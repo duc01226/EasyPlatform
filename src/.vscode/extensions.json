@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "ms-dotnettools.csharp",
+        "ms-azuretools.vscode-docker",
+        "donjayamanne.githistory",
+        "esbenp.prettier-vscode",
+        "davidanson.vscode-markdownlint"
+    ]
+}

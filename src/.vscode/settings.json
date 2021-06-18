@@ -1,0 +1,6 @@
+{
+    "html.format.wrapLineLength": 200,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "prettier.printWidth": 200
+}
