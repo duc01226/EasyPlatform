@@ -7,11 +7,17 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
-COPY ["Services/NoCeiling.Duc.Interview.Test.TextSnippet.Api/NoCeiling.Duc.Interview.Test.TextSnippet.Api.csproj", "Services/NoCeiling.Duc.Interview.Test.TextSnippet.Api/"]
-COPY ["BuildingBlocks", "BuildingBlocks"]
-RUN dotnet restore "Services/NoCeiling.Duc.Interview.Test.TextSnippet.Api/NoCeiling.Duc.Interview.Test.TextSnippet.Api.csproj"
 COPY BuildingBlocks BuildingBlocks
+COPY Services/NoCeiling.Duc.Interview.Test.TextSnippet.Api/NoCeiling.Duc.Interview.Test.TextSnippet.Api.csproj Services/NoCeiling.Duc.Interview.Test.TextSnippet.Api/NoCeiling.Duc.Interview.Test.TextSnippet.Api.csproj
+COPY Services/NoCeiling.Duc.Interview.Test.TextSnippet.Application/NoCeiling.Duc.Interview.Test.TextSnippet.Application.csproj Services/NoCeiling.Duc.Interview.Test.TextSnippet.Application/NoCeiling.Duc.Interview.Test.TextSnippet.Application.csproj
+COPY Services/NoCeiling.Duc.Interview.Test.TextSnippet.Domain/NoCeiling.Duc.Interview.Test.TextSnippet.Domain.csproj Services/NoCeiling.Duc.Interview.Test.TextSnippet.Domain/NoCeiling.Duc.Interview.Test.TextSnippet.Domain.csproj
+COPY Services/NoCeiling.Duc.Interview.Test.TextSnippet.Persistence/NoCeiling.Duc.Interview.Test.TextSnippet.Persistence.csproj Services/NoCeiling.Duc.Interview.Test.TextSnippet.Persistence/NoCeiling.Duc.Interview.Test.TextSnippet.Persistence.csproj
+RUN dotnet restore "Services/NoCeiling.Duc.Interview.Test.TextSnippet.Api/NoCeiling.Duc.Interview.Test.TextSnippet.Api.csproj"
+
 COPY Services/NoCeiling.Duc.Interview.Test.TextSnippet.Api Services/NoCeiling.Duc.Interview.Test.TextSnippet.Api
+COPY Services/NoCeiling.Duc.Interview.Test.TextSnippet.Application Services/NoCeiling.Duc.Interview.Test.TextSnippet.Application
+COPY Services/NoCeiling.Duc.Interview.Test.TextSnippet.Domain Services/NoCeiling.Duc.Interview.Test.TextSnippet.Domain
+COPY Services/NoCeiling.Duc.Interview.Test.TextSnippet.Persistence Services/NoCeiling.Duc.Interview.Test.TextSnippet.Persistence
 WORKDIR "/src/Services/NoCeiling.Duc.Interview.Test.TextSnippet.Api"
 RUN dotnet build "NoCeiling.Duc.Interview.Test.TextSnippet.Api.csproj" -c Release -o /app/build
 

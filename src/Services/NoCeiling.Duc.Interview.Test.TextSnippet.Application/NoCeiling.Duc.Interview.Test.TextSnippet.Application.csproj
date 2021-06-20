@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\BuildingBlocks\NoCeiling.Duc.Interview.Test.Platform\NoCeiling.Duc.Interview.Test.Platform.csproj" />
+    <ProjectReference Include="..\NoCeiling.Duc.Interview.Test.TextSnippet.Domain\NoCeiling.Duc.Interview.Test.TextSnippet.Domain.csproj" />
+    <ProjectReference Include="..\NoCeiling.Duc.Interview.Test.TextSnippet.Persistence\NoCeiling.Duc.Interview.Test.TextSnippet.Persistence.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -11,6 +11,11 @@ docker-compose -p NoCeiling-Duc-Interview-Testing build
 docker-compose -p NoCeiling-Duc-Interview-Testing up
 ```
 
+### Urls
+
+- Api Server: [http://localhost:5001](http://localhost:5001)
+- Client: [http://localhost:4001](http://localhost:4001)
+
 ## References
 
 [eShopOnContainers](https://github.com/dotnet-architecture/eShopOnContainers)

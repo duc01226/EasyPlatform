@@ -2,7 +2,10 @@ version: "3.4"
 
 services: 
     sql-data:
-        image: mcr.microsoft.com/mssql/server:2019-latest
+        image: ${REGISTRY:-duc01226}/fts-sql-data:${PLATFORM:-linux}-${TAG:-latest}
+        build: 
+            context: .
+            dockerfile: fts-sqldata.Dockerfile
     
     text-snippet-api:
         image: ${REGISTRY:-duc01226}/text-snippet-api:${PLATFORM:-linux}-${TAG:-latest}
