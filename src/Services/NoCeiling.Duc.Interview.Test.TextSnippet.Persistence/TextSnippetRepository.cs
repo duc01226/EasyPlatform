@@ -1,7 +1,7 @@
 using System;
 using NoCeiling.Duc.Interview.Test.Platform.Cqrs;
 using NoCeiling.Duc.Interview.Test.Platform.Domain.Entities;
-using NoCeiling.Duc.Interview.Test.Platform.EfCore.Repositories;
+using NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.Repositories;
 using NoCeiling.Duc.Interview.Test.TextSnippet.Domain.Repositories;
 
 namespace NoCeiling.Duc.Interview.Test.TextSnippet.Persistence

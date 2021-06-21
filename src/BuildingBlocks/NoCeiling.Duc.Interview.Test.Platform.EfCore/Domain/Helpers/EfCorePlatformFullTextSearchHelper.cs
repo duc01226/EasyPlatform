@@ -7,7 +7,7 @@ using NoCeiling.Duc.Interview.Test.Platform.Domain.Helpers;
 using NoCeiling.Duc.Interview.Test.Platform.Extensions;
 using NoCeiling.Duc.Interview.Test.Platform.Utils;
 
-namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.Helpers
+namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.Helpers
 {
     public class EfCoreSqlPlatformFullTextSearchHelper : IPlatformFullTextSearchHelper
     {

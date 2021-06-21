@@ -1,4 +1,4 @@
-using NoCeiling.Duc.Interview.Test.Platform.EfCore.UnitOfWork;
+using NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.UnitOfWork;
 
 namespace NoCeiling.Duc.Interview.Test.TextSnippet.Persistence
 {

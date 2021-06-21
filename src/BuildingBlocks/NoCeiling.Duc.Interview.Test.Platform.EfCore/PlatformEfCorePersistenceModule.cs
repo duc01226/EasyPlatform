@@ -30,20 +30,20 @@ namespace NoCeiling.Duc.Interview.Test.Platform.EfCore
         {
             var db = serviceScope.ServiceProvider.GetRequiredService<TDbContext>();
 
-            var retries = 10;
-            var retry = Policy.Handle<SqlException>()
+            var retryCount = 10;
+            var retryPolicy = Policy.Handle<SqlException>()
                 .WaitAndRetry(
-                    retryCount: retries,
+                    retryCount: retryCount,
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                     onRetry: (exception, timeSpan, retry, ctx) =>
                     {
-                        Logger.LogWarning(exception, "[{prefix}] Exception {ExceptionType} with message {Message} detected on attempt {retry} of {retries}", nameof(TDbContext), exception.GetType().Name, exception.Message, retry, retries);
+                        Logger.LogWarning(exception, "[{prefix}] Exception {ExceptionType} with message {Message} detected on attempt {retry} of {retries}", nameof(TDbContext), exception.GetType().Name, exception.Message, retry, retryCount);
                     });
 
             //if the sql server container is not created on run docker compose this
             //migration can't fail for network related exception. The retry options for DbContext only 
             //apply to transient exceptions
-            retry.Execute(() => db.Database.Migrate());
+            retryPolicy.Execute(() => db.Database.Migrate());
         }
     }
 }

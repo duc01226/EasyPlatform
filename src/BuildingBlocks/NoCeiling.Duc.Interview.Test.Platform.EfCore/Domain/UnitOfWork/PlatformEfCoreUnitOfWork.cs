@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using NoCeiling.Duc.Interview.Test.Platform.Domain.UnitOfWork;
 
-namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.UnitOfWork
+namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.UnitOfWork
 {
     public abstract class PlatformEfCoreUnitOfWork<TDbContext> : IUnitOfWork where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {

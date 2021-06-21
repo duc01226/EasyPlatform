@@ -10,7 +10,7 @@ using NoCeiling.Duc.Interview.Test.Platform.Domain.Events;
 using NoCeiling.Duc.Interview.Test.Platform.Domain.Repositories;
 using NoCeiling.Duc.Interview.Test.Platform.Extensions;
 
-namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.Repositories
+namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.Repositories
 {
     public abstract class PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext> : IRepository<TEntity, TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()

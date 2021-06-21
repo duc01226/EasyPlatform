@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NoCeiling.Duc.Interview.Test.Platform.Domain.Helpers;
 using NoCeiling.Duc.Interview.Test.Platform.EfCore;
-using NoCeiling.Duc.Interview.Test.Platform.EfCore.Helpers;
+using NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.Helpers;
 
 namespace NoCeiling.Duc.Interview.Test.TextSnippet.Persistence
 {
