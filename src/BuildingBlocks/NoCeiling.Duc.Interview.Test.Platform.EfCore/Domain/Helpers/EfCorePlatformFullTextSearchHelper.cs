@@ -9,7 +9,7 @@ using NoCeiling.Duc.Interview.Test.Platform.Utils;
 
 namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.Helpers
 {
-    public class EfCoreSqlPlatformFullTextSearchHelper : IPlatformFullTextSearchHelper
+    public class EfCoreSqlPlatformFullTextSearchDomainHelper : IPlatformFullTextSearchDomainHelper
     {
         public IQueryable<T> Search<T>(IQueryable<T> query, string searchText, params Expression<Func<T, string>>[] inFullTextSearchProps)
         {

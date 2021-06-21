@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 
 namespace NoCeiling.Duc.Interview.Test.Platform.Domain.Helpers
 {
-    public interface IPlatformFullTextSearchHelper
+    public interface IPlatformFullTextSearchDomainHelper : IDomainHelper
     {
         /// <summary>
         /// Filter by search text, support multiple string prop. inFullTextSearchProps must be a list of one level string prop.
@@ -14,7 +14,7 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Domain.Helpers
         /// <param name="query">Query to search on.</param>
         /// <param name="searchText">Search text.</param>
         /// <param name="inFullTextSearchProps">List of property expression to search on.</param>
-        /// <returns>Filtered by seach text query.</returns>
+        /// <returns>Filtered by search text query.</returns>
         public IQueryable<T> Search<T>(IQueryable<T> query, string searchText, params Expression<Func<T, string>>[] inFullTextSearchProps);
     }
 }

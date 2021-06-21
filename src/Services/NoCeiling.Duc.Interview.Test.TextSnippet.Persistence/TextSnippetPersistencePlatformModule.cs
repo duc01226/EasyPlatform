@@ -30,7 +30,7 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Persistence
             base.InternalRegister(serviceCollection, configuration);
             serviceCollection.AddDbContext<TextSnippetDbContext>(options =>
                 options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
-            serviceCollection.AddTransient<IPlatformFullTextSearchHelper, EfCoreSqlPlatformFullTextSearchHelper>();
+            serviceCollection.AddTransient<IPlatformFullTextSearchDomainHelper, EfCoreSqlPlatformFullTextSearchDomainHelper>();
         }
     }
 }

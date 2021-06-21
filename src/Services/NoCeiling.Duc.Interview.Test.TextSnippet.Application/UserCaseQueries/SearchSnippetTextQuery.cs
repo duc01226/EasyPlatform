@@ -27,14 +27,14 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Application.UserCaseQueries
     public class SearchSnippetTextQueryHandler : PlatformCqrsQueryHandler<SearchSnippetTextQuery, SearchSnippetTextQueryResult>
     {
         private readonly ITextSnippetRepository<TextSnippetEntity> repository;
-        private readonly IPlatformFullTextSearchHelper fullTextSearchHelper;
+        private readonly IPlatformFullTextSearchDomainHelper fullTextSearchDomainHelper;
 
         public SearchSnippetTextQueryHandler(
             ITextSnippetRepository<TextSnippetEntity> repository,
-            IPlatformFullTextSearchHelper fullTextSearchHelper)
+            IPlatformFullTextSearchDomainHelper fullTextSearchDomainHelper)
         {
             this.repository = repository;
-            this.fullTextSearchHelper = fullTextSearchHelper;
+            this.fullTextSearchDomainHelper = fullTextSearchDomainHelper;
         }
 
         protected override async Task<SearchSnippetTextQueryResult> HandleAsync(SearchSnippetTextQuery request, CancellationToken cancellationToken)
@@ -42,7 +42,7 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Application.UserCaseQueries
             var fullItemsQuery = repository
                 .GetAll()
                 .Pipe(query => !string.IsNullOrEmpty(request.SearchText)
-                    ? fullTextSearchHelper.Search(query, request.SearchText, e => e.SnippetText)
+                    ? fullTextSearchDomainHelper.Search(query, request.SearchText, e => e.SnippetText)
                     : query);
 
             var pagedEntities = await fullItemsQuery
