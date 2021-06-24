@@ -14,7 +14,7 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Domain.Repositories
 
     public interface IRepository<TEntity, TPrimaryKey> : IRepository
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
-        where TPrimaryKey : struct
+        where TPrimaryKey : IEquatable<TPrimaryKey>
     {
         IQueryable<TEntity> GetAllQuery();
 

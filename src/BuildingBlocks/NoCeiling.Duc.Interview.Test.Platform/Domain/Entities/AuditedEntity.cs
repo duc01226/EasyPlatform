@@ -16,7 +16,7 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Domain.Entities
 
     public abstract class AuditedEntity<TEntity, TPrimaryKey, TUserId> : Entity<TEntity, TPrimaryKey>, IAuditedEntity<TUserId>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
-        where TPrimaryKey : struct
+        where TPrimaryKey : IEquatable<TPrimaryKey>
         where TUserId : struct
     {
         public AuditedEntity(TUserId? createdBy = null)

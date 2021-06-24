@@ -29,7 +29,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NoCeiling.Duc.Interview.Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NoCeiling.Duc.Interview.Test.TextSnippet.Persistence", "Services\NoCeiling.Duc.Interview.Test.TextSnippet.Persistence\NoCeiling.Duc.Interview.Test.TextSnippet.Persistence.csproj", "{F01D394B-1C7E-4A4A-9543-F15AC1BDB8EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NoCeiling.Duc.Interview.Test.Platform.AspNetCore", "BuildingBlocks\NoCeiling.Duc.Interview.Test.Platform.AspNetCore\NoCeiling.Duc.Interview.Test.Platform.AspNetCore.csproj", "{D775F406-856D-4AD2-9175-82EF80514ADF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NoCeiling.Duc.Interview.Test.Platform.AspNetCore", "BuildingBlocks\NoCeiling.Duc.Interview.Test.Platform.AspNetCore\NoCeiling.Duc.Interview.Test.Platform.AspNetCore.csproj", "{D775F406-856D-4AD2-9175-82EF80514ADF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NoCeiling.Duc.Interview.Test.Platform.MongoDB", "BuildingBlocks\NoCeiling.Duc.Interview.Test.Platform.MongoDB\NoCeiling.Duc.Interview.Test.Platform.MongoDB.csproj", "{D78EE9C1-A1B8-4239-B3C3-1B462221F1EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -65,6 +67,10 @@ Global
 		{D775F406-856D-4AD2-9175-82EF80514ADF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D775F406-856D-4AD2-9175-82EF80514ADF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D775F406-856D-4AD2-9175-82EF80514ADF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D78EE9C1-A1B8-4239-B3C3-1B462221F1EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D78EE9C1-A1B8-4239-B3C3-1B462221F1EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D78EE9C1-A1B8-4239-B3C3-1B462221F1EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D78EE9C1-A1B8-4239-B3C3-1B462221F1EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -78,6 +84,7 @@ Global
 		{BF6177A5-9CFC-4DA1-B7C4-D4F081258286} = {DD7EC141-4769-4789-BC8B-ADED72046A0E}
 		{F01D394B-1C7E-4A4A-9543-F15AC1BDB8EF} = {24E30956-7F1B-449D-9B28-F5BD57717438}
 		{D775F406-856D-4AD2-9175-82EF80514ADF} = {DD7EC141-4769-4789-BC8B-ADED72046A0E}
+		{D78EE9C1-A1B8-4239-B3C3-1B462221F1EA} = {DD7EC141-4769-4789-BC8B-ADED72046A0E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1547782A-8ABF-4E37-8BAC-C85487175C1B}

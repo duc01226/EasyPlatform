@@ -7,7 +7,7 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Domain.Entities
 {
     public abstract class Entity<TEntity, TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
-        where TPrimaryKey : struct
+        where TPrimaryKey : IEquatable<TPrimaryKey>
     {
         public virtual TPrimaryKey Id { get; set; }
 

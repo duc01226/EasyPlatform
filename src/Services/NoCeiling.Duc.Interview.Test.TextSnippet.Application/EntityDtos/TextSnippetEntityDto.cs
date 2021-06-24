@@ -22,7 +22,7 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Application.EntityDtos
         {
             return new TextSnippetEntity()
             {
-                Id = Id ?? Guid.NewGuid(),
+                Id = Id == Guid.Empty ? Guid.NewGuid() : Id,
                 SnippetText = SnippetText,
                 FullText = FullText
             };

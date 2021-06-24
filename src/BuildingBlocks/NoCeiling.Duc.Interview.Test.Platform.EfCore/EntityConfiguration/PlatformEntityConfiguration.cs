@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NoCeiling.Duc.Interview.Test.Platform.Domain.Entities;
@@ -6,7 +7,7 @@ namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.EntityConfiguration
 {
     public abstract class PlatformEntityConfiguration<TEntity, TPrimaryKey> : IEntityTypeConfiguration<TEntity>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
-        where TPrimaryKey : struct
+        where TPrimaryKey : IEquatable<TPrimaryKey>
     {
         public virtual void Configure(EntityTypeBuilder<TEntity> builder)
         {

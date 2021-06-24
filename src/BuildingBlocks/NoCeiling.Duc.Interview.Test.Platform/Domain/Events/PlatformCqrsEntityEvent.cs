@@ -1,3 +1,4 @@
+using System;
 using NoCeiling.Duc.Interview.Test.Platform.Cqrs;
 using NoCeiling.Duc.Interview.Test.Platform.Domain.Entities;
 
@@ -5,7 +6,7 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Domain.Events
 {
     public class PlatformCqrsEntityEvent<TEntity, TPrimaryKey> : PlatformCqrsEvent
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
-        where TPrimaryKey : struct
+        where TPrimaryKey : IEquatable<TPrimaryKey>
     {
         public PlatformCqrsEntityEvent(TEntity entityData, EntityEventType type, string routingKeyPrefix)
         {
