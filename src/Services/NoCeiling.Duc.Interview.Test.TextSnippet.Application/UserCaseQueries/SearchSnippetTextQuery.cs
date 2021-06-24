@@ -40,18 +40,19 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Application.UserCaseQueries
         protected override async Task<SearchSnippetTextQueryResult> HandleAsync(SearchSnippetTextQuery request, CancellationToken cancellationToken)
         {
             var fullItemsQuery = repository
-                .GetAll()
+                .GetAllQuery()
                 .Pipe(query => !string.IsNullOrEmpty(request.SearchText)
                     ? fullTextSearchDomainHelper.Search(query, request.SearchText, e => e.SnippetText)
                     : query);
 
-            var pagedEntities = await fullItemsQuery
-                .OrderBy(p => p.SnippetText)
-                .Pipe(query => request.IsPagedRequestValid()
-                    ? query.PageBy(request.SkipCount, request.MaxResultCount)
-                    : query)
-                .ToListAsync(cancellationToken);
-            var totalCount = await fullItemsQuery.CountAsync(cancellationToken);
+            var pagedEntities = await repository.GetAllAsync(
+                fullItemsQuery
+                    .OrderBy(p => p.SnippetText)
+                    .Pipe(query => request.IsPagedRequestValid()
+                        ? query.PageBy(request.SkipCount, request.MaxResultCount)
+                        : query),
+                cancellationToken);
+            var totalCount = await repository.CountAsync(fullItemsQuery, cancellationToken);
 
             return new SearchSnippetTextQueryResult(
                 pagedEntities.Select(p => new TextSnippetEntityDto(p)).ToList(),

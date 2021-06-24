@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using NoCeiling.Duc.Interview.Test.Platform.Cqrs;
@@ -34,10 +35,30 @@ namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.Repositories
 
         protected abstract string EntityEventRoutingKeyPrefix { get; }
 
-        public IQueryable<TEntity> GetAll()
+        public IQueryable<TEntity> GetAllQuery()
         {
             // Ensure that UnitOfWork.Complete() will not Update/Delete entities without calling repository Update/Delete
             return Table.AsNoTrackingWithIdentityResolution();
+        }
+
+        public Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        {
+            return GetAllQuery().WhereIf(predicate != null, predicate).ToListAsync(cancellationToken);
+        }
+
+        public Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        {
+            return GetAllQuery().WhereIf(predicate != null, predicate).CountAsync(cancellationToken);
+        }
+
+        public Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        {
+            return query.ToListAsync(cancellationToken);
+        }
+
+        public Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        {
+            return query.CountAsync(cancellationToken);
         }
 
         public async Task<TEntity> Create(TEntity entity)
@@ -49,8 +70,8 @@ namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.Repositories
         public Task<TEntity> CreateOrUpdate(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null)
         {
             var existingEntity = customCheckExistingPredicate != null
-                ? GetAll().FirstOrDefault(customCheckExistingPredicate)
-                : GetAll().FirstOrDefault(p => p.Id.Equals(entity.Id));
+                ? GetAllQuery().FirstOrDefault(customCheckExistingPredicate)
+                : GetAllQuery().FirstOrDefault(p => p.Id.Equals(entity.Id));
             if (existingEntity != null)
             {
                 entity.Id = existingEntity.Id;
@@ -97,7 +118,7 @@ namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.Repositories
 
         public async Task<List<TEntity>> DeleteMany(List<TPrimaryKey> entityIds)
         {
-            var entities = await GetAll().Where(p => entityIds.Contains(p.Id)).ToListAsync();
+            var entities = await GetAllQuery().Where(p => entityIds.Contains(p.Id)).ToListAsync();
             return await DeleteMany(entities);
         }
 
