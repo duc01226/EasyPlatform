@@ -22,11 +22,5 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Application
                 typeof(TextSnippetDomainPlatformModule), typeof(TextSnippetPersistencePlatformModule)
             };
         }
-
-        protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
-        {
-            base.InternalRegister(serviceCollection, configuration);
-            this.RegisterCqrs(serviceCollection, configuration);
-        }
     }
 }

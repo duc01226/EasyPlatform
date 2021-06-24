@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -33,6 +34,7 @@ namespace NoCeiling.Duc.Interview.Test.Platform.DependencyInjection
                     return;
 
                 RegisterAllModuleDependencies(serviceCollection, configuration);
+                RegisterCqrs(serviceCollection, configuration);
                 InternalRegister(serviceCollection, configuration);
                 Registered = true;
             }
@@ -66,6 +68,11 @@ namespace NoCeiling.Duc.Interview.Test.Platform.DependencyInjection
         protected virtual List<Type> GetModuleDependencies()
         {
             return new List<Type>();
+        }
+
+        private void RegisterCqrs(IServiceCollection serviceCollection, IConfiguration configuration)
+        {
+            serviceCollection.AddMediatR(Assembly);
         }
 
         private void RegisterAllModuleDependencies(IServiceCollection serviceCollection, IConfiguration configuration)
