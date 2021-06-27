@@ -19,7 +19,9 @@ RUN npm install
 
 # Build app files
 COPY apps/text-snippet apps/text-snippet
-ARG configuration=production
+COPY libs libs
+COPY typings typings
+ARG configuration
 RUN npm run nx build text-snippet -- --configuration=${configuration}
 # BUILDER END
 

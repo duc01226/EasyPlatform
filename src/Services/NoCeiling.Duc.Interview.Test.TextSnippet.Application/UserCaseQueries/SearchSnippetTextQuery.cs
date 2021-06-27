@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
@@ -15,6 +16,7 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Application.UserCaseQueries
     public class SearchSnippetTextQuery : PlatformCqrsPagedResultQuery<SearchSnippetTextQueryResult, TextSnippetEntityDto>
     {
         public string SearchText { get; set; }
+        public Guid? SearchId { get; set; }
     }
 
     public class SearchSnippetTextQueryResult : PlatformCqrsQueryPagedResult<TextSnippetEntityDto>
@@ -43,7 +45,8 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Application.UserCaseQueries
                 .GetAllQuery()
                 .Pipe(query => !string.IsNullOrEmpty(request.SearchText)
                     ? fullTextSearchDomainHelper.Search(query, request.SearchText, e => e.SnippetText)
-                    : query);
+                    : query)
+                .WhereIf(request.SearchId != null, p => p.Id == request.SearchId);
 
             var pagedEntities = await repository.GetAllAsync(
                 fullItemsQuery

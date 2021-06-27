@@ -16,6 +16,13 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Domain.Entities
             return JsonSerializer.Deserialize<TEntity>(JsonSerializer.Serialize(this));
         }
 
+        public ValidationResult Validate()
+        {
+            var validator = GetValidator();
+
+            return validator != null ? validator.Validate((TEntity)this) : new ValidationResult();
+        }
+
         /// <summary>
         /// To get the entity validator.
         /// This will help us to centralize and reuse domain validation logic. Ensure any request which update/create domain entity
@@ -23,13 +30,6 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Domain.Entities
         /// </summary>
         /// <returns></returns>
         protected abstract PlatformValidator<TEntity> GetValidator();
-
-        public ValidationResult Validate()
-        {
-            var validator = GetValidator();
-
-            return validator != null ? validator.Validate((TEntity)this) : new ValidationResult();
-        }
     }
 
     /// <summary>

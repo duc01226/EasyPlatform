@@ -53,6 +53,11 @@ namespace NoCeiling.Duc.Interview.Test.Platform.MongoDB.Domain.Repositories
             return ((IMongoQueryable<TEntity>)GetAllQuery().WhereIf(predicate != null, predicate)).CountAsync(cancellationToken);
         }
 
+        public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        {
+            return ((IMongoQueryable<TEntity>)GetAllQuery().WhereIf(predicate != null, predicate)).AnyAsync(cancellationToken);
+        }
+
         public Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
         {
             return ((IMongoQueryable<TEntity>)query).ToListAsync(cancellationToken);

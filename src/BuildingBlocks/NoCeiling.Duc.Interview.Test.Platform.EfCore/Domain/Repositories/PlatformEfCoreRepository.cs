@@ -51,6 +51,11 @@ namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.Repositories
             return GetAllQuery().WhereIf(predicate != null, predicate).CountAsync(cancellationToken);
         }
 
+        public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        {
+            return GetAllQuery().WhereIf(predicate != null, predicate).AnyAsync(cancellationToken);
+        }
+
         public Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
         {
             return query.ToListAsync(cancellationToken);

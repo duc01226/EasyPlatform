@@ -11,15 +11,18 @@ services:
       - noceiling-sqldata:/var/opt/mssql
 
   text-snippet-api:
-    environment: 
+    environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://0.0.0.0:80
       - ConnectionStrings__DefaultConnection=${NOCEILING_TEXTSNIPPET_DB:-Server=sql-data,1433;Database=TextSnippedDb;User Id=sa;Password=123456Abc}
-    ports: 
+    ports:
       - "5001:80"
 
   text-snippet-webspa:
-    ports: 
+    build:
+      args:
+        configuration: "docker-dev"
+    ports:
       - "4001:80"
 
 volumes:

@@ -1,5 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using NoCeiling.Duc.Interview.Test.Platform.AspNetCore;
 using NoCeiling.Duc.Interview.Test.TextSnippet.Application;
 
@@ -16,6 +20,11 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Api
         protected override List<Type> GetModuleDependencies()
         {
             return new List<Type>() { typeof(TextSnippetApplicationModule) };
+        }
+
+        protected override string[] GetAllowCorsOrigins(IConfiguration configuration)
+        {
+            return configuration["AllowCorsOrigins"].Split(";");
         }
     }
 }

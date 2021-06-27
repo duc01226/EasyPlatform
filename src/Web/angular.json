@@ -1,17 +1,17 @@
 {
   "version": 1,
   "projects": {
-    "no-ceiling-platform": {
+    "no-ceiling-domains-text-snippet-domain": {
       "projectType": "library",
-      "root": "libs/no-ceiling-platform",
-      "sourceRoot": "libs/no-ceiling-platform/src",
-      "prefix": "no-ceiling-duc-interview-testing-web",
+      "root": "libs/no-ceiling-domains/text-snippet-domain",
+      "sourceRoot": "libs/no-ceiling-domains/text-snippet-domain/src",
+      "prefix": "text-snippet-domain",
       "architect": {
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/no-ceiling-platform"],
+          "outputs": ["coverage/libs/no-ceiling-domains/text-snippet-domain"],
           "options": {
-            "jestConfig": "libs/no-ceiling-platform/jest.config.js",
+            "jestConfig": "libs/no-ceiling-domains/text-snippet-domain/jest.config.js",
             "passWithNoTests": true
           }
         },
@@ -19,8 +19,33 @@
           "builder": "@nrwl/linter:eslint",
           "options": {
             "lintFilePatterns": [
-              "libs/no-ceiling-platform/src/**/*.ts",
-              "libs/no-ceiling-platform/src/**/*.html"
+              "libs/no-ceiling-domains/text-snippet-domain/src/**/*.ts",
+              "libs/no-ceiling-domains/text-snippet-domain/src/**/*.html"
+            ]
+          }
+        }
+      }
+    },
+    "no-ceiling-platform-core": {
+      "projectType": "library",
+      "root": "libs/no-ceiling-platform-core",
+      "sourceRoot": "libs/no-ceiling-platform-core/src",
+      "prefix": "no-ceiling-duc-interview-testing-web",
+      "architect": {
+        "test": {
+          "builder": "@nrwl/jest:jest",
+          "outputs": ["coverage/libs/no-ceiling-platform-core"],
+          "options": {
+            "jestConfig": "libs/no-ceiling-platform-core/jest.config.js",
+            "passWithNoTests": true
+          }
+        },
+        "lint": {
+          "builder": "@nrwl/linter:eslint",
+          "options": {
+            "lintFilePatterns": [
+              "libs/no-ceiling-platform-core/src/**/*.ts",
+              "libs/no-ceiling-platform-core/src/**/*.html"
             ]
           }
         }
@@ -42,10 +67,7 @@
             "polyfills": "apps/other-micro-app/src/polyfills.ts",
             "tsConfig": "apps/other-micro-app/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [
-              "apps/other-micro-app/src/favicon.ico",
-              "apps/other-micro-app/src/assets"
-            ],
+            "assets": ["apps/other-micro-app/src/favicon.ico", "apps/other-micro-app/src/assets"],
             "styles": ["apps/other-micro-app/src/styles.scss"],
             "scripts": []
           },
@@ -103,10 +125,7 @@
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "apps/other-micro-app/src/**/*.ts",
-              "apps/other-micro-app/src/**/*.html"
-            ]
+            "lintFilePatterns": ["apps/other-micro-app/src/**/*.ts", "apps/other-micro-app/src/**/*.html"]
           }
         },
         "test": {
@@ -161,11 +180,23 @@
             "polyfills": "apps/text-snippet/src/polyfills.ts",
             "tsConfig": "apps/text-snippet/tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [
-              "apps/text-snippet/src/favicon.ico",
-              "apps/text-snippet/src/assets"
+            "assets": ["apps/text-snippet/src/favicon.ico", "apps/text-snippet/src/assets"],
+            "styles": [
+              "apps/text-snippet/src/styles.scss",
+              {
+                "input": "apps/text-snippet/src/styles/themes/default-theme.scss",
+                "bundleName": "default-theme",
+                "inject": false
+              },
+              {
+                "input": "apps/text-snippet/src/styles/themes/deeppurple-amber-theme.scss",
+                "bundleName": "deeppurple-amber-theme",
+                "inject": false
+              }
             ],
-            "styles": ["apps/text-snippet/src/styles.scss"],
+            "stylePreprocessorOptions": {
+              "includePaths": ["apps/text-snippet/src/styles", "libs/no-ceiling-platform-core/src/styles"]
+            },
             "scripts": []
           },
           "configurations": {
@@ -197,6 +228,20 @@
               "extractLicenses": false,
               "sourceMap": true,
               "namedChunks": true
+            },
+            "docker-dev": {
+              "buildOptimizer": false,
+              "optimization": false,
+              "vendorChunk": true,
+              "extractLicenses": false,
+              "sourceMap": true,
+              "namedChunks": true,
+              "fileReplacements": [
+                {
+                  "replace": "apps/text-snippet/src/environments/environment.ts",
+                  "with": "apps/text-snippet/src/environments/environment.docker-dev.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"
@@ -222,10 +267,7 @@
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "apps/text-snippet/src/**/*.ts",
-              "apps/text-snippet/src/**/*.html"
-            ]
+            "lintFilePatterns": ["apps/text-snippet/src/**/*.ts", "apps/text-snippet/src/**/*.html"]
           }
         },
         "test": {

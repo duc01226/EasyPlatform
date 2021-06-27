@@ -31,7 +31,7 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Api
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, TextSnippetApplicationModule applicationModule)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, TextSnippetApiAspNetCoreModule apiModule)
         {
             if (env.IsDevelopment())
             {
@@ -44,12 +44,18 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Api
 
             app.UseAuthorization();
 
+            /*
+             * With endpoint routing, the CORS middleware must be configured to execute between the calls to UseRouting and UseEndpoints.
+             * Incorrect configuration will cause the middleware to stop functioning correctly.
+             */
+            apiModule.UseCors(app);
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
             });
 
-            applicationModule.Init();
+            apiModule.Init(app);
         }
     }
 }

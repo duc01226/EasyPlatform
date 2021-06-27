@@ -19,7 +19,10 @@
     }
   },
   "projects": {
-    "no-ceiling-platform": {
+    "no-ceiling-domains-text-snippet-domain": {
+      "tags": []
+    },
+    "no-ceiling-platform-core": {
       "tags": []
     },
     "other-micro-app": {

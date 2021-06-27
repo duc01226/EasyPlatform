@@ -22,6 +22,8 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Domain.Repositories
 
         Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
 
+        Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
+
         Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
 
         Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);

@@ -20,7 +20,7 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Api.Controllers
         // GET: api/<TextSnippetController>
         [HttpGet]
         [Route("search")]
-        public async Task<SearchSnippetTextQueryResult> Get([FromQuery] SearchSnippetTextQuery request)
+        public async Task<SearchSnippetTextQueryResult> Search([FromQuery] SearchSnippetTextQuery request)
         {
             return await Cqrs.SendQuery<SearchSnippetTextQuery, SearchSnippetTextQueryResult>(request);
         }

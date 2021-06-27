@@ -23,8 +23,9 @@ describe('AppComponent', () => {
   it('should render title', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
-    const compiled = fixture.nativeElement;
-    expect(compiled.querySelector('h1').textContent).toContain(
+    const compiled = <HTMLElement>fixture.nativeElement;
+    const titleElement = compiled.querySelector('h1');
+    expect(titleElement?.textContent).toContain(
       'Welcome to text-snippet!'
     );
   });

@@ -2,6 +2,7 @@
   "compileOnSave": false,
   "compilerOptions": {
     "rootDir": ".",
+    "typeRoots": ["typings", "node_modules/@types"],
     "sourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
@@ -13,12 +14,15 @@
     "lib": ["es2017", "dom"],
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
+    "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@no-ceiling-duc-interview-testing-web/no-ceiling-platform": [
-        "libs/no-ceiling-platform/src/index.ts"
-      ]
+      "@no-ceiling-duc-interview-testing-web/no-ceiling-domains/text-snippet-domain": [
+        "libs/no-ceiling-domains/text-snippet-domain/src/index.ts"
+      ],
+      "@no-ceiling-duc-interview-testing-web/no-ceiling-platform-core": ["libs/no-ceiling-platform-core/src/index.ts"]
     }
   },
-  "exclude": ["node_modules", "tmp"]
+  "exclude": ["node_modules", "tmp"],
+  "include": ["typings/*.d.ts"]
 }

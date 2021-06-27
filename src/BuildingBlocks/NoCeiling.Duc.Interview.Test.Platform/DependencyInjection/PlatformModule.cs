@@ -10,8 +10,8 @@ namespace NoCeiling.Duc.Interview.Test.Platform.DependencyInjection
 {
     public abstract class PlatformModule
     {
-        private readonly object registerLock = new object();
-        private readonly object initLock = new object();
+        protected readonly object RegisterLock = new object();
+        protected readonly object InitLock = new object();
 
         public PlatformModule(IServiceProvider serviceProvider)
         {
@@ -22,13 +22,13 @@ namespace NoCeiling.Duc.Interview.Test.Platform.DependencyInjection
 
         public Assembly Assembly => GetType().Assembly;
 
-        public bool Registered { get; private set; }
+        public bool Registered { get; protected set; }
 
-        public bool Initiated { get; private set; }
+        public bool Initiated { get; protected set; }
 
         public void Register(IServiceCollection serviceCollection, IConfiguration configuration)
         {
-            lock (registerLock)
+            lock (RegisterLock)
             {
                 if (Registered)
                     return;
@@ -42,7 +42,7 @@ namespace NoCeiling.Duc.Interview.Test.Platform.DependencyInjection
 
         public void Init()
         {
-            lock (initLock)
+            lock (InitLock)
             {
                 if (Initiated)
                     return;
@@ -70,17 +70,7 @@ namespace NoCeiling.Duc.Interview.Test.Platform.DependencyInjection
             return new List<Type>();
         }
 
-        private void RegisterCqrs(IServiceCollection serviceCollection, IConfiguration configuration)
-        {
-            serviceCollection.AddMediatR(Assembly);
-        }
-
-        private void RegisterAllModuleDependencies(IServiceCollection serviceCollection, IConfiguration configuration)
-        {
-            GetModuleDependencies().ForEach(p => serviceCollection.RegisterModule(configuration, p));
-        }
-
-        private void InitAllModuleDependencies()
+        protected void InitAllModuleDependencies()
         {
             GetModuleDependencies().ForEach(p =>
             {
@@ -97,6 +87,16 @@ namespace NoCeiling.Duc.Interview.Test.Platform.DependencyInjection
                         $"Module {GetType().Name} depend on {p.Name} but Module {p.Name} is not inherit from PlatformModule");
                 }
             });
+        }
+
+        private void RegisterCqrs(IServiceCollection serviceCollection, IConfiguration configuration)
+        {
+            serviceCollection.AddMediatR(Assembly);
+        }
+
+        private void RegisterAllModuleDependencies(IServiceCollection serviceCollection, IConfiguration configuration)
+        {
+            GetModuleDependencies().ForEach(p => serviceCollection.RegisterModule(configuration, p));
         }
     }
 }
