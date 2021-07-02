@@ -81,6 +81,7 @@ namespace NoCeiling.Duc.Interview.Test.Platform.AspNetCore
                     builder.WithOrigins(GetAllowCorsOrigins(configuration))
                         .AllowAnyMethod()
                         .AllowAnyHeader()
+                        .AllowCredentials()
                         .WithExposedHeaders(PlatformCommonHttpHeaderNames.RequestId)
                         .SetPreflightMaxAge(TimeSpan.FromDays(1))));
         }

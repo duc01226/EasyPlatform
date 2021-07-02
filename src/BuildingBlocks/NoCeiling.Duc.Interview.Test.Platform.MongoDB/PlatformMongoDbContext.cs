@@ -24,9 +24,14 @@ namespace NoCeiling.Duc.Interview.Test.Platform.MongoDB
         public IMongoCollection<PlatformDataMigrationHistory> DataMigrationHistoryCollection => Database.GetCollection<PlatformDataMigrationHistory>(DataMigrationHistoryCollectionName);
         public virtual string DataMigrationHistoryCollectionName => "migrationHistories";
 
-        public virtual List<PlatformMongoMigrationExecution<TDbContext>> MigrationExecutions()
+        public List<PlatformMongoMigrationExecution<TDbContext>> MigrationExecutions()
         {
-            return new List<PlatformMongoMigrationExecution<TDbContext>>();
+            var results = GetType().Assembly.GetTypes()
+                .Where(p => p.IsAssignableTo(typeof(PlatformMongoMigrationExecution<TDbContext>)))
+                .Select(p => (PlatformMongoMigrationExecution<TDbContext>)Activator.CreateInstance(p))
+                .Where(p => p != null)
+                .ToList();
+            return results;
         }
 
         public async Task EnsureIndexesAsync(bool recreate = false)

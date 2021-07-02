@@ -29,8 +29,8 @@ namespace NoCeiling.Duc.Interview.Test.Platform.MongoDB
             base.InternalRegister(serviceCollection, configuration);
             serviceCollection.Configure<PlatformMongoOptions>(ConfigureMongoOptions);
             serviceCollection.AddSingleton<TClientContext>();
+            serviceCollection.AddSingleton<IPlatformMongoClientContext, TClientContext>();
             serviceCollection.AddScoped<TDbContext>();
-            serviceCollection.AddScoped<IPlatformMongoClientContext, TClientContext>();
             serviceCollection.AddScoped<IPlatformMongoDbContext<TDbContext>, TDbContext>();
         }
 
