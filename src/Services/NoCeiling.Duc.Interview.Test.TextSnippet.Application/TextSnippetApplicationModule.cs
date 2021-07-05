@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using NoCeiling.Duc.Interview.Test.Platform.Application;
-using NoCeiling.Duc.Interview.Test.Platform.Cqrs;
 using NoCeiling.Duc.Interview.Test.TextSnippet.Domain;
 using NoCeiling.Duc.Interview.Test.TextSnippet.Persistence;
 

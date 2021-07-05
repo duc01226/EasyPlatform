@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using NoCeiling.Duc.Interview.Test.Platform.Cqrs;
 using NoCeiling.Duc.Interview.Test.Platform.Domain.Helpers;
 using NoCeiling.Duc.Interview.Test.Platform.Extensions;

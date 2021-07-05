@@ -15,4 +15,14 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Persistence
 
         protected override string EntityEventRoutingKeyPrefix => "Interview.Test.TextSnippet";
     }
+
+    internal class TextSnippetRootRepository<TEntity> : PlatformEfCoreRootRepository<TEntity, Guid, TextSnippetDbContext>, ITextSnippetRootRepository<TEntity>
+        where TEntity : RootEntity<TEntity, Guid>, new()
+    {
+        public TextSnippetRootRepository(TextSnippetDbContext dbContext, IPlatformCqrs cqrs) : base(dbContext, cqrs)
+        {
+        }
+
+        protected override string EntityEventRoutingKeyPrefix => "Interview.Test.TextSnippet";
+    }
 }

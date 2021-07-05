@@ -1,19 +1,26 @@
-using System.Linq;
+using System.Collections.Generic;
 using FluentValidation;
+using FluentValidation.Results;
 
 namespace NoCeiling.Duc.Interview.Test.Platform.Validators
 {
-    public abstract class PlatformValidator<T> : AbstractValidator<T>
+    public class PlatformValidator<T> : AbstractValidator<T>
     {
-        public static PlatformValidator<T> MergeAllValidators(params PlatformValidator<T>[] validators)
+        public static ValidationResult Invalid(string property, string errorMsg)
         {
-            if (!validators.Any())
-                return null;
-            return validators.Aggregate((PlatformValidator<T>)validators[0].MemberwiseClone(), (source, next) =>
+            return new ValidationResult(new List<ValidationFailure>() { new ValidationFailure(property, errorMsg) });
+        }
+
+        public static PlatformValidator<T> Create(params PlatformValidator<T>[] includeValidators)
+        {
+            var result = new PlatformValidator<T>();
+
+            foreach (var platformValidator in includeValidators)
             {
-                source.Include(next);
-                return source;
-            });
+                result.Include(platformValidator);
+            }
+
+            return result;
         }
     }
 }

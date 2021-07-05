@@ -6,7 +6,6 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Application.Exceptions
     {
         public PlatformApplicationException(string message) : base(message)
         {
-
         }
     }
 }

@@ -8,4 +8,9 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Domain.Repositories
         where TEntity : Entity<TEntity, Guid>, new()
     {
     }
+
+    public interface ITextSnippetRootRepository<TEntity> : IRootRepository<TEntity, Guid>
+        where TEntity : RootEntity<TEntity, Guid>, new()
+    {
+    }
 }

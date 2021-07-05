@@ -9,11 +9,11 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Application
 {
     public class TextSnippetApplicationDataSeeder : PlatformApplicationDataSeeder, IPlatformApplicationDataSeeder
     {
-        private readonly ITextSnippetRepository<TextSnippetEntity> textSnippetRepository;
+        private readonly ITextSnippetRootRepository<TextSnippetEntity> textSnippetRepository;
 
         public TextSnippetApplicationDataSeeder(
             IUnitOfWorkManager unitOfWorkManager,
-            ITextSnippetRepository<TextSnippetEntity> textSnippetRepository) : base(unitOfWorkManager)
+            ITextSnippetRootRepository<TextSnippetEntity> textSnippetRepository) : base(unitOfWorkManager)
         {
             this.textSnippetRepository = textSnippetRepository;
         }

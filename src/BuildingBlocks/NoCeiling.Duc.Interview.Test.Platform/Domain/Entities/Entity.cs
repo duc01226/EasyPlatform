@@ -1,4 +1,5 @@
 using System;
+using System.Linq.Expressions;
 using System.Text.Json;
 using FluentValidation.Results;
 using NoCeiling.Duc.Interview.Test.Platform.Validators;
@@ -7,7 +8,6 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Domain.Entities
 {
     public abstract class Entity<TEntity, TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
-        where TPrimaryKey : IEquatable<TPrimaryKey>
     {
         public virtual TPrimaryKey Id { get; set; }
 
@@ -29,14 +29,22 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Domain.Entities
         /// use the same entity validation logic (Single Responsibility, Don't Repeat YourSelf).
         /// </summary>
         /// <returns></returns>
-        protected abstract PlatformValidator<TEntity> GetValidator();
+        public virtual PlatformValidator<TEntity> GetValidator()
+        {
+            return null;
+        }
+
+        public virtual PlatformCheckUniquenessValidator<TEntity> CheckUniquenessValidator()
+        {
+            return null;
+        }
     }
 
     /// <summary>
-    /// A shortcut of <see cref="Entity{TPrimaryKey}"/> for most used primary key type (<see cref="Guid"/>).
+    /// Root entity represent an aggregate root entity. Only root entity can be Create/Update/Delete via repository
     /// </summary>
-    public abstract class Entity<TEntity> : Entity<TEntity, Guid>
-        where TEntity : Entity<TEntity>, new()
+    public abstract class RootEntity<TEntity, TPrimaryKey> : Entity<TEntity, TPrimaryKey>
+        where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
     }
 }

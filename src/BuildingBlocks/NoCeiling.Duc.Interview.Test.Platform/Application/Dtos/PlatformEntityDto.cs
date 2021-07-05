@@ -5,7 +5,6 @@ namespace NoCeiling.Duc.Interview.Test.Platform.Application.Dtos
 {
     public abstract class PlatformEntityDto<TEntity, TId>
         where TEntity : Entity<TEntity, TId>, new()
-        where TId : IEquatable<TId>
     {
         public PlatformEntityDto() { }
 

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FluentValidation.Results;
 using NoCeiling.Duc.Interview.Test.Platform.Domain.Helpers;
+using NoCeiling.Duc.Interview.Test.Platform.Validators;
 using NoCeiling.Duc.Interview.Test.TextSnippet.Domain.Entities;
 using NoCeiling.Duc.Interview.Test.TextSnippet.Domain.Repositories;
 
@@ -24,7 +25,7 @@ namespace NoCeiling.Duc.Interview.Test.TextSnippet.Domain.Helpers
         {
             if (await textSnippetRepository.AnyAsync(p => p.SnippetText == item.SnippetText && p.Id != item.Id, cancellationToken))
             {
-                return new ValidationResult(new List<ValidationFailure>() { new ValidationFailure(nameof(TextSnippetEntity.SnippetText), "SnippetText must be unique") });
+                return PlatformValidator<TextSnippetEntity>.Invalid(nameof(TextSnippetEntity.SnippetText), "SnippetText must be unique");
             }
 
             return new ValidationResult();

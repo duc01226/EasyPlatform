@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NoCeiling.Duc.Interview.Test.Platform.Application.Exceptions;
+using NoCeiling.Duc.Interview.Test.Platform.Domain.Exceptions;
 
 namespace NoCeiling.Duc.Interview.Test.Platform.AspNetCore.ExceptionHandling
 {
@@ -30,7 +31,8 @@ namespace NoCeiling.Duc.Interview.Test.Platform.AspNetCore.ExceptionHandling
         public void OnException(ExceptionContext context)
         {
             var exception = context.Exception;
-            if (!HandleApplicationError(exception, out var errorResponse))
+            if (!HandleApplicationError(exception, out var errorResponse) &&
+                !HandleDomainError(exception, out errorResponse))
             {
                 GeneralRequestError(logger, exception, context.HttpContext.TraceIdentifier);
 
@@ -62,6 +64,28 @@ namespace NoCeiling.Duc.Interview.Test.Platform.AspNetCore.ExceptionHandling
             {
                 errorResponse = new PlatformAspNetMvcErrorResponse(
                     PlatformAspNetMvcErrorInfo.FromApplicationException(applicationException),
+                    HttpStatusCode.BadRequest);
+                return true;
+            }
+
+            errorResponse = null;
+            return false;
+        }
+
+        private bool HandleDomainError(Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
+        {
+            if (exception is PlatformDomainValidationException applicationValidationException)
+            {
+                errorResponse = new PlatformAspNetMvcErrorResponse(
+                    PlatformAspNetMvcErrorInfo.FromDomainValidationException(applicationValidationException),
+                    HttpStatusCode.BadRequest);
+                return true;
+            }
+
+            if (exception is PlatformDomainException applicationException)
+            {
+                errorResponse = new PlatformAspNetMvcErrorResponse(
+                    PlatformAspNetMvcErrorInfo.FromDomainException(applicationException),
                     HttpStatusCode.BadRequest);
                 return true;
             }

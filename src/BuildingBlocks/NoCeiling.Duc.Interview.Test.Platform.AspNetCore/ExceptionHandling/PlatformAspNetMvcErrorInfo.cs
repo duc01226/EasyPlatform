@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using NoCeiling.Duc.Interview.Test.Platform.Application.Exceptions;
+using NoCeiling.Duc.Interview.Test.Platform.Domain.Exceptions;
 
 namespace NoCeiling.Duc.Interview.Test.Platform.AspNetCore.ExceptionHandling
 {
@@ -27,6 +28,35 @@ namespace NoCeiling.Duc.Interview.Test.Platform.AspNetCore.ExceptionHandling
 
         public static PlatformAspNetMvcErrorInfo FromApplicationException(
             PlatformApplicationException applicationException)
+        {
+            return new PlatformAspNetMvcErrorInfo()
+            {
+                Code = nameof(PlatformApplicationException),
+                Message = applicationException.Message
+            };
+        }
+
+        public static PlatformAspNetMvcErrorInfo FromDomainValidationException(
+            PlatformDomainValidationException applicationValidationException)
+        {
+            return new PlatformAspNetMvcErrorInfo
+            {
+                Code = nameof(PlatformApplicationValidationException),
+                Message = applicationValidationException.Message,
+                Details = applicationValidationException.ValidationResult.Errors
+                    .Select(p => new PlatformAspNetMvcErrorInfo
+                    {
+                        Code = p.ErrorCode,
+                        Message = p.ErrorMessage,
+                        Target = p.PropertyName,
+                        FormattedMessagePlaceholderValues = p.FormattedMessagePlaceholderValues
+                    })
+                    .ToList()
+            };
+        }
+
+        public static PlatformAspNetMvcErrorInfo FromDomainException(
+            PlatformDomainException applicationException)
         {
             return new PlatformAspNetMvcErrorInfo()
             {

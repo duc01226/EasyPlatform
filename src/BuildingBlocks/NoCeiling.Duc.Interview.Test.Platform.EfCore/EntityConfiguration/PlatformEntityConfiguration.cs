@@ -7,7 +7,6 @@ namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.EntityConfiguration
 {
     public abstract class PlatformEntityConfiguration<TEntity, TPrimaryKey> : IEntityTypeConfiguration<TEntity>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
-        where TPrimaryKey : IEquatable<TPrimaryKey>
     {
         public virtual void Configure(EntityTypeBuilder<TEntity> builder)
         {
@@ -15,9 +14,8 @@ namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.EntityConfiguration
         }
     }
 
-    public abstract class PlatformAuditedEntityConfiguration<TEntity, TUserId> : IEntityTypeConfiguration<TEntity>
-        where TEntity : AuditedEntity<TEntity, TUserId>, new()
-        where TUserId : struct
+    public abstract class PlatformAuditedEntityConfiguration<TEntity, TPrimaryKey, TUserId> : IEntityTypeConfiguration<TEntity>
+        where TEntity : AuditedEntity<TEntity, TPrimaryKey, TUserId>, new()
     {
         public virtual void Configure(EntityTypeBuilder<TEntity> builder)
         {

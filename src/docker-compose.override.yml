@@ -4,7 +4,7 @@ services:
   sql-data:
     environment:
       SA_PASSWORD: 123456Abc
-      ACCEPT_EULA: Y
+      ACCEPT_EULA: "Y"
     ports:
       - '14330:1433'
     volumes:

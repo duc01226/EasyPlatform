@@ -5,7 +5,7 @@ using NoCeiling.Duc.Interview.Test.TextSnippet.Domain.Entities;
 
 namespace NoCeiling.Duc.Interview.Test.TextSnippet.Persistence.EntityConfigurations
 {
-    internal class TextSnippetEntityConfiguration : PlatformAuditedEntityConfiguration<TextSnippetEntity, Guid>
+    internal class TextSnippetEntityConfiguration : PlatformAuditedEntityConfiguration<TextSnippetEntity, Guid, Guid?>
     {
         public override void Configure(EntityTypeBuilder<TextSnippetEntity> builder)
         {

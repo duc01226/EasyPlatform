@@ -1,0 +1,193 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
+using FluentValidation.Results;
+using Microsoft.EntityFrameworkCore;
+using NoCeiling.Duc.Interview.Test.Platform.Cqrs;
+using NoCeiling.Duc.Interview.Test.Platform.Domain.Entities;
+using NoCeiling.Duc.Interview.Test.Platform.Domain.Events;
+using NoCeiling.Duc.Interview.Test.Platform.Domain.Exceptions;
+using NoCeiling.Duc.Interview.Test.Platform.Domain.Repositories;
+using NoCeiling.Duc.Interview.Test.Platform.Extensions;
+
+namespace NoCeiling.Duc.Interview.Test.Platform.EfCore.Domain.Repositories
+{
+    public abstract class PlatformEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext>, IRootRepository<TEntity, TPrimaryKey>
+        where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
+        where TDbContext : PlatformEfCoreDbContext<TDbContext>
+    {
+        public PlatformEfCoreRootRepository(TDbContext dbContext, IPlatformCqrs cqrs) : base(dbContext, cqrs)
+        {
+        }
+
+        public new IQueryable<TEntity> GetAllQuery()
+        {
+            return Table.AsQueryable();
+        }
+
+        public async Task<TEntity> Create(TEntity entity, CancellationToken cancellationToken = default)
+        {
+            EnsureValid(entity.Validate());
+            await EnsureValid(entity.CheckUniquenessValidator()?.Validate(predicate => Table.AsQueryable().AnyAsync(predicate, cancellationToken)));
+
+            await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, EntityEventType.Created, EntityEventRoutingKeyPrefix), cancellationToken);
+            return await Table.AddAsync(entity, cancellationToken).Map(p => entity);
+        }
+
+        public Task<TEntity> CreateOrUpdate(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, CancellationToken cancellationToken = default)
+        {
+            var existingEntity = customCheckExistingPredicate != null
+                ? GetAllQuery().AsNoTracking().FirstOrDefault(customCheckExistingPredicate)
+                : GetAllQuery().AsNoTracking().FirstOrDefault(p => p.Id.Equals(entity.Id));
+            if (existingEntity != null)
+            {
+                entity.Id = existingEntity.Id;
+                return Update(entity, cancellationToken);
+            }
+            else
+            {
+                return Create(entity, cancellationToken);
+            }
+        }
+
+        public async Task<List<TEntity>> CreateOrUpdateMany(List<TEntity> entities, CancellationToken cancellationToken = default)
+        {
+            var entityIds = entities.Select(p => p.Id);
+
+            var existingEntityIds =
+                (await GetAllQuery()
+                    .Where(p => entityIds.Contains(p.Id))
+                    .Select(p => p.Id)
+                    .Distinct()
+                    .ToListAsync(cancellationToken))
+                .ToHashSet();
+
+            var toCreateEntities = entities.Where(p => !existingEntityIds.Contains(p.Id)).ToList();
+            var toUpdateEntities = entities.Where(p => existingEntityIds.Contains(p.Id)).ToList();
+
+            await CreateMany(toCreateEntities, cancellationToken);
+            await UpdateMany(toUpdateEntities, cancellationToken);
+
+            return entities;
+        }
+
+        public async Task<TEntity> Update(TEntity entity, CancellationToken cancellationToken = default)
+        {
+            EnsureValid(entity.Validate());
+            await EnsureValid(entity.CheckUniquenessValidator()?.Validate(predicate => Table.AsQueryable().AnyAsync(predicate, cancellationToken)));
+
+            await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, EntityEventType.Updated, EntityEventRoutingKeyPrefix), cancellationToken);
+            return await Task.FromResult(Table.Update(entity).Entity);
+        }
+
+        public Task Delete(TPrimaryKey entityId, CancellationToken cancellationToken = default)
+        {
+            var entity = Table.Find(entityId);
+            return Delete(entity, cancellationToken);
+        }
+
+        public async Task Delete(TEntity entity, CancellationToken cancellationToken = default)
+        {
+            await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, EntityEventType.Deleted, EntityEventRoutingKeyPrefix), cancellationToken);
+            await Task.FromResult(Table.Remove(entity).Entity);
+        }
+
+        public async Task<List<TEntity>> CreateMany(List<TEntity> entities, CancellationToken cancellationToken = default)
+        {
+            EnsureValid(entities);
+            await EnsureEntitiesUniqueness(entities, cancellationToken);
+
+            await Cqrs.SendEvents(
+                entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(
+                    entity, EntityEventType.Created, EntityEventRoutingKeyPrefix)),
+                cancellationToken);
+            return await Table.AddRangeAsync(entities, cancellationToken).Map(() => entities);
+        }
+
+        public async Task<List<TEntity>> UpdateMany(List<TEntity> entities, CancellationToken cancellationToken = default)
+        {
+            EnsureValid(entities);
+            await EnsureEntitiesUniqueness(entities, cancellationToken);
+
+            await Cqrs.SendEvents(
+                entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(
+                    entity, EntityEventType.Updated, EntityEventRoutingKeyPrefix)),
+                cancellationToken);
+            Table.UpdateRange(entities);
+            return await Task.FromResult(entities);
+        }
+
+        public async Task<List<TEntity>> DeleteMany(List<TPrimaryKey> entityIds, CancellationToken cancellationToken = default)
+        {
+            var entities = await GetAllQuery().Where(p => entityIds.Contains(p.Id)).ToListAsync(cancellationToken);
+            return await DeleteMany(entities, cancellationToken);
+        }
+
+        public async Task<List<TEntity>> DeleteMany(List<TEntity> entities, CancellationToken cancellationToken = default)
+        {
+            await Cqrs.SendEvents(
+                entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(
+                    entity, EntityEventType.Deleted, EntityEventRoutingKeyPrefix)),
+                cancellationToken);
+            Table.RemoveRange(entities);
+            return await Task.FromResult(entities);
+        }
+
+        protected void EnsureValid(List<TEntity> entities)
+        {
+            foreach (var entity in entities)
+            {
+                EnsureValid(entity.Validate());
+            }
+        }
+
+        protected void EnsureValid(ValidationResult validationResult)
+        {
+            if (validationResult != null && !validationResult.IsValid)
+                throw new PlatformDomainValidationException(validationResult);
+        }
+
+        protected void EnsureValid(List<Func<ValidationResult>> validationResultFns)
+        {
+            foreach (var validationResultFn in validationResultFns)
+            {
+                var validationResult = validationResultFn();
+                if (validationResult != null && !validationResult.IsValid)
+                    throw new PlatformDomainValidationException(validationResult);
+            }
+        }
+
+        protected async Task EnsureValid(Task<ValidationResult> validationResultTask)
+        {
+            var validationResult = await validationResultTask;
+            if (validationResult != null && !validationResult.IsValid)
+                throw new PlatformDomainValidationException(validationResult);
+        }
+
+        protected async Task EnsureValid(List<Func<Task<ValidationResult>>> validationResultAsyncFns)
+        {
+            foreach (var validationResultAsyncFn in validationResultAsyncFns)
+            {
+                var validationResult = await validationResultAsyncFn();
+                if (validationResult != null && !validationResult.IsValid)
+                    throw new PlatformDomainValidationException(validationResult);
+            }
+        }
+
+        private async Task EnsureEntitiesUniqueness(List<TEntity> entities, CancellationToken cancellationToken)
+        {
+            // Validate each entity in the list is unique in the existed items and also in the new items will be persisted
+            var entitiesValidateUniquenessFns = entities
+                .Where(p => p.CheckUniquenessValidator() != null)
+                .Select<TEntity, Func<Task<ValidationResult>>>(entity => () =>
+                    entity.CheckUniquenessValidator().Validate(async predicate =>
+                        !entities.Any(entity.CheckUniquenessValidator().FindOtherDuplicatedItemExpression.Compile()) &&
+                        await Table.AsQueryable().AnyAsync(predicate, cancellationToken)))
+                .ToList();
+            await EnsureValid(entitiesValidateUniquenessFns);
+        }
+    }
+}
