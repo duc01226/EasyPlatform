@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform\AngularDotnetPlatform.Platform.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Domain\PlatformExampleApp.TextSnippet.Domain.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Persistence\PlatformExampleApp.TextSnippet.Persistence.csproj" />
+  </ItemGroup>
+
+</Project>

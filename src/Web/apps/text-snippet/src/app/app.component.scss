@@ -1,7 +1,7 @@
 @import 'variables';
 @import 'mixins';
 
-no-ceiling-duc-interview-testing-web-root {
+angular-dotnet-platform-example-web-root {
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -17,6 +17,14 @@ no-ceiling-duc-interview-testing-web-root {
 }
 
 .app {
+  &__errors {
+    display: flex;
+    align-items: center;
+  }
+  &__errors-content {
+    flex-grow: 1;
+    vertical-align: middle;
+  }
   &__header {
     flex-shrink: 0;
     display: flex;

@@ -1,0 +1,31 @@
+{
+  "extends": ["../../.eslintrc.json"],
+  "ignorePatterns": ["!**/*"],
+  "overrides": [
+    {
+      "files": ["*.ts"],
+      "parserOptions": {
+        "project": ["libs/angular-dotnet-platform-platform-core/tsconfig.*?.json"]
+      },
+      "extends": ["plugin:@nrwl/nx/angular", "plugin:@angular-eslint/template/process-inline-templates"],
+      "rules": {
+        "@angular-eslint/directive-selector": [
+          "error",
+          {
+            "type": "attribute",
+            "prefix": "AngularDotnetPlatformPlatformExampleWeb",
+            "style": "camelCase"
+          }
+        ],
+        "@angular-eslint/component-selector": [
+          "error",
+          {
+            "type": "element",
+            "prefix": "angular-dotnet-platform-example-web",
+            "style": "kebab-case"
+          }
+        ]
+      }
+    }
+  ]
+}

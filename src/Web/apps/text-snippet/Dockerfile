@@ -3,9 +3,7 @@ FROM node:14.17.1-alpine3.12 as builder
 WORKDIR /usr/src
 
 # Copy common files
-COPY yarn.lock .
 COPY package.json .
-COPY package-lock.json .
 COPY tsconfig.base.json .
 COPY nx.json .
 COPY angular.json .

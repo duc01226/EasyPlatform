@@ -4,7 +4,7 @@
 
 export const environment = {
   production: false,
-  textSnippetApiHost: 'https://localhost:55001'
+  textSnippetApiHost: 'http://localhost:5001'
 };
 
 /*

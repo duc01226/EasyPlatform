@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { PlatformAppUiStateService } from '@no-ceiling-duc-interview-testing-web/no-ceiling-platform-core';
+import { PlatformAppUiStateService } from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
 
 import { AppModuleConfig } from '../app.module.config';
 import { AppUiStateData } from './app-ui.state-data';

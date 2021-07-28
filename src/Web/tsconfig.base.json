@@ -17,10 +17,12 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@no-ceiling-duc-interview-testing-web/no-ceiling-domains/text-snippet-domain": [
-        "libs/no-ceiling-domains/text-snippet-domain/src/index.ts"
+      "@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain": [
+        "libs/angular-dotnet-platform-domains/text-snippet-domain/src/index.ts"
       ],
-      "@no-ceiling-duc-interview-testing-web/no-ceiling-platform-core": ["libs/no-ceiling-platform-core/src/index.ts"]
+      "@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core": [
+        "libs/angular-dotnet-platform-platform-core/src/index.ts"
+      ]
     }
   },
   "exclude": ["node_modules", "tmp"],

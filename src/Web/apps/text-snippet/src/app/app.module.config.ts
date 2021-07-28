@@ -1,3 +1,3 @@
-import { NoCeilingPlatformCoreModuleConfig } from '@no-ceiling-duc-interview-testing-web/no-ceiling-platform-core';
+import { AngularDotnetPlatformPlatformCoreModuleConfig } from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
 
-export class AppModuleConfig extends NoCeilingPlatformCoreModuleConfig {}
+export class AppModuleConfig extends AngularDotnetPlatformPlatformCoreModuleConfig {}

@@ -3,18 +3,18 @@ import {
   SaveTextSnippetCommandDto,
   SearchTextSnippetQueryDto,
   TextSnippetRepository,
-} from '@no-ceiling-duc-interview-testing-web/no-ceiling-domains/text-snippet-domain';
+} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
 import {
   PlatformApiServiceErrorResponse,
   PlatformSmartComponent,
   Utils,
-} from '@no-ceiling-duc-interview-testing-web/no-ceiling-platform-core';
+} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
 
 import { AppUiStateData, AppUiStateService } from '../../app-ui-state-services';
 import { AppTextSnippetDetail } from './app-text-snippet-detail.view-model';
 
 @Component({
-  selector: 'no-ceiling-duc-interview-testing-web-text-snippet-detail',
+  selector: 'angular-dotnet-platform-example-web-text-snippet-detail',
   templateUrl: './app-text-snippet-detail.component.html',
   styleUrls: ['./app-text-snippet-detail.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

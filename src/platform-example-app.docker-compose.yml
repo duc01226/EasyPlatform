@@ -1,0 +1,26 @@
+version: "3.4"
+
+services:
+  sql-data:
+    image: ${REGISTRY:-duc01226}/angular-dotnet-platform-platform-example-app-fts-sql-data:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: fts-sqldata.Dockerfile
+
+  text-snippet-api:
+    image: ${REGISTRY:-duc01226}/angular-dotnet-platform-platform-example-app-text-snippet-api:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: Services/PlatformExampleApp.TextSnippet.Api/Dockerfile
+    depends_on:
+      - sql-data
+
+  text-snippet-webspa:
+    image: ${REGISTRY:-duc01226}/angular-dotnet-platform-platform-example-app-text-snippet-webspa:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: Web
+      args:
+        configuration: "production"
+      dockerfile: apps/text-snippet/Dockerfile
+    depends_on:
+      - text-snippet-api

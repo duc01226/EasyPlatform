@@ -1,5 +1,5 @@
 {
-  "npmScope": "no-ceiling-duc-interview-testing-web",
+  "npmScope": "angular-dotnet-platform-example-web",
   "affected": {
     "defaultBase": "master"
   },
@@ -19,10 +19,10 @@
     }
   },
   "projects": {
-    "no-ceiling-domains-text-snippet-domain": {
+    "angular-dotnet-platform-domains-text-snippet-domain": {
       "tags": []
     },
-    "no-ceiling-platform-core": {
+    "angular-dotnet-platform-platform-core": {
       "tags": []
     },
     "other-micro-app": {

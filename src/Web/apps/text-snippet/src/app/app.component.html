@@ -1,6 +1,11 @@
 <header class="app__header">
   <h1>Welcome to {{ title }}!</h1>
 </header>
+<div class="app__errors" *ngIf="vm.unexpectedError">
+  <mat-error class="app__errors-content">{{ vm.unexpectedError.getDefaultFormattedMessage() }}</mat-error>
+
+  <button mat-icon-button (click)="clearAppErrors()"><mat-icon>close</mat-icon></button>
+</div>
 <main class="app__main">
   <div class="app__side-bar">
     <mat-form-field class="app__search-input" appearance="fill">
@@ -48,7 +53,7 @@
     </div>
   </div>
   <div class="app__detail">
-    <no-ceiling-duc-interview-testing-web-text-snippet-detail></no-ceiling-duc-interview-testing-web-text-snippet-detail>
+    <angular-dotnet-platform-example-web-text-snippet-detail></angular-dotnet-platform-example-web-text-snippet-detail>
   </div>
 </main>
 <div class="platform-mat-spinner -with-backdrop" *ngIf="vm.textSnippetItems == null && vm.loadingTextSnippetItems">

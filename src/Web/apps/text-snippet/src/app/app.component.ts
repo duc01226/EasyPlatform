@@ -3,18 +3,18 @@ import { PageEvent } from '@angular/material/paginator';
 import {
   SearchTextSnippetQueryDto,
   TextSnippetRepository,
-} from '@no-ceiling-duc-interview-testing-web/no-ceiling-domains/text-snippet-domain';
+} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
 import {
   PlatformApiServiceErrorResponse,
   PlatformSmartComponent,
   Utils,
-} from '@no-ceiling-duc-interview-testing-web/no-ceiling-platform-core';
+} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
 
 import { AppUiStateData, AppUiStateService } from './app-ui-state-services';
 import { AppTextSnippetItemViewModel, AppViewModel } from './app.view-model';
 
 @Component({
-  selector: 'no-ceiling-duc-interview-testing-web-root',
+  selector: 'angular-dotnet-platform-example-web-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,6 +29,12 @@ export class AppComponent
     private snippetTextRepo: TextSnippetRepository
   ) {
     super(changeDetector, appUiState);
+
+    this.selectUiStateData(p => p.unexpectedError).subscribe(x => {
+      this.updateVm(vm => {
+        vm.unexpectedError = x;
+      });
+    });
   }
 
   public title = 'Text Snippet';
@@ -108,6 +114,13 @@ export class AppComponent
     });
     this.appUiState.updateUiStateData(p => {
       p.selectedSnippetTextId = this.vm.selectedSnippetTextId;
+      return p;
+    });
+  }
+
+  public clearAppErrors(): void {
+    this.appUiState.updateUiStateData(p => {
+      p.unexpectedError = undefined;
       return p;
     });
   }

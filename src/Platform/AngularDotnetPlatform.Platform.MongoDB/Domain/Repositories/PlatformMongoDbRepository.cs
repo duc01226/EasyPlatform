@@ -1,0 +1,69 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Cqrs;
+using AngularDotnetPlatform.Platform.Domain.Entities;
+using AngularDotnetPlatform.Platform.Domain.Repositories;
+using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.MongoDB;
+using MongoDB.Driver;
+using MongoDB.Driver.Linq;
+
+namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
+{
+    public abstract class PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext> : IRepository<TEntity, TPrimaryKey>
+        where TEntity : Entity<TEntity, TPrimaryKey>, new()
+        where TDbContext : PlatformMongoDbContext<TDbContext>
+    {
+        public PlatformMongoDbRepository(TDbContext dbContext, IPlatformCqrs cqrs)
+        {
+            DbContext = dbContext;
+            Cqrs = cqrs;
+        }
+
+        protected IPlatformCqrs Cqrs { get; }
+
+        protected TDbContext DbContext { get; }
+
+        /// <summary>
+        /// Gets DbSet for given entity.
+        /// </summary>
+        protected IMongoCollection<TEntity> Table => DbContext.Database.GetCollection<TEntity>(nameof(TEntity));
+
+        protected abstract string EntityEventRoutingKeyPrefix { get; }
+
+        public IQueryable<TEntity> GetAllQuery()
+        {
+            // Ensure that UnitOfWork.Complete() will not Update/Delete entities without calling repository Update/Delete
+            return Table.AsQueryable();
+        }
+
+        public Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        {
+            return ((IMongoQueryable<TEntity>)GetAllQuery().WhereIf(predicate != null, predicate)).ToListAsync(cancellationToken);
+        }
+
+        public Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        {
+            return ((IMongoQueryable<TEntity>)GetAllQuery().WhereIf(predicate != null, predicate)).CountAsync(cancellationToken);
+        }
+
+        public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        {
+            return ((IMongoQueryable<TEntity>)GetAllQuery().WhereIf(predicate != null, predicate)).AnyAsync(cancellationToken);
+        }
+
+        public Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        {
+            return ((IMongoQueryable<TEntity>)query).ToListAsync(cancellationToken);
+        }
+
+        public Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        {
+            return ((IMongoQueryable<TEntity>)query).CountAsync(cancellationToken);
+        }
+    }
+}

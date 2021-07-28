@@ -1,11 +1,12 @@
 import {
   ITextSnippetDataModel,
   TextSnippetDataModel,
-} from '@no-ceiling-duc-interview-testing-web/no-ceiling-domains/text-snippet-domain';
+} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
 import {
   PlatformApiServiceErrorInfo,
+  PlatformApiServiceErrorResponse,
   PlatformViewModel,
-} from '@no-ceiling-duc-interview-testing-web/no-ceiling-platform-core';
+} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
 
 export interface IAppViewModel {
   searchText?: string;
@@ -15,6 +16,7 @@ export interface IAppViewModel {
   currentTextSnippetItemsPageNumber: number;
   loadingTextSnippetItems: boolean;
   loadingTextSnippetItemsError?: PlatformApiServiceErrorInfo;
+  unexpectedError?: PlatformApiServiceErrorResponse;
 }
 
 export class AppViewModel extends PlatformViewModel implements IAppViewModel {
@@ -31,6 +33,7 @@ export class AppViewModel extends PlatformViewModel implements IAppViewModel {
     this.selectedSnippetTextId = data?.selectedSnippetTextId ?? undefined;
     this.loadingTextSnippetItems = data?.loadingTextSnippetItems ?? false;
     this.loadingTextSnippetItemsError = data?.loadingTextSnippetItemsError;
+    this.unexpectedError = data?.unexpectedError;
   }
   public searchText?: string;
   public textSnippetItems?: AppTextSnippetItemViewModel[];
@@ -39,6 +42,7 @@ export class AppViewModel extends PlatformViewModel implements IAppViewModel {
   public selectedSnippetTextId?: string;
   public loadingTextSnippetItems: boolean;
   public loadingTextSnippetItemsError?: PlatformApiServiceErrorInfo;
+  public unexpectedError?: PlatformApiServiceErrorResponse;
 
   public textSnippetItemsPageSize(): number {
     return AppViewModel.textSnippetItemsPageSize;

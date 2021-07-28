@@ -1,6 +1,8 @@
 import { NgModule } from '@angular/core';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
@@ -8,15 +10,16 @@ import { MatTableModule } from '@angular/material/table';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import {
-  NoCeilingDomainsTextSnippetDomainModule,
-  NoCeilingDomainsTextSnippetDomainModuleConfig,
-} from '@no-ceiling-duc-interview-testing-web/no-ceiling-domains/text-snippet-domain';
-import { NoCeilingPlatformCoreModule } from '@no-ceiling-duc-interview-testing-web/no-ceiling-platform-core';
+  AngularDotnetPlatformDomainsTextSnippetDomainModule,
+  AngularDotnetPlatformDomainsTextSnippetDomainModuleConfig,
+} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
+import { AngularDotnetPlatformPlatformCoreModule } from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
 
 import { environment } from '../environments/environment';
 import { AppUiStateService } from './app-ui-state-services';
 import { AppComponent } from './app.component';
 import { AppModuleConfig } from './app.module.config';
+import { ShowRepositoryErrorEventHandler } from './events';
 import { AppTextSnippetDetailComponent } from './smart-components';
 
 @NgModule({
@@ -24,19 +27,20 @@ import { AppTextSnippetDetailComponent } from './smart-components';
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
-    NoCeilingPlatformCoreModule.forRoot({
+    AngularDotnetPlatformPlatformCoreModule.forRoot({
       moduleConfig: {
         type: AppModuleConfig,
         configFactory: () => new AppModuleConfig({ isDevelopment: !environment.production })
       },
       appRootUiState: AppUiStateService
     }),
-    NoCeilingDomainsTextSnippetDomainModule.forRoot({
+    AngularDotnetPlatformDomainsTextSnippetDomainModule.forRoot({
       moduleConfigFactory: () =>
-        new NoCeilingDomainsTextSnippetDomainModuleConfig({
+        new AngularDotnetPlatformDomainsTextSnippetDomainModuleConfig({
           isDevelopment: !environment.production,
           textSnippetApiHost: environment.textSnippetApiHost
-        })
+        }),
+      appRepositoryErrorEventHandlers: [ShowRepositoryErrorEventHandler]
     }),
 
     MatTableModule,
@@ -44,6 +48,8 @@ import { AppTextSnippetDetailComponent } from './smart-components';
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatButtonModule,
+    MatIconModule,
+    MatDialogModule,
 
     FlexLayoutModule
   ],

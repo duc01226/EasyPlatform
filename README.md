@@ -1,14 +1,14 @@
-# NoCeiling-Duc-Interview-Testing
+# Angular-Dotnet-Platform
 
 This is a sample .Net Core application, based on microservices architecture and Docker containers.
 
 ## Getting Started
 
-Make sure you have [installed](https://docs.docker.com/docker-for-windows/install/) docker in your environment. After that, you can run the below commands from the **/src/** directory and get started with the `NoCeiling-Duc-Interview-Testing` immediately.
+Make sure you have [installed](https://docs.docker.com/docker-for-windows/install/) docker in your environment. After that, you can run the below commands from the **/src/** directory and get started with the `Angular-Dotnet-Platform` immediately.
 
 ```powershell
-docker-compose -p NoCeiling-Duc-Interview-Testing build
-docker-compose -p NoCeiling-Duc-Interview-Testing up
+docker-compose -p Angular-Dotnet-Platform build
+docker-compose -p Angular-Dotnet-Platform up
 ```
 
 ### Urls
@@ -42,7 +42,7 @@ We can start a single service applying this but still can do horizontal scale at
 
 I also apply strictly DI with interface to follow the I(Inversion of control) in SOLID, which help us to upgrade, switch technical implementation easily.
 
-I also modular (example: [TextSnippetApiAspNetCoreModule](src/Services/NoCeiling.Duc.Interview.Test.TextSnippet.Api/TextSnippetApiAspNetCoreModule.cs)) for each project parts of a micro-service, which help doing register, config and init module, manage module dependencies as clean as possible.
+I also modular (example: [TextSnippetApiAspNetCoreModule](src/Services/PlatformExampleApp.TextSnippet.Api/TextSnippetApiAspNetCoreModule.cs)) for each project parts of a micro-service, which help doing register, config and init module, manage module dependencies as clean as possible.
 
 ### What am I missing ?
 

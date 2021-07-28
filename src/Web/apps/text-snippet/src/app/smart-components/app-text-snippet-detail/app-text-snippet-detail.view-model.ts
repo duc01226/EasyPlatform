@@ -1,12 +1,12 @@
 import {
   ITextSnippetDataModel,
   TextSnippetDataModel,
-} from '@no-ceiling-duc-interview-testing-web/no-ceiling-domains/text-snippet-domain';
+} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
 import {
   PlatformApiServiceErrorInfo,
   PlatformViewModel,
   Utils,
-} from '@no-ceiling-duc-interview-testing-web/no-ceiling-platform-core';
+} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
 
 export interface IAppTextSnippetDetail {
   toSaveTextSnippet: ITextSnippetDataModel;

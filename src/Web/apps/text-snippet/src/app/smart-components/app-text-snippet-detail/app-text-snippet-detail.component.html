@@ -1,7 +1,9 @@
 <form class="text-snippet-detail__main-form" *ngIf="vm.toSaveTextSnippet">
-  <mat-error class="text-snippet-detail__error" *ngIf="vm.saveTextSnippetError">{{
-    vm.saveTextSnippetError.message
-  }}</mat-error>
+  <mat-error
+    class="text-snippet-detail__error"
+    *ngIf="vm.saveTextSnippetError && vm.saveTextSnippetError.isApplicationError()"
+    >{{ vm.saveTextSnippetError.message }}</mat-error
+  >
   <h2>{{ vm.isCreateNew() ? 'Create New' : 'Update Selected Item' }}</h2>
   <mat-form-field class="text-snippet-detail__form-field" appearance="fill">
     <mat-label>Snippet Text</mat-label>
