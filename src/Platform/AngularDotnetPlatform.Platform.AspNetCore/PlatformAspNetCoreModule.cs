@@ -78,6 +78,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
 
         /// <summary>
         /// This middleware should be used it at the first level to catch exception from any next middleware.
+        /// PlatformGlobalExceptionHandlerMiddleware will be used.
         /// </summary>
         public IApplicationBuilder UseGlobalExceptionHandlerMiddleware(IApplicationBuilder applicationBuilder)
         {

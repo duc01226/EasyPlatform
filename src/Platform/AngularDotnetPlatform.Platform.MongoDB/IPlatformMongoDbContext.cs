@@ -14,6 +14,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         Task EnsureIndexesAsync(bool recreate = false);
         string GenerateId();
+        void Initialize();
         void Migrate();
         Task<List<T>> ToListAsync<T>(IQueryable<T> query);
         Task<T> FirstOrDefaultAsync<T>(IQueryable<T> query);

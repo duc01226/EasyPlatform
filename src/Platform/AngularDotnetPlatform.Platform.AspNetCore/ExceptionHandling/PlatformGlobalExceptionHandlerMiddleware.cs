@@ -41,7 +41,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
             }
         }
 
-        private Task OnException(HttpContext context, Exception exception)
+        protected virtual Task OnException(HttpContext context, Exception exception)
         {
             if (!HandleApplicationError(context, exception, out var errorResponse) &&
                 !HandleDomainError(context, exception, out errorResponse))
@@ -63,7 +63,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
             return context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse));
         }
 
-        private bool HandleApplicationError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
+        protected bool HandleApplicationError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
         {
             if (exception is PlatformApplicationValidationException applicationValidationException)
             {
@@ -89,7 +89,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
             return false;
         }
 
-        private bool HandleDomainError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
+        protected bool HandleDomainError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
         {
             if (exception is PlatformDomainValidationException domainValidationException)
             {
@@ -121,7 +121,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
     /// </summary>
     public partial class PlatformGlobalExceptionHandlerMiddleware
     {
-        private static class Log
+        protected static class Log
         {
             private static readonly Action<ILogger, Exception, string> UnexpectedRequestErrorAction =
                 (logger, exception, requestId) => LoggerMessage.Define(LogLevel.Error, new EventId(1, "UnexpectedRequestError"), $"[UnexpectedRequestError] There is an unexpected exception during the processing of the request. RequestId: {requestId}")(logger, exception);

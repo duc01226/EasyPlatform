@@ -65,6 +65,11 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
             return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Define list of any modules that this module depend on. The type must be assigned to PlatformAspNetCoreModule.
+        /// Example from a XXXServiceAspNetCoreModule could depend on XXXPlatformApplicationModule and XXXPlatformPersistenceModule.
+        /// Example code : return new { typeof(XXXPlatformApplicationModule), typeof(XXXPlatformPersistenceModule) };
+        /// </summary>
         protected virtual List<Type> GetModuleDependencies()
         {
             return new List<Type>();

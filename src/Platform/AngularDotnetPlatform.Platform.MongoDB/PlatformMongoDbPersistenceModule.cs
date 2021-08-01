@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -6,6 +7,7 @@ using AngularDotnetPlatform.Platform.Persistence;
 using Microsoft.Extensions.Configuration;
 using Polly;
 using AngularDotnetPlatform.Platform.EfCore;
+using AngularDotnetPlatform.Platform.MongoDB.Mapping;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using MongoDB.Bson.Serialization;
 
@@ -24,31 +26,38 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             Logger = logger;
         }
 
-        protected abstract void ConfigureMongoOptions(PlatformMongoOptions options);
+        protected abstract void ConfigureMongoOptions(PlatformMongoOptions options, IConfiguration configuration);
 
         protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
         {
             base.InternalRegister(serviceCollection, configuration);
-            serviceCollection.Configure<PlatformMongoOptions>(ConfigureMongoOptions);
+            serviceCollection.Configure<PlatformMongoOptions>(options => ConfigureMongoOptions(options, configuration));
             serviceCollection.AddSingleton<TClientContext>();
             serviceCollection.AddSingleton<IPlatformMongoClientContext, TClientContext>();
             serviceCollection.AddScoped<TDbContext>();
             serviceCollection.AddScoped<IPlatformMongoDbContext<TDbContext>, TDbContext>();
 
-            BsonClassMap.RegisterClassMap<PlatformDataMigrationHistory>(cm =>
-            {
-                cm.AutoMap();
-                cm.SetIgnoreExtraElements(true);
-            });
+            RegisterPlatformDataMigrationHistoryClassMap();
+
+            AutoRegisterAllClassMap();
+        }
+
+        protected virtual void AutoRegisterAllClassMap()
+        {
+            var allClassMapTypes = GetType().Assembly.GetTypes()
+                .Where(p => p.IsAssignableTo(typeof(IPlatformMongoClassMapping)) && p.IsClass && !p.IsAbstract)
+                .ToList();
+
+            allClassMapTypes.ForEach(p => Activator.CreateInstance(p));
         }
 
         protected override async Task InternalInit(IServiceScope serviceScope)
         {
             await base.InternalInit(serviceScope);
-            MigrateDbContext(serviceScope);
+            InitializeDbContext(serviceScope);
         }
 
-        protected virtual void MigrateDbContext(IServiceScope serviceScope)
+        protected virtual void InitializeDbContext(IServiceScope serviceScope)
         {
             var db = serviceScope.ServiceProvider.GetRequiredService<TDbContext>();
 
@@ -63,9 +72,18 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                     });
 
             //if the sql server container is not created on run docker compose this
-            //migration can't fail for network related exception. The retry options for DbContext only
+            //Initialization can't fail for network related exception. The retry options for DbContext only
             //apply to transient exceptions
-            retryPolicy.Execute(() => db.Migrate());
+            retryPolicy.Execute(() => db.Initialize());
+        }
+
+        private static void RegisterPlatformDataMigrationHistoryClassMap()
+        {
+            BsonClassMap.RegisterClassMap<PlatformDataMigrationHistory>(cm =>
+            {
+                cm.AutoMap();
+                cm.SetIgnoreExtraElements(true);
+            });
         }
     }
 }

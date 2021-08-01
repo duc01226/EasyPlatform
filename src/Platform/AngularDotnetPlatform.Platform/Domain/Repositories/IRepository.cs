@@ -8,6 +8,9 @@ using AngularDotnetPlatform.Platform.Domain.Entities;
 
 namespace AngularDotnetPlatform.Platform.Domain.Repositories
 {
+    /// <summary>
+    /// This interface is used for conventional register class mapping via PlatformPersistenceModule.InternalRegister
+    /// </summary>
     public interface IRepository
     {
     }

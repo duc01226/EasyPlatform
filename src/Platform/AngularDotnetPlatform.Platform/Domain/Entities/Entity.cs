@@ -5,7 +5,12 @@ using AngularDotnetPlatform.Platform.Validators;
 
 namespace AngularDotnetPlatform.Platform.Domain.Entities
 {
-    public abstract class Entity<TEntity, TPrimaryKey>
+    public interface IEntity<TPrimaryKey>
+    {
+        TPrimaryKey Id { get; set; }
+    }
+
+    public abstract class Entity<TEntity, TPrimaryKey> : IEntity<TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
         public virtual TPrimaryKey Id { get; set; }

@@ -11,6 +11,6 @@ namespace AngularDotnetPlatform.Platform.EfCore
             MongoClient = new MongoClient(options.Value.ConnectionString);
         }
 
-        public MongoClient MongoClient { get; }
+        public MongoClient MongoClient { get; set; }
     }
 }

@@ -19,7 +19,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Helpers
             }
 
             var searchWords = BuildSearchWords(searchText);
-            var fullTextSearchPropNames = inFullTextSearchProps.Where(p => p != null).Select(ExpressionUtil.GetPropertyName).ToList();
+            var fullTextSearchPropNames = inFullTextSearchProps.Where(p => p != null).Select(Util.Expression.GetPropertyName).ToList();
 
             var searchedQuery = BuildSearchQuery(query, searchWords, fullTextSearchPropNames);
 

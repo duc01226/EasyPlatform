@@ -31,7 +31,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         public List<PlatformMongoMigrationExecution<TDbContext>> MigrationExecutions()
         {
             var results = GetType().Assembly.GetTypes()
-                .Where(p => p.IsAssignableTo(typeof(PlatformMongoMigrationExecution<TDbContext>)))
+                .Where(p => p.IsAssignableTo(typeof(PlatformMongoMigrationExecution<TDbContext>)) && !p.IsAbstract)
                 .Select(p => (PlatformMongoMigrationExecution<TDbContext>)Activator.CreateInstance(p))
                 .Where(p => p != null)
                 .ToList();
@@ -46,21 +46,22 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                     DataMigrationHistoryCollection.Indexes.DropAllAsync());
             }
 
-            await Task.WhenAll(
-                DataMigrationHistoryCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformDataMigrationHistory>>
-                {
-                    new CreateIndexModel<PlatformDataMigrationHistory>(Builders<PlatformDataMigrationHistory>.IndexKeys
-                            .Ascending(p => p.Name),
-                        new CreateIndexOptions() {Unique = true})
-                }));
-
             if (recreate || !IsEnsureIndexesExecuted())
             {
+                await Task.WhenAll(
+                    DataMigrationHistoryCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformDataMigrationHistory>>
+                    {
+                        new CreateIndexModel<PlatformDataMigrationHistory>(Builders<PlatformDataMigrationHistory>.IndexKeys
+                                .Ascending(p => p.Name),
+                            new CreateIndexOptions() {Unique = true})
+                    }));
+
                 await InternalEnsureIndexesAsync(recreate: !IsEnsureIndexesExecuted() || recreate);
-                if (!IsEnsureIndexesExecuted())
-                {
-                    await LogEnsureIndexesExecutedHistory();
-                }
+            }
+
+            if (!IsEnsureIndexesExecuted())
+            {
+                await LogEnsureIndexesExecutedHistory();
             }
         }
 
@@ -71,9 +72,14 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             return new BsonObjectId(ObjectId.GenerateNewId()).ToString();
         }
 
-        public void Migrate()
+        public void Initialize()
         {
             EnsureIndexesAsync().Wait();
+            Migrate();
+        }
+
+        public void Migrate()
+        {
             EnsureAllMigrationExecutionsHasUniqueName();
             GetNotExecutedMigrations().ForEach(migrationExecution =>
             {
@@ -112,6 +118,11 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             Database.RunCommand<BsonDocument>(command);
         }
 
+        protected bool IsEnsureIndexesExecuted()
+        {
+            return DataMigrationHistoryCollection.AsQueryable().Any(p => p.Name == EnsureIndexesAsyncMigrationName);
+        }
+
         private void EnsureAllMigrationExecutionsHasUniqueName()
         {
             var mongoMigrationExecutions = new Dictionary<string, PlatformMongoMigrationExecution<TDbContext>>();
@@ -136,11 +147,6 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         private List<PlatformMongoMigrationExecution<TDbContext>> OrderedMigrationExecutions()
         {
             return MigrationExecutions().OrderBy(x => x.Name).ToList();
-        }
-
-        private bool IsEnsureIndexesExecuted()
-        {
-            return DataMigrationHistoryCollection.AsQueryable().Any(p => p.Name == EnsureIndexesAsyncMigrationName);
         }
 
         private async Task LogEnsureIndexesExecutedHistory()
