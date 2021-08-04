@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AngularDotnetPlatform.Platform.Persistence;
@@ -9,6 +10,7 @@ using Polly;
 using AngularDotnetPlatform.Platform.EfCore;
 using AngularDotnetPlatform.Platform.MongoDB.Mapping;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
+using AngularDotnetPlatform.Platform.MongoDB.Serializer;
 using MongoDB.Bson.Serialization;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
@@ -34,12 +36,11 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             serviceCollection.Configure<PlatformMongoOptions>(options => ConfigureMongoOptions(options, configuration));
             serviceCollection.AddSingleton<TClientContext>();
             serviceCollection.AddSingleton<IPlatformMongoClientContext, TClientContext>();
-            serviceCollection.AddScoped<TDbContext>();
-            serviceCollection.AddScoped<IPlatformMongoDbContext<TDbContext>, TDbContext>();
+            serviceCollection.RegisterAllFromType<TDbContext>(this, ServiceLifeTime.Scoped);
 
             RegisterPlatformDataMigrationHistoryClassMap();
-
             AutoRegisterAllClassMap();
+            AutoRegisterAllSerializers();
         }
 
         protected virtual void AutoRegisterAllClassMap()
@@ -49,6 +50,23 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                 .ToList();
 
             allClassMapTypes.ForEach(p => Activator.CreateInstance(p));
+        }
+
+        protected virtual void AutoRegisterAllSerializers()
+        {
+            var allSerializerTypes = GetType().Assembly.GetTypes()
+                .Where(p => p.IsAssignableTo(typeof(IPlatformMongoBaseSerializer<>)) && p.IsClass && !p.IsAbstract)
+                .ToList();
+
+            allSerializerTypes.ForEach(p =>
+            {
+                var serializerHandleValueType = p.GetInterfaces()
+                    .First(p => p == typeof(IPlatformMongoBaseSerializer<>))
+                    .GetGenericArguments()[0];
+                BsonSerializer.RegisterSerializer(
+                    serializerHandleValueType,
+                    (IPlatformMongoBaseSerializer)Activator.CreateInstance(p));
+            });
         }
 
         protected override async Task InternalInit(IServiceScope serviceScope)

@@ -146,7 +146,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         private List<PlatformMongoMigrationExecution<TDbContext>> OrderedMigrationExecutions()
         {
-            return MigrationExecutions().OrderBy(x => x.Name).ToList();
+            return MigrationExecutions().OrderBy(x => x.GetOrderByValue()).ToList();
         }
 
         private async Task LogEnsureIndexesExecutedHistory()
