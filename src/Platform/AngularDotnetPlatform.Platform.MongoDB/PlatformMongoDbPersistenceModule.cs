@@ -8,10 +8,11 @@ using AngularDotnetPlatform.Platform.Persistence;
 using Microsoft.Extensions.Configuration;
 using Polly;
 using AngularDotnetPlatform.Platform.EfCore;
+using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.MongoDB.Mapping;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
-using AngularDotnetPlatform.Platform.MongoDB.Serializer;
 using MongoDB.Bson.Serialization;
+using AngularDotnetPlatform.Platform.MongoDB.Serializer;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
 {
@@ -36,17 +37,17 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             serviceCollection.Configure<PlatformMongoOptions>(options => ConfigureMongoOptions(options, configuration));
             serviceCollection.AddSingleton<TClientContext>();
             serviceCollection.AddSingleton<IPlatformMongoClientContext, TClientContext>();
-            serviceCollection.RegisterAllFromType<TDbContext>(this, ServiceLifeTime.Scoped);
+            serviceCollection.RegisterAllFromType<TDbContext>(ServiceLifeTime.Scoped, Assembly);
 
             RegisterPlatformDataMigrationHistoryClassMap();
-            AutoRegisterAllClassMap();
             AutoRegisterAllSerializers();
+            AutoRegisterAllClassMap();
         }
 
         protected virtual void AutoRegisterAllClassMap()
         {
             var allClassMapTypes = GetType().Assembly.GetTypes()
-                .Where(p => p.IsAssignableTo(typeof(IPlatformMongoClassMapping)) && p.IsClass && !p.IsAbstract)
+                .Where(p => p.IsAssignableTo(typeof(IPlatformMongoClassMapping)) && !p.IsAbstract && p.IsClass)
                 .ToList();
 
             allClassMapTypes.ForEach(p => Activator.CreateInstance(p));
@@ -55,13 +56,13 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         protected virtual void AutoRegisterAllSerializers()
         {
             var allSerializerTypes = GetType().Assembly.GetTypes()
-                .Where(p => p.IsAssignableTo(typeof(IPlatformMongoBaseSerializer<>)) && p.IsClass && !p.IsAbstract)
+                .Where(p => p.IsAssignableToGenericType(typeof(IPlatformMongoBaseSerializer<>)) && p.IsClass && !p.IsAbstract)
                 .ToList();
 
             allSerializerTypes.ForEach(p =>
             {
                 var serializerHandleValueType = p.GetInterfaces()
-                    .First(p => p == typeof(IPlatformMongoBaseSerializer<>))
+                    .First(p => p.IsGenericType && p.GetGenericTypeDefinition() == typeof(IPlatformMongoBaseSerializer<>))
                     .GetGenericArguments()[0];
                 BsonSerializer.RegisterSerializer(
                     serializerHandleValueType,
@@ -72,10 +73,10 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         protected override async Task InternalInit(IServiceScope serviceScope)
         {
             await base.InternalInit(serviceScope);
-            InitializeDbContext(serviceScope);
+            MigrateDbContext(serviceScope);
         }
 
-        protected virtual void InitializeDbContext(IServiceScope serviceScope)
+        protected virtual void MigrateDbContext(IServiceScope serviceScope)
         {
             var db = serviceScope.ServiceProvider.GetRequiredService<TDbContext>();
 
@@ -90,9 +91,9 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                     });
 
             //if the sql server container is not created on run docker compose this
-            //Initialization can't fail for network related exception. The retry options for DbContext only
+            //migration can't fail for network related exception. The retry options for DbContext only 
             //apply to transient exceptions
-            retryPolicy.Execute(() => db.Initialize());
+            retryPolicy.Execute(() => db.Migrate());
         }
 
         private static void RegisterPlatformDataMigrationHistoryClassMap()

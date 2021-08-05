@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using AngularDotnetPlatform.Platform.Extensions;
 
 namespace AngularDotnetPlatform.Platform.Persistence
 {
@@ -25,7 +26,7 @@ namespace AngularDotnetPlatform.Platform.Persistence
             base.InternalRegister(serviceCollection, configuration);
             serviceCollection.AddScoped(typeof(IUnitOfWorkManager), GetIUnitOfWorkManagerConcreteType());
             serviceCollection.AddTransient(typeof(IUnitOfWork), GetIUnitOfWorkConcreteType());
-            serviceCollection.RegisterAllFromType<IRepository>(this, ServiceLifeTime.Transient);
+            serviceCollection.RegisterAllFromType<IRepository>(ServiceLifeTime.Transient, Assembly);
         }
     }
 }

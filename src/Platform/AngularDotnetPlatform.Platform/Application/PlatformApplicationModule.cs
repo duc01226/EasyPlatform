@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.DependencyInjection;
+using AngularDotnetPlatform.Platform.Extensions;
 
 namespace AngularDotnetPlatform.Platform.Application
 {
@@ -16,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.Application
         protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
         {
             base.InternalRegister(serviceCollection, configuration);
-            serviceCollection.RegisterAllFromType<IPlatformApplicationDataSeeder>(this, ServiceLifeTime.Scoped);
+            serviceCollection.RegisterAllFromType<IPlatformApplicationDataSeeder>(ServiceLifeTime.Scoped, Assembly);
             serviceCollection.AddTransient<IPlatformCqrs, PlatformCqrs>();
         }
 

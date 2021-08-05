@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.Domain;
 using AngularDotnetPlatform.Platform.Domain.Helpers;
+using AngularDotnetPlatform.Platform.Extensions;
 
 namespace PlatformExampleApp.TextSnippet.Domain
 {
@@ -15,7 +16,7 @@ namespace PlatformExampleApp.TextSnippet.Domain
 
         protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
         {
-            serviceCollection.RegisterAllFromType<IDomainHelper>(this, ServiceLifeTime.Transient);
+            serviceCollection.RegisterAllFromType<IDomainHelper>(ServiceLifeTime.Transient, Assembly);
         }
     }
 }

@@ -16,8 +16,6 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
 {
     public abstract class PlatformAspNetCoreModule : PlatformModule
     {
-        public static readonly PlatformAspNetCoreModulePolicies CorsPolicies = new PlatformAspNetCoreModulePolicies();
-
         public PlatformAspNetCoreModule(IServiceProvider serviceProvider) : base(serviceProvider)
         {
         }
@@ -25,7 +23,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
         /// <summary>
         /// Auto Register default exception filter. Can set it to false if UseGlobalExceptionHandlerMiddleware has been used.
         /// </summary>
-        protected bool AutoRegisterDefaultExceptionFilter { get; init; } = true;
+        protected bool AutoRegisterDefaultExceptionFilter { get; init; } = false;
 
         public void Init(IApplicationBuilder app)
         {
@@ -50,12 +48,11 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
         ///  Incorrect configuration will cause the middleware to stop functioning correctly.
         ///  Use DevelopmentCorsPolicy in dev environment, if not then CorsPolicy will be used
         /// </summary>
-        /// <param name="applicationBuilder"></param>
-        public IApplicationBuilder UseDefaultCorsPolicy(IApplicationBuilder applicationBuilder)
+        public IApplicationBuilder UseDefaultCorsPolicy(IApplicationBuilder applicationBuilder, string specificCorPolicy = null)
         {
             var env = ServiceProvider.GetService<IWebHostEnvironment>();
-            var corsPolicyName = env.IsDevelopment() ? CorsPolicies.DevelopmentCorsPolicy : CorsPolicies.CorsPolicy;
-            applicationBuilder.UseCors(corsPolicyName);
+            var defaultCorsPolicyName = env.IsDevelopment() ? PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy : PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy;
+            applicationBuilder.UseCors(specificCorPolicy ?? defaultCorsPolicyName);
 
             return applicationBuilder;
         }
@@ -115,7 +112,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
         protected virtual void AddDefaultCorsPolicy(IServiceCollection serviceCollection, IConfiguration configuration)
         {
             serviceCollection.AddCors(options => options.AddPolicy(
-                CorsPolicies.DevelopmentCorsPolicy,
+                PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy,
                 builder =>
                     builder.AllowAnyOrigin()
                         .AllowAnyMethod()
@@ -124,9 +121,10 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
                         .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge(configuration))));
 
             serviceCollection.AddCors(options => options.AddPolicy(
-                CorsPolicies.CorsPolicy,
+                PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy,
                 builder =>
                     builder.WithOrigins(GetAllowCorsOrigins(configuration))
+                        .SetIsOriginAllowedToAllowWildcardSubdomains()
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials()

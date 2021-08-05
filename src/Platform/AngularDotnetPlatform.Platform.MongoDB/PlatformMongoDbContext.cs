@@ -40,7 +40,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         public async Task EnsureIndexesAsync(bool recreate = false)
         {
-            if (recreate)
+            if (recreate || !IsEnsureIndexesExecuted())
             {
                 await Task.WhenAll(
                     DataMigrationHistoryCollection.Indexes.DropAllAsync());
