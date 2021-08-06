@@ -2,7 +2,10 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AngularDotnetPlatform.Platform.AspNetCore.Controllers;
+using AngularDotnetPlatform.Platform.Caching;
 using AngularDotnetPlatform.Platform.Cqrs;
+using Microsoft.Extensions.Configuration;
+using PlatformExampleApp.TextSnippet.Application.Caching;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 using PlatformExampleApp.TextSnippet.Application.UserCaseQueries;
 
@@ -14,8 +17,13 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
     [ApiController]
     public class TextSnippetController : PlatformBaseController
     {
-        public TextSnippetController(IPlatformCqrs cqrs) : base(cqrs)
+        private readonly IPlatformCacheProvider cacheProvider;
+        private readonly IConfiguration configuration;
+
+        public TextSnippetController(IPlatformCqrs cqrs, IPlatformCacheProvider cacheProvider, IConfiguration configuration) : base(cqrs)
         {
+            this.cacheProvider = cacheProvider;
+            this.configuration = configuration;
         }
 
         // GET: api/<TextSnippetController>
@@ -25,7 +33,11 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
         {
             RandomThrowToTestHandleInternalException();
 
-            return await Cqrs.SendQuery<SearchSnippetTextQuery, SearchSnippetTextQueryResult>(request);
+            return await cacheProvider.Get()
+                .CacheRequestAsync(
+                    () => Cqrs.SendQuery<SearchSnippetTextQuery, SearchSnippetTextQueryResult>(request),
+                    TextSnippetCollectionCacheKeyProvider.CreateKey(new object[] { request }),
+                    new TextSnippetCollectionCacheKeyOptions(configuration));
         }
 
         // POST api/<TextSnippetController>

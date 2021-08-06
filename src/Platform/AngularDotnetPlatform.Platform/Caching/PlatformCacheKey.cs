@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -66,47 +65,6 @@ namespace AngularDotnetPlatform.Platform.Caching
         public override string ToString()
         {
             return $"{Context}.{Collection}.{RequestKey}";
-        }
-    }
-
-    public class PlatformRequestCacheKeyProvider
-    {
-        public PlatformRequestCacheKeyProvider()
-        {
-        }
-
-        public PlatformRequestCacheKeyProvider(string context, string collection)
-        {
-            Context = context;
-            Collection = collection;
-        }
-
-        /// <summary>
-        /// The context of the cached data. Usually it's like the database or service name.
-        /// </summary>
-        public virtual string Context { get; set; }
-
-        /// <summary>
-        /// The Type of the cached data. Usually it's like the database collection or data class name.
-        /// </summary>
-        public virtual string Collection { get; set; }
-
-        public PlatformCacheKey GetKey(string requestKey)
-        {
-            EnsureValidProvider();
-            return new PlatformCacheKey(Context, Collection, requestKey);
-        }
-
-        public PlatformCacheKey GetKey(object[] requestKeyParts)
-        {
-            EnsureValidProvider();
-            return new PlatformCacheKey(Context, Collection, requestKeyParts);
-        }
-
-        private void EnsureValidProvider()
-        {
-            if (string.IsNullOrEmpty(Context) || string.IsNullOrEmpty(Collection))
-                throw new Exception("Context and Collection must be not null");
         }
     }
 }
