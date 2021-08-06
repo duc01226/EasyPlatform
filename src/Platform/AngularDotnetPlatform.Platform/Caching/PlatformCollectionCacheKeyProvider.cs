@@ -56,7 +56,7 @@ namespace AngularDotnetPlatform.Platform.Caching
             return Activator.CreateInstance<TFixedImplementationProvider>().GetKey(requestKey);
         }
 
-        public PlatformCacheKey CreateKey(object[] requestKeyParts = null)
+        public static PlatformCacheKey CreateKey(object[] requestKeyParts = null)
         {
             return Activator.CreateInstance<TFixedImplementationProvider>().GetKey(requestKeyParts);
         }
