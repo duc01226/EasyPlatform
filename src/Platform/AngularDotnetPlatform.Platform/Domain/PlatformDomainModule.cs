@@ -9,13 +9,13 @@ namespace AngularDotnetPlatform.Platform.Domain
 {
     public abstract class PlatformDomainModule : PlatformModule
     {
-        protected PlatformDomainModule(IServiceProvider serviceProvider) : base(serviceProvider)
+        protected PlatformDomainModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
 
-        protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
+        protected override void InternalRegister(IServiceCollection serviceCollection)
         {
-            base.InternalRegister(serviceCollection, configuration);
+            base.InternalRegister(serviceCollection);
             serviceCollection.RegisterAllFromType<IDomainHelper>(ServiceLifeTime.Transient, Assembly);
         }
     }

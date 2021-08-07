@@ -21,7 +21,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                 var registeredModule = services.BuildServiceProvider().GetService(moduleType);
                 if (registeredModule is PlatformModule registeredPlatformModule)
                 {
-                    registeredPlatformModule.Register(services, configuration);
+                    registeredPlatformModule.Register(services);
                 }
                 else
                 {

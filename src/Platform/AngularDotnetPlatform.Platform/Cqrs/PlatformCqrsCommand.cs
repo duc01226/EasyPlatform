@@ -4,12 +4,12 @@ using AngularDotnetPlatform.Platform.Timing;
 
 namespace AngularDotnetPlatform.Platform.Cqrs
 {
-    public abstract class PlatformCqrsCommand<TResult> : IRequest<TResult> where TResult : PlatformCqrsCommandResult, new()
+    public abstract class PlatformCqrsCommand<TResult> : IPlatformCqrsRequest, IRequest<TResult> where TResult : PlatformCqrsCommandResult, new()
     {
-        public Guid Id { get; } = Guid.NewGuid();
+        public Guid? HandleAuditedTrackId { get; set; }
 
-        public DateTime CreatedDate { get; } = Clock.Now;
+        public DateTime? HandleAuditedDate { get; set; }
 
-        public string CreatedBy { get; set; }
+        public string HandleAuditedByUserId { get; set; }
     }
 }

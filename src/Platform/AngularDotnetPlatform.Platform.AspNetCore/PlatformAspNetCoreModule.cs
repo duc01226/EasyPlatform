@@ -17,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
 {
     public abstract class PlatformAspNetCoreModule : PlatformModule
     {
-        public PlatformAspNetCoreModule(IServiceProvider serviceProvider) : base(serviceProvider)
+        public PlatformAspNetCoreModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
 
@@ -95,14 +95,14 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
 
         protected abstract string[] GetAllowCorsOrigins(IConfiguration configuration);
 
-        protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
+        protected override void InternalRegister(IServiceCollection serviceCollection)
         {
-            base.InternalRegister(serviceCollection, configuration);
+            base.InternalRegister(serviceCollection);
 
             if (AutoRegisterDefaultExceptionFilter)
                 RegisterDefaultExceptionFilter(serviceCollection);
 
-            AddDefaultCorsPolicy(serviceCollection, configuration);
+            AddDefaultCorsPolicy(serviceCollection);
         }
 
         /// <summary>
@@ -115,7 +115,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
                 .Configure<MvcOptions>(mvcOptions => mvcOptions.Filters.AddService(typeof(PlatformExceptionFilter)));
         }
 
-        protected virtual void AddDefaultCorsPolicy(IServiceCollection serviceCollection, IConfiguration configuration)
+        protected virtual void AddDefaultCorsPolicy(IServiceCollection serviceCollection)
         {
             serviceCollection.AddCors(options => options.AddPolicy(
                 PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy,
@@ -124,24 +124,24 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .WithExposedHeaders(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId)
-                        .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge(configuration))));
+                        .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
 
             serviceCollection.AddCors(options => options.AddPolicy(
                 PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy,
                 builder =>
-                    builder.WithOrigins(GetAllowCorsOrigins(configuration))
+                    builder.WithOrigins(GetAllowCorsOrigins(Configuration))
                         .SetIsOriginAllowedToAllowWildcardSubdomains()
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials()
                         .WithExposedHeaders(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId)
-                        .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge(configuration))));
+                        .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
         }
 
         /// <summary>
         /// DefaultCorsPolicyPreflightMaxAge for AddDefaultCorsPolicy and UseDefaultCorsPolicy. Default is 1 day.
         /// </summary>
-        protected virtual TimeSpan DefaultCorsPolicyPreflightMaxAge(IConfiguration configuration)
+        protected virtual TimeSpan DefaultCorsPolicyPreflightMaxAge()
         {
             return TimeSpan.FromDays(1);
         }

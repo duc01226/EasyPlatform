@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.DependencyInjection;
-using AngularDotnetPlatform.Platform.EfCore.Domain.Helpers;
+using AngularDotnetPlatform.Platform.EfCore.Helpers;
 using AngularDotnetPlatform.Platform.Extensions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -19,17 +19,18 @@ namespace AngularDotnetPlatform.Platform.EfCore
 
         public PlatformEfCorePersistenceModule(
             IServiceProvider serviceProvider,
-            ILogger<PlatformEfCorePersistenceModule<TDbContext>> logger) : base(serviceProvider)
+            IConfiguration configuration,
+            ILogger<PlatformEfCorePersistenceModule<TDbContext>> logger) : base(serviceProvider, configuration)
         {
             Logger = logger;
         }
 
-        protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
+        protected override void InternalRegister(IServiceCollection serviceCollection)
         {
-            base.InternalRegister(serviceCollection, configuration);
+            base.InternalRegister(serviceCollection);
 
             serviceCollection.AddDbContext<TDbContext>(
-                DbContextOptionsBuilderActionProvider(serviceCollection, configuration),
+                DbContextOptionsBuilderActionProvider(serviceCollection),
                 ServiceLifetime.Scoped);
 
             RegisterHelpers(serviceCollection);
@@ -38,9 +39,7 @@ namespace AngularDotnetPlatform.Platform.EfCore
         /// <summary>
         /// Return a action for <see cref="DbContextOptionsBuilder"/> to AddDbContext. 
         /// </summary>
-        protected abstract Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(
-            IServiceCollection serviceCollection,
-            IConfiguration configuration);
+        protected abstract Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceCollection serviceCollection);
 
         protected override async Task InternalInit(IServiceScope serviceScope)
         {
@@ -68,10 +67,9 @@ namespace AngularDotnetPlatform.Platform.EfCore
             retryPolicy.Execute(() => db.Database.Migrate());
         }
 
-        private static void RegisterHelpers(IServiceCollection serviceCollection)
+        protected virtual void RegisterHelpers(IServiceCollection serviceCollection)
         {
-            serviceCollection.RegisterAllFromImplementation<EfCoreSqlPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime
-                .Transient);
+            serviceCollection.RegisterAllFromImplementation<EfCoreSqlPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime.Transient);
         }
     }
 }

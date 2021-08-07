@@ -5,15 +5,15 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AngularDotnetPlatform.Platform.Domain.Helpers;
 using AngularDotnetPlatform.Platform.EfCore;
-using AngularDotnetPlatform.Platform.EfCore.Domain.Helpers;
 
 namespace PlatformExampleApp.TextSnippet.Persistence
 {
-    public class TextSnippetPersistencePlatformModule : PlatformEfCorePersistenceModule<TextSnippetDbContext>
+    public class TextSnippetEfCorePersistencePlatformModule : PlatformEfCorePersistenceModule<TextSnippetDbContext>
     {
-        public TextSnippetPersistencePlatformModule(
+        public TextSnippetEfCorePersistencePlatformModule(
             IServiceProvider serviceProvider,
-            ILogger<TextSnippetPersistencePlatformModule> logger) : base(serviceProvider, logger)
+            IConfiguration configuration,
+            ILogger<TextSnippetEfCorePersistencePlatformModule> logger) : base(serviceProvider, configuration, logger)
         {
         }
 
@@ -22,12 +22,10 @@ namespace PlatformExampleApp.TextSnippet.Persistence
             return typeof(TextSnippetPersistenceUnitOfWork);
         }
 
-        protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(
-            IServiceCollection serviceCollection,
-            IConfiguration configuration)
+        protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceCollection serviceCollection)
         {
             return options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
         }
     }
 }

@@ -7,7 +7,7 @@ using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
 namespace AngularDotnetPlatform.Platform.Cqrs
 {
-    public abstract class PlatformCqrsCommandHandler<TCommand, TResult> : IRequestHandler<TCommand, TResult>
+    public abstract class PlatformCqrsCommandHandler<TCommand, TResult> : PlatformCqrsRequestHandler<TCommand>, IRequestHandler<TCommand, TResult>
         where TCommand : PlatformCqrsCommand<TResult>
         where TResult : PlatformCqrsCommandResult, new()
     {
@@ -31,6 +31,7 @@ namespace AngularDotnetPlatform.Platform.Cqrs
             using (var uow = unitOfWorkManager.Begin())
             {
                 var result = await HandleAsync(request, cancellationToken);
+                PopulateAuditInfo(request);
                 await cqrs.SendEvent(new PlatformCqrsCommandEvent<TCommand, TResult>(request, CommandEventRoutingKeyPrefix), cancellationToken);
                 await uow.CompleteAsync();
 

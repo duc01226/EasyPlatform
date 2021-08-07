@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
+using AngularDotnetPlatform.Platform.Persistence.Helpers.Abstract;
 
 namespace AngularDotnetPlatform.Platform.Persistence.Helpers
 {
@@ -14,7 +15,8 @@ namespace AngularDotnetPlatform.Platform.Persistence.Helpers
         /// <param name="query">Query to search on.</param>
         /// <param name="searchText">Search text.</param>
         /// <param name="inFullTextSearchProps">List of property expression to search on.</param>
+        /// <param name="exactMatch">Whether search matching exact phrase or not</param>
         /// <returns>Filtered by search text query.</returns>
-        public IQueryable<T> Search<T>(IQueryable<T> query, string searchText, params Expression<Func<T, string>>[] inFullTextSearchProps);
+        public IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, string>>[] inFullTextSearchProps, bool exactMatch = false);
     }
 }

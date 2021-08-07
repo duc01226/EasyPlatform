@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using MongoDB.Bson.Serialization;
 
-namespace AngularDotnetPlatform.Platform.MongoDB.Serializer
+namespace AngularDotnetPlatform.Platform.MongoDB.Serializer.Abstract
 {
     public interface IPlatformMongoBaseSerializer : IBsonSerializer
     {

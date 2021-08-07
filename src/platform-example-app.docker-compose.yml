@@ -6,6 +6,9 @@ services:
     build:
       context: .
       dockerfile: fts-sqldata.Dockerfile
+  
+  mongo-data:
+    image: mongo:4.2
 
   text-snippet-api:
     image: ${REGISTRY:-duc01226}/angular-dotnet-platform-platform-example-app-text-snippet-api:${PLATFORM:-linux}-${TAG:-latest}
@@ -14,6 +17,7 @@ services:
       dockerfile: Services/PlatformExampleApp.TextSnippet.Api/Dockerfile
     depends_on:
       - sql-data
+      - mongo-data
 
   text-snippet-webspa:
     image: ${REGISTRY:-duc01226}/angular-dotnet-platform-platform-example-app-text-snippet-webspa:${PLATFORM:-linux}-${TAG:-latest}

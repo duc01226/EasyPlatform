@@ -9,10 +9,12 @@ using Microsoft.Extensions.Configuration;
 using Polly;
 using AngularDotnetPlatform.Platform.EfCore;
 using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.MongoDB.Helpers;
 using AngularDotnetPlatform.Platform.MongoDB.Mapping;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using MongoDB.Bson.Serialization;
 using AngularDotnetPlatform.Platform.MongoDB.Serializer;
+using AngularDotnetPlatform.Platform.MongoDB.Serializer.Abstract;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
 {
@@ -24,20 +26,22 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         public PlatformMongoDbPersistenceModule(
             IServiceProvider serviceProvider,
-            ILogger<PlatformMongoDbPersistenceModule<TClientContext, TDbContext>> logger) : base(serviceProvider)
+            IConfiguration configuration,
+            ILogger<PlatformMongoDbPersistenceModule<TClientContext, TDbContext>> logger) : base(serviceProvider, configuration)
         {
             Logger = logger;
         }
 
-        protected abstract void ConfigureMongoOptions(PlatformMongoOptions options, IConfiguration configuration);
+        protected abstract void ConfigureMongoOptions(PlatformMongoOptions options);
 
-        protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
+        protected override void InternalRegister(IServiceCollection serviceCollection)
         {
-            base.InternalRegister(serviceCollection, configuration);
-            serviceCollection.Configure<PlatformMongoOptions>(options => ConfigureMongoOptions(options, configuration));
+            base.InternalRegister(serviceCollection);
+            serviceCollection.Configure<PlatformMongoOptions>(ConfigureMongoOptions);
             serviceCollection.AddSingleton<TClientContext>();
             serviceCollection.AddSingleton<IPlatformMongoClientContext, TClientContext>();
             serviceCollection.RegisterAllFromType<TDbContext>(ServiceLifeTime.Scoped, Assembly);
+            RegisterHelpers(serviceCollection);
 
             RegisterPlatformDataMigrationHistoryClassMap();
             AutoRegisterAllSerializers();
@@ -57,6 +61,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         {
             var allSerializerTypes = GetType().Assembly.GetTypes()
                 .Where(p => p.IsAssignableToGenericType(typeof(IPlatformMongoBaseSerializer<>)) && p.IsClass && !p.IsAbstract)
+                //.Concat(new[] { typeof(NullableGuidBsonSerializer) })
                 .ToList();
 
             allSerializerTypes.ForEach(p =>
@@ -73,10 +78,10 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         protected override async Task InternalInit(IServiceScope serviceScope)
         {
             await base.InternalInit(serviceScope);
-            MigrateDbContext(serviceScope);
+            InitializeDbContext(serviceScope);
         }
 
-        protected virtual void MigrateDbContext(IServiceScope serviceScope)
+        protected virtual void InitializeDbContext(IServiceScope serviceScope)
         {
             var db = serviceScope.ServiceProvider.GetRequiredService<TDbContext>();
 
@@ -93,7 +98,12 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             //if the sql server container is not created on run docker compose this
             //migration can't fail for network related exception. The retry options for DbContext only 
             //apply to transient exceptions
-            retryPolicy.Execute(() => db.Migrate());
+            retryPolicy.Execute(() => db.Initialize());
+        }
+
+        protected virtual void RegisterHelpers(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RegisterAllFromImplementation<MongoDbPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime.Transient);
         }
 
         private static void RegisterPlatformDataMigrationHistoryClassMap()

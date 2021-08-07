@@ -5,11 +5,11 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
 {
     public interface IAuditedEntity<TUserId>
     {
-        public TUserId CreatedBy { get; }
+        public TUserId CreatedBy { get; set; }
 
         public TUserId LastUpdatedBy { get; set; }
 
-        public DateTime? CreatedDate { get; }
+        public DateTime? CreatedDate { get; set; }
 
         public DateTime? LastUpdatedDate { get; set; }
     }
@@ -17,6 +17,8 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
     public abstract class AuditedEntity<TEntity, TPrimaryKey, TUserId> : RootEntity<TEntity, TPrimaryKey>, IAuditedEntity<TUserId>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
+        public AuditedEntity() { }
+
         public AuditedEntity(TUserId createdBy = default)
         {
             CreatedDate ??= Clock.Now;
@@ -25,9 +27,9 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
             LastUpdatedBy ??= CreatedBy;
         }
 
-        public TUserId CreatedBy { get; }
+        public TUserId CreatedBy { get; set; }
         public TUserId LastUpdatedBy { get; set; }
-        public DateTime? CreatedDate { get; }
+        public DateTime? CreatedDate { get; set; }
         public DateTime? LastUpdatedDate { get; set; }
     }
 }

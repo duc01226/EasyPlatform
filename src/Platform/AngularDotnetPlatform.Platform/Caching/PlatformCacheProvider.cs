@@ -11,14 +11,12 @@ namespace AngularDotnetPlatform.Platform.Caching
     {
         private readonly List<IPlatformCache> registeredCacheRepositories;
         private readonly Dictionary<PlatformCacheRepositoryType, IPlatformCache> registeredCacheRepositoriesDic;
-        private readonly ILoggerFactory loggerFactory;
         private readonly IPlatformCache defaultCache;
 
         public PlatformCacheProvider(IEnumerable<IPlatformCache> registeredCacheRepositories, ILoggerFactory loggerFactory)
         {
             this.registeredCacheRepositories = registeredCacheRepositories.ToList();
             this.registeredCacheRepositoriesDic = BuildRegisteredCacheRepositoriesDic(this.registeredCacheRepositories);
-            this.loggerFactory = loggerFactory;
             this.defaultCache = new PlatformMemoryCache(loggerFactory);
         }
 

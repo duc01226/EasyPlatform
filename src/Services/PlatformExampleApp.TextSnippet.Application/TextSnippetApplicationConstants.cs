@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PlatformExampleApp.TextSnippet.Application
 {
-    public static class ApplicationConstants
+    public static class TextSnippetApplicationConstants
     {
         public const string ApplicationName = "TextSnippet.Api";
     }

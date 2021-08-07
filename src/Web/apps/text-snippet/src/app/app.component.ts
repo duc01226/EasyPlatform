@@ -1,5 +1,3 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { PageEvent } from '@angular/material/paginator';
 import {
   SearchTextSnippetQueryDto,
   TextSnippetRepository,
@@ -9,6 +7,8 @@ import {
   PlatformSmartComponent,
   Utils,
 } from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { PageEvent } from '@angular/material/paginator';
 
 import { AppUiStateData, AppUiStateService } from './app-ui-state-services';
 import { AppTextSnippetItemViewModel, AppViewModel } from './app.view-model';
@@ -89,6 +89,7 @@ export class AppComponent
         if (this.vm.searchText == newValue) return;
         this.updateVm(vm => {
           vm.searchText = newValue;
+          vm.currentTextSnippetItemsPageNumber = 0;
         });
         this.loadSnippetTextItems();
       },

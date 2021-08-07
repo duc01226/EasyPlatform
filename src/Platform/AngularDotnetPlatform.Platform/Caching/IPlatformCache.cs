@@ -57,6 +57,14 @@ namespace AngularDotnetPlatform.Platform.Caching
         Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default);
 
         /// <summary>
+        /// Removes the value with the given key predicate.
+        /// </summary>
+        /// <param name="cacheKeyPredicate">A string identifying the requested value predicate.</param>
+        /// <param name="token">Optional. The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default);
+
+        /// <summary>
         /// Return cache from request function if exist. If not, call request function to get data, cache the data and return it.
         /// </summary>
         /// <param name="request">The request function return data to set in the cache.</param>
@@ -83,6 +91,8 @@ namespace AngularDotnetPlatform.Platform.Caching
         public abstract void Remove(PlatformCacheKey cacheKey);
 
         public abstract Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default);
+
+        public abstract Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default);
 
         public async Task<TData> CacheRequestAsync<TData>(
             Func<Task<TData>> request,

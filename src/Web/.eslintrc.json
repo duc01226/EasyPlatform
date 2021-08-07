@@ -75,7 +75,8 @@
         "no-empty-function": "off",
         "@typescript-eslint/no-empty-function": ["off"],
         "prefer-destructuring": "off",
-        "arrow-body-style": "off"
+        "arrow-body-style": "off",
+        "function-paren-newline": "off"
       }
     },
     {

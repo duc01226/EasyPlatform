@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Caching;
@@ -17,12 +18,14 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
         protected readonly object RegisterLock = new object();
         protected readonly object InitLock = new object();
 
-        public PlatformModule(IServiceProvider serviceProvider)
+        public PlatformModule(IServiceProvider serviceProvider, IConfiguration configuration)
         {
             ServiceProvider = serviceProvider;
+            Configuration = configuration;
         }
 
         public IServiceProvider ServiceProvider { get; }
+        public IConfiguration Configuration { get; }
 
         public Assembly Assembly => GetType().Assembly;
 
@@ -30,17 +33,17 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
 
         public bool Initiated { get; protected set; }
 
-        public void Register(IServiceCollection serviceCollection, IConfiguration configuration)
+        public void Register(IServiceCollection serviceCollection)
         {
             lock (RegisterLock)
             {
                 if (Registered)
                     return;
 
-                RegisterAllModuleDependencies(serviceCollection, configuration);
-                RegisterCqrs(serviceCollection, configuration);
-                RegisterCaching(serviceCollection, configuration);
-                InternalRegister(serviceCollection, configuration);
+                RegisterAllModuleDependencies(serviceCollection);
+                RegisterCqrs(serviceCollection);
+                RegisterCaching(serviceCollection);
+                InternalRegister(serviceCollection);
                 Registered = true;
             }
         }
@@ -63,7 +66,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
             }
         }
 
-        protected virtual void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration) { }
+        protected virtual void InternalRegister(IServiceCollection serviceCollection) { }
 
         protected virtual Task InternalInit(IServiceScope serviceScope)
         {
@@ -73,11 +76,11 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
         /// <summary>
         /// Define list of any modules that this module depend on. The type must be assigned to <see cref="PlatformModule"/>.
         /// Example from a XXXServiceAspNetCoreModule could depend on XXXPlatformApplicationModule and XXXPlatformPersistenceModule.
-        /// Example code : return new { typeof(XXXPlatformApplicationModule), typeof(XXXPlatformPersistenceModule) };
+        /// Example code : return new { config => typeof(XXXPlatformApplicationModule), config => typeof(XXXPlatformPersistenceModule) };
         /// </summary>
-        protected virtual List<Type> GetModuleDependencies()
+        protected virtual List<Func<IConfiguration, Type>> GetModuleDependencies()
         {
-            return new List<Type>();
+            return new List<Func<IConfiguration, Type>>();
         }
 
         /// <summary>
@@ -106,11 +109,11 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
 
         protected void InitAllModuleDependencies()
         {
-            GetModuleDependencies().ForEach(p =>
+            GetModuleDependencies().Select(moduleTypeProvider => moduleTypeProvider(Configuration)).ToList().ForEach(moduleType =>
             {
-                var dependModule = ServiceProvider.GetService(p);
+                var dependModule = ServiceProvider.GetService(moduleType);
                 if (dependModule == null)
-                    throw new Exception($"Module {GetType().Name} depend on {p.Name} but Module {p.Name} is not registered");
+                    throw new Exception($"Module {GetType().Name} depend on {moduleType.Name} but Module {moduleType.Name} is not registered");
                 if (dependModule is PlatformModule typedPlatformModule)
                 {
                     typedPlatformModule.Init();
@@ -118,36 +121,39 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                 else
                 {
                     throw new Exception(
-                        $"Module {GetType().Name} depend on {p.Name} but Module {p.Name} is not inherit from PlatformModule");
+                        $"Module {GetType().Name} depend on {moduleType.Name} but Module {moduleType.Name} is not inherit from PlatformModule");
                 }
             });
         }
 
-        private void RegisterCqrs(IServiceCollection serviceCollection, IConfiguration configuration)
+        private void RegisterCqrs(IServiceCollection serviceCollection)
         {
             serviceCollection.AddMediatR(Assembly);
             CqrsPipelinesProvider().ForEach(p => serviceCollection.Register(typeof(IPipelineBehavior<,>), p, ServiceLifeTime.Transient));
         }
 
-        private void RegisterCaching(IServiceCollection serviceCollection, IConfiguration configuration)
+        private void RegisterCaching(IServiceCollection serviceCollection)
         {
             serviceCollection.ReplaceTransient<IPlatformCacheProvider, PlatformCacheProvider>();
             serviceCollection.RegisterAllFromImplementation<PlatformMemoryCache>(ServiceLifeTime.Singleton, replaceIfExist: true);
-            if (HasDistributedCacheProviderImplementation(configuration))
+            if (HasDistributedCacheProviderImplementation())
             {
                 serviceCollection.RegisterAllFromImplementation(
-                    provider => DistributedCacheProvider(provider, configuration), ServiceLifeTime.Singleton, replaceIfExist: true);
+                    provider => DistributedCacheProvider(provider, Configuration), ServiceLifeTime.Singleton, replaceIfExist: true);
             }
         }
 
-        private bool HasDistributedCacheProviderImplementation(IConfiguration configuration)
+        private bool HasDistributedCacheProviderImplementation()
         {
-            return DistributedCacheProvider(ServiceProvider, configuration) != null;
+            return DistributedCacheProvider(ServiceProvider, Configuration) != null;
         }
 
-        private void RegisterAllModuleDependencies(IServiceCollection serviceCollection, IConfiguration configuration)
+        private void RegisterAllModuleDependencies(IServiceCollection serviceCollection)
         {
-            GetModuleDependencies().ForEach(p => serviceCollection.RegisterModule(configuration, p));
+            GetModuleDependencies()
+                .Select(moduleTypeProvider => moduleTypeProvider(Configuration))
+                .ToList()
+                .ForEach(moduleType => serviceCollection.RegisterModule(Configuration, moduleType));
         }
     }
 }

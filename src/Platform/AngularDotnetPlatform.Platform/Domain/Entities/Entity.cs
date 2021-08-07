@@ -13,7 +13,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
     public abstract class Entity<TEntity, TPrimaryKey> : IEntity<TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
-        public virtual TPrimaryKey Id { get; set; }
+        public TPrimaryKey Id { get; set; }
 
         public virtual TEntity Clone()
         {
@@ -50,5 +50,6 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
     public abstract class RootEntity<TEntity, TPrimaryKey> : Entity<TEntity, TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
+        public RootEntity() { }
     }
 }

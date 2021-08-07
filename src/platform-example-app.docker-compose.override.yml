@@ -9,12 +9,23 @@ services:
       - "14330:1433"
     volumes:
       - AngularDotnetPlatform-sqldata:/var/opt/mssql
+  
+  mongo-data:
+    ports:
+      - "27017:27017"
+    volumes:
+      - AngularDotnetPlatform-mongodata-db:/data/db
+      - AngularDotnetPlatform-mongodata-configdb:/data/configdb
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=rootPassXXX
 
   text-snippet-api:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://0.0.0.0:80
       - ConnectionStrings__DefaultConnection=${AngularDotnetPlatform_TEXTSNIPPET_DB:-Server=sql-data,1433;Database=TextSnippedDb;User Id=sa;Password=123456Abc}
+      - MongoDB__ConnectionString=${AngularDotnetPlatform_TEXTSNIPPET_MONGODB:-mongodb://root:rootPassXXX@mongo-data:27017?authSource=admin}
     ports:
       - "5001:80"
 
@@ -27,4 +38,8 @@ services:
 
 volumes:
   AngularDotnetPlatform-sqldata:
+    external: false
+  AngularDotnetPlatform-mongodata-db:
+    external: false
+  AngularDotnetPlatform-mongodata-configdb:
     external: false

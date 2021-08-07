@@ -16,6 +16,9 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Mapping
     {
     }
 
+    /// <summary>
+    /// Used to map any entity which is inherited from <see cref="IEntity{TPrimaryKey}"/>
+    /// </summary>
     public abstract class PlatformMongoClassMapping<TEntity, TPrimaryKey> : IPlatformMongoClassMapping
         where TEntity : IEntity<TPrimaryKey>
     {

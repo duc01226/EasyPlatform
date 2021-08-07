@@ -30,12 +30,17 @@ export abstract class PlatformAppUiStateService<TAppUiStateData> {
   public updateUiStateData(updateDataFn: (current: TAppUiStateData) => TAppUiStateData, delayTime: number = 100): void {
     this.updateUiStateDataDelaySub.unsubscribe();
     this.updateUiStateDataDelaySub = Utils.delay(() => {
-      const newData = updateDataFn(Utils.clone(this.dataSubject.value));
-
       if (this.moduleConfig.isDevelopment) {
+        const originalData = Utils.cloneDeep(this.dataSubject.value);
+        const newData = updateDataFn(Utils.clone(this.dataSubject.value));
+
+        // Check that updateDataFn has changed data but
+        // the data in observable and newData is equal or
+        // the data in observable is different from developmentClonedDeepUiStateData
         if (
-          Utils.isEqual(this.dataSubject.value, newData) ||
-          Utils.isDifferent(this.dataSubject.value, this.developmentClonedDeepUiStateData)
+          Utils.isDifferent(originalData, newData) &&
+          (Utils.isEqual(this.dataSubject.value, newData) ||
+            Utils.isDifferent(this.dataSubject.value, this.developmentClonedDeepUiStateData))
         ) {
           throw new Error(
             `The new updated data and original data have the same value or original data has been changed directly via object references.
@@ -44,9 +49,12 @@ export abstract class PlatformAppUiStateService<TAppUiStateData> {
           );
         }
         this.developmentClonedDeepUiStateData = Utils.cloneDeep(newData);
-      }
 
-      this.dataSubject.next(newData);
+        this.dataSubject.next(newData);
+      } else {
+        const newData = updateDataFn(Utils.clone(this.dataSubject.value));
+        this.dataSubject.next(newData);
+      }
     }, delayTime);
   }
 

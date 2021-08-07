@@ -10,7 +10,7 @@ namespace PlatformExampleApp.TextSnippet.Domain
 {
     public class TextSnippetDomainPlatformModule : PlatformDomainModule
     {
-        public TextSnippetDomainPlatformModule(IServiceProvider serviceProvider) : base(serviceProvider)
+        public TextSnippetDomainPlatformModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
     }

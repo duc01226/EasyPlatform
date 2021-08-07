@@ -1,3 +1,10 @@
+import {
+  AngularDotnetPlatformDomainsTextSnippetDomainModule,
+  AngularDotnetPlatformDomainsTextSnippetDomainModuleConfig,
+} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
+import {
+  AngularDotnetPlatformPlatformCoreModule,
+} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
 import { NgModule } from '@angular/core';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { MatButtonModule } from '@angular/material/button';
@@ -9,11 +16,6 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import {
-  AngularDotnetPlatformDomainsTextSnippetDomainModule,
-  AngularDotnetPlatformDomainsTextSnippetDomainModuleConfig,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
-import { AngularDotnetPlatformPlatformCoreModule } from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
 
 import { environment } from '../environments/environment';
 import { AppUiStateService } from './app-ui-state-services';

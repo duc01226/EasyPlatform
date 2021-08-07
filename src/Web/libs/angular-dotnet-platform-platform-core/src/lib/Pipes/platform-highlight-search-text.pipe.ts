@@ -13,8 +13,6 @@ export class PlatformHighlightSearchTextPipe
     super();
   }
   public transform(value: string | undefined, args: string | undefined): string | undefined | SafeHtml {
-    console.log(value);
-    console.log(args);
     if (!args || !value) {
       return value;
     }

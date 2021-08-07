@@ -9,7 +9,7 @@ namespace PlatformExampleApp.TextSnippet.Application.Caching
 {
     public class TextSnippetApplicationCacheKey : PlatformCacheKey
     {
-        public const string ContextName = ApplicationConstants.ApplicationName;
+        public const string ContextName = TextSnippetApplicationConstants.ApplicationName;
 
         public TextSnippetApplicationCacheKey(string requestKey) : base(requestKey)
         {

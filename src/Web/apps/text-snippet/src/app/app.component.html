@@ -10,7 +10,12 @@
   <div class="app__side-bar">
     <mat-form-field class="app__search-input" appearance="fill">
       <mat-label>Search text snippet</mat-label>
-      <input matInput [ngModel]="vm.searchText" (ngModelChange)="onSearchTextChange($event)" />
+      <input
+        matInput
+        [ngModel]="vm.searchText"
+        (ngModelChange)="onSearchTextChange($event)"
+        (keyup.enter)="loadSnippetTextItems()"
+      />
     </mat-form-field>
 
     <mat-error class="app__loading-text-snippet-items-error" *ngIf="vm.loadingTextSnippetItemsError">{{
@@ -48,6 +53,7 @@
       <mat-paginator
         [length]="vm.totalTextSnippetItems"
         [pageSize]="vm.textSnippetItemsPageSize()"
+        [pageIndex]="vm.currentTextSnippetItemsPageNumber"
         (page)="onTextSnippetGridChangePage($event)"
       ></mat-paginator>
     </div>

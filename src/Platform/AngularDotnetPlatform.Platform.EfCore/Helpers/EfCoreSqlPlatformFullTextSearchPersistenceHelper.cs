@@ -2,26 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore;
-using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using AngularDotnetPlatform.Platform.Utils;
+using Microsoft.EntityFrameworkCore;
 
-namespace AngularDotnetPlatform.Platform.EfCore.Domain.Helpers
+namespace AngularDotnetPlatform.Platform.EfCore.Helpers
 {
     public class EfCoreSqlPlatformFullTextSearchPersistenceHelper : IPlatformFullTextSearchPersistenceHelper
     {
-        public IQueryable<T> Search<T>(IQueryable<T> query, string searchText, params Expression<Func<T, string>>[] inFullTextSearchProps)
+        public IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, string>>[] inFullTextSearchProps, bool exactMatch = false)
         {
             if (string.IsNullOrWhiteSpace(searchText))
             {
                 return query;
             }
 
-            var searchWords = BuildSearchWords(searchText);
-            var fullTextSearchPropNames = inFullTextSearchProps.Where(p => p != null).Select(Util.Expression.GetPropertyName).ToList();
+            var searchWords = BuildSearchWords(searchText.Trim());
+            var fullTextSearchPropNames = inFullTextSearchProps.Where(p => p != null).Select(Util.Expressions.GetPropertyName).ToList();
 
-            var searchedQuery = BuildSearchQuery(query, searchWords, fullTextSearchPropNames);
+            var searchedQuery = BuildSearchQuery(query, searchWords, fullTextSearchPropNames, exactMatch);
 
             return searchedQuery;
         }
@@ -30,7 +30,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Helpers
         /// Build query for all search prop. Example: Search by PropA, PropB for text "hello word" will generate query with predicate:
         /// (propA.Contains("hello") AND propA.Contains("word")) OR (propB.Contains("hello") AND propB.Contains("word")).
         /// </summary>
-        private static IQueryable<T> BuildSearchQuery<T>(IQueryable<T> query, List<string> searchWords, IEnumerable<string> fullTextSearchPropNames)
+        private static IQueryable<T> BuildSearchQuery<T>(IQueryable<T> query, List<string> searchWords, IEnumerable<string> fullTextSearchPropNames, bool exactMatch = false)
         {
             Expression<Func<T, bool>> totalPropsPredicate = null;
 
@@ -40,9 +40,9 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Helpers
                 Expression<Func<T, bool>> singlePropPredicate = null;
                 foreach (var searchWord in searchWords)
                 {
-                    Expression<Func<T, bool>> singleWordSinglePropPredicate = r => EF.Functions.Contains(EF.Property<string>(r, fullTextSearchPropName), searchWord);
+                    Expression<Func<T, bool>> singleWordSinglePropPredicate = entity => EF.Functions.Contains(EF.Property<string>(entity, fullTextSearchPropName), searchWord);
 
-                    singlePropPredicate = singlePropPredicate == null ? singleWordSinglePropPredicate : singlePropPredicate.AndAlso(singleWordSinglePropPredicate);
+                    singlePropPredicate = singlePropPredicate == null ? singleWordSinglePropPredicate : (exactMatch ? singlePropPredicate.AndAlso(singleWordSinglePropPredicate) : singlePropPredicate.Or(singleWordSinglePropPredicate));
                 }
 
                 totalPropsPredicate = totalPropsPredicate == null ? singlePropPredicate : totalPropsPredicate.Or(singlePropPredicate);

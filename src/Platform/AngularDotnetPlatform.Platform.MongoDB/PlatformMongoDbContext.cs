@@ -88,6 +88,16 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             });
         }
 
+        public virtual string GetCollectionName<TEntity>()
+        {
+            return typeof(TEntity).Name;
+        }
+
+        public IMongoCollection<TEntity> GetCollection<TEntity>()
+        {
+            return Database.GetCollection<TEntity>(GetCollectionName<TEntity>());
+        }
+
         public Task<List<T>> ToListAsync<T>(IQueryable<T> query)
         {
             if (query is IMongoQueryable<T> mongoQuery)

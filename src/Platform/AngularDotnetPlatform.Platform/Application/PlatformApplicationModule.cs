@@ -10,13 +10,13 @@ namespace AngularDotnetPlatform.Platform.Application
 {
     public abstract class PlatformApplicationModule : PlatformModule
     {
-        protected PlatformApplicationModule(IServiceProvider serviceProvider) : base(serviceProvider)
+        protected PlatformApplicationModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
 
-        protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
+        protected override void InternalRegister(IServiceCollection serviceCollection)
         {
-            base.InternalRegister(serviceCollection, configuration);
+            base.InternalRegister(serviceCollection);
             serviceCollection.RegisterAllFromType<IPlatformApplicationDataSeeder>(ServiceLifeTime.Scoped, Assembly);
             serviceCollection.AddTransient<IPlatformCqrs, PlatformCqrs>();
         }

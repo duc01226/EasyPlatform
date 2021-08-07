@@ -19,8 +19,8 @@ export abstract class PlatformRepository<TContext extends PlatformRepositoryCont
     private eventManager: PlatformEventManagerService
   ) {}
 
-  protected maxNumberOfCacheItemPerApiRequest(): number {
-    return this.moduleconfig.maxNumberOfCacheItemPerApiRequest;
+  protected maxCacheRequestDataPerApiRequestName(): number {
+    return this.moduleconfig.maxCacheRequestDataPerApiRequestName;
   }
 
   protected processUpsertData<TModel, TApiResult>(config: {
@@ -74,11 +74,13 @@ export abstract class PlatformRepository<TContext extends PlatformRepositoryCont
               optionalProps: <(keyof TModel)[]>optionalProps
             });
             if (refreshRelatedReqs != null) {
-              refreshRelatedReqs.forEach(p => this.processRefreshData(p.requestName, p.requestPartialPayload));
+              refreshRelatedReqs.forEach(p =>
+                this.processRefreshData({ requestName: p.requestName, requestPayload: p.requestPartialPayload })
+              );
             }
           },
           error => {
-            this.handleApiError<TModel, TApiResult>(error, requestName, requestPayload);
+            this.handleApiError(error, requestName, requestPayload);
           }
         );
     };
@@ -115,10 +117,7 @@ export abstract class PlatformRepository<TContext extends PlatformRepositoryCont
     const cachedRequestApiResult = this.context.loadedRequestDataDic[requestId];
     if (cachedRequestApiResult == null || strategy === 'explicitReload' || (asRequest && strategy !== 'loadOnce')) {
       return apiRequestFn(false).pipe(
-        catchError(error => {
-          this.handleApiError<TModel, TApiResult>(error, requestName, requestPayload);
-          return throwError(error);
-        }),
+        catchError(error => this.catchApiError(error, requestName, requestPayload)),
         switchMap(apiResult => {
           this.updateNewRequestData<TModel, TApiResult>({
             requestId,
@@ -131,7 +130,9 @@ export abstract class PlatformRepository<TContext extends PlatformRepositoryCont
             optionalProps: <(keyof TModel)[]>optionalProps
           });
           if (refreshRelatedReqs != null) {
-            refreshRelatedReqs.forEach(p => this.processRefreshData(p.requestName, p.requestPartialPayload));
+            refreshRelatedReqs.forEach(p =>
+              this.processRefreshData({ requestName: p.requestName, requestPayload: p.requestPartialPayload })
+            );
           }
           return returnDataObsFn();
         })
@@ -145,8 +146,8 @@ export abstract class PlatformRepository<TContext extends PlatformRepositoryCont
     return returnDataObsFn();
   }
 
-  private handleApiError<TModel, TApiResult>(
-    error: any,
+  protected handleApiError(
+    error: PlatformApiServiceErrorResponse,
     requestName: string,
     requestPayload: PlatformQueryDto | PlatformCommandDto
   ) {
@@ -155,17 +156,35 @@ export abstract class PlatformRepository<TContext extends PlatformRepositoryCont
     }
   }
 
-  protected processRefreshData(
+  protected catchApiError(
+    error: PlatformApiServiceErrorResponse,
     requestName: string,
-    requestPartialPayload?: PlatformQueryDto | PlatformCommandDto
-  ): void {
-    const requestId = this.buildRequestId(requestName, requestPartialPayload);
-    const requestIdPrefix = requestId.endsWith(']') ? requestId.slice(0, requestId.length - 1) : requestId;
-    Object.keys(this.context.loadedRequestRefreshFnDic).forEach(key => {
-      if (key.startsWith(requestIdPrefix)) {
-        this.context.loadedRequestRefreshFnDic[key]();
-      }
-    });
+    requestPayload: PlatformQueryDto | PlatformCommandDto
+  ) {
+    this.handleApiError(error, requestName, requestPayload);
+    return throwError(error);
+  }
+
+  /**
+   * Refresh cached request data, filtered by requestName and requestPayload.
+   * @param options.delay Delay time. Default is 1000
+   */
+  protected processRefreshData(options: {
+    requestName: string;
+    requestPayload?: PlatformQueryDto | PlatformCommandDto;
+    delay?: number;
+  }): void {
+    const delay = options.delay ?? 500;
+
+    Utils.delay(() => {
+      const requestId = this.buildRequestId(options.requestName, options.requestPayload);
+      const requestIdPrefix = requestId.endsWith(']') ? requestId.slice(0, requestId.length - 1) : requestId;
+      Object.keys(this.context.loadedRequestRefreshFnDic).forEach(key => {
+        if (key.startsWith(requestIdPrefix)) {
+          this.context.loadedRequestRefreshFnDic[key]();
+        }
+      });
+    }, delay);
   }
 
   protected processClearRefreshDataRequest(
@@ -258,9 +277,9 @@ export abstract class PlatformRepository<TContext extends PlatformRepositoryCont
       key => key.startsWith(startWithRequestName) && this.context.loadedRequestSubscriberCountDic[key] <= 0
     );
 
-    while (noSubscriberRequests.length > this.maxNumberOfCacheItemPerApiRequest()) {
+    while (noSubscriberRequests.length > this.maxCacheRequestDataPerApiRequestName()) {
       const oldestRequestKey = <string>noSubscriberRequests.shift();
-      delete this.context.loadedRequestDataDic[oldestRequestKey];
+      this.context.clearLoadedRequestInfo(oldestRequestKey);
     }
   }
 }

@@ -15,6 +15,7 @@ namespace AngularDotnetPlatform.Platform.Caching.MemoryCache
     public class PlatformMemoryCache : PlatformCache, IPlatformMemoryCache
     {
         private readonly MemoryDistributedCache memoryDistributedCache;
+        private readonly HashSet<PlatformCacheKey> cachedKeys = new();
 
         public PlatformMemoryCache(ILoggerFactory loggerFactory)
         {
@@ -39,21 +40,55 @@ namespace AngularDotnetPlatform.Platform.Caching.MemoryCache
         public override void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions options)
         {
             memoryDistributedCache.Set(cacheKey, JsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(options));
+
+            // Lock to prevent multi thread add a same cache key at the same time
+            lock (cacheKey.ToString())
+            {
+                cachedKeys.Add(cacheKey);
+            }
         }
 
         public override async Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions, CancellationToken token = default)
         {
             await memoryDistributedCache.SetAsync(cacheKey, JsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions ?? new PlatformCacheEntryOptions()), token);
+
+            // Lock to prevent multi thread add a same cache key at the same time
+            lock (cacheKey.ToString())
+            {
+                cachedKeys.Add(cacheKey);
+            }
         }
 
         public override void Remove(PlatformCacheKey cacheKey)
         {
-            memoryDistributedCache.Get(cacheKey);
+            memoryDistributedCache.Remove(cacheKey);
+
+            // Lock to prevent multi thread add a same cache key at the same time
+            lock (cacheKey.ToString())
+            {
+                cachedKeys.Remove(cacheKey);
+            }
         }
 
         public override async Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default)
         {
             await memoryDistributedCache.RemoveAsync(cacheKey, token);
+
+            // Lock to prevent multi thread add a same cache key at the same time
+            lock (cacheKey.ToString())
+            {
+                cachedKeys.Remove(cacheKey);
+            }
+        }
+
+        public override Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default)
+        {
+            foreach (var platformCacheKey in cachedKeys.Where(cacheKeyPredicate).ToList())
+            {
+                Remove(platformCacheKey);
+            }
+
+            return Task.CompletedTask;
         }
 
         private DistributedCacheEntryOptions MapToDistributedCacheEntryOptions(PlatformCacheEntryOptions options)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Cqrs;
@@ -45,7 +46,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UserCaseQueries
             var fullItemsQuery = repository
                 .GetAllQuery()
                 .Pipe(query => !string.IsNullOrEmpty(request.SearchText)
-                    ? fullTextSearchPersistenceHelper.Search(query, request.SearchText, e => e.SnippetText)
+                    ? fullTextSearchPersistenceHelper.Search(query, request.SearchText, new Expression<Func<TextSnippetEntity, string>>[] { e => e.SnippetText }, true)
                     : query)
                 .WhereIf(request.SearchId != null, p => p.Id == request.SearchId);
 

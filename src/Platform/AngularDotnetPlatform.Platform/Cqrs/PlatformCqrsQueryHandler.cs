@@ -4,7 +4,7 @@ using MediatR;
 
 namespace AngularDotnetPlatform.Platform.Cqrs
 {
-    public abstract class PlatformCqrsQueryHandler<TQuery, TResult> : IRequestHandler<TQuery, TResult>
+    public abstract class PlatformCqrsQueryHandler<TQuery, TResult> : PlatformCqrsRequestHandler<TQuery>, IRequestHandler<TQuery, TResult>
         where TQuery : PlatformCqrsQuery<TResult>
         where TResult : PlatformCqrsQueryResult
     {
@@ -14,6 +14,7 @@ namespace AngularDotnetPlatform.Platform.Cqrs
 
         public async Task<TResult> Handle(TQuery request, CancellationToken cancellationToken)
         {
+            PopulateAuditInfo(request);
             var result = await HandleAsync(request, cancellationToken);
             return result;
         }

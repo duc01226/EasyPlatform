@@ -31,7 +31,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         /// <summary>
         /// Gets DbSet for given entity.
         /// </summary>
-        protected IMongoCollection<TEntity> Table => DbContext.Database.GetCollection<TEntity>(nameof(TEntity));
+        protected IMongoCollection<TEntity> Table => DbContext.GetCollection<TEntity>();
 
         /// <summary>
         /// Routing Key Prefix is used as a prefix for entity Create/Update/Delete event. The RoutingKey of an event is used to binding a queue to event for listening events.

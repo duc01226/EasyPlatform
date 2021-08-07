@@ -1,4 +1,3 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   SaveTextSnippetCommandDto,
   SearchTextSnippetQueryDto,
@@ -9,6 +8,7 @@ import {
   PlatformSmartComponent,
   Utils,
 } from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
 
 import { AppUiStateData, AppUiStateService } from '../../app-ui-state-services';
 import { AppTextSnippetDetail } from './app-text-snippet-detail.view-model';
@@ -79,6 +79,13 @@ export class AppTextSnippetDetailComponent
       vm.savingTextSnippet = true;
       vm.saveTextSnippetError = undefined;
     });
+    if (this.appUiState.currentData().unexpectedError != null) {
+      this.appUiState.updateUiStateData(x => {
+        x.unexpectedError = undefined;
+        return x;
+      });
+    }
+
     let saveSnippetTextItemSub = this.snippetTextRepo
       .save(new SaveTextSnippetCommandDto({ data: this.vm.toSaveTextSnippet }))
       .pipe(this.untilDestroyed())
@@ -87,12 +94,14 @@ export class AppTextSnippetDetailComponent
           this.updateVm(vm => {
             vm.toSaveTextSnippet = result.savedData;
             vm.savingTextSnippet = false;
-            vm.toSaveTextSnippetId = undefined;
+            vm.toSaveTextSnippetId = result.savedData.id;
           });
-          this.appUiState.updateUiStateData(x => {
-            x.selectedSnippetTextId = undefined;
-            return x;
-          });
+          if (this.appUiState.currentData().selectedSnippetTextId != this.vm.toSaveTextSnippetId) {
+            this.appUiState.updateUiStateData(x => {
+              x.selectedSnippetTextId = this.vm.toSaveTextSnippetId;
+              return x;
+            });
+          }
         },
         (error: PlatformApiServiceErrorResponse) => {
           this.updateVm(vm => {

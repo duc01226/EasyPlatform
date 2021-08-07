@@ -30,7 +30,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             this.repository = repository;
         }
 
-        public override string CommandEventRoutingKeyPrefix => ApplicationConstants.ApplicationName;
+        public override string CommandEventRoutingKeyPrefix => TextSnippetApplicationConstants.ApplicationName;
 
         protected override async Task<SaveSnippetTextCommandResult> HandleAsync(SaveSnippetTextCommand request, CancellationToken cancellationToken)
         {

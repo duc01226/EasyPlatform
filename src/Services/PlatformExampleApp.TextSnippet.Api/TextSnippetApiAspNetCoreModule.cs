@@ -13,18 +13,18 @@ namespace PlatformExampleApp.TextSnippet.Api
 {
     public class TextSnippetApiAspNetCoreModule : PlatformAspNetCoreModule
     {
-        public TextSnippetApiAspNetCoreModule(IServiceProvider serviceProvider) : base(serviceProvider)
+        public TextSnippetApiAspNetCoreModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
 
-        protected override List<Type> GetModuleDependencies()
+        protected override List<Func<IConfiguration, Type>> GetModuleDependencies()
         {
-            return new List<Type>() { typeof(TextSnippetApplicationModule) };
+            return new List<Func<IConfiguration, Type>>() { p => typeof(TextSnippetApplicationModule) };
         }
 
         protected override string[] GetAllowCorsOrigins(IConfiguration configuration)
         {
-            return configuration["AllowCorsOrigins"].Split(";");
+            return Configuration["AllowCorsOrigins"].Split(";");
         }
     }
 }

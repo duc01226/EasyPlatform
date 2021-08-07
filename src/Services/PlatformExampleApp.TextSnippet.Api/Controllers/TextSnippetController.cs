@@ -17,13 +17,8 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
     [ApiController]
     public class TextSnippetController : PlatformBaseController
     {
-        private readonly IPlatformCacheProvider cacheProvider;
-        private readonly IConfiguration configuration;
-
-        public TextSnippetController(IPlatformCqrs cqrs, IPlatformCacheProvider cacheProvider, IConfiguration configuration) : base(cqrs)
+        public TextSnippetController(IPlatformCqrs cqrs, IPlatformCacheProvider cacheProvider, IConfiguration configuration) : base(cqrs, cacheProvider, configuration)
         {
-            this.cacheProvider = cacheProvider;
-            this.configuration = configuration;
         }
 
         // GET: api/<TextSnippetController>
@@ -31,13 +26,11 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
         [Route("search")]
         public async Task<SearchSnippetTextQueryResult> Search([FromQuery] SearchSnippetTextQuery request)
         {
-            RandomThrowToTestHandleInternalException();
-
-            return await cacheProvider.Get()
+            return await CacheProvider.Get()
                 .CacheRequestAsync(
                     () => Cqrs.SendQuery<SearchSnippetTextQuery, SearchSnippetTextQueryResult>(request),
                     TextSnippetCollectionCacheKeyProvider.CreateKey(new object[] { request }),
-                    new TextSnippetCollectionCacheKeyOptions(configuration));
+                    new TextSnippetCollectionCacheKeyOptions(Configuration));
         }
 
         // POST api/<TextSnippetController>

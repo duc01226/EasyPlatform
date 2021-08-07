@@ -1,12 +1,12 @@
-import { Injectable } from '@angular/core';
 import {
   AngularDotnetPlatformPlatformCoreModuleConfig,
   PlatformEventManagerService,
   PlatformPagedResultDto,
   PlatformRepository,
 } from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
+import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { tap } from 'rxjs/operators';
+import { catchError, tap } from 'rxjs/operators';
 
 import { TextSnippetApi } from '../Apis';
 import { TextSnippetDataModel } from '../DataModels';
@@ -41,6 +41,9 @@ export class TextSnippetRepository extends PlatformRepository<TextSnippetReposit
   }
 
   public save(command: SaveTextSnippetCommandDto): Observable<SaveTextSnippetCommandResult> {
-    return this.textSnippetApi.save(command).pipe(tap(() => this.processRefreshData('TextSnippet.Search')));
+    return this.textSnippetApi.save(command).pipe(
+      tap(() => this.processRefreshData({ requestName: 'TextSnippet.Search' })),
+      catchError(error => this.catchApiError(error, 'TextSnippet.Save', command))
+    );
   }
 }
