@@ -67,7 +67,7 @@ namespace AngularDotnetPlatform.Platform.Caching
             Func<Task<TData>> request,
             PlatformCacheKey cacheKey,
             PlatformCacheEntryOptions cacheOptions = null,
-            CancellationToken token = default);
+            CancellationToken token = default) where TData : new();
     }
 
     public abstract class PlatformCache : IPlatformCache
@@ -88,7 +88,7 @@ namespace AngularDotnetPlatform.Platform.Caching
             Func<Task<TData>> request,
             PlatformCacheKey cacheKey,
             PlatformCacheEntryOptions cacheOptions = null,
-            CancellationToken token = default)
+            CancellationToken token = default) where TData : new()
         {
             var cachedData = await GetAsync<TData>(cacheKey, token);
             if (cachedData != null)

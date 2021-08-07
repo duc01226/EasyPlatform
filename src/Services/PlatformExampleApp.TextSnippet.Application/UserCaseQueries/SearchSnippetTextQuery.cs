@@ -4,8 +4,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Cqrs;
-using AngularDotnetPlatform.Platform.Domain.Helpers;
 using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
@@ -20,6 +20,8 @@ namespace PlatformExampleApp.TextSnippet.Application.UserCaseQueries
 
     public class SearchSnippetTextQueryResult : PlatformCqrsQueryPagedResult<TextSnippetEntityDto>
     {
+        public SearchSnippetTextQueryResult() { }
+
         public SearchSnippetTextQueryResult(List<TextSnippetEntityDto> items, int totalCount, int pageSize) : base(items, totalCount, pageSize)
         {
         }
@@ -28,14 +30,14 @@ namespace PlatformExampleApp.TextSnippet.Application.UserCaseQueries
     public class SearchSnippetTextQueryHandler : PlatformCqrsQueryHandler<SearchSnippetTextQuery, SearchSnippetTextQueryResult>
     {
         private readonly ITextSnippetRepository<TextSnippetEntity> repository;
-        private readonly IPlatformFullTextSearchDomainHelper fullTextSearchDomainHelper;
+        private readonly IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper;
 
         public SearchSnippetTextQueryHandler(
             ITextSnippetRepository<TextSnippetEntity> repository,
-            IPlatformFullTextSearchDomainHelper fullTextSearchDomainHelper)
+            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper)
         {
             this.repository = repository;
-            this.fullTextSearchDomainHelper = fullTextSearchDomainHelper;
+            this.fullTextSearchPersistenceHelper = fullTextSearchPersistenceHelper;
         }
 
         protected override async Task<SearchSnippetTextQueryResult> HandleAsync(SearchSnippetTextQuery request, CancellationToken cancellationToken)
@@ -43,7 +45,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UserCaseQueries
             var fullItemsQuery = repository
                 .GetAllQuery()
                 .Pipe(query => !string.IsNullOrEmpty(request.SearchText)
-                    ? fullTextSearchDomainHelper.Search(query, request.SearchText, e => e.SnippetText)
+                    ? fullTextSearchPersistenceHelper.Search(query, request.SearchText, e => e.SnippetText)
                     : query)
                 .WhereIf(request.SearchId != null, p => p.Id == request.SearchId);
 

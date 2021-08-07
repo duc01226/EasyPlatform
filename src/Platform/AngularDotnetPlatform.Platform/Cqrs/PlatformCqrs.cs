@@ -14,7 +14,7 @@ namespace AngularDotnetPlatform.Platform.Cqrs
             TCommand command,
             CancellationToken cancellationToken = default)
             where TCommand : PlatformCqrsCommand<TResult>
-            where TResult : PlatformCqrsCommandResult;
+            where TResult : PlatformCqrsCommandResult, new();
 
         /// <summary>
         /// To get data by conditions defined in query object.
@@ -49,7 +49,9 @@ namespace AngularDotnetPlatform.Platform.Cqrs
             this.mediator = mediator;
         }
 
-        public async Task<TResult> SendCommand<TCommand, TResult>(TCommand command, CancellationToken cancellationToken = default) where TCommand : PlatformCqrsCommand<TResult> where TResult : PlatformCqrsCommandResult
+        public async Task<TResult> SendCommand<TCommand, TResult>(TCommand command, CancellationToken cancellationToken = default)
+            where TCommand : PlatformCqrsCommand<TResult>
+            where TResult : PlatformCqrsCommandResult, new()
         {
             return await mediator.Send(command, cancellationToken);
         }

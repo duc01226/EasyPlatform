@@ -2,6 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Caching;
+using AngularDotnetPlatform.Platform.Caching.MemoryCache;
+using AngularDotnetPlatform.Platform.Cqrs;
+using AngularDotnetPlatform.Platform.Extensions;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,6 +39,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
 
                 RegisterAllModuleDependencies(serviceCollection, configuration);
                 RegisterCqrs(serviceCollection, configuration);
+                RegisterCaching(serviceCollection, configuration);
                 InternalRegister(serviceCollection, configuration);
                 Registered = true;
             }
@@ -66,11 +71,35 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
         }
 
         /// <summary>
-        /// Define list of any modules that this module depend on. The type must be assigned to PlatformAspNetCoreModule.
+        /// Define list of any modules that this module depend on. The type must be assigned to <see cref="PlatformModule"/>.
         /// Example from a XXXServiceAspNetCoreModule could depend on XXXPlatformApplicationModule and XXXPlatformPersistenceModule.
         /// Example code : return new { typeof(XXXPlatformApplicationModule), typeof(XXXPlatformPersistenceModule) };
         /// </summary>
         protected virtual List<Type> GetModuleDependencies()
+        {
+            return new List<Type>();
+        }
+
+        /// <summary>
+        /// Override this function provider to register IPlatformDistributedCache. Default return null;
+        /// </summary>
+        protected virtual IPlatformDistributedCache DistributedCacheProvider(IServiceProvider serviceProvider, IConfiguration configuration)
+        {
+            return null;
+        }
+
+        /// <summary>
+        /// Override this function provider to register <see cref="PlatformCqrsPipelineMiddleware{TRequest,TResponse}"/>.
+        /// Default is a empty list. The PlatformCqrsPipelineMiddleware is executed in same orders of the return list.
+        /// </summary>
+        /// <summary>
+        /// Define list of <see cref="PlatformCqrsPipelineMiddleware{TRequest,TResponse}"/> to register. The type must be assigned to <see cref="PlatformCqrsPipelineMiddleware{TRequest,TResponse}"/>.
+        /// Default is a empty list. The PlatformCqrsPipelineMiddleware is executed in same orders of the return list.
+        /// <br/>
+        /// Example that before any command/query is handled, XXXCqrsPipelineMiddleware then YYYCqrsPipelineMiddleware need to capture it first, then:
+        /// Example code : return new { typeof(XXXCqrsPipelineMiddleware), typeof(YYYCqrsPipelineMiddleware) };
+        /// </summary>
+        protected virtual List<Type> CqrsPipelinesProvider()
         {
             return new List<Type>();
         }
@@ -97,6 +126,23 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
         private void RegisterCqrs(IServiceCollection serviceCollection, IConfiguration configuration)
         {
             serviceCollection.AddMediatR(Assembly);
+            CqrsPipelinesProvider().ForEach(p => serviceCollection.Register(typeof(IPipelineBehavior<,>), p, ServiceLifeTime.Transient));
+        }
+
+        private void RegisterCaching(IServiceCollection serviceCollection, IConfiguration configuration)
+        {
+            serviceCollection.ReplaceTransient<IPlatformCacheProvider, PlatformCacheProvider>();
+            serviceCollection.RegisterAllFromImplementation<PlatformMemoryCache>(ServiceLifeTime.Singleton, replaceIfExist: true);
+            if (HasDistributedCacheProviderImplementation(configuration))
+            {
+                serviceCollection.RegisterAllFromImplementation(
+                    provider => DistributedCacheProvider(provider, configuration), ServiceLifeTime.Singleton, replaceIfExist: true);
+            }
+        }
+
+        private bool HasDistributedCacheProviderImplementation(IConfiguration configuration)
+        {
+            return DistributedCacheProvider(ServiceProvider, configuration) != null;
         }
 
         private void RegisterAllModuleDependencies(IServiceCollection serviceCollection, IConfiguration configuration)

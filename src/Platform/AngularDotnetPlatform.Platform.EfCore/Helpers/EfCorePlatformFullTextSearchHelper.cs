@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
-using AngularDotnetPlatform.Platform.Domain.Helpers;
+using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.Utils;
 
 namespace AngularDotnetPlatform.Platform.EfCore.Domain.Helpers
 {
-    public class EfCoreSqlPlatformFullTextSearchDomainHelper : IPlatformFullTextSearchDomainHelper
+    public class EfCoreSqlPlatformFullTextSearchPersistenceHelper : IPlatformFullTextSearchPersistenceHelper
     {
         public IQueryable<T> Search<T>(IQueryable<T> query, string searchText, params Expression<Func<T, string>>[] inFullTextSearchProps)
         {

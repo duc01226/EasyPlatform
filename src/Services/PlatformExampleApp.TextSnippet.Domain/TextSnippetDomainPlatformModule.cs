@@ -13,10 +13,5 @@ namespace PlatformExampleApp.TextSnippet.Domain
         public TextSnippetDomainPlatformModule(IServiceProvider serviceProvider) : base(serviceProvider)
         {
         }
-
-        protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
-        {
-            serviceCollection.RegisterAllFromType<IDomainHelper>(ServiceLifeTime.Transient, Assembly);
-        }
     }
 }

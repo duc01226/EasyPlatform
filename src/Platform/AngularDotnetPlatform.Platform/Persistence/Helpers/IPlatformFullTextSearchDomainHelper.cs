@@ -2,9 +2,9 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace AngularDotnetPlatform.Platform.Domain.Helpers
+namespace AngularDotnetPlatform.Platform.Persistence.Helpers
 {
-    public interface IPlatformFullTextSearchDomainHelper : IDomainHelper
+    public interface IPlatformFullTextSearchPersistenceHelper : IPersistenceHelper
     {
         /// <summary>
         /// Filter by search text, support multiple string prop. inFullTextSearchProps must be a list of one level string prop.

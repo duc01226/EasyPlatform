@@ -24,10 +24,13 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 
         public SaveSnippetTextCommandHandler(
             IUnitOfWorkManager unitOfWorkManager,
-            ITextSnippetRootRepository<TextSnippetEntity> repository) : base(unitOfWorkManager)
+            ITextSnippetRootRepository<TextSnippetEntity> repository,
+            IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
         {
             this.repository = repository;
         }
+
+        public override string CommandEventRoutingKeyPrefix => ApplicationConstants.ApplicationName;
 
         protected override async Task<SaveSnippetTextCommandResult> HandleAsync(SaveSnippetTextCommand request, CancellationToken cancellationToken)
         {

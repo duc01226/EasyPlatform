@@ -9,20 +9,29 @@ namespace AngularDotnetPlatform.Platform.Cqrs
 {
     public abstract class PlatformCqrsCommandHandler<TCommand, TResult> : IRequestHandler<TCommand, TResult>
         where TCommand : PlatformCqrsCommand<TResult>
-        where TResult : PlatformCqrsCommandResult
+        where TResult : PlatformCqrsCommandResult, new()
     {
         private readonly IUnitOfWorkManager unitOfWorkManager;
+        private readonly IPlatformCqrs cqrs;
 
-        public PlatformCqrsCommandHandler(IUnitOfWorkManager unitOfWorkManager)
+        public PlatformCqrsCommandHandler(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs)
         {
             this.unitOfWorkManager = unitOfWorkManager;
+            this.cqrs = cqrs;
         }
+
+        /// <summary>
+        /// Used to set <see cref="PlatformCqrsCommandEvent{TCommand,TCommandResult}.RoutingKeyPrefix"/> when send command event
+        /// <inheritdoc cref="PlatformCqrsCommandEvent{TCommand,TCommandResult}.RoutingKeyPrefix"/>
+        /// </summary>
+        public abstract string CommandEventRoutingKeyPrefix { get; }
 
         public async Task<TResult> Handle(TCommand request, CancellationToken cancellationToken)
         {
             using (var uow = unitOfWorkManager.Begin())
             {
                 var result = await HandleAsync(request, cancellationToken);
+                await cqrs.SendEvent(new PlatformCqrsCommandEvent<TCommand, TResult>(request, CommandEventRoutingKeyPrefix), cancellationToken);
                 await uow.CompleteAsync();
 
                 return result;

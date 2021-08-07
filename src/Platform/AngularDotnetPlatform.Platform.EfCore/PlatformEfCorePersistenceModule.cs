@@ -1,10 +1,14 @@
 using System;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.DependencyInjection;
+using AngularDotnetPlatform.Platform.EfCore.Domain.Helpers;
+using AngularDotnetPlatform.Platform.Extensions;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AngularDotnetPlatform.Platform.Persistence;
+using Microsoft.Extensions.Configuration;
 using Polly;
 
 namespace AngularDotnetPlatform.Platform.EfCore
@@ -19,6 +23,24 @@ namespace AngularDotnetPlatform.Platform.EfCore
         {
             Logger = logger;
         }
+
+        protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
+        {
+            base.InternalRegister(serviceCollection, configuration);
+
+            serviceCollection.AddDbContext<TDbContext>(
+                DbContextOptionsBuilderActionProvider(serviceCollection, configuration),
+                ServiceLifetime.Scoped);
+
+            RegisterHelpers(serviceCollection);
+        }
+
+        /// <summary>
+        /// Return a action for <see cref="DbContextOptionsBuilder"/> to AddDbContext. 
+        /// </summary>
+        protected abstract Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(
+            IServiceCollection serviceCollection,
+            IConfiguration configuration);
 
         protected override async Task InternalInit(IServiceScope serviceScope)
         {
@@ -41,9 +63,15 @@ namespace AngularDotnetPlatform.Platform.EfCore
                     });
 
             //if the sql server container is not created on run docker compose this
-            //migration can't fail for network related exception. The retry options for DbContext only
+            //migration can't fail for network related exception. The retry options for DbContext only 
             //apply to transient exceptions
             retryPolicy.Execute(() => db.Database.Migrate());
+        }
+
+        private static void RegisterHelpers(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RegisterAllFromImplementation<EfCoreSqlPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime
+                .Transient);
         }
     }
 }

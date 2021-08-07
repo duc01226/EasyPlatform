@@ -5,6 +5,7 @@ using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.Persistence.Helpers;
 
 namespace AngularDotnetPlatform.Platform.Persistence
 {
@@ -14,11 +15,18 @@ namespace AngularDotnetPlatform.Platform.Persistence
         {
         }
 
+        /// <summary>
+        /// Return Implementation of <see cref="IUnitOfWorkManager"/> to be registered.
+        /// Default return <see cref="PlatformDefaultUnitOfWorkManager"/>
+        /// </summary>
         protected virtual Type GetIUnitOfWorkManagerConcreteType()
         {
             return typeof(PlatformDefaultUnitOfWorkManager);
         }
 
+        /// <summary>
+        /// Return Implementation of <see cref="IUnitOfWork"/> to be registered
+        /// </summary>
         protected abstract Type GetIUnitOfWorkConcreteType();
 
         protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
@@ -27,6 +35,7 @@ namespace AngularDotnetPlatform.Platform.Persistence
             serviceCollection.AddScoped(typeof(IUnitOfWorkManager), GetIUnitOfWorkManagerConcreteType());
             serviceCollection.AddTransient(typeof(IUnitOfWork), GetIUnitOfWorkConcreteType());
             serviceCollection.RegisterAllFromType<IRepository>(ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType<IPersistenceHelper>(ServiceLifeTime.Transient, Assembly);
         }
     }
 }

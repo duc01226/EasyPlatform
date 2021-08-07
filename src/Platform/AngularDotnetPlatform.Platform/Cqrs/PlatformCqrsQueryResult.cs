@@ -5,10 +5,13 @@ namespace AngularDotnetPlatform.Platform.Cqrs
 {
     public abstract class PlatformCqrsQueryResult
     {
+        public PlatformCqrsQueryResult() { }
     }
 
     public abstract class PlatformCqrsQueryPagedResult<TItem> : PlatformCqrsQueryResult, IPagedResult<TItem>
     {
+        public PlatformCqrsQueryPagedResult() { }
+
         public PlatformCqrsQueryPagedResult(List<TItem> items, int totalCount, int pageSize)
         {
             Items = items;

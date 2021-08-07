@@ -21,7 +21,10 @@ namespace PlatformExampleApp.TextSnippet.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers().AddJsonOptions(options =>
+            {
+                TextSnippetApiAspNetCoreModule.DefaultJsonSerializerOptionsConfigure(options.JsonSerializerOptions);
+            });
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "PlatformExampleApp.TextSnippet.Api", Version = "v1" });

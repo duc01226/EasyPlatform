@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.AspNetCore.Constants;
 using Microsoft.AspNetCore.Mvc;
@@ -18,6 +19,11 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
     {
         public PlatformAspNetCoreModule(IServiceProvider serviceProvider) : base(serviceProvider)
         {
+        }
+
+        public static void DefaultJsonSerializerOptionsConfigure(JsonSerializerOptions options)
+        {
+            options.PropertyNamingPolicy = PlatformAspNetCoreDefaultJsonSerializerOptions.Value.PropertyNamingPolicy;
         }
 
         /// <summary>
@@ -62,7 +68,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
         /// </summary>
         public IApplicationBuilder UseMiddleware<TMiddleware>(IApplicationBuilder applicationBuilder) where TMiddleware : PlatformMiddleware
         {
-            return applicationBuilder.UseMiddleware<PlatformRequestIdGeneratorMiddleware>();
+            return applicationBuilder.UseMiddleware<TMiddleware>();
         }
 
         /// <summary>

@@ -11,13 +11,10 @@ namespace PlatformExampleApp.TextSnippet.Persistence
 {
     public class TextSnippetPersistencePlatformModule : PlatformEfCorePersistenceModule<TextSnippetDbContext>
     {
-        private readonly ILogger<TextSnippetPersistencePlatformModule> logger;
-
         public TextSnippetPersistencePlatformModule(
             IServiceProvider serviceProvider,
             ILogger<TextSnippetPersistencePlatformModule> logger) : base(serviceProvider, logger)
         {
-            this.logger = logger;
         }
 
         protected override Type GetIUnitOfWorkConcreteType()
@@ -25,12 +22,12 @@ namespace PlatformExampleApp.TextSnippet.Persistence
             return typeof(TextSnippetPersistenceUnitOfWork);
         }
 
-        protected override void InternalRegister(IServiceCollection serviceCollection, IConfiguration configuration)
+        protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(
+            IServiceCollection serviceCollection,
+            IConfiguration configuration)
         {
-            base.InternalRegister(serviceCollection, configuration);
-            serviceCollection.AddDbContext<TextSnippetDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
-            serviceCollection.AddTransient<IPlatformFullTextSearchDomainHelper, EfCoreSqlPlatformFullTextSearchDomainHelper>();
+            return options =>
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"));
         }
     }
 }
