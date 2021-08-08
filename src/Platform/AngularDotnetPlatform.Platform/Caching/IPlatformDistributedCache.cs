@@ -1,6 +1,6 @@
 ﻿namespace AngularDotnetPlatform.Platform.Caching
 {
-    public interface IPlatformDistributedCache : IPlatformCache
+    public interface IPlatformDistributedCacheRepository : IPlatformCacheRepository
     {
     }
 }

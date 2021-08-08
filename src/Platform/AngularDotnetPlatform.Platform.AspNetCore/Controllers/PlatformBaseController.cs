@@ -7,15 +7,15 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Controllers
 {
     public abstract class PlatformBaseController : ControllerBase
     {
-        public PlatformBaseController(IPlatformCqrs cqrs, IPlatformCacheProvider cacheProvider, IConfiguration configuration)
+        public PlatformBaseController(IPlatformCqrs cqrs, IPlatformCacheRepositoryProvider cacheRepositoryProvider, IConfiguration configuration)
         {
             Cqrs = cqrs;
-            CacheProvider = cacheProvider;
+            CacheRepositoryProvider = cacheRepositoryProvider;
             Configuration = configuration;
         }
 
         protected IPlatformCqrs Cqrs { get; }
-        protected IPlatformCacheProvider CacheProvider { get; }
+        protected IPlatformCacheRepositoryProvider CacheRepositoryProvider { get; }
         public IConfiguration Configuration { get; }
     }
 }

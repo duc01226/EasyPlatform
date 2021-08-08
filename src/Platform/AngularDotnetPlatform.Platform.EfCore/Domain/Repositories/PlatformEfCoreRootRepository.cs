@@ -184,7 +184,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
                 .Where(p => p.CheckUniquenessValidator() != null)
                 .Select<TEntity, Func<Task<ValidationResult>>>(entity => () =>
                     entity.CheckUniquenessValidator().Validate(async predicate =>
-                        !entities.Any(entity.CheckUniquenessValidator().FindOtherDuplicatedItemExpression.Compile()) &&
+                        !entities.Any(entity.CheckUniquenessValidator().FindOtherDuplicatedItemExpr.Compile()) &&
                         await Table.AsQueryable().AnyAsync(predicate, cancellationToken)))
                 .ToList();
             await EnsureValid(entitiesValidateUniquenessFns);

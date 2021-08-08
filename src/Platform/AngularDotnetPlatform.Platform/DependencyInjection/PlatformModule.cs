@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Application.Dtos;
 using AngularDotnetPlatform.Platform.Caching;
-using AngularDotnetPlatform.Platform.Caching.MemoryCache;
+using AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories;
 using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Extensions;
 using MediatR;
@@ -69,22 +70,21 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
 
         protected void EnsurePlatformImplementationValid()
         {
-            EnsurePlatformCqrsRequestsValid();
+            EnsurePlatformDtosValid();
         }
 
-        protected void EnsurePlatformCqrsRequestsValid()
+        protected void EnsurePlatformDtosValid()
         {
-            // Validate all PlatformCqrsRequest must have parameter less constructor so that it could be Deserialize from json string object.
-            var missingParametersConstructorCqrsRequests = Assembly.GetTypes()
-                .Where(p => p.IsAssignableTo(typeof(IPlatformCqrsRequest)) && !p.IsAbstract &&
-                            p.GetConstructor(Type.EmptyTypes) == null)
+            // Validate all IPlatformDto must have parameter less constructor so that it could be Deserialize from json string object.
+            var missingParameterLessConstructorDtos = Assembly.GetTypes()
+                .Where(p => p.IsAssignableTo(typeof(IPlatformDto)) && !p.IsAbstract && p.GetConstructor(Type.EmptyTypes) == null)
                 .ToList();
-            if (missingParametersConstructorCqrsRequests.Any())
+            if (missingParameterLessConstructorDtos.Any())
             {
                 throw new Exception(
                     $"Developer Error. " +
-                    $"All implementation of IPlatformCqrsRequest must have parameterless constructor. " +
-                    $"Invalid Types: {string.Join(", ", missingParametersConstructorCqrsRequests.Select(p => p.FullName))}");
+                    $"All implementation of IPlatformDto must have parameter less constructor. " +
+                    $"Invalid Types: {string.Join(", ", missingParameterLessConstructorDtos.Select(p => p.FullName))}");
             }
         }
 
@@ -108,7 +108,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
         /// <summary>
         /// Override this function provider to register IPlatformDistributedCache. Default return null;
         /// </summary>
-        protected virtual IPlatformDistributedCache DistributedCacheProvider(IServiceProvider serviceProvider, IConfiguration configuration)
+        protected virtual IPlatformDistributedCacheRepository DistributedCacheProvider(IServiceProvider serviceProvider, IConfiguration configuration)
         {
             return null;
         }
@@ -156,8 +156,8 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
 
         private void RegisterCaching(IServiceCollection serviceCollection)
         {
-            serviceCollection.ReplaceTransient<IPlatformCacheProvider, PlatformCacheProvider>();
-            serviceCollection.RegisterAllFromImplementation<PlatformMemoryCache>(ServiceLifeTime.Singleton, replaceIfExist: true);
+            serviceCollection.ReplaceTransient<IPlatformCacheRepositoryProvider, PlatformCacheRepositoryRepositoryProvider>();
+            serviceCollection.RegisterAllFromImplementation<PlatformMemoryCacheRepository>(ServiceLifeTime.Singleton, replaceIfExist: true);
             if (HasDistributedCacheProviderImplementation())
             {
                 serviceCollection.RegisterAllFromImplementation(

@@ -1,8 +1,9 @@
 using System;
+using AngularDotnetPlatform.Platform.Application.Dtos;
 
 namespace AngularDotnetPlatform.Platform.Cqrs
 {
-    public interface IPlatformCqrsRequest
+    public interface IPlatformCqrsRequest : IPlatformDto
     {
         public Guid? HandleAuditedTrackId { get; set; }
 

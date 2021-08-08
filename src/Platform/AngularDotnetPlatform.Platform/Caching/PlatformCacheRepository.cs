@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace AngularDotnetPlatform.Platform.Caching
 {
-    public interface IPlatformCache
+    public interface IPlatformCacheRepository
     {
         /// <summary>
         /// Gets a value with the given key.
@@ -65,6 +65,12 @@ namespace AngularDotnetPlatform.Platform.Caching
         Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default);
 
         /// <summary>
+        /// Removes the all cached value of collection with the given CollectionCacheKeyProvider.
+        /// </summary>
+        Task RemoveCollectionAsync<TCollectionCacheKeyProvider>(CancellationToken token = default)
+            where TCollectionCacheKeyProvider : IPlatformCollectionCacheKeyProvider;
+
+        /// <summary>
         /// Return cache from request function if exist. If not, call request function to get data, cache the data and return it.
         /// </summary>
         /// <param name="request">The request function return data to set in the cache.</param>
@@ -78,7 +84,7 @@ namespace AngularDotnetPlatform.Platform.Caching
             CancellationToken token = default) where TData : new();
     }
 
-    public abstract class PlatformCache : IPlatformCache
+    public abstract class PlatformCacheRepository : IPlatformCacheRepository
     {
         public abstract T Get<T>(PlatformCacheKey cacheKey);
 
@@ -93,6 +99,13 @@ namespace AngularDotnetPlatform.Platform.Caching
         public abstract Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default);
 
         public abstract Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default);
+
+        public async Task RemoveCollectionAsync<TCollectionCacheKeyProvider>(CancellationToken token = default) where TCollectionCacheKeyProvider : IPlatformCollectionCacheKeyProvider
+        {
+            await RemoveAsync(
+                Activator.CreateInstance<TCollectionCacheKeyProvider>().MatchCollectionKeyPredicate(),
+                token);
+        }
 
         public async Task<TData> CacheRequestAsync<TData>(
             Func<Task<TData>> request,

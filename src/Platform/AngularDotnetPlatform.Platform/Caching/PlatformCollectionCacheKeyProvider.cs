@@ -2,28 +2,28 @@ using System;
 
 namespace AngularDotnetPlatform.Platform.Caching
 {
-    public class PlatformCollectionCacheKeyProvider
+    public interface IPlatformCollectionCacheKeyProvider
     {
-        public const string DefaultRequestKey = "All";
+        /// <summary>
+        /// The Type of the cached data. Usually it's like the database collection or data class name.
+        /// </summary>
+        string Collection { get; init; }
 
+        PlatformCacheKey GetKey(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
+        PlatformCacheKey GetKey(object[] requestKeyParts = null);
+        Func<PlatformCacheKey, bool> MatchCollectionKeyPredicate();
+    }
+
+    public class PlatformCollectionCacheKeyProvider : PlatformContextCacheKeyProvider, IPlatformCollectionCacheKeyProvider
+    {
         public PlatformCollectionCacheKeyProvider()
         {
         }
 
         /// <summary>
-        /// The context of the cached data. Usually it's like the database or service name.
-        /// </summary>
-        public virtual string Context { get; set; }
-
-        /// <summary>
         /// The Type of the cached data. Usually it's like the database collection or data class name.
         /// </summary>
-        public virtual string Collection { get; set; }
-
-        public static PlatformCollectionCacheKeyProvider Create(string context, string collection)
-        {
-            return new PlatformCollectionCacheKeyProvider() { Collection = collection, Context = context };
-        }
+        public virtual string Collection { get; init; }
 
         public PlatformCacheKey GetKey(string requestKey = DefaultRequestKey)
         {
@@ -37,20 +37,21 @@ namespace AngularDotnetPlatform.Platform.Caching
             return new PlatformCacheKey(Context, Collection, requestKeyParts ?? new object[] { DefaultRequestKey });
         }
 
-        protected void EnsureValidProvider()
+        public Func<PlatformCacheKey, bool> MatchCollectionKeyPredicate()
+        {
+            return p => p.Collection == Collection && p.Context == Context;
+        }
+
+        protected override void EnsureValidProvider()
         {
             if (string.IsNullOrEmpty(Context) || string.IsNullOrEmpty(Collection))
                 throw new Exception("Context and Collection must be not null");
         }
     }
 
-    public abstract class
-        PlatformCollectionCacheKeyProvider<TFixedImplementationProvider> : PlatformCollectionCacheKeyProvider
-        where TFixedImplementationProvider : PlatformCollectionCacheKeyProvider<TFixedImplementationProvider>, new()
+    public class PlatformCollectionCacheKeyProvider<TFixedImplementationProvider> : PlatformCollectionCacheKeyProvider
+        where TFixedImplementationProvider : PlatformCollectionCacheKeyProvider<TFixedImplementationProvider>
     {
-        public abstract override string Context { get; }
-        public abstract override string Collection { get; }
-
         public static PlatformCacheKey CreateKey(string requestKey = DefaultRequestKey)
         {
             return Activator.CreateInstance<TFixedImplementationProvider>().GetKey(requestKey);

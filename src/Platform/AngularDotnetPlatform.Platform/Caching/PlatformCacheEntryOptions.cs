@@ -1,9 +1,10 @@
 using System;
+using Microsoft.Extensions.Configuration;
 
 namespace AngularDotnetPlatform.Platform.Caching
 {
     /// <summary>
-    /// Provides the cache options for an entry in <see cref="IPlatformCache"/>.
+    /// Provides the cache options for an entry in <see cref="IPlatformCacheRepository"/>.
     /// </summary>
     public class PlatformCacheEntryOptions
     {
@@ -36,5 +37,19 @@ namespace AngularDotnetPlatform.Platform.Caching
         {
             return SlidingExpirationInSeconds.HasValue ? TimeSpan.FromSeconds(SlidingExpirationInSeconds.Value) : null;
         }
+    }
+
+    public abstract class PlatformConfigurationCacheEntryOptions : PlatformCacheEntryOptions
+    {
+        protected readonly IConfiguration Configuration;
+
+        public PlatformConfigurationCacheEntryOptions(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public abstract override int? ExpirationInSeconds { get; }
+
+        public abstract override int? SlidingExpirationInSeconds { get; }
     }
 }

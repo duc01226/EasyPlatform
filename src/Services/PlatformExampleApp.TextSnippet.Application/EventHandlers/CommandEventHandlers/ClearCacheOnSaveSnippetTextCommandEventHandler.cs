@@ -11,28 +11,27 @@ namespace PlatformExampleApp.TextSnippet.Application.EventHandlers.CommandEventH
 {
     public class ClearCacheOnSaveSnippetTextCommandEventHandler : PlatformCqrsCommandEventHandler<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
     {
-        private readonly IPlatformCacheProvider cacheProvider;
+        private readonly IPlatformCacheRepositoryProvider cacheRepositoryProvider;
 
-        public ClearCacheOnSaveSnippetTextCommandEventHandler(IPlatformCacheProvider cacheProvider)
+        public ClearCacheOnSaveSnippetTextCommandEventHandler(IPlatformCacheRepositoryProvider cacheRepositoryProvider)
         {
-            this.cacheProvider = cacheProvider;
+            this.cacheRepositoryProvider = cacheRepositoryProvider;
         }
 
         protected override Task HandleAsync(PlatformCqrsCommandEvent<SaveSnippetTextCommand, SaveSnippetTextCommandResult> @event, CancellationToken cancellationToken)
         {
-            // Queue task to clear cache after 10 seconds. Delay because when save snippet text, fulltext index take amount of time to update, so that we wait
+            // Queue task to clear cache every 5 seconds for 3 times (mean that after 5,10,15s).
+            // Delay because when save snippet text, fulltext index take amount of time to update, so that we wait
             // amount of time for fulltext index update
-            Util.Tasks.DelayActionMultipleTimes(
-                () => cacheProvider.Get().RemoveAsync(
-                    TextSnippetCollectionCacheKeyProvider.DefaultInstance.MatchKeyPredicate(),
-                    cancellationToken),
-                delayTimes: new[] { TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(10) },
-                cancellationToken);
+            // We also set executeOnceImmediately=true to clear cache immediately in case of some index is updated fast
+            Util.Tasks.QueueIntervalAsyncAction(
+                token => cacheRepositoryProvider.Get().RemoveCollectionAsync<TextSnippetCollectionCacheKeyProvider>(token),
+                intervalTimeInSeconds: 5,
+                maximumIntervalExecutionCount: 3,
+                executeOnceImmediately: true,
+                cancellationToken: cancellationToken);
 
-            // Still clear cache immediately to help update data in case of there is index which could be updated fast
-            return cacheProvider.Get().RemoveAsync(
-                TextSnippetCollectionCacheKeyProvider.DefaultInstance.MatchKeyPredicate(),
-                cancellationToken);
+            return Task.CompletedTask;
         }
     }
 }

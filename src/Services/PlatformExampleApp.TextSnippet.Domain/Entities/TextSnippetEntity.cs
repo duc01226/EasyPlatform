@@ -32,8 +32,8 @@ namespace PlatformExampleApp.TextSnippet.Domain.Entities
         public override PlatformCheckUniquenessValidator<TextSnippetEntity> CheckUniquenessValidator()
         {
             return new PlatformCheckUniquenessValidator<TextSnippetEntity>(
-                this,
-                otherItem => !otherItem.Id.Equals(Id) && otherItem.SnippetText == SnippetText,
+                targetItem: this,
+                findOtherDuplicatedItemExpr: otherItem => !otherItem.Id.Equals(Id) && otherItem.SnippetText == SnippetText,
                 "SnippetText must be unique");
         }
 

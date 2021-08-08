@@ -17,7 +17,7 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
     [ApiController]
     public class TextSnippetController : PlatformBaseController
     {
-        public TextSnippetController(IPlatformCqrs cqrs, IPlatformCacheProvider cacheProvider, IConfiguration configuration) : base(cqrs, cacheProvider, configuration)
+        public TextSnippetController(IPlatformCqrs cqrs, IPlatformCacheRepositoryProvider cacheRepositoryProvider, IConfiguration configuration) : base(cqrs, cacheRepositoryProvider, configuration)
         {
         }
 
@@ -26,11 +26,11 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
         [Route("search")]
         public async Task<SearchSnippetTextQueryResult> Search([FromQuery] SearchSnippetTextQuery request)
         {
-            return await CacheProvider.Get()
+            return await CacheRepositoryProvider.Get()
                 .CacheRequestAsync(
                     () => Cqrs.SendQuery<SearchSnippetTextQuery, SearchSnippetTextQueryResult>(request),
                     TextSnippetCollectionCacheKeyProvider.CreateKey(new object[] { request }),
-                    new TextSnippetCollectionCacheKeyOptions(Configuration));
+                    new TextSnippetConfigurationCollectionCacheEntryOptions(Configuration));
         }
 
         // POST api/<TextSnippetController>

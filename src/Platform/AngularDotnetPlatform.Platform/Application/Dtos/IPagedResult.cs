@@ -2,9 +2,9 @@ using System.Collections.Generic;
 
 namespace AngularDotnetPlatform.Platform.Application.Dtos
 {
-    public interface IPagedResult<T>
+    public interface IPagedResult<TItem> : IPlatformDto
     {
-        List<T> Items { get; set; }
+        List<TItem> Items { get; set; }
         int TotalCount { get; set; }
         int PageSize { get; set; }
     }

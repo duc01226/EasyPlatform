@@ -11,25 +11,53 @@ namespace AngularDotnetPlatform.Platform.Utils
     {
         public static class Tasks
         {
-            public static Task DelayAction(Func<Task> action, TimeSpan delayTime, CancellationToken cancellationToken)
+            /// <summary>
+            /// Execute an action after a given of time.
+            /// </summary>
+            public static Task QueueDelayAsyncAction(Func<CancellationToken, Task> action, TimeSpan delayTime, CancellationToken cancellationToken)
             {
                 return Task.Run(
                     async () =>
                     {
-                        await Task.Delay(TimeSpan.FromSeconds(10), cancellationToken);
-                        await action();
+                        await Task.Delay(delayTime, cancellationToken);
+                        await action(cancellationToken);
                     },
                     cancellationToken);
             }
 
-            public static Task DelayActionMultipleTimes(Func<Task> action, TimeSpan[] delayTimes, CancellationToken cancellationToken)
+            /// <summary>
+            /// Execute an action after a given of time in seconds.
+            /// </summary>
+            public static Task QueueDelayAsyncActionMultipleTimes(Func<CancellationToken, Task> action, int delayTimeInSecond, CancellationToken cancellationToken)
             {
-                return Task.WhenAll(delayTimes.Select(delayTime => DelayAction(action, delayTime, cancellationToken)));
+                return QueueDelayAsyncAction(action, TimeSpan.FromSeconds(delayTimeInSecond), cancellationToken);
             }
 
-            public static Task DelayAction(Action action, TimeSpan delayTime, CancellationToken cancellationToken)
+            public static Task QueueIntervalAsyncAction(
+                Func<CancellationToken, Task> action,
+                int intervalTimeInSeconds,
+                int? maximumIntervalExecutionCount = null,
+                bool executeOnceImmediately = false,
+                CancellationToken cancellationToken = default)
             {
-                return DelayAction(() => Task.Run(action, cancellationToken), delayTime, cancellationToken);
+                if (executeOnceImmediately)
+                    action(cancellationToken).Wait(cancellationToken);
+
+                if (maximumIntervalExecutionCount <= 0)
+                    return Task.CompletedTask;
+
+                return Task.Run(
+                    async () =>
+                    {
+                        var executionCount = 0;
+                        while (executionCount < maximumIntervalExecutionCount)
+                        {
+                            await Task.Delay(TimeSpan.FromSeconds(intervalTimeInSeconds), cancellationToken);
+                            await action(cancellationToken);
+                            executionCount += 1;
+                        }
+                    },
+                    cancellationToken);
             }
         }
     }

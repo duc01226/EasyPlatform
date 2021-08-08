@@ -5,7 +5,8 @@ using AngularDotnetPlatform.Platform.Timing;
 
 namespace AngularDotnetPlatform.Platform.Cqrs
 {
-    public abstract class PlatformCqrsQuery<TResult> : IPlatformCqrsRequest, IRequest<TResult> where TResult : PlatformCqrsQueryResult
+    public abstract class PlatformCqrsQuery<TResult> : IPlatformCqrsRequest, IRequest<TResult>
+        where TResult : PlatformCqrsQueryResult
     {
         public Guid? HandleAuditedTrackId { get; set; }
 
@@ -14,7 +15,8 @@ namespace AngularDotnetPlatform.Platform.Cqrs
         public string HandleAuditedByUserId { get; set; }
     }
 
-    public abstract class PlatformCqrsPagedResultQuery<TResult, TItem> : PlatformCqrsQuery<TResult>, IPagedRequest where TResult : PlatformCqrsQueryPagedResult<TItem>
+    public abstract class PlatformCqrsPagedResultQuery<TResult, TItem> : PlatformCqrsQuery<TResult>, IPagedRequest
+        where TResult : PlatformCqrsQueryPagedResult<TItem>
     {
         public int SkipCount { get; set; }
         public int MaxResultCount { get; set; } = 10;

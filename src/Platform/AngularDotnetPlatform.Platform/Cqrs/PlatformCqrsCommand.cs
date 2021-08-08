@@ -4,7 +4,8 @@ using AngularDotnetPlatform.Platform.Timing;
 
 namespace AngularDotnetPlatform.Platform.Cqrs
 {
-    public abstract class PlatformCqrsCommand<TResult> : IPlatformCqrsRequest, IRequest<TResult> where TResult : PlatformCqrsCommandResult, new()
+    public abstract class PlatformCqrsCommand<TResult> : IPlatformCqrsRequest, IRequest<TResult>
+        where TResult : PlatformCqrsCommandResult, new()
     {
         public Guid? HandleAuditedTrackId { get; set; }
 

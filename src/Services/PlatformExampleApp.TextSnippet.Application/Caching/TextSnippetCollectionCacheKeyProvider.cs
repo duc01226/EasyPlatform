@@ -9,24 +9,7 @@ namespace PlatformExampleApp.TextSnippet.Application.Caching
 {
     public class TextSnippetCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider<TextSnippetCollectionCacheKeyProvider>
     {
-        public static readonly TextSnippetCollectionCacheKeyProvider DefaultInstance = new TextSnippetCollectionCacheKeyProvider();
-
-        public override string Context => TextSnippetApplicationCacheKey.ContextName;
+        public override string Context => TextSnippetApplicationConstants.ApplicationName;
         public override string Collection => "TextSnippet";
-
-        public static new PlatformCacheKey CreateKey(string requestKey = DefaultRequestKey)
-        {
-            return Activator.CreateInstance<TextSnippetCollectionCacheKeyProvider>().GetKey(requestKey);
-        }
-
-        public static new PlatformCacheKey CreateKey(object[] requestKeyParts = null)
-        {
-            return Activator.CreateInstance<TextSnippetCollectionCacheKeyProvider>().GetKey(requestKeyParts);
-        }
-
-        public Func<PlatformCacheKey, bool> MatchKeyPredicate()
-        {
-            return p => p.Collection == Collection && p.Context == Context;
-        }
     }
 }
