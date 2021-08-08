@@ -55,6 +55,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                 if (Initiated)
                     return;
 
+                EnsurePlatformImplementationValid();
                 InitAllModuleDependencies();
 
                 using (var scope = ServiceProvider.CreateScope())
@@ -63,6 +64,27 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                 }
 
                 Initiated = true;
+            }
+        }
+
+        protected void EnsurePlatformImplementationValid()
+        {
+            EnsurePlatformCqrsRequestsValid();
+        }
+
+        protected void EnsurePlatformCqrsRequestsValid()
+        {
+            // Validate all PlatformCqrsRequest must have parameter less constructor so that it could be Deserialize from json string object.
+            var missingParametersConstructorCqrsRequests = Assembly.GetTypes()
+                .Where(p => p.IsAssignableTo(typeof(IPlatformCqrsRequest)) && !p.IsAbstract &&
+                            p.GetConstructor(Type.EmptyTypes) == null)
+                .ToList();
+            if (missingParametersConstructorCqrsRequests.Any())
+            {
+                throw new Exception(
+                    $"Developer Error. " +
+                    $"All implementation of IPlatformCqrsRequest must have parameterless constructor. " +
+                    $"Invalid Types: {string.Join(", ", missingParametersConstructorCqrsRequests.Select(p => p.FullName))}");
             }
         }
 
