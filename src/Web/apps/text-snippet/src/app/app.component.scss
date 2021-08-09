@@ -71,9 +71,10 @@ angular-dotnet-platform-example-web-root {
   }
   &__text-snippet-items-grid-fulltext-cell {
     text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
     max-width: calculateRem(10px);
+    word-break: break-word;
   }
   &__detail {
     flex-grow: 1;

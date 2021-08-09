@@ -1,7 +1,9 @@
+@use "sass:math";
+
 $app-root-font-size: 16px;
 
 @function calculateRem($size) {
-  @return ($size / $app-root-font-size) * 1rem;
+  @return math.div($size, $app-root-font-size) * 1rem;
 }
 
 // Break-points
