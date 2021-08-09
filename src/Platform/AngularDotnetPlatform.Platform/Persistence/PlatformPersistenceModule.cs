@@ -5,7 +5,6 @@ using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Extensions;
-using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using AngularDotnetPlatform.Platform.Persistence.Helpers.Abstract;
 
 namespace AngularDotnetPlatform.Platform.Persistence
@@ -15,6 +14,8 @@ namespace AngularDotnetPlatform.Platform.Persistence
         protected PlatformPersistenceModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
+
+        protected override bool AutoRegisterCaching => false;
 
         /// <summary>
         /// Return Implementation of <see cref="IUnitOfWorkManager"/> to be registered.

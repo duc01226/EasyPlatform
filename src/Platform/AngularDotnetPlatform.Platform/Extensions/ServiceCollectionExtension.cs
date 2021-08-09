@@ -1,12 +1,9 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.DependencyInjection;
+using AngularDotnetPlatform.Platform.Utils;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace AngularDotnetPlatform.Platform.Extensions
 {
@@ -15,93 +12,106 @@ namespace AngularDotnetPlatform.Platform.Extensions
         /// <summary>
         /// Register all concrete types in a module that is assignable to TConventional as itself and it's implemented interfaces
         /// </summary>
+        public static IServiceCollection RegisterAllFromType(
+            this IServiceCollection services,
+            Type conventionalType,
+            ServiceLifeTime lifeTime,
+            Assembly assembly,
+            bool replaceIfExist = false)
+        {
+            assembly.GetTypes()
+                .Where(p => p.IsClass && !p.IsAbstract && p.IsAssignableTo(conventionalType))
+                .ToList()
+                .ForEach(implementationType =>
+                {
+                    services.RegisterSelf(implementationType, lifeTime, replaceIfExist);
+
+                    services.RegisterInterfacesForImplementation(implementationType, lifeTime, replaceIfExist, ReplaceServiceStrategy.ByBoth);
+                });
+
+            return services;
+        }
+
+        /// <summary>
+        /// Register all concrete types in a module that is assignable to TConventional as itself and it's implemented interfaces
+        /// </summary>
         public static IServiceCollection RegisterAllFromType<TConventional>(
             this IServiceCollection services,
             ServiceLifeTime lifeTime,
-            Assembly assembly)
+            Assembly assembly,
+            bool replaceIfExist = false)
         {
-            services.Scan(scan =>
-            {
-                var lifetimeSelector = scan
-                    .FromAssemblies(assembly)
-                    .AddClasses(@class => @class.AssignableTo<TConventional>())
-                    .AsSelf()
-                    .AsImplementedInterfaces();
-                switch (lifeTime)
-                {
-                    case ServiceLifeTime.Transient:
-                        lifetimeSelector.WithTransientLifetime();
-                        break;
-                    case ServiceLifeTime.Scoped:
-                        lifetimeSelector.WithScopedLifetime();
-                        break;
-                    case ServiceLifeTime.Singleton:
-                        lifetimeSelector.WithSingletonLifetime();
-                        break;
-                    default:
-                        lifetimeSelector.WithTransientLifetime();
-                        break;
-                }
-            });
-            return services;
+            return RegisterAllFromType(services, typeof(TConventional), lifeTime, assembly, replaceIfExist);
         }
 
         /// <summary>
         /// Register TImplementation as itself and it's implemented interfaces
         /// </summary>
-        public static IServiceCollection RegisterAllFromImplementation<TImplementation>(
+        public static IServiceCollection RegisterAllForImplementation(
             this IServiceCollection services,
-            Func<IServiceProvider, TImplementation> implementationInstanceObjectFunc,
+            Type implementationType,
             ServiceLifeTime lifeTime,
             bool replaceIfExist = false)
         {
-            services.Register(typeof(TImplementation), provider => implementationInstanceObjectFunc(provider), lifeTime, replaceIfExist);
+            services.RegisterSelf(implementationType, lifeTime, replaceIfExist);
 
-            foreach (var implementedInterfaceType in typeof(TImplementation).GetInterfaces())
-            {
-                services.Register(implementedInterfaceType, provider => implementationInstanceObjectFunc(provider), lifeTime, replaceIfExist);
-            }
+            services.RegisterInterfacesForImplementation(implementationType, lifeTime, replaceIfExist);
 
             return services;
         }
 
         /// <summary>
-        /// Register TImplementation as itself and it's implemented interfaces
+        /// <inheritdoc cref="RegisterAllForImplementation"/>
         /// </summary>
-        public static IServiceCollection RegisterAllFromImplementation<TImplementation>(
+        public static IServiceCollection RegisterAllForImplementation<TImplementation>(
             this IServiceCollection services,
             ServiceLifeTime lifeTime,
             bool replaceIfExist = false)
         {
-            services.Register(typeof(TImplementation), typeof(TImplementation), lifeTime, replaceIfExist);
+            return RegisterAllForImplementation(services, typeof(TImplementation), lifeTime, replaceIfExist);
+        }
 
-            foreach (var implementedInterfaceType in typeof(TImplementation).GetInterfaces())
-            {
-                services.Register(implementedInterfaceType, typeof(TImplementation), lifeTime, replaceIfExist);
-            }
+        /// <summary>
+        /// Register TImplementation instance from implementationFactory as itself and it's implemented interfaces
+        /// </summary>
+        public static IServiceCollection RegisterAllForImplementation<TImplementation>(
+            this IServiceCollection services,
+            Func<IServiceProvider, TImplementation> implementationFactory,
+            ServiceLifeTime lifeTime,
+            bool replaceIfExist = false)
+        {
+            services.Register(typeof(TImplementation), implementationFactory, lifeTime, replaceIfExist);
+
+            services.RegisterInterfacesForImplementation(implementationFactory, lifeTime, replaceIfExist);
 
             return services;
         }
 
-        public static IServiceCollection Register(this IServiceCollection services, Type serviceType, Type implementationType, ServiceLifeTime lifeTime, bool replaceIfExist = false)
+        public static IServiceCollection Register(
+            this IServiceCollection services,
+            Type serviceType,
+            Type implementationType,
+            ServiceLifeTime lifeTime,
+            bool replaceIfExist = false,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
             switch (lifeTime)
             {
                 case ServiceLifeTime.Scoped:
                     if (replaceIfExist)
-                        services.ReplaceScoped(serviceType, implementationType);
+                        services.ReplaceScoped(serviceType, implementationType, replaceStrategy);
                     else
                         services.AddScoped(serviceType, implementationType);
                     break;
                 case ServiceLifeTime.Singleton:
                     if (replaceIfExist)
-                        services.ReplaceSingleton(serviceType, implementationType);
+                        services.ReplaceSingleton(serviceType, implementationType, replaceStrategy);
                     else
                         services.AddSingleton(serviceType, implementationType);
                     break;
                 default:
                     if (replaceIfExist)
-                        services.ReplaceTransient(serviceType, implementationType);
+                        services.ReplaceTransient(serviceType, implementationType, replaceStrategy);
                     else
                         services.AddTransient(serviceType, implementationType);
                     break;
@@ -110,71 +120,203 @@ namespace AngularDotnetPlatform.Platform.Extensions
             return services;
         }
 
-        public static IServiceCollection Register(this IServiceCollection services, Type serviceType, Func<IServiceProvider, object> implementationFunc, ServiceLifeTime lifeTime, bool replaceIfExist = false)
+        public static IServiceCollection RegisterSelf(
+            this IServiceCollection services,
+            Type implementationType,
+            ServiceLifeTime lifeTime,
+            bool replaceIfExist = false,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            return Register(services, implementationType, implementationType, lifeTime, replaceIfExist, replaceStrategy);
+        }
+
+        public static IServiceCollection Register<TImplementation>(
+            this IServiceCollection services,
+            Type serviceType,
+            Func<IServiceProvider, TImplementation> implementationFunc,
+            ServiceLifeTime lifeTime,
+            bool replaceIfExist = false,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
             switch (lifeTime)
             {
                 case ServiceLifeTime.Scoped:
-                    services.AddScoped(serviceType, implementationFunc);
+                    if (replaceIfExist)
+                        services.ReplaceScoped(serviceType, implementationFunc, replaceStrategy);
+                    else
+                        services.AddScoped(serviceType, p => implementationFunc(p));
                     break;
                 case ServiceLifeTime.Singleton:
-                    services.AddSingleton(serviceType, implementationFunc);
+                    if (replaceIfExist)
+                        services.ReplaceSingleton(serviceType, implementationFunc, replaceStrategy);
+                    else
+                        services.AddSingleton(serviceType, p => implementationFunc(p));
                     break;
                 default:
-                    services.AddTransient(serviceType, implementationFunc);
+                    if (replaceIfExist)
+                        services.ReplaceTransient(serviceType, implementationFunc, replaceStrategy);
+                    else
+                        services.AddTransient(serviceType, p => implementationFunc(p));
                     break;
             }
 
             return services;
         }
 
-        public static IServiceCollection ReplaceTransient(this IServiceCollection services, Type serviceType, Type implementationType)
+        public static IServiceCollection ReplaceTransient(this IServiceCollection services, Type serviceType, Type implementationType, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            RemoveIfExist(services, serviceType);
+            RemoveIfExist(services, serviceType, implementationType, replaceStrategy);
 
             return services.AddTransient(serviceType, implementationType);
         }
 
-        public static IServiceCollection ReplaceScoped(this IServiceCollection services, Type serviceType, Type implementationType)
+        public static IServiceCollection ReplaceScoped(this IServiceCollection services, Type serviceType, Type implementationType, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            RemoveIfExist(services, serviceType);
+            RemoveIfExist(services, serviceType, implementationType, replaceStrategy);
 
             return services.AddScoped(serviceType, implementationType);
         }
 
-        public static IServiceCollection ReplaceSingleton(this IServiceCollection services, Type serviceType, Type implementationType)
+        public static IServiceCollection ReplaceSingleton(this IServiceCollection services, Type serviceType, Type implementationType, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            RemoveIfExist(services, serviceType);
+            RemoveIfExist(services, serviceType, implementationType, replaceStrategy);
 
             return services.AddSingleton(serviceType, implementationType);
         }
 
-        public static IServiceCollection ReplaceTransient<TService, TImplementation>(this IServiceCollection services)
+        public static IServiceCollection ReplaceTransient<TImplementation>(this IServiceCollection services, Type serviceType, Func<IServiceProvider, TImplementation> implementationFactory, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            RemoveIfExist(services, serviceType, typeof(TImplementation), replaceStrategy);
+
+            return services.AddTransient(serviceType, p => implementationFactory(p));
+        }
+
+        public static IServiceCollection ReplaceScoped<TImplementation>(this IServiceCollection services, Type serviceType, Func<IServiceProvider, TImplementation> implementationFactory, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            RemoveIfExist(services, serviceType, typeof(TImplementation), replaceStrategy);
+
+            return services.AddScoped(serviceType, p => implementationFactory(p));
+        }
+
+        public static IServiceCollection ReplaceSingleton<TImplementation>(this IServiceCollection services, Type serviceType, Func<IServiceProvider, TImplementation> implementationFactory, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            RemoveIfExist(services, serviceType, typeof(TImplementation), replaceStrategy);
+
+            return services.AddSingleton(serviceType, p => implementationFactory(p));
+        }
+
+        public static IServiceCollection ReplaceTransient<TService, TImplementation>(this IServiceCollection services, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
             where TService : class
             where TImplementation : class, TService
         {
-            return services.ReplaceTransient(typeof(TService), typeof(TImplementation));
+            return services.ReplaceTransient(typeof(TService), typeof(TImplementation), replaceStrategy);
         }
 
-        public static IServiceCollection ReplaceScoped<TService, TImplementation>(this IServiceCollection services)
+        public static IServiceCollection ReplaceScoped<TService, TImplementation>(this IServiceCollection services, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
             where TService : class
             where TImplementation : class, TService
         {
-            return services.ReplaceScoped(typeof(TService), typeof(TImplementation));
+            return services.ReplaceScoped(typeof(TService), typeof(TImplementation), replaceStrategy);
         }
 
-        public static IServiceCollection ReplaceSingleton<TService, TImplementation>(this IServiceCollection services)
+        public static IServiceCollection ReplaceSingleton<TService, TImplementation>(this IServiceCollection services, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
             where TService : class
             where TImplementation : class, TService
         {
-            return services.ReplaceSingleton(typeof(TService), typeof(TImplementation));
+            return services.ReplaceSingleton(typeof(TService), typeof(TImplementation), replaceStrategy);
         }
 
-        public static void RemoveIfExist(this IServiceCollection services, Type serviceType)
+        public static void RemoveIfExist(this IServiceCollection services, Func<ServiceDescriptor, bool> predicate)
         {
-            var existedServiceRegister = services.FirstOrDefault(p => p.ServiceType == serviceType);
+            var existedServiceRegister = services.FirstOrDefault(predicate);
             if (existedServiceRegister != null)
                 services.Remove(existedServiceRegister);
+        }
+
+        public static void RemoveIfExist(IServiceCollection services, Type serviceType, Type implementationType, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            switch (replaceStrategy)
+            {
+                case ReplaceServiceStrategy.ByService:
+                    RemoveIfExist(services, p => p.ServiceType == serviceType);
+                    break;
+                case ReplaceServiceStrategy.ByImplementation:
+                    RemoveIfExist(services, p => p.ImplementationType == implementationType);
+                    break;
+                case ReplaceServiceStrategy.ByBoth:
+                    RemoveIfExist(services, p => p.ServiceType == serviceType && p.ImplementationType == implementationType);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(replaceStrategy), replaceStrategy, null);
+            }
+        }
+
+        public static void RegisterInterfacesForImplementation(
+            this IServiceCollection services,
+            Type implementationType,
+            ServiceLifeTime lifeTime,
+            bool replaceIfExist,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            if (implementationType.IsGenericType)
+            {
+                implementationType
+                    .GetInterfaces()
+                    .Where(p => p.IsGenericType && p.GetGenericArguments().Length == implementationType.GetGenericArguments().Length)
+                    .ToList()
+                    .ForEach(implementationTypeInterface =>
+                    {
+                        // FixTypeReference is used because when Type is generic, get Interfaces will lead to missing fullName => lead to register into ServiceCollection for generic type get errors
+                        services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationType, lifeTime, replaceIfExist, replaceStrategy);
+                    });
+            }
+            else
+            {
+                implementationType.GetInterfaces().Where(p => !p.IsGenericType).ToList().ForEach(implementationTypeInterface =>
+                {
+                    services.Register(implementationTypeInterface, implementationType, lifeTime, replaceIfExist, replaceStrategy);
+                });
+            }
+        }
+
+        public static void RegisterInterfacesForImplementation<TImplementation>(
+            this IServiceCollection services,
+            Func<IServiceProvider, TImplementation> implementationFactory,
+            ServiceLifeTime lifeTime,
+            bool replaceIfExist,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            var implementationType = typeof(TImplementation);
+            if (implementationType.IsGenericType)
+            {
+                implementationType
+                    .GetInterfaces()
+                    .Where(p => p.IsGenericType && MatchGenericArguments(p, implementationType))
+                    .ToList()
+                    .ForEach(implementationTypeInterface =>
+                    {
+                        services.Register(implementationTypeInterface, implementationFactory, lifeTime, replaceIfExist, replaceStrategy);
+                    });
+            }
+            else
+            {
+                implementationType.GetInterfaces().Where(p => !p.IsGenericType).ToList().ForEach(implementationTypeInterface =>
+                {
+                    services.Register(implementationTypeInterface, implementationFactory, lifeTime, replaceIfExist, replaceStrategy);
+                });
+            }
+        }
+
+        public static bool MatchGenericArguments(Type rootType, Type implementationType)
+        {
+            return rootType.GetGenericArguments().Length == implementationType.GetGenericArguments().Length;
+        }
+
+        public enum ReplaceServiceStrategy
+        {
+            ByService,
+            ByImplementation,
+            ByBoth
         }
     }
 }

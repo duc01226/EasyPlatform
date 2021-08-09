@@ -1,7 +1,6 @@
 using System;
 using MediatR;
 using AngularDotnetPlatform.Platform.Application.Dtos;
-using AngularDotnetPlatform.Platform.Timing;
 
 namespace AngularDotnetPlatform.Platform.Cqrs
 {

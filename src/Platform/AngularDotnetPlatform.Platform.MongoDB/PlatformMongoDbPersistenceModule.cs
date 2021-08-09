@@ -103,7 +103,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         protected virtual void RegisterHelpers(IServiceCollection serviceCollection)
         {
-            serviceCollection.RegisterAllFromImplementation<MongoDbPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime.Transient);
+            serviceCollection.RegisterAllForImplementation<MongoDbPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime.Transient);
         }
 
         private static void RegisterPlatformDataMigrationHistoryClassMap()

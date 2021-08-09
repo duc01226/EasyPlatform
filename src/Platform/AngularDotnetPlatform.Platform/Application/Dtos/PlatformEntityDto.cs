@@ -1,4 +1,3 @@
-using System;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 
 namespace AngularDotnetPlatform.Platform.Application.Dtos

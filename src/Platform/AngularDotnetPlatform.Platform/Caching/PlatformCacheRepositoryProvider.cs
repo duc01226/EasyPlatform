@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.Caching
 {
@@ -13,7 +11,7 @@ namespace AngularDotnetPlatform.Platform.Caching
     public interface IPlatformCacheRepositoryProvider
     {
         /// <summary>
-        /// Get last registered cache repository or default cache repository
+        /// Get last registered cache repository
         /// </summary>
         public IPlatformCacheRepository Get();
 
@@ -23,40 +21,61 @@ namespace AngularDotnetPlatform.Platform.Caching
         public IPlatformCacheRepository Get(PlatformCacheRepositoryType cacheRepositoryType);
 
         /// <summary>
-        /// Get default cache repository
+        /// Get last registered collection cache repository
         /// </summary>
-        public IPlatformCacheRepository GetDefault();
+        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<TCollectionCacheKeyProvider>()
+            where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider;
+
+        /// <summary>
+        /// Get collection cache repository by type
+        /// </summary>
+        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<TCollectionCacheKeyProvider>(PlatformCacheRepositoryType cacheRepositoryType)
+            where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider;
     }
 
-    public class PlatformCacheRepositoryRepositoryProvider : IPlatformCacheRepositoryProvider
+    public class PlatformCacheRepositoryProvider : IPlatformCacheRepositoryProvider
     {
+        private readonly IServiceProvider serviceProvider;
         private readonly List<IPlatformCacheRepository> registeredCacheRepositories;
         private readonly Dictionary<PlatformCacheRepositoryType, IPlatformCacheRepository> registeredCacheRepositoriesDic;
-        private readonly IPlatformCacheRepository defaultCacheRepository;
 
-        public PlatformCacheRepositoryRepositoryProvider(IEnumerable<IPlatformCacheRepository> registeredCacheRepositories, ILoggerFactory loggerFactory)
+        public PlatformCacheRepositoryProvider(
+            IServiceProvider serviceProvider,
+            IEnumerable<IPlatformCacheRepository> registeredCacheRepositories)
         {
+            this.serviceProvider = serviceProvider;
             this.registeredCacheRepositories = registeredCacheRepositories.ToList();
             this.registeredCacheRepositoriesDic = BuildRegisteredCacheRepositoriesDic(this.registeredCacheRepositories);
-            this.defaultCacheRepository = new PlatformMemoryCacheRepository(loggerFactory);
         }
 
         public IPlatformCacheRepository Get()
         {
-            return registeredCacheRepositories.LastOrDefault() ?? GetDefault();
+            return registeredCacheRepositories.Last();
         }
 
         public IPlatformCacheRepository Get(PlatformCacheRepositoryType cacheRepositoryType)
         {
-            if (!registeredCacheRepositoriesDic.ContainsKey(cacheRepositoryType))
-                throw new Exception($"Type of {cacheRepositoryType} is not registered");
+            EnsureCacheRepositoryTypeRegistered(cacheRepositoryType);
 
             return registeredCacheRepositoriesDic[cacheRepositoryType];
         }
 
-        public IPlatformCacheRepository GetDefault()
+        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<TCollectionCacheKeyProvider>()
+            where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
         {
-            return defaultCacheRepository;
+            return serviceProvider
+                .GetServices<IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider>>()
+                .Last();
+        }
+
+        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<TCollectionCacheKeyProvider>(PlatformCacheRepositoryType cacheRepositoryType)
+            where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
+        {
+            EnsureCacheRepositoryTypeRegistered(cacheRepositoryType);
+
+            return serviceProvider
+                .GetServices<IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider>>()
+                .Last(p => p.CacheRepositoryType() == cacheRepositoryType);
         }
 
         private static Dictionary<PlatformCacheRepositoryType, IPlatformCacheRepository> BuildRegisteredCacheRepositoriesDic(List<IPlatformCacheRepository> registeredCacheRepositories)
@@ -72,6 +91,12 @@ namespace AngularDotnetPlatform.Platform.Caching
                     throw new Exception($"Unknown PlatformCacheRepositoryType of {p.GetType().Name}");
                 },
                 p => p.Last());
+        }
+
+        private void EnsureCacheRepositoryTypeRegistered(PlatformCacheRepositoryType cacheRepositoryType)
+        {
+            if (!registeredCacheRepositoriesDic.ContainsKey(cacheRepositoryType))
+                throw new Exception($"Type of {cacheRepositoryType} is not registered");
         }
     }
 }

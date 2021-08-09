@@ -69,7 +69,7 @@ namespace AngularDotnetPlatform.Platform.EfCore
 
         protected virtual void RegisterHelpers(IServiceCollection serviceCollection)
         {
-            serviceCollection.RegisterAllFromImplementation<EfCoreSqlPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime.Transient);
+            serviceCollection.RegisterAllForImplementation<EfCoreSqlPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime.Transient);
         }
     }
 }

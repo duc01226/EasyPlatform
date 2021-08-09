@@ -34,6 +34,10 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
 
         public bool Initiated { get; protected set; }
 
+        protected virtual bool AutoRegisterCqrs => true;
+
+        protected virtual bool AutoRegisterCaching => true;
+
         public void Register(IServiceCollection serviceCollection)
         {
             lock (RegisterLock)
@@ -42,8 +46,10 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                     return;
 
                 RegisterAllModuleDependencies(serviceCollection);
-                RegisterCqrs(serviceCollection);
-                RegisterCaching(serviceCollection);
+                if (AutoRegisterCqrs)
+                    RegisterCqrs(serviceCollection);
+                if (AutoRegisterCaching)
+                    RegisterCaching(serviceCollection);
                 InternalRegister(serviceCollection);
                 Registered = true;
             }
@@ -156,12 +162,20 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
 
         private void RegisterCaching(IServiceCollection serviceCollection)
         {
-            serviceCollection.ReplaceTransient<IPlatformCacheRepositoryProvider, PlatformCacheRepositoryRepositoryProvider>();
-            serviceCollection.RegisterAllFromImplementation<PlatformMemoryCacheRepository>(ServiceLifeTime.Singleton, replaceIfExist: true);
+            serviceCollection.ReplaceTransient<IPlatformCacheRepositoryProvider, PlatformCacheRepositoryProvider>();
+
+            serviceCollection.RegisterAllFromType<IPlatformCacheRepository>(ServiceLifeTime.Singleton, Assembly, replaceIfExist: true);
+            serviceCollection.RegisterAllForImplementation<PlatformMemoryCacheRepository>(ServiceLifeTime.Singleton, replaceIfExist: true);
+
+            serviceCollection.RegisterAllFromType(typeof(IPlatformCollectionCacheRepository<>), ServiceLifeTime.Transient, Assembly, replaceIfExist: true);
+            serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionMemoryCacheRepository<>), ServiceLifeTime.Transient, replaceIfExist: true);
+
             if (HasDistributedCacheProviderImplementation())
             {
-                serviceCollection.RegisterAllFromImplementation(
+                serviceCollection.RegisterAllForImplementation(
                     provider => DistributedCacheProvider(provider, Configuration), ServiceLifeTime.Singleton, replaceIfExist: true);
+
+                serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionDistributedCacheRepository<>), ServiceLifeTime.Transient, replaceIfExist: true);
             }
         }
 

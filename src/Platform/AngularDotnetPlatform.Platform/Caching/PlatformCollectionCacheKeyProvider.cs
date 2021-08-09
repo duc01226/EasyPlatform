@@ -2,19 +2,7 @@ using System;
 
 namespace AngularDotnetPlatform.Platform.Caching
 {
-    public interface IPlatformCollectionCacheKeyProvider
-    {
-        /// <summary>
-        /// The Type of the cached data. Usually it's like the database collection or data class name.
-        /// </summary>
-        string Collection { get; init; }
-
-        PlatformCacheKey GetKey(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
-        PlatformCacheKey GetKey(object[] requestKeyParts = null);
-        Func<PlatformCacheKey, bool> MatchCollectionKeyPredicate();
-    }
-
-    public class PlatformCollectionCacheKeyProvider : PlatformContextCacheKeyProvider, IPlatformCollectionCacheKeyProvider
+    public class PlatformCollectionCacheKeyProvider : PlatformContextCacheKeyProvider
     {
         public PlatformCollectionCacheKeyProvider()
         {

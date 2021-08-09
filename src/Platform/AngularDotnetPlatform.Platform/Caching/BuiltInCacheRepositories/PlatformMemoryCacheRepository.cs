@@ -19,10 +19,9 @@ namespace AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories
 
         public PlatformMemoryCacheRepository(ILoggerFactory loggerFactory)
         {
-            memoryDistributedCache =
-                new MemoryDistributedCache(
-                    new OptionsWrapper<MemoryDistributedCacheOptions>(new MemoryDistributedCacheOptions()),
-                    loggerFactory);
+            memoryDistributedCache = new MemoryDistributedCache(
+                new OptionsWrapper<MemoryDistributedCacheOptions>(new MemoryDistributedCacheOptions()),
+                loggerFactory);
         }
 
         public override T Get<T>(PlatformCacheKey cacheKey)
@@ -37,14 +36,14 @@ namespace AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories
             return result == null ? default : JsonSerializer.Deserialize<T>(result);
         }
 
-        public override void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions options)
+        public override void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null)
         {
-            memoryDistributedCache.Set(cacheKey, JsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(options));
+            memoryDistributedCache.Set(cacheKey, JsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions));
 
             cachedKeys.TryAdd(cacheKey, null);
         }
 
-        public override async Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions, CancellationToken token = default)
+        public override async Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, CancellationToken token = default)
         {
             await memoryDistributedCache.SetAsync(cacheKey, JsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions ?? new PlatformCacheEntryOptions()), token);
 
@@ -80,8 +79,8 @@ namespace AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories
         {
             return new DistributedCacheEntryOptions()
             {
-                AbsoluteExpirationRelativeToNow = options.AbsoluteExpirationRelativeToNow(),
-                SlidingExpiration = options.SlidingExpiration()
+                AbsoluteExpirationRelativeToNow = options?.AbsoluteExpirationRelativeToNow(),
+                SlidingExpiration = options?.SlidingExpiration()
             };
         }
     }

@@ -1,4 +1,3 @@
-using System;
 using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 

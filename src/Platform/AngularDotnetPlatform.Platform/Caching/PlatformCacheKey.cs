@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace AngularDotnetPlatform.Platform.Caching
 {
@@ -12,6 +10,8 @@ namespace AngularDotnetPlatform.Platform.Caching
     /// </summary>
     public class PlatformCacheKey : IEqualityComparer<PlatformCacheKey>
     {
+        public static readonly string RequestKeySeparator = ".";
+
         public PlatformCacheKey(string requestKey)
         {
             Context = GetType().Assembly.GetName().Name;
@@ -21,7 +21,7 @@ namespace AngularDotnetPlatform.Platform.Caching
         public PlatformCacheKey(object[] requestKeyParts)
         {
             Context = GetType().Assembly.GetName().Name;
-            RequestKey = string.Join(".", requestKeyParts.Select(p => JsonSerializer.Serialize(p)));
+            RequestKey = BuildRequestKey(requestKeyParts);
         }
 
         public PlatformCacheKey(string collection, string requestKey) : this(requestKey)
@@ -64,6 +64,28 @@ namespace AngularDotnetPlatform.Platform.Caching
             return platformCacheKey.ToString();
         }
 
+        public static string BuildRequestKey(object[] requestKeyParts)
+        {
+            return string.Join(RequestKeySeparator, requestKeyParts.Select(p => JsonSerializer.Serialize(p)));
+        }
+
+        public static object[] BuildRequestKeyParts(string requestKey)
+        {
+            return requestKey.Split(RequestKeySeparator)
+                .Select(requestKeyPartJsonString =>
+                {
+                    try
+                    {
+                        return JsonSerializer.Deserialize(requestKeyPartJsonString, typeof(object));
+                    }
+                    catch (Exception)
+                    {
+                        return requestKeyPartJsonString;
+                    }
+                })
+                .ToArray();
+        }
+
         public override string ToString()
         {
             return $"{Context}.{Collection}.{RequestKey}";
@@ -83,6 +105,11 @@ namespace AngularDotnetPlatform.Platform.Caching
         public int GetHashCode(PlatformCacheKey obj)
         {
             return HashCode.Combine(obj.Context, obj.Collection, obj.RequestKey);
+        }
+
+        public object[] RequestKeyParts()
+        {
+            return BuildRequestKeyParts(RequestKey);
         }
     }
 }

@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,8 +26,8 @@ namespace AngularDotnetPlatform.Platform.Caching
         /// </summary>
         /// <param name="cacheKey">A string identifying the requested value.</param>
         /// <param name="value">The value to set in the cache.</param>
-        /// <param name="options">The cache options for the value.</param>
-        void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions options);
+        /// <param name="cacheOptions">The cache options for the value.</param>
+        void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null);
 
         /// <summary>
         /// Sets the value with the given key.
@@ -40,7 +37,7 @@ namespace AngularDotnetPlatform.Platform.Caching
         /// <param name="cacheOptions">The cache options for the value.</param>
         /// <param name="token">Optional. The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
         /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
-        Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions, CancellationToken token = default);
+        Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, CancellationToken token = default);
 
         /// <summary>
         /// Removes the value with the given key.
@@ -68,7 +65,7 @@ namespace AngularDotnetPlatform.Platform.Caching
         /// Removes the all cached value of collection with the given CollectionCacheKeyProvider.
         /// </summary>
         Task RemoveCollectionAsync<TCollectionCacheKeyProvider>(CancellationToken token = default)
-            where TCollectionCacheKeyProvider : IPlatformCollectionCacheKeyProvider;
+            where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider;
 
         /// <summary>
         /// Return cache from request function if exist. If not, call request function to get data, cache the data and return it.
@@ -90,9 +87,9 @@ namespace AngularDotnetPlatform.Platform.Caching
 
         public abstract Task<T> GetAsync<T>(PlatformCacheKey cacheKey, CancellationToken token = default);
 
-        public abstract void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions options);
+        public abstract void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null);
 
-        public abstract Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions, CancellationToken token = default);
+        public abstract Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, CancellationToken token = default);
 
         public abstract void Remove(PlatformCacheKey cacheKey);
 
@@ -100,7 +97,7 @@ namespace AngularDotnetPlatform.Platform.Caching
 
         public abstract Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default);
 
-        public async Task RemoveCollectionAsync<TCollectionCacheKeyProvider>(CancellationToken token = default) where TCollectionCacheKeyProvider : IPlatformCollectionCacheKeyProvider
+        public async Task RemoveCollectionAsync<TCollectionCacheKeyProvider>(CancellationToken token = default) where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
         {
             await RemoveAsync(
                 Activator.CreateInstance<TCollectionCacheKeyProvider>().MatchCollectionKeyPredicate(),

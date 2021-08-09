@@ -13,6 +13,8 @@ namespace AngularDotnetPlatform.Platform.Domain
         {
         }
 
+        protected override bool AutoRegisterCaching => false;
+
         protected override void InternalRegister(IServiceCollection serviceCollection)
         {
             base.InternalRegister(serviceCollection);

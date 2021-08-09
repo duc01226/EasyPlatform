@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AngularDotnetPlatform.Platform.Application.Dtos
+﻿namespace AngularDotnetPlatform.Platform.Application.Dtos
 {
     public interface IPlatformDto
     {
