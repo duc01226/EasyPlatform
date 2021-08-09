@@ -21,15 +21,15 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
         {
         }
 
-        public static void DefaultJsonSerializerOptionsConfigure(JsonSerializerOptions options)
-        {
-            options.PropertyNamingPolicy = PlatformAspNetCoreDefaultJsonSerializerOptions.Value.PropertyNamingPolicy;
-        }
-
         /// <summary>
         /// Auto Register default exception filter. Can set it to false if UseGlobalExceptionHandlerMiddleware has been used.
         /// </summary>
         protected bool AutoRegisterDefaultExceptionFilter { get; init; } = false;
+
+        public static void DefaultJsonSerializerOptionsConfigure(JsonSerializerOptions options)
+        {
+            options.PropertyNamingPolicy = PlatformAspNetCoreDefaultJsonSerializerOptions.Value.PropertyNamingPolicy;
+        }
 
         public void Init(IApplicationBuilder app)
         {
