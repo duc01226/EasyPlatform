@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AngularDotnetPlatform.Platform.Caching
 {
@@ -51,9 +52,11 @@ namespace AngularDotnetPlatform.Platform.Caching
         protected readonly TCollectionCacheKeyProvider CollectionCacheKeyProvider;
         protected readonly IPlatformCacheRepositoryProvider CacheRepositoryProvider;
 
-        public PlatformCollectionCacheRepository(IPlatformCacheRepositoryProvider cacheRepositoryProvider)
+        public PlatformCollectionCacheRepository(
+            IPlatformCacheRepositoryProvider cacheRepositoryProvider,
+            TCollectionCacheKeyProvider collectionCacheKeyProvider)
         {
-            CollectionCacheKeyProvider = Activator.CreateInstance<TCollectionCacheKeyProvider>();
+            CollectionCacheKeyProvider = collectionCacheKeyProvider;
             CacheRepositoryProvider = cacheRepositoryProvider;
         }
 
@@ -162,7 +165,9 @@ namespace AngularDotnetPlatform.Platform.Caching
     public class PlatformCollectionMemoryCacheRepository<TCollectionCacheKeyProvider> : PlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
         where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
     {
-        public PlatformCollectionMemoryCacheRepository(IPlatformCacheRepositoryProvider cacheRepositoryProvider) : base(cacheRepositoryProvider)
+        public PlatformCollectionMemoryCacheRepository(
+            IPlatformCacheRepositoryProvider cacheRepositoryProvider,
+            TCollectionCacheKeyProvider collectionCacheKeyProvider) : base(cacheRepositoryProvider, collectionCacheKeyProvider)
         {
         }
 
@@ -175,7 +180,9 @@ namespace AngularDotnetPlatform.Platform.Caching
     public class PlatformCollectionDistributedCacheRepository<TCollectionCacheKeyProvider> : PlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
         where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
     {
-        public PlatformCollectionDistributedCacheRepository(IPlatformCacheRepositoryProvider cacheRepositoryProvider) : base(cacheRepositoryProvider)
+        public PlatformCollectionDistributedCacheRepository(
+            IPlatformCacheRepositoryProvider cacheRepositoryProvider,
+            TCollectionCacheKeyProvider collectionCacheKeyProvider) : base(cacheRepositoryProvider, collectionCacheKeyProvider)
         {
         }
 

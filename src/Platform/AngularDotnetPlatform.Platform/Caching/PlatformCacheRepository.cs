@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AngularDotnetPlatform.Platform.Caching
 {
@@ -83,6 +84,13 @@ namespace AngularDotnetPlatform.Platform.Caching
 
     public abstract class PlatformCacheRepository : IPlatformCacheRepository
     {
+        private readonly IServiceProvider serviceProvider;
+
+        public PlatformCacheRepository(IServiceProvider serviceProvider)
+        {
+            this.serviceProvider = serviceProvider;
+        }
+
         public abstract T Get<T>(PlatformCacheKey cacheKey);
 
         public abstract Task<T> GetAsync<T>(PlatformCacheKey cacheKey, CancellationToken token = default);
@@ -100,7 +108,7 @@ namespace AngularDotnetPlatform.Platform.Caching
         public async Task RemoveCollectionAsync<TCollectionCacheKeyProvider>(CancellationToken token = default) where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
         {
             await RemoveAsync(
-                Activator.CreateInstance<TCollectionCacheKeyProvider>().MatchCollectionKeyPredicate(),
+                serviceProvider.GetService<TCollectionCacheKeyProvider>()!.MatchCollectionKeyPredicate(),
                 token);
         }
 

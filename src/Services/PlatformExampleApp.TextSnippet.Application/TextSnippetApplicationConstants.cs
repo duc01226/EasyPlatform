@@ -9,5 +9,10 @@ namespace PlatformExampleApp.TextSnippet.Application
     public static class TextSnippetApplicationConstants
     {
         public const string ApplicationName = "TextSnippet.Api";
+
+        public static class CacheKeyCollectionNames
+        {
+            public const string TextSnippet = "TextSnippet";
+        }
     }
 }

@@ -17,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories
         private readonly MemoryDistributedCache memoryDistributedCache;
         private readonly ConcurrentDictionary<PlatformCacheKey, object> cachedKeys = new();
 
-        public PlatformMemoryCacheRepository(ILoggerFactory loggerFactory)
+        public PlatformMemoryCacheRepository(ILoggerFactory loggerFactory, IServiceProvider serviceProvider) : base(serviceProvider)
         {
             memoryDistributedCache = new MemoryDistributedCache(
                 new OptionsWrapper<MemoryDistributedCacheOptions>(new MemoryDistributedCacheOptions()),

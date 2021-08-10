@@ -22,5 +22,15 @@ namespace PlatformExampleApp.TextSnippet.Application
                 p => p.GetSection("UseMongoDb").Get<bool>() ? typeof(TextSnippetMongoPersistencePlatformModule) : typeof(TextSnippetEfCorePersistencePlatformModule)
             };
         }
+
+        // Your application can either override factory method DefaultApplicationSettingContextFactory to register default PlatformApplicationSettingContext
+        // or just declare a class implement IPlatformApplicationSettingContext to use. It will be automatically registered.
+        protected override PlatformApplicationSettingContext DefaultApplicationSettingContextFactory(IServiceProvider serviceProvider)
+        {
+            return new PlatformApplicationSettingContext()
+            {
+                ApplicationName = TextSnippetApplicationConstants.ApplicationName
+            };
+        }
     }
 }

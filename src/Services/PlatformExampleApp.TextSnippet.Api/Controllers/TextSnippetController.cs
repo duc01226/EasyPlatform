@@ -26,7 +26,7 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
         [Route("search")]
         public async Task<SearchSnippetTextQueryResult> Search([FromQuery] SearchSnippetTextQuery request)
         {
-            return await CacheRepositoryProvider.GetCollection<TextSnippetCollectionCacheKeyProvider>()
+            return await CacheRepositoryProvider.GetCollection<TextSnippetApplicationCollectionCacheKeyProvider>()
                 .CacheRequestAsync(
                     () => Cqrs.SendQuery<SearchSnippetTextQuery, SearchSnippetTextQueryResult>(request),
                     new object[] { nameof(Search), request },

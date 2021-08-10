@@ -50,6 +50,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                     RegisterCqrs(serviceCollection);
                 if (AutoRegisterCaching)
                     RegisterCaching(serviceCollection);
+
                 InternalRegister(serviceCollection);
                 Registered = true;
             }
@@ -157,12 +158,14 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
         private void RegisterCqrs(IServiceCollection serviceCollection)
         {
             serviceCollection.AddMediatR(Assembly);
+            serviceCollection.Register(typeof(IPlatformCqrs), typeof(PlatformCqrs), ServiceLifeTime.Transient, replaceIfExist: true);
             CqrsPipelinesProvider().ForEach(p => serviceCollection.Register(typeof(IPipelineBehavior<,>), p, ServiceLifeTime.Transient));
         }
 
         private void RegisterCaching(IServiceCollection serviceCollection)
         {
             serviceCollection.ReplaceTransient<IPlatformCacheRepositoryProvider, PlatformCacheRepositoryProvider>();
+            serviceCollection.RegisterAllFromType<IPlatformContextCacheKeyProvider>(ServiceLifeTime.Transient, Assembly, replaceIfExist: true);
 
             serviceCollection.RegisterAllFromType<IPlatformCacheRepository>(ServiceLifeTime.Singleton, Assembly, replaceIfExist: true);
             serviceCollection.RegisterAllForImplementation<PlatformMemoryCacheRepository>(ServiceLifeTime.Singleton, replaceIfExist: true);

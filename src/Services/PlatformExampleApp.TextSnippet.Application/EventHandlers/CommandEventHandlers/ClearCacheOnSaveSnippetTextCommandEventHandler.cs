@@ -25,7 +25,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventHandlers.CommandEventH
             // amount of time for fulltext index update
             // We also set executeOnceImmediately=true to clear cache immediately in case of some index is updated fast
             Util.Tasks.QueueIntervalAsyncAction(
-                token => cacheRepositoryProvider.Get().RemoveCollectionAsync<TextSnippetCollectionCacheKeyProvider>(token),
+                token => cacheRepositoryProvider.Get().RemoveCollectionAsync<TextSnippetApplicationCollectionCacheKeyProvider>(token),
                 intervalTimeInSeconds: 5,
                 maximumIntervalExecutionCount: 3,
                 executeOnceImmediately: true,
