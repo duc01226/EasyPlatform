@@ -127,6 +127,8 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
             channel.QueueDeclare(queueName, durable: true, exclusive: false, autoDelete: false);
             channel.QueueBind(queueName, exchange, bindRoutingKey);
+
+            LogInformation(message: $"Queue {queueName} has been declared and bind to Exchange {exchange} with routing key {bindRoutingKey}");
         }
 
         private void DeclareRabbitMqExchangesConfiguration(IModel channel)
@@ -191,6 +193,8 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 .ForEach(exchangeName =>
                 {
                     channel.ExchangeDeclare(exchangeName, ExchangeType.Topic, durable: true);
+
+                    LogInformation(message: $"Exchange {exchangeName} is declared.");
                 });
         }
 
@@ -237,6 +241,8 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 {
                     // autoAck: false -> the Consumer will ack manually.
                     channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
+
+                    LogInformation(message: $"Connected to queue {queueName}");
                 });
                 channel.ModelShutdown += (model, eventArg) =>
                 {
