@@ -21,6 +21,7 @@ services:
     depends_on:
       - sql-data
       - mongo-data
+      - rabbitmq
 
   text-snippet-webspa:
     image: ${REGISTRY:-duc01226}/angular-dotnet-platform-platform-example-app-text-snippet-webspa:${PLATFORM:-linux}-${TAG:-latest}

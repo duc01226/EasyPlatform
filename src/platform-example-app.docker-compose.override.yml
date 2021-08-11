@@ -32,7 +32,7 @@ services:
       - ConnectionStrings__DefaultConnection=${AngularDotnetPlatform_TEXTSNIPPET_DB:-Server=sql-data,1433;Database=TextSnippedDb;User Id=sa;Password=123456Abc}
       - MongoDB__ConnectionString=${AngularDotnetPlatform_TEXTSNIPPET_MONGODB:-mongodb://root:rootPassXXX@mongo-data:27017?authSource=admin}
       - UseMongoDb=${AngularDotnetPlatform_TEXTSNIPPET_UseMongoDb:-true}
-      - RabbitMqOptions__HostNames="rabbitmq"
+      - RabbitMqOptions__HostNames=rabbitmq
     ports:
       - "5001:80"
 
