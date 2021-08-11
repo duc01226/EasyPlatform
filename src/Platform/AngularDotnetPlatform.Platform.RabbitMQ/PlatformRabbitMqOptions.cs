@@ -19,7 +19,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         public int PublishMessageRetryCount { get; set; } = 5;
 
-        public int RunConsumerRetryCount { get; set; } = 5;
+        public int RunConsumerRetryCount { get; set; } = 10;
 
         public ushort QueuePrefectCount { get; set; } = 100;
 
