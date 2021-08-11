@@ -17,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
             Type conventionalType,
             ServiceLifeTime lifeTime,
             Assembly assembly,
-            bool replaceIfExist = false)
+            bool replaceIfExist = true)
         {
             assembly.GetTypes()
                 .Where(p => p.IsClass && !p.IsAbstract && p.IsAssignableTo(conventionalType))
@@ -39,7 +39,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
             this IServiceCollection services,
             ServiceLifeTime lifeTime,
             Assembly assembly,
-            bool replaceIfExist = false)
+            bool replaceIfExist = true)
         {
             return RegisterAllFromType(services, typeof(TConventional), lifeTime, assembly, replaceIfExist);
         }
@@ -51,7 +51,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
             this IServiceCollection services,
             Type implementationType,
             ServiceLifeTime lifeTime,
-            bool replaceIfExist = false)
+            bool replaceIfExist = true)
         {
             services.RegisterSelf(implementationType, lifeTime, replaceIfExist);
 
@@ -66,7 +66,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
         public static IServiceCollection RegisterAllForImplementation<TImplementation>(
             this IServiceCollection services,
             ServiceLifeTime lifeTime,
-            bool replaceIfExist = false)
+            bool replaceIfExist = true)
         {
             return RegisterAllForImplementation(services, typeof(TImplementation), lifeTime, replaceIfExist);
         }
@@ -78,7 +78,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
             this IServiceCollection services,
             Func<IServiceProvider, TImplementation> implementationFactory,
             ServiceLifeTime lifeTime,
-            bool replaceIfExist = false)
+            bool replaceIfExist = true)
         {
             services.Register(typeof(TImplementation), implementationFactory, lifeTime, replaceIfExist);
 
@@ -92,7 +92,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
             Type serviceType,
             Type implementationType,
             ServiceLifeTime lifeTime,
-            bool replaceIfExist = false,
+            bool replaceIfExist = true,
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
             switch (lifeTime)
@@ -120,11 +120,42 @@ namespace AngularDotnetPlatform.Platform.Extensions
             return services;
         }
 
+        public static IServiceCollection Register<TService, TImplementation>(
+            this IServiceCollection services,
+            ServiceLifeTime lifeTime,
+            bool replaceIfExist = true,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            return Register(services, typeof(TService), typeof(TImplementation), lifeTime, replaceIfExist, replaceStrategy);
+        }
+
+        public static IServiceCollection RegisterIfServiceNotExist<TService, TImplementation>(
+            this IServiceCollection services,
+            ServiceLifeTime lifeTime,
+            bool replaceIfExist = true,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            return RegisterIfServiceNotExist(services, typeof(TService), typeof(TImplementation), lifeTime, replaceIfExist, replaceStrategy);
+        }
+
+        public static IServiceCollection RegisterIfServiceNotExist(
+            this IServiceCollection services,
+            Type serviceType,
+            Type implementationType,
+            ServiceLifeTime lifeTime,
+            bool replaceIfExist = true,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            if (services.Any(p => p.ServiceType == serviceType))
+                return services;
+            return Register(services, serviceType, implementationType, lifeTime, replaceIfExist, replaceStrategy);
+        }
+
         public static IServiceCollection RegisterSelf(
             this IServiceCollection services,
             Type implementationType,
             ServiceLifeTime lifeTime,
-            bool replaceIfExist = false,
+            bool replaceIfExist = true,
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
             return Register(services, implementationType, implementationType, lifeTime, replaceIfExist, replaceStrategy);
@@ -135,7 +166,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
             Type serviceType,
             Func<IServiceProvider, TImplementation> implementationFunc,
             ServiceLifeTime lifeTime,
-            bool replaceIfExist = false,
+            bool replaceIfExist = true,
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
             switch (lifeTime)

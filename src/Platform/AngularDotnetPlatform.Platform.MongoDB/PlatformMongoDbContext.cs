@@ -6,8 +6,6 @@ using AngularDotnetPlatform.Platform.EfCore;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.IdGenerators;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 

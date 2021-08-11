@@ -1,7 +1,9 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.AspNetCore.Constants;
+using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,6 +11,7 @@ using AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling;
 using AngularDotnetPlatform.Platform.AspNetCore.Middleware;
 using AngularDotnetPlatform.Platform.AspNetCore.Middleware.Abstracts;
 using AngularDotnetPlatform.Platform.DependencyInjection;
+using AngularDotnetPlatform.Platform.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
@@ -28,7 +31,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
 
         public static void DefaultJsonSerializerOptionsConfigure(JsonSerializerOptions options)
         {
-            options.PropertyNamingPolicy = PlatformAspNetCoreDefaultJsonSerializerOptions.Value.PropertyNamingPolicy;
+            options.PropertyNamingPolicy = PlatformJsonSerializer.CurrentOptions.Value.PropertyNamingPolicy;
         }
 
         public void Init(IApplicationBuilder app)
@@ -81,7 +84,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
 
         /// <summary>
         /// This middleware should be used it at the first level to catch exception from any next middleware.
-        /// PlatformGlobalExceptionHandlerMiddleware will be used.
+        /// <see cref="PlatformGlobalExceptionHandlerMiddleware"/> will be used.
         /// </summary>
         public IApplicationBuilder UseGlobalExceptionHandlerMiddleware(IApplicationBuilder applicationBuilder)
         {
@@ -101,6 +104,8 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
 
             if (AutoRegisterDefaultExceptionFilter)
                 RegisterDefaultExceptionFilter(serviceCollection);
+
+            RegisterUserContext(serviceCollection);
 
             AddDefaultCorsPolicy(serviceCollection);
         }
@@ -146,17 +151,14 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
             return TimeSpan.FromDays(1);
         }
 
-        /// <summary>
-        /// Hide base Init to allow use new init only
-        /// </summary>
-        private new void Init() { }
-
-        /// <summary>
-        /// Hide base InternalInit to allow use new InternalInit only
-        /// </summary>
-        private new Task InternalInit(IServiceScope serviceScope)
+        private static void RegisterUserContext(IServiceCollection serviceCollection)
         {
-            return Task.CompletedTask;
+            serviceCollection.AddHttpContextAccessor();
+            serviceCollection.Register(
+                typeof(IPlatformApplicationUserContextAccessor),
+                typeof(PlatformAspNetApplicationUserContextAccessor),
+                ServiceLifeTime.Singleton,
+                replaceIfExist: true);
         }
     }
 }

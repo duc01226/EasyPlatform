@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using AngularDotnetPlatform.Platform.Application;
+using AngularDotnetPlatform.Platform.Application.Context;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Domain;
 using PlatformExampleApp.TextSnippet.Persistence;

@@ -13,7 +13,6 @@ using AngularDotnetPlatform.Platform.MongoDB.Helpers;
 using AngularDotnetPlatform.Platform.MongoDB.Mapping;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using MongoDB.Bson.Serialization;
-using AngularDotnetPlatform.Platform.MongoDB.Serializer;
 using AngularDotnetPlatform.Platform.MongoDB.Serializer.Abstract;
 
 namespace AngularDotnetPlatform.Platform.MongoDB

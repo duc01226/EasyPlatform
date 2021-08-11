@@ -12,8 +12,6 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
         public TextSnippetRepository(TextSnippetDbContext dbContext, IPlatformCqrs cqrs) : base(dbContext, cqrs)
         {
         }
-
-        protected override string EntityEventRoutingKeyPrefix => "Interview.Test.TextSnippet";
     }
 
     internal class TextSnippetRootRepository<TEntity> : PlatformMongoDbRootRepository<TEntity, Guid, TextSnippetDbContext>, ITextSnippetRootRepository<TEntity>
@@ -22,7 +20,5 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
         public TextSnippetRootRepository(TextSnippetDbContext dbContext, IPlatformCqrs cqrs) : base(dbContext, cqrs)
         {
         }
-
-        protected override string EntityEventRoutingKeyPrefix => "Interview.Test.TextSnippet";
     }
 }

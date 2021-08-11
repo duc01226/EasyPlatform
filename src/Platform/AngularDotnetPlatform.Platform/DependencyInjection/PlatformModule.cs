@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Dtos;
 using AngularDotnetPlatform.Platform.Caching;
@@ -11,6 +12,7 @@ using AngularDotnetPlatform.Platform.Extensions;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.DependencyInjection
 {
@@ -46,6 +48,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                     return;
 
                 RegisterAllModuleDependencies(serviceCollection);
+                RegisterDefaultLogs(serviceCollection);
                 if (AutoRegisterCqrs)
                     RegisterCqrs(serviceCollection);
                 if (AutoRegisterCaching)
@@ -53,6 +56,8 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
 
                 InternalRegister(serviceCollection);
                 Registered = true;
+
+                PlatformJsonSerializer.SetCurrentOptions(JsonSerializerCurrentOptions());
             }
         }
 
@@ -72,26 +77,6 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                 }
 
                 Initiated = true;
-            }
-        }
-
-        protected void EnsurePlatformImplementationValid()
-        {
-            EnsurePlatformDtosValid();
-        }
-
-        protected void EnsurePlatformDtosValid()
-        {
-            // Validate all IPlatformDto must have parameter less constructor so that it could be Deserialize from json string object.
-            var missingParameterLessConstructorDtos = Assembly.GetTypes()
-                .Where(p => p.IsAssignableTo(typeof(IPlatformDto)) && !p.IsAbstract && p.GetConstructor(Type.EmptyTypes) == null)
-                .ToList();
-            if (missingParameterLessConstructorDtos.Any())
-            {
-                throw new Exception(
-                    $"Developer Error. " +
-                    $"All implementation of IPlatformDto must have parameter less constructor. " +
-                    $"Invalid Types: {string.Join(", ", missingParameterLessConstructorDtos.Select(p => p.FullName))}");
             }
         }
 
@@ -136,6 +121,35 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
             return new List<Type>();
         }
 
+        /// <summary>
+        /// Override this to setup value for <see cref="PlatformJsonSerializer.CurrentOptions"/>
+        /// </summary>
+        /// <returns></returns>
+        protected virtual JsonSerializerOptions JsonSerializerCurrentOptions()
+        {
+            return PlatformJsonSerializer.DefaultValue;
+        }
+
+        protected void EnsurePlatformImplementationValid()
+        {
+            EnsurePlatformDtosValid();
+        }
+
+        protected void EnsurePlatformDtosValid()
+        {
+            // Validate all IPlatformDto must have parameter less constructor so that it could be Deserialize from json string object.
+            var missingParameterLessConstructorDtos = Assembly.GetTypes()
+                .Where(p => p.IsAssignableTo(typeof(IPlatformDto)) && !p.IsAbstract && p.GetConstructor(Type.EmptyTypes) == null)
+                .ToList();
+            if (missingParameterLessConstructorDtos.Any())
+            {
+                throw new Exception(
+                    $"Developer Error. " +
+                    $"All implementation of IPlatformDto must have parameter less constructor. " +
+                    $"Invalid Types: {string.Join(", ", missingParameterLessConstructorDtos.Select(p => p.FullName))}");
+            }
+        }
+
         protected void InitAllModuleDependencies()
         {
             GetModuleDependencies().Select(moduleTypeProvider => moduleTypeProvider(Configuration)).ToList().ForEach(moduleType =>
@@ -153,6 +167,11 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                         $"Module {GetType().Name} depend on {moduleType.Name} but Module {moduleType.Name} is not inherit from PlatformModule");
                 }
             });
+        }
+
+        private void RegisterDefaultLogs(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RegisterIfServiceNotExist(typeof(ILoggerFactory), typeof(LoggerFactory), ServiceLifeTime.Transient);
         }
 
         private void RegisterCqrs(IServiceCollection serviceCollection)

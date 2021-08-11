@@ -1,5 +1,4 @@
 using System;
-using System.Linq.Expressions;
 using FluentValidation;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Validators;

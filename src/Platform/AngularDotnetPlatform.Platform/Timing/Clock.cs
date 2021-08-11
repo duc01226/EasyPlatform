@@ -18,6 +18,8 @@ namespace AngularDotnetPlatform.Platform.Timing
 
         public static DateTime Now => Provider.Now;
 
+        public static DateTime UtcNow => DateTime.UtcNow;
+
         public static DateTimeKind Kind => Provider.Kind;
 
         /// <summary>

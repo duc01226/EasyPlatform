@@ -1,38 +1,47 @@
 using AngularDotnetPlatform.Platform.Cqrs;
+using AngularDotnetPlatform.Platform.Cqrs.Events;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 
 namespace AngularDotnetPlatform.Platform.Domain.Events
 {
+    public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent
+    {
+        public const string EventTypeValue = "EntityEvent";
+        public static string EventNameValue<TEntity>()
+        {
+            return typeof(TEntity).Name;
+        }
+    }
+
     /// <summary>
     /// This is class of events which is dispatched when an entity is created/updated/deleted.
     /// Implement and <see cref="PlatformCqrsEventHandler{TEvent}"/> to handle any events.
     /// </summary>
-    public class PlatformCqrsEntityEvent<TEntity, TPrimaryKey> : PlatformCqrsEvent
+    public class PlatformCqrsEntityEvent<TEntity, TPrimaryKey> : PlatformCqrsEntityEvent
         where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
     {
         public PlatformCqrsEntityEvent() { }
 
-        public PlatformCqrsEntityEvent(TEntity entityData, EntityEventType type, string routingKeyPrefix)
+        public PlatformCqrsEntityEvent(TEntity entityData, PlatformEntityEventAction action)
         {
+            Id = entityData.Id.ToString();
             EntityData = entityData;
-            Type = type;
-            RoutingKeyPrefix = routingKeyPrefix;
+            Action = action;
         }
 
         public TEntity EntityData { get; }
 
-        public EntityEventType Type { get; }
+        public PlatformEntityEventAction Action { get; }
 
-        /// <summary>
-        /// Routing Key Prefix is used as a prefix for entity event. The RoutingKey of an event is used to binding a event-bus queue to event for listening events.
-        /// RoutingKey = $"{RoutingKeyPrefix}.EntityEvent.{nameof(TEntity)}.{<see cref="EntityEventType"/>}"
-        /// Usually RoutingKeyPrefix should be the unique name of a micro-service.
-        /// </summary>
-        public string RoutingKeyPrefix { get; }
+        public override string EventType => EventTypeValue;
+        public override string EventName => EventNameValue<TEntity>();
+        public override string EventAction => Action.ToString();
+    }
 
-        public override string GetRoutingKey()
-        {
-            return $"{RoutingKeyPrefix}.EntityEvent.{nameof(TEntity)}.{Type}";
-        }
+    public enum PlatformEntityEventAction
+    {
+        Created,
+        Updated,
+        Deleted
     }
 }

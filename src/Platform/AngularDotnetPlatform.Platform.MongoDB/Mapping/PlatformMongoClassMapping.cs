@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.IdGenerators;
 
 namespace AngularDotnetPlatform.Platform.MongoDB.Mapping
 {

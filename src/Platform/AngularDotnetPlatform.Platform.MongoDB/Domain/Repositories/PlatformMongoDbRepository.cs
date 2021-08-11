@@ -8,7 +8,6 @@ using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
 using AngularDotnetPlatform.Platform.Extensions;
-using AngularDotnetPlatform.Platform.MongoDB;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
@@ -32,13 +31,6 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         /// Gets DbSet for given entity.
         /// </summary>
         protected IMongoCollection<TEntity> Table => DbContext.GetCollection<TEntity>();
-
-        /// <summary>
-        /// Routing Key Prefix is used as a prefix for entity Create/Update/Delete event. The RoutingKey of an event is used to binding a queue to event for listening events.
-        /// RoutingKey = $"{RoutingKeyPrefix}.{nameof(TEntity)}.{Type}"
-        /// Usually RoutingKeyPrefix should be the unique name of a micro-service.
-        /// </summary>
-        protected abstract string EntityEventRoutingKeyPrefix { get; }
 
         public IQueryable<TEntity> GetAllQuery()
         {

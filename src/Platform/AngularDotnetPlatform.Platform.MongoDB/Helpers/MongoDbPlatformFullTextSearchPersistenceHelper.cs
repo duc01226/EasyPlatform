@@ -1,14 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.Persistence.Helpers;
-using AngularDotnetPlatform.Platform.Utils;
-using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 

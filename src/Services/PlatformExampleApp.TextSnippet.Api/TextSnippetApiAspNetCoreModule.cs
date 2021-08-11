@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using AngularDotnetPlatform.Platform.AspNetCore;
 using PlatformExampleApp.TextSnippet.Application;
 
@@ -19,7 +16,7 @@ namespace PlatformExampleApp.TextSnippet.Api
 
         protected override List<Func<IConfiguration, Type>> GetModuleDependencies()
         {
-            return new List<Func<IConfiguration, Type>>() { p => typeof(TextSnippetApplicationModule) };
+            return new List<Func<IConfiguration, Type>>() { p => typeof(TextSnippetApplicationModule), p => typeof(TextSnippetPlatformRabbitMqEventBusModule) };
         }
 
         protected override string[] GetAllowCorsOrigins(IConfiguration configuration)

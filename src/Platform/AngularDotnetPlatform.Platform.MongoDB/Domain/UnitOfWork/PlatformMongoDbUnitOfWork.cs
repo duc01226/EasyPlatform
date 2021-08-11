@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
@@ -16,12 +13,17 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork
             this.dbContext = dbContext;
         }
 
+        public event Action OnCompleted;
         public bool Completed { get; private set; }
         public bool Disposed { get; private set; }
 
         public Task CompleteAsync()
         {
+            if (Completed)
+                throw new Exception("This unit of work is completed");
+
             Completed = true;
+            OnCompleted?.Invoke();
             return Task.CompletedTask;
         }
 

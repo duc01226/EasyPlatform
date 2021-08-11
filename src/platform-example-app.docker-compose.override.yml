@@ -9,7 +9,7 @@ services:
       - "14330:1433"
     volumes:
       - AngularDotnetPlatform-sqldata:/var/opt/mssql
-  
+
   mongo-data:
     ports:
       - "27017:27017"
@@ -20,6 +20,11 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=rootPassXXX
 
+  rabbitmq:
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
   text-snippet-api:
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
@@ -27,6 +32,7 @@ services:
       - ConnectionStrings__DefaultConnection=${AngularDotnetPlatform_TEXTSNIPPET_DB:-Server=sql-data,1433;Database=TextSnippedDb;User Id=sa;Password=123456Abc}
       - MongoDB__ConnectionString=${AngularDotnetPlatform_TEXTSNIPPET_MONGODB:-mongodb://root:rootPassXXX@mongo-data:27017?authSource=admin}
       - UseMongoDb=${AngularDotnetPlatform_TEXTSNIPPET_UseMongoDb:-true}
+      - RabbitMqOptions__HostNames="rabbitmq"
     ports:
       - "5001:80"
 

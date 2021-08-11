@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Cqrs;
+using AngularDotnetPlatform.Platform.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
@@ -29,8 +30,6 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         {
             this.repository = repository;
         }
-
-        public override string CommandEventRoutingKeyPrefix => TextSnippetApplicationConstants.ApplicationName;
 
         protected override async Task<SaveSnippetTextCommandResult> HandleAsync(SaveSnippetTextCommand request, CancellationToken cancellationToken)
         {

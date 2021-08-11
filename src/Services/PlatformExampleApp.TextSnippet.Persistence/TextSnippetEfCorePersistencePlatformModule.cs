@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using AngularDotnetPlatform.Platform.Domain.Helpers;
 using AngularDotnetPlatform.Platform.EfCore;
 
 namespace PlatformExampleApp.TextSnippet.Persistence

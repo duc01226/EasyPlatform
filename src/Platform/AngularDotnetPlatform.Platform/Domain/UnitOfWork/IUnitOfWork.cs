@@ -5,6 +5,8 @@ namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
 {
     public interface IUnitOfWork : IDisposable
     {
+        public event Action OnCompleted;
+
         public bool Completed { get; }
 
         public bool Disposed { get; }

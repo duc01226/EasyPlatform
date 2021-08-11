@@ -19,6 +19,7 @@ namespace AngularDotnetPlatform.Platform.Domain
         {
             base.InternalRegister(serviceCollection);
             serviceCollection.RegisterAllFromType<IDomainHelper>(ServiceLifeTime.Transient, Assembly);
+            serviceCollection.Register(typeof(IPlatformDomainAssemblyProvider), p => new PlatformDomainAssemblyProvider(Assembly), ServiceLifeTime.Transient);
         }
     }
 }

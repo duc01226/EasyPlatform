@@ -1,0 +1,14 @@
+namespace AngularDotnetPlatform.Platform.Application.Context.UserContext
+{
+    public class PlatformApplicationUserContextKeyBuilder
+    {
+        public const string ContextKeyPrefix = "Platform-ContextKey-";
+
+        private const string ContextKeyConvention = "Platform-ContextKey-{0}";
+
+        public static string ComputedContextKeyFor(string memberName)
+        {
+            return string.Format(ContextKeyConvention, memberName);
+        }
+    }
+}

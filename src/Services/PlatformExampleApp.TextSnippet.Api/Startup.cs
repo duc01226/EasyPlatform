@@ -1,3 +1,4 @@
+using AngularDotnetPlatform.Platform.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -5,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using AngularDotnetPlatform.Platform.DependencyInjection;
-using PlatformExampleApp.TextSnippet.Application;
 
 namespace PlatformExampleApp.TextSnippet.Api
 {
@@ -23,7 +23,7 @@ namespace PlatformExampleApp.TextSnippet.Api
         {
             services.AddControllers().AddJsonOptions(options =>
             {
-                TextSnippetApiAspNetCoreModule.DefaultJsonSerializerOptionsConfigure(options.JsonSerializerOptions);
+                PlatformAspNetCoreModule.DefaultJsonSerializerOptionsConfigure(options.JsonSerializerOptions);
             });
             services.AddSwaggerGen(c =>
             {
@@ -42,6 +42,8 @@ namespace PlatformExampleApp.TextSnippet.Api
                 app.UseSwagger();
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PlatformExampleApp.TextSnippet.Api v1"));
             }
+
+            // Reference middleware orders: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/?view=aspnetcore-5.0#middleware-order
 
             apiModule.UseGlobalExceptionHandlerMiddleware(app);
             apiModule.UseRequestIdGeneratorMiddleware(app);

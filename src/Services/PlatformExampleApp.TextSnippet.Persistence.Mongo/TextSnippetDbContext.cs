@@ -1,9 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.EfCore;
-using Microsoft.EntityFrameworkCore;
 using AngularDotnetPlatform.Platform.MongoDB;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using PlatformExampleApp.TextSnippet.Domain.Entities;

@@ -34,24 +34,24 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
     public interface IRootRepository<TEntity, TPrimaryKey> : IRepository<TEntity, TPrimaryKey>
         where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
     {
-        Task<TEntity> Create(TEntity entity, CancellationToken cancellationToken = default);
+        Task<TEntity> Create(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<TEntity> CreateOrUpdate(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, CancellationToken cancellationToken = default);
+        Task<TEntity> CreateOrUpdate(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<List<TEntity>> CreateOrUpdateMany(List<TEntity> entities, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> CreateOrUpdateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<TEntity> Update(TEntity entity, CancellationToken cancellationToken = default);
+        Task<TEntity> Update(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task Delete(TPrimaryKey entityId, CancellationToken cancellationToken = default);
+        Task Delete(TPrimaryKey entityId, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task Delete(TEntity entity, CancellationToken cancellationToken = default);
+        Task Delete(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<List<TEntity>> CreateMany(List<TEntity> entities, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> CreateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<List<TEntity>> UpdateMany(List<TEntity> entities, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> UpdateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<List<TEntity>> DeleteMany(List<TPrimaryKey> entityIds, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> DeleteMany(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<List<TEntity>> DeleteMany(List<TEntity> entities, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> DeleteMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
     }
 }

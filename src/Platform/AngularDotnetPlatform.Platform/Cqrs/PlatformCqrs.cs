@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Cqrs.Events;
+using AngularDotnetPlatform.Platform.Cqrs.Queries;
 using MediatR;
 
 namespace AngularDotnetPlatform.Platform.Cqrs

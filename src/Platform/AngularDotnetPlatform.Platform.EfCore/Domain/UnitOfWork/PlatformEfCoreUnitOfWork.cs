@@ -13,13 +13,19 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork
             this.dbContext = dbContext;
         }
 
+        public event Action OnCompleted;
+
         public bool Completed { get; private set; }
         public bool Disposed { get; private set; }
 
         public async Task CompleteAsync()
         {
+            if (Completed)
+                throw new Exception("This unit of work is completed");
+
             await dbContext.SaveChangesAsync();
             Completed = true;
+            OnCompleted?.Invoke();
         }
 
         public void Dispose()

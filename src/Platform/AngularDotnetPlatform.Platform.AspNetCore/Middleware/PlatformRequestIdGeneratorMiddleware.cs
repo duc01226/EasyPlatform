@@ -1,15 +1,10 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.AspNetCore.Constants;
 using AngularDotnetPlatform.Platform.AspNetCore.Middleware.Abstracts;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Primitives;
 using AngularDotnetPlatform.Platform.Extensions;
-
 namespace AngularDotnetPlatform.Platform.AspNetCore.Middleware
 {
     /// <summary>
@@ -17,8 +12,11 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Middleware
     /// </summary>
     public class PlatformRequestIdGeneratorMiddleware : PlatformMiddleware
     {
-        public PlatformRequestIdGeneratorMiddleware(RequestDelegate next) : base(next)
+        private readonly IPlatformApplicationUserContextAccessor applicationUserContextAccessor;
+
+        public PlatformRequestIdGeneratorMiddleware(RequestDelegate next, IPlatformApplicationUserContextAccessor applicationUserContextAccessor) : base(next)
         {
+            this.applicationUserContextAccessor = applicationUserContextAccessor;
         }
 
         protected override async Task InternalInvokeAsync(HttpContext context)
@@ -31,6 +29,10 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Middleware
             }
 
             context.TraceIdentifier = context.Request.Headers[PlatformAspnetConstant.CommonHttpHeaderNames.RequestId];
+            if (applicationUserContextAccessor.Current != null)
+            {
+                applicationUserContextAccessor.Current.SetValue(context.TraceIdentifier, PlatformCommonApplicationUserContextKeys.RequestId);
+            }
 
             // apply the request ID to the response header for client side tracking
             context.Response.OnStarting(() =>

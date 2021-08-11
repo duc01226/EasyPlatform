@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using FluentValidation;
 using FluentValidation.Results;
 
@@ -21,6 +22,11 @@ namespace AngularDotnetPlatform.Platform.Validators
             }
 
             return result;
+        }
+
+        public static PlatformValidator<T> Create(params PlatformSingleValidator<T, object>[] includeValidators)
+        {
+            return Create(includeValidators.Select(p => (PlatformValidator<T>)p).ToArray());
         }
     }
 }

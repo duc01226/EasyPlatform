@@ -14,12 +14,12 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
         private const string DefaultServerErrorMessage =
             "There is an unexpected error during the processing of the request. Please try again or contact the Administrator for help.";
 
-        private readonly ILogger logger;
+        protected readonly ILogger Logger;
         private readonly bool developerExceptionEnabled;
 
         public PlatformExceptionFilter(ILogger<PlatformExceptionFilter> logger, IConfiguration configuration)
         {
-            this.logger = logger;
+            this.Logger = logger;
             developerExceptionEnabled = configuration.GetValue<bool>("DeveloperExceptionEnabled");
         }
 
@@ -28,7 +28,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
             if (!HandleApplicationError(context, out var errorResponse) &&
                 !HandleDomainError(context, out errorResponse))
             {
-                Log.UnexpectedRequestError(logger, context.Exception, context.HttpContext.TraceIdentifier);
+                Log.UnexpectedRequestError(Logger, context.Exception, context.HttpContext.TraceIdentifier);
 
                 errorResponse = new PlatformAspNetMvcErrorResponse(
                     new PlatformAspNetMvcErrorInfo
@@ -53,7 +53,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
                     PlatformAspNetMvcErrorInfo.FromApplicationValidationException(applicationValidationException),
                     HttpStatusCode.BadRequest,
                     context.HttpContext.TraceIdentifier);
-                Log.KnownRequestWarning(logger, applicationValidationException, context.HttpContext.TraceIdentifier);
+                Log.KnownRequestWarning(Logger, applicationValidationException, context.HttpContext.TraceIdentifier);
                 return true;
             }
 
@@ -63,7 +63,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
                     PlatformAspNetMvcErrorInfo.FromApplicationException(applicationException),
                     HttpStatusCode.BadRequest,
                     context.HttpContext.TraceIdentifier);
-                Log.KnownRequestWarning(logger, applicationException, context.HttpContext.TraceIdentifier);
+                Log.KnownRequestWarning(Logger, applicationException, context.HttpContext.TraceIdentifier);
                 return true;
             }
 
@@ -79,7 +79,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
                     PlatformAspNetMvcErrorInfo.FromDomainValidationException(domainValidationException),
                     HttpStatusCode.BadRequest,
                     context.HttpContext.TraceIdentifier);
-                Log.KnownRequestWarning(logger, domainValidationException, context.HttpContext.TraceIdentifier);
+                Log.KnownRequestWarning(Logger, domainValidationException, context.HttpContext.TraceIdentifier);
                 return true;
             }
 
@@ -89,7 +89,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
                     PlatformAspNetMvcErrorInfo.FromDomainException(domainException),
                     HttpStatusCode.BadRequest,
                     context.HttpContext.TraceIdentifier);
-                Log.KnownRequestWarning(logger, domainException, context.HttpContext.TraceIdentifier);
+                Log.KnownRequestWarning(Logger, domainException, context.HttpContext.TraceIdentifier);
                 return true;
             }
 

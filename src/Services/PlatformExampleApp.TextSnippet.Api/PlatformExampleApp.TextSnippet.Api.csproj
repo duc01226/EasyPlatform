@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform.AspNetCore\AngularDotnetPlatform.Platform.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform.RabbitMQ\AngularDotnetPlatform.Platform.RabbitMQ.csproj" />
     <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform\AngularDotnetPlatform.Platform.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Application\PlatformExampleApp.TextSnippet.Application.csproj" />
   </ItemGroup>

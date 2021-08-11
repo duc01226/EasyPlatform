@@ -20,6 +20,9 @@ namespace PlatformExampleApp.TextSnippet.Application
 
         protected override async Task InternalSeedData()
         {
+            if (await textSnippetRepository.AnyAsync())
+                return;
+
             for (var i = 0; i < 20; i++)
             {
                 await textSnippetRepository.CreateOrUpdate(

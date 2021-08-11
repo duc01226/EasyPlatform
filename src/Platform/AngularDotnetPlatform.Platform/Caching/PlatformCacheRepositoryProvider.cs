@@ -45,7 +45,7 @@ namespace AngularDotnetPlatform.Platform.Caching
         {
             this.serviceProvider = serviceProvider;
             this.registeredCacheRepositories = registeredCacheRepositories.ToList();
-            this.registeredCacheRepositoriesDic = BuildRegisteredCacheRepositoriesDic(this.registeredCacheRepositories);
+            registeredCacheRepositoriesDic = BuildRegisteredCacheRepositoriesDic(this.registeredCacheRepositories);
         }
 
         public IPlatformCacheRepository Get()

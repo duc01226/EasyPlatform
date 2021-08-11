@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Application;
 using AngularDotnetPlatform.Platform.Application.Caching;
-using AngularDotnetPlatform.Platform.Caching;
+using AngularDotnetPlatform.Platform.Application.Context;
 
 namespace PlatformExampleApp.TextSnippet.Application.Caching
 {

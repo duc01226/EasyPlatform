@@ -1,5 +1,3 @@
-using System;
-
 namespace AngularDotnetPlatform.Platform.MongoDB.Migration
 {
     /// <summary>

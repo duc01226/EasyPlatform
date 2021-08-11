@@ -4,7 +4,14 @@ using AngularDotnetPlatform.Platform.Validators;
 
 namespace AngularDotnetPlatform.Platform.Domain.Entities
 {
-    public interface IEntity<TPrimaryKey>
+    /// <summary>
+    /// This interface is used for conventional type scan for entity
+    /// </summary>
+    public interface IEntity
+    {
+    }
+
+    public interface IEntity<TPrimaryKey> : IEntity
     {
         TPrimaryKey Id { get; set; }
     }
