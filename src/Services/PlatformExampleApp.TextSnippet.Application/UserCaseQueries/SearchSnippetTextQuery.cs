@@ -4,7 +4,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Cqrs.Queries;
 using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.Persistence.Helpers;

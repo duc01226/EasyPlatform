@@ -1,4 +1,3 @@
-using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Cqrs.Events;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 
@@ -22,7 +21,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Events
     {
         public PlatformCqrsEntityEvent() { }
 
-        public PlatformCqrsEntityEvent(TEntity entityData, PlatformEntityEventAction action)
+        public PlatformCqrsEntityEvent(TEntity entityData, PlatformCqrsEntityEventAction action)
         {
             Id = entityData.Id.ToString();
             EntityData = entityData;
@@ -31,17 +30,10 @@ namespace AngularDotnetPlatform.Platform.Domain.Events
 
         public TEntity EntityData { get; }
 
-        public PlatformEntityEventAction Action { get; }
+        public PlatformCqrsEntityEventAction Action { get; }
 
         public override string EventType => EventTypeValue;
         public override string EventName => EventNameValue<TEntity>();
         public override string EventAction => Action.ToString();
-    }
-
-    public enum PlatformEntityEventAction
-    {
-        Created,
-        Updated,
-        Deleted
     }
 }

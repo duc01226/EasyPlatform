@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext.Default;
-using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
 using AngularDotnetPlatform.Platform.DependencyInjection;

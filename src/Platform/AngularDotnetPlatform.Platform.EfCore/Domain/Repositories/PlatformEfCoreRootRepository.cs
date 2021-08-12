@@ -35,7 +35,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 
             var result = await Table.AddAsync(entity, cancellationToken).Map(p => entity);
             if (!dismissSendEvent)
-                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Created), cancellationToken);
+                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Created), cancellationToken);
             return result;
         }
 
@@ -83,7 +83,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 
             var result = await Task.FromResult(Table.Update(entity).Entity);
             if (!dismissSendEvent)
-                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Updated), cancellationToken);
+                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Updated), cancellationToken);
             return result;
         }
 
@@ -97,7 +97,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
         {
             await Task.FromResult(Table.Remove(entity).Entity);
             if (!dismissSendEvent)
-                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Deleted), cancellationToken);
+                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Deleted), cancellationToken);
         }
 
         public async Task<List<TEntity>> CreateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
@@ -110,7 +110,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvents(
-                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Created)),
+                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Created)),
                     cancellationToken);
             }
 
@@ -127,7 +127,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvents(
-                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Updated)),
+                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Updated)),
                     cancellationToken);
             }
 
@@ -147,7 +147,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvents(
-                entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Deleted)),
+                entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Deleted)),
                 cancellationToken);
             }
 

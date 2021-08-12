@@ -1,4 +1,3 @@
-using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Cqrs.Events;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 

@@ -30,7 +30,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
 
             await Table.InsertOneAsync(entity, null, cancellationToken);
             if (!dismissSendEvent)
-                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Created), cancellationToken);
+                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Created), cancellationToken);
             return entity;
         }
 
@@ -78,7 +78,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
 
             var result = await Table.ReplaceOneAsync(p => p.Id.Equals(entity.Id), entity, new ReplaceOptions { IsUpsert = false }, cancellationToken);
             if (result.ModifiedCount > 0 && !dismissSendEvent)
-                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Updated), cancellationToken);
+                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Updated), cancellationToken);
             return entity;
         }
 
@@ -92,7 +92,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         {
             var result = await Table.DeleteOneAsync(p => p.Id.Equals(entity.Id), null, cancellationToken);
             if (result.DeletedCount > 0 && !dismissSendEvent)
-                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Deleted), cancellationToken);
+                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Deleted), cancellationToken);
         }
 
         public async Task<List<TEntity>> CreateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
@@ -108,7 +108,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvents(
-                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Created)),
+                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Created)),
                     cancellationToken);
             }
 
@@ -134,7 +134,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
                 {
                     var updatedEntities = entities.Where(p => idToUpdateEntityResultMap[p.Id].ModifiedCount > 0);
                     await Cqrs.SendEvents(
-                        updatedEntities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Updated)),
+                        updatedEntities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Updated)),
                         cancellationToken);
                 }
             }
@@ -157,7 +157,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvents(
-                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformEntityEventAction.Deleted)),
+                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Deleted)),
                     cancellationToken);
             }
 

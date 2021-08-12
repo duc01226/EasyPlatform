@@ -9,6 +9,13 @@ namespace AngularDotnetPlatform.Platform.Extensions
 {
     public static class ServiceCollectionExtension
     {
+        public enum ReplaceServiceStrategy
+        {
+            ByService,
+            ByImplementation,
+            ByBoth
+        }
+
         /// <summary>
         /// Register all concrete types in a module that is assignable to TConventional as itself and it's implemented interfaces
         /// </summary>
@@ -109,6 +116,8 @@ namespace AngularDotnetPlatform.Platform.Extensions
                     else
                         services.AddSingleton(serviceType, implementationType);
                     break;
+
+                case ServiceLifeTime.Transient:
                 default:
                     if (replaceIfExist)
                         services.ReplaceTransient(serviceType, implementationType, replaceStrategy);
@@ -183,6 +192,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
                     else
                         services.AddSingleton(serviceType, p => implementationFunc(p));
                     break;
+                case ServiceLifeTime.Transient:
                 default:
                     if (replaceIfExist)
                         services.ReplaceTransient(serviceType, implementationFunc, replaceStrategy);
@@ -257,29 +267,24 @@ namespace AngularDotnetPlatform.Platform.Extensions
             return services.ReplaceSingleton(typeof(TService), typeof(TImplementation), replaceStrategy);
         }
 
-        public static void RemoveIfExist(this IServiceCollection services, Func<ServiceDescriptor, bool> predicate)
+        public static IServiceCollection RemoveIfExist(this IServiceCollection services, Func<ServiceDescriptor, bool> predicate)
         {
             var existedServiceRegister = services.FirstOrDefault(predicate);
             if (existedServiceRegister != null)
                 services.Remove(existedServiceRegister);
+
+            return services;
         }
 
-        public static void RemoveIfExist(IServiceCollection services, Type serviceType, Type implementationType, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        public static IServiceCollection RemoveIfExist(IServiceCollection services, Type serviceType, Type implementationType, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            switch (replaceStrategy)
+            return replaceStrategy switch
             {
-                case ReplaceServiceStrategy.ByService:
-                    RemoveIfExist(services, p => p.ServiceType == serviceType);
-                    break;
-                case ReplaceServiceStrategy.ByImplementation:
-                    RemoveIfExist(services, p => p.ImplementationType == implementationType);
-                    break;
-                case ReplaceServiceStrategy.ByBoth:
-                    RemoveIfExist(services, p => p.ServiceType == serviceType && p.ImplementationType == implementationType);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(replaceStrategy), replaceStrategy, null);
-            }
+                ReplaceServiceStrategy.ByService => RemoveIfExist(services, p => p.ServiceType == serviceType),
+                ReplaceServiceStrategy.ByImplementation => RemoveIfExist(services, p => p.ImplementationType == implementationType),
+                ReplaceServiceStrategy.ByBoth => RemoveIfExist(services, p => p.ServiceType == serviceType && p.ImplementationType == implementationType),
+                _ => throw new ArgumentOutOfRangeException(nameof(replaceStrategy), replaceStrategy, null)
+            };
         }
 
         public static void RegisterInterfacesForImplementation(
@@ -295,18 +300,14 @@ namespace AngularDotnetPlatform.Platform.Extensions
                     .GetInterfaces()
                     .Where(p => p.IsGenericType && p.GetGenericArguments().Length == implementationType.GetGenericArguments().Length)
                     .ToList()
-                    .ForEach(implementationTypeInterface =>
-                    {
-                        // FixTypeReference is used because when Type is generic, get Interfaces will lead to missing fullName => lead to register into ServiceCollection for generic type get errors
-                        services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationType, lifeTime, replaceIfExist, replaceStrategy);
-                    });
+                    .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationType, lifeTime, replaceIfExist, replaceStrategy));
             }
             else
             {
-                implementationType.GetInterfaces().Where(p => !p.IsGenericType).ToList().ForEach(implementationTypeInterface =>
-                {
-                    services.Register(implementationTypeInterface, implementationType, lifeTime, replaceIfExist, replaceStrategy);
-                });
+                implementationType.GetInterfaces()
+                    .Where(p => !p.IsGenericType)
+                    .ToList()
+                    .ForEach(implementationTypeInterface => services.Register(implementationTypeInterface, implementationType, lifeTime, replaceIfExist, replaceStrategy));
             }
         }
 
@@ -324,30 +325,21 @@ namespace AngularDotnetPlatform.Platform.Extensions
                     .GetInterfaces()
                     .Where(p => p.IsGenericType && MatchGenericArguments(p, implementationType))
                     .ToList()
-                    .ForEach(implementationTypeInterface =>
-                    {
-                        services.Register(implementationTypeInterface, implementationFactory, lifeTime, replaceIfExist, replaceStrategy);
-                    });
+                    .ForEach(implementationTypeInterface => services.Register(implementationTypeInterface, implementationFactory, lifeTime, replaceIfExist, replaceStrategy));
             }
             else
             {
-                implementationType.GetInterfaces().Where(p => !p.IsGenericType).ToList().ForEach(implementationTypeInterface =>
-                {
-                    services.Register(implementationTypeInterface, implementationFactory, lifeTime, replaceIfExist, replaceStrategy);
-                });
+                implementationType
+                    .GetInterfaces()
+                    .Where(p => !p.IsGenericType)
+                    .ToList()
+                    .ForEach(implementationTypeInterface => services.Register(implementationTypeInterface, implementationFactory, lifeTime, replaceIfExist, replaceStrategy));
             }
         }
 
         public static bool MatchGenericArguments(Type rootType, Type implementationType)
         {
             return rootType.GetGenericArguments().Length == implementationType.GetGenericArguments().Length;
-        }
-
-        public enum ReplaceServiceStrategy
-        {
-            ByService,
-            ByImplementation,
-            ByBoth
         }
     }
 }
