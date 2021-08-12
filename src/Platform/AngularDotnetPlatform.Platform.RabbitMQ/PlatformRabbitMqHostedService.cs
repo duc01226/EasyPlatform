@@ -1,37 +1,37 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
-using AngularDotnetPlatform.Platform.Application.Context.UserContext;
-using AngularDotnetPlatform.Platform.Application.EventBus;
-using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
-using AngularDotnetPlatform.Platform.Cqrs;
-using AngularDotnetPlatform.Platform.Cqrs.Commands;
-using AngularDotnetPlatform.Platform.Domain;
-using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.EventBus;
+using AngularDotnetPlatform.Platform.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
+using Polly;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
 namespace AngularDotnetPlatform.Platform.RabbitMQ
 {
-    public class PlatformRabbitMqHostedService : IHostedService
+    public partial class PlatformRabbitMqHostedService : IHostedService
     {
         private readonly PlatformRabbitMqOptions options;
         private readonly IServiceProvider serviceProvider;
         private readonly IPlatformApplicationSettingContext applicationSettingContext;
         private readonly PlatformRabbitMqExchangeProvider exchangeProvider;
+        private readonly IPlatformEventBusManager eventBusManager;
         private readonly ILogger<PlatformRabbitMqHostedService> logger;
+
+        // Use ObjectBool to manage chanel because HostService is singleton, and we don't want re-init chanel is heavy and wasting time.
+        // We want to use pool when object is expensive to allocate/initialize
+        // References: https://docs.microsoft.com/en-us/aspnet/core/performance/objectpool?view=aspnetcore-5.0
         private readonly DefaultObjectPool<IModel> channelPool;
+
         private readonly object retryConnectConsumerLock = new object();
         private IModel currentChannel;
 
@@ -41,6 +41,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             IServiceProvider serviceProvider,
             IPlatformApplicationSettingContext applicationSettingContext,
             PlatformRabbitMqExchangeProvider exchangeProvider,
+            IPlatformEventBusManager eventBusManager,
             ILogger<PlatformRabbitMqHostedService> logger)
         {
             this.options = options;
@@ -48,6 +49,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             this.applicationSettingContext = applicationSettingContext;
             this.exchangeProvider = exchangeProvider;
             this.logger = logger;
+            this.eventBusManager = eventBusManager;
 
             // Needs 1 object only for the hosted service.
             channelPool = new DefaultObjectPool<IModel>(channelPolicy, 1);
@@ -86,34 +88,12 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         private void DeclareRabbitMqQueuesConfiguration(IModel channel)
         {
             // Declare queue for all messages to be produced
-            GetAllDefinedMessageRoutingKeys()
-                .ForEach(definedMessageRoutingKey =>
-                {
-                    DeclareQueueForRoutingKey(channel, definedMessageRoutingKey);
-                });
+            eventBusManager.GetAllDefinedEventBusMessageRoutingKeys()
+                .ForEach(definedMessageRoutingKey => DeclareQueueForRoutingKey(channel, definedMessageRoutingKey));
 
             // Declare queue for all consumers
-            GetAllConsumerMatchingRoutingKeys()
-                .ForEach(consumerMatchingRoutingKey =>
-                {
-                    DeclareQueueForRoutingKey(channel, consumerMatchingRoutingKey);
-                });
-        }
-
-        /// <summary>
-        /// Get all routing keys matched with all defined consumers
-        /// </summary>
-        private List<PlatformEventBusMessageRoutingKey> GetAllConsumerMatchingRoutingKeys()
-        {
-            return applicationSettingContext.GetType().Assembly.GetTypes()
-                .Where(p => p.IsAssignableTo(typeof(IPlatformEventBusConsumer)) && p.IsClass && !p.IsAbstract)
-                .SelectMany(messageConsumerType => messageConsumerType
-                    .GetCustomAttributes(true)
-                    .OfType<PlatformEventBusConsumerAttribute>()
-                    .Select(messageConsumerTypeAttribute => (PlatformEventBusConsumerAttribute)messageConsumerTypeAttribute))
-                .Select(p => PlatformEventBusMessageRoutingKey.New(p.MessageGroup, p.ProducerContext, p.MessageType))
-                .Distinct()
-                .ToList();
+            eventBusManager.AllDefinedEventBusConsumerMatchingRoutingKeys()
+                .ForEach(consumerMatchingRoutingKey => DeclareQueueForRoutingKey(channel, consumerMatchingRoutingKey));
         }
 
         private void DeclareQueueForRoutingKey(IModel channel, PlatformEventBusMessageRoutingKey forRoutingKey)
@@ -128,60 +108,16 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             channel.QueueDeclare(queueName, durable: true, exclusive: false, autoDelete: false);
             channel.QueueBind(queueName, exchange, bindRoutingKey);
 
-            LogInformation(message: $"Queue {queueName} has been declared and bind to Exchange {exchange} with routing key {bindRoutingKey}");
+            Log.Information(logger, message: $"Queue {queueName} has been declared and bind to Exchange {exchange} with routing key {bindRoutingKey}");
         }
 
         private void DeclareRabbitMqExchangesConfiguration(IModel channel)
         {
             // Declare exchanges for all defined messages to be produced
-            DeclareExchangesForRoutingKeys(channel, GetAllDefinedMessageRoutingKeys());
+            DeclareExchangesForRoutingKeys(channel, eventBusManager.GetAllDefinedEventBusMessageRoutingKeys());
 
             // Declare exchanges for all consumers
-            DeclareExchangesForRoutingKeys(channel, GetAllConsumerMatchingRoutingKeys());
-        }
-
-        /// <summary>
-        /// Get routing keys for all defined message to be produced
-        /// </summary>
-        private List<PlatformEventBusMessageRoutingKey> GetAllDefinedMessageRoutingKeys()
-        {
-            var definedMessageRoutingKeys = serviceProvider.GetServices<IPlatformEventBusMessage>()
-                .Select(p => p.RoutingKey())
-                .ToList();
-
-            var allDefinedEntitiesEntityEventRoutingKeys = serviceProvider.GetService<IPlatformDomainAssemblyProvider>()!.Assembly
-                .GetTypes()
-                .Where(p => p.IsAssignableTo(typeof(IEntity)) && p.IsClass && !p.IsAbstract && !p.IsGenericType)
-                .Select(entityType =>
-                {
-                    var entityIdType = entityType.GetInterfaces().First(p => p.IsGenericType && p.GetGenericTypeDefinition().IsAssignableTo(typeof(IEntity<>)));
-                    var entityEventMessageType =
-                        typeof(PlatformCqrsEntityEventBusMessage<,>).MakeGenericType(entityType, entityIdType.GenericTypeArguments[0]);
-                    var entityEventMessage =
-                        (IPlatformCqrsEntityEventBusMessage)Activator.CreateInstance(entityEventMessageType);
-                    return entityEventMessage!.RoutingKey();
-                })
-                .ToList();
-
-            var allDefinedCommandsCommandEventRoutingKeys = applicationSettingContext.GetType().Assembly
-                .GetTypes()
-                .Where(p => p.IsAssignableTo(typeof(IPlatformCqrsCommand)) && p.IsClass && !p.IsAbstract && !p.IsGenericType)
-                .Select(commandType =>
-                {
-                    var commandResultType = commandType.GetInterfaces().First(p =>
-                        p.IsGenericType && p.GetGenericTypeDefinition().IsAssignableTo(typeof(IPlatformCqrsCommand<>)));
-                    var commandEventMessageType =
-                        typeof(PlatformCqrsCommandEventBusMessage<,>).MakeGenericType(commandType, commandResultType.GenericTypeArguments[0]);
-                    var commandEventMessage =
-                        (IPlatformCqrsCommandEventBusMessage)Activator.CreateInstance(commandEventMessageType);
-                    return commandEventMessage!.RoutingKey();
-                })
-                .ToList();
-
-            return definedMessageRoutingKeys
-                .Concat(allDefinedEntitiesEntityEventRoutingKeys)
-                .Concat(allDefinedCommandsCommandEventRoutingKeys)
-                .ToList();
+            DeclareExchangesForRoutingKeys(channel, eventBusManager.AllDefinedEventBusConsumerMatchingRoutingKeys());
         }
 
         private void DeclareExchangesForRoutingKeys(IModel channel, List<PlatformEventBusMessageRoutingKey> routingKeys)
@@ -194,7 +130,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 {
                     channel.ExchangeDeclare(exchangeName, ExchangeType.Topic, durable: true);
 
-                    LogInformation(message: $"Exchange {exchangeName} is declared.");
+                    Log.Information(logger, message: $"Exchange {exchangeName} is declared.");
                 });
         }
 
@@ -202,274 +138,259 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         {
             try
             {
-                var channel = channelPool.Get();
-                currentChannel = channel;
+                if (currentChannel != null)
+                    channelPool.Return(currentChannel);
 
+                // Config Chanel
+                currentChannel = channelPool.Get();
+                currentChannel.ModelShutdown += (model, eventArg) =>
+                {
+                    Log.Error(logger, message: "Channel shutdown");
+
+                    lock (retryConnectConsumerLock)
+                    {
+                        RetryRunningConsumer();
+
+                        Log.Warning(logger, message: "Channel Re-connect event already triggered");
+                    }
+                };
                 // Config the prefectCount: 30 (Not default is 0 mean unlimited) to limit messages to prevent rabbit mq down
                 // Reference: https://www.rabbitmq.com/tutorials/tutorial-two-dotnet.html. Filter: BasicQos
-                channel.BasicQos(prefetchSize: 0, prefetchCount: options.QueuePrefectCount, global: false);
-                var consumer = new AsyncEventingBasicConsumer(channel);
-                var reconnect = false;
-                consumer.ConsumerCancelled += (model, eventArg) =>
-                {
-                    LogError(message: "Consumer cancelled");
+                currentChannel.BasicQos(prefetchSize: 0, prefetchCount: options.QueuePrefetchCount, global: false);
 
-                    var shouldReconnect = false;
-                    lock (retryConnectConsumerLock)
+                // Config RabbitMQ Basic Consumer
+                var applicationRabbitConsumer = new AsyncEventingBasicConsumer(currentChannel);
+                applicationRabbitConsumer.ConsumerCancelled += OnConsumerCancelled;
+                applicationRabbitConsumer.Received += OnMessageReceived;
+
+                // Binding all defined event bus consumer to RabbitMQ Basic Consumer
+                eventBusManager.AllDefinedEventBusConsumerMatchingRoutingKeys()
+                    .Select(p => p.QueueName(applicationSettingContext.ApplicationName))
+                    .ToList()
+                    .ForEach(queueName =>
                     {
-                        if (!reconnect)
-                        {
-                            reconnect = true;
-                            shouldReconnect = true;
-                        }
-                        else
-                        {
-                            logger.LogWarning("[{GetType().FullName}] Re-connect event already triggered");
-                        }
-                    }
+                        // autoAck: false -> the Consumer will ack manually.
+                        currentChannel.BasicConsume(queue: queueName, autoAck: false, consumer: applicationRabbitConsumer);
 
-                    if (shouldReconnect)
-                    {
-                        RetryRunningConsumer();
-                    }
-
-                    return Task.CompletedTask;
-                };
-                consumer.Received += OnMessageReceived;
-
-                GetAllConsumerMatchingRoutingKeys().Select(p => p.QueueName(applicationSettingContext.ApplicationName)).ToList().ForEach(queueName =>
-                {
-                    // autoAck: false -> the Consumer will ack manually.
-                    channel.BasicConsume(queue: queueName, autoAck: false, consumer: consumer);
-
-                    LogInformation(message: $"Connected to queue {queueName}");
-                });
-                channel.ModelShutdown += (model, eventArg) =>
-                {
-                    LogError(message: "Channel shutdown");
-
-                    var shouldReconnect = false;
-                    lock (retryConnectConsumerLock)
-                    {
-                        if (!reconnect)
-                        {
-                            reconnect = true;
-                            shouldReconnect = true;
-                        }
-                        else
-                        {
-                            LogWarning(message: "Channel Re-connect event already triggered");
-                        }
-                    }
-
-                    if (shouldReconnect)
-                    {
-                        RetryRunningConsumer();
-                    }
-                };
+                        Log.Information(logger, message: $"Connected to queue {queueName}");
+                    });
             }
             catch (Exception ex)
             {
-                LogError(ex, "Consumer can't start");
-
+                Log.Error(logger, ex, "Consumer can't start");
                 throw;
             }
             finally
             {
                 if (currentChannel != null)
                 {
-                    LogInformation(message: "Return channel object to the pool.");
+                    Log.Information(logger, message: "Return channel object to the pool.");
                     channelPool.Return(currentChannel);
                 }
             }
         }
 
-        private void LogError(Exception ex = null, string message = null, object[] args = null)
+        private Task OnConsumerCancelled(object sender, ConsumerEventArgs args)
         {
-            if (ex != null)
-                logger.LogError(ex, $"{LogPrefix()} {message ?? ex.Message}", args ?? Array.Empty<object>());
-            else if (message != null)
-                logger.LogError($"{LogPrefix()} {message}", args);
-        }
+            Log.Error(logger, message: "Consumer cancelled");
 
-        private void LogWarning(Exception ex = null, string message = null, object[] args = null)
-        {
-            if (ex != null)
-                logger.LogWarning(ex, $"{LogPrefix()} {message ?? ex.Message}", args ?? Array.Empty<object>());
-            else if (message != null)
-                logger.LogWarning($"{LogPrefix()} {message}", args);
-        }
+            lock (retryConnectConsumerLock)
+            {
+                RetryRunningConsumer();
 
-        private void LogInformation(Exception ex = null, string message = null, object[] args = null)
-        {
-            if (ex != null)
-                logger.LogInformation(ex, $"{LogPrefix()} {message ?? ex.Message}", args ?? Array.Empty<object>());
-            else if (message != null)
-                logger.LogInformation($"{LogPrefix()} {message}", args);
-        }
+                Log.Warning(logger, message: "Re-connect event already triggered");
+            }
 
-        private string LogPrefix()
-        {
-            return $"[{GetType().FullName}]";
+            return Task.CompletedTask;
         }
 
         private void RetryRunningConsumer()
         {
-            var currentRetry = 0;
-            while (true)
-            {
-                try
-                {
-                    currentRetry++;
-                    LogInformation(message: $"Consumer re-connecting {currentRetry} time(s)");
-                    RunConsumer();
-                    LogInformation(message: "Consumer re-connected");
-
-                    break;
-                }
-                catch (Exception ex)
-                {
-                    LogWarning(ex, $"Retry consumer {currentRetry} time(s) failed with error: {ex.Message}");
-
-                    if (currentRetry > options.RunConsumerRetryCount)
+            var finalResult = Policy.Handle<Exception>()
+                .WaitAndRetry(
+                    retryCount: options.RunConsumerRetryCount,
+                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                    onRetry: (ex, timeSpan, currentRetry, ctx) =>
                     {
-                        logger.LogError(ex, $"Retry consumer failed with err : {ex.Message}");
+                        Log.Warning(
+                            logger,
+                            ex,
+                            $"Retry consumer {currentRetry} time(s) failed with error: {ex.Message}");
+                    })
+                .ExecuteAndCapture(RunConsumer);
 
-                        throw;
-                    }
-                }
-
-                Thread.Sleep(TimeSpan.FromSeconds(Math.Pow(2, currentRetry)));
+            if (finalResult.FinalException != null)
+            {
+                Log.Error(logger, finalResult.FinalException, $"Retry consumer failed with err : {finalResult.FinalException.Message}");
             }
         }
 
-        private async Task OnMessageReceived(object sender, BasicDeliverEventArgs args)
+        private async Task OnMessageReceived(object sender, BasicDeliverEventArgs rabbitMqMessage)
         {
-            Stopwatch stopwatch = null;
-            if (options.LogProcessTime)
+            if (options.LogConsumerProcessTime)
             {
-                stopwatch = Stopwatch.StartNew();
-                LogInformation(message: "Received message with routing key: {RoutingKey}. Delivery Tag: {DeliveryTag}.", args: new object[] { args.RoutingKey, args.DeliveryTag });
+                await Util.Tasks.ProfilingAsync(
+                    asyncTask: () => TransferMessageToAllEventBusConsumers(rabbitMqMessage),
+                    beforeExecution: () => Log.Information(
+                        logger,
+                        message: "Received message with routing key: {RoutingKey}. Delivery Tag: {DeliveryTag}.",
+                        args: new object[] { rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag }),
+                    afterExecution: elapsedMilliseconds => Log.Information(
+                        logger,
+                        message: "End processing message with routing key: {RoutingKey}. Delivery Tag: {DeliveryTag}. Elapsed {ElapsedMilliseconds} in milliseconds.",
+                        args: new object[] { rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag, elapsedMilliseconds }));
             }
+            else
+            {
+                await TransferMessageToAllEventBusConsumers(rabbitMqMessage);
+            }
+        }
 
+        private async Task TransferMessageToAllEventBusConsumers(BasicDeliverEventArgs rabbitMqMessage)
+        {
             try
             {
+                var objectTypePayloadMessage = JsonSerializer.Deserialize<PlatformEventBusMessage<object>>(rabbitMqMessage.Body.Span, PlatformJsonSerializer.CurrentOptions.Value);
+                if (objectTypePayloadMessage == null)
+                {
+                    currentChannel.BasicAck(rabbitMqMessage.DeliveryTag, false);
+                    return;
+                }
+
                 using (var scope = serviceProvider.CreateScope())
                 {
-                    var objectTypePayloadMessage = JsonSerializer.Deserialize<PlatformEventBusMessage<object>>(args.Body.Span, PlatformJsonSerializer.CurrentOptions.Value);
-                    if (objectTypePayloadMessage != null)
+                    var canProcessConsumers = scope.ServiceProvider
+                        .GetServices<IPlatformEventBusConsumer>()
+                        .Where(p => p.CanProcess(PlatformEventBusMessageRoutingKey.New(rabbitMqMessage.RoutingKey)))
+                        .ToList();
+
+                    foreach (var consumer in canProcessConsumers)
                     {
-                        using (logger.BeginScope(new Dictionary<string, object>()
+                        if (options.LogConsumerProcessTime)
                         {
-                            {PlatformCommonApplicationUserContextKeys.RequestId, objectTypePayloadMessage.Identity?.RequestId},
-                            {PlatformCommonApplicationUserContextKeys.UserId, objectTypePayloadMessage.Identity?.UserId}
-                        }))
+                            Log.Information(
+                                logger,
+                                message: "Begin processing message with routing key: {RoutingKey}; Delivery Tag: {DeliveryTag}; Message id {MessageId} for consumer {ConsumerName}",
+                                args: new object[] { rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag, objectTypePayloadMessage.TrackingId ?? "n/a", consumer.GetType().FullName });
+
+                            await ExecuteConsumer(rabbitMqMessage, consumer);
+
+                            Log.Information(
+                                logger,
+                                message: "End processing message with routing key: {RoutingKey}; Delivery Tag: {DeliveryTag}; Message id {MessageId} for consumer {ConsumerName}",
+                                args: new object[] { rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag, objectTypePayloadMessage.TrackingId ?? "n/a", consumer.GetType().FullName });
+                        }
+                        else
                         {
-                            var canProcessConsumers = scope.ServiceProvider
-                                .GetServices<IPlatformEventBusConsumer>()
-                                .Where(p => p.CanProcess(PlatformEventBusMessageRoutingKey.New(args.RoutingKey)))
-                                .ToList();
-
-                            foreach (var consumer in canProcessConsumers)
-                            {
-                                if (options.LogProcessTime)
-                                {
-                                    LogInformation(
-                                        message: "Begin processing message with routing key {RoutingKey} {DeliveryTag}",
-                                        args: new object[] { args.RoutingKey, args.DeliveryTag });
-                                }
-
-                                var genericConsumerType = consumer
-                                    .GetType()
-                                    .GetInterfaces()
-                                    .FirstOrDefault(x =>
-                                        x.IsGenericType &&
-                                        x.GetGenericTypeDefinition() == typeof(IPlatformEventBusConsumer<>));
-
-                                // To ensure that the consumer implements the correct interface IOpalMessageConsumer<>.
-                                // The IOpalMessageConsumer (non-generic version) is used for Interface Marker only.
-                                if (genericConsumerType == null)
-                                {
-                                    throw new Exception("Incorrect implementation of IPlatformMessageConsumer<>");
-                                }
-
-                                // Get generic type IPlatformMessageConsumer<TMessage> -> TMessage
-                                var messageConsumerPayloadType = genericConsumerType.GetGenericArguments()[0];
-
-                                // Get type of generic PlatformEventBusMessage<>
-                                var messageType = typeof(PlatformEventBusMessage<>);
-
-                                // Make a generic type: PlatformEventBusMessage<TMessage>
-                                var messageForConsumerPayloadType =
-                                    messageType.MakeGenericType(messageConsumerPayloadType);
-
-                                object data = null;
-                                try
-                                {
-                                    // Deserialize message into a type-safe type.
-                                    data = JsonSerializer.Deserialize(
-                                        args.Body.Span,
-                                        messageForConsumerPayloadType,
-                                        PlatformJsonSerializer.CurrentOptions.Value);
-                                }
-                                catch (Exception parseException)
-                                {
-                                    LogError(
-                                        parseException,
-                                        "RabbitMQ parsing error for the routing key {RoutingKey}. Body: {Message}",
-                                        new object[] { args.RoutingKey, Encoding.UTF8.GetString(args.Body.Span) });
-                                    continue;
-                                }
-
-                                if (data != null)
-                                {
-                                    // Get HandleAsync method.
-                                    var methodInfo = consumer.GetType()
-                                        .GetMethod(nameof(IPlatformEventBusConsumer<object>.HandleAsync));
-                                    if (methodInfo == null)
-                                    {
-                                        throw new Exception(
-                                            $"Can not find execution method from {genericConsumerType.FullName}");
-                                    }
-
-                                    // Invoke the method.
-                                    await (Task)methodInfo.Invoke(consumer, new[] { data });
-                                }
-
-                                if (options.LogProcessTime)
-                                {
-                                    LogInformation(
-                                        message: "End processing message with routing key: {RoutingKey}. Delivery Tag: {DeliveryTag}. Message id {MessageId}",
-                                        args: new object[] { args.RoutingKey, args.DeliveryTag, objectTypePayloadMessage.TrackingId ?? "n/a" });
-                                }
-                            }
-
-                            // Clear to prevent memory leak
-                            canProcessConsumers.Clear();
+                            await ExecuteConsumer(rabbitMqMessage, consumer);
                         }
                     }
 
+                    // Clear to prevent memory leak
+                    canProcessConsumers.Clear();
+
                     // Ack the message.
-                    currentChannel.BasicAck(args.DeliveryTag, false);
+                    currentChannel.BasicAck(rabbitMqMessage.DeliveryTag, false);
                 }
             }
             catch (Exception ex)
             {
-                LogError(ex, "RabbitMQ processing error for the routing key: {RoutingKey}. Message: {Message}", new object[] { args.RoutingKey, Encoding.UTF8.GetString(args.Body.Span) });
+                Log.Error(
+                    logger,
+                    ex,
+                    "RabbitMQ processing error for the routing key: {RoutingKey}. Message: {Message}",
+                    new object[] { rabbitMqMessage.RoutingKey, Encoding.UTF8.GetString(rabbitMqMessage.Body.Span) });
 
                 // Reject the message.
-                currentChannel.BasicReject(args.DeliveryTag, false);
+                Util.Tasks.CatchException(() => currentChannel.BasicReject(rabbitMqMessage.DeliveryTag, false));
             }
-            finally
-            {
-                if (options.LogProcessTime)
-                {
-                    stopwatch?.Stop();
+        }
 
-                    LogInformation(
-                        message: "End processing message with routing key: {RoutingKey}. Delivery Tag: {DeliveryTag}. Elapsed {ElapsedMilliseconds} in milliseconds.",
-                        args: new object[] { args.RoutingKey, args.DeliveryTag, stopwatch?.ElapsedMilliseconds ?? 0 });
+        /// <summary>
+        /// Return Exception if failed to execute consumer
+        /// </summary>
+        private async Task ExecuteConsumer(BasicDeliverEventArgs args, IPlatformEventBusConsumer consumer)
+        {
+            var genericConsumerType = consumer
+                .GetType()
+                .GetInterfaces()
+                .FirstOrDefault(x =>
+                    x.IsGenericType &&
+                    x.GetGenericTypeDefinition() == typeof(IPlatformEventBusConsumer<>));
+
+            // To ensure that the consumer implements the correct interface IOpalMessageConsumer<>.
+            // The IOpalMessageConsumer (non-generic version) is used for Interface Marker only.
+            if (genericConsumerType == null)
+            {
+                throw new Exception("Incorrect implementation of IPlatformMessageConsumer<>");
+            }
+
+            // Get generic type IPlatformMessageConsumer<TMessage> -> TMessage
+            var messageConsumerPayloadType = genericConsumerType.GetGenericArguments()[0];
+
+            // Get type of generic PlatformEventBusMessage<>
+            var messageType = typeof(PlatformEventBusMessage<>);
+
+            // Make a generic type: PlatformEventBusMessage<TMessage>
+            var messageForConsumerPayloadType =
+                messageType.MakeGenericType(messageConsumerPayloadType);
+
+            var data = Util.Tasks.CatchExceptionContinueThrow(
+                () => JsonSerializer.Deserialize(
+                    args.Body.Span,
+                    messageForConsumerPayloadType,
+                    PlatformJsonSerializer.CurrentOptions.Value),
+                ex => Log.Error(
+                    logger,
+                    ex,
+                    "RabbitMQ parsing error for the routing key {RoutingKey}. Body: {Message}",
+                    new object[] { args.RoutingKey, Encoding.UTF8.GetString(args.Body.Span) }));
+
+            if (data != null)
+            {
+                // Get HandleAsync method.
+                var methodInfo = consumer.GetType()
+                    .GetMethod(nameof(IPlatformEventBusConsumer<object>.HandleAsync));
+                if (methodInfo == null)
+                {
+                    throw new Exception(
+                        $"Can not find execution method from {genericConsumerType.FullName}");
                 }
+
+                // Invoke the method.
+                var invokeResult = methodInfo.Invoke(consumer, new[] { data });
+                if (invokeResult is Task invokeTask)
+                    await invokeTask;
+            }
+        }
+    }
+
+    public partial class PlatformRabbitMqHostedService
+    {
+        public class Log
+        {
+            public static void Error(ILogger<PlatformRabbitMqHostedService> logger, Exception ex = null, string message = null, object[] args = null)
+            {
+                if (ex != null)
+                    logger.LogError(ex, $"{message ?? ex.Message}", args ?? Array.Empty<object>());
+                else if (message != null)
+                    logger.LogError($"{message}", args);
+            }
+
+            public static void Warning(ILogger<PlatformRabbitMqHostedService> logger, Exception ex = null, string message = null, object[] args = null)
+            {
+                if (ex != null)
+                    logger.LogWarning(ex, $"{message ?? ex.Message}", args ?? Array.Empty<object>());
+                else if (message != null)
+                    logger.LogWarning($"{message}", args);
+            }
+
+            public static void Information(ILogger<PlatformRabbitMqHostedService> logger, Exception ex = null, string message = null, object[] args = null)
+            {
+                if (ex != null)
+                    logger.LogInformation(ex, $"{message ?? ex.Message}", args ?? Array.Empty<object>());
+                else if (message != null)
+                    logger.LogInformation($"{message}", args);
             }
         }
     }

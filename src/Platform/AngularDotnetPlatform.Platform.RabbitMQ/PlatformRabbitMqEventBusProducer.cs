@@ -29,7 +29,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             ExchangeProvider = exchangeProvider;
             Logger = loggerFactory.CreateLogger(GetType());
             RetryPublishPolicy = Policy.Handle<Exception>().WaitAndRetry(
-                options.PublishMessageRetryCount,
+                retryCount: options.PublishMessageRetryCount,
                 retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         }
 

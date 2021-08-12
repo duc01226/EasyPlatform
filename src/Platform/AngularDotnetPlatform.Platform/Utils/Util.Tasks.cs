@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -55,6 +56,58 @@ namespace AngularDotnetPlatform.Platform.Utils
                         }
                     },
                     cancellationToken);
+            }
+
+            public static void CatchException(Action action, Action<Exception> onException = null)
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception e)
+                {
+                    onException?.Invoke(e);
+                }
+            }
+
+            public static T CatchException<T>(Func<T> func, Func<Exception, T> onException)
+            {
+                try
+                {
+                    return func();
+                }
+                catch (Exception e)
+                {
+                    return onException(e);
+                }
+            }
+
+            public static T CatchExceptionContinueThrow<T>(Func<T> func, Action<Exception> onException)
+            {
+                try
+                {
+                    return func();
+                }
+                catch (Exception e)
+                {
+                    onException(e);
+                    throw;
+                }
+            }
+
+            /// <summary>
+            /// Help to profiling an asyncTask.
+            /// afterExecution is an optional action to execute. It's input is the task ElapsedMilliseconds of asyncTask execution.
+            /// </summary>
+            public static async Task ProfilingAsync(Func<Task> asyncTask, Action<long> afterExecution = null, Action beforeExecution = null)
+            {
+                beforeExecution?.Invoke();
+
+                var stopwatch = Stopwatch.StartNew();
+                await asyncTask();
+                stopwatch.Stop();
+
+                afterExecution?.Invoke(stopwatch.ElapsedMilliseconds);
             }
         }
     }

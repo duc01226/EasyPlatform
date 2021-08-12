@@ -19,9 +19,9 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         public int PublishMessageRetryCount { get; set; } = 5;
 
-        public int RunConsumerRetryCount { get; set; } = 10;
+        public int RunConsumerRetryCount { get; set; } = 5;
 
-        public ushort QueuePrefectCount { get; set; } = 100;
+        public ushort QueuePrefetchCount { get; set; } = 100;
 
         /// <summary>
         /// Used to set <see cref="ConnectionFactory.NetworkRecoveryInterval"/>
@@ -33,6 +33,6 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         /// </summary>
         public int RequestedConnectionTimeoutSeconds { get; set; } = 10;
 
-        public bool LogProcessTime { get; set; } = false;
+        public bool LogConsumerProcessTime { get; set; } = false;
     }
 }

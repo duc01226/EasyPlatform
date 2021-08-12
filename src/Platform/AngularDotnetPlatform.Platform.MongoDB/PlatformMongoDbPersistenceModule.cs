@@ -91,7 +91,14 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                     onRetry: (exception, timeSpan, retry, ctx) =>
                     {
-                        Logger.LogWarning(exception, "[{prefix}] Exception {ExceptionType} with message {Message} detected on attempt {retry} of {retries}", nameof(TDbContext), exception.GetType().Name, exception.Message, retry, retryCount);
+                        Logger.LogWarning(
+                            exception,
+                            "[{prefix}] Exception {ExceptionType} with message {Message} detected on attempt {retry} of {retries}",
+                            nameof(TDbContext),
+                            exception.GetType().Name,
+                            exception.Message,
+                            retry,
+                            retryCount);
                     });
 
             //if the sql server container is not created on run docker compose this

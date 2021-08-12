@@ -30,7 +30,8 @@ namespace AngularDotnetPlatform.Platform.Application
         {
             return new PlatformApplicationSettingContext()
             {
-                ApplicationName = Assembly.FullName
+                ApplicationName = Assembly.FullName,
+                ApplicationAssembly = GetType().Assembly
             };
         }
 

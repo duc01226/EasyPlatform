@@ -71,6 +71,7 @@
     <Rule Id="IDE0003" Action="None" />
     <Rule Id="IDE0004" Action="None" />
     <Rule Id="IDE0072" Action="None" />
+    <Rule Id="IDE0090" Action="None" />
   </Rules>
   <Rules AnalyzerId="Microsoft.CodeAnalysis.CSharp.NetAnalyzers" RuleNamespace="Microsoft.CodeAnalysis.CSharp.NetAnalyzers">
     <Rule Id="CA1309" Action="None" />
