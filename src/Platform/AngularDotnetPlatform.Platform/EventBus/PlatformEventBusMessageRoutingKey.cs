@@ -22,6 +22,49 @@ namespace AngularDotnetPlatform.Platform.EventBus
         private string messageType;
         private string messageAction;
 
+        /// <summary>
+        /// First group level of message <see cref="CombinedStringKey"/>.
+        /// Used to determine the exactly message type suffix group. Usually equivalent to message Class name suffix.
+        /// Example: CommandEvent, EntityEvent, AuditLog, etc...
+        /// </summary>
+        public string MessageGroup
+        {
+            get => messageGroup;
+            set => messageGroup = AutoFixKeyPart(value);
+        }
+
+        /// <summary>
+        /// Second group level of message <see cref="CombinedStringKey"/>.
+        /// Used to determine which application micro service publish this message
+        /// </summary>
+        public string ProducerContext
+        {
+            get => producerContext;
+            set => producerContext = AutoFixKeyPart(value);
+        }
+
+        /// <summary>
+        /// Third group level of message <see cref="CombinedStringKey"/>.
+        /// Used to determine the exactly message type. Usually equivalent to message Class name.
+        /// Example: RegisterNewUserCommandEvent, UserEntityEvent
+        /// </summary>
+        public string MessageType
+        {
+            get => messageType;
+            set => messageType = AutoFixKeyPart(value);
+        }
+
+        /// <summary>
+        /// Final group level of message <see cref="CombinedStringKey"/>.
+        /// This is Optional. Used to determine specific action on the <see cref="MessageType"/>
+        /// Example: Created,Updated,Deleted, etc..
+        /// </summary>
+        public string MessageAction
+        {
+            get => messageAction;
+            set => messageAction = AutoFixKeyPart(value);
+        }
+
         public static string BuildCombinedStringKey(string messageGroup, string producerContext, string messageType, string messageAction)
         {
             return $"{messageGroup}{CombinedStringKeySeparator}{producerContext}{CombinedStringKeySeparator}{messageType}{(string.IsNullOrEmpty(messageAction) ? "" : $"{CombinedStringKeySeparator}{messageAction}")}";
@@ -29,6 +72,12 @@ namespace AngularDotnetPlatform.Platform.EventBus
 
         public static string BuildQueueName(string messageGroup, string producerContext, string messageType)
         {
+            if (messageGroup == null || producerContext == null || messageType == null)
+            {
+                throw new ArgumentException(
+                    $"Invalid argument. {nameof(messageGroup)}, {nameof(producerContext)}, {nameof(messageType)} must be not null and empty");
+            }
+
             return $"{messageGroup}.{producerContext}.{messageType}";
         }
 
@@ -73,65 +122,38 @@ namespace AngularDotnetPlatform.Platform.EventBus
         }
 
         public static PlatformSingleValidator<PlatformEventBusMessageRoutingKey, string> KeyPartValidator(
-            Expression<Func<PlatformEventBusMessageRoutingKey, string>> keyPartSelector)
+            Expression<Func<PlatformEventBusMessageRoutingKey, string>> keyPartSelector,
+            bool allowMatchingAllPattern = false)
         {
             return new PlatformSingleValidator<PlatformEventBusMessageRoutingKey, string>(
                 keyPartSelector,
-                p => p.NotNull()
-                    .NotEmpty()
-                    .Matches(new Regex($"^[^\\{CombinedStringKeySeparator}]+$")).WithMessage($"Key part can not contain key separator {CombinedStringKeySeparator}"));
+                p =>
+                {
+                    var ruleBuilder = p.NotNull()
+                        .NotEmpty()
+                        .Matches(new Regex($"^[^\\{CombinedStringKeySeparator}]+$"))
+                        .WithMessage($"This key part can not contain key separator {CombinedStringKeySeparator}");
+                    if (!allowMatchingAllPattern)
+                    {
+                        ruleBuilder
+                            .Matches(new Regex($"^[^\\{MatchAllSingleGroupLevelChar}]+$"))
+                            .WithMessage($"This key part can not contain matching all pattern {MatchAllSingleGroupLevelChar}");
+                    }
+                });
         }
 
-        public static PlatformValidator<PlatformEventBusMessageRoutingKey> Validator()
+        public static PlatformValidator<PlatformEventBusMessageRoutingKey> Validator(bool forMatchingPattern = false)
         {
             return PlatformValidator<PlatformEventBusMessageRoutingKey>.Create(
                 KeyPartValidator(p => p.MessageGroup),
-                KeyPartValidator(p => p.ProducerContext),
-                KeyPartValidator(p => p.MessageType),
-                KeyPartValidator(p => p.MessageAction));
+                KeyPartValidator(p => p.ProducerContext, forMatchingPattern),
+                KeyPartValidator(p => p.MessageType, forMatchingPattern),
+                KeyPartValidator(p => p.MessageAction, forMatchingPattern));
         }
 
-        /// <summary>
-        /// First group level of message <see cref="CombinedStringKey"/>.
-        /// Used to determine the exactly message type suffix group. Usually equivalent to message Class name suffix.
-        /// Example: CommandEvent, EntityEvent, AuditLog, etc...
-        /// </summary>
-        public string MessageGroup
+        public static string AutoFixKeyPart(string keyPart)
         {
-            get => messageGroup;
-            set => messageGroup = AutoFixKeyPart(value);
-        }
-
-        /// <summary>
-        /// Second group level of message <see cref="CombinedStringKey"/>.
-        /// Used to determine which application micro service publish this message
-        /// </summary>
-        public string ProducerContext
-        {
-            get => producerContext;
-            set => producerContext = AutoFixKeyPart(value);
-        }
-
-        /// <summary>
-        /// Third group level of message <see cref="CombinedStringKey"/>.
-        /// Used to determine the exactly message type. Usually equivalent to message Class name.
-        /// Example: RegisterNewUserCommandEvent, UserEntityEvent
-        /// </summary>
-        public string MessageType
-        {
-            get => messageType;
-            set => messageType = AutoFixKeyPart(value);
-        }
-
-        /// <summary>
-        /// Final group level of message <see cref="CombinedStringKey"/>.
-        /// This is Optional. Used to determine specific action on the <see cref="MessageType"/>
-        /// Example: Created,Updated,Deleted, etc..
-        /// </summary>
-        public string MessageAction
-        {
-            get => messageAction;
-            set => messageAction = AutoFixKeyPart(value);
+            return keyPart?.Replace(CombinedStringKeySeparator, AutoFixKeyPartReplacer);
         }
 
         /// <summary>
@@ -140,9 +162,9 @@ namespace AngularDotnetPlatform.Platform.EventBus
         public string CombinedStringKey =>
             BuildCombinedStringKey(MessageGroup, ProducerContext, MessageType, MessageAction);
 
-        public string QueueName(string fallbackProducerContext)
+        public string QueueName(string forProducerContext = null)
         {
-            return BuildQueueName(MessageGroup, ProducerContext ?? fallbackProducerContext, MessageType);
+            return BuildQueueName(MessageGroup, ProducerContext ?? forProducerContext, MessageType);
         }
 
         public bool Equals(PlatformEventBusMessageRoutingKey x, PlatformEventBusMessageRoutingKey y)
@@ -169,11 +191,6 @@ namespace AngularDotnetPlatform.Platform.EventBus
                    MatchPattern(MessageGroup, routingKey.MessageGroup) &&
                    MatchPattern(MessageType, routingKey.MessageType) &&
                    MatchPattern(MessageAction, routingKey.MessageAction);
-        }
-
-        public static string AutoFixKeyPart(string keyPart)
-        {
-            return keyPart?.Replace(CombinedStringKeySeparator, AutoFixKeyPartReplacer);
         }
     }
 }

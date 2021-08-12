@@ -20,16 +20,20 @@ namespace AngularDotnetPlatform.Platform.EventBus
             string messageGroup,
             string producerContext,
             string messageType,
-            string messageActionPattern = MatchAllPatternValue)
+            string messageAction = MatchAllPatternValue)
         {
-            ProducerContext = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(producerContext);
             MessageGroup = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(messageGroup);
+            ProducerContext = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(producerContext);
             MessageType = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(messageType);
-            MessageActionPattern = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(messageActionPattern) ?? MatchAllPatternValue;
+            MessageActionPattern = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(messageAction) ?? MatchAllPatternValue;
 
             EnsureValid();
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PlatformEventBusConsumerAttribute"/> class.
+        /// Input combined ket pattern. Example: "AA.BB.CC", "AA.*.CC.*", ...
+        /// </summary>
         public PlatformEventBusConsumerAttribute(string combinedKeyPattern)
         {
             var combinedPatternParts = combinedKeyPattern.Split(".").ToList();
@@ -65,7 +69,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
 
         private void EnsureValid()
         {
-            var validationResult = PlatformEventBusMessageRoutingKey.Validator().Validate(ToRoutingKey());
+            var validationResult = PlatformEventBusMessageRoutingKey.Validator(true).Validate(ToRoutingKey());
             if (!validationResult.IsValid)
                 throw new ValidationException(validationResult.Errors);
         }
