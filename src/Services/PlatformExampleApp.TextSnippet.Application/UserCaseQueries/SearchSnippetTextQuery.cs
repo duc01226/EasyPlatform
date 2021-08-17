@@ -31,6 +31,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UserCaseQueries
 
     public class SearchSnippetTextQueryHandler : PlatformCqrsQueryHandler<SearchSnippetTextQuery, SearchSnippetTextQueryResult>
     {
+        // If get default repository/unitOfWork will get from the latest registered module. See TextSnippetApplicationModule.
         private readonly ITextSnippetRepository<TextSnippetEntity> repository;
         private readonly IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper;
 

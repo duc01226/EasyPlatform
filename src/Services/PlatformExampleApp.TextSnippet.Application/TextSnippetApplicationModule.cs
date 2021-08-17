@@ -24,8 +24,17 @@ namespace PlatformExampleApp.TextSnippet.Application
 
             if (Configuration.GetSection("DemoUseMultiDbForSaveSnippetTextCommand").Get<bool>())
             {
-                result.Add(p => typeof(TextSnippetMongoPersistencePlatformModule));
-                result.Add(p => typeof(TextSnippetEfCorePersistencePlatformModule));
+                if (Configuration.GetSection("UseMongoDb").Get<bool>())
+                {
+                    // If get default repository/unitOfWork will get from the latest registered module. If use mongo then register mongo module at last
+                    result.Add(p => typeof(TextSnippetEfCorePersistencePlatformModule));
+                    result.Add(p => typeof(TextSnippetMongoPersistencePlatformModule));
+                }
+                else
+                {
+                    result.Add(p => typeof(TextSnippetMongoPersistencePlatformModule));
+                    result.Add(p => typeof(TextSnippetEfCorePersistencePlatformModule));
+                }
             }
             else
             {
