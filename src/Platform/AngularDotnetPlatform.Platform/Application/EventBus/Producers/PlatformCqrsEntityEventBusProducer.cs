@@ -29,32 +29,30 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         protected readonly IPlatformEventBusProducer EventBusProducer;
         protected readonly IPlatformApplicationSettingContext ApplicationSettingContext;
         protected readonly IPlatformApplicationUserContextAccessor UserContextAccessor;
-        protected readonly IUnitOfWorkManager UnitOfWorkManager;
         protected readonly ILogger Logger;
 
         public PlatformCqrsEntityEventBusProducer(
+            IUnitOfWorkManager unitOfWorkManager,
             IPlatformEventBusProducer eventBusProducer,
             IPlatformApplicationSettingContext applicationSettingContext,
             IPlatformApplicationUserContextAccessor userContextAccessor,
-            IUnitOfWorkManager unitOfWorkManager,
-            ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory) : base(unitOfWorkManager)
         {
             EventBusProducer = eventBusProducer;
             ApplicationSettingContext = applicationSettingContext;
             UserContextAccessor = userContextAccessor;
-            UnitOfWorkManager = unitOfWorkManager;
             Logger = loggerFactory.CreateLogger(GetType());
         }
 
         protected override async Task HandleAsync(PlatformCqrsEntityEvent<TEntity, TEntityKey> @event, CancellationToken cancellationToken)
         {
-            if (UnitOfWorkManager.Current == null || UnitOfWorkManager.Current.Completed)
+            if (UnitOfWorkManager.Current() == null || UnitOfWorkManager.Current().Completed)
             {
                 await SendEntityEventEventBusMessage(@event, cancellationToken);
             }
             else
             {
-                UnitOfWorkManager.Current.OnCompleted += () =>
+                UnitOfWorkManager.Current().OnCompleted += (sender, args) =>
                 {
                     SendEntityEventEventBusMessage(@event, cancellationToken).Wait(cancellationToken);
                 };

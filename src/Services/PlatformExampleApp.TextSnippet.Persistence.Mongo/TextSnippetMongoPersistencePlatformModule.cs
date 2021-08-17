@@ -14,11 +14,6 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
         {
         }
 
-        protected override Type GetIUnitOfWorkConcreteType()
-        {
-            return typeof(TextSnippetPersistenceUnitOfWork);
-        }
-
         protected override void ConfigureMongoOptions(PlatformMongoOptions options)
         {
             options.ConnectionString = Configuration.GetSection("MongoDB:ConnectionString").Value;

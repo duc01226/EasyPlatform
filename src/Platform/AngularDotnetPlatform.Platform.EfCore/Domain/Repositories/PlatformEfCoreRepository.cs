@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Extensions;
 
 namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
@@ -16,15 +18,17 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
-        public PlatformEfCoreRepository(TDbContext dbContext, IPlatformCqrs cqrs)
+        public PlatformEfCoreRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs)
         {
-            DbContext = dbContext;
+            UnitOfWorkManager = unitOfWorkManager;
             Cqrs = cqrs;
         }
 
+        public IUnitOfWorkManager UnitOfWorkManager { get; }
         protected IPlatformCqrs Cqrs { get; }
 
-        protected TDbContext DbContext { get; }
+        protected TDbContext DbContext =>
+            UnitOfWorkManager.CurrentActive<IPlatformEfCoreUnitOfWork<TDbContext>>().DbContext;
 
         /// <summary>
         /// Gets DbSet for given entity.

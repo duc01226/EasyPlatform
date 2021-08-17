@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.DependencyInjection;
+using AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EfCore.Helpers;
 using AngularDotnetPlatform.Platform.Extensions;
 using Microsoft.Data.SqlClient;
@@ -13,7 +14,7 @@ using Polly;
 
 namespace AngularDotnetPlatform.Platform.EfCore
 {
-    public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPersistenceModule where TDbContext : DbContext
+    public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPersistenceModule where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
         protected readonly ILogger<PlatformEfCorePersistenceModule<TDbContext>> Logger;
 
@@ -29,7 +30,8 @@ namespace AngularDotnetPlatform.Platform.EfCore
         {
             base.InternalRegister(serviceCollection);
 
-            serviceCollection.AddDbContext<TDbContext>(DbContextOptionsBuilderActionProvider(serviceCollection));
+            serviceCollection.AddDbContext<TDbContext>(DbContextOptionsBuilderActionProvider(serviceCollection), ServiceLifetime.Transient);
+            serviceCollection.RegisterAllFromType<IPlatformEfCoreUnitOfWork<TDbContext>>(ServiceLifeTime.Transient, Assembly);
 
             RegisterHelpers(serviceCollection);
         }

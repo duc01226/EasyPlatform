@@ -5,7 +5,8 @@ namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
 {
     public interface IUnitOfWork : IDisposable
     {
-        public event Action OnCompleted;
+        public event EventHandler OnCompleted;
+        public event EventHandler<UnitOfWorkFailedArgs> OnFailed;
 
         public bool Completed { get; }
 
@@ -18,5 +19,21 @@ namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
         Task CompleteAsync();
+
+        /// <summary>
+        /// Return true if the current uow is not Completed and not Disposed
+        /// </summary>
+        /// <returns></returns>
+        bool IsActive();
+    }
+
+    public class UnitOfWorkFailedArgs
+    {
+        public UnitOfWorkFailedArgs(Exception exception)
+        {
+            Exception = exception;
+        }
+
+        public Exception Exception { get; set; }
     }
 }

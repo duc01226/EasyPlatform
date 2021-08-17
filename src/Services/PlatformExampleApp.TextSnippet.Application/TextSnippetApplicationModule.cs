@@ -17,11 +17,24 @@ namespace PlatformExampleApp.TextSnippet.Application
 
         protected override List<Func<IConfiguration, Type>> GetModuleDependencies()
         {
-            return new List<Func<IConfiguration, Type>>()
+            var result = new List<Func<IConfiguration, Type>>
             {
-                p => typeof(TextSnippetDomainPlatformModule),
-                p => p.GetSection("UseMongoDb").Get<bool>() ? typeof(TextSnippetMongoPersistencePlatformModule) : typeof(TextSnippetEfCorePersistencePlatformModule)
+                p => typeof(TextSnippetDomainPlatformModule)
             };
+
+            if (Configuration.GetSection("DemoUseMultiDbForSaveSnippetTextCommand").Get<bool>())
+            {
+                result.Add(p => typeof(TextSnippetMongoPersistencePlatformModule));
+                result.Add(p => typeof(TextSnippetEfCorePersistencePlatformModule));
+            }
+            else
+            {
+                result.Add(p => p.GetSection("UseMongoDb").Get<bool>()
+                    ? typeof(TextSnippetMongoPersistencePlatformModule)
+                    : typeof(TextSnippetEfCorePersistencePlatformModule));
+            }
+
+            return result;
         }
 
         // Your application can either override factory method DefaultApplicationSettingContextFactory to register default PlatformApplicationSettingContext

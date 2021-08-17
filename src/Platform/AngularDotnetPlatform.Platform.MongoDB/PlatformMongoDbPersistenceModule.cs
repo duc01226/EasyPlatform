@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Polly;
 using AngularDotnetPlatform.Platform.EfCore;
 using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.MongoDB.Helpers;
 using AngularDotnetPlatform.Platform.MongoDB.Mapping;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
@@ -39,7 +40,8 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             serviceCollection.Configure<PlatformMongoOptions>(ConfigureMongoOptions);
             serviceCollection.AddSingleton<TClientContext>();
             serviceCollection.AddSingleton<IPlatformMongoClientContext, TClientContext>();
-            serviceCollection.RegisterAllFromType<TDbContext>(ServiceLifeTime.Scoped, Assembly);
+            serviceCollection.RegisterAllFromType<TDbContext>(ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType<IPlatformMongoDbUnitOfWork<TDbContext>>(ServiceLifeTime.Transient, Assembly);
             RegisterHelpers(serviceCollection);
 
             RegisterPlatformDataMigrationHistoryClassMap();

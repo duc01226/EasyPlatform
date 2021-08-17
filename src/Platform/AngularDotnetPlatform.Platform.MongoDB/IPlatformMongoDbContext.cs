@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -6,7 +7,7 @@ using MongoDB.Driver;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
 {
-    public interface IPlatformMongoDbContext<TDbContext>
+    public interface IPlatformMongoDbContext<TDbContext> : IDisposable
         where TDbContext : IPlatformMongoDbContext<TDbContext>
     {
         IMongoCollection<PlatformDataMigrationHistory> DataMigrationHistoryCollection { get; }

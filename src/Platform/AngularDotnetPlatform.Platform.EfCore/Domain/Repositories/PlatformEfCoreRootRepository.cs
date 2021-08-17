@@ -9,6 +9,7 @@ using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Domain.Events;
 using AngularDotnetPlatform.Platform.Domain.Exceptions;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Extensions;
 using FluentValidation.Results;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +20,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
         where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
-        public PlatformEfCoreRootRepository(TDbContext dbContext, IPlatformCqrs cqrs) : base(dbContext, cqrs)
+        public PlatformEfCoreRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
         {
         }
 

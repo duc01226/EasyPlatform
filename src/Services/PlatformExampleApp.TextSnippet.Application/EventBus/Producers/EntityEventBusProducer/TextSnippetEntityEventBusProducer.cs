@@ -12,11 +12,11 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.EntityEv
     public class TextSnippetEntityEventBusProducer : PlatformCqrsEntityEventBusProducer<TextSnippetEntity, Guid>
     {
         public TextSnippetEntityEventBusProducer(
+            IUnitOfWorkManager unitOfWorkManager,
             IPlatformEventBusProducer eventBusProducer,
             IPlatformApplicationSettingContext applicationSettingContext,
             IPlatformApplicationUserContextAccessor userContextAccessor,
-            IUnitOfWorkManager unitOfWorkManager,
-            ILoggerFactory loggerFactory) : base(eventBusProducer, applicationSettingContext, userContextAccessor, unitOfWorkManager, loggerFactory)
+            ILoggerFactory loggerFactory) : base(unitOfWorkManager, eventBusProducer, applicationSettingContext, userContextAccessor, loggerFactory)
         {
         }
     }

@@ -7,7 +7,9 @@ using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
@@ -17,15 +19,17 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
         where TDbContext : PlatformMongoDbContext<TDbContext>
     {
-        public PlatformMongoDbRepository(TDbContext dbContext, IPlatformCqrs cqrs)
+        public PlatformMongoDbRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs)
         {
-            DbContext = dbContext;
+            UnitOfWorkManager = unitOfWorkManager;
             Cqrs = cqrs;
         }
 
+        public IUnitOfWorkManager UnitOfWorkManager { get; }
         protected IPlatformCqrs Cqrs { get; }
 
-        protected TDbContext DbContext { get; }
+        protected TDbContext DbContext =>
+            UnitOfWorkManager.CurrentActive<IPlatformMongoDbUnitOfWork<TDbContext>>().DbContext;
 
         /// <summary>
         /// Gets DbSet for given entity.

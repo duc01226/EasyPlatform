@@ -1,4 +1,5 @@
 using AngularDotnetPlatform.Platform.Cqrs.Events;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
 namespace AngularDotnetPlatform.Platform.Cqrs.Commands
 {
@@ -6,12 +7,23 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
         where TCommand : PlatformCqrsCommand<TCommandResult>, new()
         where TCommandResult : PlatformCqrsCommandResult, new()
     {
+        protected PlatformCqrsCommandEventHandler(IUnitOfWorkManager unitOfWorkManager) : base(unitOfWorkManager)
+        {
+        }
     }
 
-    public abstract class PlatformCqrsCommandEventHandler<TCommandEvent, TCommand, TCommandResult> : PlatformCqrsEventHandler<TCommandEvent>
-        where TCommandEvent : PlatformCqrsCommandEvent<TCommand, TCommandResult>, new()
-        where TCommand : PlatformCqrsCommand<TCommandResult>
+    public abstract class PlatformCqrsCommandEventHandler<TCommand, TCommandResult, TUnitOfWork> : PlatformCqrsCommandEventHandler<TCommand, TCommandResult>
+        where TCommand : PlatformCqrsCommand<TCommandResult>, new()
         where TCommandResult : PlatformCqrsCommandResult, new()
+        where TUnitOfWork : IUnitOfWork
     {
+        protected PlatformCqrsCommandEventHandler(IUnitOfWorkManager unitOfWorkManager) : base(unitOfWorkManager)
+        {
+        }
+
+        protected override IUnitOfWork BeginUnitOfWork()
+        {
+            return UnitOfWorkManager.Begin<TUnitOfWork>();
+        }
     }
 }

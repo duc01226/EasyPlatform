@@ -9,6 +9,7 @@ using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Domain.Events;
 using AngularDotnetPlatform.Platform.Domain.Exceptions;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using FluentValidation.Results;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
@@ -19,7 +20,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
         where TDbContext : PlatformMongoDbContext<TDbContext>
     {
-        public PlatformMongoDbRootRepository(TDbContext dbContext, IPlatformCqrs cqrs) : base(dbContext, cqrs)
+        public PlatformMongoDbRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
         {
         }
 

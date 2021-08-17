@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Caching;
 using AngularDotnetPlatform.Platform.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Utils;
 using PlatformExampleApp.TextSnippet.Application.Caching;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
@@ -12,7 +13,9 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents
     {
         private readonly IPlatformCacheRepositoryProvider cacheRepositoryProvider;
 
-        public ClearCacheOnSaveSnippetTextCommandEventHandler(IPlatformCacheRepositoryProvider cacheRepositoryProvider)
+        public ClearCacheOnSaveSnippetTextCommandEventHandler(
+            IUnitOfWorkManager unitOfWorkManager,
+            IPlatformCacheRepositoryProvider cacheRepositoryProvider) : base(unitOfWorkManager)
         {
             this.cacheRepositoryProvider = cacheRepositoryProvider;
         }

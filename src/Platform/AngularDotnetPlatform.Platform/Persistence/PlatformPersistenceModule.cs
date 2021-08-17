@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AngularDotnetPlatform.Platform.DependencyInjection;
@@ -17,27 +18,22 @@ namespace AngularDotnetPlatform.Platform.Persistence
 
         protected override bool AutoRegisterCaching => false;
 
-        /// <summary>
-        /// Return Implementation of <see cref="IUnitOfWorkManager"/> to be registered.
-        /// Default return <see cref="PlatformDefaultUnitOfWorkManager"/>
-        /// </summary>
-        protected virtual Type GetIUnitOfWorkManagerConcreteType()
-        {
-            return typeof(PlatformDefaultUnitOfWorkManager);
-        }
-
-        /// <summary>
-        /// Return Implementation of <see cref="IUnitOfWork"/> to be registered
-        /// </summary>
-        protected abstract Type GetIUnitOfWorkConcreteType();
-
         protected override void InternalRegister(IServiceCollection serviceCollection)
         {
             base.InternalRegister(serviceCollection);
-            serviceCollection.AddScoped(typeof(IUnitOfWorkManager), GetIUnitOfWorkManagerConcreteType());
-            serviceCollection.AddTransient(typeof(IUnitOfWork), GetIUnitOfWorkConcreteType());
+            RegisterUnitOfWorkManager(serviceCollection);
+            serviceCollection.RegisterAllFromType(typeof(IUnitOfWork), ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IRepository>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPersistenceHelper>(ServiceLifeTime.Transient, Assembly);
+        }
+
+        private void RegisterUnitOfWorkManager(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RegisterAllFromType(typeof(IUnitOfWorkManager), ServiceLifeTime.Scoped, Assembly);
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(IUnitOfWorkManager)))
+            {
+                serviceCollection.Register<IUnitOfWorkManager, PlatformDefaultUnitOfWorkManager>(ServiceLifeTime.Scoped);
+            }
         }
     }
 }

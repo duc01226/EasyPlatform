@@ -1,6 +1,7 @@
 using AngularDotnetPlatform.Platform.Application.Context;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EventBus;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
@@ -10,10 +11,11 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.CommandE
     public class SaveTextSnippetCommandEventBusProducer : PlatformCqrsCommandEventBusProducer<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
     {
         public SaveTextSnippetCommandEventBusProducer(
+            IUnitOfWorkManager unitOfWorkManager,
             IPlatformEventBusProducer eventBusProducer,
             IPlatformApplicationSettingContext applicationSettingContext,
             IPlatformApplicationUserContextAccessor userContextAccessor,
-            ILoggerFactory loggerFactory) : base(eventBusProducer, applicationSettingContext, userContextAccessor, loggerFactory)
+            ILoggerFactory loggerFactory) : base(unitOfWorkManager, eventBusProducer, applicationSettingContext, userContextAccessor, loggerFactory)
         {
         }
     }

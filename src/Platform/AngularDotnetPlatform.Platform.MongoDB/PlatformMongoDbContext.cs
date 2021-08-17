@@ -23,6 +23,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             Database = client.MongoClient.GetDatabase(options.Value.Database);
         }
 
+        public bool Disposed { get; private set; }
         public IMongoCollection<PlatformDataMigrationHistory> DataMigrationHistoryCollection => Database.GetCollection<PlatformDataMigrationHistory>(DataMigrationHistoryCollectionName);
         public virtual string DataMigrationHistoryCollectionName => "MigrationHistory";
 
@@ -124,6 +125,27 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         public void RunCommand(string command)
         {
             Database.RunCommand<BsonDocument>(command);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (Disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                // Dispose managed state (managed objects).
+            }
+
+            Disposed = true;
         }
 
         protected bool IsEnsureIndexesExecuted()

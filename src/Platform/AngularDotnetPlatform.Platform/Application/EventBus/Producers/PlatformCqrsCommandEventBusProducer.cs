@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EventBus;
 using Microsoft.Extensions.Logging;
 
@@ -32,10 +33,11 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         protected readonly ILogger Logger;
 
         public PlatformCqrsCommandEventBusProducer(
+            IUnitOfWorkManager unitOfWorkManager,
             IPlatformEventBusProducer eventBusProducer,
             IPlatformApplicationSettingContext applicationSettingContext,
             IPlatformApplicationUserContextAccessor userContextAccessor,
-            ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory) : base(unitOfWorkManager)
         {
             EventBusProducer = eventBusProducer;
             ApplicationSettingContext = applicationSettingContext;
@@ -74,12 +76,5 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         {
             return null;
         }
-    }
-
-    public abstract class PlatformCqrsEventBusCommandEventHandler<TCommandEvent, TCommand, TCommandResult> : PlatformCqrsCommandEventHandler<TCommandEvent, TCommand, TCommandResult>
-        where TCommandEvent : PlatformCqrsCommandEvent<TCommand, TCommandResult>, new()
-        where TCommand : PlatformCqrsCommand<TCommandResult>
-        where TCommandResult : PlatformCqrsCommandResult, new()
-    {
     }
 }

@@ -4,27 +4,46 @@ using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
 namespace AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork
 {
-    public abstract class PlatformMongoDbUnitOfWork<TDbContext> : IUnitOfWork where TDbContext : PlatformMongoDbContext<TDbContext>
+    public interface IPlatformMongoDbUnitOfWork<TDbContext> : IUnitOfWork where TDbContext : IPlatformMongoDbContext<TDbContext>
     {
-        private readonly TDbContext dbContext;
+        public TDbContext DbContext { get; }
+    }
 
+    public abstract class PlatformMongoDbUnitOfWork<TDbContext> : IPlatformMongoDbUnitOfWork<TDbContext> where TDbContext : PlatformMongoDbContext<TDbContext>
+    {
         public PlatformMongoDbUnitOfWork(TDbContext dbContext)
         {
-            this.dbContext = dbContext;
+            DbContext = dbContext;
         }
 
-        public event Action OnCompleted;
+        public event EventHandler OnCompleted;
+        public event EventHandler<UnitOfWorkFailedArgs> OnFailed;
         public bool Completed { get; private set; }
         public bool Disposed { get; private set; }
+        public TDbContext DbContext { get; }
 
         public Task CompleteAsync()
         {
             if (Completed)
                 throw new Exception("This unit of work is completed");
 
-            Completed = true;
-            OnCompleted?.Invoke();
+            try
+            {
+                Completed = true;
+                OnCompleted?.Invoke(this, EventArgs.Empty);
+            }
+            catch (Exception e)
+            {
+                OnFailed?.Invoke(this, new UnitOfWorkFailedArgs(e));
+                throw;
+            }
+
             return Task.CompletedTask;
+        }
+
+        public bool IsActive()
+        {
+            return !Completed && !Disposed;
         }
 
         public void Dispose()
@@ -46,7 +65,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork
             if (disposing)
             {
                 // Dispose managed state (managed objects).
-                // context?.Dispose();
+                DbContext?.Dispose();
             }
 
             Disposed = true;

@@ -16,11 +16,6 @@ namespace PlatformExampleApp.TextSnippet.Persistence
         {
         }
 
-        protected override Type GetIUnitOfWorkConcreteType()
-        {
-            return typeof(TextSnippetPersistenceUnitOfWork);
-        }
-
         protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceCollection serviceCollection)
         {
             return options =>

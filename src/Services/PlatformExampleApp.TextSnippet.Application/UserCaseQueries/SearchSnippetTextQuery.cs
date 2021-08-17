@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Cqrs.Queries;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
@@ -34,8 +35,9 @@ namespace PlatformExampleApp.TextSnippet.Application.UserCaseQueries
         private readonly IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper;
 
         public SearchSnippetTextQueryHandler(
+            IUnitOfWorkManager unitOfWorkManager,
             ITextSnippetRepository<TextSnippetEntity> repository,
-            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper)
+            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper) : base(unitOfWorkManager)
         {
             this.repository = repository;
             this.fullTextSearchPersistenceHelper = fullTextSearchPersistenceHelper;
