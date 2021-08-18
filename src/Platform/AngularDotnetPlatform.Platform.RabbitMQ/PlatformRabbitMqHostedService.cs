@@ -138,8 +138,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         {
             try
             {
-                if (currentChannel != null)
-                    channelPool.Return(currentChannel);
+                ReturnCurrentChannelToPool();
 
                 // Config Chanel
                 currentChannel = channelPool.Get();
@@ -172,7 +171,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                         // autoAck: false -> the Consumer will ack manually.
                         currentChannel.BasicConsume(queue: queueName, autoAck: false, consumer: applicationRabbitConsumer);
 
-                        Log.Information(logger, message: $"Connected to queue {queueName}");
+                        Log.Information(logger, message: $"Consumer connected to queue {queueName}");
                     });
             }
             catch (Exception ex)
@@ -182,12 +181,14 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             }
             finally
             {
-                if (currentChannel != null)
-                {
-                    Log.Information(logger, message: "Return channel object to the pool.");
-                    channelPool.Return(currentChannel);
-                }
+                ReturnCurrentChannelToPool();
             }
+        }
+
+        private void ReturnCurrentChannelToPool()
+        {
+            if (currentChannel != null)
+                channelPool.Return(currentChannel);
         }
 
         private Task OnConsumerCancelled(object sender, ConsumerEventArgs args)
@@ -196,9 +197,9 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
             lock (retryConnectConsumerLock)
             {
-                RetryRunningConsumer();
+                Log.Warning(logger, message: "Re-connect consumer is triggered.");
 
-                Log.Warning(logger, message: "Re-connect event already triggered");
+                RetryRunningConsumer();
             }
 
             return Task.CompletedTask;
@@ -222,6 +223,12 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             if (finalResult.FinalException != null)
             {
                 Log.Error(logger, finalResult.FinalException, $"Retry consumer failed with err : {finalResult.FinalException.Message}");
+            }
+            else
+            {
+                Log.Information(
+                    logger,
+                    message: $"Re-connect consumer successfully.");
             }
         }
 

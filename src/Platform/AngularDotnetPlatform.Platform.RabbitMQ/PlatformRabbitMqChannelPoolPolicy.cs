@@ -40,6 +40,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
             if (policyResult.FinalException != null)
             {
+                logger.LogError(policyResult.FinalException, "Finally create rabbit-mq channel failed.");
                 throw policyResult.FinalException;
             }
 
@@ -65,29 +66,37 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             {
                 return connection.Value.CreateModel();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // connection hang up during broker node restarted
-                // in this case, try to create new connection
-                logger.LogInformation("create channel failed, release old connection");
-                try
-                {
-                    connection.Value.Close(TimeSpan.FromSeconds(3));
-                    logger.LogDebug("connection closed");
-                }
-                catch (Exception releaseEx)
-                {
-                    logger.LogError(releaseEx, "release connection failed");
-                }
-                finally
-                {
-                    connection = new Lazy<IConnection>(CreateConnection);
-                }
-
-                logger.LogInformation("release connection done");
-
+                logger.LogError(ex, "Create rabbit-mq channel failed.");
+                ReInitNewConnection();
                 throw;
             }
+        }
+
+        /// <summary>
+        /// connection hang up during broker node restarted
+        /// in this case, try to close old and create new connection
+        /// </summary>
+        private void ReInitNewConnection()
+        {
+            logger.LogInformation("Re-init new rabbit-mq connection started.");
+
+            try
+            {
+                connection.Value.Close(TimeSpan.FromSeconds(5));
+                logger.LogInformation("Release old rabbit-mq connection successfully.");
+            }
+            catch (Exception releaseEx)
+            {
+                logger.LogError(releaseEx, "Release rabbit-mq old connection failed.");
+            }
+            finally
+            {
+                connection = new Lazy<IConnection>(CreateConnection);
+            }
+
+            logger.LogInformation("Re-init new rabbit-mq connection successfully.");
         }
 
         private IConnectionFactory InitializeFactory()
@@ -110,14 +119,15 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         private IConnection CreateConnection()
         {
-            logger.LogInformation("Creating new rabbit connection");
+            logger.LogInformation("Creating new rabbit-mq connection.");
+
             var hostNames = options.HostNames.Split(',').Where(hostName => !string.IsNullOrEmpty(hostName)).ToArray();
 
             var policyResult = retryPolicy.ExecuteAndCapture(() => factory.CreateConnection(hostNames));
 
             if (policyResult.FinalException != null)
             {
-                logger.LogError(policyResult.FinalException, "create connection failed");
+                logger.LogError(policyResult.FinalException, "Finally create rabbit-mq connection failed.");
                 throw policyResult.FinalException;
             }
 
