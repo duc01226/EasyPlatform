@@ -14,18 +14,20 @@ namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
         IUnitOfWork Current();
 
         /// <summary>
-        /// Gets currently active last begun unit of work.
+        /// Gets currently latest active unit of work.
         /// <exception cref="Exception">Throw exception if there is not active unit of work.</exception>
         /// </summary>
         IUnitOfWork CurrentActive();
 
         /// <summary>
-        /// Begin a new last registered unit of work
+        /// Begin a new last registered unit of work.
+        /// If current active unit of work existed, return it.
         /// </summary>
         IUnitOfWork Begin();
 
         /// <summary>
         /// Begin a new registered <see cref="TUnitOfWork"/> unit of work.
+        /// If current active unit of work for <see cref="TUnitOfWork"/> type existed, return it.
         /// Use this to support multi unit of work for multi database
         /// </summary>
         TUnitOfWork Begin<TUnitOfWork>() where TUnitOfWork : IUnitOfWork;
@@ -36,7 +38,7 @@ namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
         TUnitOfWork Current<TUnitOfWork>() where TUnitOfWork : IUnitOfWork;
 
         /// <summary>
-        /// Gets currently active last begun unit of work of type <see cref="TUnitOfWork"/>.
+        /// Gets currently latest active unit of work of type <see cref="TUnitOfWork"/>.
         /// <exception cref="Exception">Throw exception if there is not active unit of work.</exception>
         /// </summary>
         TUnitOfWork CurrentActive<TUnitOfWork>() where TUnitOfWork : IUnitOfWork;
