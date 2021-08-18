@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
 {
@@ -11,6 +12,7 @@ namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
         /// <summary>
         /// Gets last begun unit of work (or null if not exists).
         /// </summary>
+        [return: MaybeNull]
         IUnitOfWork Current();
 
         /// <summary>
@@ -35,6 +37,7 @@ namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
         /// <summary>
         /// Gets last begun unit of work of type <see cref="TUnitOfWork"/> (or null if not exists).
         /// </summary>
+        [return: MaybeNull]
         TUnitOfWork Current<TUnitOfWork>() where TUnitOfWork : IUnitOfWork;
 
         /// <summary>

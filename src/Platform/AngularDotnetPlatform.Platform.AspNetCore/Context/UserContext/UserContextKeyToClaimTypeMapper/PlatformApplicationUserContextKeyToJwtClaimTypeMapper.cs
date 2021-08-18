@@ -4,9 +4,12 @@ using IdentityModel;
 
 namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper
 {
+    /// <summary>
+    /// This will map <see cref="PlatformApplicationCommonUserContextKeys"/> to <see cref="JwtClaimTypes"/>
+    /// </summary>
     public class PlatformApplicationUserContextKeyToJwtClaimTypeMapper : IPlatformApplicationUserContextKeyToClaimTypeMapper
     {
-        public string ToClaimType(string contextKey)
+        public virtual string ToClaimType(string contextKey)
         {
             return contextKey switch
             {

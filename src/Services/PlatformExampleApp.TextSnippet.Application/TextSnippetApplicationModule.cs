@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AngularDotnetPlatform.Platform.Application;
 using AngularDotnetPlatform.Platform.Application.Context;
 using Microsoft.Extensions.Configuration;
+using PlatformExampleApp.TextSnippet.Application.CqrsPipelineMiddleware;
 using PlatformExampleApp.TextSnippet.Domain;
 using PlatformExampleApp.TextSnippet.Persistence;
 using PlatformExampleApp.TextSnippet.Persistence.Mongo;
@@ -54,6 +55,11 @@ namespace PlatformExampleApp.TextSnippet.Application
             {
                 ApplicationName = TextSnippetApplicationConstants.ApplicationName
             };
+        }
+
+        protected override List<Type> CqrsPipelinesProvider()
+        {
+            return new List<Type>() { typeof(CommandAuditLogCqrsPipelineMiddleware<,>) };
         }
     }
 }

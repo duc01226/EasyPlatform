@@ -9,6 +9,7 @@ using AngularDotnetPlatform.Platform.Caching;
 using AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories;
 using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.Validators;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -178,7 +179,16 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
         {
             serviceCollection.AddMediatR(Assembly);
             serviceCollection.Register(typeof(IPlatformCqrs), typeof(PlatformCqrs), ServiceLifeTime.Transient, replaceIfExist: true);
-            CqrsPipelinesProvider().ForEach(p => serviceCollection.Register(typeof(IPipelineBehavior<,>), p, ServiceLifeTime.Transient));
+            CqrsPipelinesProvider().ForEach(p =>
+            {
+                PlatformValidationResult
+                    .ValidIf(
+                        p.IsGenericType && p.GetGenericTypeDefinition().IsAssignableToGenericType(typeof(PlatformCqrsPipelineMiddleware<,>)),
+                        "Pipeline type must be GenericType and inherit from PlatformCqrsPipelineMiddleware<,>")
+                    .EnsureValid(val => new Exception(val.ErrorsMsg()));
+
+                serviceCollection.Register(typeof(IPipelineBehavior<,>), p, ServiceLifeTime.Transient);
+            });
         }
 
         private void RegisterCaching(IServiceCollection serviceCollection)

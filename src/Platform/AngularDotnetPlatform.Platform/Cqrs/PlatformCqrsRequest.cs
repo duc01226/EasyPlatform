@@ -6,10 +6,15 @@ namespace AngularDotnetPlatform.Platform.Cqrs
 {
     public interface IPlatformCqrsRequest : IPlatformDto
     {
-        public Guid? HandleAuditedTrackId { get; set; }
+        public Guid? HandleAuditedTrackId { get; }
 
-        public DateTime? HandleAuditedDate { get; set; }
+        public DateTime? HandleAuditedDate { get; }
 
-        public string HandleAuditedByUserId { get; set; }
+        public string HandleAuditedByUserId { get; }
+
+        public void PopulateAuditInfo(
+            Guid? handleAuditedTrackId,
+            DateTime? handleAuditedDate,
+            string handleAuditedByUserId);
     }
 }

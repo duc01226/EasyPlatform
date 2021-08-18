@@ -1,4 +1,5 @@
 using AngularDotnetPlatform.Platform.Domain.Entities;
+using AngularDotnetPlatform.Platform.Validators;
 
 namespace AngularDotnetPlatform.Platform.Application.Dtos
 {
@@ -24,5 +25,10 @@ namespace AngularDotnetPlatform.Platform.Application.Dtos
         public TId Id { get; set; }
 
         public abstract TEntity MapToEntity();
+
+        public PlatformValidationResult Validate()
+        {
+            return PlatformValidationResult.Valid();
+        }
     }
 }

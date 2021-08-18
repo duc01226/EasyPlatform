@@ -78,7 +78,8 @@ namespace AngularDotnetPlatform.Platform.Application
                     typeof(IPlatformApplicationUserContextAccessor),
                     typeof(PlatformDefaultApplicationUserContextAccessor),
                     ServiceLifeTime.Singleton,
-                    replaceIfExist: true);
+                    replaceIfExist: true,
+                    ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
             }
         }
 

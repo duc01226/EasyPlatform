@@ -6,7 +6,6 @@ namespace AngularDotnetPlatform.Platform.Application.Exceptions
     {
         public PlatformApplicationException(string message) : base(message)
         {
-
         }
     }
 }

@@ -1,7 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Application.Exceptions;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using AngularDotnetPlatform.Platform.Validators;
 using FluentValidation.Results;
 using MediatR;
 
@@ -14,7 +16,10 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
         protected readonly IUnitOfWorkManager UnitOfWorkManager;
         protected readonly IPlatformCqrs Cqrs;
 
-        public PlatformCqrsCommandHandler(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs)
+        public PlatformCqrsCommandHandler(
+            IPlatformApplicationUserContextAccessor userContext,
+            IUnitOfWorkManager unitOfWorkManager,
+            IPlatformCqrs cqrs) : base(userContext)
         {
             UnitOfWorkManager = unitOfWorkManager;
             Cqrs = cqrs;
@@ -22,6 +27,7 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
 
         public async Task<TResult> Handle(TCommand request, CancellationToken cancellationToken)
         {
+            EnsureValidationResultValid(request.Validate());
             PopulateAuditInfo(request);
 
             var result = await ExecuteHandleAsync(request, cancellationToken);
@@ -57,14 +63,6 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
 
             return result;
         }
-
-        protected void EnsureValidationResultValid(ValidationResult validationResult)
-        {
-            if (validationResult.IsValid == false)
-            {
-                throw new PlatformApplicationValidationException(validationResult);
-            }
-        }
     }
 
     public abstract class PlatformCqrsCommandHandler<TCommand, TResult, TUnitOfWork> : PlatformCqrsCommandHandler<TCommand, TResult>
@@ -72,7 +70,10 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
         where TResult : PlatformCqrsCommandResult, new()
         where TUnitOfWork : IUnitOfWork
     {
-        protected PlatformCqrsCommandHandler(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
+        protected PlatformCqrsCommandHandler(
+            IPlatformApplicationUserContextAccessor userContext,
+            IUnitOfWorkManager unitOfWorkManager,
+            IPlatformCqrs cqrs) : base(userContext, unitOfWorkManager, cqrs)
         {
         }
 

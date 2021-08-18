@@ -40,5 +40,10 @@ namespace PlatformExampleApp.TextSnippet.Domain.Entities
         {
             return PlatformValidator<TextSnippetEntity>.Create(SnippetTextValidator(), FullTextValidator());
         }
+
+        public PlatformValidationResult ValidateSomeSpecificDomainLogic()
+        {
+            return PlatformValidationResult.ValidIf(validCondition: true, "Some example domain logic violated message.");
+        }
     }
 }

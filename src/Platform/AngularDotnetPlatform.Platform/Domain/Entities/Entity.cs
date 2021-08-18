@@ -26,11 +26,11 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
             return JsonSerializer.Deserialize<TEntity>(JsonSerializer.Serialize(this));
         }
 
-        public ValidationResult Validate()
+        public PlatformValidationResult Validate()
         {
             var validator = GetValidator();
 
-            return validator != null ? validator.Validate((TEntity)this) : new ValidationResult();
+            return validator != null ? validator.Validate((TEntity)this) : new PlatformValidationResult();
         }
 
         /// <summary>

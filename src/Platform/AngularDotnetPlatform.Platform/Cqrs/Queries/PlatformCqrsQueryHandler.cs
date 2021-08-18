@@ -1,6 +1,9 @@
 using System.Threading;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Application.Context.UserContext;
+using AngularDotnetPlatform.Platform.Application.Exceptions;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using AngularDotnetPlatform.Platform.Validators;
 using MediatR;
 
 namespace AngularDotnetPlatform.Platform.Cqrs.Queries
@@ -11,13 +14,16 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Queries
     {
         protected readonly IUnitOfWorkManager UnitOfWorkManager;
 
-        public PlatformCqrsQueryHandler(IUnitOfWorkManager unitOfWorkManager)
+        public PlatformCqrsQueryHandler(
+            IPlatformApplicationUserContextAccessor userContext,
+            IUnitOfWorkManager unitOfWorkManager) : base(userContext)
         {
             UnitOfWorkManager = unitOfWorkManager;
         }
 
         public async Task<TResult> Handle(TQuery request, CancellationToken cancellationToken)
         {
+            EnsureValidationResultValid(request.Validate());
             PopulateAuditInfo(request);
 
             using (var uow = BeginUnitOfWork())
@@ -40,7 +46,9 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Queries
         where TResult : PlatformCqrsQueryResult
         where TUnitOfWork : IUnitOfWork
     {
-        protected PlatformCqrsQueryHandler(IUnitOfWorkManager unitOfWorkManager) : base(unitOfWorkManager)
+        protected PlatformCqrsQueryHandler(
+            IPlatformApplicationUserContextAccessor userContext,
+            IUnitOfWorkManager unitOfWorkManager) : base(userContext, unitOfWorkManager)
         {
         }
 

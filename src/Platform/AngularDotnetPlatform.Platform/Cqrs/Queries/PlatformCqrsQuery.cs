@@ -1,5 +1,6 @@
 using System;
 using AngularDotnetPlatform.Platform.Application.Dtos;
+using AngularDotnetPlatform.Platform.Validators;
 using MediatR;
 
 namespace AngularDotnetPlatform.Platform.Cqrs.Queries
@@ -16,6 +17,21 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Queries
         public DateTime? HandleAuditedDate { get; set; }
 
         public string HandleAuditedByUserId { get; set; }
+
+        public void PopulateAuditInfo(
+            Guid? handleAuditedTrackId,
+            DateTime? handleAuditedDate,
+            string handleAuditedByUserId)
+        {
+            HandleAuditedTrackId = handleAuditedTrackId;
+            HandleAuditedDate = handleAuditedDate;
+            HandleAuditedByUserId = handleAuditedByUserId;
+        }
+
+        public virtual PlatformValidationResult Validate()
+        {
+            return PlatformValidationResult.Valid();
+        }
     }
 
     public abstract class PlatformCqrsPagedResultQuery<TResult, TItem> : PlatformCqrsQuery<TResult>, IPagedRequest

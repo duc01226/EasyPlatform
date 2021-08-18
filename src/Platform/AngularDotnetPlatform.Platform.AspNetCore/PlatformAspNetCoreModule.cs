@@ -161,7 +161,8 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
                 typeof(IPlatformApplicationUserContextAccessor),
                 typeof(PlatformAspNetApplicationUserContextAccessor),
                 ServiceLifeTime.Singleton,
-                replaceIfExist: true);
+                replaceIfExist: true,
+                ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
 
             RegisterUserContextKeyToClaimTypeMapper(serviceCollection);
         }

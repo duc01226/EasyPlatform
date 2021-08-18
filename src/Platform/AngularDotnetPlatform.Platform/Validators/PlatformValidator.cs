@@ -7,9 +7,9 @@ namespace AngularDotnetPlatform.Platform.Validators
 {
     public class PlatformValidator<T> : AbstractValidator<T>
     {
-        public static ValidationResult Invalid(string property, string errorMsg)
+        public static PlatformValidationResult Invalid(string property, string errorMsg)
         {
-            return new ValidationResult(new List<ValidationFailure>() { new ValidationFailure(property, errorMsg) });
+            return new PlatformValidationResult(new List<PlatformValidationFailure>() { new PlatformValidationFailure(property, errorMsg) });
         }
 
         public static PlatformValidator<T> Create(params PlatformValidator<T>[] includeValidators)
@@ -27,6 +27,18 @@ namespace AngularDotnetPlatform.Platform.Validators
         public static PlatformValidator<T> Create(params PlatformSingleValidator<T, object>[] includeValidators)
         {
             return Create(includeValidators.Select(p => (PlatformValidator<T>)p).ToArray());
+        }
+
+        public override PlatformValidationResult Validate(ValidationContext<T> context)
+        {
+            var validationResult = base.Validate(context);
+            return new PlatformValidationResult(validationResult.Errors.Select(p => new PlatformValidationFailure(p)).ToList());
+        }
+
+        public new PlatformValidationResult Validate(T instance)
+        {
+            return new PlatformValidationResult(
+                base.Validate(instance).Errors.Select(p => new PlatformValidationFailure(p)).ToList());
         }
     }
 }

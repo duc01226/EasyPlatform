@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using AngularDotnetPlatform.Platform.Application.Dtos;
+using AngularDotnetPlatform.Platform.Validators;
 
 namespace AngularDotnetPlatform.Platform.Cqrs.Queries
 {
@@ -22,5 +23,9 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Queries
         public List<TItem> Items { get; set; }
         public int TotalCount { get; set; }
         public int PageSize { get; set; }
+        public PlatformValidationResult Validate()
+        {
+            return PlatformValidationResult.Valid();
+        }
     }
 }

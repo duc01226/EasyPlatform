@@ -6,7 +6,7 @@ using FluentValidation.Results;
 
 namespace AngularDotnetPlatform.Platform.Validators
 {
-    public class PlatformCheckUniquenessValidator<T>
+    public class PlatformCheckUniquenessValidator<T> : PlatformValidator<T>
     {
         public PlatformCheckUniquenessValidator(
             T targetItem,
@@ -24,25 +24,25 @@ namespace AngularDotnetPlatform.Platform.Validators
 
         public string ErrorMessage { get; private set; }
 
-        public ValidationResult Validate(Func<Expression<Func<T, bool>>, bool> checkAnyDuplicatedFn)
+        public PlatformValidationResult Validate(Func<Expression<Func<T, bool>>, bool> checkAnyDuplicatedFn)
         {
             if (checkAnyDuplicatedFn(FindOtherDuplicatedItemExpr))
-                return PlatformValidator<T>.Invalid("", ErrorMessage);
-            return new ValidationResult();
+                return Invalid("", ErrorMessage);
+            return new PlatformValidationResult();
         }
 
         public async Task<ValidationResult> Validate(Func<Expression<Func<T, bool>>, Task<bool>> checkAnyDuplicatedFn)
         {
             if (await checkAnyDuplicatedFn(FindOtherDuplicatedItemExpr))
-                return PlatformValidator<T>.Invalid("", ErrorMessage);
-            return new ValidationResult();
+                return Invalid("", ErrorMessage);
+            return new PlatformValidationResult();
         }
 
         public ValidationResult Validate(IQueryable<T> checkUniquenessScope)
         {
             if (checkUniquenessScope.Any(FindOtherDuplicatedItemExpr))
-                return PlatformValidator<T>.Invalid("", ErrorMessage);
-            return new ValidationResult();
+                return Invalid("", ErrorMessage);
+            return new PlatformValidationResult();
         }
     }
 }

@@ -1,9 +1,11 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using AngularDotnetPlatform.Platform.Validators;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
@@ -14,6 +16,13 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
     public class SaveSnippetTextCommand : PlatformCqrsCommand<SaveSnippetTextCommandResult>
     {
         public TextSnippetEntityDto Data { get; set; }
+
+        public override PlatformValidationResult Validate()
+        {
+            return PlatformValidationResult
+                .ValidIf(Data != null, "Data must be not null.")
+                .And(() => Data.MapToEntity().Validate());
+        }
     }
 
     public class SaveSnippetTextCommandResult : PlatformCqrsCommandResult
@@ -31,12 +40,13 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         private readonly IConfiguration configuration;
 
         public SaveSnippetTextCommandHandler(
+            IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager,
             ITextSnippetRootRepository<TextSnippetEntity> repository,
             IPlatformCqrs cqrs,
             ITextSnippetSqlRootRepository<TextSnippetEntity> sqlRepository,
             ITextSnippetMongoRootRepository<TextSnippetEntity> mongoRepository,
-            IConfiguration configuration) : base(unitOfWorkManager, cqrs)
+            IConfiguration configuration) : base(userContext, unitOfWorkManager, cqrs)
         {
             this.repository = repository;
             this.sqlRepository = sqlRepository;
@@ -48,7 +58,23 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         {
             var savingData = request.Data.MapToEntity();
 
-            EnsureValidationResultValid(savingData.Validate());
+            EnsureBusinessLogicValid(
+                savingData.ValidateSomeSpecificDomainLogic(),
+                ValidateSomeThisCommandLogic());
+
+            // Example to use validation result as a boolean to change program business flow
+            if (ValidateSomeThisCommandLogicToChangeFlow() || savingData.ValidateSomeSpecificDomainLogic())
+            {
+                // Do Some business if ValidateSomeThisCommandLogicToChangeFlow
+                // OR savingData.ValidateSomeSpecificDomainLogic
+                // RETURN Valid validation result
+            }
+            else
+            {
+                // Do Some business if ValidateSomeThisCommandLogicToChangeFlow
+                // AND savingData.ValidateSomeSpecificDomainLogic
+                // RETURN InValid validation result
+            }
 
             TextSnippetEntity savedData;
 
@@ -91,6 +117,20 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         private bool IsDemoUseMultiDb()
         {
             return configuration.GetSection("DemoUseMultiDbForSaveSnippetTextCommand").Get<bool>();
+        }
+
+        private PlatformValidationResult ValidateSomeThisCommandLogic()
+        {
+            return PlatformValidationResult.Valid()
+                .And(validCondition: true, "Example Rule 1 violated error message")
+                .And(validCondition: true, "Example Rule 2 violated error message");
+        }
+
+        private PlatformValidationResult ValidateSomeThisCommandLogicToChangeFlow()
+        {
+            return PlatformValidationResult.Valid()
+                .And(validCondition: true, "Example Rule 1 violated error message")
+                .And(validCondition: true, "Example Rule 2 violated error message");
         }
     }
 }

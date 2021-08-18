@@ -15,9 +15,9 @@ namespace AngularDotnetPlatform.Platform.Cqrs
     {
         public async Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken, RequestHandlerDelegate<TResponse> next)
         {
-            return await HandleAsync(request, cancellationToken);
+            return await HandleAsync(request, cancellationToken, next);
         }
 
-        protected abstract Task<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken);
+        protected abstract Task<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken, RequestHandlerDelegate<TResponse> next);
     }
 }
