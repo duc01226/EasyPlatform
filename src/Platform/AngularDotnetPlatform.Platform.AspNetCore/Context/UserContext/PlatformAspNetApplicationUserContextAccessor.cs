@@ -1,6 +1,8 @@
 using System;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext.Default;
+using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper;
+using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,9 +24,10 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
         protected override IPlatformApplicationUserContext CreateNewContext()
         {
             var httpContextAccessor = serviceProvider.GetService<IHttpContextAccessor>();
-            if (httpContextAccessor == null)
-                return null;
-            return new PlatformAspNetApplicationUserContext(httpContextAccessor);
+            var claimTypeMapper = serviceProvider.GetService<IPlatformApplicationUserContextKeyToClaimTypeMapper>();
+            if (httpContextAccessor == null || claimTypeMapper == null)
+                throw new Exception("[Developer] Missing registered IHttpContextAccessor or IPlatformApplicationUserContextKeyToClaimTypeMapper");
+            return new PlatformAspNetApplicationUserContext(httpContextAccessor, claimTypeMapper);
         }
     }
 }

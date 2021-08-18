@@ -29,10 +29,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Middleware
             }
 
             context.TraceIdentifier = context.Request.Headers[PlatformAspnetConstant.CommonHttpHeaderNames.RequestId];
-            if (applicationUserContextAccessor.Current != null)
-            {
-                applicationUserContextAccessor.Current.SetValue(context.TraceIdentifier, PlatformCommonApplicationUserContextKeys.RequestId);
-            }
+            applicationUserContextAccessor.Current.SetValue(context.TraceIdentifier, PlatformApplicationCommonUserContextKeys.RequestId);
 
             // apply the request ID to the response header for client side tracking
             context.Response.OnStarting(() =>

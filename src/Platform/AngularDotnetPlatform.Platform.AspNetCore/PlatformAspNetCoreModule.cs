@@ -1,9 +1,12 @@
 using System;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.AspNetCore.Constants;
 using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext;
+using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper;
+using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -151,7 +154,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
             return TimeSpan.FromDays(1);
         }
 
-        private static void RegisterUserContext(IServiceCollection serviceCollection)
+        protected void RegisterUserContext(IServiceCollection serviceCollection)
         {
             serviceCollection.AddHttpContextAccessor();
             serviceCollection.Register(
@@ -159,6 +162,26 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
                 typeof(PlatformAspNetApplicationUserContextAccessor),
                 ServiceLifeTime.Singleton,
                 replaceIfExist: true);
+
+            RegisterUserContextKeyToClaimTypeMapper(serviceCollection);
+        }
+
+        /// <summary>
+        /// This function is used to register implementation for <see cref="IPlatformApplicationUserContextKeyToClaimTypeMapper"/>
+        /// Default implementation is <see cref="PlatformApplicationUserContextKeyToJwtClaimTypeMapper"/>
+        /// </summary>
+        /// <returns></returns>
+        protected virtual Type UserContextKeyToClaimTypeMapperType()
+        {
+            return typeof(PlatformApplicationUserContextKeyToJwtClaimTypeMapper);
+        }
+
+        private void RegisterUserContextKeyToClaimTypeMapper(IServiceCollection serviceCollection)
+        {
+            serviceCollection.Register(
+                typeof(IPlatformApplicationUserContextKeyToClaimTypeMapper),
+                UserContextKeyToClaimTypeMapperType(),
+                ServiceLifeTime.Transient);
         }
     }
 }

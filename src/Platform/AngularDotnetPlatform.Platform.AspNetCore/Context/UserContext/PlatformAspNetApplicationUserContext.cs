@@ -1,7 +1,14 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Security.Claims;
+using System.Text.Json;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
+using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper;
+using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
+using AngularDotnetPlatform.Platform.Extensions;
 using Microsoft.AspNetCore.Http;
 
 namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
@@ -9,10 +16,14 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
     public class PlatformAspNetApplicationUserContext : IPlatformApplicationUserContext
     {
         private readonly IHttpContextAccessor httpContextAccessor;
+        private readonly IPlatformApplicationUserContextKeyToClaimTypeMapper claimTypeMapper;
 
-        public PlatformAspNetApplicationUserContext(IHttpContextAccessor httpContextAccessor)
+        public PlatformAspNetApplicationUserContext(
+            IHttpContextAccessor httpContextAccessor,
+            IPlatformApplicationUserContextKeyToClaimTypeMapper claimTypeMapper)
         {
             this.httpContextAccessor = httpContextAccessor;
+            this.claimTypeMapper = claimTypeMapper;
         }
 
         public T GetValue<T>(string contextKey)
@@ -30,6 +41,12 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
             if (CurrentHttpContext().Items.ContainsKey(computedKey))
             {
                 return (T)CurrentHttpContext().Items[computedKey];
+            }
+
+            if (TryGetValueFromHttpContext(contextKey, out T foundValue))
+            {
+                SetValue(foundValue, contextKey);
+                return foundValue;
             }
 
             return default;
@@ -97,6 +114,112 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
         private HttpContext CurrentHttpContext()
         {
             return httpContextAccessor.HttpContext;
+        }
+
+        private bool TryGetValueFromHttpContext<T>(string contextKey, out T foundValue)
+        {
+            if (contextKey == PlatformApplicationCommonUserContextKeys.RequestId)
+            {
+                return TryGetRequestId(CurrentHttpContext(), out foundValue);
+            }
+
+            return TryGetValueFromUserClaims(CurrentHttpContext().User, contextKey, out foundValue);
+        }
+
+        private bool TryGetRequestId<T>(HttpContext httpContext, out T foundValue)
+        {
+            if (!string.IsNullOrEmpty(httpContext.TraceIdentifier) && typeof(T) == typeof(string))
+            {
+                foundValue = (T)(object)httpContext.TraceIdentifier;
+                return true;
+            }
+
+            foundValue = default;
+            return false;
+        }
+
+        /// <summary>
+        /// Return True if found value and out the value of type <see cref="T"/>.
+        /// Return false if value is not found and out default of type <see cref="T"/>.
+        /// </summary>
+        private bool TryGetValueFromUserClaims<T>(ClaimsPrincipal userClaims, string contextKey, out T foundValue)
+        {
+            var contextKeyMappedToJwtClaimType = MapContextKeyToJwtClaimType(contextKey);
+
+            var matchedClaimStringValues = userClaims.FindAll(contextKeyMappedToJwtClaimType).Select(p => p.Value).ToList();
+
+            // Try Get Deserialized value from matchedClaimStringValues
+
+            if (typeof(T) == typeof(string))
+            {
+                foundValue = (T)(object)matchedClaimStringValues.LastOrDefault();
+                return true;
+            }
+
+            // Handle case if type T is a list with many items.
+            var isTryGetListValueSuccess = TryGetParsedListValueFromUserClaimStringValues(matchedClaimStringValues, out foundValue);
+            if (isTryGetListValueSuccess)
+                return true;
+
+            return JsonSerializerExtension.TryDeserialize(
+                matchedClaimStringValues.LastOrDefault(),
+                out foundValue,
+                PlatformJsonSerializer.CurrentOptions.Value);
+        }
+
+        private bool TryGetParsedListValueFromUserClaimStringValues<T>(
+            List<string> matchedClaimStringValues,
+            out T foundValue)
+        {
+            var firstValueListInterface = typeof(T)
+                .GetInterfaces()
+                .FirstOrDefault(p =>
+                    p.IsGenericType &&
+                    (p.GetGenericTypeDefinition().IsAssignableTo(typeof(IEnumerable<>)) ||
+                     p.GetGenericTypeDefinition().IsAssignableTo(typeof(ICollection<>))));
+
+            if (firstValueListInterface != null)
+            {
+                var listItemType = firstValueListInterface.GetGenericArguments()[0];
+
+                var isParsedAllItemSuccess = true;
+
+                var parsedItemList = matchedClaimStringValues.Select(matchedClaimStringValue =>
+                {
+                    if (listItemType == typeof(string))
+                    {
+                        return matchedClaimStringValue;
+                    }
+
+                    var parsedItemResult = JsonSerializerExtension.TryDeserialize(
+                        matchedClaimStringValue,
+                        listItemType,
+                        out var itemDeserializedValue,
+                        PlatformJsonSerializer.CurrentOptions.Value);
+
+                    if (parsedItemResult == false)
+                        isParsedAllItemSuccess = false;
+
+                    return itemDeserializedValue;
+                });
+
+                if (isParsedAllItemSuccess)
+                {
+                    // Serialize then Deserialize to type T so ensure parse matchedClaimStringValues to type T successfully
+                    foundValue = JsonSerializer.Deserialize<T>(
+                        JsonSerializer.Serialize(parsedItemList, PlatformJsonSerializer.CurrentOptions.Value));
+                    return true;
+                }
+            }
+
+            foundValue = default;
+
+            return false;
+        }
+
+        private string MapContextKeyToJwtClaimType(string contextKey)
+        {
+            return claimTypeMapper.ToClaimType(contextKey);
         }
     }
 }

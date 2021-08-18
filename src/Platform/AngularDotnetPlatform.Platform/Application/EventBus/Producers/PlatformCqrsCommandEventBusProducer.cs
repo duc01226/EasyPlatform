@@ -53,11 +53,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                     .New<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>>(
                         @event.Id,
                         @event.CommandData,
-                        new PlatformEventBusMessageIdentity()
-                        {
-                            UserId = UserContextAccessor.Current?.GetUserId(),
-                            RequestId = UserContextAccessor.Current?.GetRequestId()
-                        },
+                        PlatformApplicationEventBusMessageIdentityMapper.ByUserContext(UserContextAccessor.Current),
                         producerContext: ApplicationSettingContext.ApplicationName,
                         messageAction: @event.EventAction);
                 try

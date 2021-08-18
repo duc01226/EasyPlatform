@@ -7,7 +7,7 @@ namespace AngularDotnetPlatform.Platform.Application.Context.UserContext
     /// </summary>
     public interface IPlatformApplicationUserContextAccessor
     {
-        [MaybeNull]
+        [NotNull]
         IPlatformApplicationUserContext Current { get; set; }
     }
 }

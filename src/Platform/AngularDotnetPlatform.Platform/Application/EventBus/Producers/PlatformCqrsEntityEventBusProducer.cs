@@ -64,11 +64,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             var message = PlatformEventBusMessage<TEntity>.New<PlatformCqrsEntityEventBusMessage<TEntity, TEntityKey>>(
                 @event.Id,
                 @event.EntityData,
-                new PlatformEventBusMessageIdentity()
-                {
-                    UserId = UserContextAccessor.Current?.GetUserId(),
-                    RequestId = UserContextAccessor.Current?.GetRequestId()
-                },
+                PlatformApplicationEventBusMessageIdentityMapper.ByUserContext(UserContextAccessor.Current),
                 producerContext: ApplicationSettingContext.ApplicationName,
                 messageAction: @event.EventAction);
             try
