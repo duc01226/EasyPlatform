@@ -10,15 +10,41 @@ namespace PlatformExampleApp.TextSnippet.Application
     public class TextSnippetApplicationDataSeeder : PlatformApplicationDataSeeder, IPlatformApplicationDataSeeder
     {
         private readonly ITextSnippetRootRepository<TextSnippetEntity> textSnippetRepository;
+        private readonly ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;
 
         public TextSnippetApplicationDataSeeder(
             IUnitOfWorkManager unitOfWorkManager,
-            ITextSnippetRootRepository<TextSnippetEntity> textSnippetRepository) : base(unitOfWorkManager)
+            ITextSnippetRootRepository<TextSnippetEntity> textSnippetRepository,
+            ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository) : base(unitOfWorkManager)
         {
             this.textSnippetRepository = textSnippetRepository;
+            this.multiDbDemoEntityRepository = multiDbDemoEntityRepository;
         }
 
         protected override async Task InternalSeedData()
+        {
+            await SeedTextSnippet();
+
+            await SeedMultiDbDemoEntity();
+        }
+
+        private async Task SeedMultiDbDemoEntity()
+        {
+            if (await multiDbDemoEntityRepository.AnyAsync())
+                return;
+
+            for (var i = 0; i < 20; i++)
+            {
+                await multiDbDemoEntityRepository.CreateOrUpdate(
+                    new MultiDbDemoEntity()
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = $"Multi Db Demo Entity {i}"
+                    });
+            }
+        }
+
+        private async Task SeedTextSnippet()
         {
             if (await textSnippetRepository.AnyAsync())
                 return;

@@ -16,7 +16,7 @@ using MongoDB.Driver.Linq;
 
 namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
 {
-    public abstract class PlatformMongoDbRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext>, IRootRepository<TEntity, TPrimaryKey>
+    public abstract class PlatformMongoDbRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext>, IPlatformRootRepository<TEntity, TPrimaryKey>
         where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
         where TDbContext : PlatformMongoDbContext<TDbContext>
     {
@@ -191,6 +191,9 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
 
         protected async Task EnsureValid(Task<ValidationResult> validationResultTask)
         {
+            if (validationResultTask == null)
+                return;
+
             var validationResult = await validationResultTask;
             if (validationResult != null && !validationResult.IsValid)
                 throw new PlatformDomainValidationException(validationResult);

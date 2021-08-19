@@ -18,26 +18,27 @@ using AngularDotnetPlatform.Platform.MongoDB.Serializer.Abstract;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
 {
-    public abstract class PlatformMongoDbPersistenceModule<TClientContext, TDbContext> : PlatformPersistenceModule
+    public abstract class PlatformMongoDbPersistenceModule<TClientContext, TDbContext, TMongoOptions> : PlatformPersistenceModule
         where TClientContext : class, IPlatformMongoClientContext
         where TDbContext : class, IPlatformMongoDbContext<TDbContext>
+        where TMongoOptions : PlatformMongoOptions
     {
-        protected readonly ILogger<PlatformMongoDbPersistenceModule<TClientContext, TDbContext>> Logger;
+        protected readonly ILogger<PlatformMongoDbPersistenceModule<TClientContext, TDbContext, TMongoOptions>> Logger;
 
         public PlatformMongoDbPersistenceModule(
             IServiceProvider serviceProvider,
             IConfiguration configuration,
-            ILogger<PlatformMongoDbPersistenceModule<TClientContext, TDbContext>> logger) : base(serviceProvider, configuration)
+            ILogger<PlatformMongoDbPersistenceModule<TClientContext, TDbContext, TMongoOptions>> logger) : base(serviceProvider, configuration)
         {
             Logger = logger;
         }
 
-        protected abstract void ConfigureMongoOptions(PlatformMongoOptions options);
+        protected abstract void ConfigureMongoOptions(TMongoOptions options);
 
         protected override void InternalRegister(IServiceCollection serviceCollection)
         {
             base.InternalRegister(serviceCollection);
-            serviceCollection.Configure<PlatformMongoOptions>(ConfigureMongoOptions);
+            serviceCollection.Configure<TMongoOptions>(ConfigureMongoOptions);
             serviceCollection.AddSingleton<TClientContext>();
             serviceCollection.AddSingleton<IPlatformMongoClientContext, TClientContext>();
             serviceCollection.RegisterAllFromType<TDbContext>(ServiceLifeTime.Transient, Assembly);
@@ -116,11 +117,26 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         private static void RegisterPlatformDataMigrationHistoryClassMap()
         {
-            BsonClassMap.RegisterClassMap<PlatformDataMigrationHistory>(cm =>
+            if (!BsonClassMap.IsClassMapRegistered(typeof(PlatformDataMigrationHistory)))
             {
-                cm.AutoMap();
-                cm.SetIgnoreExtraElements(true);
-            });
+                BsonClassMap.RegisterClassMap<PlatformDataMigrationHistory>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.SetIgnoreExtraElements(true);
+                });
+            }
+        }
+    }
+
+    public abstract class PlatformMongoDbPersistenceModule<TClientContext, TDbContext> : PlatformMongoDbPersistenceModule<TClientContext, TDbContext, PlatformMongoOptions>
+        where TClientContext : class, IPlatformMongoClientContext
+        where TDbContext : class, IPlatformMongoDbContext<TDbContext>
+    {
+        protected PlatformMongoDbPersistenceModule(
+            IServiceProvider serviceProvider,
+            IConfiguration configuration,
+            ILogger<PlatformMongoDbPersistenceModule<TClientContext, TDbContext>> logger) : base(serviceProvider, configuration, logger)
+        {
         }
     }
 }

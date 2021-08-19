@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
@@ -18,7 +19,7 @@ namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
         /// Each unit of work can only Complete once
         /// </summary>
         /// <returns>A task representing the asynchronous operation.</returns>
-        Task CompleteAsync();
+        Task CompleteAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Return true if the current uow is not Completed and not Disposed

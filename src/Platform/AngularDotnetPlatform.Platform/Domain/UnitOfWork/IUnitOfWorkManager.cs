@@ -28,22 +28,15 @@ namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
         IUnitOfWork Begin();
 
         /// <summary>
-        /// Begin a new registered <see cref="TUnitOfWork"/> unit of work.
-        /// If current active unit of work for <see cref="TUnitOfWork"/> type existed, return it.
-        /// Use this to support multi unit of work for multi database
-        /// </summary>
-        TUnitOfWork Begin<TUnitOfWork>() where TUnitOfWork : IUnitOfWork;
-
-        /// <summary>
-        /// Gets last begun unit of work of type <see cref="TUnitOfWork"/> (or null if not exists).
+        /// Gets last begun inner unit of work of type <see cref="TUnitOfWork"/> (or null if not exists).
         /// </summary>
         [return: MaybeNull]
-        TUnitOfWork Current<TUnitOfWork>() where TUnitOfWork : IUnitOfWork;
+        TUnitOfWork CurrentInner<TUnitOfWork>() where TUnitOfWork : IUnitOfWork;
 
         /// <summary>
-        /// Gets currently latest active unit of work of type <see cref="TUnitOfWork"/>.
+        /// Gets currently latest active inner unit of work of type <see cref="TUnitOfWork"/>.
         /// <exception cref="Exception">Throw exception if there is not active unit of work.</exception>
         /// </summary>
-        TUnitOfWork CurrentActive<TUnitOfWork>() where TUnitOfWork : IUnitOfWork;
+        TUnitOfWork CurrentInnerActive<TUnitOfWork>() where TUnitOfWork : IUnitOfWork;
     }
 }

@@ -58,28 +58,10 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
                 await Cqrs.SendEvent(
                     new PlatformCqrsCommandEvent<TCommand, TResult>(request, PlatformCqrsCommandEventAction.Executing),
                     cancellationToken);
-                await usingUow.CompleteAsync();
+                await usingUow.CompleteAsync(cancellationToken);
             }
 
             return result;
-        }
-    }
-
-    public abstract class PlatformCqrsCommandHandler<TCommand, TResult, TUnitOfWork> : PlatformCqrsCommandHandler<TCommand, TResult>
-        where TCommand : PlatformCqrsCommand<TResult>
-        where TResult : PlatformCqrsCommandResult, new()
-        where TUnitOfWork : IUnitOfWork
-    {
-        protected PlatformCqrsCommandHandler(
-            IPlatformApplicationUserContextAccessor userContext,
-            IUnitOfWorkManager unitOfWorkManager,
-            IPlatformCqrs cqrs) : base(userContext, unitOfWorkManager, cqrs)
-        {
-        }
-
-        protected override IUnitOfWork BeginUnitOfWork()
-        {
-            return UnitOfWorkManager.Begin<TUnitOfWork>();
         }
     }
 }

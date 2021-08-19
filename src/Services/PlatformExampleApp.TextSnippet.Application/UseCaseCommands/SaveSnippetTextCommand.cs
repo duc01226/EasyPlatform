@@ -1,10 +1,12 @@
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using AngularDotnetPlatform.Platform.Timing;
 using AngularDotnetPlatform.Platform.Validators;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
@@ -32,26 +34,18 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 
     public class SaveSnippetTextCommandHandler : PlatformCqrsCommandHandler<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
     {
-        private readonly ITextSnippetRootRepository<TextSnippetEntity> repository;
-
-        // These two line to demo multi db support for one micro service
-        private readonly ITextSnippetSqlRootRepository<TextSnippetEntity> sqlRepository;
-        private readonly ITextSnippetMongoRootRepository<TextSnippetEntity> mongoRepository;
-        private readonly IConfiguration configuration;
+        private readonly ITextSnippetRootRepository<TextSnippetEntity> textSnippetEntityRepository;
+        private readonly ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;
 
         public SaveSnippetTextCommandHandler(
             IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager,
-            ITextSnippetRootRepository<TextSnippetEntity> repository,
             IPlatformCqrs cqrs,
-            ITextSnippetSqlRootRepository<TextSnippetEntity> sqlRepository,
-            ITextSnippetMongoRootRepository<TextSnippetEntity> mongoRepository,
-            IConfiguration configuration) : base(userContext, unitOfWorkManager, cqrs)
+            ITextSnippetRootRepository<TextSnippetEntity> textSnippetEntityRepository,
+            ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository) : base(userContext, unitOfWorkManager, cqrs)
         {
-            this.repository = repository;
-            this.sqlRepository = sqlRepository;
-            this.mongoRepository = mongoRepository;
-            this.configuration = configuration;
+            this.textSnippetEntityRepository = textSnippetEntityRepository;
+            this.multiDbDemoEntityRepository = multiDbDemoEntityRepository;
         }
 
         protected override async Task<SaveSnippetTextCommandResult> HandleAsync(SaveSnippetTextCommand request, CancellationToken cancellationToken)
@@ -76,22 +70,10 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
                 // RETURN InValid validation result
             }
 
-            TextSnippetEntity savedData;
+            // This is not related to SaveSnippetText logic. This is just for demo multi db features in one application works
+            await UpsertFirstExistedMultiDbDemoEntity(cancellationToken);
 
-            // Please note that we only do this for demo. In real use case it should be only one selected unit of work per command handler
-            // Can archive this by override BeginUnitOfWork or implement PlatformCqrsCommandHandler<TCommand, TResult, TUnitOfWork>
-            if (IsDemoUseMultiDb() && UnitOfWorkManager.Current<ITextSnippetMongoUnitOfWork>()?.IsActive() == true)
-            {
-                savedData = await mongoRepository.CreateOrUpdate(savingData, cancellationToken: cancellationToken);
-            }
-            else if (IsDemoUseMultiDb() && UnitOfWorkManager.Current<ITextSnippetSqlUnitOfWork>()?.IsActive() == true)
-            {
-                savedData = await sqlRepository.CreateOrUpdate(savingData, cancellationToken: cancellationToken);
-            }
-            else
-            {
-                savedData = await repository.CreateOrUpdate(savingData, cancellationToken: cancellationToken);
-            }
+            var savedData = await textSnippetEntityRepository.CreateOrUpdate(savingData, cancellationToken: cancellationToken);
 
             return new SaveSnippetTextCommandResult()
             {
@@ -99,24 +81,19 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             };
         }
 
-        protected override async Task<SaveSnippetTextCommandResult> ExecuteHandleAsync(SaveSnippetTextCommand request, CancellationToken cancellationToken)
+        private async Task UpsertFirstExistedMultiDbDemoEntity(CancellationToken cancellationToken)
         {
-            // Please note that we only do this for demo. In real use case it should be only one selected unit of work per command handler
-            // Can archive this by override BeginUnitOfWork or implement PlatformCqrsCommandHandler<TCommand, TResult, TUnitOfWork>
-            if (IsDemoUseMultiDb())
-            {
-                // Save data into both two db context
-                await base.ExecuteHandleAsync(UnitOfWorkManager.Begin<ITextSnippetMongoUnitOfWork>(), request, cancellationToken);
-                var result = await base.ExecuteHandleAsync(UnitOfWorkManager.Begin<ITextSnippetSqlUnitOfWork>(), request, cancellationToken);
-                return result;
-            }
+            var firstExistedMultiDbEntity =
+                await multiDbDemoEntityRepository.FirstOrDefaultAsync(cancellationToken: cancellationToken) ??
+                new MultiDbDemoEntity()
+                {
+                    Id = Guid.NewGuid(),
+                    Name = "First Multi Db Demo Entity"
+                };
 
-            return await base.ExecuteHandleAsync(request, cancellationToken);
-        }
+            firstExistedMultiDbEntity.Name = $"First Multi Db Demo Entity Upserted on {Clock.Now.ToShortDateString()}";
 
-        private bool IsDemoUseMultiDb()
-        {
-            return configuration.GetSection("DemoUseMultiDbForSaveSnippetTextCommand").Get<bool>();
+            await multiDbDemoEntityRepository.CreateOrUpdate(firstExistedMultiDbEntity, cancellationToken: cancellationToken);
         }
 
         private PlatformValidationResult ValidateSomeThisCommandLogic()

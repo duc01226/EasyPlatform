@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
@@ -23,14 +24,14 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork
         public bool Completed { get; private set; }
         public bool Disposed { get; private set; }
 
-        public async Task CompleteAsync()
+        public async Task CompleteAsync(CancellationToken cancellationToken = default)
         {
             if (Completed)
                 throw new Exception("This unit of work is completed");
 
             try
             {
-                await DbContext.SaveChangesAsync();
+                await DbContext.SaveChangesAsync(cancellationToken);
                 Completed = true;
                 OnCompleted?.Invoke(this, EventArgs.Empty);
             }

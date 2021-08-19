@@ -5,8 +5,6 @@ using AngularDotnetPlatform.Platform.Application.Context;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.CqrsPipelineMiddleware;
 using PlatformExampleApp.TextSnippet.Domain;
-using PlatformExampleApp.TextSnippet.Persistence;
-using PlatformExampleApp.TextSnippet.Persistence.Mongo;
 
 namespace PlatformExampleApp.TextSnippet.Application
 {
@@ -22,28 +20,6 @@ namespace PlatformExampleApp.TextSnippet.Application
             {
                 p => typeof(TextSnippetDomainPlatformModule)
             };
-
-            if (Configuration.GetSection("DemoUseMultiDbForSaveSnippetTextCommand").Get<bool>())
-            {
-                if (Configuration.GetSection("UseMongoDb").Get<bool>())
-                {
-                    // If get default repository/unitOfWork will get from the latest registered module. If use mongo then register mongo module at last
-                    result.Add(p => typeof(TextSnippetEfCorePersistencePlatformModule));
-                    result.Add(p => typeof(TextSnippetMongoPersistencePlatformModule));
-                }
-                else
-                {
-                    result.Add(p => typeof(TextSnippetMongoPersistencePlatformModule));
-                    result.Add(p => typeof(TextSnippetEfCorePersistencePlatformModule));
-                }
-            }
-            else
-            {
-                result.Add(p => p.GetSection("UseMongoDb").Get<bool>()
-                    ? typeof(TextSnippetMongoPersistencePlatformModule)
-                    : typeof(TextSnippetEfCorePersistencePlatformModule));
-            }
-
             return result;
         }
 

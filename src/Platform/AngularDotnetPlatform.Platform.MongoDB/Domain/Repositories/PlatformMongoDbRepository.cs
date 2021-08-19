@@ -15,7 +15,7 @@ using MongoDB.Driver.Linq;
 
 namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
 {
-    public abstract class PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext> : IRepository<TEntity, TPrimaryKey>
+    public abstract class PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext> : IPlatformRepository<TEntity, TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
         where TDbContext : PlatformMongoDbContext<TDbContext>
     {
@@ -29,7 +29,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         protected IPlatformCqrs Cqrs { get; }
 
         protected TDbContext DbContext =>
-            UnitOfWorkManager.CurrentActive<IPlatformMongoDbUnitOfWork<TDbContext>>().DbContext;
+            UnitOfWorkManager.CurrentInnerActive<IPlatformMongoDbUnitOfWork<TDbContext>>().DbContext;
 
         /// <summary>
         /// Gets DbSet for given entity.
@@ -45,6 +45,13 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         public Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
         {
             return ((IMongoQueryable<TEntity>)GetAllQuery().WhereIf(predicate != null, predicate)).ToListAsync(cancellationToken);
+        }
+
+        public Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        {
+            if (predicate == null)
+                return ((IMongoQueryable<TEntity>)GetAllQuery()).FirstOrDefaultAsync(cancellationToken);
+            return ((IMongoQueryable<TEntity>)GetAllQuery()).FirstOrDefaultAsync(predicate, cancellationToken);
         }
 
         public Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)

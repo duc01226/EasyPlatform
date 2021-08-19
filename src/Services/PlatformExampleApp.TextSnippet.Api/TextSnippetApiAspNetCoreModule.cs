@@ -4,6 +4,10 @@ using Microsoft.Extensions.Configuration;
 using AngularDotnetPlatform.Platform.AspNetCore;
 using PlatformExampleApp.TextSnippet.Api.Context.UserContext;
 using PlatformExampleApp.TextSnippet.Application;
+using PlatformExampleApp.TextSnippet.Domain;
+using PlatformExampleApp.TextSnippet.Persistence;
+using PlatformExampleApp.TextSnippet.Persistence.Mongo;
+using PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,7 +21,21 @@ namespace PlatformExampleApp.TextSnippet.Api
 
         protected override List<Func<IConfiguration, Type>> GetModuleDependencies()
         {
-            return new List<Func<IConfiguration, Type>>() { p => typeof(TextSnippetApplicationModule), p => typeof(TextSnippetPlatformRabbitMqEventBusModule) };
+            var result = new List<Func<IConfiguration, Type>>
+            {
+                p => typeof(TextSnippetApplicationModule),
+                p => typeof(TextSnippetPlatformRabbitMqEventBusModule)
+            };
+
+            result.Add(p => p.GetSection("UseMongoDb").Get<bool>()
+                ? typeof(TextSnippetMongoPersistencePlatformModule)
+                : typeof(TextSnippetEfCorePersistencePlatformModule));
+
+            // We can implement an ef-core module for TextSnippetMultiDbDemoPersistencePlatformModule too
+            // and import the right module as we needed.
+            result.Add(p => typeof(TextSnippetMultiDbDemoMongoPersistencePlatformModule));
+
+            return result;
         }
 
         protected override string[] GetAllowCorsOrigins(IConfiguration configuration)

@@ -26,7 +26,7 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Events
                 using (var uow = BeginUnitOfWork())
                 {
                     await HandleAsync(request, cancellationToken);
-                    await uow.CompleteAsync();
+                    await uow.CompleteAsync(cancellationToken);
                 }
             }
         }
@@ -37,19 +37,5 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Events
         }
 
         protected abstract Task HandleAsync(TEvent @event, CancellationToken cancellationToken);
-    }
-
-    public abstract class PlatformCqrsEventHandler<TEvent, TUnitOfWork> : PlatformCqrsEventHandler<TEvent>
-        where TEvent : PlatformCqrsEvent, new()
-        where TUnitOfWork : IUnitOfWork
-    {
-        protected PlatformCqrsEventHandler(IUnitOfWorkManager unitOfWorkManager) : base(unitOfWorkManager)
-        {
-        }
-
-        protected override IUnitOfWork BeginUnitOfWork()
-        {
-            return UnitOfWorkManager.Begin<TUnitOfWork>();
-        }
     }
 }

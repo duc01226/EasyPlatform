@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AngularDotnetPlatform.Platform.EfCore;
+using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Persistence
 {
@@ -20,6 +22,11 @@ namespace PlatformExampleApp.TextSnippet.Persistence
         {
             return options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+        }
+
+        protected override List<Type> RegisterLimitedRepositoryImplementationTypes()
+        {
+            return new List<Type>() { typeof(TextSnippetRootRepository<TextSnippetEntity>) };
         }
     }
 }

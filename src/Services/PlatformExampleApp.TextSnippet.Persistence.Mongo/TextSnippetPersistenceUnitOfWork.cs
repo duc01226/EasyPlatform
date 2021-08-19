@@ -3,7 +3,7 @@ using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
 {
-    internal class TextSnippetPersistenceUnitOfWork : PlatformMongoDbUnitOfWork<TextSnippetDbContext>, ITextSnippetMongoUnitOfWork
+    internal class TextSnippetPersistenceUnitOfWork : PlatformMongoDbUnitOfWork<TextSnippetDbContext>
     {
         public TextSnippetPersistenceUnitOfWork(TextSnippetDbContext dbContext) : base(dbContext)
         {

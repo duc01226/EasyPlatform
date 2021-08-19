@@ -1,35 +1,33 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
-namespace AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork
+namespace AngularDotnetPlatform.Platform.Persistence
 {
-    public interface IPlatformMongoDbUnitOfWork<TDbContext> : IUnitOfWork where TDbContext : IPlatformMongoDbContext<TDbContext>
+    public class PlatformAggregatedUnitOfWork : IUnitOfWork
     {
-        public TDbContext DbContext { get; }
-    }
-
-    public abstract class PlatformMongoDbUnitOfWork<TDbContext> : IPlatformMongoDbUnitOfWork<TDbContext> where TDbContext : PlatformMongoDbContext<TDbContext>
-    {
-        public PlatformMongoDbUnitOfWork(TDbContext dbContext)
+        public PlatformAggregatedUnitOfWork(List<IUnitOfWork> innerUnitOfWorks)
         {
-            DbContext = dbContext;
+            InnerUnitOfWorks = innerUnitOfWorks ?? new List<IUnitOfWork>();
         }
 
         public event EventHandler OnCompleted;
         public event EventHandler<UnitOfWorkFailedArgs> OnFailed;
         public bool Completed { get; private set; }
         public bool Disposed { get; private set; }
-        public TDbContext DbContext { get; }
+        public List<IUnitOfWork> InnerUnitOfWorks { get; private set; }
 
-        public Task CompleteAsync(CancellationToken cancellationToken = default)
+        public async Task CompleteAsync(CancellationToken cancellationToken = default)
         {
             if (Completed)
                 throw new Exception("This unit of work is completed");
 
             try
             {
+                await Task.WhenAll(InnerUnitOfWorks.Select(p => p.CompleteAsync(cancellationToken)));
                 Completed = true;
                 OnCompleted?.Invoke(this, EventArgs.Empty);
             }
@@ -38,35 +36,31 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork
                 OnFailed?.Invoke(this, new UnitOfWorkFailedArgs(e));
                 throw;
             }
-
-            return Task.CompletedTask;
         }
 
         public bool IsActive()
         {
-            return !Completed && !Disposed;
+            return InnerUnitOfWorks.Any(p => p.IsActive());
         }
 
         public void Dispose()
         {
-            // Dispose of unmanaged resources.
+            // Dispose of unmanaged resources
             Dispose(true);
-            // Suppress finalization.
+
+            // Suppress finalization
             GC.SuppressFinalize(this);
         }
 
-        // Protected implementation of Dispose pattern.
         protected virtual void Dispose(bool disposing)
         {
             if (Disposed)
-            {
                 return;
-            }
 
             if (disposing)
             {
-                // Dispose managed state (managed objects).
-                DbContext?.Dispose();
+                InnerUnitOfWorks.ForEach(p => p.Dispose());
+                InnerUnitOfWorks.Clear();
             }
 
             Disposed = true;

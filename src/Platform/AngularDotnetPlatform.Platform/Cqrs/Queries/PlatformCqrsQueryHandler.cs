@@ -40,21 +40,4 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Queries
 
         protected abstract Task<TResult> HandleAsync(TQuery request, CancellationToken cancellationToken);
     }
-
-    public abstract class PlatformCqrsQueryHandler<TQuery, TResult, TUnitOfWork> : PlatformCqrsQueryHandler<TQuery, TResult>
-        where TQuery : PlatformCqrsQuery<TResult>
-        where TResult : PlatformCqrsQueryResult
-        where TUnitOfWork : IUnitOfWork
-    {
-        protected PlatformCqrsQueryHandler(
-            IPlatformApplicationUserContextAccessor userContext,
-            IUnitOfWorkManager unitOfWorkManager) : base(userContext, unitOfWorkManager)
-        {
-        }
-
-        protected override IUnitOfWork BeginUnitOfWork()
-        {
-            return UnitOfWorkManager.Begin<TUnitOfWork>();
-        }
-    }
 }

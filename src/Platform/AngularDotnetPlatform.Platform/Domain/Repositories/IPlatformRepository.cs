@@ -11,16 +11,18 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
     /// <summary>
     /// This interface is used for conventional register class mapping via PlatformPersistenceModule.InternalRegister
     /// </summary>
-    public interface IRepository
+    public interface IPlatformRepository
     {
     }
 
-    public interface IRepository<TEntity, TPrimaryKey> : IRepository
+    public interface IPlatformRepository<TEntity, TPrimaryKey> : IPlatformRepository
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
         IQueryable<TEntity> GetAllQuery();
 
         Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
+
+        Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
 
         Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
 
@@ -31,7 +33,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
         Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
     }
 
-    public interface IRootRepository<TEntity, TPrimaryKey> : IRepository<TEntity, TPrimaryKey>
+    public interface IPlatformRootRepository<TEntity, TPrimaryKey> : IPlatformRepository<TEntity, TPrimaryKey>
         where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
     {
         Task<TEntity> Create(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);

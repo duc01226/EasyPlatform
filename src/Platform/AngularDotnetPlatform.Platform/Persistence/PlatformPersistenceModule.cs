@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,8 +24,17 @@ namespace AngularDotnetPlatform.Platform.Persistence
             base.InternalRegister(serviceCollection);
             RegisterUnitOfWorkManager(serviceCollection);
             serviceCollection.RegisterAllFromType(typeof(IUnitOfWork), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType<IRepository>(ServiceLifeTime.Transient, Assembly);
+            RegisterRepositories(serviceCollection);
             serviceCollection.RegisterAllFromType<IPersistenceHelper>(ServiceLifeTime.Transient, Assembly);
+        }
+
+        /// <summary>
+        /// Override this function to limit the list of supported limited repository implementation for this persistence module
+        /// </summary>
+        /// <returns></returns>
+        protected virtual List<Type> RegisterLimitedRepositoryImplementationTypes()
+        {
+            return null;
         }
 
         private void RegisterUnitOfWorkManager(IServiceCollection serviceCollection)
@@ -33,6 +43,21 @@ namespace AngularDotnetPlatform.Platform.Persistence
             if (!serviceCollection.Any(p => p.ServiceType == typeof(IUnitOfWorkManager)))
             {
                 serviceCollection.Register<IUnitOfWorkManager, PlatformDefaultUnitOfWorkManager>(ServiceLifeTime.Scoped);
+            }
+        }
+
+        private void RegisterRepositories(IServiceCollection serviceCollection)
+        {
+            if (RegisterLimitedRepositoryImplementationTypes()?.Any() == true)
+            {
+                RegisterLimitedRepositoryImplementationTypes().ForEach(repositoryImplementationType =>
+                {
+                    serviceCollection.RegisterAllForImplementation(repositoryImplementationType, ServiceLifeTime.Transient);
+                });
+            }
+            else
+            {
+                serviceCollection.RegisterAllFromType<IPlatformRepository>(ServiceLifeTime.Transient, Assembly);
             }
         }
     }

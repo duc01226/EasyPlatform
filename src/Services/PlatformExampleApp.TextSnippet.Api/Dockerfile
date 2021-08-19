@@ -17,6 +17,7 @@ COPY Services/PlatformExampleApp.TextSnippet.Application/PlatformExampleApp.Text
 COPY Services/PlatformExampleApp.TextSnippet.Domain/PlatformExampleApp.TextSnippet.Domain.csproj Services/PlatformExampleApp.TextSnippet.Domain/PlatformExampleApp.TextSnippet.Domain.csproj
 COPY Services/PlatformExampleApp.TextSnippet.Persistence/PlatformExampleApp.TextSnippet.Persistence.csproj Services/PlatformExampleApp.TextSnippet.Persistence/PlatformExampleApp.TextSnippet.Persistence.csproj
 COPY Services/PlatformExampleApp.TextSnippet.Persistence.Mongo/PlatformExampleApp.TextSnippet.Persistence.Mongo.csproj Services/PlatformExampleApp.TextSnippet.Persistence.Mongo/PlatformExampleApp.TextSnippet.Persistence.Mongo.csproj
+COPY Services/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.csproj Services/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.csproj
 RUN dotnet restore "Services/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj"
 
 COPY Platform Platform
@@ -25,6 +26,7 @@ COPY Services/PlatformExampleApp.TextSnippet.Application Services/PlatformExampl
 COPY Services/PlatformExampleApp.TextSnippet.Domain Services/PlatformExampleApp.TextSnippet.Domain
 COPY Services/PlatformExampleApp.TextSnippet.Persistence Services/PlatformExampleApp.TextSnippet.Persistence
 COPY Services/PlatformExampleApp.TextSnippet.Persistence.Mongo Services/PlatformExampleApp.TextSnippet.Persistence.Mongo
+COPY Services/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo Services/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
 WORKDIR "/src/Services/PlatformExampleApp.TextSnippet.Api"
 RUN dotnet build "PlatformExampleApp.TextSnippet.Api.csproj" -c Release -o /app/build
 
