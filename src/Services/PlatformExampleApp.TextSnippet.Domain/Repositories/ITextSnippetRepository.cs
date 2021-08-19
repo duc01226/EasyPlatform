@@ -4,12 +4,12 @@ using AngularDotnetPlatform.Platform.Domain.Repositories;
 
 namespace PlatformExampleApp.TextSnippet.Domain.Repositories
 {
-    public interface ITextSnippetRepository<TEntity> : IPlatformRepository<TEntity, Guid>
+    public interface ITextSnippetRepository<TEntity> : IPlatformQueryableRepository<TEntity, Guid>
         where TEntity : Entity<TEntity, Guid>, new()
     {
     }
 
-    public interface ITextSnippetRootRepository<TEntity> : IPlatformRootRepository<TEntity, Guid>, ITextSnippetRepository<TEntity>
+    public interface ITextSnippetRootRepository<TEntity> : IPlatformQueryableRootRepository<TEntity, Guid>, ITextSnippetRepository<TEntity>
         where TEntity : RootEntity<TEntity, Guid>, new()
     {
     }

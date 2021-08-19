@@ -16,7 +16,7 @@ using MongoDB.Driver.Linq;
 
 namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
 {
-    public abstract class PlatformMongoDbRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext>, IPlatformRootRepository<TEntity, TPrimaryKey>
+    public abstract class PlatformMongoDbRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext>, IPlatformQueryableRootRepository<TEntity, TPrimaryKey>
         where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
         where TDbContext : PlatformMongoDbContext<TDbContext>
     {

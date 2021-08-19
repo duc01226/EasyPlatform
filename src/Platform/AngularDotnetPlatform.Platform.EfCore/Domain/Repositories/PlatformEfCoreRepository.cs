@@ -14,7 +14,7 @@ using AngularDotnetPlatform.Platform.Extensions;
 
 namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 {
-    public abstract class PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext> : IPlatformRepository<TEntity, TPrimaryKey>
+    public abstract class PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext> : IPlatformQueryableRepository<TEntity, TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
