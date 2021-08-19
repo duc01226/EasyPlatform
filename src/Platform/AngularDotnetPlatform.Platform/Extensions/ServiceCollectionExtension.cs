@@ -163,7 +163,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
         public static IServiceCollection RegisterSelf(
             this IServiceCollection services,
             Type implementationType,
-            ServiceLifeTime lifeTime,
+            ServiceLifeTime lifeTime = ServiceLifeTime.Transient,
             bool replaceIfExist = true,
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
@@ -174,7 +174,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
             this IServiceCollection services,
             Type serviceType,
             Func<IServiceProvider, TImplementation> implementationFunc,
-            ServiceLifeTime lifeTime,
+            ServiceLifeTime lifeTime = ServiceLifeTime.Transient,
             bool replaceIfExist = true,
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
