@@ -36,6 +36,11 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         /// </summary>
         protected IMongoCollection<TEntity> Table => DbContext.GetCollection<TEntity>();
 
+        public Task<TEntity> GetByIdAsync(TPrimaryKey id, CancellationToken cancellationToken = default)
+        {
+            return FirstOrDefaultAsync(p => p.Id.Equals(id), cancellationToken);
+        }
+
         public IQueryable<TEntity> GetAllQuery()
         {
             // Ensure that UnitOfWork.Complete() will not Update/Delete entities without calling repository Update/Delete

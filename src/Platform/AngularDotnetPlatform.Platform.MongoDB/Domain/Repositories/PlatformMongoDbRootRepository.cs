@@ -35,7 +35,16 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             return entity;
         }
 
-        public Task<TEntity> CreateOrUpdate(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public Task<TEntity> CreateOrUpdate(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        {
+            return CreateOrUpdate(entity, null, dismissSendEvent, cancellationToken);
+        }
+
+        public Task<TEntity> CreateOrUpdate(
+            TEntity entity,
+            Expression<Func<TEntity, bool>> customCheckExistingPredicate = null,
+            bool dismissSendEvent = false,
+            CancellationToken cancellationToken = default)
         {
             var existingEntity = customCheckExistingPredicate != null
                 ? GetAllQuery().FirstOrDefault(customCheckExistingPredicate)

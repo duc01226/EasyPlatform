@@ -40,7 +40,16 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             return result;
         }
 
-        public Task<TEntity> CreateOrUpdate(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public Task<TEntity> CreateOrUpdate(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        {
+            return CreateOrUpdate(entity, null, dismissSendEvent, cancellationToken);
+        }
+
+        public Task<TEntity> CreateOrUpdate(
+            TEntity entity,
+            Expression<Func<TEntity, bool>> customCheckExistingPredicate = null,
+            bool dismissSendEvent = false,
+            CancellationToken cancellationToken = default)
         {
             var existingEntity = customCheckExistingPredicate != null
                 ? GetAllQuery().AsNoTracking().FirstOrDefault(customCheckExistingPredicate)

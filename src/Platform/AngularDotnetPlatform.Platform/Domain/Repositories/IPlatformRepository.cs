@@ -15,7 +15,13 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
     {
     }
 
-    public interface IPlatformRepository<TEntity, TPrimaryKey> : IPlatformRepository
+    public interface IPlatformBasicRepository<TEntity, TPrimaryKey> : IPlatformRepository
+        where TEntity : Entity<TEntity, TPrimaryKey>, new()
+    {
+        Task<TEntity> GetByIdAsync(TPrimaryKey id, CancellationToken cancellationToken = default);
+    }
+
+    public interface IPlatformRepository<TEntity, TPrimaryKey> : IPlatformBasicRepository<TEntity, TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
         Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
@@ -27,12 +33,12 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
         Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
     }
 
-    public interface IPlatformRootRepository<TEntity, TPrimaryKey> : IPlatformRepository<TEntity, TPrimaryKey>
+    public interface IPlatformBasicRootRepository<TEntity, TPrimaryKey> : IPlatformBasicRepository<TEntity, TPrimaryKey>
         where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
     {
         Task<TEntity> Create(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<TEntity> CreateOrUpdate(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        Task<TEntity> CreateOrUpdate(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
         Task<List<TEntity>> CreateOrUpdateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
@@ -49,6 +55,12 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
         Task<List<TEntity>> DeleteMany(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
         Task<List<TEntity>> DeleteMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+    }
+
+    public interface IPlatformRootRepository<TEntity, TPrimaryKey> : IPlatformBasicRootRepository<TEntity, TPrimaryKey>, IPlatformRepository<TEntity, TPrimaryKey>
+        where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
+    {
+        Task<TEntity> CreateOrUpdate(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
     }
 
     public interface IPlatformQueryableRepository<TEntity, TPrimaryKey> : IPlatformRepository<TEntity, TPrimaryKey>
