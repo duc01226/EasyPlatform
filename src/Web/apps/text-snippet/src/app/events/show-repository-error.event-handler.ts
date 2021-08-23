@@ -1,8 +1,5 @@
 import { Injectable } from '@angular/core';
-import {
-  PlatformEventHandler,
-  PlatformRepositoryErrorEvent,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
+import { PlatformEventHandler, PlatformRepositoryErrorEvent } from '@platform-example-web/platform-core';
 
 import { AppUiStateService } from '../app-ui-state-services';
 

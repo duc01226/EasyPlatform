@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'angular-dotnet-platform-example-web-root',
+  selector: 'platform-example-web-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss']
 })

@@ -1,4 +1,4 @@
-import { PlatformApiServiceErrorResponse } from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
+import { PlatformApiServiceErrorResponse } from '@platform-example-web/platform-core';
 
 export interface IAppUiStateData {
   selectedSnippetTextId?: string;

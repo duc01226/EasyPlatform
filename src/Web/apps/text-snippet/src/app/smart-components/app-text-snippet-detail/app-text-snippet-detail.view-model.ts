@@ -1,12 +1,5 @@
-import {
-  ITextSnippetDataModel,
-  TextSnippetDataModel,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
-import {
-  PlatformApiServiceErrorInfo,
-  PlatformViewModel,
-  Utils,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
+import { ITextSnippetDataModel, TextSnippetDataModel } from '@platform-example-web/apps-domains/text-snippet-domain';
+import { PlatformApiServiceErrorInfo, PlatformViewModel, Utils } from '@platform-example-web/platform-core';
 
 export interface IAppTextSnippetDetail {
   toSaveTextSnippet: ITextSnippetDataModel;

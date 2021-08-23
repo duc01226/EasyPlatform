@@ -1,3 +1,3 @@
-import { AngularDotnetPlatformPlatformCoreModuleConfig } from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
+import { PlatformCoreModuleConfig } from '@platform-example-web/platform-core';
 
-export class AppModuleConfig extends AngularDotnetPlatformPlatformCoreModuleConfig {}
+export class AppModuleConfig extends PlatformCoreModuleConfig {}

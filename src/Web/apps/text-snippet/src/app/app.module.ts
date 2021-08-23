@@ -1,10 +1,3 @@
-import {
-  AngularDotnetPlatformDomainsTextSnippetDomainModule,
-  AngularDotnetPlatformDomainsTextSnippetDomainModuleConfig,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
-import {
-  AngularDotnetPlatformPlatformCoreModule,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
 import { NgModule } from '@angular/core';
 import { FlexLayoutModule } from '@angular/flex-layout';
 import { MatButtonModule } from '@angular/material/button';
@@ -16,6 +9,11 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import {
+  AppsTextSnippetDomainModule,
+  AppsTextSnippetDomainModuleConfig,
+} from '@platform-example-web/apps-domains/text-snippet-domain';
+import { PlatformCoreModule } from '@platform-example-web/platform-core';
 
 import { environment } from '../environments/environment';
 import { AppUiStateService } from './app-ui-state-services';
@@ -29,16 +27,16 @@ import { AppTextSnippetDetailComponent } from './smart-components';
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
-    AngularDotnetPlatformPlatformCoreModule.forRoot({
+    PlatformCoreModule.forRoot({
       moduleConfig: {
         type: AppModuleConfig,
         configFactory: () => new AppModuleConfig({ isDevelopment: !environment.production })
       },
       appRootUiState: AppUiStateService
     }),
-    AngularDotnetPlatformDomainsTextSnippetDomainModule.forRoot({
+    AppsTextSnippetDomainModule.forRoot({
       moduleConfigFactory: () =>
-        new AngularDotnetPlatformDomainsTextSnippetDomainModuleConfig({
+        new AppsTextSnippetDomainModuleConfig({
           isDevelopment: !environment.production,
           textSnippetApiHost: environment.textSnippetApiHost
         }),

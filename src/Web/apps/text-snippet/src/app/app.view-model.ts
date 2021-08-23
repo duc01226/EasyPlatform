@@ -1,12 +1,9 @@
-import {
-  ITextSnippetDataModel,
-  TextSnippetDataModel,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
+import { ITextSnippetDataModel, TextSnippetDataModel } from '@platform-example-web/apps-domains/text-snippet-domain';
 import {
   PlatformApiServiceErrorInfo,
   PlatformApiServiceErrorResponse,
   PlatformViewModel,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
+} from '@platform-example-web/platform-core';
 
 export interface IAppViewModel {
   searchText?: string;

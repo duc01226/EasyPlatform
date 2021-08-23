@@ -1,20 +1,13 @@
-import {
-  SearchTextSnippetQueryDto,
-  TextSnippetRepository,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
-import {
-  PlatformApiServiceErrorResponse,
-  PlatformSmartComponent,
-  Utils,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { SearchTextSnippetQueryDto, TextSnippetRepository } from '@platform-example-web/apps-domains/text-snippet-domain';
+import { PlatformApiServiceErrorResponse, PlatformSmartComponent, Utils } from '@platform-example-web/platform-core';
 
 import { AppUiStateData, AppUiStateService } from './app-ui-state-services';
 import { AppTextSnippetItemViewModel, AppViewModel } from './app.view-model';
 
 @Component({
-  selector: 'angular-dotnet-platform-example-web-root',
+  selector: 'platform-example-web-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

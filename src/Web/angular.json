@@ -1,17 +1,17 @@
 {
   "version": 1,
   "projects": {
-    "angular-dotnet-platform-domains-text-snippet-domain": {
+    "apps-text-snippet-domain": {
       "projectType": "library",
-      "root": "libs/angular-dotnet-platform-domains/text-snippet-domain",
-      "sourceRoot": "libs/angular-dotnet-platform-domains/text-snippet-domain/src",
+      "root": "libs/apps-domains/text-snippet-domain",
+      "sourceRoot": "libs/apps-domains/text-snippet-domain/src",
       "prefix": "text-snippet-domain",
       "architect": {
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/angular-dotnet-platform-domains/text-snippet-domain"],
+          "outputs": ["coverage/libs/apps-domains/text-snippet-domain"],
           "options": {
-            "jestConfig": "libs/angular-dotnet-platform-domains/text-snippet-domain/jest.config.js",
+            "jestConfig": "libs/apps-domains/text-snippet-domain/jest.config.js",
             "passWithNoTests": true
           }
         },
@@ -19,34 +19,31 @@
           "builder": "@nrwl/linter:eslint",
           "options": {
             "lintFilePatterns": [
-              "libs/angular-dotnet-platform-domains/text-snippet-domain/src/**/*.ts",
-              "libs/angular-dotnet-platform-domains/text-snippet-domain/src/**/*.html"
+              "libs/apps-domains/text-snippet-domain/src/**/*.ts",
+              "libs/apps-domains/text-snippet-domain/src/**/*.html"
             ]
           }
         }
       }
     },
-    "angular-dotnet-platform-platform-core": {
+    "platform-core": {
       "projectType": "library",
-      "root": "libs/angular-dotnet-platform-platform-core",
-      "sourceRoot": "libs/angular-dotnet-platform-platform-core/src",
-      "prefix": "angular-dotnet-platform-example-web",
+      "root": "libs/platform-core",
+      "sourceRoot": "libs/platform-core/src",
+      "prefix": "platform-example-web",
       "architect": {
         "test": {
           "builder": "@nrwl/jest:jest",
-          "outputs": ["coverage/libs/angular-dotnet-platform-platform-core"],
+          "outputs": ["coverage/libs/platform-core"],
           "options": {
-            "jestConfig": "libs/angular-dotnet-platform-platform-core/jest.config.js",
+            "jestConfig": "libs/platform-core/jest.config.js",
             "passWithNoTests": true
           }
         },
         "lint": {
           "builder": "@nrwl/linter:eslint",
           "options": {
-            "lintFilePatterns": [
-              "libs/angular-dotnet-platform-platform-core/src/**/*.ts",
-              "libs/angular-dotnet-platform-platform-core/src/**/*.html"
-            ]
+            "lintFilePatterns": ["libs/platform-core/src/**/*.ts", "libs/platform-core/src/**/*.html"]
           }
         }
       }
@@ -55,7 +52,7 @@
       "projectType": "application",
       "root": "apps/other-micro-app",
       "sourceRoot": "apps/other-micro-app/src",
-      "prefix": "angular-dotnet-platform-example-web",
+      "prefix": "platform-example-web",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
@@ -168,7 +165,7 @@
       "projectType": "application",
       "root": "apps/text-snippet",
       "sourceRoot": "apps/text-snippet/src",
-      "prefix": "angular-dotnet-platform-example-web",
+      "prefix": "platform-example-web",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
@@ -195,7 +192,7 @@
               }
             ],
             "stylePreprocessorOptions": {
-              "includePaths": ["apps/text-snippet/src/styles", "libs/angular-dotnet-platform-platform-core/src/styles"]
+              "includePaths": ["apps/text-snippet/src/styles", "libs/platform-core/src/styles"]
             },
             "scripts": []
           },

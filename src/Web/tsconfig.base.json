@@ -17,12 +17,8 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain": [
-        "libs/angular-dotnet-platform-domains/text-snippet-domain/src/index.ts"
-      ],
-      "@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core": [
-        "libs/angular-dotnet-platform-platform-core/src/index.ts"
-      ]
+      "@platform-example-web/apps-domains/text-snippet-domain": ["libs/apps-domains/text-snippet-domain/src/index.ts"],
+      "@platform-example-web/platform-core": ["libs/platform-core/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"],

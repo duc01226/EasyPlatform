@@ -1,5 +1,5 @@
 {
-  "npmScope": "angular-dotnet-platform-example-web",
+  "npmScope": "platform-example-web",
   "affected": {
     "defaultBase": "master"
   },
@@ -19,10 +19,10 @@
     }
   },
   "projects": {
-    "angular-dotnet-platform-domains-text-snippet-domain": {
+    "apps-text-snippet-domain": {
       "tags": []
     },
-    "angular-dotnet-platform-platform-core": {
+    "platform-core": {
       "tags": []
     },
     "other-micro-app": {

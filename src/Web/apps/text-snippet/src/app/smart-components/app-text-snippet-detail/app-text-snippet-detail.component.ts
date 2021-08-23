@@ -1,20 +1,16 @@
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   SaveTextSnippetCommandDto,
   SearchTextSnippetQueryDto,
   TextSnippetRepository,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-domains/text-snippet-domain';
-import {
-  PlatformApiServiceErrorResponse,
-  PlatformSmartComponent,
-  Utils,
-} from '@angular-dotnet-platform-example-web/angular-dotnet-platform-platform-core';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
+} from '@platform-example-web/apps-domains/text-snippet-domain';
+import { PlatformApiServiceErrorResponse, PlatformSmartComponent, Utils } from '@platform-example-web/platform-core';
 
 import { AppUiStateData, AppUiStateService } from '../../app-ui-state-services';
 import { AppTextSnippetDetail } from './app-text-snippet-detail.view-model';
 
 @Component({
-  selector: 'angular-dotnet-platform-example-web-text-snippet-detail',
+  selector: 'platform-example-web-text-snippet-detail',
   templateUrl: './app-text-snippet-detail.component.html',
   styleUrls: ['./app-text-snippet-detail.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

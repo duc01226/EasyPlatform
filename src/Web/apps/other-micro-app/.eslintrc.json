@@ -10,7 +10,7 @@
           "error",
           {
             "type": "attribute",
-            "prefix": "AngularDotnetPlatformPlatformExampleWeb",
+            "prefix": "PlatformExampleWeb",
             "style": "camelCase"
           }
         ],
@@ -18,7 +18,7 @@
           "error",
           {
             "type": "element",
-            "prefix": "angular-dotnet-platform-example-web",
+            "prefix": "platform-example-web",
             "style": "kebab-case"
           }
         ]
