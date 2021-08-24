@@ -11,7 +11,7 @@ import { catchError, tap } from 'rxjs/operators';
 import { TextSnippetApi } from '../Apis';
 import { TextSnippetRepositoryContext } from '../apps-text-snippet.repository-context';
 import { TextSnippetDataModel } from '../DataModels';
-import { SaveTextSnippetCommandDto, SaveTextSnippetCommandResult, SearchTextSnippetQueryDto } from '../Dtos';
+import { SaveTextSnippetCommandDto, SaveTextSnippetCommandResult, SearchTextSnippetQueryDto } from '../dtos';
 
 @Injectable()
 export class TextSnippetRepository extends PlatformRepository<TextSnippetRepositoryContext> {

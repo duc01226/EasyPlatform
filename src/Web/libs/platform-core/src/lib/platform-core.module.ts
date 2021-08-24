@@ -19,7 +19,7 @@ import {
 } from './events';
 import { PlatformHighlightSearchTextPipe, PlatformPipe } from './pipes';
 import { PlatformCoreModuleConfig } from './platform-core.config';
-import { Utils } from './Utils';
+import { Utils } from './utils';
 
 type ForRootModules = PlatformCoreModule | BrowserModule | BrowserAnimationsModule;
 type ForChildModules = PlatformCoreModule;

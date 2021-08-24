@@ -17,7 +17,7 @@ import {
   SaveTextSnippetCommandDto,
   SaveTextSnippetCommandResult,
   SearchTextSnippetQueryDto,
-} from '../Dtos';
+} from '../dtos';
 
 @Injectable()
 export class TextSnippetApi extends PlatformApiService {

@@ -3,7 +3,7 @@ import { BehaviorSubject, Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 
 import { PlatformCoreModuleConfig } from '../../platform-core.config';
-import { Utils } from '../../Utils';
+import { Utils } from '../../utils';
 
 @Injectable()
 export abstract class PlatformAppUiStateService<TAppUiStateData> {

@@ -4,4 +4,4 @@ export * from './apps-text-snippet-domain.config';
 export * from './Repositories';
 export * from './DataModels';
 export * from './Apis';
-export * from './Dtos';
+export * from './dtos';

@@ -2,10 +2,10 @@ import { BehaviorSubject, defer, Observable, Subject, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, finalize, map, switchMap, take, takeUntil } from 'rxjs/operators';
 
 import { PlatformApiServiceErrorResponse } from '../../api-services';
-import { PlatformCommandDto, PlatformQueryDto } from '../../Dtos';
+import { PlatformCommandDto, PlatformQueryDto } from '../../dtos';
 import { PlatformEventManagerService } from '../../events';
 import { PlatformCoreModuleConfig } from '../../platform-core.config';
-import { Utils } from '../../Utils';
+import { Utils } from '../../utils';
 import { PlatformRepositoryErrorEvent } from '../events';
 import { PlatformRepositoryContext } from '../platform.repository-context';
 

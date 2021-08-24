@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Directive, OnDestroy, OnInit } from '
 import { BehaviorSubject, MonoTypeOperatorFunction, Subscription } from 'rxjs';
 import { filter, takeUntil } from 'rxjs/operators';
 
-import { Utils } from '../../Utils';
+import { Utils } from '../../utils';
 
 @Directive()
 export abstract class PlatformComponent implements OnInit, AfterViewInit, OnDestroy {

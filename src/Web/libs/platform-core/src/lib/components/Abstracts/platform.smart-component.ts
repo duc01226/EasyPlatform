@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Directive } from '@angular/core';
 import { Observable, Subscription } from 'rxjs';
 
 import { PlatformAppUiStateService } from '../../app-ui-state-services';
-import { Utils } from '../../Utils';
+import { Utils } from '../../utils';
 import { PlatformViewModel } from '../../view-models';
 import { PlatformComponent } from './platform.component';
 

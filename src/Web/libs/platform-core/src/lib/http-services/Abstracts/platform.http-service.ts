@@ -3,7 +3,7 @@ import { Observable, OperatorFunction } from 'rxjs';
 import { timeout } from 'rxjs/operators';
 
 import { PlatformCoreModuleConfig } from '../../platform-core.config';
-import { Utils } from '../../Utils';
+import { Utils } from '../../utils';
 import { HttpClientOptions } from './platform.http-client-options';
 
 export abstract class PlatformHttpService {

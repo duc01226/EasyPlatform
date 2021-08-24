@@ -6,7 +6,7 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { PlatformAuthHttpRequestOptionsAppenderService } from '../../auth-services';
 import { HttpClientOptions, PlatformHttpService } from '../../http-services';
 import { PlatformCoreModuleConfig } from '../../platform-core.config';
-import { Utils } from '../../Utils';
+import { Utils } from '../../utils';
 import {
   IPlatformApiServiceErrorResponse,
   PlatformApiServiceErrorInfo,
