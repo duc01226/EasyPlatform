@@ -19,6 +19,7 @@ import {
 } from './events';
 import { PlatformHighlightSearchTextPipe, PlatformPipe } from './pipes';
 import { PlatformCoreModuleConfig } from './platform-core.config';
+import { Utils } from './Utils';
 
 type ForRootModules = PlatformCoreModule | BrowserModule | BrowserAnimationsModule;
 type ForChildModules = PlatformCoreModule;
@@ -52,6 +53,10 @@ export class PlatformCoreModule {
             useValue: new PlatformEventManagerServiceSubscriptionsMap(config.eventHandlerMaps ?? []),
             multi: true
           },
+          // Register all eventHandlers from eventHandlerMaps
+          ...(config.eventHandlerMaps != null
+            ? Utils.selectMany(config.eventHandlerMaps, ([event, eventHandlers]) => eventHandlers)
+            : []),
           DefaultPlatformEventManagerService,
           ...(config.eventManager != null ? [config.eventManager] : []),
           {
