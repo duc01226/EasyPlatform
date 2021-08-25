@@ -16,11 +16,11 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
     public abstract class PlatformCqrsCommand<TResult> : IPlatformCqrsCommand<TResult>
         where TResult : PlatformCqrsCommandResult, new()
     {
-        public Guid? HandleAuditedTrackId { get; private set; }
+        public Guid? HandleAuditedTrackId { get; set; }
 
-        public DateTime? HandleAuditedDate { get; private set; }
+        public DateTime? HandleAuditedDate { get; set; }
 
-        public string HandleAuditedByUserId { get; private set; }
+        public string HandleAuditedByUserId { get; set; }
 
         public virtual PlatformValidationResult Validate()
         {
