@@ -10,7 +10,7 @@ import { catchError, tap } from 'rxjs/operators';
 
 import { TextSnippetApi } from '../Apis';
 import { TextSnippetRepositoryContext } from '../apps-text-snippet.repository-context';
-import { TextSnippetDataModel } from '../DataModels';
+import { TextSnippetDataModel } from '../data-models';
 import { SaveTextSnippetCommandDto, SaveTextSnippetCommandResult, SearchTextSnippetQueryDto } from '../dtos';
 
 @Injectable()

@@ -4,7 +4,7 @@ import { PlatformDomainModule, PlatformRepositoryErrorEventHandler } from '@plat
 import { TextSnippetApi } from './Apis';
 import { AppsTextSnippetDomainModuleConfig } from './apps-text-snippet-domain.config';
 import { TextSnippetRepositoryContext } from './apps-text-snippet.repository-context';
-import { TextSnippetRepository } from './Repositories';
+import { TextSnippetRepository } from './repositories';
 
 type ForRootModules = AppsTextSnippetDomainModule | PlatformDomainModule;
 type ForChildModules = AppsTextSnippetDomainModule | PlatformDomainModule;

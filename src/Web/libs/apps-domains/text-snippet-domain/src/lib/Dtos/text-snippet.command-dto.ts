@@ -5,7 +5,7 @@ import {
   PlatformResultDto,
 } from '@platform-example-web/platform-core';
 
-import { ITextSnippetDataModel, TextSnippetDataModel } from '../DataModels';
+import { ITextSnippetDataModel, TextSnippetDataModel } from '../data-models';
 
 export interface ISaveTextSnippetCommandDto extends IPlatformCommandDto {
   data: ITextSnippetDataModel;

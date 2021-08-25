@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 import { AppsTextSnippetDomainModuleConfig } from '../apps-text-snippet-domain.config';
-import { ITextSnippetDataModel, TextSnippetDataModel } from '../DataModels';
+import { ITextSnippetDataModel, TextSnippetDataModel } from '../data-models';
 import {
   ISaveTextSnippetCommandResult,
   SaveTextSnippetCommandDto,
