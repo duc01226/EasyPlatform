@@ -8,7 +8,7 @@ import {
 import { Observable } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 
-import { TextSnippetApi } from '../Apis';
+import { TextSnippetApi } from '../apis';
 import { TextSnippetRepositoryContext } from '../apps-text-snippet.repository-context';
 import { TextSnippetDataModel } from '../data-models';
 import { SaveTextSnippetCommandDto, SaveTextSnippetCommandResult, SearchTextSnippetQueryDto } from '../dtos';
