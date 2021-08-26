@@ -1,5 +1,7 @@
 using System;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using Polly;
@@ -107,11 +109,11 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 NetworkRecoveryInterval = TimeSpan.FromSeconds(options.NetworkRecoveryIntervalSeconds),
                 UserName = options.Username,
                 Password = options.Password,
-                VirtualHost = "/",
-                Port = AmqpTcpEndpoint.UseDefaultPort,
+                VirtualHost = options.VirtualHost,
+                Port = options.Port,
                 DispatchConsumersAsync = true,
                 RequestedConnectionTimeout = TimeSpan.FromSeconds(options.RequestedConnectionTimeoutSeconds),
-                ClientProvidedName = options.ClientProvidedName
+                ClientProvidedName = options.ClientProvidedName ?? Assembly.GetEntryAssembly()?.FullName
             };
 
             return connectionFactory;

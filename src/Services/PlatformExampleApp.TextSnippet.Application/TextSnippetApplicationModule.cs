@@ -18,7 +18,7 @@ namespace PlatformExampleApp.TextSnippet.Application
         {
             var result = new List<Func<IConfiguration, Type>>
             {
-                p => typeof(TextSnippetDomainPlatformModule)
+                p => typeof(TextSnippetDomainModule)
             };
             return result;
         }

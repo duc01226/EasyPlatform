@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace AngularDotnetPlatform.Platform
 {
@@ -11,8 +12,10 @@ namespace AngularDotnetPlatform.Platform
         {
             DefaultValue = new JsonSerializerOptions()
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                IgnoreNullValues = true
             };
+            DefaultValue.Converters.Add(new JsonStringEnumConverter());
         }
 
         /// <summary>

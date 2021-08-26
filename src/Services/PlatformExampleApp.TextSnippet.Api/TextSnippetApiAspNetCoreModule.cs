@@ -24,16 +24,16 @@ namespace PlatformExampleApp.TextSnippet.Api
             var result = new List<Func<IConfiguration, Type>>
             {
                 p => typeof(TextSnippetApplicationModule),
-                p => typeof(TextSnippetPlatformRabbitMqEventBusModule)
+                p => typeof(TextSnippetRabbitMqEventBusModule)
             };
 
             result.Add(p => p.GetSection("UseMongoDb").Get<bool>()
-                ? typeof(TextSnippetMongoPersistencePlatformModule)
-                : typeof(TextSnippetEfCorePersistencePlatformModule));
+                ? typeof(TextSnippetMongoPersistenceModule)
+                : typeof(TextSnippetEfCorePersistenceModule));
 
             // We can implement an ef-core module for TextSnippetMultiDbDemoPersistencePlatformModule too
             // and import the right module as we needed.
-            result.Add(p => typeof(TextSnippetMultiDbDemoMongoPersistencePlatformModule));
+            result.Add(p => typeof(TextSnippetMultiDbDemoMongoPersistenceModule));
 
             return result;
         }

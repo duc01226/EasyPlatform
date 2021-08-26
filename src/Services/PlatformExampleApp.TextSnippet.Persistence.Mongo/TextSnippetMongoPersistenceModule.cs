@@ -7,12 +7,12 @@ using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
 {
-    public class TextSnippetMongoPersistencePlatformModule : PlatformMongoDbPersistenceModule<TextSnippetMongoClientContext, TextSnippetDbContext>
+    public class TextSnippetMongoPersistenceModule : PlatformMongoDbPersistenceModule<TextSnippetMongoClientContext, TextSnippetDbContext>
     {
-        public TextSnippetMongoPersistencePlatformModule(
+        public TextSnippetMongoPersistenceModule(
             IServiceProvider serviceProvider,
             IConfiguration configuration,
-            ILogger<TextSnippetMongoPersistencePlatformModule> logger) : base(serviceProvider, configuration, logger)
+            ILogger<TextSnippetMongoPersistenceModule> logger) : base(serviceProvider, configuration, logger)
         {
         }
 

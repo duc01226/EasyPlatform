@@ -17,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Events
     /// Implement and <see cref="PlatformCqrsEventHandler{TEvent}"/> to handle any events.
     /// </summary>
     public class PlatformCqrsEntityEvent<TEntity, TPrimaryKey> : PlatformCqrsEntityEvent
-        where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
+        where TEntity : class, IEntity<TPrimaryKey>, new()
     {
         public PlatformCqrsEntityEvent() { }
 

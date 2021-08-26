@@ -16,15 +16,15 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
     {
     }
 
-    public class PlatformCqrsEntityEventBusMessage<TEntity, TEntityKey> : PlatformEventBusMessage<TEntity>, IPlatformCqrsEntityEventBusMessage
-        where TEntity : RootEntity<TEntity, TEntityKey>, new()
+    public class PlatformCqrsEntityEventBusMessage<TEntity> : PlatformEventBusMessage<TEntity>, IPlatformCqrsEntityEventBusMessage
+        where TEntity : class, IEntity, new()
     {
         public override string MessageGroup => PlatformCqrsEntityEvent.EventTypeValue;
         public override string MessageType => PlatformCqrsEntityEvent.EventNameValue<TEntity>();
     }
 
     public abstract class PlatformCqrsEntityEventBusProducer<TEntity, TEntityKey> : PlatformCqrsEntityEventHandler<TEntity, TEntityKey>, IPlatformCqrsEventBusProducer<PlatformCqrsEntityEvent<TEntity, TEntityKey>>
-        where TEntity : RootEntity<TEntity, TEntityKey>, new()
+        where TEntity : class, IEntity<TEntityKey>, new()
     {
         protected readonly IPlatformEventBusProducer EventBusProducer;
         protected readonly IPlatformApplicationSettingContext ApplicationSettingContext;
@@ -61,7 +61,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
 
         private async Task SendEntityEventEventBusMessage(PlatformCqrsEntityEvent<TEntity, TEntityKey> @event, CancellationToken cancellationToken)
         {
-            var message = PlatformEventBusMessage<TEntity>.New<PlatformCqrsEntityEventBusMessage<TEntity, TEntityKey>>(
+            var message = PlatformEventBusMessage<TEntity>.New<PlatformCqrsEntityEventBusMessage<TEntity>>(
                 @event.Id,
                 @event.EntityData,
                 PlatformApplicationEventBusMessageIdentityMapper.ByUserContext(UserContextAccessor.Current),
@@ -69,7 +69,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                 messageAction: @event.EventAction);
             try
             {
-                await EventBusProducer.SendAsync<PlatformCqrsEntityEventBusMessage<TEntity, TEntityKey>, TEntity>(message, cancellationToken);
+                await EventBusProducer.SendAsync<PlatformCqrsEntityEventBusMessage<TEntity>, TEntity>(message, cancellationToken);
             }
             catch (Exception e)
             {

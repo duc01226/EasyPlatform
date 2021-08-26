@@ -12,13 +12,13 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
     /// We can implement an ef-core module for TextSnippetMultiDbDemoPersistencePlatformModule too
     /// and import the right module as we needed.
     /// </summary>
-    public class TextSnippetMultiDbDemoMongoPersistencePlatformModule :
+    public class TextSnippetMultiDbDemoMongoPersistenceModule :
         PlatformMongoDbPersistenceModule<TextSnippetMultiDbDemoMongoClientContext, TextSnippetMultiDbDemoDbContext, TextSnippetMultiDbDemoMongoOptions>
     {
-        public TextSnippetMultiDbDemoMongoPersistencePlatformModule(
+        public TextSnippetMultiDbDemoMongoPersistenceModule(
             IServiceProvider serviceProvider,
             IConfiguration configuration,
-            ILogger<TextSnippetMultiDbDemoMongoPersistencePlatformModule> logger) : base(serviceProvider, configuration, logger)
+            ILogger<TextSnippetMultiDbDemoMongoPersistenceModule> logger) : base(serviceProvider, configuration, logger)
         {
         }
 

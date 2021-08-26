@@ -10,6 +10,10 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         public string Password { get; set; }
 
+        public int Port { get; set; } = AmqpTcpEndpoint.UseDefaultPort;
+
+        public string VirtualHost { get; set; } = "/";
+
         public string ClientProvidedName { get; set; }
 
         /// <summary>

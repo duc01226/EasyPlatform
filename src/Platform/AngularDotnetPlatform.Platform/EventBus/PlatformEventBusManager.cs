@@ -62,9 +62,8 @@ namespace AngularDotnetPlatform.Platform.EventBus
                 .Where(p => p.IsAssignableTo(typeof(IEntity)) && p.IsClass && !p.IsAbstract && !p.IsGenericType)
                 .Select(entityType =>
                 {
-                    var entityIdType = entityType.GetInterfaces().First(p => p.IsGenericType && p.GetGenericTypeDefinition().IsAssignableTo(typeof(IEntity<>)));
                     var entityEventMessageType =
-                        typeof(PlatformCqrsEntityEventBusMessage<,>).MakeGenericType(entityType, entityIdType.GenericTypeArguments[0]);
+                        typeof(PlatformCqrsEntityEventBusMessage<>).MakeGenericType(entityType);
                     var entityEventMessage =
                         (IPlatformCqrsEntityEventBusMessage)Activator.CreateInstance(entityEventMessageType);
                     return entityEventMessage!.RoutingKey();

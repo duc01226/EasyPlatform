@@ -10,7 +10,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
 {
     public class TextSnippetMultiDbDemoDbContext : PlatformMongoDbContext<TextSnippetMultiDbDemoDbContext>
     {
-        public TextSnippetMultiDbDemoDbContext(IOptions<TextSnippetMultiDbDemoMongoOptions> options, IPlatformMongoClientContext client) : base(options, client)
+        public TextSnippetMultiDbDemoDbContext(IOptions<TextSnippetMultiDbDemoMongoOptions> options, TextSnippetMultiDbDemoMongoClientContext client) : base(options, client)
         {
         }
 

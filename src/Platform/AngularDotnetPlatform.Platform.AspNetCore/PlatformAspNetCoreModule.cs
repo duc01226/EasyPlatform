@@ -58,7 +58,8 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
         /// <summary>
         ///  With endpoint routing, the CORS middleware must be configured to execute between the calls to UseRouting and UseEndpoints.
         ///  Incorrect configuration will cause the middleware to stop functioning correctly.
-        ///  Use DevelopmentCorsPolicy in dev environment, if not then CorsPolicy will be used
+        ///  Use <see cref="PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy"/> in dev environment,
+        ///  if not then <see cref="PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy"/> will be used
         /// </summary>
         public IApplicationBuilder UseDefaultCorsPolicy(IApplicationBuilder applicationBuilder, string specificCorPolicy = null)
         {

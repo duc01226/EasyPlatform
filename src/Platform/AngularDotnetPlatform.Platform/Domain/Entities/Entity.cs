@@ -16,7 +16,12 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
         TPrimaryKey Id { get; set; }
     }
 
-    public abstract class Entity<TEntity, TPrimaryKey> : IEntity<TPrimaryKey>
+    public interface IValidatableEntity<TPrimaryKey> : IEntity<TPrimaryKey>
+    {
+        PlatformValidationResult Validate();
+    }
+
+    public abstract class Entity<TEntity, TPrimaryKey> : IValidatableEntity<TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
         public TPrimaryKey Id { get; set; }

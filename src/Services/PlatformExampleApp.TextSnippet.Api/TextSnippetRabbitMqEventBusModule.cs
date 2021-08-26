@@ -9,9 +9,9 @@ using PlatformExampleApp.TextSnippet.Application;
 
 namespace PlatformExampleApp.TextSnippet.Api
 {
-    public class TextSnippetPlatformRabbitMqEventBusModule : PlatformRabbitMqEventBusModule
+    public class TextSnippetRabbitMqEventBusModule : PlatformRabbitMqEventBusModule
     {
-        public TextSnippetPlatformRabbitMqEventBusModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public TextSnippetRabbitMqEventBusModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
 
