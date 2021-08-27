@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.EventBus;
+using AngularDotnetPlatform.Platform.JsonSerialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using Polly;
@@ -40,6 +41,22 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             var jsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value);
 
             return PublishMessageToQueueAsync(jsonMessage, message.RoutingKey(), cancellationToken);
+        }
+
+        public Task SendAsync<TMessagePayload>(
+            string trackId,
+            TMessagePayload payload,
+            PlatformEventBusMessageIdentity identity,
+            PlatformEventBusMessageRoutingKey routingKey,
+            CancellationToken cancellationToken = default) where TMessagePayload : class, new()
+        {
+            return SendAsync<PlatformEventBusMessage<TMessagePayload>, TMessagePayload>(
+                PlatformEventBusMessage<TMessagePayload>.New(
+                    trackId: trackId,
+                    payload: payload,
+                    identity: identity,
+                    routingKey: routingKey),
+                cancellationToken);
         }
 
         private Task PublishMessageToQueueAsync(string message, PlatformEventBusMessageRoutingKey routingKey, CancellationToken cancellationToken)

@@ -15,6 +15,7 @@ using AngularDotnetPlatform.Platform.AspNetCore.Middleware;
 using AngularDotnetPlatform.Platform.AspNetCore.Middleware.Abstracts;
 using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.JsonSerialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;

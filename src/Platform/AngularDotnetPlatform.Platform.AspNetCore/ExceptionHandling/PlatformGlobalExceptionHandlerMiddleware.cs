@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Exceptions;
 using AngularDotnetPlatform.Platform.AspNetCore.Middleware.Abstracts;
 using AngularDotnetPlatform.Platform.Domain.Exceptions;
+using AngularDotnetPlatform.Platform.JsonSerialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;

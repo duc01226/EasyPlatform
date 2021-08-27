@@ -6,6 +6,7 @@ using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Domain.Events;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EventBus;
+using AngularDotnetPlatform.Platform.JsonSerialization;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 

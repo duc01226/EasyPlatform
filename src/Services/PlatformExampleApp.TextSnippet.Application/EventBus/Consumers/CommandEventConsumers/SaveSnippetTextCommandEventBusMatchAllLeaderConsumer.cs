@@ -11,10 +11,13 @@ using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
 namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandEventConsumers
 {
-    [PlatformEventBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "SaveSnippetTextCommand")]
-    public class SaveSnippetTextCommandEventBusConsumer : PlatformCqrsCommandEventBusConsumer<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
+    /// <summary>
+    /// We use MatchAllPatternValue for producer context when consumer is leader
+    /// </summary>
+    [PlatformEventBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, PlatformEventBusConsumerAttribute.MatchAllPatternValue, "SaveSnippetTextCommand")]
+    public class SaveSnippetTextCommandEventBusMatchAllLeaderConsumer : PlatformCqrsCommandEventBusConsumer<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
     {
-        public SaveSnippetTextCommandEventBusConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager) : base(loggerFactory, uowManager)
+        public SaveSnippetTextCommandEventBusMatchAllLeaderConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager) : base(loggerFactory, uowManager)
         {
         }
 

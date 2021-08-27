@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
 using AngularDotnetPlatform.Platform.EventBus;
+using AngularDotnetPlatform.Platform.JsonSerialization;
 using AngularDotnetPlatform.Platform.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

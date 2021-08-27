@@ -53,6 +53,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
             {
                 Logger.LogError(e, $"[MessageConsumerError] There is an error when handle message {message.RoutingKey().CombinedStringKey}." +
                                    $"Message Info: ${JsonSerializer.Serialize(message)}");
+                throw;
             }
         }
 

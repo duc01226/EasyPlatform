@@ -85,6 +85,24 @@ namespace AngularDotnetPlatform.Platform.EventBus
             return message;
         }
 
+        public static PlatformEventBusMessage<TPayload> New(
+            string trackId,
+            TPayload payload,
+            PlatformEventBusMessageIdentity identity,
+            PlatformEventBusMessageRoutingKey routingKey)
+        {
+            var message = Activator.CreateInstance<PlatformEventBusMessage<TPayload>>();
+            message.TrackingId = trackId;
+            message.Payload = payload;
+            message.Identity = identity ?? throw new ArgumentNullException(nameof(identity));
+            message.MessageGroup = routingKey.MessageGroup;
+            message.ProducerContext = routingKey.ProducerContext;
+            message.MessageType = routingKey.MessageType;
+            message.MessageAction = routingKey.MessageAction;
+
+            return message;
+        }
+
         public PlatformEventBusMessageRoutingKey RoutingKey()
         {
             return new PlatformEventBusMessageRoutingKey()

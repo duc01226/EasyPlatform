@@ -9,6 +9,7 @@ using AngularDotnetPlatform.Platform.Caching;
 using AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories;
 using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.JsonSerialization;
 using AngularDotnetPlatform.Platform.Validators;
 using MediatR;
 using Microsoft.Extensions.Configuration;
@@ -128,7 +129,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
         /// <returns></returns>
         protected virtual JsonSerializerOptions JsonSerializerCurrentOptions()
         {
-            return PlatformJsonSerializer.DefaultValue;
+            return PlatformJsonSerializer.DefaultOptions;
         }
 
         protected void EnsurePlatformImplementationValid()
