@@ -73,7 +73,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
             PlatformEventBusMessageIdentity identity,
             string producerContext,
             string messageAction = null)
-            where TEventBusMessage : PlatformEventBusMessage<TPayload>, new()
+            where TEventBusMessage : IPlatformEventBusMessage<TPayload>, new()
         {
             var message = Activator.CreateInstance<TEventBusMessage>();
             message.TrackingId = trackId;

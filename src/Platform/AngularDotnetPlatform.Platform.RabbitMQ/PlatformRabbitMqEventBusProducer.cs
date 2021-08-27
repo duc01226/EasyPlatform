@@ -34,29 +34,40 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         }
 
-        public Task SendAsync<TMessage, TMessagePayload>(TMessage message, CancellationToken cancellationToken = default)
-            where TMessage : IPlatformEventBusMessage<TMessagePayload>
+        public async Task<TMessage> SendAsync<TMessage, TMessagePayload>(TMessage message, CancellationToken cancellationToken = default)
+            where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
             where TMessagePayload : class, new()
         {
-            var jsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value);
+            try
+            {
+                var jsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value);
 
-            return PublishMessageToQueueAsync(jsonMessage, message.RoutingKey(), cancellationToken);
+                await PublishMessageToQueueAsync(jsonMessage, message.RoutingKey(), cancellationToken);
+
+                return message;
+            }
+            catch (Exception e)
+            {
+                throw new PlatformEventBusException<TMessage>(message, e);
+            }
         }
 
-        public Task SendAsync<TMessagePayload>(
+        public async Task<IPlatformEventBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
             string trackId,
             TMessagePayload payload,
             PlatformEventBusMessageIdentity identity,
             PlatformEventBusMessageRoutingKey routingKey,
             CancellationToken cancellationToken = default) where TMessagePayload : class, new()
         {
-            return SendAsync<PlatformEventBusMessage<TMessagePayload>, TMessagePayload>(
+            var message = await SendAsync<PlatformEventBusMessage<TMessagePayload>, TMessagePayload>(
                 PlatformEventBusMessage<TMessagePayload>.New(
                     trackId: trackId,
                     payload: payload,
                     identity: identity,
                     routingKey: routingKey),
                 cancellationToken);
+
+            return message;
         }
 
         private Task PublishMessageToQueueAsync(string message, PlatformEventBusMessageRoutingKey routingKey, CancellationToken cancellationToken)

@@ -27,21 +27,15 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         where TCommand : PlatformCqrsCommand<TCommandResult>, new()
         where TCommandResult : PlatformCqrsCommandResult, new()
     {
-        protected readonly IPlatformEventBusProducer EventBusProducer;
-        protected readonly IPlatformApplicationSettingContext ApplicationSettingContext;
-        protected readonly IPlatformApplicationUserContextAccessor UserContextAccessor;
+        protected readonly IPlatformApplicationEventBusProducer ApplicationEventBusProducer;
         protected readonly ILogger Logger;
 
         public PlatformCqrsCommandEventBusProducer(
             IUnitOfWorkManager unitOfWorkManager,
-            IPlatformEventBusProducer eventBusProducer,
-            IPlatformApplicationSettingContext applicationSettingContext,
-            IPlatformApplicationUserContextAccessor userContextAccessor,
+            IPlatformApplicationEventBusProducer applicationEventBusProducer,
             ILoggerFactory loggerFactory) : base(unitOfWorkManager)
         {
-            EventBusProducer = eventBusProducer;
-            ApplicationSettingContext = applicationSettingContext;
-            UserContextAccessor = userContextAccessor;
+            ApplicationEventBusProducer = applicationEventBusProducer;
             Logger = loggerFactory.CreateLogger(GetType());
         }
 
@@ -49,20 +43,18 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         {
             if (RestrictOnlyForAction() == null || @event.Action == RestrictOnlyForAction())
             {
-                var message = PlatformEventBusMessage<TCommand>
-                    .New<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>>(
-                        @event.Id,
-                        @event.CommandData,
-                        PlatformApplicationEventBusMessageIdentityMapper.ByUserContext(UserContextAccessor.Current),
-                        producerContext: ApplicationSettingContext.ApplicationName,
-                        messageAction: @event.EventAction);
                 try
                 {
-                    await EventBusProducer.SendAsync<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>, TCommand>(message, cancellationToken);
+                    await ApplicationEventBusProducer
+                        .SendAsync<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>, TCommand>(
+                            trackId: @event.Id,
+                            messagePayload: @event.CommandData,
+                            messageAction: @event.EventAction,
+                            cancellationToken);
                 }
-                catch (Exception e)
+                catch (PlatformEventBusException<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>> e)
                 {
-                    Logger.LogError(e, $"[PlatformCqrsEventBusCommandEventHandler] Failed to send message for ${typeof(TCommand).Name}. Message Info: {JsonSerializer.Serialize(message)}");
+                    Logger.LogError(e, $"[PlatformCqrsEventBusCommandEventHandler] Failed to send message for ${typeof(TCommand).Name}. Message Info: {JsonSerializer.Serialize(e.EventBusMessage)}");
                     throw;
                 }
             }
