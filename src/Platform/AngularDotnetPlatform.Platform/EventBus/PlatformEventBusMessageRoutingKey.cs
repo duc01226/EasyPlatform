@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
+using AngularDotnetPlatform.Platform.Application.Exceptions;
 using AngularDotnetPlatform.Platform.Validators;
 using FluentValidation;
 
@@ -81,7 +82,11 @@ namespace AngularDotnetPlatform.Platform.EventBus
             return $"{messageGroup}.{producerContext}.{messageType}";
         }
 
-        public static PlatformEventBusMessageRoutingKey New(string messageGroup, string producerContext, string messageType, string messageAction = null)
+        public static PlatformEventBusMessageRoutingKey New(
+            string messageGroup,
+            string producerContext,
+            string messageType,
+            string messageAction = null)
         {
             return new PlatformEventBusMessageRoutingKey()
             {
@@ -90,6 +95,20 @@ namespace AngularDotnetPlatform.Platform.EventBus
                 MessageType = messageType,
                 MessageAction = messageAction
             };
+        }
+
+        public static PlatformEventBusMessageRoutingKey NewEnsureValid(
+            string messageGroup,
+            string producerContext,
+            string messageType,
+            string messageAction = null,
+            bool validateForMatchingPattern = false)
+        {
+            var result = New(messageGroup, producerContext, messageType, messageAction);
+
+            result.EnsureValid(validateForMatchingPattern);
+
+            return result;
         }
 
         public static PlatformEventBusMessageRoutingKey New(string combinedKey)
@@ -191,6 +210,12 @@ namespace AngularDotnetPlatform.Platform.EventBus
                    MatchPattern(MessageGroup, routingKey.MessageGroup) &&
                    MatchPattern(MessageType, routingKey.MessageType) &&
                    MatchPattern(MessageAction, routingKey.MessageAction);
+        }
+
+        public void EnsureValid(bool forMatchingPattern = false)
+        {
+            var validationResult = Validator(forMatchingPattern).Validate(this);
+            validationResult.EnsureValid(p => new PlatformApplicationValidationException(validationResult));
         }
     }
 }

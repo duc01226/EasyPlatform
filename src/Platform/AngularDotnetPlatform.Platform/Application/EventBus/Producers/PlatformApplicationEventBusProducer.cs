@@ -8,16 +8,20 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
 {
     public interface IPlatformApplicationEventBusProducer
     {
-        public IPlatformEventBusProducer EventBusProducer { get; }
-        public IPlatformApplicationSettingContext ApplicationSettingContext { get; }
-        public IPlatformApplicationUserContextAccessor UserContextAccessor { get; }
-
         Task<TMessage> SendAsync<TMessage, TMessagePayload>(
             string trackId,
             TMessagePayload messagePayload,
             string messageAction = null,
             CancellationToken cancellationToken = default)
             where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
+            where TMessagePayload : class, new();
+
+        Task<IPlatformEventBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
+            string trackId,
+            TMessagePayload messagePayload,
+            string messageGroup,
+            string messageAction = null,
+            CancellationToken cancellationToken = default)
             where TMessagePayload : class, new();
     }
 
@@ -33,9 +37,9 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             UserContextAccessor = userContextAccessor;
         }
 
-        public IPlatformEventBusProducer EventBusProducer { get; }
-        public IPlatformApplicationSettingContext ApplicationSettingContext { get; }
-        public IPlatformApplicationUserContextAccessor UserContextAccessor { get; }
+        protected IPlatformEventBusProducer EventBusProducer { get; }
+        protected IPlatformApplicationSettingContext ApplicationSettingContext { get; }
+        protected IPlatformApplicationUserContextAccessor UserContextAccessor { get; }
 
         public Task<TMessage> SendAsync<TMessage, TMessagePayload>(
             string trackId,
@@ -54,6 +58,25 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                     messageAction: messageAction);
 
             return EventBusProducer.SendAsync<TMessage, TMessagePayload>(message, cancellationToken);
+        }
+
+        public async Task<IPlatformEventBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
+            string trackId,
+            TMessagePayload messagePayload,
+            string messageGroup,
+            string messageAction = null,
+            CancellationToken cancellationToken = default) where TMessagePayload : class, new()
+        {
+            return await EventBusProducer.SendAsync(
+                trackId,
+                messagePayload,
+                identity: PlatformApplicationEventBusMessageIdentityMapper.ByUserContext(UserContextAccessor.Current),
+                routingKey: PlatformEventBusMessageRoutingKey.NewEnsureValid(
+                    messageGroup,
+                    producerContext: ApplicationSettingContext.ApplicationName,
+                    messageType: typeof(TMessagePayload).Name,
+                    messageAction),
+                cancellationToken);
         }
     }
 }

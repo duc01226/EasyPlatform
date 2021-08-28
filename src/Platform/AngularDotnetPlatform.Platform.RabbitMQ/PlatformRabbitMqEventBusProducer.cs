@@ -16,13 +16,13 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
     public class PlatformRabbitMqEventBusProducer : IPlatformEventBusProducer
     {
         protected readonly DefaultObjectPool<IModel> ChannelPool;
-        protected readonly PlatformRabbitMqExchangeProvider ExchangeProvider;
+        protected readonly IPlatformRabbitMqExchangeProvider ExchangeProvider;
         protected readonly RetryPolicy RetryPublishPolicy;
         protected readonly ILogger Logger;
 
         public PlatformRabbitMqEventBusProducer(
             PlatformRabbitMqChannelPoolPolicy channelPoolPolicy,
-            PlatformRabbitMqExchangeProvider exchangeProvider,
+            IPlatformRabbitMqExchangeProvider exchangeProvider,
             PlatformRabbitMqOptions options,
             ILoggerFactory loggerFactory)
         {

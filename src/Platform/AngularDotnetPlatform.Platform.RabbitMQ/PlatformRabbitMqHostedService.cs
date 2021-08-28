@@ -24,7 +24,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         private readonly PlatformRabbitMqOptions options;
         private readonly IServiceProvider serviceProvider;
         private readonly IPlatformApplicationSettingContext applicationSettingContext;
-        private readonly PlatformRabbitMqExchangeProvider exchangeProvider;
+        private readonly IPlatformRabbitMqExchangeProvider exchangeProvider;
         private readonly IPlatformEventBusManager eventBusManager;
         private readonly ILogger<PlatformRabbitMqHostedService> logger;
 
@@ -41,7 +41,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             PlatformRabbitMqChannelPoolPolicy channelPolicy,
             IServiceProvider serviceProvider,
             IPlatformApplicationSettingContext applicationSettingContext,
-            PlatformRabbitMqExchangeProvider exchangeProvider,
+            IPlatformRabbitMqExchangeProvider exchangeProvider,
             IPlatformEventBusManager eventBusManager,
             ILogger<PlatformRabbitMqHostedService> logger)
         {

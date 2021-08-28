@@ -17,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         {
             base.InternalRegister(serviceCollection);
             serviceCollection.RegisterSelf(typeof(PlatformRabbitMqChannelPoolPolicy), ServiceLifeTime.Singleton);
-            serviceCollection.RegisterSelf(typeof(PlatformRabbitMqExchangeProvider), ServiceLifeTime.Transient);
+            serviceCollection.Register<IPlatformRabbitMqExchangeProvider, PlatformRabbitMqExchangeProvider>(ServiceLifeTime.Transient);
             serviceCollection.Register(typeof(PlatformRabbitMqOptions), RabbitMqOptionsFactory, ServiceLifeTime.Transient);
             serviceCollection.Register<IPlatformEventBusProducer, PlatformRabbitMqEventBusProducer>(ServiceLifeTime.Singleton);
             serviceCollection.AddHostedService<PlatformRabbitMqHostedService>();

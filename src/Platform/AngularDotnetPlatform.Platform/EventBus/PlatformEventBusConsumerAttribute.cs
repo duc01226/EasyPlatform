@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using AngularDotnetPlatform.Platform.Application.Exceptions;
 using FluentValidation;
 
 namespace AngularDotnetPlatform.Platform.EventBus
@@ -70,8 +71,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
         private void EnsureValid()
         {
             var validationResult = PlatformEventBusMessageRoutingKey.Validator(true).Validate(ToRoutingKey());
-            if (!validationResult.IsValid)
-                throw new ValidationException(validationResult.Errors);
+            validationResult.EnsureValid(p => new PlatformApplicationValidationException(validationResult));
         }
     }
 }
