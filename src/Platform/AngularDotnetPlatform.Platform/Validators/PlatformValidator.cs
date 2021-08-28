@@ -12,6 +12,16 @@ namespace AngularDotnetPlatform.Platform.Validators
             return new PlatformValidationResult(new List<PlatformValidationFailure>() { new PlatformValidationFailure(property, errorMsg) });
         }
 
+        public static PlatformValidationResult Valid()
+        {
+            return new PlatformValidationResult(new List<PlatformValidationFailure>() { });
+        }
+
+        public static PlatformValidator<T> Create()
+        {
+            return new PlatformValidator<T>();
+        }
+
         public static PlatformValidator<T> Create(params PlatformValidator<T>[] includeValidators)
         {
             var result = new PlatformValidator<T>();

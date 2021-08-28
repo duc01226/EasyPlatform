@@ -142,21 +142,28 @@ namespace AngularDotnetPlatform.Platform.EventBus
 
         public static PlatformSingleValidator<PlatformEventBusMessageRoutingKey, string> KeyPartValidator(
             Expression<Func<PlatformEventBusMessageRoutingKey, string>> keyPartSelector,
-            bool allowMatchingAllPattern = false)
+            bool allowMatchingAllPattern = false,
+            bool allowNull = false)
         {
             return new PlatformSingleValidator<PlatformEventBusMessageRoutingKey, string>(
                 keyPartSelector,
-                p =>
+                ruleBuilder =>
                 {
-                    var ruleBuilder = p.NotNull()
+                    var ruleBuilderOptions = ruleBuilder
+                        .NotNull()
                         .NotEmpty()
                         .Matches(new Regex($"^[^\\{CombinedStringKeySeparator}]+$"))
                         .WithMessage($"This key part can not contain key separator {CombinedStringKeySeparator}");
                     if (!allowMatchingAllPattern)
                     {
-                        ruleBuilder
+                        ruleBuilderOptions = ruleBuilder
                             .Matches(new Regex($"^[^\\{MatchAllSingleGroupLevelChar}]+$"))
                             .WithMessage($"This key part can not contain matching all pattern {MatchAllSingleGroupLevelChar}");
+                    }
+
+                    if (allowNull)
+                    {
+                        ruleBuilderOptions.When(key => keyPartSelector.Compile()(key) != null);
                     }
                 });
         }
@@ -167,7 +174,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
                 KeyPartValidator(p => p.MessageGroup),
                 KeyPartValidator(p => p.ProducerContext, forMatchingPattern),
                 KeyPartValidator(p => p.MessageType, forMatchingPattern),
-                KeyPartValidator(p => p.MessageAction, forMatchingPattern));
+                KeyPartValidator(p => p.MessageAction, forMatchingPattern, allowNull: true));
         }
 
         public static string AutoFixKeyPart(string keyPart)
