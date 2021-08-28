@@ -35,6 +35,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
             {
                 Logger.LogError(e, $"[PlatformUnitOfWorkMessageConsumer] There is an error when handle message {message.RoutingKey().CombinedStringKey}." +
                                    $"Message Info: ${JsonSerializer.Serialize(message)}");
+                throw;
             }
         }
     }

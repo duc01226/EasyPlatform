@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
 using AngularDotnetPlatform.Platform.EventBus;
 using AngularDotnetPlatform.Platform.JsonSerialization;
+using AngularDotnetPlatform.Platform.Timing;
 using AngularDotnetPlatform.Platform.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -321,16 +322,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                     "RabbitMQ invoke consumer {Consumer} error for the routing key: {RoutingKey}. Message: {Message}",
                     new object[] { ex.ConsumerName, rabbitMqMessage.RoutingKey, Encoding.UTF8.GetString(rabbitMqMessage.Body.Span) });
 
-                // Requeue the message.
-                // References: https://www.rabbitmq.com/confirms.html#consumer-nacks-requeue
-                Util.Tasks.CatchException(() =>
-                {
-                    Util.Tasks.QueueDelayAsyncAction(
-                        token => Task.Run(
-                            () => currentChannel.BasicNack(rabbitMqMessage.DeliveryTag, multiple: true, requeue: true),
-                            token),
-                        TimeSpan.FromSeconds(options.RequeueDelayTimeInSeconds));
-                });
+                ProcessRequeueMessage(rabbitMqMessage, ex.EventBusMessage);
             }
             catch (Exception ex)
             {
@@ -342,6 +334,28 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
                 // Reject the message.
                 Util.Tasks.CatchException(() => currentChannel.BasicReject(rabbitMqMessage.DeliveryTag, false));
+            }
+        }
+
+        private void ProcessRequeueMessage(BasicDeliverEventArgs rabbitMqMessage, IPlatformEventBusMessage eventBusMessage)
+        {
+            if (eventBusMessage.CreatedUtcDate.AddSeconds(options.RequeueExpiredTimeSpanInSeconds) >= Clock.UtcNow)
+            {
+                // Requeue the message.
+                // References: https://www.rabbitmq.com/confirms.html#consumer-nacks-requeue
+                Util.Tasks.CatchException(() =>
+                {
+                    Util.Tasks.QueueDelayAsyncAction(
+                        token => Task.Run(
+                            () =>
+                            {
+                                Log.Information(logger, message: $"RabbitMQ requeue message for the routing key: {rabbitMqMessage.RoutingKey}. Message: {Encoding.UTF8.GetString(rabbitMqMessage.Body.Span)}");
+
+                                currentChannel.BasicNack(rabbitMqMessage.DeliveryTag, multiple: true, requeue: true);
+                            },
+                            token),
+                        TimeSpan.FromSeconds(options.RequeueDelayTimeInSeconds));
+                });
             }
         }
 
@@ -374,7 +388,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             var messageForConsumerPayloadType =
                 messageType.MakeGenericType(messageConsumerPayloadType);
 
-            var data = Util.Tasks.CatchExceptionContinueThrow(
+            var eventBusMessage = (IPlatformEventBusMessage)Util.Tasks.CatchExceptionContinueThrow(
                 () => JsonSerializer.Deserialize(
                     args.Body.Span,
                     messageForConsumerPayloadType,
@@ -385,7 +399,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                     "RabbitMQ parsing error for the routing key {RoutingKey}. Body: {Message}",
                     new object[] { args.RoutingKey, Encoding.UTF8.GetString(args.Body.Span) }));
 
-            if (data != null)
+            if (eventBusMessage != null)
             {
                 // Get HandleAsync method.
                 var methodInfo = consumer.GetType()
@@ -399,13 +413,13 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 try
                 {
                     // Invoke the method.
-                    var invokeResult = methodInfo.Invoke(consumer, new[] { data });
+                    var invokeResult = methodInfo.Invoke(consumer, new[] { eventBusMessage });
                     if (invokeResult is Task invokeTask)
                         await invokeTask;
                 }
                 catch (Exception e)
                 {
-                    throw new PlatformRabbitMqInvokeConsumerException(e, consumer.GetType().FullName);
+                    throw new PlatformRabbitMqInvokeConsumerException(e, consumer.GetType().FullName, eventBusMessage);
                 }
             }
         }

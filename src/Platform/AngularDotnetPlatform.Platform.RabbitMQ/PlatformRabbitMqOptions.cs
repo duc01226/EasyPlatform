@@ -40,5 +40,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         public bool LogConsumerProcessTime { get; set; } = false;
 
         public int RequeueDelayTimeInSeconds { get; set; } = 60;
+
+        public long RequeueExpiredTimeSpanInSeconds { get; set; } = 60 * 60 * 24 * 7;
     }
 }

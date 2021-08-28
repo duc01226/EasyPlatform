@@ -1,3 +1,4 @@
+using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform;
@@ -6,6 +7,7 @@ using AngularDotnetPlatform.Platform.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EventBus;
 using AngularDotnetPlatform.Platform.JsonSerialization;
+using AngularDotnetPlatform.Platform.Timing;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
@@ -20,6 +22,9 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
 
         protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message)
         {
+            if (message.CreatedUtcDate.AddSeconds(60 * 5) >= Clock.Now)
+                throw new Exception("Test requeue message mechanism. Consumer temporarily failed for first 5 minutes from the created date of message");
+
             Logger.LogInformation($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             return Task.CompletedTask;
         }
