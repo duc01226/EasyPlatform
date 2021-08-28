@@ -258,7 +258,9 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         {
             try
             {
-                var objectTypePayloadMessage = JsonSerializer.Deserialize<PlatformEventBusMessage<object>>(rabbitMqMessage.Body.Span, PlatformJsonSerializer.CurrentOptions.Value);
+                var objectTypePayloadMessage =
+                    JsonSerializer.Deserialize<PlatformEventBusMessage<object>>(rabbitMqMessage.Body.Span,
+                        PlatformJsonSerializer.CurrentOptions.Value);
                 if (objectTypePayloadMessage == null)
                 {
                     currentChannel.BasicAck(rabbitMqMessage.DeliveryTag, false);
@@ -278,15 +280,25 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                         {
                             Log.Information(
                                 logger,
-                                message: "Begin processing message with routing key: {RoutingKey}; Delivery Tag: {DeliveryTag}; Message id {MessageId} for consumer {ConsumerName}",
-                                args: new object[] { rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag, objectTypePayloadMessage.TrackingId ?? "n/a", consumer.GetType().FullName });
+                                message:
+                                "Begin processing message with routing key: {RoutingKey}; Delivery Tag: {DeliveryTag}; Message id {MessageId} for consumer {ConsumerName}",
+                                args: new object[]
+                                {
+                                    rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag,
+                                    objectTypePayloadMessage.TrackingId ?? "n/a", consumer.GetType().FullName
+                                });
 
                             await ExecuteConsumer(rabbitMqMessage, consumer);
 
                             Log.Information(
                                 logger,
-                                message: "End processing message with routing key: {RoutingKey}; Delivery Tag: {DeliveryTag}; Message id {MessageId} for consumer {ConsumerName}",
-                                args: new object[] { rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag, objectTypePayloadMessage.TrackingId ?? "n/a", consumer.GetType().FullName });
+                                message:
+                                "End processing message with routing key: {RoutingKey}; Delivery Tag: {DeliveryTag}; Message id {MessageId} for consumer {ConsumerName}",
+                                args: new object[]
+                                {
+                                    rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag,
+                                    objectTypePayloadMessage.TrackingId ?? "n/a", consumer.GetType().FullName
+                                });
                         }
                         else
                         {
@@ -300,6 +312,25 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                     // Ack the message.
                     currentChannel.BasicAck(rabbitMqMessage.DeliveryTag, false);
                 }
+            }
+            catch (PlatformRabbitMqInvokeConsumerException ex)
+            {
+                Log.Error(
+                    logger,
+                    ex,
+                    "RabbitMQ invoke consumer {Consumer} error for the routing key: {RoutingKey}. Message: {Message}",
+                    new object[] { ex.ConsumerName, rabbitMqMessage.RoutingKey, Encoding.UTF8.GetString(rabbitMqMessage.Body.Span) });
+
+                // Requeue the message.
+                // References: https://www.rabbitmq.com/confirms.html#consumer-nacks-requeue
+                Util.Tasks.CatchException(() =>
+                {
+                    Util.Tasks.QueueDelayAsyncAction(
+                        token => Task.Run(
+                            () => currentChannel.BasicNack(rabbitMqMessage.DeliveryTag, multiple: true, requeue: true),
+                            token),
+                        TimeSpan.FromSeconds(options.RequeueDelayTimeInSeconds));
+                });
             }
             catch (Exception ex)
             {
@@ -365,10 +396,17 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                         $"Can not find execution method from {genericConsumerType.FullName}");
                 }
 
-                // Invoke the method.
-                var invokeResult = methodInfo.Invoke(consumer, new[] { data });
-                if (invokeResult is Task invokeTask)
-                    await invokeTask;
+                try
+                {
+                    // Invoke the method.
+                    var invokeResult = methodInfo.Invoke(consumer, new[] { data });
+                    if (invokeResult is Task invokeTask)
+                        await invokeTask;
+                }
+                catch (Exception e)
+                {
+                    throw new PlatformRabbitMqInvokeConsumerException(e, consumer.GetType().FullName);
+                }
             }
         }
     }

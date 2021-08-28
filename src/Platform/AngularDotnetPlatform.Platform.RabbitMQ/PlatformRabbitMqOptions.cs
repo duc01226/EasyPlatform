@@ -38,5 +38,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         public int RequestedConnectionTimeoutSeconds { get; set; } = 10;
 
         public bool LogConsumerProcessTime { get; set; } = false;
+
+        public int RequeueDelayTimeInSeconds { get; set; } = 60;
     }
 }

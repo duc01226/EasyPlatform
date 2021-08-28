@@ -12,7 +12,7 @@ namespace AngularDotnetPlatform.Platform.Utils
             /// <summary>
             /// Execute an action after a given of time.
             /// </summary>
-            public static Task QueueDelayAsyncAction(Func<CancellationToken, Task> action, TimeSpan delayTime, CancellationToken cancellationToken)
+            public static Task QueueDelayAsyncAction(Func<CancellationToken, Task> action, TimeSpan delayTime, CancellationToken cancellationToken = default)
             {
                 return Task.Run(
                     async () =>
@@ -26,7 +26,7 @@ namespace AngularDotnetPlatform.Platform.Utils
             /// <summary>
             /// Execute an action after a given of time in seconds.
             /// </summary>
-            public static Task QueueDelayAsyncActionMultipleTimes(Func<CancellationToken, Task> action, int delayTimeInSecond, CancellationToken cancellationToken)
+            public static Task QueueDelayAsyncActionMultipleTimes(Func<CancellationToken, Task> action, int delayTimeInSecond, CancellationToken cancellationToken = default)
             {
                 return QueueDelayAsyncAction(action, TimeSpan.FromSeconds(delayTimeInSecond), cancellationToken);
             }
