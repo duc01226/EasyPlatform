@@ -12,6 +12,7 @@ using AngularDotnetPlatform.Platform.EventBus;
 using AngularDotnetPlatform.Platform.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace AngularDotnetPlatform.Platform.Application
 {
@@ -42,6 +43,7 @@ namespace AngularDotnetPlatform.Platform.Application
             RegisterEventBus(serviceCollection);
             RegisterApplicationSettingContext(serviceCollection);
             RegisterDefaultApplicationUserContext(serviceCollection);
+            RegisterInboxEventBusMessageCleanerHostedService(serviceCollection);
         }
 
         protected override async Task InternalInit(IServiceScope serviceScope)
@@ -51,6 +53,18 @@ namespace AngularDotnetPlatform.Platform.Application
             var dataSeeder = serviceScope.ServiceProvider.GetService<IPlatformApplicationDataSeeder>();
             if (dataSeeder != null)
                 await dataSeeder.SeedData();
+        }
+
+        private void RegisterInboxEventBusMessageCleanerHostedService(IServiceCollection serviceCollection)
+        {
+            if (!serviceCollection.Any(p => PlatformInboxEventBusMessageCleanerHostedService.MatchImplementation(p, ServiceProvider)))
+            {
+                serviceCollection
+                    .Register(
+                        typeof(IHostedService),
+                        typeof(PlatformDefaultInboxEventBusMessageCleanerHostedService),
+                        ServiceLifeTime.Singleton);
+            }
         }
 
         private void RegisterApplicationSettingContext(IServiceCollection serviceCollection)

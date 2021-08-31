@@ -1,3 +1,4 @@
+using System;
 using AngularDotnetPlatform.Platform.Cqrs.Events;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 
@@ -23,7 +24,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Events
 
         public PlatformCqrsEntityEvent(TEntity entityData, PlatformCqrsEntityEventAction action)
         {
-            Id = entityData.Id.ToString();
+            Id = Guid.NewGuid().ToString();
             EntityData = entityData;
             Action = action;
         }

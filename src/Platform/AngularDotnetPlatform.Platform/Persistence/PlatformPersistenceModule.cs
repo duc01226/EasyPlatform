@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AngularDotnetPlatform.Platform.Application.EventBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AngularDotnetPlatform.Platform.DependencyInjection;
@@ -25,6 +26,7 @@ namespace AngularDotnetPlatform.Platform.Persistence
             RegisterUnitOfWorkManager(serviceCollection);
             serviceCollection.RegisterAllFromType(typeof(IUnitOfWork), ServiceLifeTime.Transient, Assembly);
             RegisterRepositories(serviceCollection);
+            RegisterInboxEventBusMessageRepository(serviceCollection);
             serviceCollection.RegisterAllFromType<IPersistenceHelper>(ServiceLifeTime.Transient, Assembly);
         }
 
@@ -59,6 +61,11 @@ namespace AngularDotnetPlatform.Platform.Persistence
             {
                 serviceCollection.RegisterAllFromType<IPlatformRepository>(ServiceLifeTime.Transient, Assembly);
             }
+        }
+
+        private void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RegisterAllFromType<IPlatformInboxEventBusMessageRepository>(ServiceLifeTime.Transient, Assembly);
         }
     }
 }

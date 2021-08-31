@@ -17,17 +17,67 @@ namespace AngularDotnetPlatform.Platform.EventBus
         Task HandleAsync(PlatformEventBusMessage<TMessagePayload> message);
     }
 
-    public abstract class PlatformEventBusConsumer<TMessagePayload> : IPlatformEventBusConsumer<TMessagePayload>
-        where TMessagePayload : class, new()
+    public abstract class PlatformEventBusConsumer : IPlatformEventBusConsumer
     {
-        protected readonly ILogger Logger;
-
-        public PlatformEventBusConsumer(ILoggerFactory loggerFactory)
+        /// <summary>
+        /// Get <see cref="PlatformEventBusMessage{TPayload}"/> concrete message type from a <see cref="IPlatformEventBusConsumer"/> consumer
+        /// <br/>
+        /// Get a generic type: PlatformEventBusMessage{TMessage} where TMessage = TMessagePayload
+        /// of IPlatformEventBusConsumer{TMessagePayload}
+        /// </summary>
+        public static Type GetConsumerMessageType(IPlatformEventBusConsumer consumer)
         {
-            Logger = loggerFactory.CreateLogger(GetType());
+            var genericConsumerType = consumer
+                .GetType()
+                .GetInterfaces()
+                .FirstOrDefault(x =>
+                    x.IsGenericType &&
+                    x.GetGenericTypeDefinition() == typeof(IPlatformEventBusConsumer<>));
+
+            // To ensure that the consumer implements the correct interface IOpalMessageConsumer<>.
+            // The IOpalMessageConsumer (non-generic version) is used for Interface Marker only.
+            if (genericConsumerType == null)
+            {
+                throw new Exception("Incorrect implementation of IPlatformMessageConsumer<>");
+            }
+
+            // Get generic type IPlatformMessageConsumer<TMessage> -> TMessage
+            var messageConsumerPayloadType = genericConsumerType.GetGenericArguments()[0];
+            // Get type of generic PlatformEventBusMessage<>
+            var messageType = typeof(PlatformEventBusMessage<>);
+
+            // Make a generic type: PlatformEventBusMessage<TMessage>
+            var messageForConsumerPayloadType =
+                messageType.MakeGenericType(messageConsumerPayloadType);
+
+            return messageForConsumerPayloadType;
         }
 
-        public virtual bool CanProcess(PlatformEventBusMessageRoutingKey routingKey)
+        public static async Task InvokeConsumer(IPlatformEventBusConsumer consumer, IPlatformEventBusMessage eventBusMessage)
+        {
+            // Get HandleAsync method.
+            var methodInfo = consumer.GetType()
+                .GetMethod(nameof(IPlatformEventBusConsumer<object>.HandleAsync));
+            if (methodInfo == null)
+            {
+                throw new Exception(
+                    $"Can not find execution method from {typeof(IPlatformEventBusConsumer<>).FullName}");
+            }
+
+            try
+            {
+                // Invoke the method.
+                var invokeResult = methodInfo.Invoke(consumer, new[] { eventBusMessage });
+                if (invokeResult is Task invokeTask)
+                    await invokeTask;
+            }
+            catch (Exception e)
+            {
+                throw new PlatformInvokeConsumerException(e, consumer.GetType().FullName, eventBusMessage);
+            }
+        }
+
+        public bool CanProcess(PlatformEventBusMessageRoutingKey routingKey)
         {
             var consumerAttributes = GetType()
                 .GetCustomAttributes(typeof(PlatformEventBusConsumerAttribute), true)
@@ -41,6 +91,17 @@ namespace AngularDotnetPlatform.Platform.EventBus
             }
 
             return consumerAttributes.Any(p => p.IsMatchMessageRoutingKey(routingKey));
+        }
+    }
+
+    public abstract class PlatformEventBusConsumer<TMessagePayload> : PlatformEventBusConsumer, IPlatformEventBusConsumer<TMessagePayload>
+        where TMessagePayload : class, new()
+    {
+        protected readonly ILogger Logger;
+
+        public PlatformEventBusConsumer(ILoggerFactory loggerFactory)
+        {
+            Logger = loggerFactory.CreateLogger(GetType());
         }
 
         public virtual async Task HandleAsync(PlatformEventBusMessage<TMessagePayload> message)

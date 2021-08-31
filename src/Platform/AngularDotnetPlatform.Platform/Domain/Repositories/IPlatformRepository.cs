@@ -15,13 +15,13 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
     {
     }
 
-    public interface IPlatformBasicRepository<TEntity, TPrimaryKey> : IPlatformRepository
+    public interface IPlatformBasicRepository<TEntity, in TPrimaryKey> : IPlatformRepository
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
         Task<TEntity> GetByIdAsync(TPrimaryKey id, CancellationToken cancellationToken = default);
     }
 
-    public interface IPlatformRepository<TEntity, TPrimaryKey> : IPlatformBasicRepository<TEntity, TPrimaryKey>
+    public interface IPlatformRepository<TEntity, in TPrimaryKey> : IPlatformBasicRepository<TEntity, TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
         Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
@@ -63,7 +63,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
         Task<TEntity> CreateOrUpdate(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
     }
 
-    public interface IPlatformQueryableRepository<TEntity, TPrimaryKey> : IPlatformRepository<TEntity, TPrimaryKey>
+    public interface IPlatformQueryableRepository<TEntity, in TPrimaryKey> : IPlatformRepository<TEntity, TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
         IQueryable<TEntity> GetAllQuery();

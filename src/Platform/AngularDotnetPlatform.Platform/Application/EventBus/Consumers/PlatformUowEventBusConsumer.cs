@@ -15,28 +15,34 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
     public abstract class PlatformUowEventBusConsumer<TMessagePayload> : PlatformEventBusConsumer<TMessagePayload>, IPlatformUowEventBusConsumer<TMessagePayload>
         where TMessagePayload : class, new()
     {
-        private readonly IUnitOfWorkManager uowManager;
+        protected readonly IUnitOfWorkManager UowManager;
 
         protected PlatformUowEventBusConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager) : base(loggerFactory)
         {
-            this.uowManager = uowManager;
+            UowManager = uowManager;
         }
 
         public override async Task HandleAsync(PlatformEventBusMessage<TMessagePayload> message)
         {
             try
             {
-                using (var uow = uowManager.Begin())
+                using (var uow = UowManager.Begin())
                 {
-                    await InternalHandleAsync(message);
+                    await ExecuteInternalHandleAsync(message);
+                    await uow.CompleteAsync();
                 }
             }
             catch (Exception e)
             {
-                Logger.LogError(e, $"[PlatformUnitOfWorkMessageConsumer] There is an error when handle message {message.RoutingKey().CombinedStringKey}." +
+                Logger.LogError(e, $"[{GetType().Name}] There is an error when handle message {message.RoutingKey().CombinedStringKey}." +
                                    $"Message Info: ${JsonSerializer.Serialize(message)}");
                 throw;
             }
+        }
+
+        protected virtual async Task ExecuteInternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message)
+        {
+            await InternalHandleAsync(message);
         }
     }
 }

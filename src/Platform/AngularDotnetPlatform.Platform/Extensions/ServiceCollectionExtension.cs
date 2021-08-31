@@ -24,7 +24,8 @@ namespace AngularDotnetPlatform.Platform.Extensions
             Type conventionalType,
             ServiceLifeTime lifeTime,
             Assembly assembly,
-            bool replaceIfExist = true)
+            bool replaceIfExist = true,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
             assembly.GetTypes()
                 .Where(p => p.IsClass && !p.IsAbstract && p.IsAssignableTo(conventionalType))
@@ -46,9 +47,10 @@ namespace AngularDotnetPlatform.Platform.Extensions
             this IServiceCollection services,
             ServiceLifeTime lifeTime,
             Assembly assembly,
-            bool replaceIfExist = true)
+            bool replaceIfExist = true,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            return RegisterAllFromType(services, typeof(TConventional), lifeTime, assembly, replaceIfExist);
+            return RegisterAllFromType(services, typeof(TConventional), lifeTime, assembly, replaceIfExist, replaceStrategy);
         }
 
         /// <summary>

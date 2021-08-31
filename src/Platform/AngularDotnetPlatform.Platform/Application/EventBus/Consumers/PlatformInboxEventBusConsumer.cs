@@ -1,0 +1,46 @@
+using System;
+using System.Text.Json;
+using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Domain.Repositories;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using AngularDotnetPlatform.Platform.EventBus;
+using Microsoft.Extensions.Logging;
+
+namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
+{
+    /// <summary>
+    /// Inbox consumer support inbox pattern to prevent duplicated consumer message many times
+    /// when event bus requeue message.
+    /// This will stored consumed message into db. If message existed, it won't process the consumer.
+    /// </summary>
+    public interface IPlatformInboxEventBusConsumer<TMessagePayload> : IPlatformUowEventBusConsumer<TMessagePayload>
+        where TMessagePayload : class, new()
+    {
+    }
+
+    public abstract class PlatformInboxEventBusConsumer<TMessagePayload> : PlatformUowEventBusConsumer<TMessagePayload>, IPlatformInboxEventBusConsumer<TMessagePayload>
+        where TMessagePayload : class, new()
+    {
+        private readonly IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo;
+
+        protected PlatformInboxEventBusConsumer(
+            ILoggerFactory loggerFactory,
+            IUnitOfWorkManager uowManager,
+            IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager)
+        {
+            this.inboxEventBusMessageRepo = inboxEventBusMessageRepo;
+        }
+
+        protected override async Task ExecuteInternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message)
+        {
+            if (await inboxEventBusMessageRepo.AnyAsync(p => message.TrackingId != null && p.Id == message.TrackingId))
+            {
+                Logger.LogWarning($"Message Id {message.TrackingId} is skipped because it's already consumed by {GetType().Name} consumer.");
+                return;
+            }
+
+            await base.ExecuteInternalHandleAsync(message);
+            await inboxEventBusMessageRepo.Create(PlatformInboxEventBusMessage.Create(message));
+        }
+    }
+}

@@ -2,6 +2,7 @@ using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform;
+using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
@@ -13,18 +14,25 @@ using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
 namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandEventConsumers
 {
+    /// <summary>
+    /// Demo using <see cref="PlatformInboxCqrsCommandEventBusConsumer{TCommand,TCommandResult}"/> to support inbox consumer
+    /// The SaveSnippetTextCommandEventBusMatchAllLeaderConsumer will throw error => Trigger message requeue =>
+    /// Inbox consumer will prevent a consumer consume the same message again. 
+    /// <br/>
+    /// <inheritdoc cref="PlatformInboxCqrsCommandEventBusConsumer{TCommand,TCommandResult}"/>
+    /// </summary>
     [PlatformEventBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "SaveSnippetTextCommand")]
-    public class SaveSnippetTextCommandEventBusConsumer : PlatformCqrsCommandEventBusConsumer<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
+    public class SaveSnippetTextCommandEventBusConsumer : PlatformInboxCqrsCommandEventBusConsumer<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
     {
-        public SaveSnippetTextCommandEventBusConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager) : base(loggerFactory, uowManager)
+        public SaveSnippetTextCommandEventBusConsumer(
+            ILoggerFactory loggerFactory,
+            IUnitOfWorkManager uowManager,
+            IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager, inboxEventBusMessageRepo)
         {
         }
 
         protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message)
         {
-            if (message.CreatedUtcDate.AddSeconds(60 * 5) >= Clock.Now)
-                throw new Exception("Test requeue message mechanism. Consumer temporarily failed for first 5 minutes from the created date of message");
-
             Logger.LogInformation($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             return Task.CompletedTask;
         }

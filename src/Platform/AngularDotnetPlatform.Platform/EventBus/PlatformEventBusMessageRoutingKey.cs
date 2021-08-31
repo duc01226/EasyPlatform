@@ -66,6 +66,22 @@ namespace AngularDotnetPlatform.Platform.EventBus
             set => messageAction = AutoFixKeyPart(value);
         }
 
+        /// <summary>
+        /// Combined of "MessageGroup.ProducerContext.MessageType.MessageAction"
+        /// </summary>
+        public string CombinedStringKey =>
+            BuildCombinedStringKey(MessageGroup, ProducerContext, MessageType, MessageAction);
+
+        public static implicit operator string(PlatformEventBusMessageRoutingKey routingKey)
+        {
+            return routingKey.CombinedStringKey;
+        }
+
+        public static implicit operator PlatformEventBusMessageRoutingKey(string routingKeyStr)
+        {
+            return New(routingKeyStr);
+        }
+
         public static string BuildCombinedStringKey(string messageGroup, string producerContext, string messageType, string messageAction)
         {
             return $"{messageGroup}{CombinedStringKeySeparator}{producerContext}{CombinedStringKeySeparator}{messageType}{(string.IsNullOrEmpty(messageAction) ? "" : $"{CombinedStringKeySeparator}{messageAction}")}";
@@ -181,12 +197,6 @@ namespace AngularDotnetPlatform.Platform.EventBus
         {
             return keyPart?.Replace(CombinedStringKeySeparator, AutoFixKeyPartReplacer);
         }
-
-        /// <summary>
-        /// Combined of "MessageGroup.ProducerContext.MessageType.MessageAction"
-        /// </summary>
-        public string CombinedStringKey =>
-            BuildCombinedStringKey(MessageGroup, ProducerContext, MessageType, MessageAction);
 
         public string QueueName(string forProducerContext = null)
         {

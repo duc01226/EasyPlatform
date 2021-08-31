@@ -1,11 +1,10 @@
 using System;
-using AngularDotnetPlatform.Platform.EventBus;
 
-namespace AngularDotnetPlatform.Platform.RabbitMQ
+namespace AngularDotnetPlatform.Platform.EventBus
 {
-    internal class PlatformRabbitMqInvokeConsumerException : Exception
+    public class PlatformInvokeConsumerException : Exception
     {
-        public PlatformRabbitMqInvokeConsumerException(
+        public PlatformInvokeConsumerException(
             Exception e,
             string consumerName,
             IPlatformEventBusMessage eventBusMessage) : base($"Invoke Consumer {consumerName} Failed.", e)

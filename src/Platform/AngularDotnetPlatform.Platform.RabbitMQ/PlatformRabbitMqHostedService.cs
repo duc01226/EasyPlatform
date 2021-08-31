@@ -314,7 +314,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                     currentChannel.BasicAck(rabbitMqMessage.DeliveryTag, false);
                 }
             }
-            catch (PlatformRabbitMqInvokeConsumerException ex)
+            catch (PlatformInvokeConsumerException ex)
             {
                 Log.Error(
                     logger,
@@ -349,7 +349,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                         token => Task.Run(
                             () =>
                             {
-                                Log.Information(logger, message: $"RabbitMQ requeue message for the routing key: {rabbitMqMessage.RoutingKey}. Message: {Encoding.UTF8.GetString(rabbitMqMessage.Body.Span)}");
+                                Log.Information(logger, message: $"RabbitMQ requeue message for the routing key: {rabbitMqMessage.RoutingKey}. Message: {JsonSerializer.Serialize(eventBusMessage)}");
 
                                 currentChannel.BasicNack(rabbitMqMessage.DeliveryTag, multiple: true, requeue: true);
                             },
@@ -364,34 +364,14 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         /// </summary>
         private async Task ExecuteConsumer(BasicDeliverEventArgs args, IPlatformEventBusConsumer consumer)
         {
-            var genericConsumerType = consumer
-                .GetType()
-                .GetInterfaces()
-                .FirstOrDefault(x =>
-                    x.IsGenericType &&
-                    x.GetGenericTypeDefinition() == typeof(IPlatformEventBusConsumer<>));
-
-            // To ensure that the consumer implements the correct interface IOpalMessageConsumer<>.
-            // The IOpalMessageConsumer (non-generic version) is used for Interface Marker only.
-            if (genericConsumerType == null)
-            {
-                throw new Exception("Incorrect implementation of IPlatformMessageConsumer<>");
-            }
-
-            // Get generic type IPlatformMessageConsumer<TMessage> -> TMessage
-            var messageConsumerPayloadType = genericConsumerType.GetGenericArguments()[0];
-
-            // Get type of generic PlatformEventBusMessage<>
-            var messageType = typeof(PlatformEventBusMessage<>);
-
-            // Make a generic type: PlatformEventBusMessage<TMessage>
-            var messageForConsumerPayloadType =
-                messageType.MakeGenericType(messageConsumerPayloadType);
+            // Get a generic type: PlatformEventBusMessage<TMessage> where TMessage = TMessagePayload
+            // of IPlatformEventBusConsumer<TMessagePayload>
+            var consumerMessageType = PlatformEventBusConsumer.GetConsumerMessageType(consumer);
 
             var eventBusMessage = (IPlatformEventBusMessage)Util.Tasks.CatchExceptionContinueThrow(
                 () => JsonSerializer.Deserialize(
                     args.Body.Span,
-                    messageForConsumerPayloadType,
+                    consumerMessageType,
                     PlatformJsonSerializer.CurrentOptions.Value),
                 ex => Log.Error(
                     logger,
@@ -401,26 +381,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
             if (eventBusMessage != null)
             {
-                // Get HandleAsync method.
-                var methodInfo = consumer.GetType()
-                    .GetMethod(nameof(IPlatformEventBusConsumer<object>.HandleAsync));
-                if (methodInfo == null)
-                {
-                    throw new Exception(
-                        $"Can not find execution method from {genericConsumerType.FullName}");
-                }
-
-                try
-                {
-                    // Invoke the method.
-                    var invokeResult = methodInfo.Invoke(consumer, new[] { eventBusMessage });
-                    if (invokeResult is Task invokeTask)
-                        await invokeTask;
-                }
-                catch (Exception e)
-                {
-                    throw new PlatformRabbitMqInvokeConsumerException(e, consumer.GetType().FullName, eventBusMessage);
-                }
+                await PlatformEventBusConsumer.InvokeConsumer(consumer, eventBusMessage);
             }
         }
     }

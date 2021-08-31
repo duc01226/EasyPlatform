@@ -1,3 +1,4 @@
+using AngularDotnetPlatform.Platform.Application.EventBus;
 using RabbitMQ.Client;
 
 namespace AngularDotnetPlatform.Platform.RabbitMQ
@@ -42,5 +43,21 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         public int RequeueDelayTimeInSeconds { get; set; } = 60;
 
         public long RequeueExpiredTimeSpanInSeconds { get; set; } = 60 * 60 * 24 * 7;
+
+        public PlatformRabbitMqInboxEventBusMessageCleanerOptions InboxEventBusMessageCleanerOptions { get; set; } =
+            new PlatformRabbitMqInboxEventBusMessageCleanerOptions();
+    }
+
+    public class PlatformRabbitMqInboxEventBusMessageCleanerOptions
+    {
+        /// <summary>
+        /// <inheritdoc cref="PlatformInboxEventBusMessageCleanerHostedService.ProcessTriggerIntervalTime"/>
+        /// </summary>
+        public long ProcessTriggerIntervalInMinutes { get; set; } = 1;
+
+        /// <summary>
+        /// <inheritdoc cref="PlatformInboxEventBusMessageCleanerHostedService.NumberOfDeleteMessagesBatch"/>
+        /// </summary>
+        public int NumberOfDeleteMessagesBatch { get; set; } = 500;
     }
 }

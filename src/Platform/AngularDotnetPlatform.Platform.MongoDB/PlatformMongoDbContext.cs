@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.EfCore;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using Microsoft.Extensions.Options;
@@ -25,6 +26,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         public bool Disposed { get; private set; }
         public IMongoCollection<PlatformDataMigrationHistory> DataMigrationHistoryCollection => Database.GetCollection<PlatformDataMigrationHistory>(DataMigrationHistoryCollectionName);
+        public IMongoCollection<PlatformInboxEventBusMessage> InboxEventBusMessageCollection => Database.GetCollection<PlatformInboxEventBusMessage>("InboxEventBusMessage");
         public virtual string DataMigrationHistoryCollectionName => "MigrationHistory";
 
         public List<PlatformMongoMigrationExecution<TDbContext>> MigrationExecutions()
@@ -42,7 +44,8 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             if (recreate || !IsEnsureIndexesExecuted())
             {
                 await Task.WhenAll(
-                    DataMigrationHistoryCollection.Indexes.DropAllAsync());
+                    DataMigrationHistoryCollection.Indexes.DropAllAsync(),
+                    InboxEventBusMessageCollection.Indexes.DropAllAsync());
             }
 
             if (recreate || !IsEnsureIndexesExecuted())
@@ -50,9 +53,14 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                 await Task.WhenAll(
                     DataMigrationHistoryCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformDataMigrationHistory>>
                     {
-                        new CreateIndexModel<PlatformDataMigrationHistory>(Builders<PlatformDataMigrationHistory>.IndexKeys
-                                .Ascending(p => p.Name),
+                        new CreateIndexModel<PlatformDataMigrationHistory>(
+                            Builders<PlatformDataMigrationHistory>.IndexKeys.Ascending(p => p.Name),
                             new CreateIndexOptions() {Unique = true})
+                    }),
+                    InboxEventBusMessageCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformInboxEventBusMessage>>
+                    {
+                        new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys.Ascending(p => p.RoutingKey)),
+                        new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys.Descending(p => p.ConsumerDate))
                     }));
 
                 await InternalEnsureIndexesAsync(recreate: !IsEnsureIndexesExecuted() || recreate);

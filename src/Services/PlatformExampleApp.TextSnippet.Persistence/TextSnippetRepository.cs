@@ -1,4 +1,5 @@
 using System;
+using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
@@ -19,6 +20,13 @@ namespace PlatformExampleApp.TextSnippet.Persistence
         where TEntity : RootEntity<TEntity, Guid>, new()
     {
         public TextSnippetRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
+        {
+        }
+    }
+
+    internal class InboxEventBusMessageRepository : PlatformEfCoreRootRepository<PlatformInboxEventBusMessage, string, TextSnippetDbContext>, IPlatformInboxEventBusMessageRepository
+    {
+        public InboxEventBusMessageRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
         {
         }
     }
