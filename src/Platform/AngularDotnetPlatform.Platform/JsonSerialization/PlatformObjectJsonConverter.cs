@@ -62,8 +62,19 @@ namespace AngularDotnetPlatform.Platform.JsonSerialization
                     result = dynamicObjectAsJsonElement.GetBoolean();
                     break;
                 case JsonValueKind.String:
-                    result = dynamicObjectAsJsonElement.GetString();
+                {
+                    if (dynamicObjectAsJsonElement.TryGetDateTime(out var dateValue))
+                    {
+                        result = dateValue;
+                    }
+                    else
+                    {
+                        result = dynamicObjectAsJsonElement.GetString();
+                    }
+
                     break;
+                }
+
                 case JsonValueKind.Array:
                     result = dynamicObjectAsJsonElement
                         .EnumerateArray()
