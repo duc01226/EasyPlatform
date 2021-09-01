@@ -16,7 +16,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 {
-    public abstract class PlatformEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext>, IPlatformQueryableRootRepository<TEntity, TPrimaryKey>
+    public abstract class PlatformEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext>, IPlatformRootRepository<TEntity, TPrimaryKey>
         where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
@@ -190,6 +190,9 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 
         protected async Task EnsureValid(Task<ValidationResult> validationResultTask)
         {
+            if (validationResultTask == null)
+                return;
+
             var validationResult = await validationResultTask;
             if (validationResult != null && !validationResult.IsValid)
                 throw new PlatformDomainValidationException(validationResult);
@@ -216,6 +219,15 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
                         await Table.AsQueryable().AnyAsync(predicate, cancellationToken)))
                 .ToList();
             await EnsureValid(entitiesValidateUniquenessFns);
+        }
+    }
+
+    public abstract class PlatformDefaultEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext>
+        where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
+        where TDbContext : PlatformEfCoreDbContext<TDbContext>
+    {
+        protected PlatformDefaultEfCoreRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
+        {
         }
     }
 }

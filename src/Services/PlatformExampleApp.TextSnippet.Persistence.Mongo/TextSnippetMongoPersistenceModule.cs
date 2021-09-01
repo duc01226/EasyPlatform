@@ -26,5 +26,10 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
         {
             return new List<Type>() { typeof(TextSnippetRootRepository<TextSnippetEntity>) };
         }
+
+        protected override bool EnableInboxEventBusMessageRepository()
+        {
+            return true;
+        }
     }
 }

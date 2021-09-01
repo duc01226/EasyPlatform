@@ -21,5 +21,10 @@ namespace PlatformExampleApp.TextSnippet.Persistence
             return options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
         }
+
+        protected override bool EnableInboxEventBusMessageRepository()
+        {
+            return true;
+        }
     }
 }

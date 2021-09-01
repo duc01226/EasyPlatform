@@ -23,11 +23,4 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
         {
         }
     }
-
-    internal class InboxEventBusMessageRepository : PlatformMongoDbRootRepository<PlatformInboxEventBusMessage, string, TextSnippetDbContext>, IPlatformInboxEventBusMessageRepository
-    {
-        public InboxEventBusMessageRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
-        {
-        }
-    }
 }

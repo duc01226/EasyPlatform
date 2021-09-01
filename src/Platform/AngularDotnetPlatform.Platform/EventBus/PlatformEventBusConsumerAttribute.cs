@@ -47,6 +47,22 @@ namespace AngularDotnetPlatform.Platform.EventBus
             EnsureValid();
         }
 
+        public static bool CanEventBusConsumerProcess(Type eventBusConsumerType, PlatformEventBusMessageRoutingKey routingKey)
+        {
+            var consumerAttributes = eventBusConsumerType
+                .GetCustomAttributes(typeof(PlatformEventBusConsumerAttribute), true)
+                .Select(p => (PlatformEventBusConsumerAttribute)p)
+                .ToList();
+
+            if (consumerAttributes.Count == 0)
+            {
+                throw new Exception(
+                    $"[Developer Error]. At least one PlatformMessageConsumerAttribute must be applied for {eventBusConsumerType.FullName}");
+            }
+
+            return consumerAttributes.Any(p => p.IsMatchMessageRoutingKey(routingKey));
+        }
+
         public string MessageGroup { get; }
         public string ProducerContext { get; }
         public string MessageType { get; }

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.Timing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -11,83 +12,44 @@ using Polly;
 
 namespace AngularDotnetPlatform.Platform.Application.EventBus
 {
-    public abstract class PlatformInboxEventBusMessageCleanerHostedService : IHostedService, IDisposable
+    public abstract class PlatformInboxEventBusMessageCleanerHostedService : PlatformIntervalProcessHostedService
     {
         private readonly IServiceProvider serviceProvider;
-        private readonly ILogger logger;
 
-        private Timer timer;
-        private bool disposed = false;
-
-        public PlatformInboxEventBusMessageCleanerHostedService(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
+        public PlatformInboxEventBusMessageCleanerHostedService(
+            IHostApplicationLifetime applicationLifetime,
+            IServiceProvider serviceProvider,
+            ILoggerFactory loggerFactory) : base(applicationLifetime, loggerFactory)
         {
             this.serviceProvider = serviceProvider;
-            this.logger = loggerFactory.CreateLogger(GetType());
         }
 
-        public static bool MatchImplementation(ServiceDescriptor serviceDescriptor, IServiceProvider serviceProvider)
+        public static bool MatchImplementation(ServiceDescriptor serviceDescriptor)
         {
             return serviceDescriptor.ImplementationType?.IsAssignableTo(
                        typeof(PlatformInboxEventBusMessageCleanerHostedService)) == true ||
                    serviceDescriptor.ImplementationInstance?.GetType()
-                       .IsAssignableTo(typeof(PlatformInboxEventBusMessageCleanerHostedService)) == true ||
-                   serviceDescriptor.ImplementationFactory?.Invoke(serviceProvider)?.GetType()
                        .IsAssignableTo(typeof(PlatformInboxEventBusMessageCleanerHostedService)) == true;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        protected override async Task IntervalProcess(CancellationToken cancellationToken)
         {
-            if (HasInboxEventBusMessageRepositoryRegistered())
-                timer = new Timer(Process, null, TimeSpan.Zero, ProcessTriggerIntervalTime());
+            if (!ApplicationStartedAndRunning || !HasInboxEventBusMessageRepositoryRegistered())
+                return;
 
-            return Task.CompletedTask;
-        }
-
-        public async Task StopAsync(CancellationToken cancellationToken)
-        {
-            if (timer != null)
-                await timer.DisposeAsync();
-        }
-
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        /// <summary>
-        /// The main action of the hosted service that being triggered by the Timer. This will clean old expired inbox message
-        /// </summary>
-        /// <param name="state">An object containing information to be used by the callback method, or null.</param>
-        protected virtual void Process(object state)
-        {
             // Retry in case of the db is not started, initiated or restarting
-            var finalResult = Policy.Handle<Exception>()
-                .WaitAndRetry(
+            await Policy.Handle<Exception>()
+                .WaitAndRetryAsync(
                     retryCount: ProcessClearMessageRetryCount(),
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                     onRetry: (ex, timeSpan, currentRetry, ctx) =>
                     {
                         Log.Warning(
-                            logger,
+                            Logger,
                             ex,
-                            $"Retry Process clean inbox event bus message {currentRetry} time(s) failed with error: {ex.Message}");
+                            $"Retry CleanInboxEventBusMessage {currentRetry} time(s) failed with error: {ex.Message}");
                     })
-                .ExecuteAndCapture(CleanInboxEventBusMessage);
-
-            if (finalResult.FinalException != null)
-            {
-                throw finalResult.FinalException;
-            }
-        }
-
-        /// <summary>
-        /// To config the period of the timer to trigger the <see cref="Process"/> method.
-        /// </summary>
-        /// <returns>The configuration as <see cref="TimeSpan"/> type.</returns>
-        protected virtual TimeSpan ProcessTriggerIntervalTime()
-        {
-            return TimeSpan.FromMinutes(1);
+                .ExecuteAndThrowFinalExceptionAsync(() => CleanInboxEventBusMessage(cancellationToken));
         }
 
         protected virtual int ProcessClearMessageRetryCount()
@@ -111,14 +73,6 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus
             return 7;
         }
 
-        protected virtual void Dispose(bool disposing)
-        {
-            if (disposed)
-                return;
-
-            timer?.Dispose();
-        }
-
         protected bool HasInboxEventBusMessageRepositoryRegistered()
         {
             using (var scope = serviceProvider.CreateScope())
@@ -127,7 +81,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus
             }
         }
 
-        protected void CleanInboxEventBusMessage()
+        protected async Task CleanInboxEventBusMessage(CancellationToken cancellationToken)
         {
             using (var scope = serviceProvider.CreateScope())
             {
@@ -144,11 +98,11 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus
 
                     if (expiredMessages.Count > 0)
                     {
-                        inboxEventBusMessageRepo.DeleteMany(expiredMessages, true).Wait();
+                        await inboxEventBusMessageRepo.DeleteMany(expiredMessages, true, cancellationToken);
 
-                        uow.CompleteAsync().Wait();
+                        await uow.CompleteAsync(cancellationToken);
 
-                        Log.Information(logger, message: $"CleanInboxEventBusMessage success. Number of deleted messages: {expiredMessages.Count}");
+                        Log.Information(Logger, message: $"CleanInboxEventBusMessage success. Number of deleted messages: {expiredMessages.Count}");
                     }
                 }
             }
@@ -185,8 +139,9 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus
     public class PlatformDefaultInboxEventBusMessageCleanerHostedService : PlatformInboxEventBusMessageCleanerHostedService
     {
         public PlatformDefaultInboxEventBusMessageCleanerHostedService(
+            IHostApplicationLifetime applicationLifetime,
             IServiceProvider serviceProvider,
-            ILoggerFactory loggerFactory) : base(serviceProvider, loggerFactory)
+            ILoggerFactory loggerFactory) : base(applicationLifetime, serviceProvider, loggerFactory)
         {
         }
     }

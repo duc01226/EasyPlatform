@@ -13,13 +13,45 @@ using AngularDotnetPlatform.Platform.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace AngularDotnetPlatform.Platform.Application
 {
     public abstract class PlatformApplicationModule : PlatformModule
     {
-        protected PlatformApplicationModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        protected readonly ILogger<PlatformApplicationModule> Logger;
+
+        protected PlatformApplicationModule(
+            IServiceProvider serviceProvider,
+            IConfiguration configuration,
+            ILogger<PlatformApplicationModule> logger) : base(serviceProvider, configuration)
         {
+            this.Logger = logger;
+        }
+
+        public async Task SeedData(IServiceScope serviceScope)
+        {
+            //if the db server is not initiated, SeedData could fail.
+            //So that we do retry to ensure that SeedData action run successfully.
+            await Policy.Handle<Exception>()
+                .WaitAndRetryAsync(
+                    retryCount: 10,
+                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                    onRetry: (exception, timeSpan, retry, ctx) =>
+                    {
+                        Logger.LogWarning(exception,
+                            "Exception {ExceptionType} with message [{Message}] detected on attempt SeedData {retry}",
+                            exception.GetType().Name,
+                            exception.Message,
+                            retry);
+                    })
+                .ExecuteAndCaptureAsync(async () =>
+                {
+                    var dataSeeder = serviceScope.ServiceProvider.GetService<IPlatformApplicationDataSeeder>();
+                    if (dataSeeder != null)
+                        await dataSeeder.SeedData();
+                });
         }
 
         /// <summary>
@@ -50,20 +82,29 @@ namespace AngularDotnetPlatform.Platform.Application
         {
             await base.InternalInit(serviceScope);
 
-            var dataSeeder = serviceScope.ServiceProvider.GetService<IPlatformApplicationDataSeeder>();
-            if (dataSeeder != null)
-                await dataSeeder.SeedData();
+            if (AutoSeedDataOnInit())
+                await SeedData(serviceScope);
+        }
+
+        /// <summary>
+        /// Default return value is false.
+        /// Set this to true if need to auto seed data on application module init.
+        /// Only do this when define application module depend on persistence module
+        /// to ensure db initiated in persistence module init before application module init
+        /// </summary>
+        protected virtual bool AutoSeedDataOnInit()
+        {
+            return false;
         }
 
         private void RegisterInboxEventBusMessageCleanerHostedService(IServiceCollection serviceCollection)
         {
-            if (!serviceCollection.Any(p => PlatformInboxEventBusMessageCleanerHostedService.MatchImplementation(p, ServiceProvider)))
+            if (!serviceCollection.Any(PlatformInboxEventBusMessageCleanerHostedService.MatchImplementation))
             {
-                serviceCollection
-                    .Register(
-                        typeof(IHostedService),
-                        typeof(PlatformDefaultInboxEventBusMessageCleanerHostedService),
-                        ServiceLifeTime.Singleton);
+                serviceCollection.Register(
+                    typeof(IHostedService),
+                    typeof(PlatformDefaultInboxEventBusMessageCleanerHostedService),
+                    ServiceLifeTime.Singleton);
             }
         }
 

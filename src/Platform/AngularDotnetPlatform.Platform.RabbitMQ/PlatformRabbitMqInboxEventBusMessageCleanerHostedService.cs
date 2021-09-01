@@ -1,5 +1,7 @@
 using System;
+using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.RabbitMQ
@@ -9,9 +11,10 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         private readonly PlatformRabbitMqOptions options;
 
         public PlatformRabbitMqInboxEventBusMessageCleanerHostedService(
+            IHostApplicationLifetime applicationLifetime,
             IServiceProvider serviceProvider,
             ILoggerFactory loggerFactory,
-            PlatformRabbitMqOptions options) : base(serviceProvider, loggerFactory)
+            PlatformRabbitMqOptions options) : base(applicationLifetime, serviceProvider, loggerFactory)
         {
             this.options = options;
         }

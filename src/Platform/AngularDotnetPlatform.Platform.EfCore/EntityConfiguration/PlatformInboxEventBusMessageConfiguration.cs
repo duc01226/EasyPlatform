@@ -20,4 +20,8 @@ namespace AngularDotnetPlatform.Platform.EfCore.EntityConfiguration
             builder.HasIndex(p => p.ConsumerDate);
         }
     }
+
+    public class PlatformDefaultInboxEventBusMessageConfiguration : PlatformInboxEventBusMessageConfiguration
+    {
+    }
 }

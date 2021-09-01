@@ -16,17 +16,26 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         where TDbContext : PlatformMongoDbContext<TDbContext>
     {
         public static readonly string EnsureIndexesAsyncMigrationName = "EnsureIndexesAsync";
+        public static readonly string PlatformInboxEventBusMessageCollectionName = "InboxEventBusMessage";
+        public static readonly string PlatformDataMigrationHistoryCollectionName = "MigrationHistory";
 
         public readonly IMongoDatabase Database;
+
+        protected readonly Lazy<Dictionary<Type, string>> EntityTypeToCollectionNameDictionary;
 
         public PlatformMongoDbContext(IOptions<PlatformMongoOptions> options, IPlatformMongoClientContext client)
         {
             Database = client.MongoClient.GetDatabase(options.Value.Database);
+            EntityTypeToCollectionNameDictionary = new Lazy<Dictionary<Type, string>>(() =>
+            {
+                var entityTypeToCollectionNameMaps = EntityTypeToCollectionNameMaps();
+                return entityTypeToCollectionNameMaps != null ? new Dictionary<Type, string>(entityTypeToCollectionNameMaps) : null;
+            });
         }
 
         public bool Disposed { get; private set; }
         public IMongoCollection<PlatformDataMigrationHistory> DataMigrationHistoryCollection => Database.GetCollection<PlatformDataMigrationHistory>(DataMigrationHistoryCollectionName);
-        public IMongoCollection<PlatformInboxEventBusMessage> InboxEventBusMessageCollection => Database.GetCollection<PlatformInboxEventBusMessage>("InboxEventBusMessage");
+        public IMongoCollection<PlatformInboxEventBusMessage> InboxEventBusMessageCollection => Database.GetCollection<PlatformInboxEventBusMessage>(GetCollectionName<PlatformInboxEventBusMessage>());
         public virtual string DataMigrationHistoryCollectionName => "MigrationHistory";
 
         public List<PlatformMongoMigrationExecution<TDbContext>> MigrationExecutions()
@@ -95,10 +104,30 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             });
         }
 
-        public virtual string GetCollectionName<TEntity>()
+        public string GetCollectionName<TEntity>()
         {
-            return typeof(TEntity).Name;
+            if (TryGetCollectionName<TEntity>(out var collectionName))
+            {
+                return collectionName;
+            }
+
+            if (typeof(TEntity).IsAssignableTo(typeof(PlatformInboxEventBusMessage)))
+            {
+                return PlatformInboxEventBusMessageCollectionName;
+            }
+
+            if (typeof(TEntity).IsAssignableTo(typeof(PlatformDataMigrationHistory)))
+            {
+                return PlatformDataMigrationHistoryCollectionName;
+            }
+
+            throw new Exception($"Missing collection name mapping item for entity {typeof(TEntity).Name}. Please define it in return of {nameof(EntityTypeToCollectionNameMaps)} method.");
         }
+
+        /// <summary>
+        /// This is used for <see cref="TryGetCollectionName{TEntity}"/> to return the collection name for TEntity
+        /// </summary>
+        public virtual List<KeyValuePair<Type, string>> EntityTypeToCollectionNameMaps() { return null; }
 
         public IMongoCollection<TEntity> GetCollection<TEntity>()
         {
@@ -154,6 +183,27 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             }
 
             Disposed = true;
+        }
+
+        /// <summary>
+        /// TryGetCollectionName for <see cref="GetCollectionName{TEntity}"/> to return the entity collection.
+        /// Default will get from return of <see cref="EntityTypeToCollectionNameMaps"/>
+        /// </summary>
+        protected virtual bool TryGetCollectionName<TEntity>(out string collectionName)
+        {
+            if (EntityTypeToCollectionNameDictionary.Value == null)
+            {
+                if (typeof(TEntity).IsAssignableTo(typeof(PlatformInboxEventBusMessage)) || typeof(TEntity).IsAssignableTo(typeof(PlatformDataMigrationHistory)))
+                {
+                    collectionName = null;
+                    return false;
+                }
+
+                collectionName = typeof(TEntity).Name;
+                return true;
+            }
+
+            return EntityTypeToCollectionNameDictionary.Value.TryGetValue(typeof(TEntity), out collectionName);
         }
 
         protected bool IsEnsureIndexesExecuted()

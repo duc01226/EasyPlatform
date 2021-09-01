@@ -20,14 +20,13 @@ using RabbitMQ.Client.Events;
 
 namespace AngularDotnetPlatform.Platform.RabbitMQ
 {
-    public partial class PlatformRabbitMqHostedService : IHostedService
+    public partial class PlatformRabbitMqHostedService : PlatformHostedService
     {
         private readonly PlatformRabbitMqOptions options;
         private readonly IServiceProvider serviceProvider;
         private readonly IPlatformApplicationSettingContext applicationSettingContext;
         private readonly IPlatformRabbitMqExchangeProvider exchangeProvider;
         private readonly IPlatformEventBusManager eventBusManager;
-        private readonly ILogger<PlatformRabbitMqHostedService> logger;
 
         // Use ObjectBool to manage chanel because HostService is singleton, and we don't want re-init chanel is heavy and wasting time.
         // We want to use pool when object is expensive to allocate/initialize
@@ -38,26 +37,26 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         private IModel currentChannel;
 
         public PlatformRabbitMqHostedService(
+            IHostApplicationLifetime applicationLifetime,
             PlatformRabbitMqOptions options,
             PlatformRabbitMqChannelPoolPolicy channelPolicy,
             IServiceProvider serviceProvider,
             IPlatformApplicationSettingContext applicationSettingContext,
             IPlatformRabbitMqExchangeProvider exchangeProvider,
             IPlatformEventBusManager eventBusManager,
-            ILogger<PlatformRabbitMqHostedService> logger)
+            ILoggerFactory loggerFactory) : base(applicationLifetime, loggerFactory)
         {
             this.options = options;
             this.serviceProvider = serviceProvider;
             this.applicationSettingContext = applicationSettingContext;
             this.exchangeProvider = exchangeProvider;
-            this.logger = logger;
             this.eventBusManager = eventBusManager;
 
             // Needs 1 object only for the hosted service.
             channelPool = new DefaultObjectPool<IModel>(channelPolicy, 1);
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        protected override Task StartProcess(CancellationToken cancellationToken)
         {
             DeclareRabbitMqConfiguration();
 
@@ -66,14 +65,21 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             return Task.CompletedTask;
         }
 
-        public Task StopAsync(CancellationToken cancellationToken)
+        protected override Task StopProcess(CancellationToken cancellationToken)
+        {
+            ReturnCurrentChannelBackToPool();
+
+            currentChannel?.Close();
+
+            return Task.CompletedTask;
+        }
+
+        private void ReturnCurrentChannelBackToPool()
         {
             if (currentChannel != null)
             {
                 channelPool.Return(currentChannel);
             }
-
-            return Task.CompletedTask;
         }
 
         private void DeclareRabbitMqConfiguration()
@@ -110,16 +116,21 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             channel.QueueDeclare(queueName, durable: true, exclusive: false, autoDelete: false);
             channel.QueueBind(queueName, exchange, bindRoutingKey);
 
-            Log.Information(logger, message: $"Queue {queueName} has been declared and bind to Exchange {exchange} with routing key {bindRoutingKey}");
+            Log.Information(Logger, message: $"Queue {queueName} has been declared and bind to Exchange {exchange} with routing key {bindRoutingKey}");
         }
 
         private void DeclareRabbitMqExchangesConfiguration(IModel channel)
         {
-            // Declare exchanges for all defined messages to be produced
-            DeclareExchangesForRoutingKeys(channel, eventBusManager.GetAllDefinedEventBusMessageRoutingKeys());
+            // Declare exchange routing key for all defined messages to be produced
+            var allDefinedEventBusMessageRoutingKeys = eventBusManager.GetAllDefinedEventBusMessageRoutingKeys();
 
-            // Declare exchanges for all consumers
-            DeclareExchangesForRoutingKeys(channel, eventBusManager.AllDefinedEventBusConsumerPatternRoutingKeys());
+            // Get exchange routing key for all consumers
+            var allDefinedEventBusConsumerPatternRoutingKeys = eventBusManager.AllDefinedEventBusConsumerPatternRoutingKeys();
+
+            // Declare all exchanges
+            DeclareExchangesForRoutingKeys(
+                channel,
+                routingKeys: allDefinedEventBusMessageRoutingKeys.Concat(allDefinedEventBusConsumerPatternRoutingKeys).ToList());
         }
 
         private void DeclareExchangesForRoutingKeys(IModel channel, List<PlatformEventBusMessageRoutingKey> routingKeys)
@@ -132,7 +143,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 {
                     channel.ExchangeDeclare(exchangeName, ExchangeType.Topic, durable: true);
 
-                    Log.Information(logger, message: $"Exchange {exchangeName} is declared.");
+                    Log.Information(Logger, message: $"Exchange {exchangeName} is declared.");
                 });
         }
 
@@ -146,13 +157,13 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 currentChannel = channelPool.Get();
                 currentChannel.ModelShutdown += (model, eventArg) =>
                 {
-                    Log.Error(logger, message: "Channel shutdown");
+                    Log.Error(Logger, message: "Channel shutdown");
 
                     lock (retryConnectConsumerLock)
                     {
                         RetryRunningConsumer();
 
-                        Log.Warning(logger, message: "Channel Re-connect event already triggered");
+                        Log.Warning(Logger, message: "Channel Re-connect event already triggered");
                     }
                 };
                 // Config the prefectCount: 30 (Not default is 0 mean unlimited) to limit messages to prevent rabbit mq down
@@ -173,12 +184,12 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                         // autoAck: false -> the Consumer will ack manually.
                         currentChannel.BasicConsume(queue: queueName, autoAck: false, consumer: applicationRabbitConsumer);
 
-                        Log.Information(logger, message: $"Consumer connected to queue {queueName}");
+                        Log.Information(Logger, message: $"Consumer connected to queue {queueName}");
                     });
             }
             catch (Exception ex)
             {
-                Log.Error(logger, ex, "Consumer can't start");
+                Log.Error(Logger, ex, "RabbitMq Consumer can't start");
                 throw;
             }
             finally
@@ -195,11 +206,11 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         private Task OnConsumerCancelled(object sender, ConsumerEventArgs args)
         {
-            Log.Error(logger, message: "Consumer cancelled");
+            Log.Error(Logger, message: "RabbitMq Consumer cancelled");
 
             lock (retryConnectConsumerLock)
             {
-                Log.Warning(logger, message: "Re-connect consumer is triggered.");
+                Log.Warning(Logger, message: "Re-connect RabbitMq consumer is triggered.");
 
                 RetryRunningConsumer();
             }
@@ -216,43 +227,27 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                     onRetry: (ex, timeSpan, currentRetry, ctx) =>
                     {
                         Log.Warning(
-                            logger,
+                            Logger,
                             ex,
-                            $"Retry consumer {currentRetry} time(s) failed with error: {ex.Message}");
+                            $"Retry running RabbitMq consumer {currentRetry} time(s) failed with error: {ex.Message}");
                     })
                 .ExecuteAndCapture(RunConsumer);
 
             if (finalResult.FinalException != null)
             {
-                Log.Error(logger, finalResult.FinalException, $"Retry consumer failed with err : {finalResult.FinalException.Message}");
+                Log.Error(Logger, finalResult.FinalException, $"Retry running RabbitMq  consumer failed with err : {finalResult.FinalException.Message}");
             }
             else
             {
                 Log.Information(
-                    logger,
-                    message: $"Re-connect consumer successfully.");
+                    Logger,
+                    message: $"Re-connect RabbitMq consumer successfully.");
             }
         }
 
         private async Task OnMessageReceived(object sender, BasicDeliverEventArgs rabbitMqMessage)
         {
-            if (options.LogConsumerProcessTime)
-            {
-                await Util.Tasks.ProfilingAsync(
-                    asyncTask: () => TransferMessageToAllEventBusConsumers(rabbitMqMessage),
-                    beforeExecution: () => Log.Information(
-                        logger,
-                        message: "Received message with routing key: {RoutingKey}. Delivery Tag: {DeliveryTag}.",
-                        args: new object[] { rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag }),
-                    afterExecution: elapsedMilliseconds => Log.Information(
-                        logger,
-                        message: "End processing message with routing key: {RoutingKey}. Delivery Tag: {DeliveryTag}. Elapsed {ElapsedMilliseconds} in milliseconds.",
-                        args: new object[] { rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag, elapsedMilliseconds }));
-            }
-            else
-            {
-                await TransferMessageToAllEventBusConsumers(rabbitMqMessage);
-            }
+            await TransferMessageToAllEventBusConsumers(rabbitMqMessage);
         }
 
         private async Task TransferMessageToAllEventBusConsumers(BasicDeliverEventArgs rabbitMqMessage)
@@ -268,69 +263,38 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                     return;
                 }
 
-                using (var scope = serviceProvider.CreateScope())
+                var canProcessConsumerTypes = eventBusManager.AllDefinedEventBusConsumerTypes()
+                    .Where(eventBusConsumerType => PlatformEventBusConsumerAttribute.CanEventBusConsumerProcess(eventBusConsumerType, rabbitMqMessage.RoutingKey));
+
+                foreach (var consumerType in canProcessConsumerTypes)
                 {
-                    var canProcessConsumers = scope.ServiceProvider
-                        .GetServices<IPlatformEventBusConsumer>()
-                        .Where(p => p.CanProcess(PlatformEventBusMessageRoutingKey.New(rabbitMqMessage.RoutingKey)))
-                        .ToList();
-
-                    foreach (var consumer in canProcessConsumers)
+                    using (var scope = serviceProvider.CreateScope())
                     {
-                        if (options.LogConsumerProcessTime)
-                        {
-                            Log.Information(
-                                logger,
-                                message:
-                                "Begin processing message with routing key: {RoutingKey}; Delivery Tag: {DeliveryTag}; Message id {MessageId} for consumer {ConsumerName}",
-                                args: new object[]
-                                {
-                                    rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag,
-                                    objectTypePayloadMessage.TrackingId ?? "n/a", consumer.GetType().FullName
-                                });
+                        var consumer = (IPlatformEventBusConsumer)scope.ServiceProvider.GetService(consumerType);
 
+                        if (consumer != null)
                             await ExecuteConsumer(rabbitMqMessage, consumer);
-
-                            Log.Information(
-                                logger,
-                                message:
-                                "End processing message with routing key: {RoutingKey}; Delivery Tag: {DeliveryTag}; Message id {MessageId} for consumer {ConsumerName}",
-                                args: new object[]
-                                {
-                                    rabbitMqMessage.RoutingKey, rabbitMqMessage.DeliveryTag,
-                                    objectTypePayloadMessage.TrackingId ?? "n/a", consumer.GetType().FullName
-                                });
-                        }
-                        else
-                        {
-                            await ExecuteConsumer(rabbitMqMessage, consumer);
-                        }
                     }
-
-                    // Clear to prevent memory leak
-                    canProcessConsumers.Clear();
-
-                    // Ack the message.
-                    currentChannel.BasicAck(rabbitMqMessage.DeliveryTag, false);
                 }
+
+                // Ack the message.
+                currentChannel.BasicAck(rabbitMqMessage.DeliveryTag, false);
             }
             catch (PlatformInvokeConsumerException ex)
             {
                 Log.Error(
-                    logger,
+                    Logger,
                     ex,
-                    "RabbitMQ invoke consumer {Consumer} error for the routing key: {RoutingKey}. Message: {Message}",
-                    new object[] { ex.ConsumerName, rabbitMqMessage.RoutingKey, Encoding.UTF8.GetString(rabbitMqMessage.Body.Span) });
+                    $"RabbitMQ invoke consumer {ex.ConsumerName} error for the routing key: {rabbitMqMessage.RoutingKey}.{Environment.NewLine}Message: {Encoding.UTF8.GetString(rabbitMqMessage.Body.Span)}");
 
                 ProcessRequeueMessage(rabbitMqMessage, ex.EventBusMessage);
             }
             catch (Exception ex)
             {
                 Log.Error(
-                    logger,
+                    Logger,
                     ex,
-                    "RabbitMQ processing error for the routing key: {RoutingKey}. Message: {Message}",
-                    new object[] { rabbitMqMessage.RoutingKey, Encoding.UTF8.GetString(rabbitMqMessage.Body.Span) });
+                    $"RabbitMQ processing error for the routing key: {rabbitMqMessage.RoutingKey}.{Environment.NewLine}Message: {Encoding.UTF8.GetString(rabbitMqMessage.Body.Span)}");
 
                 // Reject the message.
                 Util.Tasks.CatchException(() => currentChannel.BasicReject(rabbitMqMessage.DeliveryTag, false));
@@ -343,19 +307,23 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             {
                 // Requeue the message.
                 // References: https://www.rabbitmq.com/confirms.html#consumer-nacks-requeue
-                Util.Tasks.CatchException(() =>
-                {
-                    Util.Tasks.QueueDelayAsyncAction(
-                        token => Task.Run(
-                            () =>
-                            {
-                                Log.Information(logger, message: $"RabbitMQ requeue message for the routing key: {rabbitMqMessage.RoutingKey}. Message: {JsonSerializer.Serialize(eventBusMessage)}");
+                Util.Tasks.QueueDelayAsyncAction(
+                    token => Task.Run(
+                        () =>
+                        {
+                            Policy.Handle<Exception>()
+                                .WaitAndRetry(
+                                    retryCount: options.ProcessRequeueMessageRetryCount,
+                                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)))
+                                .ExecuteAndCapture(() =>
+                                {
+                                    currentChannel.BasicNack(rabbitMqMessage.DeliveryTag, multiple: true, requeue: true);
 
-                                currentChannel.BasicNack(rabbitMqMessage.DeliveryTag, multiple: true, requeue: true);
-                            },
-                            token),
-                        TimeSpan.FromSeconds(options.RequeueDelayTimeInSeconds));
-                });
+                                    Log.Information(Logger, message: $"RabbitMQ requeued message for the routing key: {rabbitMqMessage.RoutingKey}.{Environment.NewLine}Message: {JsonSerializer.Serialize(eventBusMessage)}");
+                                });
+                        },
+                        token),
+                    TimeSpan.FromSeconds(options.RequeueDelayTimeInSeconds));
             }
         }
 
@@ -374,14 +342,13 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                     consumerMessageType,
                     PlatformJsonSerializer.CurrentOptions.Value),
                 ex => Log.Error(
-                    logger,
+                    Logger,
                     ex,
-                    "RabbitMQ parsing error for the routing key {RoutingKey}. Body: {Message}",
-                    new object[] { args.RoutingKey, Encoding.UTF8.GetString(args.Body.Span) }));
+                    $"RabbitMQ parsing error for the routing key {args.RoutingKey}.{Environment.NewLine} Body: {Encoding.UTF8.GetString(args.Body.Span)}"));
 
             if (eventBusMessage != null)
             {
-                await PlatformEventBusConsumer.InvokeConsumer(consumer, eventBusMessage);
+                await PlatformEventBusConsumer.InvokeConsumer(consumer, eventBusMessage, options.LogConsumerProcessTime, options.LogConsumerProcessWarningTimeMilliseconds, Logger);
             }
         }
     }
@@ -390,7 +357,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
     {
         public class Log
         {
-            public static void Error(ILogger<PlatformRabbitMqHostedService> logger, Exception ex = null, string message = null, object[] args = null)
+            public static void Error(ILogger logger, Exception ex = null, string message = null, object[] args = null)
             {
                 if (ex != null)
                     logger.LogError(ex, $"{message ?? ex.Message}", args ?? Array.Empty<object>());
@@ -398,7 +365,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                     logger.LogError($"{message}", args);
             }
 
-            public static void Warning(ILogger<PlatformRabbitMqHostedService> logger, Exception ex = null, string message = null, object[] args = null)
+            public static void Warning(ILogger logger, Exception ex = null, string message = null, object[] args = null)
             {
                 if (ex != null)
                     logger.LogWarning(ex, $"{message ?? ex.Message}", args ?? Array.Empty<object>());
@@ -406,7 +373,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                     logger.LogWarning($"{message}", args);
             }
 
-            public static void Information(ILogger<PlatformRabbitMqHostedService> logger, Exception ex = null, string message = null, object[] args = null)
+            public static void Information(ILogger logger, Exception ex = null, string message = null, object[] args = null)
             {
                 if (ex != null)
                     logger.LogInformation(ex, $"{message ?? ex.Message}", args ?? Array.Empty<object>());

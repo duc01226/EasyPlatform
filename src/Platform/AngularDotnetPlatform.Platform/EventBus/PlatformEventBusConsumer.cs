@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Utils;
 using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.EventBus
@@ -9,6 +10,11 @@ namespace AngularDotnetPlatform.Platform.EventBus
     public interface IPlatformEventBusConsumer
     {
         bool CanProcess(PlatformEventBusMessageRoutingKey routingKey);
+
+        /// <summary>
+        /// Config the time in milliseconds to log warning if the process consumer time is over ProcessWarningTimeMilliseconds.
+        /// </summary>
+        long? ProcessWarningTimeMilliseconds();
     }
 
     public interface IPlatformEventBusConsumer<TMessagePayload> : IPlatformEventBusConsumer
@@ -19,6 +25,8 @@ namespace AngularDotnetPlatform.Platform.EventBus
 
     public abstract class PlatformEventBusConsumer : IPlatformEventBusConsumer
     {
+        public const long DefaultProcessWarningTimeMilliseconds = 5000;
+
         /// <summary>
         /// Get <see cref="PlatformEventBusMessage{TPayload}"/> concrete message type from a <see cref="IPlatformEventBusConsumer"/> consumer
         /// <br/>
@@ -53,7 +61,51 @@ namespace AngularDotnetPlatform.Platform.EventBus
             return messageForConsumerPayloadType;
         }
 
-        public static async Task InvokeConsumer(IPlatformEventBusConsumer consumer, IPlatformEventBusMessage eventBusMessage)
+        public static async Task InvokeConsumer(
+            IPlatformEventBusConsumer consumer,
+            IPlatformEventBusMessage eventBusMessage,
+            bool logConsumerProcessTime,
+            long logConsumerProcessWarningTimeMilliseconds = DefaultProcessWarningTimeMilliseconds,
+            ILogger logger = null)
+        {
+            if (logConsumerProcessTime)
+            {
+                if (logger == null)
+                    throw new ArgumentNullException(nameof(logger));
+
+                await Util.Tasks.ProfilingAsync(
+                    asyncTask: () => DoInvokeConsumer(consumer, eventBusMessage),
+                    afterExecution: elapsedMilliseconds =>
+                    {
+                        var message =
+                            $"[ConsumerProcessTime] Elapsed {elapsedMilliseconds} in milliseconds processing for consumer {consumer.GetType().FullName} message with routing key: {eventBusMessage.RoutingKey()}. Message id {eventBusMessage.TrackingId}.";
+                        if (elapsedMilliseconds < logConsumerProcessWarningTimeMilliseconds || elapsedMilliseconds < consumer.ProcessWarningTimeMilliseconds())
+                        {
+                            logger.LogInformation(message);
+                        }
+                        else
+                        {
+                            logger.LogWarning(message);
+                        }
+                    });
+            }
+            else
+            {
+                await DoInvokeConsumer(consumer, eventBusMessage);
+            }
+        }
+
+        public bool CanProcess(PlatformEventBusMessageRoutingKey routingKey)
+        {
+            return PlatformEventBusConsumerAttribute.CanEventBusConsumerProcess(GetType(), routingKey);
+        }
+
+        public virtual long? ProcessWarningTimeMilliseconds()
+        {
+            return DefaultProcessWarningTimeMilliseconds;
+        }
+
+        private static async Task DoInvokeConsumer(IPlatformEventBusConsumer consumer, IPlatformEventBusMessage eventBusMessage)
         {
             // Get HandleAsync method.
             var methodInfo = consumer.GetType()
@@ -75,22 +127,6 @@ namespace AngularDotnetPlatform.Platform.EventBus
             {
                 throw new PlatformInvokeConsumerException(e, consumer.GetType().FullName, eventBusMessage);
             }
-        }
-
-        public bool CanProcess(PlatformEventBusMessageRoutingKey routingKey)
-        {
-            var consumerAttributes = GetType()
-                .GetCustomAttributes(typeof(PlatformEventBusConsumerAttribute), true)
-                .Select(p => (PlatformEventBusConsumerAttribute)p)
-                .ToList();
-
-            if (consumerAttributes.Count == 0)
-            {
-                throw new Exception(
-                    $"[Developer Error]. At least one PlatformMessageConsumerAttribute must be applied for {GetType().FullName}");
-            }
-
-            return consumerAttributes.Any(p => p.IsMatchMessageRoutingKey(routingKey));
         }
     }
 

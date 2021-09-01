@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.EfCore;
@@ -41,6 +42,14 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
                     new CreateIndexModel<TextSnippetEntity>(Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.SnippetText)),
                     new CreateIndexModel<TextSnippetEntity>(Builders<TextSnippetEntity>.IndexKeys.Text(p => p.SnippetText))
                 }));
+        }
+
+        public override List<KeyValuePair<Type, string>> EntityTypeToCollectionNameMaps()
+        {
+            return new List<KeyValuePair<Type, string>>()
+            {
+                new KeyValuePair<Type, string>(typeof(TextSnippetEntity), "TextSnippetEntity")
+            };
         }
     }
 }

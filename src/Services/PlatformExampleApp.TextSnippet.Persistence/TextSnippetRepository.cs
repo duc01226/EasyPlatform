@@ -23,11 +23,4 @@ namespace PlatformExampleApp.TextSnippet.Persistence
         {
         }
     }
-
-    internal class InboxEventBusMessageRepository : PlatformEfCoreRootRepository<PlatformInboxEventBusMessage, string, TextSnippetDbContext>, IPlatformInboxEventBusMessageRepository
-    {
-        public InboxEventBusMessageRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
-        {
-        }
-    }
 }

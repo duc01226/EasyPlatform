@@ -92,7 +92,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
             PlatformEventBusMessageRoutingKey routingKey)
         {
             var message = Activator.CreateInstance<PlatformEventBusMessage<TPayload>>();
-            message.TrackingId = trackId;
+            message.TrackingId = trackId ?? throw new ArgumentNullException(nameof(trackId));
             message.Payload = payload;
             message.Identity = identity ?? throw new ArgumentNullException(nameof(identity));
             message.MessageGroup = routingKey.MessageGroup;

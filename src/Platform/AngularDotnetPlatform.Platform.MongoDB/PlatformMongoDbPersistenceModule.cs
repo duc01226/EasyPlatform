@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -9,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Polly;
 using AngularDotnetPlatform.Platform.EfCore;
 using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories;
 using AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.MongoDB.Helpers;
 using AngularDotnetPlatform.Platform.MongoDB.Mapping;
@@ -43,7 +46,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             serviceCollection.AddSingleton<IPlatformMongoClientContext, TClientContext>();
             serviceCollection.RegisterAllFromType<TDbContext>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformMongoDbUnitOfWork<TDbContext>>(ServiceLifeTime.Transient, Assembly);
-            RegisterHelpers(serviceCollection);
+            RegisterBuiltInHelpers(serviceCollection);
 
             RegisterPlatformDataMigrationHistoryClassMap();
             AutoRegisterAllSerializers();
@@ -52,9 +55,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         protected virtual void AutoRegisterAllClassMap()
         {
-            var allClassMapTypes = GetType().Assembly.GetTypes()
-                .Where(p => p.IsAssignableTo(typeof(IPlatformMongoClassMapping)) && !p.IsAbstract && p.IsClass)
-                .ToList();
+            var allClassMapTypes = AllClassMapTypes();
 
             allClassMapTypes.ForEach(p => Activator.CreateInstance(p));
         }
@@ -63,7 +64,6 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         {
             var allSerializerTypes = GetType().Assembly.GetTypes()
                 .Where(p => p.IsAssignableToGenericType(typeof(IPlatformMongoBaseSerializer<>)) && p.IsClass && !p.IsAbstract)
-                //.Concat(new[] { typeof(NullableGuidBsonSerializer) })
                 .ToList();
 
             allSerializerTypes.ForEach(p =>
@@ -88,29 +88,54 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             var db = serviceScope.ServiceProvider.GetRequiredService<TDbContext>();
 
             var retryCount = 10;
-            var retryPolicy = Policy.Handle<Exception>()
+
+            //if the db server container is not created on run docker compose,
+            //the migration action could fail for network related exception. So that we do retry to ensure that Initialize action run successfully.
+            Policy.Handle<Exception>()
                 .WaitAndRetry(
                     retryCount: retryCount,
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                     onRetry: (exception, timeSpan, retry, ctx) =>
                     {
-                        Logger.LogWarning(
-                            exception,
-                            "[{prefix}] Exception {ExceptionType} with message {Message} detected on attempt {retry} of {retries}",
+                        Logger.LogWarning(exception,
+                            "[{prefix}] Exception {ExceptionType} with message {Message} detected on attempt Initialize {retry} of {retries}",
                             nameof(TDbContext),
                             exception.GetType().Name,
                             exception.Message,
                             retry,
                             retryCount);
-                    });
-
-            //if the sql server container is not created on run docker compose this
-            //migration can't fail for network related exception. The retry options for DbContext only 
-            //apply to transient exceptions
-            retryPolicy.Execute(() => db.Initialize());
+                    })
+                .ExecuteAndThrowFinalException(() => db.Initialize());
         }
 
-        protected virtual void RegisterHelpers(IServiceCollection serviceCollection)
+        protected override void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
+        {
+            // Register Default InboxEventBusMessageRepository if not existed custom inherited IPlatformInboxEventBusMessageRepository in assembly
+            base.RegisterInboxEventBusMessageRepository(serviceCollection);
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(IPlatformInboxEventBusMessageRepository)))
+            {
+                serviceCollection.Register(
+                    typeof(IPlatformInboxEventBusMessageRepository),
+                    typeof(PlatformDefaultMongoDbInboxEventBusMessageRepository<TDbContext>),
+                    ServiceLifeTime.Transient);
+            }
+
+            // Register Default MongoInboxEventBusMessageClassMapping if not existed custom inherited PlatformMongoInboxEventBusMessageClassMapping in assembly
+            if (!AllClassMapTypes().Any(p => p.IsAssignableTo(typeof(PlatformMongoInboxEventBusMessageClassMapping))))
+            {
+                Activator.CreateInstance(typeof(PlatformDefaultMongoInboxEventBusMessageClassMapping));
+            }
+        }
+
+        protected List<Type> AllClassMapTypes()
+        {
+            var allClassMapTypes = GetType().Assembly.GetTypes()
+                .Where(p => p.IsAssignableTo(typeof(IPlatformMongoClassMapping)) && !p.IsAbstract && p.IsClass)
+                .ToList();
+            return allClassMapTypes;
+        }
+
+        private static void RegisterBuiltInHelpers(IServiceCollection serviceCollection)
         {
             serviceCollection.RegisterAllForImplementation<MongoDbPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime.Transient);
         }

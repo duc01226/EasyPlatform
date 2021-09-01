@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform;
 using AngularDotnetPlatform.Platform.Application.EventBus;
@@ -17,7 +18,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
     /// <summary>
     /// Demo using <see cref="PlatformInboxCqrsCommandEventBusConsumer{TCommand,TCommandResult}"/> to support inbox consumer
     /// The SaveSnippetTextCommandEventBusMatchAllLeaderConsumer will throw error => Trigger message requeue =>
-    /// Inbox consumer will prevent a consumer consume the same message again. 
+    /// Inbox consumer will prevent a consumer consume the same message again.
     /// <br/>
     /// <inheritdoc cref="PlatformInboxCqrsCommandEventBusConsumer{TCommand,TCommandResult}"/>
     /// </summary>
@@ -33,8 +34,13 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
 
         protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message)
         {
-            Logger.LogInformation($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
-            return Task.CompletedTask;
+            return Task.Run(() =>
+            {
+                // Sleep to demo warning slow consumer
+                Thread.Sleep(TimeSpan.FromMilliseconds(DefaultProcessWarningTimeMilliseconds + 1000));
+
+                Logger.LogInformation($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
+            });
         }
     }
 }

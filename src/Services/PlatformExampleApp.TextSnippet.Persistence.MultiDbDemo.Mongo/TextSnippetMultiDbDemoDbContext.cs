@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.EfCore;
@@ -29,6 +30,14 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
                 {
                     new CreateIndexModel<MultiDbDemoEntity>(Builders<MultiDbDemoEntity>.IndexKeys.Ascending(p => p.Name))
                 }));
+        }
+
+        public override List<KeyValuePair<Type, string>> EntityTypeToCollectionNameMaps()
+        {
+            return new List<KeyValuePair<Type, string>>()
+            {
+                new KeyValuePair<Type, string>(typeof(MultiDbDemoEntity), "MultiDbDemoEntity")
+            };
         }
     }
 }

@@ -17,6 +17,11 @@ namespace AngularDotnetPlatform.Platform.EventBus
         /// <summary>
         /// Get all routing key pattern of all defined consumers
         /// </summary>
+        List<Type> AllDefinedEventBusConsumerTypes();
+
+        /// <summary>
+        /// Get all routing key pattern of all defined consumers
+        /// </summary>
         List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusConsumerPatternRoutingKeys();
 
         /// <summary>
@@ -38,10 +43,16 @@ namespace AngularDotnetPlatform.Platform.EventBus
 
         public List<Assembly> EventBusScanAssemblies => assemblyManager.EventBusScanAssemblies;
 
-        public List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusConsumerPatternRoutingKeys()
+        public List<Type> AllDefinedEventBusConsumerTypes()
         {
             return EventBusScanAssemblies.SelectMany(p => p.GetTypes())
                 .Where(p => p.IsAssignableTo(typeof(IPlatformEventBusConsumer)) && p.IsClass && !p.IsAbstract)
+                .ToList();
+        }
+
+        public List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusConsumerPatternRoutingKeys()
+        {
+            return AllDefinedEventBusConsumerTypes()
                 .SelectMany(messageConsumerType => messageConsumerType
                     .GetCustomAttributes(true)
                     .OfType<PlatformEventBusConsumerAttribute>()

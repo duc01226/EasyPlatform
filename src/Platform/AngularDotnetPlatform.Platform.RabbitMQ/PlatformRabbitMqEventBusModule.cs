@@ -30,8 +30,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         private void RegisterRabbitMqInboxEventBusMessageCleanerHostedService(IServiceCollection serviceCollection)
         {
-            serviceCollection.RemoveIfExist(p =>
-                PlatformInboxEventBusMessageCleanerHostedService.MatchImplementation(p, ServiceProvider));
+            serviceCollection.RemoveIfExist(PlatformInboxEventBusMessageCleanerHostedService.MatchImplementation);
             serviceCollection.Register(
                 typeof(IHostedService),
                 typeof(PlatformRabbitMqInboxEventBusMessageCleanerHostedService),

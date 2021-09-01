@@ -1,4 +1,3 @@
-using System;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
 
 namespace AngularDotnetPlatform.Platform.Application.EventBus

@@ -6,4 +6,9 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Mapping
         PlatformMongoInboxEventBusMessageClassMapping : PlatformMongoBaseEntityClassMapping<PlatformInboxEventBusMessage, string>
     {
     }
+
+    public class PlatformDefaultMongoInboxEventBusMessageClassMapping : PlatformMongoInboxEventBusMessageClassMapping
+    {
+
+    }
 }

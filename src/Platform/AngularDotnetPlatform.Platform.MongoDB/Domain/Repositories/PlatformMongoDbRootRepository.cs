@@ -16,9 +16,9 @@ using MongoDB.Driver.Linq;
 
 namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
 {
-    public abstract class PlatformMongoDbRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext>, IPlatformQueryableRootRepository<TEntity, TPrimaryKey>
+    public abstract class PlatformMongoDbRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext>, IPlatformRootRepository<TEntity, TPrimaryKey>
         where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
-        where TDbContext : PlatformMongoDbContext<TDbContext>
+        where TDbContext : IPlatformMongoDbContext<TDbContext>
     {
         public PlatformMongoDbRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
         {
@@ -229,6 +229,15 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
                         await Table.AsQueryable().AnyAsync(predicate, cancellationToken)))
                 .ToList();
             await EnsureValid(entitiesValidateUniquenessFns);
+        }
+    }
+
+    public class PlatformDefaultMongoDbRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformMongoDbRootRepository<TEntity, TPrimaryKey, TDbContext>
+        where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
+        where TDbContext : IPlatformMongoDbContext<TDbContext>
+    {
+        public PlatformDefaultMongoDbRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
+        {
         }
     }
 }

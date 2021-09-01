@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
+using AngularDotnetPlatform.Platform.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using Polly;
@@ -38,16 +39,9 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         public IModel Create()
         {
-            var policyResult = retryPolicy.ExecuteAndCapture(CreateChannel);
-
-            if (policyResult.FinalException != null)
-            {
-                logger.LogError(policyResult.FinalException, "Finally create rabbit-mq channel failed.");
-                throw policyResult.FinalException;
-            }
-
-            // The final handled result captured. Will be IConnection if the policy executed successfully, or terminated with an exception.
-            return policyResult.Result;
+            return retryPolicy.ExecuteAndThrowFinalException(
+                executeFunc: CreateChannel,
+                beforeThrowFinalException: ex => { logger.LogError(ex, "Create rabbit-mq channel failed."); });
         }
 
         public bool Return(IModel obj)
@@ -125,16 +119,9 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
             var hostNames = options.HostNames.Split(',').Where(hostName => !string.IsNullOrEmpty(hostName)).ToArray();
 
-            var policyResult = retryPolicy.ExecuteAndCapture(() => factory.CreateConnection(hostNames));
-
-            if (policyResult.FinalException != null)
-            {
-                logger.LogError(policyResult.FinalException, "Finally create rabbit-mq connection failed.");
-                throw policyResult.FinalException;
-            }
-
-            // The final handled result captured. Will be IConnection if the policy executed successfully, or terminated with an exception.
-            return policyResult.Result;
+            return retryPolicy.ExecuteAndThrowFinalException(
+                executeFunc: () => factory.CreateConnection(hostNames),
+                beforeThrowFinalException: ex => logger.LogError(ex, "Create rabbit-mq connection failed."));
         }
     }
 }

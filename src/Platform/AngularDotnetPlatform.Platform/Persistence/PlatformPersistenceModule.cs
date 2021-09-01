@@ -26,7 +26,8 @@ namespace AngularDotnetPlatform.Platform.Persistence
             RegisterUnitOfWorkManager(serviceCollection);
             serviceCollection.RegisterAllFromType(typeof(IUnitOfWork), ServiceLifeTime.Transient, Assembly);
             RegisterRepositories(serviceCollection);
-            RegisterInboxEventBusMessageRepository(serviceCollection);
+            if (EnableInboxEventBusMessageRepository())
+                RegisterInboxEventBusMessageRepository(serviceCollection);
             serviceCollection.RegisterAllFromType<IPersistenceHelper>(ServiceLifeTime.Transient, Assembly);
         }
 
@@ -37,6 +38,16 @@ namespace AngularDotnetPlatform.Platform.Persistence
         protected virtual List<Type> RegisterLimitedRepositoryImplementationTypes()
         {
             return null;
+        }
+
+        protected virtual void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RegisterAllFromType<IPlatformInboxEventBusMessageRepository>(ServiceLifeTime.Transient, Assembly);
+        }
+
+        protected virtual bool EnableInboxEventBusMessageRepository()
+        {
+            return false;
         }
 
         private void RegisterUnitOfWorkManager(IServiceCollection serviceCollection)
@@ -52,20 +63,13 @@ namespace AngularDotnetPlatform.Platform.Persistence
         {
             if (RegisterLimitedRepositoryImplementationTypes()?.Any() == true)
             {
-                RegisterLimitedRepositoryImplementationTypes().ForEach(repositoryImplementationType =>
-                {
-                    serviceCollection.RegisterAllForImplementation(repositoryImplementationType, ServiceLifeTime.Transient);
-                });
+                RegisterLimitedRepositoryImplementationTypes().ForEach(
+                    repositoryImplementationType => serviceCollection.RegisterAllForImplementation(repositoryImplementationType, ServiceLifeTime.Transient));
             }
             else
             {
                 serviceCollection.RegisterAllFromType<IPlatformRepository>(ServiceLifeTime.Transient, Assembly);
             }
-        }
-
-        private void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
-        {
-            serviceCollection.RegisterAllFromType<IPlatformInboxEventBusMessageRepository>(ServiceLifeTime.Transient, Assembly);
         }
     }
 }

@@ -38,11 +38,21 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         /// </summary>
         public int RequestedConnectionTimeoutSeconds { get; set; } = 10;
 
-        public bool LogConsumerProcessTime { get; set; } = false;
+        /// <summary>
+        /// Config the time to true to log consumer process time
+        /// </summary>
+        public bool LogConsumerProcessTime { get; set; } = true;
 
-        public int RequeueDelayTimeInSeconds { get; set; } = 60;
+        /// <summary>
+        /// Config the time in milliseconds to log warning if the process consumer time is over LogConsumerProcessWarningTimeMilliseconds.
+        /// </summary>
+        public long LogConsumerProcessWarningTimeMilliseconds { get; set; } = 5000;
+
+        public int RequeueDelayTimeInSeconds { get; set; } = 30;
 
         public long RequeueExpiredTimeSpanInSeconds { get; set; } = 60 * 60 * 24 * 7;
+
+        public int ProcessRequeueMessageRetryCount { get; set; } = 10;
 
         public PlatformRabbitMqInboxEventBusMessageCleanerOptions InboxEventBusMessageCleanerOptions { get; set; } =
             new PlatformRabbitMqInboxEventBusMessageCleanerOptions();

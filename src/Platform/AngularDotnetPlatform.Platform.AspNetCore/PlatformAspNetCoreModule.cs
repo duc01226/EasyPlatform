@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Application;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.AspNetCore.Constants;
 using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext;
@@ -49,6 +50,8 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
 
                 using (var scope = ServiceProvider.CreateScope())
                 {
+                    RunApplicationSeedData(scope);
+
                     InternalInit(scope, app).Wait();
                 }
 
@@ -185,6 +188,19 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
                 typeof(IPlatformApplicationUserContextKeyToClaimTypeMapper),
                 UserContextKeyToClaimTypeMapperType(),
                 ServiceLifeTime.Transient);
+        }
+
+        private void RunApplicationSeedData(IServiceScope scope)
+        {
+            var applicationModuleType = GetModuleDependencies()
+                .Select(p => p.Invoke(Configuration))
+                .FirstOrDefault(p => p.IsAssignableTo(typeof(PlatformApplicationModule)));
+
+            if (applicationModuleType != null)
+            {
+                var applicationModule = (PlatformApplicationModule)scope.ServiceProvider.GetService(applicationModuleType);
+                applicationModule?.SeedData(scope).Wait();
+            }
         }
     }
 }

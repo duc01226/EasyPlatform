@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.EventBus;
+using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.JsonSerialization;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
@@ -72,12 +73,9 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         private Task PublishMessageToQueueAsync(string message, PlatformEventBusMessageRoutingKey routingKey, CancellationToken cancellationToken)
         {
-            var result = RetryPublishPolicy.ExecuteAndCapture(() => PublishMessageToQueue(message, routingKey));
-            if (result.Outcome == OutcomeType.Failure)
-            {
-                Logger.LogError(result.FinalException, $"[EventBusProducer] Unable to send message. Message Info: {message}");
-                throw result.FinalException;
-            }
+            RetryPublishPolicy.ExecuteAndThrowFinalException(
+                () => PublishMessageToQueue(message, routingKey),
+                ex => Logger.LogError(ex, $"[EventBusProducer] Unable to send message. Message Info: {message}"));
 
             return Task.CompletedTask;
         }

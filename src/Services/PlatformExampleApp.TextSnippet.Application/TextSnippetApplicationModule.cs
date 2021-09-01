@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using AngularDotnetPlatform.Platform.Application;
 using AngularDotnetPlatform.Platform.Application.Context;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.CqrsPipelineMiddleware;
 using PlatformExampleApp.TextSnippet.Domain;
 
@@ -10,7 +11,10 @@ namespace PlatformExampleApp.TextSnippet.Application
 {
     public class TextSnippetApplicationModule : PlatformApplicationModule
     {
-        public TextSnippetApplicationModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public TextSnippetApplicationModule(
+            IServiceProvider serviceProvider,
+            IConfiguration configuration,
+            ILogger<PlatformApplicationModule> logger) : base(serviceProvider, configuration, logger)
         {
         }
 

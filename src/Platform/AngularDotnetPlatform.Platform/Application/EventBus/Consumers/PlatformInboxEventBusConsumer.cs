@@ -35,7 +35,6 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
         {
             if (await inboxEventBusMessageRepo.AnyAsync(p => message.TrackingId != null && p.Id == message.TrackingId))
             {
-                Logger.LogWarning($"Message Id {message.TrackingId} is skipped because it's already consumed by {GetType().Name} consumer.");
                 return;
             }
 
