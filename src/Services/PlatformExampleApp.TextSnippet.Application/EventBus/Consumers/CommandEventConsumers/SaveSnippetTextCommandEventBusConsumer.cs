@@ -32,6 +32,14 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
         {
         }
 
+        // Example override this function to config this specific consumer warning time if you expect
+        // a specific consumer to run fast or slow
+        // In this Example we expect this consumer run less than 2 seconds (2000 milliseconds)
+        public override long? ProcessWarningTimeMilliseconds()
+        {
+            return 2000;
+        }
+
         protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message)
         {
             return Task.Run(() =>
