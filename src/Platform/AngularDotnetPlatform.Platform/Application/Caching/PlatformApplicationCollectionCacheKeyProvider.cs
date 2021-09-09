@@ -1,9 +1,9 @@
-﻿using AngularDotnetPlatform.Platform.Application.Context;
+using AngularDotnetPlatform.Platform.Application.Context;
 using AngularDotnetPlatform.Platform.Caching;
 
 namespace AngularDotnetPlatform.Platform.Application.Caching
 {
-    public class PlatformApplicationCollectionCacheKeyProvider<TFixedImplementationProvider> :
+    public abstract class PlatformApplicationCollectionCacheKeyProvider<TFixedImplementationProvider> :
         PlatformCollectionCacheKeyProvider<TFixedImplementationProvider>
         where TFixedImplementationProvider : PlatformCollectionCacheKeyProvider<TFixedImplementationProvider>
     {

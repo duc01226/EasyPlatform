@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
@@ -7,6 +8,7 @@ using AngularDotnetPlatform.Platform.Application.Context.UserContext.Default;
 using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
+using AngularDotnetPlatform.Platform.Caching;
 using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.EventBus;
 using AngularDotnetPlatform.Platform.Extensions;
@@ -54,6 +56,31 @@ namespace AngularDotnetPlatform.Platform.Application
                 });
         }
 
+        public async Task ClearDistributedCache(PlatformApplicationAutoClearDistributedCacheOnInitOptions options, IServiceScope serviceScope)
+        {
+            //if the cache server is not initiated, ClearDistributedCache could fail.
+            //So that we do retry to ensure that ClearDistributedCache action run successfully.
+            await Policy.Handle<Exception>()
+                .WaitAndRetryAsync(
+                    retryCount: 10,
+                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                    onRetry: (exception, timeSpan, retry, ctx) =>
+                    {
+                        Logger.LogWarning(exception,
+                            "Exception {ExceptionType} with message [{Message}] detected on attempt ClearDistributedCache {retry}",
+                            exception.GetType().Name,
+                            exception.Message,
+                            retry);
+                    })
+                .ExecuteAndCaptureAsync(async () =>
+                {
+                    var cacheProvider = serviceScope.ServiceProvider.GetService<IPlatformCacheRepositoryProvider>();
+                    var distributedCacheRepository = cacheProvider?.Get(PlatformCacheRepositoryType.Distributed);
+                    if (distributedCacheRepository != null)
+                        await distributedCacheRepository.RemoveAsync(p => options.AutoClearContexts.Contains(p.Context));
+                });
+        }
+
         /// <summary>
         /// Override this factory method to register default PlatformApplicationSettingContext if application do not
         /// have any implementation of IPlatformApplicationSettingContext in the Assembly to be registered.
@@ -84,17 +111,32 @@ namespace AngularDotnetPlatform.Platform.Application
 
             if (AutoSeedDataOnInit())
                 await SeedData(serviceScope);
+
+            var autoClearDistributedCacheOnInitOptions = AutoClearDistributedCacheOnInitOptions(serviceScope);
+            if (autoClearDistributedCacheOnInitOptions.EnableAutoClearDistributedCacheOnInit)
+                await ClearDistributedCache(autoClearDistributedCacheOnInitOptions, serviceScope);
         }
 
         /// <summary>
         /// Default return value is false.
         /// Set this to true if need to auto seed data on application module init.
         /// Only do this when define application module depend on persistence module
-        /// to ensure db initiated in persistence module init before application module init
+        /// to ensure db initiated in persistence module init before application module init 
         /// </summary>
         protected virtual bool AutoSeedDataOnInit()
         {
             return false;
+        }
+
+        protected virtual PlatformApplicationAutoClearDistributedCacheOnInitOptions AutoClearDistributedCacheOnInitOptions(IServiceScope serviceScope)
+        {
+            var applicationSettingContext =
+                serviceScope.ServiceProvider.GetService<IPlatformApplicationSettingContext>();
+            return new PlatformApplicationAutoClearDistributedCacheOnInitOptions()
+            {
+                EnableAutoClearDistributedCacheOnInit = true,
+                AutoClearContexts = new HashSet<string>() { applicationSettingContext!.ApplicationName }
+            };
         }
 
         private void RegisterInboxEventBusMessageCleanerHostedService(IServiceCollection serviceCollection)
@@ -150,5 +192,11 @@ namespace AngularDotnetPlatform.Platform.Application
             serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEntityEventBusConsumer<,>), ServiceLifeTime.Transient, Assembly);
             serviceCollection.Register<IPlatformApplicationEventBusProducer, PlatformApplicationEventBusProducer>(ServiceLifeTime.Transient);
         }
+    }
+
+    public class PlatformApplicationAutoClearDistributedCacheOnInitOptions
+    {
+        public bool EnableAutoClearDistributedCacheOnInit { get; set; }
+        public HashSet<string> AutoClearContexts { get; set; }
     }
 }

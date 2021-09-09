@@ -77,11 +77,21 @@ namespace AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories
 
         private DistributedCacheEntryOptions MapToDistributedCacheEntryOptions(PlatformCacheEntryOptions options)
         {
-            return new DistributedCacheEntryOptions()
+            var result = new DistributedCacheEntryOptions();
+
+            var absoluteExpirationRelativeToNow = options?.AbsoluteExpirationRelativeToNow();
+            if (absoluteExpirationRelativeToNow != null)
             {
-                AbsoluteExpirationRelativeToNow = options?.AbsoluteExpirationRelativeToNow(),
-                SlidingExpiration = options?.SlidingExpiration()
-            };
+                result.AbsoluteExpirationRelativeToNow = absoluteExpirationRelativeToNow;
+            }
+
+            var slidingExpiration = options?.SlidingExpiration();
+            if (slidingExpiration != null)
+            {
+                result.SlidingExpiration = slidingExpiration;
+            }
+
+            return result;
         }
     }
 }

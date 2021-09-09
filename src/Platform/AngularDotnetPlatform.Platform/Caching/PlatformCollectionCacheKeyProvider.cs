@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace AngularDotnetPlatform.Platform.Caching
 {
@@ -16,13 +17,13 @@ namespace AngularDotnetPlatform.Platform.Caching
         public PlatformCacheKey GetKey(string requestKey = DefaultRequestKey)
         {
             EnsureValidProvider();
-            return new PlatformCacheKey(Context, Collection, requestKey);
+            return new PlatformCacheKey(Context, Collection, requestKey ?? DefaultRequestKey);
         }
 
         public PlatformCacheKey GetKey(object[] requestKeyParts = null)
         {
             EnsureValidProvider();
-            return new PlatformCacheKey(Context, Collection, requestKeyParts ?? new object[] { DefaultRequestKey });
+            return new PlatformCacheKey(Context, Collection, requestKeyParts?.Any() == true ? requestKeyParts : new object[] { DefaultRequestKey });
         }
 
         public Func<PlatformCacheKey, bool> MatchCollectionKeyPredicate()
@@ -37,7 +38,7 @@ namespace AngularDotnetPlatform.Platform.Caching
         }
     }
 
-    public class PlatformCollectionCacheKeyProvider<TFixedImplementationProvider> : PlatformCollectionCacheKeyProvider
+    public abstract class PlatformCollectionCacheKeyProvider<TFixedImplementationProvider> : PlatformCollectionCacheKeyProvider
         where TFixedImplementationProvider : PlatformCollectionCacheKeyProvider<TFixedImplementationProvider>
     {
         public static PlatformCacheKey CreateKey(string requestKey = DefaultRequestKey)

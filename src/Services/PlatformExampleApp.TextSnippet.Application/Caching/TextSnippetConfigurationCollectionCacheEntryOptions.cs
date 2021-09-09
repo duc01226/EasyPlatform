@@ -9,9 +9,9 @@ namespace PlatformExampleApp.TextSnippet.Application.Caching
         {
         }
 
-        public override int? ExpirationInSeconds =>
+        public override double? ExpirationInSeconds =>
             Configuration.GetSection("Caching:TextSnippetCollectionExpirationInSeconds").Get<int>();
 
-        public override int? SlidingExpirationInSeconds { get; set; }
+        public override double? SlidingExpirationInSeconds { get; set; }
     }
 }
