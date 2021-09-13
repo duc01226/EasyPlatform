@@ -136,7 +136,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
                     builder.AllowAnyOrigin()
                         .AllowAnyMethod()
                         .AllowAnyHeader()
-                        .WithExposedHeaders(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId)
+                        .WithExposedHeaders(DefaultCorsPolicyExposedHeaders())
                         .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
 
             serviceCollection.AddCors(options => options.AddPolicy(
@@ -147,8 +147,16 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials()
-                        .WithExposedHeaders(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId)
+                        .WithExposedHeaders(DefaultCorsPolicyExposedHeaders())
                         .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
+        }
+
+        /// <summary>
+        /// Used to override WithExposedHeaders for Cors. Default has <see cref="PlatformAspnetConstant.CommonHttpHeaderNames.RequestId"/>
+        /// </summary>
+        protected virtual string[] DefaultCorsPolicyExposedHeaders()
+        {
+            return new string[] { PlatformAspnetConstant.CommonHttpHeaderNames.RequestId };
         }
 
         /// <summary>
