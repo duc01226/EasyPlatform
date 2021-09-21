@@ -20,6 +20,15 @@ namespace AngularDotnetPlatform.Platform.Cqrs
             where TResult : PlatformCqrsCommandResult, new();
 
         /// <summary>
+        /// A Command is an imperative instruction to do something; it only has one handler. We will throw an error for multiple registered handlers of a command.
+        /// Send a command without any result needed
+        /// </summary>
+        Task SendCommand<TCommand>(
+            TCommand command,
+            CancellationToken cancellationToken = default)
+            where TCommand : PlatformCqrsCommand<PlatformCqrsCommandResult>;
+
+        /// <summary>
         /// To get data by conditions defined in query object.
         /// </summary>
         Task<TResult> SendQuery<TQuery, TResult>(
@@ -57,6 +66,12 @@ namespace AngularDotnetPlatform.Platform.Cqrs
             where TResult : PlatformCqrsCommandResult, new()
         {
             return await mediator.Send(command, cancellationToken);
+        }
+
+        public async Task SendCommand<TCommand>(TCommand command, CancellationToken cancellationToken = default)
+            where TCommand : PlatformCqrsCommand<PlatformCqrsCommandResult>
+        {
+            await mediator.Send(command, cancellationToken);
         }
 
         public async Task<TResult> SendQuery<TQuery, TResult>(TQuery query, CancellationToken cancellationToken = default) where TQuery : PlatformCqrsQuery<TResult> where TResult : PlatformCqrsQueryResult

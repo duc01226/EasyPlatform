@@ -11,19 +11,21 @@ namespace AngularDotnetPlatform.Platform.Cqrs
 {
     public abstract class PlatformCqrsRequestHandler<TRequest> where TRequest : IPlatformCqrsRequest
     {
-        private readonly IPlatformApplicationUserContextAccessor userContext;
+        protected readonly IPlatformApplicationUserContextAccessor UserContext;
 
         public PlatformCqrsRequestHandler(IPlatformApplicationUserContextAccessor userContext)
         {
-            this.userContext = userContext;
+            this.UserContext = userContext;
         }
+
+        public IPlatformApplicationUserContext CurrentUser => UserContext.Current;
 
         public void PopulateAuditInfo(TRequest request)
         {
             request.PopulateAuditInfo(
                 handleAuditedTrackId: Guid.NewGuid(),
                 handleAuditedDate: Clock.Now,
-                handleAuditedByUserId: userContext.Current.GetUserId());
+                handleAuditedByUserId: UserContext.Current.GetUserId());
         }
 
         protected void EnsureValidationResultValid(params PlatformValidationResult[] validateResults)

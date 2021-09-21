@@ -37,4 +37,8 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
             HandleAuditedByUserId = handleAuditedByUserId;
         }
     }
+
+    public abstract class PlatformCqrsCommand : PlatformCqrsCommand<PlatformCqrsCommandResult>
+    {
+    }
 }

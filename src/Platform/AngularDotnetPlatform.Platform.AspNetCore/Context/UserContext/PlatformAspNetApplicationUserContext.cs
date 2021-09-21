@@ -157,6 +157,28 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
                 return true;
             }
 
+            // If T is number type
+            if (typeof(T).IsAssignableTo(typeof(double)))
+            {
+                var parsedSuccess = double.TryParse(matchedClaimStringValues.LastOrDefault(), out var parsedValue);
+                if (parsedSuccess)
+                {
+                    // Serialize then Deserialize to ensure could parse from double to int, long, float, etc.. any of number type
+                    foundValue = JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(parsedValue));
+                    return true;
+                }
+            }
+
+            if (typeof(T) == typeof(bool))
+            {
+                var parsedSuccess = bool.TryParse(matchedClaimStringValues.LastOrDefault(), out var parsedValue);
+                if (parsedSuccess)
+                {
+                    foundValue = (T)(object)parsedValue;
+                    return true;
+                }
+            }
+
             // Handle case if type T is a list with many items.
             var isTryGetListValueSuccess = TryGetParsedListValueFromUserClaimStringValues(matchedClaimStringValues, out foundValue);
             if (isTryGetListValueSuccess)

@@ -64,4 +64,15 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
             return result;
         }
     }
+
+    public abstract class PlatformCqrsCommandHandler<TCommand> : PlatformCqrsRequestHandler<TCommand>,
+        IRequestHandler<TCommand, PlatformCqrsCommandResult>
+        where TCommand : PlatformCqrsCommand
+    {
+        protected PlatformCqrsCommandHandler(IPlatformApplicationUserContextAccessor userContext) : base(userContext)
+        {
+        }
+
+        public abstract Task<PlatformCqrsCommandResult> Handle(TCommand request, CancellationToken cancellationToken);
+    }
 }
