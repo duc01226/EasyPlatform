@@ -124,7 +124,29 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
                 return TryGetRequestId(CurrentHttpContext(), out foundValue);
             }
 
-            return TryGetValueFromUserClaims(CurrentHttpContext().User, contextKey, out foundValue);
+            if (TryGetValueFromUserClaims(CurrentHttpContext().User, contextKey, out foundValue))
+            {
+                return true;
+            }
+
+            if (TryGetValueFromRequestHeaders(CurrentHttpContext().Request.Headers, contextKey, out foundValue))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        private bool TryGetValueFromRequestHeaders<T>(IHeaderDictionary requestHeaders, string contextKey, out T foundValue)
+        {
+            var contextKeyMappedToJwtClaimType = MapContextKeyToJwtClaimType(contextKey);
+
+            var stringRequestHeaderValues = requestHeaders.ContainsKey(contextKeyMappedToJwtClaimType)
+                ? new List<string>(requestHeaders[contextKeyMappedToJwtClaimType])
+                : new List<string>();
+
+            // Try Get Deserialized value from matchedClaimStringValues
+            return TryGetParsedValuesFromStringValues(out foundValue, stringRequestHeaderValues);
         }
 
         private bool TryGetRequestId<T>(HttpContext httpContext, out T foundValue)
@@ -150,17 +172,24 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
             var matchedClaimStringValues = userClaims.FindAll(contextKeyMappedToJwtClaimType).Select(p => p.Value).ToList();
 
             // Try Get Deserialized value from matchedClaimStringValues
+            return TryGetParsedValuesFromStringValues(out foundValue, matchedClaimStringValues);
+        }
 
+        /// <summary>
+        /// Try Get Deserialized value from matchedClaimStringValues
+        /// </summary>
+        private bool TryGetParsedValuesFromStringValues<T>(out T foundValue, List<string> stringValues)
+        {
             if (typeof(T) == typeof(string))
             {
-                foundValue = (T)(object)matchedClaimStringValues.LastOrDefault();
+                foundValue = (T)(object)stringValues.LastOrDefault();
                 return true;
             }
 
             // If T is number type
             if (typeof(T).IsAssignableTo(typeof(double)))
             {
-                var parsedSuccess = double.TryParse(matchedClaimStringValues.LastOrDefault(), out var parsedValue);
+                var parsedSuccess = double.TryParse(stringValues.LastOrDefault(), out var parsedValue);
                 if (parsedSuccess)
                 {
                     // Serialize then Deserialize to ensure could parse from double to int, long, float, etc.. any of number type
@@ -171,7 +200,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
 
             if (typeof(T) == typeof(bool))
             {
-                var parsedSuccess = bool.TryParse(matchedClaimStringValues.LastOrDefault(), out var parsedValue);
+                var parsedSuccess = bool.TryParse(stringValues.LastOrDefault(), out var parsedValue);
                 if (parsedSuccess)
                 {
                     foundValue = (T)(object)parsedValue;
@@ -180,12 +209,13 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
             }
 
             // Handle case if type T is a list with many items.
-            var isTryGetListValueSuccess = TryGetParsedListValueFromUserClaimStringValues(matchedClaimStringValues, out foundValue);
+            var isTryGetListValueSuccess =
+                TryGetParsedListValueFromUserClaimStringValues(stringValues, out foundValue);
             if (isTryGetListValueSuccess)
                 return true;
 
             return JsonSerializerExtension.TryDeserialize(
-                matchedClaimStringValues.LastOrDefault(),
+                stringValues.LastOrDefault(),
                 out foundValue,
                 PlatformJsonSerializer.CurrentOptions.Value);
         }
