@@ -102,7 +102,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
         /// <summary>
         /// Override this function provider to register IPlatformDistributedCache. Default return null;
         /// </summary>
-        protected virtual IPlatformDistributedCacheRepository DistributedCacheProvider(IServiceProvider serviceProvider, IConfiguration configuration)
+        protected virtual IPlatformDistributedCacheRepository DistributedCacheRepositoryProvider(IServiceProvider serviceProvider, IConfiguration configuration)
         {
             return null;
         }
@@ -206,7 +206,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
             if (HasDistributedCacheProviderImplementation())
             {
                 serviceCollection.RegisterAllForImplementation(
-                    provider => DistributedCacheProvider(provider, Configuration), ServiceLifeTime.Singleton, replaceIfExist: true);
+                    provider => DistributedCacheRepositoryProvider(provider, Configuration), ServiceLifeTime.Singleton, replaceIfExist: true);
 
                 serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionDistributedCacheRepository<>), ServiceLifeTime.Transient, replaceIfExist: true);
             }
@@ -214,7 +214,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
 
         private bool HasDistributedCacheProviderImplementation()
         {
-            return DistributedCacheProvider(ServiceProvider, Configuration) != null;
+            return DistributedCacheRepositoryProvider(ServiceProvider, Configuration) != null;
         }
 
         private void RegisterAllModuleDependencies(IServiceCollection serviceCollection)

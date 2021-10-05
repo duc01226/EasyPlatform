@@ -24,7 +24,8 @@ namespace PlatformExampleApp.TextSnippet.Api
             var result = new List<Func<IConfiguration, Type>>
             {
                 p => typeof(TextSnippetApplicationModule),
-                p => typeof(TextSnippetRabbitMqEventBusModule)
+                p => typeof(TextSnippetRabbitMqEventBusModule),
+                p => typeof(TextSnippetRedisCacheModule)
             };
 
             result.Add(p => p.GetSection("UseMongoDb").Get<bool>()

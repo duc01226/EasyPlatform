@@ -14,19 +14,19 @@ namespace AngularDotnetPlatform.Platform.Caching
         /// Gets or sets how long a cache entry can be inactive (e.g. not accessed) before it will be removed.
         /// This will not extend the entry lifetime beyond the absolute expiration (if set).
         /// </summary>
-        public virtual double? SlidingExpirationInSeconds { get; set; }
+        public virtual double? UnusedExpirationInSeconds { get; set; }
 
         /// <summary>
         /// Gets or sets an expiration time after seconds, relative to now.
         /// </summary>
-        public virtual double? ExpirationInSeconds { get; set; } = DefaultExpirationInSeconds;
+        public virtual double? AbsoluteExpirationInSeconds { get; set; } = DefaultExpirationInSeconds;
 
         /// <summary>
         /// Gets or sets an absolute expiration time, relative to now.
         /// </summary>
         public TimeSpan? AbsoluteExpirationRelativeToNow()
         {
-            return ExpirationInSeconds.HasValue ? TimeSpan.FromSeconds(ExpirationInSeconds.Value) : null;
+            return AbsoluteExpirationInSeconds.HasValue ? TimeSpan.FromSeconds(AbsoluteExpirationInSeconds.Value) : null;
         }
 
         /// <summary>
@@ -35,7 +35,7 @@ namespace AngularDotnetPlatform.Platform.Caching
         /// </summary>
         public TimeSpan? SlidingExpiration()
         {
-            return SlidingExpirationInSeconds.HasValue ? TimeSpan.FromSeconds(SlidingExpirationInSeconds.Value) : null;
+            return UnusedExpirationInSeconds.HasValue ? TimeSpan.FromSeconds(UnusedExpirationInSeconds.Value) : null;
         }
     }
 
@@ -48,8 +48,8 @@ namespace AngularDotnetPlatform.Platform.Caching
             Configuration = configuration;
         }
 
-        public abstract override double? ExpirationInSeconds { get; }
+        public abstract override double? AbsoluteExpirationInSeconds { get; }
 
-        public abstract override double? SlidingExpirationInSeconds { get; }
+        public abstract override double? UnusedExpirationInSeconds { get; }
     }
 }

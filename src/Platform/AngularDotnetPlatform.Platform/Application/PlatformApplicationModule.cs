@@ -38,7 +38,7 @@ namespace AngularDotnetPlatform.Platform.Application
             //So that we do retry to ensure that SeedData action run successfully.
             await Policy.Handle<Exception>()
                 .WaitAndRetryAsync(
-                    retryCount: 10,
+                    retryCount: 5,
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                     onRetry: (exception, timeSpan, retry, ctx) =>
                     {
@@ -62,7 +62,7 @@ namespace AngularDotnetPlatform.Platform.Application
             //So that we do retry to ensure that ClearDistributedCache action run successfully.
             await Policy.Handle<Exception>()
                 .WaitAndRetryAsync(
-                    retryCount: 10,
+                    retryCount: 5,
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                     onRetry: (exception, timeSpan, retry, ctx) =>
                     {

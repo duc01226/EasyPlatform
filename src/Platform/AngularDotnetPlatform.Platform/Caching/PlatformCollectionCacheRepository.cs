@@ -10,10 +10,16 @@ namespace AngularDotnetPlatform.Platform.Caching
         T Get<T>(object[] requestKeyParts = null);
         Task<T> GetAsync<T>(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default);
         Task<T> GetAsync<T>(object[] requestKeyParts = null, CancellationToken token = default);
-        void Set<T>(T value, PlatformCacheEntryOptions options = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
-        void Set<T>(T value, PlatformCacheEntryOptions options = null, object[] requestKeyParts = null);
+        void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
+        void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, object[] requestKeyParts = null);
         Task SetAsync<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default);
         Task SetAsync<T>(T value, PlatformCacheEntryOptions cacheOptions = null, object[] requestKeyParts = null, CancellationToken token = default);
+
+        void Set<T>(T value, double? absoluteExpirationInSeconds = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
+        void Set<T>(T value, double? absoluteExpirationInSeconds = null, object[] requestKeyParts = null);
+        Task SetAsync<T>(T value, double? absoluteExpirationInSeconds = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default);
+        Task SetAsync<T>(T value, double? absoluteExpirationInSeconds = null, object[] requestKeyParts = null, CancellationToken token = default);
+
         void Remove(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
         void Remove(object[] requestKeyParts = null);
         Task RemoveAsync(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default);
@@ -39,6 +45,18 @@ namespace AngularDotnetPlatform.Platform.Caching
             Func<Task<TData>> request,
             object[] requestKeyParts = null,
             PlatformCacheEntryOptions cacheOptions = null,
+            CancellationToken token = default) where TData : new();
+
+        Task<TData> CacheRequestAsync<TData>(
+            Func<Task<TData>> request,
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+            double? absoluteExpirationInSeconds = null,
+            CancellationToken token = default) where TData : new();
+
+        Task<TData> CacheRequestAsync<TData>(
+            Func<Task<TData>> request,
+            object[] requestKeyParts = null,
+            double? absoluteExpirationInSeconds = null,
             CancellationToken token = default) where TData : new();
     }
 
@@ -79,14 +97,14 @@ namespace AngularDotnetPlatform.Platform.Caching
             return CacheRepository().GetAsync<T>(CollectionCacheKeyProvider.GetKey(requestKeyParts), token);
         }
 
-        public void Set<T>(T value, PlatformCacheEntryOptions options = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey)
+        public void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey)
         {
-            CacheRepository().Set(CollectionCacheKeyProvider.GetKey(requestKey), value, options);
+            CacheRepository().Set(CollectionCacheKeyProvider.GetKey(requestKey), value, cacheOptions);
         }
 
-        public void Set<T>(T value, PlatformCacheEntryOptions options = null, object[] requestKeyParts = null)
+        public void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, object[] requestKeyParts = null)
         {
-            CacheRepository().Set(CollectionCacheKeyProvider.GetKey(requestKeyParts), value, options);
+            CacheRepository().Set(CollectionCacheKeyProvider.GetKey(requestKeyParts), value, cacheOptions);
         }
 
         public async Task SetAsync<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default)
@@ -97,6 +115,34 @@ namespace AngularDotnetPlatform.Platform.Caching
         public async Task SetAsync<T>(T value, PlatformCacheEntryOptions cacheOptions = null, object[] requestKeyParts = null, CancellationToken token = default)
         {
             await CacheRepository().SetAsync(CollectionCacheKeyProvider.GetKey(requestKeyParts), value, cacheOptions, token);
+        }
+
+        public void Set<T>(T value, double? absoluteExpirationInSeconds = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey)
+        {
+            Set(value, new PlatformCacheEntryOptions() { AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds }, requestKey);
+        }
+
+        public void Set<T>(T value, double? absoluteExpirationInSeconds = null, object[] requestKeyParts = null)
+        {
+            Set(value, new PlatformCacheEntryOptions() { AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds }, requestKeyParts);
+        }
+
+        public async Task SetAsync<T>(T value, double? absoluteExpirationInSeconds = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default)
+        {
+            await SetAsync(
+                value,
+                new PlatformCacheEntryOptions() { AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds },
+                requestKey,
+                token);
+        }
+
+        public async Task SetAsync<T>(T value, double? absoluteExpirationInSeconds = null, object[] requestKeyParts = null, CancellationToken token = default)
+        {
+            await SetAsync(
+                value,
+                new PlatformCacheEntryOptions() { AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds },
+                requestKeyParts,
+                token);
         }
 
         public void Remove(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey)
@@ -151,6 +197,38 @@ namespace AngularDotnetPlatform.Platform.Caching
             CancellationToken token = default) where TData : new()
         {
             return await CacheRepository().CacheRequestAsync(request, CollectionCacheKeyProvider.GetKey(requestKeyParts), cacheOptions, token);
+        }
+
+        public async Task<TData> CacheRequestAsync<TData>(
+            Func<Task<TData>> request,
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+            double? absoluteExpirationInSeconds = null,
+            CancellationToken token = default) where TData : new()
+        {
+            return await CacheRequestAsync(
+                request,
+                requestKey,
+                new PlatformCacheEntryOptions()
+                {
+                    AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds
+                },
+                token);
+        }
+
+        public async Task<TData> CacheRequestAsync<TData>(
+            Func<Task<TData>> request,
+            object[] requestKeyParts = null,
+            double? absoluteExpirationInSeconds = null,
+            CancellationToken token = default) where TData : new()
+        {
+            return await CacheRequestAsync(
+                request,
+                requestKeyParts,
+                new PlatformCacheEntryOptions()
+                {
+                    AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds
+                },
+                token);
         }
 
         public abstract PlatformCacheRepositoryType CacheRepositoryType();

@@ -16,8 +16,8 @@ namespace AngularDotnetPlatform.Platform.Caching
 
     public class PlatformContextCacheKeyProvider : IPlatformContextCacheKeyProvider
     {
-        public const string DefaultCollection = "All";
-        public const string DefaultRequestKey = "All";
+        public const string DefaultCollection = PlatformCacheKey.DefaultCollection;
+        public const string DefaultRequestKey = PlatformCacheKey.DefaultRequestKey;
 
         public PlatformContextCacheKeyProvider()
         {

@@ -7,11 +7,7 @@ EXPOSE 443
 
 FROM mcr.microsoft.com/dotnet/sdk:5.0 AS build
 WORKDIR /src
-COPY Platform/AngularDotnetPlatform.Platform/AngularDotnetPlatform.Platform.csproj Platform/AngularDotnetPlatform.Platform/AngularDotnetPlatform.Platform.csproj
-COPY Platform/AngularDotnetPlatform.Platform.AspNetCore/AngularDotnetPlatform.Platform.AspNetCore.csproj Platform/AngularDotnetPlatform.Platform.AspNetCore/AngularDotnetPlatform.Platform.AspNetCore.csproj
-COPY Platform/AngularDotnetPlatform.Platform.EfCore/AngularDotnetPlatform.Platform.EfCore.csproj Platform/AngularDotnetPlatform.Platform.EfCore/AngularDotnetPlatform.Platform.EfCore.csproj
-COPY Platform/AngularDotnetPlatform.Platform.MongoDB/AngularDotnetPlatform.Platform.MongoDB.csproj Platform/AngularDotnetPlatform.Platform.MongoDB/AngularDotnetPlatform.Platform.MongoDB.csproj
-COPY Platform/AngularDotnetPlatform.Platform.RabbitMQ/AngularDotnetPlatform.Platform.RabbitMQ.csproj Platform/AngularDotnetPlatform.Platform.RabbitMQ/AngularDotnetPlatform.Platform.RabbitMQ.csproj
+COPY Platform Platform
 COPY Services/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj Services/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj
 COPY Services/PlatformExampleApp.TextSnippet.Application/PlatformExampleApp.TextSnippet.Application.csproj Services/PlatformExampleApp.TextSnippet.Application/PlatformExampleApp.TextSnippet.Application.csproj
 COPY Services/PlatformExampleApp.TextSnippet.Domain/PlatformExampleApp.TextSnippet.Domain.csproj Services/PlatformExampleApp.TextSnippet.Domain/PlatformExampleApp.TextSnippet.Domain.csproj

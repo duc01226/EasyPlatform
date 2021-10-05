@@ -10,38 +10,42 @@ namespace AngularDotnetPlatform.Platform.Caching
     /// </summary>
     public class PlatformCacheKey : IEqualityComparer<PlatformCacheKey>
     {
-        public static readonly string RequestKeySeparator = ".";
+        public const string DefaultCollection = "All";
+        public const string DefaultRequestKey = "All";
+        public const string RequestKeySeparator = ".";
+        public const string RequestKeySeparatorAutoValidReplaced = "_";
+        public const string RequestKeyPartsSeparator = "--";
 
-        public PlatformCacheKey(string requestKey)
+        public PlatformCacheKey(string requestKey = DefaultRequestKey)
         {
             Context = GetType().Assembly.GetName().Name;
-            RequestKey = requestKey;
+            RequestKey = requestKey.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
         }
 
         public PlatformCacheKey(object[] requestKeyParts)
         {
             Context = GetType().Assembly.GetName().Name;
-            RequestKey = BuildRequestKey(requestKeyParts);
+            RequestKey = requestKeyParts.Length == 0 ? DefaultRequestKey : BuildRequestKey(requestKeyParts);
         }
 
         public PlatformCacheKey(string collection, string requestKey) : this(requestKey)
         {
-            Collection = collection;
+            Collection = collection.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
         }
 
         public PlatformCacheKey(string collection, params object[] requestKeyParts) : this(requestKeyParts)
         {
-            Collection = collection;
+            Collection = collection.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
         }
 
         public PlatformCacheKey(string context, string collection, string requestKey) : this(collection, requestKey)
         {
-            Context = context;
+            Context = context.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
         }
 
         public PlatformCacheKey(string context, string collection, params object[] requestKeyParts) : this(collection, requestKeyParts)
         {
-            Context = context;
+            Context = context.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
         }
 
         /// <summary>
@@ -52,12 +56,12 @@ namespace AngularDotnetPlatform.Platform.Caching
         /// <summary>
         /// The Type of the cached data. Usually it's like the database collection or data class name.
         /// </summary>
-        public string Collection { get; init; } = "UnknownCollection";
+        public string Collection { get; init; } = DefaultCollection;
 
         /// <summary>
         /// The request key for cached data. Usually it could be data identifier, or request unique key.
         /// </summary>
-        public string RequestKey { get; }
+        public string RequestKey { get; init; }
 
         public static implicit operator string(PlatformCacheKey platformCacheKey)
         {
@@ -66,7 +70,10 @@ namespace AngularDotnetPlatform.Platform.Caching
 
         public static string BuildRequestKey(object[] requestKeyParts)
         {
-            return string.Join(RequestKeySeparator, requestKeyParts.Select(p => JsonSerializer.Serialize(p)));
+            if (requestKeyParts.Length == 0)
+                throw new ArgumentException("requestKeyParts must be not empty.", nameof(requestKeyParts));
+
+            return $"[{string.Join(RequestKeyPartsSeparator, requestKeyParts.Select(p => JsonSerializer.Serialize(p).Replace("\"", "'")))}]";
         }
 
         public static object[] BuildRequestKeyParts(string requestKey)
@@ -88,7 +95,7 @@ namespace AngularDotnetPlatform.Platform.Caching
 
         public override string ToString()
         {
-            return $"{Context}.{Collection}.{RequestKey}";
+            return $"{Context}{RequestKeySeparator}{Collection}{RequestKeySeparator}{RequestKey}";
         }
 
         public bool Equals(PlatformCacheKey x, PlatformCacheKey y)

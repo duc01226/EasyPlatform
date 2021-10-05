@@ -41,6 +41,24 @@ namespace AngularDotnetPlatform.Platform.Caching
         Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, CancellationToken token = default);
 
         /// <summary>
+        /// Sets a value with the given key.
+        /// </summary>
+        /// <param name="cacheKey">A string identifying the requested value.</param>
+        /// <param name="value">The value to set in the cache.</param>
+        /// <param name="absoluteExpirationInSeconds">The absoluteExpirationInSeconds cache options for the value.</param>
+        void Set<T>(PlatformCacheKey cacheKey, T value, double? absoluteExpirationInSeconds = null);
+
+        /// <summary>
+        /// Sets the value with the given key.
+        /// </summary>
+        /// <param name="cacheKey">A string identifying the requested value.</param>
+        /// <param name="value">The value to set in the cache.</param>
+        /// <param name="absoluteExpirationInSeconds">The absoluteExpirationInSeconds cache options for the value.</param>
+        /// <param name="token">Optional. The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+        Task SetAsync<T>(PlatformCacheKey cacheKey, T value, double? absoluteExpirationInSeconds = null, CancellationToken token = default);
+
+        /// <summary>
         /// Removes the value with the given key.
         /// </summary>
         /// <param name="cacheKey">A string identifying the requested value.</param>
@@ -80,6 +98,19 @@ namespace AngularDotnetPlatform.Platform.Caching
             PlatformCacheKey cacheKey,
             PlatformCacheEntryOptions cacheOptions = null,
             CancellationToken token = default) where TData : new();
+
+        /// <summary>
+        /// Return cache from request function if exist. If not, call request function to get data, cache the data and return it.
+        /// </summary>
+        /// <param name="request">The request function return data to set in the cache.</param>
+        /// <param name="cacheKey">A string identifying the requested value.</param>
+        /// <param name="absoluteExpirationInSeconds">The absoluteExpirationInSeconds cache options for the value.</param>
+        /// <param name="token">Optional. The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+        Task<TData> CacheRequestAsync<TData>(
+            Func<Task<TData>> request,
+            PlatformCacheKey cacheKey,
+            double? absoluteExpirationInSeconds = null,
+            CancellationToken token = default) where TData : new();
     }
 
     public abstract class PlatformCacheRepository : IPlatformCacheRepository
@@ -98,6 +129,15 @@ namespace AngularDotnetPlatform.Platform.Caching
         public abstract void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null);
 
         public abstract Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, CancellationToken token = default);
+        public void Set<T>(PlatformCacheKey cacheKey, T value, double? absoluteExpirationInSeconds = null)
+        {
+            Set(cacheKey, value, new PlatformCacheEntryOptions() { AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds });
+        }
+
+        public async Task SetAsync<T>(PlatformCacheKey cacheKey, T value, double? absoluteExpirationInSeconds = null, CancellationToken token = default)
+        {
+            await SetAsync(cacheKey, value, new PlatformCacheEntryOptions() { AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds }, token);
+        }
 
         public abstract void Remove(PlatformCacheKey cacheKey);
 
@@ -127,6 +167,15 @@ namespace AngularDotnetPlatform.Platform.Caching
             await SetAsync(cacheKey, requestedData, cacheOptions, token);
 
             return requestedData;
+        }
+
+        public async Task<TData> CacheRequestAsync<TData>(
+            Func<Task<TData>> request,
+            PlatformCacheKey cacheKey,
+            double? absoluteExpirationInSeconds = null,
+            CancellationToken token = default) where TData : new()
+        {
+            return await CacheRequestAsync(request, cacheKey, new PlatformCacheEntryOptions() { AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds }, token);
         }
     }
 }

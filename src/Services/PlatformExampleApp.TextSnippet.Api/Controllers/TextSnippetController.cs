@@ -26,7 +26,15 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
         [Route("search")]
         public async Task<SearchSnippetTextQueryResult> Search([FromQuery] SearchSnippetTextQuery request)
         {
-            return await CacheRepositoryProvider.GetCollection<TextSnippetApplicationCollectionCacheKeyProvider>()
+            // Using default cache (default is built-in memory cache)
+            //return await CacheRepositoryProvider.GetCollection<TextSnippetApplicationCollectionCacheKeyProvider>()
+            //    .CacheRequestAsync(
+            //        () => Cqrs.SendQuery<SearchSnippetTextQuery, SearchSnippetTextQueryResult>(request),
+            //        new object[] { nameof(Search), request },
+            //        new TextSnippetConfigurationCollectionCacheEntryOptions(Configuration));
+
+            // Using distributed cache
+            return await CacheRepositoryProvider.GetCollection<TextSnippetApplicationCollectionCacheKeyProvider>(PlatformCacheRepositoryType.Distributed)
                 .CacheRequestAsync(
                     () => Cqrs.SendQuery<SearchSnippetTextQuery, SearchSnippetTextQueryResult>(request),
                     new object[] { nameof(Search), request },

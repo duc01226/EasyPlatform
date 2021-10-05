@@ -1,4 +1,4 @@
-version: "3.4"
+version: '3.4'
 
 services:
   sql-data:
@@ -13,6 +13,9 @@ services:
   rabbitmq:
     image: rabbitmq:3.8.3-management-alpine
 
+  redis-cache:
+    image: redis:6.2.5
+
   text-snippet-api:
     image: ${REGISTRY:-duc01226}/angular-dotnet-platform-platform-example-app-text-snippet-api:${PLATFORM:-linux}-${TAG:-latest}
     build:
@@ -22,13 +25,14 @@ services:
       - sql-data
       - mongo-data
       - rabbitmq
+      - redis-cache
 
   text-snippet-webspa:
     image: ${REGISTRY:-duc01226}/angular-dotnet-platform-platform-example-app-text-snippet-webspa:${PLATFORM:-linux}-${TAG:-latest}
     build:
       context: Web
       args:
-        configuration: "production"
+        configuration: 'production'
       dockerfile: apps/text-snippet/Dockerfile
     depends_on:
       - text-snippet-api
