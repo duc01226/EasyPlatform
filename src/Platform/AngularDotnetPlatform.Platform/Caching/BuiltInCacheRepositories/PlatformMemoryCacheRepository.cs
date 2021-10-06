@@ -57,6 +57,15 @@ namespace AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories
             cachedKeys.Remove(cacheKey, out _);
         }
 
+        public override void Remove(Func<PlatformCacheKey, bool> cacheKeyPredicate)
+        {
+            var matchedKeys = cachedKeys.Select(p => p.Key).Where(cacheKeyPredicate).ToList();
+            foreach (var matchedKey in matchedKeys)
+            {
+                Remove(matchedKey);
+            }
+        }
+
         public override async Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default)
         {
             await memoryDistributedCache.RemoveAsync(cacheKey, token);
@@ -66,11 +75,7 @@ namespace AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories
 
         public override Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default)
         {
-            var matchedKeys = cachedKeys.Select(p => p.Key).Where(cacheKeyPredicate).ToList();
-            foreach (var matchedKey in matchedKeys)
-            {
-                Remove(matchedKey);
-            }
+            Remove(cacheKeyPredicate);
 
             return Task.CompletedTask;
         }

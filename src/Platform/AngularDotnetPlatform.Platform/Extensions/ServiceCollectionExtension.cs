@@ -34,7 +34,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
                 {
                     services.RegisterSelf(implementationType, lifeTime, replaceIfExist);
 
-                    services.RegisterInterfacesForImplementation(implementationType, lifeTime, replaceIfExist, ReplaceServiceStrategy.ByBoth);
+                    services.RegisterInterfacesForImplementation(implementationType, lifeTime);
                 });
 
             return services;
@@ -59,12 +59,11 @@ namespace AngularDotnetPlatform.Platform.Extensions
         public static IServiceCollection RegisterAllForImplementation(
             this IServiceCollection services,
             Type implementationType,
-            ServiceLifeTime lifeTime,
-            bool replaceIfExist = true)
+            ServiceLifeTime lifeTime)
         {
-            services.RegisterSelf(implementationType, lifeTime, replaceIfExist);
+            services.RegisterIfNotExist(implementationType, implementationType, lifeTime);
 
-            services.RegisterInterfacesForImplementation(implementationType, lifeTime, replaceIfExist);
+            services.RegisterInterfacesForImplementation(implementationType, lifeTime);
 
             return services;
         }
@@ -74,10 +73,9 @@ namespace AngularDotnetPlatform.Platform.Extensions
         /// </summary>
         public static IServiceCollection RegisterAllForImplementation<TImplementation>(
             this IServiceCollection services,
-            ServiceLifeTime lifeTime,
-            bool replaceIfExist = true)
+            ServiceLifeTime lifeTime)
         {
-            return RegisterAllForImplementation(services, typeof(TImplementation), lifeTime, replaceIfExist);
+            return RegisterAllForImplementation(services, typeof(TImplementation), lifeTime);
         }
 
         /// <summary>
@@ -110,13 +108,13 @@ namespace AngularDotnetPlatform.Platform.Extensions
                     if (replaceIfExist)
                         services.ReplaceScoped(serviceType, implementationType, replaceStrategy);
                     else
-                        services.AddScoped(serviceType, implementationType);
+                        services.RegisterIfNotExist(serviceType, implementationType, lifeTime);
                     break;
                 case ServiceLifeTime.Singleton:
                     if (replaceIfExist)
                         services.ReplaceSingleton(serviceType, implementationType, replaceStrategy);
                     else
-                        services.AddSingleton(serviceType, implementationType);
+                        services.RegisterIfNotExist(serviceType, implementationType, lifeTime);
                     break;
 
                 case ServiceLifeTime.Transient:
@@ -124,7 +122,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
                     if (replaceIfExist)
                         services.ReplaceTransient(serviceType, implementationType, replaceStrategy);
                     else
-                        services.AddTransient(serviceType, implementationType);
+                        services.RegisterIfNotExist(serviceType, implementationType, lifeTime);
                     break;
             }
 
@@ -138,6 +136,24 @@ namespace AngularDotnetPlatform.Platform.Extensions
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
             return Register(services, typeof(TService), typeof(TImplementation), lifeTime, replaceIfExist, replaceStrategy);
+        }
+
+        public static IServiceCollection RegisterIfNotExist<TService, TImplementation>(
+            this IServiceCollection services,
+            ServiceLifeTime lifeTime)
+        {
+            return RegisterIfNotExist(services, typeof(TService), typeof(TImplementation), lifeTime);
+        }
+
+        public static IServiceCollection RegisterIfNotExist(
+            this IServiceCollection services,
+            Type serviceType,
+            Type implementationType,
+            ServiceLifeTime lifeTime)
+        {
+            if (services.Any(p => p.ServiceType == serviceType && p.ImplementationType == implementationType))
+                return services;
+            return Register(services, serviceType, implementationType, lifeTime);
         }
 
         public static IServiceCollection RegisterIfServiceNotExist<TService, TImplementation>(
@@ -292,9 +308,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
         public static void RegisterInterfacesForImplementation(
             this IServiceCollection services,
             Type implementationType,
-            ServiceLifeTime lifeTime,
-            bool replaceIfExist,
-            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+            ServiceLifeTime lifeTime)
         {
             if (implementationType.IsGenericType)
             {
@@ -302,14 +316,14 @@ namespace AngularDotnetPlatform.Platform.Extensions
                     .GetInterfaces()
                     .Where(p => p.IsGenericType && p.GetGenericArguments().Length == implementationType.GetGenericArguments().Length)
                     .ToList()
-                    .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationType, lifeTime, replaceIfExist, replaceStrategy));
+                    .ForEach(implementationTypeInterface => services.RegisterIfNotExist(Util.Types.FixTypeReference(implementationTypeInterface), implementationType, lifeTime));
             }
             else
             {
                 implementationType.GetInterfaces()
                     .Where(p => !p.IsGenericType)
                     .ToList()
-                    .ForEach(implementationTypeInterface => services.Register(implementationTypeInterface, implementationType, lifeTime, replaceIfExist, replaceStrategy));
+                    .ForEach(implementationTypeInterface => services.RegisterIfNotExist(implementationTypeInterface, implementationType, lifeTime));
             }
         }
 

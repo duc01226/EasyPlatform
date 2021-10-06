@@ -65,6 +65,12 @@ namespace AngularDotnetPlatform.Platform.Caching
         void Remove(PlatformCacheKey cacheKey);
 
         /// <summary>
+        /// Removes the value with the given key predicate.
+        /// </summary>
+        /// <param name="cacheKeyPredicate">A string identifying the requested value predicate.</param>
+        void Remove(Func<PlatformCacheKey, bool> cacheKeyPredicate);
+
+        /// <summary>
         /// Removes the value with the given key.
         /// </summary>
         /// <param name="cacheKey">A string identifying the requested value.</param>
@@ -140,6 +146,8 @@ namespace AngularDotnetPlatform.Platform.Caching
         }
 
         public abstract void Remove(PlatformCacheKey cacheKey);
+
+        public abstract void Remove(Func<PlatformCacheKey, bool> cacheKeyPredicate);
 
         public abstract Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default);
 

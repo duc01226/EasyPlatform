@@ -27,6 +27,12 @@ namespace AngularDotnetPlatform.Platform.Caching
 
         PlatformCacheRepositoryType CacheRepositoryType();
 
+        void Remove(Func<string, bool> cacheRequestKeyPredicate);
+
+        void Remove(Func<object[], bool> cacheRequestKeyPartsPredicate);
+
+        void RemoveAll();
+
         Task RemoveAsync(
             Func<string, bool> cacheRequestKeyPredicate,
             CancellationToken token = default);
@@ -163,6 +169,25 @@ namespace AngularDotnetPlatform.Platform.Caching
         public async Task RemoveAsync(object[] requestKeyParts = null, CancellationToken token = default)
         {
             await CacheRepository().RemoveAsync(CollectionCacheKeyProvider.GetKey(requestKeyParts), token);
+        }
+
+        public void Remove(
+            Func<string, bool> cacheRequestKeyPredicate)
+        {
+            var matchCollectionKeyPredicate = CollectionCacheKeyProvider.MatchCollectionKeyPredicate();
+            CacheRepository().Remove(cacheKey => matchCollectionKeyPredicate(cacheKey) && cacheRequestKeyPredicate(cacheKey.RequestKey));
+        }
+
+        public void Remove(
+            Func<object[], bool> cacheRequestKeyPartsPredicate)
+        {
+            var matchCollectionKeyPredicate = CollectionCacheKeyProvider.MatchCollectionKeyPredicate();
+            CacheRepository().Remove(cacheKey => matchCollectionKeyPredicate(cacheKey) && cacheRequestKeyPartsPredicate(cacheKey.RequestKeyParts()));
+        }
+
+        public void RemoveAll()
+        {
+            Remove((Func<string, bool>)(p => true));
         }
 
         public async Task RemoveAsync(

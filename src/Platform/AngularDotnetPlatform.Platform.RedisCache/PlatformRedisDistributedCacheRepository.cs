@@ -69,14 +69,7 @@ namespace AngularDotnetPlatform.Platform.RedisCache
             UpdateCachedKeys(p => p.Remove(cacheKey, out _));
         }
 
-        public override async Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default)
-        {
-            await redisCache.RemoveAsync(cacheKey, token);
-
-            UpdateCachedKeys(p => p.Remove(cacheKey, out _));
-        }
-
-        public override Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default)
+        public override void Remove(Func<PlatformCacheKey, bool> cacheKeyPredicate)
         {
             var globalCachedKeys = GetGlobalCachedKeys();
 
@@ -92,6 +85,18 @@ namespace AngularDotnetPlatform.Platform.RedisCache
             }
 
             SetGlobalCachedKeys(globalCachedKeys);
+        }
+
+        public override async Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default)
+        {
+            await redisCache.RemoveAsync(cacheKey, token);
+
+            UpdateCachedKeys(p => p.Remove(cacheKey, out _));
+        }
+
+        public override Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default)
+        {
+            Remove(cacheKeyPredicate);
 
             return Task.CompletedTask;
         }

@@ -78,7 +78,9 @@ namespace AngularDotnetPlatform.Platform.Caching
 
         public static object[] BuildRequestKeyParts(string requestKey)
         {
-            return requestKey.Split(RequestKeySeparator)
+            return requestKey
+                .Substring(1, requestKey.Length - 1)
+                .Split(RequestKeySeparator)
                 .Select(requestKeyPartJsonString =>
                 {
                     try

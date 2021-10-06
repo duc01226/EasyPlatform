@@ -8,7 +8,6 @@ using AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EfCore.EntityConfiguration;
 using AngularDotnetPlatform.Platform.EfCore.Helpers;
 using AngularDotnetPlatform.Platform.Extensions;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -20,12 +19,12 @@ namespace AngularDotnetPlatform.Platform.EfCore
 {
     public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPersistenceModule where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
-        protected readonly ILogger<PlatformEfCorePersistenceModule<TDbContext>> Logger;
+        protected readonly ILogger Logger;
 
         public PlatformEfCorePersistenceModule(
             IServiceProvider serviceProvider,
             IConfiguration configuration,
-            ILogger<PlatformEfCorePersistenceModule<TDbContext>> logger) : base(serviceProvider, configuration)
+            ILogger logger) : base(serviceProvider, configuration)
         {
             Logger = logger;
         }

@@ -198,17 +198,18 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
             serviceCollection.RegisterAllFromType<IPlatformContextCacheKeyProvider>(ServiceLifeTime.Transient, Assembly, replaceIfExist: true);
 
             serviceCollection.RegisterAllFromType<IPlatformCacheRepository>(ServiceLifeTime.Singleton, Assembly, replaceIfExist: true);
-            serviceCollection.RegisterAllForImplementation<PlatformMemoryCacheRepository>(ServiceLifeTime.Singleton, replaceIfExist: true);
-
             serviceCollection.RegisterAllFromType(typeof(IPlatformCollectionCacheRepository<>), ServiceLifeTime.Transient, Assembly, replaceIfExist: true);
-            serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionMemoryCacheRepository<>), ServiceLifeTime.Transient, replaceIfExist: true);
+
+            // Register built-in memory cache
+            serviceCollection.RegisterAllForImplementation<PlatformMemoryCacheRepository>(ServiceLifeTime.Singleton);
+            serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionMemoryCacheRepository<>), ServiceLifeTime.Transient);
 
             if (HasDistributedCacheProviderImplementation())
             {
                 serviceCollection.RegisterAllForImplementation(
                     provider => DistributedCacheRepositoryProvider(provider, Configuration), ServiceLifeTime.Singleton, replaceIfExist: true);
 
-                serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionDistributedCacheRepository<>), ServiceLifeTime.Transient, replaceIfExist: true);
+                serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionDistributedCacheRepository<>), ServiceLifeTime.Transient);
             }
         }
 
