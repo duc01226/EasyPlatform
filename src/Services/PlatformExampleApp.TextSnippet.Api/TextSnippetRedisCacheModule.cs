@@ -18,7 +18,7 @@ namespace PlatformExampleApp.TextSnippet.Api
 
         protected override void SetupRedisCacheOptions(RedisCacheOptions options)
         {
-            options.Configuration = Configuration["RedisCacheMqOptions:Connection"];
+            options.Configuration = Configuration["RedisCacheOptions:Connection"];
         }
     }
 }
