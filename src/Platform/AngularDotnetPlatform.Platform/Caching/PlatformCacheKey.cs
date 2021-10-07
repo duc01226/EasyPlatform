@@ -19,7 +19,7 @@ namespace AngularDotnetPlatform.Platform.Caching
         public PlatformCacheKey(string requestKey = DefaultRequestKey)
         {
             Context = GetType().Assembly.GetName().Name;
-            RequestKey = requestKey.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
+            RequestKey = AutoFixKeyPartValue(requestKey);
         }
 
         public PlatformCacheKey(object[] requestKeyParts)
@@ -30,22 +30,27 @@ namespace AngularDotnetPlatform.Platform.Caching
 
         public PlatformCacheKey(string collection, string requestKey) : this(requestKey)
         {
-            Collection = collection.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
+            Collection = AutoFixKeyPartValue(collection);
         }
 
         public PlatformCacheKey(string collection, params object[] requestKeyParts) : this(requestKeyParts)
         {
-            Collection = collection.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
+            Collection = AutoFixKeyPartValue(collection);
         }
 
         public PlatformCacheKey(string context, string collection, string requestKey) : this(collection, requestKey)
         {
-            Context = context.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
+            Context = AutoFixKeyPartValue(context);
         }
 
         public PlatformCacheKey(string context, string collection, params object[] requestKeyParts) : this(collection, requestKeyParts)
         {
-            Context = context.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
+            Context = AutoFixKeyPartValue(context);
+        }
+
+        public static string AutoFixKeyPartValue(string keyPartValue)
+        {
+            return keyPartValue?.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
         }
 
         /// <summary>
@@ -66,6 +71,17 @@ namespace AngularDotnetPlatform.Platform.Caching
         public static implicit operator string(PlatformCacheKey platformCacheKey)
         {
             return platformCacheKey.ToString();
+        }
+
+        public static implicit operator PlatformCacheKey(string fullCacheKeyString)
+        {
+            return FromFullCacheKeyString(fullCacheKeyString);
+        }
+
+        public static PlatformCacheKey FromFullCacheKeyString(string fullCacheKeyString)
+        {
+            var cacheKeyParts = fullCacheKeyString.Split(RequestKeySeparator).ToList();
+            return new PlatformCacheKey(cacheKeyParts[0], cacheKeyParts[1], cacheKeyParts[2]);
         }
 
         public static string BuildRequestKey(object[] requestKeyParts)

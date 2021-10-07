@@ -76,7 +76,7 @@ namespace AngularDotnetPlatform.Platform.RedisCache
             var localMatchedKeys = localCachedKeys.Select(p => p.Key).Where(cacheKeyPredicate).ToList();
             var globalMatchedKeys = globalCachedKeys.Select(p => p.Key).Where(cacheKeyPredicate).ToList();
 
-            var matchedKeys = localMatchedKeys.Concat(globalMatchedKeys).Distinct();
+            var matchedKeys = localMatchedKeys.Concat(globalMatchedKeys).Distinct().ToList();
             foreach (var matchedKey in matchedKeys)
             {
                 redisCache.Remove(matchedKey);
@@ -140,7 +140,7 @@ namespace AngularDotnetPlatform.Platform.RedisCache
             var cachedKeysList =
                 Get<List<string>>(BuildGlobalCachedKeysDataCacheKey()) ?? new List<string>();
 
-            var cachedKeys = cachedKeysList.ToDictionary(p => new PlatformCacheKey(p), p => (object)p);
+            var cachedKeys = cachedKeysList.ToDictionary(p => (PlatformCacheKey)p, p => (object)p);
 
             return cachedKeys;
         }

@@ -28,7 +28,8 @@ namespace AngularDotnetPlatform.Platform.Caching
 
         public Func<PlatformCacheKey, bool> MatchCollectionKeyPredicate()
         {
-            return p => p.Collection == Collection && p.Context == Context;
+            return p => p.Collection == PlatformCacheKey.AutoFixKeyPartValue(Collection) &&
+                        p.Context == PlatformCacheKey.AutoFixKeyPartValue(Context);
         }
 
         protected override void EnsureValidProvider()
