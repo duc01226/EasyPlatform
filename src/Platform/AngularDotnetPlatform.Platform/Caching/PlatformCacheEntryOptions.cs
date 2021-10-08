@@ -37,6 +37,13 @@ namespace AngularDotnetPlatform.Platform.Caching
         {
             return UnusedExpirationInSeconds.HasValue ? TimeSpan.FromSeconds(UnusedExpirationInSeconds.Value) : null;
         }
+
+        public PlatformCacheEntryOptions WithOptionalCustomAbsoluteExpirationInSeconds(double? value)
+        {
+            if (value != null)
+                AbsoluteExpirationInSeconds = value;
+            return this;
+        }
     }
 
     public abstract class PlatformConfigurationCacheEntryOptions : PlatformCacheEntryOptions

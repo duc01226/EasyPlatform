@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AngularDotnetPlatform.Platform.Caching
@@ -117,6 +118,11 @@ namespace AngularDotnetPlatform.Platform.Caching
             PlatformCacheKey cacheKey,
             double? absoluteExpirationInSeconds = null,
             CancellationToken token = default) where TData : new();
+
+        /// <summary>
+        /// Return default cache entry options value. This could be config when register module, override <see cref="PlatformModule.DefaultPlatformCacheEntryOptions"/>
+        /// </summary>
+        PlatformCacheEntryOptions GetDefaultCacheEntryOptions();
     }
 
     public abstract class PlatformCacheRepository : IPlatformCacheRepository
@@ -137,12 +143,18 @@ namespace AngularDotnetPlatform.Platform.Caching
         public abstract Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, CancellationToken token = default);
         public void Set<T>(PlatformCacheKey cacheKey, T value, double? absoluteExpirationInSeconds = null)
         {
-            Set(cacheKey, value, new PlatformCacheEntryOptions() { AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds });
+            var defaultCacheOptions = GetDefaultCacheEntryOptions()
+                .WithOptionalCustomAbsoluteExpirationInSeconds(absoluteExpirationInSeconds);
+
+            Set(cacheKey, value, defaultCacheOptions);
         }
 
         public async Task SetAsync<T>(PlatformCacheKey cacheKey, T value, double? absoluteExpirationInSeconds = null, CancellationToken token = default)
         {
-            await SetAsync(cacheKey, value, new PlatformCacheEntryOptions() { AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds }, token);
+            var defaultCacheOptions = GetDefaultCacheEntryOptions()
+                .WithOptionalCustomAbsoluteExpirationInSeconds(absoluteExpirationInSeconds);
+
+            await SetAsync(cacheKey, value, defaultCacheOptions, token);
         }
 
         public abstract void Remove(PlatformCacheKey cacheKey);
@@ -183,7 +195,19 @@ namespace AngularDotnetPlatform.Platform.Caching
             double? absoluteExpirationInSeconds = null,
             CancellationToken token = default) where TData : new()
         {
-            return await CacheRequestAsync(request, cacheKey, new PlatformCacheEntryOptions() { AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds }, token);
+            return await CacheRequestAsync(
+                request,
+                cacheKey,
+                new PlatformCacheEntryOptions()
+                {
+                    AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds
+                },
+                token);
+        }
+
+        public PlatformCacheEntryOptions GetDefaultCacheEntryOptions()
+        {
+            return serviceProvider.GetService<PlatformCacheEntryOptions>() ?? new PlatformCacheEntryOptions();
         }
     }
 }

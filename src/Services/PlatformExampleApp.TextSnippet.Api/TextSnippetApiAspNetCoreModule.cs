@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using AngularDotnetPlatform.Platform.AspNetCore;
+using AngularDotnetPlatform.Platform.Caching;
 using PlatformExampleApp.TextSnippet.Api.Context.UserContext;
 using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Domain;
@@ -47,6 +48,14 @@ namespace PlatformExampleApp.TextSnippet.Api
         protected override Type UserContextKeyToClaimTypeMapperType()
         {
             return typeof(TextSnippetApplicationUserContextKeyToJwtClaimTypeMapper);
+        }
+
+        protected override PlatformCacheEntryOptions DefaultPlatformCacheEntryOptions(IServiceProvider serviceProvider)
+        {
+            return new PlatformCacheEntryOptions()
+            {
+                AbsoluteExpirationInSeconds = Configuration.GetSection("Caching:DefaultExpirationInSeconds").Get<int>()
+            };
         }
     }
 }

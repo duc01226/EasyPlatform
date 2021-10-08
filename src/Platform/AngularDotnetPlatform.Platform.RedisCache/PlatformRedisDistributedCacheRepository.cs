@@ -57,7 +57,7 @@ namespace AngularDotnetPlatform.Platform.RedisCache
             PlatformCacheEntryOptions cacheOptions = null,
             CancellationToken token = default)
         {
-            await redisCache.SetAsync(cacheKey, JsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions ?? new PlatformCacheEntryOptions()), token);
+            await redisCache.SetAsync(cacheKey, JsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions ?? GetDefaultCacheEntryOptions()), token);
 
             UpdateCachedKeys(p => p.TryAdd(cacheKey, null));
         }

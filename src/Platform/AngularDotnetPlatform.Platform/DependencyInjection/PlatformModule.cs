@@ -171,6 +171,14 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
             });
         }
 
+        /// <summary>
+        /// Override this method to config default PlatformCacheEntryOptions when save cache
+        /// </summary>
+        protected virtual PlatformCacheEntryOptions DefaultPlatformCacheEntryOptions(IServiceProvider serviceProvider)
+        {
+            return null;
+        }
+
         private void RegisterDefaultLogs(IServiceCollection serviceCollection)
         {
             serviceCollection.RegisterIfServiceNotExist(typeof(ILoggerFactory), typeof(LoggerFactory), ServiceLifeTime.Transient);
@@ -200,6 +208,8 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
             serviceCollection.RegisterAllFromType<IPlatformCacheRepository>(ServiceLifeTime.Singleton, Assembly, replaceIfExist: true);
             serviceCollection.RegisterAllFromType(typeof(IPlatformCollectionCacheRepository<>), ServiceLifeTime.Transient, Assembly, replaceIfExist: true);
 
+            RegisterDefaultPlatformCacheEntryOptions(serviceCollection);
+
             // Register built-in memory cache
             serviceCollection.RegisterAllForImplementation<PlatformMemoryCacheRepository>(ServiceLifeTime.Singleton);
             serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionMemoryCacheRepository<>), ServiceLifeTime.Transient);
@@ -210,6 +220,19 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                     provider => DistributedCacheRepositoryProvider(provider, Configuration), ServiceLifeTime.Singleton, replaceIfExist: true);
 
                 serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionDistributedCacheRepository<>), ServiceLifeTime.Transient);
+            }
+        }
+
+        private void RegisterDefaultPlatformCacheEntryOptions(IServiceCollection serviceCollection)
+        {
+            if (ServiceProvider.GetService<PlatformCacheEntryOptions>() == null || DefaultPlatformCacheEntryOptions(ServiceProvider) != null)
+            {
+                serviceCollection.Register(
+                    typeof(PlatformCacheEntryOptions),
+                    DefaultPlatformCacheEntryOptions,
+                    ServiceLifeTime.Transient,
+                    replaceIfExist: true,
+                    ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
             }
         }
 

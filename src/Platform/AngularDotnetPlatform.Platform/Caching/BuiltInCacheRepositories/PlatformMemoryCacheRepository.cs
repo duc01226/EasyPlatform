@@ -38,14 +38,25 @@ namespace AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories
 
         public override void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null)
         {
-            memoryDistributedCache.Set(cacheKey, JsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions));
+            memoryDistributedCache.Set(
+                cacheKey,
+                JsonSerializer.SerializeToUtf8Bytes(value),
+                MapToDistributedCacheEntryOptions(cacheOptions));
 
             cachedKeys.TryAdd(cacheKey, null);
         }
 
-        public override async Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, CancellationToken token = default)
+        public override async Task SetAsync<T>(
+            PlatformCacheKey cacheKey,
+            T value,
+            PlatformCacheEntryOptions cacheOptions = null,
+            CancellationToken token = default)
         {
-            await memoryDistributedCache.SetAsync(cacheKey, JsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions ?? new PlatformCacheEntryOptions()), token);
+            await memoryDistributedCache.SetAsync(
+                cacheKey,
+                JsonSerializer.SerializeToUtf8Bytes(value),
+                MapToDistributedCacheEntryOptions(cacheOptions ?? GetDefaultCacheEntryOptions()),
+                token);
 
             cachedKeys.TryAdd(cacheKey, null);
         }
