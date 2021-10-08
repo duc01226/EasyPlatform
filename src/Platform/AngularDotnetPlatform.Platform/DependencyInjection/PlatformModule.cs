@@ -234,6 +234,13 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                     replaceIfExist: true,
                     ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
             }
+            else if (!serviceCollection.Any(p => p.ServiceType == typeof(PlatformCacheEntryOptions)))
+            {
+                serviceCollection.Register(
+                    typeof(PlatformCacheEntryOptions),
+                    typeof(PlatformCacheEntryOptions),
+                    ServiceLifeTime.Transient);
+            }
         }
 
         private bool HasDistributedCacheProviderImplementation()
