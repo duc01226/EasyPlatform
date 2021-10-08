@@ -10,7 +10,6 @@ namespace PlatformExampleApp.TextSnippet.Application.Caching
         {
         }
 
-        public override string Context => TextSnippetApplicationConstants.ApplicationName;
         public override string Collection => TextSnippetApplicationConstants.CacheKeyCollectionNames.TextSnippet;
     }
 }
