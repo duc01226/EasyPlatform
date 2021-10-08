@@ -225,7 +225,7 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
 
         private void RegisterDefaultPlatformCacheEntryOptions(IServiceCollection serviceCollection)
         {
-            if (ServiceProvider.GetService<PlatformCacheEntryOptions>() == null || DefaultPlatformCacheEntryOptions(ServiceProvider) != null)
+            if (DefaultPlatformCacheEntryOptions(ServiceProvider) != null)
             {
                 serviceCollection.Register(
                     typeof(PlatformCacheEntryOptions),
