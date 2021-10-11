@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace AngularDotnetPlatform.Platform
+namespace AngularDotnetPlatform.Platform.BackgroundHostedService
 {
     public abstract class PlatformIntervalProcessHostedService : PlatformHostedService
     {

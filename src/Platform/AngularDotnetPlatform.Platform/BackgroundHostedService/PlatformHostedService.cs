@@ -1,13 +1,10 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace AngularDotnetPlatform.Platform
+namespace AngularDotnetPlatform.Platform.BackgroundHostedService
 {
     public abstract class PlatformHostedService : IHostedService, IDisposable
     {
