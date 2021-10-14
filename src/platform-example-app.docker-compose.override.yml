@@ -17,6 +17,8 @@ services:
     volumes:
       - AngularDotnetPlatform-mongodata-db:/data/db
       - AngularDotnetPlatform-mongodata-configdb:/data/configdb
+      - C:\AngularDotnetPlatformDockerMongoDb\db:/data/db
+      - C:\AngularDotnetPlatformDockerMongoDb\configdb:/data/configdb
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=rootPassXXX
