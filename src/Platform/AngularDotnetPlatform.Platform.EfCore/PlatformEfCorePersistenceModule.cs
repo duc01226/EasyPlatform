@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.DependencyInjection;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EfCore.Domain.Repositories;
 using AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EfCore.EntityConfiguration;
@@ -43,7 +44,20 @@ namespace AngularDotnetPlatform.Platform.EfCore
             base.InternalRegister(serviceCollection);
 
             serviceCollection.AddDbContext<TDbContext>(DbContextOptionsBuilderActionProvider(serviceCollection), ServiceLifetime.Transient);
-            serviceCollection.RegisterAllFromType<IPlatformEfCoreUnitOfWork<TDbContext>>(ServiceLifeTime.Transient, Assembly);
+
+            serviceCollection
+                .RegisterAllForImplementation(typeof(PlatformDefaultEfCoreUnitOfWork<TDbContext>), ServiceLifeTime.Transient);
+            serviceCollection.RegisterAllFromType<IPlatformEfCoreUnitOfWork<TDbContext>>(
+                ServiceLifeTime.Transient,
+                Assembly,
+                replaceIfExist: true,
+                ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(IUnitOfWork) &&
+                                            p.ImplementationType?.IsAssignableTo(typeof(IPlatformEfCoreUnitOfWork<TDbContext>)) == true))
+            {
+                serviceCollection.Register<IUnitOfWork, PlatformDefaultEfCoreUnitOfWork<TDbContext>>(ServiceLifeTime.Transient);
+            }
+
             serviceCollection.Register(
                 typeof(PlatformEfCoreOptions),
                 p =>

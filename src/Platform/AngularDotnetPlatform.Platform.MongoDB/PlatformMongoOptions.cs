@@ -5,4 +5,6 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         public string ConnectionString { get; set; }
         public string Database { get; set; }
     }
+
+    public class PlatformMongoOptions<TDbContext> : PlatformMongoOptions where TDbContext : class, IPlatformMongoDbContext<TDbContext> { }
 }

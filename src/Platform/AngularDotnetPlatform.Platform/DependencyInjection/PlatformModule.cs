@@ -5,6 +5,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Dtos;
+using AngularDotnetPlatform.Platform.BackgroundJob;
 using AngularDotnetPlatform.Platform.Caching;
 using AngularDotnetPlatform.Platform.Caching.BuiltInCacheRepositories;
 using AngularDotnetPlatform.Platform.Cqrs;
@@ -14,7 +15,9 @@ using AngularDotnetPlatform.Platform.Validators;
 using MediatR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Polly;
 
 namespace AngularDotnetPlatform.Platform.DependencyInjection
 {
@@ -40,7 +43,9 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
 
         protected virtual bool AutoRegisterCqrs => true;
 
-        protected virtual bool AutoRegisterCaching => true;
+        protected virtual bool AutoRegisterCaching => false;
+
+        protected virtual bool AutoRegisterBackgroundJob => false;
 
         public void Register(IServiceCollection serviceCollection)
         {
@@ -55,6 +60,8 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                     RegisterCqrs(serviceCollection);
                 if (AutoRegisterCaching)
                     RegisterCaching(serviceCollection);
+                if (AutoRegisterBackgroundJob)
+                    RegisterBackgroundJob(serviceCollection);
 
                 InternalRegister(serviceCollection);
                 Registered = true;
@@ -179,9 +186,72 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
             return null;
         }
 
+        protected async Task StartBackgroundJobProcessing(IServiceScope serviceScope)
+        {
+            var backgroundJobProcessingService = serviceScope.ServiceProvider.GetService<IPlatformBackgroundJobProcessingService>();
+
+            if (backgroundJobProcessingService?.Started() == true)
+                await backgroundJobProcessingService?.Stop();
+
+            if (backgroundJobProcessingService?.Started() == false)
+            {
+                var applicationLifetime = serviceScope.ServiceProvider.GetService<IHostApplicationLifetime>();
+                var retryCount = 10;
+
+                await Policy.Handle<Exception>()
+                    .WaitAndRetryAsync(
+                        retryCount: retryCount,
+                        sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                        onRetry: (exception, timeSpan, retry, ctx) =>
+                        {
+                            var logger = serviceScope.ServiceProvider.GetService<ILogger>();
+
+                            logger.LogWarning(exception,
+                                "[StartBackgroundJobProcessing] Exception {ExceptionType} with message {Message} detected on attempt StartBackgroundJobProcessing {retry} of {retries}",
+                                exception.GetType().Name,
+                                exception.Message,
+                                retry,
+                                retryCount);
+                        })
+                    .ExecuteAndThrowFinalExceptionAsync(async () =>
+                    {
+                        await backgroundJobProcessingService.Start();
+                        applicationLifetime?.ApplicationStopping.Register(() =>
+                        {
+                            backgroundJobProcessingService.Stop().Wait();
+                        });
+                    });
+            }
+        }
+
+        protected Task ReplaceAllRecurringBackgroundJobs(IServiceScope serviceScope)
+        {
+            var scheduler = serviceScope.ServiceProvider.GetService<IPlatformBackgroundJobScheduler>();
+            if (scheduler != null)
+            {
+                var allCurrentRecurringJobExecutors = serviceScope.ServiceProvider
+                    .GetServices<IPlatformBackgroundJobExecutor>()
+                    .Where(p => !string.IsNullOrEmpty(PlatformRecurringJobAttribute.GetCronExpressionInfo(p.GetType())))
+                    .ToList();
+
+                scheduler.ReplaceAllRecurringBackgroundJobs(allCurrentRecurringJobExecutors);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        protected virtual void RegisterBackgroundJob(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RegisterAllFromType<IPlatformBackgroundJobExecutor>(
+                ServiceLifeTime.Transient,
+                Assembly,
+                replaceIfExist: true);
+        }
+
         private void RegisterDefaultLogs(IServiceCollection serviceCollection)
         {
             serviceCollection.RegisterIfServiceNotExist(typeof(ILoggerFactory), typeof(LoggerFactory), ServiceLifeTime.Transient);
+            serviceCollection.RegisterIfServiceNotExist(typeof(ILogger<>), typeof(Logger<>), ServiceLifeTime.Transient);
         }
 
         private void RegisterCqrs(IServiceCollection serviceCollection)

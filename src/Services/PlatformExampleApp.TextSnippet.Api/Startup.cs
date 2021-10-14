@@ -36,7 +36,7 @@ namespace PlatformExampleApp.TextSnippet.Api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, TextSnippetApiAspNetCoreModule apiModule)
         {
-            if (env.IsDevelopment())
+            if (env.IsDevelopment() || env.EnvironmentName.Contains(Environments.Development))
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();

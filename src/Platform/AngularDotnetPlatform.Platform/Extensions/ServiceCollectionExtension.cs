@@ -59,11 +59,19 @@ namespace AngularDotnetPlatform.Platform.Extensions
         public static IServiceCollection RegisterAllForImplementation(
             this IServiceCollection services,
             Type implementationType,
-            ServiceLifeTime lifeTime)
+            ServiceLifeTime lifeTime = ServiceLifeTime.Transient,
+            Func<IServiceProvider, object> implementationFactory = null)
         {
-            services.RegisterIfNotExist(implementationType, implementationType, lifeTime);
+            if (implementationFactory != null)
+            {
+                services.Register(implementationType, implementationFactory, lifeTime);
+            }
+            else
+            {
+                services.RegisterIfNotExist(implementationType, implementationType, lifeTime);
+            }
 
-            services.RegisterInterfacesForImplementation(implementationType, lifeTime);
+            services.RegisterInterfacesForImplementation(implementationType, lifeTime, implementationFactory);
 
             return services;
         }
@@ -73,9 +81,10 @@ namespace AngularDotnetPlatform.Platform.Extensions
         /// </summary>
         public static IServiceCollection RegisterAllForImplementation<TImplementation>(
             this IServiceCollection services,
-            ServiceLifeTime lifeTime)
+            ServiceLifeTime lifeTime = ServiceLifeTime.Transient,
+            Func<IServiceProvider, TImplementation> implementationFactory = null) where TImplementation : class
         {
-            return RegisterAllForImplementation(services, typeof(TImplementation), lifeTime);
+            return RegisterAllForImplementation(services, typeof(TImplementation), lifeTime, implementationFactory);
         }
 
         /// <summary>
@@ -308,7 +317,8 @@ namespace AngularDotnetPlatform.Platform.Extensions
         public static void RegisterInterfacesForImplementation(
             this IServiceCollection services,
             Type implementationType,
-            ServiceLifeTime lifeTime)
+            ServiceLifeTime lifeTime,
+            Func<IServiceProvider, object> implementationFactory = null)
         {
             if (implementationType.IsGenericType)
             {
@@ -316,14 +326,39 @@ namespace AngularDotnetPlatform.Platform.Extensions
                     .GetInterfaces()
                     .Where(p => p.IsGenericType && p.GetGenericArguments().Length == implementationType.GetGenericArguments().Length)
                     .ToList()
-                    .ForEach(implementationTypeInterface => services.RegisterIfNotExist(Util.Types.FixTypeReference(implementationTypeInterface), implementationType, lifeTime));
+                    .ForEach(implementationTypeInterface =>
+                    {
+                        if (implementationFactory != null)
+                        {
+                            services.Register(
+                                Util.Types.FixTypeReference(implementationTypeInterface), implementationFactory, lifeTime);
+                        }
+                        else
+                        {
+                            services.RegisterIfNotExist(
+                                Util.Types.FixTypeReference(implementationTypeInterface),
+                                implementationType,
+                                lifeTime);
+                        }
+                    });
             }
             else
             {
                 implementationType.GetInterfaces()
                     .Where(p => !p.IsGenericType)
                     .ToList()
-                    .ForEach(implementationTypeInterface => services.RegisterIfNotExist(implementationTypeInterface, implementationType, lifeTime));
+                    .ForEach(implementationTypeInterface =>
+                    {
+                        if (implementationFactory != null)
+                        {
+                            services.Register(
+                                Util.Types.FixTypeReference(implementationTypeInterface), implementationFactory, lifeTime);
+                        }
+                        else
+                        {
+                            services.RegisterIfNotExist(implementationTypeInterface, implementationType, lifeTime);
+                        }
+                    });
             }
         }
 

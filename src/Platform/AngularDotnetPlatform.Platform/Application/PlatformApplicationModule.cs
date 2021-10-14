@@ -32,6 +32,10 @@ namespace AngularDotnetPlatform.Platform.Application
             this.Logger = logger;
         }
 
+        protected override bool AutoRegisterCaching => true;
+
+        protected override bool AutoRegisterBackgroundJob => true;
+
         public async Task SeedData(IServiceScope serviceScope)
         {
             //if the db server is not initiated, SeedData could fail.

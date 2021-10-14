@@ -5,6 +5,7 @@ using AngularDotnetPlatform.Platform.AspNetCore.Controllers;
 using AngularDotnetPlatform.Platform.Caching;
 using AngularDotnetPlatform.Platform.Cqrs;
 using Microsoft.Extensions.Configuration;
+using PlatformExampleApp.TextSnippet.Application.BackgroundJob;
 using PlatformExampleApp.TextSnippet.Application.Caching;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 using PlatformExampleApp.TextSnippet.Application.UserCaseQueries;
@@ -55,6 +56,18 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
             RandomThrowToTestHandleInternalException();
 
             return await Cqrs.SendCommand<SaveSnippetTextCommand, SaveSnippetTextCommandResult>(request);
+        }
+
+        [HttpGet]
+        [Route("demoScheduleBackgroundJobManuallyCommand")]
+        public async Task<DemoScheduleBackgroundJobManuallyCommandResult> DemoScheduleBackgroundJobManuallyCommandResult(
+            string updateTextSnippetFullText = "")
+        {
+            return await Cqrs.SendCommand<DemoScheduleBackgroundJobManuallyCommand, DemoScheduleBackgroundJobManuallyCommandResult>(
+                new DemoScheduleBackgroundJobManuallyCommand()
+                {
+                    NewSnippetText = updateTextSnippetFullText
+                });
         }
 
         [HttpGet]

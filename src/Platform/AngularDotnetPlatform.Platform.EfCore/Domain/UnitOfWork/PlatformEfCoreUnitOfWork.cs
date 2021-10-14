@@ -21,10 +21,10 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork
         public event EventHandler<UnitOfWorkFailedArgs> OnFailed;
         public TDbContext DbContext { get; }
 
-        public bool Completed { get; private set; }
-        public bool Disposed { get; private set; }
+        public bool Completed { get; protected set; }
+        public bool Disposed { get; protected set; }
 
-        public async Task CompleteAsync(CancellationToken cancellationToken = default)
+        public virtual async Task CompleteAsync(CancellationToken cancellationToken = default)
         {
             if (Completed)
                 throw new Exception("This unit of work is completed");

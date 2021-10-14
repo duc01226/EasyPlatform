@@ -2,14 +2,35 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using AngularDotnetPlatform.Platform.Persistence.Helpers;
+using Microsoft.Extensions.DependencyInjection;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
 namespace AngularDotnetPlatform.Platform.MongoDB.Helpers
 {
-    public class MongoDbPlatformFullTextSearchPersistenceHelper : IPlatformFullTextSearchPersistenceHelper
+    public class MongoDbPlatformFullTextSearchPersistenceHelper : PlatformFullTextSearchPersistenceHelper
     {
-        public IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, string>>[] inFullTextSearchProps, bool exactMatch = false)
+        public MongoDbPlatformFullTextSearchPersistenceHelper(IServiceProvider serviceProvider) : base(serviceProvider)
+        {
+        }
+
+        public override IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, string>>[] inFullTextSearchProps, bool exactMatch = false)
+        {
+            if (!IsSupportQuery(query) &&
+                TrySearchByFirstSupportQueryHelper(query, searchText, inFullTextSearchProps, exactMatch, out var newQuery))
+            {
+                return newQuery;
+            }
+
+            return DoMongoSearch(query, searchText, exactMatch);
+        }
+
+        public override bool IsSupportQuery<T>(IQueryable<T> query)
+        {
+            return query is IMongoQueryable;
+        }
+
+        private static IQueryable<T> DoMongoSearch<T>(IQueryable<T> query, string searchText, bool exactMatch)
         {
             if (string.IsNullOrWhiteSpace(searchText))
             {

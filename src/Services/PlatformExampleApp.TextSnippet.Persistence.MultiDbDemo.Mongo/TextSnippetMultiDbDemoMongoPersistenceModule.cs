@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using AngularDotnetPlatform.Platform.MongoDB;
+using Microsoft.Extensions.Options;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
@@ -12,8 +13,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
     /// We can implement an ef-core module for TextSnippetMultiDbDemoPersistencePlatformModule too
     /// and import the right module as we needed.
     /// </summary>
-    public class TextSnippetMultiDbDemoMongoPersistenceModule :
-        PlatformMongoDbPersistenceModule<TextSnippetMultiDbDemoMongoClientContext, TextSnippetMultiDbDemoDbContext, TextSnippetMultiDbDemoMongoOptions>
+    public class TextSnippetMultiDbDemoMongoPersistenceModule : PlatformMongoDbPersistenceModule<TextSnippetMultiDbDemoDbContext>
     {
         public TextSnippetMultiDbDemoMongoPersistenceModule(
             IServiceProvider serviceProvider,
@@ -22,7 +22,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
         {
         }
 
-        protected override void ConfigureMongoOptions(TextSnippetMultiDbDemoMongoOptions options)
+        protected override void ConfigureMongoOptions(PlatformMongoOptions<TextSnippetMultiDbDemoDbContext> options)
         {
             options.ConnectionString = Configuration.GetSection("MongoDB:ConnectionString").Value;
             options.Database = Configuration.GetSection("MongoDB:MultiDbDemoDbDatabase").Value;

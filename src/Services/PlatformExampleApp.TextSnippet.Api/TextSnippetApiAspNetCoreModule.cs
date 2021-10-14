@@ -25,17 +25,20 @@ namespace PlatformExampleApp.TextSnippet.Api
             var result = new List<Func<IConfiguration, Type>>
             {
                 p => typeof(TextSnippetApplicationModule),
+                p => p.GetSection("UseMongoDb").Get<bool>()
+                    ? typeof(TextSnippetMongoPersistenceModule)
+                    : typeof(TextSnippetEfCorePersistenceModule),
+
+                // We can implement an ef-core module for TextSnippetMultiDbDemoPersistencePlatformModule too
+                // and import the right module as we needed.
+                p => typeof(TextSnippetMultiDbDemoMongoPersistenceModule),
+
                 p => typeof(TextSnippetRabbitMqEventBusModule),
-                p => typeof(TextSnippetRedisCacheModule)
+                p => typeof(TextSnippetRedisCacheModule),
+
+                // HangfireBackgroundJobModule should be after PersistenceModule to ensure first time run database is created
+                p => typeof(TextSnippetHangfireBackgroundJobModule)
             };
-
-            result.Add(p => p.GetSection("UseMongoDb").Get<bool>()
-                ? typeof(TextSnippetMongoPersistenceModule)
-                : typeof(TextSnippetEfCorePersistenceModule));
-
-            // We can implement an ef-core module for TextSnippetMultiDbDemoPersistencePlatformModule too
-            // and import the right module as we needed.
-            result.Add(p => typeof(TextSnippetMultiDbDemoMongoPersistenceModule));
 
             return result;
         }

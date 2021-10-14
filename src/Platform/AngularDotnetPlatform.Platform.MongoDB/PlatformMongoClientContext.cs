@@ -1,8 +1,7 @@
-using AngularDotnetPlatform.Platform.MongoDB;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
-namespace AngularDotnetPlatform.Platform.EfCore
+namespace AngularDotnetPlatform.Platform.MongoDB
 {
     public class PlatformMongoClientContext : IPlatformMongoClientContext
     {
@@ -12,5 +11,13 @@ namespace AngularDotnetPlatform.Platform.EfCore
         }
 
         public MongoClient MongoClient { get; set; }
+    }
+
+    public class PlatformMongoClientContext<TDbContext> : PlatformMongoClientContext,
+        IPlatformMongoClientContext<TDbContext> where TDbContext : class, IPlatformMongoDbContext<TDbContext>
+    {
+        public PlatformMongoClientContext(IOptions<PlatformMongoOptions<TDbContext>> options) : base(options)
+        {
+        }
     }
 }

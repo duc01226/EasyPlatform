@@ -10,7 +10,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork
         public TDbContext DbContext { get; }
     }
 
-    public abstract class PlatformMongoDbUnitOfWork<TDbContext> : IPlatformMongoDbUnitOfWork<TDbContext> where TDbContext : PlatformMongoDbContext<TDbContext>
+    public abstract class PlatformMongoDbUnitOfWork<TDbContext> : IPlatformMongoDbUnitOfWork<TDbContext> where TDbContext : IPlatformMongoDbContext<TDbContext>
     {
         public PlatformMongoDbUnitOfWork(TDbContext dbContext)
         {
@@ -19,11 +19,11 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork
 
         public event EventHandler OnCompleted;
         public event EventHandler<UnitOfWorkFailedArgs> OnFailed;
-        public bool Completed { get; private set; }
-        public bool Disposed { get; private set; }
+        public bool Completed { get; protected set; }
+        public bool Disposed { get; protected set; }
         public TDbContext DbContext { get; }
 
-        public Task CompleteAsync(CancellationToken cancellationToken = default)
+        public virtual Task CompleteAsync(CancellationToken cancellationToken = default)
         {
             if (Completed)
                 throw new Exception("This unit of work is completed");

@@ -18,6 +18,8 @@ namespace AngularDotnetPlatform.Platform.RedisCache
         {
         }
 
+        protected override bool AutoRegisterCaching => true;
+
         protected override IPlatformDistributedCacheRepository DistributedCacheRepositoryProvider(
             IServiceProvider serviceProvider,
             IConfiguration configuration)

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.EfCore;
 using AngularDotnetPlatform.Platform.MongoDB;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
@@ -9,16 +8,9 @@ using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
 {
-    public class TextSnippetMongoClientContext : PlatformMongoClientContext
-    {
-        public TextSnippetMongoClientContext(IOptions<PlatformMongoOptions> options) : base(options)
-        {
-        }
-    }
-
     public class TextSnippetDbContext : PlatformMongoDbContext<TextSnippetDbContext>
     {
-        public TextSnippetDbContext(IOptions<PlatformMongoOptions> options, TextSnippetMongoClientContext client) : base(options, client)
+        public TextSnippetDbContext(IOptions<PlatformMongoOptions<TextSnippetDbContext>> options, IPlatformMongoClientContext<TextSnippetDbContext> client) : base(options, client)
         {
         }
 

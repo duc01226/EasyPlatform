@@ -6,24 +6,34 @@ using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using AngularDotnetPlatform.Platform.Utils;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Query.Internal;
 
 namespace AngularDotnetPlatform.Platform.EfCore.Helpers
 {
-    public class EfCoreSqlPlatformFullTextSearchPersistenceHelper : IPlatformFullTextSearchPersistenceHelper
+    public class EfCoreSqlPlatformFullTextSearchPersistenceHelper : PlatformFullTextSearchPersistenceHelper
     {
-        public IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, string>>[] inFullTextSearchProps, bool exactMatch = false)
+        public EfCoreSqlPlatformFullTextSearchPersistenceHelper(IServiceProvider serviceProvider) : base(serviceProvider)
         {
-            if (string.IsNullOrWhiteSpace(searchText))
+        }
+
+        public override IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, string>>[] inFullTextSearchProps, bool exactMatch = false)
+        {
+            if (!IsSupportQuery(query) &&
+                TrySearchByFirstSupportQueryHelper(query, searchText, inFullTextSearchProps, exactMatch, out var newQuery))
             {
-                return query;
+                return newQuery;
             }
 
-            var searchWords = BuildSearchWords(searchText.Trim());
-            var fullTextSearchPropNames = inFullTextSearchProps.Where(p => p != null).Select(Util.Expressions.GetPropertyName).ToList();
+            return DoSqlSearch(query, searchText, inFullTextSearchProps, exactMatch);
+        }
 
-            var searchedQuery = BuildSearchQuery(query, searchWords, fullTextSearchPropNames, exactMatch);
-
-            return searchedQuery;
+        public override bool IsSupportQuery<T>(IQueryable<T> query) where T : class
+        {
+            var queryType = query.GetType();
+            return queryType.IsAssignableTo(typeof(DbSet<T>)) ||
+                   queryType.IsAssignableTo(typeof(IInfrastructure<T>)) ||
+                   queryType.IsAssignableTo(typeof(EntityQueryable<T>));
         }
 
         /// <summary>
@@ -66,6 +76,26 @@ namespace AngularDotnetPlatform.Platform.EfCore.Helpers
             var searchWords = removedSpecialCharactersSearchText.Split(" ").Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
 
             return searchWords;
+        }
+
+        private static IQueryable<T> DoSqlSearch<T>(
+            IQueryable<T> query,
+            string searchText,
+            Expression<Func<T, string>>[] inFullTextSearchProps,
+            bool exactMatch)
+        {
+            if (string.IsNullOrWhiteSpace(searchText))
+            {
+                return query;
+            }
+
+            var searchWords = BuildSearchWords(searchText.Trim());
+            var fullTextSearchPropNames =
+                inFullTextSearchProps.Where(p => p != null).Select(Util.Expressions.GetPropertyName).ToList();
+
+            var searchedQuery = BuildSearchQuery(query, searchWords, fullTextSearchPropNames, exactMatch);
+
+            return searchedQuery;
         }
     }
 }

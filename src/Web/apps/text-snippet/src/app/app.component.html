@@ -31,12 +31,13 @@
             *matCellDef="let element"
             [noWrap]="true"
             [innerHtml]="element.data.snippetText | platformHighlight: vm.searchText"
+            [ngClass]="'app__text-snippet-items-grid-cell'"
           ></td>
         </ng-container>
 
         <ng-container matColumnDef="FullText">
           <th mat-header-cell *matHeaderCellDef>FullText (Click on row to see detail)</th>
-          <td class="app__text-snippet-items-grid-fulltext-cell" mat-cell *matCellDef="let element">
+          <td [ngClass]="'app__text-snippet-items-grid-cell'" mat-cell *matCellDef="let element">
             {{ element.data.fullText }}
           </td>
         </ng-container>

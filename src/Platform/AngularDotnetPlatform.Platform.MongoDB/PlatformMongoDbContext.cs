@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus;
-using AngularDotnetPlatform.Platform.EfCore;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -23,7 +22,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         protected readonly Lazy<Dictionary<Type, string>> EntityTypeToCollectionNameDictionary;
 
-        public PlatformMongoDbContext(IOptions<PlatformMongoOptions> options, IPlatformMongoClientContext client)
+        public PlatformMongoDbContext(IOptions<PlatformMongoOptions<TDbContext>> options, IPlatformMongoClientContext<TDbContext> client)
         {
             Database = client.MongoClient.GetDatabase(options.Value.Database);
             EntityTypeToCollectionNameDictionary = new Lazy<Dictionary<Type, string>>(() =>

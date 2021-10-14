@@ -4,12 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.DependencyInjection;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using AngularDotnetPlatform.Platform.Persistence;
 using Microsoft.Extensions.Configuration;
 using Polly;
-using AngularDotnetPlatform.Platform.EfCore;
 using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories;
 using AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork;
@@ -18,20 +18,21 @@ using AngularDotnetPlatform.Platform.MongoDB.Mapping;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using MongoDB.Bson.Serialization;
 using AngularDotnetPlatform.Platform.MongoDB.Serializer.Abstract;
+using Microsoft.Extensions.Options;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
 {
-    public abstract class PlatformMongoDbPersistenceModule<TClientContext, TDbContext, TMongoOptions> : PlatformPersistenceModule
-        where TClientContext : class, IPlatformMongoClientContext
+    public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContext, TMongoOptions> : PlatformPersistenceModule
         where TDbContext : class, IPlatformMongoDbContext<TDbContext>
-        where TMongoOptions : PlatformMongoOptions
+        where TClientContext : class, IPlatformMongoClientContext<TDbContext>
+        where TMongoOptions : PlatformMongoOptions<TDbContext>
     {
-        protected readonly ILogger<PlatformMongoDbPersistenceModule<TClientContext, TDbContext, TMongoOptions>> Logger;
+        protected readonly ILogger Logger;
 
         public PlatformMongoDbPersistenceModule(
             IServiceProvider serviceProvider,
             IConfiguration configuration,
-            ILogger<PlatformMongoDbPersistenceModule<TClientContext, TDbContext, TMongoOptions>> logger) : base(serviceProvider, configuration)
+            ILogger logger) : base(serviceProvider, configuration)
         {
             Logger = logger;
         }
@@ -41,11 +42,28 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         protected override void InternalRegister(IServiceCollection serviceCollection)
         {
             base.InternalRegister(serviceCollection);
+
             serviceCollection.Configure<TMongoOptions>(ConfigureMongoOptions);
-            serviceCollection.AddSingleton<TClientContext>();
-            serviceCollection.AddSingleton<IPlatformMongoClientContext, TClientContext>();
-            serviceCollection.RegisterAllFromType<TDbContext>(ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType<IPlatformMongoDbUnitOfWork<TDbContext>>(ServiceLifeTime.Transient, Assembly);
+            serviceCollection.Configure<PlatformMongoOptions<TDbContext>>(options => ConfigureMongoOptions(Activator.CreateInstance<TMongoOptions>()));
+
+            serviceCollection.RegisterAllForImplementation(typeof(TClientContext), ServiceLifeTime.Singleton);
+            serviceCollection.Register(typeof(IPlatformMongoClientContext<TDbContext>), provider => provider.GetService<TClientContext>(), ServiceLifeTime.Singleton);
+
+            serviceCollection.RegisterAllForImplementation(typeof(TDbContext));
+            serviceCollection.Register(typeof(IPlatformMongoDbContext<TDbContext>), provider => provider.GetService<TDbContext>());
+
+            serviceCollection.RegisterAllForImplementation(typeof(PlatformDefaultMongoDbUnitOfWork<TDbContext>));
+            serviceCollection.RegisterAllFromType<IPlatformMongoDbUnitOfWork<TDbContext>>(
+                ServiceLifeTime.Transient,
+                Assembly,
+                replaceIfExist: true,
+                ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(IUnitOfWork) &&
+                                            p.ImplementationType?.IsAssignableTo(typeof(IPlatformMongoDbUnitOfWork<TDbContext>)) == true))
+            {
+                serviceCollection.Register<IUnitOfWork, PlatformDefaultMongoDbUnitOfWork<TDbContext>>(ServiceLifeTime.Transient);
+            }
+
             RegisterBuiltInHelpers(serviceCollection);
 
             RegisterPlatformDataMigrationHistoryClassMap();
@@ -153,14 +171,27 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         }
     }
 
-    public abstract class PlatformMongoDbPersistenceModule<TClientContext, TDbContext> : PlatformMongoDbPersistenceModule<TClientContext, TDbContext, PlatformMongoOptions>
-        where TClientContext : class, IPlatformMongoClientContext
+    public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContext>
+        : PlatformMongoDbPersistenceModule<TDbContext, TClientContext, PlatformMongoOptions<TDbContext>>
+        where TDbContext : class, IPlatformMongoDbContext<TDbContext>
+        where TClientContext : class, IPlatformMongoClientContext<TDbContext>
+    {
+        protected PlatformMongoDbPersistenceModule(
+            IServiceProvider serviceProvider,
+            IConfiguration configuration,
+            ILogger logger) : base(serviceProvider, configuration, logger)
+        {
+        }
+    }
+
+    public abstract class PlatformMongoDbPersistenceModule<TDbContext>
+        : PlatformMongoDbPersistenceModule<TDbContext, PlatformMongoClientContext<TDbContext>>
         where TDbContext : class, IPlatformMongoDbContext<TDbContext>
     {
         protected PlatformMongoDbPersistenceModule(
             IServiceProvider serviceProvider,
             IConfiguration configuration,
-            ILogger<PlatformMongoDbPersistenceModule<TClientContext, TDbContext>> logger) : base(serviceProvider, configuration, logger)
+            ILogger logger) : base(serviceProvider, configuration, logger)
         {
         }
     }

@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using AngularDotnetPlatform.Platform.MongoDB;
+using Microsoft.Extensions.Options;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
 {
-    public class TextSnippetMongoPersistenceModule : PlatformMongoDbPersistenceModule<TextSnippetMongoClientContext, TextSnippetDbContext>
+    public class TextSnippetMongoPersistenceModule : PlatformMongoDbPersistenceModule<TextSnippetDbContext>
     {
         public TextSnippetMongoPersistenceModule(
             IServiceProvider serviceProvider,
@@ -16,7 +17,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
         {
         }
 
-        protected override void ConfigureMongoOptions(PlatformMongoOptions options)
+        protected override void ConfigureMongoOptions(PlatformMongoOptions<TextSnippetDbContext> options)
         {
             options.ConnectionString = Configuration.GetSection("MongoDB:ConnectionString").Value;
             options.Database = Configuration.GetSection("MongoDB:Database").Value;

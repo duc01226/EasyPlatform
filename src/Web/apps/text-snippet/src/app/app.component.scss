@@ -69,12 +69,12 @@ platform-example-web-root {
       font-weight: bold;
     }
   }
-  &__text-snippet-items-grid-fulltext-cell {
+  &__text-snippet-items-grid-cell {
     text-overflow: ellipsis;
     white-space: normal;
     overflow: hidden;
-    max-width: calculateRem(10px);
     word-break: break-word;
+    min-width: calculateRem(100px);
   }
   &__detail {
     flex-grow: 1;
