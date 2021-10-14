@@ -53,6 +53,7 @@ namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob
         {
             await base.InternalInit(serviceScope);
 
+            // Config on init be start to take advantaged that the persistence module has initiated so that db is generated.
             GlobalConfigurationConfigure(GlobalConfiguration.Configuration);
 
             // UseActivator on init so that ServiceProvider have enough all registered services

@@ -5,6 +5,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob
 {
+    /// <summary>
+    /// Using service provider activator to resolve object when activate background job.
+    /// Activate by serviceProvider first. If not success then use class Activator.
+    /// </summary>
     public class PlatformHangfireActivator : JobActivator
     {
         private readonly IServiceProvider serviceProvider;
