@@ -9,6 +9,7 @@ services:
       - '14330:1433'
     volumes:
       - AngularDotnetPlatform-sqldata:/var/opt/mssql
+      - C:\AngularDotnetPlatformDockerSql\data:/var/opt/mssql/data
 
   mongo-data:
     ports:

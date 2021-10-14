@@ -31,8 +31,6 @@ namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob
 
         protected override void RegisterBackgroundJob(IServiceCollection serviceCollection)
         {
-            GlobalConfigurationConfigure(GlobalConfiguration.Configuration);
-
             serviceCollection.AddHangfire(GlobalConfigurationConfigure);
 
             serviceCollection.RegisterAllForImplementation<PlatformHangfireBackgroundJobScheduler>(ServiceLifeTime.Singleton);
@@ -54,6 +52,8 @@ namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob
         protected override async Task InternalInit(IServiceScope serviceScope)
         {
             await base.InternalInit(serviceScope);
+
+            GlobalConfigurationConfigure(GlobalConfiguration.Configuration);
 
             // UseActivator on init so that ServiceProvider have enough all registered services
             GlobalConfiguration.Configuration.UseActivator(new PlatformHangfireActivator(ServiceProvider));
