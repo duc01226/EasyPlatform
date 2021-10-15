@@ -1,4 +1,5 @@
 using System;
+using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Timing;
 
 namespace AngularDotnetPlatform.Platform.EventBus
@@ -131,5 +132,16 @@ namespace AngularDotnetPlatform.Platform.EventBus
         /// Indicate which user name generate the message
         /// </summary>
         public string UserName { get; set; }
+
+        public static PlatformEventBusMessageIdentity ByUserContext(
+            IPlatformApplicationUserContext applicationUserContext)
+        {
+            return new PlatformEventBusMessageIdentity()
+            {
+                UserId = applicationUserContext.GetUserId(),
+                RequestId = applicationUserContext.GetRequestId(),
+                UserName = applicationUserContext.GetUserName()
+            };
+        }
     }
 }

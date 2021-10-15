@@ -27,10 +27,14 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus
 
         public static bool MatchImplementation(ServiceDescriptor serviceDescriptor)
         {
-            return serviceDescriptor.ImplementationType?.IsAssignableTo(
-                       typeof(PlatformInboxEventBusMessageCleanerHostedService)) == true ||
-                   serviceDescriptor.ImplementationInstance?.GetType()
-                       .IsAssignableTo(typeof(PlatformInboxEventBusMessageCleanerHostedService)) == true;
+            return MatchImplementation(serviceDescriptor.ImplementationType) ||
+                   MatchImplementation(serviceDescriptor.ImplementationInstance?.GetType());
+        }
+
+        public static bool MatchImplementation(Type implementationType)
+        {
+            return implementationType?.IsAssignableTo(
+                typeof(PlatformInboxEventBusMessageCleanerHostedService)) == true;
         }
 
         protected override async Task IntervalProcess(CancellationToken cancellationToken)

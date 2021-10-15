@@ -53,7 +53,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                 .New<TMessage>(
                     trackId,
                     payload: messagePayload,
-                    PlatformApplicationEventBusMessageIdentityMapper.ByUserContext(UserContextAccessor.Current),
+                    PlatformEventBusMessageIdentity.ByUserContext(UserContextAccessor.Current),
                     producerContext: ApplicationSettingContext.ApplicationName,
                     messageAction: messageAction);
 
@@ -70,7 +70,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             return await EventBusProducer.SendAsync(
                 trackId,
                 messagePayload,
-                identity: PlatformApplicationEventBusMessageIdentityMapper.ByUserContext(UserContextAccessor.Current),
+                identity: PlatformEventBusMessageIdentity.ByUserContext(UserContextAccessor.Current),
                 routingKey: PlatformEventBusMessageRoutingKey.NewEnsureValid(
                     messageGroup,
                     producerContext: ApplicationSettingContext.ApplicationName,
