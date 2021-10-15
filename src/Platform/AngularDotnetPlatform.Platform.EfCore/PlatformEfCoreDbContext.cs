@@ -22,5 +22,12 @@ namespace AngularDotnetPlatform.Platform.EfCore
 
             base.OnModelCreating(modelBuilder);
         }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            base.OnConfiguring(optionsBuilder);
+
+            optionsBuilder.UseLazyLoadingProxies();
+        }
     }
 }
