@@ -51,12 +51,18 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 
         protected override async Task<SaveSnippetTextCommandResult> HandleAsync(SaveSnippetTextCommand request, CancellationToken cancellationToken)
         {
+            // THIS IS NOT RELATED to SaveSnippetText logic. This is just for demo multi db features in one application works
+            await UpsertFirstExistedMultiDbDemoEntity(cancellationToken);
+
+            // STEP 1: Build saving entity data from request
             var savingData = request.Data.MapToEntity();
 
+            // STEP 2: Do validation and ensure that all logic is valid
             EnsureBusinessLogicValid(
                 savingData.ValidateSomeSpecificDomainLogic(),
                 ValidateSomeThisCommandLogic());
 
+            // THIS IS NOT RELATED, JUST SOME ADDITIONAL DEMO FOR SOME VALIDATIONS USE CASES
             // Example to use validation result as a boolean to change program business flow
             if (ValidateSomeThisCommandLogicToChangeFlow() || savingData.ValidateSomeSpecificDomainLogic())
             {
@@ -71,11 +77,10 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
                 // RETURN InValid validation result
             }
 
-            // This is not related to SaveSnippetText logic. This is just for demo multi db features in one application works
-            await UpsertFirstExistedMultiDbDemoEntity(cancellationToken);
-
+            // STEP 3: Saving data in to repository
             var savedData = await textSnippetEntityRepository.CreateOrUpdate(savingData, cancellationToken: cancellationToken);
 
+            // STEP 4: Build and return result
             return new SaveSnippetTextCommandResult()
             {
                 SavedData = new TextSnippetEntityDto(savedData)

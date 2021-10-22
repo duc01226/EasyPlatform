@@ -29,6 +29,7 @@ namespace PlatformExampleApp.TextSnippet.Application
 
         // Your application can either override factory method DefaultApplicationSettingContextFactory to register default PlatformApplicationSettingContext
         // or just declare a class implement IPlatformApplicationSettingContext in project to use. It will be automatically registered.
+        // Example that the class TextSnippetApplicationSettingContext has replace the default application setting
         protected override PlatformApplicationSettingContext DefaultApplicationSettingContextFactory(IServiceProvider serviceProvider)
         {
             return new PlatformApplicationSettingContext()

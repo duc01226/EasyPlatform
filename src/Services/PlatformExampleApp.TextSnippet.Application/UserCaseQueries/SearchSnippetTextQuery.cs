@@ -48,22 +48,28 @@ namespace PlatformExampleApp.TextSnippet.Application.UserCaseQueries
 
         protected override async Task<SearchSnippetTextQueryResult> HandleAsync(SearchSnippetTextQuery request, CancellationToken cancellationToken)
         {
+            // STEP 1: Build Queries
             var fullItemsQuery = repository
                 .GetAllQuery()
-                .Pipe(query => !string.IsNullOrEmpty(request.SearchText)
-                    ? fullTextSearchPersistenceHelper.Search(query, request.SearchText, new Expression<Func<TextSnippetEntity, string>>[] { e => e.SnippetText }, true)
-                    : query)
+                .PipeIf(
+                    ifTrue: !string.IsNullOrEmpty(request.SearchText),
+                    thenPipe: query => fullTextSearchPersistenceHelper.Search(
+                        query,
+                        request.SearchText,
+                        inFullTextSearchProps: new Expression<Func<TextSnippetEntity, string>>[] { e => e.SnippetText },
+                        exactMatch: true))
                 .WhereIf(request.SearchId != null, p => p.Id == request.SearchId);
+            var orderedPagedItemsQuery = fullItemsQuery
+                .OrderBy(p => p.SnippetText)
+                .PipeIf(
+                    request.IsPagedRequestValid(),
+                    query => query.PageBy(request.SkipCount, request.MaxResultCount));
 
-            var pagedEntities = await repository.GetAllAsync(
-                fullItemsQuery
-                    .OrderBy(p => p.SnippetText)
-                    .Pipe(query => request.IsPagedRequestValid()
-                        ? query.PageBy(request.SkipCount, request.MaxResultCount)
-                        : query),
-                cancellationToken);
+            // STEP 2: Get Data
+            var pagedEntities = await repository.GetAllAsync(query: orderedPagedItemsQuery, cancellationToken);
             var totalCount = await repository.CountAsync(fullItemsQuery, cancellationToken);
 
+            // STEP 3: Build and return result
             return new SearchSnippetTextQueryResult(
                 pagedEntities.Select(p => new TextSnippetEntityDto(p)).ToList(),
                 totalCount,
