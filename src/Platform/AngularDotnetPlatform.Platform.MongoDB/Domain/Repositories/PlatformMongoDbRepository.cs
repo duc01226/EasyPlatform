@@ -15,8 +15,8 @@ using MongoDB.Driver.Linq;
 
 namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
 {
-    public abstract class PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext> : IPlatformRepository<TEntity, TPrimaryKey>
-        where TEntity : Entity<TEntity, TPrimaryKey>, new()
+    public abstract class PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext> : PlatformRepository<TEntity, TPrimaryKey>
+        where TEntity : class, IEntity<TPrimaryKey>, new()
         where TDbContext : IPlatformMongoDbContext<TDbContext>
     {
         public PlatformMongoDbRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs)
@@ -36,7 +36,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         /// </summary>
         protected IMongoCollection<TEntity> Table => DbContext.GetCollection<TEntity>();
 
-        public Task<TEntity> GetByIdAsync(TPrimaryKey id, CancellationToken cancellationToken = default)
+        public override Task<TEntity> GetByIdAsync(TPrimaryKey id, CancellationToken cancellationToken = default)
         {
             return FirstOrDefaultAsync(p => p.Id.Equals(id), cancellationToken);
         }
@@ -47,24 +47,24 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             return Table.AsQueryable();
         }
 
-        public Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
         {
             return ((IMongoQueryable<TEntity>)GetAllQuery().WhereIf(predicate != null, predicate)).ToListAsync(cancellationToken);
         }
 
-        public Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
         {
             if (predicate == null)
                 return ((IMongoQueryable<TEntity>)GetAllQuery()).FirstOrDefaultAsync(cancellationToken);
             return ((IMongoQueryable<TEntity>)GetAllQuery()).FirstOrDefaultAsync(predicate, cancellationToken);
         }
 
-        public Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
         {
             return ((IMongoQueryable<TEntity>)GetAllQuery().WhereIf(predicate != null, predicate)).CountAsync(cancellationToken);
         }
 
-        public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
         {
             return ((IMongoQueryable<TEntity>)GetAllQuery().WhereIf(predicate != null, predicate)).AnyAsync(cancellationToken);
         }

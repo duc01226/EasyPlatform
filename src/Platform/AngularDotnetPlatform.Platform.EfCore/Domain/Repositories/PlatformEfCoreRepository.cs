@@ -14,8 +14,8 @@ using AngularDotnetPlatform.Platform.Extensions;
 
 namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 {
-    public abstract class PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext> : IPlatformQueryableRepository<TEntity, TPrimaryKey>
-        where TEntity : Entity<TEntity, TPrimaryKey>, new()
+    public abstract class PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext> : PlatformRepository<TEntity, TPrimaryKey>
+        where TEntity : class, IEntity<TPrimaryKey>, new()
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
         public PlatformEfCoreRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs)
@@ -35,7 +35,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
         /// </summary>
         protected DbSet<TEntity> Table => DbContext.Set<TEntity>();
 
-        public Task<TEntity> GetByIdAsync(TPrimaryKey id, CancellationToken cancellationToken = default)
+        public override Task<TEntity> GetByIdAsync(TPrimaryKey id, CancellationToken cancellationToken = default)
         {
             return FirstOrDefaultAsync(p => p.Id.Equals(id), cancellationToken);
         }
@@ -45,24 +45,24 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             return Table.AsNoTracking();
         }
 
-        public Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
         {
             return GetAllQuery().WhereIf(predicate != null, predicate).ToListAsync(cancellationToken);
         }
 
-        public Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
         {
             if (predicate == null)
                 return GetAllQuery().FirstOrDefaultAsync(cancellationToken);
             return GetAllQuery().FirstOrDefaultAsync(predicate, cancellationToken);
         }
 
-        public Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
         {
             return GetAllQuery().WhereIf(predicate != null, predicate).CountAsync(cancellationToken);
         }
 
-        public Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
         {
             return GetAllQuery().WhereIf(predicate != null, predicate).AnyAsync(cancellationToken);
         }

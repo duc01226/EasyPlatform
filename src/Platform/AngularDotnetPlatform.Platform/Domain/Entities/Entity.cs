@@ -16,12 +16,15 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
         TPrimaryKey Id { get; set; }
     }
 
-    public interface IValidatableEntity<TPrimaryKey> : IEntity<TPrimaryKey>
+    public interface IValidatableEntity<TEntity, TPrimaryKey> : IEntity<TPrimaryKey>
+        where TEntity : IEntity<TPrimaryKey>
     {
         PlatformValidationResult Validate();
+
+        PlatformCheckUniquenessValidator<TEntity> CheckUniquenessValidator();
     }
 
-    public abstract class Entity<TEntity, TPrimaryKey> : IValidatableEntity<TPrimaryKey>
+    public abstract class Entity<TEntity, TPrimaryKey> : IValidatableEntity<TEntity, TPrimaryKey>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
         public TPrimaryKey Id { get; set; }
@@ -55,11 +58,14 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
         }
     }
 
+    public interface IRootEntity<TPrimaryKey> : IEntity<TPrimaryKey>
+    {
+    }
+
     /// <summary>
     /// Root entity represent an aggregate root entity. Only root entity can be Create/Update/Delete via repository
     /// </summary>
-    public abstract class RootEntity<TEntity, TPrimaryKey> : Entity<TEntity, TPrimaryKey>
-        where TEntity : Entity<TEntity, TPrimaryKey>, new()
+    public abstract class RootEntity<TEntity, TPrimaryKey> : Entity<TEntity, TPrimaryKey>, IRootEntity<TPrimaryKey> where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
         public RootEntity() { }
     }

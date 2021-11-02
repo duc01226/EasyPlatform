@@ -17,7 +17,7 @@ using Microsoft.EntityFrameworkCore;
 namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 {
     public abstract class PlatformEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext>, IPlatformRootRepository<TEntity, TPrimaryKey>
-        where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
+        where TEntity : class, IRootEntity<TPrimaryKey>, new()
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
         public PlatformEfCoreRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
@@ -31,8 +31,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 
         public async Task<TEntity> Create(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
-            EnsureValid(entity.Validate());
-            await EnsureValid(entity.CheckUniquenessValidator()?.Validate(predicate => Table.AsQueryable().AnyAsync(predicate, cancellationToken)));
+            await EnsureEntityValid(entity, cancellationToken);
 
             var result = await Table.AddAsync(entity, cancellationToken).Map(p => entity);
             if (!dismissSendEvent)
@@ -88,8 +87,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 
         public async Task<TEntity> Update(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
-            EnsureValid(entity.Validate());
-            await EnsureValid(entity.CheckUniquenessValidator()?.Validate(predicate => Table.AsQueryable().AnyAsync(predicate, cancellationToken)));
+            await EnsureEntityValid(entity, cancellationToken);
 
             var result = await Task.FromResult(Table.Update(entity).Entity);
             if (!dismissSendEvent)
@@ -112,8 +110,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 
         public async Task<List<TEntity>> CreateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
-            EnsureValid(entities);
-            await EnsureEntitiesUniqueness(entities, cancellationToken);
+            await EnsureEntitiesValid(entities, cancellationToken);
 
             var result = await Table.AddRangeAsync(entities, cancellationToken).Map(() => entities);
 
@@ -129,8 +126,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 
         public async Task<List<TEntity>> UpdateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
-            EnsureValid(entities);
-            await EnsureEntitiesUniqueness(entities, cancellationToken);
+            await EnsureEntitiesValid(entities, cancellationToken);
 
             Table.UpdateRange(entities);
 
@@ -162,63 +158,6 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             }
 
             return await Task.FromResult(entities);
-        }
-
-        protected void EnsureValid(List<TEntity> entities)
-        {
-            foreach (var entity in entities)
-            {
-                EnsureValid(entity.Validate());
-            }
-        }
-
-        protected void EnsureValid(ValidationResult validationResult)
-        {
-            if (validationResult != null && !validationResult.IsValid)
-                throw new PlatformDomainValidationException(validationResult);
-        }
-
-        protected void EnsureValid(List<Func<ValidationResult>> validationResultFns)
-        {
-            foreach (var validationResultFn in validationResultFns)
-            {
-                var validationResult = validationResultFn();
-                if (validationResult != null && !validationResult.IsValid)
-                    throw new PlatformDomainValidationException(validationResult);
-            }
-        }
-
-        protected async Task EnsureValid(Task<ValidationResult> validationResultTask)
-        {
-            if (validationResultTask == null)
-                return;
-
-            var validationResult = await validationResultTask;
-            if (validationResult != null && !validationResult.IsValid)
-                throw new PlatformDomainValidationException(validationResult);
-        }
-
-        protected async Task EnsureValid(List<Func<Task<ValidationResult>>> validationResultAsyncFns)
-        {
-            foreach (var validationResultAsyncFn in validationResultAsyncFns)
-            {
-                var validationResult = await validationResultAsyncFn();
-                if (validationResult != null && !validationResult.IsValid)
-                    throw new PlatformDomainValidationException(validationResult);
-            }
-        }
-
-        private async Task EnsureEntitiesUniqueness(List<TEntity> entities, CancellationToken cancellationToken)
-        {
-            // Validate each entity in the list is unique in the existed items and also in the new items will be persisted
-            var entitiesValidateUniquenessFns = entities
-                .Where(p => p.CheckUniquenessValidator() != null)
-                .Select<TEntity, Func<Task<ValidationResult>>>(entity => () =>
-                    entity.CheckUniquenessValidator().Validate(async predicate =>
-                        !entities.Any(entity.CheckUniquenessValidator().FindOtherDuplicatedItemExpr.Compile()) &&
-                        await Table.AsQueryable().AnyAsync(predicate, cancellationToken)))
-                .ToList();
-            await EnsureValid(entitiesValidateUniquenessFns);
         }
     }
 
