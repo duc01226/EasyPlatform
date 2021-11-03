@@ -10,7 +10,7 @@ using FluentValidation.Results;
 
 namespace AngularDotnetPlatform.Platform.Domain.Repositories
 {
-    public abstract class PlatformRepository<TEntity, TPrimaryKey> : IPlatformRepository<TEntity, TPrimaryKey>
+    public abstract class PlatformRepository<TEntity, TPrimaryKey> : IPlatformQueryableRepository<TEntity, TPrimaryKey>
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
         public abstract Task<TEntity> GetByIdAsync(TPrimaryKey id, CancellationToken cancellationToken = default);
@@ -22,6 +22,24 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
         public abstract Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
 
         public abstract Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
+
+        public abstract IQueryable<TEntity> GetAllQuery();
+
+        public abstract Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
+
+        public Task<List<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> queryBuilder, CancellationToken cancellationToken = default)
+        {
+            return GetAllAsync(queryBuilder(GetAllQuery()), cancellationToken);
+        }
+
+        public abstract Task<TEntity> FirstOrDefaultAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
+
+        public Task<TEntity> FirstOrDefaultAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> queryBuilder, CancellationToken cancellationToken = default)
+        {
+            return FirstOrDefaultAsync(queryBuilder(GetAllQuery()), cancellationToken);
+        }
+
+        public abstract Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
 
         protected async Task EnsureEntityValid(TEntity entity, CancellationToken cancellationToken)
         {
@@ -101,7 +119,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
         }
     }
 
-    public abstract class PlatformRootRepository<TEntity, TPrimaryKey> : PlatformRepository<TEntity, TPrimaryKey>, IPlatformRootRepository<TEntity, TPrimaryKey>
+    public abstract class PlatformRootRepository<TEntity, TPrimaryKey> : PlatformRepository<TEntity, TPrimaryKey>, IPlatformQueryableRootRepository<TEntity, TPrimaryKey>
         where TEntity : class, IRootEntity<TPrimaryKey>, new()
     {
         public abstract Task<TEntity> Create(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
@@ -123,6 +141,11 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
         public abstract Task<List<TEntity>> DeleteMany(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
         public abstract Task<List<TEntity>> DeleteMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+
+        public async Task<List<TEntity>> DeleteMany(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        {
+            return await DeleteMany(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, cancellationToken);
+        }
 
         public abstract Task<TEntity> CreateOrUpdate(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
     }

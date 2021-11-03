@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.BackgroundJob;
 using PlatformExampleApp.TextSnippet.Application.Caching;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
-using PlatformExampleApp.TextSnippet.Application.UserCaseQueries;
+using PlatformExampleApp.TextSnippet.Application.UseCaseQueries;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -30,20 +30,20 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
             // Using default last registered cache repository (default is built-in memory cache).
             //return await CacheRepositoryProvider.GetCollection<TextSnippetApplicationCollectionCacheKeyProvider>()
             //    .CacheRequestAsync(
-            //        () => Cqrs.SendQuery<SearchSnippetTextQuery, SearchSnippetTextQueryResult>(request),
+            //        () => Cqrs.SendQuery(request),
             //        new object[] { nameof(Search), request },
             //        new TextSnippetConfigurationCollectionCacheEntryOptions(Configuration));
 
             // Test case use default CacheEntryOptions. Could be configured via override DefaultPlatformCacheEntryOptions in module
             return await CacheRepositoryProvider.GetCollection<TextSnippetApplicationCollectionCacheKeyProvider>()
                 .CacheRequestAsync(
-                    () => Cqrs.SendQuery<SearchSnippetTextQuery, SearchSnippetTextQueryResult>(request),
+                    () => Cqrs.SendQuery(request),
                     requestKeyParts: new object[] { nameof(Search), request });
 
             // Using distributed cache
             return await CacheRepositoryProvider.GetCollection<TextSnippetApplicationCollectionCacheKeyProvider>(PlatformCacheRepositoryType.Distributed)
                 .CacheRequestAsync(
-                    () => Cqrs.SendQuery<SearchSnippetTextQuery, SearchSnippetTextQueryResult>(request),
+                    () => Cqrs.SendQuery(request),
                     new object[] { nameof(Search), request },
                     new TextSnippetConfigurationCollectionCacheEntryOptions(Configuration));
         }

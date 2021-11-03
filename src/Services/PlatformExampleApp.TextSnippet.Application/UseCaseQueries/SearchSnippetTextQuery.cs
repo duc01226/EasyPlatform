@@ -10,10 +10,11 @@ using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
+using PlatformExampleApp.TextSnippet.Application.Helpers;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
-namespace PlatformExampleApp.TextSnippet.Application.UserCaseQueries
+namespace PlatformExampleApp.TextSnippet.Application.UseCaseQueries
 {
     public class SearchSnippetTextQuery : PlatformCqrsPagedResultQuery<SearchSnippetTextQueryResult, TextSnippetEntityDto>
     {
@@ -35,15 +36,19 @@ namespace PlatformExampleApp.TextSnippet.Application.UserCaseQueries
         // If get default repository/unitOfWork will get from the latest registered module. See TextSnippetApplicationModule.
         private readonly ITextSnippetRepository<TextSnippetEntity> repository;
         private readonly IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper;
+        // This is just a demo that helper is used by Application Commands/Queries
+        private readonly ExampleHelper exampleHelper;
 
         public SearchSnippetTextQueryHandler(
             IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager,
             ITextSnippetRepository<TextSnippetEntity> repository,
-            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper) : base(userContext, unitOfWorkManager)
+            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper,
+            ExampleHelper exampleHelper) : base(userContext, unitOfWorkManager)
         {
             this.repository = repository;
             this.fullTextSearchPersistenceHelper = fullTextSearchPersistenceHelper;
+            this.exampleHelper = exampleHelper;
         }
 
         protected override async Task<SearchSnippetTextQueryResult> HandleAsync(SearchSnippetTextQuery request, CancellationToken cancellationToken)

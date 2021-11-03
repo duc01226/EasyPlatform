@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using AngularDotnetPlatform.Platform.AspNetCore;
 using AngularDotnetPlatform.Platform.Caching;
+using PlatformExampleApp.TextSnippet.Api.AwsEmailModule;
 using PlatformExampleApp.TextSnippet.Api.Context.UserContext;
 using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Domain;
@@ -37,7 +38,8 @@ namespace PlatformExampleApp.TextSnippet.Api
                 p => typeof(TextSnippetRedisCacheModule),
 
                 // HangfireBackgroundJobModule should be after PersistenceModule to ensure first time run database is created
-                p => typeof(TextSnippetHangfireBackgroundJobModule)
+                p => typeof(TextSnippetHangfireBackgroundJobModule),
+                p => typeof(AwsEmailInfrastructureModule)
             };
 
             return result;

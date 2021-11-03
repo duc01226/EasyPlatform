@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using AngularDotnetPlatform.Platform.Utils;
 
 namespace AngularDotnetPlatform.Platform.Application.Context.UserContext
 {
@@ -22,6 +23,11 @@ namespace AngularDotnetPlatform.Platform.Application.Context.UserContext
         public static string GetUserId(this IPlatformApplicationUserContext context)
         {
             return context.GetValue<string>(UserId);
+        }
+
+        public static T GetUserId<T>(this IPlatformApplicationUserContext context) where T : struct
+        {
+            return Util.Strings.Parse<T>(context.GetUserId());
         }
 
         public static string GetUserName(this IPlatformApplicationUserContext context)

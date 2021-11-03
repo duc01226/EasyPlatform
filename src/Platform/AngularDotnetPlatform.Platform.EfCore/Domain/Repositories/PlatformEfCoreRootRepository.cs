@@ -16,7 +16,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 {
-    public abstract class PlatformEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext>, IPlatformRootRepository<TEntity, TPrimaryKey>
+    public class PlatformEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext>, IPlatformRootRepository<TEntity, TPrimaryKey>
         where TEntity : class, IRootEntity<TPrimaryKey>, new()
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
@@ -24,7 +24,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
         {
         }
 
-        public new IQueryable<TEntity> GetAllQuery()
+        public override IQueryable<TEntity> GetAllQuery()
         {
             return Table.AsQueryable();
         }
@@ -158,6 +158,11 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             }
 
             return await Task.FromResult(entities);
+        }
+
+        public async Task<List<TEntity>> DeleteMany(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        {
+            return await DeleteMany(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, cancellationToken);
         }
     }
 

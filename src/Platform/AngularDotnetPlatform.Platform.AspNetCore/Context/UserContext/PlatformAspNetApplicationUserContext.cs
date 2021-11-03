@@ -10,6 +10,7 @@ using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextK
 using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
 using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.JsonSerialization;
+using AngularDotnetPlatform.Platform.Utils;
 using Microsoft.AspNetCore.Http;
 
 namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
@@ -214,7 +215,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
             if (isTryGetListValueSuccess)
                 return true;
 
-            return JsonSerializerExtension.TryDeserialize(
+            return Util.Jsons.TryDeserialize(
                 stringValues.LastOrDefault(),
                 out foundValue,
                 PlatformJsonSerializer.CurrentOptions.Value);
@@ -244,7 +245,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
                         return matchedClaimStringValue;
                     }
 
-                    var parsedItemResult = JsonSerializerExtension.TryDeserialize(
+                    var parsedItemResult = Util.Jsons.TryDeserialize(
                         matchedClaimStringValue,
                         listItemType,
                         out var itemDeserializedValue,

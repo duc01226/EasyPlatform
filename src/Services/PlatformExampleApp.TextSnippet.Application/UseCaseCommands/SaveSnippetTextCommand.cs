@@ -11,6 +11,7 @@ using AngularDotnetPlatform.Platform.Timing;
 using AngularDotnetPlatform.Platform.Validators;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
+using PlatformExampleApp.TextSnippet.Application.InfrastructureServices;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
@@ -37,16 +38,22 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
     {
         private readonly ITextSnippetRootRepository<TextSnippetEntity> textSnippetEntityRepository;
         private readonly ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;
+        // This only for demo define and use infrastructure services
+        private readonly ISendMailService sendMailService;
 
         public SaveSnippetTextCommandHandler(
             IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager,
             IPlatformCqrs cqrs,
             ITextSnippetRootRepository<TextSnippetEntity> textSnippetEntityRepository,
-            ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository) : base(userContext, unitOfWorkManager, cqrs)
+            ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository,
+            ISendMailService sendMailService) : base(userContext, unitOfWorkManager, cqrs)
         {
             this.textSnippetEntityRepository = textSnippetEntityRepository;
             this.multiDbDemoEntityRepository = multiDbDemoEntityRepository;
+            this.sendMailService = sendMailService;
+
+            this.sendMailService.SendEmail("demo@email.com", "demo header", "demo content");
         }
 
         protected override async Task<SaveSnippetTextCommandResult> HandleAsync(SaveSnippetTextCommand request, CancellationToken cancellationToken)

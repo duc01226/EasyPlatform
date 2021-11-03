@@ -1,3 +1,4 @@
+using System;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Validators;
 
@@ -13,7 +14,8 @@ namespace AngularDotnetPlatform.Platform.Application.Dtos
     /// - Decouple your service layer from your database layer.
     /// </summary>
     public abstract class PlatformEntityDto<TEntity, TId> : IPlatformDto
-        where TEntity : Entity<TEntity, TId>, new()
+        where TEntity : IEntity<TId>, new()
+        where TId : struct
     {
         public PlatformEntityDto() { }
 
@@ -22,9 +24,23 @@ namespace AngularDotnetPlatform.Platform.Application.Dtos
             Id = entity.Id;
         }
 
-        public TId Id { get; set; }
+        public TId? Id { get; set; }
 
-        public abstract TEntity MapToEntity();
+        public virtual TEntity MapToEntity()
+        {
+            var initialEntity = Activator.CreateInstance<TEntity>();
+
+            var updatedEntity = UpdateToEntity(initialEntity);
+
+            return updatedEntity;
+        }
+
+        /// <summary>
+        /// Modify the toBeUpdatedEntity by apply current data from entity dto to the target toBeUpdatedEntity.
+        /// Return
+        /// </summary>
+        /// <returns>Return the modified toBeUpdatedEntity</returns>
+        public abstract TEntity UpdateToEntity(TEntity toBeUpdatedEntity);
 
         public PlatformValidationResult Validate()
         {

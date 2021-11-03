@@ -4,7 +4,7 @@ using AngularDotnetPlatform.Platform.Cqrs;
 namespace AngularDotnetPlatform.Platform.Domain.Services
 {
     /// <summary>
-    /// Helper class is used to serve business logic operation related to many root domain entities,
+    /// Domain service is used to serve business logic operation related to many root domain entities,
     /// the business logic term is understood by domain expert.
     /// </summary>
     public interface IPlatformDomainService

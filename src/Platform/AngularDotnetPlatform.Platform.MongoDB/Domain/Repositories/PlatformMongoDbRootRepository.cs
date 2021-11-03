@@ -169,6 +169,11 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
 
             return await Task.FromResult(entities);
         }
+
+        public async Task<List<TEntity>> DeleteMany(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        {
+            return await DeleteMany(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, cancellationToken);
+        }
     }
 
     public class PlatformDefaultMongoDbRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformMongoDbRootRepository<TEntity, TPrimaryKey, TDbContext>

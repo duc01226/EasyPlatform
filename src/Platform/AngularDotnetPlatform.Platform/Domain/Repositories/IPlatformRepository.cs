@@ -55,6 +55,8 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
         Task<List<TEntity>> DeleteMany(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
         Task<List<TEntity>> DeleteMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+
+        Task<List<TEntity>> DeleteMany(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
     }
 
     public interface IPlatformRootRepository<TEntity, TPrimaryKey> : IPlatformBasicRootRepository<TEntity, TPrimaryKey>, IPlatformRepository<TEntity, TPrimaryKey>
@@ -69,6 +71,12 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
         IQueryable<TEntity> GetAllQuery();
 
         Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
+
+        Task<List<TEntity>> GetAllAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> queryBuilder, CancellationToken cancellationToken = default);
+
+        Task<TEntity> FirstOrDefaultAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
+
+        Task<TEntity> FirstOrDefaultAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> queryBuilder, CancellationToken cancellationToken = default);
 
         Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
     }

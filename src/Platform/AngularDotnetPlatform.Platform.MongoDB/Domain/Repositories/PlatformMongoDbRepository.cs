@@ -41,7 +41,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             return FirstOrDefaultAsync(p => p.Id.Equals(id), cancellationToken);
         }
 
-        public IQueryable<TEntity> GetAllQuery()
+        public override IQueryable<TEntity> GetAllQuery()
         {
             // Ensure that UnitOfWork.Complete() will not Update/Delete entities without calling repository Update/Delete
             return Table.AsQueryable();
@@ -69,12 +69,17 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             return ((IMongoQueryable<TEntity>)GetAllQuery().WhereIf(predicate != null, predicate)).AnyAsync(cancellationToken);
         }
 
-        public Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        public override Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
         {
             return ((IMongoQueryable<TEntity>)query).ToListAsync(cancellationToken);
         }
 
-        public Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        public override Task<TEntity> FirstOrDefaultAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        {
+            return ((IMongoQueryable<TEntity>)query).FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public override Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
         {
             return ((IMongoQueryable<TEntity>)query).CountAsync(cancellationToken);
         }

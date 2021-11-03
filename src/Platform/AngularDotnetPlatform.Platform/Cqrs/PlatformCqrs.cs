@@ -21,6 +21,14 @@ namespace AngularDotnetPlatform.Platform.Cqrs
 
         /// <summary>
         /// A Command is an imperative instruction to do something; it only has one handler. We will throw an error for multiple registered handlers of a command.
+        /// </summary>
+        Task<TResult> SendCommand<TResult>(
+            PlatformCqrsCommand<TResult> command,
+            CancellationToken cancellationToken = default)
+            where TResult : PlatformCqrsCommandResult, new();
+
+        /// <summary>
+        /// A Command is an imperative instruction to do something; it only has one handler. We will throw an error for multiple registered handlers of a command.
         /// Send a command without any result needed
         /// </summary>
         Task SendCommand<TCommand>(
@@ -35,6 +43,14 @@ namespace AngularDotnetPlatform.Platform.Cqrs
             TQuery query,
             CancellationToken cancellationToken = default)
             where TQuery : PlatformCqrsQuery<TResult>
+            where TResult : PlatformCqrsQueryResult;
+
+        /// <summary>
+        /// To get data by conditions defined in query object.
+        /// </summary>
+        Task<TResult> SendQuery<TResult>(
+            PlatformCqrsQuery<TResult> query,
+            CancellationToken cancellationToken = default)
             where TResult : PlatformCqrsQueryResult;
 
         /// <summary>
@@ -68,6 +84,11 @@ namespace AngularDotnetPlatform.Platform.Cqrs
             return await mediator.Send(command, cancellationToken);
         }
 
+        public async Task<TResult> SendCommand<TResult>(PlatformCqrsCommand<TResult> command, CancellationToken cancellationToken = default) where TResult : PlatformCqrsCommandResult, new()
+        {
+            return await mediator.Send(command, cancellationToken);
+        }
+
         public async Task SendCommand<TCommand>(TCommand command, CancellationToken cancellationToken = default)
             where TCommand : PlatformCqrsCommand<PlatformCqrsCommandResult>
         {
@@ -75,6 +96,11 @@ namespace AngularDotnetPlatform.Platform.Cqrs
         }
 
         public async Task<TResult> SendQuery<TQuery, TResult>(TQuery query, CancellationToken cancellationToken = default) where TQuery : PlatformCqrsQuery<TResult> where TResult : PlatformCqrsQueryResult
+        {
+            return await mediator.Send(query, cancellationToken);
+        }
+
+        public async Task<TResult> SendQuery<TResult>(PlatformCqrsQuery<TResult> query, CancellationToken cancellationToken = default) where TResult : PlatformCqrsQueryResult
         {
             return await mediator.Send(query, cancellationToken);
         }

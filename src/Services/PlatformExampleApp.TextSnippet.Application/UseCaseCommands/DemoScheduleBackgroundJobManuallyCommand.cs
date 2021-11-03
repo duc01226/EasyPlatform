@@ -12,6 +12,7 @@ using AngularDotnetPlatform.Platform.Validators;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.BackgroundJob;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
+using PlatformExampleApp.TextSnippet.Domain.DomainServices;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
@@ -34,14 +35,18 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         PlatformCqrsCommandHandler<DemoScheduleBackgroundJobManuallyCommand, DemoScheduleBackgroundJobManuallyCommandResult>
     {
         private readonly IPlatformBackgroundJobScheduler backgroundJobScheduler;
+        // Demo use demoDomainService
+        private readonly DemoDomainService demoDomainService;
 
         public DemoScheduleBackgroundJobManuallyCommandHandler(
             IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager,
             IPlatformCqrs cqrs,
-            IPlatformBackgroundJobScheduler backgroundJobScheduler) : base(userContext, unitOfWorkManager, cqrs)
+            IPlatformBackgroundJobScheduler backgroundJobScheduler,
+            DemoDomainService demoDomainService) : base(userContext, unitOfWorkManager, cqrs)
         {
             this.backgroundJobScheduler = backgroundJobScheduler;
+            this.demoDomainService = demoDomainService;
         }
 
         protected override async Task<DemoScheduleBackgroundJobManuallyCommandResult> HandleAsync(

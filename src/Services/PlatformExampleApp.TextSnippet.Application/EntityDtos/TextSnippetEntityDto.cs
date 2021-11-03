@@ -18,14 +18,14 @@ namespace PlatformExampleApp.TextSnippet.Application.EntityDtos
 
         public string FullText { get; set; }
 
-        public override TextSnippetEntity MapToEntity()
+        public override TextSnippetEntity UpdateToEntity(TextSnippetEntity toBeUpdatedEntity)
         {
-            return new TextSnippetEntity()
-            {
-                Id = Id == Guid.Empty ? Guid.NewGuid() : Id,
-                SnippetText = SnippetText,
-                FullText = FullText
-            };
+            if (toBeUpdatedEntity.Id == Guid.Empty)
+                toBeUpdatedEntity.Id = Id == Guid.Empty || Id == null ? Guid.NewGuid() : Id.Value;
+            toBeUpdatedEntity.SnippetText = SnippetText;
+            toBeUpdatedEntity.FullText = FullText;
+
+            return toBeUpdatedEntity;
         }
     }
 }

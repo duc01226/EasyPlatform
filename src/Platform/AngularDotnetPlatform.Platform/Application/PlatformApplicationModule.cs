@@ -8,6 +8,8 @@ using AngularDotnetPlatform.Platform.Application.Context.UserContext.Default;
 using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
+using AngularDotnetPlatform.Platform.Application.Helpers;
+using AngularDotnetPlatform.Platform.Application.InfrastructureServices;
 using AngularDotnetPlatform.Platform.Caching;
 using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.EventBus;
@@ -107,6 +109,8 @@ namespace AngularDotnetPlatform.Platform.Application
             RegisterApplicationSettingContext(serviceCollection);
             RegisterDefaultApplicationUserContext(serviceCollection);
             RegisterInboxEventBusMessageCleanerHostedService(serviceCollection);
+            serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType<IPlatformInfrastructureService>(ServiceLifeTime.Transient, Assembly);
         }
 
         protected override async Task InternalInit(IServiceScope serviceScope)

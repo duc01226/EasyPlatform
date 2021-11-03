@@ -14,7 +14,7 @@ using AngularDotnetPlatform.Platform.Extensions;
 
 namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 {
-    public abstract class PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext> : PlatformRepository<TEntity, TPrimaryKey>
+    public class PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext> : PlatformRepository<TEntity, TPrimaryKey>
         where TEntity : class, IEntity<TPrimaryKey>, new()
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
@@ -40,7 +40,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             return FirstOrDefaultAsync(p => p.Id.Equals(id), cancellationToken);
         }
 
-        public IQueryable<TEntity> GetAllQuery()
+        public override IQueryable<TEntity> GetAllQuery()
         {
             return Table.AsNoTracking();
         }
@@ -67,12 +67,17 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             return GetAllQuery().WhereIf(predicate != null, predicate).AnyAsync(cancellationToken);
         }
 
-        public Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        public override Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
         {
             return query.ToListAsync(cancellationToken);
         }
 
-        public Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        public override Task<TEntity> FirstOrDefaultAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        {
+            return query.FirstOrDefaultAsync(cancellationToken);
+        }
+
+        public override Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
         {
             return query.CountAsync(cancellationToken);
         }
