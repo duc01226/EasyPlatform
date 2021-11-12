@@ -45,12 +45,25 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             {
                 try
                 {
-                    await ApplicationEventBusProducer
-                        .SendAsync<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>, TCommand>(
-                            trackId: @event.Id,
-                            messagePayload: @event.CommandData,
-                            messageAction: @event.EventAction,
-                            cancellationToken);
+                    if (CustomMessageRoutingKey() != null)
+                    {
+                        await ApplicationEventBusProducer
+                            .SendAsync<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>, TCommand>(
+                                customRoutingKey: CustomMessageRoutingKey(),
+                                trackId: @event.Id,
+                                messagePayload: @event.CommandData,
+                                messageAction: @event.EventAction,
+                                cancellationToken);
+                    }
+                    else
+                    {
+                        await ApplicationEventBusProducer
+                            .SendAsync<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>, TCommand>(
+                                trackId: @event.Id,
+                                messagePayload: @event.CommandData,
+                                messageAction: @event.EventAction,
+                                cancellationToken);
+                    }
                 }
                 catch (PlatformEventBusException<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>> e)
                 {
@@ -61,6 +74,11 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         }
 
         protected virtual PlatformCqrsCommandEventAction? RestrictOnlyForAction()
+        {
+            return PlatformCqrsCommandEventAction.Executed;
+        }
+
+        protected virtual string CustomMessageRoutingKey()
         {
             return null;
         }

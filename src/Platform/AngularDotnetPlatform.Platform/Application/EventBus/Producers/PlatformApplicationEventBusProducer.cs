@@ -16,6 +16,15 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
             where TMessagePayload : class, new();
 
+        Task<TMessage> SendAsync<TMessage, TMessagePayload>(
+            string customRoutingKey,
+            string trackId,
+            TMessagePayload messagePayload,
+            string messageAction = null,
+            CancellationToken cancellationToken = default)
+            where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
+            where TMessagePayload : class, new();
+
         Task<IPlatformEventBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
             string trackId,
             TMessagePayload messagePayload,
@@ -57,7 +66,25 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                     producerContext: ApplicationSettingContext.ApplicationName,
                     messageAction: messageAction);
 
-            return EventBusProducer.SendAsync<TMessage, TMessagePayload>(message, cancellationToken);
+            return EventBusProducer.SendAsync(message, cancellationToken);
+        }
+
+        public Task<TMessage> SendAsync<TMessage, TMessagePayload>(
+            string customRoutingKey,
+            string trackId,
+            TMessagePayload messagePayload,
+            string messageAction = null,
+            CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new() where TMessagePayload : class, new()
+        {
+            var message = PlatformEventBusMessage<TMessagePayload>
+                .New<TMessage>(
+                    trackId,
+                    payload: messagePayload,
+                    PlatformEventBusMessageIdentity.ByUserContext(UserContextAccessor.Current),
+                    producerContext: ApplicationSettingContext.ApplicationName,
+                    messageAction: messageAction);
+
+            return EventBusProducer.SendAsync(message, customRoutingKey, cancellationToken);
         }
 
         public async Task<IPlatformEventBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(

@@ -21,7 +21,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         protected override long MessageExpiredInDays()
         {
-            return TimeSpan.FromSeconds(options.RequeueExpiredTimeSpanInSeconds).Days;
+            return TimeSpan.FromSeconds(options.InboxMessageExpiredInSeconds).Days;
         }
 
         protected override int NumberOfDeleteMessagesBatch()

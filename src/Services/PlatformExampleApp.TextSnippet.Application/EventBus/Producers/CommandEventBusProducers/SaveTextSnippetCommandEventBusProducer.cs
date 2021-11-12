@@ -18,4 +18,20 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.CommandE
         {
         }
     }
+
+    public class SaveTextSnippetCommandEventBusCustomRoutingKeyForFlexibleMigrateWithOldSystemProducer : PlatformCqrsCommandEventBusProducer<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
+    {
+        public SaveTextSnippetCommandEventBusCustomRoutingKeyForFlexibleMigrateWithOldSystemProducer(
+            IUnitOfWorkManager unitOfWorkManager,
+            IPlatformApplicationEventBusProducer applicationEventBusProducer,
+            ILoggerFactory loggerFactory) : base(unitOfWorkManager, applicationEventBusProducer, loggerFactory)
+        {
+        }
+
+        protected override string CustomMessageRoutingKey()
+        {
+            // Demo support refactor scrolling with old system that listen for message with their own routing key
+            return "CustomRoutingKeyForFlexibleMigrateWithOldSystem";
+        }
+    }
 }

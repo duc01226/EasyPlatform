@@ -20,14 +20,19 @@ namespace AngularDotnetPlatform.Platform.EventBus
         List<Type> AllDefinedEventBusConsumerTypes();
 
         /// <summary>
+        /// Get all attribute of all defined consumers
+        /// </summary>
+        List<PlatformEventBusConsumerAttribute> AllDefinedEventBusConsumerAttributes();
+
+        /// <summary>
         /// Get all routing key pattern of all defined consumers
         /// </summary>
-        List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusConsumerPatternRoutingKeys();
+        List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusConsumerRoutingKeys();
 
         /// <summary>
         /// Get routing keys for all defined message to be produced
         /// </summary>
-        List<PlatformEventBusMessageRoutingKey> GetAllDefinedEventBusMessageRoutingKeys();
+        List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusMessageRoutingKeys();
     }
 
     public class PlatformEventBusManager : IPlatformEventBusManager
@@ -50,19 +55,29 @@ namespace AngularDotnetPlatform.Platform.EventBus
                 .ToList();
         }
 
-        public List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusConsumerPatternRoutingKeys()
+        public List<PlatformEventBusConsumerAttribute> AllDefinedEventBusConsumerAttributes()
         {
             return AllDefinedEventBusConsumerTypes()
                 .SelectMany(messageConsumerType => messageConsumerType
                     .GetCustomAttributes(true)
                     .OfType<PlatformEventBusConsumerAttribute>()
                     .Select(messageConsumerTypeAttribute => messageConsumerTypeAttribute))
-                .Select(p => PlatformEventBusMessageRoutingKey.New(p.MessageGroup, p.ProducerContext, p.MessageType))
-                .Distinct()
+                .GroupBy(p => p.ToRoutingKey())
+                .Select(group => new PlatformEventBusConsumerAttribute(
+                    group.Key.MessageGroup,
+                    group.Key.ProducerContext,
+                    group.Key.MessageType,
+                    group.Key.MessageAction,
+                    additionalCustomRoutingKeys: group.ToList().SelectMany(p => p.AdditionalCustomRoutingKeys).ToArray()))
                 .ToList();
         }
 
-        public List<PlatformEventBusMessageRoutingKey> GetAllDefinedEventBusMessageRoutingKeys()
+        public List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusConsumerRoutingKeys()
+        {
+            return AllDefinedEventBusConsumerAttributes().Select(p => p.ToRoutingKey()).Distinct().ToList();
+        }
+
+        public List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusMessageRoutingKeys()
         {
             var definedMessageRoutingKeys = serviceProvider.GetServices<IPlatformEventBusMessage>()
                 .Select(p => p.RoutingKey())

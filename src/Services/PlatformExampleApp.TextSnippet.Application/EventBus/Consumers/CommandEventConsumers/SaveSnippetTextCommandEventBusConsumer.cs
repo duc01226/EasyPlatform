@@ -22,7 +22,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
     /// <br/>
     /// <inheritdoc cref="PlatformInboxCqrsCommandEventBusConsumer{TCommand,TCommandResult}"/>
     /// </summary>
-    [PlatformEventBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "SaveSnippetTextCommand")]
+    [PlatformEventBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "SaveSnippetTextCommand", additionalCustomRoutingKeys: new[] { "CustomRoutingKeyForFlexibleMigrateWithOldSystem" })]
     public class SaveSnippetTextCommandEventBusConsumer : PlatformInboxCqrsCommandEventBusConsumer<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
     {
         public SaveSnippetTextCommandEventBusConsumer(
@@ -45,7 +45,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
             return Task.Run(() =>
             {
                 // Sleep to demo warning slow consumer
-                Thread.Sleep(TimeSpan.FromMilliseconds(DefaultProcessWarningTimeMilliseconds + 1000));
+                Thread.Sleep(TimeSpan.FromMilliseconds((ProcessWarningTimeMilliseconds() ?? DefaultProcessWarningTimeMilliseconds) + 1000));
 
                 Logger.LogInformation($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             });

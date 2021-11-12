@@ -5,6 +5,13 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 {
     public class PlatformRabbitMqOptions
     {
+        public PlatformRabbitMqOptions()
+        {
+            RequeueDelayTimeInSeconds = 60;
+            RequeueExpiredInSeconds = RequeueDelayTimeInSeconds * 60 * 24 * 7;
+            InboxMessageExpiredInSeconds = RequeueExpiredInSeconds;
+        }
+
         public string HostNames { get; set; }
 
         public string Username { get; set; }
@@ -48,9 +55,11 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         /// </summary>
         public long LogConsumerProcessWarningTimeMilliseconds { get; set; } = 5000;
 
-        public int RequeueDelayTimeInSeconds { get; set; } = 30;
+        public int RequeueDelayTimeInSeconds { get; set; }
 
-        public long RequeueExpiredTimeSpanInSeconds { get; set; } = 60 * 60 * 24 * 7;
+        public long RequeueExpiredInSeconds { get; set; }
+
+        public long InboxMessageExpiredInSeconds { get; set; }
 
         public int ProcessRequeueMessageRetryCount { get; set; } = 10;
 

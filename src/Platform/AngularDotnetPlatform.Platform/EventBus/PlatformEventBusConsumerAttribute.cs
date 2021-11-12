@@ -17,16 +17,23 @@ namespace AngularDotnetPlatform.Platform.EventBus
         /// Initializes a new instance of the <see cref="PlatformEventBusConsumerAttribute"/> class.
         /// Pattern value support <see cref="MatchAllPatternValue"/> to match startWith (*XXX), endWith (XXX*) and contains (*XXX*)
         /// </summary>
+        /// <param name="messageGroup"><see cref="PlatformEventBusMessageRoutingKey.MessageGroup"/></param>
+        /// <param name="producerContext"><see cref="PlatformEventBusMessageRoutingKey.ProducerContext"/></param>
+        /// <param name="messageType"><see cref="PlatformEventBusMessageRoutingKey.MessageType"/></param>
+        /// <param name="messageAction"><see cref="PlatformEventBusMessageRoutingKey.MessageAction"/></param>
+        /// <param name="additionalCustomRoutingKeys"><see cref="AdditionalCustomRoutingKeys"/></param>
         public PlatformEventBusConsumerAttribute(
             string messageGroup,
             string producerContext,
             string messageType,
-            string messageAction = MatchAllPatternValue)
+            string messageAction = MatchAllPatternValue,
+            string[] additionalCustomRoutingKeys = null)
         {
             MessageGroup = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(messageGroup);
             ProducerContext = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(producerContext);
             MessageType = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(messageType);
-            MessageActionPattern = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(messageAction) ?? MatchAllPatternValue;
+            MessageAction = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(messageAction) ?? MatchAllPatternValue;
+            AdditionalCustomRoutingKeys = additionalCustomRoutingKeys ?? Array.Empty<string>();
 
             EnsureValid();
         }
@@ -35,19 +42,22 @@ namespace AngularDotnetPlatform.Platform.EventBus
         /// Initializes a new instance of the <see cref="PlatformEventBusConsumerAttribute"/> class.
         /// Input combined ket pattern. Example: "AA.BB.CC", "AA.*.CC.*", ...
         /// </summary>
-        public PlatformEventBusConsumerAttribute(string combinedKeyPattern)
+        /// <param name="combinedKeyPattern">Combined key pattern string represent for {messageGroup}.{producerContext}.{messageType}.{messageAction}</param>
+        /// <param name="additionalCustomRoutingKeys"><see cref="AdditionalCustomRoutingKeys"/></param>
+        public PlatformEventBusConsumerAttribute(string combinedKeyPattern, string[] additionalCustomRoutingKeys)
         {
             var combinedPatternParts = combinedKeyPattern.Split(".").ToList();
 
-            ProducerContext = combinedPatternParts.ElementAtOrDefault(0);
-            MessageGroup = combinedPatternParts.ElementAtOrDefault(1);
-            MessageType = combinedPatternParts.ElementAtOrDefault(2);
-            MessageActionPattern = combinedPatternParts.ElementAtOrDefault(3) ?? MatchAllPatternValue;
+            MessageGroup = combinedPatternParts.ElementAtOrDefault(0);
+            ProducerContext = combinedPatternParts.ElementAtOrDefault(1) ?? MatchAllPatternValue;
+            MessageType = combinedPatternParts.ElementAtOrDefault(2) ?? MatchAllPatternValue;
+            MessageAction = combinedPatternParts.ElementAtOrDefault(3) ?? MatchAllPatternValue;
+            AdditionalCustomRoutingKeys = additionalCustomRoutingKeys ?? Array.Empty<string>();
 
             EnsureValid();
         }
 
-        public static bool CanEventBusConsumerProcess(Type eventBusConsumerType, PlatformEventBusMessageRoutingKey routingKey)
+        public static bool CanEventBusConsumerProcess(Type eventBusConsumerType, string routingKey)
         {
             var consumerAttributes = eventBusConsumerType
                 .GetCustomAttributes(typeof(PlatformEventBusConsumerAttribute), true)
@@ -63,15 +73,35 @@ namespace AngularDotnetPlatform.Platform.EventBus
             return consumerAttributes.Any(p => p.IsMatchMessageRoutingKey(routingKey));
         }
 
+        /// <summary>
+        /// <see cref="PlatformEventBusMessageRoutingKey.MessageGroup"/>
+        /// </summary>
         public string MessageGroup { get; }
-        public string ProducerContext { get; }
-        public string MessageType { get; }
-        public string MessageActionPattern { get; }
 
-        public bool IsMatchMessageRoutingKey(PlatformEventBusMessageRoutingKey messageRoutingKey)
+        /// <summary>
+        /// <see cref="PlatformEventBusMessageRoutingKey.ProducerContext"/>
+        /// </summary>
+        public string ProducerContext { get; }
+
+        /// <summary>
+        /// <see cref="PlatformEventBusMessageRoutingKey.MessageType"/>
+        /// </summary>
+        public string MessageType { get; }
+
+        /// <summary>
+        /// <see cref="PlatformEventBusMessageRoutingKey.MessageAction"/>
+        /// </summary>
+        public string MessageAction { get; }
+
+        /// <summary>
+        /// Addtional custom free text routing keys list for this consumer to consume messages
+        /// </summary>
+        public string[] AdditionalCustomRoutingKeys { get; set; } = Array.Empty<string>();
+
+        public bool IsMatchMessageRoutingKey(string messageRoutingKey)
         {
             var patternRoutingKey = ToRoutingKey();
-            return patternRoutingKey.Match(messageRoutingKey);
+            return patternRoutingKey.Match(messageRoutingKey) || AdditionalCustomRoutingKeys.Contains(messageRoutingKey);
         }
 
         public PlatformEventBusMessageRoutingKey ToRoutingKey()
@@ -80,7 +110,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
                 messageGroup: MessageGroup,
                 producerContext: ProducerContext,
                 messageType: MessageType,
-                messageAction: MessageActionPattern);
+                messageAction: MessageAction);
             return patternRoutingKey;
         }
 

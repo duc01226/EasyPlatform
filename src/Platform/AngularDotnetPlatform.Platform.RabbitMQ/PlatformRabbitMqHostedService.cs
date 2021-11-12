@@ -97,15 +97,18 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         private void DeclareRabbitMqQueuesConfiguration(IModel channel)
         {
             // Declare queue for all messages to be produced
-            eventBusManager.GetAllDefinedEventBusMessageRoutingKeys()
+            eventBusManager.AllDefinedEventBusMessageRoutingKeys()
                 .ForEach(definedMessageRoutingKey => DeclareQueueForRoutingKey(channel, definedMessageRoutingKey));
 
             // Declare queue for all consumers
-            eventBusManager.AllDefinedEventBusConsumerPatternRoutingKeys()
-                .ForEach(consumerMatchingRoutingKey => DeclareQueueForRoutingKey(channel, consumerMatchingRoutingKey));
+            eventBusManager.AllDefinedEventBusConsumerAttributes()
+                .ForEach(consumerAttribute => DeclareQueueForRoutingKey(
+                    channel,
+                    consumerAttribute.ToRoutingKey(),
+                    additionalBindRoutingKeys: consumerAttribute.AdditionalCustomRoutingKeys));
         }
 
-        private void DeclareQueueForRoutingKey(IModel channel, PlatformEventBusMessageRoutingKey forRoutingKey)
+        private void DeclareQueueForRoutingKey(IModel channel, PlatformEventBusMessageRoutingKey forRoutingKey, string[] additionalBindRoutingKeys = null)
         {
             // Set exclusive to false to support multiple consumers with the same type.
             // For example: in load balancing environment, we may have 2 instances of an API.
@@ -116,6 +119,10 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
             channel.QueueDeclare(queueName, durable: true, exclusive: false, autoDelete: false);
             channel.QueueBind(queueName, exchange, bindRoutingKey);
+            additionalBindRoutingKeys?.ToList().ForEach(additionalBindRoutingKey =>
+            {
+                channel.QueueBind(queueName, exchange, additionalBindRoutingKey);
+            });
 
             Log.Information(Logger, message: $"Queue {queueName} has been declared and bind to Exchange {exchange} with routing key {bindRoutingKey}");
         }
@@ -123,10 +130,10 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         private void DeclareRabbitMqExchangesConfiguration(IModel channel)
         {
             // Declare exchange routing key for all defined messages to be produced
-            var allDefinedEventBusMessageRoutingKeys = eventBusManager.GetAllDefinedEventBusMessageRoutingKeys();
+            var allDefinedEventBusMessageRoutingKeys = eventBusManager.AllDefinedEventBusMessageRoutingKeys();
 
             // Get exchange routing key for all consumers
-            var allDefinedEventBusConsumerPatternRoutingKeys = eventBusManager.AllDefinedEventBusConsumerPatternRoutingKeys();
+            var allDefinedEventBusConsumerPatternRoutingKeys = eventBusManager.AllDefinedEventBusConsumerRoutingKeys();
 
             // Declare all exchanges
             DeclareExchangesForRoutingKeys(
@@ -177,7 +184,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 applicationRabbitConsumer.Received += OnMessageReceived;
 
                 // Binding all defined event bus consumer to RabbitMQ Basic Consumer
-                eventBusManager.AllDefinedEventBusConsumerPatternRoutingKeys()
+                eventBusManager.AllDefinedEventBusConsumerRoutingKeys()
                     .Select(p => p.QueueName())
                     .ToList()
                     .ForEach(queueName =>
@@ -304,7 +311,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         private void ProcessRequeueMessage(BasicDeliverEventArgs rabbitMqMessage, IPlatformEventBusMessage eventBusMessage)
         {
-            if (eventBusMessage.CreatedUtcDate.AddSeconds(options.RequeueExpiredTimeSpanInSeconds) >= Clock.UtcNow)
+            if (eventBusMessage.CreatedUtcDate.AddSeconds(options.RequeueExpiredInSeconds) >= Clock.UtcNow)
             {
                 // Requeue the message.
                 // References: https://www.rabbitmq.com/confirms.html#consumer-nacks-requeue

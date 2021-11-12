@@ -25,8 +25,8 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
 
         protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message)
         {
-            if (message.CreatedUtcDate.AddSeconds(30) > Clock.UtcNow)
-                throw new Exception("Test requeue message mechanism. Consumer temporarily failed for first 30 seconds from the created date of message");
+            if (message.CreatedUtcDate.AddSeconds(5) > Clock.UtcNow)
+                throw new Exception("Test requeue message mechanism. Consumer temporarily failed for first 5 seconds from the created date of message");
 
             Logger.LogInformation($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             return Task.CompletedTask;

@@ -35,15 +35,19 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         }
 
-        public async Task<TMessage> SendAsync<TMessage, TMessagePayload>(TMessage message, CancellationToken cancellationToken = default)
-            where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
-            where TMessagePayload : class, new()
+        public async Task<TMessage> SendAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default)
+            where TMessage : class, IPlatformEventBusMessage, new()
+        {
+            return await SendAsync(message, message.RoutingKey().CombinedStringKey, cancellationToken);
+        }
+
+        public async Task<TMessage> SendAsync<TMessage>(TMessage message, string customRoutingKey, CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusMessage, new()
         {
             try
             {
                 var jsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value);
 
-                await PublishMessageToQueueAsync(jsonMessage, message.RoutingKey(), cancellationToken);
+                await PublishMessageToQueueAsync(jsonMessage, message.RoutingKey(), customRoutingKey, cancellationToken);
 
                 return message;
             }
@@ -60,7 +64,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             PlatformEventBusMessageRoutingKey routingKey,
             CancellationToken cancellationToken = default) where TMessagePayload : class, new()
         {
-            var message = await SendAsync<PlatformEventBusMessage<TMessagePayload>, TMessagePayload>(
+            var message = await SendAsync(
                 PlatformEventBusMessage<TMessagePayload>.New(
                     trackId: trackId,
                     payload: payload,
@@ -71,23 +75,23 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             return message;
         }
 
-        private Task PublishMessageToQueueAsync(string message, PlatformEventBusMessageRoutingKey routingKey, CancellationToken cancellationToken)
+        private Task PublishMessageToQueueAsync(string message, PlatformEventBusMessageRoutingKey routingKey, string customRoutingKey = null, CancellationToken cancellationToken = default)
         {
             RetryPublishPolicy.ExecuteAndThrowFinalException(
-                () => PublishMessageToQueue(message, routingKey),
+                () => PublishMessageToQueue(message, routingKey, customRoutingKey),
                 ex => Logger.LogError(ex, $"[EventBusProducer] Unable to send message. Message Info: {message}"));
 
             return Task.CompletedTask;
         }
 
-        private void PublishMessageToQueue(string message, PlatformEventBusMessageRoutingKey routingKey)
+        private void PublishMessageToQueue(string message, PlatformEventBusMessageRoutingKey mainRoutingKey, string customRoutingKey = null)
         {
             var body = Encoding.UTF8.GetBytes(message);
             var channel = ChannelPool.Get();
 
             try
             {
-                channel.BasicPublish(ExchangeProvider.GetName(routingKey), routingKey.CombinedStringKey, null, body);
+                channel.BasicPublish(ExchangeProvider.GetName(mainRoutingKey), customRoutingKey ?? mainRoutingKey.CombinedStringKey, null, body);
             }
             finally
             {

@@ -33,13 +33,15 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
 
         protected override async Task ExecuteInternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message)
         {
-            if (await inboxEventBusMessageRepo.AnyAsync(p => message.TrackingId != null && p.Id == message.TrackingId))
+            if (await inboxEventBusMessageRepo.AnyAsync(p =>
+                message.TrackingId != null &&
+                p.Id == PlatformInboxEventBusMessage.BuildId(message, GetType().Name)))
             {
                 return;
             }
 
-            await base.ExecuteInternalHandleAsync(message);
-            await inboxEventBusMessageRepo.Create(PlatformInboxEventBusMessage.Create(message));
+            await InternalHandleAsync(message);
+            await inboxEventBusMessageRepo.CreateOrUpdate(PlatformInboxEventBusMessage.Create(message, GetType().Name));
         }
     }
 }
