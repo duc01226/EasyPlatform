@@ -11,9 +11,8 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
         }
     }
 
-    public class PlatformCqrsCommandEvent<TCommand, TCommandResult> : PlatformCqrsCommandEvent
-        where TCommand : PlatformCqrsCommand<TCommandResult>
-        where TCommandResult : PlatformCqrsCommandResult, new()
+    public class PlatformCqrsCommandEvent<TCommand> : PlatformCqrsCommandEvent
+        where TCommand : class, IPlatformCqrsCommand, new()
     {
         public PlatformCqrsCommandEvent() { }
 

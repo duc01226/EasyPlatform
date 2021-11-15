@@ -9,8 +9,6 @@ namespace AngularDotnetPlatform.Platform.EventBus
 {
     public interface IPlatformEventBusConsumer
     {
-        bool CanProcess(PlatformEventBusMessageRoutingKey routingKey);
-
         /// <summary>
         /// Config the time in milliseconds to log warning if the process consumer time is over ProcessWarningTimeMilliseconds.
         /// </summary>
@@ -21,6 +19,12 @@ namespace AngularDotnetPlatform.Platform.EventBus
         where TMessagePayload : class, new()
     {
         Task HandleAsync(PlatformEventBusMessage<TMessagePayload> message);
+    }
+
+    public interface IPlatformEventBusCustomMessageConsumer<TMessage> : IPlatformEventBusConsumer
+        where TMessage : class, new()
+    {
+        Task HandleAsync(TMessage message, string routingKey);
     }
 
     public abstract class PlatformEventBusConsumer : IPlatformEventBusConsumer
@@ -40,30 +44,39 @@ namespace AngularDotnetPlatform.Platform.EventBus
                 .GetInterfaces()
                 .FirstOrDefault(x =>
                     x.IsGenericType &&
-                    x.GetGenericTypeDefinition() == typeof(IPlatformEventBusConsumer<>));
+                    (x.GetGenericTypeDefinition() == typeof(IPlatformEventBusConsumer<>) ||
+                     x.GetGenericTypeDefinition() == typeof(IPlatformEventBusCustomMessageConsumer<>)));
 
-            // To ensure that the consumer implements the correct interface IOpalMessageConsumer<>.
-            // The IOpalMessageConsumer (non-generic version) is used for Interface Marker only.
+            // To ensure that the consumer implements the correct interface IPlatformEventBusConsumer<> OR IPlatformEventBusCustomMessageConsumer<>.
+            // The IPlatformEventBusConsumer (non-generic version) is used for Interface Marker only.
             if (genericConsumerType == null)
             {
-                throw new Exception("Incorrect implementation of IPlatformMessageConsumer<>");
+                throw new Exception("Incorrect implementation of IPlatformMessageConsumer<> or IPlatformEventBusCustomMessageConsumer<>");
             }
 
-            // Get generic type IPlatformMessageConsumer<TMessage> -> TMessage
-            var messageConsumerPayloadType = genericConsumerType.GetGenericArguments()[0];
-            // Get type of generic PlatformEventBusMessage<>
-            var messageType = typeof(PlatformEventBusMessage<>);
+            if (genericConsumerType.GetGenericTypeDefinition() == typeof(IPlatformEventBusConsumer<>))
+            {
+                // Get generic type IPlatformMessageConsumer<TMessagePayload> -> TMessage
+                var consumerMessagePayloadType = genericConsumerType.GetGenericArguments()[0];
+                // Get type of generic PlatformEventBusMessage<>
+                var messageType = typeof(PlatformEventBusMessage<>);
 
-            // Make a generic type: PlatformEventBusMessage<TMessage>
-            var messageForConsumerPayloadType =
-                messageType.MakeGenericType(messageConsumerPayloadType);
+                // Make a generic type: PlatformEventBusMessage<TMessage>
+                var messageForConsumerPayloadType =
+                    messageType.MakeGenericType(consumerMessagePayloadType);
 
-            return messageForConsumerPayloadType;
+                return messageForConsumerPayloadType;
+            }
+            else
+            {
+                return genericConsumerType.GetGenericArguments()[0];
+            }
         }
 
         public static async Task InvokeConsumer(
             IPlatformEventBusConsumer consumer,
-            IPlatformEventBusMessage eventBusMessage,
+            object eventBusMessage,
+            string routingKey,
             bool logConsumerProcessTime,
             long logConsumerProcessWarningTimeMilliseconds = DefaultProcessWarningTimeMilliseconds,
             ILogger logger = null)
@@ -74,11 +87,12 @@ namespace AngularDotnetPlatform.Platform.EventBus
                     throw new ArgumentNullException(nameof(logger));
 
                 await Util.Tasks.ProfilingAsync(
-                    asyncTask: () => DoInvokeConsumer(consumer, eventBusMessage),
+                    asyncTask: () => DoInvokeConsumer(consumer, eventBusMessage, routingKey),
                     afterExecution: elapsedMilliseconds =>
                     {
+                        var platformEventBusMessage = eventBusMessage as IPlatformEventBusMessage;
                         var message =
-                            $"[ConsumerProcessTime] Elapsed {elapsedMilliseconds} in milliseconds processing for consumer {consumer.GetType().FullName} message with routing key: {eventBusMessage.RoutingKey()}. Message id {eventBusMessage.TrackingId}.";
+                            $"[ConsumerProcessTime] Elapsed {elapsedMilliseconds} in milliseconds processing for consumer {consumer.GetType().FullName} message with routing key: {routingKey}. TrackingId {platformEventBusMessage?.TrackingId ?? "n/a"}.";
                         if (elapsedMilliseconds < logConsumerProcessWarningTimeMilliseconds || elapsedMilliseconds < consumer.ProcessWarningTimeMilliseconds())
                         {
                             logger.LogInformation(message);
@@ -91,13 +105,8 @@ namespace AngularDotnetPlatform.Platform.EventBus
             }
             else
             {
-                await DoInvokeConsumer(consumer, eventBusMessage);
+                await DoInvokeConsumer(consumer, eventBusMessage, routingKey);
             }
-        }
-
-        public bool CanProcess(PlatformEventBusMessageRoutingKey routingKey)
-        {
-            return PlatformEventBusConsumerAttribute.CanEventBusConsumerProcess(GetType(), routingKey);
         }
 
         public virtual long? ProcessWarningTimeMilliseconds()
@@ -105,21 +114,22 @@ namespace AngularDotnetPlatform.Platform.EventBus
             return DefaultProcessWarningTimeMilliseconds;
         }
 
-        private static async Task DoInvokeConsumer(IPlatformEventBusConsumer consumer, IPlatformEventBusMessage eventBusMessage)
+        private static async Task DoInvokeConsumer(IPlatformEventBusConsumer consumer, object eventBusMessage, string routingKey)
         {
-            // Get HandleAsync method.
-            var methodInfo = consumer.GetType()
-                .GetMethod(nameof(IPlatformEventBusConsumer<object>.HandleAsync));
+            var methodInfo = consumer.GetType().GetMethod(nameof(IPlatformEventBusConsumer<object>.HandleAsync)) ??
+                             consumer.GetType().GetMethod(nameof(IPlatformEventBusCustomMessageConsumer<object>.HandleAsync));
             if (methodInfo == null)
             {
                 throw new Exception(
-                    $"Can not find execution method from {typeof(IPlatformEventBusConsumer<>).FullName}");
+                    $"Can not find execution method from {typeof(IPlatformEventBusConsumer<>).FullName} or {typeof(IPlatformEventBusCustomMessageConsumer<>).FullName}");
             }
 
             try
             {
                 // Invoke the method.
-                var invokeResult = methodInfo.Invoke(consumer, new[] { eventBusMessage });
+                var invokeResult = methodInfo.GetParameters().Length == 2
+                    ? methodInfo.Invoke(consumer, new[] { eventBusMessage, routingKey })
+                    : methodInfo.Invoke(consumer, new[] { eventBusMessage });
                 if (invokeResult is Task invokeTask)
                     await invokeTask;
             }
@@ -155,5 +165,32 @@ namespace AngularDotnetPlatform.Platform.EventBus
         }
 
         protected abstract Task InternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message);
+    }
+
+    public abstract class PlatformEventBusCustomMessageConsumer<TMessage> : PlatformEventBusConsumer, IPlatformEventBusCustomMessageConsumer<TMessage>
+        where TMessage : class, new()
+    {
+        protected readonly ILogger Logger;
+
+        public PlatformEventBusCustomMessageConsumer(ILoggerFactory loggerFactory)
+        {
+            Logger = loggerFactory.CreateLogger(GetType());
+        }
+
+        public virtual async Task HandleAsync(TMessage message, string routingKey)
+        {
+            try
+            {
+                await InternalHandleAsync(message, routingKey);
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e, $"[MessageConsumerError] There is an error when handle message {typeof(TMessage).Name}." +
+                                   $"Message Info: ${JsonSerializer.Serialize(message)}");
+                throw;
+            }
+        }
+
+        protected abstract Task InternalHandleAsync(TMessage message, string routingKey);
     }
 }

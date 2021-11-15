@@ -25,14 +25,9 @@ namespace AngularDotnetPlatform.Platform.EventBus
         List<PlatformEventBusConsumerAttribute> AllDefinedEventBusConsumerAttributes();
 
         /// <summary>
-        /// Get all routing key pattern of all defined consumers
-        /// </summary>
-        List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusConsumerRoutingKeys();
-
-        /// <summary>
         /// Get routing keys for all defined message to be produced
         /// </summary>
-        List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusMessageRoutingKeys();
+        List<string> AllDefinedEventBusMessageRoutingKeys();
     }
 
     public class PlatformEventBusManager : IPlatformEventBusManager
@@ -61,23 +56,17 @@ namespace AngularDotnetPlatform.Platform.EventBus
                 .SelectMany(messageConsumerType => messageConsumerType
                     .GetCustomAttributes(true)
                     .OfType<PlatformEventBusConsumerAttribute>()
-                    .Select(messageConsumerTypeAttribute => messageConsumerTypeAttribute))
-                .GroupBy(p => p.ToRoutingKey())
-                .Select(group => new PlatformEventBusConsumerAttribute(
-                    group.Key.MessageGroup,
-                    group.Key.ProducerContext,
-                    group.Key.MessageType,
-                    group.Key.MessageAction,
-                    additionalCustomRoutingKeys: group.ToList().SelectMany(p => p.AdditionalCustomRoutingKeys).ToArray()))
+                    .Select(messageConsumerTypeAttribute => new
+                    {
+                        MessageConsumerTypeAttribute = messageConsumerTypeAttribute,
+                        ConsumerBindingRoutingKey = messageConsumerTypeAttribute.GetConsumerBindingRoutingKey()
+                    }))
+                .GroupBy(p => p.ConsumerBindingRoutingKey, p => p.MessageConsumerTypeAttribute)
+                .Select(group => group.First())
                 .ToList();
         }
 
-        public List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusConsumerRoutingKeys()
-        {
-            return AllDefinedEventBusConsumerAttributes().Select(p => p.ToRoutingKey()).Distinct().ToList();
-        }
-
-        public List<PlatformEventBusMessageRoutingKey> AllDefinedEventBusMessageRoutingKeys()
+        public List<string> AllDefinedEventBusMessageRoutingKeys()
         {
             var definedMessageRoutingKeys = serviceProvider.GetServices<IPlatformEventBusMessage>()
                 .Select(p => p.RoutingKey())
@@ -103,7 +92,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
                     var commandResultType = commandType.GetInterfaces().First(p =>
                         p.IsGenericType && p.GetGenericTypeDefinition().IsAssignableTo(typeof(IPlatformCqrsCommand<>)));
                     var commandEventMessageType =
-                        typeof(PlatformCqrsCommandEventBusMessage<,>).MakeGenericType(commandType, commandResultType.GenericTypeArguments[0]);
+                        typeof(PlatformCqrsCommandEventBusMessage<>).MakeGenericType(commandType, commandResultType.GenericTypeArguments[0]);
                     var commandEventMessage =
                         (IPlatformCqrsCommandEventBusMessage)Activator.CreateInstance(commandEventMessageType);
                     return commandEventMessage!.RoutingKey();
@@ -113,6 +102,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
             return definedMessageRoutingKeys
                 .Concat(allDefinedEntitiesEntityEventRoutingKeys)
                 .Concat(allDefinedCommandsCommandEventRoutingKeys)
+                .Select(p => p.CombinedStringKey)
                 .ToList();
         }
     }

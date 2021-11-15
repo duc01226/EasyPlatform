@@ -10,7 +10,7 @@ using MediatR;
 namespace AngularDotnetPlatform.Platform.Cqrs.Commands
 {
     public abstract class PlatformCqrsCommandHandler<TCommand, TResult> : PlatformCqrsRequestHandler<TCommand>, IRequestHandler<TCommand, TResult>
-        where TCommand : PlatformCqrsCommand<TResult>
+        where TCommand : PlatformCqrsCommand<TResult>, new()
         where TResult : PlatformCqrsCommandResult, new()
     {
         protected readonly IUnitOfWorkManager UnitOfWorkManager;
@@ -32,7 +32,7 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
 
             var result = await ExecuteHandleAsync(request, cancellationToken);
 
-            await Cqrs.SendEvent(new PlatformCqrsCommandEvent<TCommand, TResult>(request, PlatformCqrsCommandEventAction.Executed), cancellationToken);
+            await Cqrs.SendEvent(new PlatformCqrsCommandEvent<TCommand>(request, PlatformCqrsCommandEventAction.Executed), cancellationToken);
 
             return result;
         }
@@ -56,7 +56,7 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
             {
                 result = await HandleAsync(request, cancellationToken);
                 await Cqrs.SendEvent(
-                    new PlatformCqrsCommandEvent<TCommand, TResult>(request, PlatformCqrsCommandEventAction.Executing),
+                    new PlatformCqrsCommandEvent<TCommand>(request, PlatformCqrsCommandEventAction.Executing),
                     cancellationToken);
                 await usingUow.CompleteAsync(cancellationToken);
             }

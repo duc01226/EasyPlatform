@@ -16,14 +16,14 @@ using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandEventConsumers
 {
     /// <summary>
-    /// Demo using <see cref="PlatformInboxCqrsCommandEventBusConsumer{TCommand,TCommandResult}"/> to support inbox consumer
+    /// Demo using <see cref="PlatformInboxCqrsCommandEventBusConsumer{TCommand}"/> to support inbox consumer
     /// The SaveSnippetTextCommandEventBusMatchAllLeaderConsumer will throw error => Trigger message requeue =>
     /// Inbox consumer will prevent a consumer consume the same message again.
     /// <br/>
-    /// <inheritdoc cref="PlatformInboxCqrsCommandEventBusConsumer{TCommand,TCommandResult}"/>
+    /// <inheritdoc cref="PlatformInboxCqrsCommandEventBusConsumer{TCommand}"/>
     /// </summary>
-    [PlatformEventBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "SaveSnippetTextCommand", additionalCustomRoutingKeys: new[] { "CustomRoutingKeyForFlexibleMigrateWithOldSystem" })]
-    public class SaveSnippetTextCommandEventBusConsumer : PlatformInboxCqrsCommandEventBusConsumer<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
+    [PlatformEventBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "SaveSnippetTextCommand")]
+    public class SaveSnippetTextCommandEventBusConsumer : PlatformInboxCqrsCommandEventBusConsumer<SaveSnippetTextCommand>
     {
         public SaveSnippetTextCommandEventBusConsumer(
             ILoggerFactory loggerFactory,

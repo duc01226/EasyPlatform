@@ -9,7 +9,7 @@ using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents
 {
-    public class ClearCacheOnSaveSnippetTextCommandEventHandler : PlatformCqrsCommandEventHandler<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
+    public class ClearCacheOnSaveSnippetTextCommandEventHandler : PlatformCqrsCommandEventHandler<SaveSnippetTextCommand>
     {
         private readonly IPlatformCacheRepositoryProvider cacheRepositoryProvider;
 
@@ -20,7 +20,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents
             this.cacheRepositoryProvider = cacheRepositoryProvider;
         }
 
-        protected override Task HandleAsync(PlatformCqrsCommandEvent<SaveSnippetTextCommand, SaveSnippetTextCommandResult> @event, CancellationToken cancellationToken)
+        protected override Task HandleAsync(PlatformCqrsCommandEvent<SaveSnippetTextCommand> @event, CancellationToken cancellationToken)
         {
             // Queue task to clear cache every 5 seconds for 3 times (mean that after 5,10,15s).
             // Delay because when save snippet text, fulltext index take amount of time to update, so that we wait

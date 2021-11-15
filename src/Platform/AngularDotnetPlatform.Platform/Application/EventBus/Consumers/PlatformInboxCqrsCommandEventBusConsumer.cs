@@ -5,9 +5,8 @@ using Microsoft.Extensions.Logging;
 namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
 {
     /// <inheritdoc cref="IPlatformInboxEventBusConsumer{TMessagePayload}"/>
-    public abstract class PlatformInboxCqrsCommandEventBusConsumer<TCommand, TCommandResult> : PlatformInboxEventBusConsumer<TCommand>, IPlatformCqrsCommandEventBusConsumer<TCommand, TCommandResult>
-        where TCommand : PlatformCqrsCommand<TCommandResult>, new()
-        where TCommandResult : PlatformCqrsCommandResult, new()
+    public abstract class PlatformInboxCqrsCommandEventBusConsumer<TCommand> : PlatformInboxEventBusConsumer<TCommand>, IPlatformCqrsCommandEventBusConsumer<TCommand>
+        where TCommand : class, IPlatformCqrsCommand, new()
     {
         protected PlatformInboxCqrsCommandEventBusConsumer(
             ILoggerFactory loggerFactory,

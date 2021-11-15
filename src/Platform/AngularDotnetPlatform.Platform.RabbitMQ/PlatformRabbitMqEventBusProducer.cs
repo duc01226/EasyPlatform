@@ -47,7 +47,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             {
                 var jsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value);
 
-                await PublishMessageToQueueAsync(jsonMessage, message.RoutingKey(), customRoutingKey, cancellationToken);
+                await PublishMessageToQueueAsync(jsonMessage, customRoutingKey ?? message.RoutingKey(), cancellationToken);
 
                 return message;
             }
@@ -75,23 +75,23 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             return message;
         }
 
-        private Task PublishMessageToQueueAsync(string message, PlatformEventBusMessageRoutingKey routingKey, string customRoutingKey = null, CancellationToken cancellationToken = default)
+        private Task PublishMessageToQueueAsync(string message, string routingKey, CancellationToken cancellationToken = default)
         {
             RetryPublishPolicy.ExecuteAndThrowFinalException(
-                () => PublishMessageToQueue(message, routingKey, customRoutingKey),
+                () => PublishMessageToQueue(message, routingKey),
                 ex => Logger.LogError(ex, $"[EventBusProducer] Unable to send message. Message Info: {message}"));
 
             return Task.CompletedTask;
         }
 
-        private void PublishMessageToQueue(string message, PlatformEventBusMessageRoutingKey mainRoutingKey, string customRoutingKey = null)
+        private void PublishMessageToQueue(string message, string routingKey)
         {
             var body = Encoding.UTF8.GetBytes(message);
             var channel = ChannelPool.Get();
 
             try
             {
-                channel.BasicPublish(ExchangeProvider.GetName(mainRoutingKey), customRoutingKey ?? mainRoutingKey.CombinedStringKey, null, body);
+                channel.BasicPublish(ExchangeProvider.GetExchangeName(routingKey), routingKey, null, body);
             }
             finally
             {

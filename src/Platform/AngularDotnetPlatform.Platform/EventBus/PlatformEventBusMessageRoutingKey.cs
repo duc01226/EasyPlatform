@@ -82,20 +82,20 @@ namespace AngularDotnetPlatform.Platform.EventBus
             return New(routingKeyStr);
         }
 
-        public static string BuildCombinedStringKey(string messageGroup, string producerContext, string messageType, string messageAction)
+        public static string BuildCombinedStringKey(string messageGroup, string producerContext, string messageType, string messageAction = null)
         {
-            return $"{messageGroup}{CombinedStringKeySeparator}{producerContext}{CombinedStringKeySeparator}{messageType}{(string.IsNullOrEmpty(messageAction) ? "" : $"{CombinedStringKeySeparator}{messageAction}")}";
+            return $"{messageGroup}.{producerContext}.{messageType}" +
+                   $"{(string.IsNullOrEmpty(messageAction) ? "" : $"{CombinedStringKeySeparator}{messageAction}")}";
         }
 
-        public static string BuildQueueName(string messageGroup, string producerContext, string messageType)
+        public static string BuildCombinedStringKey(string messageGroup, string customRoutingKey)
         {
-            if (messageGroup == null || producerContext == null || messageType == null)
-            {
-                throw new ArgumentException(
-                    $"Invalid argument. {nameof(messageGroup)}, {nameof(producerContext)}, {nameof(messageType)} must be not null and empty");
-            }
+            return $"{messageGroup}.{customRoutingKey}";
+        }
 
-            return $"{messageGroup}.{producerContext}.{messageType}";
+        public override string ToString()
+        {
+            return CombinedStringKey;
         }
 
         public static PlatformEventBusMessageRoutingKey New(
@@ -198,9 +198,21 @@ namespace AngularDotnetPlatform.Platform.EventBus
             return keyPart?.Replace(CombinedStringKeySeparator, AutoFixKeyPartReplacer);
         }
 
-        public string QueueName(string forProducerContext = null)
+        public static bool IsMatchRoutingKeyPattern(string routingKeyPattern, string routingKey)
         {
-            return BuildQueueName(MessageGroup, ProducerContext ?? forProducerContext, MessageType);
+            var routingKeyPatternParts = routingKeyPattern.Split(CombinedStringKeySeparator);
+            var routingKeyParts = routingKey.Split(CombinedStringKeySeparator).ToList();
+
+            for (var i = 0; i < routingKeyPatternParts.Length; i++)
+            {
+                if (routingKeyParts.ElementAtOrDefault(i) == null ||
+                    !MatchPattern(routingKeyPatternParts[i], routingKeyParts.ElementAtOrDefault(i)))
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public bool Equals(PlatformEventBusMessageRoutingKey x, PlatformEventBusMessageRoutingKey y)
@@ -223,8 +235,8 @@ namespace AngularDotnetPlatform.Platform.EventBus
 
         public bool Match(PlatformEventBusMessageRoutingKey routingKey)
         {
-            return MatchPattern(ProducerContext, routingKey.ProducerContext) &&
-                   MatchPattern(MessageGroup, routingKey.MessageGroup) &&
+            return MatchPattern(MessageGroup, routingKey.MessageGroup) &&
+                   MatchPattern(ProducerContext, routingKey.ProducerContext) &&
                    MatchPattern(MessageType, routingKey.MessageType) &&
                    MatchPattern(MessageAction, routingKey.MessageAction);
         }
@@ -233,6 +245,11 @@ namespace AngularDotnetPlatform.Platform.EventBus
         {
             var validationResult = Validator(forMatchingPattern).Validate(this);
             validationResult.EnsureValid(p => new PlatformApplicationValidationException(validationResult));
+        }
+
+        public bool IsValid(bool forMatchingPattern = false)
+        {
+            return Validator(forMatchingPattern).Validate(this);
         }
     }
 }

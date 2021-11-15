@@ -7,7 +7,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
         public PlatformInvokeConsumerException(
             Exception e,
             string consumerName,
-            IPlatformEventBusMessage eventBusMessage) : base($"Invoke Consumer {consumerName} Failed.", e)
+            object eventBusMessage) : base($"Invoke Consumer {consumerName} Failed.", e)
         {
             ConsumerName = consumerName;
             EventBusMessage = eventBusMessage;
@@ -15,6 +15,6 @@ namespace AngularDotnetPlatform.Platform.EventBus
 
         public string ConsumerName { get; }
 
-        public IPlatformEventBusMessage EventBusMessage { get; set; }
+        public object EventBusMessage { get; set; }
     }
 }

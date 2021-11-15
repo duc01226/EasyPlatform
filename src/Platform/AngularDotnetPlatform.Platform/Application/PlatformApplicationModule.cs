@@ -81,7 +81,7 @@ namespace AngularDotnetPlatform.Platform.Application
                 .ExecuteAndCaptureAsync(async () =>
                 {
                     var cacheProvider = serviceScope.ServiceProvider.GetService<IPlatformCacheRepositoryProvider>();
-                    var distributedCacheRepository = cacheProvider?.Get(PlatformCacheRepositoryType.Distributed);
+                    var distributedCacheRepository = cacheProvider?.TryGet(PlatformCacheRepositoryType.Distributed);
                     if (distributedCacheRepository != null)
                         await distributedCacheRepository.RemoveAsync(p => options.AutoClearContexts.Contains(p.Context));
                 });
@@ -129,7 +129,7 @@ namespace AngularDotnetPlatform.Platform.Application
         /// Default return value is false.
         /// Set this to true if need to auto seed data on application module init.
         /// Only do this when define application module depend on persistence module
-        /// to ensure db initiated in persistence module init before application module init 
+        /// to ensure db initiated in persistence module init before application module init
         /// </summary>
         protected virtual bool AutoSeedDataOnInit()
         {
@@ -192,11 +192,11 @@ namespace AngularDotnetPlatform.Platform.Application
         private void RegisterEventBus(IServiceCollection serviceCollection)
         {
             serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEventBusProducer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(PlatformCqrsCommandEventBusProducer<,>), ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType(typeof(PlatformCqrsCommandEventBusProducer<>), ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType(typeof(PlatformCqrsEntityEventBusProducer<,>), ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType(typeof(IPlatformEventBusConsumer), ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType(typeof(IPlatformUowEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsCommandEventBusConsumer<,>), ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsCommandEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEntityEventBusConsumer<,>), ServiceLifeTime.Transient, Assembly);
             serviceCollection.Register<IPlatformApplicationEventBusProducer, PlatformApplicationEventBusProducer>(ServiceLifeTime.Transient);
         }

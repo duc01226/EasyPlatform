@@ -17,7 +17,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
     /// We use MatchAllPatternValue for producer context when consumer is leader
     /// </summary>
     [PlatformEventBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, PlatformEventBusConsumerAttribute.MatchAllPatternValue, "SaveSnippetTextCommand")]
-    public class SaveSnippetTextCommandEventBusMatchAllLeaderConsumer : PlatformCqrsCommandEventBusConsumer<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
+    public class SaveSnippetTextCommandEventBusMatchAllLeaderConsumer : PlatformCqrsCommandEventBusConsumer<SaveSnippetTextCommand>
     {
         public SaveSnippetTextCommandEventBusMatchAllLeaderConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager) : base(loggerFactory, uowManager)
         {

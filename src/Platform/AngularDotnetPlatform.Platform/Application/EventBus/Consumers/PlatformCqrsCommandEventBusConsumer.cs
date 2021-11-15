@@ -4,15 +4,13 @@ using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
 {
-    public interface IPlatformCqrsCommandEventBusConsumer<TCommand, TCommandResult> : IPlatformUowEventBusConsumer<TCommand>
-        where TCommand : PlatformCqrsCommand<TCommandResult>, new()
-        where TCommandResult : PlatformCqrsCommandResult, new()
+    public interface IPlatformCqrsCommandEventBusConsumer<TCommand> : IPlatformUowEventBusConsumer<TCommand>
+        where TCommand : class, IPlatformCqrsCommand, new()
     {
     }
 
-    public abstract class PlatformCqrsCommandEventBusConsumer<TCommand, TCommandResult> : PlatformUowEventBusConsumer<TCommand>, IPlatformCqrsCommandEventBusConsumer<TCommand, TCommandResult>
-        where TCommand : PlatformCqrsCommand<TCommandResult>, new()
-        where TCommandResult : PlatformCqrsCommandResult, new()
+    public abstract class PlatformCqrsCommandEventBusConsumer<TCommand> : PlatformUowEventBusConsumer<TCommand>, IPlatformCqrsCommandEventBusConsumer<TCommand>
+        where TCommand : class, IPlatformCqrsCommand, new()
     {
         protected PlatformCqrsCommandEventBusConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager) : base(loggerFactory, uowManager)
         {

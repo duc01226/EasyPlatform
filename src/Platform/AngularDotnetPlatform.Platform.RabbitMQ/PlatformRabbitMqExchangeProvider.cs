@@ -9,25 +9,22 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
     /// </summary>
     public interface IPlatformRabbitMqExchangeProvider
     {
-        string GetName(PlatformEventBusMessageRoutingKey routingKey);
+        string GetExchangeName(string routingKey);
     }
 
     public class PlatformRabbitMqExchangeProvider : IPlatformRabbitMqExchangeProvider
     {
-        public string GetName(PlatformEventBusMessageRoutingKey routingKey)
+        public string GetExchangeName(string routingKey)
         {
-            EnsureValidForGetExchangeName(routingKey);
+            var messageGroup = PlatformEventBusMessageRoutingKey.New(routingKey).MessageGroup;
 
-            return routingKey.MessageGroup;
-        }
-
-        private void EnsureValidForGetExchangeName(PlatformEventBusMessageRoutingKey routingKey)
-        {
             PlatformValidationResult
                 .ValidIf(
-                    !string.IsNullOrEmpty(routingKey.MessageGroup),
-                    $"[{nameof(PlatformRabbitMqExchangeProvider)}] RoutingKey MessageGroup must be not null and empty")
+                    !string.IsNullOrEmpty(messageGroup),
+                    $"[{nameof(PlatformRabbitMqExchangeProvider)}] RoutingKey MessageGroup must be not null and empty. RoutingKey must be in format [YourMessageGroup].xxx")
                 .EnsureValid(p => new ArgumentException(p.ErrorsMsg()));
+
+            return messageGroup;
         }
     }
 }

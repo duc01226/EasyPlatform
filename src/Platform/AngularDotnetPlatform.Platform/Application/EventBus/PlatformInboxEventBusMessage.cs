@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.EventBus;
+using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.JsonSerialization;
 using AngularDotnetPlatform.Platform.Timing;
 using AngularDotnetPlatform.Platform.Validators;
@@ -31,20 +32,43 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus
         {
             EnsureMessageValidForInbox(message);
 
-            return new PlatformInboxEventBusMessage()
+            var result = new PlatformInboxEventBusMessage()
             {
-                Id = BuildId(message, consumerBy),
+                Id = BuildId(message, consumerBy).TakeTop(IdMaxLength),
                 JsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value),
-                MessageTypeFullName = message.GetType().FullName,
-                RoutingKey = message.RoutingKey(),
+                MessageTypeFullName = message.GetType().FullName.TakeTop(MessageTypeFullNameMaxLength),
+                RoutingKey = message.RoutingKey().ToString().TakeTop(RoutingKeyMaxLength),
                 ConsumerDate = Clock.UtcNow,
                 ConsumerBy = consumerBy
             };
+
+            return result;
+        }
+
+        public static PlatformInboxEventBusMessage Create<TMessage>(TMessage customMessage, string routingKey, string consumerBy)
+            where TMessage : class, new()
+        {
+            var result = new PlatformInboxEventBusMessage()
+            {
+                Id = BuildId(customMessage, consumerBy),
+                JsonMessage = JsonSerializer.Serialize(customMessage, PlatformJsonSerializer.CurrentOptions.Value),
+                MessageTypeFullName = customMessage.GetType().FullName,
+                RoutingKey = routingKey,
+                ConsumerDate = Clock.UtcNow,
+                ConsumerBy = consumerBy
+            };
+
+            return result;
         }
 
         public static string BuildId(IPlatformEventBusMessage message, string consumerBy)
         {
-            return $"{message.TrackingId}_{consumerBy}".Substring(0, message.TrackingId.Length <= IdMaxLength ? message.TrackingId.Length : IdMaxLength);
+            return $"{message.TrackingId}_{consumerBy}";
+        }
+
+        public static string BuildId(object customMessage, string consumerBy)
+        {
+            return $"{customMessage.GetHashCode()}_{consumerBy}";
         }
 
         private static void EnsureMessageValidForInbox(IPlatformEventBusMessage message)

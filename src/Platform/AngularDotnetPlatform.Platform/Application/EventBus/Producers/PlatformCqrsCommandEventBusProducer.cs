@@ -15,17 +15,15 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
     {
     }
 
-    public class PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult> : PlatformEventBusMessage<TCommand>, IPlatformCqrsCommandEventBusMessage
-        where TCommand : PlatformCqrsCommand<TCommandResult>, new()
-        where TCommandResult : PlatformCqrsCommandResult, new()
+    public class PlatformCqrsCommandEventBusMessage<TCommand> : PlatformEventBusMessage<TCommand>, IPlatformCqrsCommandEventBusMessage
+        where TCommand : class, IPlatformCqrsCommand, new()
     {
         public override string MessageGroup => PlatformCqrsCommandEvent.EventTypeValue;
         public override string MessageType => PlatformCqrsCommandEvent.EventNameValue<TCommand>();
     }
 
-    public abstract class PlatformCqrsCommandEventBusProducer<TCommand, TCommandResult> : PlatformCqrsCommandEventHandler<TCommand, TCommandResult>, IPlatformCqrsEventBusProducer<PlatformCqrsCommandEvent<TCommand, TCommandResult>>
-        where TCommand : PlatformCqrsCommand<TCommandResult>, new()
-        where TCommandResult : PlatformCqrsCommandResult, new()
+    public abstract class PlatformCqrsCommandEventBusProducer<TCommand> : PlatformCqrsCommandEventHandler<TCommand>, IPlatformCqrsEventBusProducer<PlatformCqrsCommandEvent<TCommand>>
+        where TCommand : class, IPlatformCqrsCommand, new()
     {
         protected readonly IPlatformApplicationEventBusProducer ApplicationEventBusProducer;
         protected readonly ILogger Logger;
@@ -39,7 +37,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             Logger = loggerFactory.CreateLogger(GetType());
         }
 
-        protected override async Task HandleAsync(PlatformCqrsCommandEvent<TCommand, TCommandResult> @event, CancellationToken cancellationToken)
+        protected override async Task HandleAsync(PlatformCqrsCommandEvent<TCommand> @event, CancellationToken cancellationToken)
         {
             if (RestrictOnlyForAction() == null || @event.Action == RestrictOnlyForAction())
             {
@@ -48,7 +46,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                     if (CustomMessageRoutingKey() != null)
                     {
                         await ApplicationEventBusProducer
-                            .SendAsync<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>, TCommand>(
+                            .SendAsync<PlatformCqrsCommandEventBusMessage<TCommand>, TCommand>(
                                 customRoutingKey: CustomMessageRoutingKey(),
                                 trackId: @event.Id,
                                 messagePayload: @event.CommandData,
@@ -58,14 +56,14 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                     else
                     {
                         await ApplicationEventBusProducer
-                            .SendAsync<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>, TCommand>(
+                            .SendAsync<PlatformCqrsCommandEventBusMessage<TCommand>, TCommand>(
                                 trackId: @event.Id,
                                 messagePayload: @event.CommandData,
                                 messageAction: @event.EventAction,
                                 cancellationToken);
                     }
                 }
-                catch (PlatformEventBusException<PlatformCqrsCommandEventBusMessage<TCommand, TCommandResult>> e)
+                catch (PlatformEventBusException<PlatformCqrsCommandEventBusMessage<TCommand>> e)
                 {
                     Logger.LogError(e, $"[PlatformCqrsEventBusCommandEventHandler] Failed to send message for ${typeof(TCommand).Name}. Message Info: {JsonSerializer.Serialize(e.EventBusMessage)}");
                     throw;

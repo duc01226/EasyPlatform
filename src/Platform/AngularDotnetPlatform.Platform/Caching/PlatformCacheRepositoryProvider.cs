@@ -21,6 +21,11 @@ namespace AngularDotnetPlatform.Platform.Caching
         public IPlatformCacheRepository Get(PlatformCacheRepositoryType cacheRepositoryType);
 
         /// <summary>
+        /// Try Get cache repository by type. Return null if not existed
+        /// </summary>
+        public IPlatformCacheRepository TryGet(PlatformCacheRepositoryType cacheRepositoryType);
+
+        /// <summary>
         /// Get last registered collection cache repository
         /// </summary>
         public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<TCollectionCacheKeyProvider>()
@@ -58,6 +63,18 @@ namespace AngularDotnetPlatform.Platform.Caching
             EnsureCacheRepositoryTypeRegistered(cacheRepositoryType);
 
             return registeredCacheRepositoriesDic[cacheRepositoryType];
+        }
+
+        public IPlatformCacheRepository TryGet(PlatformCacheRepositoryType cacheRepositoryType)
+        {
+            try
+            {
+                return Get(cacheRepositoryType);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<TCollectionCacheKeyProvider>()

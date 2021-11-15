@@ -9,7 +9,7 @@ using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
 namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.CommandEventBusProducers
 {
-    public class SaveTextSnippetCommandEventBusProducer : PlatformCqrsCommandEventBusProducer<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
+    public class SaveTextSnippetCommandEventBusProducer : PlatformCqrsCommandEventBusProducer<SaveSnippetTextCommand>
     {
         public SaveTextSnippetCommandEventBusProducer(
             IUnitOfWorkManager unitOfWorkManager,
@@ -19,19 +19,13 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.CommandE
         }
     }
 
-    public class SaveTextSnippetCommandEventBusCustomRoutingKeyForFlexibleMigrateWithOldSystemProducer : PlatformCqrsCommandEventBusProducer<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
+    public class SaveTextSnippetCommandEventBusCustomRoutingKeyForFlexibleMigrateWithOldSystemProducer : PlatformCqrsCommandEventBusProducer<SaveSnippetTextCommand>
     {
         public SaveTextSnippetCommandEventBusCustomRoutingKeyForFlexibleMigrateWithOldSystemProducer(
             IUnitOfWorkManager unitOfWorkManager,
             IPlatformApplicationEventBusProducer applicationEventBusProducer,
             ILoggerFactory loggerFactory) : base(unitOfWorkManager, applicationEventBusProducer, loggerFactory)
         {
-        }
-
-        protected override string CustomMessageRoutingKey()
-        {
-            // Demo support refactor scrolling with old system that listen for message with their own routing key
-            return "CustomRoutingKeyForFlexibleMigrateWithOldSystem";
         }
     }
 }
