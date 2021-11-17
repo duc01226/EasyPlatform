@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using AngularDotnetPlatform.Platform.Application;
 using AngularDotnetPlatform.Platform.Application.Context;
+using AngularDotnetPlatform.Platform.JsonSerialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.CqrsPipelineMiddleware;
@@ -42,5 +45,18 @@ namespace PlatformExampleApp.TextSnippet.Application
         {
             return new List<Type>() { typeof(CommandAuditLogCqrsPipelineMiddleware<,>) };
         }
+
+        // Example Override this to set the whole application default JsonSerializerOptions for PlatformJsonSerializer.CurrentOptions
+        // The platform use PlatformJsonSerializer.CurrentOptions for every Json Serialization Tasks
+        //protected override JsonSerializerOptions JsonSerializerCurrentOptions()
+        //{
+        //    return PlatformJsonSerializer.BuildDefaultOptions(
+        //        useCamelCaseNaming: false,
+        //        useJsonStringEnumConverter: false,
+        //        customConverters: new List<JsonConverter>()
+        //        {
+        //            /* Your custom converters if existed*/
+        //        });
+        //}
     }
 }

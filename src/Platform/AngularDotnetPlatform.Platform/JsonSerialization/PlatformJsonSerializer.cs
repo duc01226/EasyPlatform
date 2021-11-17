@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Dynamic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -12,7 +13,7 @@ namespace AngularDotnetPlatform.Platform.JsonSerialization
 
         static PlatformJsonSerializer()
         {
-            DefaultOptions = SetupDefaultOptions();
+            DefaultOptions = BuildDefaultOptions();
         }
 
         /// <summary>
@@ -26,16 +27,23 @@ namespace AngularDotnetPlatform.Platform.JsonSerialization
             CurrentOptions = new Lazy<JsonSerializerOptions>(() => serializerOptions);
         }
 
-        private static JsonSerializerOptions SetupDefaultOptions()
+        public static JsonSerializerOptions BuildDefaultOptions(
+            bool useJsonStringEnumConverter = true,
+            bool useCamelCaseNaming = false,
+            List<JsonConverter> customConverters = null)
         {
             var result = new JsonSerializerOptions()
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 IgnoreNullValues = true
             };
-            result.Converters.Add(new JsonStringEnumConverter());
+            if (useCamelCaseNaming)
+                result.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            if (useJsonStringEnumConverter)
+                result.Converters.Add(new JsonStringEnumConverter());
             result.Converters.Add(new PlatformObjectJsonConverter());
             result.Converters.Add(new PlatformDynamicJsonConverter());
+            if (customConverters != null)
+                customConverters.ForEach(p => result.Converters.Add(p));
             return result;
         }
     }

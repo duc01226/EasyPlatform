@@ -13,6 +13,8 @@ namespace AngularDotnetPlatform.Platform.EventBus
         /// Config the time in milliseconds to log warning if the process consumer time is over ProcessWarningTimeMilliseconds.
         /// </summary>
         long? ProcessWarningTimeMilliseconds();
+
+        JsonSerializerOptions CustomJsonSerializerOptions();
     }
 
     public interface IPlatformEventBusConsumer<TMessagePayload> : IPlatformEventBusConsumer
@@ -112,6 +114,11 @@ namespace AngularDotnetPlatform.Platform.EventBus
         public virtual long? ProcessWarningTimeMilliseconds()
         {
             return DefaultProcessWarningTimeMilliseconds;
+        }
+
+        public virtual JsonSerializerOptions CustomJsonSerializerOptions()
+        {
+            return null;
         }
 
         private static async Task DoInvokeConsumer(IPlatformEventBusConsumer consumer, object eventBusMessage, string routingKey)

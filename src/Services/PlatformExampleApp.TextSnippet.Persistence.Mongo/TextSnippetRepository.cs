@@ -9,7 +9,7 @@ using PlatformExampleApp.TextSnippet.Domain.Repositories;
 namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
 {
     internal class TextSnippetRepository<TEntity> : PlatformMongoDbRepository<TEntity, Guid, TextSnippetDbContext>, ITextSnippetRepository<TEntity>
-        where TEntity : Entity<TEntity, Guid>, new()
+        where TEntity : class, IEntity<Guid>, new()
     {
         public TextSnippetRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
         {
@@ -17,7 +17,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
     }
 
     internal class TextSnippetRootRepository<TEntity> : PlatformMongoDbRootRepository<TEntity, Guid, TextSnippetDbContext>, ITextSnippetRootRepository<TEntity>
-        where TEntity : RootEntity<TEntity, Guid>, new()
+        where TEntity : class, IRootEntity<Guid>, new()
     {
         public TextSnippetRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
         {

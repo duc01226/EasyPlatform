@@ -66,7 +66,8 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
                 InternalRegister(serviceCollection);
                 Registered = true;
 
-                PlatformJsonSerializer.SetCurrentOptions(JsonSerializerCurrentOptions());
+                if (JsonSerializerCurrentOptions() != null)
+                    PlatformJsonSerializer.SetCurrentOptions(JsonSerializerCurrentOptions());
             }
         }
 
@@ -131,12 +132,12 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
         }
 
         /// <summary>
-        /// Override this to setup value for <see cref="PlatformJsonSerializer.CurrentOptions"/>
+        /// Override this to setup custom value for <see cref="PlatformJsonSerializer.CurrentOptions"/>
         /// </summary>
         /// <returns></returns>
         protected virtual JsonSerializerOptions JsonSerializerCurrentOptions()
         {
-            return PlatformJsonSerializer.DefaultOptions;
+            return null;
         }
 
         protected void EnsurePlatformImplementationValid()

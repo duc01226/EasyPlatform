@@ -8,7 +8,7 @@ using PlatformExampleApp.TextSnippet.Domain.Repositories;
 namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
 {
     internal class TextSnippetMultiDbDemoRepository<TEntity> : PlatformMongoDbRepository<TEntity, Guid, TextSnippetMultiDbDemoDbContext>, ITextSnippetRepository<TEntity>
-        where TEntity : Entity<TEntity, Guid>, new()
+        where TEntity : class, IEntity<Guid>, new()
     {
         public TextSnippetMultiDbDemoRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
         {
@@ -16,7 +16,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
     }
 
     internal class TextSnippetMultiDbDemoRootRepository<TEntity> : PlatformMongoDbRootRepository<TEntity, Guid, TextSnippetMultiDbDemoDbContext>, ITextSnippetRootRepository<TEntity>
-        where TEntity : RootEntity<TEntity, Guid>, new()
+        where TEntity : class, IRootEntity<Guid>, new()
     {
         public TextSnippetMultiDbDemoRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
         {

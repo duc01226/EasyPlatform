@@ -98,19 +98,6 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 .ForEach(consumerAttribute => DeclareQueueForConsumer(channel, consumerAttribute));
         }
 
-        private string ToMessageQueueName(PlatformEventBusConsumerAttribute consumerAttribute)
-        {
-            if (!string.IsNullOrEmpty(consumerAttribute.CustomRoutingKey))
-            {
-                return $"{consumerAttribute.MessageGroup}.{consumerAttribute.CustomRoutingKey}";
-            }
-            else
-            {
-                var platformRoutingKey = consumerAttribute.ToPlatformRoutingKey();
-                return $"{platformRoutingKey.MessageGroup}.{platformRoutingKey.ProducerContext}.{platformRoutingKey.MessageType}";
-            }
-        }
-
         private void DeclareQueueForConsumer(IModel channel, PlatformEventBusConsumerAttribute consumerAttribute)
         {
             var exchange = GetConsumerExchange(consumerAttribute);
@@ -138,7 +125,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             }
         }
 
-        private static string GetConsumerQueueName(PlatformEventBusConsumerAttribute consumerAttribute)
+        private string GetConsumerQueueName(PlatformEventBusConsumerAttribute consumerAttribute)
         {
             return consumerAttribute.GetConsumerBindingRoutingKey();
         }
@@ -286,7 +273,8 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             try
             {
                 var objectTypePayloadMessage =
-                    JsonSerializer.Deserialize<PlatformEventBusMessage<object>>(rabbitMqMessage.Body.Span,
+                    JsonSerializer.Deserialize<PlatformEventBusMessage<object>>(
+                        rabbitMqMessage.Body.Span,
                         PlatformJsonSerializer.CurrentOptions.Value);
                 if (objectTypePayloadMessage == null)
                 {
@@ -373,7 +361,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 () => JsonSerializer.Deserialize(
                     args.Body.Span,
                     consumerMessageType,
-                    PlatformJsonSerializer.CurrentOptions.Value),
+                    consumer.CustomJsonSerializerOptions() ?? PlatformJsonSerializer.CurrentOptions.Value),
                 ex => Log.Error(
                     Logger,
                     ex,
