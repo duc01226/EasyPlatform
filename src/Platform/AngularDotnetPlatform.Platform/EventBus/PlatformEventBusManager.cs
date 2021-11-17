@@ -89,13 +89,11 @@ namespace AngularDotnetPlatform.Platform.EventBus
                 .Where(p => p.IsAssignableTo(typeof(IPlatformCqrsCommand)) && p.IsClass && !p.IsAbstract && !p.IsGenericType)
                 .Select(commandType =>
                 {
-                    var commandResultType = commandType.GetInterfaces().First(p =>
-                        p.IsGenericType && p.GetGenericTypeDefinition().IsAssignableTo(typeof(IPlatformCqrsCommand<>)));
-                    var commandEventMessageType =
-                        typeof(PlatformCqrsCommandEventBusMessage<>).MakeGenericType(commandType, commandResultType.GenericTypeArguments[0]);
-                    var commandEventMessage =
-                        (IPlatformCqrsCommandEventBusMessage)Activator.CreateInstance(commandEventMessageType);
-                    return commandEventMessage!.RoutingKey();
+                    var commandEventBusMessageType =
+                        typeof(PlatformCqrsCommandEventBusMessage<>).MakeGenericType(commandType);
+                    var commandEventBusMessage =
+                        (IPlatformCqrsCommandEventBusMessage)Activator.CreateInstance(commandEventBusMessageType);
+                    return commandEventBusMessage!.RoutingKey();
                 })
                 .ToList();
 
