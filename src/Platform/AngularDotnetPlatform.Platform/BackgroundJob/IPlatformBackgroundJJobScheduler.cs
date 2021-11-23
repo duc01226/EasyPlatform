@@ -88,7 +88,7 @@ namespace AngularDotnetPlatform.Platform.BackgroundJob
         /// <br/>
         /// Run once a year at midnight of 1 January: 0 0 1 1 *
         /// <br/>
-        /// Run once a day at midnight: 0 0 * * *
+        /// Run daily at midnight 0h: 0 0 * * *
         /// </param>
         /// <param name="timeZone">Timezone for the job to run based on</param>
         public void UpsertRecurringJob<TJobExecutor>(

@@ -3,12 +3,41 @@ using System.Linq;
 
 namespace AngularDotnetPlatform.Platform.BackgroundJob
 {
+    /// <summary>
+    /// Specify cronExpression for recurring job interval <br/>
+    /// Cron expression references: https://en.wikipedia.org/wiki/Cron
+    /// <br/>
+    /// Format: [minute(0-59)] [hour(0-23)] [day of month (1-31)] [month (1-12)] [dat of week (0-6 = Sunday to Saturday)]
+    /// <br/>
+    /// Example:
+    /// <br/>
+    /// Minutely: * * * * *
+    /// <br/>
+    /// Hourly: 0 * * * *
+    /// <br/>
+    /// Run once a year at midnight of 1 January: 0 0 1 1 *
+    /// <br/>
+    /// Run daily at midnight 0h: 0 0 * * *
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface)]
     public class PlatformRecurringJobAttribute : Attribute
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="PlatformRecurringJobAttribute"/> class.
-        /// Specify cronExpression for recurring job interval
+        /// Specify cronExpression for recurring job interval <br/>
+        /// Cron expression references: https://en.wikipedia.org/wiki/Cron
+        /// <br/>
+        /// Format: [minute(0-59)] [hour(0-23)] [day of month (1-31)] [month (1-12)] [dat of week (0-6 = Sunday to Saturday)]
+        /// <br/>
+        /// Example:
+        /// <br/>
+        /// Minutely: * * * * *
+        /// <br/>
+        /// Hourly: 0 * * * *
+        /// <br/>
+        /// Run once a year at midnight of 1 January: 0 0 1 1 *
+        /// <br/>
+        /// Run daily at midnight 0h: 0 0 * * *
         /// </summary>
         /// <param name="cronExpression"><see cref="CronExpression"/></param>
         public PlatformRecurringJobAttribute(string cronExpression)
@@ -32,7 +61,7 @@ namespace AngularDotnetPlatform.Platform.BackgroundJob
         /// <br/>
         /// Run once a year at midnight of 1 January: 0 0 1 1 *
         /// <br/>
-        /// Run once a day at midnight: 0 0 * * *
+        /// Run daily at midnight 0h: 0 0 * * *
         public string CronExpression { get; }
 
         public static string GetCronExpressionInfo<TJobExecutor>() where TJobExecutor : IPlatformBackgroundJobExecutor
