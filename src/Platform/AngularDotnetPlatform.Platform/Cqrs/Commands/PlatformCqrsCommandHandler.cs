@@ -65,14 +65,22 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Commands
         }
     }
 
-    public abstract class PlatformCqrsCommandHandler<TCommand> : PlatformCqrsRequestHandler<TCommand>,
-        IRequestHandler<TCommand, PlatformCqrsCommandResult>
-        where TCommand : PlatformCqrsCommand
+    public abstract class PlatformCqrsCommandHandler<TCommand> : PlatformCqrsCommandHandler<TCommand, PlatformCqrsCommandResult>
+        where TCommand : PlatformCqrsCommand, new()
     {
-        protected PlatformCqrsCommandHandler(IPlatformApplicationUserContextAccessor userContext) : base(userContext)
+        protected PlatformCqrsCommandHandler(
+            IPlatformApplicationUserContextAccessor userContext,
+            IUnitOfWorkManager unitOfWorkManager,
+            IPlatformCqrs cqrs) : base(userContext, unitOfWorkManager, cqrs)
         {
         }
 
-        public abstract Task<PlatformCqrsCommandResult> Handle(TCommand request, CancellationToken cancellationToken);
+        protected override async Task<PlatformCqrsCommandResult> HandleAsync(TCommand request, CancellationToken cancellationToken)
+        {
+            await HandleNoResult(request, cancellationToken);
+            return new PlatformCqrsCommandResult();
+        }
+
+        public abstract Task HandleNoResult(TCommand request, CancellationToken cancellationToken);
     }
 }

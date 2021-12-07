@@ -9,7 +9,7 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Queries
         public PlatformCqrsQueryResult() { }
     }
 
-    public abstract class PlatformCqrsQueryPagedResult<TItem> : PlatformCqrsQueryResult, IPagedResult<TItem>
+    public abstract class PlatformCqrsQueryPagedResult<TItem> : PlatformCqrsQueryResult, IPlatformPagedResult<TItem>
     {
         public PlatformCqrsQueryPagedResult() { }
 

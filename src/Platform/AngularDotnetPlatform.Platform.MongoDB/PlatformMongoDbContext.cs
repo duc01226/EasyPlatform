@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
+using AngularDotnetPlatform.Platform.Persistence;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;

@@ -34,7 +34,7 @@ namespace AngularDotnetPlatform.Platform.Cqrs.Queries
         }
     }
 
-    public abstract class PlatformCqrsPagedResultQuery<TResult, TItem> : PlatformCqrsQuery<TResult>, IPagedRequest
+    public abstract class PlatformCqrsPagedResultQuery<TResult, TItem> : PlatformCqrsQuery<TResult>, IPlatformPagedRequest
         where TResult : PlatformCqrsQueryPagedResult<TItem>
     {
         public int SkipCount { get; set; }

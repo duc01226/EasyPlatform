@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
+using AngularDotnetPlatform.Platform.Persistence;
 using MongoDB.Driver;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
