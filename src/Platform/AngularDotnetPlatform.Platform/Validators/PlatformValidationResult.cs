@@ -132,7 +132,7 @@ namespace AngularDotnetPlatform.Platform.Validators
             return !IsValid ? this : val;
         }
 
-        public PlatformValidationResult And(bool validCondition, params PlatformValidationFailure[] errors)
+        public PlatformValidationResult And(Func<bool> validCondition, params PlatformValidationFailure[] errors)
         {
             return !IsValid ? this : ValidIf(validCondition, errors);
         }

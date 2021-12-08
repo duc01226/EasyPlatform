@@ -40,7 +40,8 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
 
             var computedKey = PlatformApplicationUserContextKeyBuilder.ComputedContextKeyFor(contextKey);
 
-            if (CurrentHttpContext().Items.ContainsKey(computedKey))
+            if (CurrentHttpContext().Items.ContainsKey(computedKey) &&
+                CurrentHttpContext().Items[computedKey] != null)
             {
                 return (T)CurrentHttpContext().Items[computedKey];
             }

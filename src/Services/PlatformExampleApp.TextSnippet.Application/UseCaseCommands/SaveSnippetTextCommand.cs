@@ -112,15 +112,15 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         private PlatformValidationResult ValidateSomeThisCommandLogic()
         {
             return PlatformValidationResult.Valid()
-                .And(validCondition: true, "Example Rule 1 violated error message")
-                .And(validCondition: true, "Example Rule 2 violated error message");
+                .And(validCondition: () => true, "Example Rule 1 violated error message")
+                .And(validCondition: () => true, "Example Rule 2 violated error message");
         }
 
         private PlatformValidationResult ValidateSomeThisCommandLogicToChangeFlow()
         {
             return PlatformValidationResult.Valid()
-                .And(validCondition: true, "Example Rule 1 violated error message")
-                .And(validCondition: true, "Example Rule 2 violated error message");
+                .And(validCondition: () => true, "Example Rule 1 violated error message")
+                .And(validCondition: () => true, "Example Rule 2 violated error message");
         }
     }
 }
