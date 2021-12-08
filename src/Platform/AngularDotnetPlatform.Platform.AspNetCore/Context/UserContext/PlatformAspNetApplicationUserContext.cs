@@ -239,24 +239,26 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
 
                 var isParsedAllItemSuccess = true;
 
-                var parsedItemList = matchedClaimStringValues.Select(matchedClaimStringValue =>
-                {
-                    if (listItemType == typeof(string))
+                var parsedItemList = matchedClaimStringValues
+                    .Select(matchedClaimStringValue =>
                     {
-                        return matchedClaimStringValue;
-                    }
+                        if (listItemType == typeof(string))
+                        {
+                            return matchedClaimStringValue;
+                        }
 
-                    var parsedItemResult = Util.Jsons.TryDeserialize(
-                        matchedClaimStringValue,
-                        listItemType,
-                        out var itemDeserializedValue,
-                        PlatformJsonSerializer.CurrentOptions.Value);
+                        var parsedItemResult = Util.Jsons.TryDeserialize(
+                            matchedClaimStringValue,
+                            listItemType,
+                            out var itemDeserializedValue,
+                            PlatformJsonSerializer.CurrentOptions.Value);
 
-                    if (parsedItemResult == false)
-                        isParsedAllItemSuccess = false;
+                        if (parsedItemResult == false)
+                            isParsedAllItemSuccess = false;
 
-                    return itemDeserializedValue;
-                });
+                        return itemDeserializedValue;
+                    })
+                    .ToList();
 
                 if (isParsedAllItemSuccess)
                 {
@@ -268,7 +270,6 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
             }
 
             foundValue = default;
-
             return false;
         }
 
