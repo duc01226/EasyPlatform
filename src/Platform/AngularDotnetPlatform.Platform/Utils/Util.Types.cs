@@ -23,6 +23,26 @@ namespace AngularDotnetPlatform.Platform.Utils
 
                 return Type.GetType(typeQualifiedName, true);
             }
+
+            public static Type FindMatchedGenericType(Type givenType, Type matchedToGenericTypeDefinition)
+            {
+                var interfaceTypes = givenType.GetInterfaces();
+
+                foreach (var interfaceType in interfaceTypes)
+                {
+                    if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == matchedToGenericTypeDefinition)
+                        return interfaceType;
+                }
+
+                if (givenType.IsGenericType && givenType.GetGenericTypeDefinition() == matchedToGenericTypeDefinition)
+                    return givenType;
+
+                var baseType = givenType.BaseType;
+                if (baseType == null)
+                    return null;
+
+                return FindMatchedGenericType(baseType, matchedToGenericTypeDefinition);
+            }
         }
     }
 }

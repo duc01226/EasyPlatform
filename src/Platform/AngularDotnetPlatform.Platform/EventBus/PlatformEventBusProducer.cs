@@ -30,5 +30,19 @@ namespace AngularDotnetPlatform.Platform.EventBus
             PlatformEventBusMessageRoutingKey routingKey,
             CancellationToken cancellationToken = default)
             where TMessagePayload : class, new();
+
+        /// <summary>
+        /// Send a free format message <see cref="TMessage"/> to bus with routingKey from = <see cref="PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build"/> for <see cref="TMessage"/>
+        /// </summary>
+        /// <exception cref="PlatformEventBusException{TMessage}">Could throw if there is an exception</exception>
+        public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default)
+            where TMessage : class, new();
+
+        /// <summary>
+        /// Send a free format message <see cref="TMessage"/> to bus with <see cref="routingKey"/>
+        /// </summary>
+        /// <exception cref="PlatformEventBusException{TMessage}">Could throw if there is an exception</exception>
+        public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(TMessage message, string routingKey, CancellationToken cancellationToken = default)
+            where TMessage : class, new();
     }
 }

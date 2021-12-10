@@ -96,6 +96,8 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             // Declare queue for all consumers
             eventBusManager.AllDefinedEventBusConsumerAttributes()
                 .ForEach(consumerAttribute => DeclareQueueForConsumer(channel, consumerAttribute));
+            eventBusManager.AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers()
+                .ForEach(consumerAttribute => DeclareQueueForConsumer(channel, consumerAttribute));
         }
 
         private void DeclareQueueForConsumer(IModel channel, PlatformEventBusConsumerAttribute consumerAttribute)
@@ -109,30 +111,63 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             channel.QueueDeclare(queueName, durable: true, exclusive: false, autoDelete: false);
             Log.Information(Logger, message: $"Queue {queueName} has been declared");
 
-            channel.QueueBind(queueName, exchange, consumerAttribute.GetConsumerBindingRoutingKey());
-            Log.Information(Logger, message: $"Queue {queueName} has been declared and bound to Exchange {exchange} with routing key {consumerAttribute.GetConsumerBindingRoutingKey()}");
-
-            channel.QueueBind(queueName, exchange, $"{consumerAttribute.GetConsumerBindingRoutingKey()}.{PlatformRabbitMqConstants.FanoutBindingChar}");
-            Log.Information(Logger, message: $"Queue {queueName} has been declared and bound to Exchange {exchange} with routing key {consumerAttribute.GetConsumerBindingRoutingKey()}.{PlatformRabbitMqConstants.FanoutBindingChar}");
+            DeclareQueueBindForConsumer(channel, consumerAttribute.GetConsumerBindingRoutingKey(), queueName, exchange);
 
             if (!string.IsNullOrEmpty(consumerAttribute.CustomRoutingKey))
             {
-                channel.QueueBind(queueName, exchange, $"{consumerAttribute.CustomRoutingKey}");
-                Log.Information(Logger, message: $"Queue {queueName} has been bound to Exchange {exchange} with routing key {consumerAttribute.CustomRoutingKey}");
-
-                channel.QueueBind(queueName, exchange, $"{consumerAttribute.CustomRoutingKey}.{PlatformRabbitMqConstants.FanoutBindingChar}");
-                Log.Information(Logger, message: $"Queue {queueName} has been bound to Exchange {exchange} with routing key {consumerAttribute.CustomRoutingKey}.{PlatformRabbitMqConstants.FanoutBindingChar}");
+                DeclareQueueBindForConsumer(channel, consumerAttribute.CustomRoutingKey, queueName, exchange);
             }
+        }
+
+        private void DeclareQueueForConsumer(IModel channel, PlatformEventBusMessageRoutingKey consumerBindingRoutingKey)
+        {
+            var exchange = GetConsumerExchange(consumerBindingRoutingKey);
+            var queueName = GetConsumerQueueName(consumerBindingRoutingKey);
+
+            // Set exclusive to false to support multiple consumers with the same type.
+            // For example: in load balancing environment, we may have 2 instances of an API.
+            // RabbitMQ will automatically apply load balancing behavior to send message to 1 instance only.
+            channel.QueueDeclare(queueName, durable: true, exclusive: false, autoDelete: false);
+            Log.Information(Logger, message: $"Queue {queueName} has been declared");
+
+            DeclareQueueBindForConsumer(channel, consumerBindingRoutingKey, queueName, exchange);
+        }
+
+        private void DeclareQueueBindForConsumer(
+            IModel channel,
+            string consumerBindingRoutingKey,
+            string queueName,
+            string exchange)
+        {
+            channel.QueueBind(queueName, exchange, consumerBindingRoutingKey);
+            Log.Information(Logger,
+                message:
+                $"Queue {queueName} has been declared and bound to Exchange {exchange} with routing key {consumerBindingRoutingKey}");
+
+            channel.QueueBind(queueName, exchange, $"{consumerBindingRoutingKey}.{PlatformRabbitMqConstants.FanoutBindingChar}");
+            Log.Information(Logger,
+                message:
+                $"Queue {queueName} has been declared and bound to Exchange {exchange} with routing key {consumerBindingRoutingKey}.{PlatformRabbitMqConstants.FanoutBindingChar}");
         }
 
         private string GetConsumerQueueName(PlatformEventBusConsumerAttribute consumerAttribute)
         {
-            return consumerAttribute.GetConsumerBindingRoutingKey();
+            return GetConsumerQueueName(consumerAttribute.GetConsumerBindingRoutingKey());
+        }
+
+        private string GetConsumerQueueName(string consumerRoutingKey)
+        {
+            return consumerRoutingKey;
         }
 
         private string GetConsumerExchange(PlatformEventBusConsumerAttribute consumerAttribute)
         {
-            return exchangeProvider.GetExchangeName(routingKey: consumerAttribute.GetConsumerBindingRoutingKey());
+            return GetConsumerExchange(consumerRoutingKey: consumerAttribute.GetConsumerBindingRoutingKey());
+        }
+
+        private string GetConsumerExchange(PlatformEventBusMessageRoutingKey consumerRoutingKey)
+        {
+            return exchangeProvider.GetExchangeName(routingKey: consumerRoutingKey);
         }
 
         private void DeclareRabbitMqExchangesConfiguration(IModel channel)
@@ -143,7 +178,10 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             // Get exchange routing key for all consumers
             var allDefinedEventBusConsumerPatternRoutingKeys = eventBusManager
                 .AllDefinedEventBusConsumerAttributes()
-                .Select(p => p.GetConsumerBindingRoutingKey());
+                .Select(p => p.GetConsumerBindingRoutingKey())
+                .Concat(eventBusManager
+                    .AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers()
+                    .Select(p => p.ToString()));
 
             // Declare all exchanges
             DeclareExchangesForRoutingKeys(
@@ -196,6 +234,10 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 // Binding all defined event bus consumer to RabbitMQ Basic Consumer
                 eventBusManager.AllDefinedEventBusConsumerAttributes()
                     .Select(GetConsumerQueueName)
+                    .Concat(eventBusManager
+                        .AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers()
+                        .Select(freeFormatMessageConsumerDefaultRoutingKey => GetConsumerQueueName(freeFormatMessageConsumerDefaultRoutingKey.ToString())))
+                    .Distinct()
                     .ToList()
                     .ForEach(queueName =>
                     {
@@ -283,7 +325,20 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 }
 
                 var canProcessConsumerTypes = eventBusManager.AllDefinedEventBusConsumerTypes()
-                    .Where(eventBusConsumerType => PlatformEventBusConsumerAttribute.CanEventBusConsumerProcess(eventBusConsumerType, rabbitMqMessage.RoutingKey))
+                    .Where(eventBusConsumerType =>
+                    {
+                        var matchedFreeFormatMessageConsumerType = Util.Types.FindMatchedGenericType(eventBusConsumerType, typeof(IPlatformEventBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition());
+                        if (matchedFreeFormatMessageConsumerType != null)
+                        {
+                            var matchedFreeFormatMessageConsumerRoutingKey = PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(
+                                messageType: matchedFreeFormatMessageConsumerType.GetGenericArguments()[0]);
+                            return matchedFreeFormatMessageConsumerRoutingKey.ToString() == rabbitMqMessage.RoutingKey ||
+                                   matchedFreeFormatMessageConsumerRoutingKey.Match(rabbitMqMessage.RoutingKey) ||
+                                   PlatformEventBusConsumerAttribute.CanEventBusConsumerProcess(eventBusConsumerType, rabbitMqMessage.RoutingKey, forceAtLeastOneAttributes: false);
+                        }
+
+                        return PlatformEventBusConsumerAttribute.CanEventBusConsumerProcess(eventBusConsumerType, rabbitMqMessage.RoutingKey);
+                    })
                     .ToList();
 
                 foreach (var consumerType in canProcessConsumerTypes)

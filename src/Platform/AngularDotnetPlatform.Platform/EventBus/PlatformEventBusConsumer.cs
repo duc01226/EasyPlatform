@@ -23,7 +23,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
         Task HandleAsync(PlatformEventBusMessage<TMessagePayload> message);
     }
 
-    public interface IPlatformEventBusCustomMessageConsumer<TMessage> : IPlatformEventBusConsumer
+    public interface IPlatformEventBusFreeFormatMessageConsumer<TMessage> : IPlatformEventBusConsumer
         where TMessage : class, new()
     {
         Task HandleAsync(TMessage message, string routingKey);
@@ -47,7 +47,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
                 .FirstOrDefault(x =>
                     x.IsGenericType &&
                     (x.GetGenericTypeDefinition() == typeof(IPlatformEventBusConsumer<>) ||
-                     x.GetGenericTypeDefinition() == typeof(IPlatformEventBusCustomMessageConsumer<>)));
+                     x.GetGenericTypeDefinition() == typeof(IPlatformEventBusFreeFormatMessageConsumer<>)));
 
             // To ensure that the consumer implements the correct interface IPlatformEventBusConsumer<> OR IPlatformEventBusCustomMessageConsumer<>.
             // The IPlatformEventBusConsumer (non-generic version) is used for Interface Marker only.
@@ -124,11 +124,11 @@ namespace AngularDotnetPlatform.Platform.EventBus
         private static async Task DoInvokeConsumer(IPlatformEventBusConsumer consumer, object eventBusMessage, string routingKey)
         {
             var methodInfo = consumer.GetType().GetMethod(nameof(IPlatformEventBusConsumer<object>.HandleAsync)) ??
-                             consumer.GetType().GetMethod(nameof(IPlatformEventBusCustomMessageConsumer<object>.HandleAsync));
+                             consumer.GetType().GetMethod(nameof(IPlatformEventBusFreeFormatMessageConsumer<object>.HandleAsync));
             if (methodInfo == null)
             {
                 throw new Exception(
-                    $"Can not find execution method from {typeof(IPlatformEventBusConsumer<>).FullName} or {typeof(IPlatformEventBusCustomMessageConsumer<>).FullName}");
+                    $"Can not find execution method from {typeof(IPlatformEventBusConsumer<>).FullName} or {typeof(IPlatformEventBusFreeFormatMessageConsumer<>).FullName}");
             }
 
             try
@@ -174,12 +174,12 @@ namespace AngularDotnetPlatform.Platform.EventBus
         protected abstract Task InternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message);
     }
 
-    public abstract class PlatformEventBusCustomMessageConsumer<TMessage> : PlatformEventBusConsumer, IPlatformEventBusCustomMessageConsumer<TMessage>
+    public abstract class PlatformEventBusFreeFormatMessageConsumer<TMessage> : PlatformEventBusConsumer, IPlatformEventBusFreeFormatMessageConsumer<TMessage>
         where TMessage : class, new()
     {
         protected readonly ILogger Logger;
 
-        public PlatformEventBusCustomMessageConsumer(ILoggerFactory loggerFactory)
+        public PlatformEventBusFreeFormatMessageConsumer(ILoggerFactory loggerFactory)
         {
             Logger = loggerFactory.CreateLogger(GetType());
         }

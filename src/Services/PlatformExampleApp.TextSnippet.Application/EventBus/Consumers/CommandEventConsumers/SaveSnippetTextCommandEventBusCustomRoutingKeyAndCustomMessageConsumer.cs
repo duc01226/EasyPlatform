@@ -12,9 +12,9 @@ using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandEventConsumers
 {
     [PlatformEventBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, "CustomRoutingKeyForFlexibleMigrateWithOldSystem")]
-    public class SaveSnippetTextCommandEventBusCustomRoutingKeyAndCustomMessageConsumer : PlatformInboxEventBusCustomMessageConsumer<PlatformEventBusMessage<SaveSnippetTextCommand>>
+    public class SaveSnippetTextCommandEventBusCustomRoutingKeyAndFreeFormatMessageConsumer : PlatformInboxEventBusFreeFormatMessageConsumer<PlatformEventBusMessage<SaveSnippetTextCommand>>
     {
-        public SaveSnippetTextCommandEventBusCustomRoutingKeyAndCustomMessageConsumer(
+        public SaveSnippetTextCommandEventBusCustomRoutingKeyAndFreeFormatMessageConsumer(
             ILoggerFactory loggerFactory,
             IUnitOfWorkManager uowManager,
             IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager, inboxEventBusMessageRepo)

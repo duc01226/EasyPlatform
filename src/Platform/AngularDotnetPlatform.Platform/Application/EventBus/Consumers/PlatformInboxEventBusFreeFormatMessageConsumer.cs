@@ -9,17 +9,17 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
     /// when event bus requeue message.
     /// This will stored consumed message into db. If message existed, it won't process the consumer.
     /// </summary>
-    public interface IPlatformInboxEventBusCustomMessageConsumer<TMessage> : IPlatformUowEventBusCustomMessageConsumer<TMessage>
+    public interface IPlatformInboxEventBusFreeFormatMessageConsumer<TMessage> : IPlatformUowEventBusFreeFormatMessageConsumer<TMessage>
         where TMessage : class, new()
     {
     }
 
-    public abstract class PlatformInboxEventBusCustomMessageConsumer<TMessage> : PlatformUowEventBusCustomMessageConsumer<TMessage>, IPlatformInboxEventBusCustomMessageConsumer<TMessage>
+    public abstract class PlatformInboxEventBusFreeFormatMessageConsumer<TMessage> : PlatformUowEventBusFreeFormatMessageConsumer<TMessage>, IPlatformInboxEventBusFreeFormatMessageConsumer<TMessage>
         where TMessage : class, new()
     {
         private readonly IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo;
 
-        protected PlatformInboxEventBusCustomMessageConsumer(
+        protected PlatformInboxEventBusFreeFormatMessageConsumer(
             ILoggerFactory loggerFactory,
             IUnitOfWorkManager uowManager,
             IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager)

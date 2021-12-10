@@ -38,13 +38,8 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
                 return default;
             }
 
-            var computedKey = PlatformApplicationUserContextKeyBuilder.ComputedContextKeyFor(contextKey);
-
-            if (CurrentHttpContext().Items.ContainsKey(computedKey) &&
-                CurrentHttpContext().Items[computedKey] != null)
-            {
-                return (T)CurrentHttpContext().Items[computedKey];
-            }
+            if (TryGetValueFromStoredBySetValueItems(contextKey, out T item))
+                return item;
 
             if (TryGetValueFromHttpContext(contextKey, out T foundValue))
             {
@@ -65,7 +60,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
                 return;
             }
 
-            var computedKey = PlatformApplicationUserContextKeyBuilder.ComputedContextKeyFor(contextKey);
+            var computedKey = PlatformApplicationUserContextKeyBuilder.ComputedPlatformFormatContextKeyFor(contextKey);
             CurrentHttpContext().Items[computedKey] = value;
         }
 
@@ -117,6 +112,21 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
         private HttpContext CurrentHttpContext()
         {
             return httpContextAccessor.HttpContext;
+        }
+
+        private bool TryGetValueFromStoredBySetValueItems<T>(string contextKey, out T item)
+        {
+            var computedKey = PlatformApplicationUserContextKeyBuilder.ComputedPlatformFormatContextKeyFor(contextKey);
+
+            if (CurrentHttpContext().Items.ContainsKey(computedKey) && CurrentHttpContext().Items[computedKey] != null)
+            {
+                item = (T)CurrentHttpContext().Items[computedKey];
+                return true;
+            }
+
+            item = default;
+
+            return false;
         }
 
         private bool TryGetValueFromHttpContext<T>(string contextKey, out T foundValue)
@@ -210,7 +220,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
                 }
             }
 
-            // Handle case if type T is a list with many items.
+            // Handle case if type T is a list with many items and each stringValue is a json represent an item
             var isTryGetListValueSuccess =
                 TryGetParsedListValueFromUserClaimStringValues(stringValues, out foundValue);
             if (isTryGetListValueSuccess)

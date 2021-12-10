@@ -3,7 +3,7 @@ using System;
 namespace AngularDotnetPlatform.Platform.EventBus
 {
     public class PlatformEventBusException<TMessage> : Exception
-        where TMessage : IPlatformEventBusMessage
+        where TMessage : class, new()
     {
         public PlatformEventBusException(TMessage eventBusMessage, Exception rootException) : base(rootException.Message, rootException)
         {

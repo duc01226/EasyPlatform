@@ -6,6 +6,7 @@ using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
 using AngularDotnetPlatform.Platform.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain;
 using AngularDotnetPlatform.Platform.Domain.Entities;
+using AngularDotnetPlatform.Platform.Utils;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace AngularDotnetPlatform.Platform.EventBus
@@ -23,6 +24,11 @@ namespace AngularDotnetPlatform.Platform.EventBus
         /// Get all attribute of all defined consumers
         /// </summary>
         List<PlatformEventBusConsumerAttribute> AllDefinedEventBusConsumerAttributes();
+
+        /// <summary>
+        /// Get all default routing key for defined <see cref="IPlatformEventBusFreeFormatMessageConsumer{TMessage}"/> consumers
+        /// </summary>
+        List<PlatformEventBusMessageRoutingKey> AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers();
 
         /// <summary>
         /// Get routing keys for all defined message to be produced
@@ -63,6 +69,19 @@ namespace AngularDotnetPlatform.Platform.EventBus
                     }))
                 .GroupBy(p => p.ConsumerBindingRoutingKey, p => p.MessageConsumerTypeAttribute)
                 .Select(group => group.First())
+                .ToList();
+        }
+
+        public List<PlatformEventBusMessageRoutingKey> AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers()
+        {
+            return AllDefinedEventBusConsumerTypes()
+                .Where(p => !p.GetCustomAttributes<PlatformEventBusConsumerAttribute>().Any())
+                .Select(p => Util.Types.FindMatchedGenericType(
+                    givenType: p,
+                    matchedToGenericTypeDefinition: typeof(IPlatformEventBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition()))
+                .Select(freeFormatMessageConsumerType => PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(
+                    messageType: freeFormatMessageConsumerType.GetGenericArguments()[0]))
+                .Distinct()
                 .ToList();
         }
 

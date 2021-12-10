@@ -7,17 +7,17 @@ using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
 {
-    public interface IPlatformUowEventBusCustomMessageConsumer<TMessage> : IPlatformEventBusCustomMessageConsumer<TMessage>
+    public interface IPlatformUowEventBusFreeFormatMessageConsumer<TMessage> : IPlatformEventBusFreeFormatMessageConsumer<TMessage>
         where TMessage : class, new()
     {
     }
 
-    public abstract class PlatformUowEventBusCustomMessageConsumer<TMessage> : PlatformEventBusCustomMessageConsumer<TMessage>, IPlatformUowEventBusCustomMessageConsumer<TMessage>
+    public abstract class PlatformUowEventBusFreeFormatMessageConsumer<TMessage> : PlatformEventBusFreeFormatMessageConsumer<TMessage>, IPlatformUowEventBusFreeFormatMessageConsumer<TMessage>
         where TMessage : class, new()
     {
         protected readonly IUnitOfWorkManager UowManager;
 
-        protected PlatformUowEventBusCustomMessageConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager) : base(loggerFactory)
+        protected PlatformUowEventBusFreeFormatMessageConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager) : base(loggerFactory)
         {
             UowManager = uowManager;
         }

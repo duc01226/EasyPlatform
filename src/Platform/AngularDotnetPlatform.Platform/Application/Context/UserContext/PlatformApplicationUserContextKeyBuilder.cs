@@ -6,7 +6,7 @@ namespace AngularDotnetPlatform.Platform.Application.Context.UserContext
 
         private const string ContextKeyConvention = "Platform-ContextKey-{0}";
 
-        public static string ComputedContextKeyFor(string memberName)
+        public static string ComputedPlatformFormatContextKeyFor(string memberName)
         {
             return string.Format(ContextKeyConvention, memberName);
         }

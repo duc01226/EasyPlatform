@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
@@ -8,6 +9,16 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
 {
     public interface IPlatformApplicationEventBusProducer
     {
+        /// <summary>
+        /// Send message to bus. Routing key for consumer will be "{TMessage.MessageGroup}.{ApplicationSettingContext.ApplicationName}.{TMessage.MessageType}.{<see cref="messageAction"/>}"
+        /// </summary>
+        /// <typeparam name="TMessage">Message type</typeparam>
+        /// <typeparam name="TMessagePayload">Message payload type</typeparam>
+        /// <param name="trackId">A random unique string to be used to track the message history, where is it from or for logging</param>
+        /// <param name="messagePayload">Message payload</param>
+        /// <param name="messageAction">Optional message action to be used as routing key for consumer filtering</param>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>Return sent Message</returns>
         Task<TMessage> SendAsync<TMessage, TMessagePayload>(
             string trackId,
             TMessagePayload messagePayload,
@@ -16,6 +27,17 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
             where TMessagePayload : class, new();
 
+        /// <summary>
+        /// Send message to bus with a custom routing key. Routing key for consumer will be <see cref="customRoutingKey"/>
+        /// </summary>
+        /// <typeparam name="TMessage">Message type</typeparam>
+        /// <typeparam name="TMessagePayload">Message payload type</typeparam>
+        /// <param name="customRoutingKey">A custom routing key which you want to be used for this message</param>
+        /// <param name="trackId">A random unique string to be used to track the message history, where is it from or for logging</param>
+        /// <param name="messagePayload">Message payload</param>
+        /// <param name="messageAction">Optional message action to be used as routing key for consumer filtering</param>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>Return sent Message</returns>
         Task<TMessage> SendAsync<TMessage, TMessagePayload>(
             string customRoutingKey,
             string trackId,
@@ -25,6 +47,16 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
             where TMessagePayload : class, new();
 
+        /// <summary>
+        /// Send message to bus. Routing key for consumer will be "{<see cref="messageGroup"/>}.{ApplicationSettingContext.ApplicationName}.{typeof(TMessagePayload).Name}.{<see cref="messageAction"/>}"
+        /// </summary>
+        /// <typeparam name="TMessagePayload">Message payload type</typeparam>
+        /// <param name="trackId">A random unique string to be used to track the message history, where is it from or for logging</param>
+        /// <param name="messagePayload">Message payload</param>
+        /// <param name="messageGroup">Message group is used at the first level for routing key, used to group the message in a related group like CommandEvent,DomainEvent, etc...</param>
+        /// <param name="messageAction">Optional message action to be used as routing key for consumer filtering</param>
+        /// <param name="cancellationToken">CancellationToken</param>
+        /// <returns>Return sent Message</returns>
         Task<IPlatformEventBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
             string trackId,
             TMessagePayload messagePayload,
@@ -32,6 +64,36 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             string messageAction = null,
             CancellationToken cancellationToken = default)
             where TMessagePayload : class, new();
+
+        /// <inheritdoc cref="SendAsync{TMessage,TMessagePayload}(string,TMessagePayload,string,CancellationToken)"/>
+        Task<TMessage> SendAsync<TMessage, TMessagePayload>(
+            TMessagePayload messagePayload,
+            string messageAction = null,
+            CancellationToken cancellationToken = default)
+            where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
+            where TMessagePayload : class, new();
+
+        /// <inheritdoc cref="SendAsync{TMessage,TMessagePayload}(string,string,TMessagePayload,string,CancellationToken)"/>
+        Task<TMessage> SendAsync<TMessage, TMessagePayload>(
+            TMessagePayload messagePayload,
+            string customRoutingKey,
+            string messageAction = null,
+            CancellationToken cancellationToken = default)
+            where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
+            where TMessagePayload : class, new();
+
+        /// <inheritdoc cref="SendAsync{TMessagePayload}(string,TMessagePayload,string,string,CancellationToken)"/>
+        Task<IPlatformEventBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
+            TMessagePayload messagePayload,
+            string messageGroup,
+            string messageAction = null,
+            CancellationToken cancellationToken = default)
+            where TMessagePayload : class, new();
+
+        Task<TMessage> SendAsync<TMessage>(
+            TMessage message,
+            CancellationToken cancellationToken = default)
+            where TMessage : class, new();
     }
 
     public class PlatformApplicationEventBusProducer : IPlatformApplicationEventBusProducer
@@ -104,6 +166,56 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                     messageType: typeof(TMessagePayload).Name,
                     messageAction),
                 cancellationToken);
+        }
+
+        public Task<TMessage> SendAsync<TMessage, TMessagePayload>(
+            TMessagePayload messagePayload,
+            string messageAction = null,
+            CancellationToken cancellationToken = default)
+            where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
+            where TMessagePayload : class, new()
+        {
+            return SendAsync<TMessage, TMessagePayload>(
+                trackId: Guid.NewGuid().ToString(),
+                messagePayload,
+                messageAction,
+                cancellationToken);
+        }
+
+        public Task<TMessage> SendAsync<TMessage, TMessagePayload>(
+            TMessagePayload messagePayload,
+            string customRoutingKey,
+            string messageAction = null,
+            CancellationToken cancellationToken = default)
+            where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
+            where TMessagePayload : class, new()
+        {
+            return SendAsync<TMessage, TMessagePayload>(
+                customRoutingKey: customRoutingKey,
+                trackId: Guid.NewGuid().ToString(),
+                messagePayload,
+                messageAction,
+                cancellationToken);
+        }
+
+        public Task<IPlatformEventBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
+            TMessagePayload messagePayload,
+            string messageGroup,
+            string messageAction = null,
+            CancellationToken cancellationToken = default)
+            where TMessagePayload : class, new()
+        {
+            return SendAsync(
+                trackId: Guid.NewGuid().ToString(),
+                messagePayload,
+                messageGroup,
+                messageAction,
+                cancellationToken);
+        }
+
+        public Task<TMessage> SendAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default) where TMessage : class, new()
+        {
+            return EventBusProducer.SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build<TMessage>(), cancellationToken);
         }
     }
 }

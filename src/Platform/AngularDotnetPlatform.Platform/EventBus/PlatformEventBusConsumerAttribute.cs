@@ -25,8 +25,7 @@ namespace AngularDotnetPlatform.Platform.EventBus
             string messageGroup,
             string producerContext,
             string messageType,
-            string messageAction = MatchAllPatternValue,
-            string[] additionalCustomRoutingKeys = null)
+            string messageAction = MatchAllPatternValue)
         {
             MessageGroup = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(messageGroup);
             ProducerContext = PlatformEventBusMessageRoutingKey.AutoFixKeyPart(producerContext);
@@ -61,14 +60,14 @@ namespace AngularDotnetPlatform.Platform.EventBus
             EnsureValid();
         }
 
-        public static bool CanEventBusConsumerProcess(Type eventBusConsumerType, string routingKey)
+        public static bool CanEventBusConsumerProcess(Type eventBusConsumerType, string routingKey, bool forceAtLeastOneAttributes = true)
         {
             var consumerAttributes = eventBusConsumerType
                 .GetCustomAttributes(typeof(PlatformEventBusConsumerAttribute), true)
                 .Select(p => (PlatformEventBusConsumerAttribute)p)
                 .ToList();
 
-            if (consumerAttributes.Count == 0)
+            if (forceAtLeastOneAttributes && consumerAttributes.Count == 0)
             {
                 throw new Exception(
                     $"[Developer Error]. At least one PlatformMessageConsumerAttribute must be applied for {eventBusConsumerType.FullName}");

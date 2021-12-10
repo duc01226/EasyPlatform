@@ -29,7 +29,7 @@ namespace AngularDotnetPlatform.Platform.Application.Context.UserContext.Default
 
         private static string ComputedContextKeyFor(string contextKey)
         {
-            return PlatformApplicationUserContextKeyBuilder.ComputedContextKeyFor(contextKey);
+            return PlatformApplicationUserContextKeyBuilder.ComputedPlatformFormatContextKeyFor(contextKey);
         }
     }
 }

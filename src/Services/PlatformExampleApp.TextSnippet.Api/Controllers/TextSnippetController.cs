@@ -60,14 +60,22 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
 
         [HttpGet]
         [Route("demoScheduleBackgroundJobManuallyCommand")]
-        public async Task<DemoScheduleBackgroundJobManuallyCommandResult> DemoScheduleBackgroundJobManuallyCommandResult(
+        public async Task<DemoScheduleBackgroundJobManuallyCommandResult> DemoScheduleBackgroundJobManuallyCommand(
             string updateTextSnippetFullText = "")
         {
-            return await Cqrs.SendCommand<DemoScheduleBackgroundJobManuallyCommand, DemoScheduleBackgroundJobManuallyCommandResult>(
+            return await Cqrs.SendCommand(
                 new DemoScheduleBackgroundJobManuallyCommand()
                 {
                     NewSnippetText = updateTextSnippetFullText
                 });
+        }
+
+        [HttpPost]
+        [Route("demoSendFreeFormatEventBusMessageCommand")]
+        public async Task<DemoSendFreeFormatEventBusMessageCommandResult> DemoSendFreeFormatEventBusMessageCommand(
+            [FromBody] DemoSendFreeFormatEventBusMessageCommand request)
+        {
+            return await Cqrs.SendCommand(request);
         }
 
         [HttpGet]

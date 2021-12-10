@@ -75,6 +75,32 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             return message;
         }
 
+        public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
+            TMessage message,
+            CancellationToken cancellationToken = default) where TMessage : class, new()
+        {
+            return SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build<TMessage>(), cancellationToken);
+        }
+
+        public async Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
+            TMessage message,
+            string routingKey,
+            CancellationToken cancellationToken = default) where TMessage : class, new()
+        {
+            try
+            {
+                var jsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value);
+
+                await PublishMessageToQueueAsync(jsonMessage, routingKey, cancellationToken);
+
+                return message;
+            }
+            catch (Exception e)
+            {
+                throw new PlatformEventBusException<TMessage>(message, e);
+            }
+        }
+
         private Task PublishMessageToQueueAsync(string message, string routingKey, CancellationToken cancellationToken = default)
         {
             RetryPublishPolicy.ExecuteAndThrowFinalException(
