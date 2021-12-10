@@ -13,6 +13,7 @@ namespace AngularDotnetPlatform.Platform.Application.Context.UserContext
         public const string UserPermissions = "UserPermissions";
         public const string UserFullName = "UserFullName";
         public const string UserFirstName = "UserFirstName";
+        public const string UserMiddleName = "UserMiddleName";
         public const string UserLastName = "UserLastName";
 
         public static string GetRequestId(this IPlatformApplicationUserContext context)
@@ -58,6 +59,11 @@ namespace AngularDotnetPlatform.Platform.Application.Context.UserContext
         public static string GetUserFirstName(this IPlatformApplicationUserContext context)
         {
             return context.GetValue<string>(UserFirstName);
+        }
+
+        public static string GetUserMiddleName(this IPlatformApplicationUserContext context)
+        {
+            return context.GetValue<string>(UserMiddleName);
         }
 
         public static string GetUserLastName(this IPlatformApplicationUserContext context)

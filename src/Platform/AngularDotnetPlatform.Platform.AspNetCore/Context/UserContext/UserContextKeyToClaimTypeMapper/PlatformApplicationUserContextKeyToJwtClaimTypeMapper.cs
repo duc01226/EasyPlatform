@@ -17,6 +17,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserCont
                 PlatformApplicationCommonUserContextKeys.Email => JwtClaimTypes.Email,
                 PlatformApplicationCommonUserContextKeys.UserFullName => JwtClaimTypes.Name,
                 PlatformApplicationCommonUserContextKeys.UserFirstName => JwtClaimTypes.GivenName,
+                PlatformApplicationCommonUserContextKeys.UserMiddleName => JwtClaimTypes.MiddleName,
                 PlatformApplicationCommonUserContextKeys.UserLastName => JwtClaimTypes.FamilyName,
                 PlatformApplicationCommonUserContextKeys.UserName => JwtClaimTypes.PreferredUserName,
                 PlatformApplicationCommonUserContextKeys.UserRoles => JwtClaimTypes.Role,
