@@ -42,7 +42,7 @@ namespace AngularDotnetPlatform.Platform.Application.Dtos
         /// <returns>Return the modified toBeUpdatedEntity</returns>
         public abstract TEntity UpdateToEntity(TEntity toBeUpdatedEntity);
 
-        public PlatformValidationResult Validate()
+        public virtual PlatformValidationResult Validate()
         {
             return PlatformValidationResult.Valid();
         }
