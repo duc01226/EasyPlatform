@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using PlatformExampleApp.TextSnippet.Application.InfrastructureServices;
+using PlatformExampleApp.TextSnippet.Application.Infrastructures;
 
 namespace PlatformExampleApp.TextSnippet.Api.AwsEmailModule
 {

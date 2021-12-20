@@ -33,7 +33,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence
                 optionsBuilder.Options,
                 new PlatformEfCoreOptions()
                 {
-                    EnableDefaultInboxEventBusMessageEntityConfiguration = new TextSnippetEfCorePersistenceModule(null, null, null).GetEnableDefaultInboxEventBusMessageEntityConfigurationDefaultValue()
+                    EnableDefaultInboxEventBusMessageEntityConfiguration = new TextSnippetEfCorePersistenceModule(null, null).GetEnableDefaultInboxEventBusMessageEntityConfigurationDefaultValue()
                 });
         }
     }

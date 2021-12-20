@@ -1,12 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Application.InfrastructureServices;
+using AngularDotnetPlatform.Platform.Application.Infrastructures.Abstract;
 using Microsoft.Extensions.Logging;
 
-namespace PlatformExampleApp.TextSnippet.Application.InfrastructureServices
+namespace PlatformExampleApp.TextSnippet.Application.Infrastructures
 {
     /// <summary>
     /// This for demo the best practice example for implementing an infrastructure services.

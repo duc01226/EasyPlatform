@@ -9,7 +9,7 @@ using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
 using AngularDotnetPlatform.Platform.Application.Helpers;
-using AngularDotnetPlatform.Platform.Application.InfrastructureServices;
+using AngularDotnetPlatform.Platform.Application.Infrastructures.Abstract;
 using AngularDotnetPlatform.Platform.Caching;
 using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.EventBus;
@@ -24,14 +24,13 @@ namespace AngularDotnetPlatform.Platform.Application
 {
     public abstract class PlatformApplicationModule : PlatformModule
     {
-        protected readonly ILogger<PlatformApplicationModule> Logger;
+        protected readonly ILogger Logger;
 
         protected PlatformApplicationModule(
             IServiceProvider serviceProvider,
-            IConfiguration configuration,
-            ILogger<PlatformApplicationModule> logger) : base(serviceProvider, configuration)
+            IConfiguration configuration) : base(serviceProvider, configuration)
         {
-            this.Logger = logger;
+            Logger = serviceProvider?.GetService<ILoggerFactory>().CreateLogger(GetType());
         }
 
         protected override bool AutoRegisterCaching => true;

@@ -11,7 +11,7 @@ using AngularDotnetPlatform.Platform.Timing;
 using AngularDotnetPlatform.Platform.Validators;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
-using PlatformExampleApp.TextSnippet.Application.InfrastructureServices;
+using PlatformExampleApp.TextSnippet.Application.Infrastructures;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 

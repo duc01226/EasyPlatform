@@ -17,8 +17,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
     {
         public TextSnippetMultiDbDemoMongoPersistenceModule(
             IServiceProvider serviceProvider,
-            IConfiguration configuration,
-            ILogger<TextSnippetMultiDbDemoMongoPersistenceModule> logger) : base(serviceProvider, configuration, logger)
+            IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
 

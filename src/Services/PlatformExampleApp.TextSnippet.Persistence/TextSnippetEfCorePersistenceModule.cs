@@ -11,8 +11,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence
     {
         public TextSnippetEfCorePersistenceModule(
             IServiceProvider serviceProvider,
-            IConfiguration configuration,
-            ILogger<TextSnippetEfCorePersistenceModule> logger) : base(serviceProvider, configuration, logger)
+            IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
 

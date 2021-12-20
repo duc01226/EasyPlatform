@@ -11,6 +11,12 @@ namespace AngularDotnetPlatform.Platform.Application.Context
 
     public class PlatformApplicationSettingContext : IPlatformApplicationSettingContext
     {
+        public PlatformApplicationSettingContext()
+        {
+            ApplicationName = GetType().Assembly.FullName;
+            ApplicationAssembly = GetType().Assembly;
+        }
+
         public string ApplicationName { get; init; }
 
         public Assembly ApplicationAssembly { get; init; }

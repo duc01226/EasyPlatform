@@ -31,10 +31,9 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         public PlatformMongoDbPersistenceModule(
             IServiceProvider serviceProvider,
-            IConfiguration configuration,
-            ILogger logger) : base(serviceProvider, configuration)
+            IConfiguration configuration) : base(serviceProvider, configuration)
         {
-            Logger = logger;
+            Logger = serviceProvider?.GetService<ILoggerFactory>().CreateLogger(GetType());
         }
 
         protected abstract void ConfigureMongoOptions(TMongoOptions options);
@@ -178,8 +177,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
     {
         protected PlatformMongoDbPersistenceModule(
             IServiceProvider serviceProvider,
-            IConfiguration configuration,
-            ILogger logger) : base(serviceProvider, configuration, logger)
+            IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
     }
@@ -190,8 +188,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
     {
         protected PlatformMongoDbPersistenceModule(
             IServiceProvider serviceProvider,
-            IConfiguration configuration,
-            ILogger logger) : base(serviceProvider, configuration, logger)
+            IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
     }

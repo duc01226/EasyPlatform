@@ -16,8 +16,7 @@ namespace PlatformExampleApp.TextSnippet.Application
     {
         public TextSnippetApplicationModule(
             IServiceProvider serviceProvider,
-            IConfiguration configuration,
-            ILogger<PlatformApplicationModule> logger) : base(serviceProvider, configuration, logger)
+            IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
 

@@ -1,20 +1,25 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Infrastructures.Abstract;
 using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace AngularDotnetPlatform.Platform.Application
+namespace AngularDotnetPlatform.Platform.Application.Infrastructures
 {
-    public abstract class PlatformInfrastructureServicesModule : PlatformModule
+    public abstract class PlatformInfrastructureModule : PlatformModule
     {
-        protected PlatformInfrastructureServicesModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public PlatformInfrastructureModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
 
         protected override void InternalRegister(IServiceCollection serviceCollection)
         {
+            base.InternalRegister(serviceCollection);
             serviceCollection.RegisterAllFromType<IPlatformInfrastructureService>(ServiceLifeTime.Transient, Assembly);
         }
     }

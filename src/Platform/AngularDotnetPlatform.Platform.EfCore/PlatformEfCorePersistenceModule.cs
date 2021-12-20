@@ -24,10 +24,9 @@ namespace AngularDotnetPlatform.Platform.EfCore
 
         public PlatformEfCorePersistenceModule(
             IServiceProvider serviceProvider,
-            IConfiguration configuration,
-            ILogger logger) : base(serviceProvider, configuration)
+            IConfiguration configuration) : base(serviceProvider, configuration)
         {
-            Logger = logger;
+            Logger = serviceProvider?.GetService<ILoggerFactory>().CreateLogger(GetType());
         }
 
         public bool GetEnableDefaultInboxEventBusMessageEntityConfigurationDefaultValue()

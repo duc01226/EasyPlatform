@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace AngularDotnetPlatform.Platform.Application.InfrastructureServices
+namespace AngularDotnetPlatform.Platform.Application.Infrastructures.Abstract
 {
     /// <summary>
     /// This interface is used for conventional register class mapping via PlatformApplicationModule.InternalRegister

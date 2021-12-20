@@ -12,8 +12,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
     {
         public TextSnippetMongoPersistenceModule(
             IServiceProvider serviceProvider,
-            IConfiguration configuration,
-            ILogger<TextSnippetMongoPersistenceModule> logger) : base(serviceProvider, configuration, logger)
+            IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
 
