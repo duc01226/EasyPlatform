@@ -83,5 +83,15 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         {
             return ((IMongoQueryable<TEntity>)query).CountAsync(cancellationToken);
         }
+
+        public override Task<List<TSelector>> GetAllAsync<TSelector>(Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder, CancellationToken cancellationToken = default)
+        {
+            return ((IMongoQueryable<TSelector>)queryBuilder(GetAllQuery())).ToListAsync(cancellationToken);
+        }
+
+        public override Task<TSelector> FirstOrDefaultAsync<TSelector>(Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder, CancellationToken cancellationToken = default)
+        {
+            return ((IMongoQueryable<TSelector>)queryBuilder(GetAllQuery())).FirstOrDefaultAsync(cancellationToken);
+        }
     }
 }

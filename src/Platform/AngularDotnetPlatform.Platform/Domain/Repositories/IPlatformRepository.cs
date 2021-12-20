@@ -78,6 +78,10 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
 
         Task<TEntity> FirstOrDefaultAsync(Func<IQueryable<TEntity>, IQueryable<TEntity>> queryBuilder, CancellationToken cancellationToken = default);
 
+        Task<List<TSelector>> GetAllAsync<TSelector>(Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder, CancellationToken cancellationToken = default);
+
+        Task<TSelector> FirstOrDefaultAsync<TSelector>(Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder, CancellationToken cancellationToken = default);
+
         Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
     }
 

@@ -81,5 +81,15 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
         {
             return query.CountAsync(cancellationToken);
         }
+
+        public override Task<List<TSelector>> GetAllAsync<TSelector>(Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder, CancellationToken cancellationToken = default)
+        {
+            return queryBuilder(GetAllQuery()).ToListAsync(cancellationToken);
+        }
+
+        public override Task<TSelector> FirstOrDefaultAsync<TSelector>(Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder, CancellationToken cancellationToken = default)
+        {
+            return queryBuilder(GetAllQuery()).FirstOrDefaultAsync(cancellationToken);
+        }
     }
 }

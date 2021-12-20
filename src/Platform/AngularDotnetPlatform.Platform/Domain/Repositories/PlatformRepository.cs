@@ -39,6 +39,14 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
             return FirstOrDefaultAsync(queryBuilder(GetAllQuery()), cancellationToken);
         }
 
+        public abstract Task<List<TSelector>> GetAllAsync<TSelector>(
+            Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder,
+            CancellationToken cancellationToken = default);
+
+        public abstract Task<TSelector> FirstOrDefaultAsync<TSelector>(
+            Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder,
+            CancellationToken cancellationToken = default);
+
         public abstract Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
 
         protected async Task EnsureEntityValid(TEntity entity, CancellationToken cancellationToken)
