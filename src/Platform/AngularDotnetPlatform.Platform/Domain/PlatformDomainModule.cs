@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.Domain.Services;
 using AngularDotnetPlatform.Platform.Extensions;

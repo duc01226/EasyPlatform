@@ -1,19 +1,18 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Extensions.DependencyInjection;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace AngularDotnetPlatform.Platform.Persistence
+namespace AngularDotnetPlatform.Platform.Persistence.Domain
 {
-    public class PlatformDefaultUnitOfWorkManager : IUnitOfWorkManager
+    public class PlatformDefaultPersistenceUnitOfWorkManager : IUnitOfWorkManager
     {
         private readonly IServiceProvider serviceProvider;
 
-        private PlatformAggregatedUnitOfWork currentAggregatedUnitOfWork;
+        private PlatformAggregatedPersistenceUnitOfWork currentAggregatedUnitOfWork;
         private bool isDisposed;
 
-        public PlatformDefaultUnitOfWorkManager(
+        public PlatformDefaultPersistenceUnitOfWorkManager(
             IServiceProvider serviceProvider)
         {
             this.serviceProvider = serviceProvider;
@@ -50,8 +49,8 @@ namespace AngularDotnetPlatform.Platform.Persistence
                 currentUnitOfWork.Dispose();
             }
 
-            currentUnitOfWork = new PlatformAggregatedUnitOfWork(serviceProvider.GetServices<IUnitOfWork>().ToList());
-            currentAggregatedUnitOfWork = (PlatformAggregatedUnitOfWork)currentUnitOfWork;
+            currentUnitOfWork = new PlatformAggregatedPersistenceUnitOfWork(serviceProvider.GetServices<IUnitOfWork>().ToList());
+            currentAggregatedUnitOfWork = (PlatformAggregatedPersistenceUnitOfWork)currentUnitOfWork;
 
             return currentUnitOfWork;
         }

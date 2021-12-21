@@ -5,11 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
-namespace AngularDotnetPlatform.Platform.Persistence
+namespace AngularDotnetPlatform.Platform.Persistence.Domain
 {
-    public class PlatformAggregatedUnitOfWork : IUnitOfWork
+    public class PlatformAggregatedPersistenceUnitOfWork : IUnitOfWork
     {
-        public PlatformAggregatedUnitOfWork(List<IUnitOfWork> innerUnitOfWorks)
+        public PlatformAggregatedPersistenceUnitOfWork(List<IUnitOfWork> innerUnitOfWorks)
         {
             InnerUnitOfWorks = innerUnitOfWorks ?? new List<IUnitOfWork>();
         }

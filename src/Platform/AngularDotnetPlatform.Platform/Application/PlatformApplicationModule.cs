@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext.Default;
+using AngularDotnetPlatform.Platform.Application.Domain;
 using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
@@ -12,6 +13,7 @@ using AngularDotnetPlatform.Platform.Application.Helpers;
 using AngularDotnetPlatform.Platform.Application.Infrastructures.Abstract;
 using AngularDotnetPlatform.Platform.Caching;
 using AngularDotnetPlatform.Platform.DependencyInjection;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EventBus;
 using AngularDotnetPlatform.Platform.Extensions;
 using Microsoft.Extensions.Configuration;
@@ -108,6 +110,7 @@ namespace AngularDotnetPlatform.Platform.Application
             RegisterApplicationSettingContext(serviceCollection);
             RegisterDefaultApplicationUserContext(serviceCollection);
             RegisterInboxEventBusMessageCleanerHostedService(serviceCollection);
+            RegisterUnitOfWorkManager(serviceCollection);
             serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformInfrastructureService>(ServiceLifeTime.Transient, Assembly);
         }
@@ -144,6 +147,14 @@ namespace AngularDotnetPlatform.Platform.Application
                 EnableAutoClearDistributedCacheOnInit = true,
                 AutoClearContexts = new HashSet<string>() { applicationSettingContext!.ApplicationName }
             };
+        }
+
+        private void RegisterUnitOfWorkManager(IServiceCollection serviceCollection)
+        {
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(IUnitOfWorkManager)))
+            {
+                serviceCollection.Register<IUnitOfWorkManager, PlatformDefaultPseudoUnitOfWorkManager>(ServiceLifeTime.Scoped);
+            }
         }
 
         private void RegisterInboxEventBusMessageCleanerHostedService(IServiceCollection serviceCollection)

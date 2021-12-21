@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using AngularDotnetPlatform.Platform.AspNetCore;
 using AngularDotnetPlatform.Platform.Caching;
+using AngularDotnetPlatform.Platform.JsonSerialization;
 using PlatformExampleApp.TextSnippet.Api.AwsEmailModule;
 using PlatformExampleApp.TextSnippet.Api.Context.UserContext;
 using PlatformExampleApp.TextSnippet.Application;
@@ -61,6 +63,11 @@ namespace PlatformExampleApp.TextSnippet.Api
             {
                 AbsoluteExpirationInSeconds = Configuration.GetSection("Caching:DefaultExpirationInSeconds").Get<int>()
             };
+        }
+
+        protected override JsonSerializerOptions JsonSerializerCurrentOptions()
+        {
+            return PlatformJsonSerializer.BuildDefaultOptions(useCamelCaseNaming: true);
         }
     }
 }
