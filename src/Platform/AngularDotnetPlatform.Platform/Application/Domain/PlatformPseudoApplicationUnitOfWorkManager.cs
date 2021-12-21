@@ -5,12 +5,12 @@ using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
 namespace AngularDotnetPlatform.Platform.Application.Domain
 {
-    internal class PlatformDefaultPseudoUnitOfWorkManager : IUnitOfWorkManager
+    internal class PlatformPseudoApplicationUnitOfWorkManager : IUnitOfWorkManager
     {
         private IUnitOfWork currentUnitOfWork;
         private bool isDisposed;
 
-        public PlatformDefaultPseudoUnitOfWorkManager()
+        public PlatformPseudoApplicationUnitOfWorkManager()
         {
         }
 

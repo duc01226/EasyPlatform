@@ -55,7 +55,7 @@ namespace AngularDotnetPlatform.Platform.Persistence
         private void RegisterUnitOfWorkManager(IServiceCollection serviceCollection)
         {
             serviceCollection.RegisterAllFromType(typeof(IUnitOfWorkManager), ServiceLifeTime.Scoped, Assembly);
-            if (!serviceCollection.Any(p => p.ServiceType == typeof(IUnitOfWorkManager) && p.ImplementationType != typeof(PlatformDefaultPseudoUnitOfWorkManager)))
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(IUnitOfWorkManager) && p.ImplementationType != typeof(PlatformPseudoApplicationUnitOfWorkManager)))
             {
                 serviceCollection.Register<IUnitOfWorkManager, PlatformDefaultPersistenceUnitOfWorkManager>(ServiceLifeTime.Scoped);
             }

@@ -110,7 +110,7 @@ namespace AngularDotnetPlatform.Platform.Application
             RegisterApplicationSettingContext(serviceCollection);
             RegisterDefaultApplicationUserContext(serviceCollection);
             RegisterInboxEventBusMessageCleanerHostedService(serviceCollection);
-            RegisterUnitOfWorkManager(serviceCollection);
+            RegisterPseudoApplicationUnitOfWork(serviceCollection);
             serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformInfrastructureService>(ServiceLifeTime.Transient, Assembly);
         }
@@ -149,11 +149,11 @@ namespace AngularDotnetPlatform.Platform.Application
             };
         }
 
-        private void RegisterUnitOfWorkManager(IServiceCollection serviceCollection)
+        private void RegisterPseudoApplicationUnitOfWork(IServiceCollection serviceCollection)
         {
             if (!serviceCollection.Any(p => p.ServiceType == typeof(IUnitOfWorkManager)))
             {
-                serviceCollection.Register<IUnitOfWorkManager, PlatformDefaultPseudoUnitOfWorkManager>(ServiceLifeTime.Scoped);
+                serviceCollection.Register<IUnitOfWorkManager, PlatformPseudoApplicationUnitOfWorkManager>(ServiceLifeTime.Scoped);
             }
         }
 
