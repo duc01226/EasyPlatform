@@ -15,10 +15,13 @@ using Microsoft.Extensions.Logging;
 using AngularDotnetPlatform.Platform.Persistence;
 using Microsoft.Extensions.Configuration;
 using Polly;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace AngularDotnetPlatform.Platform.EfCore
 {
-    public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPersistenceModule where TDbContext : PlatformEfCoreDbContext<TDbContext>
+    public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPersistenceModule<TDbContext> where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
         protected readonly ILogger Logger;
 
@@ -42,10 +45,10 @@ namespace AngularDotnetPlatform.Platform.EfCore
         {
             base.InternalRegister(serviceCollection);
 
-            serviceCollection.AddDbContext<TDbContext>(DbContextOptionsBuilderActionProvider(serviceCollection), ServiceLifetime.Transient);
+            RegisterDbContextOptions(serviceCollection, ServiceLifetime.Transient);
 
             serviceCollection
-                .RegisterAllForImplementation(typeof(PlatformDefaultEfCoreUnitOfWork<TDbContext>), ServiceLifeTime.Transient);
+                .RegisterAllForImplementation(typeof(PlatformDefaultEfCoreUnitOfWork<TDbContext>));
             serviceCollection.RegisterAllFromType<IPlatformEfCoreUnitOfWork<TDbContext>>(
                 ServiceLifeTime.Transient,
                 Assembly,
@@ -83,7 +86,7 @@ namespace AngularDotnetPlatform.Platform.EfCore
         /// <summary>
         /// Return a action for <see cref="DbContextOptionsBuilder"/> to AddDbContext.
         /// </summary>
-        protected abstract Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceCollection serviceCollection);
+        protected abstract Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceProvider serviceProvider);
 
         protected override async Task InternalInit(IServiceScope serviceScope)
         {
@@ -113,7 +116,7 @@ namespace AngularDotnetPlatform.Platform.EfCore
                             retry,
                             retryCount);
                     })
-                .ExecuteAndThrowFinalException(() => db.Database.Migrate());
+                .ExecuteAndThrowFinalException(() => db.Initialize(serviceScope.ServiceProvider));
         }
 
         protected override void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
@@ -129,9 +132,40 @@ namespace AngularDotnetPlatform.Platform.EfCore
             }
         }
 
-        private static void RegisterBuiltInHelpers(IServiceCollection serviceCollection)
+        private void RegisterBuiltInHelpers(IServiceCollection serviceCollection)
         {
             serviceCollection.RegisterAllForImplementation<EfCoreSqlPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime.Transient);
+        }
+
+        private void RegisterDbContextOptions(
+            IServiceCollection serviceCollection,
+            ServiceLifetime optionsLifetime)
+        {
+            serviceCollection.TryAdd(
+                new ServiceDescriptor(
+                    typeof(DbContextOptions<TDbContext>),
+                    p => CreateDbContextOptions(p, (provider, builder) => DbContextOptionsBuilderActionProvider(provider).Invoke(builder)),
+                    optionsLifetime));
+
+            serviceCollection.Add(
+                new ServiceDescriptor(
+                    typeof(DbContextOptions),
+                    p => p.GetRequiredService<DbContextOptions<TDbContext>>(),
+                    optionsLifetime));
+        }
+
+        private DbContextOptions<TDbContext> CreateDbContextOptions(
+            IServiceProvider applicationServiceProvider,
+            Action<IServiceProvider, DbContextOptionsBuilder> optionsAction)
+        {
+            var builder = new DbContextOptionsBuilder<TDbContext>(
+                new DbContextOptions<TDbContext>(new Dictionary<Type, IDbContextOptionsExtension>()));
+
+            builder.UseApplicationServiceProvider(applicationServiceProvider);
+
+            optionsAction?.Invoke(applicationServiceProvider, builder);
+
+            return builder.Options;
         }
     }
 }

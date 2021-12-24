@@ -22,7 +22,7 @@ using Microsoft.Extensions.Options;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
 {
-    public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContext, TMongoOptions> : PlatformPersistenceModule
+    public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContext, TMongoOptions> : PlatformPersistenceModule<TDbContext>
         where TDbContext : class, IPlatformMongoDbContext<TDbContext>
         where TClientContext : class, IPlatformMongoClientContext<TDbContext>
         where TMongoOptions : PlatformMongoOptions<TDbContext>
@@ -48,7 +48,6 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             serviceCollection.RegisterAllForImplementation(typeof(TClientContext), ServiceLifeTime.Singleton);
             serviceCollection.Register(typeof(IPlatformMongoClientContext<TDbContext>), provider => provider.GetService<TClientContext>(), ServiceLifeTime.Singleton);
 
-            serviceCollection.RegisterAllForImplementation(typeof(TDbContext));
             serviceCollection.Register(typeof(IPlatformMongoDbContext<TDbContext>), provider => provider.GetService<TDbContext>());
 
             serviceCollection.RegisterAllForImplementation(typeof(PlatformDefaultMongoDbUnitOfWork<TDbContext>));
@@ -122,7 +121,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                             retry,
                             retryCount);
                     })
-                .ExecuteAndThrowFinalException(() => db.Initialize());
+                .ExecuteAndThrowFinalException(() => db.Initialize(serviceScope.ServiceProvider));
         }
 
         protected override void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
@@ -159,9 +158,9 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         private static void RegisterPlatformDataMigrationHistoryClassMap()
         {
-            if (!BsonClassMap.IsClassMapRegistered(typeof(PlatformDataMigrationHistory)))
+            if (!BsonClassMap.IsClassMapRegistered(typeof(PlatformMongoMigrationHistory)))
             {
-                BsonClassMap.RegisterClassMap<PlatformDataMigrationHistory>(cm =>
+                BsonClassMap.RegisterClassMap<PlatformMongoMigrationHistory>(cm =>
                 {
                     cm.AutoMap();
                     cm.SetIgnoreExtraElements(true);

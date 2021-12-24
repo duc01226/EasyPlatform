@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus;
+using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using AngularDotnetPlatform.Platform.Persistence;
+using AngularDotnetPlatform.Platform.Persistence.DataMigration;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -15,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
     public abstract class PlatformMongoDbContext<TDbContext> : IPlatformMongoDbContext<TDbContext>
         where TDbContext : PlatformMongoDbContext<TDbContext>
     {
-        public static readonly string EnsureIndexesAsyncMigrationName = "EnsureIndexesAsync";
+        public static readonly string EnsureIndexesMigrationName = "EnsureIndexesAsync";
         public static readonly string PlatformInboxEventBusMessageCollectionName = "InboxEventBusMessage";
         public static readonly string PlatformDataMigrationHistoryCollectionName = "MigrationHistory";
 
@@ -34,33 +36,32 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         }
 
         public bool Disposed { get; private set; }
-        public IMongoCollection<PlatformDataMigrationHistory> DataMigrationHistoryCollection => Database.GetCollection<PlatformDataMigrationHistory>(DataMigrationHistoryCollectionName);
+        public IMongoCollection<PlatformMongoMigrationHistory> MigrationHistoryCollection => Database.GetCollection<PlatformMongoMigrationHistory>(DataMigrationHistoryCollectionName);
         public IMongoCollection<PlatformInboxEventBusMessage> InboxEventBusMessageCollection => Database.GetCollection<PlatformInboxEventBusMessage>(GetCollectionName<PlatformInboxEventBusMessage>());
+        public IMongoCollection<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryCollection => Database.GetCollection<PlatformDataMigrationHistory>(ApplicationDataMigrationHistoryCollectionName);
+        public IQueryable<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryQuery => ApplicationDataMigrationHistoryCollection.AsQueryable();
         public virtual string DataMigrationHistoryCollectionName => "MigrationHistory";
-
-        public List<PlatformMongoMigrationExecution<TDbContext>> MigrationExecutions()
-        {
-            var results = GetType().Assembly.GetTypes()
-                .Where(p => p.IsAssignableTo(typeof(PlatformMongoMigrationExecution<TDbContext>)) && !p.IsAbstract)
-                .Select(p => (PlatformMongoMigrationExecution<TDbContext>)Activator.CreateInstance(p))
-                .Where(p => p != null)
-                .ToList();
-            return results;
-        }
+        public virtual string ApplicationDataMigrationHistoryCollectionName => "ApplicationDataMigrationHistory";
 
         public async Task EnsureIndexesAsync(bool recreate = false)
         {
             if (recreate || !IsEnsureIndexesExecuted())
             {
                 await Task.WhenAll(
-                    DataMigrationHistoryCollection.Indexes.DropAllAsync(),
+                    MigrationHistoryCollection.Indexes.DropAllAsync(),
                     InboxEventBusMessageCollection.Indexes.DropAllAsync());
             }
 
             if (recreate || !IsEnsureIndexesExecuted())
             {
                 await Task.WhenAll(
-                    DataMigrationHistoryCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformDataMigrationHistory>>
+                    MigrationHistoryCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformMongoMigrationHistory>>
+                    {
+                        new CreateIndexModel<PlatformMongoMigrationHistory>(
+                            Builders<PlatformMongoMigrationHistory>.IndexKeys.Ascending(p => p.Name),
+                            new CreateIndexOptions() {Unique = true})
+                    }),
+                    ApplicationDataMigrationHistoryCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformDataMigrationHistory>>
                     {
                         new CreateIndexModel<PlatformDataMigrationHistory>(
                             Builders<PlatformDataMigrationHistory>.IndexKeys.Ascending(p => p.Name),
@@ -77,7 +78,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
             if (!IsEnsureIndexesExecuted())
             {
-                await LogEnsureIndexesExecutedHistory();
+                await SaveIndexesExecutedMigrationHistory();
             }
         }
 
@@ -88,19 +89,21 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             return new BsonObjectId(ObjectId.GenerateNewId()).ToString();
         }
 
-        public void Initialize()
+        public virtual void Initialize(IServiceProvider serviceProvider)
         {
             EnsureIndexesAsync().Wait();
             Migrate();
+            MigrateApplicationDataAsync(serviceProvider).Wait();
         }
 
         public void Migrate()
         {
-            EnsureAllMigrationExecutionsHasUniqueName();
-            GetNotExecutedMigrations().ForEach(migrationExecution =>
+            EnsureAllMigrationExecutorsHasUniqueName();
+            GetCanExecuteMigrationExecutors().ForEach(migrationExecutor =>
             {
-                migrationExecution.Execute((TDbContext)this);
-                DataMigrationHistoryCollection.InsertOne(new PlatformDataMigrationHistory(migrationExecution.Name));
+                migrationExecutor.Execute((TDbContext)this);
+                MigrationHistoryCollection.InsertOne(new PlatformMongoMigrationHistory(migrationExecutor.Name));
+                SaveChangesAsync().Wait();
             });
         }
 
@@ -116,7 +119,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                 return PlatformInboxEventBusMessageCollectionName;
             }
 
-            if (typeof(TEntity).IsAssignableTo(typeof(PlatformDataMigrationHistory)))
+            if (typeof(TEntity).IsAssignableTo(typeof(PlatformMongoMigrationHistory)))
             {
                 return PlatformDataMigrationHistoryCollectionName;
             }
@@ -159,6 +162,36 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             return Database.GetCollection<T>(dataSourceName).AsQueryable();
         }
 
+        public Task SaveChangesAsync()
+        {
+            return Task.CompletedTask;
+        }
+
+        public IQueryable<TEntity> GetQuery<TEntity>() where TEntity : class, IEntity
+        {
+            return GetCollection<TEntity>().AsQueryable();
+        }
+
+        public Task MigrateApplicationDataAsync(IServiceProvider serviceProvider)
+        {
+            PlatformDataMigrationExecutor<TDbContext>.EnsureAllDataMigrationExecutorsHasUniqueName(GetType().Assembly, serviceProvider);
+            PlatformDataMigrationExecutor<TDbContext>.GetCanExecuteDataMigrationExecutors(GetType().Assembly, serviceProvider, ApplicationDataMigrationHistoryQuery).ForEach(migrationExecution =>
+            {
+                if (!migrationExecution.IsObsolete())
+                {
+                    migrationExecution.Execute((TDbContext)this);
+
+                    ApplicationDataMigrationHistoryCollection.InsertOne(new PlatformDataMigrationHistory(migrationExecution.Name));
+
+                    SaveChangesAsync().Wait();
+                }
+
+                migrationExecution.Dispose();
+            });
+
+            return Task.CompletedTask;
+        }
+
         public void RunCommand(string command)
         {
             Database.RunCommand<BsonDocument>(command);
@@ -166,23 +199,23 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         public void Dispose()
         {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
             if (Disposed)
             {
                 return;
             }
 
+            Dispose(true);
+            GC.SuppressFinalize(this);
+
+            Disposed = true;
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
             if (disposing)
             {
                 // Dispose managed state (managed objects).
             }
-
-            Disposed = true;
         }
 
         /// <summary>
@@ -193,7 +226,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         {
             if (EntityTypeToCollectionNameDictionary.Value == null)
             {
-                if (typeof(TEntity).IsAssignableTo(typeof(PlatformInboxEventBusMessage)) || typeof(TEntity).IsAssignableTo(typeof(PlatformDataMigrationHistory)))
+                if (typeof(TEntity).IsAssignableTo(typeof(PlatformInboxEventBusMessage)) || typeof(TEntity).IsAssignableTo(typeof(PlatformMongoMigrationHistory)))
                 {
                     collectionName = null;
                     return false;
@@ -208,39 +241,50 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         protected bool IsEnsureIndexesExecuted()
         {
-            return DataMigrationHistoryCollection.AsQueryable().Any(p => p.Name == EnsureIndexesAsyncMigrationName);
+            return MigrationHistoryCollection.AsQueryable().Any(p => p.Name == EnsureIndexesMigrationName);
         }
 
-        private void EnsureAllMigrationExecutionsHasUniqueName()
+        private List<PlatformMongoMigrationExecutor<TDbContext>> ScanAllMigrationExecutors()
         {
-            var mongoMigrationExecutions = new Dictionary<string, PlatformMongoMigrationExecution<TDbContext>>();
-            foreach (var mongoMigrationExecution in MigrationExecutions())
+            var results = GetType().Assembly.GetTypes()
+                .Where(p => p.IsAssignableTo(typeof(PlatformMongoMigrationExecutor<TDbContext>)) && !p.IsAbstract)
+                .Select(p => (PlatformMongoMigrationExecutor<TDbContext>)Activator.CreateInstance(p))
+                .Where(p => p != null)
+                .ToList();
+            return results;
+        }
+
+        private void EnsureAllMigrationExecutorsHasUniqueName()
+        {
+            var mongoMigrationExecutionNames = new HashSet<string>();
+
+            foreach (var mongoMigrationExecution in ScanAllMigrationExecutors())
             {
-                if (mongoMigrationExecutions.ContainsKey(mongoMigrationExecution.Name))
+                if (mongoMigrationExecutionNames.Contains(mongoMigrationExecution.Name))
                 {
-                    throw new Exception($"Migration Execution Names is duplicated. Duplicated name: {mongoMigrationExecution.Name}");
+                    throw new Exception($"Mongo Migration Executor Names is duplicated. Duplicated name: {mongoMigrationExecution.Name}");
                 }
 
-                mongoMigrationExecutions.Add(mongoMigrationExecution.Name, mongoMigrationExecution);
+                mongoMigrationExecutionNames.Add(mongoMigrationExecution.Name);
             }
         }
 
-        private List<PlatformMongoMigrationExecution<TDbContext>> GetNotExecutedMigrations()
+        private List<PlatformMongoMigrationExecutor<TDbContext>> GetCanExecuteMigrationExecutors()
         {
-            var executedMigrations = DataMigrationHistoryCollection.AsQueryable().ToList();
-            var notExecutedMigrations = OrderedMigrationExecutions().FindAll(me => executedMigrations.All(em => em.Name != me.Name));
+            var executedMigrationNames = MigrationHistoryCollection.AsQueryable().Select(p => p.Name).ToHashSet();
+
+            var notExecutedMigrations = ScanAllMigrationExecutors()
+                .OrderBy(x => x.GetOrderByValue())
+                .ToList()
+                .FindAll(me => !executedMigrationNames.Contains(me.Name));
+
             return notExecutedMigrations;
         }
 
-        private List<PlatformMongoMigrationExecution<TDbContext>> OrderedMigrationExecutions()
+        private async Task SaveIndexesExecutedMigrationHistory()
         {
-            return MigrationExecutions().OrderBy(x => x.GetOrderByValue()).ToList();
-        }
-
-        private async Task LogEnsureIndexesExecutedHistory()
-        {
-            await DataMigrationHistoryCollection.InsertOneAsync(
-                new PlatformDataMigrationHistory(EnsureIndexesAsyncMigrationName));
+            await MigrationHistoryCollection.InsertOneAsync(
+                new PlatformMongoMigrationHistory(EnsureIndexesMigrationName));
         }
     }
 }

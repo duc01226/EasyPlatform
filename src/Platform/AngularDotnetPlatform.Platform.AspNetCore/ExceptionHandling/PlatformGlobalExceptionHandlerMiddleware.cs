@@ -63,7 +63,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = errorResponse.StatusCode;
-            return context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse, PlatformJsonSerializer.CurrentOptions.Value));
+            return context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse, PlatformJsonSerializer.CurrentOptions.Value), context.RequestAborted);
         }
 
         protected bool HandleApplicationError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)

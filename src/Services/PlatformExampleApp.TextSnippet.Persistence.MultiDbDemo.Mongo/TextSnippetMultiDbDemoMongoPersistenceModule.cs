@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using AngularDotnetPlatform.Platform.MongoDB;
 using Microsoft.Extensions.Options;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
+using PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.DemoMigrateDataCrossDb;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
 {
@@ -30,6 +31,14 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
         protected override List<Type> RegisterLimitedRepositoryImplementationTypes()
         {
             return new List<Type>() { typeof(TextSnippetMultiDbDemoRootRepository<MultiDbDemoEntity>) };
+        }
+
+        protected override List<Func<IConfiguration, Type>> GetModuleDependencies()
+        {
+            return new List<Func<IConfiguration, Type>>()
+            {
+                p => typeof(DemoMigrateDataCrossDbPersistenceModule)
+            };
         }
     }
 }

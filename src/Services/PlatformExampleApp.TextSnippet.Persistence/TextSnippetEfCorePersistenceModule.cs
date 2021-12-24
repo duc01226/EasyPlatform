@@ -15,15 +15,15 @@ namespace PlatformExampleApp.TextSnippet.Persistence
         {
         }
 
-        protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceCollection serviceCollection)
-        {
-            return options =>
-                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
-        }
-
         protected override bool EnableInboxEventBusMessageRepository()
         {
             return true;
+        }
+
+        protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceProvider serviceProvider)
+        {
+            return options =>
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
         }
     }
 }

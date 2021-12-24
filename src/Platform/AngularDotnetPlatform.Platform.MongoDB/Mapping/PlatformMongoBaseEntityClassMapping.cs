@@ -11,8 +11,10 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Mapping
     {
         public PlatformMongoBaseEntityClassMapping()
         {
-            BsonClassMap.RegisterClassMap<Entity<TEntity, TPrimaryKey>>(BaseEntityClassMapInitializer);
-            BsonClassMap.RegisterClassMap<TEntity>(ClassMapInitializer);
+            if (!BsonClassMap.IsClassMapRegistered(typeof(Entity<TEntity, TPrimaryKey>)))
+                BsonClassMap.RegisterClassMap<Entity<TEntity, TPrimaryKey>>(BaseEntityClassMapInitializer);
+            if (!BsonClassMap.IsClassMapRegistered(typeof(TEntity)))
+                BsonClassMap.RegisterClassMap<TEntity>(ClassMapInitializer);
         }
 
         public virtual void BaseEntityClassMapInitializer(BsonClassMap<Entity<TEntity, TPrimaryKey>> cm)

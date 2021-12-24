@@ -34,7 +34,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
                 {
                     services.RegisterSelf(implementationType, lifeTime, replaceIfExist);
 
-                    services.RegisterInterfacesForImplementation(implementationType, lifeTime);
+                    services.RegisterInterfacesForImplementation(implementationType, lifeTime, replaceIfExist, replaceStrategy);
                 });
 
             return services;
@@ -60,31 +60,44 @@ namespace AngularDotnetPlatform.Platform.Extensions
             this IServiceCollection services,
             Type implementationType,
             ServiceLifeTime lifeTime = ServiceLifeTime.Transient,
-            Func<IServiceProvider, object> implementationFactory = null)
+            bool replaceIfExist = true,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            if (implementationFactory != null)
-            {
-                services.Register(implementationType, implementationFactory, lifeTime);
-            }
-            else
-            {
-                services.RegisterIfNotExist(implementationType, implementationType, lifeTime);
-            }
+            services.RegisterIfNotExist(implementationType, implementationType, lifeTime);
 
-            services.RegisterInterfacesForImplementation(implementationType, lifeTime, implementationFactory);
+            services.RegisterInterfacesForImplementation(implementationType, lifeTime, replaceIfExist, replaceStrategy);
 
             return services;
         }
 
         /// <summary>
-        /// <inheritdoc cref="RegisterAllForImplementation"/>
+        /// Register TImplementation as itself and it's implemented interfaces
+        /// </summary>
+        public static IServiceCollection RegisterAllForImplementation(
+            this IServiceCollection services,
+            Type implementationType,
+            Func<IServiceProvider, object> implementationFactory,
+            ServiceLifeTime lifeTime = ServiceLifeTime.Transient,
+            bool replaceIfExist = true,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            services.RegisterIfNotExist(implementationType, implementationType, lifeTime);
+
+            services.RegisterInterfacesForImplementation(implementationType, implementationFactory, lifeTime, replaceIfExist, replaceStrategy);
+
+            return services;
+        }
+
+        /// <summary>
+        /// <inheritdoc cref="RegisterAllForImplementation(IServiceCollection,Type,ServiceLifeTime)"/>
         /// </summary>
         public static IServiceCollection RegisterAllForImplementation<TImplementation>(
             this IServiceCollection services,
-            ServiceLifeTime lifeTime = ServiceLifeTime.Transient,
-            Func<IServiceProvider, TImplementation> implementationFactory = null) where TImplementation : class
+            ServiceLifeTime lifeTime,
+            bool replaceIfExist = true,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            return RegisterAllForImplementation(services, typeof(TImplementation), lifeTime, implementationFactory);
+            return RegisterAllForImplementation(services, typeof(TImplementation), lifeTime, replaceIfExist, replaceStrategy);
         }
 
         /// <summary>
@@ -318,47 +331,24 @@ namespace AngularDotnetPlatform.Platform.Extensions
             this IServiceCollection services,
             Type implementationType,
             ServiceLifeTime lifeTime,
-            Func<IServiceProvider, object> implementationFactory = null)
+            bool replaceIfExist,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
             if (implementationType.IsGenericType)
             {
                 implementationType
                     .GetInterfaces()
-                    .Where(p => p.IsGenericType && p.GetGenericArguments().Length == implementationType.GetGenericArguments().Length)
+                    .Where(p => p.IsGenericType && MatchGenericArguments(p, implementationType))
                     .ToList()
-                    .ForEach(implementationTypeInterface =>
-                    {
-                        if (implementationFactory != null)
-                        {
-                            services.Register(
-                                Util.Types.FixTypeReference(implementationTypeInterface), implementationFactory, lifeTime);
-                        }
-                        else
-                        {
-                            services.RegisterIfNotExist(
-                                Util.Types.FixTypeReference(implementationTypeInterface),
-                                implementationType,
-                                lifeTime);
-                        }
-                    });
+                    .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationType, lifeTime, replaceIfExist, replaceStrategy));
             }
             else
             {
-                implementationType.GetInterfaces()
+                implementationType
+                    .GetInterfaces()
                     .Where(p => !p.IsGenericType)
                     .ToList()
-                    .ForEach(implementationTypeInterface =>
-                    {
-                        if (implementationFactory != null)
-                        {
-                            services.Register(
-                                Util.Types.FixTypeReference(implementationTypeInterface), implementationFactory, lifeTime);
-                        }
-                        else
-                        {
-                            services.RegisterIfNotExist(implementationTypeInterface, implementationType, lifeTime);
-                        }
-                    });
+                    .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationType, lifeTime, replaceIfExist, replaceStrategy));
             }
         }
 
@@ -370,13 +360,30 @@ namespace AngularDotnetPlatform.Platform.Extensions
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
             var implementationType = typeof(TImplementation);
+            RegisterInterfacesForImplementation(
+                services,
+                implementationType,
+                provider => implementationFactory(provider),
+                lifeTime,
+                replaceIfExist,
+                replaceStrategy);
+        }
+
+        public static void RegisterInterfacesForImplementation(
+            this IServiceCollection services,
+            Type implementationType,
+            Func<IServiceProvider, object> implementationFactory,
+            ServiceLifeTime lifeTime,
+            bool replaceIfExist,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
             if (implementationType.IsGenericType)
             {
                 implementationType
                     .GetInterfaces()
                     .Where(p => p.IsGenericType && MatchGenericArguments(p, implementationType))
                     .ToList()
-                    .ForEach(implementationTypeInterface => services.Register(implementationTypeInterface, implementationFactory, lifeTime, replaceIfExist, replaceStrategy));
+                    .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationFactory, lifeTime, replaceIfExist, replaceStrategy));
             }
             else
             {
@@ -384,7 +391,7 @@ namespace AngularDotnetPlatform.Platform.Extensions
                     .GetInterfaces()
                     .Where(p => !p.IsGenericType)
                     .ToList()
-                    .ForEach(implementationTypeInterface => services.Register(implementationTypeInterface, implementationFactory, lifeTime, replaceIfExist, replaceStrategy));
+                    .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationFactory, lifeTime, replaceIfExist, replaceStrategy));
             }
         }
 

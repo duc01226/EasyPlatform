@@ -9,12 +9,14 @@ using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.Persistence.DataMigration;
 using AngularDotnetPlatform.Platform.Persistence.Domain;
 using AngularDotnetPlatform.Platform.Persistence.Helpers.Abstract;
 
 namespace AngularDotnetPlatform.Platform.Persistence
 {
-    public abstract class PlatformPersistenceModule : PlatformModule
+    public abstract class PlatformPersistenceModule<TDbContext> : PlatformModule
+        where TDbContext : class, IPlatformDbContext
     {
         protected PlatformPersistenceModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
@@ -22,15 +24,24 @@ namespace AngularDotnetPlatform.Platform.Persistence
 
         protected override bool AutoRegisterCaching => false;
 
+        protected virtual Func<IServiceProvider, TDbContext> DbContextProvider => null;
+
         protected override void InternalRegister(IServiceCollection serviceCollection)
         {
             base.InternalRegister(serviceCollection);
+
+            if (DbContextProvider != null)
+                serviceCollection.RegisterAllForImplementation(typeof(TDbContext), DbContextProvider, ServiceLifeTime.Transient);
+            else
+                serviceCollection.RegisterAllForImplementation(typeof(TDbContext), ServiceLifeTime.Transient);
+
             RegisterUnitOfWorkManager(serviceCollection);
             serviceCollection.RegisterAllFromType(typeof(IUnitOfWork), ServiceLifeTime.Transient, Assembly);
             RegisterRepositories(serviceCollection);
             if (EnableInboxEventBusMessageRepository())
                 RegisterInboxEventBusMessageRepository(serviceCollection);
             serviceCollection.RegisterAllFromType<IPersistenceHelper>(ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType<IPlatformDataMigrationExecutor>(ServiceLifeTime.Transient, Assembly);
         }
 
         /// <summary>

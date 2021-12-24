@@ -1,9 +1,15 @@
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.EfCore.EntityConfiguration;
+using AngularDotnetPlatform.Platform.Persistence;
+using AngularDotnetPlatform.Platform.Persistence.DataMigration;
 using Microsoft.EntityFrameworkCore;
 
 namespace AngularDotnetPlatform.Platform.EfCore
 {
-    public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext where TDbContext : PlatformEfCoreDbContext<TDbContext>
+    public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatformDbContext where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
         private readonly PlatformEfCoreOptions efCoreOptions;
 
@@ -12,10 +18,16 @@ namespace AngularDotnetPlatform.Platform.EfCore
             this.efCoreOptions = efCoreOptions;
         }
 
+        public DbSet<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryDbSet => Set<PlatformDataMigrationHistory>();
+
+        public IQueryable<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryQuery =>
+            Set<PlatformDataMigrationHistory>().AsQueryable();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Auto apply configuration by convention.
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
+            modelBuilder.ApplyConfiguration(new PlatformApplicationDataMigrationHistoryConfiguration());
 
             if (efCoreOptions.EnableDefaultInboxEventBusMessageEntityConfiguration == true)
                 modelBuilder.ApplyConfiguration(new PlatformDefaultInboxEventBusMessageConfiguration());
@@ -28,6 +40,48 @@ namespace AngularDotnetPlatform.Platform.EfCore
             base.OnConfiguring(optionsBuilder);
 
             optionsBuilder.UseLazyLoadingProxies();
+        }
+
+        public async Task SaveChangesAsync()
+        {
+            await base.SaveChangesAsync();
+        }
+
+        public IQueryable<TEntity> GetQuery<TEntity>() where TEntity : class, IEntity
+        {
+            return Set<TEntity>().AsQueryable();
+        }
+
+        public void RunCommand(string command)
+        {
+            Database.ExecuteSqlRaw(command);
+        }
+
+        public Task MigrateApplicationDataAsync(IServiceProvider serviceProvider)
+        {
+            PlatformDataMigrationExecutor<TDbContext>.EnsureAllDataMigrationExecutorsHasUniqueName(GetType().Assembly, serviceProvider);
+            PlatformDataMigrationExecutor<TDbContext>.GetCanExecuteDataMigrationExecutors(GetType().Assembly, serviceProvider, ApplicationDataMigrationHistoryQuery).ForEach(migrationExecution =>
+            {
+                if (!migrationExecution.IsObsolete())
+                {
+                    migrationExecution.Execute((TDbContext)this);
+
+                    Set<PlatformDataMigrationHistory>()
+                        .Add(new PlatformDataMigrationHistory(migrationExecution.Name));
+
+                    base.SaveChangesAsync().Wait();
+                }
+
+                migrationExecution.Dispose();
+            });
+
+            return Task.CompletedTask;
+        }
+
+        public virtual void Initialize(IServiceProvider serviceProvider)
+        {
+            Database.Migrate();
+            MigrateApplicationDataAsync(serviceProvider).Wait();
         }
     }
 }

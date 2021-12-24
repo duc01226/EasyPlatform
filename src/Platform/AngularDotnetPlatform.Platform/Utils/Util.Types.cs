@@ -8,6 +8,7 @@ namespace AngularDotnetPlatform.Platform.Utils
         {
             /// <summary>
             /// References: https://stackoverflow.com/questions/3117090/getinterfaces-returns-generic-interface-type-with-fullname-null/3117293
+            /// <br/>
             /// This function used to fix when a Type is generic, get Interfaces will lead to missing fullName => lead to register into ServiceCollection for generic type get errors
             /// </summary>
             /// <param name="type"></param>
