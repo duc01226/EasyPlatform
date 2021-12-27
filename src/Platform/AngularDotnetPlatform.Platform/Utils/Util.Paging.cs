@@ -17,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.Utils
             /// <param name="maxItemCounts">Max items count</param>
             /// <param name="pageSize">Page size to execute.</param>
             /// <returns>Task.</returns>
-            public static async Task ExecutePagingAsync(Func<int, int, Task> executeFn, int maxItemCounts, int pageSize)
+            public static async Task ExecutePagingAsync(Func<int, int, Task> executeFn, long maxItemCounts, int pageSize)
             {
                 var currentSkipItems = 0;
 
