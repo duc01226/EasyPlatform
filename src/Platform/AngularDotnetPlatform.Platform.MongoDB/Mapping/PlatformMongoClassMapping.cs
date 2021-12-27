@@ -18,7 +18,8 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Mapping
     {
         public PlatformMongoClassMapping()
         {
-            BsonClassMap.RegisterClassMap<TEntity>(ClassMapInitializer);
+            if (!BsonClassMap.IsClassMapRegistered(typeof(TEntity)))
+                BsonClassMap.RegisterClassMap<TEntity>(ClassMapInitializer);
         }
 
         public virtual void ClassMapInitializer(BsonClassMap<TEntity> cm)
