@@ -7,6 +7,8 @@ using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using AngularDotnetPlatform.Platform.Persistence;
 using AngularDotnetPlatform.Platform.Persistence.DataMigration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
@@ -175,13 +177,22 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         public Task MigrateApplicationDataAsync(IServiceProvider serviceProvider)
         {
             PlatformDataMigrationExecutor<TDbContext>.EnsureAllDataMigrationExecutorsHasUniqueName(GetType().Assembly, serviceProvider);
+
             PlatformDataMigrationExecutor<TDbContext>.GetCanExecuteDataMigrationExecutors(GetType().Assembly, serviceProvider, ApplicationDataMigrationHistoryQuery).ForEach(migrationExecution =>
             {
                 if (!migrationExecution.IsObsolete())
                 {
+                    var logger = serviceProvider
+                        .GetService<ILoggerFactory>()
+                        .CreateLogger(migrationExecution.GetType());
+
+                    logger.LogInformation($"Migration {migrationExecution.Name} started.");
+
                     migrationExecution.Execute((TDbContext)this);
 
                     ApplicationDataMigrationHistoryCollection.InsertOne(new PlatformDataMigrationHistory(migrationExecution.Name));
+
+                    logger.LogInformation($"Migration {migrationExecution.Name} finished.");
 
                     SaveChangesAsync().Wait();
                 }

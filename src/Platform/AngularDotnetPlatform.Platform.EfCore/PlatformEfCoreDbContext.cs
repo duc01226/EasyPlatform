@@ -6,6 +6,8 @@ using AngularDotnetPlatform.Platform.EfCore.EntityConfiguration;
 using AngularDotnetPlatform.Platform.Persistence;
 using AngularDotnetPlatform.Platform.Persistence.DataMigration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.EfCore
 {
@@ -64,10 +66,18 @@ namespace AngularDotnetPlatform.Platform.EfCore
             {
                 if (!migrationExecution.IsObsolete())
                 {
+                    var logger = serviceProvider
+                        .GetService<ILoggerFactory>()
+                        .CreateLogger(migrationExecution.GetType());
+
+                    logger.LogInformation($"Migration {migrationExecution.Name} started.");
+
                     migrationExecution.Execute((TDbContext)this);
 
                     Set<PlatformDataMigrationHistory>()
                         .Add(new PlatformDataMigrationHistory(migrationExecution.Name));
+
+                    logger.LogInformation($"Migration {migrationExecution.Name} finished.");
 
                     base.SaveChangesAsync().Wait();
                 }
