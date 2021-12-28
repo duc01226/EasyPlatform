@@ -30,6 +30,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.DataMigra
                 .FirstOrDefault(p => p.SnippetText == "DemoMigrateApplicationDataDbContext Entity");
             if (demoApplicationMigrationEntity != null)
             {
+                dbContext.MultiDbDemoEntityCollection.DeleteOne(p => p.Id == demoApplicationMigrationEntity.Id);
                 dbContext.MultiDbDemoEntityCollection.InsertOne(new MultiDbDemoEntity()
                 {
                     Id = demoApplicationMigrationEntity.Id,

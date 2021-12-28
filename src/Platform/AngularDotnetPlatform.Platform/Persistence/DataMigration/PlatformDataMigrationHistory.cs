@@ -20,7 +20,7 @@ namespace AngularDotnetPlatform.Platform.Persistence.DataMigration
         {
             get
             {
-                return createdDate ?? new DateTime();
+                return createdDate ?? DateTime.UtcNow;
             }
             set
             {

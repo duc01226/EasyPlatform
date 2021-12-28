@@ -18,6 +18,7 @@ using AngularDotnetPlatform.Platform.MongoDB.Mapping;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using MongoDB.Bson.Serialization;
 using AngularDotnetPlatform.Platform.MongoDB.Serializer.Abstract;
+using AngularDotnetPlatform.Platform.Persistence.DataMigration;
 using Microsoft.Extensions.Options;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
@@ -65,6 +66,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             RegisterBuiltInHelpers(serviceCollection);
 
             RegisterPlatformDataMigrationHistoryClassMap();
+            RegisterPlatformMigrationHistoryClassMap();
             AutoRegisterAllSerializers();
             AutoRegisterAllClassMap();
         }
@@ -157,6 +159,18 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         }
 
         private static void RegisterPlatformDataMigrationHistoryClassMap()
+        {
+            if (!BsonClassMap.IsClassMapRegistered(typeof(PlatformDataMigrationHistory)))
+            {
+                BsonClassMap.RegisterClassMap<PlatformDataMigrationHistory>(cm =>
+                {
+                    cm.AutoMap();
+                    cm.SetIgnoreExtraElements(true);
+                });
+            }
+        }
+
+        private static void RegisterPlatformMigrationHistoryClassMap()
         {
             if (!BsonClassMap.IsClassMapRegistered(typeof(PlatformMongoMigrationHistory)))
             {
