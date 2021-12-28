@@ -13,6 +13,7 @@ using Polly;
 using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories;
 using AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork;
+using AngularDotnetPlatform.Platform.MongoDB.Extensions;
 using AngularDotnetPlatform.Platform.MongoDB.Helpers;
 using AngularDotnetPlatform.Platform.MongoDB.Mapping;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
@@ -29,6 +30,8 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         where TMongoOptions : PlatformMongoOptions<TDbContext>
     {
         protected readonly ILogger Logger;
+
+        private static readonly HashSet<Type> RegisteredClassMapTypes = new HashSet<Type>();
 
         public PlatformMongoDbPersistenceModule(
             IServiceProvider serviceProvider,
@@ -75,7 +78,14 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         {
             var allClassMapTypes = AllClassMapTypes();
 
-            allClassMapTypes.ForEach(p => Activator.CreateInstance(p));
+            allClassMapTypes.ForEach(p =>
+            {
+                if (!RegisteredClassMapTypes.Contains(p))
+                {
+                    Activator.CreateInstance(p);
+                    RegisteredClassMapTypes.Add(p);
+                }
+            });
         }
 
         protected virtual void AutoRegisterAllSerializers()
@@ -160,26 +170,20 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         private static void RegisterPlatformDataMigrationHistoryClassMap()
         {
-            if (!BsonClassMap.IsClassMapRegistered(typeof(PlatformDataMigrationHistory)))
+            BsonClassMapExtension.TryRegisterClassMap<PlatformDataMigrationHistory>(cm =>
             {
-                BsonClassMap.RegisterClassMap<PlatformDataMigrationHistory>(cm =>
-                {
-                    cm.AutoMap();
-                    cm.SetIgnoreExtraElements(true);
-                });
-            }
+                cm.AutoMap();
+                cm.SetIgnoreExtraElements(true);
+            });
         }
 
         private static void RegisterPlatformMigrationHistoryClassMap()
         {
-            if (!BsonClassMap.IsClassMapRegistered(typeof(PlatformMongoMigrationHistory)))
+            BsonClassMapExtension.TryRegisterClassMap<PlatformMongoMigrationHistory>(cm =>
             {
-                BsonClassMap.RegisterClassMap<PlatformMongoMigrationHistory>(cm =>
-                {
-                    cm.AutoMap();
-                    cm.SetIgnoreExtraElements(true);
-                });
-            }
+                cm.AutoMap();
+                cm.SetIgnoreExtraElements(true);
+            });
         }
     }
 
