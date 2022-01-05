@@ -41,6 +41,41 @@ namespace AngularDotnetPlatform.Platform.Extensions
         }
 
         /// <summary>
+        /// Register all implementation of implemented interfaces in a module that is assignable to TConventional
+        /// </summary>
+        public static IServiceCollection RegisterAllServicesFromType(
+            this IServiceCollection services,
+            Type conventionalType,
+            ServiceLifeTime lifeTime,
+            Assembly assembly,
+            bool replaceIfExist = true,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            assembly.GetTypes()
+                .Where(p => p.IsClass && !p.IsAbstract && p.IsAssignableTo(conventionalType))
+                .ToList()
+                .ForEach(implementationType =>
+                {
+                    services.RegisterInterfacesForImplementation(implementationType, lifeTime, replaceIfExist, replaceStrategy);
+                });
+
+            return services;
+        }
+
+        /// <summary>
+        /// Register all implementation of implemented interfaces in a module that is assignable to TConventional
+        /// </summary>
+        public static IServiceCollection RegisterAllServicesFromType<TConventional>(
+            this IServiceCollection services,
+            ServiceLifeTime lifeTime,
+            Assembly assembly,
+            bool replaceIfExist = true,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        {
+            return RegisterAllServicesFromType(services, typeof(TConventional), lifeTime, assembly, replaceIfExist, replaceStrategy);
+        }
+
+        /// <summary>
         /// Register all concrete types in a module that is assignable to TConventional as itself and it's implemented interfaces
         /// </summary>
         public static IServiceCollection RegisterAllFromType<TConventional>(

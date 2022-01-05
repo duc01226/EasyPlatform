@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AngularDotnetPlatform.Platform.Application.Domain;
 using AngularDotnetPlatform.Platform.Application.EventBus;
+using AngularDotnetPlatform.Platform.Application.Persistence;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using AngularDotnetPlatform.Platform.DependencyInjection;
@@ -34,6 +35,7 @@ namespace AngularDotnetPlatform.Platform.Persistence
                 serviceCollection.RegisterAllForImplementation(typeof(TDbContext), DbContextProvider, ServiceLifeTime.Transient);
             else
                 serviceCollection.RegisterAllForImplementation(typeof(TDbContext), ServiceLifeTime.Transient);
+            serviceCollection.RegisterAllServicesFromType<IPlatformDbContext>(ServiceLifeTime.Scoped, Assembly);
 
             RegisterUnitOfWorkManager(serviceCollection);
             serviceCollection.RegisterAllFromType(typeof(IUnitOfWork), ServiceLifeTime.Transient, Assembly);

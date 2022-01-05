@@ -11,6 +11,7 @@ using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
 using AngularDotnetPlatform.Platform.Application.Helpers;
 using AngularDotnetPlatform.Platform.Application.Infrastructures.Abstract;
+using AngularDotnetPlatform.Platform.Application.Persistence;
 using AngularDotnetPlatform.Platform.Caching;
 using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
@@ -113,6 +114,7 @@ namespace AngularDotnetPlatform.Platform.Application
             RegisterPseudoApplicationUnitOfWork(serviceCollection);
             serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformInfrastructureService>(ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllServicesFromType<IPlatformDbContext>(ServiceLifeTime.Scoped, Assembly);
         }
 
         protected override async Task InternalInit(IServiceScope serviceScope)
