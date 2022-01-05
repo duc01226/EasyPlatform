@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
@@ -23,6 +24,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork
 
         public bool Completed { get; protected set; }
         public bool Disposed { get; protected set; }
+        public List<IUnitOfWork> InnerUnitOfWorks { get; } = new List<IUnitOfWork>();
 
         public virtual async Task CompleteAsync(CancellationToken cancellationToken = default)
         {
@@ -31,7 +33,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork
 
             try
             {
-                await DbContext.SaveChangesAsync(cancellationToken);
+                await SaveChangesAsync(cancellationToken);
                 Completed = true;
                 OnCompleted?.Invoke(this, EventArgs.Empty);
             }
@@ -70,6 +72,11 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork
             }
 
             Disposed = true;
+        }
+
+        protected virtual async Task SaveChangesAsync(CancellationToken cancellationToken)
+        {
+            await DbContext.SaveChangesAsync(cancellationToken);
         }
     }
 }

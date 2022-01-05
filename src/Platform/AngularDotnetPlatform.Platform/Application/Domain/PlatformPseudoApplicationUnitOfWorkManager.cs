@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
@@ -93,6 +94,8 @@ namespace AngularDotnetPlatform.Platform.Application.Domain
         public event EventHandler<UnitOfWorkFailedArgs> OnFailed;
         public bool Completed { get; private set; }
         public bool Disposed { get; private set; }
+        public List<IUnitOfWork> InnerUnitOfWorks { get; } = new List<IUnitOfWork>();
+
         public Task CompleteAsync(CancellationToken cancellationToken = default)
         {
             try

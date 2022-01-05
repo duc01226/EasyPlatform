@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
@@ -21,6 +22,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork
         public event EventHandler<UnitOfWorkFailedArgs> OnFailed;
         public bool Completed { get; protected set; }
         public bool Disposed { get; protected set; }
+        public List<IUnitOfWork> InnerUnitOfWorks { get; } = new List<IUnitOfWork>();
         public TDbContext DbContext { get; }
 
         public virtual Task CompleteAsync(CancellationToken cancellationToken = default)

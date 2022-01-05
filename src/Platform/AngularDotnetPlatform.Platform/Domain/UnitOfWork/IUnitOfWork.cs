@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,6 +13,8 @@ namespace AngularDotnetPlatform.Platform.Domain.UnitOfWork
         public bool Completed { get; }
 
         public bool Disposed { get; }
+
+        public List<IUnitOfWork> InnerUnitOfWorks { get; }
 
         /// <summary>
         /// Completes this unit of work.

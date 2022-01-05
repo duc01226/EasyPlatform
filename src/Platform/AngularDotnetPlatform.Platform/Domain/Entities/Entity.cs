@@ -16,11 +16,14 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
         TPrimaryKey Id { get; set; }
     }
 
-    public interface IValidatableEntity<TEntity, TPrimaryKey> : IEntity<TPrimaryKey>
-        where TEntity : IEntity<TPrimaryKey>
+    public interface IValidatableEntity
     {
         PlatformValidationResult Validate();
+    }
 
+    public interface IValidatableEntity<TEntity, TPrimaryKey> : IValidatableEntity, IEntity<TPrimaryKey>
+        where TEntity : IEntity<TPrimaryKey>
+    {
         PlatformCheckUniquenessValidator<TEntity> CheckUniquenessValidator();
     }
 
