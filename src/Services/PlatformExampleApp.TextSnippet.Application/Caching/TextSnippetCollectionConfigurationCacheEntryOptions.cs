@@ -3,9 +3,9 @@ using Microsoft.Extensions.Configuration;
 
 namespace PlatformExampleApp.TextSnippet.Application.Caching
 {
-    public class TextSnippetConfigurationCollectionCacheEntryOptions : PlatformConfigurationCacheEntryOptions
+    public class TextSnippetCollectionConfigurationCacheEntryOptions : PlatformConfigurationCacheEntryOptions
     {
-        public TextSnippetConfigurationCollectionCacheEntryOptions(IConfiguration configuration) : base(configuration)
+        public TextSnippetCollectionConfigurationCacheEntryOptions(IConfiguration configuration) : base(configuration)
         {
         }
 

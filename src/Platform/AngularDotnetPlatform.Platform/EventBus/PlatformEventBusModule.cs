@@ -17,6 +17,9 @@ namespace AngularDotnetPlatform.Platform.EventBus
         protected override bool AutoRegisterCaching => false;
         protected override bool AutoRegisterCqrs => false;
 
+        /// <summary>
+        /// Return list of assemblies to scan EventBusMessage/Producers/Consumers to auto register. Usually it will be application module assembly
+        /// </summary>
         protected abstract List<Assembly> EventBusScanAssemblies();
 
         protected override void InternalRegister(IServiceCollection serviceCollection)

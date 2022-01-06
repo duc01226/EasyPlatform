@@ -279,6 +279,8 @@ namespace AngularDotnetPlatform.Platform.DependencyInjection
             serviceCollection.RegisterAllFromType<IPlatformCacheRepository>(ServiceLifeTime.Singleton, Assembly, replaceIfExist: true);
             serviceCollection.RegisterAllFromType(typeof(IPlatformCollectionCacheRepository<>), ServiceLifeTime.Transient, Assembly, replaceIfExist: true);
 
+            serviceCollection.RegisterAllFromType<PlatformConfigurationCacheEntryOptions>(ServiceLifeTime.Transient, Assembly);
+
             RegisterDefaultPlatformCacheEntryOptions(serviceCollection);
 
             // Register built-in memory cache

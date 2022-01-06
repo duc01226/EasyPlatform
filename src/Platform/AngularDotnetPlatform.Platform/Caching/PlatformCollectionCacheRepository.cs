@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace AngularDotnetPlatform.Platform.Caching
 {
@@ -53,6 +54,16 @@ namespace AngularDotnetPlatform.Platform.Caching
             PlatformCacheEntryOptions cacheOptions = null,
             CancellationToken token = default) where TData : new();
 
+        Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
+            Func<Task<TData>> request,
+            object[] requestKeyParts = null,
+            CancellationToken token = default) where TData : new() where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions;
+
+        Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
+            Func<Task<TData>> request,
+            string requestKey,
+            CancellationToken token = default) where TData : new() where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions;
+
         Task<TData> CacheRequestAsync<TData>(
             Func<Task<TData>> request,
             string requestKey,
@@ -74,12 +85,15 @@ namespace AngularDotnetPlatform.Platform.Caching
     {
         protected readonly TCollectionCacheKeyProvider CollectionCacheKeyProvider;
         protected readonly IPlatformCacheRepositoryProvider CacheRepositoryProvider;
+        protected readonly IServiceProvider ServiceProvider;
 
         public PlatformCollectionCacheRepository(
             IPlatformCacheRepositoryProvider cacheRepositoryProvider,
-            TCollectionCacheKeyProvider collectionCacheKeyProvider)
+            TCollectionCacheKeyProvider collectionCacheKeyProvider,
+            IServiceProvider serviceProvider)
         {
             CollectionCacheKeyProvider = collectionCacheKeyProvider;
+            ServiceProvider = serviceProvider;
             CacheRepositoryProvider = cacheRepositoryProvider;
         }
 
@@ -232,6 +246,22 @@ namespace AngularDotnetPlatform.Platform.Caching
             return await CacheRepository().CacheRequestAsync(request, CollectionCacheKeyProvider.GetKey(requestKeyParts), cacheOptions, token);
         }
 
+        public Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
+            Func<Task<TData>> request,
+            object[] requestKeyParts = null,
+            CancellationToken token = default) where TData : new() where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions
+        {
+            return CacheRequestAsync(request, requestKeyParts, ServiceProvider.GetService<TConfigurationCacheOptions>(), token);
+        }
+
+        public Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
+            Func<Task<TData>> request,
+            string requestKey,
+            CancellationToken token = default) where TData : new() where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions
+        {
+            return CacheRequestAsync(request, requestKey, ServiceProvider.GetService<TConfigurationCacheOptions>(), token);
+        }
+
         public async Task<TData> CacheRequestAsync<TData>(
             Func<Task<TData>> request,
             string requestKey,
@@ -271,7 +301,8 @@ namespace AngularDotnetPlatform.Platform.Caching
     {
         public PlatformCollectionMemoryCacheRepository(
             IPlatformCacheRepositoryProvider cacheRepositoryProvider,
-            TCollectionCacheKeyProvider collectionCacheKeyProvider) : base(cacheRepositoryProvider, collectionCacheKeyProvider)
+            TCollectionCacheKeyProvider collectionCacheKeyProvider,
+            IServiceProvider serviceProvider) : base(cacheRepositoryProvider, collectionCacheKeyProvider, serviceProvider)
         {
         }
 
@@ -286,7 +317,8 @@ namespace AngularDotnetPlatform.Platform.Caching
     {
         public PlatformCollectionDistributedCacheRepository(
             IPlatformCacheRepositoryProvider cacheRepositoryProvider,
-            TCollectionCacheKeyProvider collectionCacheKeyProvider) : base(cacheRepositoryProvider, collectionCacheKeyProvider)
+            TCollectionCacheKeyProvider collectionCacheKeyProvider,
+            IServiceProvider serviceProvider) : base(cacheRepositoryProvider, collectionCacheKeyProvider, serviceProvider)
         {
         }
 

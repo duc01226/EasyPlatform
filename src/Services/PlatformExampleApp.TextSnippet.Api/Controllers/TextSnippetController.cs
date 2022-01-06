@@ -35,17 +35,16 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
             //        new TextSnippetConfigurationCollectionCacheEntryOptions(Configuration));
 
             // Test case use default CacheEntryOptions. Could be configured via override DefaultPlatformCacheEntryOptions in module
-            return await CacheRepositoryProvider.GetCollection<TextSnippetApplicationCollectionCacheKeyProvider>()
+            return await CacheRepositoryProvider.GetCollection<TextSnippetCollectionCacheKeyProvider>()
                 .CacheRequestAsync(
                     () => Cqrs.SendQuery(request),
                     requestKeyParts: new object[] { nameof(Search), request });
 
-            // Using distributed cache
-            return await CacheRepositoryProvider.GetCollection<TextSnippetApplicationCollectionCacheKeyProvider>(PlatformCacheRepositoryType.Distributed)
-                .CacheRequestAsync(
+            // Using distributed cache and also use CacheRequestUseConfigOptionsAsync for convenient
+            return await CacheRepositoryProvider.GetCollection<TextSnippetCollectionCacheKeyProvider>(PlatformCacheRepositoryType.Distributed)
+                .CacheRequestUseConfigOptionsAsync<TextSnippetCollectionConfigurationCacheEntryOptions, SearchSnippetTextQueryResult>(
                     () => Cqrs.SendQuery(request),
-                    new object[] { nameof(Search), request },
-                    new TextSnippetConfigurationCollectionCacheEntryOptions(Configuration));
+                    new object[] { nameof(Search), request });
         }
 
         // POST api/<TextSnippetController>
