@@ -11,7 +11,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork
         public TDbContext DbContext { get; }
     }
 
-    public abstract class PlatformMongoDbUnitOfWork<TDbContext> : IPlatformMongoDbUnitOfWork<TDbContext> where TDbContext : IPlatformMongoDbContext<TDbContext>
+    public class PlatformMongoDbUnitOfWork<TDbContext> : IPlatformMongoDbUnitOfWork<TDbContext> where TDbContext : IPlatformMongoDbContext<TDbContext>
     {
         public PlatformMongoDbUnitOfWork(TDbContext dbContext)
         {

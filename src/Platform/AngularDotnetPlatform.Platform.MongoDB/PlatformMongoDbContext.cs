@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus;
+using AngularDotnetPlatform.Platform.Application.Persistence;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using AngularDotnetPlatform.Platform.Persistence;
@@ -16,6 +18,20 @@ using MongoDB.Driver.Linq;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
 {
+    public interface IPlatformMongoDbContext<TDbContext> : IDisposable, IPlatformDbContext
+        where TDbContext : IPlatformMongoDbContext<TDbContext>
+    {
+        IMongoCollection<PlatformMongoMigrationHistory> MigrationHistoryCollection { get; }
+        string DataMigrationHistoryCollectionName { get; }
+
+        Task EnsureIndexesAsync(bool recreate = false);
+        string GenerateId();
+        void Migrate();
+        string GetCollectionName<TEntity>();
+        IMongoCollection<TEntity> GetCollection<TEntity>();
+        IQueryable<T> GetQueryable<T>(string dataSourceName);
+    }
+
     public abstract class PlatformMongoDbContext<TDbContext> : IPlatformMongoDbContext<TDbContext>
         where TDbContext : PlatformMongoDbContext<TDbContext>
     {
@@ -27,7 +43,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
 
         protected readonly Lazy<Dictionary<Type, string>> EntityTypeToCollectionNameDictionary;
 
-        public PlatformMongoDbContext(IOptions<PlatformMongoOptions<TDbContext>> options, IPlatformMongoClientContext<TDbContext> client)
+        public PlatformMongoDbContext(IOptions<PlatformMongoOptions<TDbContext>> options, IPlatformMongoClient<TDbContext> client)
         {
             Database = client.MongoClient.GetDatabase(options.Value.Database);
             EntityTypeToCollectionNameDictionary = new Lazy<Dictionary<Type, string>>(() =>
@@ -98,6 +114,20 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             MigrateApplicationDataAsync(serviceProvider).Wait();
         }
 
+        public async Task<IEnumerable<T>> GetAllAsync<T>(IQueryable<T> query, CancellationToken cancellationToken = default)
+        {
+            if (query is IMongoQueryable<T> mongoQueryable)
+                return await mongoQueryable.ToListAsync(cancellationToken);
+            return query.ToList();
+        }
+
+        public async Task<T> FirstOrDefaultAsync<T>(IQueryable<T> query, CancellationToken cancellationToken = default)
+        {
+            if (query is IMongoQueryable<T> mongoQueryable)
+                return await mongoQueryable.FirstOrDefaultAsync(cancellationToken);
+            return query.FirstOrDefault();
+        }
+
         public void Migrate()
         {
             EnsureAllMigrationExecutorsHasUniqueName();
@@ -137,26 +167,6 @@ namespace AngularDotnetPlatform.Platform.MongoDB
         public IMongoCollection<TEntity> GetCollection<TEntity>()
         {
             return Database.GetCollection<TEntity>(GetCollectionName<TEntity>());
-        }
-
-        public Task<List<T>> ToListAsync<T>(IQueryable<T> query)
-        {
-            if (query is IMongoQueryable<T> mongoQuery)
-            {
-                return mongoQuery.ToListAsync();
-            }
-
-            throw new ArgumentException("Query couldn't be async");
-        }
-
-        public Task<T> FirstOrDefaultAsync<T>(IQueryable<T> query)
-        {
-            if (query is IMongoQueryable<T> mongoQuery)
-            {
-                return mongoQuery.FirstOrDefaultAsync();
-            }
-
-            throw new ArgumentException("Query couldn't be async");
         }
 
         public IQueryable<T> GetQueryable<T>(string dataSourceName)

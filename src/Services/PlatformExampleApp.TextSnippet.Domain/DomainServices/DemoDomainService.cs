@@ -4,7 +4,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Domain.Services;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
@@ -15,16 +17,18 @@ namespace PlatformExampleApp.TextSnippet.Domain.DomainServices
     /// Domain service is used to serve business logic operation related to many root domain entities,
     /// the business logic term is understood by domain expert.
     /// </summary>
-    public class DemoDomainService : IPlatformDomainService
+    public class DemoDomainService : BasePlatformDomainService
     {
         private readonly ITextSnippetRepository<TextSnippetEntity> textSnippetRepository;
         private readonly ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;
         private readonly IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper;
 
         public DemoDomainService(
+            IPlatformCqrs cqrs,
+            IUnitOfWorkManager unitOfWorkManager,
             ITextSnippetRepository<TextSnippetEntity> textSnippetRepository,
             ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository,
-            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper)
+            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper) : base(cqrs, unitOfWorkManager)
         {
             this.textSnippetRepository = textSnippetRepository;
             this.multiDbDemoEntityRepository = multiDbDemoEntityRepository;
@@ -41,7 +45,7 @@ namespace PlatformExampleApp.TextSnippet.Domain.DomainServices
 
             multiDbDemoEntity.Name = firstFoundTextSnippet.SnippetText;
 
-            await multiDbDemoEntityRepository.Update(multiDbDemoEntity);
+            await multiDbDemoEntityRepository.UpdateAsync(multiDbDemoEntity);
         }
     }
 }

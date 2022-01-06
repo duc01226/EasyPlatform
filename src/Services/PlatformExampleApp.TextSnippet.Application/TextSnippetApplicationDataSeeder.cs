@@ -35,7 +35,7 @@ namespace PlatformExampleApp.TextSnippet.Application
 
             for (var i = 0; i < 20; i++)
             {
-                await multiDbDemoEntityRepository.CreateOrUpdate(
+                await multiDbDemoEntityRepository.CreateOrUpdateAsync(
                     new MultiDbDemoEntity()
                     {
                         Id = Guid.NewGuid(),
@@ -51,7 +51,7 @@ namespace PlatformExampleApp.TextSnippet.Application
 
             for (var i = 0; i < 20; i++)
             {
-                await textSnippetRepository.CreateOrUpdate(
+                await textSnippetRepository.CreateOrUpdateAsync(
                     new TextSnippetEntity()
                     {
                         Id = Guid.NewGuid(),
@@ -59,7 +59,7 @@ namespace PlatformExampleApp.TextSnippet.Application
                         FullText = $"This is full text of Example Abc {i} snippet text"
                     },
                     p => p.SnippetText == $"Example Abc {i}");
-                await textSnippetRepository.CreateOrUpdate(
+                await textSnippetRepository.CreateOrUpdateAsync(
                     new TextSnippetEntity()
                     {
                         Id = Guid.NewGuid(),
@@ -67,7 +67,7 @@ namespace PlatformExampleApp.TextSnippet.Application
                         FullText = $"This is full text of Example Def {i} snippet text"
                     },
                     p => p.SnippetText == $"Example Def {i}");
-                await textSnippetRepository.CreateOrUpdate(
+                await textSnippetRepository.CreateOrUpdateAsync(
                     new TextSnippetEntity()
                     {
                         Id = Guid.NewGuid(),

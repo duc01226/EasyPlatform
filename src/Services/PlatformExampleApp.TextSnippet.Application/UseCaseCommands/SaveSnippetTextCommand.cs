@@ -85,7 +85,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             }
 
             // STEP 3: Saving data in to repository
-            var savedData = await textSnippetEntityRepository.CreateOrUpdate(savingData, cancellationToken: cancellationToken);
+            var savedData = await textSnippetEntityRepository.CreateOrUpdateAsync(savingData, cancellationToken: cancellationToken);
 
             // STEP 4: Build and return result
             return new SaveSnippetTextCommandResult()
@@ -106,7 +106,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 
             firstExistedMultiDbEntity.Name = $"First Multi Db Demo Entity Upserted on {Clock.Now.ToShortDateString()}";
 
-            await multiDbDemoEntityRepository.CreateOrUpdate(firstExistedMultiDbEntity, cancellationToken: cancellationToken);
+            await multiDbDemoEntityRepository.CreateOrUpdateAsync(firstExistedMultiDbEntity, cancellationToken: cancellationToken);
         }
 
         private PlatformValidationResult ValidateSomeThisCommandLogic()

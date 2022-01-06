@@ -14,7 +14,7 @@ namespace PlatformExampleApp.TextSnippet.Domain.Repositories.Extensions
     {
         public static Task<List<MultiDbDemoEntity>> DeleteByName(this ITextSnippetRootRepository<MultiDbDemoEntity> repository, string name)
         {
-            return repository.DeleteMany(p => p.Name == name);
+            return repository.DeleteManyAsync(p => p.Name == name);
         }
     }
 }

@@ -23,7 +23,7 @@ namespace PlatformExampleApp.TextSnippet.Application.BackgroundJob
 
         public override async Task ProcessAsync(DemoScheduleBackgroundJobManuallyCommandBackgroundJobExecutorParam param)
         {
-            await textSnippetEntityRepository.CreateOrUpdate(new TextSnippetEntity()
+            await textSnippetEntityRepository.CreateOrUpdateAsync(new TextSnippetEntity()
             {
                 Id = Guid.Parse("90d8898b-c232-461e-9cb0-3242ac6c5b41"),
                 SnippetText = $"DemoScheduleBackgroundJobManually {Clock.Now.ToShortTimeString()} {param.NewSnippetText ?? ""}",

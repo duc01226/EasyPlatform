@@ -11,7 +11,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork
         public TDbContext DbContext { get; }
     }
 
-    public abstract class PlatformEfCoreUnitOfWork<TDbContext> : IPlatformEfCoreUnitOfWork<TDbContext> where TDbContext : PlatformEfCoreDbContext<TDbContext>
+    public class PlatformEfCoreUnitOfWork<TDbContext> : IPlatformEfCoreUnitOfWork<TDbContext> where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
         public PlatformEfCoreUnitOfWork(TDbContext dbContext)
         {

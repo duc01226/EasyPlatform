@@ -12,7 +12,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
     {
         public TextSnippetMultiDbDemoDbContext(
             IOptions<PlatformMongoOptions<TextSnippetMultiDbDemoDbContext>> options,
-            IPlatformMongoClientContext<TextSnippetMultiDbDemoDbContext> client) : base(options, client)
+            IPlatformMongoClient<TextSnippetMultiDbDemoDbContext> client) : base(options, client)
         {
         }
 

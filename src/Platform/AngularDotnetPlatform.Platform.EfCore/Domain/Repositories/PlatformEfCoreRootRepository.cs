@@ -29,17 +29,17 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             return Table.AsQueryable();
         }
 
-        public async Task<TEntity> Create(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<TEntity> CreateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             return await CreateInternal(entity, dismissSendEvent, cancellationToken);
         }
 
-        public Task<TEntity> CreateOrUpdate(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public Task<TEntity> CreateOrUpdateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
-            return CreateOrUpdate(entity, null, dismissSendEvent, cancellationToken);
+            return CreateOrUpdateAsync(entity, null, dismissSendEvent, cancellationToken);
         }
 
-        public Task<TEntity> CreateOrUpdate(
+        public Task<TEntity> CreateOrUpdateAsync(
             TEntity entity,
             Expression<Func<TEntity, bool>> customCheckExistingPredicate = null,
             bool dismissSendEvent = false,
@@ -51,15 +51,15 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             if (existingEntity != null)
             {
                 entity.Id = existingEntity.Id;
-                return Update(entity, dismissSendEvent, cancellationToken);
+                return UpdateAsync(entity, dismissSendEvent, cancellationToken);
             }
             else
             {
-                return Create(entity, dismissSendEvent, cancellationToken);
+                return CreateAsync(entity, dismissSendEvent, cancellationToken);
             }
         }
 
-        public async Task<List<TEntity>> CreateOrUpdateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> CreateOrUpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             var entityIds = entities.Select(p => p.Id);
 
@@ -74,52 +74,52 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             var toCreateEntities = entities.Where(p => !existingEntityIds.Contains(p.Id)).ToList();
             var toUpdateEntities = entities.Where(p => existingEntityIds.Contains(p.Id)).ToList();
 
-            await CreateMany(toCreateEntities, dismissSendEvent, cancellationToken);
-            await UpdateMany(toUpdateEntities, dismissSendEvent, cancellationToken);
+            await CreateManyAsync(toCreateEntities, dismissSendEvent, cancellationToken);
+            await UpdateManyAsync(toUpdateEntities, dismissSendEvent, cancellationToken);
 
             return entities;
         }
 
-        public async Task<TEntity> Update(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<TEntity> UpdateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             return await UpdateInternal(entity, dismissSendEvent, cancellationToken);
         }
 
-        public Task Delete(TPrimaryKey entityId, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public Task DeleteAsync(TPrimaryKey entityId, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             var entity = Table.Find(entityId);
-            return Delete(entity, dismissSendEvent, cancellationToken);
+            return DeleteAsync(entity, dismissSendEvent, cancellationToken);
         }
 
-        public async Task Delete(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task DeleteAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             await DeleteInternal(entity, dismissSendEvent, cancellationToken);
         }
 
-        public async Task<List<TEntity>> CreateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> CreateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             return await CreateManyInternal(entities, dismissSendEvent, cancellationToken);
         }
 
-        public async Task<List<TEntity>> UpdateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> UpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             return await UpdateManyInternal(entities, dismissSendEvent, cancellationToken);
         }
 
-        public async Task<List<TEntity>> DeleteMany(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> DeleteManyAsync(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             var entities = await GetAllQuery().Where(p => entityIds.Contains(p.Id)).ToListAsync(cancellationToken);
-            return await DeleteMany(entities, dismissSendEvent, cancellationToken);
+            return await DeleteManyAsync(entities, dismissSendEvent, cancellationToken);
         }
 
-        public async Task<List<TEntity>> DeleteMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> DeleteManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             return await DeleteManyInternal(entities, dismissSendEvent, cancellationToken);
         }
 
-        public async Task<List<TEntity>> DeleteMany(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
-            return await DeleteMany(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, cancellationToken);
+            return await DeleteManyAsync(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, cancellationToken);
         }
 
         protected virtual async Task<List<TEntity>> DeleteManyInternal(List<TEntity> entities, bool dismissSendEvent, CancellationToken cancellationToken)

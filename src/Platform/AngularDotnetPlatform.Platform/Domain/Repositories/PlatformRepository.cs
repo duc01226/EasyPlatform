@@ -130,31 +130,31 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
     public abstract class PlatformRootRepository<TEntity, TPrimaryKey> : PlatformRepository<TEntity, TPrimaryKey>, IPlatformQueryableRootRepository<TEntity, TPrimaryKey>
         where TEntity : class, IRootEntity<TPrimaryKey>, new()
     {
-        public abstract Task<TEntity> Create(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        public abstract Task<TEntity> CreateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        public abstract Task<TEntity> CreateOrUpdate(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        public abstract Task<TEntity> CreateOrUpdateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        public abstract Task<List<TEntity>> CreateOrUpdateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        public abstract Task<List<TEntity>> CreateOrUpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        public abstract Task<TEntity> Update(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        public abstract Task<TEntity> UpdateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        public abstract Task Delete(TPrimaryKey entityId, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        public abstract Task DeleteAsync(TPrimaryKey entityId, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        public abstract Task Delete(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        public abstract Task DeleteAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        public abstract Task<List<TEntity>> CreateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        public abstract Task<List<TEntity>> CreateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        public abstract Task<List<TEntity>> UpdateMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        public abstract Task<List<TEntity>> UpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        public abstract Task<List<TEntity>> DeleteMany(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        public abstract Task<List<TEntity>> DeleteManyAsync(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        public abstract Task<List<TEntity>> DeleteMany(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        public abstract Task<List<TEntity>> DeleteManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        public async Task<List<TEntity>> DeleteMany(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
-            return await DeleteMany(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, cancellationToken);
+            return await DeleteManyAsync(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, cancellationToken);
         }
 
-        public abstract Task<TEntity> CreateOrUpdate(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
+        public abstract Task<TEntity> CreateOrUpdateAsync(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
     }
 }

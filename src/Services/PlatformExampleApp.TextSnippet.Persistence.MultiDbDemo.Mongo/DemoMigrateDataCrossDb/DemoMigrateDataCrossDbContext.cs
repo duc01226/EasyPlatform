@@ -12,7 +12,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.DemoMigra
     {
         public DemoMigrateDataCrossDbContext(
             IOptions<PlatformMongoOptions<DemoMigrateDataCrossDbContext>> options,
-            IPlatformMongoClientContext<DemoMigrateDataCrossDbContext> client) : base(options, client)
+            IPlatformMongoClient<DemoMigrateDataCrossDbContext> client) : base(options, client)
         {
         }
 

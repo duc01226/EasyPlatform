@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Persistence;
 using AngularDotnetPlatform.Platform.Domain.Entities;
@@ -93,6 +95,16 @@ namespace AngularDotnetPlatform.Platform.EfCore
         {
             Database.Migrate();
             MigrateApplicationDataAsync(serviceProvider).Wait();
+        }
+
+        public async Task<IEnumerable<T>> GetAllAsync<T>(IQueryable<T> query, CancellationToken cancellationToken = default)
+        {
+            return await query.ToListAsync(cancellationToken);
+        }
+
+        public Task<T> FirstOrDefaultAsync<T>(IQueryable<T> query, CancellationToken cancellationToken = default)
+        {
+            return query.FirstOrDefaultAsync(cancellationToken);
         }
     }
 }

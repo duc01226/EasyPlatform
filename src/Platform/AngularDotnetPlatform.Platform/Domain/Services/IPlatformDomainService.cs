@@ -1,5 +1,5 @@
-using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Cqrs;
+using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
 namespace AngularDotnetPlatform.Platform.Domain.Services
 {
@@ -11,17 +11,17 @@ namespace AngularDotnetPlatform.Platform.Domain.Services
     {
     }
 
-    public abstract class PlatformDomainService : IPlatformDomainService
+    public abstract class BasePlatformDomainService : IPlatformDomainService
     {
-        public PlatformDomainService(
-            IPlatformApplicationUserContextAccessor userContext,
-            IPlatformCqrs cqrs)
+        protected readonly IUnitOfWorkManager UnitOfWorkManager;
+        protected readonly IPlatformCqrs Cqrs;
+
+        public BasePlatformDomainService(
+            IPlatformCqrs cqrs,
+            IUnitOfWorkManager unitOfWorkManager)
         {
-            UserContext = userContext;
+            UnitOfWorkManager = unitOfWorkManager;
             Cqrs = cqrs;
         }
-
-        public IPlatformApplicationUserContextAccessor UserContext { get; }
-        public IPlatformCqrs Cqrs { get; }
     }
 }

@@ -41,7 +41,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
             }
 
             await InternalHandleAsync(message);
-            await inboxEventBusMessageRepo.CreateOrUpdate(PlatformInboxEventBusMessage.Create(message, GetType().Name));
+            await inboxEventBusMessageRepo.CreateOrUpdateAsync(PlatformInboxEventBusMessage.Create(message, GetType().Name));
         }
     }
 }

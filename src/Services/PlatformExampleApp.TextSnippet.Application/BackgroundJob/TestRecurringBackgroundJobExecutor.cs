@@ -24,7 +24,7 @@ namespace PlatformExampleApp.TextSnippet.Application.BackgroundJob
 
         public override async Task ProcessAsync()
         {
-            await textSnippetEntityRepository.CreateOrUpdate(new TextSnippetEntity()
+            await textSnippetEntityRepository.CreateOrUpdateAsync(new TextSnippetEntity()
             {
                 Id = Guid.Parse("76e0f523-ee53-4124-b109-13dedaa4618d"),
                 SnippetText = "TestRecurringBackgroundJob " + Clock.Now.ToShortTimeString(),

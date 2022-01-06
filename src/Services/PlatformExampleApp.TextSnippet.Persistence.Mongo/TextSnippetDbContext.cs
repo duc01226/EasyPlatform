@@ -10,7 +10,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
 {
     public class TextSnippetDbContext : PlatformMongoDbContext<TextSnippetDbContext>
     {
-        public TextSnippetDbContext(IOptions<PlatformMongoOptions<TextSnippetDbContext>> options, IPlatformMongoClientContext<TextSnippetDbContext> client) : base(options, client)
+        public TextSnippetDbContext(IOptions<PlatformMongoOptions<TextSnippetDbContext>> options, IPlatformMongoClient<TextSnippetDbContext> client) : base(options, client)
         {
         }
 

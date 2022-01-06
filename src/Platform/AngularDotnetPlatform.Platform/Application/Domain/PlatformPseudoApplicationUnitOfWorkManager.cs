@@ -44,7 +44,7 @@ namespace AngularDotnetPlatform.Platform.Application.Domain
                 currentUnitOfWork.Dispose();
             }
 
-            currentUnitOfWork = new PlatformDefaultPseudoUnitOfWork();
+            currentUnitOfWork = new PlatformPseudoApplicationUnitOfWork();
 
             return currentUnitOfWork;
         }
@@ -88,7 +88,7 @@ namespace AngularDotnetPlatform.Platform.Application.Domain
         }
     }
 
-    internal class PlatformDefaultPseudoUnitOfWork : IUnitOfWork
+    internal class PlatformPseudoApplicationUnitOfWork : IUnitOfWork
     {
         public event EventHandler OnCompleted;
         public event EventHandler<UnitOfWorkFailedArgs> OnFailed;
