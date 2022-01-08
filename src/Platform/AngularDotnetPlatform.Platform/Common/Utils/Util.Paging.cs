@@ -1,0 +1,58 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
+namespace AngularDotnetPlatform.Platform.Common.Utils
+{
+    public static partial class Util
+    {
+        public static class Paging
+        {
+            /// <summary>
+            /// Support execute async action paged.
+            /// </summary>
+            /// <param name="executeFn">Execute function async. Input is: skipCount, pageSize.</param>
+            /// <param name="maxItemCounts">Max items count</param>
+            /// <param name="pageSize">Page size to execute.</param>
+            /// <returns>Task.</returns>
+            public static async Task ExecutePagingAsync(Func<int, int, Task> executeFn, long maxItemCounts, int pageSize)
+            {
+                var currentSkipItems = 0;
+
+                do
+                {
+                    await executeFn(currentSkipItems, pageSize);
+                    currentSkipItems += pageSize;
+                }
+                while (currentSkipItems < maxItemCounts);
+            }
+
+            /// <summary>
+            /// Support execute async action paged until no items left or reach to maxExecutionCount.
+            /// </summary>
+            /// <typeparam name="TItem">The item type to be processed</typeparam>
+            /// <param name="getItemsPackageFn">Get a partial/page/package items</param>
+            /// <param name="executeFn">Execute function async. Input is: items.</param>
+            /// <param name="maxExecutionCount">Max execution count. Default is <see cref="int.MaxValue"/></param>
+            /// <returns></returns>
+            public static async Task ExecuteScrollingPagingAsync<TItem>(
+                Func<Task<IEnumerable<TItem>>> getItemsPackageFn,
+                Func<IEnumerable<TItem>, Task> executeFn,
+                int maxExecutionCount = int.MaxValue)
+            {
+                var totalExecutionCount = 0;
+                var currentPackageItems = (await getItemsPackageFn()).ToList();
+
+                while (totalExecutionCount < maxExecutionCount && currentPackageItems.Any())
+                {
+                    await executeFn(currentPackageItems);
+
+                    totalExecutionCount += 1;
+                    if (totalExecutionCount < maxExecutionCount)
+                        currentPackageItems = (await getItemsPackageFn()).ToList();
+                }
+            }
+        }
+    }
+}

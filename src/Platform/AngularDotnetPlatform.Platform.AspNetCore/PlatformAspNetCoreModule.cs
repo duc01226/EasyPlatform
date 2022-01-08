@@ -14,9 +14,9 @@ using Microsoft.Extensions.DependencyInjection;
 using AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling;
 using AngularDotnetPlatform.Platform.AspNetCore.Middleware;
 using AngularDotnetPlatform.Platform.AspNetCore.Middleware.Abstracts;
-using AngularDotnetPlatform.Platform.DependencyInjection;
-using AngularDotnetPlatform.Platform.Extensions;
-using AngularDotnetPlatform.Platform.JsonSerialization;
+using AngularDotnetPlatform.Platform.Common.DependencyInjection;
+using AngularDotnetPlatform.Platform.Common.Extensions;
+using AngularDotnetPlatform.Platform.Common.JsonSerialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
@@ -200,7 +200,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
 
         private void RunApplicationSeedData(IServiceScope scope)
         {
-            var applicationModuleType = GetModuleDependencies()
+            var applicationModuleType = GetModuleTypeDependencies()
                 .Select(p => p.Invoke(Configuration))
                 .FirstOrDefault(p => p.IsAssignableTo(typeof(PlatformApplicationModule)));
 

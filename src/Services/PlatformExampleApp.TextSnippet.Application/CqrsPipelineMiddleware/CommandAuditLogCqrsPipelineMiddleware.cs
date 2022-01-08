@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Cqrs;
-using AngularDotnetPlatform.Platform.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Cqrs;
+using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

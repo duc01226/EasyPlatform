@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
-using AngularDotnetPlatform.Platform.Caching;
+using AngularDotnetPlatform.Platform.Infrastructures.Caching;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Options;

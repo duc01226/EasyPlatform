@@ -1,7 +1,7 @@
 using System;
-using AngularDotnetPlatform.Platform.Application.Infrastructures;
-using AngularDotnetPlatform.Platform.DependencyInjection;
-using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.Infrastructures;
+using AngularDotnetPlatform.Platform.Common.DependencyInjection;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.FirebasePushNotification.GoogleFcm;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

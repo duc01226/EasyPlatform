@@ -2,10 +2,10 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
-using AngularDotnetPlatform.Platform.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.JsonSerialization;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.EventBus;
-using AngularDotnetPlatform.Platform.JsonSerialization;
+using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 

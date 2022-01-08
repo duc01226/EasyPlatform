@@ -1,6 +1,6 @@
+using AngularDotnetPlatform.Platform.Common.Timing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
-using AngularDotnetPlatform.Platform.Timing;
 
 namespace PlatformExampleApp.TextSnippet.Api
 {

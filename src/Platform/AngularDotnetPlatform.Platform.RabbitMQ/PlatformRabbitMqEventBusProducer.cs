@@ -3,14 +3,15 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.EventBus;
-using AngularDotnetPlatform.Platform.Extensions;
-using AngularDotnetPlatform.Platform.JsonSerialization;
+using AngularDotnetPlatform.Platform.Common.Extensions;
+using AngularDotnetPlatform.Platform.Common.JsonSerialization;
+using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using Polly;
 using Polly.Retry;
 using RabbitMQ.Client;
+using RabbitMQ.Client.Exceptions;
 
 namespace AngularDotnetPlatform.Platform.RabbitMQ
 {
@@ -118,6 +119,19 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             try
             {
                 channel.BasicPublish(ExchangeProvider.GetExchangeName(routingKey), routingKey, null, body);
+            }
+            catch (AlreadyClosedException alreadyClosedException)
+            {
+                if (alreadyClosedException.ShutdownReason.ReplyCode == 404)
+                {
+                    Logger.LogWarning($"Tried to send a message with routing key {routingKey} from {GetType().FullName} " +
+                                      $"but exchange is not found. May be there is no consumer registered to consume this message." +
+                                      $"If in source code has consumers for this message, this could be unexpected errors");
+                }
+                else
+                {
+                    throw;
+                }
             }
             finally
             {

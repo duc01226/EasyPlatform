@@ -6,11 +6,11 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
-using AngularDotnetPlatform.Platform.BackgroundHostedService;
-using AngularDotnetPlatform.Platform.EventBus;
-using AngularDotnetPlatform.Platform.JsonSerialization;
-using AngularDotnetPlatform.Platform.Timing;
-using AngularDotnetPlatform.Platform.Utils;
+using AngularDotnetPlatform.Platform.Common.Hosting;
+using AngularDotnetPlatform.Platform.Common.JsonSerialization;
+using AngularDotnetPlatform.Platform.Common.Timing;
+using AngularDotnetPlatform.Platform.Common.Utils;
+using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -172,21 +172,19 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         private void DeclareRabbitMqExchangesConfiguration(IModel channel)
         {
-            // Declare exchange routing key for all defined messages to be produced
-            var allDefinedEventBusMessageRoutingKeys = eventBusManager.AllDefinedEventBusMessageRoutingKeys();
-
             // Get exchange routing key for all consumers
             var allDefinedEventBusConsumerPatternRoutingKeys = eventBusManager
                 .AllDefinedEventBusConsumerAttributes()
                 .Select(p => p.GetConsumerBindingRoutingKey())
                 .Concat(eventBusManager
                     .AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers()
-                    .Select(p => p.ToString()));
+                    .Select(p => p.ToString()))
+                .ToList();
 
             // Declare all exchanges
             DeclareExchangesForRoutingKeys(
                 channel,
-                routingKeys: allDefinedEventBusMessageRoutingKeys.Concat(allDefinedEventBusConsumerPatternRoutingKeys).ToList());
+                routingKeys: allDefinedEventBusConsumerPatternRoutingKeys);
         }
 
         private void DeclareExchangesForRoutingKeys(IModel channel, List<string> routingKeys)

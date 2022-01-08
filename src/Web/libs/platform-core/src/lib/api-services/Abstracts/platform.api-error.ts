@@ -59,7 +59,9 @@ export class PlatformApiServiceErrorInfo implements IPlatformApiServiceErrorInfo
   public isApplicationError(): boolean {
     return (
       this.code == PlatformApiServiceErrorInfoCode.PlatformApplicationException ||
-      this.code == PlatformApiServiceErrorInfoCode.PlatformApplicationValidationException
+      this.code == PlatformApiServiceErrorInfoCode.PlatformApplicationValidationException ||
+      this.code == PlatformApiServiceErrorInfoCode.PlatformDomainException ||
+      this.code == PlatformApiServiceErrorInfoCode.PlatformDomainValidationException
     );
   }
 }
@@ -68,6 +70,8 @@ export enum PlatformApiServiceErrorInfoCode {
   InternalServerException = 'InternalServerException',
   PlatformApplicationException = 'PlatformApplicationException',
   PlatformApplicationValidationException = 'PlatformApplicationValidationException',
+  PlatformDomainException = 'PlatformDomainException',
+  PlatformDomainValidationException = 'PlatformDomainValidationException',
   ConnectionRefused = 'ConnectionRefused',
   TimeoutError = 'TimeoutError',
   Unknown = 'Unknown'

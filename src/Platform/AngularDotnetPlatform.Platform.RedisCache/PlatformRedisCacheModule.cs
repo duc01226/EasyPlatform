@@ -1,7 +1,7 @@
 using System;
 using AngularDotnetPlatform.Platform.Application.Context;
-using AngularDotnetPlatform.Platform.Caching;
-using AngularDotnetPlatform.Platform.DependencyInjection;
+using AngularDotnetPlatform.Platform.Infrastructures.Caching;
+using AngularDotnetPlatform.Platform.Common.DependencyInjection;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,13 +12,11 @@ namespace AngularDotnetPlatform.Platform.RedisCache
     /// <summary>
     /// Add this module to use RedisCache as a PlatformDistributedCache via <see cref="PlatformCacheRepositoryType.Distributed"/>
     /// </summary>
-    public abstract class PlatformRedisCacheModule : PlatformModule
+    public abstract class PlatformRedisCacheModule : PlatformCachingModule
     {
         public PlatformRedisCacheModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
-
-        protected override bool AutoRegisterCaching => true;
 
         protected override IPlatformDistributedCacheRepository DistributedCacheRepositoryProvider(
             IServiceProvider serviceProvider,
@@ -32,9 +30,10 @@ namespace AngularDotnetPlatform.Platform.RedisCache
 
         protected override void InternalRegister(IServiceCollection serviceCollection)
         {
+            base.InternalRegister(serviceCollection);
+
             serviceCollection.AddOptions();
             serviceCollection.Configure<RedisCacheOptions>(InternalRegisterSetupRedisCacheOptions);
-            base.InternalRegister(serviceCollection);
         }
 
         protected abstract void SetupRedisCacheOptions(RedisCacheOptions options);

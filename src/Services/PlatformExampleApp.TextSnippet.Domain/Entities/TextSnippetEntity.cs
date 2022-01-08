@@ -1,7 +1,7 @@
 using System;
+using AngularDotnetPlatform.Platform.Common.Validators;
 using FluentValidation;
 using AngularDotnetPlatform.Platform.Domain.Entities;
-using AngularDotnetPlatform.Platform.Validators;
 
 namespace PlatformExampleApp.TextSnippet.Domain.Entities
 {

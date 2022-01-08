@@ -1,8 +1,8 @@
 using System;
 using AngularDotnetPlatform.Platform.Application.EventBus;
-using AngularDotnetPlatform.Platform.DependencyInjection;
-using AngularDotnetPlatform.Platform.EventBus;
-using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.Common.DependencyInjection;
+using AngularDotnetPlatform.Platform.Common.Extensions;
+using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

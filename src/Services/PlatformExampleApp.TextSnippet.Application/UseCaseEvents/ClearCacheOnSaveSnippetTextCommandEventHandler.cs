@@ -1,15 +1,16 @@
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Caching;
-using AngularDotnetPlatform.Platform.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Application.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Infrastructures.Caching;
+using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Utils;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Utils;
 using PlatformExampleApp.TextSnippet.Application.Caching;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents
 {
-    public class ClearCacheOnSaveSnippetTextCommandEventHandler : PlatformCqrsCommandEventHandler<SaveSnippetTextCommand>
+    public class ClearCacheOnSaveSnippetTextCommandEventHandler : PlatformCqrsApplicationCommandEventHandler<SaveSnippetTextCommand>
     {
         private readonly IPlatformCacheRepositoryProvider cacheRepositoryProvider;
 

@@ -1,5 +1,4 @@
 using System;
-using AngularDotnetPlatform.Platform.BackgroundJob;
 using Hangfire;
 using Microsoft.Extensions.DependencyInjection;
 

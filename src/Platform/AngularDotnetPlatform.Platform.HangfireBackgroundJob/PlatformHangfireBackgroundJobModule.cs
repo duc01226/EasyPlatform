@@ -2,9 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.BackgroundJob;
-using AngularDotnetPlatform.Platform.DependencyInjection;
-using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.Application.BackgroundJob;
+using AngularDotnetPlatform.Platform.Common.DependencyInjection;
+using AngularDotnetPlatform.Platform.Common.Extensions;
+using AngularDotnetPlatform.Platform.Infrastructures.BackgroundJob;
 using Hangfire;
 using Hangfire.Mongo;
 using Microsoft.Extensions.Configuration;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob
 {
-    public abstract class PlatformHangfireBackgroundJobModule : PlatformModule
+    public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJobModule
     {
         public static readonly string DefaultHangfireBackgroundJobAppSettingsName = "HangfireBackgroundJob";
 
@@ -33,7 +34,15 @@ namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob
         {
             serviceCollection.AddHangfire(GlobalConfigurationConfigure);
 
-            serviceCollection.RegisterAllForImplementation<PlatformHangfireBackgroundJobScheduler>(ServiceLifeTime.Singleton);
+            serviceCollection.RegisterAllFromType<IPlatformBackgroundJobExecutor>(
+                ServiceLifeTime.Transient,
+                Assembly,
+                replaceIfExist: true);
+
+            serviceCollection.RegisterAllForImplementation<PlatformHangfireBackgroundJobScheduler>(
+                ServiceLifeTime.Singleton,
+                replaceIfExist: true,
+                replaceStrategy: ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
 
             serviceCollection.Register(
                 typeof(IPlatformBackgroundJobProcessingService),
@@ -51,8 +60,6 @@ namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob
 
         protected override async Task InternalInit(IServiceScope serviceScope)
         {
-            await base.InternalInit(serviceScope);
-
             // Config on init be start to take advantaged that the persistence module has initiated so that db is generated.
             GlobalConfigurationConfigure(GlobalConfiguration.Configuration);
 

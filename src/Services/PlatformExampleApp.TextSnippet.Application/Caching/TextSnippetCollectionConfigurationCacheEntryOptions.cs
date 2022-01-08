@@ -1,4 +1,4 @@
-using AngularDotnetPlatform.Platform.Caching;
+using AngularDotnetPlatform.Platform.Infrastructures.Caching;
 using Microsoft.Extensions.Configuration;
 
 namespace PlatformExampleApp.TextSnippet.Application.Caching

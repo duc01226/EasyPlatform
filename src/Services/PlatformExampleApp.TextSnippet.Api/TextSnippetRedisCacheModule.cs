@@ -1,5 +1,5 @@
 using System;
-using AngularDotnetPlatform.Platform.Caching;
+using AngularDotnetPlatform.Platform.Infrastructures.Caching;
 using AngularDotnetPlatform.Platform.RedisCache;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
@@ -19,6 +19,14 @@ namespace PlatformExampleApp.TextSnippet.Api
         protected override void SetupRedisCacheOptions(RedisCacheOptions options)
         {
             options.Configuration = Configuration["RedisCacheOptions:Connection"];
+        }
+
+        protected override PlatformCacheEntryOptions DefaultPlatformCacheEntryOptions(IServiceProvider serviceProvider)
+        {
+            return new PlatformCacheEntryOptions()
+            {
+                AbsoluteExpirationInSeconds = Configuration.GetSection("Caching:DefaultExpirationInSeconds").Get<int>()
+            };
         }
     }
 }

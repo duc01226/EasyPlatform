@@ -4,9 +4,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
-using AngularDotnetPlatform.Platform.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Application.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.EventBus;
+using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
@@ -22,7 +23,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         public override string MessageType => PlatformCqrsCommandEvent.EventNameValue<TCommand>();
     }
 
-    public abstract class PlatformCqrsCommandEventBusProducer<TCommand> : PlatformCqrsCommandEventHandler<TCommand>, IPlatformCqrsEventBusProducer<PlatformCqrsCommandEvent<TCommand>>
+    public abstract class PlatformCqrsCommandEventBusProducer<TCommand> : PlatformCqrsApplicationCommandEventHandler<TCommand>, IPlatformCqrsEventBusProducer<PlatformCqrsCommandEvent<TCommand>>
         where TCommand : class, IPlatformCqrsCommand, new()
     {
         protected readonly IPlatformApplicationEventBusProducer ApplicationEventBusProducer;

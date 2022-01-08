@@ -1,5 +1,5 @@
 using System;
-using AngularDotnetPlatform.Platform.Timing;
+using AngularDotnetPlatform.Platform.Common.Timing;
 
 namespace AngularDotnetPlatform.Platform.Domain.Entities
 {

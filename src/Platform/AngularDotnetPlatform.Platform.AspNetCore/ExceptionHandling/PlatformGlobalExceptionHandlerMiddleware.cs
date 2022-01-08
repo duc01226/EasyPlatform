@@ -4,8 +4,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Exceptions;
 using AngularDotnetPlatform.Platform.AspNetCore.Middleware.Abstracts;
+using AngularDotnetPlatform.Platform.Common.JsonSerialization;
+using AngularDotnetPlatform.Platform.Common.Validators.Exceptions;
 using AngularDotnetPlatform.Platform.Domain.Exceptions;
-using AngularDotnetPlatform.Platform.JsonSerialization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -46,7 +47,8 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
 
         protected virtual Task OnException(HttpContext context, Exception exception)
         {
-            if (!HandleApplicationError(context, exception, out var errorResponse) &&
+            if (!HandleValidationError(context, exception, out var errorResponse) &&
+                !HandleApplicationError(context, exception, out errorResponse) &&
                 !HandleDomainError(context, exception, out errorResponse))
             {
                 Log.UnexpectedRequestError(Logger, exception, context.TraceIdentifier);
@@ -66,25 +68,31 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
             return context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse, PlatformJsonSerializer.CurrentOptions.Value), context.RequestAborted);
         }
 
-        protected bool HandleApplicationError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
+        private bool HandleValidationError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
         {
-            if (exception is PlatformApplicationValidationException applicationValidationException)
+            if (exception is IPlatformValidationException validationException)
             {
                 errorResponse = new PlatformAspNetMvcErrorResponse(
-                    PlatformAspNetMvcErrorInfo.FromApplicationValidationException(applicationValidationException),
+                    PlatformAspNetMvcErrorInfo.FromValidationException(validationException),
                     HttpStatusCode.BadRequest,
                     context.TraceIdentifier);
-                Log.KnownRequestWarning(Logger, applicationValidationException, context.TraceIdentifier);
+                Log.KnownRequestWarning(Logger, exception, context.TraceIdentifier);
                 return true;
             }
 
+            errorResponse = null;
+            return false;
+        }
+
+        protected bool HandleApplicationError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
+        {
             if (exception is PlatformApplicationException applicationException)
             {
                 errorResponse = new PlatformAspNetMvcErrorResponse(
                     PlatformAspNetMvcErrorInfo.FromApplicationException(applicationException),
                     HttpStatusCode.BadRequest,
                     context.TraceIdentifier);
-                Log.KnownRequestWarning(Logger, applicationException, context.TraceIdentifier);
+                Log.KnownRequestWarning(Logger, exception, context.TraceIdentifier);
                 return true;
             }
 
@@ -94,16 +102,6 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
 
         protected bool HandleDomainError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
         {
-            if (exception is PlatformDomainValidationException domainValidationException)
-            {
-                errorResponse = new PlatformAspNetMvcErrorResponse(
-                    PlatformAspNetMvcErrorInfo.FromDomainValidationException(domainValidationException),
-                    HttpStatusCode.BadRequest,
-                    context.TraceIdentifier);
-                Log.KnownRequestWarning(Logger, domainValidationException, context.TraceIdentifier);
-                return true;
-            }
-
             if (exception is PlatformDomainException domainException)
             {
                 errorResponse = new PlatformAspNetMvcErrorResponse(

@@ -1,5 +1,5 @@
 using AngularDotnetPlatform.Platform.Application.EventBus;
-using AngularDotnetPlatform.Platform.Cqrs;
+using AngularDotnetPlatform.Platform.Common.Cqrs;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
 namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories

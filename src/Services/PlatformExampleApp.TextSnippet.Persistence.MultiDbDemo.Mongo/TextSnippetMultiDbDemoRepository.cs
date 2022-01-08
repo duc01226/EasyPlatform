@@ -1,5 +1,5 @@
 using System;
-using AngularDotnetPlatform.Platform.Cqrs;
+using AngularDotnetPlatform.Platform.Common.Cqrs;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories;

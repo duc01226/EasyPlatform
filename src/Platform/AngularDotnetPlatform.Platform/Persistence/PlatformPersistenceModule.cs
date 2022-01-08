@@ -1,15 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AngularDotnetPlatform.Platform.Application.Domain;
 using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Application.Persistence;
+using AngularDotnetPlatform.Platform.Common.DependencyInjection;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using AngularDotnetPlatform.Platform.DependencyInjection;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.Persistence.DataMigration;
 using AngularDotnetPlatform.Platform.Persistence.Domain;
 using AngularDotnetPlatform.Platform.Persistence.Helpers.Abstract;
@@ -22,8 +21,6 @@ namespace AngularDotnetPlatform.Platform.Persistence
         protected PlatformPersistenceModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
-
-        protected override bool AutoRegisterCaching => false;
 
         protected virtual Func<IServiceProvider, TDbContext> DbContextProvider => null;
 
@@ -67,11 +64,8 @@ namespace AngularDotnetPlatform.Platform.Persistence
 
         private void RegisterUnitOfWorkManager(IServiceCollection serviceCollection)
         {
-            serviceCollection.RegisterAllFromType(typeof(IUnitOfWorkManager), ServiceLifeTime.Scoped, Assembly);
-            if (!serviceCollection.Any(p => p.ServiceType == typeof(IUnitOfWorkManager) && p.ImplementationType != typeof(PlatformPseudoApplicationUnitOfWorkManager)))
-            {
-                serviceCollection.Register<IUnitOfWorkManager, PlatformDefaultPersistenceUnitOfWorkManager>(ServiceLifeTime.Scoped);
-            }
+            serviceCollection.Register<IUnitOfWorkManager, PlatformDefaultPersistenceUnitOfWorkManager>(ServiceLifeTime.Scoped);
+            serviceCollection.RegisterAllFromType(typeof(IUnitOfWorkManager), ServiceLifeTime.Scoped, Assembly, replaceIfExist: true);
         }
 
         private void RegisterRepositories(IServiceCollection serviceCollection)

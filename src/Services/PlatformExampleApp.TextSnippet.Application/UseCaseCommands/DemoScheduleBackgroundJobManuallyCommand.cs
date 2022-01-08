@@ -2,13 +2,13 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Application.BackgroundJob;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
-using AngularDotnetPlatform.Platform.BackgroundJob;
-using AngularDotnetPlatform.Platform.Cqrs;
-using AngularDotnetPlatform.Platform.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Application.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Cqrs;
+using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Timing;
-using AngularDotnetPlatform.Platform.Validators;
+using AngularDotnetPlatform.Platform.Infrastructures.BackgroundJob;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.BackgroundJob;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
@@ -32,7 +32,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
     }
 
     public class DemoScheduleBackgroundJobManuallyCommandHandler :
-        PlatformCqrsCommandHandler<DemoScheduleBackgroundJobManuallyCommand, DemoScheduleBackgroundJobManuallyCommandResult>
+        PlatformCqrsApplicationCommandHandler<DemoScheduleBackgroundJobManuallyCommand, DemoScheduleBackgroundJobManuallyCommandResult>
     {
         private readonly IPlatformBackgroundJobScheduler backgroundJobScheduler;
         // Demo use demoDomainService

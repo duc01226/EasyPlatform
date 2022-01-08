@@ -5,11 +5,11 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
-using AngularDotnetPlatform.Platform.BackgroundJob;
-using AngularDotnetPlatform.Platform.Cqrs;
-using AngularDotnetPlatform.Platform.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Application.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Cqrs;
+using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.EventBus;
+using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 using PlatformExampleApp.TextSnippet.Domain.DomainServices;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
@@ -25,7 +25,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
     }
 
     public class DemoSendFreeFormatEventBusMessageCommandHandler :
-        PlatformCqrsCommandHandler<DemoSendFreeFormatEventBusMessageCommand, DemoSendFreeFormatEventBusMessageCommandResult>
+        PlatformCqrsApplicationCommandHandler<DemoSendFreeFormatEventBusMessageCommand, DemoSendFreeFormatEventBusMessageCommandResult>
     {
         private readonly IPlatformEventBusProducer eventBusProducer;
 

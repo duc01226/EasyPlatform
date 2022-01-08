@@ -4,13 +4,13 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Common.Cqrs;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using Microsoft.EntityFrameworkCore;
-using AngularDotnetPlatform.Platform.Cqrs;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Extensions;
 
 namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
 {

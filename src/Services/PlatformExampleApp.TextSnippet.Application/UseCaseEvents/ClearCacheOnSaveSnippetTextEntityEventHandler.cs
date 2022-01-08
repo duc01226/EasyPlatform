@@ -1,10 +1,10 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Caching;
+using AngularDotnetPlatform.Platform.Infrastructures.Caching;
+using AngularDotnetPlatform.Platform.Common.Utils;
 using AngularDotnetPlatform.Platform.Domain.Events;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Utils;
 using PlatformExampleApp.TextSnippet.Application.Caching;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 

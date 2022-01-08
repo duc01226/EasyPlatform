@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.EventBus;
+using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 

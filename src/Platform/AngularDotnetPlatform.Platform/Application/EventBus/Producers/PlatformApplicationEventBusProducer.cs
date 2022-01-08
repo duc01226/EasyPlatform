@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
-using AngularDotnetPlatform.Platform.EventBus;
+using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 
 namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
 {
@@ -124,7 +124,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                 .New<TMessage>(
                     trackId,
                     payload: messagePayload,
-                    PlatformEventBusMessageIdentity.ByUserContext(UserContextAccessor.Current),
+                    identity: BuildPlatformEventBusMessageIdentity(),
                     producerContext: ApplicationSettingContext.ApplicationName,
                     messageAction: messageAction);
 
@@ -142,7 +142,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                 .New<TMessage>(
                     trackId,
                     payload: messagePayload,
-                    PlatformEventBusMessageIdentity.ByUserContext(UserContextAccessor.Current),
+                    identity: BuildPlatformEventBusMessageIdentity(),
                     producerContext: ApplicationSettingContext.ApplicationName,
                     messageAction: messageAction);
 
@@ -159,7 +159,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             return await EventBusProducer.SendAsync(
                 trackId,
                 messagePayload,
-                identity: PlatformEventBusMessageIdentity.ByUserContext(UserContextAccessor.Current),
+                identity: BuildPlatformEventBusMessageIdentity(),
                 routingKey: PlatformEventBusMessageRoutingKey.NewEnsureValid(
                     messageGroup,
                     producerContext: ApplicationSettingContext.ApplicationName,
@@ -216,6 +216,16 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         public Task<TMessage> SendAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default) where TMessage : class, new()
         {
             return EventBusProducer.SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build<TMessage>(), cancellationToken);
+        }
+
+        protected PlatformEventBusMessageIdentity BuildPlatformEventBusMessageIdentity()
+        {
+            return new PlatformEventBusMessageIdentity()
+            {
+                UserId = UserContextAccessor.Current.GetUserId(),
+                RequestId = UserContextAccessor.Current.GetRequestId(),
+                UserName = UserContextAccessor.Current.GetUserName()
+            };
         }
     }
 }

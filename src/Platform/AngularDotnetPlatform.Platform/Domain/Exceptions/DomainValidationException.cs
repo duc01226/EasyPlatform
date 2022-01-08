@@ -1,14 +1,16 @@
+using AngularDotnetPlatform.Platform.Common.Validators;
+using AngularDotnetPlatform.Platform.Common.Validators.Exceptions;
 using FluentValidation.Results;
 
 namespace AngularDotnetPlatform.Platform.Domain.Exceptions
 {
-    public class PlatformDomainValidationException : PlatformDomainException
+    public class PlatformDomainValidationException : PlatformDomainException, IPlatformValidationException
     {
-        public PlatformDomainValidationException(ValidationResult validationResult) : base(validationResult.ToString())
+        public PlatformDomainValidationException(PlatformValidationResult validationResult) : base(validationResult.ToString())
         {
             ValidationResult = validationResult;
         }
 
-        public ValidationResult ValidationResult { get; set; }
+        public PlatformValidationResult ValidationResult { get; set; }
     }
 }

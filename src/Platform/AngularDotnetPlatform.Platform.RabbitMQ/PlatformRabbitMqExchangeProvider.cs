@@ -1,6 +1,6 @@
 using System;
-using AngularDotnetPlatform.Platform.EventBus;
-using AngularDotnetPlatform.Platform.Validators;
+using AngularDotnetPlatform.Platform.Common.Validators;
+using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 
 namespace AngularDotnetPlatform.Platform.RabbitMQ
 {

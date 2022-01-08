@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using AngularDotnetPlatform.Platform.Application.Exceptions;
+using AngularDotnetPlatform.Platform.Common.Validators.Exceptions;
 using AngularDotnetPlatform.Platform.Domain.Exceptions;
 
 namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
@@ -25,7 +26,8 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
 
         public void OnException(ExceptionContext context)
         {
-            if (!HandleApplicationError(context, out var errorResponse) &&
+            if (!HandleValidationError(context, out var errorResponse) &&
+                !HandleApplicationError(context, out errorResponse) &&
                 !HandleDomainError(context, out errorResponse))
             {
                 Log.UnexpectedRequestError(Logger, context.Exception, context.HttpContext.TraceIdentifier);
@@ -45,25 +47,31 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
             context.ExceptionHandled = true;
         }
 
-        private bool HandleApplicationError(ExceptionContext context, out PlatformAspNetMvcErrorResponse errorResponse)
+        private bool HandleValidationError(ExceptionContext context, out PlatformAspNetMvcErrorResponse errorResponse)
         {
-            if (context.Exception is PlatformApplicationValidationException applicationValidationException)
+            if (context.Exception is IPlatformValidationException validationException)
             {
                 errorResponse = new PlatformAspNetMvcErrorResponse(
-                    PlatformAspNetMvcErrorInfo.FromApplicationValidationException(applicationValidationException),
+                    PlatformAspNetMvcErrorInfo.FromValidationException(validationException),
                     HttpStatusCode.BadRequest,
                     context.HttpContext.TraceIdentifier);
-                Log.KnownRequestWarning(Logger, applicationValidationException, context.HttpContext.TraceIdentifier);
+                Log.KnownRequestWarning(Logger, context.Exception, context.HttpContext.TraceIdentifier);
                 return true;
             }
 
+            errorResponse = null;
+            return false;
+        }
+
+        private bool HandleApplicationError(ExceptionContext context, out PlatformAspNetMvcErrorResponse errorResponse)
+        {
             if (context.Exception is PlatformApplicationException applicationException)
             {
                 errorResponse = new PlatformAspNetMvcErrorResponse(
                     PlatformAspNetMvcErrorInfo.FromApplicationException(applicationException),
                     HttpStatusCode.BadRequest,
                     context.HttpContext.TraceIdentifier);
-                Log.KnownRequestWarning(Logger, applicationException, context.HttpContext.TraceIdentifier);
+                Log.KnownRequestWarning(Logger, context.Exception, context.HttpContext.TraceIdentifier);
                 return true;
             }
 
@@ -73,16 +81,6 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
 
         private bool HandleDomainError(ExceptionContext context, out PlatformAspNetMvcErrorResponse errorResponse)
         {
-            if (context.Exception is PlatformDomainValidationException domainValidationException)
-            {
-                errorResponse = new PlatformAspNetMvcErrorResponse(
-                    PlatformAspNetMvcErrorInfo.FromDomainValidationException(domainValidationException),
-                    HttpStatusCode.BadRequest,
-                    context.HttpContext.TraceIdentifier);
-                Log.KnownRequestWarning(Logger, domainValidationException, context.HttpContext.TraceIdentifier);
-                return true;
-            }
-
             if (context.Exception is PlatformDomainException domainException)
             {
                 errorResponse = new PlatformAspNetMvcErrorResponse(

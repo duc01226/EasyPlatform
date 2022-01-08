@@ -1,20 +1,21 @@
 using System.Collections.Generic;
 using System.Linq;
 using AngularDotnetPlatform.Platform.Application.Exceptions;
+using AngularDotnetPlatform.Platform.Common.Validators.Exceptions;
 using AngularDotnetPlatform.Platform.Domain.Exceptions;
 
 namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
 {
     public class PlatformAspNetMvcErrorInfo
     {
-        public static PlatformAspNetMvcErrorInfo FromApplicationValidationException(
-            PlatformApplicationValidationException applicationValidationException)
+        public static PlatformAspNetMvcErrorInfo FromValidationException(
+            IPlatformValidationException validationException)
         {
             return new PlatformAspNetMvcErrorInfo
             {
-                Code = nameof(PlatformApplicationValidationException),
-                Message = applicationValidationException.Message,
-                Details = applicationValidationException.ValidationResult.Errors
+                Code = validationException.GetType().Name,
+                Message = validationException.Message,
+                Details = validationException.ValidationResult.Errors
                     .Select(p => new PlatformAspNetMvcErrorInfo
                     {
                         Code = p.ErrorCode,
@@ -31,27 +32,8 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
         {
             return new PlatformAspNetMvcErrorInfo()
             {
-                Code = nameof(PlatformApplicationException),
+                Code = applicationException.GetType().Name,
                 Message = applicationException.Message
-            };
-        }
-
-        public static PlatformAspNetMvcErrorInfo FromDomainValidationException(
-            PlatformDomainValidationException applicationValidationException)
-        {
-            return new PlatformAspNetMvcErrorInfo
-            {
-                Code = nameof(PlatformApplicationValidationException),
-                Message = applicationValidationException.Message,
-                Details = applicationValidationException.ValidationResult.Errors
-                    .Select(p => new PlatformAspNetMvcErrorInfo
-                    {
-                        Code = p.ErrorCode,
-                        Message = p.ErrorMessage,
-                        Target = p.PropertyName,
-                        FormattedMessagePlaceholderValues = p.FormattedMessagePlaceholderValues
-                    })
-                    .ToList()
             };
         }
 
@@ -60,7 +42,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
         {
             return new PlatformAspNetMvcErrorInfo()
             {
-                Code = nameof(PlatformApplicationException),
+                Code = applicationException.GetType().Name,
                 Message = applicationException.Message
             };
         }

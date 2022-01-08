@@ -1,11 +1,11 @@
 using AngularDotnetPlatform.Platform.AspNetCore;
+using AngularDotnetPlatform.Platform.Common.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using AngularDotnetPlatform.Platform.DependencyInjection;
 
 namespace PlatformExampleApp.TextSnippet.Api
 {

@@ -1,4 +1,5 @@
-using AngularDotnetPlatform.Platform.Application.Infrastructures.Abstract;
+using AngularDotnetPlatform.Platform.Infrastructures;
+using AngularDotnetPlatform.Platform.Infrastructures.Abstract;
 using Microsoft.Extensions.Logging;
 
 namespace PlatformExampleApp.TextSnippet.Application.Infrastructures
@@ -6,7 +7,7 @@ namespace PlatformExampleApp.TextSnippet.Application.Infrastructures
     /// <summary>
     /// This for demo the best practice example for implementing an infrastructure services.
     /// We could implement the implementation right in the application module. But we recommend that it should be
-    /// a separated project infrastructure module from <see cref="AngularDotnetPlatform.Platform.Application.PlatformInfrastructureServicesModule"/>
+    /// a separated project infrastructure module from <see cref="PlatformInfrastructureModule"/>
     /// </summary>
     public interface ISendMailService : IPlatformInfrastructureService
     {

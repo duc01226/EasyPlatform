@@ -1,5 +1,6 @@
 using System;
-using AngularDotnetPlatform.Platform.Cqrs.Events;
+using AngularDotnetPlatform.Platform.Application.Cqrs.Events;
+using AngularDotnetPlatform.Platform.Common.Cqrs.Events;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 
 namespace AngularDotnetPlatform.Platform.Domain.Events
@@ -15,7 +16,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Events
 
     /// <summary>
     /// This is class of events which is dispatched when an entity is created/updated/deleted.
-    /// Implement and <see cref="PlatformCqrsEventHandler{TEvent}"/> to handle any events.
+    /// Implement and <see cref="PlatformCqrsApplicationEventHandler{TEvent}"/> to handle any events.
     /// </summary>
     public class PlatformCqrsEntityEvent<TEntity, TPrimaryKey> : PlatformCqrsEntityEvent
         where TEntity : class, IEntity<TPrimaryKey>, new()

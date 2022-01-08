@@ -1,6 +1,7 @@
 using System;
+using AngularDotnetPlatform.Platform.Common.Dtos;
+using AngularDotnetPlatform.Platform.Common.Validators;
 using AngularDotnetPlatform.Platform.Domain.Entities;
-using AngularDotnetPlatform.Platform.Validators;
 
 namespace AngularDotnetPlatform.Platform.Application.Dtos
 {

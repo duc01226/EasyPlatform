@@ -5,9 +5,10 @@ using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
-using AngularDotnetPlatform.Platform.Cqrs.Queries;
+using AngularDotnetPlatform.Platform.Application.Cqrs.Queries;
+using AngularDotnetPlatform.Platform.Common.Cqrs.Queries;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Extensions;
 using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
 using PlatformExampleApp.TextSnippet.Application.Helpers;
@@ -31,7 +32,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseQueries
         }
     }
 
-    public class SearchSnippetTextQueryHandler : PlatformCqrsQueryHandler<SearchSnippetTextQuery, SearchSnippetTextQueryResult>
+    public class SearchSnippetTextQueryHandler : PlatformCqrsApplicationQueryHandler<SearchSnippetTextQuery, SearchSnippetTextQueryResult>
     {
         // If get default repository/unitOfWork will get from the latest registered module. See TextSnippetApplicationModule.
         private readonly ITextSnippetRepository<TextSnippetEntity> repository;

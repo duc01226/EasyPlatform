@@ -9,9 +9,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application;
 using AngularDotnetPlatform.Platform.Application.Exceptions;
-using AngularDotnetPlatform.Platform.Application.Infrastructures.PushNotification;
+using AngularDotnetPlatform.Platform.Infrastructures.PushNotification;
 using AngularDotnetPlatform.Platform.FirebasePushNotification.GoogleFcm;
-using AngularDotnetPlatform.Platform.JsonSerialization;
 using Newtonsoft.Json.Linq;
 
 namespace AngularDotnetPlatform.Platform.FirebasePushNotification

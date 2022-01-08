@@ -33,7 +33,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
             return new List<Type>() { typeof(TextSnippetMultiDbDemoRootRepository<MultiDbDemoEntity>) };
         }
 
-        protected override List<Func<IConfiguration, Type>> GetModuleDependencies()
+        protected override List<Func<IConfiguration, Type>> GetModuleTypeDependencies()
         {
             return new List<Func<IConfiguration, Type>>()
             {

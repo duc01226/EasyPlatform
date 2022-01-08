@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
-using AngularDotnetPlatform.Platform.DependencyInjection;
+using AngularDotnetPlatform.Platform.Common.DependencyInjection;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Domain.Services;
-using AngularDotnetPlatform.Platform.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,13 +14,10 @@ namespace AngularDotnetPlatform.Platform.Domain
         {
         }
 
-        protected override bool AutoRegisterCaching => false;
-
         protected override void InternalRegister(IServiceCollection serviceCollection)
         {
             base.InternalRegister(serviceCollection);
             serviceCollection.RegisterAllFromType<IPlatformDomainService>(ServiceLifeTime.Transient, Assembly);
-            serviceCollection.Register(typeof(IPlatformDomainAssemblyProvider), p => new PlatformDomainAssemblyProvider(Assembly), ServiceLifeTime.Transient);
         }
     }
 }

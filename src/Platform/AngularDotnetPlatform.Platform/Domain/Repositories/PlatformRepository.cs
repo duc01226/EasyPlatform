@@ -4,9 +4,9 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Common.Validators;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Domain.Exceptions;
-using FluentValidation.Results;
 
 namespace AngularDotnetPlatform.Platform.Domain.Repositories
 {
@@ -54,8 +54,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
             if (entity is IValidatableEntity<TEntity, TPrimaryKey> validatableEntity)
             {
                 EnsureValid(validatableEntity.Validate());
-                await EnsureValid(validatableEntity.CheckUniquenessValidator()
-                    ?.Validate(predicate => AnyAsync(predicate, cancellationToken)));
+                await EnsureValid(validatableEntity.CheckUniquenessValidator()?.Validate(predicate => AnyAsync(predicate, cancellationToken)));
             }
         }
 
@@ -76,13 +75,13 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
             }
         }
 
-        protected void EnsureValid(ValidationResult validationResult)
+        protected void EnsureValid(PlatformValidationResult validationResult)
         {
             if (validationResult != null && !validationResult.IsValid)
                 throw new PlatformDomainValidationException(validationResult);
         }
 
-        protected void EnsureValid(List<Func<ValidationResult>> validationResultFns)
+        protected void EnsureValid(List<Func<PlatformValidationResult>> validationResultFns)
         {
             foreach (var validationResultFn in validationResultFns)
             {
@@ -92,7 +91,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
             }
         }
 
-        protected async Task EnsureValid(Task<ValidationResult> validationResultTask)
+        protected async Task EnsureValid(Task<PlatformValidationResult> validationResultTask)
         {
             if (validationResultTask == null)
                 return;
@@ -102,7 +101,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
                 throw new PlatformDomainValidationException(validationResult);
         }
 
-        protected async Task EnsureValid(List<Func<Task<ValidationResult>>> validationResultAsyncFns)
+        protected async Task EnsureValid(List<Func<Task<PlatformValidationResult>>> validationResultAsyncFns)
         {
             foreach (var validationResultAsyncFn in validationResultAsyncFns)
             {
@@ -118,10 +117,11 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
             var entitiesValidateUniquenessFns = entities
                 .Where(entity => entity is IValidatableEntity<TEntity, TPrimaryKey> validatableEntity && validatableEntity.CheckUniquenessValidator() != null)
                 .Select(p => (IValidatableEntity<TEntity, TPrimaryKey>)p)
-                .Select<IValidatableEntity<TEntity, TPrimaryKey>, Func<Task<ValidationResult>>>(entity => () =>
-                    entity.CheckUniquenessValidator().Validate(async predicate =>
-                        !entities.Any(entity.CheckUniquenessValidator().FindOtherDuplicatedItemExpr.Compile()) &&
-                        await AnyAsync(predicate, cancellationToken)))
+                .Select<IValidatableEntity<TEntity, TPrimaryKey>, Func<Task<PlatformValidationResult>>>(entity =>
+                    () => entity.CheckUniquenessValidator().Validate(
+                        async predicate =>
+                            !entities.Any(entity.CheckUniquenessValidator().FindOtherDuplicatedItemExpr.Compile()) &&
+                            await AnyAsync(predicate, cancellationToken)))
                 .ToList();
             await EnsureValid(entitiesValidateUniquenessFns);
         }

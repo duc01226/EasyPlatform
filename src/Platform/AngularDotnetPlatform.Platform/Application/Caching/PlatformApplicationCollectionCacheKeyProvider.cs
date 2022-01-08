@@ -1,5 +1,5 @@
 using AngularDotnetPlatform.Platform.Application.Context;
-using AngularDotnetPlatform.Platform.Caching;
+using AngularDotnetPlatform.Platform.Infrastructures.Caching;
 
 namespace AngularDotnetPlatform.Platform.Application.Caching
 {

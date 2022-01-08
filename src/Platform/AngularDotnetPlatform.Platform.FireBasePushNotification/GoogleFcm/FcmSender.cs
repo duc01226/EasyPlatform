@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.JsonSerialization;
+using AngularDotnetPlatform.Platform.Common.JsonSerialization;
 using Newtonsoft.Json.Linq;
 
 namespace AngularDotnetPlatform.Platform.FirebasePushNotification.GoogleFcm

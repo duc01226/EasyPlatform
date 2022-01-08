@@ -8,9 +8,8 @@ using System.Text.Json;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper;
 using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
-using AngularDotnetPlatform.Platform.Extensions;
-using AngularDotnetPlatform.Platform.JsonSerialization;
-using AngularDotnetPlatform.Platform.Utils;
+using AngularDotnetPlatform.Platform.Common.JsonSerialization;
+using AngularDotnetPlatform.Platform.Common.Utils;
 using Microsoft.AspNetCore.Http;
 
 namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext

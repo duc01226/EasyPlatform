@@ -1,9 +1,8 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.BackgroundJob;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.JsonSerialization;
+using AngularDotnetPlatform.Platform.Infrastructures.BackgroundJob;
 using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.Application.BackgroundJob

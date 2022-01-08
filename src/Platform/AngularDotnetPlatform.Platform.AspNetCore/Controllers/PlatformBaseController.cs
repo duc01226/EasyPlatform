@@ -1,6 +1,6 @@
-using AngularDotnetPlatform.Platform.Caching;
+using AngularDotnetPlatform.Platform.Infrastructures.Caching;
+using AngularDotnetPlatform.Platform.Common.Cqrs;
 using Microsoft.AspNetCore.Mvc;
-using AngularDotnetPlatform.Platform.Cqrs;
 using Microsoft.Extensions.Configuration;
 
 namespace AngularDotnetPlatform.Platform.AspNetCore.Controllers

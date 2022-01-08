@@ -10,13 +10,14 @@ using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
 using AngularDotnetPlatform.Platform.Application.Helpers;
-using AngularDotnetPlatform.Platform.Application.Infrastructures.Abstract;
+using AngularDotnetPlatform.Platform.Infrastructures.Abstract;
+using AngularDotnetPlatform.Platform.Infrastructures.Caching;
 using AngularDotnetPlatform.Platform.Application.Persistence;
-using AngularDotnetPlatform.Platform.Caching;
-using AngularDotnetPlatform.Platform.DependencyInjection;
+using AngularDotnetPlatform.Platform.Common.DependencyInjection;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.EventBus;
-using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.Infrastructures.BackgroundJob;
+using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -36,9 +37,12 @@ namespace AngularDotnetPlatform.Platform.Application
             Logger = serviceProvider?.GetService<ILoggerFactory>().CreateLogger(GetType());
         }
 
-        protected override bool AutoRegisterCaching => true;
-
-        protected override bool AutoRegisterBackgroundJob => true;
+        /// <summary>
+        /// Override this to true to auto register default caching module, which include default memory caching repository.
+        /// <br></br>
+        /// Don't need to auto register if you have register a caching module manually
+        /// </summary>
+        protected virtual bool AutoRegisterDefaultCaching => false;
 
         public async Task SeedData(IServiceScope serviceScope)
         {
@@ -113,8 +117,12 @@ namespace AngularDotnetPlatform.Platform.Application
             RegisterInboxEventBusMessageCleanerHostedService(serviceCollection);
             RegisterPseudoApplicationUnitOfWork(serviceCollection);
             serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType<IPlatformInfrastructureService>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllServicesFromType<IPlatformDbContext>(ServiceLifeTime.Scoped, Assembly);
+            serviceCollection.RegisterAllFromType<IPlatformInfrastructureService>(ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType<IPlatformBackgroundJobExecutor>(ServiceLifeTime.Transient, Assembly);
+
+            if (AutoRegisterDefaultCaching)
+                RegisterRuntimeModuleDependencies<PlatformCachingModule>(serviceCollection);
         }
 
         protected override async Task InternalInit(IServiceScope serviceScope)

@@ -1,9 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.BackgroundJob;
-using AngularDotnetPlatform.Platform.BackgroundJob;
+using AngularDotnetPlatform.Platform.Common.Timing;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Timing;
+using AngularDotnetPlatform.Platform.Infrastructures.BackgroundJob;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;

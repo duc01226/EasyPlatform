@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using AngularDotnetPlatform.Platform.Extensions;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using Polly;

@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.BackgroundJob;
+using AngularDotnetPlatform.Platform.Application.BackgroundJob;
+using AngularDotnetPlatform.Platform.Infrastructures.BackgroundJob;
 using Hangfire;
 
 namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob

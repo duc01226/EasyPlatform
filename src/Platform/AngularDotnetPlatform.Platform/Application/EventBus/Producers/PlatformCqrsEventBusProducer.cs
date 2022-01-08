@@ -1,4 +1,4 @@
-using AngularDotnetPlatform.Platform.Cqrs.Events;
+using AngularDotnetPlatform.Platform.Common.Cqrs.Events;
 using MediatR;
 
 namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers

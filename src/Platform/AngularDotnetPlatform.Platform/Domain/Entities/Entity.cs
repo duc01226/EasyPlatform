@@ -1,6 +1,6 @@
 using System.Text.Json;
+using AngularDotnetPlatform.Platform.Common.Validators;
 using FluentValidation.Results;
-using AngularDotnetPlatform.Platform.Validators;
 
 namespace AngularDotnetPlatform.Platform.Domain.Entities
 {

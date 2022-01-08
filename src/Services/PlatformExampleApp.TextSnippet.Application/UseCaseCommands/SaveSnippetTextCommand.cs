@@ -3,12 +3,12 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
-using AngularDotnetPlatform.Platform.BackgroundJob;
-using AngularDotnetPlatform.Platform.Cqrs;
-using AngularDotnetPlatform.Platform.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Application.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Cqrs;
+using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Timing;
+using AngularDotnetPlatform.Platform.Common.Validators;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Timing;
-using AngularDotnetPlatform.Platform.Validators;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
 using PlatformExampleApp.TextSnippet.Application.Infrastructures;
@@ -34,7 +34,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         public TextSnippetEntityDto SavedData { get; set; }
     }
 
-    public class SaveSnippetTextCommandHandler : PlatformCqrsCommandHandler<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
+    public class SaveSnippetTextCommandHandler : PlatformCqrsApplicationCommandHandler<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
     {
         private readonly ITextSnippetRootRepository<TextSnippetEntity> textSnippetEntityRepository;
         private readonly ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;

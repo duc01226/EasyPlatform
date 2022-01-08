@@ -1,12 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using AngularDotnetPlatform.Platform.Application;
 using AngularDotnetPlatform.Platform.Application.Context;
-using AngularDotnetPlatform.Platform.JsonSerialization;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.CqrsPipelineMiddleware;
 using PlatformExampleApp.TextSnippet.Domain;
 
@@ -20,7 +16,14 @@ namespace PlatformExampleApp.TextSnippet.Application
         {
         }
 
-        protected override List<Func<IConfiguration, Type>> GetModuleDependencies()
+        /// <summary>
+        /// Override this to true to auto register default caching module, which include default memory caching repository.
+        /// <br></br>
+        /// Don't need to auto register if you have register a caching module manually
+        /// </summary>
+        protected override bool AutoRegisterDefaultCaching => false;
+
+        protected override List<Func<IConfiguration, Type>> GetModuleTypeDependencies()
         {
             var result = new List<Func<IConfiguration, Type>>
             {

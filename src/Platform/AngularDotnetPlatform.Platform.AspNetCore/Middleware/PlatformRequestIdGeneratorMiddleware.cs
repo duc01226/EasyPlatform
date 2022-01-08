@@ -3,8 +3,9 @@ using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.AspNetCore.Constants;
 using AngularDotnetPlatform.Platform.AspNetCore.Middleware.Abstracts;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using Microsoft.AspNetCore.Http;
-using AngularDotnetPlatform.Platform.Extensions;
+
 namespace AngularDotnetPlatform.Platform.AspNetCore.Middleware
 {
     /// <summary>

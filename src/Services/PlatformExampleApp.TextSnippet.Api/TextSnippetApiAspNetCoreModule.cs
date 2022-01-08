@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
+using AngularDotnetPlatform.Platform.Infrastructures.Caching;
 using Microsoft.Extensions.Configuration;
 using AngularDotnetPlatform.Platform.AspNetCore;
-using AngularDotnetPlatform.Platform.Caching;
-using AngularDotnetPlatform.Platform.JsonSerialization;
+using AngularDotnetPlatform.Platform.Common.JsonSerialization;
 using PlatformExampleApp.TextSnippet.Api.AwsEmailModule;
 using PlatformExampleApp.TextSnippet.Api.Context.UserContext;
 using PlatformExampleApp.TextSnippet.Application;
@@ -23,7 +23,7 @@ namespace PlatformExampleApp.TextSnippet.Api
         {
         }
 
-        protected override List<Func<IConfiguration, Type>> GetModuleDependencies()
+        protected override List<Func<IConfiguration, Type>> GetModuleTypeDependencies()
         {
             var result = new List<Func<IConfiguration, Type>>
             {
@@ -55,14 +55,6 @@ namespace PlatformExampleApp.TextSnippet.Api
         protected override Type UserContextKeyToClaimTypeMapperType()
         {
             return typeof(TextSnippetApplicationUserContextKeyToJwtClaimTypeMapper);
-        }
-
-        protected override PlatformCacheEntryOptions DefaultPlatformCacheEntryOptions(IServiceProvider serviceProvider)
-        {
-            return new PlatformCacheEntryOptions()
-            {
-                AbsoluteExpirationInSeconds = Configuration.GetSection("Caching:DefaultExpirationInSeconds").Get<int>()
-            };
         }
 
         protected override JsonSerializerOptions JsonSerializerCurrentOptions()
