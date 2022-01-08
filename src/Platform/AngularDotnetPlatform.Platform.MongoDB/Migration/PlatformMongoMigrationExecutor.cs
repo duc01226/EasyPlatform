@@ -10,7 +10,12 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Migration
         where TDbContext : IPlatformMongoDbContext<TDbContext>
     {
         public abstract string Name { get; }
-        public virtual int Order => 0;
+        public virtual int? Order => 0;
+
+        /// <summary>
+        /// The date that migration is expired and will never be executed
+        /// </summary>
+        public virtual DateTime? ExpiredDate { get; }
 
         public abstract void Execute(TDbContext dbContext);
 
@@ -21,7 +26,12 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Migration
         /// </summary>
         public string GetOrderByValue()
         {
-            return $"{Order:D5}_{Name}";
+            return Order.HasValue ? $"{Order:D5}_{Name}" : Name;
+        }
+
+        public bool IsExpired()
+        {
+            return ExpiredDate.HasValue && ExpiredDate < DateTime.UtcNow;
         }
     }
 }

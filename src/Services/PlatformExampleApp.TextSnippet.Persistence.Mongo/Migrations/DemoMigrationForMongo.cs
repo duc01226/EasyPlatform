@@ -1,0 +1,24 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.MongoDB.Migration;
+
+namespace PlatformExampleApp.TextSnippet.Persistence.Mongo.Migrations
+{
+    internal class DemoMigrationForMongo : PlatformMongoMigrationExecutor<TextSnippetDbContext>
+    {
+        public override string Name => "20220901000000_DemoMigrationForMongo";
+
+        /// <summary>
+        /// Demo set the expired date if the migration should be execute one time. After deploying it could be deleted.
+        /// </summary>
+        public override DateTime? ExpiredDate => new DateTime(2022, 1, 1);
+
+        public override void Execute(TextSnippetDbContext dbContext)
+        {
+            dbContext.EnsureIndexesAsync(true).Wait();
+        }
+    }
+}

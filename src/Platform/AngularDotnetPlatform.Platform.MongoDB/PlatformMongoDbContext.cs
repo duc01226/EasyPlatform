@@ -295,6 +295,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             var executedMigrationNames = MigrationHistoryCollection.AsQueryable().Select(p => p.Name).ToHashSet();
 
             var notExecutedMigrations = ScanAllMigrationExecutors()
+                .Where(p => !p.IsExpired())
                 .OrderBy(x => x.GetOrderByValue())
                 .ToList()
                 .FindAll(me => !executedMigrationNames.Contains(me.Name));

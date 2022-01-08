@@ -42,7 +42,7 @@ namespace AngularDotnetPlatform.Platform.Application
         /// <br></br>
         /// Don't need to auto register if you have register a caching module manually
         /// </summary>
-        protected virtual bool AutoRegisterDefaultCaching => false;
+        protected virtual bool AutoRegisterDefaultCaching => true;
 
         public async Task SeedData(IServiceScope serviceScope)
         {
