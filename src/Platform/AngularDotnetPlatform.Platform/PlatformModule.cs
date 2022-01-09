@@ -37,8 +37,6 @@ namespace AngularDotnetPlatform.Platform
 
         public bool Initiated { get; protected set; }
 
-        protected List<PlatformModule> DependedOnMeModules { get; set; } = new List<PlatformModule>();
-
         protected List<Type> AdditionalModuleTypeDependencies { get; set; } = new List<Type>();
 
         /// <summary>
@@ -46,19 +44,10 @@ namespace AngularDotnetPlatform.Platform
         /// </summary>
         public virtual void OnNewPlatformModuleRegistered(IServiceCollection serviceCollection, PlatformModule newModule) { }
 
-        public void AddDependedOnMeModule(
-            PlatformModule dependedOnMeModule)
-        {
-            if (DependedOnMeModules.Contains(dependedOnMeModule))
-                return;
-
-            DependedOnMeModules.Add(dependedOnMeModule);
-        }
-
         public void RegisterRuntimeModuleDependencies<TModule>(
             IServiceCollection serviceCollection) where TModule : PlatformModule
         {
-            serviceCollection.RegisterModule<TModule>(Configuration, dependedOnMeModule: this);
+            serviceCollection.RegisterModule<TModule>();
 
             if (!AdditionalModuleTypeDependencies.Contains(typeof(TModule)))
                 AdditionalModuleTypeDependencies.Add(typeof(TModule));
@@ -215,7 +204,7 @@ namespace AngularDotnetPlatform.Platform
                 .Select(moduleTypeProvider => moduleTypeProvider(Configuration))
                 .Concat(AdditionalModuleTypeDependencies)
                 .ToList()
-                .ForEach(moduleType => serviceCollection.RegisterModule(moduleType, Configuration, dependedOnMeModule: this));
+                .ForEach(moduleType => serviceCollection.RegisterModule(moduleType));
         }
     }
 }

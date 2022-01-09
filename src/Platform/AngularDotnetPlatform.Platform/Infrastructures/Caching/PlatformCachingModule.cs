@@ -62,7 +62,6 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.Caching
             RegisterCacheItemsByScanAssemblies(
                 serviceCollection,
                 assemblies: new List<Assembly>() { Assembly }
-                    .Concat(DependedOnMeModules.Select(p => p.Assembly))
                     .Concat(ServiceProvider.GetServices<PlatformModule>()
                         .Where(p => !p.GetType().IsAssignableTo(typeof(PlatformInfrastructureModule)))
                         .Select(p => p.GetType().Assembly))

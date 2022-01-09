@@ -9,25 +9,21 @@ namespace AngularDotnetPlatform.Platform.Common.DependencyInjection
     public static class PlatformRegisterModuleServiceCollectionExtensions
     {
         public static IServiceCollection RegisterModule<TModule>(
-            this IServiceCollection services,
-            IConfiguration configuration,
-            PlatformModule dependedOnMeModule = null) where TModule : PlatformModule
+            this IServiceCollection services) where TModule : PlatformModule
         {
-            return RegisterModule(services, typeof(TModule), configuration, dependedOnMeModule);
+            return RegisterModule(services, typeof(TModule));
         }
 
         public static IServiceCollection RegisterModule(
             this IServiceCollection services,
-            Type moduleType,
-            IConfiguration configuration,
-            PlatformModule dependedOnMeModule = null)
+            Type moduleType)
         {
             if (!moduleType.IsAssignableTo(typeof(PlatformModule)))
             {
                 throw new ArgumentException("ModuleType parameter is invalid. It must be inherit from PlatformModule");
             }
 
-            RegisterModuleInstance(services, moduleType, dependedOnMeModule);
+            RegisterModuleInstance(services, moduleType);
 
             var serviceProvider = services.BuildServiceProvider();
 
@@ -45,28 +41,11 @@ namespace AngularDotnetPlatform.Platform.Common.DependencyInjection
 
         private static void RegisterModuleInstance(
             IServiceCollection services,
-            Type moduleType,
-            PlatformModule dependedOnMeModule)
+            Type moduleType)
         {
             services.Register(
                 moduleType,
-                provider =>
-                {
-                    var moduleMaxParamsConstructorInfo =
-                        moduleType.GetConstructors().OrderByDescending(p => p.GetParameters().Length).First();
-                    var moduleConstructorParams = moduleMaxParamsConstructorInfo.GetParameters()
-                        .Select(p => provider.GetService(p.ParameterType))
-                        .ToArray();
-
-                    var moduleInstance = (PlatformModule)Activator.CreateInstance(
-                        moduleType,
-                        args: moduleConstructorParams);
-
-                    if (dependedOnMeModule != null)
-                        moduleInstance!.AddDependedOnMeModule(dependedOnMeModule);
-
-                    return moduleInstance;
-                },
+                moduleType,
                 ServiceLifeTime.Singleton,
                 replaceIfExist: false);
 

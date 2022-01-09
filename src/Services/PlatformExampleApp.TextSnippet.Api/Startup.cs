@@ -30,7 +30,7 @@ namespace PlatformExampleApp.TextSnippet.Api
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "PlatformExampleApp.TextSnippet.Api", Version = "v1" });
             });
 
-            services.RegisterModule<TextSnippetApiAspNetCoreModule>(Configuration);
+            services.RegisterModule<TextSnippetApiAspNetCoreModule>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
