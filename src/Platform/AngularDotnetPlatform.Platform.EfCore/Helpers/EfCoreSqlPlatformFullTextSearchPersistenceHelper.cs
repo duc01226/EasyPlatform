@@ -40,7 +40,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Helpers
         /// Build query for all search prop. Example: Search by PropA, PropB for text "hello word" will generate query with predicate:
         /// (propA.Contains("hello") AND propA.Contains("word")) OR (propB.Contains("hello") AND propB.Contains("word")).
         /// </summary>
-        private static IQueryable<T> BuildSearchQuery<T>(IQueryable<T> query, List<string> searchWords, IEnumerable<string> fullTextSearchPropNames, bool exactMatch = false)
+        public static IQueryable<T> BuildSearchQuery<T>(IQueryable<T> query, List<string> searchWords, IEnumerable<string> fullTextSearchPropNames, bool exactMatch = false)
         {
             Expression<Func<T, bool>> totalPropsPredicate = null;
 
@@ -61,7 +61,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Helpers
             return query.WhereIf(totalPropsPredicate != null, totalPropsPredicate);
         }
 
-        private static List<string> BuildSearchWords(string searchText)
+        public static List<string> BuildSearchWords(string searchText)
         {
             // Remove special not supported character for full text search
             var removedSpecialCharactersSearchText = searchText
@@ -78,7 +78,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Helpers
             return searchWords;
         }
 
-        private static IQueryable<T> DoSqlSearch<T>(
+        public static IQueryable<T> DoSqlSearch<T>(
             IQueryable<T> query,
             string searchText,
             Expression<Func<T, string>>[] inFullTextSearchProps,
