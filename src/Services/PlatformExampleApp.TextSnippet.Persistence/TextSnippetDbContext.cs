@@ -9,12 +9,6 @@ namespace PlatformExampleApp.TextSnippet.Persistence
         public TextSnippetDbContext(DbContextOptions<TextSnippetDbContext> options, PlatformEfCoreOptions efCoreOptions) : base(options, efCoreOptions)
         {
         }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            optionsBuilder.UseLazyLoadingProxies();
-            base.OnConfiguring(optionsBuilder);
-        }
     }
 
     /// <summary>
