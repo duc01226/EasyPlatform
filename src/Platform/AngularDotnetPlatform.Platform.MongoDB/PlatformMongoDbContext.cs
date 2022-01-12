@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus;
+using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Application.Persistence;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;

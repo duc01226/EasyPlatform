@@ -1,5 +1,6 @@
 using System;
 using AngularDotnetPlatform.Platform.Application.EventBus;
+using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Common.DependencyInjection;
 using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Infrastructures.EventBus;

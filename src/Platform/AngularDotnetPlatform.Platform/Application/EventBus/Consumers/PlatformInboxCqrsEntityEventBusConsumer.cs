@@ -1,3 +1,4 @@
+using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;

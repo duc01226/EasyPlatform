@@ -11,7 +11,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Polly;
 
-namespace AngularDotnetPlatform.Platform.Application.EventBus
+namespace AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern
 {
     public abstract class PlatformInboxEventBusMessageCleanerHostedService : PlatformIntervalProcessHostedService
     {

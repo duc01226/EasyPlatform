@@ -14,6 +14,7 @@ using AngularDotnetPlatform.Platform.Persistence;
 using Microsoft.Extensions.Configuration;
 using Polly;
 using System.Collections.Generic;
+using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Common.DependencyInjection;
 using AngularDotnetPlatform.Platform.Common.Extensions;
 using Microsoft.EntityFrameworkCore.Infrastructure;

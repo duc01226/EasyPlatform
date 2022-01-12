@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngularDotnetPlatform.Platform.Application.EventBus;
+using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Application.Persistence;
 using AngularDotnetPlatform.Platform.Common.DependencyInjection;
 using AngularDotnetPlatform.Platform.Common.Extensions;

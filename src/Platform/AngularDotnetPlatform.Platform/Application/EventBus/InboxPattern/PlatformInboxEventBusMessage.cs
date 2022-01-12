@@ -1,7 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Common.JsonSerialization;
@@ -10,7 +7,7 @@ using AngularDotnetPlatform.Platform.Common.Validators;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 
-namespace AngularDotnetPlatform.Platform.Application.EventBus
+namespace AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern
 {
     public class PlatformInboxEventBusMessage : RootEntity<PlatformInboxEventBusMessage, string>
     {

@@ -1,4 +1,5 @@
 using AngularDotnetPlatform.Platform.Application.EventBus;
+using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using RabbitMQ.Client;
 
 namespace AngularDotnetPlatform.Platform.RabbitMQ

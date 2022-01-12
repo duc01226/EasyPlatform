@@ -1,4 +1,5 @@
 using AngularDotnetPlatform.Platform.Application.EventBus;
+using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace AngularDotnetPlatform.Platform.EfCore.EntityConfiguration

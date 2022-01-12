@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus;
+using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
