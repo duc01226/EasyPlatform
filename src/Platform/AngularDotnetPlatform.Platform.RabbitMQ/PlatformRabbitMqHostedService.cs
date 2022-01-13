@@ -174,12 +174,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         {
             // Get exchange routing key for all consumers
             var allDefinedEventBusConsumerPatternRoutingKeys = eventBusManager
-                .AllDefinedEventBusConsumerAttributes()
-                .Select(p => p.GetConsumerBindingRoutingKey())
-                .Concat(eventBusManager
-                    .AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers()
-                    .Select(p => p.ToString()))
-                .ToList();
+                .AllDefinedEventBusConsumerBindingRoutingKeys();
 
             // Declare all exchanges
             DeclareExchangesForRoutingKeys(
@@ -230,12 +225,8 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 applicationRabbitConsumer.Received += OnMessageReceived;
 
                 // Binding all defined event bus consumer to RabbitMQ Basic Consumer
-                eventBusManager.AllDefinedEventBusConsumerAttributes()
+                eventBusManager.AllDefinedEventBusConsumerBindingRoutingKeys()
                     .Select(GetConsumerQueueName)
-                    .Concat(eventBusManager
-                        .AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers()
-                        .Select(freeFormatMessageConsumerDefaultRoutingKey => GetConsumerQueueName(freeFormatMessageConsumerDefaultRoutingKey.ToString())))
-                    .Distinct()
                     .ToList()
                     .ForEach(queueName =>
                     {

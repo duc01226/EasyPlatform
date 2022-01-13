@@ -24,6 +24,11 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
         /// </summary>
         List<PlatformEventBusMessageRoutingKey> AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers();
 
+        /// <summary>
+        /// Get all binding routing key of all defined consumers
+        /// </summary>
+        List<string> AllDefinedEventBusConsumerBindingRoutingKeys();
+
         ///// <summary>
         ///// Get routing keys for all defined message to be produced
         ///// </summary>
@@ -72,6 +77,15 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
                     matchedToGenericTypeDefinition: typeof(IPlatformEventBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition()))
                 .Select(freeFormatMessageConsumerType => PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(
                     messageType: freeFormatMessageConsumerType.GetGenericArguments()[0]))
+                .Distinct()
+                .ToList();
+        }
+
+        public List<string> AllDefinedEventBusConsumerBindingRoutingKeys()
+        {
+            return AllDefinedEventBusConsumerAttributes()
+                .Select(p => p.GetConsumerBindingRoutingKey())
+                .Concat(AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers().Select(p => p.ToString()))
                 .Distinct()
                 .ToList();
         }
