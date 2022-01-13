@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AngularDotnetPlatform.Platform.Common.Extensions
 {
@@ -15,6 +16,11 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
                     i--;
                 }
             }
+        }
+
+        public static IEnumerable<T> ConcatSingle<T>(this IEnumerable<T> items, T item)
+        {
+            return items.Concat(new List<T>() { item });
         }
     }
 }

@@ -17,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
             if (andIfTrue)
                 return expression.AndAlso(andExpression);
 
-            return andExpression;
+            return expression;
         }
 
         public static Expression<Func<T, bool>> OrIf<T>(
@@ -28,7 +28,7 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
             if (orIfTrue)
                 return expression.Or(andExpression);
 
-            return andExpression;
+            return expression;
         }
     }
 }
