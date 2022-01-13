@@ -18,24 +18,32 @@ namespace AngularDotnetPlatform.Platform.Domain.Events
     /// This is class of events which is dispatched when an entity is created/updated/deleted.
     /// Implement and <see cref="PlatformCqrsApplicationEventHandler{TEvent}"/> to handle any events.
     /// </summary>
-    public class PlatformCqrsEntityEvent<TEntity, TPrimaryKey> : PlatformCqrsEntityEvent
-        where TEntity : class, IEntity<TPrimaryKey>, new()
+    public class PlatformCqrsEntityEvent<TEntity> : PlatformCqrsEntityEvent
+        where TEntity : class, IEntity, new()
     {
+        public static string BuildEventAction(PlatformCqrsEntityEventCrudAction crudAction, string forBusinessAction)
+        {
+            return $"{crudAction}{(string.IsNullOrEmpty(forBusinessAction) ? "" : $".{forBusinessAction}")}";
+        }
+
         public PlatformCqrsEntityEvent() { }
 
-        public PlatformCqrsEntityEvent(TEntity entityData, PlatformCqrsEntityEventAction action)
+        public PlatformCqrsEntityEvent(TEntity entityData, PlatformCqrsEntityEventCrudAction crudAction, string forBusinessAction = null)
         {
             Id = Guid.NewGuid().ToString();
             EntityData = entityData;
-            Action = action;
+            CrudAction = crudAction;
+            ForBusinessAction = forBusinessAction;
         }
 
-        public TEntity EntityData { get; }
+        public TEntity EntityData { get; set; }
 
-        public PlatformCqrsEntityEventAction Action { get; }
+        public PlatformCqrsEntityEventCrudAction CrudAction { get; set; }
+
+        public string ForBusinessAction { get; set; }
 
         public override string EventType => EventTypeValue;
         public override string EventName => EventNameValue<TEntity>();
-        public override string EventAction => Action.ToString();
+        public override string EventAction => BuildEventAction(CrudAction, ForBusinessAction);
     }
 }

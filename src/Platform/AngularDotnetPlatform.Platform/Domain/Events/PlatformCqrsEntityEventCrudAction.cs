@@ -1,6 +1,6 @@
 namespace AngularDotnetPlatform.Platform.Domain.Events
 {
-    public enum PlatformCqrsEntityEventAction
+    public enum PlatformCqrsEntityEventCrudAction
     {
         Created,
         Updated,

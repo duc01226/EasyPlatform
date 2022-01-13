@@ -8,10 +8,8 @@ using AngularDotnetPlatform.Platform.Common.Cqrs;
 using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.Domain.Events;
-using AngularDotnetPlatform.Platform.Domain.Exceptions;
 using AngularDotnetPlatform.Platform.Domain.Repositories;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using FluentValidation.Results;
 using Microsoft.EntityFrameworkCore;
 
 namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
@@ -29,20 +27,21 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             return Table.AsQueryable();
         }
 
-        public async Task<TEntity> CreateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<TEntity> CreateAsync(TEntity entity, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
         {
-            return await CreateInternal(entity, dismissSendEvent, cancellationToken);
+            return await CreateInternal(entity, dismissSendEvent, forBusinessAction, cancellationToken);
         }
 
-        public Task<TEntity> CreateOrUpdateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public Task<TEntity> CreateOrUpdateAsync(TEntity entity, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
         {
-            return CreateOrUpdateAsync(entity, null, dismissSendEvent, cancellationToken);
+            return CreateOrUpdateAsync(entity, null, dismissSendEvent, forBusinessAction, cancellationToken);
         }
 
         public Task<TEntity> CreateOrUpdateAsync(
             TEntity entity,
             Expression<Func<TEntity, bool>> customCheckExistingPredicate = null,
             bool dismissSendEvent = false,
+            string forBusinessAction = null,
             CancellationToken cancellationToken = default)
         {
             var existingEntity = customCheckExistingPredicate != null
@@ -51,15 +50,19 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             if (existingEntity != null)
             {
                 entity.Id = existingEntity.Id;
-                return UpdateAsync(entity, dismissSendEvent, cancellationToken);
+                return UpdateAsync(entity, dismissSendEvent, forBusinessAction, cancellationToken);
             }
             else
             {
-                return CreateAsync(entity, dismissSendEvent, cancellationToken);
+                return CreateAsync(entity, dismissSendEvent, forBusinessAction, cancellationToken);
             }
         }
 
-        public async Task<List<TEntity>> CreateOrUpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> CreateOrUpdateManyAsync(
+            List<TEntity> entities,
+            bool dismissSendEvent = false,
+            string forBusinessAction = null,
+            CancellationToken cancellationToken = default)
         {
             var entityIds = entities.Select(p => p.Id);
 
@@ -74,55 +77,73 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             var toCreateEntities = entities.Where(p => !existingEntityIds.Contains(p.Id)).ToList();
             var toUpdateEntities = entities.Where(p => existingEntityIds.Contains(p.Id)).ToList();
 
-            await CreateManyAsync(toCreateEntities, dismissSendEvent, cancellationToken);
-            await UpdateManyAsync(toUpdateEntities, dismissSendEvent, cancellationToken);
+            await CreateManyAsync(toCreateEntities, dismissSendEvent, forBusinessAction, cancellationToken);
+            await UpdateManyAsync(toUpdateEntities, dismissSendEvent, forBusinessAction, cancellationToken);
 
             return entities;
         }
 
-        public async Task<TEntity> UpdateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<TEntity> UpdateAsync(
+            TEntity entity,
+            bool dismissSendEvent = false,
+            string forBusinessAction = null,
+            CancellationToken cancellationToken = default)
         {
-            return await UpdateInternal(entity, dismissSendEvent, cancellationToken);
+            return await UpdateInternal(entity, dismissSendEvent, forBusinessAction, cancellationToken);
         }
 
-        public Task DeleteAsync(TPrimaryKey entityId, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public Task DeleteAsync(
+            TPrimaryKey entityId,
+            bool dismissSendEvent = false,
+            string forBusinessAction = null,
+            CancellationToken cancellationToken = default)
         {
             var entity = Table.Find(entityId);
-            return DeleteAsync(entity, dismissSendEvent, cancellationToken);
+            return DeleteAsync(entity, dismissSendEvent, forBusinessAction, cancellationToken);
         }
 
-        public async Task DeleteAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task DeleteAsync(
+            TEntity entity,
+            bool dismissSendEvent = false,
+            string forBusinessAction = null,
+            CancellationToken cancellationToken = default)
         {
-            await DeleteInternal(entity, dismissSendEvent, cancellationToken);
+            await DeleteInternal(entity, dismissSendEvent, forBusinessAction, cancellationToken);
         }
 
-        public async Task<List<TEntity>> CreateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> CreateManyAsync(
+            List<TEntity> entities, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
         {
-            return await CreateManyInternal(entities, dismissSendEvent, cancellationToken);
+            return await CreateManyInternal(entities, dismissSendEvent, forBusinessAction, cancellationToken);
         }
 
-        public async Task<List<TEntity>> UpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> UpdateManyAsync(
+            List<TEntity> entities, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
         {
-            return await UpdateManyInternal(entities, dismissSendEvent, cancellationToken);
+            return await UpdateManyInternal(entities, dismissSendEvent, forBusinessAction, cancellationToken);
         }
 
-        public async Task<List<TEntity>> DeleteManyAsync(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> DeleteManyAsync(
+            List<TPrimaryKey> entityIds, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
         {
             var entities = await GetAllQuery().Where(p => entityIds.Contains(p.Id)).ToListAsync(cancellationToken);
-            return await DeleteManyAsync(entities, dismissSendEvent, cancellationToken);
+            return await DeleteManyAsync(entities, dismissSendEvent, forBusinessAction, cancellationToken);
         }
 
-        public async Task<List<TEntity>> DeleteManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> DeleteManyAsync(
+            List<TEntity> entities, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
         {
-            return await DeleteManyInternal(entities, dismissSendEvent, cancellationToken);
+            return await DeleteManyInternal(entities, dismissSendEvent, forBusinessAction, cancellationToken);
         }
 
-        public async Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> DeleteManyAsync(
+            Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
         {
-            return await DeleteManyAsync(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, cancellationToken);
+            return await DeleteManyAsync(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, forBusinessAction, cancellationToken);
         }
 
-        protected virtual async Task<List<TEntity>> DeleteManyInternal(List<TEntity> entities, bool dismissSendEvent, CancellationToken cancellationToken)
+        protected virtual async Task<List<TEntity>> DeleteManyInternal(
+            List<TEntity> entities, bool dismissSendEvent, string forBusinessAction, CancellationToken cancellationToken)
         {
             Table.RemoveRange(entities);
 
@@ -130,14 +151,15 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             {
                 await Cqrs.SendEvents(
                     entities.Select(entity =>
-                        new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Deleted)),
+                        new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Deleted, forBusinessAction)),
                     cancellationToken);
             }
 
             return await Task.FromResult(entities);
         }
 
-        protected virtual async Task<List<TEntity>> UpdateManyInternal(List<TEntity> entities, bool dismissSendEvent, CancellationToken cancellationToken)
+        protected virtual async Task<List<TEntity>> UpdateManyInternal(
+            List<TEntity> entities, bool dismissSendEvent, string forBusinessAction, CancellationToken cancellationToken)
         {
             await EnsureEntitiesValid(entities, cancellationToken);
 
@@ -147,14 +169,15 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             {
                 await Cqrs.SendEvents(
                     entities.Select(entity =>
-                        new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Updated)),
+                        new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Updated, forBusinessAction)),
                     cancellationToken);
             }
 
             return await Task.FromResult(entities);
         }
 
-        protected virtual async Task<List<TEntity>> CreateManyInternal(List<TEntity> entities, bool dismissSendEvent, CancellationToken cancellationToken)
+        protected virtual async Task<List<TEntity>> CreateManyInternal(
+            List<TEntity> entities, bool dismissSendEvent, string forBusinessAction, CancellationToken cancellationToken)
         {
             await EnsureEntitiesValid(entities, cancellationToken);
 
@@ -164,14 +187,15 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             {
                 await Cqrs.SendEvents(
                     entities.Select(entity =>
-                        new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Created)),
+                        new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Created, forBusinessAction)),
                     cancellationToken);
             }
 
             return result;
         }
 
-        protected virtual async Task<TEntity> CreateInternal(TEntity entity, bool dismissSendEvent, CancellationToken cancellationToken)
+        protected virtual async Task<TEntity> CreateInternal(
+            TEntity entity, bool dismissSendEvent, string forBusinessAction, CancellationToken cancellationToken)
         {
             await EnsureEntityValid(entity, cancellationToken);
 
@@ -179,14 +203,15 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvent(
-                    new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Created),
+                    new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Created, forBusinessAction),
                     cancellationToken);
             }
 
             return result;
         }
 
-        protected virtual async Task<TEntity> UpdateInternal(TEntity entity, bool dismissSendEvent, CancellationToken cancellationToken)
+        protected virtual async Task<TEntity> UpdateInternal(
+            TEntity entity, bool dismissSendEvent, string forBusinessAction, CancellationToken cancellationToken)
         {
             await EnsureEntityValid(entity, cancellationToken);
 
@@ -194,20 +219,21 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvent(
-                    new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Updated),
+                    new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Updated, forBusinessAction),
                     cancellationToken);
             }
 
             return result;
         }
 
-        protected virtual async Task DeleteInternal(TEntity entity, bool dismissSendEvent, CancellationToken cancellationToken)
+        protected virtual async Task DeleteInternal(
+            TEntity entity, bool dismissSendEvent, string forBusinessAction, CancellationToken cancellationToken)
         {
             await Task.FromResult(Table.Remove(entity).Entity);
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvent(
-                    new PlatformCqrsEntityEvent<TEntity, TPrimaryKey>(entity, PlatformCqrsEntityEventAction.Deleted),
+                    new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Deleted, forBusinessAction),
                     cancellationToken);
             }
         }

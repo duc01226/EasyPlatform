@@ -1,4 +1,3 @@
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Infrastructures.Caching;
@@ -10,7 +9,7 @@ using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents
 {
-    public class ClearCacheOnSaveSnippetTextEntityEventHandler : PlatformCqrsEntityEventHandler<TextSnippetEntity, Guid>
+    public class ClearCacheOnSaveSnippetTextEntityEventHandler : PlatformCqrsEntityEventHandler<TextSnippetEntity>
     {
         private readonly IPlatformCacheRepositoryProvider cacheRepositoryProvider;
 
@@ -21,7 +20,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents
             this.cacheRepositoryProvider = cacheRepositoryProvider;
         }
 
-        protected override Task HandleAsync(PlatformCqrsEntityEvent<TextSnippetEntity, Guid> @event, CancellationToken cancellationToken)
+        protected override Task HandleAsync(PlatformCqrsEntityEvent<TextSnippetEntity> @event, CancellationToken cancellationToken)
         {
             // Queue task to clear cache every 5 seconds for 3 times (mean that after 5,10,15s).
             // Delay because when save snippet text, fulltext index take amount of time to update, so that we wait

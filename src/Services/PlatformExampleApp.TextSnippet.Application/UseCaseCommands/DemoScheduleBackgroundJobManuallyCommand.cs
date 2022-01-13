@@ -1,20 +1,14 @@
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Application.BackgroundJob;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Application.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Common.Cqrs;
 using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Infrastructures.BackgroundJob;
-using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.BackgroundJob;
-using PlatformExampleApp.TextSnippet.Application.EntityDtos;
 using PlatformExampleApp.TextSnippet.Domain.DomainServices;
-using PlatformExampleApp.TextSnippet.Domain.Entities;
-using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 {

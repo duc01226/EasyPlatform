@@ -103,7 +103,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern
 
                     if (expiredMessages.Count > 0)
                     {
-                        await inboxEventBusMessageRepo.DeleteManyAsync(expiredMessages, true, cancellationToken);
+                        await inboxEventBusMessageRepo.DeleteManyAsync(expiredMessages, dismissSendEvent: true, forBusinessAction: null, cancellationToken);
 
                         await uow.CompleteAsync(cancellationToken);
 

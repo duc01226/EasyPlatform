@@ -1,10 +1,6 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Application.Dtos;
 using AngularDotnetPlatform.Platform.Application.Helpers;
 using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using PlatformExampleApp.TextSnippet.Domain.Entities;

@@ -24,12 +24,14 @@ namespace PlatformExampleApp.TextSnippet.Application.BackgroundJob
 
         public override async Task ProcessAsync()
         {
-            await textSnippetEntityRepository.CreateOrUpdateAsync(new TextSnippetEntity()
-            {
-                Id = Guid.Parse("76e0f523-ee53-4124-b109-13dedaa4618d"),
-                SnippetText = "TestRecurringBackgroundJob " + Clock.Now.ToShortTimeString(),
-                FullText = "Test of recurring job upsert this entity"
-            });
+            await textSnippetEntityRepository.CreateOrUpdateAsync(
+                new TextSnippetEntity()
+                {
+                    Id = Guid.Parse("76e0f523-ee53-4124-b109-13dedaa4618d"),
+                    SnippetText = "TestRecurringBackgroundJob " + Clock.Now.ToShortTimeString(),
+                    FullText = "Test of recurring job upsert this entity"
+                },
+                forBusinessAction: "TestRecurringBackgroundJob");
         }
     }
 }

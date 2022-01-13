@@ -16,15 +16,15 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
     {
     }
 
-    public class PlatformCqrsEntityEventBusMessage<TEntity> : PlatformEventBusMessage<TEntity>, IPlatformCqrsEntityEventBusMessage
+    public class PlatformCqrsEntityEventBusMessage<TEntity> : PlatformEventBusMessage<PlatformCqrsEntityEvent<TEntity>>, IPlatformCqrsEntityEventBusMessage
         where TEntity : class, IEntity, new()
     {
         public override string MessageGroup => PlatformCqrsEntityEvent.EventTypeValue;
         public override string MessageType => PlatformCqrsEntityEvent.EventNameValue<TEntity>();
     }
 
-    public abstract class PlatformCqrsEntityEventBusProducer<TEntity, TEntityKey> : PlatformCqrsEntityEventHandler<TEntity, TEntityKey>, IPlatformCqrsEventBusProducer<PlatformCqrsEntityEvent<TEntity, TEntityKey>>
-        where TEntity : class, IEntity<TEntityKey>, new()
+    public abstract class PlatformCqrsEntityEventBusProducer<TEntity> : PlatformCqrsEntityEventHandler<TEntity>, IPlatformCqrsEventBusProducer<PlatformCqrsEntityEvent<TEntity>>
+        where TEntity : class, IEntity, new()
     {
         protected readonly IPlatformApplicationEventBusProducer ApplicationEventBusProducer;
         protected readonly ILogger Logger;
@@ -38,7 +38,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             Logger = loggerFactory.CreateLogger(GetType());
         }
 
-        protected override async Task HandleAsync(PlatformCqrsEntityEvent<TEntity, TEntityKey> @event, CancellationToken cancellationToken)
+        protected override async Task HandleAsync(PlatformCqrsEntityEvent<TEntity> @event, CancellationToken cancellationToken)
         {
             if (UnitOfWorkManager.Current() == null || UnitOfWorkManager.Current().Completed)
             {
@@ -53,19 +53,19 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             }
         }
 
-        private async Task SendEntityEventEventBusMessage(PlatformCqrsEntityEvent<TEntity, TEntityKey> @event, CancellationToken cancellationToken)
+        private async Task SendEntityEventEventBusMessage(PlatformCqrsEntityEvent<TEntity> @event, CancellationToken cancellationToken)
         {
             try
             {
-                await ApplicationEventBusProducer.SendAsync<PlatformCqrsEntityEventBusMessage<TEntity>, TEntity>(
+                await ApplicationEventBusProducer.SendAsync<PlatformCqrsEntityEventBusMessage<TEntity>, PlatformCqrsEntityEvent<TEntity>>(
                     trackId: @event.Id,
-                    messagePayload: @event.EntityData,
+                    messagePayload: @event,
                     messageAction: @event.EventAction,
                     cancellationToken: cancellationToken);
             }
             catch (PlatformEventBusException<PlatformCqrsEntityEventBusMessage<TEntity>> e)
             {
-                Logger.LogError(e, $"[PlatformCqrsEventBusEntityEventHandler] Failed to send message for ${typeof(PlatformCqrsEntityEvent<TEntity, TEntityKey>).FullName}. Message Info: {JsonSerializer.Serialize(e.EventBusMessage)}");
+                Logger.LogError(e, $"[PlatformCqrsEventBusEntityEventHandler] Failed to send message for ${typeof(PlatformCqrsEntityEvent<TEntity>).FullName}. Message Info: {JsonSerializer.Serialize(e.EventBusMessage)}");
                 throw;
             }
         }

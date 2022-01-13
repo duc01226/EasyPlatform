@@ -1,8 +1,5 @@
-using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform;
-using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Common.JsonSerialization;
@@ -15,12 +12,12 @@ using PlatformExampleApp.TextSnippet.Domain.Entities;
 namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.EntityEventConsumers
 {
     /// <summary>
-    /// Demo using <see cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity,TPrimaryKey}"/> to support inbox consumer
+    /// Demo using <see cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity}"/> to support inbox consumer
     /// <br/>
-    /// <inheritdoc cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity,TPrimaryKey}"/>
+    /// <inheritdoc cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity}"/>
     /// </summary>
     [PlatformEventBusConsumer(PlatformCqrsEntityEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "TextSnippetEntity")]
-    public class SnippetTextEntityEventBusConsumer : PlatformInboxCqrsEntityEventBusConsumer<TextSnippetEntity, Guid>
+    public class SnippetTextEntityEventBusConsumer : PlatformInboxCqrsEntityEventBusConsumer<TextSnippetEntity>
     {
         public SnippetTextEntityEventBusConsumer(
             ILoggerFactory loggerFactory,
@@ -29,9 +26,10 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.EntityEv
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformEventBusMessage<TextSnippetEntity> message)
+        protected override Task InternalHandleAsync(PlatformEventBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message)
         {
-            Logger.LogInformation($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
+            Logger.LogInformation($"{GetType().FullName} has handled message {(message.Payload.ForBusinessAction != null ? $"for Business Action [{message.Payload.ForBusinessAction}]" : "")}.\r\n" +
+                                  $"Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             return Task.CompletedTask;
         }
     }

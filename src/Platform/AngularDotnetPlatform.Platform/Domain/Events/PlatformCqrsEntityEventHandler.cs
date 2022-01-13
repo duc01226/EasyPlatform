@@ -5,8 +5,8 @@ using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
 namespace AngularDotnetPlatform.Platform.Domain.Events
 {
-    public abstract class PlatformCqrsEntityEventHandler<TEntity, TEntityKey> : PlatformCqrsApplicationEventHandler<PlatformCqrsEntityEvent<TEntity, TEntityKey>>
-        where TEntity : class, IEntity<TEntityKey>, new()
+    public abstract class PlatformCqrsEntityEventHandler<TEntity> : PlatformCqrsApplicationEventHandler<PlatformCqrsEntityEvent<TEntity>>
+        where TEntity : class, IEntity, new()
     {
         protected PlatformCqrsEntityEventHandler(IUnitOfWorkManager unitOfWorkManager) : base(unitOfWorkManager)
         {
