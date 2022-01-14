@@ -31,17 +31,21 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
 
         public static implicit operator PlatformValidationResult(string error)
         {
-            return Invalid(error);
+            return string.IsNullOrEmpty(error) ? Valid() : Invalid(error);
         }
 
         public static implicit operator PlatformValidationResult(List<string> errors)
         {
-            return Invalid(errors.Select(p => (PlatformValidationFailure)p).ToArray());
+            return errors != null && errors.Any()
+                ? Invalid(errors.Select(p => (PlatformValidationFailure)p).ToArray())
+                : Valid();
         }
 
         public static implicit operator PlatformValidationResult(List<PlatformValidationFailure> errors)
         {
-            return Invalid(errors.Select(p => p).ToArray());
+            return errors != null && errors.Any()
+                ? Invalid(errors.Select(p => p).ToArray())
+                : Valid();
         }
 
         /// <summary>
