@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Common.Cqrs;
 using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 
@@ -26,7 +27,7 @@ namespace PlatformExampleApp.TextSnippet.Application.CqrsPipelineMiddleware
 
             if (request is IPlatformCqrsCommand command)
             {
-                logger.LogInformation($"Command {command.GetType().Name} has been executed. TrackId: {command.HandleAuditedTrackId}. UserId: {command.HandleAuditedByUserId}");
+                logger.LogInformationIfEnabled($"Command {command.GetType().Name} has been executed. TrackId: {command.HandleAuditedTrackId}. UserId: {command.HandleAuditedByUserId}");
             }
 
             return response;

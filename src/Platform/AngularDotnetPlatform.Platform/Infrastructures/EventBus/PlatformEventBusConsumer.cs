@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Common.Utils;
 using Microsoft.Extensions.Logging;
 
@@ -97,7 +98,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
                             $"[ConsumerProcessTime] Elapsed {elapsedMilliseconds} in milliseconds processing for consumer {consumer.GetType().FullName} message with routing key: {routingKey}. TrackingId {platformEventBusMessage?.TrackingId ?? "n/a"}.";
                         if (elapsedMilliseconds < logConsumerProcessWarningTimeMilliseconds || elapsedMilliseconds < consumer.ProcessWarningTimeMilliseconds())
                         {
-                            logger.LogInformation(message);
+                            logger.LogInformationIfEnabled(message);
                         }
                         else
                         {

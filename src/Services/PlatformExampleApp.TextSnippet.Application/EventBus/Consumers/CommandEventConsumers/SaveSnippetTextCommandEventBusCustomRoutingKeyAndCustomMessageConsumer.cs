@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Common.JsonSerialization;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
@@ -25,7 +26,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
         {
             return Task.Run(() =>
             {
-                Logger.LogInformation($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
+                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             });
         }
     }

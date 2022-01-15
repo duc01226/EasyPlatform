@@ -76,12 +76,12 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         /// </summary>
         private void ReInitNewConnection()
         {
-            logger.LogInformation("Re-init new rabbit-mq connection started.");
+            logger.LogInformationIfEnabled("Re-init new rabbit-mq connection started.");
 
             try
             {
                 connection.Value.Close(TimeSpan.FromSeconds(5));
-                logger.LogInformation("Release old rabbit-mq connection successfully.");
+                logger.LogInformationIfEnabled("Release old rabbit-mq connection successfully.");
             }
             catch (Exception releaseEx)
             {
@@ -92,7 +92,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 connection = new Lazy<IConnection>(CreateConnection);
             }
 
-            logger.LogInformation("Re-init new rabbit-mq connection successfully.");
+            logger.LogInformationIfEnabled("Re-init new rabbit-mq connection successfully.");
         }
 
         private IConnectionFactory InitializeFactory()
@@ -115,7 +115,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         private IConnection CreateConnection()
         {
-            logger.LogInformation("Creating new rabbit-mq connection.");
+            logger.LogInformationIfEnabled("Creating new rabbit-mq connection.");
 
             var hostNames = options.HostNames.Split(',').Where(hostName => !string.IsNullOrEmpty(hostName)).ToArray();
 

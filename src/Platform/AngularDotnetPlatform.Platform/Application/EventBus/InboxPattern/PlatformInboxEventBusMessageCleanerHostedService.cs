@@ -134,9 +134,9 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern
             public static void Information(ILogger logger, Exception ex = null, string message = null, object[] args = null)
             {
                 if (ex != null)
-                    logger.LogInformation(ex, $"{message ?? ex.Message}", args ?? Array.Empty<object>());
+                    logger.LogInformationIfEnabled(ex, $"{message ?? ex.Message}", args ?? Array.Empty<object>());
                 else if (message != null)
-                    logger.LogInformation($"{message}", args);
+                    logger.LogInformationIfEnabled($"{message}", args);
             }
         }
     }
