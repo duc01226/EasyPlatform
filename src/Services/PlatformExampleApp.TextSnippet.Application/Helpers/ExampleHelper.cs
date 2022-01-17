@@ -33,7 +33,7 @@ namespace PlatformExampleApp.TextSnippet.Application.Helpers
                 query => fullTextSearchPersistenceHelper.Search(
                     query,
                     searchText: name,
-                    inFullTextSearchProps: new Expression<Func<TextSnippetEntity, string>>[] { p => p.SnippetText }));
+                    inFullTextSearchProps: new Expression<Func<TextSnippetEntity, object>>[] { p => p.SnippetText }));
             var firstFoundMultiDemo = await multiDbDemoEntityRepository.FirstOrDefaultAsync(p => p.Name == name);
 
             return new SearchEntityByNameHelperResult()

@@ -14,7 +14,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Helpers
         {
         }
 
-        public override IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, string>>[] inFullTextSearchProps, bool exactMatch = false)
+        public override IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, object>>[] inFullTextSearchProps, bool exactMatch = false)
         {
             if (!IsSupportQuery(query) &&
                 TrySearchByFirstSupportQueryHelper(query, searchText, inFullTextSearchProps, exactMatch, out var newQuery))

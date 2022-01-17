@@ -62,7 +62,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseQueries
                     thenPipe: query => fullTextSearchPersistenceHelper.Search(
                         query,
                         request.SearchText,
-                        inFullTextSearchProps: new Expression<Func<TextSnippetEntity, string>>[] { e => e.SnippetText },
+                        inFullTextSearchProps: new Expression<Func<TextSnippetEntity, object>>[] { e => e.SnippetText },
                         exactMatch: true))
                 .WhereIf(request.SearchId != null, p => p.Id == request.SearchId);
             var orderedPagedItemsQuery = fullItemsQuery

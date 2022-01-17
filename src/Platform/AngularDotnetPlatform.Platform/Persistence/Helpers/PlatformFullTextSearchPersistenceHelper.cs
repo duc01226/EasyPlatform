@@ -17,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.Persistence.Helpers
         public abstract IQueryable<T> Search<T>(
             IQueryable<T> query,
             string searchText,
-            Expression<Func<T, string>>[] inFullTextSearchProps,
+            Expression<Func<T, object>>[] inFullTextSearchProps,
             bool exactMatch = false) where T : class;
 
         public abstract bool IsSupportQuery<T>(IQueryable<T> query) where T : class;
@@ -25,7 +25,7 @@ namespace AngularDotnetPlatform.Platform.Persistence.Helpers
         protected bool TrySearchByFirstSupportQueryHelper<T>(
             IQueryable<T> query,
             string searchText,
-            Expression<Func<T, string>>[] inFullTextSearchProps,
+            Expression<Func<T, object>>[] inFullTextSearchProps,
             bool exactMatch,
             out IQueryable<T> newQuery) where T : class
         {

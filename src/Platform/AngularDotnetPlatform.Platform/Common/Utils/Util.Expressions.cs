@@ -32,6 +32,10 @@ namespace AngularDotnetPlatform.Platform.Common.Utils
                 {
                     memberExpression = (MemberExpression)unaryExpression.Operand;
                 }
+                else if (lambda.Body is ConstantExpression constantExpression)
+                {
+                    return constantExpression.ToString();
+                }
                 else
                 {
                     memberExpression = (MemberExpression)lambda.Body;

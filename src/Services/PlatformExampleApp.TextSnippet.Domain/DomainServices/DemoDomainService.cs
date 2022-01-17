@@ -41,7 +41,7 @@ namespace PlatformExampleApp.TextSnippet.Domain.DomainServices
                 query => fullTextSearchPersistenceHelper.Search(
                     query,
                     searchText: snippetTextSearch,
-                    inFullTextSearchProps: new Expression<Func<TextSnippetEntity, string>>[] { p => p.SnippetText }));
+                    inFullTextSearchProps: new Expression<Func<TextSnippetEntity, object>>[] { p => p.SnippetText }));
 
             multiDbDemoEntity.Name = firstFoundTextSnippet.SnippetText;
 

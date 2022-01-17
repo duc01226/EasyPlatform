@@ -17,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.Persistence.Helpers
         /// <param name="inFullTextSearchProps">List of property expression to search on.</param>
         /// <param name="exactMatch">Whether search matching exact phrase or not</param>
         /// <returns>Filtered by search text query.</returns>
-        public IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, string>>[] inFullTextSearchProps, bool exactMatch = false) where T : class;
+        public IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, object>>[] inFullTextSearchProps, bool exactMatch = false) where T : class;
 
         public bool IsSupportQuery<T>(IQueryable<T> query) where T : class;
     }
