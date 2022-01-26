@@ -1,0 +1,36 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Common.Dtos;
+using AngularDotnetPlatform.Platform.Common.Validators;
+using PlatformExampleApp.TextSnippet.Domain.ValueObjects;
+
+namespace PlatformExampleApp.TextSnippet.Application.ValueObjectDtos
+{
+    public class ExampleAddressValueObjectDto : IPlatformDto<ExampleAddressValueObject>
+    {
+        public string Number { get; set; }
+        public string Street { get; set; }
+
+        public static ExampleAddressValueObjectDto Create(ExampleAddressValueObject targetObject)
+        {
+            return new ExampleAddressValueObjectDto() { Number = targetObject.Number, Street = targetObject.Street };
+        }
+
+        public PlatformValidationResult Validate()
+        {
+            return MapToObject().Validate();
+        }
+
+        public ExampleAddressValueObject MapToObject()
+        {
+            return new ExampleAddressValueObject()
+            {
+                Number = Number,
+                Street = Street
+            };
+        }
+    }
+}

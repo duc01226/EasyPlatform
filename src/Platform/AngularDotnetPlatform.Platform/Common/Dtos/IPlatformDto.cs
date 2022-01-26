@@ -6,4 +6,11 @@ namespace AngularDotnetPlatform.Platform.Common.Dtos
     {
         PlatformValidationResult Validate();
     }
+
+    public interface IPlatformDto<TMapForObject> where TMapForObject : class
+    {
+        PlatformValidationResult Validate();
+
+        TMapForObject MapToObject();
+    }
 }
