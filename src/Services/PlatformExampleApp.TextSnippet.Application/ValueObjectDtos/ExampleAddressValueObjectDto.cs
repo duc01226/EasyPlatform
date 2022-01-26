@@ -9,7 +9,7 @@ using PlatformExampleApp.TextSnippet.Domain.ValueObjects;
 
 namespace PlatformExampleApp.TextSnippet.Application.ValueObjectDtos
 {
-    public class ExampleAddressValueObjectDto : IPlatformDto<ExampleAddressValueObject>
+    public class ExampleAddressValueObjectDto : PlatformValueObjectDto<ExampleAddressValueObject>
     {
         public string Number { get; set; }
         public string Street { get; set; }
@@ -19,12 +19,7 @@ namespace PlatformExampleApp.TextSnippet.Application.ValueObjectDtos
             return new ExampleAddressValueObjectDto() { Number = targetObject.Number, Street = targetObject.Street };
         }
 
-        public PlatformValidationResult Validate()
-        {
-            return MapToObject().Validate();
-        }
-
-        public ExampleAddressValueObject MapToObject()
+        public override ExampleAddressValueObject MapToObject()
         {
             return new ExampleAddressValueObject()
             {
