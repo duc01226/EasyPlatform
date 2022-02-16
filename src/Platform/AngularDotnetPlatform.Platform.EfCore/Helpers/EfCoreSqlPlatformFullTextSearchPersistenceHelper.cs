@@ -17,7 +17,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Helpers
         {
         }
 
-        public override IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, string>>[] inFullTextSearchProps, bool exactMatch = false)
+        public override IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, object>>[] inFullTextSearchProps, bool exactMatch = false)
         {
             if (!IsSupportQuery(query) &&
                 TrySearchByFirstSupportQueryHelper(query, searchText, inFullTextSearchProps, exactMatch, out var newQuery))
@@ -81,7 +81,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Helpers
         public static IQueryable<T> DoSqlSearch<T>(
             IQueryable<T> query,
             string searchText,
-            Expression<Func<T, string>>[] inFullTextSearchProps,
+            Expression<Func<T, object>>[] inFullTextSearchProps,
             bool exactMatch)
         {
             if (string.IsNullOrWhiteSpace(searchText))

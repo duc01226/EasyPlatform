@@ -8,7 +8,7 @@ using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Infrastructures.BackgroundJob;
 using PlatformExampleApp.TextSnippet.Application.BackgroundJob;
-using PlatformExampleApp.TextSnippet.Domain.DomainServices;
+using PlatformExampleApp.TextSnippet.Domain.Services;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 {

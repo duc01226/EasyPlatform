@@ -1,4 +1,7 @@
+using System.Threading;
+using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Common.Cqrs;
+using AngularDotnetPlatform.Platform.Common.Cqrs.Events;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
 namespace AngularDotnetPlatform.Platform.Domain.Services
@@ -11,17 +14,19 @@ namespace AngularDotnetPlatform.Platform.Domain.Services
     {
     }
 
-    public abstract class BasePlatformDomainService : IPlatformDomainService
+    public abstract class PlatformDomainService : IPlatformDomainService
     {
-        protected readonly IUnitOfWorkManager UnitOfWorkManager;
-        protected readonly IPlatformCqrs Cqrs;
+        private readonly IPlatformCqrs Cqrs;
 
-        public BasePlatformDomainService(
-            IPlatformCqrs cqrs,
-            IUnitOfWorkManager unitOfWorkManager)
+        public PlatformDomainService(
+            IPlatformCqrs cqrs)
         {
-            UnitOfWorkManager = unitOfWorkManager;
             Cqrs = cqrs;
+        }
+
+        protected Task SendEvent<TEvent>(TEvent domainEvent, CancellationToken token = default) where TEvent : PlatformCqrsEvent
+        {
+            return Cqrs.SendEvent(domainEvent, token);
         }
     }
 }

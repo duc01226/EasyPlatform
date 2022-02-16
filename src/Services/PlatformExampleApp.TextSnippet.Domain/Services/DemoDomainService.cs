@@ -6,18 +6,18 @@ using System.Text;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Common.Cqrs;
 using AngularDotnetPlatform.Platform.Domain.Services;
-using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
+using PlatformExampleApp.TextSnippet.Domain.Events;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
-namespace PlatformExampleApp.TextSnippet.Domain.DomainServices
+namespace PlatformExampleApp.TextSnippet.Domain.Services
 {
     /// <summary>
     /// Domain service is used to serve business logic operation related to many root domain entities,
     /// the business logic term is understood by domain expert.
     /// </summary>
-    public class DemoDomainService : BasePlatformDomainService
+    public class DemoDomainService : PlatformDomainService
     {
         private readonly ITextSnippetRepository<TextSnippetEntity> textSnippetRepository;
         private readonly ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;
@@ -25,10 +25,9 @@ namespace PlatformExampleApp.TextSnippet.Domain.DomainServices
 
         public DemoDomainService(
             IPlatformCqrs cqrs,
-            IUnitOfWorkManager unitOfWorkManager,
             ITextSnippetRepository<TextSnippetEntity> textSnippetRepository,
             ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository,
-            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper) : base(cqrs, unitOfWorkManager)
+            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper) : base(cqrs)
         {
             this.textSnippetRepository = textSnippetRepository;
             this.multiDbDemoEntityRepository = multiDbDemoEntityRepository;
@@ -41,11 +40,14 @@ namespace PlatformExampleApp.TextSnippet.Domain.DomainServices
                 query => fullTextSearchPersistenceHelper.Search(
                     query,
                     searchText: snippetTextSearch,
-                    inFullTextSearchProps: new Expression<Func<TextSnippetEntity, string>>[] { p => p.SnippetText }));
+                    inFullTextSearchProps: new Expression<Func<TextSnippetEntity, object>>[] { p => p.SnippetText }));
+            var dispatchEvent = TransferSnippetTextToMultiDbDemoEntityNameDomainEvent.Create(firstFoundTextSnippet.SnippetText, multiDbDemoEntity.Clone());
 
             multiDbDemoEntity.Name = firstFoundTextSnippet.SnippetText;
 
             await multiDbDemoEntityRepository.UpdateAsync(multiDbDemoEntity);
+
+            await SendEvent(dispatchEvent);
         }
     }
 }
