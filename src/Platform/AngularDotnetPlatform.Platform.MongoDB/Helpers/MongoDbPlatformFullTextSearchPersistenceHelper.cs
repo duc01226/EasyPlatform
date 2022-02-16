@@ -30,17 +30,22 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Helpers
             return query is IMongoQueryable;
         }
 
-        private static IQueryable<T> DoMongoSearch<T>(IQueryable<T> query, string searchText, bool exactMatch)
+        public static IQueryable<T> DoMongoSearch<T>(IQueryable<T> query, string searchText, bool exactMatch)
         {
             if (string.IsNullOrWhiteSpace(searchText))
             {
                 return query;
             }
 
-            var filter = Builders<T>.Filter.Text(
+            var filter = BuildTextSearchMongoFilterDefinition<T>(searchText, exactMatch);
+            return ((IMongoQueryable<T>)query).Where(_ => filter.Inject());
+        }
+
+        public static FilterDefinition<T> BuildTextSearchMongoFilterDefinition<T>(string searchText, bool exactMatch)
+        {
+            return Builders<T>.Filter.Text(
                 exactMatch ? $"\"{searchText.Trim()}\"" : searchText.Trim(),
                 new TextSearchOptions() { CaseSensitive = false, DiacriticSensitive = false, Language = "none" });
-            return ((IMongoQueryable<T>)query).Where(_ => filter.Inject());
         }
     }
 }

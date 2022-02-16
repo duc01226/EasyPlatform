@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus;
 using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Application.Persistence;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using AngularDotnetPlatform.Platform.Persistence;
@@ -197,13 +198,13 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                         .GetService<ILoggerFactory>()
                         .CreateLogger(migrationExecution.GetType());
 
-                    logger.LogInformation($"Migration {migrationExecution.Name} started.");
+                    logger.LogInformationIfEnabled($"Migration {migrationExecution.Name} started.");
 
                     migrationExecution.Execute((TDbContext)this);
 
                     ApplicationDataMigrationHistoryCollection.InsertOne(new PlatformDataMigrationHistory(migrationExecution.Name));
 
-                    logger.LogInformation($"Migration {migrationExecution.Name} finished.");
+                    logger.LogInformationIfEnabled($"Migration {migrationExecution.Name} finished.");
 
                     SaveChangesAsync().Wait();
                 }

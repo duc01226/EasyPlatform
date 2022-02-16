@@ -1,3 +1,4 @@
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Infrastructures;
 using AngularDotnetPlatform.Platform.Infrastructures.Abstract;
 using Microsoft.Extensions.Logging;
@@ -28,7 +29,7 @@ namespace PlatformExampleApp.TextSnippet.Application.Infrastructures
 
         public void SendEmail(string toEmail, string mailHeader, string mailContent)
         {
-            logger.LogInformation($"Demo implemented AwsSendMailService directly in application module. " +
+            logger.LogInformationIfEnabled($"Demo implemented AwsSendMailService directly in application module. " +
                                   $"ToEmail: {toEmail}. Header: {mailHeader}. MailContent: {mailContent}");
         }
     }

@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
 using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Common.JsonSerialization;
 using AngularDotnetPlatform.Platform.Common.Timing;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
@@ -27,7 +28,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
             if (message.CreatedUtcDate.AddSeconds(5) > Clock.UtcNow)
                 throw new Exception("Test requeue message mechanism. Consumer temporarily failed for first 5 seconds from the created date of message");
 
-            Logger.LogInformation($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
+            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             return Task.CompletedTask;
         }
     }

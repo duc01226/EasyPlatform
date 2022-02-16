@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -22,7 +23,7 @@ namespace AngularDotnetPlatform.Platform.Common.Hosting
 
                 StartProcess(ApplicationLifetime.ApplicationStopping).Wait(applicationLifetime.ApplicationStopping);
 
-                Logger.LogInformation($"Process of {GetType().Name} Started");
+                Logger.LogInformationIfEnabled($"Process of {GetType().Name} Started");
             });
             ApplicationLifetime.ApplicationStopping.Register(() =>
             {
@@ -46,7 +47,7 @@ namespace AngularDotnetPlatform.Platform.Common.Hosting
         {
             await StopProcess(cancellationToken);
 
-            Logger.LogInformation($"Process of {GetType().Name} Stopped");
+            Logger.LogInformationIfEnabled($"Process of {GetType().Name} Stopped");
         }
 
         public void Dispose()

@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Common.Hosting;
 using AngularDotnetPlatform.Platform.Common.JsonSerialization;
 using AngularDotnetPlatform.Platform.Common.Timing;
@@ -422,28 +423,28 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
     {
         public class Log
         {
-            public static void Error(ILogger logger, Exception ex = null, string message = null, object[] args = null)
+            public static void Error(ILogger logger, Exception ex = null, string message = null)
             {
                 if (ex != null)
-                    logger.LogError(ex, $"{message ?? ex.Message}", args ?? Array.Empty<object>());
+                    logger.LogError(ex, $"{message ?? ex.Message}");
                 else if (message != null)
-                    logger.LogError($"{message}", args);
+                    logger.LogError($"{message}");
             }
 
-            public static void Warning(ILogger logger, Exception ex = null, string message = null, object[] args = null)
+            public static void Warning(ILogger logger, Exception ex = null, string message = null)
             {
                 if (ex != null)
-                    logger.LogWarning(ex, $"{message ?? ex.Message}", args ?? Array.Empty<object>());
+                    logger.LogWarning(ex, $"{message ?? ex.Message}");
                 else if (message != null)
-                    logger.LogWarning($"{message}", args);
+                    logger.LogWarning($"{message}");
             }
 
-            public static void Information(ILogger logger, Exception ex = null, string message = null, object[] args = null)
+            public static void Information(ILogger logger, Exception ex = null, string message = null)
             {
                 if (ex != null)
-                    logger.LogInformation(ex, $"{message ?? ex.Message}", args ?? Array.Empty<object>());
+                    logger.LogInformationIfEnabled(ex, $"{message ?? ex.Message}");
                 else if (message != null)
-                    logger.LogInformation($"{message}", args);
+                    logger.LogInformationIfEnabled($"{message}");
             }
         }
     }

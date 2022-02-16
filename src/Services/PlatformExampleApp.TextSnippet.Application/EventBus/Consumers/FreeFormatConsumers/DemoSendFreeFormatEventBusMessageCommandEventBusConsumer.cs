@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.FreeForm
 
         protected override Task InternalHandleAsync(DemoSendFreeFormatEventBusMessageCommand message, string routingKey)
         {
-            Logger.LogInformation($"Message {nameof(DemoSendFreeFormatEventBusMessageCommand)} has been handled");
+            Logger.LogInformationIfEnabled($"Message {nameof(DemoSendFreeFormatEventBusMessageCommand)} has been handled");
 
             return Task.CompletedTask;
         }
@@ -34,7 +35,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.FreeForm
 
         protected override Task InternalHandleAsync(DemoSendFreeFormatEventBusMessageCommand message, string routingKey)
         {
-            Logger.LogInformation($"Message {nameof(DemoSendFreeFormatEventBusMessageCommand)} has been handled");
+            Logger.LogInformationIfEnabled($"Message {nameof(DemoSendFreeFormatEventBusMessageCommand)} has been handled");
 
             return Task.CompletedTask;
         }

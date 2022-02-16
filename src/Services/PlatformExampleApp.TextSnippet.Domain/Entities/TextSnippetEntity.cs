@@ -2,6 +2,7 @@ using System;
 using AngularDotnetPlatform.Platform.Common.Validators;
 using FluentValidation;
 using AngularDotnetPlatform.Platform.Domain.Entities;
+using PlatformExampleApp.TextSnippet.Domain.ValueObjects;
 
 namespace PlatformExampleApp.TextSnippet.Domain.Entities
 {
@@ -13,6 +14,8 @@ namespace PlatformExampleApp.TextSnippet.Domain.Entities
         public string SnippetText { get; set; }
 
         public string FullText { get; set; }
+
+        public ExampleAddressValueObject Address { get; set; }
 
         public static PlatformSingleValidator<TextSnippetEntity, string> SnippetTextValidator()
         {
@@ -28,6 +31,13 @@ namespace PlatformExampleApp.TextSnippet.Domain.Entities
                 p => p.NotNull().NotEmpty().MaximumLength(FullTextMaxLength));
         }
 
+        public static PlatformSingleValidator<TextSnippetEntity, ExampleAddressValueObject> AddressValidator()
+        {
+            return new PlatformSingleValidator<TextSnippetEntity, ExampleAddressValueObject>(
+                p => p.Address,
+                p => p.SetValidator(ExampleAddressValueObject.GetValidator()));
+        }
+
         public override PlatformCheckUniquenessValidator<TextSnippetEntity> CheckUniquenessValidator()
         {
             return new PlatformCheckUniquenessValidator<TextSnippetEntity>(
@@ -38,7 +48,7 @@ namespace PlatformExampleApp.TextSnippet.Domain.Entities
 
         public override PlatformValidator<TextSnippetEntity> GetValidator()
         {
-            return PlatformValidator<TextSnippetEntity>.Create(SnippetTextValidator(), FullTextValidator());
+            return PlatformValidator<TextSnippetEntity>.Create(SnippetTextValidator(), FullTextValidator(), AddressValidator());
         }
 
         public PlatformValidationResult ValidateSomeSpecificDomainLogic()

@@ -1,0 +1,40 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Common.Validators;
+using AngularDotnetPlatform.Platform.Common.ValueObjects;
+
+namespace PlatformExampleApp.TextSnippet.Domain.ValueObjects
+{
+    public class ExampleAddressValueObject : PlatformValueObject<ExampleAddressValueObject>
+    {
+        public string Number { get; set; }
+        public string Street { get; set; }
+
+        public static PlatformExpressionValidator<ExampleAddressValueObject> NumberValidator()
+        {
+            return new PlatformExpressionValidator<ExampleAddressValueObject>(
+                p => !string.IsNullOrEmpty(p.Number),
+                "Number must be not null or empty");
+        }
+
+        public static PlatformExpressionValidator<ExampleAddressValueObject> StreetValidator()
+        {
+            return new PlatformExpressionValidator<ExampleAddressValueObject>(
+                p => !string.IsNullOrEmpty(p.Street),
+                "Street must be not null or empty");
+        }
+
+        public static PlatformValidator<ExampleAddressValueObject> GetValidator()
+        {
+            return PlatformValidator<ExampleAddressValueObject>.Create(NumberValidator(), StreetValidator());
+        }
+
+        public override PlatformValidationResult Validate()
+        {
+            return GetValidator().Validate(this);
+        }
+    }
+}

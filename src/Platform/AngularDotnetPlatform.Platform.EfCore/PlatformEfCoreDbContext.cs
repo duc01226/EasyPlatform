@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Persistence;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Domain.Entities;
 using AngularDotnetPlatform.Platform.EfCore.EntityConfiguration;
 using AngularDotnetPlatform.Platform.Persistence;
@@ -73,14 +74,14 @@ namespace AngularDotnetPlatform.Platform.EfCore
                         .GetService<ILoggerFactory>()
                         .CreateLogger(migrationExecution.GetType());
 
-                    logger.LogInformation($"Migration {migrationExecution.Name} started.");
+                    logger.LogInformationIfEnabled($"Migration {migrationExecution.Name} started.");
 
                     migrationExecution.Execute((TDbContext)this);
 
                     Set<PlatformDataMigrationHistory>()
                         .Add(new PlatformDataMigrationHistory(migrationExecution.Name));
 
-                    logger.LogInformation($"Migration {migrationExecution.Name} finished.");
+                    logger.LogInformationIfEnabled($"Migration {migrationExecution.Name} finished.");
 
                     base.SaveChangesAsync().Wait();
                 }

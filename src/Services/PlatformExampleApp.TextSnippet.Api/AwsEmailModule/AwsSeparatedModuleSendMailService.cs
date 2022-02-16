@@ -1,3 +1,4 @@
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.Infrastructures;
 
@@ -17,7 +18,7 @@ namespace PlatformExampleApp.TextSnippet.Api.AwsEmailModule
 
         public void SendEmail(string toEmail, string mailHeader, string mailContent)
         {
-            logger.LogInformation($"Demo implemented AwsSeparatedModuleSendMailService. " +
+            logger.LogInformationIfEnabled($"Demo implemented AwsSeparatedModuleSendMailService. " +
                                   $"ToEmail: {toEmail}. Header: {mailHeader}. MailContent: {mailContent}");
         }
     }
