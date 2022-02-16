@@ -41,10 +41,7 @@ namespace PlatformExampleApp.TextSnippet.Domain.Services
                     query,
                     searchText: snippetTextSearch,
                     inFullTextSearchProps: new Expression<Func<TextSnippetEntity, object>>[] { p => p.SnippetText }));
-<<<<<<< HEAD:src/Services/PlatformExampleApp.TextSnippet.Domain/Services/DemoDomainService.cs
             var dispatchEvent = TransferSnippetTextToMultiDbDemoEntityNameDomainEvent.Create(firstFoundTextSnippet.SnippetText, multiDbDemoEntity.Clone());
-=======
->>>>>>> main:src/Services/PlatformExampleApp.TextSnippet.Domain/DomainServices/DemoDomainService.cs
 
             multiDbDemoEntity.Name = firstFoundTextSnippet.SnippetText;
 
