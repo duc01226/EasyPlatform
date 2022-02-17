@@ -19,35 +19,50 @@ namespace PlatformExampleApp.TextSnippet.Domain.Services
     /// </summary>
     public class DemoDomainService : PlatformDomainService
     {
-        private readonly ITextSnippetRepository<TextSnippetEntity> textSnippetRepository;
+        private readonly ITextSnippetRootRepository<TextSnippetEntity> textSnippetRepository;
         private readonly ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;
-        private readonly IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper;
 
         public DemoDomainService(
             IPlatformCqrs cqrs,
-            ITextSnippetRepository<TextSnippetEntity> textSnippetRepository,
-            ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository,
-            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper) : base(cqrs)
+            ITextSnippetRootRepository<TextSnippetEntity> textSnippetRepository,
+            ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository) : base(cqrs)
         {
             this.textSnippetRepository = textSnippetRepository;
             this.multiDbDemoEntityRepository = multiDbDemoEntityRepository;
-            this.fullTextSearchPersistenceHelper = fullTextSearchPersistenceHelper;
         }
 
-        public async Task TransferSnippetTextToMultiDbDemoEntityName(string snippetTextSearch, MultiDbDemoEntity multiDbDemoEntity)
+        public async Task<TransferSnippetTextToMultiDbDemoEntityNameResult> TransferSnippetTextToMultiDbDemoEntityName()
         {
-            var firstFoundTextSnippet = await textSnippetRepository.FirstOrDefaultAsync(
-                query => fullTextSearchPersistenceHelper.Search(
-                    query,
-                    searchText: snippetTextSearch,
-                    inFullTextSearchProps: new Expression<Func<TextSnippetEntity, object>>[] { p => p.SnippetText }));
-            var dispatchEvent = TransferSnippetTextToMultiDbDemoEntityNameDomainEvent.Create(firstFoundTextSnippet.SnippetText, multiDbDemoEntity.Clone());
+            var firstFoundMultiDbDemoEntity = await multiDbDemoEntityRepository.FirstOrDefaultAsync();
+            var firstFoundTextSnippet = await textSnippetRepository.FirstOrDefaultAsync();
+            if (firstFoundMultiDbDemoEntity == null || firstFoundTextSnippet == null)
+                return new TransferSnippetTextToMultiDbDemoEntityNameResult();
 
-            multiDbDemoEntity.Name = firstFoundTextSnippet.SnippetText;
+            var dispatchEvent = TransferSnippetTextToMultiDbDemoEntityNameDomainEvent.Create(
+                firstFoundTextSnippet.SnippetText,
+                firstFoundMultiDbDemoEntity.Clone());
 
-            await multiDbDemoEntityRepository.UpdateAsync(multiDbDemoEntity);
+            firstFoundTextSnippet.DemoDoSomeDomainEntityLogicAction_EncryptSnippetText();
+
+            firstFoundMultiDbDemoEntity.Name = firstFoundTextSnippet.SnippetText;
+
+            await textSnippetRepository.UpdateAsync(firstFoundTextSnippet);
+            await multiDbDemoEntityRepository.UpdateAsync(firstFoundMultiDbDemoEntity);
 
             await SendEvent(dispatchEvent);
+
+            return new TransferSnippetTextToMultiDbDemoEntityNameResult()
+            {
+                UpdatedMultiDbDemoEntity = firstFoundMultiDbDemoEntity,
+                FirstFoundTextSnippet = firstFoundTextSnippet
+            };
+        }
+
+        public class TransferSnippetTextToMultiDbDemoEntityNameResult
+        {
+            public MultiDbDemoEntity UpdatedMultiDbDemoEntity { get; set; }
+
+            public TextSnippetEntity FirstFoundTextSnippet { get; set; }
         }
     }
 }

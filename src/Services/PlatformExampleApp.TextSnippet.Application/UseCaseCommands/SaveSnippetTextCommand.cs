@@ -32,7 +32,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         public TextSnippetEntityDto SavedData { get; set; }
     }
 
-    public class SaveSnippetTextCommandHandler : PlatformCqrsApplicationCommandHandler<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
+    public class SaveSnippetTextCommandHandler : AngularDotnetPlatform.Platform.Application.Cqrs.Commands.PlatformCqrsCommandHandler<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
     {
         private readonly ITextSnippetRootRepository<TextSnippetEntity> textSnippetEntityRepository;
         private readonly ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;

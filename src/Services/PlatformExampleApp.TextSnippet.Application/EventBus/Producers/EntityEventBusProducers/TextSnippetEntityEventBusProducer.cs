@@ -3,7 +3,7 @@ using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
-namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.EntityEventBusProducer
+namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.EntityEventBusProducers
 {
     public class TextSnippetEntityEventBusProducer : PlatformCqrsEntityEventBusProducer<TextSnippetEntity>
     {

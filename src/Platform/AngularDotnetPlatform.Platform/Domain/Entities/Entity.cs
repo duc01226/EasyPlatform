@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Text.Json;
 using AngularDotnetPlatform.Platform.Common.Validators;
 using FluentValidation.Results;
@@ -21,15 +22,26 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
         PlatformValidationResult Validate();
     }
 
+    public interface ISupportBusinessActionEventsEntity
+    {
+        /// <summary>
+        /// Return list BusinessActionEvents. The key is BusinessAction name. The Value is BusinessActionPayload.
+        /// </summary>
+        /// <returns></returns>
+        List<KeyValuePair<string, object>> GetBusinessActionEvents();
+    }
+
     public interface IValidatableEntity<TEntity, TPrimaryKey> : IValidatableEntity, IEntity<TPrimaryKey>
         where TEntity : IEntity<TPrimaryKey>
     {
         PlatformCheckUniquenessValidator<TEntity> CheckUniquenessValidator();
     }
 
-    public abstract class Entity<TEntity, TPrimaryKey> : IValidatableEntity<TEntity, TPrimaryKey>
+    public abstract class Entity<TEntity, TPrimaryKey> : IValidatableEntity<TEntity, TPrimaryKey>, ISupportBusinessActionEventsEntity
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
+        protected readonly List<KeyValuePair<string, object>> BusinessActionEvents = new List<KeyValuePair<string, object>>();
+
         public TPrimaryKey Id { get; set; }
 
         public virtual TEntity Clone()
@@ -58,6 +70,17 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
         public virtual PlatformCheckUniquenessValidator<TEntity> CheckUniquenessValidator()
         {
             return null;
+        }
+
+        public List<KeyValuePair<string, object>> GetBusinessActionEvents()
+        {
+            return BusinessActionEvents;
+        }
+
+        protected TEntity AddBusinessActionEvents(string eventActionName, object eventActionPayload)
+        {
+            BusinessActionEvents.Add(new KeyValuePair<string, object>(eventActionName, eventActionPayload));
+            return (TEntity)this;
         }
     }
 

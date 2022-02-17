@@ -10,7 +10,7 @@ using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents
 {
-    public class ClearCacheOnSaveSnippetTextCommandEventHandler : PlatformCqrsApplicationCommandEventHandler<SaveSnippetTextCommand>
+    public class ClearCacheOnSaveSnippetTextCommandEventHandler : PlatformCqrsCommandEventHandler<SaveSnippetTextCommand>
     {
         private readonly IPlatformCacheRepositoryProvider cacheRepositoryProvider;
 

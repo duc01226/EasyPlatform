@@ -26,21 +26,17 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
     }
 
     public class DemoScheduleBackgroundJobManuallyCommandHandler :
-        PlatformCqrsApplicationCommandHandler<DemoScheduleBackgroundJobManuallyCommand, DemoScheduleBackgroundJobManuallyCommandResult>
+        AngularDotnetPlatform.Platform.Application.Cqrs.Commands.PlatformCqrsCommandHandler<DemoScheduleBackgroundJobManuallyCommand, DemoScheduleBackgroundJobManuallyCommandResult>
     {
         private readonly IPlatformBackgroundJobScheduler backgroundJobScheduler;
-        // Demo use demoDomainService
-        private readonly DemoDomainService demoDomainService;
 
         public DemoScheduleBackgroundJobManuallyCommandHandler(
             IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager,
             IPlatformCqrs cqrs,
-            IPlatformBackgroundJobScheduler backgroundJobScheduler,
-            DemoDomainService demoDomainService) : base(userContext, unitOfWorkManager, cqrs)
+            IPlatformBackgroundJobScheduler backgroundJobScheduler) : base(userContext, unitOfWorkManager, cqrs)
         {
             this.backgroundJobScheduler = backgroundJobScheduler;
-            this.demoDomainService = demoDomainService;
         }
 
         protected override async Task<DemoScheduleBackgroundJobManuallyCommandResult> HandleAsync(

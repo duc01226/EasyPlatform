@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using AngularDotnetPlatform.Platform.Application.Cqrs.Events;
 using AngularDotnetPlatform.Platform.Infrastructures.Caching;
 using AngularDotnetPlatform.Platform.Common.Utils;
 using AngularDotnetPlatform.Platform.Domain.Events;

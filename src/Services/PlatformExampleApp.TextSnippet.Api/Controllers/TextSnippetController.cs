@@ -69,6 +69,14 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
                 });
         }
 
+        [HttpGet]
+        [Route("DemoUseDemoDomainServiceCommand")]
+        public async Task<DemoUseDemoDomainServiceCommandResult> DemoUseDemoDomainServiceCommand()
+        {
+            return await Cqrs.SendCommand(
+                new DemoUseDemoDomainServiceCommand());
+        }
+
         [HttpPost]
         [Route("demoSendFreeFormatEventBusMessageCommand")]
         public async Task<DemoSendFreeFormatEventBusMessageCommandResult> DemoSendFreeFormatEventBusMessageCommand(

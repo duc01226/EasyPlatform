@@ -7,13 +7,13 @@ using MediatR;
 
 namespace AngularDotnetPlatform.Platform.Application.Cqrs.Queries
 {
-    public abstract class PlatformCqrsApplicationQueryHandler<TQuery, TResult> : PlatformCqrsApplicationRequestHandler<TQuery>, IRequestHandler<TQuery, TResult>
+    public abstract class PlatformCqrsQueryHandler<TQuery, TResult> : PlatformCqrsApplicationRequestHandler<TQuery>, IRequestHandler<TQuery, TResult>
         where TQuery : PlatformCqrsQuery<TResult>
         where TResult : PlatformCqrsQueryResult
     {
         protected readonly IUnitOfWorkManager UnitOfWorkManager;
 
-        public PlatformCqrsApplicationQueryHandler(
+        public PlatformCqrsQueryHandler(
             IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager) : base(userContext)
         {

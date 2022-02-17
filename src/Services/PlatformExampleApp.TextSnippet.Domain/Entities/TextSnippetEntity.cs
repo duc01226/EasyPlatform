@@ -1,4 +1,6 @@
 using System;
+using System.Security.Cryptography;
+using System.Text;
 using AngularDotnetPlatform.Platform.Common.Validators;
 using FluentValidation;
 using AngularDotnetPlatform.Platform.Domain.Entities;
@@ -54,6 +56,38 @@ namespace PlatformExampleApp.TextSnippet.Domain.Entities
         public PlatformValidationResult ValidateSomeSpecificDomainLogic()
         {
             return PlatformValidationResult.ValidIf(validCondition: true, "Some example domain logic violated message.");
+        }
+
+        public TextSnippetEntity DemoDoSomeDomainEntityLogicAction_EncryptSnippetText()
+        {
+            var originalSnippetText = SnippetText;
+
+            using (var sha = SHA256.Create())
+            {
+                var bytes = Encoding.UTF8.GetBytes(SnippetText);
+                var hash = sha.ComputeHash(bytes);
+
+                SnippetText = Convert.ToBase64String(hash);
+            }
+
+            AddBusinessActionEvents(
+                eventActionName: EncryptSnippetTextPayload.ForEventActionName,
+                new EncryptSnippetTextPayload
+                {
+                    OriginalSnippetText = originalSnippetText,
+                    EncryptedSnippetText = SnippetText
+                });
+
+            return this;
+        }
+
+        public class EncryptSnippetTextPayload
+        {
+            public const string ForEventActionName = "EncryptSnippetText";
+
+            public string OriginalSnippetText { get; set; }
+
+            public string EncryptedSnippetText { get; set; }
         }
     }
 }

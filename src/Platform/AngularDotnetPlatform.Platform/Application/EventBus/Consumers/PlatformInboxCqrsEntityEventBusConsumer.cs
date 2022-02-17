@@ -6,10 +6,22 @@ using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
 {
-    /// <inheritdoc cref="IPlatformInboxEventBusConsumer{TMessagePayload}"/>
     public abstract class PlatformInboxCqrsEntityEventBusConsumer<TEntity>
         : PlatformInboxEventBusConsumer<PlatformCqrsEntityEvent<TEntity>>, IPlatformCqrsEntityEventBusConsumer<TEntity>
         where TEntity : class, IEntity, new()
+    {
+        protected PlatformInboxCqrsEntityEventBusConsumer(
+            ILoggerFactory loggerFactory,
+            IUnitOfWorkManager uowManager,
+            IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager, inboxEventBusMessageRepo)
+        {
+        }
+    }
+
+    public abstract class PlatformInboxCqrsEntityEventBusConsumer<TEntity, TBusinessActionPayload>
+        : PlatformInboxEventBusConsumer<PlatformCqrsEntityEvent<TEntity, TBusinessActionPayload>>, IPlatformCqrsEntityEventBusConsumer<TEntity, TBusinessActionPayload>
+        where TEntity : class, IEntity, new()
+        where TBusinessActionPayload : class, new()
     {
         protected PlatformInboxCqrsEntityEventBusConsumer(
             ILoggerFactory loggerFactory,

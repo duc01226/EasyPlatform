@@ -4,14 +4,14 @@ using AngularDotnetPlatform.Platform.Common.Cqrs.Events;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using MediatR;
 
-namespace AngularDotnetPlatform.Platform.Application.Cqrs.Events
+namespace AngularDotnetPlatform.Platform.Application.Cqrs
 {
-    public abstract class PlatformCqrsApplicationEventHandler<TEvent> : INotificationHandler<TEvent>
+    public abstract class PlatformCqrsEventHandler<TEvent> : INotificationHandler<TEvent>
         where TEvent : PlatformCqrsEvent, new()
     {
         protected readonly IUnitOfWorkManager UnitOfWorkManager;
 
-        public PlatformCqrsApplicationEventHandler(IUnitOfWorkManager unitOfWorkManager)
+        public PlatformCqrsEventHandler(IUnitOfWorkManager unitOfWorkManager)
         {
             UnitOfWorkManager = unitOfWorkManager;
         }

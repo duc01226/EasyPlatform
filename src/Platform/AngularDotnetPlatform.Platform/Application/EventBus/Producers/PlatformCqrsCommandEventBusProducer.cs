@@ -23,7 +23,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         public override string MessageType => PlatformCqrsCommandEvent.EventNameValue<TCommand>();
     }
 
-    public abstract class PlatformCqrsCommandEventBusProducer<TCommand> : PlatformCqrsApplicationCommandEventHandler<TCommand>, IPlatformCqrsEventBusProducer<PlatformCqrsCommandEvent<TCommand>>
+    public abstract class PlatformCqrsCommandEventBusProducer<TCommand> : PlatformCqrsCommandEventHandler<TCommand>, IPlatformCqrsEventBusProducer<PlatformCqrsCommandEvent<TCommand>>
         where TCommand : class, IPlatformCqrsCommand, new()
     {
         protected readonly IPlatformApplicationEventBusProducer ApplicationEventBusProducer;

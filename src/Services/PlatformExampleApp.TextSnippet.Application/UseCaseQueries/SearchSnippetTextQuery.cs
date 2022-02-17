@@ -32,7 +32,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseQueries
         }
     }
 
-    public class SearchSnippetTextQueryHandler : PlatformCqrsApplicationQueryHandler<SearchSnippetTextQuery, SearchSnippetTextQueryResult>
+    public class SearchSnippetTextQueryHandler : AngularDotnetPlatform.Platform.Application.Cqrs.Queries.PlatformCqrsQueryHandler<SearchSnippetTextQuery, SearchSnippetTextQueryResult>
     {
         // If get default repository/unitOfWork will get from the latest registered module. See TextSnippetApplicationModule.
         private readonly ITextSnippetRepository<TextSnippetEntity> repository;
