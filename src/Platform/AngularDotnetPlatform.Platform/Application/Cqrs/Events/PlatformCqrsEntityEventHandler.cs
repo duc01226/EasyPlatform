@@ -11,13 +11,4 @@ namespace AngularDotnetPlatform.Platform.Application.Cqrs.Events
         {
         }
     }
-
-    public abstract class PlatformCqrsEntityEventHandler<TEntity, TBusinessActionPayload> : PlatformCqrsEventHandler<PlatformCqrsEntityEvent<TEntity, TBusinessActionPayload>>
-        where TEntity : class, IEntity, new()
-        where TBusinessActionPayload : class, new()
-    {
-        protected PlatformCqrsEntityEventHandler(IUnitOfWorkManager unitOfWorkManager) : base(unitOfWorkManager)
-        {
-        }
-    }
 }

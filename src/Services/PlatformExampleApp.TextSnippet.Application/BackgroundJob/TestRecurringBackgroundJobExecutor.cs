@@ -30,8 +30,7 @@ namespace PlatformExampleApp.TextSnippet.Application.BackgroundJob
                     Id = Guid.Parse("76e0f523-ee53-4124-b109-13dedaa4618d"),
                     SnippetText = "TestRecurringBackgroundJob " + Clock.Now.ToShortTimeString(),
                     FullText = "Test of recurring job upsert this entity"
-                },
-                forBusinessAction: "TestRecurringBackgroundJob");
+                });
         }
     }
 }

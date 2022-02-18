@@ -7,6 +7,7 @@ using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Common.JsonSerialization;
+using AngularDotnetPlatform.Platform.Domain.Events;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
@@ -22,7 +23,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.DomainEv
     /// <br/>
     /// <inheritdoc cref="PlatformInboxEventBusConsumer{TMessagePayload}"/>
     /// </summary>
-    [PlatformEventBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "TransferSnippetTextToMultiDbDemoEntityNameDomainEvent")]
+    [PlatformEventBusConsumer(PlatformCqrsDomainEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "TransferSnippetTextToMultiDbDemoEntityNameDomainEvent")]
     public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusConsumer : PlatformInboxEventBusConsumer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
     {
         public TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusConsumer(
