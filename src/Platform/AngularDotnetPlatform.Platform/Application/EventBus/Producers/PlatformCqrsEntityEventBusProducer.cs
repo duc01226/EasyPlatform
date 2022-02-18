@@ -22,7 +22,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         public override string MessageType => PlatformCqrsEntityEvent.EventNameValue<TEntity>();
     }
 
-    public abstract class PlatformCqrsEntityEventBusProducer<TEntity> : PlatformCqrsEntityEventHandler<TEntity>, IPlatformCqrsEventBusProducer<PlatformCqrsEntityEvent<TEntity>>
+    public abstract class PlatformCqrsEntityEventBusProducer<TEntity> : PlatformCqrsEntityEventApplicationHandler<TEntity>, IPlatformCqrsEventBusProducer<PlatformCqrsEntityEvent<TEntity>>
         where TEntity : class, IEntity, new()
     {
         protected readonly IPlatformApplicationEventBusProducer ApplicationEventBusProducer;

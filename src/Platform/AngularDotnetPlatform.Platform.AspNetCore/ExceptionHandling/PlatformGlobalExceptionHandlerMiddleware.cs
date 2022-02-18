@@ -29,7 +29,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
             ILogger<PlatformGlobalExceptionHandlerMiddleware> logger,
             IConfiguration configuration) : base(next)
         {
-            this.Logger = logger;
+            Logger = logger;
             developerExceptionEnabled = configuration.GetValue<bool>("DeveloperExceptionEnabled");
         }
 

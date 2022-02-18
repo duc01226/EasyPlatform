@@ -29,7 +29,7 @@ namespace AngularDotnetPlatform.Platform.RedisCache
             IPlatformApplicationSettingContext applicationSettingContext) : base(serviceProvider)
         {
             this.applicationSettingContext = applicationSettingContext;
-            this.redisCache = new Microsoft.Extensions.Caching.StackExchangeRedis.RedisCache(optionsAccessor);
+            redisCache = new Microsoft.Extensions.Caching.StackExchangeRedis.RedisCache(optionsAccessor);
         }
 
         public override T Get<T>(PlatformCacheKey cacheKey)

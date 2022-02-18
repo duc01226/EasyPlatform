@@ -23,19 +23,19 @@ namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob
 
         public string Schedule(Expression<Action> methodCall, TimeSpan? delay = null)
         {
-            return Hangfire.BackgroundJob.Schedule(methodCall, delay ?? TimeSpan.Zero);
+            return BackgroundJob.Schedule(methodCall, delay ?? TimeSpan.Zero);
         }
 
         public string Schedule<TJobExecutor>(DateTimeOffset enqueueAt) where TJobExecutor : IPlatformBackgroundJobExecutor
         {
-            return Hangfire.BackgroundJob.Schedule(() => ExecuteBackgroundJob<TJobExecutor>(), enqueueAt);
+            return BackgroundJob.Schedule(() => ExecuteBackgroundJob<TJobExecutor>(), enqueueAt);
         }
 
         public string Schedule<TJobExecutor, TJobExecutorParam>(
             DateTimeOffset enqueueAt,
             TJobExecutorParam jobExecutorParam) where TJobExecutor : IPlatformBackgroundJobExecutor<TJobExecutorParam> where TJobExecutorParam : class
         {
-            return Hangfire.BackgroundJob.Schedule(
+            return BackgroundJob.Schedule(
                 () => ExecuteBackgroundJob(
                     typeof(TJobExecutor),
                     jobExecutorParam != null ? JsonSerializer.Serialize(jobExecutorParam, null) : null),
@@ -44,12 +44,12 @@ namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob
 
         public string Schedule(Expression<Action> methodCall, DateTimeOffset enqueueAt)
         {
-            return Hangfire.BackgroundJob.Schedule(methodCall, enqueueAt);
+            return BackgroundJob.Schedule(methodCall, enqueueAt);
         }
 
         public string Schedule<TJobExecutor>(TimeSpan? delay = null) where TJobExecutor : IPlatformBackgroundJobExecutor
         {
-            return Hangfire.BackgroundJob.Schedule(() => ExecuteBackgroundJob<TJobExecutor>(), delay ?? TimeSpan.Zero);
+            return BackgroundJob.Schedule(() => ExecuteBackgroundJob<TJobExecutor>(), delay ?? TimeSpan.Zero);
         }
 
         public string Schedule<TJobExecutor, TJobExecutorParam>(
@@ -57,7 +57,7 @@ namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob
             TimeSpan? delay = null)
             where TJobExecutor : IPlatformBackgroundJobExecutor<TJobExecutorParam> where TJobExecutorParam : class
         {
-            return Hangfire.BackgroundJob.Schedule(
+            return BackgroundJob.Schedule(
                 () => ExecuteBackgroundJob(
                     typeof(TJobExecutor),
                     jobExecutorParam != null ? JsonSerializer.Serialize(jobExecutorParam, null) : null),

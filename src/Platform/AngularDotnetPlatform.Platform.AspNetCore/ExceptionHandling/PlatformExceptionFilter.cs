@@ -20,7 +20,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
 
         public PlatformExceptionFilter(ILogger<PlatformExceptionFilter> logger, IConfiguration configuration)
         {
-            this.Logger = logger;
+            Logger = logger;
             developerExceptionEnabled = configuration.GetValue<bool>("DeveloperExceptionEnabled");
         }
 

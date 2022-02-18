@@ -10,7 +10,7 @@ using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents
 {
-    public class ClearCacheOnSaveSnippetTextEntityEventHandler : PlatformCqrsEntityEventHandler<TextSnippetEntity>
+    public class ClearCacheOnSaveSnippetTextEntityEventHandler : PlatformCqrsEntityEventApplicationHandler<TextSnippetEntity>
     {
         private readonly IPlatformCacheRepositoryProvider cacheRepositoryProvider;
 

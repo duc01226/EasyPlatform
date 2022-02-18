@@ -8,14 +8,14 @@ using MediatR;
 
 namespace AngularDotnetPlatform.Platform.Application.Cqrs.Commands
 {
-    public abstract class PlatformCqrsCommandHandler<TCommand, TResult> : PlatformCqrsApplicationRequestHandler<TCommand>, IRequestHandler<TCommand, TResult>
+    public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> : PlatformCqrsRequestApplicationHandler<TCommand>, IRequestHandler<TCommand, TResult>
         where TCommand : PlatformCqrsCommand<TResult>, new()
         where TResult : PlatformCqrsCommandResult, new()
     {
         protected readonly IUnitOfWorkManager UnitOfWorkManager;
         protected readonly IPlatformCqrs Cqrs;
 
-        public PlatformCqrsCommandHandler(
+        public PlatformCqrsCommandApplicationHandler(
             IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager,
             IPlatformCqrs cqrs) : base(userContext)
@@ -59,7 +59,7 @@ namespace AngularDotnetPlatform.Platform.Application.Cqrs.Commands
         }
     }
 
-    public abstract class PlatformCqrsCommandHandler<TCommand> : PlatformCqrsCommandHandler<TCommand, PlatformCqrsCommandResult>
+    public abstract class PlatformCqrsCommandHandler<TCommand> : PlatformCqrsCommandApplicationHandler<TCommand, PlatformCqrsCommandResult>
         where TCommand : PlatformCqrsCommand, new()
     {
         public PlatformCqrsCommandHandler(

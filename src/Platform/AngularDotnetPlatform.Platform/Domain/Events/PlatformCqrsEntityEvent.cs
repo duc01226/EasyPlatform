@@ -20,7 +20,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Events
 
     /// <summary>
     /// This is class of events which is dispatched when an entity is created/updated/deleted.
-    /// Implement and <see cref="Application.Cqrs.PlatformCqrsEventHandler{TEvent}"/> to handle any events.
+    /// Implement and <see cref="Application.Cqrs.PlatformCqrsEventApplicationHandler{TEvent}"/> to handle any events.
     /// </summary>
     public class PlatformCqrsEntityEvent<TEntity> : PlatformCqrsEntityEvent
         where TEntity : class, IEntity, new()

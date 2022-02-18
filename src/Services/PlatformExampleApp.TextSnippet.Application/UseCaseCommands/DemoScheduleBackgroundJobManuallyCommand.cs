@@ -26,7 +26,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
     }
 
     public class DemoScheduleBackgroundJobManuallyCommandHandler :
-        AngularDotnetPlatform.Platform.Application.Cqrs.Commands.PlatformCqrsCommandHandler<DemoScheduleBackgroundJobManuallyCommand, DemoScheduleBackgroundJobManuallyCommandResult>
+        PlatformCqrsCommandApplicationHandler<DemoScheduleBackgroundJobManuallyCommand, DemoScheduleBackgroundJobManuallyCommandResult>
     {
         private readonly IPlatformBackgroundJobScheduler backgroundJobScheduler;
 

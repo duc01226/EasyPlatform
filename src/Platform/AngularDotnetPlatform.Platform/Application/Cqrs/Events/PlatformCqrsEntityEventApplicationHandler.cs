@@ -4,10 +4,10 @@ using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
 namespace AngularDotnetPlatform.Platform.Application.Cqrs.Events
 {
-    public abstract class PlatformCqrsEntityEventHandler<TEntity> : PlatformCqrsEventHandler<PlatformCqrsEntityEvent<TEntity>>
+    public abstract class PlatformCqrsEntityEventApplicationHandler<TEntity> : PlatformCqrsEventApplicationHandler<PlatformCqrsEntityEvent<TEntity>>
         where TEntity : class, IEntity, new()
     {
-        protected PlatformCqrsEntityEventHandler(IUnitOfWorkManager unitOfWorkManager) : base(unitOfWorkManager)
+        protected PlatformCqrsEntityEventApplicationHandler(IUnitOfWorkManager unitOfWorkManager) : base(unitOfWorkManager)
         {
         }
     }

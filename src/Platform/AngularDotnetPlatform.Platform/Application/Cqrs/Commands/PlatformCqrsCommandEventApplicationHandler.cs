@@ -4,10 +4,10 @@ using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
 namespace AngularDotnetPlatform.Platform.Application.Cqrs.Commands
 {
-    public abstract class PlatformCqrsCommandEventHandler<TCommand> : PlatformCqrsEventHandler<PlatformCqrsCommandEvent<TCommand>>
+    public abstract class PlatformCqrsCommandEventApplicationHandler<TCommand> : PlatformCqrsEventApplicationHandler<PlatformCqrsCommandEvent<TCommand>>
         where TCommand : class, IPlatformCqrsCommand, new()
     {
-        protected PlatformCqrsCommandEventHandler(IUnitOfWorkManager unitOfWorkManager) : base(unitOfWorkManager)
+        protected PlatformCqrsCommandEventApplicationHandler(IUnitOfWorkManager unitOfWorkManager) : base(unitOfWorkManager)
         {
         }
     }
