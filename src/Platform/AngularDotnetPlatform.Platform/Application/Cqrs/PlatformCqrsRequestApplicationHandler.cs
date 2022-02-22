@@ -7,11 +7,11 @@ using AngularDotnetPlatform.Platform.Common.Validators;
 
 namespace AngularDotnetPlatform.Platform.Application.Cqrs
 {
-    public abstract class PlatformCqrsApplicationRequestHandler<TRequest> : PlatformCqrsRequestHandler<TRequest> where TRequest : IPlatformCqrsRequest
+    public abstract class PlatformCqrsRequestApplicationHandler<TRequest> : PlatformCqrsRequestHandler<TRequest> where TRequest : IPlatformCqrsRequest
     {
         protected readonly IPlatformApplicationUserContextAccessor UserContext;
 
-        public PlatformCqrsApplicationRequestHandler(IPlatformApplicationUserContextAccessor userContext)
+        public PlatformCqrsRequestApplicationHandler(IPlatformApplicationUserContextAccessor userContext)
         {
             UserContext = userContext;
         }

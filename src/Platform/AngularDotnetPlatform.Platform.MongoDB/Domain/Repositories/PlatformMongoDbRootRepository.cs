@@ -25,27 +25,26 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         }
 
         public async Task<TEntity> CreateAsync(
-            TEntity entity, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
+            TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             await EnsureEntityValid(entity, cancellationToken);
 
             await Table.InsertOneAsync(entity, null, cancellationToken);
             if (!dismissSendEvent)
-                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Created, forBusinessAction), cancellationToken);
+                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Created), cancellationToken);
             return entity;
         }
 
         public Task<TEntity> CreateOrUpdateAsync(
-            TEntity entity, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
+            TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
-            return CreateOrUpdateAsync(entity, null, dismissSendEvent, forBusinessAction, cancellationToken);
+            return CreateOrUpdateAsync(entity, null, dismissSendEvent, cancellationToken);
         }
 
         public Task<TEntity> CreateOrUpdateAsync(
             TEntity entity,
             Expression<Func<TEntity, bool>> customCheckExistingPredicate = null,
             bool dismissSendEvent = false,
-            string forBusinessAction = null,
             CancellationToken cancellationToken = default)
         {
             var existingEntity = customCheckExistingPredicate != null
@@ -54,16 +53,16 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             if (existingEntity != null)
             {
                 entity.Id = existingEntity.Id;
-                return UpdateAsync(entity, dismissSendEvent, forBusinessAction, cancellationToken);
+                return UpdateAsync(entity, dismissSendEvent, cancellationToken);
             }
             else
             {
-                return CreateAsync(entity, dismissSendEvent, forBusinessAction, cancellationToken);
+                return CreateAsync(entity, dismissSendEvent, cancellationToken);
             }
         }
 
         public async Task<List<TEntity>> CreateOrUpdateManyAsync(
-            List<TEntity> entities, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
+            List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             var entityIds = entities.Select(p => p.Id);
 
@@ -78,40 +77,40 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             var toCreateEntities = entities.Where(p => !existingEntityIds.Contains(p.Id)).ToList();
             var toUpdateEntities = entities.Where(p => existingEntityIds.Contains(p.Id)).ToList();
 
-            await CreateManyAsync(toCreateEntities, dismissSendEvent, forBusinessAction, cancellationToken);
-            await UpdateManyAsync(toUpdateEntities, dismissSendEvent, forBusinessAction, cancellationToken);
+            await CreateManyAsync(toCreateEntities, dismissSendEvent, cancellationToken);
+            await UpdateManyAsync(toUpdateEntities, dismissSendEvent, cancellationToken);
 
             return entities;
         }
 
         public async Task<TEntity> UpdateAsync(
-            TEntity entity, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
+            TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             await EnsureEntityValid(entity, cancellationToken);
 
             var result = await Table.ReplaceOneAsync(p => p.Id.Equals(entity.Id), entity, new ReplaceOptions { IsUpsert = false }, cancellationToken);
             if (result.ModifiedCount > 0 && !dismissSendEvent)
-                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Updated, forBusinessAction), cancellationToken);
+                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Updated), cancellationToken);
             return entity;
         }
 
         public async Task DeleteAsync(
-            TPrimaryKey entityId, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
+            TPrimaryKey entityId, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             var entity = await Table.Find(p => p.Id.Equals(entityId)).FirstAsync(cancellationToken);
-            await DeleteAsync(entity, dismissSendEvent, forBusinessAction, cancellationToken);
+            await DeleteAsync(entity, dismissSendEvent, cancellationToken);
         }
 
         public async Task DeleteAsync(
-            TEntity entity, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
+            TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             var result = await Table.DeleteOneAsync(p => p.Id.Equals(entity.Id), null, cancellationToken);
             if (result.DeletedCount > 0 && !dismissSendEvent)
-                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Deleted, forBusinessAction), cancellationToken);
+                await Cqrs.SendEvent(new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Deleted), cancellationToken);
         }
 
         public async Task<List<TEntity>> CreateManyAsync(
-            List<TEntity> entities, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
+            List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             await EnsureEntitiesValid(entities, cancellationToken);
 
@@ -123,14 +122,14 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvents(
-                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Created, forBusinessAction)),
+                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Created)),
                     cancellationToken);
             }
 
             return entities;
         }
 
-        public async Task<List<TEntity>> UpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> UpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             await EnsureEntitiesValid(entities, cancellationToken);
 
@@ -148,7 +147,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
                 {
                     var updatedEntities = entities.Where(p => idToUpdateEntityResultMap[p.Id].ModifiedCount > 0);
                     await Cqrs.SendEvents(
-                        updatedEntities.Select(entity => new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Updated, forBusinessAction)),
+                        updatedEntities.Select(entity => new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Updated)),
                         cancellationToken);
                 }
             }
@@ -156,14 +155,14 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             return entities;
         }
 
-        public async Task<List<TEntity>> DeleteManyAsync(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> DeleteManyAsync(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             var entities = await DbContext.GetAllAsync(GetAllQuery().Where(p => entityIds.Contains(p.Id)), cancellationToken);
 
-            return await DeleteManyAsync(entities.ToList(), dismissSendEvent, forBusinessAction, cancellationToken);
+            return await DeleteManyAsync(entities.ToList(), dismissSendEvent, cancellationToken);
         }
 
-        public async Task<List<TEntity>> DeleteManyAsync(List<TEntity> entities, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> DeleteManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             var ids = entities.Select(p => p.Id).ToList();
             await Table.DeleteManyAsync(p => ids.Contains(p.Id), cancellationToken);
@@ -171,16 +170,16 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvents(
-                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Deleted, forBusinessAction)),
+                    entities.Select(entity => new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Deleted)),
                     cancellationToken);
             }
 
             return await Task.FromResult(entities);
         }
 
-        public async Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default)
+        public async Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
-            return await DeleteManyAsync(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, forBusinessAction, cancellationToken);
+            return await DeleteManyAsync(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, cancellationToken);
         }
     }
 

@@ -36,33 +36,33 @@ namespace AngularDotnetPlatform.Platform.Domain.Repositories
     public interface IPlatformBasicRootRepository<TEntity, TPrimaryKey> : IPlatformBasicRepository<TEntity, TPrimaryKey>
         where TEntity : class, IRootEntity<TPrimaryKey>, new()
     {
-        Task<TEntity> CreateAsync(TEntity entity, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task<TEntity> CreateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<TEntity> CreateOrUpdateAsync(TEntity entity, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task<TEntity> CreateOrUpdateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<List<TEntity>> CreateOrUpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> CreateOrUpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<TEntity> UpdateAsync(TEntity entity, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task<TEntity> UpdateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task DeleteAsync(TPrimaryKey entityId, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task DeleteAsync(TPrimaryKey entityId, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task DeleteAsync(TEntity entity, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task DeleteAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<List<TEntity>> CreateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> CreateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<List<TEntity>> UpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> UpdateManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<List<TEntity>> DeleteManyAsync(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> DeleteManyAsync(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<List<TEntity>> DeleteManyAsync(List<TEntity> entities, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> DeleteManyAsync(List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
 
-        Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task<List<TEntity>> DeleteManyAsync(Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
     }
 
     public interface IPlatformRootRepository<TEntity, TPrimaryKey> : IPlatformBasicRootRepository<TEntity, TPrimaryKey>, IPlatformRepository<TEntity, TPrimaryKey>
         where TEntity : class, IRootEntity<TPrimaryKey>, new()
     {
-        Task<TEntity> CreateOrUpdateAsync(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, bool dismissSendEvent = false, string forBusinessAction = null, CancellationToken cancellationToken = default);
+        Task<TEntity> CreateOrUpdateAsync(TEntity entity, Expression<Func<TEntity, bool>> customCheckExistingPredicate = null, bool dismissSendEvent = false, CancellationToken cancellationToken = default);
     }
 
     public interface IPlatformQueryableRepository<TEntity, in TPrimaryKey> : IPlatformRepository<TEntity, TPrimaryKey>

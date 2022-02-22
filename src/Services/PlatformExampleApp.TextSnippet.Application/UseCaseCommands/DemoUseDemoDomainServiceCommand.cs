@@ -20,7 +20,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
     }
 
     public class DemoUseDemoDomainServiceCommandHandler :
-        AngularDotnetPlatform.Platform.Application.Cqrs.Commands.PlatformCqrsCommandHandler<DemoUseDemoDomainServiceCommand, DemoUseDemoDomainServiceCommandResult>
+        PlatformCqrsCommandApplicationHandler<DemoUseDemoDomainServiceCommand, DemoUseDemoDomainServiceCommandResult>
     {
         // Demo use demoDomainService
         private readonly DemoDomainService demoDomainService;

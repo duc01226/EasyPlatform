@@ -21,7 +21,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         public override string MessageType => typeof(TDomainEvent).Name;
     }
 
-    public abstract class PlatformCqrsDomainEventBusProducer<TDomainEvent> : PlatformCqrsDomainEventHandler<TDomainEvent>, IPlatformCqrsEventBusProducer<TDomainEvent>
+    public abstract class PlatformCqrsDomainEventBusProducer<TDomainEvent> : PlatformCqrsDomainEventApplicationHandler<TDomainEvent>, IPlatformCqrsEventBusProducer<TDomainEvent>
         where TDomainEvent : PlatformCqrsDomainEvent, new()
     {
         protected readonly IPlatformApplicationEventBusProducer ApplicationEventBusProducer;

@@ -40,9 +40,18 @@ namespace AngularDotnetPlatform.Platform.Common.JsonSerialization
                 result.Converters.Add(new JsonStringEnumConverter());
             result.Converters.Add(new PlatformObjectJsonConverter());
             result.Converters.Add(new PlatformDynamicJsonConverter());
-            if (customConverters != null)
-                customConverters.ForEach(p => result.Converters.Add(p));
+            customConverters?.ForEach(p => result.Converters.Add(p));
             return result;
+        }
+
+        public static string Serialize(object value)
+        {
+            return JsonSerializer.Serialize(value, CurrentOptions.Value);
+        }
+
+        public static T Deserialize<T>(string jsonValue)
+        {
+            return JsonSerializer.Deserialize<T>(jsonValue, CurrentOptions.Value);
         }
     }
 }

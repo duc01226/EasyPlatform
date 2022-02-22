@@ -20,7 +20,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
     }
 
     public class DemoSendFreeFormatEventBusMessageCommandHandler :
-        AngularDotnetPlatform.Platform.Application.Cqrs.Commands.PlatformCqrsCommandHandler<DemoSendFreeFormatEventBusMessageCommand, DemoSendFreeFormatEventBusMessageCommandResult>
+        PlatformCqrsCommandApplicationHandler<DemoSendFreeFormatEventBusMessageCommand, DemoSendFreeFormatEventBusMessageCommandResult>
     {
         private readonly IPlatformEventBusProducer eventBusProducer;
 

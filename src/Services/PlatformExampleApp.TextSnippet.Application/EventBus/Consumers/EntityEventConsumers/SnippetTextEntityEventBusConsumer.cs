@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
@@ -29,7 +30,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.EntityEv
 
         protected override Task InternalHandleAsync(PlatformEventBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message)
         {
-            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message {(message.Payload.BusinessAction != null ? $"for Business Action [{message.Payload.BusinessAction}]" : "")}.\r\n" +
+            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message {(message.Payload.BusinessActionEvents.Any() ? $"for Business Actions [{string.Join(", ", message.Payload.BusinessActionEvents.Select(p => p.Key))}]" : "")}.\r\n" +
                                   $"Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             return Task.CompletedTask;
         }

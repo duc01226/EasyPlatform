@@ -119,9 +119,13 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             try
             {
                 channel.BasicPublish(ExchangeProvider.GetExchangeName(routingKey), routingKey, null, body);
+                ChannelPool.Return(channel);
             }
             catch (AlreadyClosedException alreadyClosedException)
             {
+                channel.Close();
+                channel.Dispose();
+
                 if (alreadyClosedException.ShutdownReason.ReplyCode == 404)
                 {
                     Logger.LogWarning($"Tried to send a message with routing key {routingKey} from {GetType().FullName} " +
@@ -132,10 +136,6 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 {
                     throw;
                 }
-            }
-            finally
-            {
-                ChannelPool.Return(channel);
             }
         }
     }

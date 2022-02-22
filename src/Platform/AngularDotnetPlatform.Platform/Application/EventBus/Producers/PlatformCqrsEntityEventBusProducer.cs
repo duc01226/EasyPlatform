@@ -22,7 +22,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         public override string MessageType => PlatformCqrsEntityEvent.EventNameValue<TEntity>();
     }
 
-    public abstract class PlatformCqrsEntityEventBusProducer<TEntity> : PlatformCqrsEntityEventHandler<TEntity>, IPlatformCqrsEventBusProducer<PlatformCqrsEntityEvent<TEntity>>
+    public abstract class PlatformCqrsEntityEventBusProducer<TEntity> : PlatformCqrsEntityEventApplicationHandler<TEntity>, IPlatformCqrsEventBusProducer<PlatformCqrsEntityEvent<TEntity>>
         where TEntity : class, IEntity, new()
     {
         protected readonly IPlatformApplicationEventBusProducer ApplicationEventBusProducer;
@@ -81,28 +81,6 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         protected override async Task HandleAsync(PlatformCqrsEntityEvent<TEntity> @event, CancellationToken cancellationToken)
         {
             await HandleAsync(UnitOfWorkManager, ApplicationEventBusProducer, Logger, @event, cancellationToken);
-        }
-    }
-
-    public abstract class PlatformCqrsEntityEventBusProducer<TEntity, TBusinessActionPayload> : PlatformCqrsEntityEventHandler<TEntity, TBusinessActionPayload>, IPlatformCqrsEventBusProducer<PlatformCqrsEntityEvent<TEntity, TBusinessActionPayload>>
-        where TEntity : class, IEntity, new()
-        where TBusinessActionPayload : class, new()
-    {
-        protected readonly IPlatformApplicationEventBusProducer ApplicationEventBusProducer;
-        protected readonly ILogger Logger;
-
-        public PlatformCqrsEntityEventBusProducer(
-            IUnitOfWorkManager unitOfWorkManager,
-            IPlatformApplicationEventBusProducer applicationEventBusProducer,
-            ILoggerFactory loggerFactory) : base(unitOfWorkManager)
-        {
-            ApplicationEventBusProducer = applicationEventBusProducer;
-            Logger = loggerFactory.CreateLogger(GetType());
-        }
-
-        protected override async Task HandleAsync(PlatformCqrsEntityEvent<TEntity, TBusinessActionPayload> @event, CancellationToken cancellationToken)
-        {
-            await PlatformCqrsEntityEventBusProducer<TEntity>.HandleAsync(UnitOfWorkManager, ApplicationEventBusProducer, Logger, @event, cancellationToken);
         }
     }
 }

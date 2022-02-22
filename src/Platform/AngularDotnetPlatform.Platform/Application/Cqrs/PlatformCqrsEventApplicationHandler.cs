@@ -6,17 +6,17 @@ using MediatR;
 
 namespace AngularDotnetPlatform.Platform.Application.Cqrs
 {
-    public abstract class PlatformCqrsEventHandler<TEvent> : INotificationHandler<TEvent>
+    public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrsEventHandler<TEvent>
         where TEvent : PlatformCqrsEvent, new()
     {
         protected readonly IUnitOfWorkManager UnitOfWorkManager;
 
-        public PlatformCqrsEventHandler(IUnitOfWorkManager unitOfWorkManager)
+        public PlatformCqrsEventApplicationHandler(IUnitOfWorkManager unitOfWorkManager)
         {
             UnitOfWorkManager = unitOfWorkManager;
         }
 
-        public async Task Handle(TEvent request, CancellationToken cancellationToken)
+        public override async Task Handle(TEvent request, CancellationToken cancellationToken)
         {
             if (UnitOfWorkManager.Current() != null && UnitOfWorkManager.Current().IsActive())
             {
@@ -36,7 +36,5 @@ namespace AngularDotnetPlatform.Platform.Application.Cqrs
         {
             return UnitOfWorkManager.Begin();
         }
-
-        protected abstract Task HandleAsync(TEvent @event, CancellationToken cancellationToken);
     }
 }
