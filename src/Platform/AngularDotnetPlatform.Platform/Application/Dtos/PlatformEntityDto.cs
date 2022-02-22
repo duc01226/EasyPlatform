@@ -22,10 +22,7 @@ namespace AngularDotnetPlatform.Platform.Application.Dtos
 
         public PlatformEntityDto(TEntity entity)
         {
-            Id = entity.Id;
         }
-
-        public TId? Id { get; set; }
 
         public virtual TEntity MapToEntity()
         {
