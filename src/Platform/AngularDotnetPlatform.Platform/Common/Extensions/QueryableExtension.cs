@@ -17,6 +17,24 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
             return query.Skip(skipCount).Take(maxResultCount);
         }
 
+        public static IQueryable<T> WhereCombineOr<T>(this IQueryable<T> query, params Expression<Func<T, bool>>[] predicates)
+        {
+            var validPredicates = predicates.Where(p => p != null).ToList();
+
+            return validPredicates.Any()
+                ? query.Where(validPredicates.Aggregate((result, current) => result.Or(current)))
+                : query;
+        }
+
+        public static IQueryable<T> WhereCombineAnd<T>(this IQueryable<T> query, params Expression<Func<T, bool>>[] predicates)
+        {
+            var validPredicates = predicates.Where(p => p != null).ToList();
+
+            return validPredicates.Any()
+                ? query.Where(validPredicates.Aggregate((result, current) => result.AndAlso(current)))
+                : query;
+        }
+
         public static IQueryable<T> WhereIf<T>(this IQueryable<T> query, bool condition, Expression<Func<T, bool>> predicate)
         {
             return condition
@@ -64,11 +82,11 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
 
     internal class ParameterRebinder : ExpressionVisitor
     {
-        private readonly Dictionary<ParameterExpression, ParameterExpression> _targetToSourceParamsMap;
+        private readonly Dictionary<ParameterExpression, ParameterExpression> targetToSourceParamsMap;
 
         public ParameterRebinder(Dictionary<ParameterExpression, ParameterExpression> targetToSourceParamsMap)
         {
-            _targetToSourceParamsMap = targetToSourceParamsMap ?? new Dictionary<ParameterExpression, ParameterExpression>();
+            this.targetToSourceParamsMap = targetToSourceParamsMap ?? new Dictionary<ParameterExpression, ParameterExpression>();
         }
 
         public static Expression ReplaceParameters<T>(Expression<T> targetExpr, Expression<T> sourceExpr)
@@ -86,7 +104,7 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
 
         protected override Expression VisitParameter(ParameterExpression node)
         {
-            if (_targetToSourceParamsMap.TryGetValue(node, out var replacement))
+            if (targetToSourceParamsMap.TryGetValue(node, out var replacement))
             {
                 node = replacement;
             }

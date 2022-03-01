@@ -18,7 +18,8 @@ namespace AngularDotnetPlatform.Platform.Persistence.Helpers
             IQueryable<T> query,
             string searchText,
             Expression<Func<T, object>>[] inFullTextSearchProps,
-            bool exactMatch = false) where T : class;
+            bool fullTextExactMatch = false,
+            Expression<Func<T, object>>[] includeStartWithProps = null) where T : class;
 
         public abstract bool IsSupportQuery<T>(IQueryable<T> query) where T : class;
 
@@ -27,7 +28,8 @@ namespace AngularDotnetPlatform.Platform.Persistence.Helpers
             string searchText,
             Expression<Func<T, object>>[] inFullTextSearchProps,
             bool exactMatch,
-            out IQueryable<T> newQuery) where T : class
+            out IQueryable<T> newQuery,
+            Expression<Func<T, object>>[] includeStartWithProps = null) where T : class
         {
             var otherSupportHelpers = ServiceProvider
                 .GetServices<IPlatformFullTextSearchPersistenceHelper>()
@@ -35,7 +37,7 @@ namespace AngularDotnetPlatform.Platform.Persistence.Helpers
 
             if (otherSupportHelpers != null)
             {
-                newQuery = otherSupportHelpers.Search(query, searchText, inFullTextSearchProps, exactMatch);
+                newQuery = otherSupportHelpers.Search(query, searchText, inFullTextSearchProps, exactMatch, includeStartWithProps);
                 return true;
             }
             else

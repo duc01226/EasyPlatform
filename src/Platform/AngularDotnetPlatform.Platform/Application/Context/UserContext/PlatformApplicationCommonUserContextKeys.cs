@@ -26,7 +26,7 @@ namespace AngularDotnetPlatform.Platform.Application.Context.UserContext
             return context.GetValue<string>(UserId);
         }
 
-        public static T GetUserId<T>(this IPlatformApplicationUserContext context) where T : struct
+        public static T GetUserId<T>(this IPlatformApplicationUserContext context)
         {
             return Util.Strings.Parse<T>(context.GetUserId());
         }
