@@ -49,6 +49,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
             return GetScanAssemblies()
                 .SelectMany(p => p.GetTypes())
                 .Where(p => p.IsAssignableTo(typeof(IPlatformEventBusConsumer)) && p.IsClass && !p.IsAbstract)
+                .Distinct()
                 .ToList();
         }
 
