@@ -59,10 +59,10 @@ namespace AngularDotnetPlatform.Platform.Application.Cqrs.Commands
         }
     }
 
-    public abstract class PlatformCqrsCommandHandler<TCommand> : PlatformCqrsCommandApplicationHandler<TCommand, PlatformCqrsCommandResult>
+    public abstract class PlatformCqrsCommandApplicationHandler<TCommand> : PlatformCqrsCommandApplicationHandler<TCommand, PlatformCqrsCommandResult>
         where TCommand : PlatformCqrsCommand, new()
     {
-        public PlatformCqrsCommandHandler(
+        public PlatformCqrsCommandApplicationHandler(
             IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager,
             IPlatformCqrs cqrs) : base(userContext, unitOfWorkManager, cqrs)
