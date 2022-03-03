@@ -41,7 +41,17 @@ namespace AngularDotnetPlatform.Platform.RedisCache
         public override async Task<T> GetAsync<T>(PlatformCacheKey cacheKey, CancellationToken token = default)
         {
             var result = await redisCache.GetAsync(cacheKey, token);
-            return result == null ? default : JsonSerializer.Deserialize<T>(result);
+
+            try
+            {
+                return result == null ? default : JsonSerializer.Deserialize<T>(result);
+            }
+            catch (Exception e)
+            {
+                // If parse failed, the cached data could be obsolete. Then just clear the cache
+                await RemoveAsync(cacheKey, token);
+                return default;
+            }
         }
 
         public override void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null)
