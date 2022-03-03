@@ -16,6 +16,8 @@ namespace PlatformExampleApp.TextSnippet.Application.EntityDtos
             Address = entity.Address != null ? ExampleAddressValueObjectDto.Create(entity.Address) : null;
         }
 
+        public Guid? Id { get; set; }
+
         public string SnippetText { get; set; }
 
         public string FullText { get; set; }

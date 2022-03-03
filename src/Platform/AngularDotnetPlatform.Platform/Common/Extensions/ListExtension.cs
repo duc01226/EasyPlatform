@@ -22,5 +22,10 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
         {
             return items.Concat(new List<T>() { item });
         }
+
+        public static bool IsEmpty<T>(this IEnumerable<T> items)
+        {
+            return !items.Any();
+        }
     }
 }

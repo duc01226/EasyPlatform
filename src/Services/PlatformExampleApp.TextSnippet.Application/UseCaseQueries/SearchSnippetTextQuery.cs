@@ -63,7 +63,8 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseQueries
                         query,
                         request.SearchText,
                         inFullTextSearchProps: new Expression<Func<TextSnippetEntity, object>>[] { e => e.SnippetText },
-                        exactMatch: true))
+                        fullTextExactMatch: true,
+                        includeStartWithProps: new Expression<Func<TextSnippetEntity, object>>[] { e => e.SnippetText }))
                 .WhereIf(request.SearchId != null, p => p.Id == request.SearchId);
             var orderedPagedItemsQuery = fullItemsQuery
                 .OrderBy(p => p.SnippetText)

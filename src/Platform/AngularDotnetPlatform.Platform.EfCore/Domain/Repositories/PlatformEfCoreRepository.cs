@@ -40,6 +40,11 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
             return FirstOrDefaultAsync(p => p.Id.Equals(id), cancellationToken);
         }
 
+        public override Task<List<TEntity>> GetByIdsAsync(List<TPrimaryKey> ids, CancellationToken cancellationToken = default)
+        {
+            return GetAllAsync(p => ids.Contains(p.Id), cancellationToken);
+        }
+
         public override IQueryable<TEntity> GetAllQuery()
         {
             return Table.AsNoTracking();

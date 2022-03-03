@@ -17,6 +17,11 @@ namespace PlatformExampleApp.TextSnippet.Domain.Entities
 
         public string FullText { get; set; }
 
+        /// <summary>
+        /// Demo ForeignKey for TextSnippetAssociatedEntity
+        /// </summary>
+        public Guid? CreatedByUserId { get; set; }
+
         public ExampleAddressValueObject Address { get; set; }
 
         public static PlatformSingleValidator<TextSnippetEntity, string> SnippetTextValidator()

@@ -1,8 +1,10 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Persistence.Helpers;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
@@ -14,15 +16,20 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Helpers
         {
         }
 
-        public override IQueryable<T> Search<T>(IQueryable<T> query, string searchText, Expression<Func<T, object>>[] inFullTextSearchProps, bool exactMatch = false)
+        public override IQueryable<T> Search<T>(
+            IQueryable<T> query,
+            string searchText,
+            Expression<Func<T, object>>[] inFullTextSearchProps,
+            bool fullTextExactMatch = false,
+            Expression<Func<T, object>>[] includeStartWithProps = null)
         {
             if (!IsSupportQuery(query) &&
-                TrySearchByFirstSupportQueryHelper(query, searchText, inFullTextSearchProps, exactMatch, out var newQuery))
+                TrySearchByFirstSupportQueryHelper(query, searchText, inFullTextSearchProps, fullTextExactMatch, out var newQuery, includeStartWithProps))
             {
                 return newQuery;
             }
 
-            return DoMongoSearch(query, searchText, exactMatch);
+            return DoMongoSearch(query, searchText, fullTextExactMatch, includeStartWithProps);
         }
 
         public override bool IsSupportQuery<T>(IQueryable<T> query)
@@ -30,22 +37,38 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Helpers
             return query is IMongoQueryable;
         }
 
-        public static IQueryable<T> DoMongoSearch<T>(IQueryable<T> query, string searchText, bool exactMatch)
+        public static IQueryable<T> DoMongoSearch<T>(IQueryable<T> query, string searchText, bool fullTextExactMatch, Expression<Func<T, object>>[] includeStartWithProps = null)
         {
             if (string.IsNullOrWhiteSpace(searchText))
             {
                 return query;
             }
 
-            var filter = BuildTextSearchMongoFilterDefinition<T>(searchText, exactMatch);
-            return ((IMongoQueryable<T>)query).Where(_ => filter.Inject());
+            var textSearchMongoFilter = BuildTextSearchMongoFilterDefinition<T>(searchText, fullTextExactMatch);
+            var startsWithFilter = includeStartWithProps?.Any() == true
+                ? BuildStartsWithMongoFilterDefinition(searchText, includeStartWithProps)
+                : null;
+
+            var finalFilter = textSearchMongoFilter
+                .PipeIf(startsWithFilter != null, p => Builders<T>.Filter.Or(p, startsWithFilter));
+
+            return ((IMongoQueryable<T>)query).Where(_ => finalFilter.Inject());
         }
 
-        public static FilterDefinition<T> BuildTextSearchMongoFilterDefinition<T>(string searchText, bool exactMatch)
+        public static FilterDefinition<T> BuildTextSearchMongoFilterDefinition<T>(string searchText, bool fullTextExactMatch)
         {
             return Builders<T>.Filter.Text(
-                exactMatch ? $"\"{searchText.Trim()}\"" : searchText.Trim(),
+                fullTextExactMatch ? $"\"{searchText.Trim()}\"" : searchText.Trim(),
                 new TextSearchOptions() { CaseSensitive = false, DiacriticSensitive = false, Language = "none" });
+        }
+
+        public static FilterDefinition<T> BuildStartsWithMongoFilterDefinition<T>(string searchText, Expression<Func<T, object>>[] includeStartWithProps)
+        {
+            var filterBuilder = Builders<T>.Filter;
+            var startsWithFilters = includeStartWithProps
+                .Select(p => filterBuilder.Regex(p, new BsonRegularExpression($"^({searchText})", "i")))
+                .ToList();
+            return filterBuilder.Or(startsWithFilters);
         }
     }
 }
