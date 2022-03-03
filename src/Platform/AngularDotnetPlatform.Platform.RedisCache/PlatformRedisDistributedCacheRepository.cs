@@ -16,7 +16,6 @@ namespace AngularDotnetPlatform.Platform.RedisCache
     public class PlatformRedisDistributedCacheRepository : PlatformCacheRepository, IPlatformDistributedCacheRepository, IDisposable
     {
         public static readonly string CachedKeysCollectionName = "___PlatformRedisDistributedCacheKeys___";
-        public static readonly double GlobalCachedKeysUnusedExpirationInSeconds = TimeSpan.FromDays(7).TotalSeconds;
 
         private readonly IPlatformApplicationSettingContext applicationSettingContext;
         private readonly Microsoft.Extensions.Caching.StackExchangeRedis.RedisCache redisCache;
@@ -150,7 +149,7 @@ namespace AngularDotnetPlatform.Platform.RedisCache
             var cachedKeysList =
                 Get<List<string>>(BuildGlobalCachedKeysDataCacheKey()) ?? new List<string>();
 
-            var cachedKeys = cachedKeysList.ToDictionary(p => (PlatformCacheKey)p, p => (object)p);
+            var cachedKeys = cachedKeysList.ToDictionary(fullCacheKeyString => (PlatformCacheKey)fullCacheKeyString, p => (object)p);
 
             return cachedKeys;
         }
