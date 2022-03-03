@@ -165,7 +165,7 @@ namespace AngularDotnetPlatform.Platform.RedisCache
             SetToRedisCache(
                 BuildGlobalCachedKeysDataCacheKey(),
                 value.Keys.Select(p => p.ToString()).ToList(),
-                new PlatformCacheEntryOptions() { UnusedExpirationInSeconds = GlobalCachedKeysUnusedExpirationInSeconds });
+                new PlatformCacheEntryOptions() { UnusedExpirationInSeconds = null, AbsoluteExpirationInSeconds = null });
         }
 
         private DistributedCacheEntryOptions MapToDistributedCacheEntryOptions(PlatformCacheEntryOptions options)
