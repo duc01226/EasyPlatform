@@ -6,6 +6,7 @@ using AngularDotnetPlatform.Platform.Common.Cqrs;
 using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
+using PlatformExampleApp.TextSnippet.Application.EventBus.FreeFormatMessages;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 {
@@ -37,7 +38,13 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             DemoSendFreeFormatEventBusMessageCommand request,
             CancellationToken cancellationToken)
         {
-            await eventBusProducer.SendFreeFormatMessageAsync(request, cancellationToken);
+            await eventBusProducer.SendFreeFormatMessageAsync(
+                new DemoSendFreeFormatEventBusMessage()
+                {
+                    Property1 = request.Property1,
+                    Property2 = request.Property2
+                },
+                cancellationToken);
             return new DemoSendFreeFormatEventBusMessageCommandResult();
         }
     }
