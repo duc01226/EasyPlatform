@@ -22,6 +22,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Mapping
             cm.SetDiscriminatorIsRequired(true);
             cm.MapIdProperty(p => p.Id);
             cm.SetIgnoreExtraElements(true);
+            cm.SetIsRootClass(true);
         }
 
         public PlatformMongoBaseEntityClassMapping()

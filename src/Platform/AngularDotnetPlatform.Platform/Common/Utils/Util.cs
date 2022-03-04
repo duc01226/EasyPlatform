@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text.Json;
 
 namespace AngularDotnetPlatform.Platform.Common.Utils
 {
@@ -27,6 +28,18 @@ namespace AngularDotnetPlatform.Platform.Common.Utils
             where TTarget : class
         {
             PropertyCopier<TSource, TTarget>.Copy(source, target);
+        }
+
+        public static bool IsValueDifferent(object obj1, object obj2)
+        {
+            if (obj1 == null && obj2 != null)
+                return true;
+            if (obj2 == null && obj1 != null)
+                return true;
+            if (obj1 != null && obj2 != null)
+                return JsonSerializer.Serialize(obj1) != JsonSerializer.Serialize(obj2);
+
+            return false;
         }
 
         /// <summary>

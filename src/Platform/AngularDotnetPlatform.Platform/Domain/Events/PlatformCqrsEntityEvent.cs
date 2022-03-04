@@ -56,5 +56,13 @@ namespace AngularDotnetPlatform.Platform.Domain.Events
         /// It is a list of action-actionPayloadJson from entity action events
         /// </summary>
         public List<KeyValuePair<string, string>> BusinessActionEvents { get; set; } = new List<KeyValuePair<string, string>>();
+
+        public List<TEventPayload> FindBusinessActionEvents<TEventPayload>(string eventName)
+        {
+            return BusinessActionEvents
+                .Where(p => p.Key == eventName)
+                .Select(p => PlatformJsonSerializer.TryDeserializeOrDefault<TEventPayload>(p.Value))
+                .ToList();
+        }
     }
 }

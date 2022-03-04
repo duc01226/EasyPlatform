@@ -53,5 +53,17 @@ namespace AngularDotnetPlatform.Platform.Common.JsonSerialization
         {
             return JsonSerializer.Deserialize<T>(jsonValue, CurrentOptions.Value);
         }
+
+        public static T TryDeserializeOrDefault<T>(string jsonValue)
+        {
+            try
+            {
+                return Deserialize<T>(jsonValue);
+            }
+            catch
+            {
+                return default;
+            }
+        }
     }
 }
