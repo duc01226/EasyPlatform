@@ -25,6 +25,7 @@
     <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform.RedisCache\AngularDotnetPlatform.Platform.RedisCache.csproj" />
     <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform\AngularDotnetPlatform.Platform.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Application\PlatformExampleApp.TextSnippet.Application.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Infrastructure\PlatformExampleApp.TextSnippet.Infrastructure.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Persistence.Mongo\PlatformExampleApp.TextSnippet.Persistence.Mongo.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo\PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Persistence\PlatformExampleApp.TextSnippet.Persistence.csproj" />

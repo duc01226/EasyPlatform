@@ -5,13 +5,13 @@ using AngularDotnetPlatform.Platform.Infrastructures.Caching;
 using Microsoft.Extensions.Configuration;
 using AngularDotnetPlatform.Platform.AspNetCore;
 using AngularDotnetPlatform.Platform.Common.JsonSerialization;
-using PlatformExampleApp.TextSnippet.Api.AwsEmailModule;
 using PlatformExampleApp.TextSnippet.Api.Context.UserContext;
 using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Domain;
 using PlatformExampleApp.TextSnippet.Persistence;
 using PlatformExampleApp.TextSnippet.Persistence.Mongo;
 using PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo;
+using PlatformExampleApp.TextSnippet.Infrastructure;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 

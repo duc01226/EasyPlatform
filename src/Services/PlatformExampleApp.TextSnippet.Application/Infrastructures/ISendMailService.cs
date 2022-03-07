@@ -1,7 +1,5 @@
-using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Infrastructures;
 using AngularDotnetPlatform.Platform.Infrastructures.Abstract;
-using Microsoft.Extensions.Logging;
 
 namespace PlatformExampleApp.TextSnippet.Application.Infrastructures
 {
@@ -13,24 +11,5 @@ namespace PlatformExampleApp.TextSnippet.Application.Infrastructures
     public interface ISendMailService : IPlatformInfrastructureService
     {
         void SendEmail(string toEmail, string mailHeader, string mailContent);
-    }
-
-    /// <summary>
-    /// Example of implementation directly in the application module. It is ok but not recommended.
-    /// </summary>
-    public class AwsSendMailService : ISendMailService
-    {
-        private readonly ILogger logger;
-
-        public AwsSendMailService(ILogger<AwsSendMailService> logger)
-        {
-            this.logger = logger;
-        }
-
-        public void SendEmail(string toEmail, string mailHeader, string mailContent)
-        {
-            logger.LogInformationIfEnabled($"Demo implemented AwsSendMailService directly in application module. " +
-                                  $"ToEmail: {toEmail}. Header: {mailHeader}. MailContent: {mailContent}");
-        }
     }
 }

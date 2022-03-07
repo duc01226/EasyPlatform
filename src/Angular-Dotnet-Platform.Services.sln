@@ -42,7 +42,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngularDotnetPlatform.Platf
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngularDotnetPlatform.Platform.HangfireBackgroundJob", "Platform\AngularDotnetPlatform.Platform.HangfireBackgroundJob\AngularDotnetPlatform.Platform.HangfireBackgroundJob.csproj", "{224D7311-6BB8-4B6F-9AB1-9842670E2091}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AngularDotnetPlatform.Platform.FireBasePushNotification", "Platform\AngularDotnetPlatform.Platform.FireBasePushNotification\AngularDotnetPlatform.Platform.FireBasePushNotification.csproj", "{26FCDF7A-0995-46C9-8D9C-52877F451D2C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngularDotnetPlatform.Platform.FireBasePushNotification", "Platform\AngularDotnetPlatform.Platform.FireBasePushNotification\AngularDotnetPlatform.Platform.FireBasePushNotification.csproj", "{26FCDF7A-0995-46C9-8D9C-52877F451D2C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PlatformExampleApp.TextSnippet.Infrastructure", "Services\PlatformExampleApp.TextSnippet.Infrastructure\PlatformExampleApp.TextSnippet.Infrastructure.csproj", "{FEEEA812-7195-42F1-9C16-0E79A6E7D1EA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -106,6 +108,10 @@ Global
 		{26FCDF7A-0995-46C9-8D9C-52877F451D2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26FCDF7A-0995-46C9-8D9C-52877F451D2C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26FCDF7A-0995-46C9-8D9C-52877F451D2C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEEEA812-7195-42F1-9C16-0E79A6E7D1EA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEEEA812-7195-42F1-9C16-0E79A6E7D1EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEEEA812-7195-42F1-9C16-0E79A6E7D1EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEEEA812-7195-42F1-9C16-0E79A6E7D1EA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -126,6 +132,7 @@ Global
 		{0A957D1B-1679-4ED9-B845-2D869EE59FE7} = {112DE40F-A5AA-4240-B714-FFACAF9757F8}
 		{224D7311-6BB8-4B6F-9AB1-9842670E2091} = {112DE40F-A5AA-4240-B714-FFACAF9757F8}
 		{26FCDF7A-0995-46C9-8D9C-52877F451D2C} = {112DE40F-A5AA-4240-B714-FFACAF9757F8}
+		{FEEEA812-7195-42F1-9C16-0E79A6E7D1EA} = {24E30956-7F1B-449D-9B28-F5BD57717438}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1547782A-8ABF-4E37-8BAC-C85487175C1B}
