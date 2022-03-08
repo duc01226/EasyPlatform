@@ -21,6 +21,15 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
             serviceCollection.RegisterAllFromType<IPlatformEventBusConsumer>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformEventBusMessage>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.Register<IPlatformEventBusManager, PlatformEventBusManager>(ServiceLifeTime.Transient);
+            serviceCollection.Register(
+                typeof(PlatformEventBusApplicationSetting),
+                provider => new PlatformEventBusApplicationSetting() { ApplicationName = ForApplicationServiceName() },
+                ServiceLifeTime.Singleton);
         }
+
+        /// <summary>
+        /// The Application Service Unique Name. Usually it's the ApiService name.
+        /// </summary>
+        protected abstract string ForApplicationServiceName();
     }
 }

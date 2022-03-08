@@ -28,6 +28,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         private readonly IServiceProvider serviceProvider;
         private readonly IPlatformEventBusManager eventBusManager;
         private readonly IPlatformRabbitMqExchangeProvider exchangeProvider;
+        private readonly PlatformEventBusApplicationSetting applicationSetting;
 
         // Use ObjectBool to manage chanel because HostService is singleton, and we don't want re-init chanel is heavy and wasting time.
         // We want to use pool when object is expensive to allocate/initialize
@@ -44,12 +45,14 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             IServiceProvider serviceProvider,
             IPlatformEventBusManager eventBusManager,
             ILoggerFactory loggerFactory,
-            IPlatformRabbitMqExchangeProvider exchangeProvider) : base(applicationLifetime, loggerFactory)
+            IPlatformRabbitMqExchangeProvider exchangeProvider,
+            PlatformEventBusApplicationSetting applicationSetting) : base(applicationLifetime, loggerFactory)
         {
             this.options = options;
             this.serviceProvider = serviceProvider;
             this.eventBusManager = eventBusManager;
             this.exchangeProvider = exchangeProvider;
+            this.applicationSetting = applicationSetting;
 
             // Needs 1 object only for the hosted service.
             channelPool = new DefaultObjectPool<IModel>(channelPolicy, 1);
@@ -158,7 +161,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         private string GetConsumerQueueName(string consumerRoutingKey)
         {
-            return consumerRoutingKey;
+            return $"{applicationSetting.ApplicationName}-{consumerRoutingKey}";
         }
 
         private string GetConsumerExchange(PlatformEventBusConsumerAttribute consumerAttribute)
