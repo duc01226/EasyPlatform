@@ -226,6 +226,12 @@ namespace AngularDotnetPlatform.Platform.Application
     public class PlatformApplicationAutoClearDistributedCacheOnInitOptions
     {
         public bool EnableAutoClearDistributedCacheOnInit { get; set; }
-        public HashSet<string> AutoClearContexts { get; set; }
+
+        private HashSet<string> autoClearContexts;
+        public HashSet<string> AutoClearContexts
+        {
+            get => autoClearContexts;
+            set => autoClearContexts = value?.Select(PlatformCacheKey.AutoFixKeyPartValue).ToHashSet();
+        }
     }
 }
