@@ -13,8 +13,11 @@ namespace AngularDotnetPlatform.Platform.Common.Utils
                 return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value));
             }
 
-            public static bool IsFullTextSearchMatch(string targetText, string searchText, bool exactMatchAllWords = true)
+            public static bool IsFullTextSearchMatch(string targetText, string searchText, bool exactMatchAllWords = false)
             {
+                if (targetText == null)
+                    return false;
+
                 var searchWords = searchText.Trim().Split(" ");
                 var isMatchWords = exactMatchAllWords
                     ? searchWords.All(word => Regex.IsMatch(targetText, $"{word}"))
