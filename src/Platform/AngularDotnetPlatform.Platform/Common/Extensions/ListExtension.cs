@@ -6,16 +6,23 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
 {
     public static class ListExtension
     {
-        public static void RemoveWhere<T>(this IList<T> items, Func<T, bool> predicate)
+        public static List<T> RemoveWhere<T>(this IList<T> items, Func<T, bool> predicate)
         {
-            for (var i = 0; i < items.Count; i++)
-            {
-                if (predicate(items[i]))
-                {
-                    items.RemoveAt(i);
-                    i--;
-                }
-            }
+            var toRemoveItems = items.Where(predicate).ToList();
+
+            toRemoveItems.ForEach(p => items.Remove(p));
+
+            return toRemoveItems;
+        }
+
+        public static T RemoveFirst<T>(this IList<T> items, Func<T, bool> predicate)
+        {
+            var toRemoveItem = items.FirstOrDefault(predicate);
+
+            if (toRemoveItem != null)
+                items.Remove(toRemoveItem);
+
+            return toRemoveItem;
         }
 
         public static void UpdateWhere<T>(this IList<T> items, Func<T, bool> predicate, Action<T> updateAction)
