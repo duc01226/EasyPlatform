@@ -155,6 +155,15 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
             return entities;
         }
 
+        public async Task<List<TEntity>> UpdateWhereAsync(Expression<Func<TEntity, bool>> predicate, Action<TEntity> updateAction, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        {
+            var entities = await GetAllAsync(predicate, cancellationToken);
+
+            entities.ForEach(updateAction);
+
+            return await UpdateManyAsync(entities, dismissSendEvent, cancellationToken);
+        }
+
         public async Task<List<TEntity>> DeleteManyAsync(List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
         {
             var entities = await DbContext.GetAllAsync(GetAllQuery().Where(p => entityIds.Contains(p.Id)), cancellationToken);

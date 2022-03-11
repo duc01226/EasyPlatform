@@ -18,6 +18,17 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
             }
         }
 
+        public static void UpdateWhere<T>(this IList<T> items, Func<T, bool> predicate, Action<T> updateAction)
+        {
+            foreach (var t in items)
+            {
+                if (predicate(t))
+                {
+                    updateAction(t);
+                }
+            }
+        }
+
         public static IEnumerable<T> ConcatSingle<T>(this IEnumerable<T> items, T item)
         {
             return items.Concat(new List<T>() { item });
