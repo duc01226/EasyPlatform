@@ -37,5 +37,10 @@ namespace AngularDotnetPlatform.Platform.Application.Cqrs
             var finalValidationResult = PlatformValidationResult.HarvestErrors(validateResults);
             finalValidationResult.EnsureValid(p => new PlatformApplicationException(p.ErrorsMsg()));
         }
+
+        protected void EnsureNotNull(object target, string errorMessage)
+        {
+            EnsureNotNull(target, errorMessage, p => new PlatformApplicationValidationException(p));
+        }
     }
 }

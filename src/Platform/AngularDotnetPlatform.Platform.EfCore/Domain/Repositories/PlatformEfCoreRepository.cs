@@ -27,7 +27,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.Repositories
         public IUnitOfWorkManager UnitOfWorkManager { get; }
         protected IPlatformCqrs Cqrs { get; }
 
-        protected TDbContext DbContext =>
+        protected virtual TDbContext DbContext =>
             UnitOfWorkManager.CurrentInnerActive<IPlatformEfCoreUnitOfWork<TDbContext>>().DbContext;
 
         /// <summary>
