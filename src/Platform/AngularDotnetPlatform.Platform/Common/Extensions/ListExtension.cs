@@ -45,5 +45,13 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
         {
             return !items.Any();
         }
+
+        public static List<T> AddDistinct<T>(this List<T> items, T item)
+        {
+            if (!items.Contains(item))
+                items.Add(item);
+
+            return items;
+        }
     }
 }
