@@ -220,6 +220,19 @@ namespace AngularDotnetPlatform.Platform.Application
             serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsCommandEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEntityEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
             serviceCollection.Register<IPlatformApplicationEventBusProducer, PlatformApplicationEventBusProducer>(ServiceLifeTime.Transient);
+
+            RegisterApplicationEventBusProducer(serviceCollection);
+        }
+
+        private void RegisterApplicationEventBusProducer(IServiceCollection serviceCollection)
+        {
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(IPlatformEventBusProducer)))
+            {
+                serviceCollection.Register<IPlatformEventBusProducer, PlatformPseudoEventBusProducer>(ServiceLifeTime.Scoped);
+            }
+
+            serviceCollection.Register<IPlatformApplicationEventBusProducer, PlatformApplicationEventBusProducer>(
+                ServiceLifeTime.Transient);
         }
     }
 

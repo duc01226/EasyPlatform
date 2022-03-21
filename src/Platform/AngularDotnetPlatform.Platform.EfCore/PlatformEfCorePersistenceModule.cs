@@ -85,7 +85,8 @@ namespace AngularDotnetPlatform.Platform.EfCore
         }
 
         /// <summary>
-        /// Return a action for <see cref="DbContextOptionsBuilder"/> to AddDbContext.
+        /// Return a action for <see cref="DbContextOptionsBuilder"/> to AddDbContext. <br/>
+        /// Example: return options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
         /// </summary>
         protected abstract Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceProvider serviceProvider);
 

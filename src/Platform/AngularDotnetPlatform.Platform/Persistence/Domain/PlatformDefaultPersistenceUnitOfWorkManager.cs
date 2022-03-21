@@ -67,7 +67,7 @@ namespace AngularDotnetPlatform.Platform.Persistence.Domain
             if (current == null || !current.IsActive())
             {
                 throw new Exception(
-                    $"Current active inner unit of work is missing.");
+                    $"Current active inner unit of work of type {typeof(TUnitOfWork).FullName} is missing. Should use {nameof(IUnitOfWorkManager)} to Begin a new UOW.");
             }
 
             return current;
