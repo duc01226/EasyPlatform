@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace AngularDotnetPlatform.Platform.Common.Extensions
 {
@@ -52,6 +53,13 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
                 items.Add(item);
 
             return items;
+        }
+
+        public static List<T> WhereIf<T>(this List<T> items, bool condition, Expression<Func<T, bool>> predicate)
+        {
+            return condition
+                ? items.Where(predicate.Compile()).ToList()
+                : items;
         }
     }
 }
