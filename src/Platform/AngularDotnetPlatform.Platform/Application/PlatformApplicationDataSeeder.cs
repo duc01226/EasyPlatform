@@ -10,16 +10,16 @@ namespace AngularDotnetPlatform.Platform.Application
 
     public abstract class PlatformApplicationDataSeeder : IPlatformApplicationDataSeeder
     {
-        private readonly IUnitOfWorkManager unitOfWorkManager;
+        protected readonly IUnitOfWorkManager UnitOfWorkManager;
 
         public PlatformApplicationDataSeeder(IUnitOfWorkManager unitOfWorkManager)
         {
-            this.unitOfWorkManager = unitOfWorkManager;
+            this.UnitOfWorkManager = unitOfWorkManager;
         }
 
-        public async Task SeedData()
+        public virtual async Task SeedData()
         {
-            using (var uow = unitOfWorkManager.Begin())
+            using (var uow = UnitOfWorkManager.Begin())
             {
                 await InternalSeedData();
                 await uow.CompleteAsync();
