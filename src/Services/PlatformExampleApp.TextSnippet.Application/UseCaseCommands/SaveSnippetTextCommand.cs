@@ -63,6 +63,12 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             var savingData = request.Data.MapToEntity();
 
             // STEP 2: Do validation and ensure that all logic is valid
+
+            // Demo Permission Logic
+            EnsurePermissionLogicValid(PlatformValidationResult.ValidIf(
+                validCondition: new Random().Next(0, 10) % 2 == 0,
+                "Demo User need to has some role or logic to save snippet text"));
+            // Demo business logic
             EnsureBusinessLogicValid(
                 savingData.ValidateSomeSpecificDomainLogic(),
                 ValidateSomeThisCommandLogic());

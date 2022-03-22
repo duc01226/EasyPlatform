@@ -68,7 +68,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
             return context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse, PlatformJsonSerializer.CurrentOptions.Value), context.RequestAborted);
         }
 
-        private bool HandleValidationError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
+        protected bool HandleValidationError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
         {
             if (exception is IPlatformValidationException validationException)
             {
@@ -86,18 +86,28 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.ExceptionHandling
 
         protected bool HandleApplicationError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
         {
-            if (exception is PlatformApplicationException applicationException)
+            if (exception is PlatformApplicationPermissionException applicationPermissionException)
+            {
+                errorResponse = new PlatformAspNetMvcErrorResponse(
+                    PlatformAspNetMvcErrorInfo.FromApplicationException(applicationPermissionException),
+                    HttpStatusCode.Forbidden,
+                    context.TraceIdentifier);
+            }
+            else if (exception is PlatformApplicationException applicationException)
             {
                 errorResponse = new PlatformAspNetMvcErrorResponse(
                     PlatformAspNetMvcErrorInfo.FromApplicationException(applicationException),
                     HttpStatusCode.BadRequest,
                     context.TraceIdentifier);
-                Log.KnownRequestWarning(Logger, exception, context.TraceIdentifier);
-                return true;
+            }
+            else
+            {
+                errorResponse = null;
             }
 
-            errorResponse = null;
-            return false;
+            Log.KnownRequestWarning(Logger, exception, context.TraceIdentifier);
+
+            return errorResponse != null;
         }
 
         protected bool HandleDomainError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)
