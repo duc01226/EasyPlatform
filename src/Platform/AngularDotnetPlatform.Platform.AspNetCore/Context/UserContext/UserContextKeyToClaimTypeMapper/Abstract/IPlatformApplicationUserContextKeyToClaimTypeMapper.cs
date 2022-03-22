@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using Microsoft.AspNetCore.Http;
 
@@ -10,5 +11,6 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserCont
     public interface IPlatformApplicationUserContextKeyToClaimTypeMapper
     {
         public string ToClaimType(string contextKey);
+        public HashSet<string> ToOneOfClaimTypes(string contextKey);
     }
 }
