@@ -39,7 +39,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
             options.PropertyNamingPolicy = PlatformJsonSerializer.CurrentOptions.Value.PropertyNamingPolicy;
         }
 
-        public void Init(IApplicationBuilder app)
+        public override void Init()
         {
             lock (InitLock)
             {
@@ -52,7 +52,7 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
                 {
                     RunApplicationSeedData(scope);
 
-                    InternalInit(scope, app).Wait();
+                    InternalInit(scope).Wait();
                 }
 
                 Initiated = true;
@@ -97,11 +97,6 @@ namespace AngularDotnetPlatform.Platform.AspNetCore
         public IApplicationBuilder UseGlobalExceptionHandlerMiddleware(IApplicationBuilder applicationBuilder)
         {
             return UseMiddleware<PlatformGlobalExceptionHandlerMiddleware>(applicationBuilder);
-        }
-
-        protected virtual Task InternalInit(IServiceScope serviceScope, IApplicationBuilder app)
-        {
-            return Task.CompletedTask;
         }
 
         protected abstract string[] GetAllowCorsOrigins(IConfiguration configuration);

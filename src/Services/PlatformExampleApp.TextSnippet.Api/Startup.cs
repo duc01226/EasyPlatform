@@ -63,7 +63,7 @@ namespace PlatformExampleApp.TextSnippet.Api
                 endpoints.MapControllers();
             });
 
-            apiModule.Init(app);
+            apiModule.Init();
         }
     }
 }
