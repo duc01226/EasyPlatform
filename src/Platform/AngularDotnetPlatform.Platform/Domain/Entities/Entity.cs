@@ -50,7 +50,7 @@ namespace AngularDotnetPlatform.Platform.Domain.Entities
             return JsonSerializer.Deserialize<TEntity>(JsonSerializer.Serialize(this));
         }
 
-        public PlatformValidationResult Validate()
+        public virtual PlatformValidationResult Validate()
         {
             var validator = GetValidator();
 
