@@ -7,6 +7,10 @@ using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 
 namespace AngularDotnetPlatform.Platform.Persistence.Domain
 {
+    /// <summary>
+    /// The aggregated unit of work is to support multi database type in a same application.
+    /// Each item in InnerUnitOfWorks present a REAL unit of work including a db context
+    /// </summary>
     public class PlatformAggregatedPersistenceUnitOfWork : IUnitOfWork
     {
         public PlatformAggregatedPersistenceUnitOfWork(List<IUnitOfWork> innerUnitOfWorks)

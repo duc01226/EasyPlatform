@@ -19,5 +19,10 @@ namespace AngularDotnetPlatform.Platform.Common.Cqrs
         {
             EnsureValid(new PlatformValidationResult[] { validateResult }, exceptionProviderIfNotValid);
         }
+
+        protected void EnsureNotNull(object target, string errorMessage, Func<PlatformValidationResult, Exception> exceptionProviderIfNotValid)
+        {
+            EnsureValid(PlatformValidationResult.ValidIf(() => target != null, errorMessage), exceptionProviderIfNotValid);
+        }
     }
 }

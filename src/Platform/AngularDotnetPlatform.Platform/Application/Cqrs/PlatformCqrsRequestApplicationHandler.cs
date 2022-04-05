@@ -28,14 +28,22 @@ namespace AngularDotnetPlatform.Platform.Application.Cqrs
 
         protected void EnsureValidationResultValid(params PlatformValidationResult[] validateResults)
         {
-            var finalValidationResult = PlatformValidationResult.HarvestErrors(validateResults);
-            finalValidationResult.EnsureValid(p => new PlatformApplicationValidationException(p));
+            EnsureValid(validateResults, p => new PlatformApplicationValidationException(p));
         }
 
         protected void EnsureBusinessLogicValid(params PlatformValidationResult[] validateResults)
         {
-            var finalValidationResult = PlatformValidationResult.HarvestErrors(validateResults);
-            finalValidationResult.EnsureValid(p => new PlatformApplicationException(p.ErrorsMsg()));
+            EnsureValid(validateResults, p => new PlatformApplicationException(p.ErrorsMsg()));
+        }
+
+        protected void EnsurePermissionLogicValid(params PlatformValidationResult[] validateResults)
+        {
+            EnsureValid(validateResults, p => new PlatformApplicationPermissionException(p.ErrorsMsg()));
+        }
+
+        protected void EnsureNotNull(object target, string errorMessage)
+        {
+            EnsureNotNull(target, errorMessage, p => new PlatformApplicationValidationException(p));
         }
     }
 }

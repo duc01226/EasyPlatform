@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
 using IdentityModel;
@@ -23,6 +24,11 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserCont
                 PlatformApplicationCommonUserContextKeys.UserRoles => JwtClaimTypes.Role,
                 _ => contextKey
             };
+        }
+
+        public virtual HashSet<string> ToOneOfClaimTypes(string contextKey)
+        {
+            return new HashSet<string>() { ToClaimType(contextKey) };
         }
     }
 }

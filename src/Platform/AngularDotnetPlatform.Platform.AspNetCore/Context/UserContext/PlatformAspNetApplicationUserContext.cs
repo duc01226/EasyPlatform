@@ -150,11 +150,14 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
 
         private bool TryGetValueFromRequestHeaders<T>(IHeaderDictionary requestHeaders, string contextKey, out T foundValue)
         {
-            var contextKeyMappedToJwtClaimType = MapContextKeyToJwtClaimType(contextKey);
+            var contextKeyMappedToOneOfClaimTypes = claimTypeMapper.ToOneOfClaimTypes(contextKey);
 
-            var stringRequestHeaderValues = requestHeaders.ContainsKey(contextKeyMappedToJwtClaimType)
-                ? new List<string>(requestHeaders[contextKeyMappedToJwtClaimType])
-                : new List<string>();
+            var stringRequestHeaderValues = contextKeyMappedToOneOfClaimTypes
+                .Select(
+                    contextKeyMappedToJwtClaimType => requestHeaders.ContainsKey(contextKeyMappedToJwtClaimType)
+                        ? new List<string>(requestHeaders[contextKeyMappedToJwtClaimType])
+                        : new List<string>())
+                .FirstOrDefault(p => p.Any()) ?? new List<string>();
 
             // Try Get Deserialized value from matchedClaimStringValues
             return TryGetParsedValuesFromStringValues(out foundValue, stringRequestHeaderValues);
@@ -178,9 +181,11 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
         /// </summary>
         private bool TryGetValueFromUserClaims<T>(ClaimsPrincipal userClaims, string contextKey, out T foundValue)
         {
-            var contextKeyMappedToJwtClaimType = MapContextKeyToJwtClaimType(contextKey);
+            var contextKeyMappedToOneOfClaimTypes = claimTypeMapper.ToOneOfClaimTypes(contextKey);
 
-            var matchedClaimStringValues = userClaims.FindAll(contextKeyMappedToJwtClaimType).Select(p => p.Value).ToList();
+            var matchedClaimStringValues = contextKeyMappedToOneOfClaimTypes
+                .Select(contextKeyMappedToJwtClaimType => userClaims.FindAll(contextKeyMappedToJwtClaimType).Select(p => p.Value).ToList())
+                .FirstOrDefault(p => p.Any()) ?? new List<string>();
 
             // Try Get Deserialized value from matchedClaimStringValues
             return TryGetParsedValuesFromStringValues(out foundValue, matchedClaimStringValues);
@@ -280,11 +285,6 @@ namespace AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext
 
             foundValue = default;
             return false;
-        }
-
-        private string MapContextKeyToJwtClaimType(string contextKey)
-        {
-            return claimTypeMapper.ToClaimType(contextKey);
         }
     }
 }

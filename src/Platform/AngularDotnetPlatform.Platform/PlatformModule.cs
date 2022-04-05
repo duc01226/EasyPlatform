@@ -72,7 +72,7 @@ namespace AngularDotnetPlatform.Platform
             }
         }
 
-        public void Init()
+        public virtual void Init()
         {
             lock (InitLock)
             {

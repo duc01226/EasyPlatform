@@ -10,7 +10,12 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             SqlMigrationUtil.CreateFullTextCatalogIfNotExists(migrationBuilder, $"FTS_{nameof(TextSnippetEntity)}");
-            SqlMigrationUtil.CreateFullTextIndexIfNotExists(migrationBuilder, nameof(TextSnippetEntity), new List<string>() { nameof(TextSnippetEntity.SnippetText) }, "IX_TextSnippetEntity_SnippetText", $"FTS_{nameof(TextSnippetEntity)}");
+            SqlMigrationUtil.CreateFullTextIndexIfNotExists(
+                migrationBuilder,
+                nameof(TextSnippetEntity),
+                new List<string>() { nameof(TextSnippetEntity.SnippetText) },
+                "IX_TextSnippetEntity_SnippetText",
+                $"FTS_{nameof(TextSnippetEntity)}");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

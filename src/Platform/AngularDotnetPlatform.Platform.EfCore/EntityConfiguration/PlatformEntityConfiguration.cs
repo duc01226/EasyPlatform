@@ -4,8 +4,16 @@ using AngularDotnetPlatform.Platform.Domain.Entities;
 
 namespace AngularDotnetPlatform.Platform.EfCore.EntityConfiguration
 {
+    public abstract class PlatformEntityConfiguration<TEntity> : IEntityTypeConfiguration<TEntity>
+        where TEntity : class, IEntity
+    {
+        public virtual void Configure(EntityTypeBuilder<TEntity> builder)
+        {
+        }
+    }
+
     public abstract class PlatformEntityConfiguration<TEntity, TPrimaryKey> : IEntityTypeConfiguration<TEntity>
-        where TEntity : Entity<TEntity, TPrimaryKey>, new()
+        where TEntity : class, IEntity<TPrimaryKey>
     {
         public virtual void Configure(EntityTypeBuilder<TEntity> builder)
         {
@@ -14,7 +22,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.EntityConfiguration
     }
 
     public abstract class PlatformAuditedEntityConfiguration<TEntity, TPrimaryKey, TUserId> : IEntityTypeConfiguration<TEntity>
-        where TEntity : AuditedEntity<TEntity, TPrimaryKey, TUserId>, new()
+        where TEntity : class, IEntity<TPrimaryKey>, IAuditedEntity<TUserId>
     {
         public virtual void Configure(EntityTypeBuilder<TEntity> builder)
         {

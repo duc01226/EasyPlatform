@@ -28,7 +28,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories
         public IUnitOfWorkManager UnitOfWorkManager { get; }
         protected IPlatformCqrs Cqrs { get; }
 
-        protected TDbContext DbContext =>
+        protected virtual TDbContext DbContext =>
             UnitOfWorkManager.CurrentInnerActive<IPlatformMongoDbUnitOfWork<TDbContext>>().DbContext;
 
         /// <summary>
