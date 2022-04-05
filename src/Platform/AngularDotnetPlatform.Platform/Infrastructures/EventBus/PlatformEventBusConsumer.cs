@@ -93,7 +93,10 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
                     asyncTask: () => DoInvokeConsumer(consumer, eventBusMessage, routingKey),
                     afterExecution: elapsedMilliseconds =>
                     {
-                        var platformEventBusMessage = eventBusMessage as IPlatformEventBusMessage;
+                        var consumerMessageType = GetConsumerMessageType(consumer);
+                        var platformEventBusMessage = consumerMessageType.IsAssignableTo(typeof(IPlatformEventBusMessage))
+                            ? eventBusMessage as IPlatformEventBusMessage
+                            : null;
                         var message =
                             $"[ConsumerProcessTime] Elapsed {elapsedMilliseconds} in milliseconds processing for consumer {consumer.GetType().FullName} message with routing key: {routingKey}. TrackingId {platformEventBusMessage?.TrackingId ?? "n/a"}.";
                         if (elapsedMilliseconds < logConsumerProcessWarningTimeMilliseconds || elapsedMilliseconds < consumer.ProcessWarningTimeMilliseconds())
