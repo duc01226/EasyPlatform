@@ -15,11 +15,11 @@ using Polly;
 using AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories;
 using AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.MongoDB.Extensions;
-using AngularDotnetPlatform.Platform.MongoDB.Helpers;
 using AngularDotnetPlatform.Platform.MongoDB.Mapping;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using MongoDB.Bson.Serialization;
 using AngularDotnetPlatform.Platform.MongoDB.Serializer.Abstract;
+using AngularDotnetPlatform.Platform.MongoDB.Services;
 using AngularDotnetPlatform.Platform.Persistence.DataMigration;
 using Microsoft.Extensions.Options;
 
@@ -66,8 +66,6 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             {
                 serviceCollection.Register<IUnitOfWork, PlatformMongoDbUnitOfWork<TDbContext>>(ServiceLifeTime.Transient);
             }
-
-            RegisterBuiltInHelpers(serviceCollection);
 
             RegisterPlatformDataMigrationHistoryClassMap();
             RegisterPlatformMigrationHistoryClassMap();
@@ -162,11 +160,6 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                 .Where(p => p.IsAssignableTo(typeof(IPlatformMongoClassMapping)) && !p.IsAbstract && p.IsClass)
                 .ToList();
             return allClassMapTypes;
-        }
-
-        private static void RegisterBuiltInHelpers(IServiceCollection serviceCollection)
-        {
-            serviceCollection.RegisterAllForImplementation<MongoDbPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime.Transient);
         }
 
         private static void RegisterPlatformDataMigrationHistoryClassMap()

@@ -4,16 +4,16 @@ using System.Linq;
 using System.Linq.Expressions;
 using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Common.Utils;
-using AngularDotnetPlatform.Platform.Persistence.Helpers;
+using AngularDotnetPlatform.Platform.Persistence.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Query.Internal;
 
-namespace AngularDotnetPlatform.Platform.EfCore.Helpers
+namespace AngularDotnetPlatform.Platform.EfCore.Services
 {
-    public class EfCoreSqlPlatformFullTextSearchPersistenceHelper : PlatformFullTextSearchPersistenceHelper
+    public class EfCoreSqlPlatformFullTextSearchPersistenceService : PlatformFullTextSearchPersistenceService
     {
-        public EfCoreSqlPlatformFullTextSearchPersistenceHelper(IServiceProvider serviceProvider) : base(serviceProvider)
+        public EfCoreSqlPlatformFullTextSearchPersistenceService(IServiceProvider serviceProvider) : base(serviceProvider)
         {
         }
 

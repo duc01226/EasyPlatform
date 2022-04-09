@@ -12,7 +12,7 @@ using AngularDotnetPlatform.Platform.Domain.Repositories;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.Persistence.DataMigration;
 using AngularDotnetPlatform.Platform.Persistence.Domain;
-using AngularDotnetPlatform.Platform.Persistence.Helpers.Abstract;
+using AngularDotnetPlatform.Platform.Persistence.Services.Abstract;
 
 namespace AngularDotnetPlatform.Platform.Persistence
 {
@@ -40,7 +40,7 @@ namespace AngularDotnetPlatform.Platform.Persistence
             RegisterRepositories(serviceCollection);
             if (EnableInboxEventBusMessageRepository())
                 RegisterInboxEventBusMessageRepository(serviceCollection);
-            serviceCollection.RegisterAllFromType<IPersistenceHelper>(ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType<IPersistenceService>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformDataMigrationExecutor>(ServiceLifeTime.Transient, Assembly);
         }
 

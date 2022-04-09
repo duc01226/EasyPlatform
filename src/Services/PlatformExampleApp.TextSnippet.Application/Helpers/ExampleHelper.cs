@@ -2,7 +2,7 @@ using System;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Helpers;
-using AngularDotnetPlatform.Platform.Persistence.Helpers;
+using AngularDotnetPlatform.Platform.Persistence.Services;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
@@ -15,22 +15,22 @@ namespace PlatformExampleApp.TextSnippet.Application.Helpers
     {
         private readonly ITextSnippetRepository<TextSnippetEntity> textSnippetRepository;
         private readonly ITextSnippetRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;
-        private readonly IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper;
+        private readonly IPlatformFullTextSearchPersistenceService fullTextSearchPersistenceService;
 
         public ExampleHelper(
             ITextSnippetRepository<TextSnippetEntity> textSnippetRepository,
             ITextSnippetRepository<MultiDbDemoEntity> multiDbDemoEntityRepository,
-            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper)
+            IPlatformFullTextSearchPersistenceService fullTextSearchPersistenceService)
         {
             this.textSnippetRepository = textSnippetRepository;
             this.multiDbDemoEntityRepository = multiDbDemoEntityRepository;
-            this.fullTextSearchPersistenceHelper = fullTextSearchPersistenceHelper;
+            this.fullTextSearchPersistenceService = fullTextSearchPersistenceService;
         }
 
         public async Task<SearchEntityByNameHelperResult> SearchEntityByName(string name)
         {
             var firstFoundTextSnippet = await textSnippetRepository.FirstOrDefaultAsync(
-                query => fullTextSearchPersistenceHelper.Search(
+                query => fullTextSearchPersistenceService.Search(
                     query,
                     searchText: name,
                     inFullTextSearchProps: new Expression<Func<TextSnippetEntity, object>>[] { p => p.SnippetText }));

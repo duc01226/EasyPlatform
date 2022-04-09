@@ -9,7 +9,7 @@ using AngularDotnetPlatform.Platform.Application.Cqrs.Queries;
 using AngularDotnetPlatform.Platform.Common.Cqrs.Queries;
 using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Persistence.Helpers;
+using AngularDotnetPlatform.Platform.Persistence.Services;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
 using PlatformExampleApp.TextSnippet.Application.Helpers;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
@@ -36,7 +36,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseQueries
     {
         // If get default repository/unitOfWork will get from the latest registered module. See TextSnippetApplicationModule.
         private readonly ITextSnippetRepository<TextSnippetEntity> repository;
-        private readonly IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper;
+        private readonly IPlatformFullTextSearchPersistenceService fullTextSearchPersistenceService;
         // This is just a demo that helper is used by Application Commands/Queries
         private readonly ExampleHelper exampleHelper;
 
@@ -44,11 +44,11 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseQueries
             IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager,
             ITextSnippetRepository<TextSnippetEntity> repository,
-            IPlatformFullTextSearchPersistenceHelper fullTextSearchPersistenceHelper,
+            IPlatformFullTextSearchPersistenceService fullTextSearchPersistenceService,
             ExampleHelper exampleHelper) : base(userContext, unitOfWorkManager)
         {
             this.repository = repository;
-            this.fullTextSearchPersistenceHelper = fullTextSearchPersistenceHelper;
+            this.fullTextSearchPersistenceService = fullTextSearchPersistenceService;
             this.exampleHelper = exampleHelper;
         }
 
@@ -59,7 +59,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseQueries
                 .GetAllQuery()
                 .PipeIf(
                     ifTrue: !string.IsNullOrEmpty(request.SearchText),
-                    thenPipe: query => fullTextSearchPersistenceHelper.Search(
+                    thenPipe: query => fullTextSearchPersistenceService.Search(
                         query,
                         request.SearchText,
                         inFullTextSearchProps: new Expression<Func<TextSnippetEntity, object>>[] { e => e.SnippetText },
