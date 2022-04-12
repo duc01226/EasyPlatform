@@ -61,5 +61,10 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
                 ? items.Where(predicate.Compile()).ToList()
                 : items;
         }
+
+        public static bool ContainsAll<T>(this List<T> items, List<T> containAllItems)
+        {
+            return items.Intersect(containAllItems).Count() >= containAllItems.Count;
+        }
     }
 }

@@ -17,6 +17,7 @@ using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Common.DependencyInjection;
 using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.EfCore.Services;
+using AngularDotnetPlatform.Platform.Persistence.Services.Abstract;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -72,6 +73,7 @@ namespace AngularDotnetPlatform.Platform.EfCore
 
                     return options;
                 });
+            RegisterBuiltInPersistenceServices(serviceCollection);
         }
 
         /// <summary>
@@ -130,6 +132,11 @@ namespace AngularDotnetPlatform.Platform.EfCore
                     typeof(PlatformDefaultEfCoreInboxEventBusMessageRepository<TDbContext>),
                     ServiceLifeTime.Transient);
             }
+        }
+
+        private static void RegisterBuiltInPersistenceServices(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RegisterAllForImplementation<EfCoreSqlPlatformFullTextSearchPersistenceService>(ServiceLifeTime.Transient);
         }
 
         private void RegisterDbContextOptions(

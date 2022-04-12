@@ -21,6 +21,7 @@ using MongoDB.Bson.Serialization;
 using AngularDotnetPlatform.Platform.MongoDB.Serializer.Abstract;
 using AngularDotnetPlatform.Platform.MongoDB.Services;
 using AngularDotnetPlatform.Platform.Persistence.DataMigration;
+using AngularDotnetPlatform.Platform.Persistence.Services.Abstract;
 using Microsoft.Extensions.Options;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
@@ -71,6 +72,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             RegisterPlatformMigrationHistoryClassMap();
             AutoRegisterAllSerializers();
             AutoRegisterAllClassMap();
+            RegisterBuiltInPersistenceServices(serviceCollection);
         }
 
         protected virtual void AutoRegisterAllClassMap()
@@ -178,6 +180,11 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                 cm.AutoMap();
                 cm.SetIgnoreExtraElements(true);
             });
+        }
+
+        private static void RegisterBuiltInPersistenceServices(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RegisterAllForImplementation<MongoDbPlatformFullTextSearchPersistenceService>(ServiceLifeTime.Transient);
         }
     }
 
