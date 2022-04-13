@@ -15,12 +15,13 @@ using Polly;
 using AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories;
 using AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.MongoDB.Extensions;
-using AngularDotnetPlatform.Platform.MongoDB.Helpers;
 using AngularDotnetPlatform.Platform.MongoDB.Mapping;
 using AngularDotnetPlatform.Platform.MongoDB.Migration;
 using MongoDB.Bson.Serialization;
 using AngularDotnetPlatform.Platform.MongoDB.Serializer.Abstract;
+using AngularDotnetPlatform.Platform.MongoDB.Services;
 using AngularDotnetPlatform.Platform.Persistence.DataMigration;
+using AngularDotnetPlatform.Platform.Persistence.Services.Abstract;
 using Microsoft.Extensions.Options;
 
 namespace AngularDotnetPlatform.Platform.MongoDB
@@ -67,12 +68,11 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                 serviceCollection.Register<IUnitOfWork, PlatformMongoDbUnitOfWork<TDbContext>>(ServiceLifeTime.Transient);
             }
 
-            RegisterBuiltInHelpers(serviceCollection);
-
             RegisterPlatformDataMigrationHistoryClassMap();
             RegisterPlatformMigrationHistoryClassMap();
             AutoRegisterAllSerializers();
             AutoRegisterAllClassMap();
+            RegisterBuiltInPersistenceServices(serviceCollection);
         }
 
         protected virtual void AutoRegisterAllClassMap()
@@ -164,11 +164,6 @@ namespace AngularDotnetPlatform.Platform.MongoDB
             return allClassMapTypes;
         }
 
-        private static void RegisterBuiltInHelpers(IServiceCollection serviceCollection)
-        {
-            serviceCollection.RegisterAllForImplementation<MongoDbPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime.Transient);
-        }
-
         private static void RegisterPlatformDataMigrationHistoryClassMap()
         {
             BsonClassMapExtension.TryRegisterClassMap<PlatformDataMigrationHistory>(cm =>
@@ -185,6 +180,11 @@ namespace AngularDotnetPlatform.Platform.MongoDB
                 cm.AutoMap();
                 cm.SetIgnoreExtraElements(true);
             });
+        }
+
+        private static void RegisterBuiltInPersistenceServices(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RegisterAllForImplementation<MongoDbPlatformFullTextSearchPersistenceService>(ServiceLifeTime.Transient);
         }
     }
 

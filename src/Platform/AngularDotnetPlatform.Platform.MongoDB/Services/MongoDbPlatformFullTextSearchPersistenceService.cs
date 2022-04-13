@@ -2,17 +2,16 @@ using System;
 using System.Linq;
 using System.Linq.Expressions;
 using AngularDotnetPlatform.Platform.Common.Extensions;
-using AngularDotnetPlatform.Platform.Persistence.Helpers;
-using Microsoft.Extensions.DependencyInjection;
+using AngularDotnetPlatform.Platform.Persistence.Services;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 
-namespace AngularDotnetPlatform.Platform.MongoDB.Helpers
+namespace AngularDotnetPlatform.Platform.MongoDB.Services
 {
-    public class MongoDbPlatformFullTextSearchPersistenceHelper : PlatformFullTextSearchPersistenceHelper
+    public class MongoDbPlatformFullTextSearchPersistenceService : PlatformFullTextSearchPersistenceService
     {
-        public MongoDbPlatformFullTextSearchPersistenceHelper(IServiceProvider serviceProvider) : base(serviceProvider)
+        public MongoDbPlatformFullTextSearchPersistenceService(IServiceProvider serviceProvider) : base(serviceProvider)
         {
         }
 

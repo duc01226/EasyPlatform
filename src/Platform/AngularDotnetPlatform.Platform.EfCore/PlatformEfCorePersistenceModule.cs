@@ -6,7 +6,6 @@ using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EfCore.Domain.Repositories;
 using AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork;
 using AngularDotnetPlatform.Platform.EfCore.EntityConfiguration;
-using AngularDotnetPlatform.Platform.EfCore.Helpers;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -17,6 +16,8 @@ using System.Collections.Generic;
 using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Common.DependencyInjection;
 using AngularDotnetPlatform.Platform.Common.Extensions;
+using AngularDotnetPlatform.Platform.EfCore.Services;
+using AngularDotnetPlatform.Platform.Persistence.Services.Abstract;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -72,8 +73,7 @@ namespace AngularDotnetPlatform.Platform.EfCore
 
                     return options;
                 });
-
-            RegisterBuiltInHelpers(serviceCollection);
+            RegisterBuiltInPersistenceServices(serviceCollection);
         }
 
         /// <summary>
@@ -134,9 +134,9 @@ namespace AngularDotnetPlatform.Platform.EfCore
             }
         }
 
-        private void RegisterBuiltInHelpers(IServiceCollection serviceCollection)
+        private static void RegisterBuiltInPersistenceServices(IServiceCollection serviceCollection)
         {
-            serviceCollection.RegisterAllForImplementation<EfCoreSqlPlatformFullTextSearchPersistenceHelper>(ServiceLifeTime.Transient);
+            serviceCollection.RegisterAllForImplementation<EfCoreSqlPlatformFullTextSearchPersistenceService>(ServiceLifeTime.Transient);
         }
 
         private void RegisterDbContextOptions(

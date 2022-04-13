@@ -46,7 +46,7 @@ namespace PlatformExampleApp.TextSnippet.Application
 
         private async Task SeedTextSnippet()
         {
-            if (await textSnippetRepository.AnyAsync())
+            if (await textSnippetRepository.AnyAsync(p => p.SnippetText.StartsWith("Example")))
                 return;
 
             for (var i = 0; i < 20; i++)
