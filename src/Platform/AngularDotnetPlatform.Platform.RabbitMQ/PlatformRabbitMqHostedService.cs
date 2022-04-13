@@ -161,7 +161,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         private string GetConsumerQueueName(string consumerRoutingKey)
         {
-            return $"{applicationSetting.ApplicationName}-{consumerRoutingKey}";
+            return $"Platform-{applicationSetting.ApplicationName}-{consumerRoutingKey}";
         }
 
         private string GetConsumerExchange(PlatformEventBusConsumerAttribute consumerAttribute)
