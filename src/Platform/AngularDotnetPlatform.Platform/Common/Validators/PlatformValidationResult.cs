@@ -248,6 +248,11 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
                 throw exceptionProviderIfNotValid(this);
             }
         }
+
+        public PlatformValidationResult<T> Map<T>(Func<TValue, T> mapFunc)
+        {
+            return new PlatformValidationResult<T>(Errors, mapFunc(Value));
+        }
     }
 
     public class PlatformValidationResult : PlatformValidationResult<object>

@@ -1,13 +1,16 @@
 using System;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.Context.UserContext;
 using AngularDotnetPlatform.Platform.Application.Cqrs.Commands;
 using AngularDotnetPlatform.Platform.Common.Cqrs;
 using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 using AngularDotnetPlatform.Platform.Common.Timing;
 using AngularDotnetPlatform.Platform.Common.Validators;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
 using PlatformExampleApp.TextSnippet.Application.Infrastructures;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
@@ -38,6 +41,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         private readonly ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;
         // This only for demo define and use infrastructure services
         private readonly ISendMailService sendMailService;
+        private readonly ILogger<SaveSnippetTextCommandHandler> logger;
 
         public SaveSnippetTextCommandHandler(
             IPlatformApplicationUserContextAccessor userContext,
@@ -45,11 +49,13 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             IPlatformCqrs cqrs,
             ITextSnippetRootRepository<TextSnippetEntity> textSnippetEntityRepository,
             ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository,
-            ISendMailService sendMailService) : base(userContext, unitOfWorkManager, cqrs)
+            ISendMailService sendMailService,
+            ILogger<SaveSnippetTextCommandHandler> logger) : base(userContext, unitOfWorkManager, cqrs)
         {
             this.textSnippetEntityRepository = textSnippetEntityRepository;
             this.multiDbDemoEntityRepository = multiDbDemoEntityRepository;
             this.sendMailService = sendMailService;
+            this.logger = logger;
 
             this.sendMailService.SendEmail("demo@email.com", "demo header", "demo content");
         }
@@ -58,6 +64,29 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         {
             // THIS IS NOT RELATED to SaveSnippetText logic. This is just for demo multi db features in one application works
             await UpsertFirstExistedMultiDbDemoEntity(cancellationToken);
+
+            // THIS IS NOT RELATED to SaveSnippetText logic. This is just for demo validation<T> with value inside like Promise<T>, Task<T>
+            Func<string, PlatformValidationResult<DateTime>> parseStringToDateFunc = stringValue =>
+                DateTime.TryParse(stringValue, out var parseDateTime)
+                    .Pipe(isParseSuccess => isParseSuccess
+                        ? PlatformValidationResult<DateTime>.Valid(parseDateTime)
+                        : PlatformValidationResult<DateTime>.Invalid(
+                            errors: $"Value {stringValue} could not be parsed to Date"));
+            var parsedDateValueResult = parseStringToDateFunc("some date string");
+            if (parsedDateValueResult.IsValid)
+            {
+                logger.LogInformation($"Parsed \"some date string\" to {parsedDateValueResult.Value.ToLongDateString()}");
+            }
+            else
+            {
+                logger.LogError(parsedDateValueResult.ErrorsMsg());
+            }
+            // Demo others features use cases of Validation<T
+            // Return Validation of string of date only from another string. Process is: string => DateTime => Date only => DateOnly string
+            var parsedDateOnlyValueResult = parsedDateValueResult
+                .And(parsedDate => parsedDate < DateTime.UtcNow, "ParsedDate must in the past")
+                .Map(parsedDate => parsedDate.Date.ToString(CultureInfo.InvariantCulture));
+
 
             // STEP 1: Build saving entity data from request
             var savingData = request.Data.MapToEntity();
