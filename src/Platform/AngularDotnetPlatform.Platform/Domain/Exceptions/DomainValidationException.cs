@@ -11,6 +11,6 @@ namespace AngularDotnetPlatform.Platform.Domain.Exceptions
             ValidationResult = validationResult;
         }
 
-        public PlatformValidationResult ValidationResult { get; set; }
+        public PlatformValidationResult<object> ValidationResult { get; set; }
     }
 }

@@ -23,7 +23,7 @@ namespace AngularDotnetPlatform.Platform.Application.Cqrs
             request.PopulateAuditInfo(
                 handleAuditedTrackId: Guid.NewGuid(),
                 handleAuditedDate: Clock.Now,
-                handleAuditedByUserId: CurrentUser.GetUserId());
+                handleAuditedByUserId: UserContext.Current.GetUserId());
         }
 
         protected void EnsureValidationResultValid(params PlatformValidationResult[] validateResults)
@@ -37,6 +37,21 @@ namespace AngularDotnetPlatform.Platform.Application.Cqrs
         }
 
         protected void EnsurePermissionLogicValid(params PlatformValidationResult[] validateResults)
+        {
+            EnsureValid(validateResults, p => new PlatformApplicationPermissionException(p.ErrorsMsg()));
+        }
+
+        protected void EnsureValidationResultValid<TValue>(params PlatformValidationResult<TValue>[] validateResults)
+        {
+            EnsureValid(validateResults, exceptionProviderIfNotValid: PlatformApplicationValidationException.Create);
+        }
+
+        protected void EnsureBusinessLogicValid<TValue>(params PlatformValidationResult<TValue>[] validateResults)
+        {
+            EnsureValid(validateResults, p => new PlatformApplicationException(p.ErrorsMsg()));
+        }
+
+        protected void EnsurePermissionLogicValid<TValue>(params PlatformValidationResult<TValue>[] validateResults)
         {
             EnsureValid(validateResults, p => new PlatformApplicationPermissionException(p.ErrorsMsg()));
         }

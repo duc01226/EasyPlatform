@@ -6,44 +6,51 @@ using FluentValidation.Results;
 
 namespace AngularDotnetPlatform.Platform.Common.Validators
 {
-    public class PlatformValidationResult : ValidationResult
+    public class PlatformValidationResult<TValue> : ValidationResult
     {
         public PlatformValidationResult() : base()
         {
         }
 
-        public PlatformValidationResult(List<PlatformValidationFailure> failures) : base(failures)
+        public PlatformValidationResult(List<PlatformValidationFailure> failures, TValue value = default) : base(failures)
         {
             Errors = failures ?? new List<PlatformValidationFailure>();
+            Value = value;
         }
 
         public new List<PlatformValidationFailure> Errors { get; } = new List<PlatformValidationFailure>();
+        public TValue Value { get; set; }
 
-        public static implicit operator bool(PlatformValidationResult validation)
+        public static implicit operator TValue(PlatformValidationResult<TValue> validation)
+        {
+            return validation.Value;
+        }
+
+        public static implicit operator bool(PlatformValidationResult<TValue> validation)
         {
             return validation.IsValid;
         }
 
-        public static implicit operator string(PlatformValidationResult validation)
+        public static implicit operator string(PlatformValidationResult<TValue> validation)
         {
             return validation.ToString();
         }
 
-        public static implicit operator PlatformValidationResult(string error)
+        public static implicit operator PlatformValidationResult<TValue>(string error)
         {
-            return string.IsNullOrEmpty(error) ? Valid() : Invalid(error);
+            return Invalid(error);
         }
 
-        public static implicit operator PlatformValidationResult(List<string> errors)
+        public static implicit operator PlatformValidationResult<TValue>(List<string> errors)
         {
-            return errors != null && errors.Any()
+            return errors.Any()
                 ? Invalid(errors.Select(p => (PlatformValidationFailure)p).ToArray())
                 : Valid();
         }
 
-        public static implicit operator PlatformValidationResult(List<PlatformValidationFailure> errors)
+        public static implicit operator PlatformValidationResult<TValue>(List<PlatformValidationFailure> errors)
         {
-            return errors != null && errors.Any()
+            return errors.Any()
                 ? Invalid(errors.Select(p => p).ToArray())
                 : Valid();
         }
@@ -52,9 +59,9 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
         /// Return a valid validation result.
         /// </summary>
         /// <returns>A valid validation result.</returns>
-        public static PlatformValidationResult Valid()
+        public static PlatformValidationResult<TValue> Valid(TValue value = default)
         {
-            return new PlatformValidationResult();
+            return new PlatformValidationResult<TValue>(null, value);
         }
 
         /// <summary>
@@ -62,11 +69,26 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
         /// </summary>
         /// <param name="errors">The validation errors.</param>
         /// <returns>A invalid validation result.</returns>
-        public static PlatformValidationResult Invalid(params PlatformValidationFailure[] errors)
+        public static PlatformValidationResult<TValue> Invalid(params PlatformValidationFailure[] errors)
         {
             return errors.Any()
-                ? new PlatformValidationResult(errors.ToList())
-                : new PlatformValidationResult(new List<PlatformValidationFailure> { "Invalid!" });
+                ? new PlatformValidationResult<TValue>(errors.ToList())
+                : new PlatformValidationResult<TValue>(new List<PlatformValidationFailure> { "Invalid!" });
+        }
+
+        /// <summary>
+        /// Return a invalid validation result.
+        /// </summary>
+        /// <param name="value">The validation target object.</param>
+        /// <param name="errors">The validation errors.</param>
+        /// <returns>A invalid validation result.</returns>
+        public static PlatformValidationResult<TValue> Invalid(
+            TValue value,
+            params PlatformValidationFailure[] errors)
+        {
+            return errors.Any()
+                ? new PlatformValidationResult<TValue>(errors.ToList(), value)
+                : new PlatformValidationResult<TValue>(new List<PlatformValidationFailure> { "Invalid!" }, value);
         }
 
         /// <summary>
@@ -75,34 +97,66 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
         /// <param name="validCondition">The valid condition.</param>
         /// <param name="errors">The errors if the valid condition is false.</param>
         /// <returns>A validation result.</returns>
-        public static PlatformValidationResult ValidIf(bool validCondition, params PlatformValidationFailure[] errors)
+        public static PlatformValidationResult<TValue> ValidIf(
+            bool validCondition,
+            params PlatformValidationFailure[] errors)
         {
             return validCondition ? Valid() : Invalid(errors);
         }
 
-        /// <inheritdoc cref="ValidIf(bool,AngularDotnetPlatform.Platform.Common.Validators.PlatformValidationFailure[])"/>
-        public static PlatformValidationResult ValidIf(Func<bool> validConditionFunc, params PlatformValidationFailure[] errors)
+        /// <summary>
+        /// Return a valid validation result if the condition is true, otherwise return a invalid validation with errors.
+        /// </summary>
+        /// <param name="value">The validation target object.</param>
+        /// <param name="validCondition">The valid condition.</param>
+        /// <param name="errors">The errors if the valid condition is false.</param>
+        /// <returns>A validation result.</returns>
+        public static PlatformValidationResult<TValue> ValidIf(
+            TValue value,
+            bool validCondition,
+            params PlatformValidationFailure[] errors)
+        {
+            return validCondition ? Valid(value) : Invalid(value, errors);
+        }
+
+        /// <inheritdoc cref="ValidIf(bool,BravoSuite.Platform.Common.Validators.PlatformValidationFailure[])"/>
+        public static PlatformValidationResult<TValue> ValidIf(
+            Func<bool> validConditionFunc,
+            params PlatformValidationFailure[] errors)
         {
             return ValidIf(validConditionFunc(), errors);
         }
 
-        public static PlatformValidationResult FailFast(params Func<PlatformValidationResult>[] validations)
+        /// <inheritdoc cref="ValidIf(TValue,bool,BravoSuite.Platform.Common.Validators.PlatformValidationFailure[])"/>
+        public static PlatformValidationResult<TValue> ValidIf(
+            TValue value,
+            Func<bool> validConditionFunc,
+            params PlatformValidationFailure[] errors)
+        {
+            return ValidIf(value, validConditionFunc(), errors);
+        }
+
+        public static PlatformValidationResult<TValue> FailFast(
+            params Func<PlatformValidationResult<TValue>>[] validations)
         {
             return validations.Aggregate(Valid(), (acc, validator) => acc.Bind(validator));
         }
 
-        public static PlatformValidationResult FailFast(params PlatformValidationResult[] validations)
+        public static PlatformValidationResult<TValue> FailFast(
+            params PlatformValidationResult<TValue>[] validations)
         {
             return validations.Aggregate(Valid(), (acc, validator) => acc.Bind(() => validator));
         }
 
-        public static PlatformValidationResult HarvestErrors(params PlatformValidationResult[] validations)
+        public static PlatformValidationResult<TValue> HarvestErrors(
+            params PlatformValidationResult<TValue>[] validations)
         {
             var errors = validations.SelectMany(p => p.Errors).ToArray();
             return !errors.Any() ? Valid() : Invalid(errors);
         }
 
-        public static PlatformValidationResult HarvestErrors(params Func<PlatformValidationResult>[] validations)
+        public static PlatformValidationResult<TValue> HarvestErrors(
+            params Func<PlatformValidationResult<TValue>>[] validations)
         {
             return HarvestErrors(validations.Select(p => p()).ToArray());
         }
@@ -119,14 +173,192 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             return ErrorsMsg();
         }
 
-        public PlatformValidationResult Bind(Func<PlatformValidationResult> f)
+        public PlatformValidationResult<TBindValidationTarget> Bind<TBindValidationTarget>(
+            Func<PlatformValidationResult<TBindValidationTarget>> f)
+        {
+            return Match(
+                invalid: err => PlatformValidationResult<TBindValidationTarget>.Invalid(err.ToArray()),
+                valid: () => f());
+        }
+
+        public PlatformValidationResult<TMatchValidationTarget> Match<TMatchValidationTarget>(
+            Func<IEnumerable<PlatformValidationFailure>, PlatformValidationResult<TMatchValidationTarget>> invalid,
+            Func<PlatformValidationResult<TMatchValidationTarget>> valid)
+        {
+            return IsValid ? valid() : invalid(Errors);
+        }
+
+        public PlatformValidationResult<TValue> And(PlatformValidationResult<TValue> val)
+        {
+            return !IsValid ? this : val;
+        }
+
+        public PlatformValidationResult<TValue> And(Func<bool> validCondition, params PlatformValidationFailure[] errors)
+        {
+            return !IsValid ? this : ValidIf(validCondition, errors);
+        }
+
+        public PlatformValidationResult<TValue> And(Func<TValue, bool> validCondition, params PlatformValidationFailure[] errors)
+        {
+            return !IsValid ? this : ValidIf(validCondition(Value), errors);
+        }
+
+        public PlatformValidationResult<TValue> And(Func<PlatformValidationResult<TValue>> val)
+        {
+            return !IsValid ? this : val();
+        }
+
+        public PlatformValidationResult<TValue> Or(PlatformValidationResult<TValue> val)
+        {
+            return IsValid ? this : val;
+        }
+
+        public PlatformValidationResult<TValue> Or(Func<PlatformValidationResult<TValue>> val)
+        {
+            return IsValid ? this : val();
+        }
+
+        public async Task<PlatformValidationResult<TValue>> AndAsync(Task<PlatformValidationResult<TValue>> val)
+        {
+            return !IsValid ? this : await val;
+        }
+
+        public async Task<PlatformValidationResult<TValue>> AndAsync(Func<Task<PlatformValidationResult<TValue>>> val)
+        {
+            return !IsValid ? this : await val();
+        }
+
+        public async Task<PlatformValidationResult<TValue>> OrAsync(Task<PlatformValidationResult<TValue>> val)
+        {
+            return IsValid ? this : await val;
+        }
+
+        public async Task<PlatformValidationResult<TValue>> OrAsync(Func<Task<PlatformValidationResult<TValue>>> val)
+        {
+            return IsValid ? this : await val();
+        }
+
+        /// <summary>
+        /// Throw exception provided from <see cref="exceptionProviderIfNotValid"/>
+        /// </summary>
+        public void EnsureValid(Func<PlatformValidationResult<TValue>, Exception> exceptionProviderIfNotValid)
+        {
+            if (!IsValid)
+            {
+                throw exceptionProviderIfNotValid(this);
+            }
+        }
+    }
+
+    public class PlatformValidationResult : PlatformValidationResult<object>
+    {
+        public PlatformValidationResult() : base()
+        {
+        }
+
+        public PlatformValidationResult(List<PlatformValidationFailure> failures) : base(failures)
+        {
+        }
+
+        public PlatformValidationResult(PlatformValidationResult<object> validation) : base(validation.Errors)
+        {
+        }
+
+        public static implicit operator PlatformValidationResult(string error)
+        {
+            return Invalid(error);
+        }
+
+        public static implicit operator PlatformValidationResult(List<string> errors)
+        {
+            return errors.Any()
+                ? Invalid(errors.Select(p => (PlatformValidationFailure)p).ToArray())
+                : Valid();
+        }
+
+        public static implicit operator PlatformValidationResult(List<PlatformValidationFailure> errors)
+        {
+            return errors.Any()
+                ? Invalid(errors.Select(p => p).ToArray())
+                : Valid();
+        }
+
+        /// <summary>
+        /// Return a valid validation result if the condition is true, otherwise return a invalid validation with errors.
+        /// </summary>
+        /// <param name="validCondition">The valid condition.</param>
+        /// <param name="errors">The errors if the valid condition is false.</param>
+        /// <returns>A validation result.</returns>
+        public static new PlatformValidationResult ValidIf(
+            bool validCondition,
+            params PlatformValidationFailure[] errors)
+        {
+            return new PlatformValidationResult(PlatformValidationResult<object>.ValidIf(validCondition, errors));
+        }
+
+        /// <inheritdoc cref="ValidIf(bool,BravoSuite.Platform.Common.Validators.PlatformValidationFailure[])"/>
+        public static new PlatformValidationResult ValidIf(
+            Func<bool> validConditionFunc,
+            params PlatformValidationFailure[] errors)
+        {
+            return ValidIf(validConditionFunc(), errors);
+        }
+
+        /// <summary>
+        /// Return a valid validation result.
+        /// </summary>
+        /// <returns>A valid validation result.</returns>
+        public static PlatformValidationResult Valid()
+        {
+            return new PlatformValidationResult(null);
+        }
+
+        /// <summary>
+        /// Return a invalid validation result.
+        /// </summary>
+        /// <param name="errors">The validation errors.</param>
+        /// <returns>A invalid validation result.</returns>
+        public static new PlatformValidationResult Invalid(params PlatformValidationFailure[] errors)
+        {
+            return new PlatformValidationResult(PlatformValidationResult<object>.Invalid(errors));
+        }
+
+        public static PlatformValidationResult FailFast(
+            params Func<PlatformValidationResult>[] validations)
+        {
+            return validations.Aggregate(Valid(), (acc, validator) => acc.Bind(validator));
+        }
+
+        public static PlatformValidationResult FailFast(
+            params PlatformValidationResult[] validations)
+        {
+            return validations.Aggregate(Valid(), (acc, validator) => acc.Bind(() => validator));
+        }
+
+        public static PlatformValidationResult HarvestErrors(
+            params PlatformValidationResult[] validations)
+        {
+            var errors = validations.SelectMany(p => p.Errors).ToArray();
+            return !errors.Any() ? Valid() : Invalid(errors);
+        }
+
+        public static PlatformValidationResult HarvestErrors(
+            params Func<PlatformValidationResult>[] validations)
+        {
+            return HarvestErrors(validations.Select(p => p()).ToArray());
+        }
+
+        public PlatformValidationResult Bind(
+            Func<PlatformValidationResult> f)
         {
             return Match(
                 invalid: err => Invalid(err.ToArray()),
                 valid: () => f());
         }
 
-        public PlatformValidationResult Match(Func<IEnumerable<PlatformValidationFailure>, PlatformValidationResult> invalid, Func<PlatformValidationResult> valid)
+        public PlatformValidationResult Match(
+            Func<IEnumerable<PlatformValidationFailure>, PlatformValidationResult> invalid,
+            Func<PlatformValidationResult> valid)
         {
             return IsValid ? valid() : invalid(Errors);
         }
@@ -136,7 +368,7 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             return !IsValid ? this : val;
         }
 
-        public PlatformValidationResult And(Func<bool> validCondition, params PlatformValidationFailure[] errors)
+        public new PlatformValidationResult And(Func<bool> validCondition, params PlatformValidationFailure[] errors)
         {
             return !IsValid ? this : ValidIf(validCondition, errors);
         }
@@ -156,22 +388,22 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             return IsValid ? this : val();
         }
 
-        public async Task<PlatformValidationResult> And(Task<PlatformValidationResult> val)
+        public async Task<PlatformValidationResult> AndAsync(Task<PlatformValidationResult> val)
         {
             return !IsValid ? this : await val;
         }
 
-        public async Task<PlatformValidationResult> And(Func<Task<PlatformValidationResult>> val)
+        public async Task<PlatformValidationResult> AndAsync(Func<Task<PlatformValidationResult>> val)
         {
             return !IsValid ? this : await val();
         }
 
-        public async Task<PlatformValidationResult> Or(Task<PlatformValidationResult> val)
+        public async Task<PlatformValidationResult> OrAsync(Task<PlatformValidationResult> val)
         {
             return IsValid ? this : await val;
         }
 
-        public async Task<PlatformValidationResult> Or(Func<Task<PlatformValidationResult>> val)
+        public async Task<PlatformValidationResult> OrAsync(Func<Task<PlatformValidationResult>> val)
         {
             return IsValid ? this : await val();
         }
