@@ -119,7 +119,7 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             return validCondition ? Valid(value) : Invalid(value, errors);
         }
 
-        /// <inheritdoc cref="ValidIf(bool,BravoSuite.Platform.Common.Validators.PlatformValidationFailure[])"/>
+        /// <inheritdoc cref="ValidIf(bool,AngularDotnetPlatform.Platform.Common.Validators.PlatformValidationFailure[])"/>
         public static PlatformValidationResult<TValue> ValidIf(
             Func<bool> validConditionFunc,
             params PlatformValidationFailure[] errors)
@@ -127,7 +127,7 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             return ValidIf(validConditionFunc(), errors);
         }
 
-        /// <inheritdoc cref="ValidIf(TValue,bool,BravoSuite.Platform.Common.Validators.PlatformValidationFailure[])"/>
+        /// <inheritdoc cref="ValidIf(TValue,bool,AngularDotnetPlatform.Platform.Common.Validators.PlatformValidationFailure[])"/>
         public static PlatformValidationResult<TValue> ValidIf(
             TValue value,
             Func<bool> validConditionFunc,
@@ -301,7 +301,7 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             return new PlatformValidationResult(PlatformValidationResult<object>.ValidIf(validCondition, errors));
         }
 
-        /// <inheritdoc cref="ValidIf(bool,BravoSuite.Platform.Common.Validators.PlatformValidationFailure[])"/>
+        /// <inheritdoc cref="ValidIf(bool,AngularDotnetPlatform.Platform.Common.Validators.PlatformValidationFailure[])"/>
         public static new PlatformValidationResult ValidIf(
             Func<bool> validConditionFunc,
             params PlatformValidationFailure[] errors)
