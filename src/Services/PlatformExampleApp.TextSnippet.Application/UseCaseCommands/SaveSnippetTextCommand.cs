@@ -81,7 +81,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             {
                 logger.LogError(parsedDateValueResult.ErrorsMsg());
             }
-            // Demo others features use cases of Validation<T
+            // Demo others features use cases of Validation<T>
             // Return Validation of string of date only from another string. Process is: string => DateTime => Date only => DateOnly string
             var parsedDateOnlyValueResult = parsedDateValueResult
                 .And(parsedDate => parsedDate < DateTime.UtcNow, "ParsedDate must in the past")
