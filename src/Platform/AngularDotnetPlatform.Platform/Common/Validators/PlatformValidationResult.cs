@@ -139,13 +139,19 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
         public static PlatformValidationResult<TValue> FailFast(
             params Func<PlatformValidationResult<TValue>>[] validations)
         {
+            return validations.Aggregate(Valid(), (acc, validator) => acc.Bind(value => validator()));
+        }
+
+        public static PlatformValidationResult<TValue> FailFast(
+            params Func<TValue, PlatformValidationResult<TValue>>[] validations)
+        {
             return validations.Aggregate(Valid(), (acc, validator) => acc.Bind(validator));
         }
 
         public static PlatformValidationResult<TValue> FailFast(
             params PlatformValidationResult<TValue>[] validations)
         {
-            return validations.Aggregate(Valid(), (acc, validator) => acc.Bind(() => validator));
+            return validations.Aggregate(Valid(), (acc, validator) => acc.Bind(value => validator));
         }
 
         public static PlatformValidationResult<TValue> HarvestErrors(
@@ -174,18 +180,18 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
         }
 
         public PlatformValidationResult<TBindValidationTarget> Bind<TBindValidationTarget>(
-            Func<PlatformValidationResult<TBindValidationTarget>> f)
+            Func<TValue, PlatformValidationResult<TBindValidationTarget>> f)
         {
             return Match(
-                invalid: err => PlatformValidationResult<TBindValidationTarget>.Invalid(err.ToArray()),
-                valid: () => f());
+                valid: value => f(value),
+                invalid: err => PlatformValidationResult<TBindValidationTarget>.Invalid(err.ToArray()));
         }
 
         public PlatformValidationResult<TMatchValidationTarget> Match<TMatchValidationTarget>(
-            Func<IEnumerable<PlatformValidationFailure>, PlatformValidationResult<TMatchValidationTarget>> invalid,
-            Func<PlatformValidationResult<TMatchValidationTarget>> valid)
+            Func<TValue, PlatformValidationResult<TMatchValidationTarget>> valid,
+            Func<IEnumerable<PlatformValidationFailure>, PlatformValidationResult<TMatchValidationTarget>> invalid)
         {
-            return IsValid ? valid() : invalid(Errors);
+            return IsValid ? valid(Value) : invalid(Errors);
         }
 
         public PlatformValidationResult<TValue> And(PlatformValidationResult<TValue> val)
