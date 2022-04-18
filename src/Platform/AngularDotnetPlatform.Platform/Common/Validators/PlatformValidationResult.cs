@@ -12,7 +12,7 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
         {
         }
 
-        public PlatformValidationResult(List<PlatformValidationFailure> failures, TValue value = default) : base(failures)
+        public PlatformValidationResult(List<PlatformValidationFailure> failures, TValue value = default) : base(failures ?? new List<PlatformValidationFailure>())
         {
             Errors = failures ?? new List<PlatformValidationFailure>();
             Value = value;
@@ -43,14 +43,14 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
 
         public static implicit operator PlatformValidationResult<TValue>(List<string> errors)
         {
-            return errors.Any()
+            return errors?.Any() == true
                 ? Invalid(errors.Select(p => (PlatformValidationFailure)p).ToArray())
                 : Valid();
         }
 
         public static implicit operator PlatformValidationResult<TValue>(List<PlatformValidationFailure> errors)
         {
-            return errors.Any()
+            return errors?.Any() == true
                 ? Invalid(errors.Select(p => p).ToArray())
                 : Valid();
         }
@@ -267,7 +267,7 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
         {
         }
 
-        public PlatformValidationResult(List<PlatformValidationFailure> failures) : base(failures)
+        public PlatformValidationResult(List<PlatformValidationFailure> failures) : base(failures ?? new List<PlatformValidationFailure>())
         {
         }
 
@@ -282,14 +282,14 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
 
         public static implicit operator PlatformValidationResult(List<string> errors)
         {
-            return errors.Any()
+            return errors?.Any() == true
                 ? Invalid(errors.Select(p => (PlatformValidationFailure)p).ToArray())
                 : Valid();
         }
 
         public static implicit operator PlatformValidationResult(List<PlatformValidationFailure> errors)
         {
-            return errors.Any()
+            return errors?.Any() == true
                 ? Invalid(errors.Select(p => p).ToArray())
                 : Valid();
         }
