@@ -206,7 +206,7 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
 
         public PlatformValidationResult<TValue> And(Func<TValue, bool> validCondition, params PlatformValidationFailure[] errors)
         {
-            return !IsValid ? this : ValidIf(validCondition(Value), errors);
+            return !IsValid ? this : ValidIf(value: Value, validCondition(Value), errors);
         }
 
         public PlatformValidationResult<TValue> And(Func<PlatformValidationResult<TValue>> val)
@@ -229,9 +229,9 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             return !IsValid ? this : await val;
         }
 
-        public async Task<PlatformValidationResult<TValue>> AndAsync(Func<Task<PlatformValidationResult<TValue>>> val)
+        public async Task<PlatformValidationResult<TValue>> AndAsync(Func<TValue, Task<PlatformValidationResult<TValue>>> val)
         {
-            return !IsValid ? this : await val();
+            return !IsValid ? this : await val(Value);
         }
 
         public async Task<PlatformValidationResult<TValue>> OrAsync(Task<PlatformValidationResult<TValue>> val)
