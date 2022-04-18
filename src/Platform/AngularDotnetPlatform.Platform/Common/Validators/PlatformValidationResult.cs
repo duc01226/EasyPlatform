@@ -161,14 +161,9 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             return IsValid ? valid(Value) : invalid(Errors);
         }
 
-        public PlatformValidationResult<TValue> And(PlatformValidationResult<TValue> val)
+        public PlatformValidationResult<TValue> And(PlatformValidationResult<TValue> nextValidation)
         {
-            return !IsValid ? this : val;
-        }
-
-        public PlatformValidationResult<TValue> And(Func<bool> validCondition, params PlatformValidationFailure[] errors)
-        {
-            return !IsValid ? this : ValidIf(value: Value, validCondition, errors);
+            return !IsValid ? this : nextValidation;
         }
 
         public PlatformValidationResult<TValue> And(Func<TValue, bool> validCondition, params PlatformValidationFailure[] errors)
@@ -176,39 +171,44 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             return !IsValid ? this : ValidIf(value: Value, validCondition(Value), errors);
         }
 
-        public PlatformValidationResult<TValue> And(Func<PlatformValidationResult<TValue>> val)
+        public PlatformValidationResult<TValue> And(Func<TValue, PlatformValidationResult<TValue>> nextValidation)
         {
-            return !IsValid ? this : val();
+            return !IsValid ? this : nextValidation(Value);
         }
 
-        public PlatformValidationResult<TValue> Or(PlatformValidationResult<TValue> val)
+        public PlatformValidationResult<TValue> And(Func<PlatformValidationResult<TValue>> nextValidation)
         {
-            return IsValid ? this : val;
+            return !IsValid ? this : nextValidation();
         }
 
-        public PlatformValidationResult<TValue> Or(Func<PlatformValidationResult<TValue>> val)
+        public PlatformValidationResult<TValue> Or(PlatformValidationResult<TValue> nextValidation)
         {
-            return IsValid ? this : val();
+            return IsValid ? this : nextValidation;
         }
 
-        public async Task<PlatformValidationResult<TValue>> AndAsync(Task<PlatformValidationResult<TValue>> val)
+        public PlatformValidationResult<TValue> Or(Func<PlatformValidationResult<TValue>> nextValidation)
         {
-            return !IsValid ? this : await val;
+            return IsValid ? this : nextValidation();
         }
 
-        public async Task<PlatformValidationResult<TValue>> AndAsync(Func<TValue, Task<PlatformValidationResult<TValue>>> val)
+        public async Task<PlatformValidationResult<TValue>> AndAsync(Task<PlatformValidationResult<TValue>> nextValidation)
         {
-            return !IsValid ? this : await val(Value);
+            return !IsValid ? this : await nextValidation;
         }
 
-        public async Task<PlatformValidationResult<TValue>> OrAsync(Task<PlatformValidationResult<TValue>> val)
+        public async Task<PlatformValidationResult<TValue>> AndAsync(Func<TValue, Task<PlatformValidationResult<TValue>>> nextValidation)
         {
-            return IsValid ? this : await val;
+            return !IsValid ? this : await nextValidation(Value);
         }
 
-        public async Task<PlatformValidationResult<TValue>> OrAsync(Func<Task<PlatformValidationResult<TValue>>> val)
+        public async Task<PlatformValidationResult<TValue>> OrAsync(Task<PlatformValidationResult<TValue>> nextValidation)
         {
-            return IsValid ? this : await val();
+            return IsValid ? this : await nextValidation;
+        }
+
+        public async Task<PlatformValidationResult<TValue>> OrAsync(Func<Task<PlatformValidationResult<TValue>>> nextValidation)
+        {
+            return IsValid ? this : await nextValidation();
         }
 
         /// <summary>
@@ -341,9 +341,9 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             return IsValid ? valid() : invalid(Errors);
         }
 
-        public PlatformValidationResult And(PlatformValidationResult val)
+        public PlatformValidationResult And(PlatformValidationResult nextValidation)
         {
-            return !IsValid ? this : val;
+            return !IsValid ? this : nextValidation;
         }
 
         public new PlatformValidationResult And(Func<bool> validCondition, params PlatformValidationFailure[] errors)
@@ -351,39 +351,39 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             return !IsValid ? this : ValidIf(validCondition, errors);
         }
 
-        public PlatformValidationResult And(Func<PlatformValidationResult> val)
+        public PlatformValidationResult And(Func<PlatformValidationResult> nextValidation)
         {
-            return !IsValid ? this : val();
+            return !IsValid ? this : nextValidation();
         }
 
-        public PlatformValidationResult Or(PlatformValidationResult val)
+        public PlatformValidationResult Or(PlatformValidationResult nextValidation)
         {
-            return IsValid ? this : val;
+            return IsValid ? this : nextValidation;
         }
 
-        public PlatformValidationResult Or(Func<PlatformValidationResult> val)
+        public PlatformValidationResult Or(Func<PlatformValidationResult> nextValidation)
         {
-            return IsValid ? this : val();
+            return IsValid ? this : nextValidation();
         }
 
-        public async Task<PlatformValidationResult> AndAsync(Task<PlatformValidationResult> val)
+        public async Task<PlatformValidationResult> AndAsync(Task<PlatformValidationResult> nextValidation)
         {
-            return !IsValid ? this : await val;
+            return !IsValid ? this : await nextValidation;
         }
 
-        public async Task<PlatformValidationResult> AndAsync(Func<Task<PlatformValidationResult>> val)
+        public async Task<PlatformValidationResult> AndAsync(Func<Task<PlatformValidationResult>> nextValidation)
         {
-            return !IsValid ? this : await val();
+            return !IsValid ? this : await nextValidation();
         }
 
-        public async Task<PlatformValidationResult> OrAsync(Task<PlatformValidationResult> val)
+        public async Task<PlatformValidationResult> OrAsync(Task<PlatformValidationResult> nextValidation)
         {
-            return IsValid ? this : await val;
+            return IsValid ? this : await nextValidation;
         }
 
-        public async Task<PlatformValidationResult> OrAsync(Func<Task<PlatformValidationResult>> val)
+        public async Task<PlatformValidationResult> OrAsync(Func<Task<PlatformValidationResult>> nextValidation)
         {
-            return IsValid ? this : await val();
+            return IsValid ? this : await nextValidation();
         }
 
         /// <summary>
