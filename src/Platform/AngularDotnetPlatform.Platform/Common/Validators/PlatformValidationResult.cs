@@ -12,7 +12,7 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
         {
         }
 
-        public PlatformValidationResult(List<PlatformValidationFailure> failures, TValue value = default) : base(failures ?? new List<PlatformValidationFailure>())
+        public PlatformValidationResult(TValue value, List<PlatformValidationFailure> failures) : base(failures ?? new List<PlatformValidationFailure>())
         {
             Errors = failures ?? new List<PlatformValidationFailure>();
             Value = value;
@@ -61,7 +61,7 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
         /// <returns>A valid validation result.</returns>
         public static PlatformValidationResult<TValue> Valid(TValue value = default)
         {
-            return new PlatformValidationResult<TValue>(null, value);
+            return new PlatformValidationResult<TValue>(value, null);
         }
 
         /// <summary>
@@ -75,8 +75,8 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
             params PlatformValidationFailure[] errors)
         {
             return errors.Any()
-                ? new PlatformValidationResult<TValue>(errors.ToList(), value)
-                : new PlatformValidationResult<TValue>(new List<PlatformValidationFailure> { "Invalid!" }, value);
+                ? new PlatformValidationResult<TValue>(value, errors.ToList())
+                : new PlatformValidationResult<TValue>(value, new List<PlatformValidationFailure> { "Invalid!" });
         }
 
         /// <summary>
@@ -224,7 +224,7 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
 
         public PlatformValidationResult<T> Map<T>(Func<TValue, T> mapFunc)
         {
-            return new PlatformValidationResult<T>(Errors, mapFunc(Value));
+            return new PlatformValidationResult<T>(mapFunc(Value), Errors);
         }
     }
 
@@ -234,11 +234,11 @@ namespace AngularDotnetPlatform.Platform.Common.Validators
         {
         }
 
-        public PlatformValidationResult(List<PlatformValidationFailure> failures) : base(failures ?? new List<PlatformValidationFailure>())
+        public PlatformValidationResult(List<PlatformValidationFailure> failures) : base(null, failures ?? new List<PlatformValidationFailure>())
         {
         }
 
-        public PlatformValidationResult(PlatformValidationResult<object> validation) : base(validation.Errors)
+        public PlatformValidationResult(PlatformValidationResult<object> validation) : base(null, validation.Errors)
         {
         }
 

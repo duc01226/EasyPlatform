@@ -71,6 +71,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
                     .Pipe(isParseSuccess => isParseSuccess
                         ? PlatformValidationResult<DateTime>.Valid(parseDateTime)
                         : PlatformValidationResult<DateTime>.Invalid(
+                            parseDateTime,
                             errors: $"Value {stringValue} could not be parsed to Date"));
             var parsedDateValueResult = parseStringToDateFunc("some date string");
             if (parsedDateValueResult.IsValid)

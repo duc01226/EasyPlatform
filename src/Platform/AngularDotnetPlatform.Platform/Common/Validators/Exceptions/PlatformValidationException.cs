@@ -28,7 +28,7 @@ namespace AngularDotnetPlatform.Platform.Common.Validators.Exceptions
 
     public class PlatformValidationException : PlatformValidationException<object>, IPlatformValidationException
     {
-        public PlatformValidationException(PlatformValidationResult validationResult) : base(new PlatformValidationResult<object>(validationResult.Errors, validationResult.Value))
+        public PlatformValidationException(PlatformValidationResult validationResult) : base(new PlatformValidationResult<object>(validationResult.Value, validationResult.Errors))
         {
             ValidationResult = validationResult;
         }
