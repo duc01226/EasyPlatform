@@ -38,14 +38,17 @@ namespace AngularDotnetPlatform.Platform.Common.Utils
                     return null;
                 }
 
-                // the normalization to FormD splits accented letters in letters+accents
+                // the normalization to FormD splits accented letters in letters+accents (Ex: "điện" => "d-ie^.n")
                 // the rest removes those accents (and other non-spacing characters)
-                // and creates a new string from the remaining chars
+                // and creates a new string from the remaining chars.
+                // Normalize again to FormC to compose char again to make "normal" text again, in case of there is some special mark char which
+                // it's still match the where condition.
                 return new string(str
                     .Normalize(NormalizationForm.FormD)
                     .ToCharArray()
                     .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                    .ToArray());
+                    .ToArray())
+                    .Normalize(NormalizationForm.FormC);
             }
         }
     }
