@@ -38,17 +38,14 @@ namespace AngularDotnetPlatform.Platform.Common.Utils
                     return null;
                 }
 
-                var sb = new StringBuilder();
-
-                foreach (var c in str.Normalize(NormalizationForm.FormD))
-                {
-                    if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                    {
-                        sb.Append(c);
-                    }
-                }
-
-                return sb.ToString().Normalize(NormalizationForm.FormC);
+                // the normalization to FormD splits accented letters in letters+accents
+                // the rest removes those accents (and other non-spacing characters)
+                // and creates a new string from the remaining chars
+                return new string(str
+                    .Normalize(NormalizationForm.FormD)
+                    .ToCharArray()
+                    .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                    .ToArray());
             }
         }
     }
