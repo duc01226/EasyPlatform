@@ -58,7 +58,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Services
         {
             return Builders<T>.Filter.Text(
                 fullTextExactMatch ? $"\"{searchText.Trim()}\"" : searchText.Trim(),
-                new TextSearchOptions() { CaseSensitive = false, DiacriticSensitive = false, Language = "none" });
+                new TextSearchOptions() { CaseSensitive = false, DiacriticSensitive = false });
         }
 
         public static FilterDefinition<T> BuildStartsWithMongoFilterDefinition<T>(string searchText, Expression<Func<T, object>>[] includeStartWithProps)
