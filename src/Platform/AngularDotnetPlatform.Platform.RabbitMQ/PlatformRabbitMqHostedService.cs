@@ -69,19 +69,9 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         protected override Task StopProcess(CancellationToken cancellationToken)
         {
-            ReturnCurrentChannelBackToPool();
-
             currentChannel?.Close();
 
             return Task.CompletedTask;
-        }
-
-        private void ReturnCurrentChannelBackToPool()
-        {
-            if (currentChannel != null)
-            {
-                channelPool.Return(currentChannel);
-            }
         }
 
         private void DeclareRabbitMqConfiguration()
