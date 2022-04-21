@@ -24,7 +24,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.CommandE
         {
         }
 
-        protected override bool SendAsFreeFormatMessage()
+        protected override bool SendWithFreeFormatMessageRoutingKey()
         {
             return true;
         }

@@ -39,7 +39,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
             return 2000;
         }
 
-        protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message)
+        protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message, string routingKey)
         {
             return Task.Run(() =>
             {
@@ -77,7 +77,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
             return 2000;
         }
 
-        protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message)
+        protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message, string routingKey)
         {
             return Task.Run(() =>
             {

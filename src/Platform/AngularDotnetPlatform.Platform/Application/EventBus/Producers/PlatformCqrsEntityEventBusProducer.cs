@@ -93,14 +93,15 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
 
         protected override async Task HandleAsync(PlatformCqrsEntityEvent<TEntity> @event, CancellationToken cancellationToken)
         {
-            await HandleAsync(UnitOfWorkManager, ApplicationEventBusProducer, Logger, @event, SendAsFreeFormatMessage(), cancellationToken);
+            await HandleAsync(UnitOfWorkManager, ApplicationEventBusProducer, Logger, @event, SendWithFreeFormatMessageRoutingKey(), cancellationToken);
         }
 
         /// <summary>
-        /// If true, the producer will send message using <see cref="IPlatformApplicationEventBusProducer.SendAsFreeFormatMessageAsync{TMessage,TMessagePayload}"/>. The the consumer for this message do not need to define <see cref="PlatformEventBusConsumerAttribute"/>
+        /// Default is False. If True, the producer will send message using <see cref="IPlatformApplicationEventBusProducer.SendAsFreeFormatMessageAsync{TMessage,TMessagePayload}"/>.
+        /// The the consumer for this message do not need to define <see cref="PlatformEventBusConsumerAttribute"/>.
+        /// Consumer without <see cref="PlatformEventBusConsumerAttribute"/> will automatically binding to Default FreeFormatMessageRoutingKey for the TMessage Type.
         /// </summary>
-        /// <returns></returns>
-        protected virtual bool SendAsFreeFormatMessage()
+        protected virtual bool SendWithFreeFormatMessageRoutingKey()
         {
             return false;
         }

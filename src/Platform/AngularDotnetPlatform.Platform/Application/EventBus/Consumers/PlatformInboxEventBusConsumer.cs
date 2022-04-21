@@ -32,7 +32,9 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
             this.inboxEventBusMessageRepo = inboxEventBusMessageRepo;
         }
 
-        protected override async Task ExecuteInternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message)
+        protected override async Task ExecuteInternalHandleAsync(
+            PlatformEventBusMessage<TMessagePayload> message,
+            string routingKey)
         {
             if (await inboxEventBusMessageRepo.AnyAsync(p =>
                 message.TrackingId != null &&
@@ -41,7 +43,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
                 return;
             }
 
-            await InternalHandleAsync(message);
+            await InternalHandleAsync(message, routingKey);
             await inboxEventBusMessageRepo.CreateOrUpdateAsync(PlatformInboxEventBusMessage.Create(message, GetType().Name));
         }
     }

@@ -3,6 +3,10 @@ using System.Linq;
 
 namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
 {
+    /// <summary>
+    /// Define message routing key for <inheritdoc cref="IPlatformEventBusBaseConsumer"/>.
+    /// If not defined, consumer will bind to default free format message routing key from <inheritdoc cref="PlatformDefaultFreeFormatMessageRoutingKeyBuilder"/>
+    /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class PlatformEventBusConsumerAttribute : Attribute
     {

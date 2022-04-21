@@ -23,7 +23,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message)
+        protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message, string routingKey)
         {
             if (message.CreatedUtcDate.AddSeconds(5) > Clock.UtcNow)
                 throw new Exception("Test requeue message mechanism. Consumer temporarily failed for first 5 seconds from the created date of message");

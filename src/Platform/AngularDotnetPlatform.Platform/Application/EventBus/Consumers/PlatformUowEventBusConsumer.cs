@@ -22,13 +22,13 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
             UowManager = uowManager;
         }
 
-        public override async Task HandleAsync(PlatformEventBusMessage<TMessagePayload> message)
+        public override async Task HandleAsync(PlatformEventBusMessage<TMessagePayload> message, string routingKey)
         {
             try
             {
                 using (var uow = UowManager.Begin())
                 {
-                    await ExecuteInternalHandleAsync(message);
+                    await ExecuteInternalHandleAsync(message, routingKey);
                     await uow.CompleteAsync();
                 }
             }
@@ -40,9 +40,9 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
             }
         }
 
-        protected virtual async Task ExecuteInternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message)
+        protected virtual async Task ExecuteInternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message, string routingKey)
         {
-            await InternalHandleAsync(message);
+            await InternalHandleAsync(message, routingKey);
         }
     }
 }

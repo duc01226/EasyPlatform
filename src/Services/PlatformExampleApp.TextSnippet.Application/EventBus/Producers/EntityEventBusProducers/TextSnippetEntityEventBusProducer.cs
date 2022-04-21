@@ -24,7 +24,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.EntityEv
         {
         }
 
-        protected override bool SendAsFreeFormatMessage()
+        protected override bool SendWithFreeFormatMessageRoutingKey()
         {
             return true;
         }

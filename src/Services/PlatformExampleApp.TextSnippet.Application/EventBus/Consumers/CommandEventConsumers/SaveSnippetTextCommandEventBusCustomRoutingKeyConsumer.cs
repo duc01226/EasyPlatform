@@ -22,7 +22,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message)
+        protected override Task InternalHandleAsync(PlatformEventBusMessage<SaveSnippetTextCommand> message, string routingKey)
         {
             return Task.Run(() =>
             {

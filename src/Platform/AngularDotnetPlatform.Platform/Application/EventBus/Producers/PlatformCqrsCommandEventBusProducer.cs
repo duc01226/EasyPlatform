@@ -54,7 +54,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                                 messageAction: @event.EventAction,
                                 cancellationToken);
                     }
-                    else if (SendAsFreeFormatMessage())
+                    else if (SendWithFreeFormatMessageRoutingKey())
                     {
                         await ApplicationEventBusProducer
                             .SendAsFreeFormatMessageAsync<PlatformCqrsCommandEventBusMessage<TCommand>, TCommand>(
@@ -92,10 +92,11 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         }
 
         /// <summary>
-        /// If true, the producer will send message using <see cref="IPlatformApplicationEventBusProducer.SendAsFreeFormatMessageAsync{TMessage,TMessagePayload}"/>. The the consumer for this message do not need to define <see cref="PlatformEventBusConsumerAttribute"/>
+        /// Default is False. If True, the producer will send message using <see cref="IPlatformApplicationEventBusProducer.SendAsFreeFormatMessageAsync{TMessage,TMessagePayload}"/>.
+        /// The the consumer for this message do not need to define <see cref="PlatformEventBusConsumerAttribute"/>.
+        /// Consumer without <see cref="PlatformEventBusConsumerAttribute"/> will automatically binding to Default FreeFormatMessageRoutingKey for the TMessage Type.
         /// </summary>
-        /// <returns></returns>
-        protected virtual bool SendAsFreeFormatMessage()
+        protected virtual bool SendWithFreeFormatMessageRoutingKey()
         {
             return false;
         }

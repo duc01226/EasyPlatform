@@ -8,7 +8,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
 {
-    public interface IPlatformEventBusConsumer
+    public interface IPlatformEventBusBaseConsumer
     {
         /// <summary>
         /// Config the time in milliseconds to log warning if the process consumer time is over ProcessWarningTimeMilliseconds.
@@ -18,29 +18,33 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
         JsonSerializerOptions CustomJsonSerializerOptions();
     }
 
-    public interface IPlatformEventBusConsumer<TMessagePayload> : IPlatformEventBusConsumer
-        where TMessagePayload : class, new()
-    {
-        Task HandleAsync(PlatformEventBusMessage<TMessagePayload> message);
-    }
-
-    public interface IPlatformEventBusFreeFormatMessageConsumer<TMessage> : IPlatformEventBusConsumer
+    public interface IPlatformEventBusBaseConsumer<TMessage> : IPlatformEventBusBaseConsumer
         where TMessage : class, new()
     {
         Task HandleAsync(TMessage message, string routingKey);
     }
 
-    public abstract class PlatformEventBusConsumer : IPlatformEventBusConsumer
+    public interface IPlatformEventBusConsumer<TMessagePayload> : IPlatformEventBusBaseConsumer<PlatformEventBusMessage<TMessagePayload>>
+        where TMessagePayload : class, new()
+    {
+    }
+
+    public interface IPlatformEventBusFreeFormatMessageConsumer<TMessage> : IPlatformEventBusBaseConsumer<TMessage>
+        where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
+    {
+    }
+
+    public abstract class PlatformEventBusConsumer : IPlatformEventBusBaseConsumer
     {
         public const long DefaultProcessWarningTimeMilliseconds = 5000;
 
         /// <summary>
-        /// Get <see cref="PlatformEventBusMessage{TPayload}"/> concrete message type from a <see cref="IPlatformEventBusConsumer"/> consumer
+        /// Get <see cref="PlatformEventBusMessage{TPayload}"/> concrete message type from a <see cref="IPlatformEventBusBaseConsumer"/> consumer
         /// <br/>
         /// Get a generic type: PlatformEventBusMessage{TMessage} where TMessage = TMessagePayload
         /// of IPlatformEventBusConsumer{TMessagePayload}
         /// </summary>
-        public static Type GetConsumerMessageType(IPlatformEventBusConsumer consumer)
+        public static Type GetConsumerMessageType(IPlatformEventBusBaseConsumer consumer)
         {
             var genericConsumerType = consumer
                 .GetType()
@@ -77,7 +81,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
         }
 
         public static async Task InvokeConsumer(
-            IPlatformEventBusConsumer consumer,
+            IPlatformEventBusBaseConsumer consumer,
             object eventBusMessage,
             string routingKey,
             bool logConsumerProcessTime,
@@ -125,10 +129,9 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
             return null;
         }
 
-        private static async Task DoInvokeConsumer(IPlatformEventBusConsumer consumer, object eventBusMessage, string routingKey)
+        private static async Task DoInvokeConsumer(IPlatformEventBusBaseConsumer consumer, object eventBusMessage, string routingKey)
         {
-            var methodInfo = consumer.GetType().GetMethod(nameof(IPlatformEventBusConsumer<object>.HandleAsync)) ??
-                             consumer.GetType().GetMethod(nameof(IPlatformEventBusFreeFormatMessageConsumer<object>.HandleAsync));
+            var methodInfo = consumer.GetType().GetMethod(nameof(IPlatformEventBusBaseConsumer<object>.HandleAsync));
             if (methodInfo == null)
             {
                 throw new Exception(
@@ -161,11 +164,11 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
             Logger = loggerFactory.CreateLogger(GetType());
         }
 
-        public virtual async Task HandleAsync(PlatformEventBusMessage<TMessagePayload> message)
+        public virtual async Task HandleAsync(PlatformEventBusMessage<TMessagePayload> message, string routingKey)
         {
             try
             {
-                await InternalHandleAsync(message);
+                await InternalHandleAsync(message, routingKey);
             }
             catch (Exception e)
             {
@@ -175,7 +178,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
             }
         }
 
-        protected abstract Task InternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message);
+        protected abstract Task InternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message, string routingKey);
     }
 
     public abstract class PlatformEventBusFreeFormatMessageConsumer<TMessage> : PlatformEventBusConsumer, IPlatformEventBusFreeFormatMessageConsumer<TMessage>

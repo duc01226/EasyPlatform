@@ -18,7 +18,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
         {
             base.InternalRegister(serviceCollection);
             serviceCollection.RegisterAllFromType<IPlatformEventBusProducer>(ServiceLifeTime.Singleton, Assembly);
-            serviceCollection.RegisterAllFromType<IPlatformEventBusConsumer>(ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType<IPlatformEventBusBaseConsumer>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformEventBusMessage>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.Register<IPlatformEventBusManager, PlatformEventBusManager>(ServiceLifeTime.Transient);
             serviceCollection.Register(

@@ -331,7 +331,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 {
                     using (var scope = serviceProvider.CreateScope())
                     {
-                        var consumer = (IPlatformEventBusConsumer)scope.ServiceProvider.GetService(consumerType);
+                        var consumer = (IPlatformEventBusBaseConsumer)scope.ServiceProvider.GetService(consumerType);
 
                         if (consumer != null)
                             await ExecuteConsumer(rabbitMqMessage, consumer);
@@ -392,7 +392,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         /// <summary>
         /// Return Exception if failed to execute consumer
         /// </summary>
-        private async Task ExecuteConsumer(BasicDeliverEventArgs args, IPlatformEventBusConsumer consumer)
+        private async Task ExecuteConsumer(BasicDeliverEventArgs args, IPlatformEventBusBaseConsumer consumer)
         {
             // Get a generic type: PlatformEventBusMessage<TMessage> where TMessage = TMessagePayload
             // of IPlatformEventBusConsumer<TMessagePayload>

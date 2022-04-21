@@ -28,7 +28,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.EntityEv
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformEventBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message)
+        protected override Task InternalHandleAsync(PlatformEventBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message, string routingKey)
         {
             Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message {(message.Payload.BusinessActionEvents.Any() ? $"for Business Actions [{string.Join(", ", message.Payload.BusinessActionEvents.Select(p => p.Key))}]" : "")}.\r\n" +
                                   $"Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
@@ -52,7 +52,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.EntityEv
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformEventBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message)
+        protected override Task InternalHandleAsync(PlatformEventBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message, string routingKey)
         {
             Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message {(message.Payload.BusinessActionEvents.Any() ? $"for Business Actions [{string.Join(", ", message.Payload.BusinessActionEvents.Select(p => p.Key))}]" : "")}.\r\n" +
                                            $"Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
