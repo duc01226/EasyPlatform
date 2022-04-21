@@ -22,7 +22,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
         /// <summary>
         /// Get all default routing key for defined <see cref="IPlatformEventBusFreeFormatMessageConsumer{TMessage}"/> consumers
         /// </summary>
-        List<PlatformEventBusMessageRoutingKey> AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers();
+        List<PlatformEventBusMessageRoutingKey> AllDefaultFreeFormatMessageRoutingKeyForDefinedConsumers();
 
         /// <summary>
         /// Get all binding routing key of all defined consumers
@@ -69,13 +69,17 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
                 .ToList();
         }
 
-        public List<PlatformEventBusMessageRoutingKey> AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers()
+        public List<PlatformEventBusMessageRoutingKey> AllDefaultFreeFormatMessageRoutingKeyForDefinedConsumers()
         {
             return AllDefinedEventBusConsumerTypes()
                 .Where(p => !p.GetCustomAttributes<PlatformEventBusConsumerAttribute>().Any())
-                .Select(p => Util.Types.FindMatchedGenericType(
-                    givenType: p,
-                    matchedToGenericTypeDefinition: typeof(IPlatformEventBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition()))
+                .Select(p =>
+                    Util.Types.FindMatchedGenericType(
+                        givenType: p,
+                        matchedToGenericTypeDefinition: typeof(IPlatformEventBusConsumer<>).GetGenericTypeDefinition()) ??
+                    Util.Types.FindMatchedGenericType(
+                        givenType: p,
+                        matchedToGenericTypeDefinition: typeof(IPlatformEventBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition()))
                 .Select(freeFormatMessageConsumerType => PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(
                     messageType: freeFormatMessageConsumerType.GetGenericArguments()[0]))
                 .Distinct()
@@ -86,7 +90,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
         {
             return AllDefinedEventBusConsumerAttributes()
                 .Select(p => p.GetConsumerBindingRoutingKey())
-                .Concat(AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers().Select(p => p.ToString()))
+                .Concat(AllDefaultFreeFormatMessageRoutingKeyForDefinedConsumers().Select(p => p.ToString()))
                 .Distinct()
                 .ToList();
         }

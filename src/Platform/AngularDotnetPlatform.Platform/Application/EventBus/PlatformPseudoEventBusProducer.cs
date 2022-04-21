@@ -30,7 +30,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus
             return Task.FromResult((IPlatformEventBusMessage<TMessagePayload>)null);
         }
 
-        public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default) where TMessage : class, new()
+        public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
         {
             return Task.FromResult(message);
         }
@@ -38,7 +38,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus
         public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
             TMessage message,
             string routingKey,
-            CancellationToken cancellationToken = default) where TMessage : class, new()
+            CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
         {
             return Task.FromResult(message);
         }

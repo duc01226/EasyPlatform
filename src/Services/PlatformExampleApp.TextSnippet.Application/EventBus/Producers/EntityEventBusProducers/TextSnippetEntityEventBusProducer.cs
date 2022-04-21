@@ -14,4 +14,19 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.EntityEv
         {
         }
     }
+
+    public class TextSnippetEntitySendAsFreeFormatMessageEventBusProducer : PlatformCqrsEntityEventBusProducer<TextSnippetEntity>
+    {
+        public TextSnippetEntitySendAsFreeFormatMessageEventBusProducer(
+            IUnitOfWorkManager unitOfWorkManager,
+            IPlatformApplicationEventBusProducer applicationEventBusProducer,
+            ILoggerFactory loggerFactory) : base(unitOfWorkManager, applicationEventBusProducer, loggerFactory)
+        {
+        }
+
+        protected override bool SendAsFreeFormatMessage()
+        {
+            return true;
+        }
+    }
 }

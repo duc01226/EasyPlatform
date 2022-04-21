@@ -8,12 +8,12 @@ using Microsoft.Extensions.Logging;
 namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
 {
     public interface IPlatformUowEventBusFreeFormatMessageConsumer<TMessage> : IPlatformEventBusFreeFormatMessageConsumer<TMessage>
-        where TMessage : class, new()
+        where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
     {
     }
 
     public abstract class PlatformUowEventBusFreeFormatMessageConsumer<TMessage> : PlatformEventBusFreeFormatMessageConsumer<TMessage>, IPlatformUowEventBusFreeFormatMessageConsumer<TMessage>
-        where TMessage : class, new()
+        where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
     {
         protected readonly IUnitOfWorkManager UowManager;
 

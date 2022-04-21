@@ -14,4 +14,19 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.DomainEv
         {
         }
     }
+
+    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendAsFreeFormatMessageEventBusProducer : PlatformCqrsDomainEventBusProducer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
+    {
+        public TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendAsFreeFormatMessageEventBusProducer(
+            IUnitOfWorkManager unitOfWorkManager,
+            IPlatformApplicationEventBusProducer applicationEventBusProducer,
+            ILoggerFactory loggerFactory) : base(unitOfWorkManager, applicationEventBusProducer, loggerFactory)
+        {
+        }
+
+        protected override bool SendAsFreeFormatMessage()
+        {
+            return true;
+        }
+    }
 }

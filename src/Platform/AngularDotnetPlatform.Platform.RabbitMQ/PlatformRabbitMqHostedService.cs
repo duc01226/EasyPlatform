@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -100,8 +101,8 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
             // Declare queue for all consumers
             eventBusManager.AllDefinedEventBusConsumerAttributes()
                 .ForEach(consumerAttribute => DeclareQueueForConsumer(channel, consumerAttribute));
-            eventBusManager.AllDefaultRoutingKeyForDefinedFreeFormatMessageConsumers()
-                .ForEach(consumerAttribute => DeclareQueueForConsumer(channel, consumerAttribute));
+            eventBusManager.AllDefaultFreeFormatMessageRoutingKeyForDefinedConsumers()
+                .ForEach(consumerRoutingKey => DeclareQueueForConsumer(channel, consumerRoutingKey));
         }
 
         private void DeclareQueueForConsumer(IModel channel, PlatformEventBusConsumerAttribute consumerAttribute)
@@ -161,7 +162,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         private string GetConsumerQueueName(string consumerRoutingKey)
         {
-            return $"Platform-{applicationSetting.ApplicationName}-{consumerRoutingKey}";
+            return $"[Platform][{applicationSetting.ApplicationName}]-{consumerRoutingKey}";
         }
 
         private string GetConsumerExchange(PlatformEventBusConsumerAttribute consumerAttribute)
@@ -320,14 +321,16 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 var canProcessConsumerTypes = eventBusManager.AllDefinedEventBusConsumerTypes()
                     .Where(eventBusConsumerType =>
                     {
-                        var matchedFreeFormatMessageConsumerType = Util.Types.FindMatchedGenericType(eventBusConsumerType, typeof(IPlatformEventBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition());
-                        if (matchedFreeFormatMessageConsumerType != null)
+                        if (eventBusConsumerType.GetCustomAttributes<PlatformEventBusConsumerAttribute>().IsEmpty())
                         {
-                            var matchedFreeFormatMessageConsumerRoutingKey = PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(
-                                messageType: matchedFreeFormatMessageConsumerType.GetGenericArguments()[0]);
-                            return matchedFreeFormatMessageConsumerRoutingKey.ToString() == rabbitMqMessage.RoutingKey ||
-                                   matchedFreeFormatMessageConsumerRoutingKey.Match(rabbitMqMessage.RoutingKey) ||
-                                   PlatformEventBusConsumerAttribute.CanEventBusConsumerProcess(eventBusConsumerType, rabbitMqMessage.RoutingKey, forceAtLeastOneAttributes: false);
+                            var matchedConsumerType =
+                                Util.Types.FindMatchedGenericType(eventBusConsumerType, typeof(IPlatformEventBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition()) ??
+                                Util.Types.FindMatchedGenericType(eventBusConsumerType, typeof(IPlatformEventBusConsumer<>).GetGenericTypeDefinition());
+
+                            var matchedDefaultFreeFormatMessageRoutingKey = PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(
+                                messageType: matchedConsumerType.GetGenericArguments()[0]);
+
+                            return matchedDefaultFreeFormatMessageRoutingKey.Match(rabbitMqMessage.RoutingKey);
                         }
 
                         return PlatformEventBusConsumerAttribute.CanEventBusConsumerProcess(eventBusConsumerType, rabbitMqMessage.RoutingKey);

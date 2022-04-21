@@ -43,7 +43,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern
         }
 
         public static PlatformInboxEventBusMessage Create<TMessage>(TMessage customMessage, string routingKey, string consumerBy)
-            where TMessage : class, new()
+            where TMessage : class, IPlatformEventBusTrackableMessage, new()
         {
             var result = new PlatformInboxEventBusMessage()
             {
@@ -58,14 +58,9 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern
             return result;
         }
 
-        public static string BuildId(IPlatformEventBusMessage message, string consumerBy)
+        public static string BuildId(IPlatformEventBusTrackableMessage message, string consumerBy)
         {
-            return $"{message.TrackingId}_{consumerBy}";
-        }
-
-        public static string BuildId(object customMessage, string consumerBy)
-        {
-            return $"{customMessage.GetHashCode()}_{consumerBy}";
+            return $"{message.TrackingId ?? Guid.NewGuid().ToString()}_{consumerBy}";
         }
 
         private static void EnsureMessageValidForInbox(IPlatformEventBusMessage message)

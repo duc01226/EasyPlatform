@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
 using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
 
 namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
@@ -11,12 +12,12 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
     /// This will stored consumed message into db. If message existed, it won't process the consumer.
     /// </summary>
     public interface IPlatformInboxEventBusFreeFormatMessageConsumer<TMessage> : IPlatformUowEventBusFreeFormatMessageConsumer<TMessage>
-        where TMessage : class, new()
+        where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
     {
     }
 
     public abstract class PlatformInboxEventBusFreeFormatMessageConsumer<TMessage> : PlatformUowEventBusFreeFormatMessageConsumer<TMessage>, IPlatformInboxEventBusFreeFormatMessageConsumer<TMessage>
-        where TMessage : class, new()
+        where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
     {
         private readonly IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo;
 

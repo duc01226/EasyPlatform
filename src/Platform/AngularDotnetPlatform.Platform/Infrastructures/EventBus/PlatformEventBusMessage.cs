@@ -3,10 +3,8 @@ using AngularDotnetPlatform.Platform.Common.Timing;
 
 namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
 {
-    public interface IPlatformEventBusMessage
+    public interface IPlatformEventBusMessage : IPlatformEventBusFreeFormatMessage
     {
-        public string TrackingId { get; set; }
-
         public PlatformEventBusMessageIdentity Identity { get; set; }
 
         public DateTime CreatedUtcDate { get; set; }
@@ -27,7 +25,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
         public TPayload Payload { get; set; }
     }
 
-    public class PlatformEventBusMessage<TPayload> : IPlatformEventBusMessage<TPayload> where TPayload : class, new()
+    public class PlatformEventBusMessage<TPayload> : IPlatformEventBusMessage<TPayload>, IPlatformEventBusFreeFormatMessage where TPayload : class, new()
     {
         private string messageGroup;
         private string producerContext;

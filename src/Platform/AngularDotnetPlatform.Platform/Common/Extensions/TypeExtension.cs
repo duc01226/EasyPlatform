@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace AngularDotnetPlatform.Platform.Common.Extensions
 {
@@ -22,6 +23,22 @@ namespace AngularDotnetPlatform.Platform.Common.Extensions
                 return false;
 
             return IsAssignableToGenericType(baseType, genericType);
+        }
+
+        public static string GetGenericTypeName(this Type t)
+        {
+            if (!t.IsGenericType)
+                return t.Name;
+
+            var genericTypeName = t.GetGenericTypeDefinition().Name;
+
+            var genericTypeClassNameOnly = genericTypeName.Substring(0, genericTypeName.IndexOf('`'));
+
+            var genericArgs = string.Join(
+                ",",
+                t.GetGenericArguments().Select(GetGenericTypeName).ToArray());
+
+            return genericTypeClassNameOnly + "<" + genericArgs + ">";
         }
     }
 }

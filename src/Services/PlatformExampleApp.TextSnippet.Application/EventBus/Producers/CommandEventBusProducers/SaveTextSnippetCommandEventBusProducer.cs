@@ -15,13 +15,18 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.CommandE
         }
     }
 
-    public class SaveTextSnippetCommandEventBusCustomRoutingKeyForFlexibleMigrateWithOldSystemProducer : PlatformCqrsCommandEventBusProducer<SaveSnippetTextCommand>
+    public class SaveTextSnippetCommandSendAsFreeFormatMessageEventBusProducer : PlatformCqrsCommandEventBusProducer<SaveSnippetTextCommand>
     {
-        public SaveTextSnippetCommandEventBusCustomRoutingKeyForFlexibleMigrateWithOldSystemProducer(
+        public SaveTextSnippetCommandSendAsFreeFormatMessageEventBusProducer(
             IUnitOfWorkManager unitOfWorkManager,
             IPlatformApplicationEventBusProducer applicationEventBusProducer,
             ILoggerFactory loggerFactory) : base(unitOfWorkManager, applicationEventBusProducer, loggerFactory)
         {
+        }
+
+        protected override bool SendAsFreeFormatMessage()
+        {
+            return true;
         }
     }
 }

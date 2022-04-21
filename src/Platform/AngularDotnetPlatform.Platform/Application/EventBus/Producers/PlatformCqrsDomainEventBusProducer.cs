@@ -40,18 +40,39 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         {
             try
             {
-                await ApplicationEventBusProducer
-                    .SendAsync<PlatformCqrsDomainEventBusMessage<TDomainEvent>, TDomainEvent>(
-                        trackId: @event.Id,
-                        messagePayload: @event,
-                        messageAction: @event.EventAction,
-                        cancellationToken);
+                if (SendAsFreeFormatMessage())
+                {
+                    await ApplicationEventBusProducer
+                        .SendAsFreeFormatMessageAsync<PlatformCqrsDomainEventBusMessage<TDomainEvent>, TDomainEvent>(
+                            trackId: @event.Id,
+                            messagePayload: @event,
+                            messageAction: @event.EventAction,
+                            cancellationToken);
+                }
+                else
+                {
+                    await ApplicationEventBusProducer
+                        .SendAsync<PlatformCqrsDomainEventBusMessage<TDomainEvent>, TDomainEvent>(
+                            trackId: @event.Id,
+                            messagePayload: @event,
+                            messageAction: @event.EventAction,
+                            cancellationToken);
+                }
             }
             catch (PlatformEventBusException<PlatformCqrsDomainEventBusMessage<TDomainEvent>> e)
             {
                 Logger.LogError(e, $"[PlatformCqrsEventBusDomainEventHandler] Failed to send message for ${typeof(TDomainEvent).Name}. Message Info: {JsonSerializer.Serialize(e.EventBusMessage)}");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// If true, the producer will send message using <see cref="IPlatformApplicationEventBusProducer.SendAsFreeFormatMessageAsync{TMessage,TMessagePayload}"/>. The the consumer for this message do not need to define <see cref="PlatformEventBusConsumerAttribute"/>
+        /// </summary>
+        /// <returns></returns>
+        protected virtual bool SendAsFreeFormatMessage()
+        {
+            return false;
         }
     }
 }

@@ -11,6 +11,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EntityDtos
 
         public TextSnippetEntityDto(TextSnippetEntity entity) : base(entity)
         {
+            Id = entity.Id;
             SnippetText = entity.SnippetText;
             FullText = entity.FullText;
             Address = entity.Address != null ? ExampleAddressValueObjectDto.Create(entity.Address) : null;

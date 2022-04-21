@@ -236,6 +236,9 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
 
         public bool Match(PlatformEventBusMessageRoutingKey routingKey)
         {
+            if (ToString() == routingKey)
+                return true;
+
             return MatchPattern(MessageGroup, routingKey.MessageGroup) &&
                    MatchPattern(ProducerContext, routingKey.ProducerContext) &&
                    MatchPattern(MessageType, routingKey.MessageType) &&

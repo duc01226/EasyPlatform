@@ -1,4 +1,5 @@
 using System;
+using AngularDotnetPlatform.Platform.Common.Extensions;
 
 namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
 {
@@ -17,7 +18,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
             {
                 MessageGroup = FreeFormatMessageGroup,
                 ProducerContext = PlatformEventBusMessageRoutingKey.MatchAllSingleGroupLevelChar,
-                MessageType = messageType.Name
+                MessageType = messageType.GetGenericTypeName()
             };
         }
     }

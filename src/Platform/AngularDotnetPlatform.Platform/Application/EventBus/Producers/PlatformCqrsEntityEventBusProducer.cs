@@ -42,17 +42,18 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             IPlatformApplicationEventBusProducer applicationEventBusProducer,
             ILogger logger,
             TEvent @event,
+            bool sendAsFreeFormatMessage,
             CancellationToken cancellationToken) where TEvent : PlatformCqrsEntityEvent<TEntity>, new()
         {
             if (unitOfWorkManager.Current() == null || unitOfWorkManager.Current().Completed)
             {
-                await SendEntityEventEventBusMessage(applicationEventBusProducer, logger, @event, cancellationToken);
+                await SendEntityEventEventBusMessage(applicationEventBusProducer, logger, @event, sendAsFreeFormatMessage, cancellationToken);
             }
             else
             {
                 unitOfWorkManager.Current().OnCompleted += (sender, args) =>
                 {
-                    SendEntityEventEventBusMessage(applicationEventBusProducer, logger, @event, cancellationToken).Wait(cancellationToken);
+                    SendEntityEventEventBusMessage(applicationEventBusProducer, logger, @event, sendAsFreeFormatMessage, cancellationToken).Wait(cancellationToken);
                 };
             }
         }
@@ -61,15 +62,27 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             IPlatformApplicationEventBusProducer applicationEventBusProducer,
             ILogger logger,
             TEvent @event,
+            bool sendAsFreeFormatMessage,
             CancellationToken cancellationToken) where TEvent : PlatformCqrsEntityEvent<TEntity>, new()
         {
             try
             {
-                await applicationEventBusProducer.SendAsync<PlatformCqrsEntityEventBusMessage<TEntity>, PlatformCqrsEntityEvent<TEntity>>(
-                    trackId: @event.Id,
-                    messagePayload: @event,
-                    messageAction: @event.EventAction,
-                    cancellationToken: cancellationToken);
+                if (sendAsFreeFormatMessage)
+                {
+                    await applicationEventBusProducer.SendAsFreeFormatMessageAsync<PlatformCqrsEntityEventBusMessage<TEntity>, PlatformCqrsEntityEvent<TEntity>>(
+                        trackId: @event.Id,
+                        messagePayload: @event,
+                        messageAction: @event.EventAction,
+                        cancellationToken: cancellationToken);
+                }
+                else
+                {
+                    await applicationEventBusProducer.SendAsync<PlatformCqrsEntityEventBusMessage<TEntity>, PlatformCqrsEntityEvent<TEntity>>(
+                        trackId: @event.Id,
+                        messagePayload: @event,
+                        messageAction: @event.EventAction,
+                        cancellationToken: cancellationToken);
+                }
             }
             catch (PlatformEventBusException<PlatformCqrsEntityEventBusMessage<TEntity>> e)
             {
@@ -80,7 +93,16 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
 
         protected override async Task HandleAsync(PlatformCqrsEntityEvent<TEntity> @event, CancellationToken cancellationToken)
         {
-            await HandleAsync(UnitOfWorkManager, ApplicationEventBusProducer, Logger, @event, cancellationToken);
+            await HandleAsync(UnitOfWorkManager, ApplicationEventBusProducer, Logger, @event, SendAsFreeFormatMessage(), cancellationToken);
+        }
+
+        /// <summary>
+        /// If true, the producer will send message using <see cref="IPlatformApplicationEventBusProducer.SendAsFreeFormatMessageAsync{TMessage,TMessagePayload}"/>. The the consumer for this message do not need to define <see cref="PlatformEventBusConsumerAttribute"/>
+        /// </summary>
+        /// <returns></returns>
+        protected virtual bool SendAsFreeFormatMessage()
+        {
+            return false;
         }
     }
 }

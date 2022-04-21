@@ -78,7 +78,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
             TMessage message,
-            CancellationToken cancellationToken = default) where TMessage : class, new()
+            CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
         {
             return SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build<TMessage>(), cancellationToken);
         }
@@ -86,7 +86,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         public async Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
             TMessage message,
             string routingKey,
-            CancellationToken cancellationToken = default) where TMessage : class, new()
+            CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
         {
             try
             {

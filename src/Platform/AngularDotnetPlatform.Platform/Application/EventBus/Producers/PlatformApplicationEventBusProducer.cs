@@ -90,10 +90,18 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
             CancellationToken cancellationToken = default)
             where TMessagePayload : class, new();
 
-        Task<TMessage> SendAsync<TMessage>(
+        Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
             TMessage message,
             CancellationToken cancellationToken = default)
-            where TMessage : class, new();
+            where TMessage : class, IPlatformEventBusFreeFormatMessage, new();
+
+        Task<TMessage> SendAsFreeFormatMessageAsync<TMessage, TMessagePayload>(
+            string trackId,
+            TMessagePayload messagePayload,
+            string messageAction = null,
+            CancellationToken cancellationToken = default)
+            where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
+            where TMessagePayload : class, new();
     }
 
     public class PlatformApplicationEventBusProducer : IPlatformApplicationEventBusProducer
@@ -213,9 +221,28 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                 cancellationToken);
         }
 
-        public Task<TMessage> SendAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default) where TMessage : class, new()
+        public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
         {
             return EventBusProducer.SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build<TMessage>(), cancellationToken);
+        }
+
+        public Task<TMessage> SendAsFreeFormatMessageAsync<TMessage, TMessagePayload>(
+            string trackId,
+            TMessagePayload messagePayload,
+            string messageAction = null,
+            CancellationToken cancellationToken = default)
+            where TMessage : class, IPlatformEventBusMessage<TMessagePayload>, new()
+            where TMessagePayload : class, new()
+        {
+            var message = PlatformEventBusMessage<TMessagePayload>
+                .New<TMessage>(
+                    trackId,
+                    payload: messagePayload,
+                    identity: BuildPlatformEventBusMessageIdentity(),
+                    producerContext: ApplicationSettingContext.ApplicationName,
+                    messageAction: messageAction);
+
+            return EventBusProducer.SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build<TMessagePayload>(), cancellationToken);
         }
 
         protected PlatformEventBusMessageIdentity BuildPlatformEventBusMessageIdentity()

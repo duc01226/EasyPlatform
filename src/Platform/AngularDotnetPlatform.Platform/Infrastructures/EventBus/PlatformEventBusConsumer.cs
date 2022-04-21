@@ -179,7 +179,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
     }
 
     public abstract class PlatformEventBusFreeFormatMessageConsumer<TMessage> : PlatformEventBusConsumer, IPlatformEventBusFreeFormatMessageConsumer<TMessage>
-        where TMessage : class, new()
+        where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
     {
         protected readonly ILogger Logger;
 

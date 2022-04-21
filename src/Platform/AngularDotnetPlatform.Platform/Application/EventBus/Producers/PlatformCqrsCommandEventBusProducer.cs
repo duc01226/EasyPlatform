@@ -54,6 +54,15 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
                                 messageAction: @event.EventAction,
                                 cancellationToken);
                     }
+                    else if (SendAsFreeFormatMessage())
+                    {
+                        await ApplicationEventBusProducer
+                            .SendAsFreeFormatMessageAsync<PlatformCqrsCommandEventBusMessage<TCommand>, TCommand>(
+                                trackId: @event.Id,
+                                messagePayload: @event.CommandData,
+                                messageAction: @event.EventAction,
+                                cancellationToken);
+                    }
                     else
                     {
                         await ApplicationEventBusProducer
@@ -80,6 +89,15 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Producers
         protected virtual string CustomMessageRoutingKey()
         {
             return null;
+        }
+
+        /// <summary>
+        /// If true, the producer will send message using <see cref="IPlatformApplicationEventBusProducer.SendAsFreeFormatMessageAsync{TMessage,TMessagePayload}"/>. The the consumer for this message do not need to define <see cref="PlatformEventBusConsumerAttribute"/>
+        /// </summary>
+        /// <returns></returns>
+        protected virtual bool SendAsFreeFormatMessage()
+        {
+            return false;
         }
     }
 }
