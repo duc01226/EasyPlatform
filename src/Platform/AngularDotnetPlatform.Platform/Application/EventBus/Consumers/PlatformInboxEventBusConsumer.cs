@@ -34,8 +34,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
 
         protected override async Task ExecuteInternalHandleAsync(
             PlatformEventBusMessage<TMessagePayload> message,
-            string routingKey,
-            IUnitOfWork currentUnitOfWork)
+            string routingKey)
         {
             if (await inboxEventBusMessageRepo.AnyAsync(p =>
                 message.TrackingId != null &&
