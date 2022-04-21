@@ -7,6 +7,7 @@
   <ItemGroup>
     <PackageReference Include="Hangfire.AspNetCore" Version="1.7.25" />
     <PackageReference Include="Hangfire.Core" Version="1.7.25" />
+    <PackageReference Include="Hangfire.InMemory" Version="0.3.4" />
     <PackageReference Include="Hangfire.Mongo" Version="0.7.25" />
     <PackageReference Include="Hangfire.SqlServer" Version="1.7.25" />
   </ItemGroup>

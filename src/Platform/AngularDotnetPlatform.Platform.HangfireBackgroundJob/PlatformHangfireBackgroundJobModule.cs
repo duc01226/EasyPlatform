@@ -87,6 +87,12 @@ namespace AngularDotnetPlatform.Platform.HangfireBackgroundJob
 
             switch (UseBackgroundJobStorage())
             {
+                case PlatformHangfireBackgroundJobStorageType.InMemory:
+                {
+                    configuration.UseInMemoryStorage();
+                    break;
+                }
+
                 case PlatformHangfireBackgroundJobStorageType.Sql:
                 {
                     var options = UseSqlServerStorageOptions();

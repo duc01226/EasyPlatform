@@ -27,7 +27,7 @@ namespace AngularDotnetPlatform.Platform.Persistence.Domain
         public async Task CompleteAsync(CancellationToken cancellationToken = default)
         {
             if (Completed)
-                throw new Exception("This unit of work is completed");
+                return;
 
             try
             {

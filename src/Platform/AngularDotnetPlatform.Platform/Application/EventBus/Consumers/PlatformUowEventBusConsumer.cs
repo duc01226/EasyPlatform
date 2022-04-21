@@ -28,7 +28,7 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
             {
                 using (var uow = UowManager.Begin())
                 {
-                    await ExecuteInternalHandleAsync(message, routingKey);
+                    await ExecuteInternalHandleAsync(message, routingKey, uow);
                     await uow.CompleteAsync();
                 }
             }
@@ -40,7 +40,10 @@ namespace AngularDotnetPlatform.Platform.Application.EventBus.Consumers
             }
         }
 
-        protected virtual async Task ExecuteInternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message, string routingKey)
+        protected virtual async Task ExecuteInternalHandleAsync(
+            PlatformEventBusMessage<TMessagePayload> message,
+            string routingKey,
+            IUnitOfWork currentUnitOfWork)
         {
             await InternalHandleAsync(message, routingKey);
         }

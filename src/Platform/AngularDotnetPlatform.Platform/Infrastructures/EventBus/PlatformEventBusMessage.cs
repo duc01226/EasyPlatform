@@ -7,8 +7,6 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
     {
         public PlatformEventBusMessageIdentity Identity { get; set; }
 
-        public DateTime CreatedUtcDate { get; set; }
-
         public string MessageGroup { get; set; }
 
         public string ProducerContext { get; set; }

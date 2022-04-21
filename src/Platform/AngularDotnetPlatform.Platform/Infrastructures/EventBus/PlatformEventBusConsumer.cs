@@ -34,7 +34,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
     {
     }
 
-    public abstract class PlatformEventBusConsumer : IPlatformEventBusBaseConsumer
+    public abstract class PlatformEventBusBaseConsumer : IPlatformEventBusBaseConsumer
     {
         public const long DefaultProcessWarningTimeMilliseconds = 5000;
 
@@ -97,12 +97,9 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
                     asyncTask: () => DoInvokeConsumer(consumer, eventBusMessage, routingKey),
                     afterExecution: elapsedMilliseconds =>
                     {
-                        var consumerMessageType = GetConsumerMessageType(consumer);
-                        var platformEventBusMessage = consumerMessageType.IsAssignableTo(typeof(IPlatformEventBusMessage))
-                            ? eventBusMessage as IPlatformEventBusMessage
-                            : null;
+                        var platformEventBusTrackableMessage = eventBusMessage as IPlatformEventBusTrackableMessage;
                         var message =
-                            $"[ConsumerProcessTime] Elapsed {elapsedMilliseconds} in milliseconds processing for consumer {consumer.GetType().FullName} message with routing key: {routingKey}. TrackingId {platformEventBusMessage?.TrackingId ?? "n/a"}.";
+                            $"[ConsumerProcessTime] Elapsed {elapsedMilliseconds} in milliseconds processing for consumer {consumer.GetType().FullName} message with routing key: {routingKey}. TrackingId {platformEventBusTrackableMessage?.TrackingId ?? "n/a"}.";
                         if (elapsedMilliseconds < logConsumerProcessWarningTimeMilliseconds || elapsedMilliseconds < consumer.ProcessWarningTimeMilliseconds())
                         {
                             logger.LogInformationIfEnabled(message);
@@ -131,11 +128,13 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
 
         private static async Task DoInvokeConsumer(IPlatformEventBusBaseConsumer consumer, object eventBusMessage, string routingKey)
         {
-            var methodInfo = consumer.GetType().GetMethod(nameof(IPlatformEventBusBaseConsumer<object>.HandleAsync));
+            var handleMethodName = nameof(IPlatformEventBusBaseConsumer<object>.HandleAsync);
+
+            var methodInfo = consumer.GetType().GetMethod(handleMethodName);
             if (methodInfo == null)
             {
                 throw new Exception(
-                    $"Can not find execution method from {typeof(IPlatformEventBusConsumer<>).FullName} or {typeof(IPlatformEventBusFreeFormatMessageConsumer<>).FullName}");
+                    $"Can not find execution handle method {handleMethodName} from {consumer.GetType().FullName}");
             }
 
             try
@@ -152,39 +151,12 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
         }
     }
 
-    public abstract class PlatformEventBusConsumer<TMessagePayload> : PlatformEventBusConsumer, IPlatformEventBusConsumer<TMessagePayload>
-        where TMessagePayload : class, new()
+    public abstract class PlatformEventBusBaseConsumer<TMessage> : PlatformEventBusBaseConsumer, IPlatformEventBusBaseConsumer<TMessage>
+        where TMessage : class, new()
     {
         protected readonly ILogger Logger;
 
-        public PlatformEventBusConsumer(ILoggerFactory loggerFactory)
-        {
-            Logger = loggerFactory.CreateLogger(GetType());
-        }
-
-        public virtual async Task HandleAsync(PlatformEventBusMessage<TMessagePayload> message, string routingKey)
-        {
-            try
-            {
-                await InternalHandleAsync(message, routingKey);
-            }
-            catch (Exception e)
-            {
-                Logger.LogError(e, $"[MessageConsumerError] There is an error when handle message {message.RoutingKey().CombinedStringKey}." +
-                                   $"Message Info: ${JsonSerializer.Serialize(message)}");
-                throw;
-            }
-        }
-
-        protected abstract Task InternalHandleAsync(PlatformEventBusMessage<TMessagePayload> message, string routingKey);
-    }
-
-    public abstract class PlatformEventBusFreeFormatMessageConsumer<TMessage> : PlatformEventBusConsumer, IPlatformEventBusFreeFormatMessageConsumer<TMessage>
-        where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
-    {
-        protected readonly ILogger Logger;
-
-        public PlatformEventBusFreeFormatMessageConsumer(ILoggerFactory loggerFactory)
+        public PlatformEventBusBaseConsumer(ILoggerFactory loggerFactory)
         {
             Logger = loggerFactory.CreateLogger(GetType());
         }
@@ -197,12 +169,28 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
             }
             catch (Exception e)
             {
-                Logger.LogError(e, $"[MessageConsumerError] There is an error when handle message {typeof(TMessage).Name}." +
+                Logger.LogError(e, $"[MessageConsumerError] There is an error when handle message {routingKey}." +
                                    $"Message Info: ${JsonSerializer.Serialize(message)}");
                 throw;
             }
         }
 
         protected abstract Task InternalHandleAsync(TMessage message, string routingKey);
+    }
+
+    public abstract class PlatformEventBusConsumer<TMessagePayload> : PlatformEventBusBaseConsumer<PlatformEventBusMessage<TMessagePayload>>, IPlatformEventBusConsumer<TMessagePayload>
+        where TMessagePayload : class, new()
+    {
+        protected PlatformEventBusConsumer(ILoggerFactory loggerFactory) : base(loggerFactory)
+        {
+        }
+    }
+
+    public abstract class PlatformEventBusFreeFormatMessageConsumer<TMessage> : PlatformEventBusBaseConsumer<TMessage>, IPlatformEventBusFreeFormatMessageConsumer<TMessage>
+        where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
+    {
+        protected PlatformEventBusFreeFormatMessageConsumer(ILoggerFactory loggerFactory) : base(loggerFactory)
+        {
+        }
     }
 }

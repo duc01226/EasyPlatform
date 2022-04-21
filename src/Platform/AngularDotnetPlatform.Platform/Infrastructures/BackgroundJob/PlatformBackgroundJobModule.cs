@@ -38,10 +38,10 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.BackgroundJob
         {
             var backgroundJobProcessingService = serviceScope.ServiceProvider.GetService<IPlatformBackgroundJobProcessingService>();
 
-            if (backgroundJobProcessingService?.Started() == true)
-                await backgroundJobProcessingService?.Stop();
+            if (backgroundJobProcessingService!.Started())
+                await backgroundJobProcessingService.Stop();
 
-            if (backgroundJobProcessingService?.Started() == false)
+            if (backgroundJobProcessingService!.Started() == false)
             {
                 var applicationLifetime = serviceScope.ServiceProvider.GetService<IHostApplicationLifetime>();
                 var retryCount = 10;

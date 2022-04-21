@@ -29,7 +29,7 @@ namespace AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork
         public virtual async Task CompleteAsync(CancellationToken cancellationToken = default)
         {
             if (Completed)
-                throw new Exception("This unit of work is completed");
+                return;
 
             try
             {

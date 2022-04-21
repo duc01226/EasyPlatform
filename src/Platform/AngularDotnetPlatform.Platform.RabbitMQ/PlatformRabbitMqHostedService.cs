@@ -298,16 +298,6 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         {
             try
             {
-                var objectTypePayloadMessage =
-                    JsonSerializer.Deserialize<PlatformEventBusMessage<object>>(
-                        rabbitMqMessage.Body.Span,
-                        PlatformJsonSerializer.CurrentOptions.Value);
-                if (objectTypePayloadMessage == null)
-                {
-                    currentChannel.BasicAck(rabbitMqMessage.DeliveryTag, false);
-                    return;
-                }
-
                 var canProcessConsumerTypes = eventBusManager.AllDefinedEventBusConsumerTypes()
                     .Where(eventBusConsumerType =>
                     {
@@ -364,8 +354,9 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
 
         private void ProcessRequeueMessage(BasicDeliverEventArgs rabbitMqMessage, object eventBusMessage)
         {
-            if (eventBusMessage is IPlatformEventBusMessage platformEventBusMessage &&
-                platformEventBusMessage.CreatedUtcDate.AddSeconds(options.RequeueExpiredInSeconds) >= Clock.UtcNow)
+            if (options.RequeueExpiredInSeconds <= 0 ||
+                (eventBusMessage is IPlatformEventBusTrackableMessage platformEventBusTrackableMessage &&
+                 platformEventBusTrackableMessage.CreatedUtcDate.AddSeconds(options.RequeueExpiredInSeconds) >= Clock.UtcNow))
             {
                 // Requeue the message.
                 // References: https://www.rabbitmq.com/confirms.html#consumer-nacks-requeue
@@ -396,7 +387,7 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
         {
             // Get a generic type: PlatformEventBusMessage<TMessage> where TMessage = TMessagePayload
             // of IPlatformEventBusConsumer<TMessagePayload>
-            var consumerMessageType = PlatformEventBusConsumer.GetConsumerMessageType(consumer);
+            var consumerMessageType = PlatformEventBusBaseConsumer.GetConsumerMessageType(consumer);
 
             var eventBusMessage = Util.Tasks.CatchExceptionContinueThrow(
                 () => JsonSerializer.Deserialize(
@@ -406,11 +397,11 @@ namespace AngularDotnetPlatform.Platform.RabbitMQ
                 ex => Log.Error(
                     Logger,
                     ex,
-                    $"RabbitMQ parsing error for the routing key {args.RoutingKey}.{Environment.NewLine} Body: {Encoding.UTF8.GetString(args.Body.Span)}"));
+                    $"RabbitMQ parsing message to {consumerMessageType.Name} error for the routing key {args.RoutingKey}.{Environment.NewLine} Body: {Encoding.UTF8.GetString(args.Body.Span)}"));
 
             if (eventBusMessage != null)
             {
-                await PlatformEventBusConsumer.InvokeConsumer(consumer, eventBusMessage, args.RoutingKey, options.LogConsumerProcessTime, options.LogConsumerProcessWarningTimeMilliseconds, Logger);
+                await PlatformEventBusBaseConsumer.InvokeConsumer(consumer, eventBusMessage, args.RoutingKey, options.LogConsumerProcessTime, options.LogConsumerProcessWarningTimeMilliseconds, Logger);
             }
         }
     }

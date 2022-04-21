@@ -28,7 +28,7 @@ namespace AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork
         public virtual Task CompleteAsync(CancellationToken cancellationToken = default)
         {
             if (Completed)
-                throw new Exception("This unit of work is completed");
+                return Task.CompletedTask;
 
             try
             {
