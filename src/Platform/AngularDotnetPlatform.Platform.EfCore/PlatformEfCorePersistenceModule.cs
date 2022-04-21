@@ -93,10 +93,10 @@ namespace AngularDotnetPlatform.Platform.EfCore
         protected override async Task InternalInit(IServiceScope serviceScope)
         {
             await base.InternalInit(serviceScope);
-            MigrateDbContext(serviceScope);
+            InitializeDbContext(serviceScope);
         }
 
-        protected virtual void MigrateDbContext(IServiceScope serviceScope)
+        protected virtual void InitializeDbContext(IServiceScope serviceScope)
         {
             var db = serviceScope.ServiceProvider.GetRequiredService<TDbContext>();
 
