@@ -24,8 +24,10 @@ namespace AngularDotnetPlatform.Platform.EfCore
             this.efCoreOptions = efCoreOptions;
         }
 
+        public DbSet<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryDbSet => Set<PlatformDataMigrationHistory>();
+
         public IQueryable<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryQuery =>
-            Set<PlatformDataMigrationHistory>().AsQueryable();
+            ApplicationDataMigrationHistoryDbSet.AsQueryable();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
