@@ -141,9 +141,7 @@ namespace AngularDotnetPlatform.Platform.Infrastructures.EventBus
             try
             {
                 // Invoke the method.
-                var invokeResult = methodInfo.GetParameters().Length == 2
-                    ? methodInfo.Invoke(consumer, new[] { eventBusMessage, routingKey })
-                    : methodInfo.Invoke(consumer, new[] { eventBusMessage });
+                var invokeResult = methodInfo.Invoke(consumer, new[] { eventBusMessage, routingKey });
                 if (invokeResult is Task invokeTask)
                     await invokeTask;
             }
