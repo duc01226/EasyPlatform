@@ -70,7 +70,7 @@ namespace AngularDotnetPlatform.Platform.Common.Utils
                 }
             }
 
-            public static T CatchException<T>(Func<T> func, Func<Exception, T> onException)
+            public static T CatchException<T>(Func<T> func, Func<Exception, T> onException = null)
             {
                 try
                 {
@@ -78,7 +78,8 @@ namespace AngularDotnetPlatform.Platform.Common.Utils
                 }
                 catch (Exception e)
                 {
-                    return onException(e);
+                    onException?.Invoke(e);
+                    return default;
                 }
             }
 

@@ -63,15 +63,22 @@ namespace AngularDotnetPlatform.Platform.Common.JsonSerialization
                     break;
                 case JsonValueKind.String:
                 {
-                    if (dynamicObjectAsJsonElement.TryGetDateTimeOffset(out var dateTimeOffsetValue))
+                    try
                     {
-                        result = dateTimeOffsetValue;
+                        if (dynamicObjectAsJsonElement.TryGetDateTimeOffset(out var dateTimeOffsetValue))
+                        {
+                            result = dateTimeOffsetValue;
+                        }
+                        else if (dynamicObjectAsJsonElement.TryGetDateTime(out var dateValue))
+                        {
+                            result = dateValue;
+                        }
+                        else
+                        {
+                            result = dynamicObjectAsJsonElement.GetString();
+                        }
                     }
-                    else if (dynamicObjectAsJsonElement.TryGetDateTime(out var dateValue))
-                    {
-                        result = dateValue;
-                    }
-                    else
+                    catch
                     {
                         result = dynamicObjectAsJsonElement.GetString();
                     }
