@@ -1,10 +1,10 @@
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Application.Cqrs.Commands;
-using AngularDotnetPlatform.Platform.Infrastructures.Caching;
-using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
-using AngularDotnetPlatform.Platform.Common.Utils;
-using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using Easy.Platform.Application.Cqrs.Commands;
+using Easy.Platform.Infrastructures.Caching;
+using Easy.Platform.Common.Cqrs.Commands;
+using Easy.Platform.Common.Utils;
+using Easy.Platform.Domain.UnitOfWork;
 using PlatformExampleApp.TextSnippet.Application.Caching;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 

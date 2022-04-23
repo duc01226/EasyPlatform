@@ -1,20 +1,27 @@
-# Angular-Dotnet-Platform
+# EasyPlatform-Example
 
 This is a sample .Net Core application, based on microservices architecture and Docker containers.
 
 ## Getting Started
 
-Make sure you have [installed](https://docs.docker.com/docker-for-windows/install/) docker in your environment. After that, you can run the below commands from the **/src/** directory and get started with the `Angular-Dotnet-Platform` immediately.
+Make sure you have [installed](https://docs.docker.com/docker-for-windows/install/) docker in your environment. After that, you can run the below commands from the **/src/** directory and get started with the `EasyPlatform-Example` immediately.
 
 ```powershell
-docker-compose -p Angular-Dotnet-Platform build
-docker-compose -p Angular-Dotnet-Platform up
+docker-compose -f platform-example-app.docker-compose.yml -f platform-example-app.docker-compose.override.yml -p EasyPlatform-Example build
+docker-compose -f platform-example-app.docker-compose.yml -f platform-example-app.docker-compose.override.yml -p EasyPlatform-Example up
+```
+
+Start infrastructure only
+
+```powershell
+docker-compose -f platform-example-app.docker-compose.yml -f platform-example-app.docker-compose.override.yml -p EasyPlatform-Example build sql-data
+docker-compose -f platform-example-app.docker-compose.yml -f platform-example-app.docker-compose.override.yml -p EasyPlatform-Example up sql-data
 ```
 
 ### Urls
 
-- Api Server: [http://localhost:5001](http://localhost:5001)
-- Client: [http://localhost:4001](http://localhost:4001)
+-   Api Server: [http://localhost:5001](http://localhost:5001)
+-   Client: [http://localhost:4001](http://localhost:4001)
 
 ## Backend Architecture overview
 
@@ -42,16 +49,16 @@ We can start a single service applying this but still can do horizontal scale at
 
 I also apply strictly DI with interface to follow the I(Inversion of control) in SOLID, which help us to upgrade, switch technical implementation easily.
 
-I also modular (example: [TextSnippetApiAspNetCoreModule](src/Services/PlatformExampleApp.TextSnippet.Api/TextSnippetApiAspNetCoreModule.cs)) for each project parts of a micro-service, which help doing register, config and init module, manage module dependencies as clean as possible.
+I also modular (example: [TextSnippetApiAspNetCoreModule](src/Services/BravoSuite.Duc.Interview.Test.TextSnippet.Api/TextSnippetApiAspNetCoreModule.cs)) for each project parts of a micro-service, which help doing register, config and init module, manage module dependencies as clean as possible.
 
 ### What am I missing ?
 
-- EventBus Demo
-- Inbox/Outbox pattern to support transaction for sending event to bus.
-- Authentication (Identity)
-- Recurring Job Demo
-- Third-party Infrastructure Demo (Sending Email)
-- etc...
+-   EventBus Demo
+-   Inbox/Outbox pattern to support transaction for sending event to bus.
+-   Authentication (Identity)
+-   Recurring Job Demo
+-   Third-party Infrastructure Demo (Sending Email)
+-   etc...
 
 ## Frontend Architecture overview
 

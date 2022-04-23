@@ -1,5 +1,5 @@
 using System;
-using AngularDotnetPlatform.Platform.MongoDB;
+using Easy.Platform.MongoDB;
 using Microsoft.Extensions.Configuration;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.DemoMigrateDataCrossDb

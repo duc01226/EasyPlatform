@@ -1,6 +1,6 @@
 using System;
-using AngularDotnetPlatform.Platform.Domain.Entities;
-using AngularDotnetPlatform.Platform.Domain.Repositories;
+using Easy.Platform.Domain.Entities;
+using Easy.Platform.Domain.Repositories;
 
 namespace PlatformExampleApp.TextSnippet.Domain.Repositories
 {

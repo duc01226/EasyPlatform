@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using AngularDotnetPlatform.Platform.Application;
-using AngularDotnetPlatform.Platform.Application.Context;
+using Easy.Platform.Application;
+using Easy.Platform.Application.Context;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.CqrsPipelineMiddleware;
 using PlatformExampleApp.TextSnippet.Domain;

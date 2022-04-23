@@ -1,9 +1,9 @@
 using System;
-using AngularDotnetPlatform.Platform.Application.EventBus;
-using AngularDotnetPlatform.Platform.Common.Cqrs;
-using AngularDotnetPlatform.Platform.Domain.Entities;
-using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.EfCore.Domain.Repositories;
+using Easy.Platform.Application.EventBus;
+using Easy.Platform.Common.Cqrs;
+using Easy.Platform.Domain.Entities;
+using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.EfCore.Domain.Repositories;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
 namespace PlatformExampleApp.TextSnippet.Persistence

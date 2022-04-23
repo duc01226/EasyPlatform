@@ -1,6 +1,6 @@
 using System;
 using System.Linq;
-using AngularDotnetPlatform.Platform.Persistence.DataMigration;
+using Easy.Platform.Persistence.DataMigration;
 using MongoDB.Driver;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.DemoMigrateDataCrossDb;

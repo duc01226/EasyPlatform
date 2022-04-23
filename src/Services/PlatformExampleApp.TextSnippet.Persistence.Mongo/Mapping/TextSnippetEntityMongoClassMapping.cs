@@ -1,5 +1,5 @@
 using System;
-using AngularDotnetPlatform.Platform.MongoDB.Mapping;
+using Easy.Platform.MongoDB.Mapping;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Mongo.Mapping

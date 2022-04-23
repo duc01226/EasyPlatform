@@ -1,9 +1,9 @@
 using System;
 using System.Security.Cryptography;
 using System.Text;
-using AngularDotnetPlatform.Platform.Common.Validators;
+using Easy.Platform.Common.Validators;
 using FluentValidation;
-using AngularDotnetPlatform.Platform.Domain.Entities;
+using Easy.Platform.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.ValueObjects;
 
 namespace PlatformExampleApp.TextSnippet.Domain.Entities

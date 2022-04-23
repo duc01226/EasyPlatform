@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using AngularDotnetPlatform.Platform.MongoDB;
+using Easy.Platform.MongoDB;
 using Microsoft.Extensions.Options;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 

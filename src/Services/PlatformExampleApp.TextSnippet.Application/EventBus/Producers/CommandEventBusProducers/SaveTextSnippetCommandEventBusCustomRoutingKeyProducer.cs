@@ -1,7 +1,7 @@
-using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
-using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
-using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
+using Easy.Platform.Application.EventBus.Producers;
+using Easy.Platform.Common.Cqrs.Commands;
+using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 

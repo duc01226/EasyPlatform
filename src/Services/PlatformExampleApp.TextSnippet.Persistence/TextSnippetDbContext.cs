@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using AngularDotnetPlatform.Platform.EfCore;
+using Easy.Platform.EfCore;
 using Microsoft.EntityFrameworkCore.Design;
 
 namespace PlatformExampleApp.TextSnippet.Persistence

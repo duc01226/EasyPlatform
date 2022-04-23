@@ -15,8 +15,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform.EfCore\AngularDotnetPlatform.Platform.EfCore.csproj" />
-    <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform\AngularDotnetPlatform.Platform.csproj" />
+    <ProjectReference Include="..\..\Platform\Easy.Platform.EfCore\Easy.Platform.EfCore.csproj" />
+    <ProjectReference Include="..\..\Platform\Easy.Platform\Easy.Platform.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Domain\PlatformExampleApp.TextSnippet.Domain.csproj" />
   </ItemGroup>
 

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Application.Context.UserContext;
-using AngularDotnetPlatform.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper;
+using Easy.Platform.Application.Context.UserContext;
+using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper;
 using IdentityModel;
 using PlatformExampleApp.TextSnippet.Application.Context.UserContext;
 

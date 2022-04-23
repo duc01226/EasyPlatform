@@ -1,5 +1,5 @@
-using AngularDotnetPlatform.Platform.Application.Caching;
-using AngularDotnetPlatform.Platform.Application.Context;
+using Easy.Platform.Application.Caching;
+using Easy.Platform.Application.Context;
 
 namespace PlatformExampleApp.TextSnippet.Application.Caching
 {

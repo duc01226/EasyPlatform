@@ -1,5 +1,5 @@
-using AngularDotnetPlatform.Platform.Application.EventBus.Producers;
-using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using Easy.Platform.Application.EventBus.Producers;
+using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 

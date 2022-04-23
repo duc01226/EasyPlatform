@@ -1,5 +1,5 @@
 using System;
-using AngularDotnetPlatform.Platform.Domain.Entities;
+using Easy.Platform.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Domain.Entities
 {

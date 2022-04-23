@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   sql-data:
-    image: ${REGISTRY:-duc01226}/angular-dotnet-platform-platform-example-app-fts-sql-data:${PLATFORM:-linux}-${TAG:-latest}
+    image: ${REGISTRY:-duc01226}/easy-platform-example-app-fts-sql-data:${PLATFORM:-linux}-${TAG:-latest}
     build:
       context: .
       dockerfile: fts-sqldata.Dockerfile
@@ -17,7 +17,7 @@ services:
     image: redis:6.2.5
 
   text-snippet-api:
-    image: ${REGISTRY:-duc01226}/angular-dotnet-platform-platform-example-app-text-snippet-api:${PLATFORM:-linux}-${TAG:-latest}
+    image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-api:${PLATFORM:-linux}-${TAG:-latest}
     build:
       context: .
       dockerfile: Services/PlatformExampleApp.TextSnippet.Api/Dockerfile
@@ -28,7 +28,7 @@ services:
       - redis-cache
 
   text-snippet-webspa:
-    image: ${REGISTRY:-duc01226}/angular-dotnet-platform-platform-example-app-text-snippet-webspa:${PLATFORM:-linux}-${TAG:-latest}
+    image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-webspa:${PLATFORM:-linux}-${TAG:-latest}
     build:
       context: Web
       args:

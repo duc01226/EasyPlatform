@@ -1,6 +1,6 @@
 using System;
 using Microsoft.Extensions.Configuration;
-using AngularDotnetPlatform.Platform.Domain;
+using Easy.Platform.Domain;
 
 namespace PlatformExampleApp.TextSnippet.Domain
 {

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Common.Dtos;
-using AngularDotnetPlatform.Platform.Common.Validators;
+using Easy.Platform.Common.Dtos;
+using Easy.Platform.Common.Validators;
 using PlatformExampleApp.TextSnippet.Domain.ValueObjects;
 
 namespace PlatformExampleApp.TextSnippet.Application.ValueObjectDtos

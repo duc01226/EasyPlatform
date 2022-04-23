@@ -1,0 +1,85 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Easy.Platform.Application.EventBus;
+using Easy.Platform.Application.EventBus.InboxPattern;
+using Easy.Platform.Application.Persistence;
+using Easy.Platform.Common.DependencyInjection;
+using Easy.Platform.Common.Extensions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Easy.Platform.Domain.Repositories;
+using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.Persistence.DataMigration;
+using Easy.Platform.Persistence.Domain;
+using Easy.Platform.Persistence.Services.Abstract;
+
+namespace Easy.Platform.Persistence
+{
+    public abstract class PlatformPersistenceModule<TDbContext> : PlatformModule
+        where TDbContext : class, IPlatformDbContext
+    {
+        protected PlatformPersistenceModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        {
+        }
+
+        protected virtual Func<IServiceProvider, TDbContext> DbContextProvider => null;
+
+        protected override void InternalRegister(IServiceCollection serviceCollection)
+        {
+            base.InternalRegister(serviceCollection);
+
+            if (DbContextProvider != null)
+                serviceCollection.RegisterAllForImplementation(typeof(TDbContext), DbContextProvider, ServiceLifeTime.Transient);
+            else
+                serviceCollection.RegisterAllForImplementation(typeof(TDbContext), ServiceLifeTime.Transient);
+            serviceCollection.RegisterAllServicesFromType<IPlatformDbContext>(ServiceLifeTime.Scoped, Assembly);
+
+            RegisterUnitOfWorkManager(serviceCollection);
+            serviceCollection.RegisterAllFromType(typeof(IUnitOfWork), ServiceLifeTime.Transient, Assembly);
+            RegisterRepositories(serviceCollection);
+            if (EnableInboxEventBusMessageRepository())
+                RegisterInboxEventBusMessageRepository(serviceCollection);
+            serviceCollection.RegisterAllFromType<IPersistenceService>(ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType<IPlatformDataMigrationExecutor>(ServiceLifeTime.Transient, Assembly);
+        }
+
+        /// <summary>
+        /// Override this function to limit the list of supported limited repository implementation for this persistence module
+        /// </summary>
+        /// <returns></returns>
+        protected virtual List<Type> RegisterLimitedRepositoryImplementationTypes()
+        {
+            return null;
+        }
+
+        protected virtual void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RegisterAllFromType<IPlatformInboxEventBusMessageRepository>(ServiceLifeTime.Transient, Assembly);
+        }
+
+        protected virtual bool EnableInboxEventBusMessageRepository()
+        {
+            return false;
+        }
+
+        private void RegisterUnitOfWorkManager(IServiceCollection serviceCollection)
+        {
+            serviceCollection.Register<IUnitOfWorkManager, PlatformDefaultPersistenceUnitOfWorkManager>(ServiceLifeTime.Scoped);
+            serviceCollection.RegisterAllFromType(typeof(IUnitOfWorkManager), ServiceLifeTime.Scoped, Assembly, replaceIfExist: true);
+        }
+
+        private void RegisterRepositories(IServiceCollection serviceCollection)
+        {
+            if (RegisterLimitedRepositoryImplementationTypes()?.Any() == true)
+            {
+                RegisterLimitedRepositoryImplementationTypes().ForEach(
+                    repositoryImplementationType => serviceCollection.RegisterAllForImplementation(repositoryImplementationType, ServiceLifeTime.Transient));
+            }
+            else
+            {
+                serviceCollection.RegisterAllFromType<IPlatformRepository>(ServiceLifeTime.Transient, Assembly);
+            }
+        }
+    }
+}

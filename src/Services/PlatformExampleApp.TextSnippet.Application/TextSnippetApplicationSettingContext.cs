@@ -1,5 +1,5 @@
 using System.Reflection;
-using AngularDotnetPlatform.Platform.Application.Context;
+using Easy.Platform.Application.Context;
 using Microsoft.Extensions.Configuration;
 
 namespace PlatformExampleApp.TextSnippet.Application

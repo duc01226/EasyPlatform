@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Common.Utils;
+using Easy.Platform.Common.Utils;
 using Microsoft.VisualBasic.CompilerServices;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;

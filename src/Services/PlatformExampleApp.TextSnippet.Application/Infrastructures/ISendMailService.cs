@@ -1,5 +1,5 @@
-using AngularDotnetPlatform.Platform.Infrastructures;
-using AngularDotnetPlatform.Platform.Infrastructures.Abstract;
+using Easy.Platform.Infrastructures;
+using Easy.Platform.Infrastructures.Abstract;
 
 namespace PlatformExampleApp.TextSnippet.Application.Infrastructures
 {

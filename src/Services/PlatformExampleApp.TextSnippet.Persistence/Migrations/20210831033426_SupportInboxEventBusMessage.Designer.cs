@@ -21,7 +21,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
                 .HasAnnotation("ProductVersion", "5.0.7")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("AngularDotnetPlatform.Platform.Application.EventBus.PlatformInboxEventBusMessage", b =>
+            modelBuilder.Entity("Easy.Platform.Application.EventBus.PlatformInboxEventBusMessage", b =>
                 {
                     b.Property<string>("Id")
                         .HasMaxLength(100)

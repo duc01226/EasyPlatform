@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
+using Easy.Platform.Infrastructures.EventBus;
 
 namespace PlatformExampleApp.TextSnippet.Application.EventBus.FreeFormatMessages
 {

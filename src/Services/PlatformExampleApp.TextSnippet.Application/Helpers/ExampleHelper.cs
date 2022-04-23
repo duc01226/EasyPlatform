@@ -1,8 +1,8 @@
 using System;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Application.Helpers;
-using AngularDotnetPlatform.Platform.Persistence.Services;
+using Easy.Platform.Application.Helpers;
+using Easy.Platform.Persistence.Services;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 

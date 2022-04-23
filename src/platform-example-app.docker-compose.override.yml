@@ -8,15 +8,15 @@ services:
     ports:
       - '14330:1433'
     volumes:
-      - AngularDotnetPlatform-sqldata:/var/opt/mssql
+      - Easy.Platform-sqldata:/var/opt/mssql
       - C:\AngularDotnetPlatformDockerSql\data:/var/opt/mssql/data
 
   mongo-data:
     ports:
       - '27017:27017'
     volumes:
-      - AngularDotnetPlatform-mongodata-db:/data/db
-      - AngularDotnetPlatform-mongodata-configdb:/data/configdb
+      - Easy.Platform-mongodata-db:/data/db
+      - Easy.Platform-mongodata-configdb:/data/configdb
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=rootPassXXX
@@ -25,10 +25,14 @@ services:
     ports:
       - '15672:15672'
       - '5672:5672'
+    volumes:
+      - Easy.Platform-rabbitmq-volume:/var/lib/rabbitmq
 
   redis-cache:
     ports:
       - '6379:6379'
+    volumes:
+      - Easy.Platform-redis-cache-data:/data
 
   text-snippet-api:
     environment:
@@ -49,9 +53,13 @@ services:
       - '4001:80'
 
 volumes:
-  AngularDotnetPlatform-sqldata:
+  Easy.Platform-sqldata:
     external: false
-  AngularDotnetPlatform-mongodata-db:
+  Easy.Platform-mongodata-db:
     external: false
-  AngularDotnetPlatform-mongodata-configdb:
+  Easy.Platform-mongodata-configdb:
+    external: false
+  Easy.Platform-rabbitmq-volume:
+    external: false
+  Easy.Platform-redis-cache-data:
     external: false

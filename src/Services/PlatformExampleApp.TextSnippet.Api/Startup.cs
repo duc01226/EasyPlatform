@@ -1,5 +1,5 @@
-using AngularDotnetPlatform.Platform.AspNetCore;
-using AngularDotnetPlatform.Platform.Common.DependencyInjection;
+using Easy.Platform.AspNetCore;
+using Easy.Platform.Common.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;

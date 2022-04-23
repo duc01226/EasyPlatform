@@ -9,7 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform\AngularDotnetPlatform.Platform.csproj" />
+    <ProjectReference Include="..\..\Platform\Easy.Platform\Easy.Platform.csproj" />
   </ItemGroup>
 
 </Project>

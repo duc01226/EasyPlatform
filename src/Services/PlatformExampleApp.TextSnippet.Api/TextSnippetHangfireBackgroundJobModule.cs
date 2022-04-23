@@ -1,5 +1,5 @@
 using System;
-using AngularDotnetPlatform.Platform.HangfireBackgroundJob;
+using Easy.Platform.HangfireBackgroundJob;
 using Microsoft.Extensions.Configuration;
 
 namespace PlatformExampleApp.TextSnippet.Api

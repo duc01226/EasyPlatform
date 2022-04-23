@@ -1,8 +1,8 @@
 using System;
-using AngularDotnetPlatform.Platform.Common.Cqrs;
-using AngularDotnetPlatform.Platform.Domain.Entities;
-using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.MongoDB.Domain.Repositories;
+using Easy.Platform.Common.Cqrs;
+using Easy.Platform.Domain.Entities;
+using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.MongoDB.Domain.Repositories;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
-using AngularDotnetPlatform.Platform.Infrastructures.Caching;
+using Easy.Platform.Infrastructures.Caching;
 using Microsoft.Extensions.Configuration;
-using AngularDotnetPlatform.Platform.AspNetCore;
-using AngularDotnetPlatform.Platform.Common.JsonSerialization;
+using Easy.Platform.AspNetCore;
+using Easy.Platform.Common.JsonSerialization;
 using PlatformExampleApp.TextSnippet.Api.Context.UserContext;
 using PlatformExampleApp.TextSnippet.Application;
 using PlatformExampleApp.TextSnippet.Domain;

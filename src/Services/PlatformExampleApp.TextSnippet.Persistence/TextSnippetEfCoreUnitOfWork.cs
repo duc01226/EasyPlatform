@@ -1,8 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.EfCore.Domain.UnitOfWork;
+using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.EfCore.Domain.UnitOfWork;
 
 namespace PlatformExampleApp.TextSnippet.Persistence
 {

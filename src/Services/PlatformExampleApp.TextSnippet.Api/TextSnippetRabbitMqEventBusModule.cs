@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using AngularDotnetPlatform.Platform.Application.Context;
-using AngularDotnetPlatform.Platform.RabbitMQ;
+using Easy.Platform.Application.Context;
+using Easy.Platform.RabbitMQ;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PlatformExampleApp.TextSnippet.Application;

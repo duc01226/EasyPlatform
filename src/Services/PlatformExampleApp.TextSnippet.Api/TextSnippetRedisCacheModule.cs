@@ -1,6 +1,6 @@
 using System;
-using AngularDotnetPlatform.Platform.Infrastructures.Caching;
-using AngularDotnetPlatform.Platform.RedisCache;
+using Easy.Platform.Infrastructures.Caching;
+using Easy.Platform.RedisCache;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application;

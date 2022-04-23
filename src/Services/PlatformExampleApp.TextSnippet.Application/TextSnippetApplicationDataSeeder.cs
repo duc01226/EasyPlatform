@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Application;
-using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
+using Easy.Platform.Application;
+using Easy.Platform.Domain.UnitOfWork;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 

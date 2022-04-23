@@ -19,7 +19,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
                 .HasAnnotation("ProductVersion", "5.0.7")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-            modelBuilder.Entity("AngularDotnetPlatform.Platform.Application.EventBus.PlatformInboxEventBusMessage", b =>
+            modelBuilder.Entity("Easy.Platform.Application.EventBus.PlatformInboxEventBusMessage", b =>
             {
                 b.Property<string>("Id")
                     .HasMaxLength(200)
@@ -53,7 +53,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
                 b.ToTable("PlatformInboxEventBusMessage");
             });
 
-            modelBuilder.Entity("AngularDotnetPlatform.Platform.Persistence.DataMigration.PlatformDataMigrationHistory", b =>
+            modelBuilder.Entity("Easy.Platform.Persistence.DataMigration.PlatformDataMigrationHistory", b =>
             {
                 b.Property<string>("Name")
                     .HasColumnType("nvarchar(450)");

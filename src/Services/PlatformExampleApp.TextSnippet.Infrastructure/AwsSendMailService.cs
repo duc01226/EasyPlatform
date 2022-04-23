@@ -1,4 +1,4 @@
-using AngularDotnetPlatform.Platform.Common.Extensions;
+using Easy.Platform.Common.Extensions;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.Infrastructures;
 

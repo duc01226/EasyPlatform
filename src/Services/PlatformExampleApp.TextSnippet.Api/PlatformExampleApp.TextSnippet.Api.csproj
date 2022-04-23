@@ -19,11 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform.AspNetCore\AngularDotnetPlatform.Platform.AspNetCore.csproj" />
-    <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform.HangfireBackgroundJob\AngularDotnetPlatform.Platform.HangfireBackgroundJob.csproj" />
-    <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform.RabbitMQ\AngularDotnetPlatform.Platform.RabbitMQ.csproj" />
-    <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform.RedisCache\AngularDotnetPlatform.Platform.RedisCache.csproj" />
-    <ProjectReference Include="..\..\Platform\AngularDotnetPlatform.Platform\AngularDotnetPlatform.Platform.csproj" />
+    <ProjectReference Include="..\..\Platform\Easy.Platform.AspNetCore\Easy.Platform.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\Platform\Easy.Platform.HangfireBackgroundJob\Easy.Platform.HangfireBackgroundJob.csproj" />
+    <ProjectReference Include="..\..\Platform\Easy.Platform.RabbitMQ\Easy.Platform.RabbitMQ.csproj" />
+    <ProjectReference Include="..\..\Platform\Easy.Platform.RedisCache\Easy.Platform.RedisCache.csproj" />
+    <ProjectReference Include="..\..\Platform\Easy.Platform\Easy.Platform.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Application\PlatformExampleApp.TextSnippet.Application.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Infrastructure\PlatformExampleApp.TextSnippet.Infrastructure.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Persistence.Mongo\PlatformExampleApp.TextSnippet.Persistence.Mongo.csproj" />

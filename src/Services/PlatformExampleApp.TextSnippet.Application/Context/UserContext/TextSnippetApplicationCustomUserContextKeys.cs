@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using AngularDotnetPlatform.Platform.Application.Context.UserContext;
+using Easy.Platform.Application.Context.UserContext;
 
 namespace PlatformExampleApp.TextSnippet.Application.Context.UserContext
 {

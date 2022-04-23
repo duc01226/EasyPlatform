@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.MongoDB.Serializer.Abstract;
+using Easy.Platform.MongoDB.Serializer.Abstract;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 

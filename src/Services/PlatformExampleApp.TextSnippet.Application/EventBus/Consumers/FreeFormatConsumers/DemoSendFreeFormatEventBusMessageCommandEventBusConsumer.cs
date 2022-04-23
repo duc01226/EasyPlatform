@@ -1,9 +1,9 @@
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Application.EventBus.Consumers;
-using AngularDotnetPlatform.Platform.Application.EventBus.InboxPattern;
-using AngularDotnetPlatform.Platform.Common.Extensions;
-using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Infrastructures.EventBus;
+using Easy.Platform.Application.EventBus.Consumers;
+using Easy.Platform.Application.EventBus.InboxPattern;
+using Easy.Platform.Common.Extensions;
+using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.EventBus.FreeFormatMessages;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;

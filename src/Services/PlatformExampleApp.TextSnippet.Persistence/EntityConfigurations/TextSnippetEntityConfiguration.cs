@@ -1,6 +1,6 @@
 using System;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using AngularDotnetPlatform.Platform.EfCore.EntityConfiguration;
+using Easy.Platform.EfCore.EntityConfiguration;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.EntityConfigurations

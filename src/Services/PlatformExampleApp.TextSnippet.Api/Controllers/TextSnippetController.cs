@@ -1,9 +1,9 @@
 using System;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Infrastructures.Caching;
+using Easy.Platform.Infrastructures.Caching;
 using Microsoft.AspNetCore.Mvc;
-using AngularDotnetPlatform.Platform.AspNetCore.Controllers;
-using AngularDotnetPlatform.Platform.Common.Cqrs;
+using Easy.Platform.AspNetCore.Controllers;
+using Easy.Platform.Common.Cqrs;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.BackgroundJob;
 using PlatformExampleApp.TextSnippet.Application.Caching;

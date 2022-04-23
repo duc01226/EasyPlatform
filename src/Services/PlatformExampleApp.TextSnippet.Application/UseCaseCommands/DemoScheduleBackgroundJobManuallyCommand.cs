@@ -1,12 +1,12 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Application.Context.UserContext;
-using AngularDotnetPlatform.Platform.Application.Cqrs.Commands;
-using AngularDotnetPlatform.Platform.Common.Cqrs;
-using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
-using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.Infrastructures.BackgroundJob;
+using Easy.Platform.Application.Context.UserContext;
+using Easy.Platform.Application.Cqrs.Commands;
+using Easy.Platform.Common.Cqrs;
+using Easy.Platform.Common.Cqrs.Commands;
+using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.Infrastructures.BackgroundJob;
 using PlatformExampleApp.TextSnippet.Application.BackgroundJob;
 using PlatformExampleApp.TextSnippet.Domain.Services;
 

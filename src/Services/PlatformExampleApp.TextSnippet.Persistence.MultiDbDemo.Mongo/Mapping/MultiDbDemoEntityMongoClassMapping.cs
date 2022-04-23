@@ -1,5 +1,5 @@
 using System;
-using AngularDotnetPlatform.Platform.MongoDB.Mapping;
+using Easy.Platform.MongoDB.Mapping;
 using MongoDB.Bson.Serialization;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 

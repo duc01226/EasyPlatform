@@ -1,5 +1,5 @@
 using System;
-using AngularDotnetPlatform.Platform.Infrastructures;
+using Easy.Platform.Infrastructures;
 using Microsoft.Extensions.Configuration;
 
 namespace PlatformExampleApp.TextSnippet.Infrastructure

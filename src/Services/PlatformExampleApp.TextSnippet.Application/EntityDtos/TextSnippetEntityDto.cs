@@ -1,5 +1,5 @@
 using System;
-using AngularDotnetPlatform.Platform.Application.Dtos;
+using Easy.Platform.Application.Dtos;
 using PlatformExampleApp.TextSnippet.Application.ValueObjectDtos;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 

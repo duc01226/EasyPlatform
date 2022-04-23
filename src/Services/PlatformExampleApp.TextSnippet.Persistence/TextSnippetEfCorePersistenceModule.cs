@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using AngularDotnetPlatform.Platform.EfCore;
+using Easy.Platform.EfCore;
 
 namespace PlatformExampleApp.TextSnippet.Persistence
 {

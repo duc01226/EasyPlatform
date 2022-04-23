@@ -1,8 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Domain.UnitOfWork;
-using AngularDotnetPlatform.Platform.MongoDB.Domain.UnitOfWork;
+using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.MongoDB.Domain.UnitOfWork;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Mongo

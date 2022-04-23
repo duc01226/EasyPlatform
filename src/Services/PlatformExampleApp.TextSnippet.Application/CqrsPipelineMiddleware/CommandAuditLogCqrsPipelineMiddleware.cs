@@ -1,8 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
-using AngularDotnetPlatform.Platform.Common.Cqrs;
-using AngularDotnetPlatform.Platform.Common.Cqrs.Commands;
-using AngularDotnetPlatform.Platform.Common.Extensions;
+using Easy.Platform.Common.Cqrs;
+using Easy.Platform.Common.Cqrs.Commands;
+using Easy.Platform.Common.Extensions;
 using MediatR;
 using Microsoft.Extensions.Logging;
 

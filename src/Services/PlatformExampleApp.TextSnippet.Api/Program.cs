@@ -1,4 +1,4 @@
-using AngularDotnetPlatform.Platform.Common.Timing;
+using Easy.Platform.Common.Timing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 

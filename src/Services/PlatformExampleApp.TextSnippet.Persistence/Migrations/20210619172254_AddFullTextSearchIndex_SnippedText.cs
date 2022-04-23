@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
-using AngularDotnetPlatform.Platform.EfCore.Utils;
+using Easy.Platform.EfCore.Utils;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
