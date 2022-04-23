@@ -3,15 +3,15 @@ using Easy.Platform.Infrastructures;
 using Easy.Platform.Infrastructures.PushNotification;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Extensions;
-using Easy.Platform.FirebasePushNotification.GoogleFcm;
+using Easy.Platform.FireBasePushNotification.GoogleFcm;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Easy.Platform.FirebasePushNotification
+namespace Easy.Platform.FireBasePushNotification
 {
-    public abstract class FirebasePushNotificationPlatformModule : PlatformInfrastructureModule
+    public abstract class FireBasePushNotificationPlatformModule : PlatformInfrastructureModule
     {
-        public FirebasePushNotificationPlatformModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public FireBasePushNotificationPlatformModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
 
@@ -19,12 +19,12 @@ namespace Easy.Platform.FirebasePushNotification
         {
             base.InternalRegister(serviceCollection);
 
-            serviceCollection.Register<IPushNotificationPlatformService, FirebasePushNotificationService>(ServiceLifeTime.Transient);
-            serviceCollection.Register(typeof(FirebasePushNotificationSettings), FirebasePushNotificationSettingsProvider);
+            serviceCollection.Register<IPushNotificationPlatformService, FireBasePushNotificationService>(ServiceLifeTime.Transient);
+            serviceCollection.Register(typeof(FireBasePushNotificationSettings), FireBasePushNotificationSettingsProvider);
             serviceCollection.Register<IFcmSender, FcmSender>(ServiceLifeTime.Transient);
             serviceCollection.AddHttpClient<FcmSender>();
         }
 
-        protected abstract FirebasePushNotificationSettings FirebasePushNotificationSettingsProvider(IServiceProvider serviceProvider);
+        protected abstract FireBasePushNotificationSettings FireBasePushNotificationSettingsProvider(IServiceProvider serviceProvider);
     }
 }

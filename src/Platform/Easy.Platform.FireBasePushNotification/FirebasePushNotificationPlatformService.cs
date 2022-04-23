@@ -10,18 +10,18 @@ using System.Threading.Tasks;
 using Easy.Platform.Application;
 using Easy.Platform.Application.Exceptions;
 using Easy.Platform.Infrastructures.PushNotification;
-using Easy.Platform.FirebasePushNotification.GoogleFcm;
+using Easy.Platform.FireBasePushNotification.GoogleFcm;
 using Easy.Platform.Common.JsonSerialization;
 using Microsoft.Extensions.Logging;
 
-namespace Easy.Platform.FirebasePushNotification
+namespace Easy.Platform.FireBasePushNotification
 {
-    internal class FirebasePushNotificationService : IPushNotificationPlatformService
+    internal class FireBasePushNotificationService : IPushNotificationPlatformService
     {
         private readonly IFcmSender fcmSender;
-        private readonly ILogger<FirebasePushNotificationService> logger;
+        private readonly ILogger<FireBasePushNotificationService> logger;
 
-        public FirebasePushNotificationService(IFcmSender fcmSender, ILogger<FirebasePushNotificationService> logger)
+        public FireBasePushNotificationService(IFcmSender fcmSender, ILogger<FireBasePushNotificationService> logger)
         {
             this.fcmSender = fcmSender;
             this.logger = logger;

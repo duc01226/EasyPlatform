@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Easy.Platform.Common.JsonSerialization;
 using Newtonsoft.Json.Linq;
 
-namespace Easy.Platform.FirebasePushNotification.GoogleFcm
+namespace Easy.Platform.FireBasePushNotification.GoogleFcm
 {
     internal interface IFcmSender
     {
@@ -21,10 +21,10 @@ namespace Easy.Platform.FirebasePushNotification.GoogleFcm
     internal class FcmSender : IFcmSender
     {
         private readonly string fcmUrl = "https://fcm.googleapis.com/fcm/send";
-        private readonly FirebasePushNotificationSettings settings;
+        private readonly FireBasePushNotificationSettings settings;
         private readonly HttpClient http;
 
-        public FcmSender(FirebasePushNotificationSettings settings, HttpClient http)
+        public FcmSender(FireBasePushNotificationSettings settings, HttpClient http)
         {
             this.settings = settings;
             this.http = http;

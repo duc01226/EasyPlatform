@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Easy.Platform.FirebasePushNotification.GoogleFcm
+namespace Easy.Platform.FireBasePushNotification.GoogleFcm
 {
     internal class FcmResult
     {
