@@ -20,7 +20,7 @@ services:
     image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-api:${PLATFORM:-linux}-${TAG:-latest}
     build:
       context: .
-      dockerfile: Services/PlatformExampleApp.TextSnippet.Api/Dockerfile
+      dockerfile: PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/Dockerfile
     depends_on:
       - sql-data
       - mongo-data
@@ -30,7 +30,7 @@ services:
   text-snippet-webspa:
     image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-webspa:${PLATFORM:-linux}-${TAG:-latest}
     build:
-      context: Web
+      context: PlatformExampleAppWeb
       args:
         configuration: 'production'
       dockerfile: apps/text-snippet/Dockerfile
