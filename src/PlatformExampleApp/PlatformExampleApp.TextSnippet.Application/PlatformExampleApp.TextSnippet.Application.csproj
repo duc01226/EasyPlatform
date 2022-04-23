@@ -9,4 +9,11 @@
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Domain\PlatformExampleApp.TextSnippet.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="EventBus\Consumers\FreeFormatConsumers\EventHandlerConsumers\" />
+    <Folder Include="EventBus\Consumers\FreeFormatConsumers\RequestHandlerConsumers\" />
+    <Folder Include="EventBus\FreeFormatMessages\EventMessages\" />
+    <Folder Include="EventBus\FreeFormatMessages\RequestMessages\" />
+  </ItemGroup>
+
 </Project>
