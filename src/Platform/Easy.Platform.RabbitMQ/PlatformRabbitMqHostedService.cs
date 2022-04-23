@@ -237,7 +237,7 @@ namespace Easy.Platform.RabbitMQ
             }
             catch (Exception ex)
             {
-                Log.Error(Logger, ex, "RabbitMq Consumer can't start");
+                Log.Warning(Logger, ex, "RabbitMq Consumer can't start");
                 throw;
             }
             finally
