@@ -15,9 +15,9 @@ namespace Easy.Platform.Common.Cqrs
     {
         public async Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken, RequestHandlerDelegate<TResponse> next)
         {
-            return await HandleAsync(request, cancellationToken, next);
+            return await HandleAsync(request, next, cancellationToken);
         }
 
-        protected abstract Task<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken, RequestHandlerDelegate<TResponse> next);
+        protected abstract Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken);
     }
 }

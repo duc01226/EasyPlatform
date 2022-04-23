@@ -21,7 +21,7 @@ namespace PlatformExampleApp.TextSnippet.Application.CqrsPipelineMiddleware
             this.logger = logger;
         }
 
-        protected override async Task<TResponse> HandleAsync(TRequest request, CancellationToken cancellationToken, RequestHandlerDelegate<TResponse> next)
+        protected override async Task<TResponse> HandleAsync(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)
         {
             var response = await next();
 

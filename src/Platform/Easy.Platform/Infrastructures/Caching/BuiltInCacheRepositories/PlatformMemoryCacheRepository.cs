@@ -15,7 +15,7 @@ namespace Easy.Platform.Infrastructures.Caching.BuiltInCacheRepositories
     public class PlatformMemoryCacheRepository : PlatformCacheRepository, IPlatformMemoryCacheRepository
     {
         private readonly MemoryDistributedCache memoryDistributedCache;
-        private readonly ConcurrentDictionary<PlatformCacheKey, object> cachedKeys = new();
+        private readonly ConcurrentDictionary<PlatformCacheKey, object> cachedKeys = new ConcurrentDictionary<PlatformCacheKey, object>();
 
         public PlatformMemoryCacheRepository(ILoggerFactory loggerFactory, IServiceProvider serviceProvider) : base(serviceProvider)
         {

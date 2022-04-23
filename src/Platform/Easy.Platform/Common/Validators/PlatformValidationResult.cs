@@ -346,7 +346,7 @@ namespace Easy.Platform.Common.Validators
             return !IsValid ? this : nextValidation;
         }
 
-        public new PlatformValidationResult And(Func<bool> validCondition, params PlatformValidationFailure[] errors)
+        public PlatformValidationResult And(Func<bool> validCondition, params PlatformValidationFailure[] errors)
         {
             return !IsValid ? this : ValidIf(validCondition, errors);
         }

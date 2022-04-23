@@ -16,7 +16,7 @@ namespace Easy.Platform.Domain.Services
 
     public abstract class PlatformDomainService : IPlatformDomainService
     {
-        private readonly IPlatformCqrs Cqrs;
+        protected readonly IPlatformCqrs Cqrs;
 
         public PlatformDomainService(
             IPlatformCqrs cqrs)
