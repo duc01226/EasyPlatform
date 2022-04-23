@@ -1,4 +1,6 @@
 using System;
+using System.Text;
+using System.Threading;
 using Easy.Platform.Application.Context;
 using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.Common.DependencyInjection;

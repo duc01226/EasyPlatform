@@ -19,7 +19,9 @@ namespace Easy.Platform.MongoDB.Mapping
         public PlatformMongoClassMapping()
         {
             if (!BsonClassMap.IsClassMapRegistered(typeof(TEntity)))
+            {
                 BsonClassMap.RegisterClassMap<TEntity>(ClassMapInitializer);
+            }
         }
 
         public virtual void ClassMapInitializer(BsonClassMap<TEntity> cm)

@@ -1,4 +1,5 @@
 using System;
+using Easy.Platform.Application.BackgroundJob;
 using Hangfire;
 using Microsoft.Extensions.DependencyInjection;
 

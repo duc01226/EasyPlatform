@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Infrastructures;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

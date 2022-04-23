@@ -1,8 +1,8 @@
 using System;
 using System.Linq;
 using Easy.Platform.Common.DependencyInjection;
-using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Services;
+using Easy.Platform.Common.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

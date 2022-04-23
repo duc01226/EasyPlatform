@@ -24,7 +24,7 @@ namespace Easy.Platform.Application.Cqrs.Commands
             Cqrs = cqrs;
         }
 
-        public async Task<TResult> Handle(TCommand request, CancellationToken cancellationToken)
+        public virtual async Task<TResult> Handle(TCommand request, CancellationToken cancellationToken)
         {
             EnsureValidationResultValid(request.Validate());
             PopulateAuditInfo(request);

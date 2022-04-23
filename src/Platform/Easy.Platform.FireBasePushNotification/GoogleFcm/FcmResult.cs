@@ -10,6 +10,7 @@ namespace Easy.Platform.FirebasePushNotification.GoogleFcm
         [JsonPropertyName("registration_id")]
         public string RegistrationId { get; set; }
 
+        [JsonPropertyName("error")]
         public string Error { get; set; }
     }
 }

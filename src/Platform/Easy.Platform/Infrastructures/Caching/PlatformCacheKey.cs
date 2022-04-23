@@ -10,6 +10,7 @@ namespace Easy.Platform.Infrastructures.Caching
     /// </summary>
     public class PlatformCacheKey : IEqualityComparer<PlatformCacheKey>
     {
+        public const string DefaultContext = "UnknowContext";
         public const string DefaultCollection = "All";
         public const string DefaultRequestKey = "All";
         public const string RequestKeySeparator = ".";
@@ -18,13 +19,11 @@ namespace Easy.Platform.Infrastructures.Caching
 
         public PlatformCacheKey(string requestKey = DefaultRequestKey)
         {
-            Context = GetType().Assembly.GetName().Name;
             RequestKey = AutoFixKeyPartValue(requestKey);
         }
 
         public PlatformCacheKey(object[] requestKeyParts)
         {
-            Context = GetType().Assembly.GetName().Name;
             RequestKey = requestKeyParts.Length == 0 ? DefaultRequestKey : BuildRequestKey(requestKeyParts);
         }
 
@@ -56,7 +55,7 @@ namespace Easy.Platform.Infrastructures.Caching
         /// <summary>
         /// The context of the cached data. Usually it's like the database or service name.
         /// </summary>
-        public string Context { get; init; }
+        public string Context { get; init; } = DefaultContext;
 
         /// <summary>
         /// The Type of the cached data. Usually it's like the database collection or data class name.

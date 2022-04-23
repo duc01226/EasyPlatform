@@ -20,7 +20,7 @@ namespace Easy.Platform.AspNetCore.ExceptionHandling
 
         public PlatformExceptionFilter(ILogger<PlatformExceptionFilter> logger, IConfiguration configuration)
         {
-            Logger = logger;
+            this.Logger = logger;
             developerExceptionEnabled = configuration.GetValue<bool>("DeveloperExceptionEnabled");
         }
 

@@ -117,7 +117,7 @@ namespace Easy.Platform.EfCore.Services
         private static Expression<Func<T, bool>> BuildFullTextSearchPropsPredicate<T>(
             List<string> searchWords,
             List<string> fullTextSearchPropNames,
-            bool fullTextExactMatch)
+            bool exactMatch)
         {
             var fullTextSearchPropsPredicate = fullTextSearchPropNames
                 .Select(fullTextSearchPropName =>
@@ -130,7 +130,7 @@ namespace Easy.Platform.EfCore.Services
                             return singleWordSinglePropPredicate;
                         })
                         .Aggregate((resultPredicate, nextPredicate) =>
-                            fullTextExactMatch ? resultPredicate.AndAlso(nextPredicate) : resultPredicate.Or(nextPredicate));
+                            exactMatch ? resultPredicate.AndAlso(nextPredicate) : resultPredicate.Or(nextPredicate));
                 })
                 .Aggregate((resultPredicate, nextSinglePropPredicate) => resultPredicate.Or(nextSinglePropPredicate));
             return fullTextSearchPropsPredicate;

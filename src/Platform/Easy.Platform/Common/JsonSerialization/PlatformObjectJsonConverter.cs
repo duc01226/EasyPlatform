@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.Utils;
 
 namespace Easy.Platform.Common.JsonSerialization
 {
@@ -61,6 +62,7 @@ namespace Easy.Platform.Common.JsonSerialization
                 case JsonValueKind.True:
                     result = dynamicObjectAsJsonElement.GetBoolean();
                     break;
+
                 case JsonValueKind.String:
                 {
                     try
@@ -92,6 +94,7 @@ namespace Easy.Platform.Common.JsonSerialization
                         .Select(o => TryGetReflectionDynamicIfJsonElement(o))
                         .ToArray();
                     break;
+
                 case JsonValueKind.Object:
                 {
                     var keyValueObject = new Dictionary<string, object>();

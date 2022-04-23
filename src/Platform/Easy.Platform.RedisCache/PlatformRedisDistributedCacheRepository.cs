@@ -28,7 +28,7 @@ namespace Easy.Platform.RedisCache
             IPlatformApplicationSettingContext applicationSettingContext) : base(serviceProvider)
         {
             this.applicationSettingContext = applicationSettingContext;
-            redisCache = new Microsoft.Extensions.Caching.StackExchangeRedis.RedisCache(optionsAccessor);
+            this.redisCache = new Microsoft.Extensions.Caching.StackExchangeRedis.RedisCache(optionsAccessor);
         }
 
         public override T Get<T>(PlatformCacheKey cacheKey)
@@ -85,7 +85,7 @@ namespace Easy.Platform.RedisCache
             var localMatchedKeys = localCachedKeys.Select(p => p.Key).Where(cacheKeyPredicate).ToList();
             var globalMatchedKeys = globalCachedKeys.Select(p => p.Key).Where(cacheKeyPredicate).ToList();
 
-            var matchedKeys = localMatchedKeys.Concat(globalMatchedKeys).Distinct().ToList();
+            var matchedKeys = localMatchedKeys.Concat(globalMatchedKeys).Distinct();
             foreach (var matchedKey in matchedKeys)
             {
                 redisCache.Remove(matchedKey);

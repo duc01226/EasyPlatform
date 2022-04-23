@@ -1,6 +1,6 @@
 using System;
-using Easy.Platform.Common.Validators;
 using Easy.Platform.Infrastructures.EventBus;
+using Easy.Platform.Common.Validators;
 
 namespace Easy.Platform.RabbitMQ
 {

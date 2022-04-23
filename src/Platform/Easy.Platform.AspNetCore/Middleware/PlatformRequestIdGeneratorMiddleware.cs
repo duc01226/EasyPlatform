@@ -3,9 +3,8 @@ using System.Threading.Tasks;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.AspNetCore.Constants;
 using Easy.Platform.AspNetCore.Middleware.Abstracts;
-using Easy.Platform.Common.Extensions;
 using Microsoft.AspNetCore.Http;
-
+using Easy.Platform.Common.Extensions;
 namespace Easy.Platform.AspNetCore.Middleware
 {
     /// <summary>

@@ -1,6 +1,5 @@
 using Easy.Platform.Common.Validators;
 using Easy.Platform.Common.Validators.Exceptions;
-using FluentValidation.Results;
 
 namespace Easy.Platform.Application.Exceptions
 {

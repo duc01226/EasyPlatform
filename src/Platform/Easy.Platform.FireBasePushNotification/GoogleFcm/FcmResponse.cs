@@ -6,7 +6,7 @@ namespace Easy.Platform.FirebasePushNotification.GoogleFcm
     internal class FcmResponse
     {
         [JsonPropertyName("multicast_id")]
-        public string MulticastId { get; set; }
+        public long MulticastId { get; set; }
 
         [JsonPropertyName("canonical_ids")]
         public int CanonicalIds { get; set; }
@@ -14,16 +14,19 @@ namespace Easy.Platform.FirebasePushNotification.GoogleFcm
         /// <summary>
         /// Success count
         /// </summary>
+        [JsonPropertyName("success")]
         public int Success { get; set; }
 
         /// <summary>
         /// Failure count
         /// </summary>
+        [JsonPropertyName("failure")]
         public int Failure { get; set; }
 
         /// <summary>
         /// Results
         /// </summary>
+        [JsonPropertyName("results")]
         public List<FcmResult> Results { get; set; }
 
         /// <summary>

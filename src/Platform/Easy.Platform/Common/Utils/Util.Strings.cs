@@ -1,8 +1,11 @@
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Easy.Platform.Common.Utils
 {
@@ -44,10 +47,10 @@ namespace Easy.Platform.Common.Utils
                 // Normalize again to FormC to compose char again to make "normal" text again, in case of there is some special mark char which
                 // it's still match the where condition.
                 return new string(str
-                    .Normalize(NormalizationForm.FormD)
-                    .ToCharArray()
-                    .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                    .ToArray())
+                        .Normalize(NormalizationForm.FormD)
+                        .ToCharArray()
+                        .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                        .ToArray())
                     .Normalize(NormalizationForm.FormC);
             }
         }

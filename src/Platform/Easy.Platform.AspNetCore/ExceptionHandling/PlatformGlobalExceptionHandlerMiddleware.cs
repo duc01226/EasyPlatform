@@ -4,9 +4,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using Easy.Platform.Application.Exceptions;
 using Easy.Platform.AspNetCore.Middleware.Abstracts;
+using Easy.Platform.Domain.Exceptions;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Validators.Exceptions;
-using Easy.Platform.Domain.Exceptions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -29,7 +29,7 @@ namespace Easy.Platform.AspNetCore.ExceptionHandling
             ILogger<PlatformGlobalExceptionHandlerMiddleware> logger,
             IConfiguration configuration) : base(next)
         {
-            Logger = logger;
+            this.Logger = logger;
             developerExceptionEnabled = configuration.GetValue<bool>("DeveloperExceptionEnabled");
         }
 

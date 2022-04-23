@@ -12,13 +12,13 @@ using Easy.Platform.Application.EventBus.InboxPattern;
 using Easy.Platform.Application.EventBus.Producers;
 using Easy.Platform.Application.Helpers;
 using Easy.Platform.Infrastructures.Abstract;
-using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.Application.Persistence;
+using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.Common.DependencyInjection;
-using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.UnitOfWork;
-using Easy.Platform.Infrastructures.BackgroundJob;
 using Easy.Platform.Infrastructures.EventBus;
+using Easy.Platform.Common.Extensions;
+using Easy.Platform.Infrastructures.BackgroundJob;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -219,7 +219,6 @@ namespace Easy.Platform.Application
             serviceCollection.RegisterAllFromType(typeof(IPlatformUowEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsCommandEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEntityEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.Register<IPlatformApplicationEventBusProducer, PlatformApplicationEventBusProducer>(ServiceLifeTime.Transient);
 
             RegisterApplicationEventBusProducer(serviceCollection);
         }

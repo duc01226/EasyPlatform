@@ -4,13 +4,13 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Easy.Platform.Common.Cqrs;
-using Easy.Platform.Common.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.Repositories;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.EfCore.Domain.UnitOfWork;
+using Easy.Platform.Common.Extensions;
 
 namespace Easy.Platform.EfCore.Domain.Repositories
 {

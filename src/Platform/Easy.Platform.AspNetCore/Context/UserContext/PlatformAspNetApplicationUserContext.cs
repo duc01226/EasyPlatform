@@ -8,6 +8,7 @@ using System.Text.Json;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper;
 using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
+using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Utils;
 using Microsoft.AspNetCore.Http;
@@ -196,14 +197,31 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
         /// </summary>
         private bool TryGetParsedValuesFromStringValues<T>(out T foundValue, List<string> stringValues)
         {
+            if (FindFirstValueListInterfaceType<T>() == null && !stringValues.Any())
+            {
+                foundValue = default;
+                return false;
+            }
+
             if (typeof(T) == typeof(string))
             {
+                if (!stringValues.Any())
+                {
+                    foundValue = default;
+                    return false;
+                }
+
                 foundValue = (T)(object)stringValues.LastOrDefault();
                 return true;
             }
 
             // If T is number type
-            if (typeof(T).IsAssignableTo(typeof(double)))
+            if (typeof(T).IsAssignableTo(typeof(double)) ||
+                typeof(T) == typeof(int) ||
+                typeof(T) == typeof(float) ||
+                typeof(T) == typeof(double) ||
+                typeof(T) == typeof(long) ||
+                typeof(T) == typeof(short))
             {
                 var parsedSuccess = double.TryParse(stringValues.LastOrDefault(), out var parsedValue);
                 if (parsedSuccess)
@@ -240,12 +258,7 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
             List<string> matchedClaimStringValues,
             out T foundValue)
         {
-            var firstValueListInterface = typeof(T)
-                .GetInterfaces()
-                .FirstOrDefault(p =>
-                    p.IsGenericType &&
-                    (p.GetGenericTypeDefinition().IsAssignableTo(typeof(IEnumerable<>)) ||
-                     p.GetGenericTypeDefinition().IsAssignableTo(typeof(ICollection<>))));
+            var firstValueListInterface = FindFirstValueListInterfaceType<T>();
 
             if (firstValueListInterface != null)
             {
@@ -284,7 +297,19 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
             }
 
             foundValue = default;
+
             return false;
+        }
+
+        private static Type? FindFirstValueListInterfaceType<T>()
+        {
+            var firstValueListInterface = typeof(T)
+                .GetInterfaces()
+                .FirstOrDefault(p =>
+                    p.IsGenericType &&
+                    (p.GetGenericTypeDefinition().IsAssignableTo(typeof(IEnumerable<>)) ||
+                     p.GetGenericTypeDefinition().IsAssignableTo(typeof(ICollection<>))));
+            return firstValueListInterface;
         }
     }
 }

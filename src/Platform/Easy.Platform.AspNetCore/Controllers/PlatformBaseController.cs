@@ -1,6 +1,6 @@
 using Easy.Platform.Infrastructures.Caching;
-using Easy.Platform.Common.Cqrs;
 using Microsoft.AspNetCore.Mvc;
+using Easy.Platform.Common.Cqrs;
 using Microsoft.Extensions.Configuration;
 
 namespace Easy.Platform.AspNetCore.Controllers

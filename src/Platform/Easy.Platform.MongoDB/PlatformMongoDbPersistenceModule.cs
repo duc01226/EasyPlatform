@@ -5,13 +5,13 @@ using System.Threading.Tasks;
 using Easy.Platform.Application.EventBus;
 using Easy.Platform.Application.EventBus.InboxPattern;
 using Easy.Platform.Common.DependencyInjection;
-using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Easy.Platform.Persistence;
 using Microsoft.Extensions.Configuration;
 using Polly;
+using Easy.Platform.Common.Extensions;
 using Easy.Platform.MongoDB.Domain.Repositories;
 using Easy.Platform.MongoDB.Domain.UnitOfWork;
 using Easy.Platform.MongoDB.Extensions;
@@ -22,7 +22,6 @@ using Easy.Platform.MongoDB.Serializer.Abstract;
 using Easy.Platform.MongoDB.Services;
 using Easy.Platform.Persistence.DataMigration;
 using Easy.Platform.Persistence.Services.Abstract;
-using Microsoft.Extensions.Options;
 
 namespace Easy.Platform.MongoDB
 {

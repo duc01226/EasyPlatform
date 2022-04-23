@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Easy.Platform.Common.Validators;
 
 namespace Easy.Platform.Infrastructures.EventBus
 {
@@ -134,7 +135,7 @@ namespace Easy.Platform.Infrastructures.EventBus
             }
         }
 
-        private void EnsureValid()
+        private void EnsureValid(Func<PlatformValidationResult, Exception> exceptionProvider = null)
         {
             if (!string.IsNullOrEmpty(CustomRoutingKey))
             {
@@ -143,11 +144,11 @@ namespace Easy.Platform.Infrastructures.EventBus
                         MessageGroup,
                         PlatformEventBusMessageRoutingKey.MatchAllSingleGroupLevelChar,
                         CustomRoutingKey)
-                    .EnsureValid(true);
+                    .EnsureValid(true, exceptionProvider);
             }
             else
             {
-                ToPlatformRoutingKey().EnsureValid(true);
+                ToPlatformRoutingKey().EnsureValid(true, exceptionProvider);
             }
         }
     }

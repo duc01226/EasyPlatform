@@ -5,14 +5,14 @@ using Easy.Platform.Application.EventBus;
 using Easy.Platform.Application.EventBus.InboxPattern;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Common.DependencyInjection;
-using Easy.Platform.Common.Extensions;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Easy.Platform.Domain.Repositories;
 using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.Common.Extensions;
 using Easy.Platform.Persistence.DataMigration;
 using Easy.Platform.Persistence.Domain;
 using Easy.Platform.Persistence.Services.Abstract;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Easy.Platform.Persistence
 {

@@ -33,7 +33,7 @@ namespace Easy.Platform.EfCore
         {
             // Auto apply configuration by convention.
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
-            modelBuilder.ApplyConfiguration(new PlatformApplicationDataMigrationHistoryConfiguration());
+            modelBuilder.ApplyConfiguration(new PlatformDataMigrationHistoryConfiguration());
 
             if (efCoreOptions.EnableDefaultInboxEventBusMessageEntityConfiguration == true)
                 modelBuilder.ApplyConfiguration(new PlatformDefaultInboxEventBusMessageConfiguration());

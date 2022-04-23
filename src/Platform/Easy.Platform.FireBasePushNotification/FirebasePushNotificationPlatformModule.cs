@@ -1,5 +1,6 @@
 using System;
 using Easy.Platform.Infrastructures;
+using Easy.Platform.Infrastructures.PushNotification;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.FirebasePushNotification.GoogleFcm;
@@ -18,6 +19,7 @@ namespace Easy.Platform.FirebasePushNotification
         {
             base.InternalRegister(serviceCollection);
 
+            serviceCollection.Register<IPushNotificationPlatformService, FirebasePushNotificationService>(ServiceLifeTime.Transient);
             serviceCollection.Register(typeof(FirebasePushNotificationSettings), FirebasePushNotificationSettingsProvider);
             serviceCollection.Register<IFcmSender, FcmSender>(ServiceLifeTime.Transient);
             serviceCollection.AddHttpClient<FcmSender>();

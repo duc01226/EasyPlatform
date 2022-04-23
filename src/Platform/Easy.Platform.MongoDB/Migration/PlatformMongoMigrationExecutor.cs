@@ -3,7 +3,7 @@ using System;
 namespace Easy.Platform.MongoDB.Migration
 {
     /// <summary>
-    /// This class is used to run migration for mongodb. Each class will be initiated and executed via Execute method.
+    /// This class is used to run migration for mongodb. Each class will be initiated and executed via Execute method. 
     /// The order of execution of all migration classes will be order ascending by Order then by Name;
     /// </summary>
     public abstract class PlatformMongoMigrationExecutor<TDbContext>

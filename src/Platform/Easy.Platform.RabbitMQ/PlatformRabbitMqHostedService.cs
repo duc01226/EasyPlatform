@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 using Easy.Platform.Application.Context;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Hosting;
+using Easy.Platform.Infrastructures.EventBus;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Common.Utils;
-using Easy.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -70,9 +70,19 @@ namespace Easy.Platform.RabbitMQ
 
         protected override Task StopProcess(CancellationToken cancellationToken)
         {
+            ReturnCurrentChannelBackToPool();
+
             currentChannel?.Close();
 
             return Task.CompletedTask;
+        }
+
+        private void ReturnCurrentChannelBackToPool()
+        {
+            if (currentChannel != null)
+            {
+                channelPool.Return(currentChannel);
+            }
         }
 
         private void DeclareRabbitMqConfiguration()
@@ -356,7 +366,7 @@ namespace Easy.Platform.RabbitMQ
         {
             if (options.RequeueExpiredInSeconds <= 0 ||
                 (eventBusMessage is IPlatformEventBusTrackableMessage platformEventBusTrackableMessage &&
-                 platformEventBusTrackableMessage.CreatedUtcDate.AddSeconds(options.RequeueExpiredInSeconds) >= Clock.UtcNow))
+                platformEventBusTrackableMessage.CreatedUtcDate.AddSeconds(options.RequeueExpiredInSeconds) >= Clock.UtcNow))
             {
                 // Requeue the message.
                 // References: https://www.rabbitmq.com/confirms.html#consumer-nacks-requeue

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Easy.Platform.Common.Validators;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.Exceptions;
+using FluentValidation.Results;
 
 namespace Easy.Platform.Domain.Repositories
 {

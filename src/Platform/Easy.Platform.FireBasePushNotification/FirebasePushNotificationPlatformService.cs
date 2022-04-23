@@ -11,24 +11,27 @@ using Easy.Platform.Application;
 using Easy.Platform.Application.Exceptions;
 using Easy.Platform.Infrastructures.PushNotification;
 using Easy.Platform.FirebasePushNotification.GoogleFcm;
-using Newtonsoft.Json.Linq;
+using Easy.Platform.Common.JsonSerialization;
+using Microsoft.Extensions.Logging;
 
 namespace Easy.Platform.FirebasePushNotification
 {
     internal class FirebasePushNotificationService : IPushNotificationPlatformService
     {
         private readonly IFcmSender fcmSender;
+        private readonly ILogger<FirebasePushNotificationService> logger;
 
-        public FirebasePushNotificationService(IFcmSender fcmSender)
+        public FirebasePushNotificationService(IFcmSender fcmSender, ILogger<FirebasePushNotificationService> logger)
         {
             this.fcmSender = fcmSender;
+            this.logger = logger;
         }
 
         public async Task SendAsync(PushNotificationPlatformMessage message, CancellationToken cancellationToken)
         {
             message.Validate().EnsureValid(p => new PlatformApplicationValidationException(p));
 
-            await fcmSender.SendAsync(
+            var result = await fcmSender.SendAsync(
                 deviceId: message.DeviceId,
                 payload: new GoogleNotification()
                 {
@@ -39,6 +42,11 @@ namespace Easy.Platform.FirebasePushNotification
                     }
                 },
                 cancellationToken);
+
+            if (!result.IsSuccess())
+            {
+                logger.LogError($"Firebase notification error with Device Token Id: {message.DeviceId} - {result.Results[0].Error}");
+            }
         }
     }
 }

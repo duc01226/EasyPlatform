@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Dtos;
@@ -60,6 +61,7 @@ namespace Easy.Platform
                 if (RegisterServicesExecuted)
                     return;
 
+                serviceCollection.Register(typeof(PlatformModule), p => this, ServiceLifeTime.Singleton);
                 RegisterAllModuleDependencies(serviceCollection);
                 RegisterDefaultLogs(serviceCollection);
                 RegisterCqrs(serviceCollection);

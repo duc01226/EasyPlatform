@@ -1,25 +1,25 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Easy.Platform.Application.EventBus;
+using Easy.Platform.Application.EventBus.InboxPattern;
+using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.EfCore.Domain.Repositories;
 using Easy.Platform.EfCore.Domain.UnitOfWork;
 using Easy.Platform.EfCore.EntityConfiguration;
+using Easy.Platform.Common.Extensions;
+using Easy.Platform.EfCore.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Easy.Platform.Persistence;
-using Microsoft.Extensions.Configuration;
-using Polly;
-using System.Collections.Generic;
-using Easy.Platform.Application.EventBus.InboxPattern;
-using Easy.Platform.Common.DependencyInjection;
-using Easy.Platform.Common.Extensions;
-using Easy.Platform.EfCore.Services;
 using Easy.Platform.Persistence.Services.Abstract;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Polly;
 
 namespace Easy.Platform.EfCore
 {
@@ -73,6 +73,7 @@ namespace Easy.Platform.EfCore
 
                     return options;
                 });
+
             RegisterBuiltInPersistenceServices(serviceCollection);
         }
 

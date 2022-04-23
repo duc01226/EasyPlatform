@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Easy.Platform.Common.Validators;
 using FluentValidation.Results;
+using Easy.Platform.Common.Validators;
 
 namespace Easy.Platform.Domain.Entities
 {

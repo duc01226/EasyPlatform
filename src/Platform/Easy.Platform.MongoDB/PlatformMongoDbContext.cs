@@ -189,7 +189,6 @@ namespace Easy.Platform.MongoDB
         public Task MigrateApplicationDataAsync(IServiceProvider serviceProvider)
         {
             PlatformDataMigrationExecutor<TDbContext>.EnsureAllDataMigrationExecutorsHasUniqueName(GetType().Assembly, serviceProvider);
-
             PlatformDataMigrationExecutor<TDbContext>.GetCanExecuteDataMigrationExecutors(GetType().Assembly, serviceProvider, ApplicationDataMigrationHistoryQuery).ForEach(migrationExecution =>
             {
                 if (!migrationExecution.IsObsolete())

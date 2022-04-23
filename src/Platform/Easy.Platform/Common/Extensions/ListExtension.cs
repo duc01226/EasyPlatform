@@ -11,7 +11,7 @@ namespace Easy.Platform.Common.Extensions
         {
             var toRemoveItems = items.Where(predicate).ToList();
 
-            toRemoveItems.ForEach(p => items.Remove(p));
+            toRemoveItems.ForEach(item => items.Remove(item));
 
             return toRemoveItems;
         }
@@ -21,7 +21,9 @@ namespace Easy.Platform.Common.Extensions
             var toRemoveItem = items.FirstOrDefault(predicate);
 
             if (toRemoveItem != null)
+            {
                 items.Remove(toRemoveItem);
+            }
 
             return toRemoveItem;
         }

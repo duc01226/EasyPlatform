@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Easy.Platform.Common.Utils
@@ -55,7 +56,7 @@ namespace Easy.Platform.Common.Utils
             }
 
             /// <summary>
-            /// <see cref="ExecuteScrollingPagingAsync{TItem}(Func{Task{IEnumerable{TItem}}},Func{IEnumerable{TItem},Task},ulong)"/>
+            /// <see cref="ExecuteScrollingPagingAsync{TItem}(System.Func{System.Threading.Tasks.Task{System.Collections.Generic.IEnumerable{TItem}}},System.Func{System.Collections.Generic.IEnumerable{TItem},System.Threading.Tasks.Task},ulong)"/>
             /// </summary>
             public static Task ExecuteScrollingPagingAsync<TItem>(
                 Func<Task<List<TItem>>> getItemsPackageFn,

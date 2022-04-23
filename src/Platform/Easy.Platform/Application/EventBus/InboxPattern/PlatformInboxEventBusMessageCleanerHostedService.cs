@@ -2,10 +2,10 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Hosting;
-using Easy.Platform.Common.Timing;
 using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.Timing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -34,7 +34,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         public static bool MatchImplementation(Type implementationType)
         {
             return implementationType?.IsAssignableTo(
-                typeof(PlatformInboxEventBusMessageCleanerHostedService)) == true;
+                       typeof(PlatformInboxEventBusMessageCleanerHostedService)) == true;
         }
 
         protected override async Task IntervalProcess(CancellationToken cancellationToken)
