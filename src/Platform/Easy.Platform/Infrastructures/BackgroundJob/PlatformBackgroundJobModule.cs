@@ -96,7 +96,7 @@ namespace Easy.Platform.Infrastructures.BackgroundJob
                 replaceIfExist: true);
 
             serviceCollection.RegisterAllFromType<IPlatformBackgroundJobScheduler>(
-                ServiceLifeTime.Singleton,
+                ServiceLifeTime.Transient,
                 Assembly,
                 replaceIfExist: true,
                 replaceStrategy: ServiceCollectionExtension.ReplaceServiceStrategy.ByService);

@@ -30,11 +30,7 @@ namespace Easy.Platform.RabbitMQ
         private readonly IPlatformEventBusManager eventBusManager;
         private readonly IPlatformRabbitMqExchangeProvider exchangeProvider;
         private readonly PlatformEventBusApplicationSetting applicationSetting;
-
-        // Use ObjectBool to manage chanel because HostService is singleton, and we don't want re-init chanel is heavy and wasting time.
-        // We want to use pool when object is expensive to allocate/initialize
-        // References: https://docs.microsoft.com/en-us/aspnet/core/performance/objectpool?view=aspnetcore-5.0
-        private readonly DefaultObjectPool<IModel> channelPool;
+        private readonly PlatformRabbitChannelPool channelPool;
 
         private readonly object retryConnectConsumerLock = new object();
         private IModel currentChannel;
@@ -42,21 +38,19 @@ namespace Easy.Platform.RabbitMQ
         public PlatformRabbitMqHostedService(
             IHostApplicationLifetime applicationLifetime,
             PlatformRabbitMqOptions options,
-            PlatformRabbitMqChannelPoolPolicy channelPolicy,
             IServiceProvider serviceProvider,
             IPlatformEventBusManager eventBusManager,
             ILoggerFactory loggerFactory,
             IPlatformRabbitMqExchangeProvider exchangeProvider,
-            PlatformEventBusApplicationSetting applicationSetting) : base(applicationLifetime, loggerFactory)
+            PlatformEventBusApplicationSetting applicationSetting,
+            PlatformRabbitChannelPool channelPool) : base(applicationLifetime, loggerFactory)
         {
             this.options = options;
             this.serviceProvider = serviceProvider;
             this.eventBusManager = eventBusManager;
             this.exchangeProvider = exchangeProvider;
             this.applicationSetting = applicationSetting;
-
-            // Needs 1 object only for the hosted service.
-            channelPool = new DefaultObjectPool<IModel>(channelPolicy, 1);
+            this.channelPool = channelPool;
         }
 
         protected override Task StartProcess(CancellationToken cancellationToken)

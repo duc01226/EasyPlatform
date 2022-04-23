@@ -7,7 +7,6 @@ using Easy.Platform.Infrastructures.EventBus;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.ObjectPool;
 using Polly;
 using Polly.Retry;
 using RabbitMQ.Client;
@@ -17,18 +16,18 @@ namespace Easy.Platform.RabbitMQ
 {
     public class PlatformRabbitMqEventBusProducer : IPlatformEventBusProducer
     {
-        protected readonly DefaultObjectPool<IModel> ChannelPool;
+        protected readonly PlatformRabbitChannelPool ChannelPool;
         protected readonly IPlatformRabbitMqExchangeProvider ExchangeProvider;
         protected readonly RetryPolicy RetryPublishPolicy;
         protected readonly ILogger Logger;
 
         public PlatformRabbitMqEventBusProducer(
-            PlatformRabbitMqChannelPoolPolicy channelPoolPolicy,
             IPlatformRabbitMqExchangeProvider exchangeProvider,
             PlatformRabbitMqOptions options,
-            ILoggerFactory loggerFactory)
+            ILoggerFactory loggerFactory,
+            PlatformRabbitChannelPool channelPool)
         {
-            ChannelPool = new DefaultObjectPool<IModel>(channelPoolPolicy);
+            ChannelPool = channelPool;
             ExchangeProvider = exchangeProvider;
             Logger = loggerFactory.CreateLogger(GetType());
             RetryPublishPolicy = Policy.Handle<Exception>().WaitAndRetry(
@@ -123,8 +122,7 @@ namespace Easy.Platform.RabbitMQ
             }
             catch (AlreadyClosedException alreadyClosedException)
             {
-                channel.Close();
-                channel.Dispose();
+                ChannelPool.Return(channel);
 
                 if (alreadyClosedException.ShutdownReason.ReplyCode == 404)
                 {

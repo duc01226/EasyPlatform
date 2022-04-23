@@ -40,7 +40,7 @@ namespace Easy.Platform.HangfireBackgroundJob
                 replaceIfExist: true);
 
             serviceCollection.RegisterAllForImplementation<PlatformHangfireBackgroundJobScheduler>(
-                ServiceLifeTime.Singleton,
+                ServiceLifeTime.Transient,
                 replaceIfExist: true,
                 replaceStrategy: ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
 

@@ -18,14 +18,14 @@ namespace Easy.Platform.Infrastructures.EventBus
         protected override void InternalRegister(IServiceCollection serviceCollection)
         {
             base.InternalRegister(serviceCollection);
-            serviceCollection.RegisterAllFromType<IPlatformEventBusProducer>(ServiceLifeTime.Singleton, Assembly);
+            serviceCollection.RegisterAllFromType<IPlatformEventBusProducer>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformEventBusBaseConsumer>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformEventBusMessage>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.Register<IPlatformEventBusManager, PlatformEventBusManager>(ServiceLifeTime.Transient);
             serviceCollection.Register(
                 typeof(PlatformEventBusApplicationSetting),
                 provider => new PlatformEventBusApplicationSetting() { ApplicationName = ForApplicationServiceName() },
-                ServiceLifeTime.Singleton);
+                ServiceLifeTime.Transient);
         }
 
         /// <summary>

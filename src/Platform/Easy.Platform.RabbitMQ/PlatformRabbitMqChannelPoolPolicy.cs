@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
 using Polly;
@@ -51,7 +52,10 @@ namespace Easy.Platform.RabbitMQ
                 return true;
             }
 
-            obj.Dispose();
+            Util.Tasks.CatchException(() =>
+            {
+                obj.Dispose();
+            });
 
             return false;
         }
