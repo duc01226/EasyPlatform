@@ -21,5 +21,21 @@ namespace Easy.Platform.RabbitMQ
         protected PlatformRabbitChannelPool(IPooledObjectPolicy<IModel> policy, int maximumRetained) : base(policy, maximumRetained)
         {
         }
+
+        public override IModel Get()
+        {
+            var channelInPool = base.Get();
+
+            if (channelInPool.IsClosed)
+            {
+                channelInPool.Dispose();
+
+                var newChannel = Get();
+
+                return newChannel;
+            }
+
+            return channelInPool;
+        }
     }
 }
