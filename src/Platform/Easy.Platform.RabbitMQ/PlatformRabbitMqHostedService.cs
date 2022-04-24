@@ -66,7 +66,8 @@ namespace Easy.Platform.RabbitMQ
         {
             ReturnCurrentChannelBackToPool();
 
-            currentChannel?.Close();
+            if (currentChannel is { IsOpen: true })
+                currentChannel.Close();
 
             return Task.CompletedTask;
         }
