@@ -107,7 +107,7 @@ namespace Easy.Platform.EfCore.Services
                 .Select(startWithPropName =>
                 {
                     Expression<Func<T, bool>> singlePropPredicate = entity =>
-                        EF.Property<string>(entity, startWithPropName).StartsWith(searchText);
+                        EF.Functions.Like(EF.Property<string>(entity, startWithPropName), $"{searchText}%");
                     return singlePropPredicate;
                 })
                 .Aggregate((resultPredicate, nextPredicate) => resultPredicate.Or(nextPredicate));
