@@ -93,8 +93,11 @@ namespace Easy.Platform.MongoDB
             var allSerializerTypes = GetType().Assembly.GetTypes()
                 .Where(p => p.IsAssignableToGenericType(typeof(IPlatformMongoBaseSerializer<>)) && p.IsClass && !p.IsAbstract)
                 .ToList();
+            var allBuiltInSerializerTypes = typeof(PlatformMongoDbPersistenceModule<>).Assembly.GetTypes()
+                .Where(p => p.IsAssignableToGenericType(typeof(IPlatformMongoBaseSerializer<>)) && p.IsClass && !p.IsAbstract)
+                .ToList();
 
-            allSerializerTypes.ForEach(p =>
+            allSerializerTypes.Concat(allBuiltInSerializerTypes).ToList().ForEach(p =>
             {
                 var serializerHandleValueType = p.GetInterfaces()
                     .First(p => p.IsGenericType && p.GetGenericTypeDefinition() == typeof(IPlatformMongoBaseSerializer<>))
