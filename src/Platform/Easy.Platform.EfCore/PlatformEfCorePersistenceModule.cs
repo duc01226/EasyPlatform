@@ -113,7 +113,7 @@ namespace Easy.Platform.EfCore
                     {
                         Logger.LogWarning(exception,
                             "[{prefix}] Exception {ExceptionType} with message {Message} detected on attempt Migrate {retry} of {retries}",
-                            nameof(TDbContext),
+                            typeof(TDbContext).Name,
                             exception.GetType().Name,
                             exception.Message,
                             retry,

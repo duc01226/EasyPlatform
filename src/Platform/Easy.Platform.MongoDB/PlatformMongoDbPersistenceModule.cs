@@ -134,7 +134,7 @@ namespace Easy.Platform.MongoDB
                     {
                         Logger.LogWarning(exception,
                             "[{prefix}] Exception {ExceptionType} with message {Message} detected on attempt Initialize {retry} of {retries}",
-                            nameof(TDbContext),
+                            typeof(TDbContext).Name,
                             exception.GetType().Name,
                             exception.Message,
                             retry,
