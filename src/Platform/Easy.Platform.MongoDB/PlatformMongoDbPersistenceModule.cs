@@ -33,6 +33,7 @@ namespace Easy.Platform.MongoDB
         protected readonly ILogger Logger;
 
         private static readonly HashSet<Type> RegisteredClassMapTypes = new HashSet<Type>();
+        private static readonly HashSet<Type> RegisteredSerializerTypes = new HashSet<Type>();
 
         public PlatformMongoDbPersistenceModule(
             IServiceProvider serviceProvider,
@@ -102,9 +103,15 @@ namespace Easy.Platform.MongoDB
                 var serializerHandleValueType = p.GetInterfaces()
                     .First(p => p.IsGenericType && p.GetGenericTypeDefinition() == typeof(IPlatformMongoBaseSerializer<>))
                     .GetGenericArguments()[0];
-                BsonSerializer.RegisterSerializer(
-                    serializerHandleValueType,
-                    (IPlatformMongoBaseSerializer)Activator.CreateInstance(p));
+
+                if (!RegisteredSerializerTypes.Contains(p))
+                {
+                    BsonSerializer.RegisterSerializer(
+                        serializerHandleValueType,
+                        (IPlatformMongoBaseSerializer)Activator.CreateInstance(p));
+
+                    RegisteredSerializerTypes.Add(serializerHandleValueType);
+                }
             });
         }
 
@@ -143,7 +150,7 @@ namespace Easy.Platform.MongoDB
         {
             // Register Default InboxEventBusMessageRepository if not existed custom inherited IPlatformInboxEventBusMessageRepository in assembly
             base.RegisterInboxEventBusMessageRepository(serviceCollection);
-            if (!serviceCollection.Any(p => p.ServiceType == typeof(IPlatformInboxEventBusMessageRepository)))
+            if (serviceCollection.All(p => p.ServiceType != typeof(IPlatformInboxEventBusMessageRepository)))
             {
                 serviceCollection.Register(
                     typeof(IPlatformInboxEventBusMessageRepository),
