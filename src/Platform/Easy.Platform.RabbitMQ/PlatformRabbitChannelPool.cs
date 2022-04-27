@@ -37,5 +37,17 @@ namespace Easy.Platform.RabbitMQ
 
             return channelInPool;
         }
+
+        public override void Return(IModel obj)
+        {
+            if (obj.IsClosed)
+            {
+                obj.Dispose();
+            }
+            else
+            {
+                base.Return(obj);
+            }
+        }
     }
 }
