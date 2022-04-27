@@ -7,6 +7,7 @@ using Easy.Platform.Infrastructures.EventBus;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.ObjectPool;
 using Polly;
 using Polly.Retry;
 using RabbitMQ.Client;

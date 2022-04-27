@@ -58,7 +58,10 @@ namespace Easy.Platform.EfCore.Services
                 ? BuildStartWithPropsPredicate<T>(searchText, startWithPropNames)
                 : null;
 
-            return query.WhereCombineOr(fullTextSearchPropsPredicate, startWithPropsPredicate);
+            // Should use union instead of OR because UNION is better at performance
+            // https://stackoverflow.com/questions/16438556/combining-free-text-search-with-another-condition-is-slow
+            return query.Where(fullTextSearchPropsPredicate)
+                .PipeIf(startWithPropsPredicate != null, p => p.Union(query.Where(startWithPropsPredicate!)));
         }
 
         public static List<string> BuildSearchWords(string searchText)
