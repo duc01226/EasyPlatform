@@ -32,8 +32,8 @@ namespace Easy.Platform.MongoDB
     {
         protected readonly ILogger Logger;
 
-        private static readonly HashSet<Type> RegisteredClassMapTypes = new HashSet<Type>();
-        private static readonly HashSet<Type> RegisteredSerializerTypes = new HashSet<Type>();
+        protected static readonly HashSet<Type> RegisteredClassMapTypes = new HashSet<Type>();
+        protected static readonly HashSet<Type> RegisteredSerializerTypes = new HashSet<Type>();
 
         public PlatformMongoDbPersistenceModule(
             IServiceProvider serviceProvider,
@@ -104,7 +104,7 @@ namespace Easy.Platform.MongoDB
                     .First(p => p.IsGenericType && p.GetGenericTypeDefinition() == typeof(IPlatformMongoBaseSerializer<>))
                     .GetGenericArguments()[0];
 
-                if (!RegisteredSerializerTypes.Contains(p))
+                if (!RegisteredSerializerTypes.Contains(serializerHandleValueType))
                 {
                     BsonSerializer.RegisterSerializer(
                         serializerHandleValueType,
