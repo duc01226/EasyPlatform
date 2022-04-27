@@ -32,9 +32,6 @@ namespace Easy.Platform.MongoDB
     {
         protected readonly ILogger Logger;
 
-        protected static readonly HashSet<Type> RegisteredClassMapTypes = new HashSet<Type>();
-        protected static readonly HashSet<Type> RegisteredSerializerTypes = new HashSet<Type>();
-
         public PlatformMongoDbPersistenceModule(
             IServiceProvider serviceProvider,
             IConfiguration configuration) : base(serviceProvider, configuration)
@@ -81,10 +78,10 @@ namespace Easy.Platform.MongoDB
 
             allClassMapTypes.ForEach(p =>
             {
-                if (!RegisteredClassMapTypes.Contains(p))
+                if (!PlatformMongoDbPersistenceModuleCache.RegisteredClassMapTypes.Contains(p))
                 {
                     Activator.CreateInstance(p);
-                    RegisteredClassMapTypes.Add(p);
+                    PlatformMongoDbPersistenceModuleCache.RegisteredClassMapTypes.Add(p);
                 }
             });
         }
@@ -104,13 +101,13 @@ namespace Easy.Platform.MongoDB
                     .First(p => p.IsGenericType && p.GetGenericTypeDefinition() == typeof(IPlatformMongoBaseSerializer<>))
                     .GetGenericArguments()[0];
 
-                if (!RegisteredSerializerTypes.Contains(serializerHandleValueType))
+                if (!PlatformMongoDbPersistenceModuleCache.RegisteredSerializerTypes.Contains(serializerHandleValueType))
                 {
                     BsonSerializer.RegisterSerializer(
                         serializerHandleValueType,
                         (IPlatformMongoBaseSerializer)Activator.CreateInstance(p));
 
-                    RegisteredSerializerTypes.Add(serializerHandleValueType);
+                    PlatformMongoDbPersistenceModuleCache.RegisteredSerializerTypes.Add(serializerHandleValueType);
                 }
             });
         }
@@ -218,5 +215,15 @@ namespace Easy.Platform.MongoDB
             IConfiguration configuration) : base(serviceProvider, configuration)
         {
         }
+    }
+
+    /// <summary>
+    /// Could not store singleton cache in generic class because it will be singleton only for a specific generic type.
+    /// This class to serve singleton cache for PlatformMongoDbPersistenceModule
+    /// </summary>
+    public abstract class PlatformMongoDbPersistenceModuleCache
+    {
+        public static readonly HashSet<Type> RegisteredClassMapTypes = new HashSet<Type>();
+        public static readonly HashSet<Type> RegisteredSerializerTypes = new HashSet<Type>();
     }
 }
