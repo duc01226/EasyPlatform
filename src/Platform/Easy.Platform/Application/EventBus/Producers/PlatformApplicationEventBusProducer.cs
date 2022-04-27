@@ -226,7 +226,7 @@ namespace Easy.Platform.Application.EventBus.Producers
 
         public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
         {
-            return EventBusProducer.SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build<TMessage>(), cancellationToken);
+            return EventBusProducer.SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(message.GetType()), cancellationToken);
         }
 
         public Task<TMessage> SendAsFreeFormatMessageAsync<TMessage, TMessagePayload>(
@@ -245,7 +245,7 @@ namespace Easy.Platform.Application.EventBus.Producers
                     producerContext: ApplicationSettingContext.ApplicationName,
                     messageAction: messageAction);
 
-            return EventBusProducer.SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build<TMessagePayload>(), cancellationToken);
+            return EventBusProducer.SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(messagePayload.GetType()), cancellationToken);
         }
 
         protected PlatformEventBusMessageIdentity BuildPlatformEventBusMessageIdentity()

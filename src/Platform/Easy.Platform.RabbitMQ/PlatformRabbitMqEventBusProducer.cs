@@ -79,7 +79,7 @@ namespace Easy.Platform.RabbitMQ
             TMessage message,
             CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
         {
-            return SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build<TMessage>(), cancellationToken);
+            return SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(message.GetType()), cancellationToken);
         }
 
         public async Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
