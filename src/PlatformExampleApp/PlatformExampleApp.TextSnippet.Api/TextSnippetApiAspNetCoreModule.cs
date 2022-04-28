@@ -28,7 +28,7 @@ namespace PlatformExampleApp.TextSnippet.Api
             var result = new List<Func<IConfiguration, Type>>
             {
                 p => typeof(TextSnippetApplicationModule),
-                p => p.GetSection("UseMongoDb").Get<bool>()
+                p => p.GetSection("UseDbType").Get<string>() == "MongoDb"
                     ? typeof(TextSnippetMongoPersistenceModule)
                     : typeof(TextSnippetEfCorePersistenceModule),
 

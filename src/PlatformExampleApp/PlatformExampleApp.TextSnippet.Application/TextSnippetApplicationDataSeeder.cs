@@ -46,10 +46,12 @@ namespace PlatformExampleApp.TextSnippet.Application
 
         private async Task SeedTextSnippet()
         {
-            if (await textSnippetRepository.AnyAsync())
+            var numberOfItemsGroupSeedTextSnippet = 20;
+
+            if (await textSnippetRepository.CountAsync() >= numberOfItemsGroupSeedTextSnippet)
                 return;
 
-            for (var i = 0; i < 20; i++)
+            for (var i = 0; i < numberOfItemsGroupSeedTextSnippet; i++)
             {
                 await textSnippetRepository.CreateOrUpdateAsync(
                     new TextSnippetEntity()

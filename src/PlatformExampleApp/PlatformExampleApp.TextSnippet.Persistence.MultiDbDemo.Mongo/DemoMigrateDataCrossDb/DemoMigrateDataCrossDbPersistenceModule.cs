@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Easy.Platform.MongoDB;
 using Microsoft.Extensions.Configuration;
 
@@ -19,6 +20,11 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.DemoMigra
         {
             options.ConnectionString = Configuration.GetSection("MongoDB:ConnectionString").Value;
             options.Database = Configuration.GetSection("MongoDB:Database").Value;
+        }
+
+        protected override List<Type> RegisterLimitedRepositoryImplementationTypes()
+        {
+            return new List<Type>();
         }
     }
 }

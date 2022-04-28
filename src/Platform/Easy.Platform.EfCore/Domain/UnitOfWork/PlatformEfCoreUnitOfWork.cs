@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Easy.Platform.Domain.Exceptions;
 using Easy.Platform.Domain.UnitOfWork;
+using Microsoft.EntityFrameworkCore;
 
 namespace Easy.Platform.EfCore.Domain.UnitOfWork
 {
@@ -36,6 +38,10 @@ namespace Easy.Platform.EfCore.Domain.UnitOfWork
                 await SaveChangesAsync(cancellationToken);
                 Completed = true;
                 OnCompleted?.Invoke(this, EventArgs.Empty);
+            }
+            catch (DbUpdateConcurrencyException concurrencyException)
+            {
+                throw new PlatformRowVersionConflictDomainException(concurrencyException.Message, concurrencyException);
             }
             catch (Exception e)
             {

@@ -71,7 +71,7 @@ namespace Easy.Platform.Persistence
 
         private void RegisterRepositories(IServiceCollection serviceCollection)
         {
-            if (RegisterLimitedRepositoryImplementationTypes()?.Any() == true)
+            if (RegisterLimitedRepositoryImplementationTypes() != null)
             {
                 RegisterLimitedRepositoryImplementationTypes().ForEach(
                     repositoryImplementationType => serviceCollection.RegisterAllForImplementation(repositoryImplementationType, ServiceLifeTime.Transient));

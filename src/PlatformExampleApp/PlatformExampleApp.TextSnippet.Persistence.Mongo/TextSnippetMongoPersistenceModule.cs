@@ -22,11 +22,6 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
             options.Database = Configuration.GetSection("MongoDB:Database").Value;
         }
 
-        protected override List<Type> RegisterLimitedRepositoryImplementationTypes()
-        {
-            return new List<Type>() { typeof(TextSnippetRootRepository<TextSnippetEntity>) };
-        }
-
         protected override bool EnableInboxEventBusMessageRepository()
         {
             return true;

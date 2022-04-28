@@ -13,9 +13,9 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo.Serializers
 {
     /// <summary>
     /// Example implement a custom serializer for any data type.
-    /// This will be registered automatically via <see cref="IPlatformMongoBaseSerializer"/>
+    /// This will be registered automatically via <see cref="IPlatformMongoAutoRegisterBaseSerializer{TValue}"/>
     /// </summary>
-    public class ExampleColorSerializer : StructSerializerBase<Color>, IPlatformMongoBaseSerializer<Color>
+    public class ExampleColorSerializer : StructSerializerBase<Color>, IPlatformMongoAutoRegisterBaseSerializer<Color>
     {
         public override Color Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {

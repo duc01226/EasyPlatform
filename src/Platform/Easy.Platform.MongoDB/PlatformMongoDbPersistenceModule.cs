@@ -89,16 +89,16 @@ namespace Easy.Platform.MongoDB
         protected virtual void AutoRegisterAllSerializers()
         {
             var allSerializerTypes = GetType().Assembly.GetTypes()
-                .Where(p => p.IsAssignableToGenericType(typeof(IPlatformMongoBaseSerializer<>)) && p.IsClass && !p.IsAbstract)
+                .Where(p => p.IsAssignableToGenericType(typeof(IPlatformMongoAutoRegisterBaseSerializer<>)) && p.IsClass && !p.IsAbstract)
                 .ToList();
             var allBuiltInSerializerTypes = typeof(PlatformMongoDbPersistenceModule<>).Assembly.GetTypes()
-                .Where(p => p.IsAssignableToGenericType(typeof(IPlatformMongoBaseSerializer<>)) && p.IsClass && !p.IsAbstract)
+                .Where(p => p.IsAssignableToGenericType(typeof(IPlatformMongoAutoRegisterBaseSerializer<>)) && p.IsClass && !p.IsAbstract)
                 .ToList();
 
             allSerializerTypes.Concat(allBuiltInSerializerTypes).ToList().ForEach(p =>
             {
                 var serializerHandleValueType = p.GetInterfaces()
-                    .First(p => p.IsGenericType && p.GetGenericTypeDefinition() == typeof(IPlatformMongoBaseSerializer<>))
+                    .First(p => p.IsGenericType && p.GetGenericTypeDefinition() == typeof(IPlatformMongoAutoRegisterBaseSerializer<>))
                     .GetGenericArguments()[0];
 
                 if (!PlatformMongoDbPersistenceModuleCache.RegisteredSerializerTypes.Contains(serializerHandleValueType))

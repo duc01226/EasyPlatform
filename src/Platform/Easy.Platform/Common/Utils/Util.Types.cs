@@ -44,6 +44,11 @@ namespace Easy.Platform.Common.Utils
 
                 return FindMatchedGenericType(baseType, matchedToGenericTypeDefinition);
             }
+
+            public static bool MatchGenericArguments(Type rootType, Type implementationType)
+            {
+                return rootType.GetGenericArguments().Length == implementationType.GetGenericArguments().Length;
+            }
         }
     }
 }

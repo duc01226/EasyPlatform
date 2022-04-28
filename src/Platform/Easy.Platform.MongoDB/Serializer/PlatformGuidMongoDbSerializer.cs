@@ -1,0 +1,61 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using Easy.Platform.MongoDB.Serializer.Abstract;
+using MongoDB.Bson;
+using MongoDB.Bson.IO;
+using MongoDB.Bson.Serialization;
+using MongoDB.Bson.Serialization.Serializers;
+
+namespace Easy.Platform.MongoDB.Serializer
+{
+    public class PlatformNullableGuidToStringMongoDbSerializer : SerializerBase<Guid?>, IPlatformMongoBaseSerializer<Guid?>
+    {
+        public static Guid? Deserialize(GuidSerializer guidAsBinarySerializer, BsonDeserializationContext context, BsonDeserializationArgs args)
+        {
+            if (context.Reader.CurrentBsonType == BsonType.Binary)
+            {
+                return guidAsBinarySerializer.Deserialize(context, args);
+            }
+
+            if (context.Reader.CurrentBsonType == BsonType.Null)
+            {
+                context.Reader.ReadNull();
+                return Guid.Empty;
+            }
+
+            return Guid.Parse(context.Reader.ReadString());
+        }
+
+        private readonly GuidSerializer guidAsBinarySerializer = new GuidSerializer(BsonType.Binary);
+
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, Guid? value)
+        {
+            BsonSerializer.Serialize(context.Writer, value?.ToString());
+        }
+
+        public override Guid? Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        {
+            return Deserialize(guidAsBinarySerializer, context, args);
+        }
+    }
+
+    public class PlatformGuidToStringMongoDbSerializer : SerializerBase<Guid>, IPlatformMongoBaseSerializer<Guid>
+    {
+        private readonly GuidSerializer guidAsBinarySerializer = new GuidSerializer(BsonType.Binary);
+
+        public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, Guid value)
+        {
+            BsonSerializer.Serialize(context.Writer, value.ToString());
+        }
+
+        public override Guid Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
+        {
+            var guidValue = PlatformNullableGuidToStringMongoDbSerializer.Deserialize(guidAsBinarySerializer, context, args);
+
+            return guidValue ?? Guid.Empty;
+        }
+    }
+}

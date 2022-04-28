@@ -1,10 +1,6 @@
 import { Inject, Injectable, Injector, Type } from '@angular/core';
 
-import {
-  PlatformEvent,
-  PlatformEventManagerService,
-  PlatformEventManagerServiceSubscriptionsMap,
-} from './Abstracts/platform.event-manager-service';
+import { PlatformEvent, PlatformEventManagerService, PlatformEventManagerServiceSubscriptionsMap } from './abstracts';
 
 @Injectable()
 export class DefaultPlatformEventManagerService extends PlatformEventManagerService {

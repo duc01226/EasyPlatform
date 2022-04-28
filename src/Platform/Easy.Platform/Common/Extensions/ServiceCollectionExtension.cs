@@ -373,7 +373,7 @@ namespace Easy.Platform.Common.Extensions
             {
                 implementationType
                     .GetInterfaces()
-                    .Where(p => p.IsGenericType && MatchGenericArguments(p, implementationType))
+                    .Where(p => p.IsGenericType && Util.Types.MatchGenericArguments(p, implementationType))
                     .ToList()
                     .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationType, lifeTime, replaceIfExist, replaceStrategy));
             }
@@ -416,7 +416,7 @@ namespace Easy.Platform.Common.Extensions
             {
                 implementationType
                     .GetInterfaces()
-                    .Where(p => p.IsGenericType && MatchGenericArguments(p, implementationType))
+                    .Where(p => p.IsGenericType && Util.Types.MatchGenericArguments(p, implementationType))
                     .ToList()
                     .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationFactory, lifeTime, replaceIfExist, replaceStrategy));
             }
@@ -428,11 +428,6 @@ namespace Easy.Platform.Common.Extensions
                     .ToList()
                     .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationFactory, lifeTime, replaceIfExist, replaceStrategy));
             }
-        }
-
-        public static bool MatchGenericArguments(Type rootType, Type implementationType)
-        {
-            return rootType.GetGenericArguments().Length == implementationType.GetGenericArguments().Length;
         }
     }
 }

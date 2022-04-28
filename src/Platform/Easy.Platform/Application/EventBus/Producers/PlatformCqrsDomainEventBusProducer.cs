@@ -38,6 +38,23 @@ namespace Easy.Platform.Application.EventBus.Producers
 
         protected override async Task HandleAsync(TDomainEvent @event, CancellationToken cancellationToken)
         {
+            if (UnitOfWorkManager.Current() == null || UnitOfWorkManager.Current().Completed)
+            {
+                await SendDomainEventEventBusMessage(@event, cancellationToken);
+            }
+            else
+            {
+                UnitOfWorkManager.Current().OnCompleted += (sender, args) =>
+                {
+                    SendDomainEventEventBusMessage(@event, cancellationToken).Wait(cancellationToken);
+                };
+            }
+
+            await SendDomainEventEventBusMessage(@event, cancellationToken);
+        }
+
+        protected virtual async Task SendDomainEventEventBusMessage(TDomainEvent @event, CancellationToken cancellationToken)
+        {
             try
             {
                 if (SendWithFreeFormatMessageRoutingKey())
@@ -61,7 +78,9 @@ namespace Easy.Platform.Application.EventBus.Producers
             }
             catch (PlatformEventBusException<PlatformCqrsDomainEventBusMessage<TDomainEvent>> e)
             {
-                Logger.LogError(e, $"[PlatformCqrsEventBusDomainEventHandler] Failed to send message for ${typeof(TDomainEvent).Name}. Message Info: {JsonSerializer.Serialize(e.EventBusMessage)}");
+                Logger.LogError(
+                    e,
+                    $"[PlatformCqrsEventBusDomainEventHandler] Failed to send message for ${typeof(TDomainEvent).Name}. Message Info: {JsonSerializer.Serialize(e.EventBusMessage)}");
                 throw;
             }
         }

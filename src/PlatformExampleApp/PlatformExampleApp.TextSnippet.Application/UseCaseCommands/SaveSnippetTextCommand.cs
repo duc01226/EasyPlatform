@@ -91,7 +91,9 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 
 
             // STEP 1: Build saving entity data from request
-            var savingData = request.Data.MapToEntity();
+            var savingData = request.Data.Id.HasValue
+                ? request.Data.UpdateToEntity(await textSnippetEntityRepository.GetByIdAsync(request.Data.Id.Value, cancellationToken))
+                : request.Data.MapToEntity();
 
             // STEP 2: Do validation and ensure that all logic is valid
 

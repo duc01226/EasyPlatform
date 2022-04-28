@@ -18,6 +18,8 @@ namespace PlatformExampleApp.TextSnippet.Persistence.EntityConfigurations
                 .HasMaxLength(TextSnippetEntity.FullTextMaxLength)
                 .IsRequired();
 
+            builder.OwnsOne(p => p.Address);
+
             builder.HasIndex(p => new { p.SnippetText }).IsUnique();
         }
     }

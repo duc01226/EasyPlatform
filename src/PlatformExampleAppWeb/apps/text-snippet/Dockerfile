@@ -2,8 +2,11 @@
 FROM node:14.17.1-alpine3.12 as builder
 WORKDIR /usr/src
 
-# Copy common files
+# npm install
 COPY package.json .
+RUN npm install
+
+# Copy common files
 COPY tsconfig.base.json .
 COPY nx.json .
 COPY angular.json .
@@ -11,9 +14,6 @@ COPY .eslintrc.json .
 COPY decorate-angular-cli.js .
 COPY libs libs
 COPY tools tools
-
-# npm install
-RUN npm install
 
 # Build app files
 COPY apps/text-snippet apps/text-snippet

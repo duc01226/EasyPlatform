@@ -8,7 +8,7 @@ using PlatformExampleApp.TextSnippet.Domain.ValueObjects;
 
 namespace PlatformExampleApp.TextSnippet.Domain.Entities
 {
-    public class TextSnippetEntity : AuditedEntity<TextSnippetEntity, Guid, Guid?>
+    public class TextSnippetEntity : AuditedEntity<TextSnippetEntity, Guid, Guid?>, IRowVersionEntity
     {
         public const int FullTextMaxLength = 4000;
         public const int SnippetTextMaxLength = 100;
@@ -22,7 +22,7 @@ namespace PlatformExampleApp.TextSnippet.Domain.Entities
         /// </summary>
         public Guid? CreatedByUserId { get; set; }
 
-        public ExampleAddressValueObject Address { get; set; }
+        public virtual ExampleAddressValueObject Address { get; set; }
 
         public static PlatformSingleValidator<TextSnippetEntity, string> SnippetTextValidator()
         {
@@ -94,5 +94,7 @@ namespace PlatformExampleApp.TextSnippet.Domain.Entities
 
             public string EncryptedSnippetText { get; set; }
         }
+
+        public Guid? ConcurrencyUpdateToken { get; set; }
     }
 }

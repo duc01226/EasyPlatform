@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -30,6 +31,17 @@ namespace Easy.Platform.Domain.Entities
         /// </summary>
         /// <returns></returns>
         List<KeyValuePair<string, object>> GetBusinessActionEvents();
+    }
+
+    /// <summary>
+    /// Ensure concurrent update is not conflicted
+    /// </summary>
+    public interface IRowVersionEntity : IEntity
+    {
+        /// <summary>
+        /// This is used as a Concurrency Token to track entity version to prevent concurrent update
+        /// </summary>
+        public Guid? ConcurrencyUpdateToken { get; set; }
     }
 
     public interface IValidatableEntity<TEntity, TPrimaryKey> : IValidatableEntity, IEntity<TPrimaryKey>
