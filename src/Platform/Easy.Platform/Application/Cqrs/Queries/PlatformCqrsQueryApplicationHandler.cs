@@ -25,7 +25,7 @@ namespace Easy.Platform.Application.Cqrs.Queries
             EnsureValidationResultValid(request.Validate());
             PopulateAuditInfo(request);
 
-            using (UnitOfWorkManager.Begin())
+            using (var uow = UnitOfWorkManager.Begin())
             {
                 var result = await HandleAsync(request, cancellationToken);
                 return result;

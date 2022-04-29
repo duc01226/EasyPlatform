@@ -19,7 +19,7 @@ namespace Easy.Platform.Application
 
         public virtual async Task SeedData()
         {
-            using (var uow = UnitOfWorkManager.Begin())
+            using (var uow = UnitOfWorkManager.Begin(true))
             {
                 await InternalSeedData();
                 await uow.CompleteAsync();

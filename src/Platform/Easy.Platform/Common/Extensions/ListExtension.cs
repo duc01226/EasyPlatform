@@ -9,9 +9,20 @@ namespace Easy.Platform.Common.Extensions
     {
         public static List<T> RemoveWhere<T>(this IList<T> items, Func<T, bool> predicate)
         {
-            var toRemoveItems = items.Where(predicate).ToList();
+            var toRemoveItems = new List<T>();
 
             toRemoveItems.ForEach(item => items.Remove(item));
+
+            for (var i = 0; i < items.Count; i++)
+            {
+                if (predicate(items[i]))
+                {
+                    toRemoveItems.Add(items[i]);
+                    items.RemoveAt(i);
+                }
+
+                i--;
+            }
 
             return toRemoveItems;
         }

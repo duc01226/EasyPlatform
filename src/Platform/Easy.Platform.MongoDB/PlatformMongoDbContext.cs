@@ -20,7 +20,7 @@ using MongoDB.Driver.Linq;
 
 namespace Easy.Platform.MongoDB
 {
-    public interface IPlatformMongoDbContext<TDbContext> : IDisposable, IPlatformDbContext
+    public interface IPlatformMongoDbContext<TDbContext> : IPlatformDbContext
         where TDbContext : IPlatformMongoDbContext<TDbContext>
     {
         IMongoCollection<PlatformMongoMigrationHistory> MigrationHistoryCollection { get; }

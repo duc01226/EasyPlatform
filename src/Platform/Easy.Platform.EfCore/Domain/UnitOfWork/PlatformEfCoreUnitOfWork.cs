@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Domain.Exceptions;
@@ -13,31 +14,23 @@ namespace Easy.Platform.EfCore.Domain.UnitOfWork
         public TDbContext DbContext { get; }
     }
 
-    public class PlatformEfCoreUnitOfWork<TDbContext> : IPlatformEfCoreUnitOfWork<TDbContext> where TDbContext : PlatformEfCoreDbContext<TDbContext>
+    public class PlatformEfCoreUnitOfWork<TDbContext> : PlatformUnitOfWork<TDbContext>, IPlatformEfCoreUnitOfWork<TDbContext> where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
-        public PlatformEfCoreUnitOfWork(TDbContext dbContext)
+        public PlatformEfCoreUnitOfWork(TDbContext dbContext) : base(dbContext)
         {
-            DbContext = dbContext;
         }
 
-        public event EventHandler OnCompleted;
-        public event EventHandler<UnitOfWorkFailedArgs> OnFailed;
-        public TDbContext DbContext { get; }
-
-        public bool Completed { get; protected set; }
-        public bool Disposed { get; protected set; }
-        public List<IUnitOfWork> InnerUnitOfWorks { get; } = new List<IUnitOfWork>();
-
-        public virtual async Task CompleteAsync(CancellationToken cancellationToken = default)
+        public override async Task CompleteAsync(CancellationToken cancellationToken = default)
         {
             if (Completed)
                 return;
 
             try
             {
+                await Task.WhenAll(InnerUnitOfWorks.Where(p => p.IsActive()).Select(p => p.CompleteAsync(cancellationToken)));
                 await SaveChangesAsync(cancellationToken);
                 Completed = true;
-                OnCompleted?.Invoke(this, EventArgs.Empty);
+                InvokeOnCompleted(this, EventArgs.Empty);
             }
             catch (DbUpdateConcurrencyException concurrencyException)
             {
@@ -45,42 +38,12 @@ namespace Easy.Platform.EfCore.Domain.UnitOfWork
             }
             catch (Exception e)
             {
-                OnFailed?.Invoke(this, new UnitOfWorkFailedArgs(e));
+                InvokeOnFailed(this, new UnitOfWorkFailedArgs(e));
                 throw;
             }
         }
 
-        public bool IsActive()
-        {
-            return !Completed && !Disposed;
-        }
-
-        public void Dispose()
-        {
-            // Dispose of unmanaged resources.
-            Dispose(true);
-            // Suppress finalization.
-            GC.SuppressFinalize(this);
-        }
-
-        // Protected implementation of Dispose pattern.
-        protected virtual void Dispose(bool disposing)
-        {
-            if (Disposed)
-            {
-                return;
-            }
-
-            if (disposing)
-            {
-                // Dispose managed state (managed objects).
-                DbContext?.Dispose();
-            }
-
-            Disposed = true;
-        }
-
-        protected virtual async Task SaveChangesAsync(CancellationToken cancellationToken)
+        protected override async Task SaveChangesAsync(CancellationToken cancellationToken)
         {
             await DbContext.SaveChangesAsync(cancellationToken);
         }
