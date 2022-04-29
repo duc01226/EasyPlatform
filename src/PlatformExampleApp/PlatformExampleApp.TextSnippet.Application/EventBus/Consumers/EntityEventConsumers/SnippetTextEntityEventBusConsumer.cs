@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -57,6 +58,27 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.EntityEv
             Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message {(message.Payload.BusinessActionEvents.Any() ? $"for Business Actions [{string.Join(", ", message.Payload.BusinessActionEvents.Select(p => p.Key))}]" : "")}.\r\n" +
                                            $"Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             return Task.CompletedTask;
+        }
+    }
+
+    /// <summary>
+    /// Demo using <see cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity}"/> to support inbox consumer.
+    /// Test throw error to store inbox message with error info
+    /// <br/>
+    /// <inheritdoc cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity}"/>
+    /// </summary>
+    public class SnippetTextEntityTestErrorInboxEventBusConsumer : PlatformInboxCqrsEntityEventBusConsumer<TextSnippetEntity>
+    {
+        public SnippetTextEntityTestErrorInboxEventBusConsumer(
+            ILoggerFactory loggerFactory,
+            IUnitOfWorkManager uowManager,
+            IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager, inboxEventBusMessageRepo)
+        {
+        }
+
+        protected override Task InternalHandleAsync(PlatformEventBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message, string routingKey)
+        {
+            throw new Exception($"Test error inbox {DateTime.UtcNow.ToLongDateString()}");
         }
     }
 }

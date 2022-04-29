@@ -35,6 +35,7 @@ namespace Easy.Platform.Application.EventBus.Consumers
         {
             await PlatformInboxEventBusConsumerHelper.ExecuteInternalHandleAsync(
                 consumer: this,
+                UowManager,
                 inboxEventBusMessageRepo,
                 InternalHandleAsync,
                 message,

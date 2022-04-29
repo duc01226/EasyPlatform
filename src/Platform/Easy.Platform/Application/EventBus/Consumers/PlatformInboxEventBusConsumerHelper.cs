@@ -50,6 +50,8 @@ namespace Easy.Platform.Application.EventBus.Consumers
                     {
                         using (unitOfWorkManager.Begin())
                         {
+                            var consumeError = PlatformJsonSerializer.Serialize(new { e.Message, e.StackTrace });
+
                             if (existingInboxMessage == null)
                             {
                                 await inboxEventBusMessageRepo.CreateAsync(PlatformInboxEventBusMessage.Create(
@@ -57,13 +59,13 @@ namespace Easy.Platform.Application.EventBus.Consumers
                                     routingKey,
                                     consumer.GetType().Name,
                                     PlatformInboxEventBusMessage.ConsumeStatuses.Failed,
-                                    lastConsumeError: PlatformJsonSerializer.Serialize(e)));
+                                    lastConsumeError: consumeError));
                             }
                             else
                             {
                                 existingInboxMessage.ConsumeStatus = PlatformInboxEventBusMessage.ConsumeStatuses.Failed;
                                 existingInboxMessage.LastConsumeDate = DateTime.UtcNow;
-                                existingInboxMessage.LastConsumeError = PlatformJsonSerializer.Serialize(e);
+                                existingInboxMessage.LastConsumeError = consumeError;
 
                                 await inboxEventBusMessageRepo.UpdateAsync(existingInboxMessage);
                             }
