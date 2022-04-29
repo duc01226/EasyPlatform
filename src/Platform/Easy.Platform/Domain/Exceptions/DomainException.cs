@@ -10,7 +10,7 @@ namespace Easy.Platform.Domain.Exceptions
         }
     }
 
-    public class PlatformEntityNotFoundDomainException<TEntity> : Exception where TEntity : IEntity
+    public class PlatformEntityNotFoundDomainException<TEntity> : PlatformDomainException where TEntity : IEntity
     {
         public PlatformEntityNotFoundDomainException(string entityId, Exception innerException = null) : base($"{typeof(TEntity).Name} with Id:{entityId} is not found", innerException)
         {
