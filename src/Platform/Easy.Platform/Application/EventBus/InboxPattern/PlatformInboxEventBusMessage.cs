@@ -35,7 +35,8 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         public string LastConsumeError { get; set; }
 
         public static PlatformInboxEventBusMessage Create(
-            IPlatformEventBusMessage message,
+            IPlatformEventBusTrackableMessage message,
+            string routingKey,
             string consumerBy,
             ConsumeStatuses consumeStatus,
             string lastConsumeError = null)
@@ -49,7 +50,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                 Id = BuildId(message, consumerBy).TakeTop(IdMaxLength),
                 JsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value),
                 MessageTypeFullName = message.GetType().FullName.TakeTop(MessageTypeFullNameMaxLength),
-                RoutingKey = message.RoutingKey().ToString().TakeTop(RoutingKeyMaxLength),
+                RoutingKey = routingKey.TakeTop(RoutingKeyMaxLength),
                 LastConsumeDate = nowDate,
                 CreatedDate = nowDate,
                 ConsumerBy = consumerBy,
@@ -81,7 +82,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             return $"{message.TrackingId ?? Guid.NewGuid().ToString()}_{consumerBy}";
         }
 
-        private static void EnsureMessageValidForInbox(IPlatformEventBusMessage message)
+        private static void EnsureMessageValidForInbox(IPlatformEventBusTrackableMessage message)
         {
             PlatformValidationResult
                 .ValidIf(!string.IsNullOrEmpty(message.TrackingId), "Message TrackingId must be not null and empty")

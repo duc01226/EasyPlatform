@@ -1,5 +1,7 @@
+using System;
 using System.Threading.Tasks;
 using Easy.Platform.Application.EventBus.InboxPattern;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
@@ -31,14 +33,12 @@ namespace Easy.Platform.Application.EventBus.Consumers
 
         protected override async Task ExecuteInternalHandleAsync(TMessage message, string routingKey)
         {
-            if (await inboxEventBusMessageRepo.AnyAsync(p =>
-                p.Id == PlatformInboxEventBusMessage.BuildId(message, GetType().Name)))
-            {
-                return;
-            }
-
-            await InternalHandleAsync(message, routingKey);
-            await inboxEventBusMessageRepo.CreateOrUpdateAsync(PlatformInboxEventBusMessage.Create(message, routingKey, GetType().Name));
+            await PlatformInboxEventBusConsumerHelper.ExecuteInternalHandleAsync(
+                consumer: this,
+                inboxEventBusMessageRepo,
+                InternalHandleAsync,
+                message,
+                routingKey);
         }
     }
 }
