@@ -27,8 +27,8 @@ namespace Easy.Platform.Domain.UnitOfWork
         /// Begin a new last registered unit of work.
         /// If current active unit of work existed, return it.
         /// </summary>
-        /// <param name="suppressCurrentUow">When true, new uow will be created event if current uow existed. When false, use current active uow if possible</param>
-        IUnitOfWork Begin(bool suppressCurrentUow = false);
+        /// <param name="suppressCurrentUow">When true, new uow will be created event if current uow existed. When false, use current active uow if possible. Default is true.</param>
+        IUnitOfWork Begin(bool suppressCurrentUow = true);
 
         /// <summary>
         /// Gets last begun inner unit of work of type <see cref="TUnitOfWork"/> (or null if not exists).
@@ -78,7 +78,7 @@ namespace Easy.Platform.Domain.UnitOfWork
             return current;
         }
 
-        public IUnitOfWork Begin(bool suppressCurrentUow = false)
+        public IUnitOfWork Begin(bool suppressCurrentUow = true)
         {
             if (suppressCurrentUow)
             {

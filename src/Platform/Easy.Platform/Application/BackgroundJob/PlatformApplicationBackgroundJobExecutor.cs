@@ -24,7 +24,7 @@ namespace Easy.Platform.Application.BackgroundJob
         {
             try
             {
-                using (var uow = UnitOfWorkManager.Begin(true))
+                using (var uow = UnitOfWorkManager.Begin())
                 {
                     ProcessAsync().Wait();
                     uow.CompleteAsync().Wait();
@@ -58,7 +58,7 @@ namespace Easy.Platform.Application.BackgroundJob
         {
             try
             {
-                using (var uow = UnitOfWorkManager.Begin(true))
+                using (var uow = UnitOfWorkManager.Begin())
                 {
                     ProcessAsync(param).Wait();
                     uow.CompleteAsync().Wait();
