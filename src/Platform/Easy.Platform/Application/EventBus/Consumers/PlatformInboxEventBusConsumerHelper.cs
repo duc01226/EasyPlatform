@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Easy.Platform.Application.EventBus.InboxPattern;
 using Easy.Platform.Common.JsonSerialization;
+using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.EventBus;
 
 namespace Easy.Platform.Application.EventBus.Consumers
@@ -10,6 +11,7 @@ namespace Easy.Platform.Application.EventBus.Consumers
     {
         public static async Task ExecuteInternalHandleAsync<TMessage>(
             IPlatformEventBusBaseConsumer<TMessage> consumer,
+            IUnitOfWorkManager unitOfWorkManager,
             IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo,
             Func<TMessage, string, Task> internalHandleAsync,
             TMessage message,
@@ -46,22 +48,25 @@ namespace Easy.Platform.Application.EventBus.Consumers
                     }
                     catch (Exception e)
                     {
-                        if (existingInboxMessage == null)
+                        using (unitOfWorkManager.Begin())
                         {
-                            await inboxEventBusMessageRepo.CreateAsync(PlatformInboxEventBusMessage.Create(
-                                message,
-                                routingKey,
-                                consumer.GetType().Name,
-                                PlatformInboxEventBusMessage.ConsumeStatuses.Failed,
-                                lastConsumeError: PlatformJsonSerializer.Serialize(e)));
-                        }
-                        else
-                        {
-                            existingInboxMessage.ConsumeStatus = PlatformInboxEventBusMessage.ConsumeStatuses.Failed;
-                            existingInboxMessage.LastConsumeDate = DateTime.UtcNow;
-                            existingInboxMessage.LastConsumeError = PlatformJsonSerializer.Serialize(e);
+                            if (existingInboxMessage == null)
+                            {
+                                await inboxEventBusMessageRepo.CreateAsync(PlatformInboxEventBusMessage.Create(
+                                    message,
+                                    routingKey,
+                                    consumer.GetType().Name,
+                                    PlatformInboxEventBusMessage.ConsumeStatuses.Failed,
+                                    lastConsumeError: PlatformJsonSerializer.Serialize(e)));
+                            }
+                            else
+                            {
+                                existingInboxMessage.ConsumeStatus = PlatformInboxEventBusMessage.ConsumeStatuses.Failed;
+                                existingInboxMessage.LastConsumeDate = DateTime.UtcNow;
+                                existingInboxMessage.LastConsumeError = PlatformJsonSerializer.Serialize(e);
 
-                            await inboxEventBusMessageRepo.UpdateAsync(existingInboxMessage);
+                                await inboxEventBusMessageRepo.UpdateAsync(existingInboxMessage);
+                            }
                         }
 
                         throw;
