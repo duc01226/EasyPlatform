@@ -24,13 +24,25 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
         public string RoutingKey { get; set; }
 
-        public DateTime ConsumerDate { get; set; }
-
         public string ConsumerBy { get; set; }
 
-        public static PlatformInboxEventBusMessage Create(IPlatformEventBusMessage message, string consumerBy)
+        public ConsumeStatuses ConsumeStatus { get; set; }
+
+        public DateTime CreatedDate { get; set; }
+
+        public DateTime LastConsumeDate { get; set; }
+
+        public string LastConsumeError { get; set; }
+
+        public static PlatformInboxEventBusMessage Create(
+            IPlatformEventBusMessage message,
+            string consumerBy,
+            ConsumeStatuses consumeStatus,
+            string lastConsumeError = null)
         {
             EnsureMessageValidForInbox(message);
+
+            var nowDate = Clock.UtcNow;
 
             var result = new PlatformInboxEventBusMessage()
             {
@@ -38,8 +50,11 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                 JsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value),
                 MessageTypeFullName = message.GetType().FullName.TakeTop(MessageTypeFullNameMaxLength),
                 RoutingKey = message.RoutingKey().ToString().TakeTop(RoutingKeyMaxLength),
-                ConsumerDate = Clock.UtcNow,
-                ConsumerBy = consumerBy
+                LastConsumeDate = nowDate,
+                CreatedDate = nowDate,
+                ConsumerBy = consumerBy,
+                ConsumeStatus = consumeStatus,
+                LastConsumeError = lastConsumeError
             };
 
             return result;
@@ -54,7 +69,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                 JsonMessage = JsonSerializer.Serialize(customMessage, PlatformJsonSerializer.CurrentOptions.Value),
                 MessageTypeFullName = customMessage.GetType().FullName,
                 RoutingKey = routingKey,
-                ConsumerDate = Clock.UtcNow,
+                LastConsumeDate = Clock.UtcNow,
                 ConsumerBy = consumerBy
             };
 
@@ -71,6 +86,14 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             PlatformValidationResult
                 .ValidIf(!string.IsNullOrEmpty(message.TrackingId), "Message TrackingId must be not null and empty")
                 .EnsureValid(p => new ArgumentException(p.ErrorsMsg(), nameof(message)));
+        }
+
+        public enum ConsumeStatuses
+        {
+            New,
+            Processing,
+            Processed,
+            Failed
         }
     }
 }

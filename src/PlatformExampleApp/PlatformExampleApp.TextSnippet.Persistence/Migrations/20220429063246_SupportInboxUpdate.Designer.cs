@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PlatformExampleApp.TextSnippet.Persistence;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
 {
     [DbContext(typeof(TextSnippetDbContext))]
-    partial class TextSnippetDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220429063246_SupportInboxUpdate")]
+    partial class SupportInboxUpdate
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

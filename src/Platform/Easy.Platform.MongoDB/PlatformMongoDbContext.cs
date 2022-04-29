@@ -63,42 +63,80 @@ namespace Easy.Platform.MongoDB
         public virtual string DataMigrationHistoryCollectionName => "MigrationHistory";
         public virtual string ApplicationDataMigrationHistoryCollectionName => "ApplicationDataMigrationHistory";
 
-        public async Task EnsureIndexesAsync(bool recreate = false)
+        public virtual async Task EnsureIndexesAsync(bool recreate = false)
         {
-            if (recreate || !IsEnsureIndexesExecuted())
-            {
-                await Task.WhenAll(
-                    MigrationHistoryCollection.Indexes.DropAllAsync(),
-                    InboxEventBusMessageCollection.Indexes.DropAllAsync());
-            }
+            await EnsureMigrationHistoryCollectionIndexesAsync(recreate);
+            await EnsureApplicationDataMigrationHistoryCollectionIndexesAsync(recreate);
+            await EnsureInboxEventBusMessageCollectionIndexesAsync(recreate);
 
             if (recreate || !IsEnsureIndexesExecuted())
             {
-                await Task.WhenAll(
-                    MigrationHistoryCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformMongoMigrationHistory>>
-                    {
-                        new CreateIndexModel<PlatformMongoMigrationHistory>(
-                            Builders<PlatformMongoMigrationHistory>.IndexKeys.Ascending(p => p.Name),
-                            new CreateIndexOptions() {Unique = true})
-                    }),
-                    ApplicationDataMigrationHistoryCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformDataMigrationHistory>>
-                    {
-                        new CreateIndexModel<PlatformDataMigrationHistory>(
-                            Builders<PlatformDataMigrationHistory>.IndexKeys.Ascending(p => p.Name),
-                            new CreateIndexOptions() {Unique = true})
-                    }),
-                    InboxEventBusMessageCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformInboxEventBusMessage>>
-                    {
-                        new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys.Ascending(p => p.RoutingKey)),
-                        new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys.Descending(p => p.ConsumerDate))
-                    }));
-
                 await InternalEnsureIndexesAsync(recreate: !IsEnsureIndexesExecuted() || recreate);
             }
 
             if (!IsEnsureIndexesExecuted())
             {
                 await SaveIndexesExecutedMigrationHistory();
+            }
+        }
+
+        public virtual async Task EnsureMigrationHistoryCollectionIndexesAsync(bool recreate = false)
+        {
+            if (recreate || !IsEnsureIndexesExecuted())
+            {
+                await MigrationHistoryCollection.Indexes.DropAllAsync();
+            }
+
+            if (recreate || !IsEnsureIndexesExecuted())
+            {
+                await MigrationHistoryCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformMongoMigrationHistory>>
+                {
+                    new CreateIndexModel<PlatformMongoMigrationHistory>(
+                        Builders<PlatformMongoMigrationHistory>.IndexKeys.Ascending(p => p.Name),
+                        new CreateIndexOptions() {Unique = true})
+                });
+            }
+        }
+
+        public virtual async Task EnsureApplicationDataMigrationHistoryCollectionIndexesAsync(bool recreate = false)
+        {
+            if (recreate || !IsEnsureIndexesExecuted())
+            {
+                await ApplicationDataMigrationHistoryCollection.Indexes.DropAllAsync();
+            }
+
+            if (recreate || !IsEnsureIndexesExecuted())
+            {
+                await ApplicationDataMigrationHistoryCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformDataMigrationHistory>>
+                {
+                    new CreateIndexModel<PlatformDataMigrationHistory>(
+                        Builders<PlatformDataMigrationHistory>.IndexKeys.Ascending(p => p.Name),
+                        new CreateIndexOptions() {Unique = true})
+                });
+            }
+        }
+
+        public virtual async Task EnsureInboxEventBusMessageCollectionIndexesAsync(bool recreate = false)
+        {
+            if (recreate || !IsEnsureIndexesExecuted())
+            {
+                await InboxEventBusMessageCollection.Indexes.DropAllAsync();
+            }
+
+            if (recreate || !IsEnsureIndexesExecuted())
+            {
+                await InboxEventBusMessageCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformInboxEventBusMessage>>
+                {
+                    new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys.Ascending(p => p.RoutingKey)),
+                    new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys
+                        .Ascending(p => p.ConsumeStatus)
+                        .Ascending(p => p.LastConsumeDate)),
+                    new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys
+                        .Ascending(p => p.ConsumeStatus)
+                        .Ascending(p => p.CreatedDate)),
+                    new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys.Descending(p => p.LastConsumeDate)),
+                    new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys.Descending(p => p.CreatedDate))
+                });
             }
         }
 

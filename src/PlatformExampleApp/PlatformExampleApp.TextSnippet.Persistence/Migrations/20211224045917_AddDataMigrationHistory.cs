@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
@@ -9,7 +9,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
         {
             migrationBuilder.AlterColumn<string>(
                 name: "Id",
-                table: "PlatformInboxEventBusMessage",
+                table: "PlatformInboxEventBusMessageDbSet",
                 type: "nvarchar(200)",
                 maxLength: 200,
                 nullable: false,
@@ -19,7 +19,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
 
             migrationBuilder.AddColumn<string>(
                 name: "ConsumerBy",
-                table: "PlatformInboxEventBusMessage",
+                table: "PlatformInboxEventBusMessageDbSet",
                 type: "nvarchar(max)",
                 nullable: true);
 
@@ -43,11 +43,11 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
 
             migrationBuilder.DropColumn(
                 name: "ConsumerBy",
-                table: "PlatformInboxEventBusMessage");
+                table: "PlatformInboxEventBusMessageDbSet");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Id",
-                table: "PlatformInboxEventBusMessage",
+                table: "PlatformInboxEventBusMessageDbSet",
                 type: "nvarchar(100)",
                 maxLength: 100,
                 nullable: false,

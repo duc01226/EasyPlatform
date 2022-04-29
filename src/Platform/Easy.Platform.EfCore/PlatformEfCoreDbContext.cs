@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Easy.Platform.Application.EventBus.InboxPattern;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Entities;
@@ -29,14 +30,17 @@ namespace Easy.Platform.EfCore
         public IQueryable<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryQuery =>
             ApplicationDataMigrationHistoryDbSet.AsQueryable();
 
+        public DbSet<PlatformInboxEventBusMessage> PlatformInboxEventBusMessageDbSet => Set<PlatformInboxEventBusMessage>();
+
+        public IQueryable<PlatformInboxEventBusMessage> PlatformInboxEventBusMessageQuery =>
+            PlatformInboxEventBusMessageDbSet.AsQueryable();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Auto apply configuration by convention.
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
             modelBuilder.ApplyConfiguration(new PlatformDataMigrationHistoryConfiguration());
-
-            if (efCoreOptions.EnableDefaultInboxEventBusMessageEntityConfiguration == true)
-                modelBuilder.ApplyConfiguration(new PlatformDefaultInboxEventBusMessageConfiguration());
+            modelBuilder.ApplyConfiguration(new PlatformDefaultInboxEventBusMessageConfiguration());
 
             base.OnModelCreating(modelBuilder);
         }

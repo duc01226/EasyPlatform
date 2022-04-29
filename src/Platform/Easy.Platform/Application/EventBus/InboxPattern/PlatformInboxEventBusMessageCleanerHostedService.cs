@@ -96,8 +96,9 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                     var inboxEventBusMessageRepo = scope.ServiceProvider.GetService<IPlatformInboxEventBusMessageRepository>();
 
                     var expiredMessages = inboxEventBusMessageRepo!.GetAllQuery()
-                        .Where(p => p.ConsumerDate <= Clock.UtcNow.AddDays(-MessageExpiredInDays()))
-                        .OrderBy(p => p.ConsumerDate)
+                        .Where(p => p.LastConsumeDate <= Clock.UtcNow.AddDays(-MessageExpiredInDays()) &&
+                                    p.ConsumeStatus == PlatformInboxEventBusMessage.ConsumeStatuses.Processed)
+                        .OrderBy(p => p.LastConsumeDate)
                         .Take(NumberOfDeleteMessagesBatch())
                         .ToList();
 

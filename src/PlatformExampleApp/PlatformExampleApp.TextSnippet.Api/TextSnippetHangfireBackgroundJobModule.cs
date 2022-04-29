@@ -12,14 +12,14 @@ namespace PlatformExampleApp.TextSnippet.Api
 
         protected override PlatformHangfireBackgroundJobStorageType UseBackgroundJobStorage()
         {
-            return Configuration.GetSection("UseMongoDb").Get<bool>()
+            return Configuration.GetSection("UseDbType").Get<string>() == "MongoDb"
                 ? PlatformHangfireBackgroundJobStorageType.Mongo
                 : PlatformHangfireBackgroundJobStorageType.Sql;
         }
 
         protected override string StorageOptionsConnectionString()
         {
-            return Configuration.GetSection("UseMongoDb").Get<bool>()
+            return Configuration.GetSection("UseDbType").Get<string>() == "MongoDb"
                 ? Configuration.GetSection("MongoDB:ConnectionString").Get<string>()
                 : Configuration.GetSection("ConnectionStrings:DefaultConnection").Get<string>();
         }

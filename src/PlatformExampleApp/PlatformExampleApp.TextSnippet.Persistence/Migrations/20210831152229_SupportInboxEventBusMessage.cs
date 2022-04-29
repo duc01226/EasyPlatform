@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
@@ -8,7 +8,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "PlatformInboxEventBusMessage",
+                name: "PlatformInboxEventBusMessageDbSet",
                 columns: table => new
                 {
                     Id = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
@@ -23,20 +23,20 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_PlatformInboxEventBusMessage_ConsumerDate",
-                table: "PlatformInboxEventBusMessage",
+                name: "IX_PlatformInboxEventBusMessageDbSet_ConsumerDate",
+                table: "PlatformInboxEventBusMessageDbSet",
                 column: "ConsumerDate");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PlatformInboxEventBusMessage_RoutingKey",
-                table: "PlatformInboxEventBusMessage",
+                name: "IX_PlatformInboxEventBusMessageDbSet_RoutingKey",
+                table: "PlatformInboxEventBusMessageDbSet",
                 column: "RoutingKey");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "PlatformInboxEventBusMessage");
+                name: "PlatformInboxEventBusMessageDbSet");
         }
     }
 }
