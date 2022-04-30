@@ -89,9 +89,6 @@ namespace Easy.Platform.Domain.UnitOfWork
 
         public void Dispose()
         {
-            if (IsActive())
-                CompleteAsync().Wait();
-
             // Dispose of unmanaged resources.
             Dispose(true);
 

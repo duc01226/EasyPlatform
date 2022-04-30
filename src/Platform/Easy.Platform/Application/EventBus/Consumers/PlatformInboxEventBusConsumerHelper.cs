@@ -48,7 +48,7 @@ namespace Easy.Platform.Application.EventBus.Consumers
                     }
                     catch (Exception e)
                     {
-                        using (unitOfWorkManager.Begin())
+                        using (var uow = unitOfWorkManager.Begin())
                         {
                             var consumeError = PlatformJsonSerializer.Serialize(new { e.Message, e.StackTrace });
 
@@ -69,6 +69,8 @@ namespace Easy.Platform.Application.EventBus.Consumers
 
                                 await inboxEventBusMessageRepo.UpdateAsync(existingInboxMessage);
                             }
+
+                            await uow.CompleteAsync();
                         }
 
                         throw;
