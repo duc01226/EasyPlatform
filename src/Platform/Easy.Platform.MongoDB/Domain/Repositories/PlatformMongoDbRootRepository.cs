@@ -112,7 +112,7 @@ namespace Easy.Platform.MongoDB.Domain.Repositories
                     new ReplaceOptions { IsUpsert = false },
                     cancellationToken);
 
-                if (result.ModifiedCount <= 0)
+                if (result.MatchedCount <= 0)
                 {
                     if (await AnyAsync(p => p.Id.Equals(entity.Id), cancellationToken))
                     {
@@ -129,7 +129,7 @@ namespace Easy.Platform.MongoDB.Domain.Repositories
             {
                 var result = await Table.ReplaceOneAsync(p => p.Id.Equals(entity.Id), entity, new ReplaceOptions { IsUpsert = false }, cancellationToken);
 
-                if (result.ModifiedCount <= 0)
+                if (result.MatchedCount <= 0)
                 {
                     throw new PlatformEntityNotFoundDomainException<TEntity>(entity.Id.ToString());
                 }
