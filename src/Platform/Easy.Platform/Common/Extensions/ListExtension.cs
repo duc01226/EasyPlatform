@@ -11,17 +11,14 @@ namespace Easy.Platform.Common.Extensions
         {
             var toRemoveItems = new List<T>();
 
-            toRemoveItems.ForEach(item => items.Remove(item));
-
             for (var i = 0; i < items.Count; i++)
             {
                 if (predicate(items[i]))
                 {
                     toRemoveItems.Add(items[i]);
                     items.RemoveAt(i);
+                    i--;
                 }
-
-                i--;
             }
 
             return toRemoveItems;

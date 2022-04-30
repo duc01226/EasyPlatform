@@ -61,22 +61,6 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             return result;
         }
 
-        public static PlatformInboxEventBusMessage Create<TMessage>(TMessage customMessage, string routingKey, string consumerBy)
-            where TMessage : class, IPlatformEventBusTrackableMessage, new()
-        {
-            var result = new PlatformInboxEventBusMessage()
-            {
-                Id = BuildId(customMessage, consumerBy),
-                JsonMessage = JsonSerializer.Serialize(customMessage, PlatformJsonSerializer.CurrentOptions.Value),
-                MessageTypeFullName = customMessage.GetType().FullName,
-                RoutingKey = routingKey,
-                LastConsumeDate = Clock.UtcNow,
-                ConsumerBy = consumerBy
-            };
-
-            return result;
-        }
-
         public static string BuildId(IPlatformEventBusTrackableMessage message, string consumerBy)
         {
             return $"{message.TrackingId ?? Guid.NewGuid().ToString()}_{consumerBy}";
