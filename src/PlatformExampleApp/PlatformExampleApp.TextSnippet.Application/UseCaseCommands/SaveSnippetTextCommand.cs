@@ -89,6 +89,12 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
                 .And(parsedDate => parsedDate < DateTime.UtcNow, "ParsedDate must in the past")
                 .Map(parsedDate => parsedDate.Date.ToString(CultureInfo.InvariantCulture));
 
+            // THIS IS NOT RELATED to SaveSnippetText logic. Test support suppress uow works
+            using (var uow = UnitOfWorkManager.Begin())
+            {
+                await textSnippetEntityRepository.UpdateAsync(await textSnippetEntityRepository.FirstOrDefaultAsync(cancellationToken: cancellationToken), cancellationToken: cancellationToken);
+                await uow.CompleteAsync(cancellationToken);
+            }
 
             // STEP 1: Build saving entity data from request
             var savingData = request.Data.Id.HasValue

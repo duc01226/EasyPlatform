@@ -36,6 +36,20 @@ namespace Easy.Platform.Common.Extensions
             return toRemoveItem;
         }
 
+        /// <summary>
+        /// Remove last item in list and return it
+        /// </summary>
+        public static T Pop<T>(this IList<T> items)
+        {
+            var lastItemIndex = items.Count - 1;
+
+            var toRemoveItem = items[lastItemIndex];
+
+            items.RemoveAt(lastItemIndex);
+
+            return toRemoveItem;
+        }
+
         public static void UpdateWhere<T>(this IList<T> items, Func<T, bool> predicate, Action<T> updateAction)
         {
             foreach (var t in items)

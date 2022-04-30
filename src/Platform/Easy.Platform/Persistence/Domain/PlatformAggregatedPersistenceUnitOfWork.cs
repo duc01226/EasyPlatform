@@ -18,6 +18,8 @@ namespace Easy.Platform.Persistence.Domain
             InnerUnitOfWorks = innerUnitOfWorks ?? new List<IUnitOfWork>();
         }
 
+        public Guid Id { get; } = Guid.NewGuid();
+
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);
