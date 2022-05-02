@@ -34,12 +34,12 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
         public string LastConsumeError { get; set; }
 
-        public static PlatformInboxEventBusMessage Create(
-            IPlatformEventBusTrackableMessage message,
+        public static PlatformInboxEventBusMessage Create<TMessage>(
+            TMessage message,
             string routingKey,
             string consumerBy,
             ConsumeStatuses consumeStatus,
-            string lastConsumeError = null)
+            string lastConsumeError = null) where TMessage : class, IPlatformEventBusTrackableMessage
         {
             EnsureMessageValidForInbox(message);
 
