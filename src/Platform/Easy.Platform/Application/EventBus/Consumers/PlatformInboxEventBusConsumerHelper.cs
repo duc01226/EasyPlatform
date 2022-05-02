@@ -29,21 +29,25 @@ namespace Easy.Platform.Application.EventBus.Consumers
                     try
                     {
                         await internalHandleAsync(message, routingKey);
-
-                        if (existingInboxMessage == null)
+                        using (var uow = unitOfWorkManager.Begin())
                         {
-                            await inboxEventBusMessageRepo.CreateAsync(PlatformInboxEventBusMessage.Create(
-                                message,
-                                routingKey,
-                                consumer.GetType().Name,
-                                PlatformInboxEventBusMessage.ConsumeStatuses.Processed));
-                        }
-                        else
-                        {
-                            existingInboxMessage.LastConsumeDate = DateTime.UtcNow;
-                            existingInboxMessage.ConsumeStatus = PlatformInboxEventBusMessage.ConsumeStatuses.Processed;
+                            if (existingInboxMessage == null)
+                            {
+                                await inboxEventBusMessageRepo.CreateAsync(PlatformInboxEventBusMessage.Create(
+                                    message,
+                                    routingKey,
+                                    consumer.GetType().Name,
+                                    PlatformInboxEventBusMessage.ConsumeStatuses.Processed));
+                            }
+                            else
+                            {
+                                existingInboxMessage.LastConsumeDate = DateTime.UtcNow;
+                                existingInboxMessage.ConsumeStatus = PlatformInboxEventBusMessage.ConsumeStatuses.Processed;
 
-                            await inboxEventBusMessageRepo.UpdateAsync(existingInboxMessage);
+                                await inboxEventBusMessageRepo.UpdateAsync(existingInboxMessage);
+                            }
+
+                            await uow.CompleteAsync();
                         }
                     }
                     catch (Exception e)
