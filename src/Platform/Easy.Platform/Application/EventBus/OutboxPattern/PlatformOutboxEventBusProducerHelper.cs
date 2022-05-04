@@ -26,6 +26,8 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         {
             if (message.TrackingId != null)
             {
+                var autoCompleteUowWhenSaveOutboxMessage = unitOfWorkManager.Current() == null;
+
                 unitOfWorkManager.Begin(suppressCurrentUow: false);
 
                 if (isProcessingExistingOutboxMessage)
@@ -48,6 +50,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                             routingKey,
                             logger,
                             existingOutboxMessage,
+                            autoCompleteUowWhenSaveOutboxMessage,
                             cancellationToken);
                     }
                 }
@@ -62,6 +65,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                         routingKey,
                         logger,
                         existingOutboxMessage: null,
+                        autoCompleteUowWhenSaveOutboxMessage,
                         cancellationToken);
                 }
             }
@@ -80,6 +84,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             string routingKey,
             ILogger logger,
             PlatformOutboxEventBusMessage existingOutboxMessage,
+            bool autoCompleteUow,
             CancellationToken cancellationToken)
             where TMessage : IPlatformEventBusTrackableMessage
         {
@@ -105,6 +110,9 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                     // Try to process newProcessingOutboxMessage first time after saved
                     await SendOutboxMessageInNewScopeAsync(serviceProvider, eventBusProducer, message, routingKey, logger, cancellationToken);
                 };
+
+                if (autoCompleteUow)
+                    await uow.CompleteAsync(cancellationToken);
             }
         }
 
