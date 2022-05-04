@@ -29,17 +29,16 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         protected PlatformSendOutboxEventBusMessageHostedService(
             IHostApplicationLifetime applicationLifetime,
             ILoggerFactory loggerFactory,
-            IServiceProvider serviceProvider,
-            IPlatformEventBusProducer eventBusProducer,
-            IPlatformEventBusManager eventBusManager) : base(applicationLifetime, loggerFactory)
+            IServiceProvider serviceProvider) : base(applicationLifetime, loggerFactory)
         {
             this.ServiceProvider = serviceProvider;
-            this.eventBusProducer = eventBusProducer;
-            FullNameToDefinedEventBusTypeDic = eventBusManager
+            this.eventBusProducer = serviceProvider.GetService<IPlatformEventBusProducer>();
+            FullNameToDefinedEventBusTypeDic = serviceProvider
+                .GetService<IPlatformEventBusManager>()?
                 .GetScanAssemblies()
                 .SelectMany(p => p.GetTypes())
                 .GroupBy(p => p.FullName)
-                .ToDictionary(p => p.Key, p => p.First());
+                .ToDictionary(p => p.Key, p => p.First()) ?? new Dictionary<string, Type>();
         }
 
         public static bool MatchImplementation(ServiceDescriptor serviceDescriptor)
@@ -249,9 +248,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         public PlatformDefaultSendOutboxEventBusMessageHostedService(
             IHostApplicationLifetime applicationLifetime,
             ILoggerFactory loggerFactory,
-            IServiceProvider serviceProvider,
-            IPlatformEventBusProducer eventBusProducer,
-            IPlatformEventBusManager eventBusManager) : base(applicationLifetime, loggerFactory, serviceProvider, eventBusProducer, eventBusManager)
+            IServiceProvider serviceProvider) : base(applicationLifetime, loggerFactory, serviceProvider)
         {
         }
     }

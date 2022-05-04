@@ -29,13 +29,13 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         protected PlatformConsumeInboxEventBusMessageHostedService(
             IHostApplicationLifetime applicationLifetime,
             ILoggerFactory loggerFactory,
-            IServiceProvider serviceProvider,
-            IPlatformEventBusManager eventBusManager) : base(applicationLifetime, loggerFactory)
+            IServiceProvider serviceProvider) : base(applicationLifetime, loggerFactory)
         {
-            this.ServiceProvider = serviceProvider;
-            FullNameToDefinedEventBusConsumerTypeDic = eventBusManager
+            ServiceProvider = serviceProvider;
+            FullNameToDefinedEventBusConsumerTypeDic = serviceProvider
+                .GetService<IPlatformEventBusManager>()?
                 .AllDefinedEventBusConsumerTypes()
-                .ToDictionary(p => p.FullName, p => p);
+                .ToDictionary(p => p.FullName, p => p) ?? new Dictionary<string, Type>();
         }
 
         public static bool MatchImplementation(ServiceDescriptor serviceDescriptor)
@@ -267,7 +267,10 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
     public class PlatformDefaultConsumeInboxEventBusMessageHostedService : PlatformConsumeInboxEventBusMessageHostedService
     {
-        public PlatformDefaultConsumeInboxEventBusMessageHostedService(IHostApplicationLifetime applicationLifetime, ILoggerFactory loggerFactory, IServiceProvider serviceProvider, IPlatformEventBusManager eventBusManager) : base(applicationLifetime, loggerFactory, serviceProvider, eventBusManager)
+        public PlatformDefaultConsumeInboxEventBusMessageHostedService(
+            IHostApplicationLifetime applicationLifetime,
+            ILoggerFactory loggerFactory,
+            IServiceProvider serviceProvider) : base(applicationLifetime, loggerFactory, serviceProvider)
         {
         }
     }
