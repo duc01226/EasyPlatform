@@ -19,7 +19,7 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PlatformInboxEventBusMessage", x => x.Id);
+                    table.PrimaryKey("PK_PlatformInboxEventBusMessageDbSet", x => x.Id);
                 });
 
             migrationBuilder.CreateIndex(

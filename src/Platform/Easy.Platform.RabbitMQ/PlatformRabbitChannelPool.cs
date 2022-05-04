@@ -14,14 +14,6 @@ namespace Easy.Platform.RabbitMQ
         {
         }
 
-        protected PlatformRabbitChannelPool(IPooledObjectPolicy<IModel> policy) : base(policy)
-        {
-        }
-
-        protected PlatformRabbitChannelPool(IPooledObjectPolicy<IModel> policy, int maximumRetained) : base(policy, maximumRetained)
-        {
-        }
-
         public override IModel Get()
         {
             var channelInPool = base.Get();

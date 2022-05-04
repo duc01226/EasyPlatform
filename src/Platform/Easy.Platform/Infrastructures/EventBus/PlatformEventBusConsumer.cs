@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
@@ -13,7 +14,7 @@ namespace Easy.Platform.Infrastructures.EventBus
         /// <summary>
         /// Config the time in milliseconds to log warning if the process consumer time is over ProcessWarningTimeMilliseconds.
         /// </summary>
-        long? ProcessWarningTimeMilliseconds();
+        long? SlowProcessWarningTimeMilliseconds();
 
         JsonSerializerOptions CustomJsonSerializerOptions();
     }
@@ -84,39 +85,43 @@ namespace Easy.Platform.Infrastructures.EventBus
             IPlatformEventBusBaseConsumer consumer,
             object eventBusMessage,
             string routingKey,
-            bool logConsumerProcessTime,
-            long logConsumerProcessWarningTimeMilliseconds = DefaultProcessWarningTimeMilliseconds,
-            ILogger logger = null)
+            bool isLogConsumerProcessTime,
+            double slowProcessWarningTimeMilliseconds = DefaultProcessWarningTimeMilliseconds,
+            ILogger logger = null,
+            CancellationToken cancellationToken = default)
         {
-            if (logConsumerProcessTime)
+            if (isLogConsumerProcessTime)
             {
                 if (logger == null)
                     throw new ArgumentNullException(nameof(logger));
 
                 await Util.Tasks.ProfilingAsync(
-                    asyncTask: () => DoInvokeConsumer(consumer, eventBusMessage, routingKey),
+                    asyncTask: () => DoInvokeConsumer(consumer, eventBusMessage, routingKey, cancellationToken),
                     afterExecution: elapsedMilliseconds =>
                     {
                         var platformEventBusTrackableMessage = eventBusMessage as IPlatformEventBusTrackableMessage;
-                        var message =
-                            $"[ConsumerProcessTime] Elapsed {elapsedMilliseconds} in milliseconds processing for consumer {consumer.GetType().FullName} message with routing key: {routingKey}. TrackingId {platformEventBusTrackableMessage?.TrackingId ?? "n/a"}.";
-                        if (elapsedMilliseconds < logConsumerProcessWarningTimeMilliseconds || elapsedMilliseconds < consumer.ProcessWarningTimeMilliseconds())
+                        var logMessage =
+                            $"[ElapsedMilliseconds:{elapsedMilliseconds}]. [Consumer:{consumer.GetType().FullName}]. [RoutingKey:{routingKey}]. [TrackingId:{platformEventBusTrackableMessage?.TrackingId ?? "n/a"}].";
+
+                        var toCheckSlowProcessWarningTimeMilliseconds = consumer.SlowProcessWarningTimeMilliseconds() ??
+                                                                        slowProcessWarningTimeMilliseconds;
+                        if (elapsedMilliseconds >= toCheckSlowProcessWarningTimeMilliseconds)
                         {
-                            logger.LogInformationIfEnabled(message);
+                            logger.LogError($"[SlowConsumerProcessTime]. [SlowProcessWarningTimeMilliseconds:{toCheckSlowProcessWarningTimeMilliseconds}]. {logMessage}. [MessageContent:{JsonSerializer.Serialize(eventBusMessage)}]");
                         }
                         else
                         {
-                            logger.LogWarning(message);
+                            logger.LogInformationIfEnabled($"[ConsumerProcessTime] {logMessage}");
                         }
                     });
             }
             else
             {
-                await DoInvokeConsumer(consumer, eventBusMessage, routingKey);
+                await DoInvokeConsumer(consumer, eventBusMessage, routingKey, cancellationToken);
             }
         }
 
-        public virtual long? ProcessWarningTimeMilliseconds()
+        public virtual long? SlowProcessWarningTimeMilliseconds()
         {
             return DefaultProcessWarningTimeMilliseconds;
         }
@@ -126,7 +131,7 @@ namespace Easy.Platform.Infrastructures.EventBus
             return null;
         }
 
-        private static async Task DoInvokeConsumer(IPlatformEventBusBaseConsumer consumer, object eventBusMessage, string routingKey)
+        private static async Task DoInvokeConsumer(IPlatformEventBusBaseConsumer consumer, object eventBusMessage, string routingKey, CancellationToken cancellationToken = default)
         {
             var handleMethodName = nameof(IPlatformEventBusBaseConsumer<object>.HandleAsync);
 
@@ -169,8 +174,8 @@ namespace Easy.Platform.Infrastructures.EventBus
             }
             catch (Exception e)
             {
-                Logger.LogError(e, $"[MessageConsumerError] There is an error when handle message {routingKey}." +
-                                   $"Message Info: ${JsonSerializer.Serialize(message)}");
+                Logger.LogError(e, $"Error Consume message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
+                                   $"Message Info: ${JsonSerializer.Serialize(message)}.{Environment.NewLine}");
                 throw;
             }
         }
@@ -178,18 +183,18 @@ namespace Easy.Platform.Infrastructures.EventBus
         protected abstract Task InternalHandleAsync(TMessage message, string routingKey);
     }
 
-    public abstract class PlatformEventBusConsumer<TMessagePayload> : PlatformEventBusBaseConsumer<PlatformEventBusMessage<TMessagePayload>>, IPlatformEventBusConsumer<TMessagePayload>
-        where TMessagePayload : class, new()
-    {
-        protected PlatformEventBusConsumer(ILoggerFactory loggerFactory) : base(loggerFactory)
-        {
-        }
-    }
-
     public abstract class PlatformEventBusFreeFormatMessageConsumer<TMessage> : PlatformEventBusBaseConsumer<TMessage>, IPlatformEventBusFreeFormatMessageConsumer<TMessage>
         where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
     {
         protected PlatformEventBusFreeFormatMessageConsumer(ILoggerFactory loggerFactory) : base(loggerFactory)
+        {
+        }
+    }
+
+    public abstract class PlatformEventBusConsumer<TMessagePayload> : PlatformEventBusFreeFormatMessageConsumer<PlatformEventBusMessage<TMessagePayload>>, IPlatformEventBusConsumer<TMessagePayload>
+        where TMessagePayload : class, new()
+    {
+        protected PlatformEventBusConsumer(ILoggerFactory loggerFactory) : base(loggerFactory)
         {
         }
     }

@@ -2,15 +2,13 @@ using System;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Easy.Platform.Application.Context;
-using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.Cqrs.Commands;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
 
-namespace Easy.Platform.Application.EventBus.Producers
+namespace Easy.Platform.Application.EventBus.Producers.CqrsEventProducers
 {
     public interface IPlatformCqrsCommandEventBusMessage : IPlatformEventBusMessage
     {
@@ -49,28 +47,28 @@ namespace Easy.Platform.Application.EventBus.Producers
                         await ApplicationEventBusProducer
                             .SendAsync<PlatformCqrsCommandEventBusMessage<TCommand>, TCommand>(
                                 customRoutingKey: CustomMessageRoutingKey(),
-                                trackId: @event.Id,
+                                trackId: Guid.NewGuid().ToString(),
                                 messagePayload: @event.CommandData,
                                 messageAction: @event.EventAction,
-                                cancellationToken);
+                                cancellationToken: cancellationToken);
                     }
-                    else if (SendWithFreeFormatMessageRoutingKey())
+                    else if (SendAsFreeFormatMessage())
                     {
                         await ApplicationEventBusProducer
                             .SendAsFreeFormatMessageAsync<PlatformCqrsCommandEventBusMessage<TCommand>, TCommand>(
-                                trackId: @event.Id,
+                                trackId: Guid.NewGuid().ToString(),
                                 messagePayload: @event.CommandData,
                                 messageAction: @event.EventAction,
-                                cancellationToken);
+                                cancellationToken: cancellationToken);
                     }
                     else
                     {
                         await ApplicationEventBusProducer
                             .SendAsync<PlatformCqrsCommandEventBusMessage<TCommand>, TCommand>(
-                                trackId: @event.Id,
+                                trackId: Guid.NewGuid().ToString(),
                                 messagePayload: @event.CommandData,
                                 messageAction: @event.EventAction,
-                                cancellationToken);
+                                cancellationToken: cancellationToken);
                     }
                 }
                 catch (PlatformEventBusException<PlatformCqrsCommandEventBusMessage<TCommand>> e)
@@ -96,7 +94,7 @@ namespace Easy.Platform.Application.EventBus.Producers
         /// The the consumer for this message do not need to define <see cref="PlatformEventBusConsumerAttribute"/>.
         /// Consumer without <see cref="PlatformEventBusConsumerAttribute"/> will automatically binding to Default FreeFormatMessageRoutingKey for the TMessage Type.
         /// </summary>
-        protected virtual bool SendWithFreeFormatMessageRoutingKey()
+        protected virtual bool SendAsFreeFormatMessage()
         {
             return false;
         }

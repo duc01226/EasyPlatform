@@ -1,4 +1,5 @@
 using Easy.Platform.Application.EventBus.Producers;
+using Easy.Platform.Application.EventBus.Producers.CqrsEventProducers;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Domain.Events;
@@ -15,6 +16,9 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.DomainEv
         }
     }
 
+    /// <summary>
+    /// Demo SendAsFreeFormatMessage. The consumer for this domain event message do not need to define routing key
+    /// </summary>
     public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendAsFreeFormatMessageEventBusProducer : PlatformCqrsDomainEventBusProducer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
     {
         public TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendAsFreeFormatMessageEventBusProducer(
@@ -24,7 +28,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.DomainEv
         {
         }
 
-        protected override bool SendWithFreeFormatMessageRoutingKey()
+        protected override bool SendAsFreeFormatMessage()
         {
             return true;
         }

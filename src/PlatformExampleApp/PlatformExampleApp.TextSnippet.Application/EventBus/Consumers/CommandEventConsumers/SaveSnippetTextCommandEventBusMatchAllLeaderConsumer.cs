@@ -2,6 +2,7 @@ using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Easy.Platform.Application.EventBus.Consumers;
+using Easy.Platform.Application.EventBus.Consumers.CqrsEventConsumers;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.UnitOfWork;
@@ -19,7 +20,10 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
     [PlatformEventBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, PlatformEventBusConsumerAttribute.MatchAllPatternValue, "SaveSnippetTextCommand")]
     public class SaveSnippetTextCommandEventBusMatchAllLeaderConsumer : PlatformCqrsCommandEventBusConsumer<SaveSnippetTextCommand>
     {
-        public SaveSnippetTextCommandEventBusMatchAllLeaderConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager) : base(loggerFactory, uowManager)
+        public SaveSnippetTextCommandEventBusMatchAllLeaderConsumer(
+            ILoggerFactory loggerFactory,
+            IUnitOfWorkManager uowManager,
+            IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
         {
         }
 
@@ -31,5 +35,9 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
             Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             return Task.CompletedTask;
         }
+
+        // Can override this method return false to user normal consumer without using inbox message
+        // Set AutoSaveInboxMessage = false to test requeue works because message is not saved as inbox => throw ex => requeue message
+        public override bool AutoSaveInboxMessage => false;
     }
 }

@@ -15,7 +15,14 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 {
     public abstract class PlatformInboxEventBusMessageCleanerHostedService : PlatformIntervalProcessHostedService
     {
+        /// <summary>
+        /// Default number messages is deleted in every process. Default is 100;
+        /// </summary>
+        public const int DefaultNumberOfDeleteMessagesBatch = 100;
+
         private readonly IServiceProvider serviceProvider;
+
+        private bool isProcessing = false;
 
         public PlatformInboxEventBusMessageCleanerHostedService(
             IHostApplicationLifetime applicationLifetime,
@@ -39,8 +46,10 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
         protected override async Task IntervalProcess(CancellationToken cancellationToken)
         {
-            if (!ApplicationStartedAndRunning || !HasInboxEventBusMessageRepositoryRegistered())
+            if (!ApplicationStartedAndRunning || !HasInboxEventBusMessageRepositoryRegistered() || isProcessing)
                 return;
+
+            isProcessing = true;
 
             // Retry in case of the db is not started, initiated or restarting
             await Policy.Handle<Exception>()
@@ -55,6 +64,8 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                             $"Retry CleanInboxEventBusMessage {currentRetry} time(s) failed with error: {ex.Message}");
                     })
                 .ExecuteAndThrowFinalExceptionAsync(() => CleanInboxEventBusMessage(cancellationToken));
+
+            isProcessing = false;
         }
 
         protected virtual int ProcessClearMessageRetryCount()
@@ -63,15 +74,15 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         }
 
         /// <summary>
-        /// To config maximum number messages is deleted in every process. Default is one week;
+        /// To config maximum number messages is deleted in every process. Default is <see cref="DefaultNumberOfDeleteMessagesBatch"/>;
         /// </summary>
         protected virtual int NumberOfDeleteMessagesBatch()
         {
-            return 500;
+            return DefaultNumberOfDeleteMessagesBatch;
         }
 
         /// <summary>
-        /// To config how long a message can live in the database in days. Default is one week;
+        /// To config how long a message can live in the database in days. Default is one week (7 days);
         /// </summary>
         protected virtual long MessageExpiredInDays()
         {
@@ -91,6 +102,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             using (var scope = serviceProvider.CreateScope())
             {
                 var uowManager = scope.ServiceProvider.GetService<IUnitOfWorkManager>();
+
                 using (var uow = uowManager!.Begin())
                 {
                     var inboxEventBusMessageRepo = scope.ServiceProvider.GetService<IPlatformInboxEventBusMessageRepository>();

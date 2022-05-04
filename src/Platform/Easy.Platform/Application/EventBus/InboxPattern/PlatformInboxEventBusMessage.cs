@@ -12,7 +12,7 @@ using Easy.Platform.Common.Validators;
 
 namespace Easy.Platform.Application.EventBus.InboxPattern
 {
-    public class PlatformInboxEventBusMessage : RootEntity<PlatformInboxEventBusMessage, string>
+    public class PlatformInboxEventBusMessage : RootEntity<PlatformInboxEventBusMessage, string>, IRowVersionEntity
     {
         public const int IdMaxLength = 200;
         public const int MessageTypeFullNameMaxLength = 1000;
@@ -24,6 +24,9 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
         public string RoutingKey { get; set; }
 
+        /// <summary>
+        /// Consumer Type FullName
+        /// </summary>
         public string ConsumerBy { get; set; }
 
         public ConsumeStatuses ConsumeStatus { get; set; }
@@ -33,6 +36,8 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         public DateTime LastConsumeDate { get; set; }
 
         public string LastConsumeError { get; set; }
+
+        public Guid? ConcurrencyUpdateToken { get; set; }
 
         public static PlatformInboxEventBusMessage Create<TMessage>(
             TMessage message,

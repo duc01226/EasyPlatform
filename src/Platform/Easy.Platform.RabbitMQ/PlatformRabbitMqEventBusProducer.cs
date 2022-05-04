@@ -4,12 +4,8 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Infrastructures.EventBus;
-using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.ObjectPool;
-using Polly;
-using Polly.Retry;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 
@@ -19,7 +15,7 @@ namespace Easy.Platform.RabbitMQ
     {
         protected readonly PlatformRabbitChannelPool ChannelPool;
         protected readonly IPlatformRabbitMqExchangeProvider ExchangeProvider;
-        protected readonly RetryPolicy RetryPublishPolicy;
+        protected readonly PlatformRabbitMqOptions Options;
         protected readonly ILogger Logger;
 
         public PlatformRabbitMqEventBusProducer(
@@ -30,10 +26,8 @@ namespace Easy.Platform.RabbitMQ
         {
             ChannelPool = channelPool;
             ExchangeProvider = exchangeProvider;
+            this.Options = options;
             Logger = loggerFactory.CreateLogger(GetType());
-            RetryPublishPolicy = Policy.Handle<Exception>().WaitAndRetry(
-                retryCount: options.PublishMessageRetryCount,
-                retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
         }
 
         public async Task<TMessage> SendAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default)
@@ -78,7 +72,7 @@ namespace Easy.Platform.RabbitMQ
 
         public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
             TMessage message,
-            CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
+            CancellationToken cancellationToken = default) where TMessage : IPlatformEventBusFreeFormatMessage
         {
             return SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(message.GetType()), cancellationToken);
         }
@@ -86,7 +80,7 @@ namespace Easy.Platform.RabbitMQ
         public async Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
             TMessage message,
             string routingKey,
-            CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusFreeFormatMessage, new()
+            CancellationToken cancellationToken = default) where TMessage : IPlatformEventBusFreeFormatMessage
         {
             try
             {
@@ -102,28 +96,49 @@ namespace Easy.Platform.RabbitMQ
             }
         }
 
-        private Task PublishMessageToQueueAsync(string message, string routingKey, CancellationToken cancellationToken = default)
+        public async Task<TMessage> SendTrackableMessageAsync<TMessage>(
+            TMessage message,
+            string routingKey,
+            CancellationToken cancellationToken = default) where TMessage : IPlatformEventBusTrackableMessage
         {
-            RetryPublishPolicy.ExecuteAndThrowFinalException(
-                () => PublishMessageToQueue(message, routingKey),
-                ex => Logger.LogError(ex, $"[EventBusProducer] Unable to send message. Message Info: {message}"));
+            try
+            {
+                var jsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value);
 
-            return Task.CompletedTask;
+                await PublishMessageToQueueAsync(jsonMessage, routingKey, cancellationToken);
+
+                return message;
+            }
+            catch (Exception e)
+            {
+                throw new PlatformEventBusException<TMessage>(message, e);
+            }
+        }
+
+        private async Task PublishMessageToQueueAsync(string message, string routingKey, CancellationToken cancellationToken = default)
+        {
+            await Task.Run(
+                () =>
+                {
+                    PublishMessageToQueue(message, routingKey);
+                },
+                cancellationToken);
         }
 
         private void PublishMessageToQueue(string message, string routingKey)
         {
-            var body = Encoding.UTF8.GetBytes(message);
-            var channel = ChannelPool.Get();
+            IModel channel = null;
 
             try
             {
-                channel.BasicPublish(ExchangeProvider.GetExchangeName(routingKey), routingKey, null, body);
+                channel = ChannelPool.Get();
+                channel.BasicPublish(ExchangeProvider.GetExchangeName(routingKey), routingKey, null, body: Encoding.UTF8.GetBytes(message));
                 ChannelPool.Return(channel);
             }
             catch (AlreadyClosedException alreadyClosedException)
             {
-                ChannelPool.Return(channel);
+                if (channel != null)
+                    ChannelPool.Return(channel);
 
                 if (alreadyClosedException.ShutdownReason.ReplyCode == 404)
                 {

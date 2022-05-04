@@ -1,4 +1,5 @@
 using Easy.Platform.Application.EventBus.Producers;
+using Easy.Platform.Application.EventBus.Producers.CqrsEventProducers;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
@@ -15,6 +16,9 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.CommandE
         }
     }
 
+    /// <summary>
+    /// Demo SendAsFreeFormatMessage. The consumer for this command event message do not need to define routing key
+    /// </summary>
     public class SaveTextSnippetCommandSendAsFreeFormatMessageEventBusProducer : PlatformCqrsCommandEventBusProducer<SaveSnippetTextCommand>
     {
         public SaveTextSnippetCommandSendAsFreeFormatMessageEventBusProducer(
@@ -24,7 +28,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.CommandE
         {
         }
 
-        protected override bool SendWithFreeFormatMessageRoutingKey()
+        protected override bool SendAsFreeFormatMessage()
         {
             return true;
         }

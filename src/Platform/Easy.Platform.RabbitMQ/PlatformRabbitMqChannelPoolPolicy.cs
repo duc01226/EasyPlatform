@@ -1,66 +1,34 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Threading;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ObjectPool;
-using Polly;
-using Polly.Retry;
 using RabbitMQ.Client;
 
 namespace Easy.Platform.RabbitMQ
 {
     public class PlatformRabbitMqChannelPoolPolicy : IPooledObjectPolicy<IModel>
     {
-        private readonly RetryPolicy retryPolicy;
         private readonly PlatformRabbitMqOptions options;
-        private readonly IConnectionFactory factory;
         private readonly ILogger<PlatformRabbitMqChannelPoolPolicy> logger;
+        private readonly IConnectionFactory connectionFactory;
+
         private Lazy<IConnection> connection;
 
         public PlatformRabbitMqChannelPoolPolicy(
             PlatformRabbitMqOptions options,
             ILogger<PlatformRabbitMqChannelPoolPolicy> logger)
         {
-            connection = new Lazy<IConnection>(CreateConnection);
             this.options = options;
-
             this.logger = logger;
 
-            retryPolicy = Policy
-                .Handle<Exception>()
-                .WaitAndRetry(
-                    this.options.CreateChannelRetryCount,
-                    retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)));
-
-            factory = InitializeFactory();
+            connection = new Lazy<IConnection>(CreateConnection);
+            connectionFactory = InitializeFactory();
         }
 
         public IModel Create()
-        {
-            return retryPolicy.ExecuteAndThrowFinalException(
-                executeFunc: CreateChannel,
-                beforeThrowFinalException: ex => { logger.LogError(ex, "Create rabbit-mq channel failed."); });
-        }
-
-        public bool Return(IModel obj)
-        {
-            if (obj.IsOpen)
-            {
-                return true;
-            }
-
-            Util.Tasks.CatchException(() =>
-            {
-                obj.Dispose();
-            });
-
-            return false;
-        }
-
-        private IModel CreateChannel()
         {
             try
             {
@@ -74,8 +42,20 @@ namespace Easy.Platform.RabbitMQ
             }
         }
 
+        public bool Return(IModel obj)
+        {
+            if (obj.IsOpen)
+            {
+                return true;
+            }
+
+            Util.Tasks.CatchException(obj.Dispose);
+
+            return false;
+        }
+
         /// <summary>
-        /// connection hang up during broker node restarted
+        /// Connection hang up during broker node restarted
         /// in this case, try to close old and create new connection
         /// </summary>
         private void ReInitNewConnection()
@@ -85,11 +65,13 @@ namespace Easy.Platform.RabbitMQ
             try
             {
                 connection.Value.Close(TimeSpan.FromSeconds(5));
+                connection.Value.Dispose();
+
                 logger.LogInformationIfEnabled("Release old rabbit-mq connection successfully.");
             }
             catch (Exception releaseEx)
             {
-                logger.LogError(releaseEx, "Release rabbit-mq old connection failed.");
+                logger.LogWarning(releaseEx, "Release rabbit-mq old connection failed.");
             }
             finally
             {
@@ -101,7 +83,7 @@ namespace Easy.Platform.RabbitMQ
 
         private IConnectionFactory InitializeFactory()
         {
-            var connectionFactory = new ConnectionFactory
+            var connectionFactoryResult = new ConnectionFactory
             {
                 AutomaticRecoveryEnabled = true,
                 NetworkRecoveryInterval = TimeSpan.FromSeconds(options.NetworkRecoveryIntervalSeconds),
@@ -114,18 +96,24 @@ namespace Easy.Platform.RabbitMQ
                 ClientProvidedName = options.ClientProvidedName ?? Assembly.GetEntryAssembly()?.FullName
             };
 
-            return connectionFactory;
+            return connectionFactoryResult;
         }
 
         private IConnection CreateConnection()
         {
-            logger.LogInformationIfEnabled("Creating new rabbit-mq connection.");
+            try
+            {
+                logger.LogInformationIfEnabled("Creating new rabbit-mq connection.");
 
-            var hostNames = options.HostNames.Split(',').Where(hostName => !string.IsNullOrEmpty(hostName)).ToArray();
+                var hostNames = options.HostNames.Split(',').Where(hostName => !string.IsNullOrEmpty(hostName)).ToArray();
 
-            return retryPolicy.ExecuteAndThrowFinalException(
-                executeFunc: () => factory.CreateConnection(hostNames),
-                beforeThrowFinalException: ex => logger.LogError(ex, "Create rabbit-mq connection failed."));
+                return connectionFactory.CreateConnection(hostNames);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Create rabbit-mq connection failed.");
+                throw;
+            }
         }
     }
 }

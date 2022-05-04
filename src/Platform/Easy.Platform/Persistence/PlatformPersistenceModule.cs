@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Easy.Platform.Application.EventBus;
 using Easy.Platform.Application.EventBus.InboxPattern;
+using Easy.Platform.Application.EventBus.OutboxPattern;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Domain.Repositories;
@@ -38,8 +39,8 @@ namespace Easy.Platform.Persistence
             RegisterUnitOfWorkManager(serviceCollection);
             serviceCollection.RegisterAllFromType(typeof(IUnitOfWork), ServiceLifeTime.Transient, Assembly);
             RegisterRepositories(serviceCollection);
-            if (EnableInboxEventBusMessageRepository())
-                RegisterInboxEventBusMessageRepository(serviceCollection);
+            RegisterInboxEventBusMessageRepository(serviceCollection);
+            RegisterOutboxEventBusMessageRepository(serviceCollection);
             serviceCollection.RegisterAllFromType<IPersistenceService>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformDataMigrationExecutor>(ServiceLifeTime.Transient, Assembly);
         }
@@ -55,10 +56,22 @@ namespace Easy.Platform.Persistence
 
         protected virtual void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
         {
-            serviceCollection.RegisterAllFromType<IPlatformInboxEventBusMessageRepository>(ServiceLifeTime.Transient, Assembly);
+            if (EnableInboxEventBusMessageRepository())
+                serviceCollection.RegisterAllFromType<IPlatformInboxEventBusMessageRepository>(ServiceLifeTime.Transient, Assembly);
+        }
+
+        protected virtual void RegisterOutboxEventBusMessageRepository(IServiceCollection serviceCollection)
+        {
+            if (EnableOutboxEventBusMessageRepository())
+                serviceCollection.RegisterAllFromType<IPlatformOutboxEventBusMessageRepository>(ServiceLifeTime.Transient, Assembly);
         }
 
         protected virtual bool EnableInboxEventBusMessageRepository()
+        {
+            return false;
+        }
+
+        protected virtual bool EnableOutboxEventBusMessageRepository()
         {
             return false;
         }

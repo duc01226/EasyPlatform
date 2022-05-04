@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.Cqrs.Commands;
+using Easy.Platform.Application.EventBus.Producers;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Domain.UnitOfWork;
@@ -22,13 +23,13 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 
     public class DemoSendFreeFormatEventBusMessageCommandHandler : PlatformCqrsCommandApplicationHandler<DemoSendFreeFormatEventBusMessageCommand, DemoSendFreeFormatEventBusMessageCommandResult>
     {
-        private readonly IPlatformEventBusProducer eventBusProducer;
+        private readonly IPlatformApplicationEventBusProducer eventBusProducer;
 
         public DemoSendFreeFormatEventBusMessageCommandHandler(
             IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager,
             IPlatformCqrs cqrs,
-            IPlatformEventBusProducer eventBusProducer) : base(userContext, unitOfWorkManager, cqrs)
+            IPlatformApplicationEventBusProducer eventBusProducer) : base(userContext, unitOfWorkManager, cqrs)
         {
             this.eventBusProducer = eventBusProducer;
         }
@@ -43,7 +44,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
                     Property1 = request.Property1,
                     Property2 = request.Property2
                 },
-                cancellationToken);
+                cancellationToken: cancellationToken);
             return new DemoSendFreeFormatEventBusMessageCommandResult();
         }
     }

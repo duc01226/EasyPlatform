@@ -36,13 +36,20 @@ namespace Easy.Platform.Infrastructures.EventBus
         /// </summary>
         /// <exception cref="PlatformEventBusException{TMessage}">Could throw if there is an exception</exception>
         public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default)
-            where TMessage : class, IPlatformEventBusFreeFormatMessage, new();
+            where TMessage : IPlatformEventBusFreeFormatMessage;
 
         /// <summary>
         /// Send a free format message <see cref="TMessage"/> to bus with <see cref="routingKey"/>
         /// </summary>
         /// <exception cref="PlatformEventBusException{TMessage}">Could throw if there is an exception</exception>
         public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(TMessage message, string routingKey, CancellationToken cancellationToken = default)
-            where TMessage : class, IPlatformEventBusFreeFormatMessage, new();
+            where TMessage : IPlatformEventBusFreeFormatMessage;
+
+        /// <summary>
+        /// Send a message to bus with a routingKey
+        /// </summary>
+        /// <exception cref="PlatformEventBusException{TMessage}">Could throw if there is an exception</exception>
+        public Task<TMessage> SendTrackableMessageAsync<TMessage>(TMessage message, string routingKey, CancellationToken cancellationToken = default)
+            where TMessage : IPlatformEventBusTrackableMessage;
     }
 }

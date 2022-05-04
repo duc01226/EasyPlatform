@@ -30,17 +30,13 @@ namespace Easy.Platform.EfCore
         public IQueryable<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryQuery =>
             ApplicationDataMigrationHistoryDbSet.AsQueryable();
 
-        public DbSet<PlatformInboxEventBusMessage> PlatformInboxEventBusMessageDbSet => Set<PlatformInboxEventBusMessage>();
-
-        public IQueryable<PlatformInboxEventBusMessage> PlatformInboxEventBusMessageQuery =>
-            PlatformInboxEventBusMessageDbSet.AsQueryable();
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Auto apply configuration by convention.
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
             modelBuilder.ApplyConfiguration(new PlatformDataMigrationHistoryConfiguration());
-            modelBuilder.ApplyConfiguration(new PlatformDefaultInboxEventBusMessageConfiguration());
+            modelBuilder.ApplyConfiguration(new PlatformInboxEventBusMessageConfiguration());
+            modelBuilder.ApplyConfiguration(new PlatformOutboxEventBusMessageConfiguration());
 
             base.OnModelCreating(modelBuilder);
         }

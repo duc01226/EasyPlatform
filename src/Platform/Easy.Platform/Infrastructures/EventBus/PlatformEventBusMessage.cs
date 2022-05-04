@@ -23,7 +23,7 @@ namespace Easy.Platform.Infrastructures.EventBus
         public TPayload Payload { get; set; }
     }
 
-    public class PlatformEventBusMessage<TPayload> : IPlatformEventBusMessage<TPayload>, IPlatformEventBusFreeFormatMessage where TPayload : class, new()
+    public class PlatformEventBusMessage<TPayload> : IPlatformEventBusMessage<TPayload> where TPayload : class, new()
     {
         private string messageGroup;
         private string producerContext;

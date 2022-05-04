@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Easy.Platform.EfCore.EntityConfiguration
 {
-    public abstract class PlatformInboxEventBusMessageConfiguration : PlatformEntityConfiguration<PlatformInboxEventBusMessage, string>
+    public class PlatformInboxEventBusMessageConfiguration : PlatformEntityConfiguration<PlatformInboxEventBusMessage, string>
     {
         public override void Configure(EntityTypeBuilder<PlatformInboxEventBusMessage> builder)
         {
@@ -25,9 +25,5 @@ namespace Easy.Platform.EfCore.EntityConfiguration
             builder.HasIndex(p => p.LastConsumeDate);
             builder.HasIndex(p => p.CreatedDate);
         }
-    }
-
-    public class PlatformDefaultInboxEventBusMessageConfiguration : PlatformInboxEventBusMessageConfiguration
-    {
     }
 }

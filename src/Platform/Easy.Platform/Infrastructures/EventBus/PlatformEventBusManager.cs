@@ -29,10 +29,10 @@ namespace Easy.Platform.Infrastructures.EventBus
         /// </summary>
         List<string> AllDefinedEventBusConsumerBindingRoutingKeys();
 
-        ///// <summary>
-        ///// Get routing keys for all defined message to be produced
-        ///// </summary>
-        //List<string> AllDefinedEventBusMessageRoutingKeys();
+        /// <summary>
+        /// Get all assemblies for scanning event bus message/consumer
+        /// </summary>
+        List<Assembly> GetScanAssemblies();
     }
 
     public class PlatformEventBusManager : IPlatformEventBusManager
@@ -95,7 +95,7 @@ namespace Easy.Platform.Infrastructures.EventBus
                 .ToList();
         }
 
-        protected virtual List<Assembly> GetScanAssemblies()
+        public List<Assembly> GetScanAssemblies()
         {
             return serviceProvider.GetServices<PlatformModule>()
                 .Where(p => !p.GetType().IsAssignableTo(typeof(PlatformInfrastructureModule)))

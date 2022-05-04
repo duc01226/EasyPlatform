@@ -22,17 +22,17 @@ namespace Easy.Platform.RabbitMQ
 
         protected override long MessageExpiredInDays()
         {
-            return TimeSpan.FromSeconds(options.InboxMessageExpiredInSeconds).Days;
+            return TimeSpan.FromSeconds(options.InboxEventBusMessageOptions.MessageExpiredInSeconds).Days;
         }
 
         protected override int NumberOfDeleteMessagesBatch()
         {
-            return options.InboxEventBusMessageCleanerOptions.NumberOfDeleteMessagesBatch;
+            return options.InboxEventBusMessageOptions.NumberOfDeleteMessagesBatch;
         }
 
         protected override TimeSpan ProcessTriggerIntervalTime()
         {
-            return TimeSpan.FromMinutes(options.InboxEventBusMessageCleanerOptions.ProcessTriggerIntervalInMinutes);
+            return TimeSpan.FromMinutes(options.InboxEventBusMessageOptions.ProcessTriggerIntervalInMinutes);
         }
     }
 }

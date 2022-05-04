@@ -1,4 +1,5 @@
 using Easy.Platform.Application.EventBus.Producers;
+using Easy.Platform.Application.EventBus.Producers.CqrsEventProducers;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
@@ -15,6 +16,9 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.EntityEv
         }
     }
 
+    /// <summary>
+    /// Demo SendAsFreeFormatMessage. The consumer for this entity event message do not need to define routing key
+    /// </summary>
     public class TextSnippetEntitySendAsFreeFormatMessageEventBusProducer : PlatformCqrsEntityEventBusProducer<TextSnippetEntity>
     {
         public TextSnippetEntitySendAsFreeFormatMessageEventBusProducer(
@@ -24,7 +28,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Producers.EntityEv
         {
         }
 
-        protected override bool SendWithFreeFormatMessageRoutingKey()
+        protected override bool SendAsFreeFormatMessage()
         {
             return true;
         }

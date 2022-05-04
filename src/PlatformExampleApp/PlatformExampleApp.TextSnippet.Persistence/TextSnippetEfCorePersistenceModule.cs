@@ -20,6 +20,11 @@ namespace PlatformExampleApp.TextSnippet.Persistence
             return true;
         }
 
+        protected override bool EnableOutboxEventBusMessageRepository()
+        {
+            return true;
+        }
+
         protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceProvider serviceProvider)
         {
             return options =>

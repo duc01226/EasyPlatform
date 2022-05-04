@@ -8,7 +8,7 @@ using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
 
-namespace Easy.Platform.Application.EventBus.Producers
+namespace Easy.Platform.Application.EventBus.Producers.CqrsEventProducers
 {
     public interface IPlatformCqrsDomainEventBusMessage : IPlatformEventBusMessage
     {
@@ -38,18 +38,6 @@ namespace Easy.Platform.Application.EventBus.Producers
 
         protected override async Task HandleAsync(TDomainEvent @event, CancellationToken cancellationToken)
         {
-            if (UnitOfWorkManager.Current() == null || UnitOfWorkManager.Current().Completed)
-            {
-                await SendDomainEventEventBusMessage(@event, cancellationToken);
-            }
-            else
-            {
-                UnitOfWorkManager.Current().OnCompleted += (sender, args) =>
-                {
-                    SendDomainEventEventBusMessage(@event, cancellationToken).Wait(cancellationToken);
-                };
-            }
-
             await SendDomainEventEventBusMessage(@event, cancellationToken);
         }
 
@@ -57,23 +45,23 @@ namespace Easy.Platform.Application.EventBus.Producers
         {
             try
             {
-                if (SendWithFreeFormatMessageRoutingKey())
+                if (SendAsFreeFormatMessage())
                 {
                     await ApplicationEventBusProducer
                         .SendAsFreeFormatMessageAsync<PlatformCqrsDomainEventBusMessage<TDomainEvent>, TDomainEvent>(
-                            trackId: @event.Id,
+                            trackId: Guid.NewGuid().ToString(),
                             messagePayload: @event,
                             messageAction: @event.EventAction,
-                            cancellationToken);
+                            cancellationToken: cancellationToken);
                 }
                 else
                 {
                     await ApplicationEventBusProducer
                         .SendAsync<PlatformCqrsDomainEventBusMessage<TDomainEvent>, TDomainEvent>(
-                            trackId: @event.Id,
+                            trackId: Guid.NewGuid().ToString(),
                             messagePayload: @event,
                             messageAction: @event.EventAction,
-                            cancellationToken);
+                            cancellationToken: cancellationToken);
                 }
             }
             catch (PlatformEventBusException<PlatformCqrsDomainEventBusMessage<TDomainEvent>> e)
@@ -90,7 +78,7 @@ namespace Easy.Platform.Application.EventBus.Producers
         /// The the consumer for this message do not need to define <see cref="PlatformEventBusConsumerAttribute"/>.
         /// Consumer without <see cref="PlatformEventBusConsumerAttribute"/> will automatically binding to Default FreeFormatMessageRoutingKey for the TMessage Type.
         /// </summary>
-        protected virtual bool SendWithFreeFormatMessageRoutingKey()
+        protected virtual bool SendAsFreeFormatMessage()
         {
             return false;
         }

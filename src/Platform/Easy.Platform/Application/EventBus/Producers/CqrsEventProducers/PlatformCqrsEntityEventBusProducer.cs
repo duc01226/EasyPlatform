@@ -9,7 +9,7 @@ using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
 
-namespace Easy.Platform.Application.EventBus.Producers
+namespace Easy.Platform.Application.EventBus.Producers.CqrsEventProducers
 {
     public interface IPlatformCqrsEntityEventBusMessage : IPlatformEventBusMessage
     {
@@ -39,17 +39,7 @@ namespace Easy.Platform.Application.EventBus.Producers
 
         protected override async Task HandleAsync(PlatformCqrsEntityEvent<TEntity> @event, CancellationToken cancellationToken)
         {
-            if (UnitOfWorkManager.Current() == null || UnitOfWorkManager.Current().Completed)
-            {
-                await SendEntityEventEventBusMessage(@event, cancellationToken);
-            }
-            else
-            {
-                UnitOfWorkManager.Current().OnCompleted += (sender, args) =>
-                {
-                    SendEntityEventEventBusMessage(@event, cancellationToken).Wait(cancellationToken);
-                };
-            }
+            await SendEntityEventEventBusMessage(@event, cancellationToken);
         }
 
         /// <summary>
@@ -57,7 +47,7 @@ namespace Easy.Platform.Application.EventBus.Producers
         /// The the consumer for this message do not need to define <see cref="PlatformEventBusConsumerAttribute"/>.
         /// Consumer without <see cref="PlatformEventBusConsumerAttribute"/> will automatically binding to Default FreeFormatMessageRoutingKey for the TMessage Type.
         /// </summary>
-        protected virtual bool SendWithFreeFormatMessageRoutingKey()
+        protected virtual bool SendAsFreeFormatMessage()
         {
             return false;
         }
@@ -68,10 +58,10 @@ namespace Easy.Platform.Application.EventBus.Producers
         {
             try
             {
-                if (SendWithFreeFormatMessageRoutingKey())
+                if (SendAsFreeFormatMessage())
                 {
                     await ApplicationEventBusProducer.SendAsFreeFormatMessageAsync<PlatformCqrsEntityEventBusMessage<TEntity>, PlatformCqrsEntityEvent<TEntity>>(
-                        trackId: @event.Id,
+                        trackId: Guid.NewGuid().ToString(),
                         messagePayload: @event,
                         messageAction: @event.EventAction,
                         cancellationToken: cancellationToken);
@@ -79,7 +69,7 @@ namespace Easy.Platform.Application.EventBus.Producers
                 else
                 {
                     await ApplicationEventBusProducer.SendAsync<PlatformCqrsEntityEventBusMessage<TEntity>, PlatformCqrsEntityEvent<TEntity>>(
-                        trackId: @event.Id,
+                        trackId: Guid.NewGuid().ToString(),
                         messagePayload: @event,
                         messageAction: @event.EventAction,
                         cancellationToken: cancellationToken);

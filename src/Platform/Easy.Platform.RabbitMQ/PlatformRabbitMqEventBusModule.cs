@@ -1,6 +1,7 @@
 using System;
 using Easy.Platform.Application.EventBus;
 using Easy.Platform.Application.EventBus.InboxPattern;
+using Easy.Platform.Application.EventBus.OutboxPattern;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Infrastructures.EventBus;
 using Easy.Platform.Common.Extensions;
@@ -25,7 +26,12 @@ namespace Easy.Platform.RabbitMQ
             serviceCollection.Register(typeof(PlatformRabbitMqOptions), RabbitMqOptionsFactory, ServiceLifeTime.Transient);
             serviceCollection.Register<IPlatformEventBusProducer, PlatformRabbitMqEventBusProducer>(ServiceLifeTime.Singleton);
             serviceCollection.AddHostedService<PlatformRabbitMqHostedService>();
+
             RegisterRabbitMqInboxEventBusMessageCleanerHostedService(serviceCollection);
+            RegisterRabbitMqConsumeInboxEventBusMessageHostedService(serviceCollection);
+
+            RegisterRabbitMqOutboxEventBusMessageCleanerHostedService(serviceCollection);
+            RegisterRabbitMqSendOutboxEventBusMessageHostedService(serviceCollection);
         }
 
         protected abstract PlatformRabbitMqOptions RabbitMqOptionsFactory(IServiceProvider serviceProvider);
@@ -36,6 +42,33 @@ namespace Easy.Platform.RabbitMQ
             serviceCollection.Register(
                 typeof(IHostedService),
                 typeof(PlatformRabbitMqInboxEventBusMessageCleanerHostedService),
+                ServiceLifeTime.Singleton);
+        }
+
+        private void RegisterRabbitMqConsumeInboxEventBusMessageHostedService(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RemoveIfExist(PlatformConsumeInboxEventBusMessageHostedService.MatchImplementation);
+            serviceCollection.Register(
+                typeof(IHostedService),
+                typeof(PlatformRabbitMqConsumeInboxEventBusMessageHostedService),
+                ServiceLifeTime.Singleton);
+        }
+
+        private void RegisterRabbitMqOutboxEventBusMessageCleanerHostedService(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RemoveIfExist(PlatformOutboxEventBusMessageCleanerHostedService.MatchImplementation);
+            serviceCollection.Register(
+                typeof(IHostedService),
+                typeof(PlatformRabbitMqOutboxEventBusMessageCleanerHostedService),
+                ServiceLifeTime.Singleton);
+        }
+
+        private void RegisterRabbitMqSendOutboxEventBusMessageHostedService(IServiceCollection serviceCollection)
+        {
+            serviceCollection.RemoveIfExist(PlatformSendOutboxEventBusMessageHostedService.MatchImplementation);
+            serviceCollection.Register(
+                typeof(IHostedService),
+                typeof(PlatformRabbitMqSendOutboxEventBusMessageHostedService),
                 ServiceLifeTime.Singleton);
         }
     }

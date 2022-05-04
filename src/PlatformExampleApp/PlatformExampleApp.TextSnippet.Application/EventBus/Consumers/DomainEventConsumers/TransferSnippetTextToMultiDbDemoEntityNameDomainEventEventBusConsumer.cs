@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Application.EventBus.Consumers;
+using Easy.Platform.Application.EventBus.Consumers.CqrsEventConsumers;
 using Easy.Platform.Application.EventBus.InboxPattern;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Common.Extensions;
@@ -17,19 +18,19 @@ using PlatformExampleApp.TextSnippet.Domain.Events;
 namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.DomainEventConsumers
 {
     /// <summary>
-    /// Demo using <see cref="PlatformInboxEventBusConsumer{TMessagePayload}"/> to support inbox consumer
+    /// Demo using <see cref="PlatformApplicationEventBusConsumer{TMessagePayload}"/> to support inbox consumer
     /// The TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusConsumer will throw error => Trigger message requeue =>
     /// Inbox consumer will prevent a consumer consume the same message again.
     /// <br/>
-    /// <inheritdoc cref="PlatformInboxEventBusConsumer{TMessagePayload}"/>
+    /// <inheritdoc cref="PlatformApplicationEventBusConsumer{TMessagePayload}"/>
     /// </summary>
     [PlatformEventBusConsumer(PlatformCqrsDomainEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "TransferSnippetTextToMultiDbDemoEntityNameDomainEvent")]
-    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusConsumer : PlatformInboxEventBusConsumer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
+    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusConsumer : PlatformCqrsDomainEventBusConsumer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
     {
         public TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusConsumer(
             ILoggerFactory loggerFactory,
             IUnitOfWorkManager uowManager,
-            IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager, inboxEventBusMessageRepo)
+            IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
         {
         }
 
@@ -39,23 +40,26 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.DomainEv
 
             return Task.CompletedTask;
         }
+
+        // Can override this method return false to user normal consumer without using inbox message
+        //public override bool AutoSaveInboxMessage => false;
     }
 
     /// <summary>
-    /// Demo using <see cref="PlatformInboxEventBusConsumer{TEntity}"/> to support inbox consumer.
+    /// Demo using <see cref="PlatformApplicationEventBusConsumer{TMessagePayload}"/> to support inbox consumer.
     /// The TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusConsumer will throw error => Trigger message requeue =>
     /// Inbox consumer will prevent a consumer consume the same message again. <br/>
     /// Consume without using <see cref="PlatformEventBusConsumerAttribute"/>, Consumer will treat the message as free format message.
     /// Must ensure MessageClassName is unique in the system.
     /// <br/>
-    /// <inheritdoc cref="PlatformInboxEventBusConsumer{TEntity}"/>
+    /// <inheritdoc cref="PlatformApplicationEventBusConsumer{TMessagePayload}"/>
     /// </summary>
-    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventAsFreeFormatEventBusConsumer : PlatformInboxEventBusConsumer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
+    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventAsFreeFormatEventBusConsumer : PlatformCqrsDomainEventBusConsumer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
     {
         public TransferSnippetTextToMultiDbDemoEntityNameDomainEventAsFreeFormatEventBusConsumer(
             ILoggerFactory loggerFactory,
             IUnitOfWorkManager uowManager,
-            IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager, inboxEventBusMessageRepo)
+            IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
         {
         }
 
@@ -65,5 +69,8 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.DomainEv
 
             return Task.CompletedTask;
         }
+
+        // Can override this method return false to user normal consumer without using inbox message
+        //public override bool AutoSaveInboxMessage => false;
     }
 }

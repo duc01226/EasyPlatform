@@ -1,5 +1,6 @@
 using Easy.Platform.Application.EventBus;
 using Easy.Platform.Application.EventBus.InboxPattern;
+using Easy.Platform.Application.EventBus.OutboxPattern;
 using RabbitMQ.Client;
 
 namespace Easy.Platform.RabbitMQ
@@ -9,8 +10,9 @@ namespace Easy.Platform.RabbitMQ
         public PlatformRabbitMqOptions()
         {
             RequeueDelayTimeInSeconds = 60;
-            RequeueExpiredInSeconds = RequeueDelayTimeInSeconds * 60 * 24 * 7;
-            InboxMessageExpiredInSeconds = RequeueExpiredInSeconds;
+            RequeueExpiredInSeconds = 60 * 60 * 24 * 7;
+            InboxEventBusMessageOptions.MessageExpiredInSeconds = RequeueExpiredInSeconds;
+            OutboxEventBusMessageOptions.MessageExpiredInSeconds = RequeueExpiredInSeconds;
         }
 
         public string HostNames { get; set; }
@@ -28,9 +30,7 @@ namespace Easy.Platform.RabbitMQ
         /// <summary>
         /// Used to set RetryCount policy when tried to create rabbit mq channel <see cref="IModel"/>
         /// </summary>
-        public int CreateChannelRetryCount { get; set; } = 5;
-
-        public int PublishMessageRetryCount { get; set; } = 5;
+        public int FirstTimeInitChannelRetryCount { get; set; } = 5;
 
         public int RunConsumerRetryCount { get; set; } = 5;
 
@@ -49,26 +49,27 @@ namespace Easy.Platform.RabbitMQ
         /// <summary>
         /// Config the time to true to log consumer process time
         /// </summary>
-        public bool LogConsumerProcessTime { get; set; } = true;
+        public bool IsLogConsumerProcessTime { get; set; } = true;
 
         /// <summary>
         /// Config the time in milliseconds to log warning if the process consumer time is over LogConsumerProcessWarningTimeMilliseconds.
         /// </summary>
-        public long LogConsumerProcessWarningTimeMilliseconds { get; set; } = 5000;
+        public long LogErrorSlowProcessWarningTimeMilliseconds { get; set; } = 5000;
 
-        public int RequeueDelayTimeInSeconds { get; set; }
+        public double RequeueDelayTimeInSeconds { get; set; }
 
-        public long RequeueExpiredInSeconds { get; set; }
-
-        public long InboxMessageExpiredInSeconds { get; set; }
+        public double RequeueExpiredInSeconds { get; set; }
 
         public int ProcessRequeueMessageRetryCount { get; set; } = 10;
 
-        public PlatformRabbitMqInboxEventBusMessageCleanerOptions InboxEventBusMessageCleanerOptions { get; set; } =
-            new PlatformRabbitMqInboxEventBusMessageCleanerOptions();
+        public PlatformRabbitMqInboxEventBusMessageOptions InboxEventBusMessageOptions { get; set; } =
+            new PlatformRabbitMqInboxEventBusMessageOptions();
+
+        public PlatformRabbitMqOutboxEventBusMessageOptions OutboxEventBusMessageOptions { get; set; } =
+            new PlatformRabbitMqOutboxEventBusMessageOptions();
     }
 
-    public class PlatformRabbitMqInboxEventBusMessageCleanerOptions
+    public class PlatformRabbitMqInboxEventBusMessageOptions
     {
         /// <summary>
         /// <inheritdoc cref="PlatformInboxEventBusMessageCleanerHostedService.ProcessTriggerIntervalTime"/>
@@ -78,6 +79,23 @@ namespace Easy.Platform.RabbitMQ
         /// <summary>
         /// <inheritdoc cref="PlatformInboxEventBusMessageCleanerHostedService.NumberOfDeleteMessagesBatch"/>
         /// </summary>
-        public int NumberOfDeleteMessagesBatch { get; set; } = 500;
+        public int NumberOfDeleteMessagesBatch { get; set; } = PlatformInboxEventBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
+
+        public double MessageExpiredInSeconds { get; set; }
+    }
+
+    public class PlatformRabbitMqOutboxEventBusMessageOptions
+    {
+        /// <summary>
+        /// <inheritdoc cref="PlatformOutboxEventBusMessageCleanerHostedService.ProcessTriggerIntervalTime"/>
+        /// </summary>
+        public long ProcessTriggerIntervalInMinutes { get; set; } = 1;
+
+        /// <summary>
+        /// <inheritdoc cref="PlatformOutboxEventBusMessageCleanerHostedService.NumberOfDeleteMessagesBatch"/>
+        /// </summary>
+        public int NumberOfDeleteMessagesBatch { get; set; } = PlatformOutboxEventBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
+
+        public double MessageExpiredInSeconds { get; set; }
     }
 }

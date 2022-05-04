@@ -44,8 +44,7 @@ namespace Easy.Platform.Common.Hosting
 
         protected override void DisposeManagedResource()
         {
-            if (timer != null)
-                timer.Dispose();
+            timer?.Dispose();
         }
     }
 }

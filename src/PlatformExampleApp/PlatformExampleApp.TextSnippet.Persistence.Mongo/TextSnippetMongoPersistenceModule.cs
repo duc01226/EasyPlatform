@@ -26,5 +26,10 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
         {
             return true;
         }
+
+        protected override bool EnableOutboxEventBusMessageRepository()
+        {
+            return true;
+        }
     }
 }

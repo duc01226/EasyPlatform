@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Easy.Platform.Application.EventBus.Consumers;
+using Easy.Platform.Application.EventBus.Consumers.CqrsEventConsumers;
 using Easy.Platform.Application.EventBus.InboxPattern;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Events;
@@ -15,17 +16,17 @@ using PlatformExampleApp.TextSnippet.Domain.Entities;
 namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.EntityEventConsumers
 {
     /// <summary>
-    /// Demo using <see cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity}"/> to support inbox consumer
+    /// Demo using <see cref="PlatformCqrsEntityEventBusConsumer{TEntity}"/> to support inbox consumer
     /// <br/>
-    /// <inheritdoc cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity}"/>
+    /// <inheritdoc cref="PlatformCqrsEntityEventBusConsumer{TEntity}"/>
     /// </summary>
     [PlatformEventBusConsumer(PlatformCqrsEntityEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "TextSnippetEntity")]
-    public class SnippetTextEntityEventBusConsumer : PlatformInboxCqrsEntityEventBusConsumer<TextSnippetEntity>
+    public class SnippetTextEntityEventBusConsumer : PlatformCqrsEntityEventBusConsumer<TextSnippetEntity>
     {
         public SnippetTextEntityEventBusConsumer(
             ILoggerFactory loggerFactory,
             IUnitOfWorkManager uowManager,
-            IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager, inboxEventBusMessageRepo)
+            IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
         {
         }
 
@@ -35,21 +36,24 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.EntityEv
                                            $"Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             return Task.CompletedTask;
         }
+
+        // Can override this method return false to user normal consumer without using inbox message
+        //public override bool AutoSaveInboxMessage => false;
     }
 
     /// <summary>
-    /// Demo using <see cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity}"/> to support inbox consumer.
+    /// Demo using <see cref="PlatformCqrsEntityEventBusConsumer{TEntity}"/> to support inbox consumer.
     /// Consume without using <see cref="PlatformEventBusConsumerAttribute"/>, Consumer will treat the message as free format message.
     /// Must ensure MessageClassName is unique in the system.
     /// <br/>
-    /// <inheritdoc cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity}"/>
+    /// <inheritdoc cref="PlatformCqrsEntityEventBusConsumer{TEntity}"/>
     /// </summary>
-    public class SnippetTextEntityAsFreeFormatEventBusConsumer : PlatformInboxCqrsEntityEventBusConsumer<TextSnippetEntity>
+    public class SnippetTextEntityAsFreeFormatEventBusConsumer : PlatformCqrsEntityEventBusConsumer<TextSnippetEntity>
     {
         public SnippetTextEntityAsFreeFormatEventBusConsumer(
             ILoggerFactory loggerFactory,
             IUnitOfWorkManager uowManager,
-            IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager, inboxEventBusMessageRepo)
+            IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
         {
         }
 
@@ -59,20 +63,23 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.EntityEv
                                            $"Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
             return Task.CompletedTask;
         }
+
+        // Can override this method return false to user normal consumer without using inbox message
+        //public override bool AutoSaveInboxMessage => false;
     }
 
     /// <summary>
-    /// Demo using <see cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity}"/> to support inbox consumer.
+    /// Demo using <see cref="PlatformCqrsEntityEventBusConsumer{TEntity}"/> to support inbox consumer.
     /// Test throw error to store inbox message with error info
     /// <br/>
-    /// <inheritdoc cref="PlatformInboxCqrsEntityEventBusConsumer{TEntity}"/>
+    /// <inheritdoc cref="PlatformCqrsEntityEventBusConsumer{TEntity}"/>
     /// </summary>
-    public class SnippetTextEntityTestErrorInboxEventBusConsumer : PlatformInboxCqrsEntityEventBusConsumer<TextSnippetEntity>
+    public class SnippetTextEntityTestErrorInboxEventBusConsumer : PlatformCqrsEntityEventBusConsumer<TextSnippetEntity>
     {
         public SnippetTextEntityTestErrorInboxEventBusConsumer(
             ILoggerFactory loggerFactory,
             IUnitOfWorkManager uowManager,
-            IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager, inboxEventBusMessageRepo)
+            IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
         {
         }
 
@@ -80,5 +87,8 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.EntityEv
         {
             throw new Exception($"Test error inbox {DateTime.UtcNow.ToLongDateString()}");
         }
+
+        // Can override this method return false to user normal consumer without using inbox message
+        //public override bool AutoSaveInboxMessage => false;
     }
 }

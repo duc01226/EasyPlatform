@@ -1,3 +1,4 @@
+using System;
 using System.Threading.Tasks;
 using Easy.Platform.Application.EventBus.Consumers;
 using Easy.Platform.Application.EventBus.InboxPattern;
@@ -23,33 +24,18 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.FreeForm
 
             return Task.CompletedTask;
         }
+
+        // Can override this method return false to user normal consumer without using inbox message
+        //public override bool AutoSaveInboxMessage => false;
     }
 
     /// <summary>
-    /// Use PlatformUowEventBusFreeFormatMessageConsumer if you need to use platform repository
+    /// Use DemoSendFreeFormatInboxEventBusMessageCommandEventBusConsumer if you need to use platform repository/use inbox messages pattern
     /// </summary>
-    public class DemoSendFreeFormatUowEventBusMessageCommandEventBusConsumer
-        : PlatformUowEventBusFreeFormatMessageConsumer<DemoSendFreeFormatEventBusMessage>
+    public class DemoSendFreeFormatInboxEventBusMessageCommandApplicationEventBusConsumer
+        : PlatformApplicationEventBusFreeFormatMessageConsumer<DemoSendFreeFormatEventBusMessage>
     {
-        public DemoSendFreeFormatUowEventBusMessageCommandEventBusConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager) : base(loggerFactory, uowManager)
-        {
-        }
-
-        protected override Task InternalHandleAsync(DemoSendFreeFormatEventBusMessage message, string routingKey)
-        {
-            Logger.LogInformationIfEnabled($"Message {nameof(DemoSendFreeFormatEventBusMessage)} by {GetType().Name} has been handled");
-
-            return Task.CompletedTask;
-        }
-    }
-
-    /// <summary>
-    /// Use DemoSendFreeFormatInboxEventBusMessageCommandEventBusConsumer if you need to use inbox messages pattern
-    /// </summary>
-    public class DemoSendFreeFormatInboxEventBusMessageCommandEventBusConsumer
-        : PlatformInboxEventBusFreeFormatMessageConsumer<DemoSendFreeFormatEventBusMessage>
-    {
-        public DemoSendFreeFormatInboxEventBusMessageCommandEventBusConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager, IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo) : base(loggerFactory, uowManager, inboxEventBusMessageRepo)
+        public DemoSendFreeFormatInboxEventBusMessageCommandApplicationEventBusConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager, IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
         {
         }
 
@@ -59,5 +45,8 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.FreeForm
 
             return Task.CompletedTask;
         }
+
+        // Can override this method return false to user normal consumer without using inbox message
+        //public override bool AutoSaveInboxMessage => false;
     }
 }

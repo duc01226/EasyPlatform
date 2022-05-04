@@ -53,23 +53,32 @@ namespace Easy.Platform.RabbitMQ
             this.channelPool = channelPool;
         }
 
-        protected override Task StartProcess(CancellationToken cancellationToken)
+        protected override async Task StartProcess(CancellationToken cancellationToken)
         {
-            DeclareRabbitMqConfiguration();
+            await Task.Run(
+                () =>
+                {
+                    while (DeclareRabbitMqConfiguration() == false)
+                    {
+                        DeclareRabbitMqConfiguration();
+                    }
 
-            RunConsumer();
-
-            return Task.CompletedTask;
+                    RunConsumer();
+                },
+                cancellationToken);
         }
 
-        protected override Task StopProcess(CancellationToken cancellationToken)
+        protected override async Task StopProcess(CancellationToken cancellationToken)
         {
-            ReturnCurrentChannelBackToPool();
+            await Task.Run(
+                () =>
+                {
+                    ReturnCurrentChannelBackToPool();
 
-            if (currentChannel is { IsOpen: true })
-                currentChannel.Close();
-
-            return Task.CompletedTask;
+                    if (currentChannel is { IsOpen: true })
+                        currentChannel.Close();
+                },
+                cancellationToken);
         }
 
         private void ReturnCurrentChannelBackToPool()
@@ -80,15 +89,39 @@ namespace Easy.Platform.RabbitMQ
             }
         }
 
-        private void DeclareRabbitMqConfiguration()
+        private bool DeclareRabbitMqConfiguration()
         {
-            var channel = channelPool.Get();
+            var channel = InitRabbitMqChannel();
+
+            if (channel == null)
+                return false;
 
             DeclareRabbitMqExchangesConfiguration(channel);
 
             DeclareRabbitMqQueuesConfiguration(channel);
 
             channelPool.Return(channel);
+
+            return true;
+        }
+
+        private IModel InitRabbitMqChannel()
+        {
+            try
+            {
+                return Policy
+                    .Handle<Exception>()
+                    .WaitAndRetry(
+                        options.FirstTimeInitChannelRetryCount,
+                        retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)))
+                    .ExecuteAndThrowFinalException(
+                        executeFunc: () => channelPool.Get(),
+                        beforeThrowFinalException: ex => { Logger.LogError(ex, "Init rabbit-mq channel failed."); });
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private void DeclareRabbitMqQueuesConfiguration(IModel channel)
@@ -338,11 +371,6 @@ namespace Easy.Platform.RabbitMQ
             }
             catch (PlatformInvokeConsumerException ex)
             {
-                Log.Error(
-                    Logger,
-                    ex,
-                    $"RabbitMQ invoke consumer {ex.ConsumerName} error for the routing key: {rabbitMqMessage.RoutingKey}.{Environment.NewLine}Message: {Encoding.UTF8.GetString(rabbitMqMessage.Body.Span)}");
-
                 ProcessRequeueMessage(rabbitMqMessage, ex.EventBusMessage);
             }
             catch (Exception ex)
@@ -350,7 +378,8 @@ namespace Easy.Platform.RabbitMQ
                 Log.Error(
                     Logger,
                     ex,
-                    $"RabbitMQ processing error for the routing key: {rabbitMqMessage.RoutingKey}.{Environment.NewLine}Message: {Encoding.UTF8.GetString(rabbitMqMessage.Body.Span)}");
+                    $"RabbitMQ consume message error must REJECT. [RoutingKey:{rabbitMqMessage.RoutingKey}].{Environment.NewLine}" +
+                    $"Message: {Encoding.UTF8.GetString(rabbitMqMessage.Body.Span)}");
 
                 // Reject the message.
                 Util.Tasks.CatchException(() => currentChannel.BasicReject(rabbitMqMessage.DeliveryTag, false));
@@ -406,7 +435,13 @@ namespace Easy.Platform.RabbitMQ
 
             if (eventBusMessage != null)
             {
-                await PlatformEventBusBaseConsumer.InvokeConsumer(consumer, eventBusMessage, args.RoutingKey, options.LogConsumerProcessTime, options.LogConsumerProcessWarningTimeMilliseconds, Logger);
+                await PlatformEventBusBaseConsumer.InvokeConsumer(
+                    consumer,
+                    eventBusMessage,
+                    args.RoutingKey,
+                    options.IsLogConsumerProcessTime,
+                    options.LogErrorSlowProcessWarningTimeMilliseconds,
+                    Logger);
             }
         }
     }

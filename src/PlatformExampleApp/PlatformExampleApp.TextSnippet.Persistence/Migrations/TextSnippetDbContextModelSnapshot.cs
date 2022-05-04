@@ -25,6 +25,10 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<Guid?>("ConcurrencyUpdateToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<string>("ConsumeStatus")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -67,6 +71,57 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Migrations
                     b.HasIndex("ConsumeStatus", "LastConsumeDate");
 
                     b.ToTable("PlatformInboxEventBusMessage");
+                });
+
+            modelBuilder.Entity("Easy.Platform.Application.EventBus.OutboxPattern.PlatformOutboxEventBusMessage", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid?>("ConcurrencyUpdateToken")
+                        .IsConcurrencyToken()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("JsonMessage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("LastSendDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("LastSendError")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("MessageTypeFullName")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("RoutingKey")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("SendStatus")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedDate");
+
+                    b.HasIndex("LastSendDate");
+
+                    b.HasIndex("RoutingKey");
+
+                    b.HasIndex("SendStatus", "CreatedDate");
+
+                    b.HasIndex("SendStatus", "LastSendDate");
+
+                    b.ToTable("PlatformOutboxEventBusMessage");
                 });
 
             modelBuilder.Entity("Easy.Platform.Persistence.DataMigration.PlatformDataMigrationHistory", b =>

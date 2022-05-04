@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Application.EventBus;
 using Easy.Platform.Application.EventBus.InboxPattern;
+using Easy.Platform.Application.EventBus.OutboxPattern;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Entities;
@@ -39,6 +40,7 @@ namespace Easy.Platform.MongoDB
     {
         public static readonly string EnsureIndexesMigrationName = "EnsureIndexesAsync";
         public static readonly string PlatformInboxEventBusMessageCollectionName = "InboxEventBusMessage";
+        public static readonly string PlatformOutboxEventBusMessageCollectionName = "OutboxEventBusMessage";
         public static readonly string PlatformDataMigrationHistoryCollectionName = "MigrationHistory";
 
         public readonly IMongoDatabase Database;
@@ -58,6 +60,7 @@ namespace Easy.Platform.MongoDB
         public bool Disposed { get; private set; }
         public IMongoCollection<PlatformMongoMigrationHistory> MigrationHistoryCollection => Database.GetCollection<PlatformMongoMigrationHistory>(DataMigrationHistoryCollectionName);
         public IMongoCollection<PlatformInboxEventBusMessage> InboxEventBusMessageCollection => Database.GetCollection<PlatformInboxEventBusMessage>(GetCollectionName<PlatformInboxEventBusMessage>());
+        public IMongoCollection<PlatformOutboxEventBusMessage> OutboxEventBusMessageCollection => Database.GetCollection<PlatformOutboxEventBusMessage>(GetCollectionName<PlatformOutboxEventBusMessage>());
         public IMongoCollection<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryCollection => Database.GetCollection<PlatformDataMigrationHistory>(ApplicationDataMigrationHistoryCollectionName);
         public IQueryable<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryQuery => ApplicationDataMigrationHistoryCollection.AsQueryable();
         public virtual string DataMigrationHistoryCollectionName => "MigrationHistory";
@@ -68,6 +71,7 @@ namespace Easy.Platform.MongoDB
             await EnsureMigrationHistoryCollectionIndexesAsync(recreate);
             await EnsureApplicationDataMigrationHistoryCollectionIndexesAsync(recreate);
             await EnsureInboxEventBusMessageCollectionIndexesAsync(recreate);
+            await EnsureOutboxEventBusMessageCollectionIndexesAsync(recreate);
 
             if (recreate || !IsEnsureIndexesExecuted())
             {
@@ -140,6 +144,30 @@ namespace Easy.Platform.MongoDB
             }
         }
 
+        public virtual async Task EnsureOutboxEventBusMessageCollectionIndexesAsync(bool recreate = false)
+        {
+            if (recreate || !IsEnsureIndexesExecuted())
+            {
+                await OutboxEventBusMessageCollection.Indexes.DropAllAsync();
+            }
+
+            if (recreate || !IsEnsureIndexesExecuted())
+            {
+                await OutboxEventBusMessageCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformOutboxEventBusMessage>>
+                {
+                    new CreateIndexModel<PlatformOutboxEventBusMessage>(Builders<PlatformOutboxEventBusMessage>.IndexKeys.Ascending(p => p.RoutingKey)),
+                    new CreateIndexModel<PlatformOutboxEventBusMessage>(Builders<PlatformOutboxEventBusMessage>.IndexKeys
+                        .Ascending(p => p.SendStatus)
+                        .Ascending(p => p.LastSendDate)),
+                    new CreateIndexModel<PlatformOutboxEventBusMessage>(Builders<PlatformOutboxEventBusMessage>.IndexKeys
+                        .Ascending(p => p.SendStatus)
+                        .Ascending(p => p.CreatedDate)),
+                    new CreateIndexModel<PlatformOutboxEventBusMessage>(Builders<PlatformOutboxEventBusMessage>.IndexKeys.Descending(p => p.LastSendDate)),
+                    new CreateIndexModel<PlatformOutboxEventBusMessage>(Builders<PlatformOutboxEventBusMessage>.IndexKeys.Descending(p => p.CreatedDate))
+                });
+            }
+        }
+
         public abstract Task InternalEnsureIndexesAsync(bool recreate = false);
 
         public string GenerateId()
@@ -186,9 +214,22 @@ namespace Easy.Platform.MongoDB
                 return collectionName;
             }
 
+            if (TryGetPlatformEntityCollectionName<TEntity>() != null)
+                return TryGetPlatformEntityCollectionName<TEntity>();
+
+            throw new Exception($"Missing collection name mapping item for entity {typeof(TEntity).Name}. Please define it in return of {nameof(EntityTypeToCollectionNameMaps)} method.");
+        }
+
+        private static string TryGetPlatformEntityCollectionName<TEntity>()
+        {
             if (typeof(TEntity).IsAssignableTo(typeof(PlatformInboxEventBusMessage)))
             {
                 return PlatformInboxEventBusMessageCollectionName;
+            }
+
+            if (typeof(TEntity).IsAssignableTo(typeof(PlatformOutboxEventBusMessage)))
+            {
+                return PlatformOutboxEventBusMessageCollectionName;
             }
 
             if (typeof(TEntity).IsAssignableTo(typeof(PlatformMongoMigrationHistory)))
@@ -196,7 +237,7 @@ namespace Easy.Platform.MongoDB
                 return PlatformDataMigrationHistoryCollectionName;
             }
 
-            throw new Exception($"Missing collection name mapping item for entity {typeof(TEntity).Name}. Please define it in return of {nameof(EntityTypeToCollectionNameMaps)} method.");
+            return null;
         }
 
         /// <summary>
@@ -286,13 +327,7 @@ namespace Easy.Platform.MongoDB
         {
             if (EntityTypeToCollectionNameDictionary.Value == null)
             {
-                if (typeof(TEntity).IsAssignableTo(typeof(PlatformInboxEventBusMessage)) || typeof(TEntity).IsAssignableTo(typeof(PlatformMongoMigrationHistory)))
-                {
-                    collectionName = null;
-                    return false;
-                }
-
-                collectionName = typeof(TEntity).Name;
+                collectionName = TryGetPlatformEntityCollectionName<TEntity>() ?? typeof(TEntity).Name;
                 return true;
             }
 
