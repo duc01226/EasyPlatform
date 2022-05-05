@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Easy.Platform.Application.Context;
 using Easy.Platform.Application.EventBus;
 using Easy.Platform.Application.EventBus.InboxPattern;
 using Microsoft.Extensions.Hosting;
@@ -15,7 +16,8 @@ namespace Easy.Platform.RabbitMQ
             IHostApplicationLifetime applicationLifetime,
             IServiceProvider serviceProvider,
             ILoggerFactory loggerFactory,
-            PlatformRabbitMqOptions options) : base(applicationLifetime, serviceProvider, loggerFactory)
+            IPlatformApplicationSettingContext applicationSettingContext,
+            PlatformRabbitMqOptions options) : base(applicationLifetime, serviceProvider, loggerFactory, applicationSettingContext)
         {
             this.options = options;
         }

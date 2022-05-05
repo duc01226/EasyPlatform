@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Easy.Platform.Application.Context;
 using Easy.Platform.Common.Hosting;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Common.Extensions;
@@ -21,15 +22,18 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         public const int DefaultNumberOfDeleteMessagesBatch = 100;
 
         private readonly IServiceProvider serviceProvider;
+        private readonly IPlatformApplicationSettingContext applicationSettingContext;
 
         private bool isProcessing = false;
 
         public PlatformInboxEventBusMessageCleanerHostedService(
             IHostApplicationLifetime applicationLifetime,
             IServiceProvider serviceProvider,
-            ILoggerFactory loggerFactory) : base(applicationLifetime, loggerFactory)
+            ILoggerFactory loggerFactory,
+            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, loggerFactory)
         {
             this.serviceProvider = serviceProvider;
+            this.applicationSettingContext = applicationSettingContext;
         }
 
         public static bool MatchImplementation(ServiceDescriptor serviceDescriptor)
@@ -61,7 +65,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                         Log.Warning(
                             Logger,
                             ex,
-                            $"Retry CleanInboxEventBusMessage {currentRetry} time(s) failed with error: {ex.Message}");
+                            $"Retry CleanInboxEventBusMessage {currentRetry} time(s) failed with error: {ex.Message}. [ApplicationName:{applicationSettingContext.ApplicationName}]. [ApplicationAssembly:{applicationSettingContext.ApplicationAssembly.FullName}]");
                     })
                 .ExecuteAndThrowFinalExceptionAsync(() => CleanInboxEventBusMessage(cancellationToken));
 
@@ -159,7 +163,8 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         public PlatformDefaultInboxEventBusMessageCleanerHostedService(
             IHostApplicationLifetime applicationLifetime,
             IServiceProvider serviceProvider,
-            ILoggerFactory loggerFactory) : base(applicationLifetime, serviceProvider, loggerFactory)
+            ILoggerFactory loggerFactory,
+            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, serviceProvider, loggerFactory, applicationSettingContext)
         {
         }
     }
