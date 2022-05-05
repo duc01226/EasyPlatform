@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Easy.Platform.Application.Context;
 using Easy.Platform.Application.EventBus.Consumers;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Hosting;
@@ -24,14 +25,18 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 {
     public abstract class PlatformConsumeInboxEventBusMessageHostedService : PlatformIntervalProcessHostedService
     {
+        private readonly IPlatformApplicationSettingContext applicationSettingContext;
+
         private bool isProcessing = false;
 
         protected PlatformConsumeInboxEventBusMessageHostedService(
             IHostApplicationLifetime applicationLifetime,
             ILoggerFactory loggerFactory,
-            IServiceProvider serviceProvider) : base(applicationLifetime, loggerFactory)
+            IServiceProvider serviceProvider,
+            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, loggerFactory)
         {
             ServiceProvider = serviceProvider;
+            this.applicationSettingContext = applicationSettingContext;
             FullNameToDefinedEventBusConsumerTypeDic = serviceProvider
                 .GetService<IPlatformEventBusManager>()?
                 .AllDefinedEventBusConsumerTypes()
@@ -70,18 +75,27 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
             isProcessing = true;
 
-            // Retry in case of the db is not started, initiated or restarting
-            await Policy.Handle<Exception>()
-                .WaitAndRetryAsync(
-                    retryCount: ProcessConsumeMessageRetryCount(),
-                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    onRetry: (ex, timeSpan, currentRetry, ctx) =>
-                    {
-                        Logger.LogWarning(
-                            ex,
-                            $"Retry ConsumeInboxEventBusMessages {currentRetry} time(s) failed with error: {ex.Message}");
-                    })
-                .ExecuteAndThrowFinalExceptionAsync(() => ConsumeInboxEventBusMessages(cancellationToken));
+            try
+            {
+                // Retry in case of the db is not started, initiated or restarting
+                await Policy.Handle<Exception>()
+                    .WaitAndRetryAsync(
+                        retryCount: ProcessConsumeMessageRetryCount(),
+                        sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                        onRetry: (ex, timeSpan, currentRetry, ctx) =>
+                        {
+                            Logger.LogWarning(
+                                ex,
+                                $"Retry ConsumeInboxEventBusMessages {currentRetry} time(s) failed with error: {ex.Message}. [ApplicationName:{applicationSettingContext.ApplicationName}]. [ApplicationAssembly:{applicationSettingContext.ApplicationAssembly.FullName}]");
+                        })
+                    .ExecuteAndThrowFinalExceptionAsync(() => ConsumeInboxEventBusMessages(cancellationToken));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(
+                    ex,
+                    $"Retry ConsumeInboxEventBusMessages failed with error: {ex.Message}. [ApplicationName:{applicationSettingContext.ApplicationName}]. [ApplicationAssembly:{applicationSettingContext.ApplicationAssembly.FullName}]");
+            }
 
             isProcessing = false;
         }
@@ -270,7 +284,8 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         public PlatformDefaultConsumeInboxEventBusMessageHostedService(
             IHostApplicationLifetime applicationLifetime,
             ILoggerFactory loggerFactory,
-            IServiceProvider serviceProvider) : base(applicationLifetime, loggerFactory, serviceProvider)
+            IServiceProvider serviceProvider,
+            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, loggerFactory, serviceProvider, applicationSettingContext)
         {
         }
     }

@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Easy.Platform.Application.Context;
 using Easy.Platform.Application.EventBus.Producers;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Hosting;
@@ -25,13 +26,16 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
     {
         private bool isProcessing = false;
         private readonly IPlatformEventBusProducer eventBusProducer;
+        private readonly IPlatformApplicationSettingContext applicationSettingContext;
 
         protected PlatformSendOutboxEventBusMessageHostedService(
             IHostApplicationLifetime applicationLifetime,
             ILoggerFactory loggerFactory,
-            IServiceProvider serviceProvider) : base(applicationLifetime, loggerFactory)
+            IServiceProvider serviceProvider,
+            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, loggerFactory)
         {
             this.ServiceProvider = serviceProvider;
+            this.applicationSettingContext = applicationSettingContext;
             this.eventBusProducer = serviceProvider.GetService<IPlatformEventBusProducer>();
             FullNameToDefinedEventBusTypeDic = serviceProvider
                 .GetService<IPlatformEventBusManager>()?
@@ -73,18 +77,27 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
 
             isProcessing = true;
 
-            // Retry in case of the db is not started, initiated or restarting
-            await Policy.Handle<Exception>()
-                .WaitAndRetryAsync(
-                    retryCount: ProcessSendMessageRetryCount(),
-                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    onRetry: (ex, timeSpan, currentRetry, ctx) =>
-                    {
-                        Logger.LogWarning(
-                            ex,
-                            $"Retry SendOutboxEventBusMessages {currentRetry} time(s) failed with error: {ex.Message}");
-                    })
-                .ExecuteAndThrowFinalExceptionAsync(() => SendOutboxEventBusMessages(cancellationToken));
+            try
+            {
+                // Retry in case of the db is not started, initiated or restarting
+                await Policy.Handle<Exception>()
+                    .WaitAndRetryAsync(
+                        retryCount: ProcessSendMessageRetryCount(),
+                        sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                        onRetry: (ex, timeSpan, currentRetry, ctx) =>
+                        {
+                            Logger.LogWarning(
+                                ex,
+                                $"Retry SendOutboxEventBusMessages {currentRetry} time(s) failed with error: {ex.Message}. [ApplicationName:{applicationSettingContext.ApplicationName}]. [ApplicationAssembly:{applicationSettingContext.ApplicationAssembly.FullName}]");
+                        })
+                    .ExecuteAndThrowFinalExceptionAsync(() => SendOutboxEventBusMessages(cancellationToken));
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(
+                    ex,
+                    $"SendOutboxEventBusMessages failed with error: {ex.Message}. [ApplicationName:{applicationSettingContext.ApplicationName}]. [ApplicationAssembly:{applicationSettingContext.ApplicationAssembly.FullName}]");
+            }
 
             isProcessing = false;
         }
@@ -248,7 +261,8 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         public PlatformDefaultSendOutboxEventBusMessageHostedService(
             IHostApplicationLifetime applicationLifetime,
             ILoggerFactory loggerFactory,
-            IServiceProvider serviceProvider) : base(applicationLifetime, loggerFactory, serviceProvider)
+            IServiceProvider serviceProvider,
+            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, loggerFactory, serviceProvider, applicationSettingContext)
         {
         }
     }

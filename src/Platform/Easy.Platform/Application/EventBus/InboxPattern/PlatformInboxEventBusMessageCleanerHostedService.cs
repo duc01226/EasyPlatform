@@ -55,19 +55,29 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
             isProcessing = true;
 
-            // Retry in case of the db is not started, initiated or restarting
-            await Policy.Handle<Exception>()
-                .WaitAndRetryAsync(
-                    retryCount: ProcessClearMessageRetryCount(),
-                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    onRetry: (ex, timeSpan, currentRetry, ctx) =>
-                    {
-                        Log.Warning(
-                            Logger,
-                            ex,
-                            $"Retry CleanInboxEventBusMessage {currentRetry} time(s) failed with error: {ex.Message}. [ApplicationName:{applicationSettingContext.ApplicationName}]. [ApplicationAssembly:{applicationSettingContext.ApplicationAssembly.FullName}]");
-                    })
-                .ExecuteAndThrowFinalExceptionAsync(() => CleanInboxEventBusMessage(cancellationToken));
+            try
+            {
+                // Retry in case of the db is not started, initiated or restarting
+                await Policy.Handle<Exception>()
+                    .WaitAndRetryAsync(
+                        retryCount: ProcessClearMessageRetryCount(),
+                        sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                        onRetry: (ex, timeSpan, currentRetry, ctx) =>
+                        {
+                            Log.Warning(
+                                Logger,
+                                ex,
+                                $"Retry CleanInboxEventBusMessage {currentRetry} time(s) failed with error: {ex.Message}. [ApplicationName:{applicationSettingContext.ApplicationName}]. [ApplicationAssembly:{applicationSettingContext.ApplicationAssembly.FullName}]");
+                        })
+                    .ExecuteAndThrowFinalExceptionAsync(() => CleanInboxEventBusMessage(cancellationToken));
+            }
+            catch (Exception ex)
+            {
+                Log.Error(
+                    Logger,
+                    ex,
+                    $"Retry CleanInboxEventBusMessage failed with error: {ex.Message}. [ApplicationName:{applicationSettingContext.ApplicationName}]. [ApplicationAssembly:{applicationSettingContext.ApplicationAssembly.FullName}]");
+            }
 
             isProcessing = false;
         }
