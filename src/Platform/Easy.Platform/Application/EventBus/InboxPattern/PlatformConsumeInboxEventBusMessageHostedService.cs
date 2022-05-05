@@ -37,10 +37,10 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         {
             ServiceProvider = serviceProvider;
             this.applicationSettingContext = applicationSettingContext;
-            FullNameToDefinedEventBusConsumerTypeDic = serviceProvider
+            ConsumerByValueToDefinedEventBusConsumerTypeDic = serviceProvider
                 .GetService<IPlatformEventBusManager>()?
                 .AllDefinedEventBusConsumerTypes()
-                .ToDictionary(p => p.FullName, p => p) ?? new Dictionary<string, Type>();
+                .ToDictionary(PlatformInboxEventBusConsumerHelper.GetConsumerByValue, p => p) ?? new Dictionary<string, Type>();
         }
 
         public static bool MatchImplementation(ServiceDescriptor serviceDescriptor)
@@ -66,7 +66,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
         protected IServiceProvider ServiceProvider { get; }
 
-        protected Dictionary<string, Type> FullNameToDefinedEventBusConsumerTypeDic { get; }
+        protected Dictionary<string, Type> ConsumerByValueToDefinedEventBusConsumerTypeDic { get; }
 
         protected override async Task IntervalProcess(CancellationToken cancellationToken)
         {
@@ -145,7 +145,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             PlatformInboxEventBusMessage toHandleInboxMessage,
             CancellationToken cancellationToken)
         {
-            var consumerType = FullNameToDefinedEventBusConsumerTypeDic.GetValueOrDefault(toHandleInboxMessage.ConsumerBy, null);
+            var consumerType = ConsumerByValueToDefinedEventBusConsumerTypeDic.GetValueOrDefault(toHandleInboxMessage.ConsumerBy, null);
 
             var consumer = consumerType != null
                 ? scope.ServiceProvider.GetService(consumerType)

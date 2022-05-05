@@ -57,6 +57,16 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             }
         }
 
+        public static string GetConsumerByValue<TMessage>(IPlatformEventBusBaseConsumer<TMessage> consumer) where TMessage : class, IPlatformEventBusTrackableMessage, new()
+        {
+            return GetConsumerByValue(consumer.GetType());
+        }
+
+        public static string GetConsumerByValue(Type consumerType)
+        {
+            return consumerType.FullName;
+        }
+
         private static async Task UpsertProcessedInboxMessage<TMessage>(
             IPlatformEventBusBaseConsumer<TMessage> consumer,
             IUnitOfWorkManager unitOfWorkManager,
@@ -123,11 +133,6 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
                 await uow.CompleteAsync();
             }
-        }
-
-        private static string GetConsumerByValue<TMessage>(IPlatformEventBusBaseConsumer<TMessage> consumer) where TMessage : class, IPlatformEventBusTrackableMessage, new()
-        {
-            return consumer.GetType().FullName;
         }
     }
 }
