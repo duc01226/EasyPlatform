@@ -89,7 +89,7 @@ namespace Easy.Platform.Infrastructures.Caching
             if (requestKeyParts.Length == 0)
                 throw new ArgumentException("requestKeyParts must be not empty.", nameof(requestKeyParts));
 
-            return $"[{string.Join(RequestKeyPartsSeparator, requestKeyParts.Select(p => PlatformJsonSerializer.Serialize(p).Replace("\"", "'")))}]";
+            return $"[{string.Join(RequestKeyPartsSeparator, requestKeyParts.Select(p => p ?? "null").Select(p => PlatformJsonSerializer.Serialize(p).Replace("\"", "'")))}]";
         }
 
         public static object[] BuildRequestKeyParts(string requestKey)

@@ -46,9 +46,9 @@ namespace Easy.Platform.Common.JsonSerialization
             return result;
         }
 
-        public static string Serialize<TMessage>(TMessage value)
+        public static string Serialize<TValue>(TValue value)
         {
-            return JsonSerializer.Serialize(value, value.GetType(), CurrentOptions.Value);
+            return JsonSerializer.Serialize(value, value?.GetType() ?? typeof(TValue), CurrentOptions.Value);
         }
 
         public static T Deserialize<T>(string jsonValue, JsonSerializerOptions customSerializerOptions = null)
@@ -65,7 +65,7 @@ namespace Easy.Platform.Common.JsonSerialization
             TValue value,
             JsonSerializerOptions customSerializerOptions = null)
         {
-            return JsonSerializer.SerializeToUtf8Bytes(value, value.GetType(), customSerializerOptions ?? CurrentOptions.Value);
+            return JsonSerializer.SerializeToUtf8Bytes(value, value?.GetType() ?? typeof(TValue), customSerializerOptions ?? CurrentOptions.Value);
         }
 
         public static TValue Deserialize<TValue>(ReadOnlySpan<byte> utf8Json, JsonSerializerOptions customSerializerOptions = null)
