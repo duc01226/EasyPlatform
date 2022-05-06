@@ -40,7 +40,7 @@ namespace Easy.Platform.RabbitMQ
         {
             try
             {
-                var jsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value);
+                var jsonMessage = SerializeMessage(message);
 
                 await PublishMessageToQueueAsync(jsonMessage, customRoutingKey ?? message.RoutingKey(), cancellationToken);
 
@@ -84,7 +84,7 @@ namespace Easy.Platform.RabbitMQ
         {
             try
             {
-                var jsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value);
+                var jsonMessage = SerializeMessage(message);
 
                 await PublishMessageToQueueAsync(jsonMessage, routingKey, cancellationToken);
 
@@ -103,7 +103,7 @@ namespace Easy.Platform.RabbitMQ
         {
             try
             {
-                var jsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value);
+                var jsonMessage = SerializeMessage(message);
 
                 await PublishMessageToQueueAsync(jsonMessage, routingKey, cancellationToken);
 
@@ -113,6 +113,12 @@ namespace Easy.Platform.RabbitMQ
             {
                 throw new PlatformEventBusException<TMessage>(message, e);
             }
+        }
+
+        private static string SerializeMessage<TMessage>(TMessage message) where TMessage : IPlatformEventBusTrackableMessage
+        {
+            var jsonMessage = JsonSerializer.Serialize(message, message.GetType(), PlatformJsonSerializer.CurrentOptions.Value);
+            return jsonMessage;
         }
 
         private async Task PublishMessageToQueueAsync(string message, string routingKey, CancellationToken cancellationToken = default)
