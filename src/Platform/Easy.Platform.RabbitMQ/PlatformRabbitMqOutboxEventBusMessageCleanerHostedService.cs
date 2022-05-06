@@ -20,19 +20,19 @@ namespace Easy.Platform.RabbitMQ
             this.options = options;
         }
 
-        protected override long MessageExpiredInDays()
+        protected override double DeleteProcessedMessageInSeconds()
         {
-            return TimeSpan.FromSeconds(options.InboxEventBusMessageOptions.MessageExpiredInSeconds).Days;
+            return options.OutboxEventBusMessageOptions.DeleteProcessedMessageInSeconds;
         }
 
         protected override int NumberOfDeleteMessagesBatch()
         {
-            return options.InboxEventBusMessageOptions.NumberOfDeleteMessagesBatch;
+            return options.OutboxEventBusMessageOptions.NumberOfDeleteMessagesBatch;
         }
 
         protected override TimeSpan ProcessTriggerIntervalTime()
         {
-            return TimeSpan.FromMinutes(options.InboxEventBusMessageOptions.ProcessTriggerIntervalInMinutes);
+            return TimeSpan.FromMinutes(options.OutboxEventBusMessageOptions.ProcessTriggerIntervalInMinutes);
         }
     }
 }

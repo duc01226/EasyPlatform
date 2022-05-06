@@ -35,10 +35,5 @@ namespace Easy.Platform.RabbitMQ
         {
             return options.RequeueDelayTimeInSeconds;
         }
-
-        protected override double MessageProcessingExpiredInDays()
-        {
-            return options.RequeueExpiredInSeconds / (60 * 60 * 24);
-        }
     }
 }

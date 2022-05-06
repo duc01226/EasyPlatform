@@ -96,11 +96,11 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         }
 
         /// <summary>
-        /// To config how long a message can live in the database in days. Default is one week (7 days);
+        /// To config how long a message can live in the database in seconds. Default is one week (7 days);
         /// </summary>
-        protected virtual long MessageExpiredInDays()
+        protected virtual double DeleteProcessedMessageInSeconds()
         {
-            return 7;
+            return TimeSpan.FromDays(7).TotalSeconds;
         }
 
         protected bool HasOutboxEventBusMessageRepositoryRegistered()
@@ -121,7 +121,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                     var outboxEventBusMessageRepo = scope.ServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>();
 
                     var expiredMessages = outboxEventBusMessageRepo!.GetAllQuery()
-                        .Where(p => p.LastSendDate <= Clock.UtcNow.AddDays(-MessageExpiredInDays()) &&
+                        .Where(p => p.LastSendDate <= Clock.UtcNow.AddDays(-DeleteProcessedMessageInSeconds()) &&
                                     p.SendStatus == PlatformOutboxEventBusMessage.SendStatuses.Processed)
                         .OrderBy(p => p.SendStatus)
                         .Take(NumberOfDeleteMessagesBatch())

@@ -59,11 +59,11 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
 
         public static Expression<Func<PlatformOutboxEventBusMessage, bool>> ToHandleOutboxEventBusMessagesExpr(
             double retryProcessFailedMessageDelayTimeInSeconds,
-            double messageProcessingExpiredInDays)
+            double messageProcessingMaximumTimeInSeconds)
         {
             return p => p.SendStatus == PlatformOutboxEventBusMessage.SendStatuses.New ||
                         (p.SendStatus == PlatformOutboxEventBusMessage.SendStatuses.Failed && p.LastSendDate <= Clock.UtcNow.AddSeconds(-retryProcessFailedMessageDelayTimeInSeconds)) ||
-                        (p.SendStatus == PlatformOutboxEventBusMessage.SendStatuses.Processing && p.LastSendDate <= Clock.UtcNow.AddDays(-messageProcessingExpiredInDays));
+                        (p.SendStatus == PlatformOutboxEventBusMessage.SendStatuses.Processing && p.LastSendDate <= Clock.UtcNow.AddSeconds(-messageProcessingMaximumTimeInSeconds));
         }
 
         protected IServiceProvider ServiceProvider { get; }
@@ -135,7 +135,10 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                     var outboxEventBusMessageRepo =
                         scope.ServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>();
 
-                    var result = await outboxEventBusMessageRepo!.AnyAsync(ToHandleOutboxEventBusMessagesExpr(RetryProcessFailedMessageDelayTimeInSeconds(), MessageProcessingExpiredInDays()));
+                    var result = await outboxEventBusMessageRepo!.AnyAsync(
+                        ToHandleOutboxEventBusMessagesExpr(
+                            RetryProcessFailedMessageDelayTimeInSeconds(),
+                            MessageProcessingMaximumTimeInSeconds()));
 
                     return result;
                 }
@@ -189,7 +192,9 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                             scope.ServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>();
 
                         var toHandleMessages = outboxEventBusMessageRepo!.GetAllQuery()
-                            .Where(ToHandleOutboxEventBusMessagesExpr(RetryProcessFailedMessageDelayTimeInSeconds(), MessageProcessingExpiredInDays()))
+                            .Where(ToHandleOutboxEventBusMessagesExpr(
+                                RetryProcessFailedMessageDelayTimeInSeconds(),
+                                MessageProcessingMaximumTimeInSeconds()))
                             .OrderBy(p => p.LastSendDate)
                             .Take(NumberOfProcessMessagesBatch())
                             .ToList();
@@ -231,12 +236,12 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         }
 
         /// <summary>
-        /// To config how long a message can live in the database as Processing status in days. Default is 1 day;
+        /// To config how long a message can live in the database as Processing status in seconds. Default is 3600 seconds;
         /// This to handle that if message for some reason has been set as Processing but failed to process and has not been set back to failed.
         /// </summary>
-        protected virtual double MessageProcessingExpiredInDays()
+        protected virtual double MessageProcessingMaximumTimeInSeconds()
         {
-            return 1;
+            return 3600;
         }
 
         /// <summary>

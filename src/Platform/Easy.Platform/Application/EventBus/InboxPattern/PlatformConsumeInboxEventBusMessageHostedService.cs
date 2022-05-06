@@ -57,11 +57,11 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
         public static Expression<Func<PlatformInboxEventBusMessage, bool>> ToHandleInboxEventBusMessagesExpr(
             double retryProcessFailedMessageDelayTimeInSeconds,
-            double messageProcessingExpiredInDays)
+            double messageProcessingMaximumTimeInSeconds)
         {
             return p => p.ConsumeStatus == PlatformInboxEventBusMessage.ConsumeStatuses.New ||
                         (p.ConsumeStatus == PlatformInboxEventBusMessage.ConsumeStatuses.Failed && p.LastConsumeDate <= Clock.UtcNow.AddSeconds(-retryProcessFailedMessageDelayTimeInSeconds)) ||
-                        (p.ConsumeStatus == PlatformInboxEventBusMessage.ConsumeStatuses.Processing && p.LastConsumeDate <= Clock.UtcNow.AddDays(-messageProcessingExpiredInDays));
+                        (p.ConsumeStatus == PlatformInboxEventBusMessage.ConsumeStatuses.Processing && p.LastConsumeDate <= Clock.UtcNow.AddSeconds(-messageProcessingMaximumTimeInSeconds));
         }
 
         protected IServiceProvider ServiceProvider { get; }
@@ -133,7 +133,10 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                     var inboxEventBusMessageRepo =
                         scope.ServiceProvider.GetService<IPlatformInboxEventBusMessageRepository>();
 
-                    var result = await inboxEventBusMessageRepo!.AnyAsync(ToHandleInboxEventBusMessagesExpr(RetryProcessFailedMessageDelayTimeInSeconds(), MessageProcessingExpiredInDays()));
+                    var result = await inboxEventBusMessageRepo!.AnyAsync(
+                        ToHandleInboxEventBusMessagesExpr(
+                            RetryProcessFailedMessageDelayTimeInSeconds(),
+                            MessageProcessingMaximumTimeInSeconds()));
 
                     return result;
                 }
@@ -196,7 +199,9 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                             scope.ServiceProvider.GetService<IPlatformInboxEventBusMessageRepository>();
 
                         var toHandleMessages = inboxEventBusMessageRepo!.GetAllQuery()
-                            .Where(ToHandleInboxEventBusMessagesExpr(RetryProcessFailedMessageDelayTimeInSeconds(), MessageProcessingExpiredInDays()))
+                            .Where(ToHandleInboxEventBusMessagesExpr(
+                                RetryProcessFailedMessageDelayTimeInSeconds(),
+                                MessageProcessingMaximumTimeInSeconds()))
                             .OrderBy(p => p.LastConsumeDate)
                             .Take(NumberOfProcessMessagesBatch())
                             .ToList();
@@ -238,12 +243,12 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         }
 
         /// <summary>
-        /// To config how long a message can live in the database as Processing status in days. Default is 1 day;
+        /// To config how long a message can live in the database as Processing status in seconds. Default is 3600 * 24 seconds;
         /// This to handle that if message for some reason has been set as Processing but failed to process and has not been set back to failed.
         /// </summary>
-        protected virtual double MessageProcessingExpiredInDays()
+        protected virtual double MessageProcessingMaximumTimeInSeconds()
         {
-            return 1;
+            return 3600 * 24;
         }
 
         /// <summary>

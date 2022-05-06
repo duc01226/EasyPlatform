@@ -1,4 +1,4 @@
-using Easy.Platform.Application.EventBus;
+using System;
 using Easy.Platform.Application.EventBus.InboxPattern;
 using Easy.Platform.Application.EventBus.OutboxPattern;
 using RabbitMQ.Client;
@@ -10,9 +10,9 @@ namespace Easy.Platform.RabbitMQ
         public PlatformRabbitMqOptions()
         {
             RequeueDelayTimeInSeconds = 60;
-            RequeueExpiredInSeconds = 60 * 60 * 24 * 7;
-            InboxEventBusMessageOptions.MessageExpiredInSeconds = RequeueExpiredInSeconds;
-            OutboxEventBusMessageOptions.MessageExpiredInSeconds = RequeueExpiredInSeconds;
+            RequeueExpiredInSeconds = TimeSpan.FromDays(7).TotalSeconds;
+            InboxEventBusMessageOptions.DeleteProcessedMessageInSeconds = RequeueExpiredInSeconds;
+            OutboxEventBusMessageOptions.DeleteProcessedMessageInSeconds = RequeueExpiredInSeconds;
         }
 
         public string HostNames { get; set; }
@@ -81,7 +81,7 @@ namespace Easy.Platform.RabbitMQ
         /// </summary>
         public int NumberOfDeleteMessagesBatch { get; set; } = PlatformInboxEventBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
 
-        public double MessageExpiredInSeconds { get; set; }
+        public double DeleteProcessedMessageInSeconds { get; set; }
     }
 
     public class PlatformRabbitMqOutboxEventBusMessageOptions
@@ -96,6 +96,6 @@ namespace Easy.Platform.RabbitMQ
         /// </summary>
         public int NumberOfDeleteMessagesBatch { get; set; } = PlatformOutboxEventBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
 
-        public double MessageExpiredInSeconds { get; set; }
+        public double DeleteProcessedMessageInSeconds { get; set; }
     }
 }

@@ -22,9 +22,9 @@ namespace Easy.Platform.RabbitMQ
             this.options = options;
         }
 
-        protected override long MessageExpiredInDays()
+        protected override double DeleteProcessedMessageInSeconds()
         {
-            return TimeSpan.FromSeconds(options.InboxEventBusMessageOptions.MessageExpiredInSeconds).Days;
+            return options.InboxEventBusMessageOptions.DeleteProcessedMessageInSeconds;
         }
 
         protected override int NumberOfDeleteMessagesBatch()

@@ -26,46 +26,36 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         {
             if (message.TrackingId != null)
             {
-                var autoCompleteUowWhenSaveOutboxMessage = unitOfWorkManager.Current() == null;
+                var needToStartNewUow = unitOfWorkManager.Current() == null;
 
-                unitOfWorkManager.Begin(suppressCurrentUow: false);
+                if (needToStartNewUow)
+                    unitOfWorkManager.Begin(suppressCurrentUow: false);
 
                 if (isProcessingExistingOutboxMessage)
                 {
-                    var existingOutboxMessage = await outboxEventBusMessageRepo.FirstOrDefaultAsync(
-                        p => p.Id == PlatformOutboxEventBusMessage.BuildId(message),
-                        cancellationToken);
+                    var existingOutboxMessage = await outboxEventBusMessageRepo.GetByIdAsync(
+                        PlatformOutboxEventBusMessage.BuildId(message), cancellationToken);
 
-                    if (existingOutboxMessage == null ||
-                        existingOutboxMessage.SendStatus == PlatformOutboxEventBusMessage.SendStatuses.New ||
-                        existingOutboxMessage.SendStatus == PlatformOutboxEventBusMessage.SendStatuses.Failed ||
-                        existingOutboxMessage.SendStatus == PlatformOutboxEventBusMessage.SendStatuses.Processing)
+                    if (existingOutboxMessage.SendStatus is
+                        PlatformOutboxEventBusMessage.SendStatuses.New or
+                        PlatformOutboxEventBusMessage.SendStatuses.Failed or
+                        PlatformOutboxEventBusMessage.SendStatuses.Processing)
                     {
-                        await SaveOutboxMessageAndTrySendAfterCompletedAsync(
-                            serviceProvider,
-                            unitOfWorkManager,
-                            outboxEventBusMessageRepo,
-                            eventBusProducer,
-                            message,
-                            routingKey,
-                            logger,
-                            existingOutboxMessage,
-                            autoCompleteUowWhenSaveOutboxMessage,
-                            cancellationToken);
+                        await SendExistingOutboxMessageAsync(
+                            outboxEventBusMessageRepo, eventBusProducer, message, routingKey, logger, cancellationToken);
                     }
                 }
                 else
                 {
-                    await SaveOutboxMessageAndTrySendAfterCompletedAsync(
+                    await SaveAndTrySendNewOutboxMessageAsync(
                         serviceProvider,
-                        unitOfWorkManager,
+                        uow: unitOfWorkManager.Current(),
                         outboxEventBusMessageRepo,
                         eventBusProducer,
                         message,
                         routingKey,
                         logger,
-                        existingOutboxMessage: null,
-                        autoCompleteUowWhenSaveOutboxMessage,
+                        autoCompleteUow: needToStartNewUow,
                         cancellationToken);
                 }
             }
@@ -75,48 +65,38 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             }
         }
 
-        private static async Task SaveOutboxMessageAndTrySendAfterCompletedAsync<TMessage>(
+        private static async Task SaveAndTrySendNewOutboxMessageAsync<TMessage>(
             IServiceProvider serviceProvider,
-            IUnitOfWorkManager unitOfWorkManager,
+            IUnitOfWork uow,
             IPlatformOutboxEventBusMessageRepository outboxEventBusMessageRepo,
             IPlatformEventBusProducer eventBusProducer,
             TMessage message,
             string routingKey,
             ILogger logger,
-            PlatformOutboxEventBusMessage existingOutboxMessage,
             bool autoCompleteUow,
             CancellationToken cancellationToken)
             where TMessage : IPlatformEventBusTrackableMessage
         {
-            if (existingOutboxMessage != null)
+            var newProcessingOutboxMessage = PlatformOutboxEventBusMessage.Create(
+                message,
+                routingKey,
+                PlatformOutboxEventBusMessage.SendStatuses.Processing);
+
+            await outboxEventBusMessageRepo.CreateAsync(
+                newProcessingOutboxMessage,
+                cancellationToken: cancellationToken);
+
+            uow.OnCompleted += async (sender, args) =>
             {
-                await SendOutboxMessageAsync(outboxEventBusMessageRepo, eventBusProducer, message, routingKey, logger, cancellationToken);
-            }
-            else
-            {
-                var uow = unitOfWorkManager.Begin(suppressCurrentUow: false);
+                // Try to process newProcessingOutboxMessage first time after saved
+                await SendExistingOutboxMessageInNewScopeAsync(serviceProvider, eventBusProducer, message, routingKey, logger, cancellationToken);
+            };
 
-                var newProcessingOutboxMessage = PlatformOutboxEventBusMessage.Create(
-                    message,
-                    routingKey,
-                    PlatformOutboxEventBusMessage.SendStatuses.Processing);
-
-                await outboxEventBusMessageRepo.CreateAsync(
-                    newProcessingOutboxMessage,
-                    cancellationToken: cancellationToken);
-
-                uow.OnCompleted += async (sender, args) =>
-                {
-                    // Try to process newProcessingOutboxMessage first time after saved
-                    await SendOutboxMessageInNewScopeAsync(serviceProvider, eventBusProducer, message, routingKey, logger, cancellationToken);
-                };
-
-                if (autoCompleteUow)
-                    await uow.CompleteAsync(cancellationToken);
-            }
+            if (autoCompleteUow)
+                await uow.CompleteAsync(cancellationToken);
         }
 
-        private static async Task SendOutboxMessageInNewScopeAsync<TMessage>(
+        private static async Task SendExistingOutboxMessageInNewScopeAsync<TMessage>(
             IServiceProvider serviceProvider,
             IPlatformEventBusProducer eventBusProducer,
             TMessage message,
@@ -131,7 +111,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
 
                 using (var newUowForTrySendMessageToBus = unitOfWorkManager!.Begin())
                 {
-                    await SendOutboxMessageAsync(
+                    await SendExistingOutboxMessageAsync(
                         outboxEventBusMessageRepo,
                         eventBusProducer,
                         message,
@@ -144,7 +124,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             }
         }
 
-        private static async Task SendOutboxMessageAsync<TMessage>(
+        private static async Task SendExistingOutboxMessageAsync<TMessage>(
             IPlatformOutboxEventBusMessageRepository outboxEventBusMessageRepo,
             IPlatformEventBusProducer eventBusProducer,
             TMessage message,
@@ -174,8 +154,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             IPlatformOutboxEventBusMessageRepository outboxEventBusMessageRepo,
             TMessage message) where TMessage : IPlatformEventBusTrackableMessage
         {
-            var existingOutboxMessage = await outboxEventBusMessageRepo.FirstOrDefaultAsync(p =>
-                p.Id == PlatformOutboxEventBusMessage.BuildId(message));
+            var existingOutboxMessage = await outboxEventBusMessageRepo.GetByIdAsync(PlatformOutboxEventBusMessage.BuildId(message));
 
             existingOutboxMessage.LastSendDate = DateTime.UtcNow;
             existingOutboxMessage.SendStatus = PlatformOutboxEventBusMessage.SendStatuses.Processed;
@@ -188,8 +167,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             TMessage message,
             Exception exception) where TMessage : IPlatformEventBusTrackableMessage
         {
-            var existingOutboxMessage = await outboxEventBusMessageRepo.FirstOrDefaultAsync(p =>
-                p.Id == PlatformOutboxEventBusMessage.BuildId(message));
+            var existingOutboxMessage = await outboxEventBusMessageRepo.GetByIdAsync(PlatformOutboxEventBusMessage.BuildId(message));
 
             existingOutboxMessage.SendStatus = PlatformOutboxEventBusMessage.SendStatuses.Failed;
             existingOutboxMessage.LastSendDate = DateTime.UtcNow;
