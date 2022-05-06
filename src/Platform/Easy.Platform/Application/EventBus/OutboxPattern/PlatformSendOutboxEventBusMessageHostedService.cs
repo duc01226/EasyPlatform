@@ -154,10 +154,9 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
 
             if (messageType != null && messageType.IsAssignableTo(typeof(IPlatformEventBusTrackableMessage)))
             {
-                var message = (IPlatformEventBusTrackableMessage)JsonSerializer.Deserialize(
+                var message = (IPlatformEventBusTrackableMessage)PlatformJsonSerializer.Deserialize(
                     toHandleOutboxMessage.JsonMessage,
-                    messageType,
-                    PlatformJsonSerializer.CurrentOptions.Value);
+                    messageType);
 
                 var uowManager = scope.ServiceProvider.GetService<IUnitOfWorkManager>();
                 using (var uow = uowManager!.Begin())

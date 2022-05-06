@@ -55,7 +55,7 @@ namespace Easy.Platform.FireBasePushNotification.GoogleFcm
         /// <exception cref="HttpRequestException">Throws exception when not successful</exception>
         public async Task<FcmResponse> SendAsync(object payload, CancellationToken cancellationToken = default)
         {
-            var serialized = JsonSerializer.Serialize(payload, PlatformJsonSerializer.CurrentOptions.Value);
+            var serialized = PlatformJsonSerializer.Serialize(payload);
 
             using (var httpRequest = new HttpRequestMessage(HttpMethod.Post, fcmUrl))
             {
@@ -77,7 +77,7 @@ namespace Easy.Platform.FireBasePushNotification.GoogleFcm
                         throw new HttpRequestException("Firebase notification error: " + responseString);
                     }
 
-                    return JsonSerializer.Deserialize<FcmResponse>(responseString, PlatformJsonSerializer.CurrentOptions.Value);
+                    return PlatformJsonSerializer.Deserialize<FcmResponse>(responseString);
                 }
             }
         }

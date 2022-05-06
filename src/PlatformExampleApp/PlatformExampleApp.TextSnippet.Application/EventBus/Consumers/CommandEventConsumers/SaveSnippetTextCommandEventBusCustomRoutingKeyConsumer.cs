@@ -28,7 +28,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
         {
             return Task.Run(() =>
             {
-                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
+                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
             });
         }
 
@@ -50,7 +50,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
         {
             return Task.Run(() =>
             {
-                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
+                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
             });
         }
 

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Easy.Platform.Common.JsonSerialization;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -27,20 +28,20 @@ namespace Easy.Platform.Infrastructures.Caching.BuiltInCacheRepositories
         public override T Get<T>(PlatformCacheKey cacheKey)
         {
             var result = memoryDistributedCache.Get(cacheKey);
-            return result == null ? default : JsonSerializer.Deserialize<T>(result);
+            return result == null ? default : PlatformJsonSerializer.Deserialize<T>(result);
         }
 
         public override async Task<T> GetAsync<T>(PlatformCacheKey cacheKey, CancellationToken token = default)
         {
             var result = await memoryDistributedCache.GetAsync(cacheKey, token);
-            return result == null ? default : JsonSerializer.Deserialize<T>(result);
+            return result == null ? default : PlatformJsonSerializer.Deserialize<T>(result);
         }
 
         public override void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null)
         {
             memoryDistributedCache.Set(
                 cacheKey,
-                JsonSerializer.SerializeToUtf8Bytes(value),
+                PlatformJsonSerializer.SerializeToUtf8Bytes(value),
                 MapToDistributedCacheEntryOptions(cacheOptions));
 
             cachedKeys.TryAdd(cacheKey, null);
@@ -54,7 +55,7 @@ namespace Easy.Platform.Infrastructures.Caching.BuiltInCacheRepositories
         {
             await memoryDistributedCache.SetAsync(
                 cacheKey,
-                JsonSerializer.SerializeToUtf8Bytes(value),
+                PlatformJsonSerializer.SerializeToUtf8Bytes(value),
                 MapToDistributedCacheEntryOptions(cacheOptions ?? GetDefaultCacheEntryOptions()),
                 token);
 

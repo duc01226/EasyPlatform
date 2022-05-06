@@ -47,7 +47,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                         await UpsertFailedInboxMessage(consumer, unitOfWorkManager, inboxEventBusMessageRepo, message, routingKey, e);
 
                         logger.LogError(e, $"Error Consume inbox message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
-                                           $"Message Info: ${JsonSerializer.Serialize(message)}.{Environment.NewLine}");
+                                           $"Message Info: ${PlatformJsonSerializer.Serialize(message)}.{Environment.NewLine}");
                     }
                 }
             }

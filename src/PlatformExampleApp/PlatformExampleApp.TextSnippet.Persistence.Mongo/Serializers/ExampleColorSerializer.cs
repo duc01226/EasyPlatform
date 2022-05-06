@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.MongoDB.Serializer.Abstract;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
@@ -19,12 +20,12 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo.Serializers
     {
         public override Color Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
-            return JsonSerializer.Deserialize<Color>(context.Reader.ReadString());
+            return PlatformJsonSerializer.Deserialize<Color>(context.Reader.ReadString());
         }
 
         public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, Color value)
         {
-            context.Writer.WriteString(JsonSerializer.Serialize(value));
+            context.Writer.WriteString(PlatformJsonSerializer.Serialize(value));
         }
     }
 }

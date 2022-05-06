@@ -32,7 +32,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
             if (message.CreatedUtcDate.AddSeconds(5) > Clock.UtcNow)
                 throw new Exception("Test requeue message mechanism. Consumer temporarily failed for first 5 seconds from the created date of message");
 
-            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
+            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
             return Task.CompletedTask;
         }
 

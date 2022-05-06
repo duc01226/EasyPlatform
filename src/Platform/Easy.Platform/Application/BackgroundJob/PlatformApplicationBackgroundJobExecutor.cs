@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.BackgroundJob;
 using Microsoft.Extensions.Logging;
@@ -66,7 +67,7 @@ namespace Easy.Platform.Application.BackgroundJob
             }
             catch (Exception e)
             {
-                Logger.LogError(e, $"[BackgroundJob] Job {GetType().Name} execution with param {(param != null ? JsonSerializer.Serialize(param) : "null")} was failed.");
+                Logger.LogError(e, $"[BackgroundJob] Job {GetType().Name} execution with param {(param != null ? PlatformJsonSerializer.Serialize(param) : "null")} was failed.");
                 throw;
             }
         }

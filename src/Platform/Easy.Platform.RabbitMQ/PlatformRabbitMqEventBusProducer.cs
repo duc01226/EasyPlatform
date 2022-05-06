@@ -117,7 +117,7 @@ namespace Easy.Platform.RabbitMQ
 
         private static string SerializeMessage<TMessage>(TMessage message) where TMessage : IPlatformEventBusTrackableMessage
         {
-            var jsonMessage = JsonSerializer.Serialize(message, message.GetType(), PlatformJsonSerializer.CurrentOptions.Value);
+            var jsonMessage = PlatformJsonSerializer.Serialize(message);
             return jsonMessage;
         }
 

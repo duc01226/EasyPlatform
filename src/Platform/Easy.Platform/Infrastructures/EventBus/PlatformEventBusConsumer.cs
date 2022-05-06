@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Utils;
 using Microsoft.Extensions.Logging;
 
@@ -107,7 +108,7 @@ namespace Easy.Platform.Infrastructures.EventBus
                                                                         slowProcessWarningTimeMilliseconds;
                         if (elapsedMilliseconds >= toCheckSlowProcessWarningTimeMilliseconds)
                         {
-                            logger.LogError($"[SlowConsumerProcessTime]. [SlowProcessWarningTimeMilliseconds:{toCheckSlowProcessWarningTimeMilliseconds}]. {logMessage}. [MessageContent:{JsonSerializer.Serialize(eventBusMessage)}]");
+                            logger.LogError($"[SlowConsumerProcessTime]. [SlowProcessWarningTimeMilliseconds:{toCheckSlowProcessWarningTimeMilliseconds}]. {logMessage}. [MessageContent:{PlatformJsonSerializer.Serialize(eventBusMessage)}]");
                         }
                         else
                         {
@@ -175,7 +176,7 @@ namespace Easy.Platform.Infrastructures.EventBus
             catch (Exception e)
             {
                 Logger.LogError(e, $"Error Consume message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
-                                   $"Message Info: ${JsonSerializer.Serialize(message)}.{Environment.NewLine}");
+                                   $"Message Info: ${PlatformJsonSerializer.Serialize(message)}.{Environment.NewLine}");
                 throw;
             }
         }

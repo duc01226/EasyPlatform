@@ -36,7 +36,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.DomainEv
 
         protected override Task InternalHandleAsync(PlatformEventBusMessage<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent> message, string routingKey)
         {
-            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
+            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
 
             return Task.CompletedTask;
         }
@@ -65,7 +65,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.DomainEv
 
         protected override Task InternalHandleAsync(PlatformEventBusMessage<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent> message, string routingKey)
         {
-            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
+            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
 
             return Task.CompletedTask;
         }

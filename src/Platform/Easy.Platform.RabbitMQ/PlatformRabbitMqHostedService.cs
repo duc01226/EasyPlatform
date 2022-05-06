@@ -406,7 +406,7 @@ namespace Easy.Platform.RabbitMQ
                                 {
                                     currentChannel.BasicNack(rabbitMqMessage.DeliveryTag, multiple: true, requeue: true);
 
-                                    Log.Information(Logger, message: $"RabbitMQ requeued message for the routing key: {rabbitMqMessage.RoutingKey}.{Environment.NewLine}Message: {JsonSerializer.Serialize(eventBusMessage)}");
+                                    Log.Information(Logger, message: $"RabbitMQ requeued message for the routing key: {rabbitMqMessage.RoutingKey}.{Environment.NewLine}Message: {PlatformJsonSerializer.Serialize(eventBusMessage)}");
                                 });
                         },
                         token),
@@ -424,10 +424,10 @@ namespace Easy.Platform.RabbitMQ
             var consumerMessageType = PlatformEventBusBaseConsumer.GetConsumerMessageType(consumer);
 
             var eventBusMessage = Util.Tasks.CatchExceptionContinueThrow(
-                () => JsonSerializer.Deserialize(
+                () => PlatformJsonSerializer.Deserialize(
                     args.Body.Span,
                     consumerMessageType,
-                    consumer.CustomJsonSerializerOptions() ?? PlatformJsonSerializer.CurrentOptions.Value),
+                    consumer.CustomJsonSerializerOptions()),
                 ex => Log.Error(
                     Logger,
                     ex,

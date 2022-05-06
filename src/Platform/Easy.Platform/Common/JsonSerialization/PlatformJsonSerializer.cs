@@ -46,14 +46,36 @@ namespace Easy.Platform.Common.JsonSerialization
             return result;
         }
 
-        public static string Serialize(object value)
+        public static string Serialize<TMessage>(TMessage value)
         {
-            return JsonSerializer.Serialize(value, CurrentOptions.Value);
+            return JsonSerializer.Serialize(value, value.GetType(), CurrentOptions.Value);
         }
 
-        public static T Deserialize<T>(string jsonValue)
+        public static T Deserialize<T>(string jsonValue, JsonSerializerOptions customSerializerOptions = null)
         {
-            return JsonSerializer.Deserialize<T>(jsonValue, CurrentOptions.Value);
+            return JsonSerializer.Deserialize<T>(jsonValue, customSerializerOptions ?? CurrentOptions.Value);
+        }
+
+        public static object Deserialize(string jsonValue, Type returnType, JsonSerializerOptions customSerializerOptions = null)
+        {
+            return JsonSerializer.Deserialize(jsonValue, returnType, customSerializerOptions ?? CurrentOptions.Value);
+        }
+
+        public static byte[] SerializeToUtf8Bytes<TValue>(
+            TValue value,
+            JsonSerializerOptions customSerializerOptions = null)
+        {
+            return JsonSerializer.SerializeToUtf8Bytes(value, value.GetType(), customSerializerOptions ?? CurrentOptions.Value);
+        }
+
+        public static TValue Deserialize<TValue>(ReadOnlySpan<byte> utf8Json, JsonSerializerOptions customSerializerOptions = null)
+        {
+            return JsonSerializer.Deserialize<TValue>(utf8Json, customSerializerOptions ?? CurrentOptions.Value);
+        }
+
+        public static object Deserialize(ReadOnlySpan<byte> utf8Json, Type returnType, JsonSerializerOptions customSerializerOptions = null)
+        {
+            return JsonSerializer.Deserialize(utf8Json, returnType, customSerializerOptions ?? CurrentOptions.Value);
         }
 
         public static T TryDeserializeOrDefault<T>(string jsonValue)

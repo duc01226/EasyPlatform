@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Text.Json;
 using Easy.Platform.Application.BackgroundJob;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Infrastructures.BackgroundJob;
 using Hangfire;
@@ -38,7 +39,7 @@ namespace Easy.Platform.HangfireBackgroundJob
             return BackgroundJob.Schedule(
                 () => ExecuteBackgroundJob(
                     typeof(TJobExecutor),
-                    jobExecutorParam != null ? JsonSerializer.Serialize(jobExecutorParam, null) : null),
+                    jobExecutorParam != null ? PlatformJsonSerializer.Serialize(jobExecutorParam) : null),
                 enqueueAt);
         }
 
@@ -60,7 +61,7 @@ namespace Easy.Platform.HangfireBackgroundJob
             return BackgroundJob.Schedule(
                 () => ExecuteBackgroundJob(
                     typeof(TJobExecutor),
-                    jobExecutorParam != null ? JsonSerializer.Serialize(jobExecutorParam, null) : null),
+                    jobExecutorParam != null ? PlatformJsonSerializer.Serialize(jobExecutorParam) : null),
                 delay ?? TimeSpan.Zero);
         }
 
@@ -156,7 +157,7 @@ namespace Easy.Platform.HangfireBackgroundJob
         {
             ExecuteBackgroundJob(
                 typeof(TJobExecutor),
-                jobExecutorParam != null ? JsonSerializer.Serialize(jobExecutorParam) : null);
+                jobExecutorParam != null ? PlatformJsonSerializer.Serialize(jobExecutorParam) : null);
         }
 
         public void ExecuteBackgroundJob(Type jobExecutorType, string jobExecutorParamJson)
@@ -179,7 +180,7 @@ namespace Easy.Platform.HangfireBackgroundJob
                         // Parse job executor param to correct type
                         var jobExecutorParamType = withParamJobExecutorType.GetGenericArguments()[0];
                         var jobExecutorParam = jobExecutorParamJson != null
-                            ? JsonSerializer.Deserialize(jobExecutorParamJson, jobExecutorParamType)
+                            ? PlatformJsonSerializer.Deserialize(jobExecutorParamJson, jobExecutorParamType)
                             : null;
 
                         // Execute job executor method

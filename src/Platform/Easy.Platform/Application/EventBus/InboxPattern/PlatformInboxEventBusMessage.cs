@@ -53,7 +53,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             var result = new PlatformInboxEventBusMessage()
             {
                 Id = BuildId(message, consumerBy).TakeTop(IdMaxLength),
-                JsonMessage = JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value),
+                JsonMessage = PlatformJsonSerializer.Serialize(message),
                 MessageTypeFullName = message.GetType().FullName.TakeTop(MessageTypeFullNameMaxLength),
                 RoutingKey = routingKey.TakeTop(RoutingKeyMaxLength),
                 LastConsumeDate = nowDate,

@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Application.Cqrs.Events;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Domain.Events;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.EventBus;
@@ -68,7 +69,7 @@ namespace Easy.Platform.Application.EventBus.Producers.CqrsEventProducers
             {
                 Logger.LogError(
                     e,
-                    $"[PlatformCqrsEventBusDomainEventHandler] Failed to send message for ${typeof(TDomainEvent).Name}. Message Info: {JsonSerializer.Serialize(e.EventBusMessage)}");
+                    $"[PlatformCqrsEventBusDomainEventHandler] Failed to send message for ${typeof(TDomainEvent).Name}. Message Info: {PlatformJsonSerializer.Serialize(e.EventBusMessage)}");
                 throw;
             }
         }

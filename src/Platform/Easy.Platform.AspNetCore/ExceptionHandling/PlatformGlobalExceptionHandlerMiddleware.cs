@@ -65,7 +65,7 @@ namespace Easy.Platform.AspNetCore.ExceptionHandling
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = errorResponse.StatusCode;
-            return context.Response.WriteAsync(JsonSerializer.Serialize(errorResponse, PlatformJsonSerializer.CurrentOptions.Value), context.RequestAborted);
+            return context.Response.WriteAsync(PlatformJsonSerializer.Serialize(errorResponse), context.RequestAborted);
         }
 
         protected bool HandleValidationError(HttpContext context, Exception exception, out PlatformAspNetMvcErrorResponse errorResponse)

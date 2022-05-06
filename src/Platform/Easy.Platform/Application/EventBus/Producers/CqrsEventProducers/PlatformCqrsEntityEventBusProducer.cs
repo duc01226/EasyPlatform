@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Application.Cqrs.Events;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.Events;
 using Easy.Platform.Domain.UnitOfWork;
@@ -77,7 +78,8 @@ namespace Easy.Platform.Application.EventBus.Producers.CqrsEventProducers
             }
             catch (PlatformEventBusException<PlatformCqrsEntityEventBusMessage<TEntity>> e)
             {
-                Logger.LogError(e, $"[PlatformCqrsEventBusEntityEventHandler] Failed to send message for ${typeof(PlatformCqrsEntityEvent<TEntity>).FullName}. Message Info: {JsonSerializer.Serialize(e.EventBusMessage)}");
+                Logger.LogError(e, $"[PlatformCqrsEventBusEntityEventHandler] Failed to send message for ${typeof(PlatformCqrsEntityEvent<TEntity>).FullName}. " +
+                                   $"Message Info: {PlatformJsonSerializer.Serialize(e.EventBusMessage)}");
                 throw;
             }
         }

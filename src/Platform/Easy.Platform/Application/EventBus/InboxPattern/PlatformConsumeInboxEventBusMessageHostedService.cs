@@ -163,10 +163,10 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                 var consumerMessageType = PlatformEventBusBaseConsumer.GetConsumerMessageType(inboxSupportEventBusConsumer);
 
                 var eventBusMessage = Util.Tasks.CatchExceptionContinueThrow(
-                    () => JsonSerializer.Deserialize(
+                    () => PlatformJsonSerializer.Deserialize(
                         toHandleInboxMessage.JsonMessage,
                         consumerMessageType,
-                        inboxSupportEventBusConsumer.CustomJsonSerializerOptions() ?? PlatformJsonSerializer.CurrentOptions.Value),
+                        inboxSupportEventBusConsumer.CustomJsonSerializerOptions()),
                     ex => Logger.LogError(
                         ex,
                         $"RabbitMQ parsing message to {consumerMessageType.Name} error for the routing key {toHandleInboxMessage.RoutingKey}.{Environment.NewLine} Body: {toHandleInboxMessage.JsonMessage}"));

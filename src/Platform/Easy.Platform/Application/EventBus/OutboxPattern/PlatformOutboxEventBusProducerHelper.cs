@@ -148,7 +148,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                 logger.LogError(
                     exception,
                     $"Error Send message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
-                    $"Message Info: ${JsonSerializer.Serialize(message)}.{Environment.NewLine}");
+                    $"Message Info: ${PlatformJsonSerializer.Serialize(message)}.{Environment.NewLine}");
             }
         }
 

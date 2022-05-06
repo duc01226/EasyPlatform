@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Application.Cqrs.Commands;
 using Easy.Platform.Common.Cqrs.Commands;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.Logging;
@@ -73,7 +74,7 @@ namespace Easy.Platform.Application.EventBus.Producers.CqrsEventProducers
                 }
                 catch (PlatformEventBusException<PlatformCqrsCommandEventBusMessage<TCommand>> e)
                 {
-                    Logger.LogError(e, $"[PlatformCqrsEventBusCommandEventHandler] Failed to send message for ${typeof(TCommand).Name}. Message Info: {JsonSerializer.Serialize(e.EventBusMessage)}");
+                    Logger.LogError(e, $"[PlatformCqrsEventBusCommandEventHandler] Failed to send message for ${typeof(TCommand).Name}. Message Info: {PlatformJsonSerializer.Serialize(e.EventBusMessage)}");
                     throw;
                 }
             }

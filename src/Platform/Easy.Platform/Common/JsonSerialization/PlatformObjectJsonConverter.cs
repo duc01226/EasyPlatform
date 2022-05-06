@@ -163,7 +163,7 @@ namespace Easy.Platform.Common.JsonSerialization
             var doNotHandleObjectOptions = options.Clone();
             doNotHandleObjectOptions.Converters.RemoveWhere(p => p is PlatformObjectJsonConverter);
 
-            JsonSerializer.Serialize(writer, value, options);
+            JsonSerializer.Serialize(writer, value, options ?? PlatformJsonSerializer.CurrentOptions.Value);
         }
     }
 }

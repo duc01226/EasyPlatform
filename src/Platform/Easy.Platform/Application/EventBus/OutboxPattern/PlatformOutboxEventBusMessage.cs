@@ -44,7 +44,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             var result = new PlatformOutboxEventBusMessage()
             {
                 Id = BuildId(message).TakeTop(IdMaxLength),
-                JsonMessage = JsonSerializer.Serialize(message, message.GetType(), PlatformJsonSerializer.CurrentOptions.Value),
+                JsonMessage = PlatformJsonSerializer.Serialize(message),
                 MessageTypeFullName = message.GetType().FullName.TakeTop(MessageTypeFullNameMaxLength),
                 RoutingKey = routingKey.TakeTop(RoutingKeyMaxLength),
                 LastSendDate = nowDate,

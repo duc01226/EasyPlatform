@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Application.Context;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Infrastructures.Caching;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
@@ -34,7 +35,7 @@ namespace Easy.Platform.RedisCache
         public override T Get<T>(PlatformCacheKey cacheKey)
         {
             var result = redisCache.Get(cacheKey);
-            return result == null ? default : JsonSerializer.Deserialize<T>(result);
+            return result == null ? default : PlatformJsonSerializer.Deserialize<T>(result);
         }
 
         public override async Task<T> GetAsync<T>(PlatformCacheKey cacheKey, CancellationToken token = default)
@@ -43,7 +44,7 @@ namespace Easy.Platform.RedisCache
 
             try
             {
-                return result == null ? default : JsonSerializer.Deserialize<T>(result);
+                return result == null ? default : PlatformJsonSerializer.Deserialize<T>(result);
             }
             catch (Exception e)
             {
@@ -66,7 +67,7 @@ namespace Easy.Platform.RedisCache
             PlatformCacheEntryOptions cacheOptions = null,
             CancellationToken token = default)
         {
-            await redisCache.SetAsync(cacheKey, JsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions ?? GetDefaultCacheEntryOptions()), token);
+            await redisCache.SetAsync(cacheKey, PlatformJsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions ?? GetDefaultCacheEntryOptions()), token);
 
             UpdateCachedKeys(p => p.TryAdd(cacheKey, null));
         }
@@ -141,7 +142,7 @@ namespace Easy.Platform.RedisCache
 
         private void SetToRedisCache<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null)
         {
-            redisCache.Set(cacheKey, JsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions));
+            redisCache.Set(cacheKey, PlatformJsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions));
         }
 
         private Dictionary<PlatformCacheKey, object> GetGlobalCachedKeys()

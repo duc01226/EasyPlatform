@@ -47,7 +47,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
                 // Sleep to demo warning slow consumer
                 Thread.Sleep(TimeSpan.FromMilliseconds((SlowProcessWarningTimeMilliseconds() ?? DefaultProcessWarningTimeMilliseconds) + 1000));
 
-                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
+                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
             });
         }
 
@@ -88,7 +88,7 @@ namespace PlatformExampleApp.TextSnippet.Application.EventBus.Consumers.CommandE
                 // Sleep to demo warning slow consumer
                 Thread.Sleep(TimeSpan.FromMilliseconds((SlowProcessWarningTimeMilliseconds() ?? DefaultProcessWarningTimeMilliseconds) + 1000));
 
-                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${JsonSerializer.Serialize(message, PlatformJsonSerializer.CurrentOptions.Value)}");
+                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
             });
         }
 

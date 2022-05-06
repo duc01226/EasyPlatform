@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Easy.Platform.Common.JsonSerialization;
 using FluentValidation.Results;
 using Easy.Platform.Common.Validators;
 
@@ -59,7 +60,7 @@ namespace Easy.Platform.Domain.Entities
 
         public virtual TEntity Clone()
         {
-            return JsonSerializer.Deserialize<TEntity>(JsonSerializer.Serialize(this));
+            return PlatformJsonSerializer.Deserialize<TEntity>(PlatformJsonSerializer.Serialize(this));
         }
 
         public virtual PlatformValidationResult Validate()

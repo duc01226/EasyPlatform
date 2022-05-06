@@ -227,7 +227,7 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
                 if (parsedSuccess)
                 {
                     // Serialize then Deserialize to ensure could parse from double to int, long, float, etc.. any of number type
-                    foundValue = JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(parsedValue));
+                    foundValue = PlatformJsonSerializer.Deserialize<T>(PlatformJsonSerializer.Serialize(parsedValue));
                     return true;
                 }
             }
@@ -290,8 +290,7 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
                 if (isParsedAllItemSuccess)
                 {
                     // Serialize then Deserialize to type T so ensure parse matchedClaimStringValues to type T successfully
-                    foundValue = JsonSerializer.Deserialize<T>(
-                        JsonSerializer.Serialize(parsedItemList, PlatformJsonSerializer.CurrentOptions.Value));
+                    foundValue = PlatformJsonSerializer.Deserialize<T>(PlatformJsonSerializer.Serialize(parsedItemList));
                     return true;
                 }
             }

@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Validators;
 
 namespace Easy.Platform.Common.ValueObjects
@@ -51,7 +52,7 @@ namespace Easy.Platform.Common.ValueObjects
         /// </summary>
         public override string ToString()
         {
-            return JsonSerializer.Serialize(this);
+            return PlatformJsonSerializer.Serialize(this);
         }
     }
 }

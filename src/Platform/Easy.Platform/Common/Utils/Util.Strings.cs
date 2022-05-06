@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Easy.Platform.Common.JsonSerialization;
 
 namespace Easy.Platform.Common.Utils
 {
@@ -15,7 +16,7 @@ namespace Easy.Platform.Common.Utils
         {
             public static T Parse<T>(string value)
             {
-                return JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(value));
+                return PlatformJsonSerializer.Deserialize<T>(PlatformJsonSerializer.Serialize(value));
             }
 
             public static bool IsFullTextSearchMatch(string targetText, string searchText, bool exactMatchAllWords = false)

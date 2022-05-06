@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using Easy.Platform.Common.JsonSerialization;
 
 namespace Easy.Platform.Infrastructures.Caching
 {
@@ -88,7 +89,7 @@ namespace Easy.Platform.Infrastructures.Caching
             if (requestKeyParts.Length == 0)
                 throw new ArgumentException("requestKeyParts must be not empty.", nameof(requestKeyParts));
 
-            return $"[{string.Join(RequestKeyPartsSeparator, requestKeyParts.Select(p => JsonSerializer.Serialize(p).Replace("\"", "'")))}]";
+            return $"[{string.Join(RequestKeyPartsSeparator, requestKeyParts.Select(p => PlatformJsonSerializer.Serialize(p).Replace("\"", "'")))}]";
         }
 
         public static object[] BuildRequestKeyParts(string requestKey)
@@ -100,7 +101,7 @@ namespace Easy.Platform.Infrastructures.Caching
                 {
                     try
                     {
-                        return JsonSerializer.Deserialize(requestKeyPartJsonString, typeof(object));
+                        return PlatformJsonSerializer.Deserialize(requestKeyPartJsonString, typeof(object));
                     }
                     catch (Exception)
                     {
