@@ -18,7 +18,11 @@ namespace Easy.Platform.Common.Hosting
 
         protected override Task StartProcess(CancellationToken cancellationToken)
         {
-            timer = new Timer(state => IntervalProcess(cancellationToken), null, TimeSpan.Zero, ProcessTriggerIntervalTime());
+            timer = new Timer(
+                callback: state => IntervalProcessAsync(cancellationToken).Wait(cancellationToken),
+                state: null,
+                dueTime: TimeSpan.Zero,
+                period: ProcessTriggerIntervalTime());
 
             return Task.CompletedTask;
         }
@@ -31,10 +35,10 @@ namespace Easy.Platform.Common.Hosting
                 await timer.DisposeAsync();
         }
 
-        protected abstract Task IntervalProcess(CancellationToken cancellationToken);
+        protected abstract Task IntervalProcessAsync(CancellationToken cancellationToken);
 
         /// <summary>
-        /// To config the period of the timer to trigger the <see cref="IntervalProcess"/> method.
+        /// To config the period of the timer to trigger the <see cref="IntervalProcessAsync"/> method.
         /// </summary>
         /// <returns>The configuration as <see cref="TimeSpan"/> type.</returns>
         protected virtual TimeSpan ProcessTriggerIntervalTime()

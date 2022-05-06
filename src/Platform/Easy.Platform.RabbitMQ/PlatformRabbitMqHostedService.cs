@@ -116,7 +116,7 @@ namespace Easy.Platform.RabbitMQ
                         retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)))
                     .ExecuteAndThrowFinalException(
                         executeFunc: () => channelPool.Get(),
-                        beforeThrowFinalException: ex => { Logger.LogError(ex, "Init rabbit-mq channel failed."); });
+                        onBeforeThrowFinalExceptionFn: ex => { Logger.LogError(ex, "Init rabbit-mq channel failed."); });
             }
             catch
             {

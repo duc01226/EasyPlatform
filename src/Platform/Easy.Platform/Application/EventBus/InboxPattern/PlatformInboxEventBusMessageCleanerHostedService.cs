@@ -48,7 +48,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                        typeof(PlatformInboxEventBusMessageCleanerHostedService)) == true;
         }
 
-        protected override async Task IntervalProcess(CancellationToken cancellationToken)
+        protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
         {
             if (!ApplicationStartedAndRunning || !HasInboxEventBusMessageRepositoryRegistered() || isProcessing)
                 return;

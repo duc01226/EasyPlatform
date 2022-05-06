@@ -68,7 +68,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
         protected Dictionary<string, Type> ConsumerByValueToDefinedEventBusConsumerTypeDic { get; }
 
-        protected override async Task IntervalProcess(CancellationToken cancellationToken)
+        protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
         {
             if (!ApplicationStartedAndRunning || !HasInboxEventBusMessageRepositoryRegistered() || isProcessing)
                 return;

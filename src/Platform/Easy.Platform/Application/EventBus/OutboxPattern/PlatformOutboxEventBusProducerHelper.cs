@@ -112,7 +112,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                 using (var newUowForTrySendMessageToBus = unitOfWorkManager!.Begin())
                 {
                     await SendExistingOutboxMessageAsync(
-                        serviceProvider,
+                        newScope.ServiceProvider,
                         outboxEventBusMessageRepo,
                         eventBusProducer,
                         message,

@@ -70,7 +70,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
 
         protected Dictionary<string, Type> FullNameToDefinedEventBusTypeDic { get; }
 
-        protected override async Task IntervalProcess(CancellationToken cancellationToken)
+        protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
         {
             if (!ApplicationStartedAndRunning || !HasOutboxEventBusMessageRepositoryRegistered() || isProcessing)
                 return;
