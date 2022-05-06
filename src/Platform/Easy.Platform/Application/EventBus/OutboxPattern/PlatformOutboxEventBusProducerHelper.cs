@@ -42,7 +42,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                         PlatformOutboxEventBusMessage.SendStatuses.Processing)
                     {
                         await SendExistingOutboxMessageAsync(
-                            outboxEventBusMessageRepo, eventBusProducer, message, routingKey, logger, cancellationToken);
+                            serviceProvider, outboxEventBusMessageRepo, eventBusProducer, message, routingKey, logger, cancellationToken);
                     }
                 }
                 else
@@ -112,6 +112,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                 using (var newUowForTrySendMessageToBus = unitOfWorkManager!.Begin())
                 {
                     await SendExistingOutboxMessageAsync(
+                        serviceProvider,
                         outboxEventBusMessageRepo,
                         eventBusProducer,
                         message,
@@ -125,6 +126,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         }
 
         private static async Task SendExistingOutboxMessageAsync<TMessage>(
+            IServiceProvider serviceProvider,
             IPlatformOutboxEventBusMessageRepository outboxEventBusMessageRepo,
             IPlatformEventBusProducer eventBusProducer,
             TMessage message,
@@ -141,7 +143,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             }
             catch (Exception exception)
             {
-                await UpdateExistingOutboxMessageFailed(outboxEventBusMessageRepo, message, exception);
+                await UpdateExistingOutboxMessageFailed(serviceProvider, message, exception, cancellationToken);
 
                 logger.LogError(
                     exception,
@@ -163,17 +165,31 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         }
 
         private static async Task UpdateExistingOutboxMessageFailed<TMessage>(
-            IPlatformOutboxEventBusMessageRepository outboxEventBusMessageRepo,
+            IServiceProvider serviceProvider,
             TMessage message,
-            Exception exception) where TMessage : IPlatformEventBusTrackableMessage
+            Exception exception,
+            CancellationToken cancellationToken) where TMessage : IPlatformEventBusTrackableMessage
         {
-            var existingOutboxMessage = await outboxEventBusMessageRepo.GetByIdAsync(PlatformOutboxEventBusMessage.BuildId(message));
+            using (var newScope = serviceProvider.CreateScope())
+            {
+                var outboxEventBusMessageRepo = newScope.ServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>();
+                var unitOfWorkManager = newScope.ServiceProvider.GetService<IUnitOfWorkManager>();
 
-            existingOutboxMessage.SendStatus = PlatformOutboxEventBusMessage.SendStatuses.Failed;
-            existingOutboxMessage.LastSendDate = DateTime.UtcNow;
-            existingOutboxMessage.LastSendError = PlatformJsonSerializer.Serialize(new { exception.Message, exception.StackTrace });
+                using (var newUowForTrySendMessageToBus = unitOfWorkManager!.Begin())
+                {
+                    var existingOutboxMessage = await outboxEventBusMessageRepo!.GetByIdAsync(
+                        PlatformOutboxEventBusMessage.BuildId(message),
+                        cancellationToken);
 
-            await outboxEventBusMessageRepo.UpdateAsync(existingOutboxMessage);
+                    existingOutboxMessage.SendStatus = PlatformOutboxEventBusMessage.SendStatuses.Failed;
+                    existingOutboxMessage.LastSendDate = DateTime.UtcNow;
+                    existingOutboxMessage.LastSendError = PlatformJsonSerializer.Serialize(new { exception.Message, exception.StackTrace });
+
+                    await outboxEventBusMessageRepo.UpdateAsync(existingOutboxMessage, cancellationToken: cancellationToken);
+
+                    await newUowForTrySendMessageToBus.CompleteAsync(cancellationToken);
+                }
+            }
         }
     }
 }
