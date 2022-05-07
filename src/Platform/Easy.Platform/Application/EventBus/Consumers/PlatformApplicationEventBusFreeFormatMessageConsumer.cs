@@ -73,7 +73,14 @@ namespace Easy.Platform.Application.EventBus.Consumers
             }
         }
 
-        public bool IsProcessingExistingInboxMessage { get; set; } = false;
+        protected bool IsProcessingExistingInboxMessage { get; set; }
+
+        public IPlatformInboxSupportEventBusConsumer ForProcessingExistingInboxMessage()
+        {
+            IsProcessingExistingInboxMessage = true;
+
+            return this;
+        }
 
         /// <summary>
         /// Auto save inbox message if Inbox feature activated

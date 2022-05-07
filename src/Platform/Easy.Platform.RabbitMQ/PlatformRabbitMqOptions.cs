@@ -34,6 +34,10 @@ namespace Easy.Platform.RabbitMQ
 
         public int RunConsumerRetryCount { get; set; } = 5;
 
+        /// <summary>
+        /// Config the prefectCount. (Not default is 0 mean unlimited) to limit messages to prevent rabbit mq down
+        /// Reference: https://www.rabbitmq.com/tutorials/tutorial-two-dotnet.html. Filter: BasicQos
+        /// </summary>
         public ushort QueuePrefetchCount { get; set; } = 100;
 
         /// <summary>

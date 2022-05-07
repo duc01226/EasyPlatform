@@ -52,7 +52,8 @@ namespace Easy.Platform.Infrastructures.BackgroundJob
                         sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
                         onRetry: (exception, timeSpan, retry, ctx) =>
                         {
-                            var logger = serviceScope.ServiceProvider.GetService<ILogger>();
+                            var logger = serviceScope.ServiceProvider.GetService<ILoggerFactory>()!.CreateLogger(
+                                categoryName: GetType().Name);
 
                             logger.LogWarning(exception,
                                 "[StartBackgroundJobProcessing] Exception {ExceptionType} with message {Message} detected on attempt StartBackgroundJobProcessing {retry} of {retries}",

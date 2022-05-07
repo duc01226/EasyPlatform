@@ -11,14 +11,14 @@ namespace Easy.Platform.Common.Extensions
             Action action,
             Action<Exception> onBeforeThrowFinalExceptionFn = null)
         {
-            ExecuteAndThrowFinalException<object>(
-                retryPolicy,
-                () =>
-                {
-                    action();
-                    return null;
-                },
-                onBeforeThrowFinalExceptionFn);
+            var result = retryPolicy.ExecuteAndCapture(action);
+
+            if (result.FinalException != null)
+            {
+                onBeforeThrowFinalExceptionFn?.Invoke(result.FinalException);
+
+                throw result.FinalException;
+            }
         }
 
         public static T ExecuteAndThrowFinalException<T>(
@@ -43,14 +43,14 @@ namespace Easy.Platform.Common.Extensions
             Func<Task> action,
             Action<Exception> onBeforeThrowFinalExceptionFn = null)
         {
-            await ExecuteAndThrowFinalExceptionAsync<object>(
-                retryPolicy,
-                async () =>
-                {
-                    await action();
-                    return null;
-                },
-                onBeforeThrowFinalExceptionFn);
+            var result = await retryPolicy.ExecuteAndCaptureAsync(action);
+
+            if (result.FinalException != null)
+            {
+                onBeforeThrowFinalExceptionFn?.Invoke(result.FinalException);
+
+                throw result.FinalException;
+            }
         }
 
         public static async Task<T> ExecuteAndThrowFinalExceptionAsync<T>(

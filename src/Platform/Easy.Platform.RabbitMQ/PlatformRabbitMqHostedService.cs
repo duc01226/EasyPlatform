@@ -248,7 +248,7 @@ namespace Easy.Platform.RabbitMQ
                         Log.Warning(Logger, message: "Channel Re-connect event already triggered");
                     }
                 };
-                // Config the prefectCount: 30 (Not default is 0 mean unlimited) to limit messages to prevent rabbit mq down
+                // Config the prefectCount (Not default is 0 mean unlimited) to limit messages to prevent rabbit mq down
                 // Reference: https://www.rabbitmq.com/tutorials/tutorial-two-dotnet.html. Filter: BasicQos
                 currentChannel.BasicQos(prefetchSize: 0, prefetchCount: options.QueuePrefetchCount, global: false);
 
@@ -435,7 +435,7 @@ namespace Easy.Platform.RabbitMQ
 
             if (eventBusMessage != null)
             {
-                await PlatformEventBusBaseConsumer.InvokeConsumer(
+                await PlatformEventBusBaseConsumer.InvokeConsumerAsync(
                     consumer,
                     eventBusMessage,
                     args.RoutingKey,

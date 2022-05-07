@@ -61,7 +61,6 @@ namespace Easy.Platform
                 if (RegisterServicesExecuted)
                     return;
 
-                serviceCollection.Register(typeof(PlatformModule), p => this, ServiceLifeTime.Singleton);
                 RegisterAllModuleDependencies(serviceCollection);
                 RegisterDefaultLogs(serviceCollection);
                 RegisterCqrs(serviceCollection);

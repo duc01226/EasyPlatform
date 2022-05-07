@@ -7,7 +7,6 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Application.Context;
-using Easy.Platform.Application.EventBus.Consumers;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Hosting;
 using Easy.Platform.Common.JsonSerialization;
@@ -37,10 +36,6 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         {
             ServiceProvider = serviceProvider;
             this.applicationSettingContext = applicationSettingContext;
-            ConsumerByValueToDefinedEventBusConsumerTypeDic = serviceProvider
-                .GetService<IPlatformEventBusManager>()?
-                .AllDefinedEventBusConsumerTypes()
-                .ToDictionary(PlatformInboxEventBusConsumerHelper.GetConsumerByValue, p => p) ?? new Dictionary<string, Type>();
         }
 
         public static bool MatchImplementation(ServiceDescriptor serviceDescriptor)
@@ -65,8 +60,6 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         }
 
         protected IServiceProvider ServiceProvider { get; }
-
-        protected Dictionary<string, Type> ConsumerByValueToDefinedEventBusConsumerTypeDic { get; }
 
         protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
         {
@@ -148,33 +141,30 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             PlatformInboxEventBusMessage toHandleInboxMessage,
             CancellationToken cancellationToken)
         {
-            var consumerType = ConsumerByValueToDefinedEventBusConsumerTypeDic.GetValueOrDefault(toHandleInboxMessage.ConsumerBy, null);
+            var consumerType = ResolveConsumerType(toHandleInboxMessage);
 
-            var consumer = consumerType != null
-                ? scope.ServiceProvider.GetService(consumerType)
-                : null;
-
-            if (consumer is IPlatformInboxSupportEventBusConsumer inboxSupportEventBusConsumer)
+            if (consumerType != null)
             {
-                inboxSupportEventBusConsumer.IsProcessingExistingInboxMessage = true;
+                var consumer = ((IPlatformInboxSupportEventBusConsumer)scope.ServiceProvider.GetService(consumerType))
+                    !.ForProcessingExistingInboxMessage();
 
                 // Get a generic type: PlatformEventBusMessage<TMessage> where TMessage = TMessagePayload
                 // of IPlatformEventBusConsumer<TMessagePayload>
-                var consumerMessageType = PlatformEventBusBaseConsumer.GetConsumerMessageType(inboxSupportEventBusConsumer);
+                var consumerMessageType = PlatformEventBusBaseConsumer.GetConsumerMessageType(consumer);
 
                 var eventBusMessage = Util.Tasks.CatchExceptionContinueThrow(
                     () => PlatformJsonSerializer.Deserialize(
                         toHandleInboxMessage.JsonMessage,
                         consumerMessageType,
-                        inboxSupportEventBusConsumer.CustomJsonSerializerOptions()),
+                        consumer.CustomJsonSerializerOptions()),
                     ex => Logger.LogError(
                         ex,
                         $"RabbitMQ parsing message to {consumerMessageType.Name} error for the routing key {toHandleInboxMessage.RoutingKey}.{Environment.NewLine} Body: {toHandleInboxMessage.JsonMessage}"));
 
                 if (eventBusMessage != null)
                 {
-                    await PlatformEventBusBaseConsumer.InvokeConsumer(
-                        inboxSupportEventBusConsumer,
+                    await PlatformEventBusBaseConsumer.InvokeConsumerAsync(
+                        consumer,
                         eventBusMessage,
                         toHandleInboxMessage.RoutingKey,
                         IsLogConsumerProcessTime(),
@@ -182,6 +172,15 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                         Logger,
                         cancellationToken);
                 }
+            }
+            else
+            {
+                await PlatformInboxEventBusConsumerHelper.UpdateFailedInboxMessageAsync(
+                    toHandleInboxMessage.Id,
+                    scope.ServiceProvider.GetService<IUnitOfWorkManager>(),
+                    scope.ServiceProvider.GetService<IPlatformInboxEventBusMessageRepository>(),
+                    new Exception($"[{GetType().Name}] Error resolve consumer type {toHandleInboxMessage.ConsumerBy}. InboxId:{toHandleInboxMessage.Id} "),
+                    cancellationToken);
             }
         }
 
@@ -281,6 +280,20 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             {
                 return scope.ServiceProvider.GetService<IPlatformInboxEventBusMessageRepository>() != null;
             }
+        }
+
+        private Type ResolveConsumerType(PlatformInboxEventBusMessage toHandleInboxMessage)
+        {
+            var messageType =
+                Type.GetType(toHandleInboxMessage.ConsumerBy, throwOnError: false) ??
+                ServiceProvider
+                    .GetService<IPlatformEventBusManager>()!
+                    .GetScanAssemblies()
+                    .ConcatSingle(typeof(PlatformModule).Assembly)
+                    .Select(assembly => assembly.GetType(toHandleInboxMessage.ConsumerBy))
+                    .FirstOrDefault(p => p != null);
+
+            return messageType;
         }
     }
 

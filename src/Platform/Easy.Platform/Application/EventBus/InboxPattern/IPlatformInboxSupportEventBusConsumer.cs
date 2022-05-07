@@ -4,6 +4,6 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 {
     public interface IPlatformInboxSupportEventBusConsumer : IPlatformEventBusBaseConsumer
     {
-        public bool IsProcessingExistingInboxMessage { get; set; }
+        public IPlatformInboxSupportEventBusConsumer ForProcessingExistingInboxMessage();
     }
 }

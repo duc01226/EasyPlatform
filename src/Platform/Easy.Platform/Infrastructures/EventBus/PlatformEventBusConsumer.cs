@@ -82,7 +82,7 @@ namespace Easy.Platform.Infrastructures.EventBus
             }
         }
 
-        public static async Task InvokeConsumer(
+        public static async Task InvokeConsumerAsync(
             IPlatformEventBusBaseConsumer consumer,
             object eventBusMessage,
             string routingKey,

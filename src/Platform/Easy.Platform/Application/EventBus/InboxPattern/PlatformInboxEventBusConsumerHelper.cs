@@ -1,5 +1,6 @@
 using System;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
@@ -24,12 +25,14 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             TMessage message,
             string routingKey,
             bool isProcessingExistingInboxMessage,
-            ILogger logger) where TMessage : class, IPlatformEventBusTrackableMessage, new()
+            ILogger logger,
+            CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusTrackableMessage, new()
         {
             if (message.TrackingId != null)
             {
-                var existingInboxMessage = await inboxEventBusMessageRepo.FirstOrDefaultAsync(p =>
-                    p.Id == PlatformInboxEventBusMessage.BuildId(message, GetConsumerByValue(consumer)));
+                var existingInboxMessage = await inboxEventBusMessageRepo.FirstOrDefaultAsync(
+                    p => p.Id == PlatformInboxEventBusMessage.BuildId(message, GetConsumerByValue(consumer)),
+                    cancellationToken);
 
                 if (existingInboxMessage == null ||
                     existingInboxMessage.ConsumeStatus == PlatformInboxEventBusMessage.ConsumeStatuses.New ||
@@ -40,13 +43,15 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                     {
                         await internalHandleAsync(message, routingKey);
 
-                        await UpsertProcessedInboxMessage(consumer, unitOfWorkManager, inboxEventBusMessageRepo, message, routingKey);
+                        await UpsertProcessedInboxMessageAsync(
+                            consumer, unitOfWorkManager, inboxEventBusMessageRepo, message, routingKey, cancellationToken);
                     }
-                    catch (Exception e)
+                    catch (Exception ex)
                     {
-                        await UpsertFailedInboxMessage(consumer, unitOfWorkManager, inboxEventBusMessageRepo, message, routingKey, e);
+                        await UpsertFailedInboxMessageAsync(
+                            consumer, unitOfWorkManager, inboxEventBusMessageRepo, message, routingKey, ex, cancellationToken);
 
-                        logger.LogError(e, $"Error Consume inbox message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
+                        logger.LogError(ex, $"Error Consume inbox message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
                                            $"Message Info: ${PlatformJsonSerializer.Serialize(message)}.{Environment.NewLine}");
                     }
                 }
@@ -57,7 +62,8 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             }
         }
 
-        public static string GetConsumerByValue<TMessage>(IPlatformEventBusBaseConsumer<TMessage> consumer) where TMessage : class, IPlatformEventBusTrackableMessage, new()
+        public static string GetConsumerByValue<TMessage>(IPlatformEventBusBaseConsumer<TMessage> consumer)
+            where TMessage : class, IPlatformEventBusTrackableMessage, new()
         {
             return GetConsumerByValue(consumer.GetType());
         }
@@ -67,60 +73,68 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             return consumerType.FullName;
         }
 
-        private static async Task UpsertProcessedInboxMessage<TMessage>(
+        public static async Task UpsertProcessedInboxMessageAsync<TMessage>(
             IPlatformEventBusBaseConsumer<TMessage> consumer,
             IUnitOfWorkManager unitOfWorkManager,
             IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo,
             TMessage message,
-            string routingKey) where TMessage : class, IPlatformEventBusTrackableMessage, new()
+            string routingKey,
+            CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusTrackableMessage, new()
         {
             using (var uow = unitOfWorkManager.Begin())
             {
-                var existingInboxMessage = await inboxEventBusMessageRepo.FirstOrDefaultAsync(p =>
-                    p.Id == PlatformInboxEventBusMessage.BuildId(message, GetConsumerByValue(consumer)));
+                var existingInboxMessage = await inboxEventBusMessageRepo.FirstOrDefaultAsync(
+                    p => p.Id == PlatformInboxEventBusMessage.BuildId(message, GetConsumerByValue(consumer)),
+                    cancellationToken);
 
                 if (existingInboxMessage == null)
                 {
-                    await inboxEventBusMessageRepo.CreateAsync(PlatformInboxEventBusMessage.Create(
-                        message,
-                        routingKey,
-                        GetConsumerByValue(consumer),
-                        PlatformInboxEventBusMessage.ConsumeStatuses.Processed));
+                    await inboxEventBusMessageRepo.CreateAsync(
+                        PlatformInboxEventBusMessage.Create(
+                            message,
+                            routingKey,
+                            GetConsumerByValue(consumer),
+                            PlatformInboxEventBusMessage.ConsumeStatuses.Processed),
+                        cancellationToken: cancellationToken);
                 }
                 else
                 {
                     existingInboxMessage.LastConsumeDate = DateTime.UtcNow;
                     existingInboxMessage.ConsumeStatus = PlatformInboxEventBusMessage.ConsumeStatuses.Processed;
 
-                    await inboxEventBusMessageRepo.UpdateAsync(existingInboxMessage);
+                    await inboxEventBusMessageRepo.UpdateAsync(existingInboxMessage, cancellationToken: cancellationToken);
                 }
 
-                await uow.CompleteAsync();
+                await uow.CompleteAsync(cancellationToken);
             }
         }
 
-        private static async Task UpsertFailedInboxMessage<TMessage>(
+        public static async Task UpsertFailedInboxMessageAsync<TMessage>(
             IPlatformEventBusBaseConsumer<TMessage> consumer,
             IUnitOfWorkManager unitOfWorkManager,
             IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo,
             TMessage message,
             string routingKey,
-            Exception exception) where TMessage : class, IPlatformEventBusTrackableMessage, new()
+            Exception exception,
+            CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusTrackableMessage, new()
         {
             using (var uow = unitOfWorkManager.Begin())
             {
-                var existingInboxMessage = await inboxEventBusMessageRepo.FirstOrDefaultAsync(p =>
-                    p.Id == PlatformInboxEventBusMessage.BuildId(message, GetConsumerByValue(consumer)));
+                var existingInboxMessage = await inboxEventBusMessageRepo.FirstOrDefaultAsync(
+                    p => p.Id == PlatformInboxEventBusMessage.BuildId(message, GetConsumerByValue(consumer)),
+                    cancellationToken);
                 var consumeError = PlatformJsonSerializer.Serialize(new { exception.Message, exception.StackTrace });
 
                 if (existingInboxMessage == null)
                 {
-                    await inboxEventBusMessageRepo.CreateAsync(PlatformInboxEventBusMessage.Create(
-                        message,
-                        routingKey,
-                        GetConsumerByValue(consumer),
-                        PlatformInboxEventBusMessage.ConsumeStatuses.Failed,
-                        lastConsumeError: consumeError));
+                    await inboxEventBusMessageRepo.CreateAsync(
+                        PlatformInboxEventBusMessage.Create(
+                            message,
+                            routingKey,
+                            GetConsumerByValue(consumer),
+                            PlatformInboxEventBusMessage.ConsumeStatuses.Failed,
+                            lastConsumeError: consumeError),
+                        cancellationToken: cancellationToken);
                 }
                 else
                 {
@@ -128,10 +142,32 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
                     existingInboxMessage.LastConsumeDate = DateTime.UtcNow;
                     existingInboxMessage.LastConsumeError = consumeError;
 
-                    await inboxEventBusMessageRepo.UpdateAsync(existingInboxMessage);
+                    await inboxEventBusMessageRepo.UpdateAsync(existingInboxMessage, cancellationToken: cancellationToken);
                 }
 
-                await uow.CompleteAsync();
+                await uow.CompleteAsync(cancellationToken);
+            }
+        }
+
+        public static async Task UpdateFailedInboxMessageAsync(
+            string id,
+            IUnitOfWorkManager unitOfWorkManager,
+            IPlatformInboxEventBusMessageRepository inboxEventBusMessageRepo,
+            Exception exception,
+            CancellationToken cancellationToken = default)
+        {
+            using (var uow = unitOfWorkManager.Begin())
+            {
+                var existingInboxMessage = await inboxEventBusMessageRepo.GetByIdAsync(id, cancellationToken);
+                var consumeError = PlatformJsonSerializer.Serialize(new { exception.Message, exception.StackTrace });
+
+                existingInboxMessage.ConsumeStatus = PlatformInboxEventBusMessage.ConsumeStatuses.Failed;
+                existingInboxMessage.LastConsumeDate = DateTime.UtcNow;
+                existingInboxMessage.LastConsumeError = consumeError;
+
+                await inboxEventBusMessageRepo.UpdateAsync(existingInboxMessage, cancellationToken: cancellationToken);
+
+                await uow.CompleteAsync(cancellationToken);
             }
         }
     }

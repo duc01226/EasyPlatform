@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -25,7 +26,6 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
     public abstract class PlatformSendOutboxEventBusMessageHostedService : PlatformIntervalProcessHostedService
     {
         private bool isProcessing = false;
-        private readonly IPlatformEventBusProducer eventBusProducer;
         private readonly IPlatformApplicationSettingContext applicationSettingContext;
 
         protected PlatformSendOutboxEventBusMessageHostedService(
@@ -36,13 +36,6 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         {
             this.ServiceProvider = serviceProvider;
             this.applicationSettingContext = applicationSettingContext;
-            this.eventBusProducer = serviceProvider.GetService<IPlatformEventBusProducer>();
-            FullNameToDefinedEventBusTypeDic = serviceProvider
-                .GetService<IPlatformEventBusManager>()?
-                .GetScanAssemblies()
-                .SelectMany(p => p.GetTypes())
-                .GroupBy(p => p.FullName)
-                .ToDictionary(p => p.Key, p => p.First()) ?? new Dictionary<string, Type>();
         }
 
         public static bool MatchImplementation(ServiceDescriptor serviceDescriptor)
@@ -67,8 +60,6 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         }
 
         protected IServiceProvider ServiceProvider { get; }
-
-        protected Dictionary<string, Type> FullNameToDefinedEventBusTypeDic { get; }
 
         protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
         {
@@ -150,25 +141,39 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             PlatformOutboxEventBusMessage toHandleOutboxMessage,
             CancellationToken cancellationToken)
         {
-            var messageType = FullNameToDefinedEventBusTypeDic.GetValueOrDefault(toHandleOutboxMessage.MessageTypeFullName, null);
+            var uowManager = scope.ServiceProvider.GetService<IUnitOfWorkManager>();
+            var outboxEventBusMessageRepo = scope.ServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>();
+            var eventBusProducer = scope.ServiceProvider.GetService<IPlatformEventBusProducer>();
 
-            if (messageType != null && messageType.IsAssignableTo(typeof(IPlatformEventBusTrackableMessage)))
+            using (var uow = uowManager!.Begin())
             {
-                var message = (IPlatformEventBusTrackableMessage)PlatformJsonSerializer.Deserialize(
-                    toHandleOutboxMessage.JsonMessage,
-                    messageType);
+                var messageType = ResolveMessageType(toHandleOutboxMessage);
 
-                var uowManager = scope.ServiceProvider.GetService<IUnitOfWorkManager>();
-                using (var uow = uowManager!.Begin())
+                if (messageType != null && messageType.IsAssignableTo(typeof(IPlatformEventBusTrackableMessage)))
                 {
+                    var message = (IPlatformEventBusTrackableMessage)PlatformJsonSerializer.Deserialize(
+                        toHandleOutboxMessage.JsonMessage,
+                        messageType);
+
                     await PlatformOutboxEventBusProducerHelper.HandleSendingOutboxMessageAsync(
-                        ServiceProvider,
+                        scope.ServiceProvider,
                         uowManager,
-                        scope.ServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>(),
+                        outboxEventBusMessageRepo,
                         eventBusProducer,
                         message,
                         toHandleOutboxMessage.RoutingKey,
                         isProcessingExistingOutboxMessage: true,
+                        Logger,
+                        cancellationToken);
+
+                    await uow.CompleteAsync(cancellationToken);
+                }
+                else
+                {
+                    await PlatformOutboxEventBusProducerHelper.UpdateExistingOutboxMessageFailedInNewScope(
+                        scope.ServiceProvider,
+                        toHandleOutboxMessage.Id,
+                        new Exception($"[{GetType().Name}] Error resolve outbox message type [TypeName:{toHandleOutboxMessage.MessageTypeFullName}]. OutboxId:{toHandleOutboxMessage.Id}"),
                         Logger,
                         cancellationToken);
 
@@ -257,6 +262,20 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             {
                 return scope.ServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>() != null;
             }
+        }
+
+        private Type ResolveMessageType(PlatformOutboxEventBusMessage toHandleOutboxMessage)
+        {
+            var messageType =
+                Type.GetType(toHandleOutboxMessage.MessageTypeFullName, throwOnError: false) ??
+                ServiceProvider
+                    .GetService<IPlatformEventBusManager>()!
+                    .GetScanAssemblies()
+                    .ConcatSingle(typeof(PlatformModule).Assembly)
+                    .Select(assembly => assembly.GetType(toHandleOutboxMessage.MessageTypeFullName))
+                    .FirstOrDefault(p => p != null);
+
+            return messageType;
         }
     }
 
