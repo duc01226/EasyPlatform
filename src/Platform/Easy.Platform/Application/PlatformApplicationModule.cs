@@ -109,7 +109,7 @@ namespace Easy.Platform.Application
             return new PlatformApplicationSettingContext()
             {
                 ApplicationName = Assembly.FullName,
-                ApplicationAssembly = GetType().Assembly
+                ApplicationAssembly = Assembly
             };
         }
 
