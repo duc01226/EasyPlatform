@@ -39,8 +39,21 @@ namespace Easy.Platform.Persistence
             RegisterUnitOfWorkManager(serviceCollection);
             serviceCollection.RegisterAllFromType(typeof(IUnitOfWork), ServiceLifeTime.Transient, Assembly);
             RegisterRepositories(serviceCollection);
+
             RegisterInboxEventBusMessageRepository(serviceCollection);
+
             RegisterOutboxEventBusMessageRepository(serviceCollection);
+
+            if (OutboxConfigProvider(serviceCollection.BuildServiceProvider()) != null)
+            {
+                serviceCollection.Register(
+                    serviceType: typeof(PlatformOutboxConfig),
+                    OutboxConfigProvider,
+                    ServiceLifeTime.Transient,
+                    replaceIfExist: true,
+                    ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+            }
+
             serviceCollection.RegisterAllFromType<IPersistenceService>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformDataMigrationExecutor>(ServiceLifeTime.Transient, Assembly);
         }
@@ -74,6 +87,14 @@ namespace Easy.Platform.Persistence
         protected virtual bool EnableOutboxEventBusMessageRepository()
         {
             return false;
+        }
+
+        /// <summary>
+        /// Support to custom the outbox config. Default return null
+        /// </summary>
+        protected virtual PlatformOutboxConfig OutboxConfigProvider(IServiceProvider serviceProvider)
+        {
+            return null;
         }
 
         private void RegisterUnitOfWorkManager(IServiceCollection serviceCollection)

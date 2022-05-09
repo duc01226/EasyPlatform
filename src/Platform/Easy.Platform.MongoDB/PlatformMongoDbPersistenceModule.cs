@@ -37,7 +37,7 @@ namespace Easy.Platform.MongoDB
             IServiceProvider serviceProvider,
             IConfiguration configuration) : base(serviceProvider, configuration)
         {
-            Logger = serviceProvider?.GetService<ILoggerFactory>().CreateLogger(GetType());
+            Logger = serviceProvider?.GetService<ILoggerFactory>()?.CreateLogger(GetType());
         }
 
         protected abstract void ConfigureMongoOptions(TMongoOptions options);

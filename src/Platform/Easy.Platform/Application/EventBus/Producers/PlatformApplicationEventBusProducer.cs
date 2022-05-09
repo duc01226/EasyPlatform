@@ -130,13 +130,15 @@ namespace Easy.Platform.Application.EventBus.Producers
             IServiceProvider serviceProvider,
             ILogger<PlatformApplicationEventBusProducer> logger,
             IPlatformApplicationSettingContext applicationSettingContext,
-            IPlatformApplicationUserContextAccessor userContextAccessor)
+            IPlatformApplicationUserContextAccessor userContextAccessor,
+            PlatformOutboxConfig outboxConfig)
         {
             ServiceProvider = serviceProvider;
             Logger = logger;
             EventBusProducer = serviceProvider.GetService<IPlatformEventBusProducer>() ?? new PlatformPseudoEventBusProducer();
             ApplicationSettingContext = applicationSettingContext;
             UserContextAccessor = userContextAccessor;
+            OutboxConfig = outboxConfig;
         }
 
         protected IServiceProvider ServiceProvider { get; }
@@ -144,6 +146,7 @@ namespace Easy.Platform.Application.EventBus.Producers
         protected IPlatformEventBusProducer EventBusProducer { get; }
         protected IPlatformApplicationSettingContext ApplicationSettingContext { get; }
         protected IPlatformApplicationUserContextAccessor UserContextAccessor { get; }
+        protected PlatformOutboxConfig OutboxConfig { get; }
 
         public async Task<TMessage> SendAsync<TMessage, TMessagePayload>(
             string trackId,
@@ -325,6 +328,7 @@ namespace Easy.Platform.Application.EventBus.Producers
                     message,
                     routingKey,
                     isProcessingExistingOutboxMessage: false,
+                    OutboxConfig,
                     Logger,
                     cancellationToken);
 

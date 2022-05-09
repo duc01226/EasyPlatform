@@ -32,10 +32,12 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             IHostApplicationLifetime applicationLifetime,
             ILoggerFactory loggerFactory,
             IServiceProvider serviceProvider,
-            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, loggerFactory)
+            IPlatformApplicationSettingContext applicationSettingContext,
+            PlatformOutboxConfig outboxConfig) : base(applicationLifetime, loggerFactory)
         {
             this.ServiceProvider = serviceProvider;
             this.applicationSettingContext = applicationSettingContext;
+            OutboxConfig = outboxConfig;
         }
 
         public static bool MatchImplementation(ServiceDescriptor serviceDescriptor)
@@ -60,6 +62,8 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         }
 
         protected IServiceProvider ServiceProvider { get; }
+
+        protected PlatformOutboxConfig OutboxConfig { get; }
 
         protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
         {
@@ -159,6 +163,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                         message,
                         toHandleOutboxMessage.RoutingKey,
                         isProcessingExistingOutboxMessage: true,
+                        OutboxConfig,
                         Logger,
                         cancellationToken);
 
@@ -281,7 +286,8 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             IHostApplicationLifetime applicationLifetime,
             ILoggerFactory loggerFactory,
             IServiceProvider serviceProvider,
-            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, loggerFactory, serviceProvider, applicationSettingContext)
+            IPlatformApplicationSettingContext applicationSettingContext,
+            PlatformOutboxConfig outboxConfig) : base(applicationLifetime, loggerFactory, serviceProvider, applicationSettingContext, outboxConfig)
         {
         }
     }

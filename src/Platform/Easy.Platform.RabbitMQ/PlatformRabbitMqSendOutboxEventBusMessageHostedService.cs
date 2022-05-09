@@ -16,7 +16,8 @@ namespace Easy.Platform.RabbitMQ
             ILoggerFactory loggerFactory,
             IServiceProvider serviceProvider,
             IPlatformApplicationSettingContext applicationSettingContext,
-            PlatformRabbitMqOptions options) : base(applicationLifetime, loggerFactory, serviceProvider, applicationSettingContext)
+            PlatformOutboxConfig outboxConfig,
+            PlatformRabbitMqOptions options) : base(applicationLifetime, loggerFactory, serviceProvider, applicationSettingContext, outboxConfig)
         {
             this.options = options;
         }

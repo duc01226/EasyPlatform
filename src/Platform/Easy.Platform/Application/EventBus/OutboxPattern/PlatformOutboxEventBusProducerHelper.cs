@@ -19,6 +19,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             TMessage message,
             string routingKey,
             bool isProcessingExistingOutboxMessage,
+            PlatformOutboxConfig outboxConfig,
             ILogger logger,
             CancellationToken cancellationToken) where TMessage : IPlatformEventBusTrackableMessage
         {
@@ -27,10 +28,10 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                 var outboxEventBusMessageRepo = currentScopeServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>();
                 var unitOfWorkManager = currentScopeServiceProvider.GetService<IUnitOfWorkManager>();
 
-                var needToStartNewUow = !unitOfWorkManager!.HasCurrentActive();
+                var needToStartNewUow = outboxConfig.ForceAlwaysSendOutboxInNewUow || !unitOfWorkManager!.HasCurrentActive();
 
                 var currentUow = needToStartNewUow
-                    ? unitOfWorkManager.Begin(suppressCurrentUow: true)
+                    ? unitOfWorkManager!.Begin(suppressCurrentUow: true)
                     : unitOfWorkManager.Current();
 
                 if (isProcessingExistingOutboxMessage)
@@ -91,10 +92,15 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             // Can execute it immediately without waiting for uow to complete
             if (currentUow.IsNoTransactionUow())
             {
-                await SendExistingOutboxMessageInNewScopeAsync(
+                var logger = rootScopeServiceProvider.GetService<ILoggerFactory>()!.CreateLogger(
+                    categoryName: nameof(PlatformOutboxEventBusProducerHelper));
+
+                await SendExistingOutboxMessageAsync(
+                    rootScopeServiceProvider,
                     rootScopeServiceProvider,
                     message,
                     routingKey,
+                    logger,
                     cancellationToken);
             }
             else
@@ -126,7 +132,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                 var logger = newScope.ServiceProvider.GetService<ILoggerFactory>()!.CreateLogger(
                     categoryName: nameof(PlatformOutboxEventBusProducerHelper));
 
-                using (var newUowForTrySendMessageToBus = unitOfWorkManager!.Begin())
+                using (var uow = unitOfWorkManager!.Begin())
                 {
                     await SendExistingOutboxMessageAsync(
                         rootScopeServiceProvider,
@@ -136,7 +142,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                         logger,
                         cancellationToken);
 
-                    await newUowForTrySendMessageToBus.CompleteAsync(cancellationToken);
+                    await uow.CompleteAsync(cancellationToken);
                 }
             }
         }

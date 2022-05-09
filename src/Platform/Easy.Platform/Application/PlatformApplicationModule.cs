@@ -126,6 +126,8 @@ namespace Easy.Platform.Application
 
             RegisterOutboxEventBusMessageCleanerHostedService(serviceCollection);
             RegisterSendOutboxEventBusMessageHostedService(serviceCollection);
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(PlatformOutboxConfig)))
+                serviceCollection.RegisterIfNotExist<PlatformOutboxConfig, PlatformOutboxConfig>(ServiceLifeTime.Transient);
 
             RegisterPseudoApplicationUnitOfWork(serviceCollection);
             serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(ServiceLifeTime.Transient, Assembly);
