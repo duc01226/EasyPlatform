@@ -14,10 +14,8 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
     public static class PlatformOutboxEventBusProducerHelper
     {
         public static async Task HandleSendingOutboxMessageAsync<TMessage>(
-            IServiceProvider serviceProvider,
-            IUnitOfWorkManager unitOfWorkManager,
-            IPlatformOutboxEventBusMessageRepository outboxEventBusMessageRepo,
-            IPlatformEventBusProducer eventBusProducer,
+            IServiceProvider rootScopeServiceProvider,
+            IServiceProvider currentScopeServiceProvider,
             TMessage message,
             string routingKey,
             bool isProcessingExistingOutboxMessage,
@@ -26,14 +24,18 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         {
             if (message.TrackingId != null)
             {
-                var needToStartNewUow = !unitOfWorkManager.HasCurrentActive();
+                var outboxEventBusMessageRepo = currentScopeServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>();
+                var unitOfWorkManager = currentScopeServiceProvider.GetService<IUnitOfWorkManager>();
 
-                if (needToStartNewUow)
-                    unitOfWorkManager.Begin(suppressCurrentUow: false);
+                var needToStartNewUow = !unitOfWorkManager!.HasCurrentActive();
+
+                var currentUow = needToStartNewUow
+                    ? unitOfWorkManager.Begin(suppressCurrentUow: true)
+                    : unitOfWorkManager.Current();
 
                 if (isProcessingExistingOutboxMessage)
                 {
-                    var existingOutboxMessage = await outboxEventBusMessageRepo.GetByIdAsync(
+                    var existingOutboxMessage = await outboxEventBusMessageRepo!.GetByIdAsync(
                         PlatformOutboxEventBusMessage.BuildId(message), cancellationToken);
 
                     if (existingOutboxMessage.SendStatus is
@@ -42,14 +44,14 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                         PlatformOutboxEventBusMessage.SendStatuses.Processing)
                     {
                         await SendExistingOutboxMessageAsync(
-                            serviceProvider, outboxEventBusMessageRepo, eventBusProducer, message, routingKey, logger, cancellationToken);
+                            rootScopeServiceProvider, currentScopeServiceProvider, message, routingKey, logger, cancellationToken);
                     }
                 }
                 else
                 {
                     await SaveAndTrySendNewOutboxMessageAsync(
-                        serviceProvider,
-                        uow: unitOfWorkManager.Current(),
+                        rootScopeServiceProvider,
+                        currentScopeUow: currentUow,
                         outboxEventBusMessageRepo,
                         message,
                         routingKey,
@@ -59,13 +61,15 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             }
             else
             {
-                await eventBusProducer.SendTrackableMessageAsync(message, routingKey, cancellationToken);
+                var eventBusProducer = currentScopeServiceProvider.GetService<IPlatformEventBusProducer>();
+
+                await eventBusProducer!.SendTrackableMessageAsync(message, routingKey, cancellationToken);
             }
         }
 
         public static async Task SaveAndTrySendNewOutboxMessageAsync<TMessage>(
-            IServiceProvider serviceProvider,
-            IUnitOfWork uow,
+            IServiceProvider rootScopeServiceProvider,
+            IUnitOfWork currentScopeUow,
             IPlatformOutboxEventBusMessageRepository outboxEventBusMessageRepo,
             TMessage message,
             string routingKey,
@@ -83,40 +87,37 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                 dismissSendEvent: true,
                 cancellationToken);
 
-            uow.OnCompleted += async (sender, args) =>
+            currentScopeUow.OnCompleted += (sender, args) =>
             {
                 // Try to process newProcessingOutboxMessage first time after saved
-                await SendExistingOutboxMessageInNewScopeAsync(
-                    serviceProvider,
+                SendExistingOutboxMessageInNewScopeAsync(
+                    rootScopeServiceProvider,
                     message,
                     routingKey,
-                    cancellationToken);
+                    cancellationToken).Wait(cancellationToken);
             };
 
             if (autoCompleteUow)
-                await uow.CompleteAsync(cancellationToken);
+                await currentScopeUow.CompleteAsync(cancellationToken);
         }
 
         public static async Task SendExistingOutboxMessageInNewScopeAsync<TMessage>(
-            IServiceProvider serviceProvider,
+            IServiceProvider rootScopeServiceProvider,
             TMessage message,
             string routingKey,
             CancellationToken cancellationToken) where TMessage : IPlatformEventBusTrackableMessage
         {
-            using (var newScope = serviceProvider.CreateScope())
+            using (var newScope = rootScopeServiceProvider.CreateScope())
             {
-                var outboxEventBusMessageRepo = newScope.ServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>();
                 var unitOfWorkManager = newScope.ServiceProvider.GetService<IUnitOfWorkManager>();
-                var eventBusProducer = newScope.ServiceProvider.GetService<IPlatformEventBusProducer>();
                 var logger = newScope.ServiceProvider.GetService<ILoggerFactory>()!.CreateLogger(
                     categoryName: nameof(PlatformOutboxEventBusProducerHelper));
 
                 using (var newUowForTrySendMessageToBus = unitOfWorkManager!.Begin())
                 {
                     await SendExistingOutboxMessageAsync(
+                        rootScopeServiceProvider,
                         newScope.ServiceProvider,
-                        outboxEventBusMessageRepo,
-                        eventBusProducer,
                         message,
                         routingKey,
                         logger,
@@ -128,25 +129,27 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         }
 
         public static async Task SendExistingOutboxMessageAsync<TMessage>(
-            IServiceProvider serviceProvider,
-            IPlatformOutboxEventBusMessageRepository outboxEventBusMessageRepo,
-            IPlatformEventBusProducer eventBusProducer,
+            IServiceProvider rootScopeServiceProvider,
+            IServiceProvider currentScopeServiceProvider,
             TMessage message,
             string routingKey,
             ILogger logger,
             CancellationToken cancellationToken)
             where TMessage : IPlatformEventBusTrackableMessage
         {
+            var outboxEventBusMessageRepo = currentScopeServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>();
+            var eventBusProducer = currentScopeServiceProvider.GetService<IPlatformEventBusProducer>();
+
             try
             {
-                await eventBusProducer.SendTrackableMessageAsync(message, routingKey, cancellationToken);
+                await eventBusProducer!.SendTrackableMessageAsync(message, routingKey, cancellationToken);
 
                 await UpdateExistingOutboxMessageProcessed(outboxEventBusMessageRepo, PlatformOutboxEventBusMessage.BuildId(message), cancellationToken);
             }
             catch (Exception exception)
             {
                 await UpdateExistingOutboxMessageFailedInNewScope(
-                    serviceProvider,
+                    rootScopeServiceProvider,
                     PlatformOutboxEventBusMessage.BuildId(message),
                     exception,
                     logger,
@@ -170,13 +173,13 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         }
 
         public static async Task UpdateExistingOutboxMessageFailedInNewScope(
-            IServiceProvider serviceProvider,
+            IServiceProvider rootScopeServiceProvider,
             string messageId,
             Exception exception,
             ILogger logger,
             CancellationToken cancellationToken)
         {
-            using (var newScope = serviceProvider.CreateScope())
+            using (var newScope = rootScopeServiceProvider.CreateScope())
             {
                 var outboxEventBusMessageRepo = newScope.ServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>();
                 var unitOfWorkManager = newScope.ServiceProvider.GetService<IUnitOfWorkManager>();

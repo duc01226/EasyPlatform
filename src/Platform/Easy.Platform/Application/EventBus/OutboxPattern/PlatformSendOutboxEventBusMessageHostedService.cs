@@ -142,8 +142,6 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             CancellationToken cancellationToken)
         {
             var uowManager = scope.ServiceProvider.GetService<IUnitOfWorkManager>();
-            var outboxEventBusMessageRepo = scope.ServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>();
-            var eventBusProducer = scope.ServiceProvider.GetService<IPlatformEventBusProducer>();
 
             using (var uow = uowManager!.Begin())
             {
@@ -156,10 +154,8 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                         messageType);
 
                     await PlatformOutboxEventBusProducerHelper.HandleSendingOutboxMessageAsync(
-                        scope.ServiceProvider,
-                        uowManager,
-                        outboxEventBusMessageRepo,
-                        eventBusProducer,
+                        rootScopeServiceProvider: ServiceProvider,
+                        currentScopeServiceProvider: scope.ServiceProvider,
                         message,
                         toHandleOutboxMessage.RoutingKey,
                         isProcessingExistingOutboxMessage: true,

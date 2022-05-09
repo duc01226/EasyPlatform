@@ -320,10 +320,8 @@ namespace Easy.Platform.Application.EventBus.Producers
             if (autoSaveOutboxMessage && HasOutboxEventBusMessageRepositoryRegistered())
             {
                 await PlatformOutboxEventBusProducerHelper.HandleSendingOutboxMessageAsync(
-                    ServiceProvider,
-                    ServiceProvider.GetService<IUnitOfWorkManager>(),
-                    ServiceProvider.GetService<IPlatformOutboxEventBusMessageRepository>(),
-                    EventBusProducer,
+                    rootScopeServiceProvider: ServiceProvider,
+                    currentScopeServiceProvider: ServiceProvider,
                     message,
                     routingKey,
                     isProcessingExistingOutboxMessage: false,
