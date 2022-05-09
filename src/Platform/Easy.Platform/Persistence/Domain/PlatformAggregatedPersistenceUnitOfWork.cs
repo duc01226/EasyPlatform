@@ -20,6 +20,11 @@ namespace Easy.Platform.Persistence.Domain
 
         public Guid Id { get; } = Guid.NewGuid();
 
+        public override bool IsNoTransactionUow()
+        {
+            return InnerUnitOfWorks.All(p => p.IsNoTransactionUow());
+        }
+
         protected override void Dispose(bool disposing)
         {
             base.Dispose(disposing);

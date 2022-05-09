@@ -33,6 +33,11 @@ namespace Easy.Platform.Domain.UnitOfWork
         /// </summary>
         /// <returns></returns>
         bool IsActive();
+
+        /// <summary>
+        /// If true, the uow actually do not handle real transaction. Repository when create/update data actually save immediately
+        /// </summary>
+        bool IsNoTransactionUow();
     }
 
     public class UnitOfWorkFailedArgs
@@ -86,6 +91,8 @@ namespace Easy.Platform.Domain.UnitOfWork
         {
             return !Completed && !Disposed;
         }
+
+        public abstract bool IsNoTransactionUow();
 
         public void Dispose()
         {

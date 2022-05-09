@@ -51,7 +51,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                 {
                     await SaveAndTrySendNewOutboxMessageAsync(
                         rootScopeServiceProvider,
-                        currentScopeUow: currentUow,
+                        currentUow: currentUow,
                         outboxEventBusMessageRepo,
                         message,
                         routingKey,
@@ -69,7 +69,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
 
         public static async Task SaveAndTrySendNewOutboxMessageAsync<TMessage>(
             IServiceProvider rootScopeServiceProvider,
-            IUnitOfWork currentScopeUow,
+            IUnitOfWork currentUow,
             IPlatformOutboxEventBusMessageRepository outboxEventBusMessageRepo,
             TMessage message,
             string routingKey,
@@ -87,18 +87,31 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                 dismissSendEvent: true,
                 cancellationToken);
 
-            currentScopeUow.OnCompleted += (sender, args) =>
+            // Do not need to wait for uow completed if the uow for db do not handle actually transaction.
+            // Can execute it immediately without waiting for uow to complete
+            if (currentUow.IsNoTransactionUow())
             {
-                // Try to process newProcessingOutboxMessage first time after saved
-                SendExistingOutboxMessageInNewScopeAsync(
+                await SendExistingOutboxMessageInNewScopeAsync(
                     rootScopeServiceProvider,
                     message,
                     routingKey,
-                    cancellationToken).Wait(cancellationToken);
-            };
+                    cancellationToken);
+            }
+            else
+            {
+                currentUow.OnCompleted += (sender, args) =>
+                {
+                    // Try to process newProcessingOutboxMessage first time after saved
+                    SendExistingOutboxMessageInNewScopeAsync(
+                        rootScopeServiceProvider,
+                        message,
+                        routingKey,
+                        cancellationToken).Wait(cancellationToken);
+                };
+            }
 
             if (autoCompleteUow)
-                await currentScopeUow.CompleteAsync(cancellationToken);
+                await currentUow.CompleteAsync(cancellationToken);
         }
 
         public static async Task SendExistingOutboxMessageInNewScopeAsync<TMessage>(

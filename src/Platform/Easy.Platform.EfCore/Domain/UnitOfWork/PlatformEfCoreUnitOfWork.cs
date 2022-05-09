@@ -43,6 +43,11 @@ namespace Easy.Platform.EfCore.Domain.UnitOfWork
             }
         }
 
+        public override bool IsNoTransactionUow()
+        {
+            return false;
+        }
+
         protected override async Task SaveChangesAsync(CancellationToken cancellationToken)
         {
             await DbContext.SaveChangesAsync(cancellationToken);

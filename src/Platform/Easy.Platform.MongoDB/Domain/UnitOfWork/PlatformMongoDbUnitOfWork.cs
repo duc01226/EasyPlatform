@@ -17,5 +17,10 @@ namespace Easy.Platform.MongoDB.Domain.UnitOfWork
         public PlatformMongoDbUnitOfWork(TDbContext dbContext) : base(dbContext)
         {
         }
+
+        public override bool IsNoTransactionUow()
+        {
+            return true;
+        }
     }
 }

@@ -17,5 +17,9 @@ namespace Easy.Platform.Application.Domain
 
     internal class PlatformPseudoApplicationUnitOfWork : PlatformUnitOfWork
     {
+        public override bool IsNoTransactionUow()
+        {
+            return true;
+        }
     }
 }
