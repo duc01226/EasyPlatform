@@ -1,11 +1,13 @@
 using System;
 using System.Threading.Tasks;
 using Easy.Platform.Application.BackgroundJob;
+using Easy.Platform.Application.EventBus.Producers;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Infrastructures.BackgroundJob;
 using Microsoft.Extensions.Logging;
+using PlatformExampleApp.Shared.Application.EventBus.FreeFormatMessages;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
@@ -17,14 +19,18 @@ namespace PlatformExampleApp.TextSnippet.Application.BackgroundJob
     {
         private readonly IPlatformCqrs cqrs;
         private readonly ITextSnippetRootRepository<TextSnippetEntity> textSnippetEntityRepository;
+        private readonly IPlatformApplicationEventBusProducer eventBusProducer;
+
         public TestRecurringBackgroundJobExecutor(
             IUnitOfWorkManager unitOfWorkManager,
             ILoggerFactory loggerFactory,
             ITextSnippetRootRepository<TextSnippetEntity> textSnippetEntityRepository,
-            IPlatformCqrs cqrs) : base(unitOfWorkManager, loggerFactory)
+            IPlatformCqrs cqrs,
+            IPlatformApplicationEventBusProducer eventBusProducer) : base(unitOfWorkManager, loggerFactory)
         {
             this.textSnippetEntityRepository = textSnippetEntityRepository;
             this.cqrs = cqrs;
+            this.eventBusProducer = eventBusProducer;
         }
 
         public override async Task ProcessAsync()
@@ -41,6 +47,11 @@ namespace PlatformExampleApp.TextSnippet.Application.BackgroundJob
             {
                 Property1 = "TestRecurringBackgroundJobExecutor Prop1"
             });
+
+            await eventBusProducer.SendFreeFormatMessageAsync(
+                new TestFreeFormatMessageInDifferentSharedAssemblyCheckingOutboxResolveWorks());
+            await eventBusProducer.SendFreeFormatMessageAsync(
+                new TestFreeFormatMessageInDifferentSharedAssemblyCheckingOutboxResolveWorks1());
         }
     }
 }

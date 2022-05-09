@@ -26,7 +26,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         {
             if (message.TrackingId != null)
             {
-                var needToStartNewUow = unitOfWorkManager.Current() == null;
+                var needToStartNewUow = !unitOfWorkManager.HasCurrentActive();
 
                 if (needToStartNewUow)
                     unitOfWorkManager.Begin(suppressCurrentUow: false);
@@ -53,7 +53,6 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                         outboxEventBusMessageRepo,
                         message,
                         routingKey,
-                        logger,
                         autoCompleteUow: needToStartNewUow,
                         cancellationToken);
                 }
@@ -70,7 +69,6 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             IPlatformOutboxEventBusMessageRepository outboxEventBusMessageRepo,
             TMessage message,
             string routingKey,
-            ILogger logger,
             bool autoCompleteUow,
             CancellationToken cancellationToken)
             where TMessage : IPlatformEventBusTrackableMessage

@@ -12,8 +12,8 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
     public class PlatformOutboxEventBusMessage : RootEntity<PlatformOutboxEventBusMessage, string>, IRowVersionEntity
     {
         public const int IdMaxLength = 200;
-        public const int MessageTypeFullNameMaxLength = 1000;
         public const int RoutingKeyMaxLength = 500;
+        public const int MessageTypeFullNameMaxLength = 1000;
 
         public string JsonMessage { get; set; }
 
@@ -45,7 +45,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             {
                 Id = BuildId(message).TakeTop(IdMaxLength),
                 JsonMessage = PlatformJsonSerializer.Serialize(message),
-                MessageTypeFullName = message.GetType().FullName.TakeTop(MessageTypeFullNameMaxLength),
+                MessageTypeFullName = GetMessageTypeFullName(message.GetType()),
                 RoutingKey = routingKey.TakeTop(RoutingKeyMaxLength),
                 LastSendDate = nowDate,
                 CreatedDate = nowDate,
@@ -54,6 +54,11 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             };
 
             return result;
+        }
+
+        public static string GetMessageTypeFullName(Type messageType)
+        {
+            return messageType.AssemblyQualifiedName.TakeTop(MessageTypeFullNameMaxLength);
         }
 
         public static string BuildId(IPlatformEventBusTrackableMessage message)

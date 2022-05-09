@@ -32,10 +32,14 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             IHostApplicationLifetime applicationLifetime,
             ILoggerFactory loggerFactory,
             IServiceProvider serviceProvider,
-            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, loggerFactory)
+            IPlatformApplicationSettingContext applicationSettingContext,
+            IPlatformEventBusManager eventBusManager) : base(applicationLifetime, loggerFactory)
         {
             ServiceProvider = serviceProvider;
             this.applicationSettingContext = applicationSettingContext;
+            ConsumerByNameToTypeDic = eventBusManager
+                .AllDefinedEventBusConsumerTypes()
+                .ToDictionary(PlatformInboxEventBusConsumerHelper.GetConsumerByValue);
         }
 
         public static bool MatchImplementation(ServiceDescriptor serviceDescriptor)
@@ -60,6 +64,8 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
         }
 
         protected IServiceProvider ServiceProvider { get; }
+
+        protected Dictionary<string, Type> ConsumerByNameToTypeDic { get; }
 
         protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
         {
@@ -284,16 +290,7 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
 
         private Type ResolveConsumerType(PlatformInboxEventBusMessage toHandleInboxMessage)
         {
-            var messageType =
-                Type.GetType(toHandleInboxMessage.ConsumerBy, throwOnError: false) ??
-                ServiceProvider
-                    .GetService<IPlatformEventBusManager>()!
-                    .GetScanAssemblies()
-                    .ConcatSingle(typeof(PlatformModule).Assembly)
-                    .Select(assembly => assembly.GetType(toHandleInboxMessage.ConsumerBy))
-                    .FirstOrDefault(p => p != null);
-
-            return messageType;
+            return ConsumerByNameToTypeDic.GetValueOrDefault(toHandleInboxMessage.ConsumerBy, null);
         }
     }
 
@@ -303,7 +300,8 @@ namespace Easy.Platform.Application.EventBus.InboxPattern
             IHostApplicationLifetime applicationLifetime,
             ILoggerFactory loggerFactory,
             IServiceProvider serviceProvider,
-            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, loggerFactory, serviceProvider, applicationSettingContext)
+            IPlatformApplicationSettingContext applicationSettingContext,
+            IPlatformEventBusManager eventBusManager) : base(applicationLifetime, loggerFactory, serviceProvider, applicationSettingContext, eventBusManager)
         {
         }
     }

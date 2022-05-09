@@ -25,6 +25,11 @@ namespace Easy.Platform.Domain.UnitOfWork
         IUnitOfWork CurrentActive();
 
         /// <summary>
+        /// Check that is there any currently latest active unit of work
+        /// </summary>
+        bool HasCurrentActive();
+
+        /// <summary>
         /// Begin a new last registered unit of work.
         /// If current active unit of work existed, return it.
         /// </summary>
@@ -77,6 +82,11 @@ namespace Easy.Platform.Domain.UnitOfWork
             }
 
             return current;
+        }
+
+        public bool HasCurrentActive()
+        {
+            return Current() != null && Current().IsActive();
         }
 
         public IUnitOfWork Begin(bool suppressCurrentUow = true)

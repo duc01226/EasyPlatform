@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Platform\Easy.Platform\Easy.Platform.csproj" />
+    <ProjectReference Include="..\PlatformExampleApp.Shared\PlatformExampleApp.Shared.csproj" />
     <ProjectReference Include="..\PlatformExampleApp.TextSnippet.Domain\PlatformExampleApp.TextSnippet.Domain.csproj" />
   </ItemGroup>
 
