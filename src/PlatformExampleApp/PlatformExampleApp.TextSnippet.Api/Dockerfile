@@ -1,6 +1,6 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS base
+FROM mcr.microsoft.com/dotnet/sdk:5.0 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
@@ -15,6 +15,8 @@ COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence/PlatformExamp
 COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.Mongo/PlatformExampleApp.TextSnippet.Persistence.Mongo.csproj PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.Mongo/PlatformExampleApp.TextSnippet.Persistence.Mongo.csproj
 COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.csproj PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.csproj
 COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Infrastructure/PlatformExampleApp.TextSnippet.Infrastructure.csproj PlatformExampleApp/PlatformExampleApp.TextSnippet.Infrastructure/PlatformExampleApp.TextSnippet.Infrastructure.csproj
+COPY NuGetDocker.Config PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/NuGet.Config
+
 RUN dotnet restore "PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj"
 
 COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Api PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
@@ -24,11 +26,9 @@ COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence PlatformExamp
 COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.Mongo PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.Mongo
 COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
 COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Infrastructure PlatformExampleApp/PlatformExampleApp.TextSnippet.Infrastructure
-WORKDIR "/src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api"
-RUN dotnet build "PlatformExampleApp.TextSnippet.Api.csproj" -c Release -o /app/build
 
 FROM build AS publish
-RUN dotnet publish "PlatformExampleApp.TextSnippet.Api.csproj" -c Release -o /app/publish
+RUN dotnet publish "PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj" -c Release -o /app/publish --no-restore
 
 FROM base AS final
 WORKDIR /app

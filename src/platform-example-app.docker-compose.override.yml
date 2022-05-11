@@ -36,7 +36,7 @@ services:
 
   text-snippet-api:
     environment:
-      - ASPNETCORE_ENVIRONMENT=DevelopmentDocker
+      - ASPNETCORE_ENVIRONMENT=Development.Docker
       - ASPNETCORE_URLS=http://0.0.0.0:80
       - ConnectionStrings__DefaultConnection=${AngularDotnetPlatform_TEXTSNIPPET_DB:-Server=sql-data,1433;Database=TextSnippedDb;User Id=sa;Password=123456Abc}
       - MongoDB__ConnectionString=${AngularDotnetPlatform_TEXTSNIPPET_MONGODB:-mongodb://root:rootPassXXX@mongo-data:27017?authSource=admin}

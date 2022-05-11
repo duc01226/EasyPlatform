@@ -8,8 +8,6 @@ using System.Threading.Tasks;
 using Easy.Platform.Application.Context;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.EventBus.OutboxPattern;
-using Easy.Platform.Common.JsonSerialization;
-using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.EventBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -322,14 +320,13 @@ namespace Easy.Platform.Application.EventBus.Producers
         {
             if (autoSaveOutboxMessage && HasOutboxEventBusMessageRepositoryRegistered())
             {
-                await PlatformOutboxEventBusProducerHelper.HandleSendingOutboxMessageAsync(
-                    rootScopeServiceProvider: ServiceProvider,
-                    currentScopeServiceProvider: ServiceProvider,
+                var outboxEventBusProducerHelper = ServiceProvider.GetService<PlatformOutboxEventBusProducerHelper>();
+
+                await outboxEventBusProducerHelper!.HandleSendingOutboxMessageAsync(
+                    ServiceProvider,
                     message,
                     routingKey,
                     isProcessingExistingOutboxMessage: false,
-                    OutboxConfig,
-                    Logger,
                     cancellationToken);
 
                 return message;

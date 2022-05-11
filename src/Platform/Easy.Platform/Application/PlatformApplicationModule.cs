@@ -130,7 +130,10 @@ namespace Easy.Platform.Application
                 serviceCollection.RegisterIfNotExist<PlatformOutboxConfig, PlatformOutboxConfig>(ServiceLifeTime.Transient);
 
             RegisterPseudoApplicationUnitOfWork(serviceCollection);
+
+            serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(ServiceLifeTime.Transient, typeof(PlatformApplicationModule).Assembly);
             serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(ServiceLifeTime.Transient, Assembly);
+
             serviceCollection.RegisterAllServicesFromType<IPlatformDbContext>(ServiceLifeTime.Scoped, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformInfrastructureService>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformBackgroundJobExecutor>(ServiceLifeTime.Transient, Assembly);

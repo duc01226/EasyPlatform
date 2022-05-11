@@ -27,6 +27,7 @@ namespace Easy.Platform
         {
             ServiceProvider = serviceProvider;
             Configuration = configuration;
+            Logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger(GetType());
         }
 
         public IServiceProvider ServiceProvider { get; }
@@ -39,6 +40,8 @@ namespace Easy.Platform
         public bool Initiated { get; protected set; }
 
         protected List<Type> AdditionalModuleTypeDependencies { get; set; } = new List<Type>();
+
+        protected ILogger Logger { get; init; }
 
         /// <summary>
         /// Override this to call every time a new platform module is registered
