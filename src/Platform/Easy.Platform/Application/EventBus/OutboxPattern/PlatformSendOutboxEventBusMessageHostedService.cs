@@ -105,7 +105,7 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
                     {
                         try
                         {
-                            await SendMessageToBusAsync(ServiceProvider, scope, toHandleMessage, cancellationToken);
+                            await SendMessageToBusAsync(scope, toHandleMessage, cancellationToken);
                         }
                         catch (Exception e)
                         {
@@ -137,7 +137,6 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
         }
 
         protected virtual async Task SendMessageToBusAsync(
-            IServiceProvider rootServiceProvider,
             IServiceScope scope,
             PlatformOutboxEventBusMessage toHandleOutboxMessage,
             CancellationToken cancellationToken)
