@@ -323,7 +323,6 @@ namespace Easy.Platform.Application.EventBus.Producers
                 var outboxEventBusProducerHelper = ServiceProvider.GetService<PlatformOutboxEventBusProducerHelper>();
 
                 await outboxEventBusProducerHelper!.HandleSendingOutboxMessageAsync(
-                    ServiceProvider,
                     message,
                     routingKey,
                     isProcessingExistingOutboxMessage: false,
