@@ -8,7 +8,7 @@ namespace PlatformExampleApp.TextSnippet.Api
 {
     public class Program
     {
-        public static IConfiguration Configuration = PlatformConfigurationBuilder.GetConfigurationBuilder().Build();
+        public static IConfiguration Configuration = PlatformAppSettingsConfigurationBuilder.GetConfigurationBuilder().Build();
 
         public static void Main(string[] args)
         {
