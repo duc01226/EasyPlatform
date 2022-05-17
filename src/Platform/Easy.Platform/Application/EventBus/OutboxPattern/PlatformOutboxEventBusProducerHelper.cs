@@ -116,6 +116,8 @@ namespace Easy.Platform.Application.EventBus.OutboxPattern
             }
             else
             {
+                // Never use async lambda on event handler, because it's equivalent to async void, which fire async task and forget
+                // this will lead to a lot of potential bug and issues.
                 currentUow.OnCompleted += (sender, args) =>
                 {
                     // Try to process newProcessingOutboxMessage first time after saved
