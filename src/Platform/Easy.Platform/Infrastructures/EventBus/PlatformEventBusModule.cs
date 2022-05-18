@@ -21,7 +21,7 @@ namespace Easy.Platform.Infrastructures.EventBus
             serviceCollection.RegisterAllFromType<IPlatformEventBusProducer>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformEventBusBaseConsumer>(ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType<IPlatformEventBusMessage>(ServiceLifeTime.Transient, Assembly);
-            serviceCollection.Register<IPlatformEventBusManager, PlatformEventBusManager>(ServiceLifeTime.Transient);
+            serviceCollection.Register<IPlatformEventBusManager, PlatformEventBusManager>(ServiceLifeTime.Transient, replaceIfExist: true, ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
             serviceCollection.Register(
                 typeof(PlatformEventBusApplicationSetting),
                 provider => new PlatformEventBusApplicationSetting() { ApplicationName = ForApplicationServiceName() },

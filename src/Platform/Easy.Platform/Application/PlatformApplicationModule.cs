@@ -120,15 +120,6 @@ namespace Easy.Platform.Application
             RegisterEventBus(serviceCollection);
             RegisterApplicationSettingContext(serviceCollection);
             RegisterDefaultApplicationUserContext(serviceCollection);
-
-            RegisterInboxEventBusMessageCleanerHostedService(serviceCollection);
-            RegisterConsumeInboxEventBusMessageHostedService(serviceCollection);
-
-            RegisterOutboxEventBusMessageCleanerHostedService(serviceCollection);
-            RegisterSendOutboxEventBusMessageHostedService(serviceCollection);
-            if (!serviceCollection.Any(p => p.ServiceType == typeof(PlatformOutboxConfig)))
-                serviceCollection.RegisterIfNotExist<PlatformOutboxConfig, PlatformOutboxConfig>(ServiceLifeTime.Transient);
-
             RegisterPseudoApplicationUnitOfWork(serviceCollection);
 
             serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(ServiceLifeTime.Transient, typeof(PlatformApplicationModule).Assembly);
@@ -269,6 +260,17 @@ namespace Easy.Platform.Application
             serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsCommandEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
             serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEntityEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
             serviceCollection.Register<IPlatformApplicationEventBusProducer, PlatformApplicationEventBusProducer>(ServiceLifeTime.Transient);
+
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(IPlatformEventBusManager)))
+                serviceCollection.Register<IPlatformEventBusManager, PlatformApplicationPseudoEventBusManager>(ServiceLifeTime.Transient);
+
+            RegisterInboxEventBusMessageCleanerHostedService(serviceCollection);
+            RegisterConsumeInboxEventBusMessageHostedService(serviceCollection);
+
+            RegisterOutboxEventBusMessageCleanerHostedService(serviceCollection);
+            RegisterSendOutboxEventBusMessageHostedService(serviceCollection);
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(PlatformOutboxConfig)))
+                serviceCollection.Register<PlatformOutboxConfig, PlatformOutboxConfig>(ServiceLifeTime.Transient);
         }
     }
 
