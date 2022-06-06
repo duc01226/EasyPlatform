@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.Utils;
 using Easy.Platform.Infrastructures.EventBus;
 
 namespace Easy.Platform.Infrastructures.EventBus
@@ -25,6 +26,29 @@ namespace Easy.Platform.Infrastructures.EventBus
                 ProducerContext = PlatformEventBusMessageRoutingKey.MatchAllSingleGroupLevelChar,
                 MessageType = messageType.GetGenericTypeName()
             };
+        }
+
+        public static PlatformEventBusMessageRoutingKey BuildForConsumer(Type consumerType)
+        {
+            var messageType = consumerType.GetGenericArguments()[0];
+
+            return BuildForGenericPlatformEventBusMessage(messageType);
+        }
+
+        public static PlatformEventBusMessageRoutingKey BuildForGenericPlatformEventBusMessage(Type messageType)
+        {
+            var matchedPlatformGenericMessageType = Util.Types.FindMatchedGenericType(
+                givenType: messageType,
+                matchedToGenericTypeDefinition: typeof(IPlatformEventBusMessage<>).GetGenericTypeDefinition());
+
+            if (messageType.IsGenericType && matchedPlatformGenericMessageType != null)
+            {
+                return Build(matchedPlatformGenericMessageType.GetGenericArguments()[0]);
+            }
+            else
+            {
+                return Build(messageType);
+            }
         }
     }
 }

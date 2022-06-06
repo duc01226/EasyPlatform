@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -5,6 +6,7 @@ using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Common.JsonSerialization;
+using Easy.Platform.Infrastructures.PushNotification;
 using Newtonsoft.Json.Linq;
 
 namespace Easy.Platform.FireBasePushNotification.GoogleFcm
@@ -90,9 +92,18 @@ namespace Easy.Platform.FireBasePushNotification.GoogleFcm
         [JsonPropertyName("priority")]
         public string Priority { get; set; } = "high";
         [JsonPropertyName("data")]
-        public DataPayload Data { get; set; }
+        public Dictionary<string, string> Data { get; set; }
         [JsonPropertyName("notification")]
         public DataPayload Notification { get; set; }
+
+        public static GoogleNotification Create(PushNotificationPlatformMessage message)
+        {
+            return new GoogleNotification
+            {
+                Notification = DataPayload.Create(message),
+                Data = message.Data
+            };
+        }
 
         public class DataPayload
         {
@@ -100,6 +111,24 @@ namespace Easy.Platform.FireBasePushNotification.GoogleFcm
             public string Title { get; set; }
             [JsonPropertyName("body")]
             public string Body { get; set; }
+
+            /// <summary>
+            /// please check out Notification payload support
+            /// https://firebase.google.com/docs/cloud-messaging/http-server-ref#notification-payload-support
+            /// The value will be returned for iOS by message, and the value is value of the badge on the home screen app icon.
+            /// </summary>
+            [JsonPropertyName("badge")]
+            public int? Badge { get; set; }
+
+            public static DataPayload Create(PushNotificationPlatformMessage message)
+            {
+                return new DataPayload
+                {
+                    Title = message.Title,
+                    Body = message.Body,
+                    Badge = message.Badge
+                };
+            }
         }
     }
 }

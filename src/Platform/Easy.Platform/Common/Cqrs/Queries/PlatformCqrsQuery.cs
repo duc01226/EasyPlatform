@@ -37,8 +37,8 @@ namespace Easy.Platform.Common.Cqrs.Queries
     public abstract class PlatformCqrsPagedResultQuery<TResult, TItem> : PlatformCqrsQuery<TResult>, IPlatformPagedRequest
         where TResult : PlatformCqrsQueryPagedResult<TItem>
     {
-        public int SkipCount { get; set; }
-        public int MaxResultCount { get; set; } = -1;
+        public virtual int? SkipCount { get; set; }
+        public virtual int? MaxResultCount { get; set; }
         public bool IsPagedRequestValid()
         {
             return SkipCount >= 0 && MaxResultCount >= 0;

@@ -33,14 +33,7 @@ namespace Easy.Platform.FireBasePushNotification
 
             var result = await fcmSender.SendAsync(
                 deviceId: message.DeviceId,
-                payload: new GoogleNotification()
-                {
-                    Notification = new GoogleNotification.DataPayload()
-                    {
-                        Title = message.Title,
-                        Body = message.Body
-                    }
-                },
+                payload: GoogleNotification.Create(message),
                 cancellationToken);
 
             if (!result.IsSuccess())

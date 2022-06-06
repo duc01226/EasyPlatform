@@ -345,8 +345,7 @@ namespace Easy.Platform.RabbitMQ
                                 Util.Types.FindMatchedGenericType(eventBusConsumerType, typeof(IPlatformEventBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition()) ??
                                 Util.Types.FindMatchedGenericType(eventBusConsumerType, typeof(IPlatformEventBusConsumer<>).GetGenericTypeDefinition());
 
-                            var matchedDefaultFreeFormatMessageRoutingKey = PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(
-                                messageType: matchedConsumerType.GetGenericArguments()[0]);
+                            var matchedDefaultFreeFormatMessageRoutingKey = PlatformDefaultFreeFormatMessageRoutingKeyBuilder.BuildForConsumer(matchedConsumerType);
 
                             return matchedDefaultFreeFormatMessageRoutingKey.Match(rabbitMqMessage.RoutingKey);
                         }

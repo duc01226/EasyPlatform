@@ -7,14 +7,11 @@ namespace Easy.Platform.Common.Extensions
 {
     public static class QueryableExtension
     {
-        public static IQueryable<T> PageBy<T>(this IQueryable<T> query, int skipCount, int maxResultCount)
+        public static IQueryable<T> PageBy<T>(this IQueryable<T> query, int? skipCount, int? maxResultCount)
         {
-            if (query == null)
-            {
-                throw new ArgumentNullException(nameof(query));
-            }
-
-            return query.Skip(skipCount).Take(maxResultCount);
+            return skipCount >= 0 && maxResultCount >= 0
+                ? query.Skip(skipCount.Value).Take(maxResultCount.Value)
+                : query;
         }
 
         public static IQueryable<T> WhereCombineOr<T>(this IQueryable<T> query, params Expression<Func<T, bool>>[] predicates)

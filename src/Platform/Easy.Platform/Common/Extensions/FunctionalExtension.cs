@@ -9,6 +9,13 @@ namespace Easy.Platform.Common.Extensions
             return pipeFunc(target);
         }
 
+        public static TTarget Pipe<TTarget>(this TTarget target, Action<TTarget> actionFn)
+        {
+            actionFn(target);
+
+            return target;
+        }
+
         public static TResult PipeIf<TTarget, TResult>(
             this TTarget target,
             bool ifTrue,

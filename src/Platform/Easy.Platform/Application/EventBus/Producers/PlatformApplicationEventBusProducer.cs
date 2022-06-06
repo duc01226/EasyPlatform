@@ -112,7 +112,7 @@ namespace Easy.Platform.Application.EventBus.Producers
             CancellationToken cancellationToken = default)
             where TMessage : class, IPlatformEventBusFreeFormatMessage, new();
 
-        Task<TMessage> SendAsFreeFormatMessageAsync<TMessage, TMessagePayload>(
+        Task<TMessage> SendAsDefaultFreeFormatMessageAsync<TMessage, TMessagePayload>(
             string trackId,
             TMessagePayload messagePayload,
             string messageAction = null,
@@ -269,7 +269,7 @@ namespace Easy.Platform.Application.EventBus.Producers
                 cancellationToken);
         }
 
-        public async Task<TMessage> SendAsFreeFormatMessageAsync<TMessage, TMessagePayload>(
+        public async Task<TMessage> SendAsDefaultFreeFormatMessageAsync<TMessage, TMessagePayload>(
             string trackId,
             TMessagePayload messagePayload,
             string messageAction = null,
@@ -288,7 +288,7 @@ namespace Easy.Platform.Application.EventBus.Producers
 
             return await SendMessageAsync(
                 message,
-                routingKey: PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(messagePayload.GetType()),
+                routingKey: PlatformDefaultFreeFormatMessageRoutingKeyBuilder.BuildForGenericPlatformEventBusMessage(message.GetType()),
                 autoSaveOutboxMessage,
                 cancellationToken);
         }

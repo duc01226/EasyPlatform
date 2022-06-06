@@ -49,7 +49,7 @@ namespace Easy.Platform.Application.EventBus.Producers.CqrsEventProducers
                 if (SendAsFreeFormatMessage())
                 {
                     await ApplicationEventBusProducer
-                        .SendAsFreeFormatMessageAsync<PlatformCqrsDomainEventBusMessage<TDomainEvent>, TDomainEvent>(
+                        .SendAsDefaultFreeFormatMessageAsync<PlatformCqrsDomainEventBusMessage<TDomainEvent>, TDomainEvent>(
                             trackId: Guid.NewGuid().ToString(),
                             messagePayload: @event,
                             messageAction: @event.EventAction,
@@ -75,7 +75,7 @@ namespace Easy.Platform.Application.EventBus.Producers.CqrsEventProducers
         }
 
         /// <summary>
-        /// Default is False. If True, the producer will send message using <see cref="IPlatformApplicationEventBusProducer.SendAsFreeFormatMessageAsync{TMessage,TMessagePayload}"/>.
+        /// Default is False. If True, the producer will send message using <see cref="IPlatformApplicationEventBusProducer.SendAsDefaultFreeFormatMessageAsync{TMessage,TMessagePayload}"/>.
         /// The the consumer for this message do not need to define <see cref="PlatformEventBusConsumerAttribute"/>.
         /// Consumer without <see cref="PlatformEventBusConsumerAttribute"/> will automatically binding to Default FreeFormatMessageRoutingKey for the TMessage Type.
         /// </summary>

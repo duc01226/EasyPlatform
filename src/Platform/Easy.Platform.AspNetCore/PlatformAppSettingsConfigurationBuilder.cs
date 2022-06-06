@@ -35,8 +35,6 @@ namespace Easy.Platform.AspNetCore
                             optional: true,
                             reloadOnChange: false);
                     }
-
-                    return builder;
                 })
                 .AddEnvironmentVariables();
         }

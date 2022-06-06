@@ -325,7 +325,7 @@ namespace Easy.Platform.MongoDB
         /// </summary>
         protected virtual bool TryGetCollectionName<TEntity>(out string collectionName)
         {
-            if (EntityTypeToCollectionNameDictionary.Value == null)
+            if (EntityTypeToCollectionNameDictionary.Value == null || !EntityTypeToCollectionNameDictionary.Value.ContainsKey(typeof(TEntity)))
             {
                 collectionName = TryGetPlatformEntityCollectionName<TEntity>() ?? typeof(TEntity).Name;
                 return true;

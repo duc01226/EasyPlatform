@@ -13,7 +13,7 @@ namespace Easy.Platform.Common.Cqrs.Queries
     {
         public PlatformCqrsQueryPagedResult() { }
 
-        public PlatformCqrsQueryPagedResult(List<TItem> items, int totalCount, int pageSize)
+        public PlatformCqrsQueryPagedResult(List<TItem> items, int totalCount, int? pageSize)
         {
             Items = items;
             TotalCount = totalCount;
@@ -21,8 +21,8 @@ namespace Easy.Platform.Common.Cqrs.Queries
         }
 
         public List<TItem> Items { get; set; }
-        public int TotalCount { get; set; }
-        public int PageSize { get; set; }
+        public long TotalCount { get; set; }
+        public int? PageSize { get; set; }
         public PlatformValidationResult Validate()
         {
             return PlatformValidationResult.Valid();

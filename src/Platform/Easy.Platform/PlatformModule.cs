@@ -27,7 +27,7 @@ namespace Easy.Platform
         {
             ServiceProvider = serviceProvider;
             Configuration = configuration;
-            Logger = serviceProvider.GetService<ILoggerFactory>().CreateLogger(GetType());
+            Logger = serviceProvider?.GetService<ILoggerFactory>().CreateLogger(GetType());
         }
 
         public IServiceProvider ServiceProvider { get; }

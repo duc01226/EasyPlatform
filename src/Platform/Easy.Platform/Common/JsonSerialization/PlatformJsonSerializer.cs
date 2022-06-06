@@ -42,6 +42,7 @@ namespace Easy.Platform.Common.JsonSerialization
                 result.Converters.Add(new JsonStringEnumConverter());
             result.Converters.Add(new PlatformObjectJsonConverter());
             result.Converters.Add(new PlatformDynamicJsonConverter());
+            result.Converters.Add(new PlatformCustomJsonConverterForType());
             customConverters?.ForEach(p => result.Converters.Add(p));
             return result;
         }
@@ -49,6 +50,11 @@ namespace Easy.Platform.Common.JsonSerialization
         public static string Serialize<TValue>(TValue value)
         {
             return JsonSerializer.Serialize(value, value?.GetType() ?? typeof(TValue), CurrentOptions.Value);
+        }
+
+        public static string Serialize<TValue>(TValue value, JsonSerializerOptions customSerializerOptions = null)
+        {
+            return JsonSerializer.Serialize(value, value?.GetType() ?? typeof(TValue), customSerializerOptions ?? CurrentOptions.Value);
         }
 
         public static T Deserialize<T>(string jsonValue, JsonSerializerOptions customSerializerOptions = null)

@@ -27,7 +27,7 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseQueries
     {
         public SearchSnippetTextQueryResult() { }
 
-        public SearchSnippetTextQueryResult(List<TextSnippetEntityDto> items, int totalCount, int pageSize) : base(items, totalCount, pageSize)
+        public SearchSnippetTextQueryResult(List<TextSnippetEntityDto> items, int totalCount, int? pageSize) : base(items, totalCount, pageSize)
         {
         }
     }

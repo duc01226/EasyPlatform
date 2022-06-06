@@ -80,8 +80,7 @@ namespace Easy.Platform.Infrastructures.EventBus
                     Util.Types.FindMatchedGenericType(
                         givenType: p,
                         matchedToGenericTypeDefinition: typeof(IPlatformEventBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition()))
-                .Select(freeFormatMessageConsumerType => PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(
-                    messageType: freeFormatMessageConsumerType.GetGenericArguments()[0]))
+                .Select(consumerType => PlatformDefaultFreeFormatMessageRoutingKeyBuilder.BuildForConsumer(consumerType))
                 .Distinct()
                 .ToList();
         }

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Easy.Platform.Common.Dtos;
 using Easy.Platform.Common.Validators;
 
@@ -8,6 +9,8 @@ namespace Easy.Platform.Infrastructures.PushNotification
         public string DeviceId { get; set; }
         public string Title { get; set; }
         public string Body { get; set; }
+        public int? Badge { get; set; }
+        public Dictionary<string, string> Data { get; set; }
 
         public PlatformValidationResult Validate()
         {

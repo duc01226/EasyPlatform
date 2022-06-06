@@ -71,6 +71,16 @@ namespace Easy.Platform.Common.Extensions
             return !items.Any();
         }
 
+        public static bool NotExist<T>(this IEnumerable<T> items, Func<T, bool> predicate)
+        {
+            return !items.Any(predicate);
+        }
+
+        public static bool NotContains<T>(this IEnumerable<T> items, T item)
+        {
+            return !items.Contains(item);
+        }
+
         public static List<T> AddDistinct<T>(this List<T> items, T item)
         {
             if (!items.Contains(item))

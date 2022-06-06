@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Easy.Platform.Common.Extensions
 {
@@ -39,6 +41,15 @@ namespace Easy.Platform.Common.Extensions
                 t.GetGenericArguments().Select(GetGenericTypeName).ToArray());
 
             return genericTypeClassNameOnly + "<" + genericArgs + ">";
+        }
+
+        public static List<T> GetAllPublicConstantValues<T>(this Type type)
+        {
+            return type
+                .GetFields(BindingFlags.Public | BindingFlags.Static)
+                .Where(fi => fi.IsLiteral && fi.FieldType == typeof(T))
+                .Select(x => (T)x.GetRawConstantValue())
+                .ToList();
         }
     }
 }

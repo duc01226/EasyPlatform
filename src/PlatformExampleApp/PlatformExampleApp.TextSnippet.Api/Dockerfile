@@ -11,6 +11,7 @@ WORKDIR /src
 COPY NuGetDocker.Config PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/NuGet.Config
 
 COPY Platform Platform
+COPY PlatformExampleApp/PlatformExampleApp.Shared PlatformExampleApp/PlatformExampleApp.Shared
 COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Api PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
 COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Application PlatformExampleApp/PlatformExampleApp.TextSnippet.Application
 COPY PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain
