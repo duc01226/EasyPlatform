@@ -6,29 +6,27 @@ using Easy.Platform.Application.Context;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.Context.UserContext.Default;
 using Easy.Platform.Application.Domain;
-using Easy.Platform.Application.EventBus;
-using Easy.Platform.Application.EventBus.Consumers;
-using Easy.Platform.Application.EventBus.Consumers.CqrsEventConsumers;
-using Easy.Platform.Application.EventBus.InboxPattern;
-using Easy.Platform.Application.EventBus.OutboxPattern;
-using Easy.Platform.Application.EventBus.Producers;
-using Easy.Platform.Application.EventBus.Producers.CqrsEventProducers;
 using Easy.Platform.Application.Helpers;
+using Easy.Platform.Application.MessageBus;
+using Easy.Platform.Application.MessageBus.Consumers;
+using Easy.Platform.Application.MessageBus.Consumers.CqrsEventConsumers;
+using Easy.Platform.Application.MessageBus.InboxPattern;
+using Easy.Platform.Application.MessageBus.OutboxPattern;
+using Easy.Platform.Application.MessageBus.Producers;
+using Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers;
 using Easy.Platform.Infrastructures.Abstract;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Domain.UnitOfWork;
-using Easy.Platform.Infrastructures.EventBus;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Infrastructures.BackgroundJob;
+using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Polly;
-using PlatformDefaultConsumeInboxEventBusMessageHostedService = Easy.Platform.Application.EventBus.InboxPattern.PlatformDefaultConsumeInboxEventBusMessageHostedService;
-using PlatformDefaultInboxEventBusMessageCleanerHostedService = Easy.Platform.Application.EventBus.InboxPattern.PlatformDefaultInboxEventBusMessageCleanerHostedService;
 
 namespace Easy.Platform.Application
 {
@@ -169,44 +167,44 @@ namespace Easy.Platform.Application
 
         protected virtual void RegisterInboxEventBusMessageCleanerHostedService(IServiceCollection serviceCollection)
         {
-            if (!serviceCollection.Any(PlatformInboxEventBusMessageCleanerHostedService.MatchImplementation))
+            if (!serviceCollection.Any(PlatformInboxBusMessageCleanerHostedService.MatchImplementation))
             {
                 serviceCollection.Register(
                     typeof(IHostedService),
-                    typeof(PlatformDefaultInboxEventBusMessageCleanerHostedService),
+                    typeof(PlatformDefaultInboxBusMessageCleanerHostedService),
                     ServiceLifeTime.Singleton);
             }
         }
 
         protected virtual void RegisterConsumeInboxEventBusMessageHostedService(IServiceCollection serviceCollection)
         {
-            if (!serviceCollection.Any(PlatformConsumeInboxEventBusMessageHostedService.MatchImplementation))
+            if (!serviceCollection.Any(PlatformConsumeInboxBusMessageHostedService.MatchImplementation))
             {
                 serviceCollection.Register(
                     typeof(IHostedService),
-                    typeof(PlatformDefaultConsumeInboxEventBusMessageHostedService),
+                    typeof(PlatformDefaultConsumeInboxBusMessageHostedService),
                     ServiceLifeTime.Singleton);
             }
         }
 
         protected virtual void RegisterOutboxEventBusMessageCleanerHostedService(IServiceCollection serviceCollection)
         {
-            if (!serviceCollection.Any(PlatformOutboxEventBusMessageCleanerHostedService.MatchImplementation))
+            if (!serviceCollection.Any(PlatformOutboxBusMessageCleanerHostedService.MatchImplementation))
             {
                 serviceCollection.Register(
                     typeof(IHostedService),
-                    typeof(PlatformDefaultOutboxEventBusMessageCleanerHostedService),
+                    typeof(PlatformDefaultOutboxBusMessageCleanerHostedService),
                     ServiceLifeTime.Singleton);
             }
         }
 
         protected virtual void RegisterSendOutboxEventBusMessageHostedService(IServiceCollection serviceCollection)
         {
-            if (!serviceCollection.Any(PlatformSendOutboxEventBusMessageHostedService.MatchImplementation))
+            if (!serviceCollection.Any(PlatformSendOutboxBusMessageHostedService.MatchImplementation))
             {
                 serviceCollection.Register(
                     typeof(IHostedService),
-                    typeof(PlatformDefaultSendOutboxEventBusMessageHostedService),
+                    typeof(PlatformDefaultSendOutboxBusMessageHostedService),
                     ServiceLifeTime.Singleton);
             }
         }
@@ -252,17 +250,17 @@ namespace Easy.Platform.Application
 
         private void RegisterEventBus(IServiceCollection serviceCollection)
         {
-            serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEventBusProducer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(PlatformCqrsCommandEventBusProducer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(PlatformCqrsEntityEventBusProducer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(IPlatformEventBusBaseConsumer), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(IPlatformApplicationEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsCommandEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEntityEventBusConsumer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.Register<IPlatformApplicationEventBusProducer, PlatformApplicationEventBusProducer>(ServiceLifeTime.Transient);
+            serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEventBusMessageProducer<>), ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType(typeof(PlatformCqrsCommandEventBusMessageProducer<>), ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType(typeof(PlatformCqrsEntityEventBusMessageProducer<>), ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType(typeof(IPlatformMessageBusBaseConsumer), ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType(typeof(IPlatformApplicationMessageBusConsumer<>), ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsCommandEventBusMessageConsumer<>), ServiceLifeTime.Transient, Assembly);
+            serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEntityEventBusMessageConsumer<>), ServiceLifeTime.Transient, Assembly);
+            serviceCollection.Register<IPlatformApplicationBusMessageProducer, PlatformApplicationBusMessageProducer>(ServiceLifeTime.Transient);
 
-            if (!serviceCollection.Any(p => p.ServiceType == typeof(IPlatformEventBusManager)))
-                serviceCollection.Register<IPlatformEventBusManager, PlatformApplicationPseudoEventBusManager>(ServiceLifeTime.Transient);
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(IPlatformMessageBusManager)))
+                serviceCollection.Register<IPlatformMessageBusManager, PlatformApplicationPseudoMessageBusManager>(ServiceLifeTime.Transient);
 
             RegisterInboxEventBusMessageCleanerHostedService(serviceCollection);
             RegisterConsumeInboxEventBusMessageHostedService(serviceCollection);

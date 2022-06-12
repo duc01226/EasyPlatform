@@ -46,6 +46,11 @@ namespace Easy.Platform.Common.Extensions
                 _ => throw new ArgumentException()
             };
         }
+
+        public static DateTime ConvertToTimeZone(this DateTime dateTime, int timeZoneOffset)
+        {
+            return dateTime.ToUniversalTime().AddHours(-timeZoneOffset / 60);
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 using System;
-using Easy.Platform.Application.EventBus.InboxPattern;
-using Easy.Platform.Application.EventBus.OutboxPattern;
+using Easy.Platform.Application.MessageBus.InboxPattern;
+using Easy.Platform.Application.MessageBus.OutboxPattern;
 using RabbitMQ.Client;
 
 namespace Easy.Platform.RabbitMQ
@@ -76,14 +76,14 @@ namespace Easy.Platform.RabbitMQ
     public class PlatformRabbitMqInboxEventBusMessageOptions
     {
         /// <summary>
-        /// <inheritdoc cref="PlatformInboxEventBusMessageCleanerHostedService.ProcessTriggerIntervalTime"/>
+        /// <inheritdoc cref="PlatformInboxBusMessageCleanerHostedService.ProcessTriggerIntervalTime"/>
         /// </summary>
         public long ProcessTriggerIntervalInMinutes { get; set; } = 1;
 
         /// <summary>
-        /// <inheritdoc cref="PlatformInboxEventBusMessageCleanerHostedService.NumberOfDeleteMessagesBatch"/>
+        /// <inheritdoc cref="PlatformInboxBusMessageCleanerHostedService.NumberOfDeleteMessagesBatch"/>
         /// </summary>
-        public int NumberOfDeleteMessagesBatch { get; set; } = PlatformInboxEventBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
+        public int NumberOfDeleteMessagesBatch { get; set; } = PlatformInboxBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
 
         public double DeleteProcessedMessageInSeconds { get; set; }
     }
@@ -91,14 +91,14 @@ namespace Easy.Platform.RabbitMQ
     public class PlatformRabbitMqOutboxEventBusMessageOptions
     {
         /// <summary>
-        /// <inheritdoc cref="PlatformOutboxEventBusMessageCleanerHostedService.ProcessTriggerIntervalTime"/>
+        /// <inheritdoc cref="PlatformOutboxBusMessageCleanerHostedService.ProcessTriggerIntervalTime"/>
         /// </summary>
         public long ProcessTriggerIntervalInMinutes { get; set; } = 1;
 
         /// <summary>
-        /// <inheritdoc cref="PlatformOutboxEventBusMessageCleanerHostedService.NumberOfDeleteMessagesBatch"/>
+        /// <inheritdoc cref="PlatformOutboxBusMessageCleanerHostedService.NumberOfDeleteMessagesBatch"/>
         /// </summary>
-        public int NumberOfDeleteMessagesBatch { get; set; } = PlatformOutboxEventBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
+        public int NumberOfDeleteMessagesBatch { get; set; } = PlatformOutboxBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
 
         public double DeleteProcessedMessageInSeconds { get; set; }
     }

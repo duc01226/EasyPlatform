@@ -1,6 +1,6 @@
 using System;
-using Easy.Platform.Infrastructures.EventBus;
 using Easy.Platform.Common.Validators;
+using Easy.Platform.Infrastructures.MessageBus;
 
 namespace Easy.Platform.RabbitMQ
 {
@@ -16,7 +16,7 @@ namespace Easy.Platform.RabbitMQ
     {
         public string GetExchangeName(string routingKey)
         {
-            var messageGroup = PlatformEventBusMessageRoutingKey.New(routingKey).MessageGroup;
+            var messageGroup = PlatformBusMessageRoutingKey.New(routingKey).MessageGroup;
 
             PlatformValidationResult
                 .ValidIf(

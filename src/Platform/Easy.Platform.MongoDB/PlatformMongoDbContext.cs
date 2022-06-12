@@ -3,9 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Easy.Platform.Application.EventBus;
-using Easy.Platform.Application.EventBus.InboxPattern;
-using Easy.Platform.Application.EventBus.OutboxPattern;
+using Easy.Platform.Application.MessageBus.InboxPattern;
+using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Entities;
@@ -39,8 +38,8 @@ namespace Easy.Platform.MongoDB
         where TDbContext : PlatformMongoDbContext<TDbContext>
     {
         public static readonly string EnsureIndexesMigrationName = "EnsureIndexesAsync";
-        public static readonly string PlatformInboxEventBusMessageCollectionName = "InboxEventBusMessage";
-        public static readonly string PlatformOutboxEventBusMessageCollectionName = "OutboxEventBusMessage";
+        public static readonly string PlatformInboxBusMessageCollectionName = "InboxEventBusMessage";
+        public static readonly string PlatformOutboxBusMessageCollectionName = "OutboxEventBusMessage";
         public static readonly string PlatformDataMigrationHistoryCollectionName = "MigrationHistory";
 
         public readonly IMongoDatabase Database;
@@ -59,8 +58,8 @@ namespace Easy.Platform.MongoDB
 
         public bool Disposed { get; private set; }
         public IMongoCollection<PlatformMongoMigrationHistory> MigrationHistoryCollection => Database.GetCollection<PlatformMongoMigrationHistory>(DataMigrationHistoryCollectionName);
-        public IMongoCollection<PlatformInboxEventBusMessage> InboxEventBusMessageCollection => Database.GetCollection<PlatformInboxEventBusMessage>(GetCollectionName<PlatformInboxEventBusMessage>());
-        public IMongoCollection<PlatformOutboxEventBusMessage> OutboxEventBusMessageCollection => Database.GetCollection<PlatformOutboxEventBusMessage>(GetCollectionName<PlatformOutboxEventBusMessage>());
+        public IMongoCollection<PlatformInboxBusMessage> InboxEventBusMessageCollection => Database.GetCollection<PlatformInboxBusMessage>(GetCollectionName<PlatformInboxBusMessage>());
+        public IMongoCollection<PlatformOutboxBusMessage> OutboxEventBusMessageCollection => Database.GetCollection<PlatformOutboxBusMessage>(GetCollectionName<PlatformOutboxBusMessage>());
         public IMongoCollection<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryCollection => Database.GetCollection<PlatformDataMigrationHistory>(ApplicationDataMigrationHistoryCollectionName);
         public IQueryable<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryQuery => ApplicationDataMigrationHistoryCollection.AsQueryable();
         public virtual string DataMigrationHistoryCollectionName => "MigrationHistory";
@@ -129,17 +128,17 @@ namespace Easy.Platform.MongoDB
 
             if (recreate || !IsEnsureIndexesExecuted())
             {
-                await InboxEventBusMessageCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformInboxEventBusMessage>>
+                await InboxEventBusMessageCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformInboxBusMessage>>
                 {
-                    new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys.Ascending(p => p.RoutingKey)),
-                    new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys
+                    new CreateIndexModel<PlatformInboxBusMessage>(Builders<PlatformInboxBusMessage>.IndexKeys.Ascending(p => p.RoutingKey)),
+                    new CreateIndexModel<PlatformInboxBusMessage>(Builders<PlatformInboxBusMessage>.IndexKeys
                         .Ascending(p => p.ConsumeStatus)
                         .Ascending(p => p.LastConsumeDate)),
-                    new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys
+                    new CreateIndexModel<PlatformInboxBusMessage>(Builders<PlatformInboxBusMessage>.IndexKeys
                         .Ascending(p => p.ConsumeStatus)
                         .Ascending(p => p.CreatedDate)),
-                    new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys.Descending(p => p.LastConsumeDate)),
-                    new CreateIndexModel<PlatformInboxEventBusMessage>(Builders<PlatformInboxEventBusMessage>.IndexKeys.Descending(p => p.CreatedDate))
+                    new CreateIndexModel<PlatformInboxBusMessage>(Builders<PlatformInboxBusMessage>.IndexKeys.Descending(p => p.LastConsumeDate)),
+                    new CreateIndexModel<PlatformInboxBusMessage>(Builders<PlatformInboxBusMessage>.IndexKeys.Descending(p => p.CreatedDate))
                 });
             }
         }
@@ -153,17 +152,17 @@ namespace Easy.Platform.MongoDB
 
             if (recreate || !IsEnsureIndexesExecuted())
             {
-                await OutboxEventBusMessageCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformOutboxEventBusMessage>>
+                await OutboxEventBusMessageCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<PlatformOutboxBusMessage>>
                 {
-                    new CreateIndexModel<PlatformOutboxEventBusMessage>(Builders<PlatformOutboxEventBusMessage>.IndexKeys.Ascending(p => p.RoutingKey)),
-                    new CreateIndexModel<PlatformOutboxEventBusMessage>(Builders<PlatformOutboxEventBusMessage>.IndexKeys
+                    new CreateIndexModel<PlatformOutboxBusMessage>(Builders<PlatformOutboxBusMessage>.IndexKeys.Ascending(p => p.RoutingKey)),
+                    new CreateIndexModel<PlatformOutboxBusMessage>(Builders<PlatformOutboxBusMessage>.IndexKeys
                         .Ascending(p => p.SendStatus)
                         .Ascending(p => p.LastSendDate)),
-                    new CreateIndexModel<PlatformOutboxEventBusMessage>(Builders<PlatformOutboxEventBusMessage>.IndexKeys
+                    new CreateIndexModel<PlatformOutboxBusMessage>(Builders<PlatformOutboxBusMessage>.IndexKeys
                         .Ascending(p => p.SendStatus)
                         .Ascending(p => p.CreatedDate)),
-                    new CreateIndexModel<PlatformOutboxEventBusMessage>(Builders<PlatformOutboxEventBusMessage>.IndexKeys.Descending(p => p.LastSendDate)),
-                    new CreateIndexModel<PlatformOutboxEventBusMessage>(Builders<PlatformOutboxEventBusMessage>.IndexKeys.Descending(p => p.CreatedDate))
+                    new CreateIndexModel<PlatformOutboxBusMessage>(Builders<PlatformOutboxBusMessage>.IndexKeys.Descending(p => p.LastSendDate)),
+                    new CreateIndexModel<PlatformOutboxBusMessage>(Builders<PlatformOutboxBusMessage>.IndexKeys.Descending(p => p.CreatedDate))
                 });
             }
         }
@@ -222,14 +221,14 @@ namespace Easy.Platform.MongoDB
 
         private static string TryGetPlatformEntityCollectionName<TEntity>()
         {
-            if (typeof(TEntity).IsAssignableTo(typeof(PlatformInboxEventBusMessage)))
+            if (typeof(TEntity).IsAssignableTo(typeof(PlatformInboxBusMessage)))
             {
-                return PlatformInboxEventBusMessageCollectionName;
+                return PlatformInboxBusMessageCollectionName;
             }
 
-            if (typeof(TEntity).IsAssignableTo(typeof(PlatformOutboxEventBusMessage)))
+            if (typeof(TEntity).IsAssignableTo(typeof(PlatformOutboxBusMessage)))
             {
-                return PlatformOutboxEventBusMessageCollectionName;
+                return PlatformOutboxBusMessageCollectionName;
             }
 
             if (typeof(TEntity).IsAssignableTo(typeof(PlatformMongoMigrationHistory)))

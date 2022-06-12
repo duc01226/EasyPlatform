@@ -1,24 +1,26 @@
-using Easy.Platform.Application.EventBus;
-using Easy.Platform.Application.EventBus.InboxPattern;
-using Easy.Platform.Application.EventBus.OutboxPattern;
+using Easy.Platform.Application.MessageBus.OutboxPattern;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Easy.Platform.EfCore.EntityConfiguration
 {
-    public class PlatformOutboxEventBusMessageConfiguration : PlatformEntityConfiguration<PlatformOutboxEventBusMessage, string>
+    public class PlatformOutboxEventBusMessageConfiguration : PlatformEntityConfiguration<PlatformOutboxBusMessage, string>
     {
-        public override void Configure(EntityTypeBuilder<PlatformOutboxEventBusMessage> builder)
+        public const string PlatformOutboxBusMessageTableName = "PlatformOutboxEventBusMessage";
+
+        public override void Configure(EntityTypeBuilder<PlatformOutboxBusMessage> builder)
         {
             base.Configure(builder);
-            builder.Property(p => p.Id).HasMaxLength(PlatformOutboxEventBusMessage.IdMaxLength);
+            builder.ToTable(PlatformOutboxBusMessageTableName);
+            builder.Property(p => p.Id).HasMaxLength(PlatformOutboxBusMessage.IdMaxLength);
             builder.Property(p => p.MessageTypeFullName)
-                .HasMaxLength(PlatformOutboxEventBusMessage.MessageTypeFullNameMaxLength)
+                .HasMaxLength(PlatformOutboxBusMessage.MessageTypeFullNameMaxLength)
                 .IsRequired();
             builder.Property(p => p.RoutingKey)
-                .HasMaxLength(PlatformOutboxEventBusMessage.RoutingKeyMaxLength)
+                .HasMaxLength(PlatformOutboxBusMessage.RoutingKeyMaxLength)
                 .IsRequired();
-            builder.Property(p => p.SendStatus).HasConversion(new EnumToStringConverter<PlatformOutboxEventBusMessage.SendStatuses>());
+            builder.Property(p => p.SendStatus).HasConversion(new EnumToStringConverter<PlatformOutboxBusMessage.SendStatuses>());
 
             builder.HasIndex(p => p.RoutingKey);
             builder.HasIndex(p => new { p.SendStatus, p.LastSendDate });

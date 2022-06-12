@@ -11,10 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="EventBus\Consumers\FreeFormatConsumers\EventHandlerConsumers\" />
-    <Folder Include="EventBus\Consumers\FreeFormatConsumers\RequestHandlerConsumers\" />
-    <Folder Include="EventBus\FreeFormatMessages\EventMessages\" />
-    <Folder Include="EventBus\FreeFormatMessages\RequestMessages\" />
+    <Folder Include="MessageBus\Consumers\FreeFormatConsumers\EventHandlerConsumers\" />
+    <Folder Include="MessageBus\Consumers\FreeFormatConsumers\RequestHandlerConsumers\" />
+    <Folder Include="MessageBus\FreeFormatMessages\EventMessages\" />
+    <Folder Include="MessageBus\FreeFormatMessages\RequestMessages\" />
   </ItemGroup>
 
 </Project>

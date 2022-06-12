@@ -9,10 +9,10 @@ using System.Threading.Tasks;
 using Easy.Platform.Application.Context;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Hosting;
-using Easy.Platform.Infrastructures.EventBus;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Common.Utils;
+using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -27,9 +27,9 @@ namespace Easy.Platform.RabbitMQ
     {
         private readonly PlatformRabbitMqOptions options;
         private readonly IServiceProvider serviceProvider;
-        private readonly IPlatformEventBusManager eventBusManager;
+        private readonly IPlatformMessageBusManager messageBusManager;
         private readonly IPlatformRabbitMqExchangeProvider exchangeProvider;
-        private readonly PlatformEventBusApplicationSetting applicationSetting;
+        private readonly PlatformMessageBusApplicationSetting applicationSetting;
         private readonly PlatformRabbitChannelPool channelPool;
 
         private readonly object retryConnectConsumerLock = new object();
@@ -39,15 +39,15 @@ namespace Easy.Platform.RabbitMQ
             IHostApplicationLifetime applicationLifetime,
             PlatformRabbitMqOptions options,
             IServiceProvider serviceProvider,
-            IPlatformEventBusManager eventBusManager,
+            IPlatformMessageBusManager messageBusManager,
             ILoggerFactory loggerFactory,
             IPlatformRabbitMqExchangeProvider exchangeProvider,
-            PlatformEventBusApplicationSetting applicationSetting,
+            PlatformMessageBusApplicationSetting applicationSetting,
             PlatformRabbitChannelPool channelPool) : base(applicationLifetime, loggerFactory)
         {
             this.options = options;
             this.serviceProvider = serviceProvider;
-            this.eventBusManager = eventBusManager;
+            this.messageBusManager = messageBusManager;
             this.exchangeProvider = exchangeProvider;
             this.applicationSetting = applicationSetting;
             this.channelPool = channelPool;
@@ -127,13 +127,13 @@ namespace Easy.Platform.RabbitMQ
         private void DeclareRabbitMqQueuesConfiguration(IModel channel)
         {
             // Declare queue for all consumers
-            eventBusManager.AllDefinedEventBusConsumerAttributes()
+            messageBusManager.AllDefinedEventBusConsumerAttributes()
                 .ForEach(consumerAttribute => DeclareQueueForConsumer(channel, consumerAttribute));
-            eventBusManager.AllDefaultFreeFormatMessageRoutingKeyForDefinedConsumers()
+            messageBusManager.AllDefaultFreeFormatMessageRoutingKeyForDefinedConsumers()
                 .ForEach(consumerRoutingKey => DeclareQueueForConsumer(channel, consumerRoutingKey));
         }
 
-        private void DeclareQueueForConsumer(IModel channel, PlatformEventBusConsumerAttribute consumerAttribute)
+        private void DeclareQueueForConsumer(IModel channel, PlatformMessageBusConsumerAttribute consumerAttribute)
         {
             var exchange = GetConsumerExchange(consumerAttribute);
             var queueName = GetConsumerQueueName(consumerAttribute);
@@ -152,7 +152,7 @@ namespace Easy.Platform.RabbitMQ
             }
         }
 
-        private void DeclareQueueForConsumer(IModel channel, PlatformEventBusMessageRoutingKey consumerBindingRoutingKey)
+        private void DeclareQueueForConsumer(IModel channel, PlatformBusMessageRoutingKey consumerBindingRoutingKey)
         {
             var exchange = GetConsumerExchange(consumerBindingRoutingKey);
             var queueName = GetConsumerQueueName(consumerBindingRoutingKey);
@@ -183,7 +183,7 @@ namespace Easy.Platform.RabbitMQ
                 $"Queue {queueName} has been declared and bound to Exchange {exchange} with routing key {consumerBindingRoutingKey}.{PlatformRabbitMqConstants.FanoutBindingChar}");
         }
 
-        private string GetConsumerQueueName(PlatformEventBusConsumerAttribute consumerAttribute)
+        private string GetConsumerQueueName(PlatformMessageBusConsumerAttribute consumerAttribute)
         {
             return GetConsumerQueueName(consumerAttribute.GetConsumerBindingRoutingKey());
         }
@@ -193,12 +193,12 @@ namespace Easy.Platform.RabbitMQ
             return $"[Platform][{applicationSetting.ApplicationName}]-{consumerRoutingKey}";
         }
 
-        private string GetConsumerExchange(PlatformEventBusConsumerAttribute consumerAttribute)
+        private string GetConsumerExchange(PlatformMessageBusConsumerAttribute consumerAttribute)
         {
             return GetConsumerExchange(consumerRoutingKey: consumerAttribute.GetConsumerBindingRoutingKey());
         }
 
-        private string GetConsumerExchange(PlatformEventBusMessageRoutingKey consumerRoutingKey)
+        private string GetConsumerExchange(PlatformBusMessageRoutingKey consumerRoutingKey)
         {
             return exchangeProvider.GetExchangeName(routingKey: consumerRoutingKey);
         }
@@ -206,7 +206,7 @@ namespace Easy.Platform.RabbitMQ
         private void DeclareRabbitMqExchangesConfiguration(IModel channel)
         {
             // Get exchange routing key for all consumers
-            var allDefinedEventBusConsumerPatternRoutingKeys = eventBusManager
+            var allDefinedEventBusConsumerPatternRoutingKeys = messageBusManager
                 .AllDefinedEventBusConsumerBindingRoutingKeys();
 
             // Declare all exchanges
@@ -258,7 +258,7 @@ namespace Easy.Platform.RabbitMQ
                 applicationRabbitConsumer.Received += OnMessageReceived;
 
                 // Binding all defined event bus consumer to RabbitMQ Basic Consumer
-                eventBusManager.AllDefinedEventBusConsumerBindingRoutingKeys()
+                messageBusManager.AllDefinedEventBusConsumerBindingRoutingKeys()
                     .Select(GetConsumerQueueName)
                     .ToList()
                     .ForEach(queueName =>
@@ -336,21 +336,21 @@ namespace Easy.Platform.RabbitMQ
         {
             try
             {
-                var canProcessConsumerTypes = eventBusManager.AllDefinedEventBusConsumerTypes()
+                var canProcessConsumerTypes = messageBusManager.AllDefinedEventBusConsumerTypes()
                     .Where(eventBusConsumerType =>
                     {
-                        if (eventBusConsumerType.GetCustomAttributes<PlatformEventBusConsumerAttribute>().IsEmpty())
+                        if (eventBusConsumerType.GetCustomAttributes<PlatformMessageBusConsumerAttribute>().IsEmpty())
                         {
                             var matchedConsumerType =
-                                Util.Types.FindMatchedGenericType(eventBusConsumerType, typeof(IPlatformEventBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition()) ??
-                                Util.Types.FindMatchedGenericType(eventBusConsumerType, typeof(IPlatformEventBusConsumer<>).GetGenericTypeDefinition());
+                                Util.Types.FindMatchedGenericType(eventBusConsumerType, typeof(IPlatformMessageBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition()) ??
+                                Util.Types.FindMatchedGenericType(eventBusConsumerType, typeof(IPlatformMessageBusConsumer<>).GetGenericTypeDefinition());
 
-                            var matchedDefaultFreeFormatMessageRoutingKey = PlatformDefaultFreeFormatMessageRoutingKeyBuilder.BuildForConsumer(matchedConsumerType);
+                            var matchedDefaultFreeFormatMessageRoutingKey = PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.BuildForConsumer(matchedConsumerType);
 
                             return matchedDefaultFreeFormatMessageRoutingKey.Match(rabbitMqMessage.RoutingKey);
                         }
 
-                        return PlatformEventBusConsumerAttribute.CanEventBusConsumerProcess(eventBusConsumerType, rabbitMqMessage.RoutingKey);
+                        return PlatformMessageBusConsumerAttribute.CanEventBusConsumerProcess(eventBusConsumerType, rabbitMqMessage.RoutingKey);
                     })
                     .ToList();
 
@@ -358,7 +358,7 @@ namespace Easy.Platform.RabbitMQ
                 {
                     using (var scope = serviceProvider.CreateScope())
                     {
-                        var consumer = (IPlatformEventBusBaseConsumer)scope.ServiceProvider.GetService(consumerType);
+                        var consumer = (IPlatformMessageBusBaseConsumer)scope.ServiceProvider.GetService(consumerType);
 
                         if (consumer != null)
                             await ExecuteConsumer(rabbitMqMessage, consumer);
@@ -388,7 +388,7 @@ namespace Easy.Platform.RabbitMQ
         private void ProcessRequeueMessage(BasicDeliverEventArgs rabbitMqMessage, object eventBusMessage)
         {
             if (options.RequeueExpiredInSeconds <= 0 ||
-                (eventBusMessage is IPlatformEventBusTrackableMessage platformEventBusTrackableMessage &&
+                (eventBusMessage is IPlatformBusTrackableMessage platformEventBusTrackableMessage &&
                 platformEventBusTrackableMessage.CreatedUtcDate.AddSeconds(options.RequeueExpiredInSeconds) >= Clock.UtcNow))
             {
                 // Requeue the message.
@@ -416,11 +416,11 @@ namespace Easy.Platform.RabbitMQ
         /// <summary>
         /// Return Exception if failed to execute consumer
         /// </summary>
-        private async Task ExecuteConsumer(BasicDeliverEventArgs args, IPlatformEventBusBaseConsumer consumer)
+        private async Task ExecuteConsumer(BasicDeliverEventArgs args, IPlatformMessageBusBaseConsumer consumer)
         {
             // Get a generic type: PlatformEventBusMessage<TMessage> where TMessage = TMessagePayload
             // of IPlatformEventBusConsumer<TMessagePayload>
-            var consumerMessageType = PlatformEventBusBaseConsumer.GetConsumerMessageType(consumer);
+            var consumerMessageType = PlatformMessageBusBaseConsumer.GetConsumerMessageType(consumer);
 
             var eventBusMessage = Util.Tasks.CatchExceptionContinueThrow(
                 () => PlatformJsonSerializer.Deserialize(
@@ -434,7 +434,7 @@ namespace Easy.Platform.RabbitMQ
 
             if (eventBusMessage != null)
             {
-                await PlatformEventBusBaseConsumer.InvokeConsumerAsync(
+                await PlatformMessageBusBaseConsumer.InvokeConsumerAsync(
                     consumer,
                     eventBusMessage,
                     args.RoutingKey,

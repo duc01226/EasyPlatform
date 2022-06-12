@@ -17,7 +17,10 @@ namespace Easy.Platform.MongoDB.Serializer
 
         public override void Serialize(BsonSerializationContext context, BsonSerializationArgs args, object value)
         {
-            BsonSerializer.Serialize(context.Writer, PlatformObjectJsonConverter.TryGetReflectionDynamicIfJsonElement(value));
+            if (value == null)
+                context.Writer.WriteNull();
+            else
+                BsonSerializer.Serialize(context.Writer, PlatformObjectJsonConverter.TryGetReflectionDynamicIfJsonElement(value));
         }
 
         private static dynamic TryGetReflectionDynamic(BsonValue dynamicObjectAsBsonValue)

@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Easy.Platform.Application.EventBus;
-using Easy.Platform.Application.EventBus.InboxPattern;
-using Easy.Platform.Application.EventBus.OutboxPattern;
+using Easy.Platform.Application.MessageBus.InboxPattern;
+using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Domain.Repositories;
@@ -70,13 +69,13 @@ namespace Easy.Platform.Persistence
         protected virtual void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
         {
             if (EnableInboxEventBusMessageRepository())
-                serviceCollection.RegisterAllFromType<IPlatformInboxEventBusMessageRepository>(ServiceLifeTime.Transient, Assembly);
+                serviceCollection.RegisterAllFromType<IPlatformInboxBusMessageRepository>(ServiceLifeTime.Transient, Assembly);
         }
 
         protected virtual void RegisterOutboxEventBusMessageRepository(IServiceCollection serviceCollection)
         {
             if (EnableOutboxEventBusMessageRepository())
-                serviceCollection.RegisterAllFromType<IPlatformOutboxEventBusMessageRepository>(ServiceLifeTime.Transient, Assembly);
+                serviceCollection.RegisterAllFromType<IPlatformOutboxBusMessageRepository>(ServiceLifeTime.Transient, Assembly);
         }
 
         protected virtual bool EnableInboxEventBusMessageRepository()

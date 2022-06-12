@@ -2,12 +2,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.Cqrs.Commands;
-using Easy.Platform.Application.EventBus.Producers;
+using Easy.Platform.Application.MessageBus.Producers;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Domain.UnitOfWork;
-using Easy.Platform.Infrastructures.EventBus;
-using PlatformExampleApp.TextSnippet.Application.EventBus.FreeFormatMessages;
+using PlatformExampleApp.TextSnippet.Application.MessageBus.FreeFormatMessages;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 {
@@ -23,22 +22,22 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 
     public class DemoSendFreeFormatEventBusMessageCommandHandler : PlatformCqrsCommandApplicationHandler<DemoSendFreeFormatEventBusMessageCommand, DemoSendFreeFormatEventBusMessageCommandResult>
     {
-        private readonly IPlatformApplicationEventBusProducer eventBusProducer;
+        private readonly IPlatformApplicationBusMessageProducer busMessageProducer;
 
         public DemoSendFreeFormatEventBusMessageCommandHandler(
             IPlatformApplicationUserContextAccessor userContext,
             IUnitOfWorkManager unitOfWorkManager,
             IPlatformCqrs cqrs,
-            IPlatformApplicationEventBusProducer eventBusProducer) : base(userContext, unitOfWorkManager, cqrs)
+            IPlatformApplicationBusMessageProducer busMessageProducer) : base(userContext, unitOfWorkManager, cqrs)
         {
-            this.eventBusProducer = eventBusProducer;
+            this.busMessageProducer = busMessageProducer;
         }
 
         protected override async Task<DemoSendFreeFormatEventBusMessageCommandResult> HandleAsync(
             DemoSendFreeFormatEventBusMessageCommand request,
             CancellationToken cancellationToken)
         {
-            await eventBusProducer.SendFreeFormatMessageAsync(
+            await busMessageProducer.SendFreeFormatMessageAsync(
                 new DemoSendFreeFormatEventBusMessage()
                 {
                     Property1 = request.Property1,

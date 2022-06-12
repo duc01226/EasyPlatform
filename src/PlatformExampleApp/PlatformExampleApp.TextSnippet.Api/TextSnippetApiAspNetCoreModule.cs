@@ -36,7 +36,7 @@ namespace PlatformExampleApp.TextSnippet.Api
                 // and import the right module as we needed.
                 p => typeof(TextSnippetMultiDbDemoMongoPersistenceModule),
 
-                p => typeof(TextSnippetRabbitMqEventBusModule),
+                p => typeof(TextSnippetRabbitMqMessageBusModule),
                 p => typeof(TextSnippetRedisCacheModule),
 
                 // HangfireBackgroundJobModule should be after PersistenceModule to ensure first time run database is created

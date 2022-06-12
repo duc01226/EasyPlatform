@@ -1,5 +1,4 @@
 using System;
-using Easy.Platform.Application.EventBus.OutboxPattern;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;

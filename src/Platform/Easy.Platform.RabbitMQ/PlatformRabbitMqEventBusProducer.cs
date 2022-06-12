@@ -3,22 +3,22 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Easy.Platform.Infrastructures.EventBus;
 using Easy.Platform.Common.JsonSerialization;
+using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 
 namespace Easy.Platform.RabbitMQ
 {
-    public class PlatformRabbitMqEventBusProducer : IPlatformEventBusProducer
+    public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
     {
         protected readonly PlatformRabbitChannelPool ChannelPool;
         protected readonly IPlatformRabbitMqExchangeProvider ExchangeProvider;
         protected readonly PlatformRabbitMqOptions Options;
         protected readonly ILogger Logger;
 
-        public PlatformRabbitMqEventBusProducer(
+        public PlatformRabbitMqMessageBusProducer(
             IPlatformRabbitMqExchangeProvider exchangeProvider,
             PlatformRabbitMqOptions options,
             ILoggerFactory loggerFactory,
@@ -31,12 +31,12 @@ namespace Easy.Platform.RabbitMQ
         }
 
         public async Task<TMessage> SendAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default)
-            where TMessage : class, IPlatformEventBusMessage, new()
+            where TMessage : class, IPlatformBusMessage, new()
         {
             return await SendAsync(message, message.RoutingKey().CombinedStringKey, cancellationToken);
         }
 
-        public async Task<TMessage> SendAsync<TMessage>(TMessage message, string customRoutingKey, CancellationToken cancellationToken = default) where TMessage : class, IPlatformEventBusMessage, new()
+        public async Task<TMessage> SendAsync<TMessage>(TMessage message, string customRoutingKey, CancellationToken cancellationToken = default) where TMessage : class, IPlatformBusMessage, new()
         {
             try
             {
@@ -48,19 +48,19 @@ namespace Easy.Platform.RabbitMQ
             }
             catch (Exception e)
             {
-                throw new PlatformEventBusException<TMessage>(message, e);
+                throw new PlatformMessageBusException<TMessage>(message, e);
             }
         }
 
-        public async Task<IPlatformEventBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
+        public async Task<IPlatformBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
             string trackId,
             TMessagePayload payload,
-            PlatformEventBusMessageIdentity identity,
-            PlatformEventBusMessageRoutingKey routingKey,
+            PlatformBusMessageIdentity identity,
+            PlatformBusMessageRoutingKey routingKey,
             CancellationToken cancellationToken = default) where TMessagePayload : class, new()
         {
             var message = await SendAsync(
-                PlatformEventBusMessage<TMessagePayload>.New(
+                PlatformBusMessage<TMessagePayload>.New(
                     trackId: trackId,
                     payload: payload,
                     identity: identity,
@@ -72,15 +72,15 @@ namespace Easy.Platform.RabbitMQ
 
         public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
             TMessage message,
-            CancellationToken cancellationToken = default) where TMessage : IPlatformEventBusFreeFormatMessage
+            CancellationToken cancellationToken = default) where TMessage : IPlatformBusFreeFormatMessage
         {
-            return SendFreeFormatMessageAsync(message, PlatformDefaultFreeFormatMessageRoutingKeyBuilder.Build(message.GetType()), cancellationToken);
+            return SendFreeFormatMessageAsync(message, PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.Build(message.GetType()), cancellationToken);
         }
 
         public async Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
             TMessage message,
             string routingKey,
-            CancellationToken cancellationToken = default) where TMessage : IPlatformEventBusFreeFormatMessage
+            CancellationToken cancellationToken = default) where TMessage : IPlatformBusFreeFormatMessage
         {
             try
             {
@@ -92,14 +92,14 @@ namespace Easy.Platform.RabbitMQ
             }
             catch (Exception e)
             {
-                throw new PlatformEventBusException<TMessage>(message, e);
+                throw new PlatformMessageBusException<TMessage>(message, e);
             }
         }
 
         public async Task<TMessage> SendTrackableMessageAsync<TMessage>(
             TMessage message,
             string routingKey,
-            CancellationToken cancellationToken = default) where TMessage : IPlatformEventBusTrackableMessage
+            CancellationToken cancellationToken = default) where TMessage : IPlatformBusTrackableMessage
         {
             try
             {
@@ -111,11 +111,11 @@ namespace Easy.Platform.RabbitMQ
             }
             catch (Exception e)
             {
-                throw new PlatformEventBusException<TMessage>(message, e);
+                throw new PlatformMessageBusException<TMessage>(message, e);
             }
         }
 
-        private static string SerializeMessage<TMessage>(TMessage message) where TMessage : IPlatformEventBusTrackableMessage
+        private static string SerializeMessage<TMessage>(TMessage message) where TMessage : IPlatformBusTrackableMessage
         {
             var jsonMessage = PlatformJsonSerializer.Serialize(message);
             return jsonMessage;

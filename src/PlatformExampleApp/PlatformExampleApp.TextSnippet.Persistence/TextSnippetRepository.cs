@@ -1,5 +1,4 @@
 using System;
-using Easy.Platform.Application.EventBus;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.UnitOfWork;

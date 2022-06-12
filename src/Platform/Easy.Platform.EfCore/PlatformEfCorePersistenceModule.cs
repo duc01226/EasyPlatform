@@ -2,9 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Easy.Platform.Application.EventBus;
-using Easy.Platform.Application.EventBus.InboxPattern;
-using Easy.Platform.Application.EventBus.OutboxPattern;
+using Easy.Platform.Application.MessageBus.InboxPattern;
+using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.EfCore.Domain.Repositories;
@@ -131,11 +130,11 @@ namespace Easy.Platform.EfCore
             base.RegisterInboxEventBusMessageRepository(serviceCollection);
 
             // Register Default InboxEventBusMessageRepository if not existed custom inherited IPlatformInboxEventBusMessageRepository in assembly
-            if (serviceCollection.All(p => p.ServiceType != typeof(IPlatformInboxEventBusMessageRepository)))
+            if (serviceCollection.All(p => p.ServiceType != typeof(IPlatformInboxBusMessageRepository)))
             {
                 serviceCollection.Register(
-                    typeof(IPlatformInboxEventBusMessageRepository),
-                    typeof(PlatformDefaultEfCoreInboxEventBusMessageRepository<TDbContext>),
+                    typeof(IPlatformInboxBusMessageRepository),
+                    typeof(PlatformDefaultEfCoreInboxBusMessageRepository<TDbContext>),
                     ServiceLifeTime.Transient);
             }
         }
@@ -148,11 +147,11 @@ namespace Easy.Platform.EfCore
             base.RegisterOutboxEventBusMessageRepository(serviceCollection);
 
             // Register Default OutboxEventBusMessageRepository if not existed custom inherited IPlatformOutboxEventBusMessageRepository in assembly
-            if (serviceCollection.All(p => p.ServiceType != typeof(IPlatformOutboxEventBusMessageRepository)))
+            if (serviceCollection.All(p => p.ServiceType != typeof(IPlatformOutboxBusMessageRepository)))
             {
                 serviceCollection.Register(
-                    typeof(IPlatformOutboxEventBusMessageRepository),
-                    typeof(PlatformDefaultEfCoreOutboxEventBusMessageRepository<TDbContext>),
+                    typeof(IPlatformOutboxBusMessageRepository),
+                    typeof(PlatformDefaultEfCoreOutboxBusMessageRepository<TDbContext>),
                     ServiceLifeTime.Transient);
             }
         }

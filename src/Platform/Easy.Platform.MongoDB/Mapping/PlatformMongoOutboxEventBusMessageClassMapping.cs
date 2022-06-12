@@ -1,5 +1,4 @@
-using Easy.Platform.Application.EventBus;
-using Easy.Platform.Application.EventBus.OutboxPattern;
+using Easy.Platform.Application.MessageBus.OutboxPattern;
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
@@ -7,18 +6,18 @@ using MongoDB.Bson.Serialization.Serializers;
 namespace Easy.Platform.MongoDB.Mapping
 {
     public abstract class
-        PlatformMongoOutboxEventBusMessageClassMapping : PlatformMongoBaseEntityClassMapping<PlatformOutboxEventBusMessage, string>
+        PlatformMongoOutboxEventBusMessageClassMapping : PlatformMongoBaseEntityClassMapping<PlatformOutboxBusMessage, string>
     {
     }
 
     public class PlatformDefaultMongoOutboxEventBusMessageClassMapping : PlatformMongoOutboxEventBusMessageClassMapping
     {
-        public override void ClassMapInitializer(BsonClassMap<PlatformOutboxEventBusMessage> cm)
+        public override void ClassMapInitializer(BsonClassMap<PlatformOutboxBusMessage> cm)
         {
             base.ClassMapInitializer(cm);
 
             cm.MapProperty(p => p.SendStatus)
-                .SetSerializer(new EnumSerializer<PlatformOutboxEventBusMessage.SendStatuses>(BsonType.String));
+                .SetSerializer(new EnumSerializer<PlatformOutboxBusMessage.SendStatuses>(BsonType.String));
         }
     }
 }

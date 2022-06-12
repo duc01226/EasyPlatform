@@ -1,23 +1,26 @@
-using Easy.Platform.Application.EventBus;
-using Easy.Platform.Application.EventBus.InboxPattern;
+using Easy.Platform.Application.MessageBus.InboxPattern;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Easy.Platform.EfCore.EntityConfiguration
 {
-    public class PlatformInboxEventBusMessageConfiguration : PlatformEntityConfiguration<PlatformInboxEventBusMessage, string>
+    public class PlatformInboxEventBusMessageConfiguration : PlatformEntityConfiguration<PlatformInboxBusMessage, string>
     {
-        public override void Configure(EntityTypeBuilder<PlatformInboxEventBusMessage> builder)
+        public const string PlatformInboxBusMessageTableName = "PlatformInboxEventBusMessage";
+
+        public override void Configure(EntityTypeBuilder<PlatformInboxBusMessage> builder)
         {
             base.Configure(builder);
-            builder.Property(p => p.Id).HasMaxLength(PlatformInboxEventBusMessage.IdMaxLength);
+            builder.ToTable(PlatformInboxBusMessageTableName);
+            builder.Property(p => p.Id).HasMaxLength(PlatformInboxBusMessage.IdMaxLength);
             builder.Property(p => p.MessageTypeFullName)
-                .HasMaxLength(PlatformInboxEventBusMessage.MessageTypeFullNameMaxLength)
+                .HasMaxLength(PlatformInboxBusMessage.MessageTypeFullNameMaxLength)
                 .IsRequired();
             builder.Property(p => p.RoutingKey)
-                .HasMaxLength(PlatformInboxEventBusMessage.RoutingKeyMaxLength)
+                .HasMaxLength(PlatformInboxBusMessage.RoutingKeyMaxLength)
                 .IsRequired();
-            builder.Property(p => p.ConsumeStatus).HasConversion(new EnumToStringConverter<PlatformInboxEventBusMessage.ConsumeStatuses>());
+            builder.Property(p => p.ConsumeStatus).HasConversion(new EnumToStringConverter<PlatformInboxBusMessage.ConsumeStatuses>());
 
             builder.HasIndex(p => p.RoutingKey);
             builder.HasIndex(p => new { p.ConsumeStatus, p.LastConsumeDate });

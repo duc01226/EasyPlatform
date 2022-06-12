@@ -61,6 +61,20 @@ namespace Easy.Platform.Common.Extensions
             }
         }
 
+        public static void UpsertWhere<T>(this IList<T> items, Func<T, bool> predicate, T item)
+        {
+            for (var i = 0; i < items.Count; i++)
+            {
+                if (predicate(items[i]))
+                {
+                    items[i] = item;
+                    return;
+                }
+            }
+
+            items.Add(item);
+        }
+
         public static IEnumerable<T> ConcatSingle<T>(this IEnumerable<T> items, T item)
         {
             return items.Concat(new List<T>() { item });
