@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Easy.Platform.Application.Exceptions;
 using Easy.Platform.Common.Validators.Exceptions;
 using Easy.Platform.Domain.Exceptions;
@@ -16,13 +14,14 @@ namespace Easy.Platform.AspNetCore.ExceptionHandling
                 Code = validationException.GetType().Name,
                 Message = validationException.Message,
                 Details = validationException.ValidationResult.Errors
-                    .Select(p => new PlatformAspNetMvcErrorInfo
-                    {
-                        Code = p.ErrorCode,
-                        Message = p.ErrorMessage,
-                        Target = p.PropertyName,
-                        FormattedMessagePlaceholderValues = p.FormattedMessagePlaceholderValues
-                    })
+                    .Select(
+                        p => new PlatformAspNetMvcErrorInfo
+                        {
+                            Code = p.ErrorCode,
+                            Message = p.ErrorMessage,
+                            Target = p.PropertyName,
+                            FormattedMessagePlaceholderValues = p.FormattedMessagePlaceholderValues
+                        })
                     .ToList()
             };
         }

@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Reflection;
 using Easy.Platform.Infrastructures.MessageBus;
 
@@ -7,12 +5,12 @@ namespace Easy.Platform.Application.MessageBus
 {
     public class PlatformApplicationPseudoMessageBusManager : IPlatformMessageBusManager
     {
-        public List<Type> AllDefinedEventBusConsumerTypes()
+        public List<Type> AllDefinedMessageBusConsumerTypes()
         {
             return new List<Type>();
         }
 
-        public List<PlatformMessageBusConsumerAttribute> AllDefinedEventBusConsumerAttributes()
+        public List<PlatformMessageBusConsumerAttribute> AllDefinedMessageBusConsumerAttributes()
         {
             return new List<PlatformMessageBusConsumerAttribute>();
         }
@@ -22,7 +20,7 @@ namespace Easy.Platform.Application.MessageBus
             return new List<PlatformBusMessageRoutingKey>();
         }
 
-        public List<string> AllDefinedEventBusConsumerBindingRoutingKeys()
+        public List<string> AllDefinedMessageBusConsumerBindingRoutingKeys()
         {
             return new List<string>();
         }

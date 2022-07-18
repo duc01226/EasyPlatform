@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
@@ -15,16 +13,21 @@ namespace Easy.Platform.Application.MessageBus.Consumers
     /// when event bus requeue message.
     /// This will stored consumed message into db. If message existed, it won't process the consumer.
     /// </summary>
-    public interface IPlatformApplicationBusFreeFormatMessageConsumer<TMessage> : IPlatformInboxSupportMessageBusConsumer, IPlatformMessageBusFreeFormatMessageConsumer<TMessage>
+    public interface IPlatformApplicationBusFreeFormatMessageConsumer<in TMessage> :
+        IPlatformInboxSupportMessageBusConsumer,
+        IPlatformMessageBusFreeFormatMessageConsumer<TMessage>
         where TMessage : class, IPlatformBusFreeFormatMessage, new()
     {
     }
 
-    public abstract class PlatformApplicationBusFreeFormatMessageConsumer<TMessage> : PlatformMessageBusFreeFormatMessageConsumer<TMessage>, IPlatformApplicationBusFreeFormatMessageConsumer<TMessage>
+    public abstract class PlatformApplicationBusFreeFormatMessageConsumer<TMessage> :
+        PlatformMessageBusFreeFormatMessageConsumer<TMessage>,
+        IPlatformApplicationBusFreeFormatMessageConsumer<TMessage>
         where TMessage : class, IPlatformBusFreeFormatMessage, new()
     {
         protected readonly IUnitOfWorkManager UowManager;
         protected readonly IPlatformInboxBusMessageRepository InboxBusMessageRepo;
+        protected readonly PlatformInboxConfig InboxConfig;
 
         protected PlatformApplicationBusFreeFormatMessageConsumer(
             ILoggerFactory loggerFactory,
@@ -33,6 +36,7 @@ namespace Easy.Platform.Application.MessageBus.Consumers
         {
             UowManager = uowManager;
             InboxBusMessageRepo = serviceProvider.GetService<IPlatformInboxBusMessageRepository>();
+            InboxConfig = serviceProvider.GetRequiredService<PlatformInboxConfig>();
         }
 
         public override async Task HandleAsync(TMessage message, string routingKey)
@@ -47,8 +51,10 @@ namespace Easy.Platform.Application.MessageBus.Consumers
             }
             catch (Exception e)
             {
-                Logger.LogError(e, $"Error Consume message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
-                                   $"Message Info: ${PlatformJsonSerializer.Serialize(message)}.{Environment.NewLine}");
+                Logger.LogError(
+                    e,
+                    $"Error Consume message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
+                    $"Message Info: ${PlatformJsonSerializer.Serialize(message)}.{Environment.NewLine}");
                 throw;
             }
         }
@@ -65,7 +71,8 @@ namespace Easy.Platform.Application.MessageBus.Consumers
                     message,
                     routingKey,
                     IsProcessingExistingInboxMessage,
-                    Logger);
+                    Logger,
+                    InboxConfig.RetryProcessFailedMessageInSecondsUnit);
             }
             else
             {

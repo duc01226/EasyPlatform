@@ -1,9 +1,7 @@
-using System;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
 using Easy.Platform.AspNetCore.Controllers;
-using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.Common.Cqrs;
+using Easy.Platform.Infrastructures.Caching;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Application.Caching;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
@@ -17,7 +15,10 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
     [ApiController]
     public class TextSnippetController : PlatformBaseController
     {
-        public TextSnippetController(IPlatformCqrs cqrs, IPlatformCacheRepositoryProvider cacheRepositoryProvider, IConfiguration configuration) : base(cqrs, cacheRepositoryProvider, configuration)
+        public TextSnippetController(
+            IPlatformCqrs cqrs,
+            IPlatformCacheRepositoryProvider cacheRepositoryProvider,
+            IConfiguration configuration) : base(cqrs, cacheRepositoryProvider, configuration)
         {
         }
 
@@ -37,13 +38,17 @@ namespace PlatformExampleApp.TextSnippet.Api.Controllers
             return await CacheRepositoryProvider.GetCollection<TextSnippetCollectionCacheKeyProvider>()
                 .CacheRequestAsync(
                     () => Cqrs.SendQuery(request),
-                    requestKeyParts: new object[] { nameof(Search), request });
+                    requestKeyParts: new object[]
+                    {
+                        nameof(Search),
+                        request
+                    });
 
             // Using distributed cache and also use CacheRequestUseConfigOptionsAsync for convenient
-            return await CacheRepositoryProvider.GetCollection<TextSnippetCollectionCacheKeyProvider>(PlatformCacheRepositoryType.Distributed)
-                .CacheRequestUseConfigOptionsAsync<TextSnippetCollectionConfigurationCacheEntryOptions, SearchSnippetTextQueryResult>(
-                    () => Cqrs.SendQuery(request),
-                    new object[] { nameof(Search), request });
+            //return await CacheRepositoryProvider.GetCollection<TextSnippetCollectionCacheKeyProvider>(PlatformCacheRepositoryType.Distributed)
+            //    .CacheRequestUseConfigOptionsAsync<TextSnippetCollectionConfigurationCacheEntryOptions, SearchSnippetTextQueryResult>(
+            //        () => Cqrs.SendQuery(request),
+            //        new object[] { nameof(Search), request });
         }
 
         // POST api/<TextSnippetController>

@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Easy.Platform.Common.Utils
 {
     public static partial class Util
@@ -17,7 +11,10 @@ namespace Easy.Platform.Common.Utils
             /// <param name="maxItemCounts">Max items count</param>
             /// <param name="pageSize">Page size to execute.</param>
             /// <returns>Task.</returns>
-            public static async Task ExecutePagingAsync(Func<int, int, Task> executeFn, long maxItemCounts, int pageSize)
+            public static async Task ExecutePagingAsync(
+                Func<int, int, Task> executeFn,
+                long maxItemCounts,
+                int pageSize)
             {
                 var currentSkipItems = 0;
 
@@ -25,8 +22,7 @@ namespace Easy.Platform.Common.Utils
                 {
                     await executeFn(currentSkipItems, pageSize);
                     currentSkipItems += pageSize;
-                }
-                while (currentSkipItems < maxItemCounts);
+                } while (currentSkipItems < maxItemCounts);
             }
 
             /// <summary>
@@ -63,7 +59,10 @@ namespace Easy.Platform.Common.Utils
                 Func<List<TItem>, Task> executeFn,
                 ulong maxExecutionCount = ulong.MaxValue)
             {
-                return ExecuteScrollingPagingAsync(GetItemsPackageFacadeFn, items => executeFn(items.ToList()), maxExecutionCount);
+                return ExecuteScrollingPagingAsync(
+                    GetItemsPackageFacadeFn,
+                    items => executeFn(items.ToList()),
+                    maxExecutionCount);
 
                 async Task<IEnumerable<TItem>> GetItemsPackageFacadeFn() => await getItemsPackageFn();
             }

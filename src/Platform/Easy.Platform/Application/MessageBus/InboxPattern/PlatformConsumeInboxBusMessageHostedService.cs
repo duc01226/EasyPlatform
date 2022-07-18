@@ -1,14 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Hosting;
 using Easy.Platform.Common.JsonSerialization;
-using Easy.Platform.Common.Timing;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Domain.Exceptions;
 using Easy.Platform.Domain.UnitOfWork;
@@ -36,7 +29,7 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
             ServiceProvider = serviceProvider;
             this.applicationSettingContext = applicationSettingContext;
             ConsumerByNameToTypeDic = messageBusManager
-                .AllDefinedEventBusConsumerTypes()
+                .AllDefinedMessageBusConsumerTypes()
                 .ToDictionary(PlatformInboxMessageBusConsumerHelper.GetConsumerByValue);
         }
 
@@ -49,16 +42,8 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
         public static bool MatchImplementation(Type implementationType)
         {
             return implementationType?.IsAssignableTo(
-                typeof(PlatformConsumeInboxBusMessageHostedService)) == true;
-        }
-
-        public static Expression<Func<PlatformInboxBusMessage, bool>> ToHandleInboxEventBusMessagesExpr(
-            double retryProcessFailedMessageDelayTimeInSeconds,
-            double messageProcessingMaximumTimeInSeconds)
-        {
-            return p => p.ConsumeStatus == PlatformInboxBusMessage.ConsumeStatuses.New ||
-                        (p.ConsumeStatus == PlatformInboxBusMessage.ConsumeStatuses.Failed && p.LastConsumeDate <= Clock.UtcNow.AddSeconds(-retryProcessFailedMessageDelayTimeInSeconds)) ||
-                        (p.ConsumeStatus == PlatformInboxBusMessage.ConsumeStatuses.Processing && p.LastConsumeDate <= Clock.UtcNow.AddSeconds(-messageProcessingMaximumTimeInSeconds));
+                       typeof(PlatformConsumeInboxBusMessageHostedService)) ==
+                   true;
         }
 
         protected IServiceProvider ServiceProvider { get; }
@@ -74,12 +59,16 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
 
             try
             {
-                // Retry in case of the db is not started, initiated or restarting
+                // WHY: Retry in case of the database is not started, initiated or restarting
                 await Policy.Handle<Exception>()
                     .WaitAndRetryAsync(
                         retryCount: ProcessConsumeMessageRetryCount(),
                         sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                        onRetry: (ex, timeSpan, currentRetry, ctx) =>
+                        onRetry: (
+                            ex,
+                            timeSpan,
+                            currentRetry,
+                            ctx) =>
                         {
                             Logger.LogWarning(
                                 ex,
@@ -113,12 +102,13 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
                         }
                         catch (Exception e)
                         {
-                            Logger.LogError(e, $"[PlatformConsumeInboxEventBusMessageHostedService] Try to consume inbox message with Id:{toHandleMessage.Id} failed. Message Content:{PlatformJsonSerializer.Serialize(toHandleMessage)}");
+                            Logger.LogError(
+                                e,
+                                $"[PlatformConsumeInboxEventBusMessageHostedService] Try to consume inbox message with Id:{toHandleMessage.Id} failed. Message Content:{PlatformJsonSerializer.Serialize(toHandleMessage)}");
                         }
                     }
                 }
-            }
-            while (await IsAnyMessagesToHandleAsync());
+            } while (await IsAnyMessagesToHandleAsync());
         }
 
         protected async Task<bool> IsAnyMessagesToHandleAsync()
@@ -131,8 +121,7 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
                         scope.ServiceProvider.GetService<IPlatformInboxBusMessageRepository>();
 
                     var result = await inboxEventBusMessageRepo!.AnyAsync(
-                        ToHandleInboxEventBusMessagesExpr(
-                            RetryProcessFailedMessageDelayTimeInSeconds(),
+                        PlatformInboxBusMessage.ToHandleInboxEventBusMessagesExpr(
                             MessageProcessingMaximumTimeInSeconds()));
 
                     return result;
@@ -152,8 +141,6 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
                 var consumer = ((IPlatformInboxSupportMessageBusConsumer)scope.ServiceProvider.GetService(consumerType))
                     !.ForProcessingExistingInboxMessage();
 
-                // Get a generic type: PlatformEventBusMessage<TMessage> where TMessage = TMessagePayload
-                // of IPlatformEventBusConsumer<TMessagePayload>
                 var consumerMessageType = PlatformMessageBusBaseConsumer.GetConsumerMessageType(consumer);
 
                 var eventBusMessage = Util.Tasks.CatchExceptionContinueThrow(
@@ -183,12 +170,14 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
                     toHandleInboxMessage.Id,
                     scope.ServiceProvider.GetService<IUnitOfWorkManager>(),
                     scope.ServiceProvider.GetService<IPlatformInboxBusMessageRepository>(),
-                    new Exception($"[{GetType().Name}] Error resolve consumer type {toHandleInboxMessage.ConsumerBy}. InboxId:{toHandleInboxMessage.Id} "),
+                    new Exception(
+                        $"[{GetType().Name}] Error resolve consumer type {toHandleInboxMessage.ConsumerBy}. InboxId:{toHandleInboxMessage.Id} "),
                     cancellationToken);
             }
         }
 
-        protected async Task<List<PlatformInboxBusMessage>> PopToHandleInboxEventBusMessages(CancellationToken cancellationToken)
+        protected async Task<List<PlatformInboxBusMessage>> PopToHandleInboxEventBusMessages(
+            CancellationToken cancellationToken)
         {
             try
             {
@@ -202,18 +191,19 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
                             scope.ServiceProvider.GetService<IPlatformInboxBusMessageRepository>();
 
                         var toHandleMessages = inboxEventBusMessageRepo!.GetAllQuery()
-                            .Where(ToHandleInboxEventBusMessagesExpr(
-                                RetryProcessFailedMessageDelayTimeInSeconds(),
-                                MessageProcessingMaximumTimeInSeconds()))
+                            .Where(
+                                PlatformInboxBusMessage.ToHandleInboxEventBusMessagesExpr(
+                                    MessageProcessingMaximumTimeInSeconds()))
                             .OrderBy(p => p.LastConsumeDate)
                             .Take(NumberOfProcessMessagesBatch())
                             .ToList();
 
-                        toHandleMessages.ForEach(p =>
-                        {
-                            p.ConsumeStatus = PlatformInboxBusMessage.ConsumeStatuses.Processing;
-                            p.LastConsumeDate = DateTime.UtcNow;
-                        });
+                        toHandleMessages.ForEach(
+                            p =>
+                            {
+                                p.ConsumeStatus = PlatformInboxBusMessage.ConsumeStatuses.Processing;
+                                p.LastConsumeDate = DateTime.UtcNow;
+                            });
 
                         await inboxEventBusMessageRepo.UpdateManyAsync(
                             toHandleMessages,
@@ -228,9 +218,12 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
             }
             catch (PlatformRowVersionConflictDomainException conflictDomainException)
             {
-                Logger.LogWarning(conflictDomainException, "Some other consumer instance has been handling some inbox messages, which lead to row version conflict. This is as expected so just warning.");
+                Logger.LogWarning(
+                    conflictDomainException,
+                    "Some other consumer instance has been handling some inbox messages (support multi service instance running concurrently), which lead to row version conflict. This is as expected so just warning.");
 
-                // Retry PopToHandleInboxEventBusMessages
+                // WHY: Because support multi service instance running concurrently,
+                // get row version conflict is expected, so just retry again to get unprocessed inbox messages
                 return await PopToHandleInboxEventBusMessages(cancellationToken);
             }
         }
@@ -299,7 +292,12 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
             ILoggerFactory loggerFactory,
             IServiceProvider serviceProvider,
             IPlatformApplicationSettingContext applicationSettingContext,
-            IPlatformMessageBusManager messageBusManager) : base(applicationLifetime, loggerFactory, serviceProvider, applicationSettingContext, messageBusManager)
+            IPlatformMessageBusManager messageBusManager) : base(
+            applicationLifetime,
+            loggerFactory,
+            serviceProvider,
+            applicationSettingContext,
+            messageBusManager)
         {
         }
     }

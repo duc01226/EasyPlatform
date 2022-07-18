@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Common.Cqrs.Events;
 using Easy.Platform.Common.Cqrs.Queries;
@@ -77,14 +74,18 @@ namespace Easy.Platform.Common.Cqrs
             this.mediator = mediator;
         }
 
-        public async Task<TResult> SendCommand<TCommand, TResult>(TCommand command, CancellationToken cancellationToken = default)
+        public async Task<TResult> SendCommand<TCommand, TResult>(
+            TCommand command,
+            CancellationToken cancellationToken = default)
             where TCommand : PlatformCqrsCommand<TResult>
             where TResult : PlatformCqrsCommandResult, new()
         {
             return await mediator.Send(command, cancellationToken);
         }
 
-        public async Task<TResult> SendCommand<TResult>(PlatformCqrsCommand<TResult> command, CancellationToken cancellationToken = default) where TResult : PlatformCqrsCommandResult, new()
+        public async Task<TResult> SendCommand<TResult>(
+            PlatformCqrsCommand<TResult> command,
+            CancellationToken cancellationToken = default) where TResult : PlatformCqrsCommandResult, new()
         {
             return await mediator.Send(command, cancellationToken);
         }
@@ -95,12 +96,17 @@ namespace Easy.Platform.Common.Cqrs
             await mediator.Send(command, cancellationToken);
         }
 
-        public async Task<TResult> SendQuery<TQuery, TResult>(TQuery query, CancellationToken cancellationToken = default) where TQuery : PlatformCqrsQuery<TResult> where TResult : PlatformCqrsQueryResult
+        public async Task<TResult> SendQuery<TQuery, TResult>(
+            TQuery query,
+            CancellationToken cancellationToken = default) where TQuery : PlatformCqrsQuery<TResult>
+            where TResult : PlatformCqrsQueryResult
         {
             return await mediator.Send(query, cancellationToken);
         }
 
-        public async Task<TResult> SendQuery<TResult>(PlatformCqrsQuery<TResult> query, CancellationToken cancellationToken = default) where TResult : PlatformCqrsQueryResult
+        public async Task<TResult> SendQuery<TResult>(
+            PlatformCqrsQuery<TResult> query,
+            CancellationToken cancellationToken = default) where TResult : PlatformCqrsQueryResult
         {
             return await mediator.Send(query, cancellationToken);
         }
@@ -110,7 +116,9 @@ namespace Easy.Platform.Common.Cqrs
             await mediator.Publish(cqrsEvent, cancellationToken);
         }
 
-        public async Task SendEvents(IEnumerable<PlatformCqrsEvent> cqrsEvents, CancellationToken cancellationToken = default)
+        public async Task SendEvents(
+            IEnumerable<PlatformCqrsEvent> cqrsEvents,
+            CancellationToken cancellationToken = default)
         {
             foreach (var cqrsEvent in cqrsEvents)
             {

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Easy.Platform.Application.Context.UserContext;
 
 namespace PlatformExampleApp.TextSnippet.Application.Context.UserContext

@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Reflection;
-using System.Threading.Tasks;
-using Easy.Platform.Application.BackgroundJob;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Infrastructures.BackgroundJob;
@@ -17,7 +12,8 @@ namespace Easy.Platform.HangfireBackgroundJob
     {
         public static readonly string DefaultHangfireBackgroundJobAppSettingsName = "HangfireBackgroundJob";
 
-        protected PlatformHangfireBackgroundJobModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        protected PlatformHangfireBackgroundJobModule(IServiceProvider serviceProvider, IConfiguration configuration) :
+            base(serviceProvider, configuration)
         {
         }
 
@@ -60,7 +56,8 @@ namespace Easy.Platform.HangfireBackgroundJob
 
         protected override async Task InternalInit(IServiceScope serviceScope)
         {
-            // Config on init be start to take advantaged that the persistence module has initiated so that db is generated.
+            // WHY: Config GlobalConfiguration on init module to take advantaged that the persistence module has initiated
+            // (convention persistence module should be imported before infras module like background job) so that db is generated.
             GlobalConfigurationConfigure(GlobalConfiguration.Configuration);
 
             // UseActivator on init so that ServiceProvider have enough all registered services

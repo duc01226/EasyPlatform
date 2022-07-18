@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Easy.Platform.Application.MessageBus.Consumers;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.UnitOfWork;
@@ -12,13 +10,15 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.FreeFo
     public class DemoSendFreeFormatEventBusMessageCommandEventBusConsumer
         : PlatformMessageBusFreeFormatMessageConsumer<DemoSendFreeFormatEventBusMessage>
     {
-        public DemoSendFreeFormatEventBusMessageCommandEventBusConsumer(ILoggerFactory loggerFactory) : base(loggerFactory)
+        public DemoSendFreeFormatEventBusMessageCommandEventBusConsumer(ILoggerFactory loggerFactory) : base(
+            loggerFactory)
         {
         }
 
         protected override Task InternalHandleAsync(DemoSendFreeFormatEventBusMessage message, string routingKey)
         {
-            Logger.LogInformationIfEnabled($"Message {nameof(DemoSendFreeFormatEventBusMessage)} by {GetType().Name} has been handled");
+            Logger.LogInformationIfEnabled(
+                $"Message {nameof(DemoSendFreeFormatEventBusMessage)} by {GetType().Name} has been handled");
 
             return Task.CompletedTask;
         }
@@ -33,7 +33,10 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.FreeFo
     public class DemoSendFreeFormatInboxEventBusMessageCommandApplicationEventBusConsumer
         : PlatformApplicationBusFreeFormatMessageConsumer<DemoSendFreeFormatEventBusMessage>
     {
-        public DemoSendFreeFormatInboxEventBusMessageCommandApplicationEventBusConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager, IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
+        public DemoSendFreeFormatInboxEventBusMessageCommandApplicationEventBusConsumer(
+            ILoggerFactory loggerFactory,
+            IUnitOfWorkManager uowManager,
+            IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
         {
         }
 

@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using FluentValidation.Results;
 
 namespace Easy.Platform.Common.Validators
@@ -12,7 +8,8 @@ namespace Easy.Platform.Common.Validators
         {
         }
 
-        public PlatformValidationResult(TValue value, List<PlatformValidationFailure> failures) : base(failures ?? new List<PlatformValidationFailure>())
+        public PlatformValidationResult(TValue value, List<PlatformValidationFailure> failures) : base(
+            failures ?? new List<PlatformValidationFailure>())
         {
             Errors = failures ?? new List<PlatformValidationFailure>();
             Value = value;
@@ -36,19 +33,24 @@ namespace Easy.Platform.Common.Validators
             return validation.ToString();
         }
 
-        public static implicit operator PlatformValidationResult<TValue>((TValue value, string error) invalidValidationInfo)
+        public static implicit operator PlatformValidationResult<TValue>(
+            (TValue value, string error) invalidValidationInfo)
         {
             return Invalid(value: invalidValidationInfo.value, invalidValidationInfo.error);
         }
 
-        public static implicit operator PlatformValidationResult<TValue>((TValue value, List<string> errors) invalidValidationInfo)
+        public static implicit operator PlatformValidationResult<TValue>(
+            (TValue value, List<string> errors) invalidValidationInfo)
         {
             return invalidValidationInfo.errors?.Any() == true
-                ? Invalid(value: invalidValidationInfo.value, invalidValidationInfo.errors.Select(p => (PlatformValidationFailure)p).ToArray())
+                ? Invalid(
+                    value: invalidValidationInfo.value,
+                    invalidValidationInfo.errors.Select(p => (PlatformValidationFailure)p).ToArray())
                 : Valid();
         }
 
-        public static implicit operator PlatformValidationResult<TValue>((TValue value, List<PlatformValidationFailure> errors) invalidValidationInfo)
+        public static implicit operator PlatformValidationResult<TValue>(
+            (TValue value, List<PlatformValidationFailure> errors) invalidValidationInfo)
         {
             return invalidValidationInfo.errors?.Any() == true
                 ? Invalid(value: invalidValidationInfo.value, invalidValidationInfo.errors.Select(p => p).ToArray())
@@ -76,7 +78,12 @@ namespace Easy.Platform.Common.Validators
         {
             return errors.Any()
                 ? new PlatformValidationResult<TValue>(value, errors.ToList())
-                : new PlatformValidationResult<TValue>(value, new List<PlatformValidationFailure> { "Invalid!" });
+                : new PlatformValidationResult<TValue>(
+                    value,
+                    new List<PlatformValidationFailure>
+                    {
+                        "Invalid!"
+                    });
         }
 
         /// <summary>
@@ -151,7 +158,8 @@ namespace Easy.Platform.Common.Validators
         {
             return Match(
                 valid: value => f(value),
-                invalid: err => PlatformValidationResult<TBindValidationTarget>.Invalid(value: f(Value).Value, err.ToArray()));
+                invalid: err =>
+                    PlatformValidationResult<TBindValidationTarget>.Invalid(value: f(Value).Value, err.ToArray()));
         }
 
         public PlatformValidationResult<TMatchValidationTarget> Match<TMatchValidationTarget>(
@@ -166,7 +174,9 @@ namespace Easy.Platform.Common.Validators
             return !IsValid ? this : nextValidation;
         }
 
-        public PlatformValidationResult<TValue> And(Func<TValue, bool> validCondition, params PlatformValidationFailure[] errors)
+        public PlatformValidationResult<TValue> And(
+            Func<TValue, bool> validCondition,
+            params PlatformValidationFailure[] errors)
         {
             return !IsValid ? this : ValidIf(value: Value, validCondition(Value), errors);
         }
@@ -191,22 +201,26 @@ namespace Easy.Platform.Common.Validators
             return IsValid ? this : nextValidation();
         }
 
-        public async Task<PlatformValidationResult<TValue>> AndAsync(Task<PlatformValidationResult<TValue>> nextValidation)
+        public async Task<PlatformValidationResult<TValue>> AndAsync(
+            Task<PlatformValidationResult<TValue>> nextValidation)
         {
             return !IsValid ? this : await nextValidation;
         }
 
-        public async Task<PlatformValidationResult<TValue>> AndAsync(Func<TValue, Task<PlatformValidationResult<TValue>>> nextValidation)
+        public async Task<PlatformValidationResult<TValue>> AndAsync(
+            Func<TValue, Task<PlatformValidationResult<TValue>>> nextValidation)
         {
             return !IsValid ? this : await nextValidation(Value);
         }
 
-        public async Task<PlatformValidationResult<TValue>> OrAsync(Task<PlatformValidationResult<TValue>> nextValidation)
+        public async Task<PlatformValidationResult<TValue>> OrAsync(
+            Task<PlatformValidationResult<TValue>> nextValidation)
         {
             return IsValid ? this : await nextValidation;
         }
 
-        public async Task<PlatformValidationResult<TValue>> OrAsync(Func<Task<PlatformValidationResult<TValue>>> nextValidation)
+        public async Task<PlatformValidationResult<TValue>> OrAsync(
+            Func<Task<PlatformValidationResult<TValue>>> nextValidation)
         {
             return IsValid ? this : await nextValidation();
         }
@@ -234,7 +248,9 @@ namespace Easy.Platform.Common.Validators
         {
         }
 
-        public PlatformValidationResult(List<PlatformValidationFailure> failures) : base(null, failures ?? new List<PlatformValidationFailure>())
+        public PlatformValidationResult(List<PlatformValidationFailure> failures) : base(
+            null,
+            failures ?? new List<PlatformValidationFailure>())
         {
         }
 

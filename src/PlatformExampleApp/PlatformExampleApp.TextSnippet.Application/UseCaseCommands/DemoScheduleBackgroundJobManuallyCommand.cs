@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.Cqrs.Commands;
 using Easy.Platform.Common.Cqrs;
@@ -8,11 +5,11 @@ using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.BackgroundJob;
 using PlatformExampleApp.TextSnippet.Application.BackgroundJob;
-using PlatformExampleApp.TextSnippet.Domain.Services;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 {
-    public class DemoScheduleBackgroundJobManuallyCommand : PlatformCqrsCommand<DemoScheduleBackgroundJobManuallyCommandResult>
+    public class
+        DemoScheduleBackgroundJobManuallyCommand : PlatformCqrsCommand<DemoScheduleBackgroundJobManuallyCommandResult>
     {
         public static readonly string DefaultUpdateTextSnippetFullText =
             "DemoScheduleBackgroundJobManually NewSnippetText";
@@ -25,7 +22,8 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         public string ScheduledJobId { get; set; }
     }
 
-    public class DemoScheduleBackgroundJobManuallyCommandHandler : PlatformCqrsCommandApplicationHandler<DemoScheduleBackgroundJobManuallyCommand, DemoScheduleBackgroundJobManuallyCommandResult>
+    public class DemoScheduleBackgroundJobManuallyCommandHandler : PlatformCqrsCommandApplicationHandler<
+        DemoScheduleBackgroundJobManuallyCommand, DemoScheduleBackgroundJobManuallyCommandResult>
     {
         private readonly IPlatformBackgroundJobScheduler backgroundJobScheduler;
 
@@ -46,14 +44,18 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
                 () =>
                 {
                     var scheduledJobId = backgroundJobScheduler
-                        .Schedule<DemoScheduleBackgroundJobManuallyCommandBackgroundJobExecutor, DemoScheduleBackgroundJobManuallyCommandBackgroundJobExecutorParam>(
+                        .Schedule<DemoScheduleBackgroundJobManuallyCommandBackgroundJobExecutor,
+                            DemoScheduleBackgroundJobManuallyCommandBackgroundJobExecutorParam>(
                             new DemoScheduleBackgroundJobManuallyCommandBackgroundJobExecutorParam()
                             {
                                 NewSnippetText = request.NewSnippetText
                             },
                             TimeSpan.FromSeconds(5));
 
-                    return new DemoScheduleBackgroundJobManuallyCommandResult() { ScheduledJobId = scheduledJobId };
+                    return new DemoScheduleBackgroundJobManuallyCommandResult()
+                    {
+                        ScheduledJobId = scheduledJobId
+                    };
                 },
                 cancellationToken);
         }

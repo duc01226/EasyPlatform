@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Text.Json;
-using Easy.Platform.Application.BackgroundJob;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Infrastructures.BackgroundJob;
@@ -27,14 +22,16 @@ namespace Easy.Platform.HangfireBackgroundJob
             return BackgroundJob.Schedule(methodCall, delay ?? TimeSpan.Zero);
         }
 
-        public string Schedule<TJobExecutor>(DateTimeOffset enqueueAt) where TJobExecutor : IPlatformBackgroundJobExecutor
+        public string Schedule<TJobExecutor>(DateTimeOffset enqueueAt)
+            where TJobExecutor : IPlatformBackgroundJobExecutor
         {
             return BackgroundJob.Schedule(() => ExecuteBackgroundJob<TJobExecutor>(), enqueueAt);
         }
 
         public string Schedule<TJobExecutor, TJobExecutorParam>(
             DateTimeOffset enqueueAt,
-            TJobExecutorParam jobExecutorParam) where TJobExecutor : IPlatformBackgroundJobExecutor<TJobExecutorParam> where TJobExecutorParam : class
+            TJobExecutorParam jobExecutorParam) where TJobExecutor : IPlatformBackgroundJobExecutor<TJobExecutorParam>
+            where TJobExecutorParam : class
         {
             return BackgroundJob.Schedule(
                 () => ExecuteBackgroundJob(
@@ -65,9 +62,11 @@ namespace Easy.Platform.HangfireBackgroundJob
                 delay ?? TimeSpan.Zero);
         }
 
-        public void UpsertRecurringJob<TJobExecutor>(Func<string> cronExpression = null, TimeZoneInfo timeZone = null) where TJobExecutor : IPlatformBackgroundJobExecutor
+        public void UpsertRecurringJob<TJobExecutor>(Func<string> cronExpression = null, TimeZoneInfo timeZone = null)
+            where TJobExecutor : IPlatformBackgroundJobExecutor
         {
-            var cronExpressionValue = PlatformRecurringJobAttribute.GetCronExpressionInfo<TJobExecutor>() ?? cronExpression?.Invoke();
+            var cronExpressionValue = PlatformRecurringJobAttribute.GetCronExpressionInfo<TJobExecutor>() ??
+                                      cronExpression?.Invoke();
             if (cronExpressionValue == null)
             {
                 throw new Exception(
@@ -81,11 +80,15 @@ namespace Easy.Platform.HangfireBackgroundJob
                 timeZone ?? Clock.CurrentTimeZone);
         }
 
-        public void UpsertRecurringJob(Type jobExecutorType, Func<string> cronExpression = null, TimeZoneInfo timeZone = null)
+        public void UpsertRecurringJob(
+            Type jobExecutorType,
+            Func<string> cronExpression = null,
+            TimeZoneInfo timeZone = null)
         {
             EnsureJobExecutorTypeValid(jobExecutorType);
 
-            var cronExpressionValue = PlatformRecurringJobAttribute.GetCronExpressionInfo(jobExecutorType) ?? cronExpression?.Invoke();
+            var cronExpressionValue = PlatformRecurringJobAttribute.GetCronExpressionInfo(jobExecutorType) ??
+                                      cronExpression?.Invoke();
             if (cronExpressionValue == null)
             {
                 throw new Exception(
@@ -130,7 +133,7 @@ namespace Easy.Platform.HangfireBackgroundJob
 
         public void ReplaceAllRecurringBackgroundJobs(List<IPlatformBackgroundJobExecutor> newAllRecurringJobs)
         {
-            // Remove obsolete recurring job, job is not existed in the all current recurring job list in code
+            // Remove obsolete recurring job, job is not existed in the all current recurring declared jobs in source code
             var allCurrentRecurringJobExecutorIds = newAllRecurringJobs
                 .Select(p => BuildRecurringJobId(p.GetType()))
                 .ToHashSet();
@@ -172,9 +175,10 @@ namespace Easy.Platform.HangfireBackgroundJob
                     var withParamJobExecutorType = jobExecutor
                         .GetType()
                         .GetInterfaces()
-                        .FirstOrDefault(x =>
-                            x.IsGenericType &&
-                            x.GetGenericTypeDefinition() == typeof(IPlatformBackgroundJobExecutor<>));
+                        .FirstOrDefault(
+                            x =>
+                                x.IsGenericType &&
+                                x.GetGenericTypeDefinition() == typeof(IPlatformBackgroundJobExecutor<>));
                     if (withParamJobExecutorType != null)
                     {
                         // Parse job executor param to correct type
@@ -186,8 +190,16 @@ namespace Easy.Platform.HangfireBackgroundJob
                         // Execute job executor method
                         var executeMethod = jobExecutorType.GetMethod(
                             nameof(IPlatformBackgroundJobExecutor.Execute),
-                            new Type[] { jobExecutorParamType });
-                        executeMethod!.Invoke(jobExecutor, new[] { jobExecutorParam });
+                            new Type[]
+                            {
+                                jobExecutorParamType
+                            });
+                        executeMethod!.Invoke(
+                            jobExecutor,
+                            new[]
+                            {
+                                jobExecutorParam
+                            });
                     }
                     else
                     {

@@ -7,7 +7,8 @@ namespace PlatformExampleApp.Shared.Application.EventBus.FreeFormatMessages
         public string Prop1 { get; set; } = "Prop1";
     }
 
-    public class TestFreeFormatMessageInDifferentSharedAssemblyCheckingOutboxResolveWorks1 : PlatformBusFreeFormatMessage
+    public class
+        TestFreeFormatMessageInDifferentSharedAssemblyCheckingOutboxResolveWorks1 : PlatformBusFreeFormatMessage
     {
         public string Prop1 { get; set; } = "Prop1";
     }

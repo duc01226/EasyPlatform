@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Easy.Platform.Common.Utils
 {
     public static partial class Util
@@ -13,7 +7,8 @@ namespace Easy.Platform.Common.Utils
             /// <summary>
             ///     Map an Enum to another Enum which has the same key
             /// </summary>
-            public static TEnumResult Map<TEnumSource, TEnumResult>(TEnumSource input) where TEnumSource : Enum where TEnumResult : Enum
+            public static TEnumResult Map<TEnumSource, TEnumResult>(TEnumSource input)
+                where TEnumSource : Enum where TEnumResult : Enum
             {
                 return Parse<TEnumResult>(input.ToString("g"));
             }

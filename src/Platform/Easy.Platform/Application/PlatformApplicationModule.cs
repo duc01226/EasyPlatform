@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.Context.UserContext.Default;
@@ -14,13 +10,13 @@ using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Application.MessageBus.Producers;
 using Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers;
-using Easy.Platform.Infrastructures.Abstract;
 using Easy.Platform.Application.Persistence;
-using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.Common.DependencyInjection;
-using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.Infrastructures.Abstract;
 using Easy.Platform.Infrastructures.BackgroundJob;
+using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,13 +28,10 @@ namespace Easy.Platform.Application
 {
     public abstract class PlatformApplicationModule : PlatformModule
     {
-        protected readonly ILogger Logger;
-
         protected PlatformApplicationModule(
             IServiceProvider serviceProvider,
             IConfiguration configuration) : base(serviceProvider, configuration)
         {
-            Logger = serviceProvider?.GetService<ILoggerFactory>().CreateLogger(GetType());
         }
 
         /// <summary>
@@ -56,23 +49,31 @@ namespace Easy.Platform.Application
                 .WaitAndRetryAsync(
                     retryCount: 5,
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    onRetry: (exception, timeSpan, retry, ctx) =>
+                    onRetry: (
+                        exception,
+                        timeSpan,
+                        retry,
+                        ctx) =>
                     {
-                        Logger.LogWarning(exception,
+                        Logger.LogWarning(
+                            exception,
                             "Exception {ExceptionType} with message [{Message}] detected on attempt SeedData {retry}",
                             exception.GetType().Name,
                             exception.Message,
                             retry);
                     })
-                .ExecuteAndCaptureAsync(async () =>
-                {
-                    var dataSeeder = serviceScope.ServiceProvider.GetService<IPlatformApplicationDataSeeder>();
-                    if (dataSeeder != null)
-                        await dataSeeder.SeedData();
-                });
+                .ExecuteAndCaptureAsync(
+                    async () =>
+                    {
+                        var dataSeeder = serviceScope.ServiceProvider.GetService<IPlatformApplicationDataSeeder>();
+                        if (dataSeeder != null)
+                            await dataSeeder.SeedData();
+                    });
         }
 
-        public async Task ClearDistributedCache(PlatformApplicationAutoClearDistributedCacheOnInitOptions options, IServiceScope serviceScope)
+        public async Task ClearDistributedCache(
+            PlatformApplicationAutoClearDistributedCacheOnInitOptions options,
+            IServiceScope serviceScope)
         {
             //if the cache server is not initiated, ClearDistributedCache could fail.
             //So that we do retry to ensure that ClearDistributedCache action run successfully.
@@ -80,21 +81,28 @@ namespace Easy.Platform.Application
                 .WaitAndRetryAsync(
                     retryCount: 5,
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    onRetry: (exception, timeSpan, retry, ctx) =>
+                    onRetry: (
+                        exception,
+                        timeSpan,
+                        retry,
+                        ctx) =>
                     {
-                        Logger.LogWarning(exception,
+                        Logger.LogWarning(
+                            exception,
                             "Exception {ExceptionType} with message [{Message}] detected on attempt ClearDistributedCache {retry}",
                             exception.GetType().Name,
                             exception.Message,
                             retry);
                     })
-                .ExecuteAndCaptureAsync(async () =>
-                {
-                    var cacheProvider = serviceScope.ServiceProvider.GetService<IPlatformCacheRepositoryProvider>();
-                    var distributedCacheRepository = cacheProvider?.TryGet(PlatformCacheRepositoryType.Distributed);
-                    if (distributedCacheRepository != null)
-                        await distributedCacheRepository.RemoveAsync(p => options.AutoClearContexts.Contains(p.Context));
-                });
+                .ExecuteAndCaptureAsync(
+                    async () =>
+                    {
+                        var cacheProvider = serviceScope.ServiceProvider.GetService<IPlatformCacheRepositoryProvider>();
+                        var distributedCacheRepository = cacheProvider?.TryGet(PlatformCacheRepositoryType.Distributed);
+                        if (distributedCacheRepository != null)
+                            await distributedCacheRepository.RemoveAsync(
+                                p => options.AutoClearContexts.Contains(p.Context));
+                    });
         }
 
         /// <summary>
@@ -120,7 +128,9 @@ namespace Easy.Platform.Application
             RegisterDefaultApplicationUserContext(serviceCollection);
             RegisterPseudoApplicationUnitOfWork(serviceCollection);
 
-            serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(ServiceLifeTime.Transient, typeof(PlatformApplicationModule).Assembly);
+            serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(
+                ServiceLifeTime.Transient,
+                typeof(PlatformApplicationModule).Assembly);
             serviceCollection.RegisterAllFromType<IPlatformApplicationHelper>(ServiceLifeTime.Transient, Assembly);
 
             serviceCollection.RegisterAllServicesFromType<IPlatformDbContext>(ServiceLifeTime.Scoped, Assembly);
@@ -154,14 +164,18 @@ namespace Easy.Platform.Application
             return false;
         }
 
-        protected virtual PlatformApplicationAutoClearDistributedCacheOnInitOptions AutoClearDistributedCacheOnInitOptions(IServiceScope serviceScope)
+        protected virtual PlatformApplicationAutoClearDistributedCacheOnInitOptions
+            AutoClearDistributedCacheOnInitOptions(IServiceScope serviceScope)
         {
             var applicationSettingContext =
                 serviceScope.ServiceProvider.GetService<IPlatformApplicationSettingContext>();
             return new PlatformApplicationAutoClearDistributedCacheOnInitOptions()
             {
                 EnableAutoClearDistributedCacheOnInit = true,
-                AutoClearContexts = new HashSet<string>() { applicationSettingContext!.ApplicationName }
+                AutoClearContexts = new HashSet<string>()
+                {
+                    applicationSettingContext!.ApplicationName
+                }
             };
         }
 
@@ -213,7 +227,8 @@ namespace Easy.Platform.Application
         {
             if (serviceCollection.All(p => p.ServiceType != typeof(IUnitOfWorkManager)))
             {
-                serviceCollection.Register<IUnitOfWorkManager, PlatformPseudoApplicationUnitOfWorkManager>(ServiceLifeTime.Scoped);
+                serviceCollection.Register<IUnitOfWorkManager, PlatformPseudoApplicationUnitOfWorkManager>(
+                    ServiceLifeTime.Scoped);
             }
         }
 
@@ -224,7 +239,9 @@ namespace Easy.Platform.Application
                 Assembly,
                 replaceIfExist: true);
 
-            // If there is no implemented type of IPlatformApplicationSettingContext in application, register default PlatformApplicationSettingContext
+            // If there is no custom implemented class type of IPlatformApplicationSettingContext in application,
+            // register default PlatformApplicationSettingContext from result of DefaultApplicationSettingContextFactory
+            // WHY: To support custom IPlatformApplicationSettingContext if you want to or just use the default from DefaultApplicationSettingContextFactory
             if (serviceCollection.All(p => p.ServiceType != typeof(IPlatformApplicationSettingContext)))
             {
                 serviceCollection.Register(
@@ -250,20 +267,45 @@ namespace Easy.Platform.Application
 
         private void RegisterEventBus(IServiceCollection serviceCollection)
         {
-            serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEventBusMessageProducer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(PlatformCqrsCommandEventBusMessageProducer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(PlatformCqrsEntityEventBusMessageProducer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(IPlatformMessageBusBaseConsumer), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(IPlatformApplicationMessageBusConsumer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsCommandEventBusMessageConsumer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.RegisterAllFromType(typeof(IPlatformCqrsEntityEventBusMessageConsumer<>), ServiceLifeTime.Transient, Assembly);
-            serviceCollection.Register<IPlatformApplicationBusMessageProducer, PlatformApplicationBusMessageProducer>(ServiceLifeTime.Transient);
+            serviceCollection.RegisterAllFromType(
+                typeof(IPlatformCqrsEventBusMessageProducer<>),
+                ServiceLifeTime.Transient,
+                Assembly);
+            serviceCollection.RegisterAllFromType(
+                typeof(PlatformCqrsCommandEventBusMessageProducer<>),
+                ServiceLifeTime.Transient,
+                Assembly);
+            serviceCollection.RegisterAllFromType(
+                typeof(PlatformCqrsEntityEventBusMessageProducer<>),
+                ServiceLifeTime.Transient,
+                Assembly);
+            serviceCollection.RegisterAllFromType(
+                typeof(IPlatformMessageBusBaseConsumer),
+                ServiceLifeTime.Transient,
+                Assembly);
+            serviceCollection.RegisterAllFromType(
+                typeof(IPlatformApplicationMessageBusConsumer<>),
+                ServiceLifeTime.Transient,
+                Assembly);
+            serviceCollection.RegisterAllFromType(
+                typeof(IPlatformCqrsCommandEventBusMessageConsumer<>),
+                ServiceLifeTime.Transient,
+                Assembly);
+            serviceCollection.RegisterAllFromType(
+                typeof(IPlatformCqrsEntityEventBusMessageConsumer<>),
+                ServiceLifeTime.Transient,
+                Assembly);
+            serviceCollection.Register<IPlatformApplicationBusMessageProducer, PlatformApplicationBusMessageProducer>(
+                ServiceLifeTime.Transient);
 
             if (!serviceCollection.Any(p => p.ServiceType == typeof(IPlatformMessageBusManager)))
-                serviceCollection.Register<IPlatformMessageBusManager, PlatformApplicationPseudoMessageBusManager>(ServiceLifeTime.Transient);
+                serviceCollection.Register<IPlatformMessageBusManager, PlatformApplicationPseudoMessageBusManager>(
+                    ServiceLifeTime.Transient);
 
             RegisterInboxEventBusMessageCleanerHostedService(serviceCollection);
             RegisterConsumeInboxEventBusMessageHostedService(serviceCollection);
+            if (!serviceCollection.Any(p => p.ServiceType == typeof(PlatformInboxConfig)))
+                serviceCollection.Register<PlatformInboxConfig, PlatformInboxConfig>(ServiceLifeTime.Transient);
 
             RegisterOutboxEventBusMessageCleanerHostedService(serviceCollection);
             RegisterSendOutboxEventBusMessageHostedService(serviceCollection);
@@ -277,6 +319,7 @@ namespace Easy.Platform.Application
         public bool EnableAutoClearDistributedCacheOnInit { get; set; }
 
         private HashSet<string> autoClearContexts;
+
         public HashSet<string> AutoClearContexts
         {
             get => autoClearContexts;

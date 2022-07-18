@@ -4,7 +4,10 @@ namespace Easy.Platform.AspNetCore.ExceptionHandling
 {
     public class PlatformAspNetMvcErrorResponse
     {
-        public PlatformAspNetMvcErrorResponse(PlatformAspNetMvcErrorInfo error, HttpStatusCode statusCode, string requestId)
+        public PlatformAspNetMvcErrorResponse(
+            PlatformAspNetMvcErrorInfo error,
+            HttpStatusCode statusCode,
+            string requestId)
         {
             Error = error;
             StatusCode = (int)statusCode;

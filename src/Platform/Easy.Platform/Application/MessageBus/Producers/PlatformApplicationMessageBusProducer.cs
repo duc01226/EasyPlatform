@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
@@ -129,7 +126,8 @@ namespace Easy.Platform.Application.MessageBus.Producers
         {
             ServiceProvider = serviceProvider;
             Logger = logger;
-            MessageBusProducer = serviceProvider.GetService<IPlatformMessageBusProducer>() ?? new PlatformPseudoMessageBusProducer();
+            MessageBusProducer = serviceProvider.GetService<IPlatformMessageBusProducer>() ??
+                                 new PlatformPseudoMessageBusProducer();
             ApplicationSettingContext = applicationSettingContext;
             UserContextAccessor = userContextAccessor;
             OutboxConfig = outboxConfig;
@@ -159,7 +157,11 @@ namespace Easy.Platform.Application.MessageBus.Producers
                     producerContext: ApplicationSettingContext.ApplicationName,
                     messageAction: messageAction);
 
-            return await SendMessageAsync(message, message.RoutingKey(), autoSaveOutboxMessage, cancellationToken);
+            return await SendMessageAsync(
+                message,
+                message.RoutingKey(),
+                autoSaveOutboxMessage,
+                cancellationToken);
         }
 
         public async Task<TMessage> SendAsync<TMessage, TMessagePayload>(
@@ -168,7 +170,8 @@ namespace Easy.Platform.Application.MessageBus.Producers
             TMessagePayload messagePayload,
             string messageAction = null,
             bool autoSaveOutboxMessage = true,
-            CancellationToken cancellationToken = default) where TMessage : class, IPlatformBusMessage<TMessagePayload>, new() where TMessagePayload : class, new()
+            CancellationToken cancellationToken = default)
+            where TMessage : class, IPlatformBusMessage<TMessagePayload>, new() where TMessagePayload : class, new()
         {
             var message = PlatformBusMessage<TMessagePayload>
                 .New<TMessage>(
@@ -178,7 +181,11 @@ namespace Easy.Platform.Application.MessageBus.Producers
                     producerContext: ApplicationSettingContext.ApplicationName,
                     messageAction: messageAction);
 
-            return await SendMessageAsync(message, customRoutingKey ?? message.RoutingKey(), autoSaveOutboxMessage, cancellationToken);
+            return await SendMessageAsync(
+                message,
+                customRoutingKey ?? message.RoutingKey(),
+                autoSaveOutboxMessage,
+                cancellationToken);
         }
 
         public async Task<IPlatformBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
@@ -199,7 +206,11 @@ namespace Easy.Platform.Application.MessageBus.Producers
                     messageType: typeof(TMessagePayload).Name,
                     messageAction));
 
-            return await SendMessageAsync(message, message.RoutingKey(), autoSaveOutboxMessage, cancellationToken);
+            return await SendMessageAsync(
+                message,
+                message.RoutingKey(),
+                autoSaveOutboxMessage,
+                cancellationToken);
         }
 
         public Task<TMessage> SendAsync<TMessage, TMessagePayload>(
@@ -284,7 +295,8 @@ namespace Easy.Platform.Application.MessageBus.Producers
 
             return await SendMessageAsync(
                 message,
-                routingKey: PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.BuildForGenericPlatformEventBusMessage(message.GetType()),
+                routingKey: PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper
+                    .BuildForGenericPlatformEventBusMessage(message.GetType()),
                 autoSaveOutboxMessage,
                 cancellationToken);
         }
@@ -322,6 +334,7 @@ namespace Easy.Platform.Application.MessageBus.Producers
                     message,
                     routingKey,
                     isProcessingExistingOutboxMessage: false,
+                    OutboxConfig.RetryProcessFailedMessageInSecondsUnit,
                     cancellationToken);
 
                 return message;
@@ -334,12 +347,16 @@ namespace Easy.Platform.Application.MessageBus.Producers
 
         public class PlatformPseudoMessageBusProducer : IPlatformMessageBusProducer
         {
-            public Task<TMessage> SendAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default) where TMessage : class, IPlatformBusMessage, new()
+            public Task<TMessage> SendAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default)
+                where TMessage : class, IPlatformBusMessage, new()
             {
                 return Task.FromResult(message);
             }
 
-            public Task<TMessage> SendAsync<TMessage>(TMessage message, string customRoutingKey, CancellationToken cancellationToken = default) where TMessage : class, IPlatformBusMessage, new()
+            public Task<TMessage> SendAsync<TMessage>(
+                TMessage message,
+                string customRoutingKey,
+                CancellationToken cancellationToken = default) where TMessage : class, IPlatformBusMessage, new()
             {
                 return Task.FromResult(message);
             }
@@ -354,7 +371,9 @@ namespace Easy.Platform.Application.MessageBus.Producers
                 return Task.FromResult((IPlatformBusMessage<TMessagePayload>)null);
             }
 
-            public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default) where TMessage : IPlatformBusFreeFormatMessage
+            public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
+                TMessage message,
+                CancellationToken cancellationToken = default) where TMessage : IPlatformBusFreeFormatMessage
             {
                 return Task.FromResult(message);
             }

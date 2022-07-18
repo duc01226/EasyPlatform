@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.MongoDB.Serializer.Abstract;
 using MongoDB.Bson;
@@ -8,7 +6,8 @@ using MongoDB.Bson.Serialization.Serializers;
 
 namespace Easy.Platform.MongoDB.Serializer
 {
-    public class PlatformDynamicObjectMongoDbSerializer : SerializerBase<object>, IPlatformMongoAutoRegisterBaseSerializer<object>
+    public class PlatformDynamicObjectMongoDbSerializer : SerializerBase<object>,
+        IPlatformMongoAutoRegisterBaseSerializer<object>
     {
         public override object Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
@@ -20,12 +19,14 @@ namespace Easy.Platform.MongoDB.Serializer
             if (value == null)
                 context.Writer.WriteNull();
             else
-                BsonSerializer.Serialize(context.Writer, PlatformObjectJsonConverter.TryGetReflectionDynamicIfJsonElement(value));
+                BsonSerializer.Serialize(
+                    context.Writer,
+                    PlatformObjectJsonConverter.TryGetReflectionDynamicIfJsonElement(value));
         }
 
         private static dynamic TryGetReflectionDynamic(BsonValue dynamicObjectAsBsonValue)
         {
-            dynamic result = null;
+            dynamic result;
             switch (dynamicObjectAsBsonValue.BsonType)
             {
                 case BsonType.Int32:

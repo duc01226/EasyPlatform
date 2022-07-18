@@ -1,7 +1,4 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
 using Easy.Platform.Common.Extensions;
 
 namespace Easy.Platform.Domain.UnitOfWork
@@ -120,7 +117,8 @@ namespace Easy.Platform.Domain.UnitOfWork
 
         public TUnitOfWork CurrentInner<TUnitOfWork>() where TUnitOfWork : IUnitOfWork
         {
-            return (TUnitOfWork)Current()?.InnerUnitOfWorks
+            return (TUnitOfWork)Current()
+                ?.InnerUnitOfWorks
                 .LastOrDefault(p => p.GetType().IsAssignableTo(typeof(TUnitOfWork)));
         }
 
@@ -154,6 +152,7 @@ namespace Easy.Platform.Domain.UnitOfWork
                 {
                     currentUnitOfWork.Dispose();
                 }
+
                 CurrentUnitOfWorks.Clear();
             }
 

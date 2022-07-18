@@ -1,7 +1,5 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Easy.Platform.MongoDB;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
@@ -12,7 +10,8 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.DemoMigra
     {
         public DemoMigrateDataCrossDbContext(
             IOptions<PlatformMongoOptions<DemoMigrateDataCrossDbContext>> options,
-            IPlatformMongoClient<DemoMigrateDataCrossDbContext> client) : base(options, client)
+            IPlatformMongoClient<DemoMigrateDataCrossDbContext> client,
+            ILoggerFactory loggerFactory) : base(options, client, loggerFactory)
         {
         }
 
@@ -23,20 +22,22 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.DemoMigra
             return Task.CompletedTask;
         }
 
-        public override void Initialize(IServiceProvider serviceProvider)
+        public override void Initialize(IServiceProvider serviceProvider, bool isDevEnvironment)
         {
             // Insert fake data before run DemoMigrateApplicationDataCrossDb
-            if (!TextSnippetEntityCollection.AsQueryable().Any(p => p.SnippetText == "DemoMigrateApplicationDataDbContext Entity"))
+            if (!TextSnippetEntityCollection.AsQueryable()
+                .Any(p => p.SnippetText == "DemoMigrateApplicationDataDbContext Entity"))
             {
-                TextSnippetEntityCollection.InsertOne(new TextSnippetEntity()
-                {
-                    Id = Guid.NewGuid(),
-                    SnippetText = "DemoMigrateApplicationDataDbContext Entity",
-                    FullText = "DemoMigrateApplicationDataDbContext Entity"
-                });
+                TextSnippetEntityCollection.InsertOne(
+                    new TextSnippetEntity()
+                    {
+                        Id = Guid.NewGuid(),
+                        SnippetText = "DemoMigrateApplicationDataDbContext Entity",
+                        FullText = "DemoMigrateApplicationDataDbContext Entity"
+                    });
             }
 
-            base.Initialize(serviceProvider);
+            base.Initialize(serviceProvider, isDevEnvironment);
         }
     }
 }

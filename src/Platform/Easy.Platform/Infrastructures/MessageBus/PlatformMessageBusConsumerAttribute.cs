@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Easy.Platform.Common.Validators;
 
 namespace Easy.Platform.Infrastructures.MessageBus
@@ -63,7 +61,7 @@ namespace Easy.Platform.Infrastructures.MessageBus
             EnsureValid();
         }
 
-        public static bool CanEventBusConsumerProcess(Type eventBusConsumerType, string routingKey)
+        public static bool CanMessageBusConsumerProcess(Type eventBusConsumerType, string routingKey)
         {
             var consumerAttributes = eventBusConsumerType
                 .GetCustomAttributes(typeof(PlatformMessageBusConsumerAttribute), true)
@@ -102,9 +100,13 @@ namespace Easy.Platform.Infrastructures.MessageBus
         {
             if (!string.IsNullOrEmpty(CustomRoutingKey))
             {
-                return PlatformBusMessageRoutingKey.IsMatchRoutingKeyPattern(routingKeyPattern: CustomRoutingKey, messageRoutingKey) ||
+                return PlatformBusMessageRoutingKey.IsMatchRoutingKeyPattern(
+                           routingKeyPattern: CustomRoutingKey,
+                           messageRoutingKey) ||
                        PlatformBusMessageRoutingKey.IsMatchRoutingKeyPattern(
-                           routingKeyPattern: PlatformBusMessageRoutingKey.BuildCombinedStringKey(MessageGroup, CustomRoutingKey),
+                           routingKeyPattern: PlatformBusMessageRoutingKey.BuildCombinedStringKey(
+                               MessageGroup,
+                               CustomRoutingKey),
                            messageRoutingKey);
             }
             else

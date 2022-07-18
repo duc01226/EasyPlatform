@@ -1,10 +1,8 @@
-using System;
-using System.Threading.Tasks;
 using Easy.Platform.Application.BackgroundJob;
 using Easy.Platform.Application.MessageBus.Producers;
 using Easy.Platform.Common.Cqrs;
-using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Common.Timing;
+using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.BackgroundJob;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.Shared.Application.EventBus.FreeFormatMessages;
@@ -43,10 +41,11 @@ namespace PlatformExampleApp.TextSnippet.Application.BackgroundJob
                     FullText = "Test of recurring job upsert this entity"
                 });
 
-            await cqrs.SendCommand(new DemoSendFreeFormatEventBusMessageCommand()
-            {
-                Property1 = "TestRecurringBackgroundJobExecutor Prop1"
-            });
+            await cqrs.SendCommand(
+                new DemoSendFreeFormatEventBusMessageCommand()
+                {
+                    Property1 = "TestRecurringBackgroundJobExecutor Prop1"
+                });
 
             await busMessageProducer.SendFreeFormatMessageAsync(
                 new TestFreeFormatMessageInDifferentSharedAssemblyCheckingOutboxResolveWorks());

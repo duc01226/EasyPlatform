@@ -1,5 +1,4 @@
-﻿using System;
-using Hangfire.SqlServer;
+﻿using Hangfire.SqlServer;
 
 namespace Easy.Platform.HangfireBackgroundJob
 {

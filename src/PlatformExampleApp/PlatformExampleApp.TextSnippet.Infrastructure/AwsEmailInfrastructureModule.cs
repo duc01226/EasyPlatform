@@ -1,4 +1,3 @@
-using System;
 using Easy.Platform.Infrastructures;
 using Microsoft.Extensions.Configuration;
 
@@ -9,7 +8,9 @@ namespace PlatformExampleApp.TextSnippet.Infrastructure
     /// </summary>
     public class AwsEmailInfrastructureModule : PlatformInfrastructureModule
     {
-        public AwsEmailInfrastructureModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public AwsEmailInfrastructureModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(
+            serviceProvider,
+            configuration)
         {
         }
     }

@@ -1,9 +1,8 @@
-using System;
 using System.Security.Cryptography;
 using System.Text;
-using FluentValidation;
-using Easy.Platform.Domain.Entities;
 using Easy.Platform.Common.Validators;
+using Easy.Platform.Domain.Entities;
+using FluentValidation;
 using PlatformExampleApp.TextSnippet.Domain.ValueObjects;
 
 namespace PlatformExampleApp.TextSnippet.Domain.Entities
@@ -49,18 +48,24 @@ namespace PlatformExampleApp.TextSnippet.Domain.Entities
         {
             return new PlatformCheckUniquenessValidator<TextSnippetEntity>(
                 targetItem: this,
-                findOtherDuplicatedItemExpr: otherItem => !otherItem.Id.Equals(Id) && otherItem.SnippetText == SnippetText,
+                findOtherDuplicatedItemExpr: otherItem =>
+                    !otherItem.Id.Equals(Id) && otherItem.SnippetText == SnippetText,
                 "SnippetText must be unique");
         }
 
         public override PlatformValidator<TextSnippetEntity> GetValidator()
         {
-            return PlatformValidator<TextSnippetEntity>.Create(SnippetTextValidator(), FullTextValidator(), AddressValidator());
+            return PlatformValidator<TextSnippetEntity>.Create(
+                SnippetTextValidator(),
+                FullTextValidator(),
+                AddressValidator());
         }
 
         public PlatformValidationResult ValidateSomeSpecificDomainLogic()
         {
-            return PlatformValidationResult.ValidIf(validCondition: true, "Some example domain logic violated message.");
+            return PlatformValidationResult.ValidIf(
+                validCondition: true,
+                "Some example domain logic violated message.");
         }
 
         public TextSnippetEntity DemoDoSomeDomainEntityLogicAction_EncryptSnippetText()

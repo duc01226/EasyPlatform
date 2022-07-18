@@ -1,4 +1,3 @@
-using System;
 using Easy.Platform.Common.Timing;
 using MediatR;
 

@@ -1,5 +1,4 @@
-using Easy.Platform.EfCore.Domain.UnitOfWork;
-using PlatformExampleApp.TextSnippet.Domain.Repositories;
+// ReSharper disable once EmptyNamespace
 
 namespace PlatformExampleApp.TextSnippet.Persistence
 {

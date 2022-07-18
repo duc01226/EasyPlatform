@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Infrastructures.Caching.BuiltInCacheRepositories;
@@ -14,24 +10,33 @@ namespace Easy.Platform.Infrastructures.Caching
 {
     public class PlatformCachingModule : PlatformInfrastructureModule
     {
-        public PlatformCachingModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public PlatformCachingModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(
+            serviceProvider,
+            configuration)
         {
         }
 
-        public override void OnNewPlatformModuleRegistered(IServiceCollection serviceCollection, PlatformModule newModule)
+        public override void OnNewPlatformModuleRegistered(
+            IServiceCollection serviceCollection,
+            PlatformModule newModule)
         {
             if (!newModule.GetType().IsAssignableTo(typeof(PlatformInfrastructureModule)))
             {
                 RegisterCacheItemsByScanAssemblies(
                     serviceCollection,
-                    assemblies: new List<Assembly>() { newModule.Assembly });
+                    assemblies: new List<Assembly>()
+                    {
+                        newModule.Assembly
+                    });
             }
         }
 
         /// <summary>
         /// Override this function provider to register IPlatformDistributedCache. Default return null;
         /// </summary>
-        protected virtual IPlatformDistributedCacheRepository DistributedCacheRepositoryProvider(IServiceProvider serviceProvider, IConfiguration configuration)
+        protected virtual IPlatformDistributedCacheRepository DistributedCacheRepositoryProvider(
+            IServiceProvider serviceProvider,
+            IConfiguration configuration)
         {
             return null;
         }
@@ -39,7 +44,9 @@ namespace Easy.Platform.Infrastructures.Caching
         /// <summary>
         /// Override this function provider to register IPlatformMemoryCacheRepository. Default return PlatformMemoryCacheRepository;
         /// </summary>
-        protected virtual IPlatformMemoryCacheRepository MemoryCacheRepositoryProvider(IServiceProvider serviceProvider, IConfiguration configuration)
+        protected virtual IPlatformMemoryCacheRepository MemoryCacheRepositoryProvider(
+            IServiceProvider serviceProvider,
+            IConfiguration configuration)
         {
             return new PlatformMemoryCacheRepository(serviceProvider.GetService<ILoggerFactory>(), serviceProvider);
         }
@@ -56,27 +63,34 @@ namespace Easy.Platform.Infrastructures.Caching
         {
             base.InternalRegister(serviceCollection);
 
-            serviceCollection.Register<IPlatformCacheRepositoryProvider, PlatformCacheRepositoryProvider>(ServiceLifeTime.Transient);
+            serviceCollection.Register<IPlatformCacheRepositoryProvider, PlatformCacheRepositoryProvider>(
+                ServiceLifeTime.Transient);
             RegisterDefaultPlatformCacheEntryOptions(serviceCollection);
 
             RegisterCacheItemsByScanAssemblies(
                 serviceCollection,
-                assemblies: new List<Assembly>() { Assembly }
-                    .Concat(ServiceProvider.GetServices<PlatformModule>()
-                        .Where(p => !p.GetType().IsAssignableTo(typeof(PlatformInfrastructureModule)))
-                        .Select(p => p.GetType().Assembly))
+                assemblies: new List<Assembly>()
+                    {
+                        Assembly
+                    }
+                    .Concat(
+                        ServiceProvider.GetServices<PlatformModule>()
+                            .Where(p => !p.GetType().IsAssignableTo(typeof(PlatformInfrastructureModule)))
+                            .Select(p => p.GetType().Assembly))
                     .Distinct()
                     .ToList());
 
             // Register built-in default memory cache
             serviceCollection.RegisterAllForImplementation(
-                provider => MemoryCacheRepositoryProvider(provider, Configuration), ServiceLifeTime.Singleton);
+                provider => MemoryCacheRepositoryProvider(provider, Configuration),
+                ServiceLifeTime.Singleton);
             serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionMemoryCacheRepository<>));
 
             if (DistributedCacheRepositoryProvider(ServiceProvider, Configuration) != null)
             {
                 serviceCollection.RegisterAllForImplementation(
-                    provider => DistributedCacheRepositoryProvider(provider, Configuration), ServiceLifeTime.Singleton);
+                    provider => DistributedCacheRepositoryProvider(provider, Configuration),
+                    ServiceLifeTime.Singleton);
 
                 serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionDistributedCacheRepository<>));
             }
@@ -102,15 +116,20 @@ namespace Easy.Platform.Infrastructures.Caching
             }
         }
 
-        protected void RegisterCacheItemsByScanAssemblies(IServiceCollection serviceCollection, List<Assembly> assemblies)
+        protected void RegisterCacheItemsByScanAssemblies(
+            IServiceCollection serviceCollection,
+            List<Assembly> assemblies)
         {
-            assemblies.ForEach(cacheItemsScanAssembly =>
-            {
-                serviceCollection.RegisterAllFromType<IPlatformContextCacheKeyProvider>(ServiceLifeTime.Transient,
-                    cacheItemsScanAssembly);
-                serviceCollection.RegisterAllFromType<PlatformConfigurationCacheEntryOptions>(ServiceLifeTime.Transient,
-                    cacheItemsScanAssembly);
-            });
+            assemblies.ForEach(
+                cacheItemsScanAssembly =>
+                {
+                    serviceCollection.RegisterAllFromType<IPlatformContextCacheKeyProvider>(
+                        ServiceLifeTime.Transient,
+                        cacheItemsScanAssembly);
+                    serviceCollection.RegisterAllFromType<PlatformConfigurationCacheEntryOptions>(
+                        ServiceLifeTime.Transient,
+                        cacheItemsScanAssembly);
+                });
         }
     }
 }

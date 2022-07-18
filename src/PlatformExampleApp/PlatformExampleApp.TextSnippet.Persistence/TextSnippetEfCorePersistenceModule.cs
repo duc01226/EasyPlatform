@@ -1,9 +1,8 @@
-using System;
+using Easy.Platform.EfCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Easy.Platform.EfCore;
+using Microsoft.Extensions.Hosting;
 
 namespace PlatformExampleApp.TextSnippet.Persistence
 {
@@ -13,6 +12,11 @@ namespace PlatformExampleApp.TextSnippet.Persistence
             IServiceProvider serviceProvider,
             IConfiguration configuration) : base(serviceProvider, configuration)
         {
+        }
+
+        protected override bool IsDevEnvironment()
+        {
+            return ServiceProvider.GetRequiredService<IHostEnvironment>().EnvironmentName.Contains("Development");
         }
 
         protected override bool EnableInboxEventBusMessageRepository()
@@ -38,7 +42,8 @@ namespace PlatformExampleApp.TextSnippet.Persistence
         //    return defaultConfig;
         //}
 
-        protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceProvider serviceProvider)
+        protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(
+            IServiceProvider serviceProvider)
         {
             return options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));

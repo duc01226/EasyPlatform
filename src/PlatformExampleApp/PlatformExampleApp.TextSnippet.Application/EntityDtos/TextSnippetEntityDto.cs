@@ -1,4 +1,3 @@
-using System;
 using Easy.Platform.Application.Dtos;
 using PlatformExampleApp.TextSnippet.Application.ValueObjectDtos;
 using PlatformExampleApp.TextSnippet.Domain.Entities;

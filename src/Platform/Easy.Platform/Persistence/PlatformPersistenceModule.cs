@@ -1,13 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Common.DependencyInjection;
+using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Repositories;
 using Easy.Platform.Domain.UnitOfWork;
-using Easy.Platform.Common.Extensions;
 using Easy.Platform.Persistence.DataMigration;
 using Easy.Platform.Persistence.Domain;
 using Easy.Platform.Persistence.Services.Abstract;
@@ -25,6 +22,8 @@ namespace Easy.Platform.Persistence
 
         protected virtual Func<IServiceProvider, TDbContext> DbContextProvider => null;
 
+        protected abstract bool IsDevEnvironment();
+
         protected override void InternalRegister(IServiceCollection serviceCollection)
         {
             base.InternalRegister(serviceCollection);
@@ -40,9 +39,17 @@ namespace Easy.Platform.Persistence
             RegisterRepositories(serviceCollection);
 
             RegisterInboxEventBusMessageRepository(serviceCollection);
+            if (InboxConfigProvider(serviceCollection.BuildServiceProvider()) != null)
+            {
+                serviceCollection.Register(
+                    serviceType: typeof(PlatformInboxConfig),
+                    InboxConfigProvider,
+                    ServiceLifeTime.Transient,
+                    replaceIfExist: true,
+                    ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+            }
 
             RegisterOutboxEventBusMessageRepository(serviceCollection);
-
             if (OutboxConfigProvider(serviceCollection.BuildServiceProvider()) != null)
             {
                 serviceCollection.Register(
@@ -81,6 +88,14 @@ namespace Easy.Platform.Persistence
         protected virtual bool EnableInboxEventBusMessageRepository()
         {
             return false;
+        }
+
+        /// <summary>
+        /// Support to custom the inbox config. Default return null
+        /// </summary>
+        protected virtual PlatformInboxConfig InboxConfigProvider(IServiceProvider serviceProvider)
+        {
+            return null;
         }
 
         protected virtual bool EnableOutboxEventBusMessageRepository()

@@ -1,17 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.MongoDB.Migration;
-using Easy.Platform.Persistence;
 using Easy.Platform.Persistence.DataMigration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
@@ -42,11 +35,16 @@ namespace Easy.Platform.MongoDB
         public static readonly string PlatformOutboxBusMessageCollectionName = "OutboxEventBusMessage";
         public static readonly string PlatformDataMigrationHistoryCollectionName = "MigrationHistory";
 
+        private readonly ILogger logger;
+
         public readonly IMongoDatabase Database;
 
         protected readonly Lazy<Dictionary<Type, string>> EntityTypeToCollectionNameDictionary;
 
-        public PlatformMongoDbContext(IOptions<PlatformMongoOptions<TDbContext>> options, IPlatformMongoClient<TDbContext> client)
+        public PlatformMongoDbContext(
+            IOptions<PlatformMongoOptions<TDbContext>> options,
+            IPlatformMongoClient<TDbContext> client,
+            ILoggerFactory loggerFactory)
         {
             Database = client.MongoClient.GetDatabase(options.Value.Database);
             EntityTypeToCollectionNameDictionary = new Lazy<Dictionary<Type, string>>(() =>
@@ -54,6 +52,7 @@ namespace Easy.Platform.MongoDB
                 var entityTypeToCollectionNameMaps = EntityTypeToCollectionNameMaps();
                 return entityTypeToCollectionNameMaps != null ? new Dictionary<Type, string>(entityTypeToCollectionNameMaps) : null;
             });
+            logger = loggerFactory.CreateLogger(GetType());
         }
 
         public bool Disposed { get; private set; }
@@ -138,6 +137,7 @@ namespace Easy.Platform.MongoDB
                         .Ascending(p => p.ConsumeStatus)
                         .Ascending(p => p.CreatedDate)),
                     new CreateIndexModel<PlatformInboxBusMessage>(Builders<PlatformInboxBusMessage>.IndexKeys.Descending(p => p.LastConsumeDate)),
+                    new CreateIndexModel<PlatformInboxBusMessage>(Builders<PlatformInboxBusMessage>.IndexKeys.Descending(p => p.NextRetryProcessAfter)),
                     new CreateIndexModel<PlatformInboxBusMessage>(Builders<PlatformInboxBusMessage>.IndexKeys.Descending(p => p.CreatedDate))
                 });
             }
@@ -162,6 +162,7 @@ namespace Easy.Platform.MongoDB
                         .Ascending(p => p.SendStatus)
                         .Ascending(p => p.CreatedDate)),
                     new CreateIndexModel<PlatformOutboxBusMessage>(Builders<PlatformOutboxBusMessage>.IndexKeys.Descending(p => p.LastSendDate)),
+                    new CreateIndexModel<PlatformOutboxBusMessage>(Builders<PlatformOutboxBusMessage>.IndexKeys.Descending(p => p.NextRetryProcessAfter)),
                     new CreateIndexModel<PlatformOutboxBusMessage>(Builders<PlatformOutboxBusMessage>.IndexKeys.Descending(p => p.CreatedDate))
                 });
             }
@@ -174,14 +175,29 @@ namespace Easy.Platform.MongoDB
             return new BsonObjectId(ObjectId.GenerateNewId()).ToString();
         }
 
-        public virtual void Initialize(IServiceProvider serviceProvider)
+        public virtual void Initialize(IServiceProvider serviceProvider, bool isDevEnvironment)
         {
             EnsureIndexesAsync().Wait();
             Migrate();
-            MigrateApplicationDataAsync(serviceProvider).Wait();
+            ExecuteMigrateApplicationDataAsync();
+
+            void ExecuteMigrateApplicationDataAsync()
+            {
+                try
+                {
+                    MigrateApplicationDataAsync(serviceProvider).Wait();
+                }
+                catch (Exception ex)
+                {
+                    if (!isDevEnvironment)
+                        throw;
+                    else
+                        logger.LogError(ex, "MigrateApplicationDataAsync has errors. For dev environment it may happens if migrate cross db, when other service db is not initiated. Usually for dev environment migrate cross service db when run system in the first-time could be ignored.");
+                }
+            }
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync<T>(IQueryable<T> query, CancellationToken cancellationToken = default)
+        public async Task<List<T>> GetAllAsync<T>(IQueryable<T> query, CancellationToken cancellationToken = default)
         {
             if (query is IMongoQueryable<T> mongoQueryable)
                 return await mongoQueryable.ToListAsync(cancellationToken);
@@ -271,10 +287,6 @@ namespace Easy.Platform.MongoDB
             {
                 if (!migrationExecution.IsObsolete())
                 {
-                    var logger = serviceProvider
-                        .GetService<ILoggerFactory>()
-                        .CreateLogger(migrationExecution.GetType());
-
                     logger.LogInformationIfEnabled($"Migration {migrationExecution.Name} started.");
 
                     migrationExecution.Execute((TDbContext)this);

@@ -1,4 +1,3 @@
-using System;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.Exceptions;
 using Easy.Platform.Common.Cqrs;
@@ -7,7 +6,8 @@ using Easy.Platform.Common.Validators;
 
 namespace Easy.Platform.Application.Cqrs
 {
-    public abstract class PlatformCqrsRequestApplicationHandler<TRequest> : PlatformCqrsRequestHandler<TRequest> where TRequest : IPlatformCqrsRequest
+    public abstract class PlatformCqrsRequestApplicationHandler<TRequest> : PlatformCqrsRequestHandler<TRequest>
+        where TRequest : IPlatformCqrsRequest
     {
         protected readonly IPlatformApplicationUserContextAccessor UserContext;
 

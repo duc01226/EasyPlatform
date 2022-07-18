@@ -1,8 +1,5 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.Cqrs.Events;
-using Easy.Platform.Domain.UnitOfWork;
 
 namespace Easy.Platform.Domain.Services
 {
@@ -24,7 +21,8 @@ namespace Easy.Platform.Domain.Services
             Cqrs = cqrs;
         }
 
-        protected Task SendEvent<TEvent>(TEvent domainEvent, CancellationToken token = default) where TEvent : PlatformCqrsEvent
+        protected Task SendEvent<TEvent>(TEvent domainEvent, CancellationToken token = default)
+            where TEvent : PlatformCqrsEvent
         {
             return Cqrs.SendEvent(domainEvent, token);
         }

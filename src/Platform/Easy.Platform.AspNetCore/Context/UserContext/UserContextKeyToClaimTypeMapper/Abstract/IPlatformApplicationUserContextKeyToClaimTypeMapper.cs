@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract
 {
     public interface IPlatformApplicationUserContextKeyToClaimTypeMapper

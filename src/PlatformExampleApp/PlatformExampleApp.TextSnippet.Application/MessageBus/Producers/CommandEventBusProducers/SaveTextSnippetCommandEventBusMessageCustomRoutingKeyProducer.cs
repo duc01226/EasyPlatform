@@ -7,7 +7,9 @@ using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
 namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.CommandEventBusProducers
 {
-    public class SaveTextSnippetCommandEventBusMessageCustomRoutingKeyProducer : PlatformCqrsCommandEventBusMessageProducer<SaveSnippetTextCommand>
+    public class
+        SaveTextSnippetCommandEventBusMessageCustomRoutingKeyProducer : PlatformCqrsCommandEventBusMessageProducer<
+            SaveSnippetTextCommand>
     {
         public SaveTextSnippetCommandEventBusMessageCustomRoutingKeyProducer(
             IUnitOfWorkManager unitOfWorkManager,

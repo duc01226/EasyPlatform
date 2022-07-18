@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.Cqrs.Commands;
@@ -8,7 +6,9 @@ using MediatR;
 
 namespace Easy.Platform.Application.Cqrs.Commands
 {
-    public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> : PlatformCqrsRequestApplicationHandler<TCommand>, IRequestHandler<TCommand, TResult>
+    public abstract class
+        PlatformCqrsCommandApplicationHandler<TCommand, TResult> : PlatformCqrsRequestApplicationHandler<TCommand>,
+            IRequestHandler<TCommand, TResult>
         where TCommand : PlatformCqrsCommand<TResult>, new()
         where TResult : PlatformCqrsCommandResult, new()
     {
@@ -31,7 +31,9 @@ namespace Easy.Platform.Application.Cqrs.Commands
 
             var result = await ExecuteHandleAsync(request, cancellationToken);
 
-            await Cqrs.SendEvent(new PlatformCqrsCommandEvent<TCommand>(request, PlatformCqrsCommandEventAction.Executed), cancellationToken);
+            await Cqrs.SendEvent(
+                new PlatformCqrsCommandEvent<TCommand>(request, PlatformCqrsCommandEventAction.Executed),
+                cancellationToken);
 
             return result;
         }
@@ -43,7 +45,10 @@ namespace Easy.Platform.Application.Cqrs.Commands
             return await ExecuteHandleAsync(UnitOfWorkManager.Begin(), request, cancellationToken);
         }
 
-        protected virtual async Task<TResult> ExecuteHandleAsync(IUnitOfWork usingUow, TCommand request, CancellationToken cancellationToken)
+        protected virtual async Task<TResult> ExecuteHandleAsync(
+            IUnitOfWork usingUow,
+            TCommand request,
+            CancellationToken cancellationToken)
         {
             TResult result;
             using (usingUow)
@@ -59,7 +64,9 @@ namespace Easy.Platform.Application.Cqrs.Commands
         }
     }
 
-    public abstract class PlatformCqrsCommandApplicationHandler<TCommand> : PlatformCqrsCommandApplicationHandler<TCommand, PlatformCqrsCommandResult>
+    public abstract class
+        PlatformCqrsCommandApplicationHandler<TCommand> : PlatformCqrsCommandApplicationHandler<TCommand,
+            PlatformCqrsCommandResult>
         where TCommand : PlatformCqrsCommand, new()
     {
         public PlatformCqrsCommandApplicationHandler(
@@ -71,7 +78,9 @@ namespace Easy.Platform.Application.Cqrs.Commands
 
         public abstract Task HandleNoResult(TCommand request, CancellationToken cancellationToken);
 
-        protected override async Task<PlatformCqrsCommandResult> HandleAsync(TCommand request, CancellationToken cancellationToken)
+        protected override async Task<PlatformCqrsCommandResult> HandleAsync(
+            TCommand request,
+            CancellationToken cancellationToken)
         {
             await HandleNoResult(request, cancellationToken);
             return new PlatformCqrsCommandResult();

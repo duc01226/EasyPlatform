@@ -5,6 +5,7 @@ namespace Easy.Platform.Common.Cqrs.Commands
     public abstract class PlatformCqrsCommandEvent : PlatformCqrsEvent
     {
         public const string EventTypeValue = "CommandEvent";
+
         public static string EventNameValue<TCommand>()
         {
             return typeof(TCommand).Name;

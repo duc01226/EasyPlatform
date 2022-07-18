@@ -6,7 +6,8 @@ using PlatformExampleApp.TextSnippet.Domain.Events;
 
 namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.DomainEventBusProducers
 {
-    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusMessageProducer : PlatformCqrsDomainEventBusMessageProducer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
+    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusMessageProducer :
+        PlatformCqrsDomainEventBusMessageProducer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
     {
         public TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusMessageProducer(
             IUnitOfWorkManager unitOfWorkManager,
@@ -19,7 +20,8 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.Domain
     /// <summary>
     /// Demo SendAsFreeFormatMessage. The consumer for this domain event message do not need to define routing key
     /// </summary>
-    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendAsFreeFormatMessageEventBusMessageProducer : PlatformCqrsDomainEventBusMessageProducer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
+    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendAsFreeFormatMessageEventBusMessageProducer :
+        PlatformCqrsDomainEventBusMessageProducer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
     {
         public TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendAsFreeFormatMessageEventBusMessageProducer(
             IUnitOfWorkManager unitOfWorkManager,

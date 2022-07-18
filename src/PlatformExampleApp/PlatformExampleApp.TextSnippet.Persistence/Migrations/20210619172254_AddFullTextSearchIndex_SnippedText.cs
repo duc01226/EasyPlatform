@@ -1,6 +1,5 @@
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Easy.Platform.EfCore.Utils;
+using Microsoft.EntityFrameworkCore.Migrations;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Migrations

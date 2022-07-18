@@ -1,10 +1,8 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Helpers;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
+using Easy.Platform.Persistence.Domain;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -42,17 +40,20 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         /// <param name="message"></param>
         /// <param name="routingKey"></param>
         /// <param name="isProcessingExistingOutboxMessage"></param>
+        /// <param name="retryProcessFailedMessageInSecondsUnit"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
         public async Task HandleSendingOutboxMessageAsync<TMessage>(
             TMessage message,
             string routingKey,
             bool isProcessingExistingOutboxMessage,
+            double retryProcessFailedMessageInSecondsUnit,
             CancellationToken cancellationToken) where TMessage : IPlatformBusTrackableMessage
         {
             if (message.TrackingId != null)
             {
-                var needToStartNewUow = outboxConfig.ForceAlwaysSendOutboxInNewUow || !unitOfWorkManager.HasCurrentActive();
+                var needToStartNewUow =
+                    outboxConfig.ForceAlwaysSendOutboxInNewUow || !unitOfWorkManager.HasCurrentActive();
 
                 var currentUow = needToStartNewUow
                     ? unitOfWorkManager.Begin()
@@ -61,14 +62,19 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
                 if (isProcessingExistingOutboxMessage)
                 {
                     var existingOutboxMessage = await outboxBusMessageRepository.GetByIdAsync(
-                        PlatformOutboxBusMessage.BuildId(message), cancellationToken);
+                        PlatformOutboxBusMessage.BuildId(message),
+                        cancellationToken);
 
                     if (existingOutboxMessage.SendStatus is
-                        PlatformOutboxBusMessage.SendStatuses.New or
-                        PlatformOutboxBusMessage.SendStatuses.Failed or
-                        PlatformOutboxBusMessage.SendStatuses.Processing)
+                        PlatformOutboxBusMessage.SendStatuses.New
+                        or PlatformOutboxBusMessage.SendStatuses.Failed
+                        or PlatformOutboxBusMessage.SendStatuses.Processing)
                     {
-                        await SendExistingOutboxMessageAsync(message, routingKey, cancellationToken);
+                        await SendExistingOutboxMessageAsync(
+                            message,
+                            routingKey,
+                            retryProcessFailedMessageInSecondsUnit,
+                            cancellationToken);
                     }
                 }
                 else
@@ -78,6 +84,7 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
                         message,
                         routingKey,
                         autoCompleteUow: needToStartNewUow,
+                        retryProcessFailedMessageInSecondsUnit,
                         cancellationToken);
                 }
             }
@@ -92,6 +99,7 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
             TMessage message,
             string routingKey,
             bool autoCompleteUow,
+            double retryProcessFailedMessageInSecondsUnit,
             CancellationToken cancellationToken)
             where TMessage : IPlatformBusTrackableMessage
         {
@@ -105,26 +113,34 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
                 dismissSendEvent: true,
                 cancellationToken);
 
-            // Do not need to wait for uow completed if the uow for db do not handle actually transaction.
+            // WHY: Do not need to wait for uow completed if the uow for db do not handle actually transaction.
             // Can execute it immediately without waiting for uow to complete
-            if (currentUow.IsNoTransactionUow())
+            if (currentUow.IsNoTransactionUow() ||
+                (currentUow is IPlatformAggregatedPersistenceUnitOfWork currentAggregatedPersistenceUow &&
+                 currentAggregatedPersistenceUow.IsNoTransactionUow(outboxBusMessageRepository.CurrentUow())))
             {
                 await SendExistingOutboxMessageAsync(
                     message,
                     routingKey,
+                    retryProcessFailedMessageInSecondsUnit,
                     cancellationToken);
             }
             else
             {
-                // Never use async lambda on event handler, because it's equivalent to async void, which fire async task and forget
+                // Do not use async, just call.Wait()
+                // WHY: Never use async lambda on event handler, because it's equivalent to async void, which fire async task and forget
                 // this will lead to a lot of potential bug and issues.
                 currentUow.OnCompleted += (sender, args) =>
                 {
-                    // Try to process newProcessingOutboxMessage first time after saved
+                    // Try to process sending newProcessingOutboxMessage first time immediately after task completed
+                    // WHY: we can wait for the background process handle the message but try to do it
+                    // immediately if possible is better instead of waiting for the background process
                     SendExistingOutboxMessageInNewScopeAsync(
-                        message,
-                        routingKey,
-                        cancellationToken).Wait(cancellationToken);
+                            message,
+                            routingKey,
+                            retryProcessFailedMessageInSecondsUnit,
+                            cancellationToken)
+                        .Wait(cancellationToken);
                 };
             }
 
@@ -135,6 +151,7 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         public async Task SendExistingOutboxMessageAsync<TMessage>(
             TMessage message,
             string routingKey,
+            double retryProcessFailedMessageInSecondsUnit,
             CancellationToken cancellationToken)
             where TMessage : IPlatformBusTrackableMessage
         {
@@ -142,7 +159,9 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
             {
                 await messageBusProducer.SendTrackableMessageAsync(message, routingKey, cancellationToken);
 
-                await UpdateExistingOutboxMessageProcessedAsync(PlatformOutboxBusMessage.BuildId(message), cancellationToken);
+                await UpdateExistingOutboxMessageProcessedAsync(
+                    PlatformOutboxBusMessage.BuildId(message),
+                    cancellationToken);
             }
             catch (Exception exception)
             {
@@ -151,6 +170,7 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
                 await UpdateExistingOutboxMessageFailedInNewScopeAsync(
                     PlatformOutboxBusMessage.BuildId(message),
                     exception,
+                    retryProcessFailedMessageInSecondsUnit,
                     cancellationToken);
             }
         }
@@ -158,15 +178,18 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         public async Task SendExistingOutboxMessageInNewScopeAsync<TMessage>(
             TMessage message,
             string routingKey,
+            double retryProcessFailedMessageInSecondsUnit,
             CancellationToken cancellationToken) where TMessage : IPlatformBusTrackableMessage
         {
             using (var newScope = serviceProvider.CreateScope())
             {
-                var outboxEventBusProducerHelper = newScope.ServiceProvider.GetService<PlatformOutboxMessageBusProducerHelper>();
+                var outboxEventBusProducerHelper =
+                    newScope.ServiceProvider.GetService<PlatformOutboxMessageBusProducerHelper>();
 
                 await outboxEventBusProducerHelper!.SendExistingOutboxMessageInNewUowAsync(
                     message,
                     routingKey,
+                    retryProcessFailedMessageInSecondsUnit,
                     cancellationToken);
             }
         }
@@ -174,12 +197,17 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         public async Task SendExistingOutboxMessageInNewUowAsync<TMessage>(
             TMessage message,
             string routingKey,
+            double retryProcessFailedMessageInSecondsUnit,
             CancellationToken cancellationToken)
             where TMessage : IPlatformBusTrackableMessage
         {
             using (var uow = unitOfWorkManager.Begin())
             {
-                await SendExistingOutboxMessageAsync(message, routingKey, cancellationToken);
+                await SendExistingOutboxMessageAsync(
+                    message,
+                    routingKey,
+                    retryProcessFailedMessageInSecondsUnit,
+                    cancellationToken);
 
                 await uow.CompleteAsync(cancellationToken);
             }
@@ -202,15 +230,18 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         public async Task UpdateExistingOutboxMessageFailedInNewScopeAsync(
             string messageId,
             Exception exception,
+            double retryProcessFailedMessageInSecondsUnit,
             CancellationToken cancellationToken)
         {
             using (var newScope = serviceProvider.CreateScope())
             {
-                var newScopeOutboxEventBusProducerHelper = newScope.ServiceProvider.GetService<PlatformOutboxMessageBusProducerHelper>();
+                var newScopeOutboxEventBusProducerHelper =
+                    newScope.ServiceProvider.GetService<PlatformOutboxMessageBusProducerHelper>();
 
                 await newScopeOutboxEventBusProducerHelper!.UpdateExistingOutboxMessageFailedInNewUowAsync(
                     messageId,
                     exception,
+                    retryProcessFailedMessageInSecondsUnit,
                     cancellationToken);
             }
         }
@@ -218,11 +249,16 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         public async Task UpdateExistingOutboxMessageFailedInNewUowAsync(
             string messageId,
             Exception exception,
+            double retryProcessFailedMessageInSecondsUnit,
             CancellationToken cancellationToken)
         {
             using (var uow = unitOfWorkManager.Begin())
             {
-                await UpdateExistingOutboxMessageFailedAsync(messageId, exception, cancellationToken);
+                await UpdateExistingOutboxMessageFailedAsync(
+                    messageId,
+                    exception,
+                    retryProcessFailedMessageInSecondsUnit,
+                    cancellationToken);
 
                 await uow.CompleteAsync(cancellationToken);
             }
@@ -231,6 +267,7 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         public async Task UpdateExistingOutboxMessageFailedAsync(
             string messageId,
             Exception exception,
+            double retryProcessFailedMessageInSecondsUnit,
             CancellationToken cancellationToken)
         {
             var existingOutboxMessage = await outboxBusMessageRepository.GetByIdAsync(
@@ -240,7 +277,15 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
             existingOutboxMessage.SendStatus = PlatformOutboxBusMessage.SendStatuses.Failed;
             existingOutboxMessage.LastSendDate = DateTime.UtcNow;
             existingOutboxMessage.LastSendError = PlatformJsonSerializer.Serialize(
-                new { exception.Message, exception.StackTrace });
+                new
+                {
+                    exception.Message,
+                    exception.StackTrace
+                });
+            existingOutboxMessage.RetriedProcessCount = (existingOutboxMessage.RetriedProcessCount ?? 0) + 1;
+            existingOutboxMessage.NextRetryProcessAfter = PlatformOutboxBusMessage.CalculateNextRetryProcessAfter(
+                retriedProcessCount: existingOutboxMessage.RetriedProcessCount,
+                retryProcessFailedMessageInSecondsUnit);
 
             await outboxBusMessageRepository.UpdateAsync(existingOutboxMessage, cancellationToken: cancellationToken);
 

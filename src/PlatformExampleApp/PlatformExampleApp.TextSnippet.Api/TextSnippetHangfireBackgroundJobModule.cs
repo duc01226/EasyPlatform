@@ -1,4 +1,3 @@
-using System;
 using Easy.Platform.HangfireBackgroundJob;
 using Microsoft.Extensions.Configuration;
 
@@ -6,7 +5,8 @@ namespace PlatformExampleApp.TextSnippet.Api
 {
     public class TextSnippetHangfireBackgroundJobModule : PlatformHangfireBackgroundJobModule
     {
-        public TextSnippetHangfireBackgroundJobModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public TextSnippetHangfireBackgroundJobModule(IServiceProvider serviceProvider, IConfiguration configuration) :
+            base(serviceProvider, configuration)
         {
         }
 

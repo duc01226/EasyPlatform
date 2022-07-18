@@ -1,7 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Easy.Platform.MongoDB;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
@@ -12,7 +10,8 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
     {
         public TextSnippetDbContext(
             IOptions<PlatformMongoOptions<TextSnippetDbContext>> options,
-            IPlatformMongoClient<TextSnippetDbContext> client) : base(options, client)
+            IPlatformMongoClient<TextSnippetDbContext> client,
+            ILoggerFactory loggerFactory) : base(options, client, loggerFactory)
         {
         }
 
@@ -27,15 +26,22 @@ namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
             }
 
             await Task.WhenAll(
-                TextSnippetCollection.Indexes.CreateManyAsync(new List<CreateIndexModel<TextSnippetEntity>>()
-                {
-                    new CreateIndexModel<TextSnippetEntity>(Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.CreatedBy)),
-                    new CreateIndexModel<TextSnippetEntity>(Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.CreatedDate)),
-                    new CreateIndexModel<TextSnippetEntity>(Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.LastUpdatedBy)),
-                    new CreateIndexModel<TextSnippetEntity>(Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.LastUpdatedDate)),
-                    new CreateIndexModel<TextSnippetEntity>(Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.SnippetText)),
-                    new CreateIndexModel<TextSnippetEntity>(Builders<TextSnippetEntity>.IndexKeys.Text(p => p.SnippetText))
-                }));
+                TextSnippetCollection.Indexes.CreateManyAsync(
+                    new List<CreateIndexModel<TextSnippetEntity>>()
+                    {
+                        new CreateIndexModel<TextSnippetEntity>(
+                            Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.CreatedBy)),
+                        new CreateIndexModel<TextSnippetEntity>(
+                            Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.CreatedDate)),
+                        new CreateIndexModel<TextSnippetEntity>(
+                            Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.LastUpdatedBy)),
+                        new CreateIndexModel<TextSnippetEntity>(
+                            Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.LastUpdatedDate)),
+                        new CreateIndexModel<TextSnippetEntity>(
+                            Builders<TextSnippetEntity>.IndexKeys.Ascending(p => p.SnippetText)),
+                        new CreateIndexModel<TextSnippetEntity>(
+                            Builders<TextSnippetEntity>.IndexKeys.Text(p => p.SnippetText))
+                    }));
         }
 
         public override List<KeyValuePair<Type, string>> EntityTypeToCollectionNameMaps()

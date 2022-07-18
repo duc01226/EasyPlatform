@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Text.Json;
@@ -36,7 +34,7 @@ namespace Easy.Platform.Common.Utils
                 return true;
             if (obj2 == null && obj1 != null)
                 return true;
-            if (obj1 != null && obj2 != null)
+            if (obj1 != null)
                 return JsonSerializer.Serialize(obj1) != JsonSerializer.Serialize(obj2);
 
             return false;
@@ -68,6 +66,7 @@ namespace Easy.Platform.Common.Utils
             /// me if you really need this...
             /// </summary>
             private static readonly List<PropertyInfo> SourceProperties = new List<PropertyInfo>();
+
             private static readonly List<PropertyInfo> TargetProperties = new List<PropertyInfo>();
             private static readonly Exception InitializationException;
 
@@ -122,7 +121,8 @@ namespace Easy.Platform.Common.Utils
             {
                 var sourceParameter = Expression.Parameter(typeof(TSource), "source");
                 var bindings = new List<MemberBinding>();
-                foreach (var sourceProperty in typeof(TSource).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+                foreach (var sourceProperty in typeof(TSource).GetProperties(
+                    BindingFlags.Public | BindingFlags.Instance))
                 {
                     if (!sourceProperty.CanRead)
                     {
@@ -133,22 +133,32 @@ namespace Easy.Platform.Common.Utils
 
                     if (targetProperty == null)
                     {
-                        throw new ArgumentException("Property " + sourceProperty.Name + " is not present and accessible in " + typeof(TTarget).FullName);
+                        throw new ArgumentException(
+                            "Property " +
+                            sourceProperty.Name +
+                            " is not present and accessible in " +
+                            typeof(TTarget).FullName);
                     }
 
                     if (!targetProperty.CanWrite)
                     {
-                        throw new ArgumentException("Property " + sourceProperty.Name + " is not writable in " + typeof(TTarget).FullName);
+                        throw new ArgumentException(
+                            "Property " + sourceProperty.Name + " is not writable in " + typeof(TTarget).FullName);
                     }
 
                     if ((targetProperty.GetSetMethod()?.Attributes & MethodAttributes.Static) != 0)
                     {
-                        throw new ArgumentException("Property " + sourceProperty.Name + " is static in " + typeof(TTarget).FullName);
+                        throw new ArgumentException(
+                            "Property " + sourceProperty.Name + " is static in " + typeof(TTarget).FullName);
                     }
 
                     if (!targetProperty.PropertyType.IsAssignableFrom(sourceProperty.PropertyType))
                     {
-                        throw new ArgumentException("Property " + sourceProperty.Name + " has an incompatible type in " + typeof(TTarget).FullName);
+                        throw new ArgumentException(
+                            "Property " +
+                            sourceProperty.Name +
+                            " has an incompatible type in " +
+                            typeof(TTarget).FullName);
                     }
 
                     bindings.Add(Expression.Bind(targetProperty, Expression.Property(sourceParameter, sourceProperty)));

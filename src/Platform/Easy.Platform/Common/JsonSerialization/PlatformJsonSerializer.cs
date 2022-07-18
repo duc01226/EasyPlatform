@@ -1,7 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Dynamic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -34,7 +30,7 @@ namespace Easy.Platform.Common.JsonSerialization
         {
             var result = new JsonSerializerOptions()
             {
-                IgnoreNullValues = true
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
             if (useCamelCaseNaming)
                 result.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -52,17 +48,28 @@ namespace Easy.Platform.Common.JsonSerialization
             return JsonSerializer.Serialize(value, value?.GetType() ?? typeof(TValue), CurrentOptions.Value);
         }
 
-        public static string Serialize<TValue>(TValue value, JsonSerializerOptions customSerializerOptions = null)
+        public static string Serialize<TValue>(TValue value, JsonSerializerOptions customSerializerOptions)
         {
-            return JsonSerializer.Serialize(value, value?.GetType() ?? typeof(TValue), customSerializerOptions ?? CurrentOptions.Value);
+            return JsonSerializer.Serialize(
+                value,
+                value?.GetType() ?? typeof(TValue),
+                customSerializerOptions ?? CurrentOptions.Value);
         }
 
-        public static T Deserialize<T>(string jsonValue, JsonSerializerOptions customSerializerOptions = null)
+        public static T Deserialize<T>(string jsonValue)
+        {
+            return JsonSerializer.Deserialize<T>(jsonValue, CurrentOptions.Value);
+        }
+
+        public static T Deserialize<T>(string jsonValue, JsonSerializerOptions customSerializerOptions)
         {
             return JsonSerializer.Deserialize<T>(jsonValue, customSerializerOptions ?? CurrentOptions.Value);
         }
 
-        public static object Deserialize(string jsonValue, Type returnType, JsonSerializerOptions customSerializerOptions = null)
+        public static object Deserialize(
+            string jsonValue,
+            Type returnType,
+            JsonSerializerOptions customSerializerOptions = null)
         {
             return JsonSerializer.Deserialize(jsonValue, returnType, customSerializerOptions ?? CurrentOptions.Value);
         }
@@ -71,15 +78,23 @@ namespace Easy.Platform.Common.JsonSerialization
             TValue value,
             JsonSerializerOptions customSerializerOptions = null)
         {
-            return JsonSerializer.SerializeToUtf8Bytes(value, value?.GetType() ?? typeof(TValue), customSerializerOptions ?? CurrentOptions.Value);
+            return JsonSerializer.SerializeToUtf8Bytes(
+                value,
+                value?.GetType() ?? typeof(TValue),
+                customSerializerOptions ?? CurrentOptions.Value);
         }
 
-        public static TValue Deserialize<TValue>(ReadOnlySpan<byte> utf8Json, JsonSerializerOptions customSerializerOptions = null)
+        public static TValue Deserialize<TValue>(
+            ReadOnlySpan<byte> utf8Json,
+            JsonSerializerOptions customSerializerOptions = null)
         {
             return JsonSerializer.Deserialize<TValue>(utf8Json, customSerializerOptions ?? CurrentOptions.Value);
         }
 
-        public static object Deserialize(ReadOnlySpan<byte> utf8Json, Type returnType, JsonSerializerOptions customSerializerOptions = null)
+        public static object Deserialize(
+            ReadOnlySpan<byte> utf8Json,
+            Type returnType,
+            JsonSerializerOptions customSerializerOptions = null)
         {
             return JsonSerializer.Deserialize(utf8Json, returnType, customSerializerOptions ?? CurrentOptions.Value);
         }

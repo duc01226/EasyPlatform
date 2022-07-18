@@ -1,5 +1,3 @@
-using System;
-
 namespace Easy.Platform.Persistence.DataMigration
 {
     public class PlatformDataMigrationHistory
@@ -16,6 +14,7 @@ namespace Easy.Platform.Persistence.DataMigration
         }
 
         public string Name { get; set; }
+
         public DateTime CreatedDate
         {
             get

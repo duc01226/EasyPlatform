@@ -1,5 +1,3 @@
-using System;
-
 namespace Easy.Platform.Application.Exceptions
 {
     public class PlatformApplicationException : Exception

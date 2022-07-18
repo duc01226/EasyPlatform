@@ -1,11 +1,9 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using MediatR;
 
 namespace Easy.Platform.Common.Cqrs.Commands
 {
-    public abstract class PlatformCqrsCommandHandler<TCommand, TResult> : PlatformCqrsRequestHandler<TCommand>, IRequestHandler<TCommand, TResult>
+    public abstract class PlatformCqrsCommandHandler<TCommand, TResult> : PlatformCqrsRequestHandler<TCommand>,
+        IRequestHandler<TCommand, TResult>
         where TCommand : PlatformCqrsCommand<TResult>, new()
         where TResult : PlatformCqrsCommandResult, new()
     {
@@ -22,7 +20,9 @@ namespace Easy.Platform.Common.Cqrs.Commands
 
             var result = await ExecuteHandleAsync(request, cancellationToken);
 
-            await Cqrs.SendEvent(new PlatformCqrsCommandEvent<TCommand>(request, PlatformCqrsCommandEventAction.Executed), cancellationToken);
+            await Cqrs.SendEvent(
+                new PlatformCqrsCommandEvent<TCommand>(request, PlatformCqrsCommandEventAction.Executed),
+                cancellationToken);
 
             return result;
         }
@@ -40,7 +40,8 @@ namespace Easy.Platform.Common.Cqrs.Commands
         }
     }
 
-    public abstract class PlatformCqrsCommandHandler<TCommand> : PlatformCqrsCommandHandler<TCommand, PlatformCqrsCommandResult>
+    public abstract class
+        PlatformCqrsCommandHandler<TCommand> : PlatformCqrsCommandHandler<TCommand, PlatformCqrsCommandResult>
         where TCommand : PlatformCqrsCommand, new()
     {
         public PlatformCqrsCommandHandler(
@@ -50,7 +51,9 @@ namespace Easy.Platform.Common.Cqrs.Commands
 
         public abstract Task HandleNoResult(TCommand request, CancellationToken cancellationToken);
 
-        protected override async Task<PlatformCqrsCommandResult> HandleAsync(TCommand request, CancellationToken cancellationToken)
+        protected override async Task<PlatformCqrsCommandResult> HandleAsync(
+            TCommand request,
+            CancellationToken cancellationToken)
         {
             await HandleNoResult(request, cancellationToken);
             return new PlatformCqrsCommandResult();

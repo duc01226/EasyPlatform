@@ -1,4 +1,3 @@
-using System;
 using Easy.Platform.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Domain.Entities

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Reflection;
 using Easy.Platform.Application.Context;
 using Easy.Platform.RabbitMQ;
 using Microsoft.Extensions.Configuration;
@@ -11,7 +8,8 @@ namespace PlatformExampleApp.TextSnippet.Api
 {
     public class TextSnippetRabbitMqMessageBusModule : PlatformRabbitMqMessageBusModule
     {
-        public TextSnippetRabbitMqMessageBusModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public TextSnippetRabbitMqMessageBusModule(IServiceProvider serviceProvider, IConfiguration configuration) :
+            base(serviceProvider, configuration)
         {
         }
 

@@ -1,20 +1,16 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Easy.Platform.Common.Cqrs;
+using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.Repositories;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.EfCore.Domain.UnitOfWork;
-using Easy.Platform.Common.Extensions;
+using Microsoft.EntityFrameworkCore;
 
 namespace Easy.Platform.EfCore.Domain.Repositories
 {
-    public abstract class PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext> : PlatformRepository<TEntity, TPrimaryKey>
+    public abstract class
+        PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext> : PlatformRepository<TEntity, TPrimaryKey>
         where TEntity : class, IEntity<TPrimaryKey>, new()
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
@@ -35,12 +31,19 @@ namespace Easy.Platform.EfCore.Domain.Repositories
         /// </summary>
         protected DbSet<TEntity> Table => DbContext.Set<TEntity>();
 
+        public override IUnitOfWork CurrentUow()
+        {
+            return UnitOfWorkManager.CurrentInnerActive<IPlatformEfCoreUnitOfWork<TDbContext>>();
+        }
+
         public override Task<TEntity> GetByIdAsync(TPrimaryKey id, CancellationToken cancellationToken = default)
         {
             return FirstOrDefaultAsync(p => p.Id.Equals(id), cancellationToken);
         }
 
-        public override Task<List<TEntity>> GetByIdsAsync(List<TPrimaryKey> ids, CancellationToken cancellationToken = default)
+        public override Task<List<TEntity>> GetByIdsAsync(
+            List<TPrimaryKey> ids,
+            CancellationToken cancellationToken = default)
         {
             return GetAllAsync(p => ids.Contains(p.Id), cancellationToken);
         }
@@ -50,34 +53,46 @@ namespace Easy.Platform.EfCore.Domain.Repositories
             return Table.AsNoTracking();
         }
 
-        public override Task<List<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<List<TEntity>> GetAllAsync(
+            Expression<Func<TEntity, bool>> predicate = null,
+            CancellationToken cancellationToken = default)
         {
             return GetAllQuery().WhereIf(predicate != null, predicate).ToListAsync(cancellationToken);
         }
 
-        public override Task<TEntity> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<TEntity> FirstOrDefaultAsync(
+            Expression<Func<TEntity, bool>> predicate = null,
+            CancellationToken cancellationToken = default)
         {
             if (predicate == null)
                 return GetAllQuery().FirstOrDefaultAsync(cancellationToken);
             return GetAllQuery().FirstOrDefaultAsync(predicate, cancellationToken);
         }
 
-        public override Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<int> CountAsync(
+            Expression<Func<TEntity, bool>> predicate = null,
+            CancellationToken cancellationToken = default)
         {
             return GetAllQuery().WhereIf(predicate != null, predicate).CountAsync(cancellationToken);
         }
 
-        public override Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default)
+        public override Task<bool> AnyAsync(
+            Expression<Func<TEntity, bool>> predicate = null,
+            CancellationToken cancellationToken = default)
         {
             return GetAllQuery().WhereIf(predicate != null, predicate).AnyAsync(cancellationToken);
         }
 
-        public override Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        public override Task<List<TEntity>> GetAllAsync(
+            IQueryable<TEntity> query,
+            CancellationToken cancellationToken = default)
         {
             return query.ToListAsync(cancellationToken);
         }
 
-        public override Task<TEntity> FirstOrDefaultAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
+        public override Task<TEntity> FirstOrDefaultAsync(
+            IQueryable<TEntity> query,
+            CancellationToken cancellationToken = default)
         {
             return query.FirstOrDefaultAsync(cancellationToken);
         }
@@ -87,12 +102,16 @@ namespace Easy.Platform.EfCore.Domain.Repositories
             return query.CountAsync(cancellationToken);
         }
 
-        public override Task<List<TSelector>> GetAllAsync<TSelector>(Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder, CancellationToken cancellationToken = default)
+        public override Task<List<TSelector>> GetAllAsync<TSelector>(
+            Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder,
+            CancellationToken cancellationToken = default)
         {
             return queryBuilder(GetAllQuery()).ToListAsync(cancellationToken);
         }
 
-        public override Task<TSelector> FirstOrDefaultAsync<TSelector>(Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder, CancellationToken cancellationToken = default)
+        public override Task<TSelector> FirstOrDefaultAsync<TSelector>(
+            Func<IQueryable<TEntity>, IQueryable<TSelector>> queryBuilder,
+            CancellationToken cancellationToken = default)
         {
             return queryBuilder(GetAllQuery()).FirstOrDefaultAsync(cancellationToken);
         }

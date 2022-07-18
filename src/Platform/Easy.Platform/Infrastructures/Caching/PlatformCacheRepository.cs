@@ -1,7 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-using Easy.Platform.Common.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Easy.Platform.Infrastructures.Caching
@@ -39,7 +35,11 @@ namespace Easy.Platform.Infrastructures.Caching
         /// <param name="cacheOptions">The cache options for the value.</param>
         /// <param name="token">Optional. The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
         /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
-        Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, CancellationToken token = default);
+        Task SetAsync<T>(
+            PlatformCacheKey cacheKey,
+            T value,
+            PlatformCacheEntryOptions cacheOptions = null,
+            CancellationToken token = default);
 
         /// <summary>
         /// Sets a value with the given key.
@@ -57,7 +57,11 @@ namespace Easy.Platform.Infrastructures.Caching
         /// <param name="absoluteExpirationInSeconds">The absoluteExpirationInSeconds cache options for the value.</param>
         /// <param name="token">Optional. The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
         /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
-        Task SetAsync<T>(PlatformCacheKey cacheKey, T value, double? absoluteExpirationInSeconds = null, CancellationToken token = default);
+        Task SetAsync<T>(
+            PlatformCacheKey cacheKey,
+            T value,
+            double? absoluteExpirationInSeconds = null,
+            CancellationToken token = default);
 
         /// <summary>
         /// Removes the value with the given key.
@@ -140,7 +144,12 @@ namespace Easy.Platform.Infrastructures.Caching
 
         public abstract void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null);
 
-        public abstract Task SetAsync<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, CancellationToken token = default);
+        public abstract Task SetAsync<T>(
+            PlatformCacheKey cacheKey,
+            T value,
+            PlatformCacheEntryOptions cacheOptions = null,
+            CancellationToken token = default);
+
         public void Set<T>(PlatformCacheKey cacheKey, T value, double? absoluteExpirationInSeconds = null)
         {
             var defaultCacheOptions = GetDefaultCacheEntryOptions()
@@ -149,12 +158,20 @@ namespace Easy.Platform.Infrastructures.Caching
             Set(cacheKey, value, defaultCacheOptions);
         }
 
-        public async Task SetAsync<T>(PlatformCacheKey cacheKey, T value, double? absoluteExpirationInSeconds = null, CancellationToken token = default)
+        public async Task SetAsync<T>(
+            PlatformCacheKey cacheKey,
+            T value,
+            double? absoluteExpirationInSeconds = null,
+            CancellationToken token = default)
         {
             var defaultCacheOptions = GetDefaultCacheEntryOptions()
                 .WithOptionalCustomAbsoluteExpirationInSeconds(absoluteExpirationInSeconds);
 
-            await SetAsync(cacheKey, value, defaultCacheOptions, token);
+            await SetAsync(
+                cacheKey,
+                value,
+                defaultCacheOptions,
+                token);
         }
 
         public abstract void Remove(PlatformCacheKey cacheKey);
@@ -163,9 +180,12 @@ namespace Easy.Platform.Infrastructures.Caching
 
         public abstract Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default);
 
-        public abstract Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default);
+        public abstract Task RemoveAsync(
+            Func<PlatformCacheKey, bool> cacheKeyPredicate,
+            CancellationToken token = default);
 
-        public async Task RemoveCollectionAsync<TCollectionCacheKeyProvider>(CancellationToken token = default) where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
+        public async Task RemoveCollectionAsync<TCollectionCacheKeyProvider>(CancellationToken token = default)
+            where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
         {
             await RemoveAsync(
                 serviceProvider.GetService<TCollectionCacheKeyProvider>()!.MatchCollectionKeyPredicate(),
@@ -184,7 +204,11 @@ namespace Easy.Platform.Infrastructures.Caching
 
             var requestedData = await request();
 
-            await SetAsync(cacheKey, requestedData, cacheOptions, token);
+            await SetAsync(
+                cacheKey,
+                requestedData,
+                cacheOptions,
+                token);
 
             return requestedData;
         }
@@ -200,7 +224,8 @@ namespace Easy.Platform.Infrastructures.Caching
                 cacheKey,
                 new PlatformCacheEntryOptions()
                 {
-                    AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ?? PlatformCacheEntryOptions.DefaultExpirationInSeconds
+                    AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ??
+                                                  PlatformCacheEntryOptions.DefaultExpirationInSeconds
                 },
                 token);
         }

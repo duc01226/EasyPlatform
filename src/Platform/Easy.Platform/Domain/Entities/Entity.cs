@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using Easy.Platform.Common.JsonSerialization;
-using FluentValidation.Results;
 using Easy.Platform.Common.Validators;
 
 namespace Easy.Platform.Domain.Entities
@@ -51,10 +46,12 @@ namespace Easy.Platform.Domain.Entities
         PlatformCheckUniquenessValidator<TEntity> CheckUniquenessValidator();
     }
 
-    public abstract class Entity<TEntity, TPrimaryKey> : IValidatableEntity<TEntity, TPrimaryKey>, ISupportBusinessActionEventsEntity
+    public abstract class Entity<TEntity, TPrimaryKey> : IValidatableEntity<TEntity, TPrimaryKey>,
+        ISupportBusinessActionEventsEntity
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
-        protected readonly List<KeyValuePair<string, object>> BusinessActionEvents = new List<KeyValuePair<string, object>>();
+        protected readonly List<KeyValuePair<string, object>> BusinessActionEvents =
+            new List<KeyValuePair<string, object>>();
 
         public TPrimaryKey Id { get; set; }
 
@@ -105,7 +102,8 @@ namespace Easy.Platform.Domain.Entities
     /// <summary>
     /// Root entity represent an aggregate root entity. Only root entity can be Create/Update/Delete via repository
     /// </summary>
-    public abstract class RootEntity<TEntity, TPrimaryKey> : Entity<TEntity, TPrimaryKey>, IRootEntity<TPrimaryKey> where TEntity : Entity<TEntity, TPrimaryKey>, new()
+    public abstract class RootEntity<TEntity, TPrimaryKey> : Entity<TEntity, TPrimaryKey>, IRootEntity<TPrimaryKey>
+        where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
         public RootEntity() { }
     }

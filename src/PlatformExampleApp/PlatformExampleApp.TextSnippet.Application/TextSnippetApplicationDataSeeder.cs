@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Easy.Platform.Application;
 using Easy.Platform.Domain.UnitOfWork;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
@@ -7,7 +5,7 @@ using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
 namespace PlatformExampleApp.TextSnippet.Application
 {
-    public class TextSnippetApplicationDataSeeder : PlatformApplicationDataSeeder, IPlatformApplicationDataSeeder
+    public class TextSnippetApplicationDataSeeder : PlatformApplicationDataSeeder
     {
         private readonly ITextSnippetRootRepository<TextSnippetEntity> textSnippetRepository;
         private readonly ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;

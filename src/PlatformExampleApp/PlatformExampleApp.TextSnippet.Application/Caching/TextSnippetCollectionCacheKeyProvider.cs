@@ -6,7 +6,8 @@ namespace PlatformExampleApp.TextSnippet.Application.Caching
     public class TextSnippetCollectionCacheKeyProvider :
         PlatformApplicationCollectionCacheKeyProvider<TextSnippetCollectionCacheKeyProvider>
     {
-        public TextSnippetCollectionCacheKeyProvider(IPlatformApplicationSettingContext applicationSettingContext) : base(applicationSettingContext)
+        public TextSnippetCollectionCacheKeyProvider(IPlatformApplicationSettingContext applicationSettingContext) :
+            base(applicationSettingContext)
         {
         }
 

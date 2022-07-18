@@ -1,4 +1,3 @@
-using System;
 using Easy.Platform.Common.Timing;
 
 namespace Easy.Platform.Infrastructures.MessageBus

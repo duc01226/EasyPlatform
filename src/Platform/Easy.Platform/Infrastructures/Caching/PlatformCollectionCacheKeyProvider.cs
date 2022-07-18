@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-
 namespace Easy.Platform.Infrastructures.Caching
 {
     public class PlatformCollectionCacheKeyProvider : PlatformContextCacheKeyProvider
@@ -23,7 +20,15 @@ namespace Easy.Platform.Infrastructures.Caching
         public PlatformCacheKey GetKey(object[] requestKeyParts = null)
         {
             EnsureValidProvider();
-            return new PlatformCacheKey(Context, Collection, requestKeyParts?.Any() == true ? requestKeyParts : new object[] { DefaultRequestKey });
+            return new PlatformCacheKey(
+                Context,
+                Collection,
+                requestKeyParts?.Any() == true
+                    ? requestKeyParts
+                    : new object[]
+                    {
+                        DefaultRequestKey
+                    });
         }
 
         public Func<PlatformCacheKey, bool> MatchCollectionKeyPredicate()
@@ -39,7 +44,8 @@ namespace Easy.Platform.Infrastructures.Caching
         }
     }
 
-    public abstract class PlatformCollectionCacheKeyProvider<TFixedImplementationProvider> : PlatformCollectionCacheKeyProvider
+    public abstract class
+        PlatformCollectionCacheKeyProvider<TFixedImplementationProvider> : PlatformCollectionCacheKeyProvider
         where TFixedImplementationProvider : PlatformCollectionCacheKeyProvider<TFixedImplementationProvider>
     {
         public static PlatformCacheKey CreateKey(string requestKey = DefaultRequestKey)

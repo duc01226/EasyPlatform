@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 namespace Easy.Platform.Infrastructures.BackgroundJob
 {
     public interface IPlatformBackgroundJobProcessingService

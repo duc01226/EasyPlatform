@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Easy.Platform.Persistence.DataMigration;
 using MongoDB.Driver;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
@@ -31,11 +29,13 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.DataMigra
             if (demoApplicationMigrationEntity != null)
             {
                 dbContext.MultiDbDemoEntityCollection.DeleteOne(p => p.Id == demoApplicationMigrationEntity.Id);
-                dbContext.MultiDbDemoEntityCollection.InsertOne(new MultiDbDemoEntity()
-                {
-                    Id = demoApplicationMigrationEntity.Id,
-                    Name = $"DemoApplicationMigrationEntity.SnippetText: {demoApplicationMigrationEntity.SnippetText}"
-                });
+                dbContext.MultiDbDemoEntityCollection.InsertOne(
+                    new MultiDbDemoEntity()
+                    {
+                        Id = demoApplicationMigrationEntity.Id,
+                        Name =
+                            $"DemoApplicationMigrationEntity.SnippetText: {demoApplicationMigrationEntity.SnippetText}"
+                    });
             }
         }
 

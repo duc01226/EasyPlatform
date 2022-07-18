@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Easy.Platform.Common.Extensions;
-using Easy.Platform.Common.Utils;
 
 namespace Easy.Platform.Common.JsonSerialization
 {
@@ -36,23 +32,21 @@ namespace Easy.Platform.Common.JsonSerialization
         /// <inheritdoc cref="TryGetReflectionDynamicIfJsonElement"/>
         public static dynamic TryGetReflectionDynamic(JsonElement dynamicObjectAsJsonElement)
         {
-            dynamic result = null;
-
             switch (dynamicObjectAsJsonElement.ValueKind)
             {
                 case JsonValueKind.Number:
                 {
                     if (dynamicObjectAsJsonElement.TryGetInt32(out var valInt32))
                     {
-                        result = valInt32;
+                        return valInt32;
                     }
                     else if (dynamicObjectAsJsonElement.TryGetInt64(out var valInt64))
                     {
-                        result = valInt64;
+                        return valInt64;
                     }
                     else if (dynamicObjectAsJsonElement.TryGetDouble(out var valDouble))
                     {
-                        result = valDouble;
+                        return valDouble;
                     }
 
                     break;
@@ -60,8 +54,7 @@ namespace Easy.Platform.Common.JsonSerialization
 
                 case JsonValueKind.False:
                 case JsonValueKind.True:
-                    result = dynamicObjectAsJsonElement.GetBoolean();
-                    break;
+                    return dynamicObjectAsJsonElement.GetBoolean();
 
                 case JsonValueKind.String:
                 {
@@ -69,31 +62,28 @@ namespace Easy.Platform.Common.JsonSerialization
                     {
                         if (dynamicObjectAsJsonElement.TryGetDateTimeOffset(out var dateTimeOffsetValue))
                         {
-                            result = dateTimeOffsetValue;
+                            return dateTimeOffsetValue;
                         }
                         else if (dynamicObjectAsJsonElement.TryGetDateTime(out var dateValue))
                         {
-                            result = dateValue;
+                            return dateValue;
                         }
                         else
                         {
-                            result = dynamicObjectAsJsonElement.GetString();
+                            return dynamicObjectAsJsonElement.GetString();
                         }
                     }
                     catch
                     {
-                        result = dynamicObjectAsJsonElement.GetString();
+                        return dynamicObjectAsJsonElement.GetString();
                     }
-
-                    break;
                 }
 
                 case JsonValueKind.Array:
-                    result = dynamicObjectAsJsonElement
+                    return dynamicObjectAsJsonElement
                         .EnumerateArray()
                         .Select(o => TryGetReflectionDynamicIfJsonElement(o))
                         .ToArray();
-                    break;
 
                 case JsonValueKind.Object:
                 {
@@ -107,13 +97,11 @@ namespace Easy.Platform.Common.JsonSerialization
                             TryGetReflectionDynamic(dynamicObjectPropEnumerator.Current.Value));
                     }
 
-                    result = keyValueObject;
-                    break;
+                    return keyValueObject;
                 }
             }
 
-            // Always return true; other exceptions may have already been thrown if needed
-            return result;
+            return null;
         }
 
         public override object Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
@@ -160,10 +148,10 @@ namespace Easy.Platform.Common.JsonSerialization
         {
             // We do not handle write object, so we remove PlatformObjectJsonConverter
             // and write object by default implementation of JsonSerializer
-            var doNotHandleObjectOptions = options.Clone();
-            doNotHandleObjectOptions.Converters.RemoveWhere(p => p is PlatformObjectJsonConverter);
+            var removedPlatformObjectJsonConverterOptions = options.Clone()
+                .With(p => p.Converters.RemoveWhere(p => p is PlatformObjectJsonConverter));
 
-            JsonSerializer.Serialize(writer, value, options ?? PlatformJsonSerializer.CurrentOptions.Value);
+            JsonSerializer.Serialize(writer, value, removedPlatformObjectJsonConverterOptions);
         }
     }
 }

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
 using IdentityModel;
@@ -8,7 +7,8 @@ namespace Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimType
     /// <summary>
     /// This will map <see cref="PlatformApplicationCommonUserContextKeys"/> to <see cref="JwtClaimTypes"/>
     /// </summary>
-    public class PlatformApplicationUserContextKeyToJwtClaimTypeMapper : IPlatformApplicationUserContextKeyToClaimTypeMapper
+    public class
+        PlatformApplicationUserContextKeyToJwtClaimTypeMapper : IPlatformApplicationUserContextKeyToClaimTypeMapper
     {
         public virtual string ToClaimType(string contextKey)
         {
@@ -28,7 +28,10 @@ namespace Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimType
 
         public virtual HashSet<string> ToOneOfClaimTypes(string contextKey)
         {
-            return new HashSet<string>() { ToClaimType(contextKey) };
+            return new HashSet<string>()
+            {
+                ToClaimType(contextKey)
+            };
         }
     }
 }

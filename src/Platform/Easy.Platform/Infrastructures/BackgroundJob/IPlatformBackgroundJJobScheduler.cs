@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 using Easy.Platform.Common.Utils;
 
@@ -23,7 +21,8 @@ namespace Easy.Platform.Infrastructures.BackgroundJob
         /// <typeparam name="TJobExecutor">The job executor type will be invoked during the job processing.</typeparam>
         /// <param name="enqueueAt">The moment of time at which the job will be enqueued.</param>
         /// <returns>Unique identifier of a created job.</returns>
-        public string Schedule<TJobExecutor>(DateTimeOffset enqueueAt) where TJobExecutor : IPlatformBackgroundJobExecutor;
+        public string Schedule<TJobExecutor>(DateTimeOffset enqueueAt)
+            where TJobExecutor : IPlatformBackgroundJobExecutor;
 
         /// <summary>
         /// Creates a new background job based on a specified method call expression
@@ -34,7 +33,9 @@ namespace Easy.Platform.Infrastructures.BackgroundJob
         /// <param name="enqueueAt">The moment of time at which the job will be enqueued.</param>
         /// <param name="jobExecutorParam">Job executor param</param>
         /// <returns>Unique identifier of a created job.</returns>
-        public string Schedule<TJobExecutor, TJobExecutorParam>(DateTimeOffset enqueueAt, TJobExecutorParam jobExecutorParam)
+        public string Schedule<TJobExecutor, TJobExecutorParam>(
+            DateTimeOffset enqueueAt,
+            TJobExecutorParam jobExecutorParam)
             where TJobExecutor : IPlatformBackgroundJobExecutor<TJobExecutorParam>
             where TJobExecutorParam : class;
 
@@ -54,7 +55,8 @@ namespace Easy.Platform.Infrastructures.BackgroundJob
         /// <typeparam name="TJobExecutor">The job executor type will be invoked during the job processing.</typeparam>
         /// <param name="delay">Delay, after which the job will be enqueued.</param>
         /// <returns>Unique identifier of a created job.</returns>
-        public string Schedule<TJobExecutor>(TimeSpan? delay = null) where TJobExecutor : IPlatformBackgroundJobExecutor;
+        public string Schedule<TJobExecutor>(TimeSpan? delay = null)
+            where TJobExecutor : IPlatformBackgroundJobExecutor;
 
         /// <summary>
         /// Creates a new background job based on a specified method call expression
@@ -65,7 +67,9 @@ namespace Easy.Platform.Infrastructures.BackgroundJob
         /// <param name="jobExecutorParam">Job executor param</param>
         /// <param name="delay">Delay, after which the job will be enqueued.</param>
         /// <returns>Unique identifier of a created job.</returns>
-        public string Schedule<TJobExecutor, TJobExecutorParam>(TJobExecutorParam jobExecutorParam, TimeSpan? delay = null)
+        public string Schedule<TJobExecutor, TJobExecutorParam>(
+            TJobExecutorParam jobExecutorParam,
+            TimeSpan? delay = null)
             where TJobExecutor : IPlatformBackgroundJobExecutor<TJobExecutorParam>
             where TJobExecutorParam : class;
 
@@ -115,7 +119,7 @@ namespace Easy.Platform.Infrastructures.BackgroundJob
         public void RemoveAllRecurringJobs();
 
         /// <summary>
-        /// Get all existed recurring jobs. Return all existed recurring job ids, list of id from <see cref="BuildRecurringJobId{TJobExecutor}rringJobId"/>
+        /// Get all existed recurring jobs. Return all existed recurring job ids, list of id from <see cref="BuildRecurringJobId{TJobExecutor}"/>
         /// </summary>
         public HashSet<string> AllRecurringJobIds();
 

@@ -1,17 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
-using Easy.Platform.Application;
 using Easy.Platform.Application.Exceptions;
-using Easy.Platform.Infrastructures.PushNotification;
 using Easy.Platform.FireBasePushNotification.GoogleFcm;
-using Easy.Platform.Common.JsonSerialization;
+using Easy.Platform.Infrastructures.PushNotification;
 using Microsoft.Extensions.Logging;
 
 namespace Easy.Platform.FireBasePushNotification
@@ -38,7 +27,8 @@ namespace Easy.Platform.FireBasePushNotification
 
             if (!result.IsSuccess())
             {
-                logger.LogError($"Firebase notification error with Device Token Id: {message.DeviceId} - {result.Results[0].Error}");
+                logger.LogError(
+                    $"Firebase notification error with Device Token Id: {message.DeviceId} - {result.Results[0].Error}");
             }
         }
     }

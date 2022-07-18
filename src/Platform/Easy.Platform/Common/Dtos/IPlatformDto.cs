@@ -7,7 +7,7 @@ namespace Easy.Platform.Common.Dtos
         PlatformValidationResult Validate();
     }
 
-    public interface IPlatformDto<TMapForObject> where TMapForObject : class
+    public interface IPlatformDto<out TMapForObject> where TMapForObject : class
     {
         PlatformValidationResult Validate();
 

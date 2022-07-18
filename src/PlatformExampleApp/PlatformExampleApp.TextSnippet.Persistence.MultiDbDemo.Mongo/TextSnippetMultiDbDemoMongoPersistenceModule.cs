@@ -1,9 +1,7 @@
-using System;
-using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using Easy.Platform.MongoDB;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.DemoMigrateDataCrossDb;
 
@@ -14,7 +12,8 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
     /// We can implement an ef-core module for TextSnippetMultiDbDemoPersistencePlatformModule too
     /// and import the right module as we needed.
     /// </summary>
-    public class TextSnippetMultiDbDemoMongoPersistenceModule : PlatformMongoDbPersistenceModule<TextSnippetMultiDbDemoDbContext>
+    public class
+        TextSnippetMultiDbDemoMongoPersistenceModule : PlatformMongoDbPersistenceModule<TextSnippetMultiDbDemoDbContext>
     {
         public TextSnippetMultiDbDemoMongoPersistenceModule(
             IServiceProvider serviceProvider,
@@ -28,9 +27,17 @@ namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
             options.Database = Configuration.GetSection("MongoDB:MultiDbDemoDbDatabase").Value;
         }
 
+        protected override bool IsDevEnvironment()
+        {
+            return ServiceProvider.GetRequiredService<IHostEnvironment>().EnvironmentName.Contains("Development");
+        }
+
         protected override List<Type> RegisterLimitedRepositoryImplementationTypes()
         {
-            return new List<Type>() { typeof(TextSnippetMultiDbDemoRootRepository<MultiDbDemoEntity>) };
+            return new List<Type>()
+            {
+                typeof(TextSnippetMultiDbDemoRootRepository<MultiDbDemoEntity>)
+            };
         }
 
         protected override List<Func<IConfiguration, Type>> GetModuleTypeDependencies()

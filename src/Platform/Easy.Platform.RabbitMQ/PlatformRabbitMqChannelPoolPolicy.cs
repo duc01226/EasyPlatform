@@ -105,7 +105,9 @@ namespace Easy.Platform.RabbitMQ
             {
                 logger.LogInformationIfEnabled("Creating new rabbit-mq connection.");
 
-                var hostNames = options.HostNames.Split(',').Where(hostName => !string.IsNullOrEmpty(hostName)).ToArray();
+                var hostNames = options.HostNames.Split(',')
+                    .Where(hostName => !string.IsNullOrEmpty(hostName))
+                    .ToArray();
 
                 return connectionFactory.CreateConnection(hostNames);
             }

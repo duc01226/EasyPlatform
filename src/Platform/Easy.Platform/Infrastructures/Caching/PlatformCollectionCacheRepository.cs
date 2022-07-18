@@ -1,29 +1,64 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Easy.Platform.Infrastructures.Caching
 {
-    public interface IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
+    public interface IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
+        where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
     {
         T Get<T>(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
         T Get<T>(object[] requestKeyParts = null);
-        Task<T> GetAsync<T>(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default);
-        Task<T> GetAsync<T>(object[] requestKeyParts = null, CancellationToken token = default);
-        void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
-        void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, object[] requestKeyParts = null);
-        Task SetAsync<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default);
-        Task SetAsync<T>(T value, PlatformCacheEntryOptions cacheOptions = null, object[] requestKeyParts = null, CancellationToken token = default);
 
-        void Set<T>(T value, double? absoluteExpirationInSeconds = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
+        Task<T> GetAsync<T>(
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+            CancellationToken token = default);
+
+        Task<T> GetAsync<T>(object[] requestKeyParts = null, CancellationToken token = default);
+
+        void Set<T>(
+            T value,
+            PlatformCacheEntryOptions cacheOptions = null,
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
+
+        void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, object[] requestKeyParts = null);
+
+        Task SetAsync<T>(
+            T value,
+            PlatformCacheEntryOptions cacheOptions = null,
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+            CancellationToken token = default);
+
+        Task SetAsync<T>(
+            T value,
+            PlatformCacheEntryOptions cacheOptions = null,
+            object[] requestKeyParts = null,
+            CancellationToken token = default);
+
+        void Set<T>(
+            T value,
+            double? absoluteExpirationInSeconds = null,
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
+
         void Set<T>(T value, double? absoluteExpirationInSeconds = null, object[] requestKeyParts = null);
-        Task SetAsync<T>(T value, double? absoluteExpirationInSeconds = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default);
-        Task SetAsync<T>(T value, double? absoluteExpirationInSeconds = null, object[] requestKeyParts = null, CancellationToken token = default);
+
+        Task SetAsync<T>(
+            T value,
+            double? absoluteExpirationInSeconds = null,
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+            CancellationToken token = default);
+
+        Task SetAsync<T>(
+            T value,
+            double? absoluteExpirationInSeconds = null,
+            object[] requestKeyParts = null,
+            CancellationToken token = default);
 
         void Remove(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
         void Remove(object[] requestKeyParts = null);
-        Task RemoveAsync(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default);
+
+        Task RemoveAsync(
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+            CancellationToken token = default);
+
         Task RemoveAsync(object[] requestKeyParts = null, CancellationToken token = default);
 
         PlatformCacheRepositoryType CacheRepositoryType();
@@ -57,12 +92,14 @@ namespace Easy.Platform.Infrastructures.Caching
         Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
             Func<Task<TData>> request,
             object[] requestKeyParts = null,
-            CancellationToken token = default) where TData : new() where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions;
+            CancellationToken token = default) where TData : new()
+            where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions;
 
         Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
             Func<Task<TData>> request,
             string requestKey,
-            CancellationToken token = default) where TData : new() where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions;
+            CancellationToken token = default) where TData : new()
+            where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions;
 
         Task<TData> CacheRequestAsync<TData>(
             Func<Task<TData>> request,
@@ -80,7 +117,9 @@ namespace Easy.Platform.Infrastructures.Caching
     /// <summary>
     /// Collection cache repository for last registered cache repository
     /// </summary>
-    public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvider> : IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
+    public abstract class
+        PlatformCollectionCacheRepository<TCollectionCacheKeyProvider> : IPlatformCollectionCacheRepository<
+            TCollectionCacheKeyProvider>
         where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
     {
         protected readonly TCollectionCacheKeyProvider CollectionCacheKeyProvider;
@@ -107,7 +146,9 @@ namespace Easy.Platform.Infrastructures.Caching
             return CacheRepository().Get<T>(CollectionCacheKeyProvider.GetKey(requestKeyParts));
         }
 
-        public Task<T> GetAsync<T>(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default)
+        public Task<T> GetAsync<T>(
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+            CancellationToken token = default)
         {
             return CacheRepository().GetAsync<T>(CollectionCacheKeyProvider.GetKey(requestKey), token);
         }
@@ -117,7 +158,10 @@ namespace Easy.Platform.Infrastructures.Caching
             return CacheRepository().GetAsync<T>(CollectionCacheKeyProvider.GetKey(requestKeyParts), token);
         }
 
-        public void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey)
+        public void Set<T>(
+            T value,
+            PlatformCacheEntryOptions cacheOptions = null,
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey)
         {
             CacheRepository().Set(CollectionCacheKeyProvider.GetKey(requestKey), value, cacheOptions);
         }
@@ -127,17 +171,38 @@ namespace Easy.Platform.Infrastructures.Caching
             CacheRepository().Set(CollectionCacheKeyProvider.GetKey(requestKeyParts), value, cacheOptions);
         }
 
-        public async Task SetAsync<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default)
+        public async Task SetAsync<T>(
+            T value,
+            PlatformCacheEntryOptions cacheOptions = null,
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+            CancellationToken token = default)
         {
-            await CacheRepository().SetAsync(CollectionCacheKeyProvider.GetKey(requestKey), value, cacheOptions, token);
+            await CacheRepository()
+                .SetAsync(
+                    CollectionCacheKeyProvider.GetKey(requestKey),
+                    value,
+                    cacheOptions,
+                    token);
         }
 
-        public async Task SetAsync<T>(T value, PlatformCacheEntryOptions cacheOptions = null, object[] requestKeyParts = null, CancellationToken token = default)
+        public async Task SetAsync<T>(
+            T value,
+            PlatformCacheEntryOptions cacheOptions = null,
+            object[] requestKeyParts = null,
+            CancellationToken token = default)
         {
-            await CacheRepository().SetAsync(CollectionCacheKeyProvider.GetKey(requestKeyParts), value, cacheOptions, token);
+            await CacheRepository()
+                .SetAsync(
+                    CollectionCacheKeyProvider.GetKey(requestKeyParts),
+                    value,
+                    cacheOptions,
+                    token);
         }
 
-        public void Set<T>(T value, double? absoluteExpirationInSeconds = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey)
+        public void Set<T>(
+            T value,
+            double? absoluteExpirationInSeconds = null,
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey)
         {
             var defaultCacheOptions = CacheRepository()
                 .GetDefaultCacheEntryOptions()
@@ -155,22 +220,38 @@ namespace Easy.Platform.Infrastructures.Caching
             Set(value, defaultCacheOptions, requestKeyParts);
         }
 
-        public async Task SetAsync<T>(T value, double? absoluteExpirationInSeconds = null, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default)
+        public async Task SetAsync<T>(
+            T value,
+            double? absoluteExpirationInSeconds = null,
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+            CancellationToken token = default)
         {
             var defaultCacheOptions = CacheRepository()
                 .GetDefaultCacheEntryOptions()
                 .WithOptionalCustomAbsoluteExpirationInSeconds(absoluteExpirationInSeconds);
 
-            await SetAsync(value, defaultCacheOptions, requestKey, token);
+            await SetAsync(
+                value,
+                defaultCacheOptions,
+                requestKey,
+                token);
         }
 
-        public async Task SetAsync<T>(T value, double? absoluteExpirationInSeconds = null, object[] requestKeyParts = null, CancellationToken token = default)
+        public async Task SetAsync<T>(
+            T value,
+            double? absoluteExpirationInSeconds = null,
+            object[] requestKeyParts = null,
+            CancellationToken token = default)
         {
             var defaultCacheOptions = CacheRepository()
                 .GetDefaultCacheEntryOptions()
                 .WithOptionalCustomAbsoluteExpirationInSeconds(absoluteExpirationInSeconds);
 
-            await SetAsync(value, defaultCacheOptions, requestKeyParts, token);
+            await SetAsync(
+                value,
+                defaultCacheOptions,
+                requestKeyParts,
+                token);
         }
 
         public void Remove(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey)
@@ -183,7 +264,9 @@ namespace Easy.Platform.Infrastructures.Caching
             CacheRepository().Remove(CollectionCacheKeyProvider.GetKey(requestKeyParts));
         }
 
-        public async Task RemoveAsync(string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey, CancellationToken token = default)
+        public async Task RemoveAsync(
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+            CancellationToken token = default)
         {
             await CacheRepository().RemoveAsync(CollectionCacheKeyProvider.GetKey(requestKey), token);
         }
@@ -197,14 +280,19 @@ namespace Easy.Platform.Infrastructures.Caching
             Func<string, bool> cacheRequestKeyPredicate)
         {
             var matchCollectionKeyPredicate = CollectionCacheKeyProvider.MatchCollectionKeyPredicate();
-            CacheRepository().Remove(cacheKey => matchCollectionKeyPredicate(cacheKey) && cacheRequestKeyPredicate(cacheKey.RequestKey));
+            CacheRepository()
+                .Remove(
+                    cacheKey => matchCollectionKeyPredicate(cacheKey) && cacheRequestKeyPredicate(cacheKey.RequestKey));
         }
 
         public void Remove(
             Func<object[], bool> cacheRequestKeyPartsPredicate)
         {
             var matchCollectionKeyPredicate = CollectionCacheKeyProvider.MatchCollectionKeyPredicate();
-            CacheRepository().Remove(cacheKey => matchCollectionKeyPredicate(cacheKey) && cacheRequestKeyPartsPredicate(cacheKey.RequestKeyParts()));
+            CacheRepository()
+                .Remove(
+                    cacheKey => matchCollectionKeyPredicate(cacheKey) &&
+                                cacheRequestKeyPartsPredicate(cacheKey.RequestKeyParts()));
         }
 
         public void RemoveAll()
@@ -217,7 +305,10 @@ namespace Easy.Platform.Infrastructures.Caching
             CancellationToken token = default)
         {
             var matchCollectionKeyPredicate = CollectionCacheKeyProvider.MatchCollectionKeyPredicate();
-            await CacheRepository().RemoveAsync(cacheKey => matchCollectionKeyPredicate(cacheKey) && cacheRequestKeyPredicate(cacheKey.RequestKey), token);
+            await CacheRepository()
+                .RemoveAsync(
+                    cacheKey => matchCollectionKeyPredicate(cacheKey) && cacheRequestKeyPredicate(cacheKey.RequestKey),
+                    token);
         }
 
         public async Task RemoveAsync(
@@ -225,7 +316,11 @@ namespace Easy.Platform.Infrastructures.Caching
             CancellationToken token = default)
         {
             var matchCollectionKeyPredicate = CollectionCacheKeyProvider.MatchCollectionKeyPredicate();
-            await CacheRepository().RemoveAsync(cacheKey => matchCollectionKeyPredicate(cacheKey) && cacheRequestKeyPartsPredicate(cacheKey.RequestKeyParts()), token);
+            await CacheRepository()
+                .RemoveAsync(
+                    cacheKey => matchCollectionKeyPredicate(cacheKey) &&
+                                cacheRequestKeyPartsPredicate(cacheKey.RequestKeyParts()),
+                    token);
         }
 
         public async Task<TData> CacheRequestAsync<TData>(
@@ -234,7 +329,12 @@ namespace Easy.Platform.Infrastructures.Caching
             PlatformCacheEntryOptions cacheOptions = null,
             CancellationToken token = default) where TData : new()
         {
-            return await CacheRepository().CacheRequestAsync(request, CollectionCacheKeyProvider.GetKey(requestKey), cacheOptions, token);
+            return await CacheRepository()
+                .CacheRequestAsync(
+                    request,
+                    CollectionCacheKeyProvider.GetKey(requestKey),
+                    cacheOptions,
+                    token);
         }
 
         public async Task<TData> CacheRequestAsync<TData>(
@@ -243,23 +343,38 @@ namespace Easy.Platform.Infrastructures.Caching
             PlatformCacheEntryOptions cacheOptions = null,
             CancellationToken token = default) where TData : new()
         {
-            return await CacheRepository().CacheRequestAsync(request, CollectionCacheKeyProvider.GetKey(requestKeyParts), cacheOptions, token);
+            return await CacheRepository()
+                .CacheRequestAsync(
+                    request,
+                    CollectionCacheKeyProvider.GetKey(requestKeyParts),
+                    cacheOptions,
+                    token);
         }
 
         public Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
             Func<Task<TData>> request,
             object[] requestKeyParts = null,
-            CancellationToken token = default) where TData : new() where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions
+            CancellationToken token = default) where TData : new()
+            where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions
         {
-            return CacheRequestAsync(request, requestKeyParts, ServiceProvider.GetService<TConfigurationCacheOptions>(), token);
+            return CacheRequestAsync(
+                request,
+                requestKeyParts,
+                ServiceProvider.GetService<TConfigurationCacheOptions>(),
+                token);
         }
 
         public Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
             Func<Task<TData>> request,
             string requestKey,
-            CancellationToken token = default) where TData : new() where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions
+            CancellationToken token = default) where TData : new()
+            where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions
         {
-            return CacheRequestAsync(request, requestKey, ServiceProvider.GetService<TConfigurationCacheOptions>(), token);
+            return CacheRequestAsync(
+                request,
+                requestKey,
+                ServiceProvider.GetService<TConfigurationCacheOptions>(),
+                token);
         }
 
         public async Task<TData> CacheRequestAsync<TData>(
@@ -272,7 +387,11 @@ namespace Easy.Platform.Infrastructures.Caching
                 .GetDefaultCacheEntryOptions()
                 .WithOptionalCustomAbsoluteExpirationInSeconds(absoluteExpirationInSeconds);
 
-            return await CacheRequestAsync(request, requestKey, defaultCacheOptions, token);
+            return await CacheRequestAsync(
+                request,
+                requestKey,
+                defaultCacheOptions,
+                token);
         }
 
         public async Task<TData> CacheRequestAsync<TData>(
@@ -285,7 +404,11 @@ namespace Easy.Platform.Infrastructures.Caching
                 .GetDefaultCacheEntryOptions()
                 .WithOptionalCustomAbsoluteExpirationInSeconds(absoluteExpirationInSeconds);
 
-            return await CacheRequestAsync(request, requestKeyParts, defaultCacheOptions, token);
+            return await CacheRequestAsync(
+                request,
+                requestKeyParts,
+                defaultCacheOptions,
+                token);
         }
 
         public abstract PlatformCacheRepositoryType CacheRepositoryType();
@@ -296,13 +419,18 @@ namespace Easy.Platform.Infrastructures.Caching
         }
     }
 
-    public class PlatformCollectionMemoryCacheRepository<TCollectionCacheKeyProvider> : PlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
+    public class
+        PlatformCollectionMemoryCacheRepository<TCollectionCacheKeyProvider> : PlatformCollectionCacheRepository<
+            TCollectionCacheKeyProvider>
         where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
     {
         public PlatformCollectionMemoryCacheRepository(
             IPlatformCacheRepositoryProvider cacheRepositoryProvider,
             TCollectionCacheKeyProvider collectionCacheKeyProvider,
-            IServiceProvider serviceProvider) : base(cacheRepositoryProvider, collectionCacheKeyProvider, serviceProvider)
+            IServiceProvider serviceProvider) : base(
+            cacheRepositoryProvider,
+            collectionCacheKeyProvider,
+            serviceProvider)
         {
         }
 
@@ -312,13 +440,18 @@ namespace Easy.Platform.Infrastructures.Caching
         }
     }
 
-    public class PlatformCollectionDistributedCacheRepository<TCollectionCacheKeyProvider> : PlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
+    public class
+        PlatformCollectionDistributedCacheRepository<TCollectionCacheKeyProvider> : PlatformCollectionCacheRepository<
+            TCollectionCacheKeyProvider>
         where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
     {
         public PlatformCollectionDistributedCacheRepository(
             IPlatformCacheRepositoryProvider cacheRepositoryProvider,
             TCollectionCacheKeyProvider collectionCacheKeyProvider,
-            IServiceProvider serviceProvider) : base(cacheRepositoryProvider, collectionCacheKeyProvider, serviceProvider)
+            IServiceProvider serviceProvider) : base(
+            cacheRepositoryProvider,
+            collectionCacheKeyProvider,
+            serviceProvider)
         {
         }
 

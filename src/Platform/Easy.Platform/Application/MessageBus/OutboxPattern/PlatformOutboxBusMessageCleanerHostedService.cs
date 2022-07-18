@@ -1,12 +1,9 @@
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Hosting;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Domain.UnitOfWork;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -21,19 +18,26 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         /// </summary>
         public const int DefaultNumberOfDeleteMessagesBatch = 100;
 
+        public const string DefaultDeleteProcessedMessageInSecondsSettingKey =
+            "MessageBus:OutboxDeleteProcessedMessageInSeconds";
+
         private readonly IServiceProvider serviceProvider;
         private readonly IPlatformApplicationSettingContext applicationSettingContext;
 
         private bool isProcessing = false;
 
+        protected readonly IConfiguration Configuration;
+
         public PlatformOutboxBusMessageCleanerHostedService(
             IHostApplicationLifetime applicationLifetime,
             IServiceProvider serviceProvider,
             ILoggerFactory loggerFactory,
-            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, loggerFactory)
+            IPlatformApplicationSettingContext applicationSettingContext,
+            IConfiguration configuration) : base(applicationLifetime, loggerFactory)
         {
             this.serviceProvider = serviceProvider;
             this.applicationSettingContext = applicationSettingContext;
+            this.Configuration = configuration;
         }
 
         public static bool MatchImplementation(ServiceDescriptor serviceDescriptor)
@@ -45,7 +49,7 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         public static bool MatchImplementation(Type implementationType)
         {
             return implementationType?.IsAssignableTo(
-                       typeof(PlatformOutboxBusMessageCleanerHostedService)) == true;
+                typeof(PlatformOutboxBusMessageCleanerHostedService)) == true;
         }
 
         protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
@@ -57,7 +61,7 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
 
             try
             {
-                // Retry in case of the db is not started, initiated or restarting
+                // WHY: Retry in case of the db is not started, initiated or restarting
                 await Policy.Handle<Exception>()
                     .WaitAndRetryAsync(
                         retryCount: ProcessClearMessageRetryCount(),
@@ -100,7 +104,8 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         /// </summary>
         protected virtual double DeleteProcessedMessageInSeconds()
         {
-            return TimeSpan.FromDays(7).TotalSeconds;
+            return Configuration.GetSection(DefaultDeleteProcessedMessageInSecondsSettingKey)?.Get<int?>() ??
+                   TimeSpan.FromDays(7).TotalSeconds;
         }
 
         protected bool HasOutboxEventBusMessageRepositoryRegistered()
@@ -118,7 +123,8 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
                 var uowManager = scope.ServiceProvider.GetService<IUnitOfWorkManager>();
                 using (var uow = uowManager!.Begin())
                 {
-                    var outboxEventBusMessageRepo = scope.ServiceProvider.GetService<IPlatformOutboxBusMessageRepository>();
+                    var outboxEventBusMessageRepo =
+                        scope.ServiceProvider.GetService<IPlatformOutboxBusMessageRepository>();
 
                     var expiredMessages = outboxEventBusMessageRepo!.GetAllQuery()
                         .Where(p => p.LastSendDate <= Clock.UtcNow.AddDays(-DeleteProcessedMessageInSeconds()) &&
@@ -129,11 +135,14 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
 
                     if (expiredMessages.Count > 0)
                     {
-                        await outboxEventBusMessageRepo.DeleteManyAsync(expiredMessages, dismissSendEvent: true, cancellationToken);
+                        await outboxEventBusMessageRepo.DeleteManyAsync(expiredMessages, dismissSendEvent: true,
+                            cancellationToken);
 
                         await uow.CompleteAsync(cancellationToken);
 
-                        Log.Information(Logger, message: $"CleanOutboxEventBusMessage success. Number of deleted messages: {expiredMessages.Count}");
+                        Log.Information(Logger,
+                            message:
+                            $"CleanOutboxEventBusMessage success. Number of deleted messages: {expiredMessages.Count}");
                     }
                 }
             }
@@ -173,7 +182,9 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
             IHostApplicationLifetime applicationLifetime,
             IServiceProvider serviceProvider,
             ILoggerFactory loggerFactory,
-            IPlatformApplicationSettingContext applicationSettingContext) : base(applicationLifetime, serviceProvider, loggerFactory, applicationSettingContext)
+            IPlatformApplicationSettingContext applicationSettingContext,
+            IConfiguration configuration) : base(applicationLifetime, serviceProvider, loggerFactory,
+            applicationSettingContext, configuration)
         {
         }
     }

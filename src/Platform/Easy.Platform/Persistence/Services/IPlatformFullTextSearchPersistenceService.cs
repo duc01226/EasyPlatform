@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Linq.Expressions;
 using Easy.Platform.Persistence.Services.Abstract;
 using Microsoft.Extensions.DependencyInjection;
@@ -61,7 +59,12 @@ namespace Easy.Platform.Persistence.Services
 
             if (otherSupportHelpers != null)
             {
-                newQuery = otherSupportHelpers.Search(query, searchText, inFullTextSearchProps, exactMatch, includeStartWithProps);
+                newQuery = otherSupportHelpers.Search(
+                    query,
+                    searchText,
+                    inFullTextSearchProps,
+                    exactMatch,
+                    includeStartWithProps);
                 return true;
             }
             else

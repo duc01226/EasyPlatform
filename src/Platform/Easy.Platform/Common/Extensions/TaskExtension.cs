@@ -1,6 +1,3 @@
-using System;
-using System.Threading.Tasks;
-
 namespace Easy.Platform.Common.Extensions
 {
     public static class TaskExtension
@@ -31,6 +28,24 @@ namespace Easy.Platform.Common.Extensions
         {
             await task;
             return f();
+        }
+
+        /// <summary>
+        /// Apply using functional programming to map from Task[A] => (A) => Task[B] => Task[B]
+        /// </summary>
+        public static async Task<TR> Bind<T, TR>(
+            this Task<T> task, Func<T, Task<TR>> f)
+        {
+            return await f(await task.ConfigureAwait(false)).ConfigureAwait(false);
+        }
+
+        public static Task<TR> MatchMap<T, TR>(
+            this Task<T> task, Func<Exception, TR> faulted, Func<T, TR> completed)
+        {
+            return task.ContinueWith(t =>
+                t.Status == TaskStatus.Faulted
+                    ? faulted(t.Exception)
+                    : completed(t.Result));
         }
     }
 }

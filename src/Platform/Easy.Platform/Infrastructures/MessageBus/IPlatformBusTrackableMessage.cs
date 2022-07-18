@@ -1,5 +1,3 @@
-using System;
-
 namespace Easy.Platform.Infrastructures.MessageBus
 {
     public interface IPlatformBusTrackableMessage

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Easy.Platform.Common.Dtos;
 using Easy.Platform.Common.Validators;
 
@@ -23,6 +22,7 @@ namespace Easy.Platform.Common.Cqrs.Queries
         public List<TItem> Items { get; set; }
         public long TotalCount { get; set; }
         public int? PageSize { get; set; }
+
         public PlatformValidationResult Validate()
         {
             return PlatformValidationResult.Valid();

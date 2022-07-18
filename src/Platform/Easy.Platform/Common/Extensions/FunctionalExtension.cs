@@ -1,5 +1,3 @@
-using System;
-
 namespace Easy.Platform.Common.Extensions
 {
     public static class FunctionalExtension
@@ -14,6 +12,20 @@ namespace Easy.Platform.Common.Extensions
             actionFn(target);
 
             return target;
+        }
+
+        public static TR Pipe<T, T1, TR>(this T @this, Func<T, T1> func, Func<T1, TR> func1)
+        {
+            return @this.Pipe(func).Pipe(func1);
+        }
+
+        public static TR Pipe<T, T1, T2, TR>(
+            this T @this,
+            Func<T, T1> func,
+            Func<T1, T2> func1,
+            Func<T2, TR> func2)
+        {
+            return @this.Pipe(func).Pipe(func1).Pipe(func2);
         }
 
         public static TResult PipeIf<TTarget, TResult>(

@@ -1,5 +1,3 @@
-using System;
-
 namespace Easy.Platform.MongoDB.Migration
 {
     public class PlatformMongoMigrationHistory
@@ -16,6 +14,7 @@ namespace Easy.Platform.MongoDB.Migration
         }
 
         public string Name { get; set; }
+
         public DateTime CreatedDate
         {
             get

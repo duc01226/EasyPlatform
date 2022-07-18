@@ -1,27 +1,22 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.EfCore.EntityConfiguration;
-using Easy.Platform.Persistence;
 using Easy.Platform.Persistence.DataMigration;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Easy.Platform.EfCore
 {
     public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatformDbContext where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
-        private readonly PlatformEfCoreOptions efCoreOptions;
+        private readonly ILogger logger;
 
-        public PlatformEfCoreDbContext(DbContextOptions<TDbContext> options, PlatformEfCoreOptions efCoreOptions) : base(options)
+        public PlatformEfCoreDbContext(
+            DbContextOptions<TDbContext> options,
+            ILoggerFactory loggerFactory) : base(options)
         {
-            this.efCoreOptions = efCoreOptions;
+            logger = loggerFactory.CreateLogger(GetType());
         }
 
         public DbSet<PlatformDataMigrationHistory> ApplicationDataMigrationHistoryDbSet => Set<PlatformDataMigrationHistory>();
@@ -31,11 +26,11 @@ namespace Easy.Platform.EfCore
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Auto apply configuration by convention.
+            // Auto apply configuration by convention for the current dbcontext (usually persistence layer) assembly.
             modelBuilder.ApplyConfigurationsFromAssembly(GetType().Assembly);
-            modelBuilder.ApplyConfiguration(new PlatformDataMigrationHistoryConfiguration());
-            modelBuilder.ApplyConfiguration(new PlatformInboxEventBusMessageConfiguration());
-            modelBuilder.ApplyConfiguration(new PlatformOutboxEventBusMessageConfiguration());
+            modelBuilder.ApplyConfiguration(new PlatformDataMigrationHistoryEntityConfiguration());
+            modelBuilder.ApplyConfiguration(new PlatformInboxEventBusMessageEntityConfiguration());
+            modelBuilder.ApplyConfiguration(new PlatformOutboxEventBusMessageEntityConfiguration());
 
             base.OnModelCreating(modelBuilder);
         }
@@ -69,10 +64,6 @@ namespace Easy.Platform.EfCore
             {
                 if (!migrationExecution.IsObsolete())
                 {
-                    var logger = serviceProvider
-                        .GetService<ILoggerFactory>()
-                        .CreateLogger(migrationExecution.GetType());
-
                     logger.LogInformationIfEnabled($"Migration {migrationExecution.Name} started.");
 
                     migrationExecution.Execute((TDbContext)this);
@@ -91,13 +82,28 @@ namespace Easy.Platform.EfCore
             return Task.CompletedTask;
         }
 
-        public virtual void Initialize(IServiceProvider serviceProvider)
+        public virtual void Initialize(IServiceProvider serviceProvider, bool isDevEnvironment)
         {
             Database.Migrate();
-            MigrateApplicationDataAsync(serviceProvider).Wait();
+            ExecuteMigrateApplicationDataAsync();
+
+            void ExecuteMigrateApplicationDataAsync()
+            {
+                try
+                {
+                    MigrateApplicationDataAsync(serviceProvider).Wait();
+                }
+                catch (Exception ex)
+                {
+                    if (!isDevEnvironment)
+                        throw;
+                    else
+                        logger.LogError(ex, "MigrateApplicationDataAsync has errors. For dev environment it may happens if migrate cross db, when other service db is not initiated. Usually for dev environment migrate cross service db when run system in the first-time could be ignored.");
+                }
+            }
         }
 
-        public async Task<IEnumerable<T>> GetAllAsync<T>(IQueryable<T> query, CancellationToken cancellationToken = default)
+        public async Task<List<T>> GetAllAsync<T>(IQueryable<T> query, CancellationToken cancellationToken = default)
         {
             return await query.ToListAsync(cancellationToken);
         }

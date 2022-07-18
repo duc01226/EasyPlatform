@@ -1,7 +1,6 @@
-using System;
 using Easy.Platform.Common.Dtos;
-using Easy.Platform.Domain.Entities;
 using Easy.Platform.Common.Validators;
+using Easy.Platform.Domain.Entities;
 
 namespace Easy.Platform.Application.Dtos
 {

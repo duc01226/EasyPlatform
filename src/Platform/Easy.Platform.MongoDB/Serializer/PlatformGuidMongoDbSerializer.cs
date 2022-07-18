@@ -1,19 +1,17 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Easy.Platform.MongoDB.Serializer.Abstract;
 using MongoDB.Bson;
-using MongoDB.Bson.IO;
 using MongoDB.Bson.Serialization;
 using MongoDB.Bson.Serialization.Serializers;
 
 namespace Easy.Platform.MongoDB.Serializer
 {
-    public class PlatformNullableGuidToStringMongoDbSerializer : SerializerBase<Guid?>, IPlatformMongoBaseSerializer<Guid?>
+    public class PlatformNullableGuidToStringMongoDbSerializer : SerializerBase<Guid?>,
+        IPlatformMongoBaseSerializer<Guid?>
     {
-        public static Guid? Deserialize(GuidSerializer guidAsBinarySerializer, BsonDeserializationContext context, BsonDeserializationArgs args)
+        public static Guid? Deserialize(
+            GuidSerializer guidAsBinarySerializer,
+            BsonDeserializationContext context,
+            BsonDeserializationArgs args)
         {
             if (context.Reader.CurrentBsonType == BsonType.Binary)
             {
@@ -53,7 +51,8 @@ namespace Easy.Platform.MongoDB.Serializer
 
         public override Guid Deserialize(BsonDeserializationContext context, BsonDeserializationArgs args)
         {
-            var guidValue = PlatformNullableGuidToStringMongoDbSerializer.Deserialize(guidAsBinarySerializer, context, args);
+            var guidValue =
+                PlatformNullableGuidToStringMongoDbSerializer.Deserialize(guidAsBinarySerializer, context, args);
 
             return guidValue ?? Guid.Empty;
         }

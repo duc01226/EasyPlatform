@@ -1,11 +1,9 @@
-using System.Collections.Generic;
-using System.Linq;
-
 namespace Easy.Platform.Domain.UnitOfWork
 {
     public static class UnitOfWorkHelper
     {
-        public static TInnerUow FindFirstInnerUowOfType<TInnerUow>(List<IUnitOfWork> innerUnitOfWorks) where TInnerUow : class, IUnitOfWork
+        public static TInnerUow FindFirstInnerUowOfType<TInnerUow>(List<IUnitOfWork> innerUnitOfWorks)
+            where TInnerUow : class, IUnitOfWork
         {
             foreach (var innerUnitOfWork in innerUnitOfWorks)
             {
@@ -17,7 +15,8 @@ namespace Easy.Platform.Domain.UnitOfWork
                 {
                     foreach (var innerUnitOfWorkLevel2 in innerUnitOfWork.InnerUnitOfWorks)
                     {
-                        var innerUnitOfWorkLevel2FirstMatched = innerUnitOfWorkLevel2.FindFirstInnerUowOfType<TInnerUow>();
+                        var innerUnitOfWorkLevel2FirstMatched =
+                            innerUnitOfWorkLevel2.FindFirstInnerUowOfType<TInnerUow>();
                         if (innerUnitOfWorkLevel2FirstMatched != null)
                             return innerUnitOfWorkLevel2FirstMatched;
                     }

@@ -1,8 +1,5 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Common.Cqrs.Events;
 using Easy.Platform.Domain.UnitOfWork;
-using MediatR;
 
 namespace Easy.Platform.Application.Cqrs
 {
@@ -18,7 +15,9 @@ namespace Easy.Platform.Application.Cqrs
 
         public override async Task Handle(TEvent request, CancellationToken cancellationToken)
         {
-            if (UnitOfWorkManager.Current() != null && UnitOfWorkManager.Current().IsActive())
+            var currentUow = UnitOfWorkManager.Current();
+
+            if (currentUow?.IsActive() == true)
             {
                 await HandleAsync(request, cancellationToken);
             }

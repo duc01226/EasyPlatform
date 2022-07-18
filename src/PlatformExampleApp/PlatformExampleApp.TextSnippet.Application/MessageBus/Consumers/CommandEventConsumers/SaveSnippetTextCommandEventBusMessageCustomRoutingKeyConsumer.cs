@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Easy.Platform.Application.MessageBus.Consumers;
 using Easy.Platform.Application.MessageBus.Consumers.CqrsEventConsumers;
 using Easy.Platform.Common.Extensions;
@@ -12,7 +10,9 @@ using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.CommandEventConsumers
 {
     [PlatformMessageBusConsumer("CustomGroupForExchange", "CustomRoutingKeyForFlexibleMigrateWithOldSystem")]
-    public class SaveSnippetTextCommandEventBusMessageCustomRoutingKeyConsumer : PlatformCqrsCommandEventBusMessageConsumer<SaveSnippetTextCommand>
+    public class
+        SaveSnippetTextCommandEventBusMessageCustomRoutingKeyConsumer : PlatformCqrsCommandEventBusMessageConsumer<
+            SaveSnippetTextCommand>
     {
         public SaveSnippetTextCommandEventBusMessageCustomRoutingKeyConsumer(
             ILoggerFactory loggerFactory,
@@ -21,12 +21,16 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Comman
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformBusMessage<SaveSnippetTextCommand> message, string routingKey)
+        protected override Task InternalHandleAsync(
+            PlatformBusMessage<SaveSnippetTextCommand> message,
+            string routingKey)
         {
-            return Task.Run(() =>
-            {
-                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
-            });
+            return Task.Run(
+                () =>
+                {
+                    Logger.LogInformationIfEnabled(
+                        $"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
+                });
         }
 
         // Can override this method return false to user normal consumer without using inbox message
@@ -34,7 +38,8 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Comman
     }
 
     [PlatformMessageBusConsumer("CustomGroupForExchange", "CustomRoutingKeyForFlexibleMigrateWithOldSystem")]
-    public class SaveSnippetTextCommandEventBusCustomRoutingKeyAndFreeFormatMessageConsumer : PlatformApplicationBusFreeFormatMessageConsumer<PlatformBusMessage<SaveSnippetTextCommand>>
+    public class SaveSnippetTextCommandEventBusCustomRoutingKeyAndFreeFormatMessageConsumer :
+        PlatformApplicationBusFreeFormatMessageConsumer<PlatformBusMessage<SaveSnippetTextCommand>>
     {
         public SaveSnippetTextCommandEventBusCustomRoutingKeyAndFreeFormatMessageConsumer(
             ILoggerFactory loggerFactory,
@@ -43,12 +48,16 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Comman
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformBusMessage<SaveSnippetTextCommand> message, string routingKey)
+        protected override Task InternalHandleAsync(
+            PlatformBusMessage<SaveSnippetTextCommand> message,
+            string routingKey)
         {
-            return Task.Run(() =>
-            {
-                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
-            });
+            return Task.Run(
+                () =>
+                {
+                    Logger.LogInformationIfEnabled(
+                        $"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
+                });
         }
 
         // Can override this method return false to user normal consumer without using inbox message

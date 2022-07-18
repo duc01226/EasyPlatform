@@ -1,4 +1,3 @@
-using System;
 using System.Linq.Expressions;
 using FluentValidation;
 
@@ -17,7 +16,8 @@ namespace Easy.Platform.Common.Validators
         public Expression<Func<TTarget, TProperty>> RuleForPropExpr { get; }
 
         public static implicit operator PlatformSingleValidator<TTarget, TProperty>(
-            ValueTuple<Expression<Func<TTarget, TProperty>>, Action<IRuleBuilderInitial<TTarget, TProperty>>> validatorInfo)
+            ValueTuple<Expression<Func<TTarget, TProperty>>, Action<IRuleBuilderInitial<TTarget, TProperty>>>
+                validatorInfo)
         {
             return new PlatformSingleValidator<TTarget, TProperty>(validatorInfo.Item1, validatorInfo.Item2);
         }

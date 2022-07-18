@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using Easy.Platform.Common.Utils;
 
 namespace Easy.Platform.Infrastructures.BackgroundJob

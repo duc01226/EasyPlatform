@@ -1,7 +1,4 @@
-using System;
-using System.Linq;
 using Easy.Platform.Common.Extensions;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Easy.Platform.Common.DependencyInjection
@@ -34,7 +31,8 @@ namespace Easy.Platform.Common.DependencyInjection
                 .GetServices<PlatformModule>()
                 .Where(p => !p.GetType().IsAssignableTo(moduleType))
                 .ToList()
-                .ForEach(otherRegisteredModule => otherRegisteredModule.OnNewPlatformModuleRegistered(services, newModule));
+                .ForEach(
+                    otherRegisteredModule => otherRegisteredModule.OnNewPlatformModuleRegistered(services, newModule));
 
             return services;
         }

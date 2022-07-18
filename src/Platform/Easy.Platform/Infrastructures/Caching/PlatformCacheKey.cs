@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
 using Easy.Platform.Common.JsonSerialization;
 
 namespace Easy.Platform.Infrastructures.Caching
@@ -43,7 +39,9 @@ namespace Easy.Platform.Infrastructures.Caching
             Context = AutoFixKeyPartValue(context);
         }
 
-        public PlatformCacheKey(string context, string collection, params object[] requestKeyParts) : this(collection, requestKeyParts)
+        public PlatformCacheKey(string context, string collection, params object[] requestKeyParts) : this(
+            collection,
+            requestKeyParts)
         {
             Context = AutoFixKeyPartValue(context);
         }
@@ -89,7 +87,8 @@ namespace Easy.Platform.Infrastructures.Caching
             if (requestKeyParts.Length == 0)
                 throw new ArgumentException("requestKeyParts must be not empty.", nameof(requestKeyParts));
 
-            return $"[{string.Join(RequestKeyPartsSeparator, requestKeyParts.Select(p => p ?? "null").Select(p => PlatformJsonSerializer.Serialize(p).Replace("\"", "'")))}]";
+            return
+                $"[{string.Join(RequestKeyPartsSeparator, requestKeyParts.Select(p => p ?? "null").Select(p => PlatformJsonSerializer.Serialize(p).Replace("\"", "'")))}]";
         }
 
         public static object[] BuildRequestKeyParts(string requestKey)
@@ -97,17 +96,18 @@ namespace Easy.Platform.Infrastructures.Caching
             return requestKey
                 .Substring(1, requestKey.Length - 1)
                 .Split(RequestKeySeparator)
-                .Select(requestKeyPartJsonString =>
-                {
-                    try
+                .Select(
+                    requestKeyPartJsonString =>
                     {
-                        return PlatformJsonSerializer.Deserialize(requestKeyPartJsonString, typeof(object));
-                    }
-                    catch (Exception)
-                    {
-                        return requestKeyPartJsonString;
-                    }
-                })
+                        try
+                        {
+                            return PlatformJsonSerializer.Deserialize(requestKeyPartJsonString, typeof(object));
+                        }
+                        catch (Exception)
+                        {
+                            return requestKeyPartJsonString;
+                        }
+                    })
                 .ToArray();
         }
 

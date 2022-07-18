@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Easy.Platform.Common.Utils
 {
     public static partial class Util
@@ -100,7 +94,11 @@ namespace Easy.Platform.Common.Utils
             /// <param name="minute">The minute in which the schedule will be activated (0-59).</param>
             public static string Weekly(DayOfWeek dayOfWeek, int hour, int minute)
             {
-                return string.Format("{0} {1} * * {2}", minute, hour, (int)dayOfWeek);
+                return string.Format(
+                    "{0} {1} * * {2}",
+                    minute,
+                    hour,
+                    (int)dayOfWeek);
             }
 
             /// <summary>
@@ -142,7 +140,11 @@ namespace Easy.Platform.Common.Utils
             /// <param name="minute">The minute in which the schedule will be activated (0-59).</param>
             public static string Monthly(int day, int hour, int minute)
             {
-                return string.Format("{0} {1} {2} * *", minute, hour, day);
+                return string.Format(
+                    "{0} {1} {2} * *",
+                    minute,
+                    hour,
+                    day);
             }
 
             /// <summary>
@@ -183,7 +185,11 @@ namespace Easy.Platform.Common.Utils
             /// <param name="hour">The hour in which the schedule will be activated (0-23).</param>
             public static string Yearly(int month, int day, int hour)
             {
-                return Yearly(month, day, hour, 0);
+                return Yearly(
+                    month,
+                    day,
+                    hour,
+                    0);
             }
 
             /// <summary>
@@ -194,9 +200,18 @@ namespace Easy.Platform.Common.Utils
             /// <param name="day">The day of month in which the schedule will be activated (1-31).</param>
             /// <param name="hour">The hour in which the schedule will be activated (0-23).</param>
             /// <param name="minute">The minute in which the schedule will be activated (0-59).</param>
-            public static string Yearly(int month, int day, int hour, int minute)
+            public static string Yearly(
+                int month,
+                int day,
+                int hour,
+                int minute)
             {
-                return string.Format("{0} {1} {2} {3} *", minute, hour, day, month);
+                return string.Format(
+                    "{0} {1} {2} {3} *",
+                    minute,
+                    hour,
+                    day,
+                    month);
             }
 
             /// <summary>

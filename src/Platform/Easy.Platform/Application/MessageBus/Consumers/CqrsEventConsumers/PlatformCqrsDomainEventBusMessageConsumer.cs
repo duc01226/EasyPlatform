@@ -1,16 +1,19 @@
-using System;
 using Easy.Platform.Domain.Events;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
 
 namespace Easy.Platform.Application.MessageBus.Consumers.CqrsEventConsumers
 {
-    public interface IPlatformCqrsDomainEventBusMessageConsumer<TMessagePayload> : IPlatformApplicationMessageBusConsumer<TMessagePayload>
+    public interface
+        IPlatformCqrsDomainEventBusMessageConsumer<TMessagePayload> : IPlatformApplicationMessageBusConsumer<
+            TMessagePayload>
         where TMessagePayload : PlatformCqrsDomainEvent, new()
     {
     }
 
-    public abstract class PlatformCqrsDomainEventBusMessageConsumer<TMessagePayload> : PlatformApplicationMessageBusConsumer<TMessagePayload>, IPlatformCqrsDomainEventBusMessageConsumer<TMessagePayload>
+    public abstract class PlatformCqrsDomainEventBusMessageConsumer<TMessagePayload> :
+        PlatformApplicationMessageBusConsumer<TMessagePayload>,
+        IPlatformCqrsDomainEventBusMessageConsumer<TMessagePayload>
         where TMessagePayload : PlatformCqrsDomainEvent, new()
     {
         protected PlatformCqrsDomainEventBusMessageConsumer(

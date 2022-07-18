@@ -10,7 +10,9 @@ namespace Easy.Platform.RabbitMQ
     /// </summary>
     public class PlatformRabbitChannelPool : DefaultObjectPool<IModel>
     {
-        public PlatformRabbitChannelPool(PlatformRabbitMqChannelPoolPolicy channelPoolPolicy) : base(channelPoolPolicy, 1)
+        public PlatformRabbitChannelPool(PlatformRabbitMqChannelPoolPolicy channelPoolPolicy) : base(
+            channelPoolPolicy,
+            1)
         {
         }
 

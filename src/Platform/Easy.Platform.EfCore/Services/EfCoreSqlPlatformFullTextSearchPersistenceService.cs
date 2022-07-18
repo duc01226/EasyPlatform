@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
@@ -13,7 +10,8 @@ namespace Easy.Platform.EfCore.Services
 {
     public class EfCoreSqlPlatformFullTextSearchPersistenceService : PlatformFullTextSearchPersistenceService
     {
-        public EfCoreSqlPlatformFullTextSearchPersistenceService(IServiceProvider serviceProvider) : base(serviceProvider)
+        public EfCoreSqlPlatformFullTextSearchPersistenceService(IServiceProvider serviceProvider) : base(
+            serviceProvider)
         {
         }
 
@@ -25,12 +23,23 @@ namespace Easy.Platform.EfCore.Services
             Expression<Func<T, object>>[] includeStartWithProps = null)
         {
             if (!IsSupportQuery(query) &&
-                TrySearchByFirstSupportQueryHelper(query, searchText, inFullTextSearchProps, fullTextExactMatch, out var newQuery, includeStartWithProps))
+                TrySearchByFirstSupportQueryHelper(
+                    query,
+                    searchText,
+                    inFullTextSearchProps,
+                    fullTextExactMatch,
+                    out var newQuery,
+                    includeStartWithProps))
             {
                 return newQuery;
             }
 
-            return DoSqlSearch(query, searchText, inFullTextSearchProps, fullTextExactMatch, includeStartWithProps);
+            return DoSqlSearch(
+                query,
+                searchText,
+                inFullTextSearchProps,
+                fullTextExactMatch,
+                includeStartWithProps);
         }
 
         public override bool IsSupportQuery<T>(IQueryable<T> query) where T : class
@@ -53,12 +62,15 @@ namespace Easy.Platform.EfCore.Services
             bool exactMatch = false,
             List<string> startWithPropNames = null)
         {
-            var fullTextSearchPropsPredicate = BuildFullTextSearchPropsPredicate<T>(searchWords, fullTextSearchPropNames, exactMatch);
+            var fullTextSearchPropsPredicate = BuildFullTextSearchPropsPredicate<T>(
+                searchWords,
+                fullTextSearchPropNames,
+                exactMatch);
             var startWithPropsPredicate = startWithPropNames?.Any() == true
                 ? BuildStartWithPropsPredicate<T>(searchText, startWithPropNames)
                 : null;
 
-            // Should use union instead of OR because UNION is better at performance
+            // WHY: Should use union instead of OR because UNION is better at performance
             // https://stackoverflow.com/questions/16438556/combining-free-text-search-with-another-condition-is-slow
             return query.Where(fullTextSearchPropsPredicate)
                 .PipeIf(startWithPropsPredicate != null, p => p.Union(query.Where(startWithPropsPredicate!)));
@@ -76,7 +88,9 @@ namespace Easy.Platform.EfCore.Services
                 .Replace(")", " ")
                 .Replace("!", " ");
 
-            var searchWords = removedSpecialCharactersSearchText.Split(" ").Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
+            var searchWords = removedSpecialCharactersSearchText.Split(" ")
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .ToList();
 
             return searchWords;
         }
@@ -99,20 +113,29 @@ namespace Easy.Platform.EfCore.Services
             var includeStartWithPropNames =
                 includeStartWithProps?.Where(p => p != null).Select(Util.Expressions.GetPropertyName).ToList();
 
-            var searchedQuery = BuildSearchQuery(query, searchText, searchWords, fullTextSearchPropNames, fullTextExactMatch, includeStartWithPropNames);
+            var searchedQuery = BuildSearchQuery(
+                query,
+                searchText,
+                searchWords,
+                fullTextSearchPropNames,
+                fullTextExactMatch,
+                includeStartWithPropNames);
 
             return searchedQuery;
         }
 
-        private static Expression<Func<T, bool>> BuildStartWithPropsPredicate<T>(string searchText, List<string> startWithPropNames)
+        private static Expression<Func<T, bool>> BuildStartWithPropsPredicate<T>(
+            string searchText,
+            List<string> startWithPropNames)
         {
             var startWithPropsPredicate = startWithPropNames
-                .Select(startWithPropName =>
-                {
-                    Expression<Func<T, bool>> singlePropPredicate = entity =>
-                        EF.Functions.Like(EF.Property<string>(entity, startWithPropName), $"{searchText}%");
-                    return singlePropPredicate;
-                })
+                .Select(
+                    startWithPropName =>
+                    {
+                        Expression<Func<T, bool>> singlePropPredicate = entity =>
+                            EF.Functions.Like(EF.Property<string>(entity, startWithPropName), $"{searchText}%");
+                        return singlePropPredicate;
+                    })
                 .Aggregate((resultPredicate, nextPredicate) => resultPredicate.Or(nextPredicate));
             return startWithPropsPredicate;
         }
@@ -123,18 +146,25 @@ namespace Easy.Platform.EfCore.Services
             bool exactMatch)
         {
             var fullTextSearchPropsPredicate = fullTextSearchPropNames
-                .Select(fullTextSearchPropName =>
-                {
-                    return searchWords
-                        .Select(searchWord =>
-                        {
-                            Expression<Func<T, bool>> singleWordSinglePropPredicate = entity =>
-                                EF.Functions.Contains(EF.Property<string>(entity, fullTextSearchPropName), searchWord);
-                            return singleWordSinglePropPredicate;
-                        })
-                        .Aggregate((resultPredicate, nextPredicate) =>
-                            exactMatch ? resultPredicate.AndAlso(nextPredicate) : resultPredicate.Or(nextPredicate));
-                })
+                .Select(
+                    fullTextSearchPropName =>
+                    {
+                        return searchWords
+                            .Select(
+                                searchWord =>
+                                {
+                                    Expression<Func<T, bool>> singleWordSinglePropPredicate = entity =>
+                                        EF.Functions.Contains(
+                                            EF.Property<string>(entity, fullTextSearchPropName),
+                                            searchWord);
+                                    return singleWordSinglePropPredicate;
+                                })
+                            .Aggregate(
+                                (resultPredicate, nextPredicate) =>
+                                    exactMatch
+                                        ? resultPredicate.AndAlso(nextPredicate)
+                                        : resultPredicate.Or(nextPredicate));
+                    })
                 .Aggregate((resultPredicate, nextSinglePropPredicate) => resultPredicate.Or(nextSinglePropPredicate));
             return fullTextSearchPropsPredicate;
         }

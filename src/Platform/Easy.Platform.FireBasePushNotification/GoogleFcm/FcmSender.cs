@@ -1,19 +1,18 @@
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Infrastructures.PushNotification;
-using Newtonsoft.Json.Linq;
 
 namespace Easy.Platform.FireBasePushNotification.GoogleFcm
 {
     internal interface IFcmSender
     {
-        Task<FcmResponse> SendAsync(string deviceId, GoogleNotification payload, CancellationToken cancellationToken = default);
+        Task<FcmResponse> SendAsync(
+            string deviceId,
+            GoogleNotification payload,
+            CancellationToken cancellationToken = default);
+
         Task<FcmResponse> SendAsync(object payload, CancellationToken cancellationToken = default);
     }
 
@@ -40,8 +39,11 @@ namespace Easy.Platform.FireBasePushNotification.GoogleFcm
         /// </summary>
         /// <param name="deviceId">Device token (will add `to` to the payload)</param>
         /// <param name="payload">Notification payload that will be serialized using Newtonsoft.Json package</param>
-        /// <cref="HttpRequestException">Throws exception when not successful</exception>
-        public Task<FcmResponse> SendAsync(string deviceId, GoogleNotification payload, CancellationToken cancellationToken = default)
+        /// <param name="cancellationToken">cancellationToken</param>
+        public Task<FcmResponse> SendAsync(
+            string deviceId,
+            GoogleNotification payload,
+            CancellationToken cancellationToken = default)
         {
             payload.To = deviceId;
             return SendAsync(payload, cancellationToken);
@@ -54,6 +56,7 @@ namespace Easy.Platform.FireBasePushNotification.GoogleFcm
         /// The SendAsync method will add/replace "to" value with deviceId
         /// </summary>
         /// <param name="payload">Notification payload that will be serialized using Newtonsoft.Json package</param>
+        /// <param name="cancellationToken"></param>
         /// <exception cref="HttpRequestException">Throws exception when not successful</exception>
         public async Task<FcmResponse> SendAsync(object payload, CancellationToken cancellationToken = default)
         {
@@ -87,14 +90,10 @@ namespace Easy.Platform.FireBasePushNotification.GoogleFcm
 
     public class GoogleNotification
     {
-        [JsonPropertyName("to")]
-        public string To { get; set; }
-        [JsonPropertyName("priority")]
-        public string Priority { get; set; } = "high";
-        [JsonPropertyName("data")]
-        public Dictionary<string, string> Data { get; set; }
-        [JsonPropertyName("notification")]
-        public DataPayload Notification { get; set; }
+        [JsonPropertyName("to")] public string To { get; set; }
+        [JsonPropertyName("priority")] public string Priority { get; set; } = "high";
+        [JsonPropertyName("data")] public Dictionary<string, string> Data { get; set; }
+        [JsonPropertyName("notification")] public DataPayload Notification { get; set; }
 
         public static GoogleNotification Create(PushNotificationPlatformMessage message)
         {
@@ -107,10 +106,8 @@ namespace Easy.Platform.FireBasePushNotification.GoogleFcm
 
         public class DataPayload
         {
-            [JsonPropertyName("title")]
-            public string Title { get; set; }
-            [JsonPropertyName("body")]
-            public string Body { get; set; }
+            [JsonPropertyName("title")] public string Title { get; set; }
+            [JsonPropertyName("body")] public string Body { get; set; }
 
             /// <summary>
             /// please check out Notification payload support

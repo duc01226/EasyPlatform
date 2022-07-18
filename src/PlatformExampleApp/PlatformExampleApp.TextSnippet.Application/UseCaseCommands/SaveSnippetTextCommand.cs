@@ -1,15 +1,12 @@
-using System;
 using System.Globalization;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.Cqrs.Commands;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Common.Extensions;
-using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Common.Validators;
+using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.EntityDtos;
 using PlatformExampleApp.TextSnippet.Application.Infrastructures;
@@ -35,11 +32,15 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
         public TextSnippetEntityDto SavedData { get; set; }
     }
 
-    public class SaveSnippetTextCommandHandler : PlatformCqrsCommandApplicationHandler<SaveSnippetTextCommand, SaveSnippetTextCommandResult>
+    public class SaveSnippetTextCommandHandler : PlatformCqrsCommandApplicationHandler<SaveSnippetTextCommand,
+        SaveSnippetTextCommandResult>
     {
         private readonly ITextSnippetRootRepository<TextSnippetEntity> textSnippetEntityRepository;
+
         private readonly ITextSnippetRootRepository<MultiDbDemoEntity> multiDbDemoEntityRepository;
+
         // This only for demo define and use infrastructure services
+        // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
         private readonly ISendMailService sendMailService;
         private readonly ILogger<SaveSnippetTextCommandHandler> logger;
 
@@ -60,7 +61,9 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             this.sendMailService.SendEmail("demo@email.com", "demo header", "demo content");
         }
 
-        protected override async Task<SaveSnippetTextCommandResult> HandleAsync(SaveSnippetTextCommand request, CancellationToken cancellationToken)
+        protected override async Task<SaveSnippetTextCommandResult> HandleAsync(
+            SaveSnippetTextCommand request,
+            CancellationToken cancellationToken)
         {
             // THIS IS NOT RELATED to SaveSnippetText logic. This is just for demo multi db features in one application works
             await UpsertFirstExistedMultiDbDemoEntity(cancellationToken);
@@ -69,20 +72,23 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             // THIS IS NOT RELATED to SaveSnippetText logic. This is just for demo validation<T> with value inside like Promise<T>, Task<T>
             Func<string, PlatformValidationResult<DateTime>> parseStringToDateFunc = stringValue =>
                 DateTime.TryParse(stringValue, out var parseDateTime)
-                    .Pipe(isParseSuccess => isParseSuccess
-                        ? PlatformValidationResult<DateTime>.Valid(parseDateTime)
-                        : PlatformValidationResult<DateTime>.Invalid(
-                            parseDateTime,
-                            errors: $"Value {stringValue} could not be parsed to Date"));
+                    .Pipe(
+                        isParseSuccess => isParseSuccess
+                            ? PlatformValidationResult<DateTime>.Valid(parseDateTime)
+                            : PlatformValidationResult<DateTime>.Invalid(
+                                parseDateTime,
+                                errors: $"Value {stringValue} could not be parsed to Date"));
             var parsedDateValueResult = parseStringToDateFunc("some date string");
             if (parsedDateValueResult.IsValid)
             {
-                logger.LogInformation($"Parsed \"some date string\" to {parsedDateValueResult.Value.ToLongDateString()}");
+                logger.LogInformation(
+                    $"Parsed \"some date string\" to {parsedDateValueResult.Value.ToLongDateString()}");
             }
             else
             {
                 logger.LogError(parsedDateValueResult.ErrorsMsg());
             }
+
             // Demo others features use cases of Validation<T>
             // Return Validation of string of date only from another string. Process is: string => DateTime => Date only => DateOnly string
             var parsedDateOnlyValueResult = parsedDateValueResult
@@ -92,21 +98,25 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             // THIS IS NOT RELATED to SaveSnippetText logic. Test support suppress uow works
             using (var uow = UnitOfWorkManager.Begin())
             {
-                await textSnippetEntityRepository.UpdateAsync(await textSnippetEntityRepository.FirstOrDefaultAsync(cancellationToken: cancellationToken), cancellationToken: cancellationToken);
+                await textSnippetEntityRepository.UpdateAsync(
+                    await textSnippetEntityRepository.FirstOrDefaultAsync(cancellationToken: cancellationToken),
+                    cancellationToken: cancellationToken);
                 await uow.CompleteAsync(cancellationToken);
             }
 
             // STEP 1: Build saving entity data from request
             var savingData = request.Data.Id.HasValue
-                ? request.Data.UpdateToEntity(await textSnippetEntityRepository.GetByIdAsync(request.Data.Id.Value, cancellationToken))
+                ? request.Data.UpdateToEntity(
+                    await textSnippetEntityRepository.GetByIdAsync(request.Data.Id.Value, cancellationToken))
                 : request.Data.MapToEntity();
 
             // STEP 2: Do validation and ensure that all logic is valid
 
             // Demo Permission Logic
-            EnsurePermissionLogicValid(PlatformValidationResult.ValidIf(
-                validCondition: new Random().Next(0, 10) % 2 == 0,
-                "Demo User need to has some role or logic to save snippet text"));
+            EnsurePermissionLogicValid(
+                PlatformValidationResult.ValidIf(
+                    validCondition: new Random().Next(0, 10) % 2 == 0,
+                    "Demo User need to has some role or logic to save snippet text"));
             // Demo business logic
             EnsureBusinessLogicValid(
                 savingData.ValidateSomeSpecificDomainLogic(),
@@ -128,7 +138,9 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             }
 
             // STEP 3: Saving data in to repository
-            var savedData = await textSnippetEntityRepository.CreateOrUpdateAsync(savingData, cancellationToken: cancellationToken);
+            var savedData = await textSnippetEntityRepository.CreateOrUpdateAsync(
+                savingData,
+                cancellationToken: cancellationToken);
 
             // STEP 4: Build and return result
             return new SaveSnippetTextCommandResult()
@@ -149,7 +161,9 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 
             firstExistedMultiDbEntity.Name = $"First Multi Db Demo Entity Upserted on {Clock.Now.ToShortDateString()}";
 
-            await multiDbDemoEntityRepository.CreateOrUpdateAsync(firstExistedMultiDbEntity, cancellationToken: cancellationToken);
+            await multiDbDemoEntityRepository.CreateOrUpdateAsync(
+                firstExistedMultiDbEntity,
+                cancellationToken: cancellationToken);
         }
 
         private PlatformValidationResult ValidateSomeThisCommandLogic()

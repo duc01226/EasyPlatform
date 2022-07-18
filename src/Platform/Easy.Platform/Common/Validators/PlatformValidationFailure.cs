@@ -1,12 +1,13 @@
-using System.Collections.Generic;
-using System.Linq;
 using FluentValidation.Results;
 
 namespace Easy.Platform.Common.Validators
 {
     public class PlatformValidationFailure : ValidationFailure
     {
-        public PlatformValidationFailure(ValidationFailure failure) : base(failure.PropertyName, failure.ErrorMessage, failure.AttemptedValue)
+        public PlatformValidationFailure(ValidationFailure failure) : base(
+            failure.PropertyName,
+            failure.ErrorMessage,
+            failure.AttemptedValue)
         {
             ErrorCode = failure.ErrorCode;
             CustomState = failure.CustomState;
@@ -18,7 +19,10 @@ namespace Easy.Platform.Common.Validators
         {
         }
 
-        public PlatformValidationFailure(string propertyName, string errorMessage, object attemptedValue) : base(propertyName, errorMessage, attemptedValue)
+        public PlatformValidationFailure(string propertyName, string errorMessage, object attemptedValue) : base(
+            propertyName,
+            errorMessage,
+            attemptedValue)
         {
         }
 
@@ -34,10 +38,13 @@ namespace Easy.Platform.Common.Validators
 
         public static PlatformValidationFailure Create(string message, Dictionary<string, string> messageParams = null)
         {
-            return Create(message, (string)null, messageParams);
+            return Create(message, null, messageParams);
         }
 
-        public static PlatformValidationFailure Create(string message, string propName, Dictionary<string, string> messageParams = null)
+        public static PlatformValidationFailure Create(
+            string message,
+            string propName,
+            Dictionary<string, string> messageParams = null)
         {
             return new PlatformValidationFailure(propName, message)
             {

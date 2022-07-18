@@ -1,9 +1,7 @@
-using System;
 using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.RedisCache;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
-using PlatformExampleApp.TextSnippet.Application;
 
 namespace PlatformExampleApp.TextSnippet.Api
 {
@@ -12,7 +10,9 @@ namespace PlatformExampleApp.TextSnippet.Api
     /// </summary>
     public class TextSnippetRedisCacheModule : PlatformRedisCacheModule
     {
-        public TextSnippetRedisCacheModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public TextSnippetRedisCacheModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(
+            serviceProvider,
+            configuration)
         {
         }
 

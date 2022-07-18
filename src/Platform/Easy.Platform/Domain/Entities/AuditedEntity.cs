@@ -1,4 +1,3 @@
-using System;
 using Easy.Platform.Common.Timing;
 
 namespace Easy.Platform.Domain.Entities
@@ -14,7 +13,8 @@ namespace Easy.Platform.Domain.Entities
         public DateTime? LastUpdatedDate { get; set; }
     }
 
-    public abstract class AuditedEntity<TEntity, TPrimaryKey, TUserId> : RootEntity<TEntity, TPrimaryKey>, IAuditedEntity<TUserId>
+    public abstract class AuditedEntity<TEntity, TPrimaryKey, TUserId> : RootEntity<TEntity, TPrimaryKey>,
+        IAuditedEntity<TUserId>
         where TEntity : Entity<TEntity, TPrimaryKey>, new()
     {
         public AuditedEntity() { }

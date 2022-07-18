@@ -1,6 +1,5 @@
 using System;
 using System.Text;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Common.JsonSerialization;
@@ -26,7 +25,7 @@ namespace Easy.Platform.RabbitMQ
         {
             ChannelPool = channelPool;
             ExchangeProvider = exchangeProvider;
-            this.Options = options;
+            Options = options;
             Logger = loggerFactory.CreateLogger(GetType());
         }
 
@@ -36,13 +35,19 @@ namespace Easy.Platform.RabbitMQ
             return await SendAsync(message, message.RoutingKey().CombinedStringKey, cancellationToken);
         }
 
-        public async Task<TMessage> SendAsync<TMessage>(TMessage message, string customRoutingKey, CancellationToken cancellationToken = default) where TMessage : class, IPlatformBusMessage, new()
+        public async Task<TMessage> SendAsync<TMessage>(
+            TMessage message,
+            string customRoutingKey,
+            CancellationToken cancellationToken = default) where TMessage : class, IPlatformBusMessage, new()
         {
             try
             {
                 var jsonMessage = SerializeMessage(message);
 
-                await PublishMessageToQueueAsync(jsonMessage, customRoutingKey ?? message.RoutingKey(), cancellationToken);
+                await PublishMessageToQueueAsync(
+                    jsonMessage,
+                    customRoutingKey ?? message.RoutingKey(),
+                    cancellationToken);
 
                 return message;
             }
@@ -74,7 +79,10 @@ namespace Easy.Platform.RabbitMQ
             TMessage message,
             CancellationToken cancellationToken = default) where TMessage : IPlatformBusFreeFormatMessage
         {
-            return SendFreeFormatMessageAsync(message, PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.Build(message.GetType()), cancellationToken);
+            return SendFreeFormatMessageAsync(
+                message,
+                PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.Build(message.GetType()),
+                cancellationToken);
         }
 
         public async Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
@@ -121,7 +129,10 @@ namespace Easy.Platform.RabbitMQ
             return jsonMessage;
         }
 
-        private async Task PublishMessageToQueueAsync(string message, string routingKey, CancellationToken cancellationToken = default)
+        private async Task PublishMessageToQueueAsync(
+            string message,
+            string routingKey,
+            CancellationToken cancellationToken = default)
         {
             await Task.Run(
                 () =>
@@ -138,7 +149,11 @@ namespace Easy.Platform.RabbitMQ
             try
             {
                 channel = ChannelPool.Get();
-                channel.BasicPublish(ExchangeProvider.GetExchangeName(routingKey), routingKey, null, body: Encoding.UTF8.GetBytes(message));
+                channel.BasicPublish(
+                    ExchangeProvider.GetExchangeName(routingKey),
+                    routingKey,
+                    null,
+                    body: Encoding.UTF8.GetBytes(message));
                 ChannelPool.Return(channel);
             }
             catch (AlreadyClosedException alreadyClosedException)
@@ -148,9 +163,10 @@ namespace Easy.Platform.RabbitMQ
 
                 if (alreadyClosedException.ShutdownReason.ReplyCode == 404)
                 {
-                    Logger.LogWarning($"Tried to send a message with routing key {routingKey} from {GetType().FullName} " +
-                                      $"but exchange is not found. May be there is no consumer registered to consume this message." +
-                                      $"If in source code has consumers for this message, this could be unexpected errors");
+                    Logger.LogWarning(
+                        $"Tried to send a message with routing key {routingKey} from {GetType().FullName} " +
+                        $"but exchange is not found. May be there is no consumer registered to consume this message." +
+                        $"If in source code has consumers for this message, this could be unexpected errors");
                 }
                 else
                 {

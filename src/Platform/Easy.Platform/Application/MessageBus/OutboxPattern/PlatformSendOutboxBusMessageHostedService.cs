@@ -1,14 +1,7 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Hosting;
 using Easy.Platform.Common.JsonSerialization;
-using Easy.Platform.Common.Timing;
 using Easy.Platform.Domain.Exceptions;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
@@ -45,16 +38,8 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         public static bool MatchImplementation(Type implementationType)
         {
             return implementationType?.IsAssignableTo(
-                typeof(PlatformSendOutboxBusMessageHostedService)) == true;
-        }
-
-        public static Expression<Func<PlatformOutboxBusMessage, bool>> ToHandleOutboxEventBusMessagesExpr(
-            double retryProcessFailedMessageDelayTimeInSeconds,
-            double messageProcessingMaximumTimeInSeconds)
-        {
-            return p => p.SendStatus == PlatformOutboxBusMessage.SendStatuses.New ||
-                        (p.SendStatus == PlatformOutboxBusMessage.SendStatuses.Failed && p.LastSendDate <= Clock.UtcNow.AddSeconds(-retryProcessFailedMessageDelayTimeInSeconds)) ||
-                        (p.SendStatus == PlatformOutboxBusMessage.SendStatuses.Processing && p.LastSendDate <= Clock.UtcNow.AddSeconds(-messageProcessingMaximumTimeInSeconds));
+                       typeof(PlatformSendOutboxBusMessageHostedService)) ==
+                   true;
         }
 
         protected IServiceProvider ServiceProvider { get; }
@@ -70,12 +55,16 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
 
             try
             {
-                // Retry in case of the db is not started, initiated or restarting
+                // WHY: Retry in case of the db is not started, initiated or restarting
                 await Policy.Handle<Exception>()
                     .WaitAndRetryAsync(
                         retryCount: ProcessSendMessageRetryCount(),
                         sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                        onRetry: (ex, timeSpan, currentRetry, ctx) =>
+                        onRetry: (
+                            ex,
+                            timeSpan,
+                            currentRetry,
+                            ctx) =>
                         {
                             Logger.LogWarning(
                                 ex,
@@ -105,16 +94,21 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
                     {
                         try
                         {
-                            await SendMessageToBusAsync(scope, toHandleMessage, cancellationToken);
+                            await SendMessageToBusAsync(
+                                scope,
+                                toHandleMessage,
+                                OutboxConfig.RetryProcessFailedMessageInSecondsUnit,
+                                cancellationToken);
                         }
                         catch (Exception e)
                         {
-                            Logger.LogError(e, $"[PlatformSendOutboxEventBusMessageHostedService] Try to produce outbox message with Id:{toHandleMessage.Id} failed. Message Content:{PlatformJsonSerializer.Serialize(toHandleMessage)}");
+                            Logger.LogError(
+                                e,
+                                $"[PlatformSendOutboxEventBusMessageHostedService] Try to produce outbox message with Id:{toHandleMessage.Id} failed. Message Content:{PlatformJsonSerializer.Serialize(toHandleMessage)}");
                         }
                     }
                 }
-            }
-            while (await IsAnyMessagesToHandleAsync());
+            } while (await IsAnyMessagesToHandleAsync());
         }
 
         protected async Task<bool> IsAnyMessagesToHandleAsync()
@@ -127,8 +121,7 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
                         scope.ServiceProvider.GetService<IPlatformOutboxBusMessageRepository>();
 
                     var result = await outboxEventBusMessageRepo!.AnyAsync(
-                        ToHandleOutboxEventBusMessagesExpr(
-                            RetryProcessFailedMessageDelayTimeInSeconds(),
+                        PlatformOutboxBusMessage.ToHandleOutboxEventBusMessagesExpr(
                             MessageProcessingMaximumTimeInSeconds()));
 
                     return result;
@@ -139,9 +132,11 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         protected virtual async Task SendMessageToBusAsync(
             IServiceScope scope,
             PlatformOutboxBusMessage toHandleOutboxMessage,
+            double retryProcessFailedMessageInSecondsUnit,
             CancellationToken cancellationToken)
         {
-            var outboxEventBusProducerHelper = scope.ServiceProvider.GetService<PlatformOutboxMessageBusProducerHelper>();
+            var outboxEventBusProducerHelper =
+                scope.ServiceProvider.GetService<PlatformOutboxMessageBusProducerHelper>();
             var messageType = ResolveMessageType(toHandleOutboxMessage);
 
             using (var uow = scope.ServiceProvider.GetService<IUnitOfWorkManager>()!.Begin())
@@ -156,14 +151,17 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
                         message,
                         toHandleOutboxMessage.RoutingKey,
                         isProcessingExistingOutboxMessage: true,
+                        retryProcessFailedMessageInSecondsUnit,
                         cancellationToken);
                 }
                 else
                 {
                     await outboxEventBusProducerHelper!.UpdateExistingOutboxMessageFailedAsync(
                         toHandleOutboxMessage.Id,
-                        new Exception($"[{GetType().Name}] Error resolve outbox message type/or not assignable to {nameof(IPlatformBusTrackableMessage)} " +
-                                      $"[TypeName:{toHandleOutboxMessage.MessageTypeFullName}]. OutboxId:{toHandleOutboxMessage.Id}"),
+                        new Exception(
+                            $"[{GetType().Name}] Error resolve outbox message type/or not assignable to {nameof(IPlatformBusTrackableMessage)} " +
+                            $"[TypeName:{toHandleOutboxMessage.MessageTypeFullName}]. OutboxId:{toHandleOutboxMessage.Id}"),
+                        retryProcessFailedMessageInSecondsUnit,
                         cancellationToken);
                 }
 
@@ -171,7 +169,8 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
             }
         }
 
-        protected async Task<List<PlatformOutboxBusMessage>> PopToHandleOutboxEventBusMessages(CancellationToken cancellationToken)
+        protected async Task<List<PlatformOutboxBusMessage>> PopToHandleOutboxEventBusMessages(
+            CancellationToken cancellationToken)
         {
             try
             {
@@ -179,21 +178,23 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
                 {
                     using (var uow = scope.ServiceProvider.GetService<IUnitOfWorkManager>()!.Begin())
                     {
-                        var outboxEventBusMessageRepo = scope.ServiceProvider.GetService<IPlatformOutboxBusMessageRepository>();
+                        var outboxEventBusMessageRepo =
+                            scope.ServiceProvider.GetService<IPlatformOutboxBusMessageRepository>();
 
                         var toHandleMessages = outboxEventBusMessageRepo!.GetAllQuery()
-                            .Where(ToHandleOutboxEventBusMessagesExpr(
-                                RetryProcessFailedMessageDelayTimeInSeconds(),
-                                MessageProcessingMaximumTimeInSeconds()))
+                            .Where(
+                                PlatformOutboxBusMessage.ToHandleOutboxEventBusMessagesExpr(
+                                    MessageProcessingMaximumTimeInSeconds()))
                             .OrderBy(p => p.LastSendDate)
                             .Take(NumberOfProcessMessagesBatch())
                             .ToList();
 
-                        toHandleMessages.ForEach(p =>
-                        {
-                            p.SendStatus = PlatformOutboxBusMessage.SendStatuses.Processing;
-                            p.LastSendDate = DateTime.UtcNow;
-                        });
+                        toHandleMessages.ForEach(
+                            p =>
+                            {
+                                p.SendStatus = PlatformOutboxBusMessage.SendStatuses.Processing;
+                                p.LastSendDate = DateTime.UtcNow;
+                            });
 
                         await outboxEventBusMessageRepo.UpdateManyAsync(
                             toHandleMessages,
@@ -207,9 +208,12 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
             }
             catch (PlatformRowVersionConflictDomainException conflictDomainException)
             {
-                Logger.LogWarning(conflictDomainException, "Some other producer instance has been handling some outbox messages, which lead to row version conflict. This is as expected so just warning.");
+                Logger.LogWarning(
+                    conflictDomainException,
+                    "Some other producer instance has been handling some outbox messages, which lead to row version conflict (support multi service instance running concurrently). This is as expected so just warning.");
 
-                // Retry PopToHandleOutboxEventBusMessages
+                // WHY: Because support multi service instance running concurrently,
+                // get row version conflict is expected, so just retry again to get unprocessed outbox messages
                 return await PopToHandleOutboxEventBusMessages(cancellationToken);
             }
         }
@@ -231,14 +235,6 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         protected virtual double MessageProcessingMaximumTimeInSeconds()
         {
             return 3600;
-        }
-
-        /// <summary>
-        /// Config the time in seconds to retry process failed message from lastSendDate. Default is 60
-        /// </summary>
-        protected virtual double RetryProcessFailedMessageDelayTimeInSeconds()
-        {
-            return 60;
         }
 
         protected bool HasOutboxEventBusMessageRepositoryRegistered()
@@ -271,7 +267,12 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
             ILoggerFactory loggerFactory,
             IServiceProvider serviceProvider,
             IPlatformApplicationSettingContext applicationSettingContext,
-            PlatformOutboxConfig outboxConfig) : base(applicationLifetime, loggerFactory, serviceProvider, applicationSettingContext, outboxConfig)
+            PlatformOutboxConfig outboxConfig) : base(
+            applicationLifetime,
+            loggerFactory,
+            serviceProvider,
+            applicationSettingContext,
+            outboxConfig)
         {
         }
     }

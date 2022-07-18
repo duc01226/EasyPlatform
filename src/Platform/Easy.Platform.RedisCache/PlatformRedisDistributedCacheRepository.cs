@@ -2,7 +2,6 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Easy.Platform.Application.Context;
@@ -14,7 +13,9 @@ using Microsoft.Extensions.Options;
 
 namespace Easy.Platform.RedisCache
 {
-    public class PlatformRedisDistributedCacheRepository : PlatformCacheRepository, IPlatformDistributedCacheRepository, IDisposable
+    public class PlatformRedisDistributedCacheRepository : PlatformCacheRepository,
+        IPlatformDistributedCacheRepository,
+        IDisposable
     {
         public static readonly string CachedKeysCollectionName = "___PlatformRedisDistributedCacheKeys___";
 
@@ -46,9 +47,9 @@ namespace Easy.Platform.RedisCache
             {
                 return result == null ? default : PlatformJsonSerializer.Deserialize<T>(result);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                // If parse failed, the cached data could be obsolete. Then just clear the cache
+                // WHY: If parse failed, the cached data could be obsolete. Then just clear the cache
                 await RemoveAsync(cacheKey, token);
                 return default;
             }
@@ -67,7 +68,11 @@ namespace Easy.Platform.RedisCache
             PlatformCacheEntryOptions cacheOptions = null,
             CancellationToken token = default)
         {
-            await redisCache.SetAsync(cacheKey, PlatformJsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions ?? GetDefaultCacheEntryOptions()), token);
+            await redisCache.SetAsync(
+                cacheKey,
+                PlatformJsonSerializer.SerializeToUtf8Bytes(value),
+                MapToDistributedCacheEntryOptions(cacheOptions ?? GetDefaultCacheEntryOptions()),
+                token);
 
             UpdateCachedKeys(p => p.TryAdd(cacheKey, null));
         }
@@ -104,7 +109,9 @@ namespace Easy.Platform.RedisCache
             UpdateCachedKeys(p => p.Remove(cacheKey, out _));
         }
 
-        public override Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default)
+        public override Task RemoveAsync(
+            Func<PlatformCacheKey, bool> cacheKeyPredicate,
+            CancellationToken token = default)
         {
             Remove(cacheKeyPredicate);
 
@@ -140,9 +147,15 @@ namespace Easy.Platform.RedisCache
             SetGlobalCachedKeys(globalCachedKeys);
         }
 
-        private void SetToRedisCache<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null)
+        private void SetToRedisCache<T>(
+            PlatformCacheKey cacheKey,
+            T value,
+            PlatformCacheEntryOptions cacheOptions = null)
         {
-            redisCache.Set(cacheKey, PlatformJsonSerializer.SerializeToUtf8Bytes(value), MapToDistributedCacheEntryOptions(cacheOptions));
+            redisCache.Set(
+                cacheKey,
+                PlatformJsonSerializer.SerializeToUtf8Bytes(value),
+                MapToDistributedCacheEntryOptions(cacheOptions));
         }
 
         private Dictionary<PlatformCacheKey, object> GetGlobalCachedKeys()
@@ -150,14 +163,18 @@ namespace Easy.Platform.RedisCache
             var cachedKeysList =
                 Get<List<string>>(BuildGlobalCachedKeysDataCacheKey()) ?? new List<string>();
 
-            var cachedKeys = cachedKeysList.ToDictionary(fullCacheKeyString => (PlatformCacheKey)fullCacheKeyString, p => (object)p);
+            var cachedKeys = cachedKeysList.ToDictionary(
+                fullCacheKeyString => (PlatformCacheKey)fullCacheKeyString,
+                p => (object)p);
 
             return cachedKeys;
         }
 
         private PlatformCacheKey BuildGlobalCachedKeysDataCacheKey()
         {
-            return new PlatformCacheKey(context: applicationSettingContext.ApplicationName, collection: CachedKeysCollectionName);
+            return new PlatformCacheKey(
+                context: applicationSettingContext.ApplicationName,
+                collection: CachedKeysCollectionName);
         }
 
         private void SetGlobalCachedKeys(IDictionary<PlatformCacheKey, object> value)
@@ -165,7 +182,11 @@ namespace Easy.Platform.RedisCache
             SetToRedisCache(
                 BuildGlobalCachedKeysDataCacheKey(),
                 value.Keys.Select(p => p.ToString()).ToList(),
-                new PlatformCacheEntryOptions() { UnusedExpirationInSeconds = null, AbsoluteExpirationInSeconds = null });
+                new PlatformCacheEntryOptions()
+                {
+                    UnusedExpirationInSeconds = null,
+                    AbsoluteExpirationInSeconds = null
+                });
         }
 
         private DistributedCacheEntryOptions MapToDistributedCacheEntryOptions(PlatformCacheEntryOptions options)

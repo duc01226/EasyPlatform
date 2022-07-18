@@ -1,16 +1,16 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Cqrs.Commands;
-using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.Common.Cqrs.Commands;
-using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Common.Utils;
+using Easy.Platform.Domain.UnitOfWork;
+using Easy.Platform.Infrastructures.Caching;
 using PlatformExampleApp.TextSnippet.Application.Caching;
 using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents
 {
-    public class ClearCacheOnSaveSnippetTextCommandEventHandler : PlatformCqrsCommandEventApplicationHandler<SaveSnippetTextCommand>
+    public class
+        ClearCacheOnSaveSnippetTextCommandEventHandler : PlatformCqrsCommandEventApplicationHandler<
+            SaveSnippetTextCommand>
     {
         private readonly IPlatformCacheRepositoryProvider cacheRepositoryProvider;
 
@@ -21,7 +21,9 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents
             this.cacheRepositoryProvider = cacheRepositoryProvider;
         }
 
-        protected override Task HandleAsync(PlatformCqrsCommandEvent<SaveSnippetTextCommand> @event, CancellationToken cancellationToken)
+        protected override Task HandleAsync(
+            PlatformCqrsCommandEvent<SaveSnippetTextCommand> @event,
+            CancellationToken cancellationToken)
         {
             // Queue task to clear cache every 5 seconds for 3 times (mean that after 5,10,15s).
             // Delay because when save snippet text, fulltext index take amount of time to update, so that we wait
@@ -30,7 +32,8 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents
             if (@event.Action == PlatformCqrsCommandEventAction.Executed)
             {
                 Util.Tasks.QueueIntervalAsyncAction(
-                    token => cacheRepositoryProvider.Get().RemoveCollectionAsync<TextSnippetCollectionCacheKeyProvider>(token),
+                    token => cacheRepositoryProvider.Get()
+                        .RemoveCollectionAsync<TextSnippetCollectionCacheKeyProvider>(token),
                     intervalTimeInSeconds: 5,
                     maximumIntervalExecutionCount: 3,
                     executeOnceImmediately: true,

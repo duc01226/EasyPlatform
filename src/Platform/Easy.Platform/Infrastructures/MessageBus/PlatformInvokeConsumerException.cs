@@ -1,5 +1,3 @@
-using System;
-
 namespace Easy.Platform.Infrastructures.MessageBus
 {
     public class PlatformInvokeConsumerException : Exception
@@ -7,14 +5,14 @@ namespace Easy.Platform.Infrastructures.MessageBus
         public PlatformInvokeConsumerException(
             Exception e,
             string consumerName,
-            object eventBusMessage) : base($"Invoke Consumer {consumerName} Failed.", e)
+            object busMessage) : base($"Invoke Consumer {consumerName} Failed.", e)
         {
             ConsumerName = consumerName;
-            EventBusMessage = eventBusMessage;
+            BusMessage = busMessage;
         }
 
         public string ConsumerName { get; }
 
-        public object EventBusMessage { get; set; }
+        public object BusMessage { get; set; }
     }
 }

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Easy.Platform.Application.Context.UserContext
 {
     public interface IPlatformApplicationUserContext

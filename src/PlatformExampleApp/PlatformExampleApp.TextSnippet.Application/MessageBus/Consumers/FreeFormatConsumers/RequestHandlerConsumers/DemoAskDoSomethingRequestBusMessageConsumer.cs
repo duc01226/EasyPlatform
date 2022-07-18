@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Easy.Platform.Application.MessageBus.Consumers;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
@@ -22,9 +17,13 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.FreeFo
     ///
     /// This is example the LEADER-SERVICE listen to an request message from other to do serve the request
     /// </summary>
-    public class DemoAskDoSomethingRequestBusMessageConsumer : PlatformApplicationBusFreeFormatMessageConsumer<DemoAskDoSomethingRequestBusMessage>
+    public class DemoAskDoSomethingRequestBusMessageConsumer : PlatformApplicationBusFreeFormatMessageConsumer<
+        DemoAskDoSomethingRequestBusMessage>
     {
-        public DemoAskDoSomethingRequestBusMessageConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager, IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
+        public DemoAskDoSomethingRequestBusMessageConsumer(
+            ILoggerFactory loggerFactory,
+            IUnitOfWorkManager uowManager,
+            IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
         {
         }
 

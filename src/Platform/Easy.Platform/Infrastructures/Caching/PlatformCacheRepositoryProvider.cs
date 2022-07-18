@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Easy.Platform.Infrastructures.Caching
@@ -28,13 +25,15 @@ namespace Easy.Platform.Infrastructures.Caching
         /// <summary>
         /// Get last registered collection cache repository
         /// </summary>
-        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<TCollectionCacheKeyProvider>()
+        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<
+            TCollectionCacheKeyProvider>()
             where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider;
 
         /// <summary>
         /// Get collection cache repository by type
         /// </summary>
-        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<TCollectionCacheKeyProvider>(PlatformCacheRepositoryType cacheRepositoryType)
+        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
+            GetCollection<TCollectionCacheKeyProvider>(PlatformCacheRepositoryType cacheRepositoryType)
             where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider;
     }
 
@@ -42,7 +41,9 @@ namespace Easy.Platform.Infrastructures.Caching
     {
         private readonly IServiceProvider serviceProvider;
         private readonly List<IPlatformCacheRepository> registeredCacheRepositories;
-        private readonly Dictionary<PlatformCacheRepositoryType, IPlatformCacheRepository> registeredCacheRepositoriesDic;
+
+        private readonly Dictionary<PlatformCacheRepositoryType, IPlatformCacheRepository>
+            registeredCacheRepositoriesDic;
 
         public PlatformCacheRepositoryProvider(
             IServiceProvider serviceProvider,
@@ -77,7 +78,8 @@ namespace Easy.Platform.Infrastructures.Caching
             }
         }
 
-        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<TCollectionCacheKeyProvider>()
+        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<
+            TCollectionCacheKeyProvider>()
             where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
         {
             return serviceProvider
@@ -85,7 +87,8 @@ namespace Easy.Platform.Infrastructures.Caching
                 .Last();
         }
 
-        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider> GetCollection<TCollectionCacheKeyProvider>(PlatformCacheRepositoryType cacheRepositoryType)
+        public IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
+            GetCollection<TCollectionCacheKeyProvider>(PlatformCacheRepositoryType cacheRepositoryType)
             where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
         {
             EnsureCacheRepositoryTypeRegistered(cacheRepositoryType);
@@ -95,19 +98,21 @@ namespace Easy.Platform.Infrastructures.Caching
                 .Last(p => p.CacheRepositoryType() == cacheRepositoryType);
         }
 
-        private static Dictionary<PlatformCacheRepositoryType, IPlatformCacheRepository> BuildRegisteredCacheRepositoriesDic(List<IPlatformCacheRepository> registeredCacheRepositories)
+        private static Dictionary<PlatformCacheRepositoryType, IPlatformCacheRepository>
+            BuildRegisteredCacheRepositoriesDic(List<IPlatformCacheRepository> registeredCacheRepositories)
         {
-            return registeredCacheRepositories.GroupBy(p => p.GetType()).ToDictionary(
-                p =>
-                {
-                    if (p.Key.IsAssignableTo(typeof(IPlatformDistributedCacheRepository)))
-                        return PlatformCacheRepositoryType.Distributed;
-                    if (p.Key.IsAssignableTo(typeof(IPlatformMemoryCacheRepository)))
-                        return PlatformCacheRepositoryType.Memory;
+            return registeredCacheRepositories.GroupBy(p => p.GetType())
+                .ToDictionary(
+                    p =>
+                    {
+                        if (p.Key.IsAssignableTo(typeof(IPlatformDistributedCacheRepository)))
+                            return PlatformCacheRepositoryType.Distributed;
+                        if (p.Key.IsAssignableTo(typeof(IPlatformMemoryCacheRepository)))
+                            return PlatformCacheRepositoryType.Memory;
 
-                    throw new Exception($"Unknown PlatformCacheRepositoryType of {p.GetType().Name}");
-                },
-                p => p.Last());
+                        throw new Exception($"Unknown PlatformCacheRepositoryType of {p.GetType().Name}");
+                    },
+                    p => p.Last());
         }
 
         private void EnsureCacheRepositoryTypeRegistered(PlatformCacheRepositoryType cacheRepositoryType)

@@ -1,6 +1,4 @@
-using System;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Helpers;
 using Easy.Platform.Persistence.Services;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
@@ -33,7 +31,10 @@ namespace PlatformExampleApp.TextSnippet.Application.Helpers
                 query => fullTextSearchPersistenceService.Search(
                     query,
                     searchText: name,
-                    inFullTextSearchProps: new Expression<Func<TextSnippetEntity, object>>[] { p => p.SnippetText }));
+                    inFullTextSearchProps: new Expression<Func<TextSnippetEntity, object>>[]
+                    {
+                        p => p.SnippetText
+                    }));
             var firstFoundMultiDemo = await multiDbDemoEntityRepository.FirstOrDefaultAsync(p => p.Name == name);
 
             return new SearchEntityByNameHelperResult()

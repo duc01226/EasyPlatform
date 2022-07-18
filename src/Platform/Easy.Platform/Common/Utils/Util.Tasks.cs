@@ -1,7 +1,4 @@
-using System;
 using System.Diagnostics;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Easy.Platform.Common.Utils
 {
@@ -12,7 +9,10 @@ namespace Easy.Platform.Common.Utils
             /// <summary>
             /// Execute an action after a given of time.
             /// </summary>
-            public static Task QueueDelayAsyncAction(Func<CancellationToken, Task> action, TimeSpan delayTime, CancellationToken cancellationToken = default)
+            public static Task QueueDelayAsyncAction(
+                Func<CancellationToken, Task> action,
+                TimeSpan delayTime,
+                CancellationToken cancellationToken = default)
             {
                 return Task.Run(
                     async () =>
@@ -26,7 +26,10 @@ namespace Easy.Platform.Common.Utils
             /// <summary>
             /// Execute an action after a given of time in seconds.
             /// </summary>
-            public static Task QueueDelayAsyncActionMultipleTimes(Func<CancellationToken, Task> action, int delayTimeInSecond, CancellationToken cancellationToken = default)
+            public static Task QueueDelayAsyncActionMultipleTimes(
+                Func<CancellationToken, Task> action,
+                int delayTimeInSecond,
+                CancellationToken cancellationToken = default)
             {
                 return QueueDelayAsyncAction(action, TimeSpan.FromSeconds(delayTimeInSecond), cancellationToken);
             }
@@ -100,7 +103,10 @@ namespace Easy.Platform.Common.Utils
             /// Help to profiling an asyncTask.
             /// afterExecution is an optional action to execute. It's input is the task ElapsedMilliseconds of asyncTask execution.
             /// </summary>
-            public static async Task ProfilingAsync(Func<Task> asyncTask, Action<long> afterExecution = null, Action beforeExecution = null)
+            public static async Task ProfilingAsync(
+                Func<Task> asyncTask,
+                Action<long> afterExecution = null,
+                Action beforeExecution = null)
             {
                 beforeExecution?.Invoke();
 
@@ -113,48 +119,68 @@ namespace Easy.Platform.Common.Utils
 
             public static Task<ValueTuple<T1, T2>> WhenAll<T1, T2>(Task<T1> task1, Task<T2> task2)
             {
-                return Task.Run(() =>
-                {
-                    Task.WaitAll(task1, task2);
-                    return (task1.Result, task2.Result);
-                });
+                return Task.Run(
+                    () =>
+                    {
+                        Task.WaitAll(task1, task2);
+                        return (task1.Result, task2.Result);
+                    });
             }
 
-            public static Task<ValueTuple<T1, T2, T3>> WhenAll<T1, T2, T3>(Task<T1> task1, Task<T2> task2, Task<T3> task3)
+            public static Task<ValueTuple<T1, T2, T3>> WhenAll<T1, T2, T3>(
+                Task<T1> task1,
+                Task<T2> task2,
+                Task<T3> task3)
             {
-                return Task.Run(() =>
-                {
-                    Task.WaitAll(task1, task2, task3);
-                    return (task1.Result, task2.Result, task3.Result);
-                });
+                return Task.Run(
+                    () =>
+                    {
+                        Task.WaitAll(task1, task2, task3);
+                        return (task1.Result, task2.Result, task3.Result);
+                    });
             }
 
-            public static Task<ValueTuple<T1, T2, T3, T4>> WhenAll<T1, T2, T3, T4>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4)
+            public static Task<ValueTuple<T1, T2, T3, T4>> WhenAll<T1, T2, T3, T4>(
+                Task<T1> task1,
+                Task<T2> task2,
+                Task<T3> task3,
+                Task<T4> task4)
             {
-                return Task.Run(() =>
-                {
-                    Task.WaitAll(task1, task2, task3, task4);
-                    return (task1.Result, task2.Result, task3.Result, task4.Result);
-                });
+                return Task.Run(
+                    () =>
+                    {
+                        Task.WaitAll(
+                            task1,
+                            task2,
+                            task3,
+                            task4);
+                        return (task1.Result, task2.Result, task3.Result, task4.Result);
+                    });
             }
 
-            public static Task<ValueTuple<T1, T2, T3, T4, T5>> WhenAll<T1, T2, T3, T4, T5>(Task<T1> task1, Task<T2> task2, Task<T3> task3, Task<T4> task4, Task<T5> task5)
+            public static Task<ValueTuple<T1, T2, T3, T4, T5>> WhenAll<T1, T2, T3, T4, T5>(
+                Task<T1> task1,
+                Task<T2> task2,
+                Task<T3> task3,
+                Task<T4> task4,
+                Task<T5> task5)
             {
-                return Task.Run(() =>
-                {
-                    Task.WaitAll(task1, task2, task3, task4, task5);
-                    return (task1.Result, task2.Result, task3.Result, task4.Result, task5.Result);
-                });
+                return Task.Run(
+                    () =>
+                    {
+                        Task.WaitAll(
+                            task1,
+                            task2,
+                            task3,
+                            task4,
+                            task5);
+                        return (task1.Result, task2.Result, task3.Result, task4.Result, task5.Result);
+                    });
             }
 
             public static Task<T> Async<T>(T t)
             {
                 return Task.FromResult(t);
-            }
-
-            public static Task<T> Async<T>(Func<T> fn)
-            {
-                return Task.Run(fn);
             }
         }
     }

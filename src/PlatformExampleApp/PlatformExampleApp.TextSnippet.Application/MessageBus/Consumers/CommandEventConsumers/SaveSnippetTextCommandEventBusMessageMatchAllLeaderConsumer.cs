@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Easy.Platform.Application.MessageBus.Consumers.CqrsEventConsumers;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Common.Extensions;
@@ -15,8 +13,13 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Comman
     /// <summary>
     /// We use MatchAllPatternValue for producer context when consumer is leader
     /// </summary>
-    [PlatformMessageBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, PlatformMessageBusConsumerAttribute.MatchAllPatternValue, "SaveSnippetTextCommand")]
-    public class SaveSnippetTextCommandEventBusMessageMatchAllLeaderConsumer : PlatformCqrsCommandEventBusMessageConsumer<SaveSnippetTextCommand>
+    [PlatformMessageBusConsumer(
+        PlatformCqrsCommandEvent.EventTypeValue,
+        PlatformMessageBusConsumerAttribute.MatchAllPatternValue,
+        "SaveSnippetTextCommand")]
+    public class
+        SaveSnippetTextCommandEventBusMessageMatchAllLeaderConsumer : PlatformCqrsCommandEventBusMessageConsumer<
+            SaveSnippetTextCommand>
     {
         public SaveSnippetTextCommandEventBusMessageMatchAllLeaderConsumer(
             ILoggerFactory loggerFactory,
@@ -25,12 +28,16 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Comman
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformBusMessage<SaveSnippetTextCommand> message, string routingKey)
+        protected override Task InternalHandleAsync(
+            PlatformBusMessage<SaveSnippetTextCommand> message,
+            string routingKey)
         {
             if (message.CreatedUtcDate.AddSeconds(5) > Clock.UtcNow)
-                throw new Exception("Test requeue message mechanism. Consumer temporarily failed for first 5 seconds from the created date of message");
+                throw new Exception(
+                    "Test requeue message mechanism. Consumer temporarily failed for first 5 seconds from the created date of message");
 
-            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
+            Logger.LogInformationIfEnabled(
+                $"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
             return Task.CompletedTask;
         }
 

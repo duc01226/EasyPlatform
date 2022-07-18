@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-
 namespace Easy.Platform.Domain.UnitOfWork
 {
     public interface IUnitOfWork : IDisposable
@@ -74,7 +68,8 @@ namespace Easy.Platform.Domain.UnitOfWork
 
             try
             {
-                await Task.WhenAll(InnerUnitOfWorks.Where(p => p.IsActive()).Select(p => p.CompleteAsync(cancellationToken)));
+                await Task.WhenAll(
+                    InnerUnitOfWorks.Where(p => p.IsActive()).Select(p => p.CompleteAsync(cancellationToken)));
                 await SaveChangesAsync(cancellationToken);
                 Completed = true;
                 InvokeOnCompleted(this, EventArgs.Empty);

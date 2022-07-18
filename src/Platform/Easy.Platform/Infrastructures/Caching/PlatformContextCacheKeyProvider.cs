@@ -1,5 +1,3 @@
-using System;
-
 namespace Easy.Platform.Infrastructures.Caching
 {
     public interface IPlatformContextCacheKeyProvider
@@ -9,8 +7,14 @@ namespace Easy.Platform.Infrastructures.Caching
         /// </summary>
         string Context { get; init; }
 
-        PlatformCacheKey GetKey(string collection = PlatformContextCacheKeyProvider.DefaultCollection, string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
-        PlatformCacheKey GetKey(string collection = PlatformContextCacheKeyProvider.DefaultCollection, object[] requestKeyParts = null);
+        PlatformCacheKey GetKey(
+            string collection = PlatformContextCacheKeyProvider.DefaultCollection,
+            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
+
+        PlatformCacheKey GetKey(
+            string collection = PlatformContextCacheKeyProvider.DefaultCollection,
+            object[] requestKeyParts = null);
+
         Func<PlatformCacheKey, bool> MatchContextKeyPredicate();
     }
 
@@ -28,7 +32,9 @@ namespace Easy.Platform.Infrastructures.Caching
         /// </summary>
         public virtual string Context { get; init; }
 
-        public virtual PlatformCacheKey GetKey(string collection = DefaultCollection, string requestKey = DefaultRequestKey)
+        public virtual PlatformCacheKey GetKey(
+            string collection = DefaultCollection,
+            string requestKey = DefaultRequestKey)
         {
             EnsureValidProvider();
             return new PlatformCacheKey(Context, collection ?? DefaultCollection, requestKey);
@@ -37,7 +43,14 @@ namespace Easy.Platform.Infrastructures.Caching
         public virtual PlatformCacheKey GetKey(string collection = DefaultCollection, object[] requestKeyParts = null)
         {
             EnsureValidProvider();
-            return new PlatformCacheKey(Context, collection ?? DefaultCollection, requestKeyParts ?? new object[] { DefaultRequestKey });
+            return new PlatformCacheKey(
+                Context,
+                collection ?? DefaultCollection,
+                requestKeyParts ??
+                new object[]
+                {
+                    DefaultRequestKey
+                });
         }
 
         public Func<PlatformCacheKey, bool> MatchContextKeyPredicate()
@@ -55,7 +68,9 @@ namespace Easy.Platform.Infrastructures.Caching
     public class PlatformContextCacheKeyProvider<TFixedImplementationProvider> : PlatformContextCacheKeyProvider
         where TFixedImplementationProvider : PlatformContextCacheKeyProvider<TFixedImplementationProvider>
     {
-        public static PlatformCacheKey CreateKey(string collection = DefaultCollection, string requestKey = DefaultRequestKey)
+        public static PlatformCacheKey CreateKey(
+            string collection = DefaultCollection,
+            string requestKey = DefaultRequestKey)
         {
             return Activator.CreateInstance<TFixedImplementationProvider>().GetKey(collection, requestKey);
         }

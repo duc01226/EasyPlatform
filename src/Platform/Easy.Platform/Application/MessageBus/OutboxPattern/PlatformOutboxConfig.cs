@@ -7,5 +7,12 @@ namespace Easy.Platform.Application.MessageBus.OutboxPattern
         /// after call sendMessages. This will force sending message always start use there own uow
         /// </summary>
         public bool ForceAlwaysSendOutboxInNewUow { get; set; }
+
+        /// <summary>
+        /// This is used to calculate the next retry process message time.
+        /// Ex: NextRetryProcessAfterDate = DateTime.UtcNow.AddSeconds(retryProcessFailedMessageInSecondsUnit * Math.Pow(2, retriedProcessCount ?? 0));
+        /// </summary>
+        public double RetryProcessFailedMessageInSecondsUnit { get; set; } =
+            PlatformOutboxBusMessage.DefaultRetryProcessFailedMessageInSecondsUnit;
     }
 }

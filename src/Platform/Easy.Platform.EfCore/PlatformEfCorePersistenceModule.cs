@@ -1,46 +1,42 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Common.DependencyInjection;
+using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.EfCore.Domain.Repositories;
 using Easy.Platform.EfCore.Domain.UnitOfWork;
 using Easy.Platform.EfCore.EntityConfiguration;
-using Easy.Platform.Common.Extensions;
 using Easy.Platform.EfCore.Services;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Easy.Platform.Persistence;
-using Easy.Platform.Persistence.Services.Abstract;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Polly;
 
 namespace Easy.Platform.EfCore
 {
-    public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPersistenceModule<TDbContext> where TDbContext : PlatformEfCoreDbContext<TDbContext>
+    public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPersistenceModule<TDbContext>
+        where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
-        protected readonly ILogger Logger;
-
         public PlatformEfCorePersistenceModule(
             IServiceProvider serviceProvider,
             IConfiguration configuration) : base(serviceProvider, configuration)
         {
-            Logger = serviceProvider?.GetService<ILoggerFactory>().CreateLogger(GetType());
         }
 
-        public bool GetEnableDefaultInboxEventBusMessageEntityConfigurationDefaultValue()
+        public bool EnableDefaultInboxEventBusMessageEntityConfigurationDefaultValue()
         {
             return EnableInboxEventBusMessageRepository() &&
-                   !Assembly.GetTypes().Any(persistenceAssemblyType =>
-                       !persistenceAssemblyType.IsAbstract &&
-                       persistenceAssemblyType.IsClass &&
-                       persistenceAssemblyType.IsAssignableTo(typeof(PlatformInboxEventBusMessageConfiguration)));
+                   !Assembly.GetTypes()
+                       .Any(
+                           persistenceAssemblyType =>
+                               !persistenceAssemblyType.IsAbstract &&
+                               persistenceAssemblyType.IsClass &&
+                               persistenceAssemblyType.IsAssignableTo(
+                                   typeof(PlatformInboxEventBusMessageEntityConfiguration)));
         }
 
         protected override void InternalRegister(IServiceCollection serviceCollection)
@@ -56,40 +52,23 @@ namespace Easy.Platform.EfCore
                 Assembly,
                 replaceIfExist: true,
                 ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
-            if (!serviceCollection.Any(p => p.ServiceType == typeof(IUnitOfWork) &&
-                                            p.ImplementationType?.IsAssignableTo(typeof(IPlatformEfCoreUnitOfWork<TDbContext>)) == true))
+            if (!serviceCollection.Any(
+                p => p.ServiceType == typeof(IUnitOfWork) &&
+                     p.ImplementationType?.IsAssignableTo(typeof(IPlatformEfCoreUnitOfWork<TDbContext>)) == true))
             {
-                serviceCollection.Register<IUnitOfWork, PlatformEfCoreUnitOfWork<TDbContext>>(ServiceLifeTime.Transient);
+                serviceCollection
+                    .Register<IUnitOfWork, PlatformEfCoreUnitOfWork<TDbContext>>(ServiceLifeTime.Transient);
             }
 
-            serviceCollection.Register(
-                typeof(PlatformEfCoreOptions),
-                p =>
-                {
-                    var options = PlatformEfCoreOptionsFactory();
-
-                    // Auto set value for EnableDefaultInboxEventBusMessageEntityConfiguration if it is not set value
-                    options.EnableDefaultInboxEventBusMessageEntityConfiguration ??= GetEnableDefaultInboxEventBusMessageEntityConfigurationDefaultValue();
-
-                    return options;
-                });
-
             RegisterBuiltInPersistenceServices(serviceCollection);
-        }
-
-        /// <summary>
-        /// Override this to custom PlatformEfCoreOptions value
-        /// </summary>
-        protected virtual PlatformEfCoreOptions PlatformEfCoreOptionsFactory()
-        {
-            return new PlatformEfCoreOptions();
         }
 
         /// <summary>
         /// Return a action for <see cref="DbContextOptionsBuilder"/> to AddDbContext. <br/>
         /// Example: return options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
         /// </summary>
-        protected abstract Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceProvider serviceProvider);
+        protected abstract Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(
+            IServiceProvider serviceProvider);
 
         protected override async Task InternalInit(IServiceScope serviceScope)
         {
@@ -109,9 +88,14 @@ namespace Easy.Platform.EfCore
                 .WaitAndRetry(
                     retryCount: retryCount,
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                    onRetry: (exception, timeSpan, retry, ctx) =>
+                    onRetry: (
+                        exception,
+                        timeSpan,
+                        retry,
+                        ctx) =>
                     {
-                        Logger.LogWarning(exception,
+                        Logger.LogWarning(
+                            exception,
                             "[{prefix}] Exception {ExceptionType} with message {Message} detected on attempt Migrate {retry} of {retries}",
                             typeof(TDbContext).Name,
                             exception.GetType().Name,
@@ -119,7 +103,7 @@ namespace Easy.Platform.EfCore
                             retry,
                             retryCount);
                     })
-                .ExecuteAndThrowFinalException(() => db.Initialize(serviceScope.ServiceProvider));
+                .ExecuteAndThrowFinalException(() => db.Initialize(serviceScope.ServiceProvider, IsDevEnvironment()));
         }
 
         protected override void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
@@ -158,7 +142,8 @@ namespace Easy.Platform.EfCore
 
         private static void RegisterBuiltInPersistenceServices(IServiceCollection serviceCollection)
         {
-            serviceCollection.RegisterAllForImplementation<EfCoreSqlPlatformFullTextSearchPersistenceService>(ServiceLifeTime.Transient);
+            serviceCollection.RegisterAllForImplementation<EfCoreSqlPlatformFullTextSearchPersistenceService>(
+                ServiceLifeTime.Transient);
         }
 
         private void RegisterDbContextOptions(
@@ -168,7 +153,9 @@ namespace Easy.Platform.EfCore
             serviceCollection.TryAdd(
                 new ServiceDescriptor(
                     typeof(DbContextOptions<TDbContext>),
-                    p => CreateDbContextOptions(p, (provider, builder) => DbContextOptionsBuilderActionProvider(provider).Invoke(builder)),
+                    p => CreateDbContextOptions(
+                        p,
+                        (provider, builder) => DbContextOptionsBuilderActionProvider(provider).Invoke(builder)),
                     optionsLifetime));
 
             serviceCollection.Add(

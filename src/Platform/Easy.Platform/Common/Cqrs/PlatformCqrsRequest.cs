@@ -1,4 +1,3 @@
-using System;
 using Easy.Platform.Common.Dtos;
 
 namespace Easy.Platform.Common.Cqrs

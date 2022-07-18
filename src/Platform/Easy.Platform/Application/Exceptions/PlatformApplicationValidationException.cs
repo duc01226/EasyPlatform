@@ -11,7 +11,8 @@ namespace Easy.Platform.Application.Exceptions
             return new PlatformApplicationValidationException(new PlatformValidationResult(validationResult.Errors));
         }
 
-        public PlatformApplicationValidationException(PlatformValidationResult validationResult) : base(validationResult.ToString())
+        public PlatformApplicationValidationException(PlatformValidationResult validationResult) : base(
+            validationResult.ToString())
         {
             ValidationResult = validationResult;
         }
@@ -19,9 +20,11 @@ namespace Easy.Platform.Application.Exceptions
         public PlatformValidationResult<object> ValidationResult { get; set; }
     }
 
-    public class PlatformApplicationValidationException<TValue> : PlatformApplicationException, IPlatformValidationException<TValue>
+    public class PlatformApplicationValidationException<TValue> : PlatformApplicationException,
+        IPlatformValidationException<TValue>
     {
-        public PlatformApplicationValidationException(PlatformValidationResult<TValue> validationResult) : base(validationResult.ToString())
+        public PlatformApplicationValidationException(PlatformValidationResult<TValue> validationResult) : base(
+            validationResult.ToString())
         {
             ValidationResult = validationResult;
         }

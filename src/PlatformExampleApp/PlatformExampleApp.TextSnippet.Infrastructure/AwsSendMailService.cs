@@ -18,8 +18,9 @@ namespace PlatformExampleApp.TextSnippet.Infrastructure
 
         public void SendEmail(string toEmail, string mailHeader, string mailContent)
         {
-            logger.LogInformationIfEnabled($"Demo implemented AwsSendMailService directly in application module. " +
-                                           $"ToEmail: {toEmail}. Header: {mailHeader}. MailContent: {mailContent}");
+            logger.LogInformationIfEnabled(
+                $"Demo implemented AwsSendMailService directly in application module. " +
+                $"ToEmail: {toEmail}. Header: {mailHeader}. MailContent: {mailContent}");
         }
     }
 }

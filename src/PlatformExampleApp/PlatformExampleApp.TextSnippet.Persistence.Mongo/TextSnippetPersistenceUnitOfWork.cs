@@ -1,5 +1,4 @@
-using Easy.Platform.MongoDB.Domain.UnitOfWork;
-using PlatformExampleApp.TextSnippet.Domain.Repositories;
+// ReSharper disable once EmptyNamespace
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
 {

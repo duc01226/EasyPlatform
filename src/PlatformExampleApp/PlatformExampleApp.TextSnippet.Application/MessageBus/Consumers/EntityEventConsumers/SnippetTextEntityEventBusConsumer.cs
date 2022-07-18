@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Easy.Platform.Application.MessageBus.Consumers.CqrsEventConsumers;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
@@ -17,7 +14,10 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Entity
     /// <br/>
     /// <inheritdoc cref="PlatformCqrsEntityEventBusMessageConsumer{TEntity}"/>
     /// </summary>
-    [PlatformMessageBusConsumer(PlatformCqrsEntityEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "TextSnippetEntity")]
+    [PlatformMessageBusConsumer(
+        PlatformCqrsEntityEvent.EventTypeValue,
+        TextSnippetApplicationConstants.ApplicationName,
+        "TextSnippetEntity")]
     public class SnippetTextEntityEventBusMessageConsumer : PlatformCqrsEntityEventBusMessageConsumer<TextSnippetEntity>
     {
         public SnippetTextEntityEventBusMessageConsumer(
@@ -27,10 +27,13 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Entity
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message, string routingKey)
+        protected override Task InternalHandleAsync(
+            PlatformBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message,
+            string routingKey)
         {
-            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message {(message.Payload.BusinessActionEvents.Any() ? $"for Business Actions [{string.Join(", ", message.Payload.BusinessActionEvents.Select(p => p.Key))}]" : "")}.\r\n" +
-                                           $"Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
+            Logger.LogInformationIfEnabled(
+                $"{GetType().FullName} has handled message {(message.Payload.BusinessActionEvents.Any() ? $"for Business Actions [{string.Join(", ", message.Payload.BusinessActionEvents.Select(p => p.Key))}]" : "")}.\r\n" +
+                $"Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
             return Task.CompletedTask;
         }
 
@@ -45,7 +48,9 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Entity
     /// <br/>
     /// <inheritdoc cref="PlatformCqrsEntityEventBusMessageConsumer{TEntity}"/>
     /// </summary>
-    public class SnippetTextEntityAsFreeFormatEventBusMessageConsumer : PlatformCqrsEntityEventBusMessageConsumer<TextSnippetEntity>
+    public class
+        SnippetTextEntityAsFreeFormatEventBusMessageConsumer : PlatformCqrsEntityEventBusMessageConsumer<
+            TextSnippetEntity>
     {
         public SnippetTextEntityAsFreeFormatEventBusMessageConsumer(
             ILoggerFactory loggerFactory,
@@ -54,10 +59,13 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Entity
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message, string routingKey)
+        protected override Task InternalHandleAsync(
+            PlatformBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message,
+            string routingKey)
         {
-            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message {(message.Payload.BusinessActionEvents.Any() ? $"for Business Actions [{string.Join(", ", message.Payload.BusinessActionEvents.Select(p => p.Key))}]" : "")}.\r\n" +
-                                           $"Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
+            Logger.LogInformationIfEnabled(
+                $"{GetType().FullName} has handled message {(message.Payload.BusinessActionEvents.Any() ? $"for Business Actions [{string.Join(", ", message.Payload.BusinessActionEvents.Select(p => p.Key))}]" : "")}.\r\n" +
+                $"Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
             return Task.CompletedTask;
         }
 
@@ -71,7 +79,9 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Entity
     /// <br/>
     /// <inheritdoc cref="PlatformCqrsEntityEventBusMessageConsumer{TEntity}"/>
     /// </summary>
-    public class SnippetTextEntityTestErrorInboxEventBusMessageConsumer : PlatformCqrsEntityEventBusMessageConsumer<TextSnippetEntity>
+    public class
+        SnippetTextEntityTestErrorInboxEventBusMessageConsumer : PlatformCqrsEntityEventBusMessageConsumer<
+            TextSnippetEntity>
     {
         public SnippetTextEntityTestErrorInboxEventBusMessageConsumer(
             ILoggerFactory loggerFactory,
@@ -80,7 +90,9 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Entity
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message, string routingKey)
+        protected override Task InternalHandleAsync(
+            PlatformBusMessage<PlatformCqrsEntityEvent<TextSnippetEntity>> message,
+            string routingKey)
         {
             throw new Exception($"Test error inbox {DateTime.UtcNow.ToLongDateString()}");
         }

@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Domain.UnitOfWork;
@@ -25,6 +22,7 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
             string routingKey,
             bool isProcessingExistingInboxMessage,
             ILogger logger,
+            double retryProcessFailedMessageInSecondsUnit,
             CancellationToken cancellationToken = default) where TMessage : class, IPlatformBusTrackableMessage, new()
         {
             if (message.TrackingId != null)
@@ -36,22 +34,37 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
                 if (existingInboxMessage == null ||
                     existingInboxMessage.ConsumeStatus == PlatformInboxBusMessage.ConsumeStatuses.New ||
                     existingInboxMessage.ConsumeStatus == PlatformInboxBusMessage.ConsumeStatuses.Failed ||
-                    (isProcessingExistingInboxMessage && existingInboxMessage.ConsumeStatus == PlatformInboxBusMessage.ConsumeStatuses.Processing))
+                    (isProcessingExistingInboxMessage &&
+                     existingInboxMessage.ConsumeStatus == PlatformInboxBusMessage.ConsumeStatuses.Processing))
                 {
                     try
                     {
                         await internalHandleAsync(message, routingKey);
 
                         await UpsertProcessedInboxMessageAsync(
-                            consumer, unitOfWorkManager, inboxBusMessageRepo, message, routingKey, cancellationToken);
+                            consumer,
+                            unitOfWorkManager,
+                            inboxBusMessageRepo,
+                            message,
+                            routingKey,
+                            cancellationToken);
                     }
                     catch (Exception ex)
                     {
                         await UpsertFailedInboxMessageAsync(
-                            consumer, unitOfWorkManager, inboxBusMessageRepo, message, routingKey, ex, cancellationToken);
+                            consumer,
+                            unitOfWorkManager,
+                            inboxBusMessageRepo,
+                            message,
+                            routingKey,
+                            ex,
+                            retryProcessFailedMessageInSecondsUnit,
+                            cancellationToken);
 
-                        logger.LogError(ex, $"Error Consume inbox message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
-                                           $"Message Info: ${PlatformJsonSerializer.Serialize(message)}.{Environment.NewLine}");
+                        logger.LogError(
+                            ex,
+                            $"Error Consume inbox message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
+                            $"Message Info: ${PlatformJsonSerializer.Serialize(message)}.{Environment.NewLine}");
                     }
                 }
             }
@@ -115,6 +128,7 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
             TMessage message,
             string routingKey,
             Exception exception,
+            double retryProcessFailedMessageInSecondsUnit,
             CancellationToken cancellationToken = default) where TMessage : class, IPlatformBusTrackableMessage, new()
         {
             using (var uow = unitOfWorkManager.Begin())
@@ -122,7 +136,12 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
                 var existingInboxMessage = await inboxBusMessageRepo.FirstOrDefaultAsync(
                     p => p.Id == PlatformInboxBusMessage.BuildId(message, GetConsumerByValue(consumer)),
                     cancellationToken);
-                var consumeError = PlatformJsonSerializer.Serialize(new { exception.Message, exception.StackTrace });
+                var consumeError = PlatformJsonSerializer.Serialize(
+                    new
+                    {
+                        exception.Message,
+                        exception.StackTrace
+                    });
 
                 if (existingInboxMessage == null)
                 {
@@ -140,6 +159,10 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
                     existingInboxMessage.ConsumeStatus = PlatformInboxBusMessage.ConsumeStatuses.Failed;
                     existingInboxMessage.LastConsumeDate = DateTime.UtcNow;
                     existingInboxMessage.LastConsumeError = consumeError;
+                    existingInboxMessage.RetriedProcessCount = (existingInboxMessage.RetriedProcessCount ?? 0) + 1;
+                    existingInboxMessage.NextRetryProcessAfter = PlatformInboxBusMessage.CalculateNextRetryProcessAfter(
+                        retriedProcessCount: existingInboxMessage.RetriedProcessCount,
+                        retryProcessFailedMessageInSecondsUnit);
 
                     await inboxBusMessageRepo.UpdateAsync(existingInboxMessage, cancellationToken: cancellationToken);
                 }
@@ -158,7 +181,12 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern
             using (var uow = unitOfWorkManager.Begin())
             {
                 var existingInboxMessage = await inboxBusMessageRepo.GetByIdAsync(id, cancellationToken);
-                var consumeError = PlatformJsonSerializer.Serialize(new { exception.Message, exception.StackTrace });
+                var consumeError = PlatformJsonSerializer.Serialize(
+                    new
+                    {
+                        exception.Message,
+                        exception.StackTrace
+                    });
 
                 existingInboxMessage.ConsumeStatus = PlatformInboxBusMessage.ConsumeStatuses.Failed;
                 existingInboxMessage.LastConsumeDate = DateTime.UtcNow;

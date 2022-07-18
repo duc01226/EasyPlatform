@@ -6,7 +6,9 @@ using PlatformExampleApp.TextSnippet.Application.UseCaseCommands;
 
 namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.CommandEventBusProducers
 {
-    public class SaveTextSnippetCommandEventBusMessageProducer : PlatformCqrsCommandEventBusMessageProducer<SaveSnippetTextCommand>
+    public class
+        SaveTextSnippetCommandEventBusMessageProducer : PlatformCqrsCommandEventBusMessageProducer<
+            SaveSnippetTextCommand>
     {
         public SaveTextSnippetCommandEventBusMessageProducer(
             IUnitOfWorkManager unitOfWorkManager,
@@ -19,7 +21,9 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.Comman
     /// <summary>
     /// Demo SendAsFreeFormatMessage. The consumer for this command event message do not need to define routing key
     /// </summary>
-    public class SaveTextSnippetCommandSendAsFreeFormatMessageEventBusMessageProducer : PlatformCqrsCommandEventBusMessageProducer<SaveSnippetTextCommand>
+    public class
+        SaveTextSnippetCommandSendAsFreeFormatMessageEventBusMessageProducer :
+            PlatformCqrsCommandEventBusMessageProducer<SaveSnippetTextCommand>
     {
         public SaveTextSnippetCommandSendAsFreeFormatMessageEventBusMessageProducer(
             IUnitOfWorkManager unitOfWorkManager,

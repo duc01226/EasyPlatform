@@ -1,13 +1,9 @@
-using System;
-using System.Collections.Generic;
 using System.Text.Json;
-using Microsoft.Extensions.Configuration;
 using Easy.Platform.AspNetCore;
-using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.Common.JsonSerialization;
+using Microsoft.Extensions.Configuration;
 using PlatformExampleApp.TextSnippet.Api.Context.UserContext;
 using PlatformExampleApp.TextSnippet.Application;
-using PlatformExampleApp.TextSnippet.Domain;
 using PlatformExampleApp.TextSnippet.Infrastructure;
 using PlatformExampleApp.TextSnippet.Persistence;
 using PlatformExampleApp.TextSnippet.Persistence.Mongo;
@@ -19,7 +15,9 @@ namespace PlatformExampleApp.TextSnippet.Api
 {
     public class TextSnippetApiAspNetCoreModule : PlatformAspNetCoreModule
     {
-        public TextSnippetApiAspNetCoreModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public TextSnippetApiAspNetCoreModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(
+            serviceProvider,
+            configuration)
         {
         }
 

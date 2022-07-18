@@ -1,8 +1,4 @@
-using System;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
-using FluentValidation.Results;
 
 namespace Easy.Platform.Common.Validators
 {
@@ -24,16 +20,17 @@ namespace Easy.Platform.Common.Validators
 
         public string ErrorMessage { get; private set; }
 
-        public PlatformValidationResult Validate(Func<Expression<Func<T, bool>>, bool> checkAnyDuplicatedFn)
+        public PlatformValidationResult Validate(Func<Expression<Func<T, bool>>, bool> checkAnyDuplicatedItemFunction)
         {
-            if (checkAnyDuplicatedFn(FindOtherDuplicatedItemExpr))
+            if (checkAnyDuplicatedItemFunction(FindOtherDuplicatedItemExpr))
                 return Invalid("", ErrorMessage);
             return new PlatformValidationResult();
         }
 
-        public async Task<PlatformValidationResult> Validate(Func<Expression<Func<T, bool>>, Task<bool>> checkAnyDuplicatedFn)
+        public async Task<PlatformValidationResult> Validate(
+            Func<Expression<Func<T, bool>>, Task<bool>> checkAnyDuplicatedItemAsyncFunction)
         {
-            if (await checkAnyDuplicatedFn(FindOtherDuplicatedItemExpr))
+            if (await checkAnyDuplicatedItemAsyncFunction(FindOtherDuplicatedItemExpr))
                 return Invalid("", ErrorMessage);
             return new PlatformValidationResult();
         }

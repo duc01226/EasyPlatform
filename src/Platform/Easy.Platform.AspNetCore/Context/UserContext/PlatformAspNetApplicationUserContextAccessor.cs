@@ -1,7 +1,5 @@
-using System;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.Context.UserContext.Default;
-using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper;
 using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +10,7 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
     /// Implementation of <see cref="IPlatformApplicationUserContextAccessor"/>
     /// Inspired by Microsoft.AspNetCore.Http.HttpContextAccessor
     /// </summary>
-    public class PlatformAspNetApplicationUserContextAccessor : PlatformDefaultApplicationUserContextAccessor, IPlatformApplicationUserContextAccessor
+    public class PlatformAspNetApplicationUserContextAccessor : PlatformDefaultApplicationUserContextAccessor
     {
         private readonly IServiceProvider serviceProvider;
 
@@ -26,7 +24,8 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
             var httpContextAccessor = serviceProvider.GetService<IHttpContextAccessor>();
             var claimTypeMapper = serviceProvider.GetService<IPlatformApplicationUserContextKeyToClaimTypeMapper>();
             if (httpContextAccessor == null || claimTypeMapper == null)
-                throw new Exception("[Developer] Missing registered IHttpContextAccessor or IPlatformApplicationUserContextKeyToClaimTypeMapper");
+                throw new Exception(
+                    "[Developer] Missing registered IHttpContextAccessor or IPlatformApplicationUserContextKeyToClaimTypeMapper");
             return new PlatformAspNetApplicationUserContext(httpContextAccessor, claimTypeMapper);
         }
     }

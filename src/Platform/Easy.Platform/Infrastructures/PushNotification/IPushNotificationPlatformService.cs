@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Infrastructures.Abstract;
 
 namespace Easy.Platform.Infrastructures.PushNotification

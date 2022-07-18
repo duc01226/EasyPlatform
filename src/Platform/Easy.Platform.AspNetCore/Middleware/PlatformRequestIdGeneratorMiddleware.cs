@@ -1,10 +1,9 @@
-using System;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.AspNetCore.Constants;
 using Easy.Platform.AspNetCore.Middleware.Abstracts;
-using Microsoft.AspNetCore.Http;
 using Easy.Platform.Common.Extensions;
+using Microsoft.AspNetCore.Http;
+
 namespace Easy.Platform.AspNetCore.Middleware
 {
     /// <summary>
@@ -14,7 +13,8 @@ namespace Easy.Platform.AspNetCore.Middleware
     {
         private readonly IPlatformApplicationUserContextAccessor applicationUserContextAccessor;
 
-        public PlatformRequestIdGeneratorMiddleware(RequestDelegate next, IPlatformApplicationUserContextAccessor applicationUserContextAccessor) : base(next)
+        public PlatformRequestIdGeneratorMiddleware(RequestDelegate next,
+            IPlatformApplicationUserContextAccessor applicationUserContextAccessor) : base(next)
         {
             this.applicationUserContextAccessor = applicationUserContextAccessor;
         }
@@ -22,20 +22,23 @@ namespace Easy.Platform.AspNetCore.Middleware
         protected override async Task InternalInvokeAsync(HttpContext context)
         {
             if (!context.Request.Headers.TryGetValue(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
-                out var existedRequestId) || string.IsNullOrEmpty(existedRequestId))
+                    out var existedRequestId) || string.IsNullOrEmpty(existedRequestId))
             {
                 var newGeneratedRequestId = Guid.NewGuid().ToString();
-                context.Request.Headers.Upsert(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId, newGeneratedRequestId);
+                context.Request.Headers.Upsert(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
+                    newGeneratedRequestId);
             }
 
             context.TraceIdentifier = context.Request.Headers[PlatformAspnetConstant.CommonHttpHeaderNames.RequestId];
-            applicationUserContextAccessor.Current.SetValue(context.TraceIdentifier, PlatformApplicationCommonUserContextKeys.RequestId);
+            applicationUserContextAccessor.Current.SetValue(context.TraceIdentifier,
+                PlatformApplicationCommonUserContextKeys.RequestId);
 
-            // apply the request ID to the response header for client side tracking
+            // Add the request ID to the response header for client side tracking
             context.Response.OnStarting(() =>
             {
                 if (!context.Response.Headers.ContainsKey(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId))
-                    context.Response.Headers.Add(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId, new[] { context.TraceIdentifier });
+                    context.Response.Headers.Add(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
+                        new[] { context.TraceIdentifier });
                 return Task.CompletedTask;
             });
 

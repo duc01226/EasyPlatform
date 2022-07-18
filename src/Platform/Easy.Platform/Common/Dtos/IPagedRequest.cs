@@ -1,5 +1,3 @@
-using Easy.Platform.Common.Validators;
-
 namespace Easy.Platform.Common.Dtos
 {
     public interface IPlatformPagedRequest : IPlatformDto

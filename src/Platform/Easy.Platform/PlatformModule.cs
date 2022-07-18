@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Easy.Platform.Infrastructures.Caching;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Dtos;
@@ -27,7 +22,7 @@ namespace Easy.Platform
         {
             ServiceProvider = serviceProvider;
             Configuration = configuration;
-            Logger = serviceProvider?.GetService<ILoggerFactory>().CreateLogger(GetType());
+            Logger = serviceProvider?.GetService<ILoggerFactory>()?.CreateLogger(GetType());
         }
 
         public IServiceProvider ServiceProvider { get; }
@@ -46,7 +41,11 @@ namespace Easy.Platform
         /// <summary>
         /// Override this to call every time a new platform module is registered
         /// </summary>
-        public virtual void OnNewPlatformModuleRegistered(IServiceCollection serviceCollection, PlatformModule newModule) { }
+        public virtual void OnNewPlatformModuleRegistered(
+            IServiceCollection serviceCollection,
+            PlatformModule newModule)
+        {
+        }
 
         public void RegisterRuntimeModuleDependencies<TModule>(
             IServiceCollection serviceCollection) where TModule : PlatformModule
@@ -144,9 +143,12 @@ namespace Easy.Platform
 
         protected void EnsurePlatformDtosValid()
         {
-            // Validate all IPlatformDto must have parameter less constructor so that it could be Deserialize from json string object.
+            // WHY: Validate all IPlatformDto must have parameter less constructor so that it could be Deserialize from json string object.
             var missingParameterLessConstructorDtos = Assembly.GetTypes()
-                .Where(p => p.IsAssignableTo(typeof(IPlatformDto)) && !p.IsAbstract && p.GetConstructor(Type.EmptyTypes) == null)
+                .Where(
+                    p => p.IsAssignableTo(typeof(IPlatformDto)) &&
+                         !p.IsAbstract &&
+                         p.GetConstructor(Type.EmptyTypes) == null)
                 .ToList();
             if (missingParameterLessConstructorDtos.Any())
             {
@@ -163,43 +165,56 @@ namespace Easy.Platform
                 .Select(moduleTypeProvider => moduleTypeProvider(Configuration))
                 .Concat(AdditionalModuleTypeDependencies)
                 .ToList()
-                .ForEach(moduleType =>
-                {
-                    var dependModule = ServiceProvider.GetService(moduleType);
-                    if (dependModule == null)
-                        throw new Exception($"Module {GetType().Name} depend on {moduleType.Name} but Module {moduleType.Name} is not registered");
-                    if (dependModule is PlatformModule typedPlatformModule)
+                .ForEach(
+                    moduleType =>
                     {
-                        typedPlatformModule.Init();
-                    }
-                    else
-                    {
-                        throw new Exception(
-                            $"Module {GetType().Name} depend on {moduleType.Name} but Module {moduleType.Name} is not inherit from PlatformModule");
-                    }
-                });
+                        var dependModule = ServiceProvider.GetService(moduleType);
+                        if (dependModule == null)
+                            throw new Exception(
+                                $"Module {GetType().Name} depend on {moduleType.Name} but Module {moduleType.Name} is not registered");
+                        if (dependModule is PlatformModule typedPlatformModule)
+                        {
+                            typedPlatformModule.Init();
+                        }
+                        else
+                        {
+                            throw new Exception(
+                                $"Module {GetType().Name} depend on {moduleType.Name} but Module {moduleType.Name} is not inherit from PlatformModule");
+                        }
+                    });
         }
 
         private void RegisterDefaultLogs(IServiceCollection serviceCollection)
         {
-            serviceCollection.RegisterIfServiceNotExist(typeof(ILoggerFactory), typeof(LoggerFactory), ServiceLifeTime.Transient);
+            serviceCollection.RegisterIfServiceNotExist(
+                typeof(ILoggerFactory),
+                typeof(LoggerFactory),
+                ServiceLifeTime.Transient);
             serviceCollection.RegisterIfServiceNotExist(typeof(ILogger<>), typeof(Logger<>), ServiceLifeTime.Transient);
         }
 
         private void RegisterCqrs(IServiceCollection serviceCollection)
         {
             serviceCollection.AddMediatR(Assembly);
-            serviceCollection.Register(typeof(IPlatformCqrs), typeof(PlatformCqrs), ServiceLifeTime.Transient, replaceIfExist: true);
-            CqrsPipelinesProvider().ForEach(p =>
-            {
-                PlatformValidationResult
-                    .ValidIf(
-                        p.IsGenericType && p.GetGenericTypeDefinition().IsAssignableToGenericType(typeof(PlatformCqrsPipelineMiddleware<,>)),
-                        "Pipeline type must be GenericType and inherit from PlatformCqrsPipelineMiddleware<,>")
-                    .EnsureValid(val => new Exception(val.ErrorsMsg()));
+            serviceCollection.Register(
+                typeof(IPlatformCqrs),
+                typeof(PlatformCqrs),
+                ServiceLifeTime.Transient,
+                replaceIfExist: true);
+            CqrsPipelinesProvider()
+                .ForEach(
+                    p =>
+                    {
+                        PlatformValidationResult
+                            .ValidIf(
+                                p.IsGenericType &&
+                                p.GetGenericTypeDefinition()
+                                    .IsAssignableToGenericType(typeof(PlatformCqrsPipelineMiddleware<,>)),
+                                "Pipeline type must be GenericType and inherit from PlatformCqrsPipelineMiddleware<,>")
+                            .EnsureValid(val => new Exception(val.ErrorsMsg()));
 
-                serviceCollection.Register(typeof(IPipelineBehavior<,>), p, ServiceLifeTime.Transient);
-            });
+                        serviceCollection.Register(typeof(IPipelineBehavior<,>), p, ServiceLifeTime.Transient);
+                    });
         }
 
         private void RegisterAllModuleDependencies(IServiceCollection serviceCollection)

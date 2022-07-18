@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Cqrs.Events;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Domain.Entities;
@@ -15,14 +12,17 @@ namespace Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers
     {
     }
 
-    public class PlatformCqrsEntityEventBusMessage<TEntity> : PlatformBusMessage<PlatformCqrsEntityEvent<TEntity>>, IPlatformCqrsEntityEventBusMessage
+    public class PlatformCqrsEntityEventBusMessage<TEntity> : PlatformBusMessage<PlatformCqrsEntityEvent<TEntity>>,
+        IPlatformCqrsEntityEventBusMessage
         where TEntity : class, IEntity, new()
     {
         public override string MessageGroup => PlatformCqrsEntityEvent.EventTypeValue;
         public override string MessageType => PlatformCqrsEntityEvent.EventNameValue<TEntity>();
     }
 
-    public abstract class PlatformCqrsEntityEventBusMessageProducer<TEntity> : PlatformCqrsEntityEventApplicationHandler<TEntity>, IPlatformCqrsEventBusMessageProducer<PlatformCqrsEntityEvent<TEntity>>
+    public abstract class PlatformCqrsEntityEventBusMessageProducer<TEntity> :
+        PlatformCqrsEntityEventApplicationHandler<TEntity>,
+        IPlatformCqrsEventBusMessageProducer<PlatformCqrsEntityEvent<TEntity>>
         where TEntity : class, IEntity, new()
     {
         protected readonly IPlatformApplicationBusMessageProducer ApplicationBusMessageProducer;
@@ -37,7 +37,9 @@ namespace Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers
             Logger = loggerFactory.CreateLogger(GetType());
         }
 
-        protected override async Task HandleAsync(PlatformCqrsEntityEvent<TEntity> @event, CancellationToken cancellationToken)
+        protected override async Task HandleAsync(
+            PlatformCqrsEntityEvent<TEntity> @event,
+            CancellationToken cancellationToken)
         {
             await SendEntityEventEventBusMessage(@event, cancellationToken);
         }
@@ -60,25 +62,30 @@ namespace Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers
             {
                 if (SendAsFreeFormatMessage())
                 {
-                    await ApplicationBusMessageProducer.SendAsDefaultFreeFormatMessageAsync<PlatformCqrsEntityEventBusMessage<TEntity>, PlatformCqrsEntityEvent<TEntity>>(
-                        trackId: Guid.NewGuid().ToString(),
-                        messagePayload: @event,
-                        messageAction: @event.EventAction,
-                        cancellationToken: cancellationToken);
+                    await ApplicationBusMessageProducer
+                        .SendAsDefaultFreeFormatMessageAsync<PlatformCqrsEntityEventBusMessage<TEntity>,
+                            PlatformCqrsEntityEvent<TEntity>>(
+                            trackId: Guid.NewGuid().ToString(),
+                            messagePayload: @event,
+                            messageAction: @event.EventAction,
+                            cancellationToken: cancellationToken);
                 }
                 else
                 {
-                    await ApplicationBusMessageProducer.SendAsync<PlatformCqrsEntityEventBusMessage<TEntity>, PlatformCqrsEntityEvent<TEntity>>(
-                        trackId: Guid.NewGuid().ToString(),
-                        messagePayload: @event,
-                        messageAction: @event.EventAction,
-                        cancellationToken: cancellationToken);
+                    await ApplicationBusMessageProducer
+                        .SendAsync<PlatformCqrsEntityEventBusMessage<TEntity>, PlatformCqrsEntityEvent<TEntity>>(
+                            trackId: Guid.NewGuid().ToString(),
+                            messagePayload: @event,
+                            messageAction: @event.EventAction,
+                            cancellationToken: cancellationToken);
                 }
             }
             catch (PlatformMessageBusException<PlatformCqrsEntityEventBusMessage<TEntity>> e)
             {
-                Logger.LogError(e, $"[PlatformCqrsEventBusEntityEventHandler] Failed to send message for ${typeof(PlatformCqrsEntityEvent<TEntity>).FullName}. " +
-                                   $"Message Info: {PlatformJsonSerializer.Serialize(e.EventBusMessage)}");
+                Logger.LogError(
+                    e,
+                    $"[PlatformCqrsEventBusEntityEventHandler] Failed to send message for ${typeof(PlatformCqrsEntityEvent<TEntity>).FullName}. " +
+                    $"Message Info: {PlatformJsonSerializer.Serialize(e.EventBusMessage)}");
                 throw;
             }
         }

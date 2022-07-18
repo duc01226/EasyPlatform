@@ -1,4 +1,3 @@
-using System;
 using Easy.Platform.Common.Validators;
 
 namespace Easy.Platform.Common.Cqrs
@@ -21,7 +20,12 @@ namespace Easy.Platform.Common.Cqrs
             PlatformValidationResult validateResult,
             Func<PlatformValidationResult, Exception> exceptionProviderIfNotValid)
         {
-            EnsureValid(new PlatformValidationResult[] { validateResult }, exceptionProviderIfNotValid);
+            EnsureValid(
+                new PlatformValidationResult[]
+                {
+                    validateResult
+                },
+                exceptionProviderIfNotValid);
         }
 
         protected void EnsureValid<TValue>(
@@ -36,12 +40,22 @@ namespace Easy.Platform.Common.Cqrs
             PlatformValidationResult<TValue> validateResult,
             Func<PlatformValidationResult<TValue>, Exception> exceptionProviderIfNotValid)
         {
-            EnsureValid(new PlatformValidationResult<TValue>[] { validateResult }, exceptionProviderIfNotValid);
+            EnsureValid(
+                new PlatformValidationResult<TValue>[]
+                {
+                    validateResult
+                },
+                exceptionProviderIfNotValid);
         }
 
-        protected void EnsureNotNull(object target, string errorMessage, Func<PlatformValidationResult, Exception> exceptionProviderIfNotValid)
+        protected void EnsureNotNull(
+            object target,
+            string errorMessage,
+            Func<PlatformValidationResult, Exception> exceptionProviderIfNotValid)
         {
-            EnsureValid(PlatformValidationResult.ValidIf(() => target != null, errorMessage), exceptionProviderIfNotValid);
+            EnsureValid(
+                PlatformValidationResult.ValidIf(() => target != null, errorMessage),
+                exceptionProviderIfNotValid);
         }
     }
 }

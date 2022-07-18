@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Easy.Platform.Application;
 using Easy.Platform.Application.Context;
 using Microsoft.Extensions.Configuration;
@@ -35,7 +33,8 @@ namespace PlatformExampleApp.TextSnippet.Application
         // Your application can either override factory method DefaultApplicationSettingContextFactory to register default PlatformApplicationSettingContext
         // or just declare a class implement IPlatformApplicationSettingContext in project to use. It will be automatically registered.
         // Example that the class TextSnippetApplicationSettingContext has replace the default application setting
-        protected override PlatformApplicationSettingContext DefaultApplicationSettingContextFactory(IServiceProvider serviceProvider)
+        protected override PlatformApplicationSettingContext DefaultApplicationSettingContextFactory(
+            IServiceProvider serviceProvider)
         {
             return new PlatformApplicationSettingContext()
             {
@@ -45,7 +44,10 @@ namespace PlatformExampleApp.TextSnippet.Application
 
         protected override List<Type> CqrsPipelinesProvider()
         {
-            return new List<Type>() { typeof(CommandAuditLogCqrsPipelineMiddleware<,>) };
+            return new List<Type>()
+            {
+                typeof(CommandAuditLogCqrsPipelineMiddleware<,>)
+            };
         }
 
         // Example Override this to set the whole application default JsonSerializerOptions for PlatformJsonSerializer.CurrentOptions

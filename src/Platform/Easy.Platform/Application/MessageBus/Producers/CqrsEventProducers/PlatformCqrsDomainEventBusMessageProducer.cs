@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Cqrs.Events;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Domain.Events;
@@ -14,14 +11,17 @@ namespace Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers
     {
     }
 
-    public class PlatformCqrsDomainEventBusMessage<TDomainEvent> : PlatformBusMessage<TDomainEvent>, IPlatformCqrsDomainEventBusMessage
+    public class PlatformCqrsDomainEventBusMessage<TDomainEvent> : PlatformBusMessage<TDomainEvent>,
+        IPlatformCqrsDomainEventBusMessage
         where TDomainEvent : PlatformCqrsDomainEvent, new()
     {
         public override string MessageGroup => PlatformCqrsDomainEvent.EventTypeValue;
         public override string MessageType => typeof(TDomainEvent).Name;
     }
 
-    public abstract class PlatformCqrsDomainEventBusMessageProducer<TDomainEvent> : PlatformCqrsDomainEventApplicationHandler<TDomainEvent>, IPlatformCqrsEventBusMessageProducer<TDomainEvent>
+    public abstract class PlatformCqrsDomainEventBusMessageProducer<TDomainEvent> :
+        PlatformCqrsDomainEventApplicationHandler<TDomainEvent>,
+        IPlatformCqrsEventBusMessageProducer<TDomainEvent>
         where TDomainEvent : PlatformCqrsDomainEvent, new()
     {
         protected readonly IPlatformApplicationBusMessageProducer ApplicationBusMessageProducer;
@@ -41,14 +41,17 @@ namespace Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers
             await SendDomainEventEventBusMessage(@event, cancellationToken);
         }
 
-        protected virtual async Task SendDomainEventEventBusMessage(TDomainEvent @event, CancellationToken cancellationToken)
+        protected virtual async Task SendDomainEventEventBusMessage(
+            TDomainEvent @event,
+            CancellationToken cancellationToken)
         {
             try
             {
                 if (SendAsFreeFormatMessage())
                 {
                     await ApplicationBusMessageProducer
-                        .SendAsDefaultFreeFormatMessageAsync<PlatformCqrsDomainEventBusMessage<TDomainEvent>, TDomainEvent>(
+                        .SendAsDefaultFreeFormatMessageAsync<PlatformCqrsDomainEventBusMessage<TDomainEvent>,
+                            TDomainEvent>(
                             trackId: Guid.NewGuid().ToString(),
                             messagePayload: @event,
                             messageAction: @event.EventAction,

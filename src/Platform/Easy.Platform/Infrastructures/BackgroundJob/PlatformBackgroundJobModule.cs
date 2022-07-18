@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Extensions;
 using Microsoft.Extensions.Configuration;
@@ -15,7 +10,9 @@ namespace Easy.Platform.Infrastructures.BackgroundJob
 {
     public abstract class PlatformBackgroundJobModule : PlatformInfrastructureModule
     {
-        public PlatformBackgroundJobModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public PlatformBackgroundJobModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(
+            serviceProvider,
+            configuration)
         {
         }
 
@@ -36,7 +33,8 @@ namespace Easy.Platform.Infrastructures.BackgroundJob
 
         protected async Task StartBackgroundJobProcessing(IServiceScope serviceScope)
         {
-            var backgroundJobProcessingService = serviceScope.ServiceProvider.GetService<IPlatformBackgroundJobProcessingService>();
+            var backgroundJobProcessingService =
+                serviceScope.ServiceProvider.GetService<IPlatformBackgroundJobProcessingService>();
 
             if (backgroundJobProcessingService!.Started())
                 await backgroundJobProcessingService.Stop();
@@ -50,26 +48,33 @@ namespace Easy.Platform.Infrastructures.BackgroundJob
                     .WaitAndRetryAsync(
                         retryCount: retryCount,
                         sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                        onRetry: (exception, timeSpan, retry, ctx) =>
+                        onRetry: (
+                            exception,
+                            timeSpan,
+                            retry,
+                            ctx) =>
                         {
                             var logger = serviceScope.ServiceProvider.GetService<ILoggerFactory>()!.CreateLogger(
                                 categoryName: GetType().Name);
 
-                            logger.LogWarning(exception,
+                            logger.LogWarning(
+                                exception,
                                 "[StartBackgroundJobProcessing] Exception {ExceptionType} with message {Message} detected on attempt StartBackgroundJobProcessing {retry} of {retries}",
                                 exception.GetType().Name,
                                 exception.Message,
                                 retry,
                                 retryCount);
                         })
-                    .ExecuteAndThrowFinalExceptionAsync(async () =>
-                    {
-                        await backgroundJobProcessingService.Start();
-                        applicationLifetime?.ApplicationStopping.Register(() =>
+                    .ExecuteAndThrowFinalExceptionAsync(
+                        async () =>
                         {
-                            backgroundJobProcessingService.Stop().Wait();
+                            await backgroundJobProcessingService.Start();
+                            applicationLifetime?.ApplicationStopping.Register(
+                                () =>
+                                {
+                                    backgroundJobProcessingService.Stop().Wait();
+                                });
                         });
-                    });
             }
         }
 

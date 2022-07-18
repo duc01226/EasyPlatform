@@ -1,8 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Easy.Platform.Application.Cqrs;
-using Easy.Platform.Application.Cqrs.Events;
 using Easy.Platform.Common.Cqrs.Events;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Domain.Entities;
@@ -12,6 +7,7 @@ namespace Easy.Platform.Domain.Events
     public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent
     {
         public const string EventTypeValue = "EntityEvent";
+
         public static string EventNameValue<TEntity>()
         {
             return typeof(TEntity).Name;
@@ -55,7 +51,8 @@ namespace Easy.Platform.Domain.Events
         /// BusinessAction is used to give more detail about the crud operation.<br/>
         /// It is a list of action-actionPayloadJson from entity action events
         /// </summary>
-        public List<KeyValuePair<string, string>> BusinessActionEvents { get; set; } = new List<KeyValuePair<string, string>>();
+        public List<KeyValuePair<string, string>> BusinessActionEvents { get; set; } =
+            new List<KeyValuePair<string, string>>();
 
         public List<TEventPayload> FindBusinessActionEvents<TEventPayload>(string eventName)
         {

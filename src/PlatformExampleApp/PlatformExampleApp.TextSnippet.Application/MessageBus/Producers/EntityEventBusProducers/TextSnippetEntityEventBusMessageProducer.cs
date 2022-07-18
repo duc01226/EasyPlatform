@@ -19,7 +19,9 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.Entity
     /// <summary>
     /// Demo SendAsFreeFormatMessage. The consumer for this entity event message do not need to define routing key
     /// </summary>
-    public class TextSnippetEntitySendAsFreeFormatMessageEventBusMessageProducer : PlatformCqrsEntityEventBusMessageProducer<TextSnippetEntity>
+    public class
+        TextSnippetEntitySendAsFreeFormatMessageEventBusMessageProducer : PlatformCqrsEntityEventBusMessageProducer<
+            TextSnippetEntity>
     {
         public TextSnippetEntitySendAsFreeFormatMessageEventBusMessageProducer(
             IUnitOfWorkManager unitOfWorkManager,

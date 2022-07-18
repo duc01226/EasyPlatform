@@ -1,7 +1,4 @@
-using System.Collections.Generic;
-using System.Linq;
 using FluentValidation;
-using FluentValidation.Results;
 
 namespace Easy.Platform.Common.Validators
 {
@@ -9,12 +6,16 @@ namespace Easy.Platform.Common.Validators
     {
         public static PlatformValidationResult Invalid(string property, string errorMsg)
         {
-            return new PlatformValidationResult(new List<PlatformValidationFailure>() { new PlatformValidationFailure(property, errorMsg) });
+            return new PlatformValidationResult(
+                new List<PlatformValidationFailure>()
+                {
+                    new PlatformValidationFailure(property, errorMsg)
+                });
         }
 
         public static PlatformValidationResult Valid()
         {
-            return new PlatformValidationResult(new List<PlatformValidationFailure>() { });
+            return new PlatformValidationResult(new List<PlatformValidationFailure>());
         }
 
         public static PlatformValidator<T> Create()
@@ -42,7 +43,8 @@ namespace Easy.Platform.Common.Validators
         public override PlatformValidationResult Validate(ValidationContext<T> context)
         {
             var validationResult = base.Validate(context);
-            return new PlatformValidationResult(validationResult.Errors.Select(p => new PlatformValidationFailure(p)).ToList());
+            return new PlatformValidationResult(
+                validationResult.Errors.Select(p => new PlatformValidationFailure(p)).ToList());
         }
 
         public new PlatformValidationResult Validate(T instance)

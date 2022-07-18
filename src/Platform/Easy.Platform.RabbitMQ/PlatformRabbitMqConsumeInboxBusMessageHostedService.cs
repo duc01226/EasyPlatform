@@ -17,7 +17,12 @@ namespace Easy.Platform.RabbitMQ
             IServiceProvider serviceProvider,
             IPlatformApplicationSettingContext applicationSettingContext,
             PlatformRabbitMqOptions options,
-            IPlatformMessageBusManager messageBusManager) : base(applicationLifetime, loggerFactory, serviceProvider, applicationSettingContext, messageBusManager)
+            IPlatformMessageBusManager messageBusManager) : base(
+            applicationLifetime,
+            loggerFactory,
+            serviceProvider,
+            applicationSettingContext,
+            messageBusManager)
         {
             this.options = options;
         }

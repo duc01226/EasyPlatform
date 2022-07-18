@@ -1,15 +1,12 @@
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Easy.Platform.FireBasePushNotification.GoogleFcm
 {
     internal class FcmResponse
     {
-        [JsonPropertyName("multicast_id")]
-        public long MulticastId { get; set; }
+        [JsonPropertyName("multicast_id")] public long MulticastId { get; set; }
 
-        [JsonPropertyName("canonical_ids")]
-        public int CanonicalIds { get; set; }
+        [JsonPropertyName("canonical_ids")] public int CanonicalIds { get; set; }
 
         /// <summary>
         /// Success count

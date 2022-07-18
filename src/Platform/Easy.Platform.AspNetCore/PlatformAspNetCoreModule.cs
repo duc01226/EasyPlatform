@@ -1,17 +1,10 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Easy.Platform.Application;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.AspNetCore.Constants;
 using Easy.Platform.AspNetCore.Context.UserContext;
 using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper;
 using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Easy.Platform.AspNetCore.ExceptionHandling;
 using Easy.Platform.AspNetCore.Middleware;
 using Easy.Platform.AspNetCore.Middleware.Abstracts;
@@ -20,13 +13,18 @@ using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace Easy.Platform.AspNetCore
 {
     public abstract class PlatformAspNetCoreModule : PlatformModule
     {
-        public PlatformAspNetCoreModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public PlatformAspNetCoreModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(
+            serviceProvider,
+            configuration)
         {
         }
 
@@ -66,10 +64,14 @@ namespace Easy.Platform.AspNetCore
         ///  Use <see cref="PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy"/> in dev environment,
         ///  if not then <see cref="PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy"/> will be used
         /// </summary>
-        public IApplicationBuilder UseDefaultCorsPolicy(IApplicationBuilder applicationBuilder, string specificCorPolicy = null)
+        public IApplicationBuilder UseDefaultCorsPolicy(
+            IApplicationBuilder applicationBuilder,
+            string specificCorPolicy = null)
         {
             var env = ServiceProvider.GetService<IWebHostEnvironment>();
-            var defaultCorsPolicyName = env.IsDevelopment() ? PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy : PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy;
+            var defaultCorsPolicyName = env.IsDevelopment()
+                ? PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy
+                : PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy;
             applicationBuilder.UseCors(specificCorPolicy ?? defaultCorsPolicyName);
 
             return applicationBuilder;
@@ -78,7 +80,8 @@ namespace Easy.Platform.AspNetCore
         /// <summary>
         /// Use a specific middleware by middle class type
         /// </summary>
-        public IApplicationBuilder UseMiddleware<TMiddleware>(IApplicationBuilder applicationBuilder) where TMiddleware : PlatformMiddleware
+        public IApplicationBuilder UseMiddleware<TMiddleware>(IApplicationBuilder applicationBuilder)
+            where TMiddleware : PlatformMiddleware
         {
             return applicationBuilder.UseMiddleware<TMiddleware>();
         }
@@ -126,25 +129,27 @@ namespace Easy.Platform.AspNetCore
 
         protected virtual void AddDefaultCorsPolicy(IServiceCollection serviceCollection)
         {
-            serviceCollection.AddCors(options => options.AddPolicy(
-                PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy,
-                builder =>
-                    builder.AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .WithExposedHeaders(DefaultCorsPolicyExposedHeaders())
-                        .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
+            serviceCollection.AddCors(
+                options => options.AddPolicy(
+                    PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy,
+                    builder =>
+                        builder.AllowAnyOrigin()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader()
+                            .WithExposedHeaders(DefaultCorsPolicyExposedHeaders())
+                            .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
 
-            serviceCollection.AddCors(options => options.AddPolicy(
-                PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy,
-                builder =>
-                    builder.WithOrigins(GetAllowCorsOrigins(Configuration))
-                        .SetIsOriginAllowedToAllowWildcardSubdomains()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials()
-                        .WithExposedHeaders(DefaultCorsPolicyExposedHeaders())
-                        .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
+            serviceCollection.AddCors(
+                options => options.AddPolicy(
+                    PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy,
+                    builder =>
+                        builder.WithOrigins(GetAllowCorsOrigins(Configuration))
+                            .SetIsOriginAllowedToAllowWildcardSubdomains()
+                            .AllowAnyMethod()
+                            .AllowAnyHeader()
+                            .AllowCredentials()
+                            .WithExposedHeaders(DefaultCorsPolicyExposedHeaders())
+                            .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
         }
 
         /// <summary>
@@ -152,7 +157,10 @@ namespace Easy.Platform.AspNetCore
         /// </summary>
         protected virtual string[] DefaultCorsPolicyExposedHeaders()
         {
-            return new string[] { PlatformAspnetConstant.CommonHttpHeaderNames.RequestId };
+            return new string[]
+            {
+                PlatformAspnetConstant.CommonHttpHeaderNames.RequestId
+            };
         }
 
         /// <summary>
@@ -202,7 +210,8 @@ namespace Easy.Platform.AspNetCore
 
             if (applicationModuleType != null)
             {
-                var applicationModule = (PlatformApplicationModule)scope.ServiceProvider.GetService(applicationModuleType);
+                var applicationModule =
+                    (PlatformApplicationModule)scope.ServiceProvider.GetService(applicationModuleType);
                 applicationModule?.SeedData(scope).Wait();
             }
         }

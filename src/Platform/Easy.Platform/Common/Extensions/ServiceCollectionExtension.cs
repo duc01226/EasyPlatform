@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Reflection;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Utils;
@@ -30,12 +28,17 @@ namespace Easy.Platform.Common.Extensions
             assembly.GetTypes()
                 .Where(p => p.IsClass && !p.IsAbstract && p.IsAssignableTo(conventionalType))
                 .ToList()
-                .ForEach(implementationType =>
-                {
-                    services.RegisterSelf(implementationType, lifeTime, replaceIfExist);
+                .ForEach(
+                    implementationType =>
+                    {
+                        services.RegisterSelf(implementationType, lifeTime, replaceIfExist);
 
-                    services.RegisterInterfacesForImplementation(implementationType, lifeTime, replaceIfExist, replaceStrategy);
-                });
+                        services.RegisterInterfacesForImplementation(
+                            implementationType,
+                            lifeTime,
+                            replaceIfExist,
+                            replaceStrategy);
+                    });
 
             return services;
         }
@@ -54,10 +57,15 @@ namespace Easy.Platform.Common.Extensions
             assembly.GetTypes()
                 .Where(p => p.IsClass && !p.IsAbstract && p.IsAssignableTo(conventionalType))
                 .ToList()
-                .ForEach(implementationType =>
-                {
-                    services.RegisterInterfacesForImplementation(implementationType, lifeTime, replaceIfExist, replaceStrategy);
-                });
+                .ForEach(
+                    implementationType =>
+                    {
+                        services.RegisterInterfacesForImplementation(
+                            implementationType,
+                            lifeTime,
+                            replaceIfExist,
+                            replaceStrategy);
+                    });
 
             return services;
         }
@@ -72,7 +80,13 @@ namespace Easy.Platform.Common.Extensions
             bool replaceIfExist = true,
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            return RegisterAllServicesFromType(services, typeof(TConventional), lifeTime, assembly, replaceIfExist, replaceStrategy);
+            return RegisterAllServicesFromType(
+                services,
+                typeof(TConventional),
+                lifeTime,
+                assembly,
+                replaceIfExist,
+                replaceStrategy);
         }
 
         /// <summary>
@@ -85,7 +99,13 @@ namespace Easy.Platform.Common.Extensions
             bool replaceIfExist = true,
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            return RegisterAllFromType(services, typeof(TConventional), lifeTime, assembly, replaceIfExist, replaceStrategy);
+            return RegisterAllFromType(
+                services,
+                typeof(TConventional),
+                lifeTime,
+                assembly,
+                replaceIfExist,
+                replaceStrategy);
         }
 
         /// <summary>
@@ -100,7 +120,11 @@ namespace Easy.Platform.Common.Extensions
         {
             services.RegisterIfNotExist(implementationType, implementationType, lifeTime);
 
-            services.RegisterInterfacesForImplementation(implementationType, lifeTime, replaceIfExist, replaceStrategy);
+            services.RegisterInterfacesForImplementation(
+                implementationType,
+                lifeTime,
+                replaceIfExist,
+                replaceStrategy);
 
             return services;
         }
@@ -118,13 +142,18 @@ namespace Easy.Platform.Common.Extensions
         {
             services.RegisterIfNotExist(implementationType, implementationType, lifeTime);
 
-            services.RegisterInterfacesForImplementation(implementationType, implementationFactory, lifeTime, replaceIfExist, replaceStrategy);
+            services.RegisterInterfacesForImplementation(
+                implementationType,
+                implementationFactory,
+                lifeTime,
+                replaceIfExist,
+                replaceStrategy);
 
             return services;
         }
 
         /// <summary>
-        /// <inheritdoc cref="RegisterAllForImplementation(IServiceCollection,Type,ServiceLifeTime)"/>
+        /// <inheritdoc cref="RegisterAllForImplementation(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Type,Easy.Platform.Common.DependencyInjection.ServiceLifeTime,bool,Easy.Platform.Common.Extensions.ServiceCollectionExtension.ReplaceServiceStrategy)"/>
         /// </summary>
         public static IServiceCollection RegisterAllForImplementation<TImplementation>(
             this IServiceCollection services,
@@ -132,7 +161,12 @@ namespace Easy.Platform.Common.Extensions
             bool replaceIfExist = true,
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            return RegisterAllForImplementation(services, typeof(TImplementation), lifeTime, replaceIfExist, replaceStrategy);
+            return RegisterAllForImplementation(
+                services,
+                typeof(TImplementation),
+                lifeTime,
+                replaceIfExist,
+                replaceStrategy);
         }
 
         /// <summary>
@@ -144,7 +178,11 @@ namespace Easy.Platform.Common.Extensions
             ServiceLifeTime lifeTime,
             bool replaceIfExist = true)
         {
-            services.Register(typeof(TImplementation), implementationFactory, lifeTime, replaceIfExist);
+            services.Register(
+                typeof(TImplementation),
+                implementationFactory,
+                lifeTime,
+                replaceIfExist);
 
             services.RegisterInterfacesForImplementation(implementationFactory, lifeTime, replaceIfExist);
 
@@ -192,14 +230,24 @@ namespace Easy.Platform.Common.Extensions
             bool replaceIfExist = true,
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            return Register(services, typeof(TService), typeof(TImplementation), lifeTime, replaceIfExist, replaceStrategy);
+            return Register(
+                services,
+                typeof(TService),
+                typeof(TImplementation),
+                lifeTime,
+                replaceIfExist,
+                replaceStrategy);
         }
 
         public static IServiceCollection RegisterIfNotExist<TService, TImplementation>(
             this IServiceCollection services,
             ServiceLifeTime lifeTime)
         {
-            return RegisterIfNotExist(services, typeof(TService), typeof(TImplementation), lifeTime);
+            return RegisterIfNotExist(
+                services,
+                typeof(TService),
+                typeof(TImplementation),
+                lifeTime);
         }
 
         public static IServiceCollection RegisterIfNotExist(
@@ -210,7 +258,11 @@ namespace Easy.Platform.Common.Extensions
         {
             if (services.Any(p => p.ServiceType == serviceType && p.ImplementationType == implementationType))
                 return services;
-            return Register(services, serviceType, implementationType, lifeTime);
+            return Register(
+                services,
+                serviceType,
+                implementationType,
+                lifeTime);
         }
 
         public static IServiceCollection RegisterIfServiceNotExist<TService, TImplementation>(
@@ -219,7 +271,13 @@ namespace Easy.Platform.Common.Extensions
             bool replaceIfExist = true,
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            return RegisterIfServiceNotExist(services, typeof(TService), typeof(TImplementation), lifeTime, replaceIfExist, replaceStrategy);
+            return RegisterIfServiceNotExist(
+                services,
+                typeof(TService),
+                typeof(TImplementation),
+                lifeTime,
+                replaceIfExist,
+                replaceStrategy);
         }
 
         public static IServiceCollection RegisterIfServiceNotExist(
@@ -232,7 +290,13 @@ namespace Easy.Platform.Common.Extensions
         {
             if (services.Any(p => p.ServiceType == serviceType))
                 return services;
-            return Register(services, serviceType, implementationType, lifeTime, replaceIfExist, replaceStrategy);
+            return Register(
+                services,
+                serviceType,
+                implementationType,
+                lifeTime,
+                replaceIfExist,
+                replaceStrategy);
         }
 
         public static IServiceCollection RegisterSelf(
@@ -242,7 +306,13 @@ namespace Easy.Platform.Common.Extensions
             bool replaceIfExist = true,
             ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            return Register(services, implementationType, implementationType, lifeTime, replaceIfExist, replaceStrategy);
+            return Register(
+                services,
+                implementationType,
+                implementationType,
+                lifeTime,
+                replaceIfExist,
+                replaceStrategy);
         }
 
         public static IServiceCollection Register<TImplementation>(
@@ -279,70 +349,126 @@ namespace Easy.Platform.Common.Extensions
             return services;
         }
 
-        public static IServiceCollection ReplaceTransient(this IServiceCollection services, Type serviceType, Type implementationType, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        public static IServiceCollection ReplaceTransient(
+            this IServiceCollection services,
+            Type serviceType,
+            Type implementationType,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            RemoveIfExist(services, serviceType, implementationType, replaceStrategy);
+            RemoveIfExist(
+                services,
+                serviceType,
+                implementationType,
+                replaceStrategy);
 
             return services.AddTransient(serviceType, implementationType);
         }
 
-        public static IServiceCollection ReplaceScoped(this IServiceCollection services, Type serviceType, Type implementationType, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        public static IServiceCollection ReplaceScoped(
+            this IServiceCollection services,
+            Type serviceType,
+            Type implementationType,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            RemoveIfExist(services, serviceType, implementationType, replaceStrategy);
+            RemoveIfExist(
+                services,
+                serviceType,
+                implementationType,
+                replaceStrategy);
 
             return services.AddScoped(serviceType, implementationType);
         }
 
-        public static IServiceCollection ReplaceSingleton(this IServiceCollection services, Type serviceType, Type implementationType, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        public static IServiceCollection ReplaceSingleton(
+            this IServiceCollection services,
+            Type serviceType,
+            Type implementationType,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            RemoveIfExist(services, serviceType, implementationType, replaceStrategy);
+            RemoveIfExist(
+                services,
+                serviceType,
+                implementationType,
+                replaceStrategy);
 
             return services.AddSingleton(serviceType, implementationType);
         }
 
-        public static IServiceCollection ReplaceTransient<TImplementation>(this IServiceCollection services, Type serviceType, Func<IServiceProvider, TImplementation> implementationFactory, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        public static IServiceCollection ReplaceTransient<TImplementation>(
+            this IServiceCollection services,
+            Type serviceType,
+            Func<IServiceProvider, TImplementation> implementationFactory,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            RemoveIfExist(services, serviceType, typeof(TImplementation), replaceStrategy);
+            RemoveIfExist(
+                services,
+                serviceType,
+                typeof(TImplementation),
+                replaceStrategy);
 
             return services.AddTransient(serviceType, p => implementationFactory(p));
         }
 
-        public static IServiceCollection ReplaceScoped<TImplementation>(this IServiceCollection services, Type serviceType, Func<IServiceProvider, TImplementation> implementationFactory, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        public static IServiceCollection ReplaceScoped<TImplementation>(
+            this IServiceCollection services,
+            Type serviceType,
+            Func<IServiceProvider, TImplementation> implementationFactory,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            RemoveIfExist(services, serviceType, typeof(TImplementation), replaceStrategy);
+            RemoveIfExist(
+                services,
+                serviceType,
+                typeof(TImplementation),
+                replaceStrategy);
 
             return services.AddScoped(serviceType, p => implementationFactory(p));
         }
 
-        public static IServiceCollection ReplaceSingleton<TImplementation>(this IServiceCollection services, Type serviceType, Func<IServiceProvider, TImplementation> implementationFactory, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        public static IServiceCollection ReplaceSingleton<TImplementation>(
+            this IServiceCollection services,
+            Type serviceType,
+            Func<IServiceProvider, TImplementation> implementationFactory,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
-            RemoveIfExist(services, serviceType, typeof(TImplementation), replaceStrategy);
+            RemoveIfExist(
+                services,
+                serviceType,
+                typeof(TImplementation),
+                replaceStrategy);
 
             return services.AddSingleton(serviceType, p => implementationFactory(p));
         }
 
-        public static IServiceCollection ReplaceTransient<TService, TImplementation>(this IServiceCollection services, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        public static IServiceCollection ReplaceTransient<TService, TImplementation>(
+            this IServiceCollection services,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
             where TService : class
             where TImplementation : class, TService
         {
             return services.ReplaceTransient(typeof(TService), typeof(TImplementation), replaceStrategy);
         }
 
-        public static IServiceCollection ReplaceScoped<TService, TImplementation>(this IServiceCollection services, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        public static IServiceCollection ReplaceScoped<TService, TImplementation>(
+            this IServiceCollection services,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
             where TService : class
             where TImplementation : class, TService
         {
             return services.ReplaceScoped(typeof(TService), typeof(TImplementation), replaceStrategy);
         }
 
-        public static IServiceCollection ReplaceSingleton<TService, TImplementation>(this IServiceCollection services, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        public static IServiceCollection ReplaceSingleton<TService, TImplementation>(
+            this IServiceCollection services,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
             where TService : class
             where TImplementation : class, TService
         {
             return services.ReplaceSingleton(typeof(TService), typeof(TImplementation), replaceStrategy);
         }
 
-        public static IServiceCollection RemoveIfExist(this IServiceCollection services, Func<ServiceDescriptor, bool> predicate)
+        public static IServiceCollection RemoveIfExist(
+            this IServiceCollection services,
+            Func<ServiceDescriptor, bool> predicate)
         {
             var existedServiceRegister = services.FirstOrDefault(predicate);
             if (existedServiceRegister != null)
@@ -351,13 +477,21 @@ namespace Easy.Platform.Common.Extensions
             return services;
         }
 
-        public static IServiceCollection RemoveIfExist(IServiceCollection services, Type serviceType, Type implementationType, ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
+        public static IServiceCollection RemoveIfExist(
+            IServiceCollection services,
+            Type serviceType,
+            Type implementationType,
+            ReplaceServiceStrategy replaceStrategy = ReplaceServiceStrategy.ByBoth)
         {
             return replaceStrategy switch
             {
                 ReplaceServiceStrategy.ByService => RemoveIfExist(services, p => p.ServiceType == serviceType),
-                ReplaceServiceStrategy.ByImplementation => RemoveIfExist(services, p => p.ImplementationType == implementationType),
-                ReplaceServiceStrategy.ByBoth => RemoveIfExist(services, p => p.ServiceType == serviceType && p.ImplementationType == implementationType),
+                ReplaceServiceStrategy.ByImplementation => RemoveIfExist(
+                    services,
+                    p => p.ImplementationType == implementationType),
+                ReplaceServiceStrategy.ByBoth => RemoveIfExist(
+                    services,
+                    p => p.ServiceType == serviceType && p.ImplementationType == implementationType),
                 _ => throw new ArgumentOutOfRangeException(nameof(replaceStrategy), replaceStrategy, null)
             };
         }
@@ -375,7 +509,13 @@ namespace Easy.Platform.Common.Extensions
                     .GetInterfaces()
                     .Where(p => p.IsGenericType && Util.Types.MatchGenericArguments(p, implementationType))
                     .ToList()
-                    .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationType, lifeTime, replaceIfExist, replaceStrategy));
+                    .ForEach(
+                        implementationTypeInterface => services.Register(
+                            Util.Types.FixTypeReference(implementationTypeInterface),
+                            implementationType,
+                            lifeTime,
+                            replaceIfExist,
+                            replaceStrategy));
             }
             else
             {
@@ -383,7 +523,13 @@ namespace Easy.Platform.Common.Extensions
                     .GetInterfaces()
                     .Where(p => !p.IsGenericType)
                     .ToList()
-                    .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationType, lifeTime, replaceIfExist, replaceStrategy));
+                    .ForEach(
+                        implementationTypeInterface => services.Register(
+                            Util.Types.FixTypeReference(implementationTypeInterface),
+                            implementationType,
+                            lifeTime,
+                            replaceIfExist,
+                            replaceStrategy));
             }
         }
 
@@ -418,7 +564,13 @@ namespace Easy.Platform.Common.Extensions
                     .GetInterfaces()
                     .Where(p => p.IsGenericType && Util.Types.MatchGenericArguments(p, implementationType))
                     .ToList()
-                    .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationFactory, lifeTime, replaceIfExist, replaceStrategy));
+                    .ForEach(
+                        implementationTypeInterface => services.Register(
+                            Util.Types.FixTypeReference(implementationTypeInterface),
+                            implementationFactory,
+                            lifeTime,
+                            replaceIfExist,
+                            replaceStrategy));
             }
             else
             {
@@ -426,7 +578,13 @@ namespace Easy.Platform.Common.Extensions
                     .GetInterfaces()
                     .Where(p => !p.IsGenericType)
                     .ToList()
-                    .ForEach(implementationTypeInterface => services.Register(Util.Types.FixTypeReference(implementationTypeInterface), implementationFactory, lifeTime, replaceIfExist, replaceStrategy));
+                    .ForEach(
+                        implementationTypeInterface => services.Register(
+                            Util.Types.FixTypeReference(implementationTypeInterface),
+                            implementationFactory,
+                            lifeTime,
+                            replaceIfExist,
+                            replaceStrategy));
             }
         }
     }

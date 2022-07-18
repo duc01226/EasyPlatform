@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.Cqrs.Commands;
 using Easy.Platform.Application.MessageBus.Producers;
@@ -10,7 +8,8 @@ using PlatformExampleApp.TextSnippet.Application.MessageBus.FreeFormatMessages;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 {
-    public class DemoSendFreeFormatEventBusMessageCommand : PlatformCqrsCommand<DemoSendFreeFormatEventBusMessageCommandResult>
+    public class
+        DemoSendFreeFormatEventBusMessageCommand : PlatformCqrsCommand<DemoSendFreeFormatEventBusMessageCommandResult>
     {
         public string Property1 { get; set; }
         public int Property2 { get; set; }
@@ -20,7 +19,8 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
     {
     }
 
-    public class DemoSendFreeFormatEventBusMessageCommandHandler : PlatformCqrsCommandApplicationHandler<DemoSendFreeFormatEventBusMessageCommand, DemoSendFreeFormatEventBusMessageCommandResult>
+    public class DemoSendFreeFormatEventBusMessageCommandHandler : PlatformCqrsCommandApplicationHandler<
+        DemoSendFreeFormatEventBusMessageCommand, DemoSendFreeFormatEventBusMessageCommandResult>
     {
         private readonly IPlatformApplicationBusMessageProducer busMessageProducer;
 

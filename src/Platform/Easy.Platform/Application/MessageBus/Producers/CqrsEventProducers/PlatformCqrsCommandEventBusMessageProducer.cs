@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Cqrs.Commands;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Common.JsonSerialization;
@@ -10,7 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers
 {
-    public abstract class PlatformCqrsCommandEventBusMessageProducer<TCommand> : PlatformCqrsCommandEventApplicationHandler<TCommand>, IPlatformCqrsEventBusMessageProducer<PlatformCqrsCommandEvent<TCommand>>
+    public abstract class PlatformCqrsCommandEventBusMessageProducer<TCommand> :
+        PlatformCqrsCommandEventApplicationHandler<TCommand>,
+        IPlatformCqrsEventBusMessageProducer<PlatformCqrsCommandEvent<TCommand>>
         where TCommand : class, IPlatformCqrsCommand, new()
     {
         protected readonly IPlatformApplicationBusMessageProducer ApplicationBusMessageProducer;
@@ -25,7 +24,9 @@ namespace Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers
             Logger = loggerFactory.CreateLogger(GetType());
         }
 
-        protected override async Task HandleAsync(PlatformCqrsCommandEvent<TCommand> @event, CancellationToken cancellationToken)
+        protected override async Task HandleAsync(
+            PlatformCqrsCommandEvent<TCommand> @event,
+            CancellationToken cancellationToken)
         {
             if (RestrictOnlyForAction() == null || @event.Action == RestrictOnlyForAction())
             {
@@ -44,7 +45,8 @@ namespace Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers
                     else if (SendAsFreeFormatMessage())
                     {
                         await ApplicationBusMessageProducer
-                            .SendAsDefaultFreeFormatMessageAsync<PlatformCqrsCommandEventBusMessage<TCommand>, TCommand>(
+                            .SendAsDefaultFreeFormatMessageAsync<PlatformCqrsCommandEventBusMessage<TCommand>,
+                                TCommand>(
                                 trackId: Guid.NewGuid().ToString(),
                                 messagePayload: @event.CommandData,
                                 messageAction: @event.EventAction,
@@ -62,7 +64,9 @@ namespace Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers
                 }
                 catch (PlatformMessageBusException<PlatformCqrsCommandEventBusMessage<TCommand>> e)
                 {
-                    Logger.LogError(e, $"[PlatformCqrsEventBusCommandEventHandler] Failed to send message for ${typeof(TCommand).Name}. Message Info: {PlatformJsonSerializer.Serialize(e.EventBusMessage)}");
+                    Logger.LogError(
+                        e,
+                        $"[PlatformCqrsEventBusCommandEventHandler] Failed to send message for ${typeof(TCommand).Name}. Message Info: {PlatformJsonSerializer.Serialize(e.EventBusMessage)}");
                     throw;
                 }
             }
@@ -93,7 +97,8 @@ namespace Easy.Platform.Application.MessageBus.Producers.CqrsEventProducers
     {
     }
 
-    public class PlatformCqrsCommandEventBusMessage<TCommand> : PlatformBusMessage<TCommand>, IPlatformCqrsCommandEventBusMessage
+    public class PlatformCqrsCommandEventBusMessage<TCommand> : PlatformBusMessage<TCommand>,
+        IPlatformCqrsCommandEventBusMessage
         where TCommand : class, IPlatformCqrsCommand, new()
     {
         public override string MessageGroup => PlatformCqrsCommandEvent.EventTypeValue;

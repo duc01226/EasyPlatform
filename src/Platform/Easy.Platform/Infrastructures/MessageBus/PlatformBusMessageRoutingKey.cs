@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 using System.Text.RegularExpressions;
 using Easy.Platform.Common.Validators;
@@ -15,6 +12,7 @@ namespace Easy.Platform.Infrastructures.MessageBus
         /// MatchAllPatternValue = "*"
         /// </summary>
         public const string MatchAllSingleGroupLevelChar = "*";
+
         public const string CombinedStringKeySeparator = ".";
         public const string AutoFixKeyPartReplacer = "-";
 
@@ -70,7 +68,11 @@ namespace Easy.Platform.Infrastructures.MessageBus
         /// Combined of "MessageGroup.ProducerContext.MessageType.MessageAction"
         /// </summary>
         public string CombinedStringKey =>
-            BuildCombinedStringKey(MessageGroup, ProducerContext, MessageType, MessageAction);
+            BuildCombinedStringKey(
+                MessageGroup,
+                ProducerContext,
+                MessageType,
+                MessageAction);
 
         public static implicit operator string(PlatformBusMessageRoutingKey routingKey)
         {
@@ -82,7 +84,11 @@ namespace Easy.Platform.Infrastructures.MessageBus
             return New(routingKeyStr);
         }
 
-        public static string BuildCombinedStringKey(string messageGroup, string producerContext, string messageType, string messageAction = null)
+        public static string BuildCombinedStringKey(
+            string messageGroup,
+            string producerContext,
+            string messageType,
+            string messageAction = null)
         {
             return $"{messageGroup}.{producerContext}.{messageType}" +
                    $"{(string.IsNullOrEmpty(messageAction) ? "" : $"{CombinedStringKeySeparator}{messageAction}")}";
@@ -121,7 +127,11 @@ namespace Easy.Platform.Infrastructures.MessageBus
             bool validateForMatchingPattern = false,
             Func<PlatformValidationResult, Exception> exceptionProvider = null)
         {
-            var result = New(messageGroup, producerContext, messageType, messageAction);
+            var result = New(
+                messageGroup,
+                producerContext,
+                messageType,
+                messageAction);
 
             result.EnsureValid(validateForMatchingPattern, exceptionProvider);
 
@@ -175,7 +185,8 @@ namespace Easy.Platform.Infrastructures.MessageBus
                     {
                         ruleBuilderOptions = ruleBuilder
                             .Matches(new Regex($"^[^\\{MatchAllSingleGroupLevelChar}]+$"))
-                            .WithMessage($"This key part can not contain matching all pattern {MatchAllSingleGroupLevelChar}");
+                            .WithMessage(
+                                $"This key part can not contain matching all pattern {MatchAllSingleGroupLevelChar}");
                     }
 
                     if (allowNull)
@@ -245,10 +256,15 @@ namespace Easy.Platform.Infrastructures.MessageBus
                    MatchPattern(MessageAction, routingKey.MessageAction);
         }
 
-        public void EnsureValid(bool forMatchingPattern = false, Func<PlatformValidationResult, Exception> exceptionProvider = null)
+        public void EnsureValid(
+            bool forMatchingPattern = false,
+            Func<PlatformValidationResult, Exception> exceptionProvider = null)
         {
             var validationResult = Validator(forMatchingPattern).Validate(this);
-            validationResult.EnsureValid(p => exceptionProvider != null ? exceptionProvider(p) : new PlatformValidationException(validationResult));
+            validationResult.EnsureValid(
+                p => exceptionProvider != null
+                    ? exceptionProvider(p)
+                    : new PlatformValidationException(validationResult));
         }
 
         public bool IsValid(bool forMatchingPattern = false)

@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Text.Json;
 
 namespace Easy.Platform.Common.Extensions
@@ -14,10 +12,11 @@ namespace Easy.Platform.Common.Extensions
                 .GetProperties()
                 .Where(p => p.CanWrite)
                 .ToList()
-                .ForEach(p =>
-                {
-                    p.SetValue(cloned, p.GetValue(options));
-                });
+                .ForEach(
+                    p =>
+                    {
+                        p.SetValue(cloned, p.GetValue(options));
+                    });
 
             foreach (var optionsConverter in options.Converters)
             {

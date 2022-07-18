@@ -1,12 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Domain.Services;
-using Easy.Platform.Domain.UnitOfWork;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Events;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;

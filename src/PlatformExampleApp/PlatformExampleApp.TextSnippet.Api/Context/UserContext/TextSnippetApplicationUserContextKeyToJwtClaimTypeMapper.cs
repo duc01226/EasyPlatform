@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Security.Claims;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper;
-using IdentityModel;
 using PlatformExampleApp.TextSnippet.Application.Context.UserContext;
 
 namespace PlatformExampleApp.TextSnippet.Api.Context.UserContext
@@ -14,7 +9,8 @@ namespace PlatformExampleApp.TextSnippet.Api.Context.UserContext
     /// An example if your application have custom jwt which you want to added into user context
     /// In this example imaging in jwt claim types you have "organization"
     /// </summary>
-    public class TextSnippetApplicationUserContextKeyToJwtClaimTypeMapper : PlatformApplicationUserContextKeyToJwtClaimTypeMapper
+    public class
+        TextSnippetApplicationUserContextKeyToJwtClaimTypeMapper : PlatformApplicationUserContextKeyToJwtClaimTypeMapper
     {
         public override string ToClaimType(string contextKey)
         {
@@ -30,7 +26,11 @@ namespace PlatformExampleApp.TextSnippet.Api.Context.UserContext
         {
             return contextKey switch
             {
-                PlatformApplicationCommonUserContextKeys.UserId => new HashSet<string>() { ToClaimType(contextKey), ClaimTypes.NameIdentifier },
+                PlatformApplicationCommonUserContextKeys.UserId => new HashSet<string>()
+                {
+                    ToClaimType(contextKey),
+                    ClaimTypes.NameIdentifier
+                },
                 _ => base.ToOneOfClaimTypes(contextKey)
             };
         }

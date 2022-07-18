@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Easy.Platform.Common.Utils;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,12 +9,12 @@ namespace Easy.Platform.Infrastructures.MessageBus
         /// <summary>
         /// Get all routing key pattern of all defined consumers
         /// </summary>
-        List<Type> AllDefinedEventBusConsumerTypes();
+        List<Type> AllDefinedMessageBusConsumerTypes();
 
         /// <summary>
         /// Get all attribute of all defined consumers
         /// </summary>
-        List<PlatformMessageBusConsumerAttribute> AllDefinedEventBusConsumerAttributes();
+        List<PlatformMessageBusConsumerAttribute> AllDefinedMessageBusConsumerAttributes();
 
         /// <summary>
         /// Get all default routing key for defined <see cref="IPlatformMessageBusFreeFormatMessageConsumer{TMessage}"/> consumers
@@ -27,7 +24,7 @@ namespace Easy.Platform.Infrastructures.MessageBus
         /// <summary>
         /// Get all binding routing key of all defined consumers
         /// </summary>
-        List<string> AllDefinedEventBusConsumerBindingRoutingKeys();
+        List<string> AllDefinedMessageBusConsumerBindingRoutingKeys();
 
         /// <summary>
         /// Get all assemblies for scanning event bus message/consumer
@@ -44,7 +41,7 @@ namespace Easy.Platform.Infrastructures.MessageBus
             this.serviceProvider = serviceProvider;
         }
 
-        public List<Type> AllDefinedEventBusConsumerTypes()
+        public List<Type> AllDefinedMessageBusConsumerTypes()
         {
             return GetScanAssemblies()
                 .SelectMany(p => p.GetTypes())
@@ -53,17 +50,19 @@ namespace Easy.Platform.Infrastructures.MessageBus
                 .ToList();
         }
 
-        public List<PlatformMessageBusConsumerAttribute> AllDefinedEventBusConsumerAttributes()
+        public List<PlatformMessageBusConsumerAttribute> AllDefinedMessageBusConsumerAttributes()
         {
-            return AllDefinedEventBusConsumerTypes()
-                .SelectMany(messageConsumerType => messageConsumerType
-                    .GetCustomAttributes(true)
-                    .OfType<PlatformMessageBusConsumerAttribute>()
-                    .Select(messageConsumerTypeAttribute => new
-                    {
-                        MessageConsumerTypeAttribute = messageConsumerTypeAttribute,
-                        ConsumerBindingRoutingKey = messageConsumerTypeAttribute.GetConsumerBindingRoutingKey()
-                    }))
+            return AllDefinedMessageBusConsumerTypes()
+                .SelectMany(
+                    messageConsumerType => messageConsumerType
+                        .GetCustomAttributes(true)
+                        .OfType<PlatformMessageBusConsumerAttribute>()
+                        .Select(
+                            messageConsumerTypeAttribute => new
+                            {
+                                MessageConsumerTypeAttribute = messageConsumerTypeAttribute,
+                                ConsumerBindingRoutingKey = messageConsumerTypeAttribute.GetConsumerBindingRoutingKey()
+                            }))
                 .GroupBy(p => p.ConsumerBindingRoutingKey, p => p.MessageConsumerTypeAttribute)
                 .Select(group => group.First())
                 .ToList();
@@ -71,23 +70,28 @@ namespace Easy.Platform.Infrastructures.MessageBus
 
         public List<PlatformBusMessageRoutingKey> AllDefaultFreeFormatMessageRoutingKeyForDefinedConsumers()
         {
-            return AllDefinedEventBusConsumerTypes()
+            return AllDefinedMessageBusConsumerTypes()
                 .Where(p => !p.GetCustomAttributes<PlatformMessageBusConsumerAttribute>().Any())
-                .Select(p =>
-                    Util.Types.FindMatchedGenericType(
-                        givenType: p,
-                        matchedToGenericTypeDefinition: typeof(IPlatformMessageBusConsumer<>).GetGenericTypeDefinition()) ??
-                    Util.Types.FindMatchedGenericType(
-                        givenType: p,
-                        matchedToGenericTypeDefinition: typeof(IPlatformMessageBusFreeFormatMessageConsumer<>).GetGenericTypeDefinition()))
-                .Select(consumerType => PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.BuildForConsumer(consumerType))
+                .Select(
+                    p =>
+                        Util.Types.FindMatchedGenericType(
+                            givenType: p,
+                            matchedToGenericTypeDefinition: typeof(IPlatformMessageBusConsumer<>)
+                                .GetGenericTypeDefinition()) ??
+                        Util.Types.FindMatchedGenericType(
+                            givenType: p,
+                            matchedToGenericTypeDefinition: typeof(IPlatformMessageBusFreeFormatMessageConsumer<>)
+                                .GetGenericTypeDefinition()))
+                .Select(
+                    consumerType =>
+                        PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.BuildForConsumer(consumerType))
                 .Distinct()
                 .ToList();
         }
 
-        public List<string> AllDefinedEventBusConsumerBindingRoutingKeys()
+        public List<string> AllDefinedMessageBusConsumerBindingRoutingKeys()
         {
-            return AllDefinedEventBusConsumerAttributes()
+            return AllDefinedMessageBusConsumerAttributes()
                 .Select(p => p.GetConsumerBindingRoutingKey())
                 .Concat(AllDefaultFreeFormatMessageRoutingKeyForDefinedConsumers().Select(p => p.ToString()))
                 .Distinct()

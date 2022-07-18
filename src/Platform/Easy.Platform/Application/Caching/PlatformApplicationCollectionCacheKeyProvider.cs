@@ -9,7 +9,8 @@ namespace Easy.Platform.Application.Caching
     {
         private readonly IPlatformApplicationSettingContext applicationSettingContext;
 
-        public PlatformApplicationCollectionCacheKeyProvider(IPlatformApplicationSettingContext applicationSettingContext)
+        public PlatformApplicationCollectionCacheKeyProvider(
+            IPlatformApplicationSettingContext applicationSettingContext)
         {
             this.applicationSettingContext = applicationSettingContext;
         }

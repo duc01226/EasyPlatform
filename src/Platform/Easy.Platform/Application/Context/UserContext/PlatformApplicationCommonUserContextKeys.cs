@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Text.Json;
 using Easy.Platform.Common.Utils;
 
 namespace Easy.Platform.Application.Context.UserContext

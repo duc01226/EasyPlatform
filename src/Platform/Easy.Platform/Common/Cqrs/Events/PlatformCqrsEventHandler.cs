@@ -1,5 +1,3 @@
-using System.Threading;
-using System.Threading.Tasks;
 using MediatR;
 
 namespace Easy.Platform.Common.Cqrs.Events

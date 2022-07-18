@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Common.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,18 +14,20 @@ namespace Easy.Platform.Common.Hosting
             Logger = loggerFactory.CreateLogger(GetType());
             ApplicationLifetime = applicationLifetime;
 
-            ApplicationLifetime.ApplicationStarted.Register(() =>
-            {
-                ApplicationStartedAndRunning = true;
+            ApplicationLifetime.ApplicationStarted.Register(
+                () =>
+                {
+                    ApplicationStartedAndRunning = true;
 
-                StartProcess(ApplicationLifetime.ApplicationStopping).Wait(applicationLifetime.ApplicationStopping);
+                    StartProcess(ApplicationLifetime.ApplicationStopping).Wait(applicationLifetime.ApplicationStopping);
 
-                Logger.LogInformationIfEnabled($"Process of {GetType().Name} Started");
-            });
-            ApplicationLifetime.ApplicationStopping.Register(() =>
-            {
-                ApplicationStartedAndRunning = false;
-            });
+                    Logger.LogInformationIfEnabled($"Process of {GetType().Name} Started");
+                });
+            ApplicationLifetime.ApplicationStopping.Register(
+                () =>
+                {
+                    ApplicationStartedAndRunning = false;
+                });
         }
 
         /// <summary>

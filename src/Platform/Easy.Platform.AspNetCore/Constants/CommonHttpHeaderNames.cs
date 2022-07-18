@@ -29,7 +29,7 @@ namespace Easy.Platform.AspNetCore.Constants
             public const string ContentLanguage = "Content-Language";
             public const string ContentLength = "Content-Length";
             public const string ContentLocation = "Content-Location";
-            public const string ContentMD5 = "Content-MD5";
+            public const string ContentMd5 = "Content-MD5";
             public const string ContentRange = "Content-Range";
             public const string ContentSecurityPolicy = "Content-Security-Policy";
             public const string ContentSecurityPolicyReportOnly = "Content-Security-Policy-Report-Only";

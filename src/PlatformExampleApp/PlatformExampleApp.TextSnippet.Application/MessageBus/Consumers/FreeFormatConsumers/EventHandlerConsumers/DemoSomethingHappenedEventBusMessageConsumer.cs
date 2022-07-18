@@ -1,11 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Easy.Platform.Application.MessageBus.Consumers;
 using Easy.Platform.Domain.UnitOfWork;
-using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.MessageBus.FreeFormatMessages.EventMessages;
 
@@ -23,9 +17,13 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.FreeFo
     ///
     /// This is example one other feature services want to listen to an event from LEADER-SERVICE to do their own logic
     /// </summary>
-    public class DemoSomethingHappenedEventBusMessageConsumer : PlatformApplicationBusFreeFormatMessageConsumer<DemoSomethingHappenedEventBusMessage>
+    public class DemoSomethingHappenedEventBusMessageConsumer : PlatformApplicationBusFreeFormatMessageConsumer<
+        DemoSomethingHappenedEventBusMessage>
     {
-        public DemoSomethingHappenedEventBusMessageConsumer(ILoggerFactory loggerFactory, IUnitOfWorkManager uowManager, IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
+        public DemoSomethingHappenedEventBusMessageConsumer(
+            ILoggerFactory loggerFactory,
+            IUnitOfWorkManager uowManager,
+            IServiceProvider serviceProvider) : base(loggerFactory, uowManager, serviceProvider)
         {
         }
 

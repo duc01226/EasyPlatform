@@ -1,4 +1,3 @@
-﻿using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -9,10 +8,9 @@ namespace Easy.Platform.Common.JsonSerialization
         public override Type Read(
             ref Utf8JsonReader reader,
             Type typeToConvert,
-            JsonSerializerOptions options
-            )
+            JsonSerializerOptions options)
         {
-            // Caution: Deserialization of type instances like this 
+            // WHY: Deserialization of type instances like this
             // is not recommended and should be avoided
             // since it can lead to potential security issues.
 
@@ -26,7 +24,7 @@ namespace Easy.Platform.Common.JsonSerialization
             Utf8JsonWriter writer,
             Type value,
             JsonSerializerOptions options
-            )
+        )
         {
             var assemblyQualifiedName = value.AssemblyQualifiedName;
 

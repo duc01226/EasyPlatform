@@ -1,43 +1,51 @@
-using System;
-using System.Linq;
 using Easy.Platform.Domain.Entities;
-using MongoDB.Bson;
 using MongoDB.Bson.Serialization;
-using MongoDB.Bson.Serialization.Serializers;
 
 namespace Easy.Platform.MongoDB.Mapping
 {
-    /// <summary>
-    /// Used to map any entity which is inherited from <see cref="Entity{TEntity,TPrimaryKey}"/>
-    /// </summary>
-    public abstract class PlatformMongoBaseEntityClassMapping<TEntity, TPrimaryKey> : IPlatformMongoClassMapping
-        where TEntity : Entity<TEntity, TPrimaryKey>, new()
+    public abstract class PlatformMongoBaseEntityClassMapping : PlatformMongoClassMapping
     {
-        public static void RegisterBaseEntityClassMapping(Action<BsonClassMap<Entity<TEntity, TPrimaryKey>>> classMapInitializer = null)
+        public static void RegisterBaseEntityClassMapping<TEntity, TPrimaryKey>(
+            Action<BsonClassMap<Entity<TEntity, TPrimaryKey>>> classMapInitializer,
+            bool autoApplyGuidAsStringMappingConvention,
+            bool autoApplyEnumAsStringMappingConvention) where TEntity : Entity<TEntity, TPrimaryKey>, new()
         {
             if (!BsonClassMap.IsClassMapRegistered(typeof(Entity<TEntity, TPrimaryKey>)))
-                BsonClassMap.RegisterClassMap(classMapInitializer ?? DefaultBaseEntityClassMapInitializer);
+            {
+                BsonClassMap.RegisterClassMap(
+                    classMapInitializer ??
+                    (cm => DefaultBaseEntityClassMapInitializer(
+                        cm,
+                        autoApplyGuidAsStringMappingConvention,
+                        autoApplyEnumAsStringMappingConvention)));
+            }
         }
 
-        public static void DefaultBaseEntityClassMapInitializer(BsonClassMap<Entity<TEntity, TPrimaryKey>> cm)
+        public static void DefaultBaseEntityClassMapInitializer<TEntity, TPrimaryKey>(
+            BsonClassMap<Entity<TEntity, TPrimaryKey>> cm,
+            bool autoApplyGuidAsStringMappingConvention,
+            bool autoApplyEnumAsStringMappingConvention) where TEntity : Entity<TEntity, TPrimaryKey>, new()
         {
             cm.AutoMap();
             cm.SetDiscriminatorIsRequired(true);
             cm.MapIdProperty(p => p.Id);
             cm.SetIgnoreExtraElements(true);
             cm.SetIsRootClass(true);
+            if (autoApplyGuidAsStringMappingConvention)
+                ApplyGuidAsStringMappingConvention(cm);
+            if (autoApplyEnumAsStringMappingConvention)
+                ApplyEnumAsStringMappingConvention(cm);
         }
+    }
 
-        public static void MapAllEnumToString<T>(BsonClassMap<T> classMap)
-        {
-            foreach (var bsonMemberMap in classMap.DeclaredMemberMaps.Where(p => p.MemberType.IsEnum))
-            {
-                bsonMemberMap.SetSerializer((IBsonSerializer)Activator.CreateInstance(
-                    type: typeof(EnumSerializer<>).MakeGenericType(bsonMemberMap.MemberType),
-                    args: new object[] { BsonType.String }));
-            }
-        }
-
+    /// <summary>
+    /// Used to map any entity which is inherited from <see cref="Entity{TEntity,TPrimaryKey}"/>
+    /// </summary>
+    public abstract class
+        PlatformMongoBaseEntityClassMapping<TEntity, TPrimaryKey> : PlatformMongoBaseEntityClassMapping,
+            IPlatformMongoClassMapping
+        where TEntity : Entity<TEntity, TPrimaryKey>, new()
+    {
         public PlatformMongoBaseEntityClassMapping()
         {
             if (!BsonClassMap.IsClassMapRegistered(typeof(Entity<TEntity, TPrimaryKey>)))
@@ -46,9 +54,16 @@ namespace Easy.Platform.MongoDB.Mapping
                 BsonClassMap.RegisterClassMap<TEntity>(ClassMapInitializer);
         }
 
+        public virtual bool AutoApplyGuidAsStringMappingConvention => true;
+
+        public virtual bool AutoApplyEnumAsStringMappingConvention => true;
+
         public virtual void BaseEntityClassMapInitializer(BsonClassMap<Entity<TEntity, TPrimaryKey>> cm)
         {
-            DefaultBaseEntityClassMapInitializer(cm);
+            DefaultBaseEntityClassMapInitializer(
+                cm,
+                AutoApplyGuidAsStringMappingConvention,
+                AutoApplyEnumAsStringMappingConvention);
         }
 
         public virtual void ClassMapInitializer(BsonClassMap<TEntity> cm)
@@ -56,6 +71,10 @@ namespace Easy.Platform.MongoDB.Mapping
             cm.AutoMap();
             cm.SetDiscriminatorIsRequired(true);
             cm.SetIgnoreExtraElements(true);
+            if (AutoApplyGuidAsStringMappingConvention)
+                ApplyGuidAsStringMappingConvention(cm);
+            if (AutoApplyEnumAsStringMappingConvention)
+                ApplyEnumAsStringMappingConvention(cm);
         }
     }
 }

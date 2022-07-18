@@ -1,5 +1,4 @@
-using System;
-using System.Threading.Tasks;
+using Polly;
 using Polly.Retry;
 
 namespace Easy.Platform.Common.Extensions

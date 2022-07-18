@@ -1,8 +1,3 @@
-using System;
-using System.Linq;
-using System.Reflection;
-using Easy.Platform.Common.JsonSerialization;
-
 namespace Easy.Platform.Common.Utils
 {
     public static partial class Util
@@ -34,7 +29,8 @@ namespace Easy.Platform.Common.Utils
 
                 foreach (var interfaceType in interfaceTypes)
                 {
-                    if (interfaceType.IsGenericType && interfaceType.GetGenericTypeDefinition() == matchedToGenericTypeDefinition)
+                    if (interfaceType.IsGenericType &&
+                        interfaceType.GetGenericTypeDefinition() == matchedToGenericTypeDefinition)
                         return interfaceType;
                 }
 

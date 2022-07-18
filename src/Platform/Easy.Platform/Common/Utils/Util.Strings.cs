@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Easy.Platform.Common.JsonSerialization;
 
 namespace Easy.Platform.Common.Utils
@@ -19,7 +14,10 @@ namespace Easy.Platform.Common.Utils
                 return PlatformJsonSerializer.Deserialize<T>(PlatformJsonSerializer.Serialize(value));
             }
 
-            public static bool IsFullTextSearchMatch(string targetText, string searchText, bool exactMatchAllWords = false)
+            public static bool IsFullTextSearchMatch(
+                string targetText,
+                string searchText,
+                bool exactMatchAllWords = false)
             {
                 if (targetText == null)
                     return false;
@@ -29,10 +27,22 @@ namespace Easy.Platform.Common.Utils
 
                 var searchWords = noDiacriticsSearchText.Trim().Split(" ");
                 var isMatchWords = exactMatchAllWords
-                    ? searchWords.All(word => Regex.IsMatch(noDiacriticsTargetText, $"{word}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
-                    : searchWords.Any(word => Regex.IsMatch(noDiacriticsTargetText, $"{word}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
+                    ? searchWords.All(
+                        word => Regex.IsMatch(
+                            noDiacriticsTargetText,
+                            GetMatchWordRegexPattern(word),
+                            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                    : searchWords.Any(
+                        word => Regex.IsMatch(
+                            noDiacriticsTargetText,
+                            GetMatchWordRegexPattern(word),
+                            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant));
 
-                return Regex.IsMatch(noDiacriticsTargetText, $"{noDiacriticsSearchText}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) || isMatchWords;
+                return Regex.IsMatch(
+                           noDiacriticsTargetText,
+                           $"{noDiacriticsSearchText}",
+                           RegexOptions.IgnoreCase | RegexOptions.CultureInvariant) ||
+                       isMatchWords;
             }
 
             public static string RemoveDiacritics(string str)
@@ -47,12 +57,18 @@ namespace Easy.Platform.Common.Utils
                 // and creates a new string from the remaining chars.
                 // Normalize again to FormC to compose char again to make "normal" text again, in case of there is some special mark char which
                 // it's still match the where condition.
-                return new string(str
-                        .Normalize(NormalizationForm.FormD)
-                        .ToCharArray()
-                        .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                        .ToArray())
+                return new string(
+                        str
+                            .Normalize(NormalizationForm.FormD)
+                            .ToCharArray()
+                            .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                            .ToArray())
                     .Normalize(NormalizationForm.FormC);
+            }
+
+            public static string GetMatchWordRegexPattern(string word)
+            {
+                return $"^(.*?(\\b{word}\\b)[^$]*)$";
             }
         }
     }

@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace Easy.Platform.Common.Extensions
@@ -22,6 +19,28 @@ namespace Easy.Platform.Common.Extensions
             }
 
             return toRemoveItems;
+        }
+
+        /// <summary>
+        /// Remove item in this and return removed items
+        /// </summary>
+        public static List<T> RemoveMany<T>(this IList<T> items, IList<T> toRemoveItems)
+        {
+            var toRemoveItemsDic = toRemoveItems.ToDictionary(p => p);
+
+            var removedItems = new List<T>();
+
+            for (var i = 0; i < items.Count; i++)
+            {
+                if (toRemoveItemsDic.ContainsKey(items[i]))
+                {
+                    removedItems.Add(items[i]);
+                    items.RemoveAt(i);
+                    i--;
+                }
+            }
+
+            return removedItems;
         }
 
         public static T RemoveFirst<T>(this IList<T> items, Func<T, bool> predicate)
@@ -113,6 +132,46 @@ namespace Easy.Platform.Common.Extensions
         public static bool ContainsAll<T>(this List<T> items, List<T> containAllItems)
         {
             return items.Intersect(containAllItems).Count() >= containAllItems.Count;
+        }
+
+        public static void ForEach<T>(this IEnumerable<T> items, Action<T> actionOnEachItem)
+        {
+            foreach (var item in items)
+            {
+                actionOnEachItem(item);
+            }
+        }
+
+        public static List<T1> Map<T, T1>(this IList<T> items, Func<T, T1> mapFunc)
+        {
+            return items.Select(mapFunc).ToList();
+        }
+
+        public static IEnumerable<T1> Map<T, T1>(this IEnumerable<T> items, Func<T, T1> mapFunc)
+        {
+            return items.Select(mapFunc);
+        }
+
+        public static IEnumerable<T> Flatten<T>(this IEnumerable<IEnumerable<T>> items)
+        {
+            return items.SelectMany(p => p);
+        }
+
+        /// <summary>
+        /// Functional Programming Concept. Bind List[T] => (T => List[T1]) => List[T1]
+        /// Ex: [a, b].Bind(t => [t + a1, t + b1]) = [aa1,ab1,ba1,bb1]
+        /// </summary>
+        public static IEnumerable<TR> Bind<T, TR>(this IEnumerable<T> list, Func<T, IEnumerable<TR>> func)
+        {
+            return list.SelectMany(func);
+        }
+
+        public static ValueTuple<Dictionary<TKey, T>, List<TKey>> ToDictionaryWithKeysList<T, TKey>(this IEnumerable<T> items, Func<T, TKey> selectKey)
+        {
+            var dict = items.ToList().ToDictionary(selectKey, p => p);
+            var keys = dict.Keys.ToList();
+
+            return (dict, keys);
         }
     }
 }

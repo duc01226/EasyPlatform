@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using System.Linq.Expressions;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Persistence.Services;
@@ -23,12 +21,22 @@ namespace Easy.Platform.MongoDB.Services
             Expression<Func<T, object>>[] includeStartWithProps = null)
         {
             if (!IsSupportQuery(query) &&
-                TrySearchByFirstSupportQueryHelper(query, searchText, inFullTextSearchProps, fullTextExactMatch, out var newQuery, includeStartWithProps))
+                TrySearchByFirstSupportQueryHelper(
+                    query,
+                    searchText,
+                    inFullTextSearchProps,
+                    fullTextExactMatch,
+                    out var newQuery,
+                    includeStartWithProps))
             {
                 return newQuery;
             }
 
-            return DoMongoSearch(query, searchText, fullTextExactMatch, includeStartWithProps);
+            return DoMongoSearch(
+                query,
+                searchText,
+                fullTextExactMatch,
+                includeStartWithProps);
         }
 
         public override bool IsSupportQuery<T>(IQueryable<T> query)
@@ -36,7 +44,11 @@ namespace Easy.Platform.MongoDB.Services
             return query is IMongoQueryable;
         }
 
-        public static IQueryable<T> DoMongoSearch<T>(IQueryable<T> query, string searchText, bool fullTextExactMatch, Expression<Func<T, object>>[] includeStartWithProps = null)
+        public static IQueryable<T> DoMongoSearch<T>(
+            IQueryable<T> query,
+            string searchText,
+            bool fullTextExactMatch,
+            Expression<Func<T, object>>[] includeStartWithProps = null)
         {
             if (string.IsNullOrWhiteSpace(searchText))
             {
@@ -54,14 +66,22 @@ namespace Easy.Platform.MongoDB.Services
             return ((IMongoQueryable<T>)query).Where(_ => finalFilter.Inject());
         }
 
-        public static FilterDefinition<T> BuildTextSearchMongoFilterDefinition<T>(string searchText, bool fullTextExactMatch)
+        public static FilterDefinition<T> BuildTextSearchMongoFilterDefinition<T>(
+            string searchText,
+            bool fullTextExactMatch)
         {
             return Builders<T>.Filter.Text(
                 fullTextExactMatch ? $"\"{searchText.Trim()}\"" : searchText.Trim(),
-                new TextSearchOptions() { CaseSensitive = false, DiacriticSensitive = false });
+                new TextSearchOptions()
+                {
+                    CaseSensitive = false,
+                    DiacriticSensitive = false
+                });
         }
 
-        public static FilterDefinition<T> BuildStartsWithMongoFilterDefinition<T>(string searchText, Expression<Func<T, object>>[] includeStartWithProps)
+        public static FilterDefinition<T> BuildStartsWithMongoFilterDefinition<T>(
+            string searchText,
+            Expression<Func<T, object>>[] includeStartWithProps)
         {
             var filterBuilder = Builders<T>.Filter;
             var startsWithFilters = includeStartWithProps

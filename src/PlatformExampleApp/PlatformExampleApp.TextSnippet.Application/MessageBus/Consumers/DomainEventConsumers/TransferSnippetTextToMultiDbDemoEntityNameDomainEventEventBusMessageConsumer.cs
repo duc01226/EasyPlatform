@@ -1,5 +1,3 @@
-using System;
-using System.Threading.Tasks;
 using Easy.Platform.Application.MessageBus.Consumers;
 using Easy.Platform.Application.MessageBus.Consumers.CqrsEventConsumers;
 using Easy.Platform.Common.Extensions;
@@ -19,8 +17,12 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Domain
     /// <br/>
     /// <inheritdoc cref="PlatformApplicationMessageBusConsumer{TMessagePayload}"/>
     /// </summary>
-    [PlatformMessageBusConsumer(PlatformCqrsDomainEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "TransferSnippetTextToMultiDbDemoEntityNameDomainEvent")]
-    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusMessageConsumer : PlatformCqrsDomainEventBusMessageConsumer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
+    [PlatformMessageBusConsumer(
+        PlatformCqrsDomainEvent.EventTypeValue,
+        TextSnippetApplicationConstants.ApplicationName,
+        "TransferSnippetTextToMultiDbDemoEntityNameDomainEvent")]
+    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusMessageConsumer :
+        PlatformCqrsDomainEventBusMessageConsumer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
     {
         public TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusMessageConsumer(
             ILoggerFactory loggerFactory,
@@ -29,9 +31,12 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Domain
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformBusMessage<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent> message, string routingKey)
+        protected override Task InternalHandleAsync(
+            PlatformBusMessage<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent> message,
+            string routingKey)
         {
-            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
+            Logger.LogInformationIfEnabled(
+                $"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
 
             return Task.CompletedTask;
         }
@@ -49,7 +54,8 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Domain
     /// <br/>
     /// <inheritdoc cref="PlatformApplicationMessageBusConsumer{TMessagePayload}"/>
     /// </summary>
-    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventAsFreeFormatEventBusMessageConsumer : PlatformCqrsDomainEventBusMessageConsumer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
+    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventAsFreeFormatEventBusMessageConsumer :
+        PlatformCqrsDomainEventBusMessageConsumer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
     {
         public TransferSnippetTextToMultiDbDemoEntityNameDomainEventAsFreeFormatEventBusMessageConsumer(
             ILoggerFactory loggerFactory,
@@ -58,9 +64,12 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Domain
         {
         }
 
-        protected override Task InternalHandleAsync(PlatformBusMessage<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent> message, string routingKey)
+        protected override Task InternalHandleAsync(
+            PlatformBusMessage<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent> message,
+            string routingKey)
         {
-            Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
+            Logger.LogInformationIfEnabled(
+                $"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
 
             return Task.CompletedTask;
         }

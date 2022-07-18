@@ -1,12 +1,15 @@
-using Microsoft.EntityFrameworkCore;
 using Easy.Platform.EfCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Logging;
 
 namespace PlatformExampleApp.TextSnippet.Persistence
 {
     public class TextSnippetDbContext : PlatformEfCoreDbContext<TextSnippetDbContext>
     {
-        public TextSnippetDbContext(DbContextOptions<TextSnippetDbContext> options, PlatformEfCoreOptions efCoreOptions) : base(options, efCoreOptions)
+        public TextSnippetDbContext(
+            DbContextOptions<TextSnippetDbContext> options,
+            ILoggerFactory loggerFactory) : base(options, loggerFactory)
         {
         }
     }
@@ -21,14 +24,12 @@ namespace PlatformExampleApp.TextSnippet.Persistence
         public TextSnippetDbContext CreateDbContext(string[] args)
         {
             var optionsBuilder = new DbContextOptionsBuilder<TextSnippetDbContext>();
-            optionsBuilder.UseSqlServer("Data Source=localhost,14330;Initial Catalog=TextSnippedDb;User ID=sa;Password=123456Abc");
+            optionsBuilder.UseSqlServer(
+                "Data Source=localhost,14330;Initial Catalog=TextSnippedDb;User ID=sa;Password=123456Abc");
 
             return new TextSnippetDbContext(
                 optionsBuilder.Options,
-                new PlatformEfCoreOptions()
-                {
-                    EnableDefaultInboxEventBusMessageEntityConfiguration = new TextSnippetEfCorePersistenceModule(null, null).GetEnableDefaultInboxEventBusMessageEntityConfigurationDefaultValue()
-                });
+                new LoggerFactory());
         }
     }
 }

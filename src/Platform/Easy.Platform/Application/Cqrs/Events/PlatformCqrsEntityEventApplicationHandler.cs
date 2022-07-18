@@ -4,10 +4,13 @@ using Easy.Platform.Domain.UnitOfWork;
 
 namespace Easy.Platform.Application.Cqrs.Events
 {
-    public abstract class PlatformCqrsEntityEventApplicationHandler<TEntity> : PlatformCqrsEventApplicationHandler<PlatformCqrsEntityEvent<TEntity>>
+    public abstract class
+        PlatformCqrsEntityEventApplicationHandler<TEntity> : PlatformCqrsEventApplicationHandler<
+            PlatformCqrsEntityEvent<TEntity>>
         where TEntity : class, IEntity, new()
     {
-        protected PlatformCqrsEntityEventApplicationHandler(IUnitOfWorkManager unitOfWorkManager) : base(unitOfWorkManager)
+        protected PlatformCqrsEntityEventApplicationHandler(IUnitOfWorkManager unitOfWorkManager) : base(
+            unitOfWorkManager)
         {
         }
     }

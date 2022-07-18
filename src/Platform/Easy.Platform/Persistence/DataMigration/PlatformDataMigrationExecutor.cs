@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Easy.Platform.Application.Persistence;
 
@@ -13,7 +10,8 @@ namespace Easy.Platform.Persistence.DataMigration
     {
     }
 
-    public interface IPlatformDataMigrationExecutor<TDbContext> : IPlatformDataMigrationExecutor where TDbContext : IPlatformDbContext
+    public interface IPlatformDataMigrationExecutor<in TDbContext> : IPlatformDataMigrationExecutor
+        where TDbContext : IPlatformDbContext
     {
         string Name { get; }
         int Order { get; }
@@ -37,7 +35,8 @@ namespace Easy.Platform.Persistence.DataMigration
     /// Each class will be initiated and executed via Execute method.
     /// The order of execution of all migration classes will be order ascending by Order then by Name;
     /// </summary>
-    public abstract class PlatformDataMigrationExecutor<TDbContext> : IPlatformDataMigrationExecutor<TDbContext> where TDbContext : IPlatformDbContext
+    public abstract class PlatformDataMigrationExecutor<TDbContext> : IPlatformDataMigrationExecutor<TDbContext>
+        where TDbContext : IPlatformDbContext
     {
         public abstract string Name { get; }
         public virtual int Order => 0;
@@ -45,7 +44,9 @@ namespace Easy.Platform.Persistence.DataMigration
         public abstract void Execute(TDbContext dbContext);
         public bool IsDisposed { get; set; } = false;
 
-        public static List<PlatformDataMigrationExecutor<TDbContext>> ScanAllDataMigrationExecutors(Assembly scanAssembly, IServiceProvider serviceProvider)
+        public static List<PlatformDataMigrationExecutor<TDbContext>> ScanAllDataMigrationExecutors(
+            Assembly scanAssembly,
+            IServiceProvider serviceProvider)
         {
             var results = scanAssembly.GetTypes()
                 .Where(p => p.IsAssignableTo(typeof(PlatformDataMigrationExecutor<TDbContext>)) && !p.IsAbstract)
@@ -55,14 +56,17 @@ namespace Easy.Platform.Persistence.DataMigration
             return results;
         }
 
-        public static void EnsureAllDataMigrationExecutorsHasUniqueName(Assembly scanAssembly, IServiceProvider serviceProvider)
+        public static void EnsureAllDataMigrationExecutorsHasUniqueName(
+            Assembly scanAssembly,
+            IServiceProvider serviceProvider)
         {
             var applicationDataMigrationExecutionNames = new HashSet<string>();
             foreach (var mongoMigrationExecution in ScanAllDataMigrationExecutors(scanAssembly, serviceProvider))
             {
                 if (applicationDataMigrationExecutionNames.Contains(mongoMigrationExecution.Name))
                 {
-                    throw new Exception($"Application Data Migration Executor Names is duplicated. Duplicated name: {mongoMigrationExecution.Name}");
+                    throw new Exception(
+                        $"Application Data Migration Executor Names is duplicated. Duplicated name: {mongoMigrationExecution.Name}");
                 }
 
                 applicationDataMigrationExecutionNames.Add(mongoMigrationExecution.Name);
@@ -82,17 +86,19 @@ namespace Easy.Platform.Persistence.DataMigration
             ScanAllDataMigrationExecutors(scanAssembly, serviceProvider)
                 .OrderBy(x => x.GetOrderByValue())
                 .ToList()
-                .ForEach(migrationExecution =>
-                {
-                    if (!executedMigrationNames.Contains(migrationExecution.Name) && !migrationExecution.IsExpired())
+                .ForEach(
+                    migrationExecution =>
                     {
-                        canExecutedMigrations.Add(migrationExecution);
-                    }
-                    else
-                    {
-                        migrationExecution.Dispose();
-                    }
-                });
+                        if (!executedMigrationNames.Contains(migrationExecution.Name) &&
+                            !migrationExecution.IsExpired())
+                        {
+                            canExecutedMigrations.Add(migrationExecution);
+                        }
+                        else
+                        {
+                            migrationExecution.Dispose();
+                        }
+                    });
 
             return canExecutedMigrations;
         }

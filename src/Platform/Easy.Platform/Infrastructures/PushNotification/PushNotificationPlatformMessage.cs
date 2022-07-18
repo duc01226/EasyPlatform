@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Easy.Platform.Common.Dtos;
 using Easy.Platform.Common.Validators;
 

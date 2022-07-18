@@ -1,8 +1,4 @@
-using System;
-using System.Linq;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Utils;
@@ -26,12 +22,15 @@ namespace Easy.Platform.Infrastructures.MessageBus
         Task HandleAsync(TMessage message, string routingKey);
     }
 
-    public interface IPlatformMessageBusConsumer<TMessagePayload> : IPlatformMessageBusBaseConsumer<PlatformBusMessage<TMessagePayload>>
+    public interface
+        IPlatformMessageBusConsumer<TMessagePayload> : IPlatformMessageBusBaseConsumer<
+            PlatformBusMessage<TMessagePayload>>
         where TMessagePayload : class, new()
     {
     }
 
-    public interface IPlatformMessageBusFreeFormatMessageConsumer<in TMessage> : IPlatformMessageBusBaseConsumer<TMessage>
+    public interface
+        IPlatformMessageBusFreeFormatMessageConsumer<in TMessage> : IPlatformMessageBusBaseConsumer<TMessage>
         where TMessage : class, IPlatformBusFreeFormatMessage, new()
     {
     }
@@ -51,23 +50,24 @@ namespace Easy.Platform.Infrastructures.MessageBus
             var genericConsumerType = consumer
                 .GetType()
                 .GetInterfaces()
-                .FirstOrDefault(x =>
-                    x.IsGenericType &&
-                    (x.GetGenericTypeDefinition() == typeof(IPlatformMessageBusConsumer<>) ||
-                     x.GetGenericTypeDefinition() == typeof(IPlatformMessageBusFreeFormatMessageConsumer<>)));
+                .FirstOrDefault(
+                    x =>
+                        x.IsGenericType &&
+                        (x.GetGenericTypeDefinition() == typeof(IPlatformMessageBusConsumer<>) ||
+                         x.GetGenericTypeDefinition() == typeof(IPlatformMessageBusFreeFormatMessageConsumer<>)));
 
-            // To ensure that the consumer implements the correct interface IPlatformEventBusConsumer<> OR IPlatformEventBusCustomMessageConsumer<>.
+            // WHY: To ensure that the consumer implements the correct interface IPlatformEventBusConsumer<> OR IPlatformEventBusCustomMessageConsumer<>.
             // The IPlatformEventBusConsumer (non-generic version) is used for Interface Marker only.
             if (genericConsumerType == null)
             {
-                throw new Exception("Incorrect implementation of IPlatformMessageConsumer<> or IPlatformEventBusCustomMessageConsumer<>");
+                throw new Exception(
+                    "Incorrect implementation of IPlatformMessageConsumer<> or IPlatformEventBusCustomMessageConsumer<>");
             }
 
             if (genericConsumerType.GetGenericTypeDefinition() == typeof(IPlatformMessageBusConsumer<>))
             {
                 // Get generic type IPlatformMessageConsumer<TMessagePayload> -> TMessage
                 var consumerMessagePayloadType = genericConsumerType.GetGenericArguments()[0];
-                // Get type of generic PlatformEventBusMessage<>
                 var messageType = typeof(PlatformBusMessage<>);
 
                 // Make a generic type: PlatformEventBusMessage<TMessage>
@@ -97,7 +97,11 @@ namespace Easy.Platform.Infrastructures.MessageBus
                     throw new ArgumentNullException(nameof(logger));
 
                 await Util.Tasks.ProfilingAsync(
-                    asyncTask: () => DoInvokeConsumer(consumer, eventBusMessage, routingKey, cancellationToken),
+                    asyncTask: () => DoInvokeConsumer(
+                        consumer,
+                        eventBusMessage,
+                        routingKey,
+                        cancellationToken),
                     afterExecution: elapsedMilliseconds =>
                     {
                         var platformEventBusTrackableMessage = eventBusMessage as IPlatformBusTrackableMessage;
@@ -108,7 +112,8 @@ namespace Easy.Platform.Infrastructures.MessageBus
                                                                         slowProcessWarningTimeMilliseconds;
                         if (elapsedMilliseconds >= toCheckSlowProcessWarningTimeMilliseconds)
                         {
-                            logger.LogError($"[SlowConsumerProcessTime]. [SlowProcessWarningTimeMilliseconds:{toCheckSlowProcessWarningTimeMilliseconds}]. {logMessage}. [MessageContent:{PlatformJsonSerializer.Serialize(eventBusMessage)}]");
+                            logger.LogError(
+                                $"[SlowConsumerProcessTime]. [SlowProcessWarningTimeMilliseconds:{toCheckSlowProcessWarningTimeMilliseconds}]. {logMessage}. [MessageContent:{PlatformJsonSerializer.Serialize(eventBusMessage)}]");
                         }
                         else
                         {
@@ -118,7 +123,11 @@ namespace Easy.Platform.Infrastructures.MessageBus
             }
             else
             {
-                await DoInvokeConsumer(consumer, eventBusMessage, routingKey, cancellationToken);
+                await DoInvokeConsumer(
+                    consumer,
+                    eventBusMessage,
+                    routingKey,
+                    cancellationToken);
             }
         }
 
@@ -132,7 +141,11 @@ namespace Easy.Platform.Infrastructures.MessageBus
             return null;
         }
 
-        private static async Task DoInvokeConsumer(IPlatformMessageBusBaseConsumer consumer, object eventBusMessage, string routingKey, CancellationToken cancellationToken = default)
+        private static async Task DoInvokeConsumer(
+            IPlatformMessageBusBaseConsumer consumer,
+            object eventBusMessage,
+            string routingKey,
+            CancellationToken cancellationToken = default)
         {
             var handleMethodName = nameof(IPlatformMessageBusBaseConsumer<object>.HandleAsync);
 
@@ -145,8 +158,13 @@ namespace Easy.Platform.Infrastructures.MessageBus
 
             try
             {
-                // Invoke the method.
-                var invokeResult = methodInfo.Invoke(consumer, new[] { eventBusMessage, routingKey });
+                var invokeResult = methodInfo.Invoke(
+                    consumer,
+                    new[]
+                    {
+                        eventBusMessage,
+                        routingKey
+                    });
                 if (invokeResult is Task invokeTask)
                     await invokeTask;
             }
@@ -157,7 +175,8 @@ namespace Easy.Platform.Infrastructures.MessageBus
         }
     }
 
-    public abstract class PlatformMessageBusBaseConsumer<TMessage> : PlatformMessageBusBaseConsumer, IPlatformMessageBusBaseConsumer<TMessage>
+    public abstract class PlatformMessageBusBaseConsumer<TMessage> : PlatformMessageBusBaseConsumer,
+        IPlatformMessageBusBaseConsumer<TMessage>
         where TMessage : class, new()
     {
         protected readonly ILogger Logger;
@@ -175,8 +194,10 @@ namespace Easy.Platform.Infrastructures.MessageBus
             }
             catch (Exception e)
             {
-                Logger.LogError(e, $"Error Consume message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
-                                   $"Message Info: ${PlatformJsonSerializer.Serialize(message)}.{Environment.NewLine}");
+                Logger.LogError(
+                    e,
+                    $"Error Consume message [RoutingKey:{routingKey}], [Type:{message.GetType().GetGenericTypeName()}].{Environment.NewLine}" +
+                    $"Message Info: ${PlatformJsonSerializer.Serialize(message)}.{Environment.NewLine}");
                 throw;
             }
         }
@@ -184,7 +205,9 @@ namespace Easy.Platform.Infrastructures.MessageBus
         protected abstract Task InternalHandleAsync(TMessage message, string routingKey);
     }
 
-    public abstract class PlatformMessageBusFreeFormatMessageConsumer<TMessage> : PlatformMessageBusBaseConsumer<TMessage>, IPlatformMessageBusFreeFormatMessageConsumer<TMessage>
+    public abstract class PlatformMessageBusFreeFormatMessageConsumer<TMessage> :
+        PlatformMessageBusBaseConsumer<TMessage>,
+        IPlatformMessageBusFreeFormatMessageConsumer<TMessage>
         where TMessage : class, IPlatformBusFreeFormatMessage, new()
     {
         protected PlatformMessageBusFreeFormatMessageConsumer(ILoggerFactory loggerFactory) : base(loggerFactory)

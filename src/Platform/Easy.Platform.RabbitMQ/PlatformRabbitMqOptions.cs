@@ -83,7 +83,8 @@ namespace Easy.Platform.RabbitMQ
         /// <summary>
         /// <inheritdoc cref="PlatformInboxBusMessageCleanerHostedService.NumberOfDeleteMessagesBatch"/>
         /// </summary>
-        public int NumberOfDeleteMessagesBatch { get; set; } = PlatformInboxBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
+        public int NumberOfDeleteMessagesBatch { get; set; } =
+            PlatformInboxBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
 
         public double DeleteProcessedMessageInSeconds { get; set; }
     }
@@ -98,7 +99,8 @@ namespace Easy.Platform.RabbitMQ
         /// <summary>
         /// <inheritdoc cref="PlatformOutboxBusMessageCleanerHostedService.NumberOfDeleteMessagesBatch"/>
         /// </summary>
-        public int NumberOfDeleteMessagesBatch { get; set; } = PlatformOutboxBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
+        public int NumberOfDeleteMessagesBatch { get; set; } =
+            PlatformOutboxBusMessageCleanerHostedService.DefaultNumberOfDeleteMessagesBatch;
 
         public double DeleteProcessedMessageInSeconds { get; set; }
     }

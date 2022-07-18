@@ -1,11 +1,9 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using MediatR;
 
 namespace Easy.Platform.Common.Cqrs.Queries
 {
-    public abstract class PlatformCqrsQueryHandler<TQuery, TResult> : PlatformCqrsRequestHandler<TQuery>, IRequestHandler<TQuery, TResult>
+    public abstract class PlatformCqrsQueryHandler<TQuery, TResult> : PlatformCqrsRequestHandler<TQuery>,
+        IRequestHandler<TQuery, TResult>
         where TQuery : PlatformCqrsQuery<TResult>
         where TResult : PlatformCqrsQueryResult
     {

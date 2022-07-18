@@ -1,9 +1,6 @@
 using System;
-using System.Text;
-using System.Threading;
 using Easy.Platform.Application.Context;
 using Easy.Platform.Infrastructures.Caching;
-using Easy.Platform.Common.DependencyInjection;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,7 +13,9 @@ namespace Easy.Platform.RedisCache
     /// </summary>
     public abstract class PlatformRedisCacheModule : PlatformCachingModule
     {
-        public PlatformRedisCacheModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(serviceProvider, configuration)
+        public PlatformRedisCacheModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(
+            serviceProvider,
+            configuration)
         {
         }
 

@@ -1,11 +1,11 @@
 using Easy.Platform.AspNetCore;
+using Easy.Platform.Common.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Easy.Platform.Common.DependencyInjection;
 
 namespace PlatformExampleApp.TextSnippet.Api
 {
@@ -21,26 +21,39 @@ namespace PlatformExampleApp.TextSnippet.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers().AddJsonOptions(options =>
-            {
-                PlatformAspNetCoreModule.DefaultJsonSerializerOptionsConfigure(options.JsonSerializerOptions);
-            });
-            services.AddSwaggerGen(c =>
-            {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "PlatformExampleApp.TextSnippet.Api", Version = "v1" });
-            });
+            services.AddControllers()
+                .AddJsonOptions(
+                    options =>
+                    {
+                        PlatformAspNetCoreModule.DefaultJsonSerializerOptionsConfigure(options.JsonSerializerOptions);
+                    });
+            services.AddSwaggerGen(
+                c =>
+                {
+                    c.SwaggerDoc(
+                        "v1",
+                        new OpenApiInfo
+                        {
+                            Title = "PlatformExampleApp.TextSnippet.Api",
+                            Version = "v1"
+                        });
+                });
 
             services.RegisterModule<TextSnippetApiAspNetCoreModule>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, TextSnippetApiAspNetCoreModule apiModule)
+        public void Configure(
+            IApplicationBuilder app,
+            IWebHostEnvironment env,
+            TextSnippetApiAspNetCoreModule apiModule)
         {
             if (env.IsDevelopment() || env.EnvironmentName.Contains(Environments.Development))
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PlatformExampleApp.TextSnippet.Api v1"));
+                app.UseSwaggerUI(
+                    c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "PlatformExampleApp.TextSnippet.Api v1"));
             }
 
             // Reference middleware orders: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/?view=aspnetcore-5.0#middleware-order
@@ -58,10 +71,11 @@ namespace PlatformExampleApp.TextSnippet.Api
 
             app.UseAuthorization();
 
-            app.UseEndpoints(endpoints =>
-            {
-                endpoints.MapControllers();
-            });
+            app.UseEndpoints(
+                endpoints =>
+                {
+                    endpoints.MapControllers();
+                });
 
             apiModule.Init();
         }

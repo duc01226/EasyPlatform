@@ -1,9 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Easy.Platform.Common.Cqrs.Events;
 using Easy.Platform.Domain.Events;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
@@ -14,7 +8,9 @@ namespace PlatformExampleApp.TextSnippet.Domain.Events
         public string SnippetText { get; set; }
         public MultiDbDemoEntity TargetEntity { get; set; }
 
-        public static TransferSnippetTextToMultiDbDemoEntityNameDomainEvent Create(string snippetText, MultiDbDemoEntity targetEntity)
+        public static TransferSnippetTextToMultiDbDemoEntityNameDomainEvent Create(
+            string snippetText,
+            MultiDbDemoEntity targetEntity)
         {
             return new TransferSnippetTextToMultiDbDemoEntityNameDomainEvent()
             {

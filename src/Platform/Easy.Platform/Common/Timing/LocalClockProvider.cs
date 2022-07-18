@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Easy.Platform.Common.Timing
+﻿namespace Easy.Platform.Common.Timing
 {
     public class LocalClockProvider : IClockProvider
     {

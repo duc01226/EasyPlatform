@@ -33,7 +33,8 @@ namespace Easy.Platform.Infrastructures.BackgroundJob
     /// <summary>
     /// Base class for any background job executor with param. Define a job be extend from this class.
     /// </summary>
-    public abstract class PlatformBackgroundJobExecutor<TParam> : PlatformBackgroundJobExecutor, IPlatformBackgroundJobExecutor<TParam> where TParam : class
+    public abstract class PlatformBackgroundJobExecutor<TParam> : PlatformBackgroundJobExecutor,
+        IPlatformBackgroundJobExecutor<TParam> where TParam : class
     {
         public override void Execute()
         {

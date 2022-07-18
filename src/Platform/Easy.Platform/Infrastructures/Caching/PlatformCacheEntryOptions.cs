@@ -1,4 +1,3 @@
-using System;
 using Microsoft.Extensions.Configuration;
 
 namespace Easy.Platform.Infrastructures.Caching
@@ -8,7 +7,7 @@ namespace Easy.Platform.Infrastructures.Caching
     /// </summary>
     public class PlatformCacheEntryOptions
     {
-        public static int DefaultExpirationInSeconds = 3600;
+        public const int DefaultExpirationInSeconds = 3600;
 
         /// <summary>
         /// Gets or sets how long a cache entry can be inactive (e.g. not accessed) before it will be removed.
@@ -26,7 +25,9 @@ namespace Easy.Platform.Infrastructures.Caching
         /// </summary>
         public TimeSpan? AbsoluteExpirationRelativeToNow()
         {
-            return AbsoluteExpirationInSeconds.HasValue ? TimeSpan.FromSeconds(AbsoluteExpirationInSeconds.Value) : null;
+            return AbsoluteExpirationInSeconds.HasValue
+                ? TimeSpan.FromSeconds(AbsoluteExpirationInSeconds.Value)
+                : null;
         }
 
         /// <summary>

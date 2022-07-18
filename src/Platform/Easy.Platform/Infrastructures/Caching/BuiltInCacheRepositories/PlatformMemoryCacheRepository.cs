@@ -1,10 +1,4 @@
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Common.JsonSerialization;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Caching.Memory;
@@ -16,9 +10,12 @@ namespace Easy.Platform.Infrastructures.Caching.BuiltInCacheRepositories
     public class PlatformMemoryCacheRepository : PlatformCacheRepository, IPlatformMemoryCacheRepository
     {
         private readonly MemoryDistributedCache memoryDistributedCache;
-        private readonly ConcurrentDictionary<PlatformCacheKey, object> cachedKeys = new ConcurrentDictionary<PlatformCacheKey, object>();
 
-        public PlatformMemoryCacheRepository(ILoggerFactory loggerFactory, IServiceProvider serviceProvider) : base(serviceProvider)
+        private readonly ConcurrentDictionary<PlatformCacheKey, object> cachedKeys =
+            new ConcurrentDictionary<PlatformCacheKey, object>();
+
+        public PlatformMemoryCacheRepository(ILoggerFactory loggerFactory, IServiceProvider serviceProvider) : base(
+            serviceProvider)
         {
             memoryDistributedCache = new MemoryDistributedCache(
                 new OptionsWrapper<MemoryDistributedCacheOptions>(new MemoryDistributedCacheOptions()),
@@ -85,7 +82,9 @@ namespace Easy.Platform.Infrastructures.Caching.BuiltInCacheRepositories
             cachedKeys.Remove(cacheKey, out _);
         }
 
-        public override Task RemoveAsync(Func<PlatformCacheKey, bool> cacheKeyPredicate, CancellationToken token = default)
+        public override Task RemoveAsync(
+            Func<PlatformCacheKey, bool> cacheKeyPredicate,
+            CancellationToken token = default)
         {
             Remove(cacheKeyPredicate);
 

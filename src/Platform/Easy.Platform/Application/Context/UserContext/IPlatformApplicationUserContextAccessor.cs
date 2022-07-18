@@ -7,7 +7,6 @@ namespace Easy.Platform.Application.Context.UserContext
     /// </summary>
     public interface IPlatformApplicationUserContextAccessor
     {
-        [NotNull]
-        IPlatformApplicationUserContext Current { get; set; }
+        [NotNull] IPlatformApplicationUserContext Current { get; set; }
     }
 }

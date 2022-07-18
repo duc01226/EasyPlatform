@@ -1,6 +1,3 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.MessageBus.Consumers.CqrsEventConsumers;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Common.Extensions;
@@ -19,8 +16,13 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Comman
     /// <br/>
     /// <inheritdoc cref="PlatformCqrsCommandEventBusMessageConsumer{TCommand}"/>
     /// </summary>
-    [PlatformMessageBusConsumer(PlatformCqrsCommandEvent.EventTypeValue, TextSnippetApplicationConstants.ApplicationName, "SaveSnippetTextCommand")]
-    public class SaveSnippetTextCommandEventBusMessageConsumer : PlatformCqrsCommandEventBusMessageConsumer<SaveSnippetTextCommand>
+    [PlatformMessageBusConsumer(
+        PlatformCqrsCommandEvent.EventTypeValue,
+        TextSnippetApplicationConstants.ApplicationName,
+        "SaveSnippetTextCommand")]
+    public class
+        SaveSnippetTextCommandEventBusMessageConsumer : PlatformCqrsCommandEventBusMessageConsumer<
+            SaveSnippetTextCommand>
     {
         public SaveSnippetTextCommandEventBusMessageConsumer(
             ILoggerFactory loggerFactory,
@@ -37,15 +39,21 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Comman
             return 2000;
         }
 
-        protected override Task InternalHandleAsync(PlatformBusMessage<SaveSnippetTextCommand> message, string routingKey)
+        protected override Task InternalHandleAsync(
+            PlatformBusMessage<SaveSnippetTextCommand> message,
+            string routingKey)
         {
-            return Task.Run(() =>
-            {
-                // Sleep to demo warning slow consumer
-                Thread.Sleep(TimeSpan.FromMilliseconds((SlowProcessWarningTimeMilliseconds() ?? DefaultProcessWarningTimeMilliseconds) + 1000));
+            return Task.Run(
+                () =>
+                {
+                    // Sleep to demo warning slow consumer
+                    Thread.Sleep(
+                        TimeSpan.FromMilliseconds(
+                            (SlowProcessWarningTimeMilliseconds() ?? DefaultProcessWarningTimeMilliseconds) + 1000));
 
-                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
-            });
+                    Logger.LogInformationIfEnabled(
+                        $"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
+                });
         }
 
         // Can override this method return false to user normal consumer without using inbox message
@@ -61,7 +69,9 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Comman
     /// Must ensure MessageClassName is unique in the system.
     /// <inheritdoc cref="PlatformCqrsCommandEventBusMessageConsumer{TCommand}"/>
     /// </summary>
-    public class SaveSnippetTextCommandAsFreeFormatEventBusMessageConsumer : PlatformCqrsCommandEventBusMessageConsumer<SaveSnippetTextCommand>
+    public class
+        SaveSnippetTextCommandAsFreeFormatEventBusMessageConsumer : PlatformCqrsCommandEventBusMessageConsumer<
+            SaveSnippetTextCommand>
     {
         public SaveSnippetTextCommandAsFreeFormatEventBusMessageConsumer(
             ILoggerFactory loggerFactory,
@@ -78,15 +88,21 @@ namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Consumers.Comman
             return 2000;
         }
 
-        protected override Task InternalHandleAsync(PlatformBusMessage<SaveSnippetTextCommand> message, string routingKey)
+        protected override Task InternalHandleAsync(
+            PlatformBusMessage<SaveSnippetTextCommand> message,
+            string routingKey)
         {
-            return Task.Run(() =>
-            {
-                // Sleep to demo warning slow consumer
-                Thread.Sleep(TimeSpan.FromMilliseconds((SlowProcessWarningTimeMilliseconds() ?? DefaultProcessWarningTimeMilliseconds) + 1000));
+            return Task.Run(
+                () =>
+                {
+                    // Sleep to demo warning slow consumer
+                    Thread.Sleep(
+                        TimeSpan.FromMilliseconds(
+                            (SlowProcessWarningTimeMilliseconds() ?? DefaultProcessWarningTimeMilliseconds) + 1000));
 
-                Logger.LogInformationIfEnabled($"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
-            });
+                    Logger.LogInformationIfEnabled(
+                        $"{GetType().FullName} has handled message. Message Detail: ${PlatformJsonSerializer.Serialize(message)}");
+                });
         }
 
         // Can override this method return false to user normal consumer without using inbox message

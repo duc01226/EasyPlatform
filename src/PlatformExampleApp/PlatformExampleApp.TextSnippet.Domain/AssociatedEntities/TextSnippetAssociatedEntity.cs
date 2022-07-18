@@ -1,10 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Easy.Platform.Common.Utils;
-using Microsoft.VisualBasic.CompilerServices;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
@@ -37,7 +31,8 @@ namespace PlatformExampleApp.TextSnippet.Domain.AssociatedEntities
 
         public TextSnippetAssociatedEntity WithCreatedByUser(ITextSnippetRepository<UserEntity> userRepo)
         {
-            return WithCreatedByUser(CreatedByUserId.HasValue ? userRepo.GetByIdAsync(CreatedByUserId.Value).Result : null);
+            return WithCreatedByUser(
+                CreatedByUserId.HasValue ? userRepo.GetByIdAsync(CreatedByUserId.Value).Result : null);
         }
     }
 }

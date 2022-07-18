@@ -1,12 +1,11 @@
-using System;
 using System.Net;
+using Easy.Platform.Application.Exceptions;
+using Easy.Platform.Common.Validators.Exceptions;
+using Easy.Platform.Domain.Exceptions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Easy.Platform.Application.Exceptions;
-using Easy.Platform.Common.Validators.Exceptions;
-using Easy.Platform.Domain.Exceptions;
 
 namespace Easy.Platform.AspNetCore.ExceptionHandling
 {
@@ -20,7 +19,7 @@ namespace Easy.Platform.AspNetCore.ExceptionHandling
 
         public PlatformExceptionFilter(ILogger<PlatformExceptionFilter> logger, IConfiguration configuration)
         {
-            this.Logger = logger;
+            Logger = logger;
             developerExceptionEnabled = configuration.GetValue<bool>("DeveloperExceptionEnabled");
         }
 
@@ -104,19 +103,37 @@ namespace Easy.Platform.AspNetCore.ExceptionHandling
         private static class Log
         {
             private static readonly Action<ILogger, Exception, string> UnexpectedRequestErrorAction =
-                (logger, exception, requestId) => LoggerMessage.Define(LogLevel.Error, new EventId(1, "UnexpectedRequestError"), $"[UnexpectedRequestError] There is an unexpected exception during the processing of the request. RequestId: {requestId}")(logger, exception);
+                (logger, exception, requestId) => LoggerMessage.Define(
+                    LogLevel.Error,
+                    new EventId(1, "UnexpectedRequestError"),
+                    $"[UnexpectedRequestError] There is an unexpected exception during the processing of the request. RequestId: {requestId}")(
+                    logger,
+                    exception);
 
-            private static readonly Action<ILogger, string, Exception, string> KnownRequestWarningAction =
-                (logger, exceptionType, exception, requestId) => LoggerMessage.Define(LogLevel.Warning, new EventId(2, "KnownRequestWarning"), $"[KnownRequestWarning] There is a {exceptionType} during the processing of the request. RequestId: {requestId}")(logger, exception);
+            private static readonly Action<ILogger, string, Exception, string> KnownRequestWarningAction = (
+                logger,
+                exceptionType,
+                exception,
+                requestId) => LoggerMessage.Define(
+                LogLevel.Warning,
+                new EventId(2, "KnownRequestWarning"),
+                $"[KnownRequestWarning] There is a {exceptionType} during the processing of the request. RequestId: {requestId}")(
+                logger,
+                exception);
 
             public static void UnexpectedRequestError(ILogger logger, Exception exception, string requestId)
             {
                 UnexpectedRequestErrorAction(logger, exception, requestId);
             }
 
-            public static void KnownRequestWarning<TException>(ILogger logger, TException exception, string requestId) where TException : Exception
+            public static void KnownRequestWarning<TException>(ILogger logger, TException exception, string requestId)
+                where TException : Exception
             {
-                KnownRequestWarningAction(logger, typeof(TException).Name, exception, requestId);
+                KnownRequestWarningAction(
+                    logger,
+                    typeof(TException).Name,
+                    exception,
+                    requestId);
             }
         }
     }

@@ -9,7 +9,8 @@ namespace Easy.Platform.EfCore.Domain.Repositories
         IPlatformOutboxBusMessageRepository
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
-        public PlatformDefaultEfCoreOutboxBusMessageRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
+        public PlatformDefaultEfCoreOutboxBusMessageRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs)
+            : base(unitOfWorkManager, cqrs)
         {
         }
     }

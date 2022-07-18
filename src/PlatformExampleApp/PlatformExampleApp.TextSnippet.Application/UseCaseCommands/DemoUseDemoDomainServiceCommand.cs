@@ -1,13 +1,8 @@
-using System;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.Application.Cqrs.Commands;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.Cqrs.Commands;
 using Easy.Platform.Domain.UnitOfWork;
-using Easy.Platform.Infrastructures.BackgroundJob;
-using PlatformExampleApp.TextSnippet.Application.BackgroundJob;
 using PlatformExampleApp.TextSnippet.Domain.Services;
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
@@ -18,10 +13,12 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
 
     public class DemoUseDemoDomainServiceCommandResult : PlatformCqrsCommandResult
     {
-        public DemoDomainService.TransferSnippetTextToMultiDbDemoEntityNameResult TransferSnippetTextToMultiDbDemoEntityNameResult { get; set; }
+        public DemoDomainService.TransferSnippetTextToMultiDbDemoEntityNameResult
+            TransferSnippetTextToMultiDbDemoEntityNameResult { get; set; }
     }
 
-    public class DemoUseDemoDomainServiceCommandHandler : PlatformCqrsCommandApplicationHandler<DemoUseDemoDomainServiceCommand, DemoUseDemoDomainServiceCommandResult>
+    public class DemoUseDemoDomainServiceCommandHandler : PlatformCqrsCommandApplicationHandler<
+        DemoUseDemoDomainServiceCommand, DemoUseDemoDomainServiceCommandResult>
     {
         // Demo use demoDomainService
         private readonly DemoDomainService demoDomainService;
@@ -39,7 +36,8 @@ namespace PlatformExampleApp.TextSnippet.Application.UseCaseCommands
             DemoUseDemoDomainServiceCommand request,
             CancellationToken cancellationToken)
         {
-            var transferSnippetTextToMultiDbDemoEntityNameResult = await demoDomainService.TransferSnippetTextToMultiDbDemoEntityName();
+            var transferSnippetTextToMultiDbDemoEntityNameResult =
+                await demoDomainService.TransferSnippetTextToMultiDbDemoEntityName();
 
             return new DemoUseDemoDomainServiceCommandResult()
             {

@@ -1,24 +1,23 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Linq.Expressions;
-using System.Threading;
-using System.Threading.Tasks;
 using Easy.Platform.Common.Cqrs;
+using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.Events;
 using Easy.Platform.Domain.Repositories;
 using Easy.Platform.Domain.UnitOfWork;
-using Easy.Platform.Common.Extensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace Easy.Platform.EfCore.Domain.Repositories
 {
-    public abstract class PlatformEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext>, IPlatformRootRepository<TEntity, TPrimaryKey>
+    public abstract class PlatformEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext> :
+        PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext>,
+        IPlatformRootRepository<TEntity, TPrimaryKey>
         where TEntity : class, IRootEntity<TPrimaryKey>, new()
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
-        public PlatformEfCoreRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
+        public PlatformEfCoreRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(
+            unitOfWorkManager,
+            cqrs)
         {
         }
 
@@ -27,7 +26,10 @@ namespace Easy.Platform.EfCore.Domain.Repositories
             return Table.AsQueryable();
         }
 
-        public virtual async Task<TEntity> CreateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public virtual async Task<TEntity> CreateAsync(
+            TEntity entity,
+            bool dismissSendEvent = false,
+            CancellationToken cancellationToken = default)
         {
             await EnsureEntityValid(entity, cancellationToken);
 
@@ -42,9 +44,16 @@ namespace Easy.Platform.EfCore.Domain.Repositories
             return result;
         }
 
-        public virtual Task<TEntity> CreateOrUpdateAsync(TEntity entity, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+        public virtual Task<TEntity> CreateOrUpdateAsync(
+            TEntity entity,
+            bool dismissSendEvent = false,
+            CancellationToken cancellationToken = default)
         {
-            return CreateOrUpdateAsync(entity, null, dismissSendEvent, cancellationToken);
+            return CreateOrUpdateAsync(
+                entity,
+                null,
+                dismissSendEvent,
+                cancellationToken);
         }
 
         public virtual Task<TEntity> CreateOrUpdateAsync(
@@ -60,7 +69,8 @@ namespace Easy.Platform.EfCore.Domain.Repositories
             {
                 entity.Id = existingEntity.Id;
 
-                if (entity is IRowVersionEntity rowVersionEntity && existingEntity is IRowVersionEntity existingRowVersionEntity)
+                if (entity is IRowVersionEntity rowVersionEntity &&
+                    existingEntity is IRowVersionEntity existingRowVersionEntity)
                 {
                     rowVersionEntity.ConcurrencyUpdateToken = existingRowVersionEntity.ConcurrencyUpdateToken;
                 }
@@ -145,7 +155,9 @@ namespace Easy.Platform.EfCore.Domain.Repositories
         }
 
         public virtual async Task<List<TEntity>> CreateManyAsync(
-            List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+            List<TEntity> entities,
+            bool dismissSendEvent = false,
+            CancellationToken cancellationToken = default)
         {
             await EnsureEntitiesValid(entities, cancellationToken);
 
@@ -154,8 +166,9 @@ namespace Easy.Platform.EfCore.Domain.Repositories
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvents(
-                    entities.Select(entity =>
-                        new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Created)),
+                    entities.Select(
+                        entity =>
+                            new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Created)),
                     cancellationToken);
             }
 
@@ -163,7 +176,9 @@ namespace Easy.Platform.EfCore.Domain.Repositories
         }
 
         public virtual async Task<List<TEntity>> UpdateManyAsync(
-            List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+            List<TEntity> entities,
+            bool dismissSendEvent = false,
+            CancellationToken cancellationToken = default)
         {
             foreach (var entity in entities)
             {
@@ -174,22 +189,27 @@ namespace Easy.Platform.EfCore.Domain.Repositories
         }
 
         public virtual async Task<List<TEntity>> DeleteManyAsync(
-            List<TPrimaryKey> entityIds, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+            List<TPrimaryKey> entityIds,
+            bool dismissSendEvent = false,
+            CancellationToken cancellationToken = default)
         {
             var entities = await GetAllQuery().Where(p => entityIds.Contains(p.Id)).ToListAsync(cancellationToken);
             return await DeleteManyAsync(entities, dismissSendEvent, cancellationToken);
         }
 
         public virtual async Task<List<TEntity>> DeleteManyAsync(
-            List<TEntity> entities, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+            List<TEntity> entities,
+            bool dismissSendEvent = false,
+            CancellationToken cancellationToken = default)
         {
             Table.RemoveRange(entities);
 
             if (!dismissSendEvent)
             {
                 await Cqrs.SendEvents(
-                    entities.Select(entity =>
-                        new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Deleted)),
+                    entities.Select(
+                        entity =>
+                            new PlatformCqrsEntityEvent<TEntity>(entity, PlatformCqrsEntityEventCrudAction.Deleted)),
                     cancellationToken);
             }
 
@@ -197,17 +217,26 @@ namespace Easy.Platform.EfCore.Domain.Repositories
         }
 
         public virtual async Task<List<TEntity>> DeleteManyAsync(
-            Expression<Func<TEntity, bool>> predicate, bool dismissSendEvent = false, CancellationToken cancellationToken = default)
+            Expression<Func<TEntity, bool>> predicate,
+            bool dismissSendEvent = false,
+            CancellationToken cancellationToken = default)
         {
-            return await DeleteManyAsync(await GetAllAsync(predicate, cancellationToken), dismissSendEvent, cancellationToken);
+            return await DeleteManyAsync(
+                await GetAllAsync(predicate, cancellationToken),
+                dismissSendEvent,
+                cancellationToken);
         }
     }
 
-    public abstract class PlatformDefaultEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext>
+    public abstract class
+        PlatformDefaultEfCoreRootRepository<TEntity, TPrimaryKey, TDbContext> : PlatformEfCoreRootRepository<TEntity,
+            TPrimaryKey, TDbContext>
         where TEntity : RootEntity<TEntity, TPrimaryKey>, new()
         where TDbContext : PlatformEfCoreDbContext<TDbContext>
     {
-        protected PlatformDefaultEfCoreRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(unitOfWorkManager, cqrs)
+        protected PlatformDefaultEfCoreRootRepository(IUnitOfWorkManager unitOfWorkManager, IPlatformCqrs cqrs) : base(
+            unitOfWorkManager,
+            cqrs)
         {
         }
     }

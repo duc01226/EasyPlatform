@@ -1,5 +1,3 @@
-using System;
-
 namespace Easy.Platform.Common.Timing
 {
     /// <summary>

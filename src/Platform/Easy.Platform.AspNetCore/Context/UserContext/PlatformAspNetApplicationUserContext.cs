@@ -1,14 +1,6 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Security.Claims;
-using System.Text.Json;
 using Easy.Platform.Application.Context.UserContext;
-using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper;
 using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
-using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Utils;
 using Microsoft.AspNetCore.Http;
@@ -71,8 +63,11 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
                 return new List<string>();
             }
 
-            return CurrentHttpContext().Items.Keys
-                .Where(key => key is string keyString && keyString.StartsWith(PlatformApplicationUserContextKeyBuilder.ContextKeyPrefix))
+            return CurrentHttpContext()
+                .Items.Keys
+                .Where(
+                    key => key is string keyString &&
+                           keyString.StartsWith(PlatformApplicationUserContextKeyBuilder.ContextKeyPrefix))
                 .Select(key => (string)key)
                 .ToList();
         }
@@ -149,16 +144,22 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
             return false;
         }
 
-        private bool TryGetValueFromRequestHeaders<T>(IHeaderDictionary requestHeaders, string contextKey, out T foundValue)
+        private bool TryGetValueFromRequestHeaders<T>(
+            IHeaderDictionary requestHeaders,
+            string contextKey,
+            out T foundValue)
         {
             var contextKeyMappedToOneOfClaimTypes = claimTypeMapper.ToOneOfClaimTypes(contextKey);
 
             var stringRequestHeaderValues = contextKeyMappedToOneOfClaimTypes
-                .Select(
-                    contextKeyMappedToJwtClaimType => requestHeaders.ContainsKey(contextKeyMappedToJwtClaimType)
-                        ? new List<string>(requestHeaders[contextKeyMappedToJwtClaimType])
-                        : new List<string>())
-                .FirstOrDefault(p => p.Any()) ?? new List<string>();
+                                                .Select(
+                                                    contextKeyMappedToJwtClaimType =>
+                                                        requestHeaders.ContainsKey(contextKeyMappedToJwtClaimType)
+                                                            ? new List<string>(
+                                                                requestHeaders[contextKeyMappedToJwtClaimType])
+                                                            : new List<string>())
+                                                .FirstOrDefault(p => p.Any()) ??
+                                            new List<string>();
 
             // Try Get Deserialized value from matchedClaimStringValues
             return TryGetParsedValuesFromStringValues(out foundValue, stringRequestHeaderValues);
@@ -185,8 +186,13 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
             var contextKeyMappedToOneOfClaimTypes = claimTypeMapper.ToOneOfClaimTypes(contextKey);
 
             var matchedClaimStringValues = contextKeyMappedToOneOfClaimTypes
-                .Select(contextKeyMappedToJwtClaimType => userClaims.FindAll(contextKeyMappedToJwtClaimType).Select(p => p.Value).ToList())
-                .FirstOrDefault(p => p.Any()) ?? new List<string>();
+                                               .Select(
+                                                   contextKeyMappedToJwtClaimType =>
+                                                       userClaims.FindAll(contextKeyMappedToJwtClaimType)
+                                                           .Select(p => p.Value)
+                                                           .ToList())
+                                               .FirstOrDefault(p => p.Any()) ??
+                                           new List<string>();
 
             // Try Get Deserialized value from matchedClaimStringValues
             return TryGetParsedValuesFromStringValues(out foundValue, matchedClaimStringValues);
@@ -226,7 +232,7 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
                 var parsedSuccess = double.TryParse(stringValues.LastOrDefault(), out var parsedValue);
                 if (parsedSuccess)
                 {
-                    // Serialize then Deserialize to ensure could parse from double to int, long, float, etc.. any of number type
+                    // WHY: Serialize then Deserialize to ensure could parse from double to int, long, float, etc.. any of number type T
                     foundValue = PlatformJsonSerializer.Deserialize<T>(PlatformJsonSerializer.Serialize(parsedValue));
                     return true;
                 }
@@ -267,30 +273,32 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
                 var isParsedAllItemSuccess = true;
 
                 var parsedItemList = matchedClaimStringValues
-                    .Select(matchedClaimStringValue =>
-                    {
-                        if (listItemType == typeof(string))
+                    .Select(
+                        matchedClaimStringValue =>
                         {
-                            return matchedClaimStringValue;
-                        }
+                            if (listItemType == typeof(string))
+                            {
+                                return matchedClaimStringValue;
+                            }
 
-                        var parsedItemResult = Util.Jsons.TryDeserialize(
-                            matchedClaimStringValue,
-                            listItemType,
-                            out var itemDeserializedValue,
-                            PlatformJsonSerializer.CurrentOptions.Value);
+                            var parsedItemResult = Util.Jsons.TryDeserialize(
+                                matchedClaimStringValue,
+                                listItemType,
+                                out var itemDeserializedValue,
+                                PlatformJsonSerializer.CurrentOptions.Value);
 
-                        if (parsedItemResult == false)
-                            isParsedAllItemSuccess = false;
+                            if (parsedItemResult == false)
+                                isParsedAllItemSuccess = false;
 
-                        return itemDeserializedValue;
-                    })
+                            return itemDeserializedValue;
+                        })
                     .ToList();
 
                 if (isParsedAllItemSuccess)
                 {
                     // Serialize then Deserialize to type T so ensure parse matchedClaimStringValues to type T successfully
-                    foundValue = PlatformJsonSerializer.Deserialize<T>(PlatformJsonSerializer.Serialize(parsedItemList));
+                    foundValue =
+                        PlatformJsonSerializer.Deserialize<T>(PlatformJsonSerializer.Serialize(parsedItemList));
                     return true;
                 }
             }
@@ -300,14 +308,15 @@ namespace Easy.Platform.AspNetCore.Context.UserContext
             return false;
         }
 
-        private static Type? FindFirstValueListInterfaceType<T>()
+        private static Type FindFirstValueListInterfaceType<T>()
         {
             var firstValueListInterface = typeof(T)
                 .GetInterfaces()
-                .FirstOrDefault(p =>
-                    p.IsGenericType &&
-                    (p.GetGenericTypeDefinition().IsAssignableTo(typeof(IEnumerable<>)) ||
-                     p.GetGenericTypeDefinition().IsAssignableTo(typeof(ICollection<>))));
+                .FirstOrDefault(
+                    p =>
+                        p.IsGenericType &&
+                        (p.GetGenericTypeDefinition().IsAssignableTo(typeof(IEnumerable<>)) ||
+                         p.GetGenericTypeDefinition().IsAssignableTo(typeof(ICollection<>))));
             return firstValueListInterface;
         }
     }

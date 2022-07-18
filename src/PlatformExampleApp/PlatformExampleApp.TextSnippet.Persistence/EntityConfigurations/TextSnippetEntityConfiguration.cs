@@ -1,6 +1,5 @@
-using System;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Easy.Platform.EfCore.EntityConfiguration;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.EntityConfigurations
@@ -20,7 +19,12 @@ namespace PlatformExampleApp.TextSnippet.Persistence.EntityConfigurations
 
             builder.OwnsOne(p => p.Address);
 
-            builder.HasIndex(p => new { p.SnippetText }).IsUnique();
+            builder.HasIndex(
+                    p => new
+                    {
+                        p.SnippetText
+                    })
+                .IsUnique();
         }
     }
 }

@@ -1,5 +1,3 @@
-using System.Threading;
-
 namespace Easy.Platform.Application.Context.UserContext.Default
 {
     /// <summary>
@@ -8,7 +6,8 @@ namespace Easy.Platform.Application.Context.UserContext.Default
     /// </summary>
     public class PlatformDefaultApplicationUserContextAccessor : IPlatformApplicationUserContextAccessor
     {
-        private static readonly AsyncLocal<UserContextHolder> UserContextCurrentThread = new AsyncLocal<UserContextHolder>();
+        private static readonly AsyncLocal<UserContextHolder> UserContextCurrentThread =
+            new AsyncLocal<UserContextHolder>();
 
         public IPlatformApplicationUserContext Current
         {
@@ -26,15 +25,19 @@ namespace Easy.Platform.Application.Context.UserContext.Default
                 var holder = UserContextCurrentThread.Value;
                 if (holder != null)
                 {
-                    // Clear current Context trapped in the AsyncLocals, as its done.
+                    // WHY: Clear current Context trapped in the AsyncLocals, as its done using
+                    // because we want to set a new current user context.
                     holder.Context = null;
                 }
 
                 if (value != null)
                 {
-                    // Use an object indirection to hold the Context in the AsyncLocal,
+                    // WHY: Use an object indirection to hold the Context in the AsyncLocal,
                     // so it can be cleared in all ExecutionContexts when its cleared.
-                    UserContextCurrentThread.Value = new UserContextHolder { Context = value };
+                    UserContextCurrentThread.Value = new UserContextHolder
+                    {
+                        Context = value
+                    };
                 }
             }
         }

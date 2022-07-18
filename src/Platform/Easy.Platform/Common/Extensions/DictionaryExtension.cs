@@ -1,6 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-
 namespace Easy.Platform.Common.Extensions
 {
     public static class DictionaryExtension

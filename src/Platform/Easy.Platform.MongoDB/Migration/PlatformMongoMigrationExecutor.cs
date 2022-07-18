@@ -1,5 +1,3 @@
-using System;
-
 namespace Easy.Platform.MongoDB.Migration
 {
     /// <summary>
@@ -15,7 +13,7 @@ namespace Easy.Platform.MongoDB.Migration
         /// <summary>
         /// The date that migration is expired and will never be executed
         /// </summary>
-        public virtual DateTime? ExpiredDate { get; }
+        public virtual DateTime? ExpiredDate { get; } = null;
 
         public abstract void Execute(TDbContext dbContext);
 
