@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31129.286
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32630.193
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Api", "PlatformExampleApp\PlatformExampleApp.TextSnippet.Api\PlatformExampleApp.TextSnippet.Api.csproj", "{721EE62A-F873-4AB8-B318-27A058D22943}"
 EndProject
@@ -47,6 +47,20 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Infrastructure", "PlatformExampleApp\PlatformExampleApp.TextSnippet.Infrastructure\PlatformExampleApp.TextSnippet.Infrastructure.csproj", "{FEEEA812-7195-42F1-9C16-0E79A6E7D1EA}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.Shared", "PlatformExampleApp\PlatformExampleApp.Shared\PlatformExampleApp.Shared.csproj", "{A412448B-EA9E-461A-90DD-6D708307552A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Learning", "Learning", "{47110732-9454-4200-9364-C08C9CC71202}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LearnAspNetCoreIdentity", "LearnAspNetCoreIdentity", "{13FB8183-B33A-4F4E-92E7-9CCE264CD721}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "LearningAuthenticationExamples", "LearningAuthenticationExamples", "{40AD1E47-CDB1-4DA1-BE2D-D4E83B362211}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApp_UnderTheHood", "Learning\LearnAspNetCoreIdentity\WebApp_UnderTheHood\WebApp_UnderTheHood.csproj", "{2A36388C-D1AD-4B1A-9898-701CE3E64D17}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebApi", "Learning\LearnAspNetCoreIdentity\WebApi\WebApi.csproj", "{B327D0E7-52DA-4D91-BEAD-09B962AC4187}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspNetCoreIdentity", "Learning\LearnAspNetCoreIdentity\AspNetCoreIdentity\AspNetCoreIdentity.csproj", "{A69E9008-EF3A-42EC-9D24-231E458FE74C}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "1_ApiJwtAuthenticationExample", "Learning\LearningAuthenticationExamples\1_ApiJwtAuthenticationExample\1_ApiJwtAuthenticationExample.csproj", "{4F348DE0-AB3F-4229-917F-D44FA757127E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -118,6 +132,22 @@ Global
 		{A412448B-EA9E-461A-90DD-6D708307552A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A412448B-EA9E-461A-90DD-6D708307552A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A412448B-EA9E-461A-90DD-6D708307552A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2A36388C-D1AD-4B1A-9898-701CE3E64D17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A36388C-D1AD-4B1A-9898-701CE3E64D17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A36388C-D1AD-4B1A-9898-701CE3E64D17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A36388C-D1AD-4B1A-9898-701CE3E64D17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B327D0E7-52DA-4D91-BEAD-09B962AC4187}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B327D0E7-52DA-4D91-BEAD-09B962AC4187}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B327D0E7-52DA-4D91-BEAD-09B962AC4187}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B327D0E7-52DA-4D91-BEAD-09B962AC4187}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A69E9008-EF3A-42EC-9D24-231E458FE74C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A69E9008-EF3A-42EC-9D24-231E458FE74C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A69E9008-EF3A-42EC-9D24-231E458FE74C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A69E9008-EF3A-42EC-9D24-231E458FE74C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4F348DE0-AB3F-4229-917F-D44FA757127E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4F348DE0-AB3F-4229-917F-D44FA757127E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4F348DE0-AB3F-4229-917F-D44FA757127E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4F348DE0-AB3F-4229-917F-D44FA757127E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -140,6 +170,12 @@ Global
 		{26FCDF7A-0995-46C9-8D9C-52877F451D2C} = {112DE40F-A5AA-4240-B714-FFACAF9757F8}
 		{FEEEA812-7195-42F1-9C16-0E79A6E7D1EA} = {24E30956-7F1B-449D-9B28-F5BD57717438}
 		{A412448B-EA9E-461A-90DD-6D708307552A} = {24E30956-7F1B-449D-9B28-F5BD57717438}
+		{13FB8183-B33A-4F4E-92E7-9CCE264CD721} = {47110732-9454-4200-9364-C08C9CC71202}
+		{40AD1E47-CDB1-4DA1-BE2D-D4E83B362211} = {47110732-9454-4200-9364-C08C9CC71202}
+		{2A36388C-D1AD-4B1A-9898-701CE3E64D17} = {13FB8183-B33A-4F4E-92E7-9CCE264CD721}
+		{B327D0E7-52DA-4D91-BEAD-09B962AC4187} = {13FB8183-B33A-4F4E-92E7-9CCE264CD721}
+		{A69E9008-EF3A-42EC-9D24-231E458FE74C} = {13FB8183-B33A-4F4E-92E7-9CCE264CD721}
+		{4F348DE0-AB3F-4229-917F-D44FA757127E} = {40AD1E47-CDB1-4DA1-BE2D-D4E83B362211}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {1547782A-8ABF-4E37-8BAC-C85487175C1B}
