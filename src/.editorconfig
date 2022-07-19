@@ -248,6 +248,10 @@ dotnet_naming_style.prefix_type_parameters_with_t_style.required_prefix = T
 dotnet_naming_style.disallowed_style.capitalization = pascal_case
 dotnet_naming_style.disallowed_style.required_prefix =
 dotnet_naming_style.disallowed_style.required_suffix =
+# internal_error_style - This style should never occur... if it does, it indicates a bug in file or in the parser using the file
+dotnet_naming_style.internal_error_style.capitalization = pascal_case
+dotnet_naming_style.internal_error_style.required_prefix = ____INTERNAL_ERROR____
+dotnet_naming_style.internal_error_style.required_suffix = ____INTERNAL_ERROR____
 
 ##########################################
 # .NET Design GuIDEline Field Naming Rules
@@ -280,6 +284,55 @@ dotnet_naming_symbols.other_public_protected_fields_group.applicable_kinds = fie
 dotnet_naming_rule.other_public_protected_fields_disallowed_rule.symbols = other_public_protected_fields_group
 dotnet_naming_rule.other_public_protected_fields_disallowed_rule.style = disallowed_style
 dotnet_naming_rule.other_public_protected_fields_disallowed_rule.severity = error
+
+##########################################
+# StyleCop Field Naming Rules
+# Naming rules for fields follow the StyleCop analyzers
+# This does not override any rules using disallowed_style above
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers
+##########################################
+
+# All constant fields must be PascalCase
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1303.md
+dotnet_naming_symbols.stylecop_constant_fields_group.applicable_accessibilities = public, internal, protected_internal, protected, private_protected, private
+dotnet_naming_symbols.stylecop_constant_fields_group.required_modifiers = const
+dotnet_naming_symbols.stylecop_constant_fields_group.applicable_kinds = field
+dotnet_naming_rule.stylecop_constant_fields_must_be_pascal_case_rule.symbols = stylecop_constant_fields_group
+dotnet_naming_rule.stylecop_constant_fields_must_be_pascal_case_rule.style = disallowed_style
+dotnet_naming_rule.stylecop_constant_fields_must_be_pascal_case_rule.severity = error
+
+# All static readonly fields must be PascalCase
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1311.md
+dotnet_naming_symbols.stylecop_static_readonly_fields_group.applicable_accessibilities = public, internal, protected_internal, protected, private_protected, private
+dotnet_naming_symbols.stylecop_static_readonly_fields_group.required_modifiers = static, readonly
+dotnet_naming_symbols.stylecop_static_readonly_fields_group.applicable_kinds = field
+dotnet_naming_rule.stylecop_static_readonly_fields_must_be_pascal_case_rule.symbols = stylecop_static_readonly_fields_group
+dotnet_naming_rule.stylecop_static_readonly_fields_must_be_pascal_case_rule.style = disallowed_style
+dotnet_naming_rule.stylecop_static_readonly_fields_must_be_pascal_case_rule.severity = error
+
+# No non-private instance fields are allowed
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1401.md
+dotnet_naming_symbols.stylecop_fields_must_be_private_group.applicable_accessibilities = public, internal, protected_internal, protected, private_protected
+dotnet_naming_symbols.stylecop_fields_must_be_private_group.applicable_kinds = field
+dotnet_naming_rule.stylecop_instance_fields_must_be_private_rule.symbols = stylecop_fields_must_be_private_group
+dotnet_naming_rule.stylecop_instance_fields_must_be_private_rule.style = disallowed_style
+dotnet_naming_rule.stylecop_instance_fields_must_be_private_rule.severity = error
+
+# Private fields must be camelCase
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1306.md
+dotnet_naming_symbols.stylecop_private_fields_group.applicable_accessibilities = private
+dotnet_naming_symbols.stylecop_private_fields_group.applicable_kinds = field
+dotnet_naming_rule.stylecop_private_fields_must_be_camel_case_rule.symbols = stylecop_private_fields_group
+dotnet_naming_rule.stylecop_private_fields_must_be_camel_case_rule.style = camel_case_style
+dotnet_naming_rule.stylecop_private_fields_must_be_camel_case_rule.severity = suggestion
+
+# Local variables must be camelCase
+# https://github.com/DotNetAnalyzers/StyleCopAnalyzers/blob/master/documentation/SA1312.md
+dotnet_naming_symbols.stylecop_local_fields_group.applicable_accessibilities = local
+dotnet_naming_symbols.stylecop_local_fields_group.applicable_kinds = local
+dotnet_naming_rule.stylecop_local_fields_must_be_camel_case_rule.symbols = stylecop_local_fields_group
+dotnet_naming_rule.stylecop_local_fields_must_be_camel_case_rule.style = camel_case_style
+dotnet_naming_rule.stylecop_local_fields_must_be_camel_case_rule.severity = silent
 
 # This rule should never fire.  However, it's included for at least two purposes:
 # First, it helps to understand, reason about, and root-case certain types of issues, such as bugs in .editorconfig parsers.
@@ -368,7 +421,7 @@ dotnet_diagnostic.IDE0072.severity = suggestion
 dotnet_diagnostic.IDE0090.severity = suggestion
 dotnet_diagnostic.IDE0037.severity = suggestion
 dotnet_diagnostic.IDE0106.severity = suggestion
-dotnet_diagnostic.IDE0160.severity = suggestion
+dotnet_diagnostic.IDE0160.severity = none
 dotnet_diagnostic.IDE0130.severity = suggestion
 dotnet_diagnostic.IDE0058.severity = suggestion
 dotnet_diagnostic.IDE0078.severity = suggestion
