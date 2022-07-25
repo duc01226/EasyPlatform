@@ -1,10 +1,10 @@
 ﻿@page
-@model AspNetCoreIdentity.Pages.Account.LoginTwoFactorModel
+@model LoginTwoFactorModel
 @{
 }
 
 <h3>Two Factor Authentication</h3>
-@if (!string.IsNullOrEmpty(@Model.Vm.FallbackSendEmailDisplaySecurityCode))
+@if (!string.IsNullOrEmpty(Model.Vm.FallbackSendEmailDisplaySecurityCode))
 {
     <div class="alert alert-success" role="alert">
         Can't not send to your email.So Your security code is: @Model.Vm.FallbackSendEmailDisplaySecurityCode
@@ -35,7 +35,7 @@ else
         </div>
         <div class="form-group row">
             <div class="col-2">
-                <input type="submit" class="btn btn-primary" value="Verify" />
+                <input type="submit" class="btn btn-primary" value="Verify"/>
             </div>
             <div class="col">
                 <input type="hidden" asp-for="Vm.VerifyForm.RememberMe"/>

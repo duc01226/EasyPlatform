@@ -1,11 +1,10 @@
 ﻿using WebApi.Dtos.Abstract;
 
-namespace WebApi.Dtos
-{
-    public class CredentialDto : Dto
-    {
-        public string? UserName { get; set; }
+namespace WebApi.Dtos;
 
-        public string? Password { get; set; }
-    }
+public class CredentialDto : Dto
+{
+    public string? UserName { get; set; }
+
+    public string? Password { get; set; }
 }

@@ -1,17 +1,16 @@
-﻿namespace WebApi.Common.Extensions
+﻿namespace WebApi.Common.Extensions;
+
+public static class DateTimeExtension
 {
-    public static class DateTimeExtension
+    public static DateTime? TryParseDateTime(this string dateTimeString)
     {
-        public static DateTime? TryParseDateTime(this string dateTimeString)
+        try
         {
-            try
-            {
-                return DateTime.Parse(dateTimeString);
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            return DateTime.Parse(dateTimeString);
+        }
+        catch (Exception)
+        {
+            return null;
         }
     }
 }

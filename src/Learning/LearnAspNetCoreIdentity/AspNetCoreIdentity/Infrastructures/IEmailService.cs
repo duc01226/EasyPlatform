@@ -1,10 +1,9 @@
 ﻿using System.Net.Mail;
 using AspNetCoreIdentity.Infrastructures.Abstract;
 
-namespace AspNetCoreIdentity.Infrastructures
+namespace AspNetCoreIdentity.Infrastructures;
+
+public interface IEmailService : IInfrastructureService
 {
-    public interface IEmailService : IInfrastructureService
-    {
-        Task SendAsync(MailMessage emailMessage);
-    }
+    Task SendAsync(MailMessage emailMessage);
 }

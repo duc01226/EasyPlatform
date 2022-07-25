@@ -1,6 +1,5 @@
-﻿namespace WebApp_UnderTheHood.Helpers.Abstract
+﻿namespace WebApp_UnderTheHood.Helpers.Abstract;
+
+public abstract class Helper
 {
-    public abstract class Helper
-    {
-    }
 }

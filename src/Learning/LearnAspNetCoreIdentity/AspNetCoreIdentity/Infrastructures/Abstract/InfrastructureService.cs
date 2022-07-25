@@ -2,9 +2,8 @@
 
 public interface IInfrastructureService
 {
-
 }
 
-public abstract class InfrastructureService: IInfrastructureService
+public abstract class InfrastructureService : IInfrastructureService
 {
 }

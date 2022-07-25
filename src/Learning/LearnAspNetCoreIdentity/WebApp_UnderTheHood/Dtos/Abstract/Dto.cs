@@ -1,10 +1,9 @@
-﻿namespace WebApp_UnderTheHood.Dtos.Abstract
-{
-    public interface IDto
-    {
-    }
+﻿namespace WebApp_UnderTheHood.Dtos.Abstract;
 
-    public abstract class Dto : IDto
-    {
-    }
+public interface IDto
+{
+}
+
+public abstract class Dto : IDto
+{
 }

@@ -3,14 +3,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using WebApp_UnderTheHood.Auth;
 
-namespace WebApp_UnderTheHood.Pages.Account
+namespace WebApp_UnderTheHood.Pages.Account;
+
+public class LogoutModel : PageModel
 {
-    public class LogoutModel : PageModel
+    public async Task<IActionResult> OnPostAsync()
     {
-        public async Task<IActionResult> OnPostAsync()
-        {
-            await HttpContext.SignOutAsync(AppAuthenticationSchemes.CookieScheme);
-            return RedirectToPage("/Index");
-        }
+        await HttpContext.SignOutAsync(AppAuthenticationSchemes.CookieScheme);
+        return RedirectToPage("/Index");
     }
 }

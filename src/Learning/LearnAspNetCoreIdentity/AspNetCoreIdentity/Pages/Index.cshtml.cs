@@ -1,19 +1,16 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-namespace AspNetCoreIdentity.Pages
+namespace AspNetCoreIdentity.Pages;
+
+[Authorize]
+public class IndexModel : PageModel
 {
-    [Authorize]
-    public class IndexModel : PageModel
+    public IndexModel(ILogger<IndexModel> logger)
     {
-        public IndexModel(ILogger<IndexModel> logger)
-        {
-        }
+    }
 
-        public void OnGet()
-        {
-
-        }
+    public void OnGet()
+    {
     }
 }

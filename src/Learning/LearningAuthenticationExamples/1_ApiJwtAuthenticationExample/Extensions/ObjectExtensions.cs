@@ -1,14 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿namespace ApiJwtAuthenticationExample.Extensions;
 
-namespace ApiJwtAuthenticationExample.Extensions
+public static class ObjectExtensions
 {
-    public static class ObjectExtensions
+    public static T With<T>(this T target, Action<T> editDataAction)
     {
-        public static T With<T>(this T target, Action<T> editDataAction)
-        {
-            editDataAction(target);
+        editDataAction(target);
 
-            return target;
-        }
+        return target;
     }
 }

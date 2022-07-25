@@ -1,11 +1,11 @@
 ﻿@page
-@model AspNetCoreIdentity.Pages.Account.ConfirmEmailModel
+@model ConfirmEmailModel
 @{
 }
 
 <h3>Confirm Email</h3>
 <p>@Model.Message</p>
-@if (@Model.ConfirmSucceeded)
+@if (Model.ConfirmSucceeded)
 {
     <a class="btn btn-link" href="/Account/Login">Login</a>
 }

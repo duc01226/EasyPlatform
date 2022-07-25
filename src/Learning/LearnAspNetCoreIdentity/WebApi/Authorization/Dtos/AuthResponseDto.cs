@@ -1,11 +1,10 @@
 ﻿using WebApi.Dtos.Abstract;
 
-namespace WebApi.Authorization.Dtos
-{
-    public class JwtTokenResponseDto : Dto
-    {
-        public string AccessToken { get; set; } = "";
+namespace WebApi.Authorization.Dtos;
 
-        public DateTime ExpiresAt { get; set; }
-    }
+public class JwtTokenResponseDto : Dto
+{
+    public string AccessToken { get; set; } = "";
+
+    public DateTime ExpiresAt { get; set; }
 }

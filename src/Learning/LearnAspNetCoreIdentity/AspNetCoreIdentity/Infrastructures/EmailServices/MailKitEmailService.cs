@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.Net.Mail;
+﻿using System.Net.Mail;
 using AspNetCoreIdentity.Infrastructures.Abstract;
 using AspNetCoreIdentity.Settings;
 using MailKit.Security;
@@ -25,7 +24,10 @@ public class MailKitEmailService : InfrastructureService, IEmailService
         mimeMessage.From.Add(new MailboxAddress(name: emailMessage.From!.DisplayName, address: emailMessage.From.Address));
         emailMessage.To.ToList().ForEach(toEmailAddress => mimeMessage.To.Add(MailboxAddress.Parse(toEmailAddress.Address)));
         mimeMessage.Subject = emailMessage.Subject;
-        mimeMessage.Body = new TextPart(emailMessage.IsBodyHtml ? TextFormat.Html : TextFormat.Plain) { Text = emailMessage.Body };
+        mimeMessage.Body = new TextPart(emailMessage.IsBodyHtml ? TextFormat.Html : TextFormat.Plain)
+        {
+            Text = emailMessage.Body
+        };
 
         using (var smtpClient = new SmtpClient())
         {

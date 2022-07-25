@@ -4,21 +4,21 @@ namespace ApiJwtAuthenticationExample.Auth.Dtos;
 
 public class ResponseDto : Dto
 {
-    public static ResponseDto Create(Statuses status, string? message = null)
+    public enum Statuses
     {
-        return new ResponseDto()
-        {
-            Status = status,
-            Message = message
-        };
+        Error,
+        Success
     }
 
     public Statuses Status { get; set; }
     public string? Message { get; set; }
 
-    public enum Statuses
+    public static ResponseDto Create(Statuses status, string? message = null)
     {
-        Error,
-        Success
+        return new ResponseDto
+        {
+            Status = status,
+            Message = message
+        };
     }
 }

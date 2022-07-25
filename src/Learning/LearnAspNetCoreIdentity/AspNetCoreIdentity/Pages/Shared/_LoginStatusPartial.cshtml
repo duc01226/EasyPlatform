@@ -4,7 +4,7 @@
         Welcome @User.Identity.Name
 
         @* // DEMO ANOTHER WAY TO ADD MORE USER INFO IS ADD USER CLAIM INSTEAD OF DEFINE CUSTOM USER ENTITY AND ADD DATA INTO USER TABLE *@
-        <br />
+        <br/>
         Position: @(User.Claims.FirstOrDefault(x => x.Type == nameof(Entities.User.Position))?.Value ?? "n/a")
         <button type="submit" class="ml-2 btn btn-link">Logout</button>
     </form>

@@ -3,40 +3,39 @@ using Microsoft.AspNetCore.Authorization;
 using WebApp_UnderTheHood.Auth;
 using WebApp_UnderTheHood.Common.Extensions;
 
-namespace WebApp_UnderTheHood.Authorization.PolicyRequirements
+namespace WebApp_UnderTheHood.Authorization.PolicyRequirements;
+
+public class HrManageProbationRequirement : IAuthorizationRequirement
 {
-    public class HrManageProbationRequirement : IAuthorizationRequirement
+    public const int DefaultMinimumProbationMonths = 3;
+
+    public HrManageProbationRequirement(int probationMonths)
     {
-        public const int DefaultMinimumProbationMonths = 3;
-
-        public HrManageProbationRequirement(int probationMonths)
-        {
-            ProbationMonths = probationMonths;
-        }
-
-        public int ProbationMonths { get; set; }
-
-        public int ProbationDays => ProbationMonths * 30;
+        ProbationMonths = probationMonths;
     }
 
-    public class HrManageProbationRequirementHandler : AuthorizationHandler<HrManageProbationRequirement>
+    public int ProbationMonths { get; set; }
+
+    public int ProbationDays => ProbationMonths * 30;
+}
+
+public class HrManageProbationRequirementHandler : AuthorizationHandler<HrManageProbationRequirement>
+{
+    protected override Task HandleRequirementAsync(
+        AuthorizationHandlerContext context,
+        HrManageProbationRequirement requirement)
     {
-        protected override Task HandleRequirementAsync(
-            AuthorizationHandlerContext context,
-            HrManageProbationRequirement requirement)
+        var employmentDate = context.User.FindFirstValue(AppAuthenticationClaims.EmploymentDate.Type)
+            ?.TryParseDateTime();
+
+        if (employmentDate != null)
         {
-            var employmentDate = context.User.FindFirstValue(AppAuthenticationClaims.EmploymentDate.Type)
-                ?.TryParseDateTime();
+            var probationPeriod = DateTime.UtcNow - employmentDate.Value;
 
-            if (employmentDate != null)
-            {
-                var probationPeriod = DateTime.UtcNow - employmentDate.Value;
-
-                if (probationPeriod.Days > requirement.ProbationDays)
-                    context.Succeed(requirement);
-            }
-
-            return Task.CompletedTask;
+            if (probationPeriod.Days > requirement.ProbationDays)
+                context.Succeed(requirement);
         }
+
+        return Task.CompletedTask;
     }
 }

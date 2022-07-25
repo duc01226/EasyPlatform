@@ -21,7 +21,8 @@ builder.Services.AddAuthentication(defaultScheme: AppAuthenticationSchemes.Cooki
         options.Cookie.Name = AppAuthenticationSchemes.CookieScheme;
         options.LoginPath = "/Account/Login";
         options.AccessDeniedPath = "/Account/AccessDenied";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(1); // Cookie will be expired no matter persisted or not (no matter IsPersistent = true/false)
+        options.ExpireTimeSpan =
+            TimeSpan.FromMinutes(1); // Cookie will be expired no matter persisted or not (no matter IsPersistent = true/false)
     });
 
 // Add Authorization Policies for policy based authorization. Ex: [Authorize(policy: AppAuthorizationPolicies.AdminOnly)]
@@ -30,7 +31,7 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy(
         AppAuthorizationPolicies.MustBelongToHrDepartment,
         policy => policy.RequireClaim(AppAuthenticationClaims.HrDepartment.Type, AppAuthenticationClaims.HrDepartment.Value));
-    
+
     options.AddPolicy(
         AppAuthorizationPolicies.AdminOnly,
         policy => policy.RequireClaim(AppAuthenticationClaims.Admin.Type, AppAuthenticationClaims.Admin.Value));

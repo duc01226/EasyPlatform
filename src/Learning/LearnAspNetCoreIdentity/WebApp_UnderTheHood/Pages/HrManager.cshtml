@@ -1,5 +1,5 @@
 ﻿@page
-@model WebApp_UnderTheHood.Pages.HrManagerModel
+@model HrManagerModel
 @{
     ViewData["Title"] = "HrManager";
 }
@@ -9,23 +9,23 @@
 
     <table class="table table-bordered table-striped">
         <thead>
-            <tr>
-                <th>Date</th>
-                <th>Temp C</th>
-                <th>Temp F</th>
-                <th>Summary</th>
-            </tr>
+        <tr>
+            <th>Date</th>
+            <th>Temp C</th>
+            <th>Temp F</th>
+            <th>Summary</th>
+        </tr>
         </thead>
         <tbody>
-            @foreach (var item in Model.WeatherForecastItems)
-            {
-                <tr>
-                    <td>@item.Date</td>
-                    <td>@item.TemperatureC</td>
-                    <td>@item.TemperatureF</td>
-                    <td>@item.Summary</td>
-                </tr>
-            }
+        @foreach (var item in Model.WeatherForecastItems)
+        {
+            <tr>
+                <td>@item.Date</td>
+                <td>@item.TemperatureC</td>
+                <td>@item.TemperatureF</td>
+                <td>@item.Summary</td>
+            </tr>
+        }
         </tbody>
     </table>
 </div>

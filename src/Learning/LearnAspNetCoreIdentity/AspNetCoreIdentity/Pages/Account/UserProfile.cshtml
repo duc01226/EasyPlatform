@@ -1,5 +1,5 @@
 ﻿@page
-@model AspNetCoreIdentity.Pages.Account.UserProfileModel
+@model UserProfileModel
 @{
 }
 
@@ -12,7 +12,7 @@
                 <label asp-for="UserProfile.Email"></label>
             </div>
             <div class="col-5">
-                <input type="text" asp-for="UserProfile.Email" class="form-control" readonly />
+                <input type="text" asp-for="UserProfile.Email" class="form-control" readonly/>
                 <span class="text-danger" asp-validation-for="UserProfile.Email"></span>
             </div>
         </div>
@@ -21,7 +21,7 @@
                 <label asp-for="UserProfile.Department"></label>
             </div>
             <div class="col-5">
-                <input type="text" asp-for="UserProfile.Department" class="form-control" />
+                <input type="text" asp-for="UserProfile.Department" class="form-control"/>
                 <span class="text-danger" asp-validation-for="UserProfile.Department"></span>
             </div>
         </div>
@@ -30,13 +30,13 @@
                 <label asp-for="UserProfile.Position"></label>
             </div>
             <div class="col-5">
-                <input type="text" asp-for="UserProfile.Position" class="form-control" />
+                <input type="text" asp-for="UserProfile.Position" class="form-control"/>
                 <span class="text-danger" asp-validation-for="UserProfile.Position"></span>
             </div>
         </div>
         <div class="form-group row">
             <div class="col-2">
-                <input type="submit" class="btn btn-primary" value="Save" />
+                <input type="submit" class="btn btn-primary" value="Save"/>
             </div>
             <div class="col-5">
             </div>
@@ -44,7 +44,7 @@
     </form>
 </div>
 
-@if (!string.IsNullOrEmpty(@Model.SaveProfileSuccessMessage))
+@if (!string.IsNullOrEmpty(Model.SaveProfileSuccessMessage))
 {
     <div class="alert alert-success" role="alert">
         @Model.SaveProfileSuccessMessage

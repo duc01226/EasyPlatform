@@ -18,8 +18,8 @@ public class SystemSmtpEmailService : InfrastructureService, IEmailService
     public async Task SendAsync(MailMessage emailMessage)
     {
         using (var smtpClient = new SmtpClient(
-                   smtpSetting.Value.Host,
-                   smtpSetting.Value.Port))
+            smtpSetting.Value.Host,
+            smtpSetting.Value.Port))
         {
             smtpClient.Credentials = new NetworkCredential(
                 userName: smtpSetting.Value.User, // The sender

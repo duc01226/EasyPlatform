@@ -1,66 +1,63 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using WebApi.Auth;
 using WebApi.Authorization.Dtos;
 using WebApi.Dtos;
 
-namespace WebApi.Controllers
+namespace WebApi.Controllers;
+
+[Route("[controller]")]
+[ApiController]
+public class AuthController : ControllerBase
 {
-    [Route("[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
+    private readonly IConfiguration configuration;
+
+    public AuthController(IConfiguration configuration)
     {
-        private readonly IConfiguration configuration;
+        this.configuration = configuration;
+    }
 
-        public AuthController(IConfiguration configuration)
+    [HttpPost]
+    public IActionResult Login([FromBody] CredentialDto credential)
+    {
+        // verify the credentials
+        if (ModelState.IsValid && credential.UserName == "admin" && credential.Password == "password")
         {
-            this.configuration = configuration;
-        }
-
-        [HttpPost]
-        public IActionResult Login([FromBody] CredentialDto credential)
-        {
-            // verify the credentials
-            if (ModelState.IsValid && credential.UserName == "admin" && credential.Password == "password")
+            var claims = new List<Claim>
             {
-                var claims = new List<Claim>()
-                {
-                    new Claim(ClaimTypes.Name, credential.UserName),
-                    new Claim(ClaimTypes.Email, $"{credential.UserName}@mywebsite.com"),
-                    new Claim(AppAuthenticationClaims.HrDepartment.Type, AppAuthenticationClaims.HrDepartment.Value),
-                    new Claim(AppAuthenticationClaims.Admin.Type, AppAuthenticationClaims.Admin.Value),
-                    new Claim(AppAuthenticationClaims.Manager.Type, AppAuthenticationClaims.Manager.Value),
-                    new Claim(AppAuthenticationClaims.EmploymentDate.Type, new DateTime(2021,1,1).ToString())
-                };
+                new Claim(ClaimTypes.Name, credential.UserName),
+                new Claim(ClaimTypes.Email, $"{credential.UserName}@mywebsite.com"),
+                new Claim(AppAuthenticationClaims.HrDepartment.Type, AppAuthenticationClaims.HrDepartment.Value),
+                new Claim(AppAuthenticationClaims.Admin.Type, AppAuthenticationClaims.Admin.Value),
+                new Claim(AppAuthenticationClaims.Manager.Type, AppAuthenticationClaims.Manager.Value),
+                new Claim(AppAuthenticationClaims.EmploymentDate.Type, new DateTime(2021, 1, 1).ToString())
+            };
 
-                var expiresAt = DateTime.UtcNow.AddMinutes(1);
+            var expiresAt = DateTime.UtcNow.AddMinutes(1);
 
-                return Ok(new JwtTokenResponseDto
-                {
-                    AccessToken = GenerateToken(claims, expiresAt),
-                    ExpiresAt = expiresAt
-                });
-            }
-            
-            return Unauthorized();
+            return Ok(new JwtTokenResponseDto
+            {
+                AccessToken = GenerateToken(claims, expiresAt),
+                ExpiresAt = expiresAt
+            });
         }
 
-        private string GenerateToken(IEnumerable<Claim> claims, DateTime expiresAt)
-        {
-            var jwtToken = new JwtSecurityToken(
-                claims: claims,
-                notBefore: DateTime.UtcNow,
-                expires: expiresAt,
-                signingCredentials: new SigningCredentials(
-                    key: new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretAuthenticationKey"])),
-                    algorithm: SecurityAlgorithms.HmacSha256));
+        return Unauthorized();
+    }
 
-            return new JwtSecurityTokenHandler().WriteToken(token: jwtToken);
-        }
+    private string GenerateToken(IEnumerable<Claim> claims, DateTime expiresAt)
+    {
+        var jwtToken = new JwtSecurityToken(
+            claims: claims,
+            notBefore: DateTime.UtcNow,
+            expires: expiresAt,
+            signingCredentials: new SigningCredentials(
+                key: new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretAuthenticationKey"])),
+                algorithm: SecurityAlgorithms.HmacSha256));
+
+        return new JwtSecurityTokenHandler().WriteToken(token: jwtToken);
     }
 }

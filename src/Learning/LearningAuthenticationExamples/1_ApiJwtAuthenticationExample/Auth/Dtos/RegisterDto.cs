@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace ApiJwtAuthenticationExample.Auth.Dtos;
 
-public class RegisterDto: Dto
+public class RegisterDto : Dto
 {
     [Required(ErrorMessage = "User Name is required")]
     public string? Username { get; set; }
@@ -18,7 +18,7 @@ public class RegisterDto: Dto
 
     public IdentityUser ToNewUser()
     {
-        return new IdentityUser()
+        return new IdentityUser
         {
             Email = Email,
             UserName = Username
