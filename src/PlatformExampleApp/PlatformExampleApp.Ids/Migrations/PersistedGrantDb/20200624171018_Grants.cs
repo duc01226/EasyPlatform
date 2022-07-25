@@ -67,9 +67,7 @@ namespace PlatformExampleApp.Ids.Migrations.PersistedGrantDb
                 table: "PersistedGrants",
                 columns: new[]
                 {
-                    "SubjectId",
-                    "ClientId",
-                    "Type"
+                    "SubjectId", "ClientId", "Type"
                 });
 
             migrationBuilder.CreateIndex(
@@ -77,9 +75,7 @@ namespace PlatformExampleApp.Ids.Migrations.PersistedGrantDb
                 table: "PersistedGrants",
                 columns: new[]
                 {
-                    "SubjectId",
-                    "SessionId",
-                    "Type"
+                    "SubjectId", "SessionId", "Type"
                 });
         }
 

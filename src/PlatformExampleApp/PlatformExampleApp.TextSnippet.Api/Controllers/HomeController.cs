@@ -1,14 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace PlatformExampleApp.TextSnippet.Api.Controllers
+namespace PlatformExampleApp.TextSnippet.Api.Controllers;
+
+[Route("")]
+public class HomeController : ControllerBase
 {
-    [Route("")]
-    public class HomeController : ControllerBase
+    [HttpGet]
+    public IActionResult Index()
     {
-        [HttpGet]
-        public IActionResult Index()
-        {
-            return new RedirectResult("~/swagger");
-        }
+        return new RedirectResult("~/swagger");
     }
 }

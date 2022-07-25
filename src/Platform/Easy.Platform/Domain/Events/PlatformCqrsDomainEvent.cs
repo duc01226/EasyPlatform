@@ -1,15 +1,14 @@
 using Easy.Platform.Common.Cqrs.Events;
 
-namespace Easy.Platform.Domain.Events
+namespace Easy.Platform.Domain.Events;
+
+public abstract class PlatformCqrsDomainEvent : PlatformCqrsEvent
 {
-    public abstract class PlatformCqrsDomainEvent : PlatformCqrsEvent
-    {
-        public const string EventTypeValue = "DomainEvent";
+    public const string EventTypeValue = "DomainEvent";
 
-        public override string EventType => EventTypeValue;
+    public override string EventType => EventTypeValue;
 
-        public override string EventName => GetType().Name;
+    public override string EventName => GetType().Name;
 
-        public override string EventAction => null;
-    }
+    public override string EventAction => null;
 }

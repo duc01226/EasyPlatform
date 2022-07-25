@@ -1,57 +1,56 @@
 using Easy.Platform.Infrastructures.BackgroundJob;
 using Hangfire;
 
-namespace Easy.Platform.HangfireBackgroundJob
+namespace Easy.Platform.HangfireBackgroundJob;
+
+public sealed class PlatformHangfireBackgroundJobProcessingService : IPlatformBackgroundJobProcessingService,
+    IDisposable
 {
-    public sealed class PlatformHangfireBackgroundJobProcessingService : IPlatformBackgroundJobProcessingService,
-        IDisposable
+    public static readonly long WaitForShutdownTimeoutInSeconds = 5 * 60;
+
+    private readonly BackgroundJobServerOptions options;
+
+    private BackgroundJobServer currentBackgroundJobServer;
+    private bool isRunning;
+
+    public PlatformHangfireBackgroundJobProcessingService(BackgroundJobServerOptions options)
     {
-        public static readonly long WaitForShutdownTimeoutInSeconds = 5 * 60;
+        this.options = options;
+    }
 
-        private readonly BackgroundJobServerOptions options;
+    public void Dispose()
+    {
+        currentBackgroundJobServer?.Dispose();
+    }
 
-        private BackgroundJobServer currentBackgroundJobServer;
-        private bool isRunning = false;
+    public bool Started()
+    {
+        return currentBackgroundJobServer != null;
+    }
 
-        public PlatformHangfireBackgroundJobProcessingService(BackgroundJobServerOptions options)
-        {
-            this.options = options;
-        }
-
-        public bool Started()
-        {
-            return currentBackgroundJobServer != null;
-        }
-
-        public Task Start()
-        {
-            return Task.Run(
-                () =>
+    public Task Start()
+    {
+        return Task.Run(
+            () =>
+            {
+                if (currentBackgroundJobServer == null || !isRunning)
                 {
-                    if (currentBackgroundJobServer == null || !isRunning)
-                    {
-                        currentBackgroundJobServer = new BackgroundJobServer(options);
-                        isRunning = true;
-                    }
-                });
-        }
+                    currentBackgroundJobServer = new BackgroundJobServer(options);
+                    isRunning = true;
+                }
+            });
+    }
 
-        public Task Stop()
-        {
-            return Task.Run(
-                () =>
-                {
-                    currentBackgroundJobServer?.SendStop();
-                    currentBackgroundJobServer?.WaitForShutdown(TimeSpan.FromSeconds(WaitForShutdownTimeoutInSeconds));
-                    currentBackgroundJobServer?.Dispose();
-                    currentBackgroundJobServer = null;
-                    isRunning = false;
-                });
-        }
-
-        public void Dispose()
-        {
-            currentBackgroundJobServer?.Dispose();
-        }
+    public Task Stop()
+    {
+        return Task.Run(
+            () =>
+            {
+                currentBackgroundJobServer?.SendStop();
+                currentBackgroundJobServer?.WaitForShutdown(TimeSpan.FromSeconds(WaitForShutdownTimeoutInSeconds));
+                currentBackgroundJobServer?.Dispose();
+                currentBackgroundJobServer = null;
+                isRunning = false;
+            });
     }
 }

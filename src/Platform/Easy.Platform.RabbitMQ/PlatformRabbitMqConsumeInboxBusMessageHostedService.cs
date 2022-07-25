@@ -5,41 +5,40 @@ using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Easy.Platform.RabbitMQ
+namespace Easy.Platform.RabbitMQ;
+
+public class PlatformRabbitMqConsumeInboxBusMessageHostedService : PlatformConsumeInboxBusMessageHostedService
 {
-    public class PlatformRabbitMqConsumeInboxBusMessageHostedService : PlatformConsumeInboxBusMessageHostedService
+    private readonly PlatformRabbitMqOptions options;
+
+    public PlatformRabbitMqConsumeInboxBusMessageHostedService(
+        IHostApplicationLifetime applicationLifetime,
+        ILoggerFactory loggerFactory,
+        IServiceProvider serviceProvider,
+        IPlatformApplicationSettingContext applicationSettingContext,
+        PlatformRabbitMqOptions options,
+        IPlatformMessageBusManager messageBusManager) : base(
+        applicationLifetime,
+        loggerFactory,
+        serviceProvider,
+        applicationSettingContext,
+        messageBusManager)
     {
-        private readonly PlatformRabbitMqOptions options;
+        this.options = options;
+    }
 
-        public PlatformRabbitMqConsumeInboxBusMessageHostedService(
-            IHostApplicationLifetime applicationLifetime,
-            ILoggerFactory loggerFactory,
-            IServiceProvider serviceProvider,
-            IPlatformApplicationSettingContext applicationSettingContext,
-            PlatformRabbitMqOptions options,
-            IPlatformMessageBusManager messageBusManager) : base(
-            applicationLifetime,
-            loggerFactory,
-            serviceProvider,
-            applicationSettingContext,
-            messageBusManager)
-        {
-            this.options = options;
-        }
+    protected override bool IsLogConsumerProcessTime()
+    {
+        return options.IsLogConsumerProcessTime;
+    }
 
-        protected override bool IsLogConsumerProcessTime()
-        {
-            return options.IsLogConsumerProcessTime;
-        }
+    protected override double LogErrorSlowProcessWarningTimeMilliseconds()
+    {
+        return options.LogErrorSlowProcessWarningTimeMilliseconds;
+    }
 
-        protected override double LogErrorSlowProcessWarningTimeMilliseconds()
-        {
-            return options.LogErrorSlowProcessWarningTimeMilliseconds;
-        }
-
-        protected override double RetryProcessFailedMessageDelayTimeInSeconds()
-        {
-            return options.RequeueDelayTimeInSeconds;
-        }
+    protected override double RetryProcessFailedMessageDelayTimeInSeconds()
+    {
+        return options.RequeueDelayTimeInSeconds;
     }
 }

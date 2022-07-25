@@ -1,9 +1,8 @@
-namespace Easy.Platform.Domain.Events
+namespace Easy.Platform.Domain.Events;
+
+public enum PlatformCqrsEntityEventCrudAction
 {
-    public enum PlatformCqrsEntityEventCrudAction
-    {
-        Created,
-        Updated,
-        Deleted
-    }
+    Created,
+    Updated,
+    Deleted
 }

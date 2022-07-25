@@ -4,29 +4,28 @@ using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapp
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Easy.Platform.AspNetCore.Context.UserContext
+namespace Easy.Platform.AspNetCore.Context.UserContext;
+
+/// <summary>
+/// Implementation of <see cref="IPlatformApplicationUserContextAccessor"/>
+/// Inspired by Microsoft.AspNetCore.Http.HttpContextAccessor
+/// </summary>
+public class PlatformAspNetApplicationUserContextAccessor : PlatformDefaultApplicationUserContextAccessor
 {
-    /// <summary>
-    /// Implementation of <see cref="IPlatformApplicationUserContextAccessor"/>
-    /// Inspired by Microsoft.AspNetCore.Http.HttpContextAccessor
-    /// </summary>
-    public class PlatformAspNetApplicationUserContextAccessor : PlatformDefaultApplicationUserContextAccessor
+    private readonly IServiceProvider serviceProvider;
+
+    public PlatformAspNetApplicationUserContextAccessor(IServiceProvider serviceProvider)
     {
-        private readonly IServiceProvider serviceProvider;
+        this.serviceProvider = serviceProvider;
+    }
 
-        public PlatformAspNetApplicationUserContextAccessor(IServiceProvider serviceProvider)
-        {
-            this.serviceProvider = serviceProvider;
-        }
-
-        protected override IPlatformApplicationUserContext CreateNewContext()
-        {
-            var httpContextAccessor = serviceProvider.GetService<IHttpContextAccessor>();
-            var claimTypeMapper = serviceProvider.GetService<IPlatformApplicationUserContextKeyToClaimTypeMapper>();
-            if (httpContextAccessor == null || claimTypeMapper == null)
-                throw new Exception(
-                    "[Developer] Missing registered IHttpContextAccessor or IPlatformApplicationUserContextKeyToClaimTypeMapper");
-            return new PlatformAspNetApplicationUserContext(httpContextAccessor, claimTypeMapper);
-        }
+    protected override IPlatformApplicationUserContext CreateNewContext()
+    {
+        var httpContextAccessor = serviceProvider.GetService<IHttpContextAccessor>();
+        var claimTypeMapper = serviceProvider.GetService<IPlatformApplicationUserContextKeyToClaimTypeMapper>();
+        if (httpContextAccessor == null || claimTypeMapper == null)
+            throw new Exception(
+                "[Developer] Missing registered IHttpContextAccessor or IPlatformApplicationUserContextKeyToClaimTypeMapper");
+        return new PlatformAspNetApplicationUserContext(httpContextAccessor, claimTypeMapper);
     }
 }

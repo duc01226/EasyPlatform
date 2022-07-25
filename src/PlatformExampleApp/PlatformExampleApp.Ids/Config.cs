@@ -12,19 +12,17 @@ namespace PlatformExampleApp.Ids
         public static IEnumerable<IdentityResource> IdentityResources =>
             new IdentityResource[]
             {
-                new IdentityResources.OpenId(),
-                new IdentityResources.Profile(),
+                new IdentityResources.OpenId(), new IdentityResources.Profile()
             };
 
         public static IEnumerable<ApiScope> ApiScopes =>
-            new ApiScope[]
+            new[]
             {
-                new ApiScope("scope1"),
-                new ApiScope("scope2"),
+                new ApiScope("scope1"), new ApiScope("scope2")
             };
 
         public static IEnumerable<Client> Clients =>
-            new Client[]
+            new[]
             {
                 // m2m client credentials flow client
                 new Client
@@ -63,9 +61,11 @@ namespace PlatformExampleApp.Ids
                     AllowOfflineAccess = true,
                     AllowedScopes =
                     {
-                        "openid", "profile", "scope2"
+                        "openid",
+                        "profile",
+                        "scope2"
                     }
-                },
+                }
             };
     }
 }

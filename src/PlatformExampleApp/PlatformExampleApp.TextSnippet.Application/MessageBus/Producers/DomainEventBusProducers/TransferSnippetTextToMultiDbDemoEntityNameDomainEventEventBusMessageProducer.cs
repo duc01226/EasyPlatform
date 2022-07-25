@@ -4,35 +4,34 @@ using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Domain.Events;
 
-namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.DomainEventBusProducers
+namespace PlatformExampleApp.TextSnippet.Application.MessageBus.Producers.DomainEventBusProducers;
+
+public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusMessageProducer :
+    PlatformCqrsDomainEventBusMessageProducer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
 {
-    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusMessageProducer :
-        PlatformCqrsDomainEventBusMessageProducer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
+    public TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusMessageProducer(
+        IUnitOfWorkManager unitOfWorkManager,
+        IPlatformApplicationBusMessageProducer applicationBusMessageProducer,
+        ILoggerFactory loggerFactory) : base(unitOfWorkManager, applicationBusMessageProducer, loggerFactory)
     {
-        public TransferSnippetTextToMultiDbDemoEntityNameDomainEventEventBusMessageProducer(
-            IUnitOfWorkManager unitOfWorkManager,
-            IPlatformApplicationBusMessageProducer applicationBusMessageProducer,
-            ILoggerFactory loggerFactory) : base(unitOfWorkManager, applicationBusMessageProducer, loggerFactory)
-        {
-        }
+    }
+}
+
+/// <summary>
+/// Demo SendAsFreeFormatMessage. The consumer for this domain event message do not need to define routing key
+/// </summary>
+public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendAsFreeFormatMessageEventBusMessageProducer :
+    PlatformCqrsDomainEventBusMessageProducer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
+{
+    public TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendAsFreeFormatMessageEventBusMessageProducer(
+        IUnitOfWorkManager unitOfWorkManager,
+        IPlatformApplicationBusMessageProducer applicationBusMessageProducer,
+        ILoggerFactory loggerFactory) : base(unitOfWorkManager, applicationBusMessageProducer, loggerFactory)
+    {
     }
 
-    /// <summary>
-    /// Demo SendAsFreeFormatMessage. The consumer for this domain event message do not need to define routing key
-    /// </summary>
-    public class TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendAsFreeFormatMessageEventBusMessageProducer :
-        PlatformCqrsDomainEventBusMessageProducer<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent>
+    protected override bool SendAsFreeFormatMessage()
     {
-        public TransferSnippetTextToMultiDbDemoEntityNameDomainEventSendAsFreeFormatMessageEventBusMessageProducer(
-            IUnitOfWorkManager unitOfWorkManager,
-            IPlatformApplicationBusMessageProducer applicationBusMessageProducer,
-            ILoggerFactory loggerFactory) : base(unitOfWorkManager, applicationBusMessageProducer, loggerFactory)
-        {
-        }
-
-        protected override bool SendAsFreeFormatMessage()
-        {
-            return true;
-        }
+        return true;
     }
 }

@@ -40,8 +40,7 @@ namespace Easy.Platform.Common.Cqrs.Commands
         }
     }
 
-    public abstract class
-        PlatformCqrsCommandHandler<TCommand> : PlatformCqrsCommandHandler<TCommand, PlatformCqrsCommandResult>
+    public abstract class PlatformCqrsCommandHandler<TCommand> : PlatformCqrsCommandHandler<TCommand, PlatformCqrsCommandResult>
         where TCommand : PlatformCqrsCommand, new()
     {
         public PlatformCqrsCommandHandler(

@@ -5,41 +5,40 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Easy.Platform.RabbitMQ
+namespace Easy.Platform.RabbitMQ;
+
+public class PlatformRabbitMqInboxBusMessageCleanerHostedService : PlatformInboxBusMessageCleanerHostedService
 {
-    public class PlatformRabbitMqInboxBusMessageCleanerHostedService : PlatformInboxBusMessageCleanerHostedService
+    private readonly PlatformRabbitMqOptions options;
+
+    public PlatformRabbitMqInboxBusMessageCleanerHostedService(
+        IHostApplicationLifetime applicationLifetime,
+        IServiceProvider serviceProvider,
+        ILoggerFactory loggerFactory,
+        IPlatformApplicationSettingContext applicationSettingContext,
+        IConfiguration configuration,
+        PlatformRabbitMqOptions options) : base(
+        applicationLifetime,
+        serviceProvider,
+        loggerFactory,
+        applicationSettingContext,
+        configuration)
     {
-        private readonly PlatformRabbitMqOptions options;
+        this.options = options;
+    }
 
-        public PlatformRabbitMqInboxBusMessageCleanerHostedService(
-            IHostApplicationLifetime applicationLifetime,
-            IServiceProvider serviceProvider,
-            ILoggerFactory loggerFactory,
-            IPlatformApplicationSettingContext applicationSettingContext,
-            IConfiguration configuration,
-            PlatformRabbitMqOptions options) : base(
-            applicationLifetime,
-            serviceProvider,
-            loggerFactory,
-            applicationSettingContext,
-            configuration)
-        {
-            this.options = options;
-        }
+    protected override double DeleteProcessedMessageInSeconds()
+    {
+        return options.InboxEventBusMessageOptions.DeleteProcessedMessageInSeconds;
+    }
 
-        protected override double DeleteProcessedMessageInSeconds()
-        {
-            return options.InboxEventBusMessageOptions.DeleteProcessedMessageInSeconds;
-        }
+    protected override int NumberOfDeleteMessagesBatch()
+    {
+        return options.InboxEventBusMessageOptions.NumberOfDeleteMessagesBatch;
+    }
 
-        protected override int NumberOfDeleteMessagesBatch()
-        {
-            return options.InboxEventBusMessageOptions.NumberOfDeleteMessagesBatch;
-        }
-
-        protected override TimeSpan ProcessTriggerIntervalTime()
-        {
-            return TimeSpan.FromMinutes(options.InboxEventBusMessageOptions.ProcessTriggerIntervalInMinutes);
-        }
+    protected override TimeSpan ProcessTriggerIntervalTime()
+    {
+        return TimeSpan.FromMinutes(options.InboxEventBusMessageOptions.ProcessTriggerIntervalInMinutes);
     }
 }

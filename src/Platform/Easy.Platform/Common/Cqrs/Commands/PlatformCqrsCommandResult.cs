@@ -1,7 +1,5 @@
-namespace Easy.Platform.Common.Cqrs.Commands
+namespace Easy.Platform.Common.Cqrs.Commands;
+
+public class PlatformCqrsCommandResult
 {
-    public class PlatformCqrsCommandResult
-    {
-        public PlatformCqrsCommandResult() { }
-    }
 }

@@ -21,10 +21,10 @@ namespace IdentityServerHost.Quickstart.UI
     [Authorize]
     public class GrantsController : Controller
     {
-        private readonly IIdentityServerInteractionService interaction;
         private readonly IClientStore clients;
-        private readonly IResourceStore resourcesStore;
         private readonly IEventService events;
+        private readonly IIdentityServerInteractionService interaction;
+        private readonly IResourceStore resourcesStore;
 
         public GrantsController(
             IIdentityServerInteractionService interaction,
@@ -70,9 +70,9 @@ namespace IdentityServerHost.Quickstart.UI
                 var client = await clients.FindClientByIdAsync(grant.ClientId);
                 if (client != null)
                 {
-                    var resources = await this.resourcesStore.FindResourcesByScopeAsync(grant.Scopes);
+                    var resources = await resourcesStore.FindResourcesByScopeAsync(grant.Scopes);
 
-                    var item = new GrantViewModel()
+                    var item = new GrantViewModel
                     {
                         ClientId = client.ClientId,
                         ClientName = client.ClientName ?? client.ClientId,

@@ -1,33 +1,32 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
-namespace Easy.Platform.MongoDB
+namespace Easy.Platform.MongoDB;
+
+public interface IPlatformMongoClient
 {
-    public interface IPlatformMongoClient
+    public MongoClient MongoClient { get; }
+}
+
+public interface IPlatformMongoClient<TDbContext> : IPlatformMongoClient
+    where TDbContext : class, IPlatformMongoDbContext<TDbContext>
+{
+}
+
+public class PlatformMongoClient : IPlatformMongoClient
+{
+    public PlatformMongoClient(IOptions<PlatformMongoOptions> options)
     {
-        public MongoClient MongoClient { get; }
+        MongoClient = new MongoClient(options.Value.ConnectionString);
     }
 
-    public interface IPlatformMongoClient<TDbContext> : IPlatformMongoClient
-        where TDbContext : class, IPlatformMongoDbContext<TDbContext>
-    {
-    }
+    public MongoClient MongoClient { get; set; }
+}
 
-    public class PlatformMongoClient : IPlatformMongoClient
+public class PlatformMongoClient<TDbContext> : PlatformMongoClient,
+    IPlatformMongoClient<TDbContext> where TDbContext : class, IPlatformMongoDbContext<TDbContext>
+{
+    public PlatformMongoClient(IOptions<PlatformMongoOptions<TDbContext>> options) : base(options)
     {
-        public PlatformMongoClient(IOptions<PlatformMongoOptions> options)
-        {
-            MongoClient = new MongoClient(options.Value.ConnectionString);
-        }
-
-        public MongoClient MongoClient { get; set; }
-    }
-
-    public class PlatformMongoClient<TDbContext> : PlatformMongoClient,
-        IPlatformMongoClient<TDbContext> where TDbContext : class, IPlatformMongoDbContext<TDbContext>
-    {
-        public PlatformMongoClient(IOptions<PlatformMongoOptions<TDbContext>> options) : base(options)
-        {
-        }
     }
 }

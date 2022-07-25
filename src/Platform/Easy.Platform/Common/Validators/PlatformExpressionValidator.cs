@@ -1,19 +1,18 @@
 using System.Linq.Expressions;
 using FluentValidation;
 
-namespace Easy.Platform.Common.Validators
+namespace Easy.Platform.Common.Validators;
+
+public class PlatformExpressionValidator<T> : PlatformValidator<T>
 {
-    public class PlatformExpressionValidator<T> : PlatformValidator<T>
+    public PlatformExpressionValidator(Expression<Func<T, bool>> must, string errorMessage)
     {
-        public PlatformExpressionValidator(Expression<Func<T, bool>> isValidExpression, string errorMessage) : base()
-        {
-            IsValidExpression = isValidExpression;
-            ErrorMessage = errorMessage;
+        MustExpr = must;
+        ErrorMessage = errorMessage;
 
-            RuleFor(x => x).Must(isValidExpression.Compile()).WithMessage(errorMessage);
-        }
-
-        public Expression<Func<T, bool>> IsValidExpression { get; private set; }
-        public string ErrorMessage { get; private set; }
+        RuleFor(x => x).Must(must.Compile()).WithMessage(errorMessage);
     }
+
+    public Expression<Func<T, bool>> MustExpr { get; }
+    public string ErrorMessage { get; }
 }

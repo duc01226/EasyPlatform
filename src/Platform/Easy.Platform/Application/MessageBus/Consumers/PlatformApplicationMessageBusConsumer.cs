@@ -4,9 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Easy.Platform.Application.MessageBus.Consumers
 {
-    public interface
-        IPlatformApplicationMessageBusConsumer<TMessagePayload> : IPlatformApplicationBusFreeFormatMessageConsumer<
-            PlatformBusMessage<TMessagePayload>>
+    public interface IPlatformApplicationMessageBusConsumer<TMessagePayload> : IPlatformApplicationBusFreeFormatMessageConsumer<PlatformBusMessage<TMessagePayload>>
         where TMessagePayload : class, new()
     {
     }

@@ -50,9 +50,7 @@ namespace PlatformExampleApp.Ids
             {
                 Log.Debug("Clients being populated");
                 foreach (var client in Config.Clients.ToList())
-                {
                     context.Clients.Add(client.ToEntity());
-                }
 
                 context.SaveChanges();
             }
@@ -65,9 +63,7 @@ namespace PlatformExampleApp.Ids
             {
                 Log.Debug("IdentityResources being populated");
                 foreach (var resource in Config.IdentityResources.ToList())
-                {
                     context.IdentityResources.Add(resource.ToEntity());
-                }
 
                 context.SaveChanges();
             }
@@ -80,9 +76,7 @@ namespace PlatformExampleApp.Ids
             {
                 Log.Debug("ApiScopes being populated");
                 foreach (var resource in Config.ApiScopes.ToList())
-                {
                     context.ApiScopes.Add(resource.ToEntity());
-                }
 
                 context.SaveChanges();
             }

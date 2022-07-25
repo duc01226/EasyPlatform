@@ -1,20 +1,19 @@
 using Easy.Platform.Domain.UnitOfWork;
 
-namespace Easy.Platform.Application.Domain
-{
-    internal class PlatformPseudoApplicationUnitOfWorkManager : PlatformUnitOfWorkManager
-    {
-        protected override IUnitOfWork NewUow()
-        {
-            return new PlatformPseudoApplicationUnitOfWork();
-        }
-    }
+namespace Easy.Platform.Application.Domain;
 
-    internal class PlatformPseudoApplicationUnitOfWork : PlatformUnitOfWork
+internal class PlatformPseudoApplicationUnitOfWorkManager : PlatformUnitOfWorkManager
+{
+    protected override IUnitOfWork NewUow()
     {
-        public override bool IsNoTransactionUow()
-        {
-            return true;
-        }
+        return new PlatformPseudoApplicationUnitOfWork();
+    }
+}
+
+internal class PlatformPseudoApplicationUnitOfWork : PlatformUnitOfWork
+{
+    public override bool IsNoTransactionUow()
+    {
+        return true;
     }
 }

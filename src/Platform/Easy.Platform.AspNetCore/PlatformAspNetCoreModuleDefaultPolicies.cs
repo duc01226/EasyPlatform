@@ -1,8 +1,7 @@
-namespace Easy.Platform.AspNetCore
+namespace Easy.Platform.AspNetCore;
+
+public static class PlatformAspNetCoreModuleDefaultPolicies
 {
-    public static class PlatformAspNetCoreModuleDefaultPolicies
-    {
-        public const string DevelopmentCorsPolicy = "DevelopmentCorsPolicy";
-        public const string CorsPolicy = "CorsPolicy";
-    }
+    public const string DevelopmentCorsPolicy = "DevelopmentCorsPolicy";
+    public const string CorsPolicy = "CorsPolicy";
 }

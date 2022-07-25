@@ -4,9 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Easy.Platform.Application.MessageBus.Consumers.CqrsEventConsumers
 {
-    public interface
-        IPlatformCqrsDomainEventBusMessageConsumer<TMessagePayload> : IPlatformApplicationMessageBusConsumer<
-            TMessagePayload>
+    public interface IPlatformCqrsDomainEventBusMessageConsumer<TMessagePayload> : IPlatformApplicationMessageBusConsumer<TMessagePayload>
         where TMessagePayload : PlatformCqrsDomainEvent, new()
     {
     }

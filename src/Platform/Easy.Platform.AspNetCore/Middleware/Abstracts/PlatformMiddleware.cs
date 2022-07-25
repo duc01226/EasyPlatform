@@ -1,26 +1,25 @@
 using Microsoft.AspNetCore.Http;
 
-namespace Easy.Platform.AspNetCore.Middleware.Abstracts
+namespace Easy.Platform.AspNetCore.Middleware.Abstracts;
+
+public interface IPlatformMiddleware
 {
-    public interface IPlatformMiddleware
+    public Task InvokeAsync(HttpContext context);
+}
+
+public abstract class PlatformMiddleware : IPlatformMiddleware
+{
+    protected readonly RequestDelegate Next;
+
+    public PlatformMiddleware(RequestDelegate next)
     {
-        public Task InvokeAsync(HttpContext context);
+        Next = next;
     }
 
-    public abstract class PlatformMiddleware : IPlatformMiddleware
+    public Task InvokeAsync(HttpContext context)
     {
-        protected readonly RequestDelegate Next;
-
-        public PlatformMiddleware(RequestDelegate next)
-        {
-            Next = next;
-        }
-
-        public Task InvokeAsync(HttpContext context)
-        {
-            return InternalInvokeAsync(context);
-        }
-
-        protected abstract Task InternalInvokeAsync(HttpContext context);
+        return InternalInvokeAsync(context);
     }
+
+    protected abstract Task InternalInvokeAsync(HttpContext context);
 }

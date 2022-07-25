@@ -1,32 +1,31 @@
-namespace Easy.Platform.Application.Context.UserContext.Default
+namespace Easy.Platform.Application.Context.UserContext.Default;
+
+public class PlatformDefaultApplicationUserContext : IPlatformApplicationUserContext
 {
-    public class PlatformDefaultApplicationUserContext : IPlatformApplicationUserContext
+    private readonly Dictionary<string, object> userContextData = new Dictionary<string, object>();
+
+    public T GetValue<T>(string contextKey = "")
     {
-        private readonly Dictionary<string, object> userContextData = new Dictionary<string, object>();
+        return (T)userContextData.GetValueOrDefault(ComputedContextKeyFor(contextKey));
+    }
 
-        public T GetValue<T>(string contextKey = "")
-        {
-            return (T)userContextData.GetValueOrDefault(ComputedContextKeyFor(contextKey));
-        }
+    public void SetValue(object value, string contextKey = "")
+    {
+        userContextData[ComputedContextKeyFor(contextKey)] = value;
+    }
 
-        public void SetValue(object value, string contextKey = "")
-        {
-            userContextData[ComputedContextKeyFor(contextKey)] = value;
-        }
+    public List<string> GetAllKeys()
+    {
+        return userContextData.Keys.ToList();
+    }
 
-        public List<string> GetAllKeys()
-        {
-            return userContextData.Keys.ToList();
-        }
+    public void Clear()
+    {
+        userContextData.Clear();
+    }
 
-        public void Clear()
-        {
-            userContextData.Clear();
-        }
-
-        private static string ComputedContextKeyFor(string contextKey)
-        {
-            return PlatformApplicationUserContextKeyBuilder.ComputedPlatformFormatContextKeyFor(contextKey);
-        }
+    private static string ComputedContextKeyFor(string contextKey)
+    {
+        return PlatformApplicationUserContextKeyBuilder.ComputedPlatformFormatContextKeyFor(contextKey);
     }
 }

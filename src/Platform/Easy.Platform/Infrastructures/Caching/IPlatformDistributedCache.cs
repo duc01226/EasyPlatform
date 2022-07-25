@@ -1,6 +1,5 @@
-﻿namespace Easy.Platform.Infrastructures.Caching
+﻿namespace Easy.Platform.Infrastructures.Caching;
+
+public interface IPlatformDistributedCacheRepository : IPlatformCacheRepository
 {
-    public interface IPlatformDistributedCacheRepository : IPlatformCacheRepository
-    {
-    }
 }

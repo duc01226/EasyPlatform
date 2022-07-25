@@ -1,9 +1,8 @@
-namespace Easy.Platform.Infrastructures.MessageBus
-{
-    public interface IPlatformBusTrackableMessage
-    {
-        public string TrackingId { get; set; }
+namespace Easy.Platform.Infrastructures.MessageBus;
 
-        public DateTime CreatedUtcDate { get; set; }
-    }
+public interface IPlatformBusTrackableMessage
+{
+    public string TrackingId { get; set; }
+
+    public DateTime CreatedUtcDate { get; set; }
 }

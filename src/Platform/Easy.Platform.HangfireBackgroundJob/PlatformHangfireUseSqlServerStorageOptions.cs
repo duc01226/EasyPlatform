@@ -1,20 +1,19 @@
 ﻿using Hangfire.SqlServer;
 
-namespace Easy.Platform.HangfireBackgroundJob
+namespace Easy.Platform.HangfireBackgroundJob;
+
+public class PlatformHangfireUseSqlServerStorageOptions
 {
-    public class PlatformHangfireUseSqlServerStorageOptions
+    public static readonly SqlServerStorageOptions DefaultStorageOptions = new SqlServerStorageOptions
     {
-        public static readonly SqlServerStorageOptions DefaultStorageOptions = new SqlServerStorageOptions
-        {
-            CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
-            SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
-            QueuePollInterval = TimeSpan.Zero,
-            UseRecommendedIsolationLevel = true,
-            DisableGlobalLocks = true
-        };
+        CommandBatchMaxTimeout = TimeSpan.FromMinutes(5),
+        SlidingInvisibilityTimeout = TimeSpan.FromMinutes(5),
+        QueuePollInterval = TimeSpan.Zero,
+        UseRecommendedIsolationLevel = true,
+        DisableGlobalLocks = true
+    };
 
-        public string ConnectionString { get; set; }
+    public string ConnectionString { get; set; }
 
-        public SqlServerStorageOptions StorageOptions { get; set; } = DefaultStorageOptions;
-    }
+    public SqlServerStorageOptions StorageOptions { get; set; } = DefaultStorageOptions;
 }

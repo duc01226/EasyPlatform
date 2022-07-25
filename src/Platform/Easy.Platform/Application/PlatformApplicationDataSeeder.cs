@@ -1,30 +1,29 @@
 using Easy.Platform.Domain.UnitOfWork;
 
-namespace Easy.Platform.Application
+namespace Easy.Platform.Application;
+
+public interface IPlatformApplicationDataSeeder
 {
-    public interface IPlatformApplicationDataSeeder
+    public Task SeedData();
+}
+
+public abstract class PlatformApplicationDataSeeder : IPlatformApplicationDataSeeder
+{
+    protected readonly IUnitOfWorkManager UnitOfWorkManager;
+
+    public PlatformApplicationDataSeeder(IUnitOfWorkManager unitOfWorkManager)
     {
-        public Task SeedData();
+        UnitOfWorkManager = unitOfWorkManager;
     }
 
-    public abstract class PlatformApplicationDataSeeder : IPlatformApplicationDataSeeder
+    public virtual async Task SeedData()
     {
-        protected readonly IUnitOfWorkManager UnitOfWorkManager;
-
-        public PlatformApplicationDataSeeder(IUnitOfWorkManager unitOfWorkManager)
+        using (var uow = UnitOfWorkManager.Begin())
         {
-            this.UnitOfWorkManager = unitOfWorkManager;
+            await InternalSeedData();
+            await uow.CompleteAsync();
         }
-
-        public virtual async Task SeedData()
-        {
-            using (var uow = UnitOfWorkManager.Begin())
-            {
-                await InternalSeedData();
-                await uow.CompleteAsync();
-            }
-        }
-
-        protected abstract Task InternalSeedData();
     }
+
+    protected abstract Task InternalSeedData();
 }

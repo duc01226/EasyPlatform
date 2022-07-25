@@ -3,30 +3,29 @@ using Easy.Platform.RedisCache;
 using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 
-namespace PlatformExampleApp.TextSnippet.Api
+namespace PlatformExampleApp.TextSnippet.Api;
+
+/// <summary>
+/// Implement RedisCacheModule and use it to use distributed cache via <see cref="PlatformCacheRepositoryType.Distributed"/>
+/// </summary>
+public class TextSnippetRedisCacheModule : PlatformRedisCacheModule
 {
-    /// <summary>
-    /// Implement RedisCacheModule and use it to use distributed cache via <see cref="PlatformCacheRepositoryType.Distributed"/>
-    /// </summary>
-    public class TextSnippetRedisCacheModule : PlatformRedisCacheModule
+    public TextSnippetRedisCacheModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(
+        serviceProvider,
+        configuration)
     {
-        public TextSnippetRedisCacheModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(
-            serviceProvider,
-            configuration)
-        {
-        }
+    }
 
-        protected override void SetupRedisCacheOptions(RedisCacheOptions options)
-        {
-            options.Configuration = Configuration["RedisCacheOptions:Connection"];
-        }
+    protected override void SetupRedisCacheOptions(RedisCacheOptions options)
+    {
+        options.Configuration = Configuration["RedisCacheOptions:Connection"];
+    }
 
-        protected override PlatformCacheEntryOptions DefaultPlatformCacheEntryOptions(IServiceProvider serviceProvider)
+    protected override PlatformCacheEntryOptions DefaultPlatformCacheEntryOptions(IServiceProvider serviceProvider)
+    {
+        return new PlatformCacheEntryOptions
         {
-            return new PlatformCacheEntryOptions()
-            {
-                AbsoluteExpirationInSeconds = Configuration.GetSection("Caching:DefaultExpirationInSeconds").Get<int>()
-            };
-        }
+            AbsoluteExpirationInSeconds = Configuration.GetSection("Caching:DefaultExpirationInSeconds").Get<int>()
+        };
     }
 }

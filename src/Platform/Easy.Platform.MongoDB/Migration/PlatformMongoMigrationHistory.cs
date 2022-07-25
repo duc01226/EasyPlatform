@@ -1,30 +1,23 @@
-namespace Easy.Platform.MongoDB.Migration
+namespace Easy.Platform.MongoDB.Migration;
+
+public class PlatformMongoMigrationHistory
 {
-    public class PlatformMongoMigrationHistory
+    private DateTime? createdDate;
+
+    public PlatformMongoMigrationHistory()
     {
-        private DateTime? createdDate;
+    }
 
-        public PlatformMongoMigrationHistory()
-        {
-        }
+    public PlatformMongoMigrationHistory(string name)
+    {
+        Name = name;
+    }
 
-        public PlatformMongoMigrationHistory(string name)
-        {
-            Name = name;
-        }
+    public string Name { get; set; }
 
-        public string Name { get; set; }
-
-        public DateTime CreatedDate
-        {
-            get
-            {
-                return createdDate ?? new DateTime();
-            }
-            set
-            {
-                createdDate = value;
-            }
-        }
+    public DateTime CreatedDate
+    {
+        get => createdDate ?? new DateTime();
+        set => createdDate = value;
     }
 }

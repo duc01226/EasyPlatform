@@ -1,46 +1,51 @@
-namespace Easy.Platform.Common.DeprecatedFPLibrary
+namespace Easy.Platform.Common.DeprecatedFPLibrary;
+
+public class Error
 {
-    public class Error
+    internal Error(string message)
     {
-        internal Error(string message)
-        {
-            Message = message;
-        }
+        Message = message;
+    }
 
-        internal Error(string message, string code = null)
-        {
-            Message = message;
-            Code = code;
-        }
+    internal Error(string message, string code = null)
+    {
+        Message = message;
+        Code = code;
+    }
 
-        internal Error(string message, int? httpStatus = null)
-        {
-            Message = message;
-            HttpStatus = httpStatus;
-        }
+    internal Error(string message, int? httpStatus = null)
+    {
+        Message = message;
+        HttpStatus = httpStatus;
+    }
 
-        protected Error()
-        {
-        }
+    protected Error()
+    {
+    }
 
-        public static implicit operator Error(string m) => new Error(m);
+    public virtual string Message { get; }
 
-        public static implicit operator Error((string, string) data) => new Error(data.Item1, data.Item2);
+    public string Code { get; }
 
-        public static implicit operator Error((string, int) data)
-        {
-            return new Error(data.Item1, data.Item2);
-        }
+    public int? HttpStatus { get; }
 
-        public virtual string Message { get; }
+    public static implicit operator Error(string m)
+    {
+        return new Error(m);
+    }
 
-        public string Code { get; }
+    public static implicit operator Error((string, string) data)
+    {
+        return new Error(data.Item1, data.Item2);
+    }
 
-        public int? HttpStatus { get; }
+    public static implicit operator Error((string, int) data)
+    {
+        return new Error(data.Item1, data.Item2);
+    }
 
-        public override string ToString()
-        {
-            return Message;
-        }
+    public override string ToString()
+    {
+        return Message;
     }
 }

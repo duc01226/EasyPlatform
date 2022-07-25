@@ -6,9 +6,7 @@ using MediatR;
 
 namespace Easy.Platform.Application.Cqrs.Commands
 {
-    public abstract class
-        PlatformCqrsCommandApplicationHandler<TCommand, TResult> : PlatformCqrsRequestApplicationHandler<TCommand>,
-            IRequestHandler<TCommand, TResult>
+    public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> : PlatformCqrsRequestApplicationHandler<TCommand>, IRequestHandler<TCommand, TResult>
         where TCommand : PlatformCqrsCommand<TResult>, new()
         where TResult : PlatformCqrsCommandResult, new()
     {
@@ -64,9 +62,7 @@ namespace Easy.Platform.Application.Cqrs.Commands
         }
     }
 
-    public abstract class
-        PlatformCqrsCommandApplicationHandler<TCommand> : PlatformCqrsCommandApplicationHandler<TCommand,
-            PlatformCqrsCommandResult>
+    public abstract class PlatformCqrsCommandApplicationHandler<TCommand> : PlatformCqrsCommandApplicationHandler<TCommand, PlatformCqrsCommandResult>
         where TCommand : PlatformCqrsCommand, new()
     {
         public PlatformCqrsCommandApplicationHandler(

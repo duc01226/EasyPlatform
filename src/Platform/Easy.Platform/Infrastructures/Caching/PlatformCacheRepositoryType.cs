@@ -1,8 +1,7 @@
-namespace Easy.Platform.Infrastructures.Caching
+namespace Easy.Platform.Infrastructures.Caching;
+
+public enum PlatformCacheRepositoryType
 {
-    public enum PlatformCacheRepositoryType
-    {
-        Memory,
-        Distributed
-    }
+    Memory,
+    Distributed
 }

@@ -1,30 +1,23 @@
-namespace Easy.Platform.Persistence.DataMigration
+namespace Easy.Platform.Persistence.DataMigration;
+
+public class PlatformDataMigrationHistory
 {
-    public class PlatformDataMigrationHistory
+    private DateTime? createdDate;
+
+    public PlatformDataMigrationHistory()
     {
-        private DateTime? createdDate;
+    }
 
-        public PlatformDataMigrationHistory()
-        {
-        }
+    public PlatformDataMigrationHistory(string name)
+    {
+        Name = name;
+    }
 
-        public PlatformDataMigrationHistory(string name)
-        {
-            Name = name;
-        }
+    public string Name { get; set; }
 
-        public string Name { get; set; }
-
-        public DateTime CreatedDate
-        {
-            get
-            {
-                return createdDate ?? DateTime.UtcNow;
-            }
-            set
-            {
-                createdDate = value;
-            }
-        }
+    public DateTime CreatedDate
+    {
+        get => createdDate ?? DateTime.UtcNow;
+        set => createdDate = value;
     }
 }

@@ -1,52 +1,49 @@
 using System.Reflection;
 
-namespace Easy.Platform.Common.Extensions
+namespace Easy.Platform.Common.Extensions;
+
+public static class TypeExtension
 {
-    public static class TypeExtension
+    public static bool IsAssignableToGenericType(this Type givenType, Type genericType)
     {
-        public static bool IsAssignableToGenericType(this Type givenType, Type genericType)
-        {
-            var interfaceTypes = givenType.GetInterfaces();
+        var interfaceTypes = givenType.GetInterfaces();
 
-            foreach (var it in interfaceTypes)
-            {
-                if (it.IsGenericType && it.GetGenericTypeDefinition() == genericType)
-                    return true;
-            }
-
-            if (givenType.IsGenericType && givenType.GetGenericTypeDefinition() == genericType)
+        foreach (var it in interfaceTypes)
+            if (it.IsGenericType && it.GetGenericTypeDefinition() == genericType)
                 return true;
 
-            var baseType = givenType.BaseType;
-            if (baseType == null)
-                return false;
+        if (givenType.IsGenericType && givenType.GetGenericTypeDefinition() == genericType)
+            return true;
 
-            return IsAssignableToGenericType(baseType, genericType);
-        }
+        var baseType = givenType.BaseType;
+        if (baseType == null)
+            return false;
 
-        public static string GetGenericTypeName(this Type t)
-        {
-            if (!t.IsGenericType)
-                return t.Name;
+        return IsAssignableToGenericType(baseType, genericType);
+    }
 
-            var genericTypeName = t.GetGenericTypeDefinition().Name;
+    public static string GetGenericTypeName(this Type t)
+    {
+        if (!t.IsGenericType)
+            return t.Name;
 
-            var genericTypeClassNameOnly = genericTypeName.Substring(0, genericTypeName.IndexOf('`'));
+        var genericTypeName = t.GetGenericTypeDefinition().Name;
 
-            var genericArgs = string.Join(
-                ",",
-                t.GetGenericArguments().Select(GetGenericTypeName).ToArray());
+        var genericTypeClassNameOnly = genericTypeName.Substring(0, genericTypeName.IndexOf('`'));
 
-            return genericTypeClassNameOnly + "<" + genericArgs + ">";
-        }
+        var genericArgs = string.Join(
+            ",",
+            t.GetGenericArguments().Select(GetGenericTypeName).ToArray());
 
-        public static List<T> GetAllPublicConstantValues<T>(this Type type)
-        {
-            return type
-                .GetFields(BindingFlags.Public | BindingFlags.Static)
-                .Where(fi => fi.IsLiteral && fi.FieldType == typeof(T))
-                .Select(x => (T)x.GetRawConstantValue())
-                .ToList();
-        }
+        return genericTypeClassNameOnly + "<" + genericArgs + ">";
+    }
+
+    public static List<T> GetAllPublicConstantValues<T>(this Type type)
+    {
+        return type
+            .GetFields(BindingFlags.Public | BindingFlags.Static)
+            .Where(fi => fi.IsLiteral && fi.FieldType == typeof(T))
+            .Select(x => (T)x.GetRawConstantValue())
+            .ToList();
     }
 }

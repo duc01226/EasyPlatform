@@ -8,171 +8,166 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 
-namespace Easy.Platform.RabbitMQ
+namespace Easy.Platform.RabbitMQ;
+
+public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
 {
-    public class PlatformRabbitMqMessageBusProducer : IPlatformMessageBusProducer
+    protected readonly PlatformRabbitChannelPool ChannelPool;
+    protected readonly IPlatformRabbitMqExchangeProvider ExchangeProvider;
+    protected readonly ILogger Logger;
+    protected readonly PlatformRabbitMqOptions Options;
+
+    public PlatformRabbitMqMessageBusProducer(
+        IPlatformRabbitMqExchangeProvider exchangeProvider,
+        PlatformRabbitMqOptions options,
+        ILoggerFactory loggerFactory,
+        PlatformRabbitChannelPool channelPool)
     {
-        protected readonly PlatformRabbitChannelPool ChannelPool;
-        protected readonly IPlatformRabbitMqExchangeProvider ExchangeProvider;
-        protected readonly PlatformRabbitMqOptions Options;
-        protected readonly ILogger Logger;
+        ChannelPool = channelPool;
+        ExchangeProvider = exchangeProvider;
+        Options = options;
+        Logger = loggerFactory.CreateLogger(GetType());
+    }
 
-        public PlatformRabbitMqMessageBusProducer(
-            IPlatformRabbitMqExchangeProvider exchangeProvider,
-            PlatformRabbitMqOptions options,
-            ILoggerFactory loggerFactory,
-            PlatformRabbitChannelPool channelPool)
+    public async Task<TMessage> SendAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default)
+        where TMessage : class, IPlatformBusMessage, new()
+    {
+        return await SendAsync(message, message.RoutingKey().CombinedStringKey, cancellationToken);
+    }
+
+    public async Task<TMessage> SendAsync<TMessage>(
+        TMessage message,
+        string customRoutingKey,
+        CancellationToken cancellationToken = default) where TMessage : class, IPlatformBusMessage, new()
+    {
+        try
         {
-            ChannelPool = channelPool;
-            ExchangeProvider = exchangeProvider;
-            Options = options;
-            Logger = loggerFactory.CreateLogger(GetType());
-        }
+            var jsonMessage = SerializeMessage(message);
 
-        public async Task<TMessage> SendAsync<TMessage>(TMessage message, CancellationToken cancellationToken = default)
-            where TMessage : class, IPlatformBusMessage, new()
-        {
-            return await SendAsync(message, message.RoutingKey().CombinedStringKey, cancellationToken);
-        }
-
-        public async Task<TMessage> SendAsync<TMessage>(
-            TMessage message,
-            string customRoutingKey,
-            CancellationToken cancellationToken = default) where TMessage : class, IPlatformBusMessage, new()
-        {
-            try
-            {
-                var jsonMessage = SerializeMessage(message);
-
-                await PublishMessageToQueueAsync(
-                    jsonMessage,
-                    customRoutingKey ?? message.RoutingKey(),
-                    cancellationToken);
-
-                return message;
-            }
-            catch (Exception e)
-            {
-                throw new PlatformMessageBusException<TMessage>(message, e);
-            }
-        }
-
-        public async Task<IPlatformBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
-            string trackId,
-            TMessagePayload payload,
-            PlatformBusMessageIdentity identity,
-            PlatformBusMessageRoutingKey routingKey,
-            CancellationToken cancellationToken = default) where TMessagePayload : class, new()
-        {
-            var message = await SendAsync(
-                PlatformBusMessage<TMessagePayload>.New(
-                    trackId: trackId,
-                    payload: payload,
-                    identity: identity,
-                    routingKey: routingKey),
+            await PublishMessageToQueueAsync(
+                jsonMessage,
+                customRoutingKey ?? message.RoutingKey(),
                 cancellationToken);
 
             return message;
         }
-
-        public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
-            TMessage message,
-            CancellationToken cancellationToken = default) where TMessage : IPlatformBusFreeFormatMessage
+        catch (Exception e)
         {
-            return SendFreeFormatMessageAsync(
-                message,
-                PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.Build(message.GetType()),
-                cancellationToken);
+            throw new PlatformMessageBusException<TMessage>(message, e);
         }
+    }
 
-        public async Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
-            TMessage message,
-            string routingKey,
-            CancellationToken cancellationToken = default) where TMessage : IPlatformBusFreeFormatMessage
+    public async Task<IPlatformBusMessage<TMessagePayload>> SendAsync<TMessagePayload>(
+        string trackId,
+        TMessagePayload payload,
+        PlatformBusMessageIdentity identity,
+        PlatformBusMessageRoutingKey routingKey,
+        CancellationToken cancellationToken = default) where TMessagePayload : class, new()
+    {
+        var message = await SendAsync(
+            PlatformBusMessage<TMessagePayload>.New(
+                trackId: trackId,
+                payload: payload,
+                identity: identity,
+                routingKey: routingKey),
+            cancellationToken);
+
+        return message;
+    }
+
+    public Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
+        TMessage message,
+        CancellationToken cancellationToken = default) where TMessage : IPlatformBusFreeFormatMessage
+    {
+        return SendFreeFormatMessageAsync(
+            message,
+            PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.Build(message.GetType()),
+            cancellationToken);
+    }
+
+    public async Task<TMessage> SendFreeFormatMessageAsync<TMessage>(
+        TMessage message,
+        string routingKey,
+        CancellationToken cancellationToken = default) where TMessage : IPlatformBusFreeFormatMessage
+    {
+        try
         {
-            try
-            {
-                var jsonMessage = SerializeMessage(message);
+            var jsonMessage = SerializeMessage(message);
 
-                await PublishMessageToQueueAsync(jsonMessage, routingKey, cancellationToken);
+            await PublishMessageToQueueAsync(jsonMessage, routingKey, cancellationToken);
 
-                return message;
-            }
-            catch (Exception e)
-            {
-                throw new PlatformMessageBusException<TMessage>(message, e);
-            }
+            return message;
         }
-
-        public async Task<TMessage> SendTrackableMessageAsync<TMessage>(
-            TMessage message,
-            string routingKey,
-            CancellationToken cancellationToken = default) where TMessage : IPlatformBusTrackableMessage
+        catch (Exception e)
         {
-            try
-            {
-                var jsonMessage = SerializeMessage(message);
-
-                await PublishMessageToQueueAsync(jsonMessage, routingKey, cancellationToken);
-
-                return message;
-            }
-            catch (Exception e)
-            {
-                throw new PlatformMessageBusException<TMessage>(message, e);
-            }
+            throw new PlatformMessageBusException<TMessage>(message, e);
         }
+    }
 
-        private static string SerializeMessage<TMessage>(TMessage message) where TMessage : IPlatformBusTrackableMessage
+    public async Task<TMessage> SendTrackableMessageAsync<TMessage>(
+        TMessage message,
+        string routingKey,
+        CancellationToken cancellationToken = default) where TMessage : IPlatformBusTrackableMessage
+    {
+        try
         {
-            var jsonMessage = PlatformJsonSerializer.Serialize(message);
-            return jsonMessage;
+            var jsonMessage = SerializeMessage(message);
+
+            await PublishMessageToQueueAsync(jsonMessage, routingKey, cancellationToken);
+
+            return message;
         }
-
-        private async Task PublishMessageToQueueAsync(
-            string message,
-            string routingKey,
-            CancellationToken cancellationToken = default)
+        catch (Exception e)
         {
-            await Task.Run(
-                () =>
-                {
-                    PublishMessageToQueue(message, routingKey);
-                },
-                cancellationToken);
+            throw new PlatformMessageBusException<TMessage>(message, e);
         }
+    }
 
-        private void PublishMessageToQueue(string message, string routingKey)
-        {
-            IModel channel = null;
+    private static string SerializeMessage<TMessage>(TMessage message) where TMessage : IPlatformBusTrackableMessage
+    {
+        var jsonMessage = PlatformJsonSerializer.Serialize(message);
+        return jsonMessage;
+    }
 
-            try
+    private async Task PublishMessageToQueueAsync(
+        string message,
+        string routingKey,
+        CancellationToken cancellationToken = default)
+    {
+        await Task.Run(
+            () =>
             {
-                channel = ChannelPool.Get();
-                channel.BasicPublish(
-                    ExchangeProvider.GetExchangeName(routingKey),
-                    routingKey,
-                    null,
-                    body: Encoding.UTF8.GetBytes(message));
+                PublishMessageToQueue(message, routingKey);
+            },
+            cancellationToken);
+    }
+
+    private void PublishMessageToQueue(string message, string routingKey)
+    {
+        IModel channel = null;
+
+        try
+        {
+            channel = ChannelPool.Get();
+            channel.BasicPublish(
+                ExchangeProvider.GetExchangeName(routingKey),
+                routingKey,
+                null,
+                body: Encoding.UTF8.GetBytes(message));
+            ChannelPool.Return(channel);
+        }
+        catch (AlreadyClosedException alreadyClosedException)
+        {
+            if (channel != null)
                 ChannelPool.Return(channel);
-            }
-            catch (AlreadyClosedException alreadyClosedException)
-            {
-                if (channel != null)
-                    ChannelPool.Return(channel);
 
-                if (alreadyClosedException.ShutdownReason.ReplyCode == 404)
-                {
-                    Logger.LogWarning(
-                        $"Tried to send a message with routing key {routingKey} from {GetType().FullName} " +
-                        $"but exchange is not found. May be there is no consumer registered to consume this message." +
-                        $"If in source code has consumers for this message, this could be unexpected errors");
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            if (alreadyClosedException.ShutdownReason.ReplyCode == 404)
+                Logger.LogWarning(
+                    $"Tried to send a message with routing key {routingKey} from {GetType().FullName} " +
+                    "but exchange is not found. May be there is no consumer registered to consume this message." +
+                    "If in source code has consumers for this message, this could be unexpected errors");
+            else
+                throw;
         }
     }
 }

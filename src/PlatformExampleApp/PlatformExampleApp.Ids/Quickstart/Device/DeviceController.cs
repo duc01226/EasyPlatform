@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using IdentityServer4;
 using IdentityServer4.Configuration;
 using IdentityServer4.Events;
 using IdentityServer4.Extensions;
@@ -22,8 +23,8 @@ namespace IdentityServerHost.Quickstart.UI
     [SecurityHeaders]
     public class DeviceController : Controller
     {
-        private readonly IDeviceFlowInteractionService interaction;
         private readonly IEventService events;
+        private readonly IDeviceFlowInteractionService interaction;
         private readonly IOptions<IdentityServerOptions> options;
 
         public DeviceController(
@@ -110,10 +111,8 @@ namespace IdentityServerHost.Quickstart.UI
                 {
                     var scopes = model.ScopesConsented;
                     if (ConsentOptions.EnableOfflineAccess == false)
-                    {
                         scopes = scopes.Where(
-                            x => x != IdentityServer4.IdentityServerConstants.StandardScopes.OfflineAccess);
-                    }
+                            x => x != IdentityServerConstants.StandardScopes.OfflineAccess);
 
                     grantedConsent = new ConsentResponse
                     {
@@ -165,9 +164,7 @@ namespace IdentityServerHost.Quickstart.UI
         {
             var request = await interaction.GetAuthorizationContextAsync(userCode);
             if (request != null)
-            {
                 return CreateConsentViewModel(userCode, model, request);
-            }
 
             return null;
         }
@@ -210,13 +207,11 @@ namespace IdentityServerHost.Quickstart.UI
             }
 
             if (ConsentOptions.EnableOfflineAccess && request.ValidatedResources.Resources.OfflineAccess)
-            {
                 apiScopes.Add(
                     GetOfflineAccessScope(
                         vm.ScopesConsented.Contains(
-                            IdentityServer4.IdentityServerConstants.StandardScopes.OfflineAccess) ||
+                            IdentityServerConstants.StandardScopes.OfflineAccess) ||
                         model == null));
-            }
 
             vm.ApiScopes = apiScopes;
 
@@ -254,7 +249,7 @@ namespace IdentityServerHost.Quickstart.UI
         {
             return new ScopeViewModel
             {
-                Value = IdentityServer4.IdentityServerConstants.StandardScopes.OfflineAccess,
+                Value = IdentityServerConstants.StandardScopes.OfflineAccess,
                 DisplayName = ConsentOptions.OfflineAccessDisplayName,
                 Description = ConsentOptions.OfflineAccessDescription,
                 Emphasize = true,

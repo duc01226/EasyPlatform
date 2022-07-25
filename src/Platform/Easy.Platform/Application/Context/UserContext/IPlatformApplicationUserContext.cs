@@ -1,13 +1,12 @@
-namespace Easy.Platform.Application.Context.UserContext
+namespace Easy.Platform.Application.Context.UserContext;
+
+public interface IPlatformApplicationUserContext
 {
-    public interface IPlatformApplicationUserContext
-    {
-        T GetValue<T>(string contextKey = "");
+    T GetValue<T>(string contextKey = "");
 
-        void SetValue(object value, string contextKey = "");
+    void SetValue(object value, string contextKey = "");
 
-        List<string> GetAllKeys();
+    List<string> GetAllKeys();
 
-        void Clear();
-    }
+    void Clear();
 }

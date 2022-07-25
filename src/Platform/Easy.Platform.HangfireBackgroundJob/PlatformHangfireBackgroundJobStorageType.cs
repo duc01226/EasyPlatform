@@ -1,9 +1,8 @@
-namespace Easy.Platform.HangfireBackgroundJob
+namespace Easy.Platform.HangfireBackgroundJob;
+
+public enum PlatformHangfireBackgroundJobStorageType
 {
-    public enum PlatformHangfireBackgroundJobStorageType
-    {
-        InMemory,
-        Sql,
-        Mongo
-    }
+    InMemory,
+    Sql,
+    Mongo
 }

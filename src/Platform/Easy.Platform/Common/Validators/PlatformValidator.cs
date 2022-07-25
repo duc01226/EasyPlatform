@@ -1,56 +1,54 @@
 using FluentValidation;
 
-namespace Easy.Platform.Common.Validators
+namespace Easy.Platform.Common.Validators;
+
+public class PlatformValidator<T> : AbstractValidator<T>
 {
-    public class PlatformValidator<T> : AbstractValidator<T>
+    public static PlatformValidationResult Invalid(string property, string errorMsg)
     {
-        public static PlatformValidationResult Invalid(string property, string errorMsg)
-        {
-            return new PlatformValidationResult(
-                new List<PlatformValidationFailure>()
-                {
-                    new PlatformValidationFailure(property, errorMsg)
-                });
-        }
-
-        public static PlatformValidationResult Valid()
-        {
-            return new PlatformValidationResult(new List<PlatformValidationFailure>());
-        }
-
-        public static PlatformValidator<T> Create()
-        {
-            return new PlatformValidator<T>();
-        }
-
-        public static PlatformValidator<T> Create(params PlatformValidator<T>[] includeValidators)
-        {
-            var result = new PlatformValidator<T>();
-
-            foreach (var platformValidator in includeValidators)
+        return new PlatformValidationResult(
+            new List<PlatformValidationFailure>
             {
-                result.Include(platformValidator);
-            }
+                new PlatformValidationFailure(property, errorMsg)
+            });
+    }
 
-            return result;
-        }
+    public static PlatformValidationResult Valid()
+    {
+        return new PlatformValidationResult(new List<PlatformValidationFailure>());
+    }
 
-        public static PlatformValidator<T> Create(params PlatformSingleValidator<T, object>[] includeValidators)
-        {
-            return Create(includeValidators.Select(p => (PlatformValidator<T>)p).ToArray());
-        }
+    public static PlatformValidator<T> Create()
+    {
+        return new PlatformValidator<T>();
+    }
 
-        public override PlatformValidationResult Validate(ValidationContext<T> context)
-        {
-            var validationResult = base.Validate(context);
-            return new PlatformValidationResult(
-                validationResult.Errors.Select(p => new PlatformValidationFailure(p)).ToList());
-        }
+    public static PlatformValidator<T> Create(params PlatformValidator<T>[] includeValidators)
+    {
+        var result = new PlatformValidator<T>();
 
-        public new PlatformValidationResult Validate(T instance)
-        {
-            return new PlatformValidationResult(
-                base.Validate(instance).Errors.Select(p => new PlatformValidationFailure(p)).ToList());
-        }
+        foreach (var platformValidator in includeValidators)
+            result.Include(platformValidator);
+
+        return result;
+    }
+
+    public static PlatformValidator<T> Create(params PlatformSingleValidator<T, object>[] includeValidators)
+    {
+        return Create(includeValidators.Select(p => (PlatformValidator<T>)p).ToArray());
+    }
+
+    public override PlatformValidationResult Validate(ValidationContext<T> context)
+    {
+        var validationResult = base.Validate(context);
+        return new PlatformValidationResult(
+            validationResult.Errors.Select(p => new PlatformValidationFailure(p)).ToList());
+    }
+
+    public new PlatformValidationResult<T> Validate(T instance)
+    {
+        return new PlatformValidationResult<T>(
+            instance,
+            base.Validate(instance).Errors.Select(p => new PlatformValidationFailure(p)).ToList());
     }
 }

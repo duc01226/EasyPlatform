@@ -4,42 +4,39 @@ using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 
-namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo
+namespace PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo;
+
+public class TextSnippetMultiDbDemoDbContext : PlatformMongoDbContext<TextSnippetMultiDbDemoDbContext>
 {
-    public class TextSnippetMultiDbDemoDbContext : PlatformMongoDbContext<TextSnippetMultiDbDemoDbContext>
+    public TextSnippetMultiDbDemoDbContext(
+        IOptions<PlatformMongoOptions<TextSnippetMultiDbDemoDbContext>> options,
+        IPlatformMongoClient<TextSnippetMultiDbDemoDbContext> client,
+        ILoggerFactory loggerFactory) : base(options, client, loggerFactory)
     {
-        public TextSnippetMultiDbDemoDbContext(
-            IOptions<PlatformMongoOptions<TextSnippetMultiDbDemoDbContext>> options,
-            IPlatformMongoClient<TextSnippetMultiDbDemoDbContext> client,
-            ILoggerFactory loggerFactory) : base(options, client, loggerFactory)
-        {
-        }
+    }
 
-        public IMongoCollection<MultiDbDemoEntity> MultiDbDemoEntityCollection => GetCollection<MultiDbDemoEntity>();
+    public IMongoCollection<MultiDbDemoEntity> MultiDbDemoEntityCollection => GetCollection<MultiDbDemoEntity>();
 
-        public override async Task InternalEnsureIndexesAsync(bool recreate = false)
-        {
-            if (recreate)
-            {
-                await Task.WhenAll(
-                    MultiDbDemoEntityCollection.Indexes.DropAllAsync());
-            }
-
+    public override async Task InternalEnsureIndexesAsync(bool recreate = false)
+    {
+        if (recreate)
             await Task.WhenAll(
-                MultiDbDemoEntityCollection.Indexes.CreateManyAsync(
-                    new List<CreateIndexModel<MultiDbDemoEntity>>()
-                    {
-                        new CreateIndexModel<MultiDbDemoEntity>(
-                            Builders<MultiDbDemoEntity>.IndexKeys.Ascending(p => p.Name))
-                    }));
-        }
+                MultiDbDemoEntityCollection.Indexes.DropAllAsync());
 
-        public override List<KeyValuePair<Type, string>> EntityTypeToCollectionNameMaps()
+        await Task.WhenAll(
+            MultiDbDemoEntityCollection.Indexes.CreateManyAsync(
+                new List<CreateIndexModel<MultiDbDemoEntity>>
+                {
+                    new CreateIndexModel<MultiDbDemoEntity>(
+                        Builders<MultiDbDemoEntity>.IndexKeys.Ascending(p => p.Name))
+                }));
+    }
+
+    public override List<KeyValuePair<Type, string>> EntityTypeToCollectionNameMaps()
+    {
+        return new List<KeyValuePair<Type, string>>
         {
-            return new List<KeyValuePair<Type, string>>()
-            {
-                new KeyValuePair<Type, string>(typeof(MultiDbDemoEntity), "MultiDbDemoEntity")
-            };
-        }
+            new KeyValuePair<Type, string>(typeof(MultiDbDemoEntity), "MultiDbDemoEntity")
+        };
     }
 }

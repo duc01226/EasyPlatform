@@ -1,9 +1,7 @@
 using Easy.Platform.Domain.Repositories;
 
-namespace Easy.Platform.Application.MessageBus.OutboxPattern
+namespace Easy.Platform.Application.MessageBus.OutboxPattern;
+
+public interface IPlatformOutboxBusMessageRepository : IPlatformQueryableRootRepository<PlatformOutboxBusMessage, string>
 {
-    public interface
-        IPlatformOutboxBusMessageRepository : IPlatformQueryableRootRepository<PlatformOutboxBusMessage, string>
-    {
-    }
 }

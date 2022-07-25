@@ -1,11 +1,10 @@
-namespace Easy.Platform.Common.Timing
+namespace Easy.Platform.Common.Timing;
+
+public interface IClockProvider
 {
-    public interface IClockProvider
-    {
-        DateTime Now { get; }
+    DateTime Now { get; }
 
-        DateTimeKind Kind { get; }
+    DateTimeKind Kind { get; }
 
-        DateTime Normalize(DateTime dateTime);
-    }
+    DateTime Normalize(DateTime dateTime);
 }

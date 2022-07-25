@@ -4,20 +4,19 @@ using Easy.Platform.Domain.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Easy.Platform.Domain
-{
-    public abstract class PlatformDomainModule : PlatformModule
-    {
-        protected PlatformDomainModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(
-            serviceProvider,
-            configuration)
-        {
-        }
+namespace Easy.Platform.Domain;
 
-        protected override void InternalRegister(IServiceCollection serviceCollection)
-        {
-            base.InternalRegister(serviceCollection);
-            serviceCollection.RegisterAllFromType<IPlatformDomainService>(ServiceLifeTime.Transient, Assembly);
-        }
+public abstract class PlatformDomainModule : PlatformModule
+{
+    protected PlatformDomainModule(IServiceProvider serviceProvider, IConfiguration configuration) : base(
+        serviceProvider,
+        configuration)
+    {
+    }
+
+    protected override void InternalRegister(IServiceCollection serviceCollection)
+    {
+        base.InternalRegister(serviceCollection);
+        serviceCollection.RegisterAllFromType<IPlatformDomainService>(ServiceLifeTime.Transient, Assembly);
     }
 }

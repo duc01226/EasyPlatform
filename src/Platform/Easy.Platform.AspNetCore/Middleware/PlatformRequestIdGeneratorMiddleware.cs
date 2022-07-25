@@ -4,46 +4,48 @@ using Easy.Platform.AspNetCore.Middleware.Abstracts;
 using Easy.Platform.Common.Extensions;
 using Microsoft.AspNetCore.Http;
 
-namespace Easy.Platform.AspNetCore.Middleware
+namespace Easy.Platform.AspNetCore.Middleware;
+
+/// <summary>
+/// This middleware will add a generated guid request id in to headers. It should be added at the first middleware or second after UseGlobalExceptionHandlerMiddleware
+/// </summary>
+public class PlatformRequestIdGeneratorMiddleware : PlatformMiddleware
 {
-    /// <summary>
-    /// This middleware will add a generated guid request id in to headers. It should be added at the first middleware or second after UseGlobalExceptionHandlerMiddleware
-    /// </summary>
-    public class PlatformRequestIdGeneratorMiddleware : PlatformMiddleware
+    private readonly IPlatformApplicationUserContextAccessor applicationUserContextAccessor;
+
+    public PlatformRequestIdGeneratorMiddleware(RequestDelegate next,
+        IPlatformApplicationUserContextAccessor applicationUserContextAccessor) : base(next)
     {
-        private readonly IPlatformApplicationUserContextAccessor applicationUserContextAccessor;
+        this.applicationUserContextAccessor = applicationUserContextAccessor;
+    }
 
-        public PlatformRequestIdGeneratorMiddleware(RequestDelegate next,
-            IPlatformApplicationUserContextAccessor applicationUserContextAccessor) : base(next)
+    protected override async Task InternalInvokeAsync(HttpContext context)
+    {
+        if (!context.Request.Headers.TryGetValue(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
+                out var existedRequestId) || string.IsNullOrEmpty(existedRequestId))
         {
-            this.applicationUserContextAccessor = applicationUserContextAccessor;
+            var newGeneratedRequestId = Guid.NewGuid().ToString();
+            context.Request.Headers.Upsert(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
+                newGeneratedRequestId);
         }
 
-        protected override async Task InternalInvokeAsync(HttpContext context)
+        context.TraceIdentifier = context.Request.Headers[PlatformAspnetConstant.CommonHttpHeaderNames.RequestId];
+        applicationUserContextAccessor.Current.SetValue(context.TraceIdentifier,
+            PlatformApplicationCommonUserContextKeys.RequestId);
+
+        // Add the request ID to the response header for client side tracking
+        context.Response.OnStarting(() =>
         {
-            if (!context.Request.Headers.TryGetValue(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
-                    out var existedRequestId) || string.IsNullOrEmpty(existedRequestId))
-            {
-                var newGeneratedRequestId = Guid.NewGuid().ToString();
-                context.Request.Headers.Upsert(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
-                    newGeneratedRequestId);
-            }
+            if (!context.Response.Headers.ContainsKey(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId))
+                context.Response.Headers.Add(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
+                    new[]
+                    {
+                        context.TraceIdentifier
+                    });
+            return Task.CompletedTask;
+        });
 
-            context.TraceIdentifier = context.Request.Headers[PlatformAspnetConstant.CommonHttpHeaderNames.RequestId];
-            applicationUserContextAccessor.Current.SetValue(context.TraceIdentifier,
-                PlatformApplicationCommonUserContextKeys.RequestId);
-
-            // Add the request ID to the response header for client side tracking
-            context.Response.OnStarting(() =>
-            {
-                if (!context.Response.Headers.ContainsKey(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId))
-                    context.Response.Headers.Add(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
-                        new[] { context.TraceIdentifier });
-                return Task.CompletedTask;
-            });
-
-            // Call the next delegate/middleware in the pipeline
-            await Next(context);
-        }
+        // Call the next delegate/middleware in the pipeline
+        await Next(context);
     }
 }

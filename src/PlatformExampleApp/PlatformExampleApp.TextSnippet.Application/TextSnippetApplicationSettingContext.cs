@@ -2,24 +2,23 @@ using System.Reflection;
 using Easy.Platform.Application.Context;
 using Microsoft.Extensions.Configuration;
 
-namespace PlatformExampleApp.TextSnippet.Application
+namespace PlatformExampleApp.TextSnippet.Application;
+
+/// <summary>
+/// This file is optional. You will want to implement it to override default implementation of IPlatformApplicationSettingContext if you want to.
+/// This will replace config from DefaultApplicationSettingContextFactory in ApplicationModule
+/// </summary>
+public class TextSnippetApplicationSettingContext : IPlatformApplicationSettingContext
 {
-    /// <summary>
-    /// This file is optional. You will want to implement it to override default implementation of IPlatformApplicationSettingContext if you want to.
-    /// This will replace config from DefaultApplicationSettingContextFactory in ApplicationModule
-    /// </summary>
-    public class TextSnippetApplicationSettingContext : IPlatformApplicationSettingContext
+    public TextSnippetApplicationSettingContext(IConfiguration configuration)
     {
-        public TextSnippetApplicationSettingContext(IConfiguration configuration)
-        {
-            AdditionalSettingExample = configuration["AllowCorsOrigins"];
-            ApplicationAssembly = GetType().Assembly;
-        }
-
-        public string ApplicationName => TextSnippetApplicationConstants.ApplicationName;
-
-        public Assembly ApplicationAssembly { get; init; }
-
-        public string AdditionalSettingExample { get; }
+        AdditionalSettingExample = configuration["AllowCorsOrigins"];
+        ApplicationAssembly = GetType().Assembly;
     }
+
+    public string AdditionalSettingExample { get; }
+
+    public string ApplicationName => TextSnippetApplicationConstants.ApplicationName;
+
+    public Assembly ApplicationAssembly { get; init; }
 }

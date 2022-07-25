@@ -1,9 +1,8 @@
-﻿namespace Easy.Platform.Common.DependencyInjection
+namespace Easy.Platform.Common.DependencyInjection;
+
+public enum ServiceLifeTime
 {
-    public enum ServiceLifeTime
-    {
-        Transient,
-        Scoped,
-        Singleton
-    }
+    Transient,
+    Scoped,
+    Singleton
 }

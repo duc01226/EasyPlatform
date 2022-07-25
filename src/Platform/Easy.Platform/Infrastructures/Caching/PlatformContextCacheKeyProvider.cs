@@ -1,83 +1,79 @@
-namespace Easy.Platform.Infrastructures.Caching
+using Easy.Platform.Common.Extensions;
+
+namespace Easy.Platform.Infrastructures.Caching;
+
+public interface IPlatformContextCacheKeyProvider
 {
-    public interface IPlatformContextCacheKeyProvider
+    /// <summary>
+    /// The context of the cached data. Usually it's like the database or service name.
+    /// </summary>
+    string Context { get; init; }
+
+    PlatformCacheKey GetKey(
+        string collection = PlatformContextCacheKeyProvider.DefaultCollection,
+        string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
+
+    PlatformCacheKey GetKey(
+        string collection = PlatformContextCacheKeyProvider.DefaultCollection,
+        object[] requestKeyParts = null);
+
+    Func<PlatformCacheKey, bool> MatchContextKeyPredicate();
+}
+
+public class PlatformContextCacheKeyProvider : IPlatformContextCacheKeyProvider
+{
+    public const string DefaultCollection = PlatformCacheKey.DefaultCollection;
+    public const string DefaultRequestKey = PlatformCacheKey.DefaultRequestKey;
+
+    /// <summary>
+    /// The context of the cached data. Usually it's like the database or service name.
+    /// </summary>
+    public virtual string Context { get; init; }
+
+    public virtual PlatformCacheKey GetKey(
+        string collection = DefaultCollection,
+        string requestKey = DefaultRequestKey)
     {
-        /// <summary>
-        /// The context of the cached data. Usually it's like the database or service name.
-        /// </summary>
-        string Context { get; init; }
-
-        PlatformCacheKey GetKey(
-            string collection = PlatformContextCacheKeyProvider.DefaultCollection,
-            string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
-
-        PlatformCacheKey GetKey(
-            string collection = PlatformContextCacheKeyProvider.DefaultCollection,
-            object[] requestKeyParts = null);
-
-        Func<PlatformCacheKey, bool> MatchContextKeyPredicate();
+        EnsureValidProvider();
+        return new PlatformCacheKey(Context, collection ?? DefaultCollection, requestKey);
     }
 
-    public class PlatformContextCacheKeyProvider : IPlatformContextCacheKeyProvider
+    public virtual PlatformCacheKey GetKey(string collection = DefaultCollection, object[] requestKeyParts = null)
     {
-        public const string DefaultCollection = PlatformCacheKey.DefaultCollection;
-        public const string DefaultRequestKey = PlatformCacheKey.DefaultRequestKey;
-
-        public PlatformContextCacheKeyProvider()
-        {
-        }
-
-        /// <summary>
-        /// The context of the cached data. Usually it's like the database or service name.
-        /// </summary>
-        public virtual string Context { get; init; }
-
-        public virtual PlatformCacheKey GetKey(
-            string collection = DefaultCollection,
-            string requestKey = DefaultRequestKey)
-        {
-            EnsureValidProvider();
-            return new PlatformCacheKey(Context, collection ?? DefaultCollection, requestKey);
-        }
-
-        public virtual PlatformCacheKey GetKey(string collection = DefaultCollection, object[] requestKeyParts = null)
-        {
-            EnsureValidProvider();
-            return new PlatformCacheKey(
-                Context,
-                collection ?? DefaultCollection,
-                requestKeyParts ??
-                new object[]
-                {
-                    DefaultRequestKey
-                });
-        }
-
-        public Func<PlatformCacheKey, bool> MatchContextKeyPredicate()
-        {
-            return p => p.Context == Context;
-        }
-
-        protected virtual void EnsureValidProvider()
-        {
-            if (string.IsNullOrEmpty(Context))
-                throw new Exception("Context must be not null");
-        }
+        EnsureValidProvider();
+        return new PlatformCacheKey(
+            Context,
+            collection ?? DefaultCollection,
+            requestKeyParts ??
+            new object[]
+            {
+                DefaultRequestKey
+            });
     }
 
-    public class PlatformContextCacheKeyProvider<TFixedImplementationProvider> : PlatformContextCacheKeyProvider
-        where TFixedImplementationProvider : PlatformContextCacheKeyProvider<TFixedImplementationProvider>
+    public Func<PlatformCacheKey, bool> MatchContextKeyPredicate()
     {
-        public static PlatformCacheKey CreateKey(
-            string collection = DefaultCollection,
-            string requestKey = DefaultRequestKey)
-        {
-            return Activator.CreateInstance<TFixedImplementationProvider>().GetKey(collection, requestKey);
-        }
+        return p => p.Context == Context;
+    }
 
-        public static PlatformCacheKey CreateKey(string collection = DefaultCollection, object[] requestKeyParts = null)
-        {
-            return Activator.CreateInstance<TFixedImplementationProvider>().GetKey(collection, requestKeyParts);
-        }
+    protected virtual PlatformContextCacheKeyProvider EnsureValidProvider()
+    {
+        return this.ThrowIf(p => string.IsNullOrEmpty(p.Context), () => new Exception("Context must be not null"));
+    }
+}
+
+public class PlatformContextCacheKeyProvider<TFixedImplementationProvider> : PlatformContextCacheKeyProvider
+    where TFixedImplementationProvider : PlatformContextCacheKeyProvider<TFixedImplementationProvider>
+{
+    public static PlatformCacheKey CreateKey(
+        string collection = DefaultCollection,
+        string requestKey = DefaultRequestKey)
+    {
+        return Activator.CreateInstance<TFixedImplementationProvider>().GetKey(collection, requestKey);
+    }
+
+    public static PlatformCacheKey CreateKey(string collection = DefaultCollection, object[] requestKeyParts = null)
+    {
+        return Activator.CreateInstance<TFixedImplementationProvider>().GetKey(collection, requestKeyParts);
     }
 }

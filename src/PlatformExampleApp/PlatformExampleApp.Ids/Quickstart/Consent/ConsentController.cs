@@ -2,10 +2,10 @@
 // Licensed under the Apache License, Version 2.0. See LICENSE in the project root for license information.
 
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using IdentityServer4;
 using IdentityServer4.Events;
 using IdentityServer4.Extensions;
 using IdentityServer4.Models;
@@ -24,8 +24,8 @@ namespace IdentityServerHost.Quickstart.UI
     [Authorize]
     public class ConsentController : Controller
     {
-        private readonly IIdentityServerInteractionService interaction;
         private readonly IEventService events;
+        private readonly IIdentityServerInteractionService interaction;
         private readonly ILogger<ConsentController> logger;
 
         public ConsentController(
@@ -48,9 +48,7 @@ namespace IdentityServerHost.Quickstart.UI
         {
             var vm = await BuildViewModelAsync(returnUrl);
             if (vm != null)
-            {
                 return View("Index", vm);
-            }
 
             return View("Error");
         }
@@ -68,24 +66,18 @@ namespace IdentityServerHost.Quickstart.UI
             {
                 var context = await interaction.GetAuthorizationContextAsync(model.ReturnUrl);
                 if (context?.IsNativeClient() == true)
-                {
                     // The client is native, so this change in how to
                     // return the response is for better UX for the end user.
                     return this.LoadingPage("Redirect", result.RedirectUri);
-                }
 
                 return Redirect(result.RedirectUri);
             }
 
             if (result.HasValidationError)
-            {
                 ModelState.AddModelError(string.Empty, result.ValidationError);
-            }
 
             if (result.ShowView)
-            {
                 return View("Index", result.ViewModel);
-            }
 
             return View("Error");
         }
@@ -127,10 +119,8 @@ namespace IdentityServerHost.Quickstart.UI
                 {
                     var scopes = model.ScopesConsented;
                     if (ConsentOptions.EnableOfflineAccess == false)
-                    {
                         scopes = scopes.Where(
-                            x => x != IdentityServer4.IdentityServerConstants.StandardScopes.OfflineAccess);
-                    }
+                            x => x != IdentityServerConstants.StandardScopes.OfflineAccess);
 
                     grantedConsent = new ConsentResponse
                     {
@@ -180,13 +170,8 @@ namespace IdentityServerHost.Quickstart.UI
         {
             var request = await interaction.GetAuthorizationContextAsync(returnUrl);
             if (request != null)
-            {
                 return CreateConsentViewModel(model, returnUrl, request);
-            }
-            else
-            {
-                logger.LogError("No consent request matching request: {0}", returnUrl);
-            }
+            logger.LogError("No consent request matching request: {0}", returnUrl);
 
             return null;
         }
@@ -229,13 +214,11 @@ namespace IdentityServerHost.Quickstart.UI
             }
 
             if (ConsentOptions.EnableOfflineAccess && request.ValidatedResources.Resources.OfflineAccess)
-            {
                 apiScopes.Add(
                     GetOfflineAccessScope(
                         vm.ScopesConsented.Contains(
-                            IdentityServer4.IdentityServerConstants.StandardScopes.OfflineAccess) ||
+                            IdentityServerConstants.StandardScopes.OfflineAccess) ||
                         model == null));
-            }
 
             vm.ApiScopes = apiScopes;
 
@@ -259,9 +242,7 @@ namespace IdentityServerHost.Quickstart.UI
         {
             var displayName = apiScope.DisplayName ?? apiScope.Name;
             if (!string.IsNullOrWhiteSpace(parsedScopeValue.ParsedParameter))
-            {
                 displayName += ":" + parsedScopeValue.ParsedParameter;
-            }
 
             return new ScopeViewModel
             {
@@ -278,7 +259,7 @@ namespace IdentityServerHost.Quickstart.UI
         {
             return new ScopeViewModel
             {
-                Value = IdentityServer4.IdentityServerConstants.StandardScopes.OfflineAccess,
+                Value = IdentityServerConstants.StandardScopes.OfflineAccess,
                 DisplayName = ConsentOptions.OfflineAccessDisplayName,
                 Description = ConsentOptions.OfflineAccessDescription,
                 Emphasize = true,

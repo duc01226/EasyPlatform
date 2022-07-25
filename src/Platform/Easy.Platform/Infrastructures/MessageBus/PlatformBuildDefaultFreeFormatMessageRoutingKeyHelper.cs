@@ -1,48 +1,42 @@
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
 
-namespace Easy.Platform.Infrastructures.MessageBus
+namespace Easy.Platform.Infrastructures.MessageBus;
+
+public static class PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper
 {
-    public static class PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper
+    public const string FreeFormatMessageGroup = "FreeFormatMessage";
+
+    public static PlatformBusMessageRoutingKey Build<TMessage>() where TMessage : class, new()
     {
-        public const string FreeFormatMessageGroup = "FreeFormatMessage";
+        return Build(typeof(TMessage));
+    }
 
-        public static PlatformBusMessageRoutingKey Build<TMessage>() where TMessage : class, new()
+    public static PlatformBusMessageRoutingKey Build(Type messageType)
+    {
+        return new PlatformBusMessageRoutingKey
         {
-            return Build(typeof(TMessage));
-        }
+            MessageGroup = FreeFormatMessageGroup,
+            ProducerContext = PlatformBusMessageRoutingKey.MatchAllSingleGroupLevelChar,
+            MessageType = messageType.GetGenericTypeName()
+        };
+    }
 
-        public static PlatformBusMessageRoutingKey Build(Type messageType)
-        {
-            return new PlatformBusMessageRoutingKey()
-            {
-                MessageGroup = FreeFormatMessageGroup,
-                ProducerContext = PlatformBusMessageRoutingKey.MatchAllSingleGroupLevelChar,
-                MessageType = messageType.GetGenericTypeName()
-            };
-        }
+    public static PlatformBusMessageRoutingKey BuildForConsumer(Type consumerType)
+    {
+        var messageType = consumerType.GetGenericArguments()[0];
 
-        public static PlatformBusMessageRoutingKey BuildForConsumer(Type consumerType)
-        {
-            var messageType = consumerType.GetGenericArguments()[0];
+        return BuildForGenericPlatformEventBusMessage(messageType);
+    }
 
-            return BuildForGenericPlatformEventBusMessage(messageType);
-        }
+    public static PlatformBusMessageRoutingKey BuildForGenericPlatformEventBusMessage(Type messageType)
+    {
+        var matchedPlatformGenericMessageType = Util.Types.FindMatchedGenericType(
+            givenType: messageType,
+            matchedToGenericTypeDefinition: typeof(IPlatformBusMessage<>).GetGenericTypeDefinition());
 
-        public static PlatformBusMessageRoutingKey BuildForGenericPlatformEventBusMessage(Type messageType)
-        {
-            var matchedPlatformGenericMessageType = Util.Types.FindMatchedGenericType(
-                givenType: messageType,
-                matchedToGenericTypeDefinition: typeof(IPlatformBusMessage<>).GetGenericTypeDefinition());
-
-            if (messageType.IsGenericType && matchedPlatformGenericMessageType != null)
-            {
-                return Build(matchedPlatformGenericMessageType.GetGenericArguments()[0]);
-            }
-            else
-            {
-                return Build(messageType);
-            }
-        }
+        if (messageType.IsGenericType && matchedPlatformGenericMessageType != null)
+            return Build(matchedPlatformGenericMessageType.GetGenericArguments()[0]);
+        return Build(messageType);
     }
 }

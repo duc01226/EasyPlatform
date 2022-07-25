@@ -2,39 +2,38 @@ using System.IO;
 using Easy.Platform.Common.Extensions;
 using Microsoft.Extensions.Configuration;
 
-namespace Easy.Platform.AspNetCore
+namespace Easy.Platform.AspNetCore;
+
+public static class PlatformAppSettingsConfigurationBuilder
 {
-    public static class PlatformAppSettingsConfigurationBuilder
+    /// <summary>
+    /// Support get configuration inheritance from appsettings.X.Y.Z.
+    /// Example: Development.Level1.Level2.json => Load from Development.json, Development.Level1.json and Development.Level1.Level2.json
+    /// </summary>
+    public static IConfigurationBuilder GetConfigurationBuilder()
     {
-        /// <summary>
-        /// Support get configuration inheritance from appsettings.X.Y.Z.
-        /// Example: Development.Level1.Level2.json => Load from Development.json, Development.Level1.json and Development.Level1.Level2.json
-        /// </summary>
-        public static IConfigurationBuilder GetConfigurationBuilder()
-        {
-            return new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
-                .Pipe(
-                    builder =>
+        return new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: false)
+            .Pipe(
+                builder =>
+                {
+                    var aspCoreEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+
+                    var aspCoreEnvInheritanceLevelNames = aspCoreEnv.Split(".");
+
+                    for (var i = 0; i < aspCoreEnvInheritanceLevelNames.Length; i++)
                     {
-                        var aspCoreEnv = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Development";
+                        var fullCurrentAppSettingLevelName = string.Join(
+                            ".",
+                            aspCoreEnvInheritanceLevelNames.Take(i + 1));
 
-                        var aspCoreEnvInheritanceLevelNames = aspCoreEnv.Split(".");
-
-                        for (var i = 0; i < aspCoreEnvInheritanceLevelNames.Length; i++)
-                        {
-                            var fullCurrentAppSettingLevelName = string.Join(
-                                ".",
-                                aspCoreEnvInheritanceLevelNames.Take(i + 1));
-
-                            builder = builder.AddJsonFile(
-                                $"appsettings.{fullCurrentAppSettingLevelName}.json",
-                                optional: true,
-                                reloadOnChange: false);
-                        }
-                    })
-                .AddEnvironmentVariables();
-        }
+                        builder = builder.AddJsonFile(
+                            $"appsettings.{fullCurrentAppSettingLevelName}.json",
+                            optional: true,
+                            reloadOnChange: false);
+                    }
+                })
+            .AddEnvironmentVariables();
     }
 }

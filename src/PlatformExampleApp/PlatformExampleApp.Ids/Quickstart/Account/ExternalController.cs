@@ -20,10 +20,10 @@ namespace IdentityServerHost.Quickstart.UI
     [AllowAnonymous]
     public class ExternalController : Controller
     {
-        private readonly TestUserStore users;
+        private readonly IEventService events;
         private readonly IIdentityServerInteractionService interaction;
         private readonly ILogger<ExternalController> logger;
-        private readonly IEventService events;
+        private readonly TestUserStore users;
 
         public ExternalController(
             IIdentityServerInteractionService interaction,
@@ -51,10 +51,8 @@ namespace IdentityServerHost.Quickstart.UI
 
             // validate returnUrl - either it is a valid OIDC URL or back to a local page
             if (Url.IsLocalUrl(returnUrl) == false && interaction.IsValidReturnUrl(returnUrl) == false)
-            {
                 // user might have clicked on a malicious link - should be logged
                 throw new Exception("invalid return URL");
-            }
 
             // start challenge and roundtrip the return URL and scheme 
             var props = new AuthenticationProperties
@@ -67,7 +65,7 @@ namespace IdentityServerHost.Quickstart.UI
                     },
                     {
                         "scheme", scheme
-                    },
+                    }
                 }
             };
 
@@ -84,9 +82,7 @@ namespace IdentityServerHost.Quickstart.UI
             var result =
                 await HttpContext.AuthenticateAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
             if (result?.Succeeded != true)
-            {
                 throw new Exception("External authentication error");
-            }
 
             if (logger.IsEnabled(LogLevel.Debug))
             {
@@ -97,12 +93,10 @@ namespace IdentityServerHost.Quickstart.UI
             // lookup our user and external provider info
             var (user, provider, providerUserId, claims) = FindUserFromExternalProvider(result);
             if (user == null)
-            {
                 // this might be where you might initiate a custom workflow for user registration
                 // in this sample we don't show how that would be done, as our sample implementation
                 // simply auto-provisions new external user
                 user = AutoProvisionUser(provider, providerUserId, claims);
-            }
 
             // this allows us to collect any additional claims or properties
             // for the specific protocols used and store them in the local auth cookie.
@@ -139,14 +133,10 @@ namespace IdentityServerHost.Quickstart.UI
                     context?.Client.ClientId));
 
             if (context != null)
-            {
                 if (context.IsNativeClient())
-                {
                     // The client is native, so this change in how to
                     // return the response is for better UX for the end user.
                     return this.LoadingPage("Redirect", returnUrl);
-                }
-            }
 
             return Redirect(returnUrl);
         }
@@ -193,14 +183,11 @@ namespace IdentityServerHost.Quickstart.UI
             // so we can use it for single sign-out
             var sid = externalResult.Principal.Claims.FirstOrDefault(x => x.Type == JwtClaimTypes.SessionId);
             if (sid != null)
-            {
                 localClaims.Add(new Claim(JwtClaimTypes.SessionId, sid.Value));
-            }
 
             // if the external provider issued an id_token, we'll keep it for signout
             var idToken = externalResult.Properties.GetTokenValue("id_token");
             if (idToken != null)
-            {
                 localSignInProps.StoreTokens(
                     new[]
                     {
@@ -210,7 +197,6 @@ namespace IdentityServerHost.Quickstart.UI
                             Value = idToken
                         }
                     });
-            }
         }
     }
 }

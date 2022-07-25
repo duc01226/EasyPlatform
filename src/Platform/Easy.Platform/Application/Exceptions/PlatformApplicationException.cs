@@ -1,9 +1,8 @@
-namespace Easy.Platform.Application.Exceptions
+namespace Easy.Platform.Application.Exceptions;
+
+public class PlatformApplicationException : Exception
 {
-    public class PlatformApplicationException : Exception
+    public PlatformApplicationException(string message) : base(message)
     {
-        public PlatformApplicationException(string message) : base(message)
-        {
-        }
     }
 }

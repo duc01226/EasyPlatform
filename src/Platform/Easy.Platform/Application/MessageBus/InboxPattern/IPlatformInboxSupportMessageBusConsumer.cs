@@ -1,9 +1,8 @@
 using Easy.Platform.Infrastructures.MessageBus;
 
-namespace Easy.Platform.Application.MessageBus.InboxPattern
+namespace Easy.Platform.Application.MessageBus.InboxPattern;
+
+public interface IPlatformInboxSupportMessageBusConsumer : IPlatformMessageBusBaseConsumer
 {
-    public interface IPlatformInboxSupportMessageBusConsumer : IPlatformMessageBusBaseConsumer
-    {
-        public IPlatformInboxSupportMessageBusConsumer ForProcessingExistingInboxMessage();
-    }
+    public IPlatformInboxSupportMessageBusConsumer ForProcessingExistingInboxMessage();
 }

@@ -1,16 +1,15 @@
 using Easy.Platform.Common.Validators;
 
-namespace Easy.Platform.Common.Dtos
+namespace Easy.Platform.Common.Dtos;
+
+public interface IPlatformDto
 {
-    public interface IPlatformDto
-    {
-        PlatformValidationResult Validate();
-    }
+    PlatformValidationResult Validate();
+}
 
-    public interface IPlatformDto<out TMapForObject> where TMapForObject : class
-    {
-        PlatformValidationResult Validate();
+public interface IPlatformDto<out TMapForObject> where TMapForObject : class
+{
+    PlatformValidationResult Validate();
 
-        TMapForObject MapToObject();
-    }
+    TMapForObject MapToObject();
 }

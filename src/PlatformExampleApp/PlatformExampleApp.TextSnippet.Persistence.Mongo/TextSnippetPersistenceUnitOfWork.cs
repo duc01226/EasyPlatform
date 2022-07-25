@@ -1,38 +1,38 @@
 // ReSharper disable once EmptyNamespace
 
-namespace PlatformExampleApp.TextSnippet.Persistence.Mongo
-{
-    // If you want to implement or override your own custom uow, just define a uow implement
-    // IPlatformMongoDbUnitOfWork or PlatformMongoDbUnitOfWork
-    //internal class TextSnippetPersistenceUnitOfWork : PlatformMongoDbUnitOfWork<TextSnippetDbContext>
-    //{
-    //    public TextSnippetPersistenceUnitOfWork(TextSnippetDbContext dbContext) : base(dbContext)
-    //    {
-    //    }
+namespace PlatformExampleApp.TextSnippet.Persistence.Mongo;
 
-    //    public new event EventHandler OnCompleted;
-    //    public new event EventHandler<UnitOfWorkFailedArgs> OnFailed;
 
-    //    public override Task CompleteAsync(CancellationToken cancellationToken = default)
-    //    {
-    //        if (Completed)
-    //            throw new Exception("This unit of work is completed");
+// If you want to implement or override your own custom uow, just define a uow implement
+// IPlatformMongoDbUnitOfWork or PlatformMongoDbUnitOfWork
+//internal class TextSnippetPersistenceUnitOfWork : PlatformMongoDbUnitOfWork<TextSnippetDbContext>
+//{
+//    public TextSnippetPersistenceUnitOfWork(TextSnippetDbContext dbContext) : base(dbContext)
+//    {
+//    }
 
-    //        try
-    //        {
-    //            Completed = true;
+//    public new event EventHandler OnCompleted;
+//    public new event EventHandler<UnitOfWorkFailedArgs> OnFailed;
 
-    //            // Some custom code for example log out when CompleteAsync
+//    public override Task CompleteAsync(CancellationToken cancellationToken = default)
+//    {
+//        if (Completed)
+//            throw new Exception("This unit of work is completed");
 
-    //            OnCompleted?.Invoke(this, EventArgs.Empty);
-    //        }
-    //        catch (Exception e)
-    //        {
-    //            OnFailed?.Invoke(this, new UnitOfWorkFailedArgs(e));
-    //            throw;
-    //        }
+//        try
+//        {
+//            Completed = true;
 
-    //        return Task.CompletedTask;
-    //    }
-    //}
-}
+//            // Some custom code for example log out when CompleteAsync
+
+//            OnCompleted?.Invoke(this, EventArgs.Empty);
+//        }
+//        catch (Exception e)
+//        {
+//            OnFailed?.Invoke(this, new UnitOfWorkFailedArgs(e));
+//            throw;
+//        }
+
+//        return Task.CompletedTask;
+//    }
+//}
