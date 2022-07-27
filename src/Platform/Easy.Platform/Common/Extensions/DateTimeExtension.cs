@@ -2,7 +2,7 @@ namespace Easy.Platform.Common.Extensions;
 
 public static class DateTimeExtension
 {
-    public enum DayOfMonToSunWeek
+    public enum MonToSunDayOfWeeks
     {
         Monday,
         Tuesday,
@@ -47,26 +47,16 @@ public static class DateTimeExtension
         return dateTime.Date.AddDays(1).AddSeconds(-1);
     }
 
-    public static DateTime DateOfMonToSunWeek(this DateTime currentDate, DayOfMonToSunWeek dayOfWeek)
+    public static DateTime ToDateOfMonToSunWeek(this DateTime currentDate, MonToSunDayOfWeeks monToSunDayOfWeek)
     {
-        var firstDateOfWeek = currentDate.AddDays(-(int)currentDate.ToDayOfMonToSunWeek());
+        var firstDateOfMonToSunWeek = currentDate.AddDays(-(int)currentDate.MonToSunDayOfWeek());
 
-        return firstDateOfWeek.AddDays((int)dayOfWeek);
+        return firstDateOfMonToSunWeek.AddDays((int)monToSunDayOfWeek);
     }
 
-    public static DayOfMonToSunWeek ToDayOfMonToSunWeek(this DateTime currentDate)
+    public static MonToSunDayOfWeeks MonToSunDayOfWeek(this DateTime currentDate)
     {
-        return currentDate.DayOfWeek switch
-        {
-            DayOfWeek.Monday => DayOfMonToSunWeek.Monday,
-            DayOfWeek.Tuesday => DayOfMonToSunWeek.Tuesday,
-            DayOfWeek.Wednesday => DayOfMonToSunWeek.Wednesday,
-            DayOfWeek.Thursday => DayOfMonToSunWeek.Thursday,
-            DayOfWeek.Friday => DayOfMonToSunWeek.Friday,
-            DayOfWeek.Saturday => DayOfMonToSunWeek.Saturday,
-            DayOfWeek.Sunday => DayOfMonToSunWeek.Sunday,
-            _ => throw new ArgumentException()
-        };
+        return currentDate.DayOfWeek.Parse<MonToSunDayOfWeeks>();
     }
 
     public static DateTime ConvertToTimeZone(this DateTime dateTime, int timeZoneOffset)

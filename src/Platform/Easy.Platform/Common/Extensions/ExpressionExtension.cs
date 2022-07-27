@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using System.Reflection;
 
 namespace Easy.Platform.Common.Extensions;
 
@@ -24,5 +25,33 @@ public static class ExpressionExtension
             return expression.Or(andExpression);
 
         return expression;
+    }
+
+    /// <summary>
+    ///     Returns the name of the specified property of the specified type.
+    /// </summary>
+    /// <typeparam name="T">
+    ///     The type the property is a member of.
+    /// </typeparam>
+    /// <typeparam name="TProp">The type of the property.</typeparam>
+    /// <param name="property">
+    ///     The property.
+    /// </param>
+    /// <returns>
+    ///     The property name.
+    /// </returns>
+    public static string GetPropertyName<T, TProp>(this Expression<Func<T, TProp>> property)
+    {
+        LambdaExpression lambda = property;
+        MemberExpression memberExpression;
+
+        if (lambda.Body is UnaryExpression unaryExpression)
+            memberExpression = (MemberExpression)unaryExpression.Operand;
+        else if (lambda.Body is ConstantExpression constantExpression)
+            return constantExpression.ToString();
+        else
+            memberExpression = (MemberExpression)lambda.Body;
+
+        return ((PropertyInfo)memberExpression.Member).Name;
     }
 }

@@ -17,7 +17,8 @@ public class Option
         internal Some(T value)
         {
             if (value == null)
-                throw new ArgumentNullException(nameof(value),
+                throw new ArgumentNullException(
+                    nameof(value),
                     "Cannot wrap a null value in a 'Some'; use 'None' instead");
 
             Value = value;
@@ -167,7 +168,9 @@ public static class OptionExt
         return optTask.Map(opt => opt.Match(none, some));
     }
 
-    public static Task<TR> MatchAsync<T, TR>(this Task<Option<T>> optTask, Func<Task<TR>> none,
+    public static Task<TR> MatchAsync<T, TR>(
+        this Task<Option<T>> optTask,
+        Func<Task<TR>> none,
         Func<T, Task<TR>> some)
     {
         return optTask.Bind(opt => opt.Match(none, some));
@@ -175,12 +178,12 @@ public static class OptionExt
 
     public static Task<TR> MatchAsync<T, TR>(this Task<Option<T>> optTask, Func<Task<TR>> none, Func<T, TR> some)
     {
-        return optTask.Bind(opt => opt.Match(none, _ => Util.Tasks.Async(some(_))));
+        return optTask.Bind(opt => opt.Match(none, _ => Util.TaskRunner.Async(some(_))));
     }
 
     public static Task<TR> MatchAsync<T, TR>(this Task<Option<T>> optTask, Func<TR> none, Func<T, Task<TR>> some)
     {
-        return optTask.Bind(opt => opt.Match(() => Util.Tasks.Async(none()), some));
+        return optTask.Bind(opt => opt.Match(() => Util.TaskRunner.Async(none()), some));
     }
 
     public static Task<T> GetOrElseAsync<T>(this Task<Option<T>> optTask, Func<Task<T>> fallback)
@@ -211,22 +214,25 @@ public static class OptionExt
             t => t);
     }
 
-    public static Task<Validation<ValueTuple>> ValidateIfSomeAsync<T>(this Option<T> opt,
+    public static Task<Validation<ValueTuple>> ValidateIfSomeAsync<T>(
+        this Option<T> opt,
         Func<T, Task<Validation<ValueTuple>>> validateFn)
     {
         return opt.Match(
-            () => Util.Tasks.Async(F.Valid(F.Unit())),
+            () => Util.TaskRunner.Async(F.Valid(F.Unit())),
             t => validateFn(t));
     }
 
-    public static Task<Validation<ValueTuple>> ValidateIfSomeAsync<T>(this Task<Option<T>> opt,
+    public static Task<Validation<ValueTuple>> ValidateIfSomeAsync<T>(
+        this Task<Option<T>> opt,
         Func<T, Task<Validation<ValueTuple>>> validateFn)
     {
         return opt.Bind(optionT => optionT.ValidateIfSomeAsync(validateFn));
     }
 
     public static Option<T> Where<T>(
-        this Option<T> optT, Func<T, bool> predicate)
+        this Option<T> optT,
+        Func<T, bool> predicate)
     {
         return optT.Match(
             () => F.None,

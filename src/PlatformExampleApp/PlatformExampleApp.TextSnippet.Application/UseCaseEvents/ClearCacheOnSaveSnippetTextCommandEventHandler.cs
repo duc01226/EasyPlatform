@@ -28,7 +28,7 @@ public class ClearCacheOnSaveSnippetTextCommandEventHandler : PlatformCqrsComman
         // amount of time for fulltext index update
         // We also set executeOnceImmediately=true to clear cache immediately in case of some index is updated fast
         if (@event.Action == PlatformCqrsCommandEventAction.Executed)
-            Util.Tasks.QueueIntervalAsyncAction(
+            Util.TaskRunner.QueueIntervalAsyncAction(
                 token => cacheRepositoryProvider.Get()
                     .RemoveCollectionAsync<TextSnippetCollectionCacheKeyProvider>(token),
                 intervalTimeInSeconds: 5,

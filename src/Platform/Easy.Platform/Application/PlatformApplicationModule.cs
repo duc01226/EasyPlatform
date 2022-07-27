@@ -246,7 +246,7 @@ public abstract class PlatformApplicationModule : PlatformModule
                 typeof(PlatformDefaultApplicationUserContextAccessor),
                 ServiceLifeTime.Singleton,
                 replaceIfExist: true,
-                ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+                DependencyInjectionExtension.ReplaceServiceStrategy.ByService);
     }
 
     private void RegisterEventBus(IServiceCollection serviceCollection)

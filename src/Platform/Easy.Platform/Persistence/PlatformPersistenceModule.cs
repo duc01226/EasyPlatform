@@ -45,7 +45,7 @@ public abstract class PlatformPersistenceModule<TDbContext> : PlatformModule
                 InboxConfigProvider,
                 ServiceLifeTime.Transient,
                 replaceIfExist: true,
-                ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+                DependencyInjectionExtension.ReplaceServiceStrategy.ByService);
 
         RegisterOutboxEventBusMessageRepository(serviceCollection);
         if (OutboxConfigProvider(serviceCollection.BuildServiceProvider()) != null)
@@ -54,7 +54,7 @@ public abstract class PlatformPersistenceModule<TDbContext> : PlatformModule
                 OutboxConfigProvider,
                 ServiceLifeTime.Transient,
                 replaceIfExist: true,
-                ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+                DependencyInjectionExtension.ReplaceServiceStrategy.ByService);
 
         serviceCollection.RegisterAllFromType<IPersistenceService>(ServiceLifeTime.Transient, Assembly);
         serviceCollection.RegisterAllFromType<IPlatformDataMigrationExecutor>(ServiceLifeTime.Transient, Assembly);
@@ -110,7 +110,10 @@ public abstract class PlatformPersistenceModule<TDbContext> : PlatformModule
     private void RegisterUnitOfWorkManager(IServiceCollection serviceCollection)
     {
         serviceCollection.Register<IUnitOfWorkManager, PlatformDefaultPersistenceUnitOfWorkManager>(ServiceLifeTime.Scoped);
-        serviceCollection.RegisterAllFromType(typeof(IUnitOfWorkManager), ServiceLifeTime.Scoped, Assembly,
+        serviceCollection.RegisterAllFromType(
+            typeof(IUnitOfWorkManager),
+            ServiceLifeTime.Scoped,
+            Assembly,
             replaceIfExist: true);
     }
 

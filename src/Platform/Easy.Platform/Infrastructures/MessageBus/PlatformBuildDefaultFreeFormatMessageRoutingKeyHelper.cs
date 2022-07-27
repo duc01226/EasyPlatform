@@ -1,5 +1,4 @@
 using Easy.Platform.Common.Extensions;
-using Easy.Platform.Common.Utils;
 
 namespace Easy.Platform.Infrastructures.MessageBus;
 
@@ -31,9 +30,7 @@ public static class PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper
 
     public static PlatformBusMessageRoutingKey BuildForGenericPlatformEventBusMessage(Type messageType)
     {
-        var matchedPlatformGenericMessageType = Util.Types.FindMatchedGenericType(
-            givenType: messageType,
-            matchedToGenericTypeDefinition: typeof(IPlatformBusMessage<>).GetGenericTypeDefinition());
+        var matchedPlatformGenericMessageType = messageType.FindMatchedGenericType(typeof(IPlatformBusMessage<>));
 
         if (messageType.IsGenericType && matchedPlatformGenericMessageType != null)
             return Build(matchedPlatformGenericMessageType.GetGenericArguments()[0]);

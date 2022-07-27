@@ -74,8 +74,7 @@ public interface IPlatformBackgroundJobScheduler
         where TJobExecutorParam : class;
 
     /// <summary>
-    /// Add or update a recurring job. Use <see cref="Util.Cron"/> for common cron.
-    /// </summary>
+    /// Add or update a recurring job. Use <see cref="Util.CronBuilder"/> for common cron.// </summary>
     /// <param name="cronExpression">
     /// Set the cronExpression to be used if TJobExecutor don't have <see cref="PlatformRecurringJobAttribute"/>
     /// https://en.wikipedia.org/wiki/Cron

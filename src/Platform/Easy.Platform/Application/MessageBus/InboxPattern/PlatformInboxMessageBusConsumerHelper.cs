@@ -174,6 +174,7 @@ public static class PlatformInboxMessageBusConsumerHelper
         IUnitOfWorkManager unitOfWorkManager,
         IPlatformInboxBusMessageRepository inboxBusMessageRepo,
         Exception exception,
+        double retryProcessFailedMessageInSecondsUnit,
         CancellationToken cancellationToken = default)
     {
         using (var uow = unitOfWorkManager.Begin())
@@ -189,6 +190,10 @@ public static class PlatformInboxMessageBusConsumerHelper
             existingInboxMessage.ConsumeStatus = PlatformInboxBusMessage.ConsumeStatuses.Failed;
             existingInboxMessage.LastConsumeDate = DateTime.UtcNow;
             existingInboxMessage.LastConsumeError = consumeError;
+            existingInboxMessage.RetriedProcessCount = (existingInboxMessage.RetriedProcessCount ?? 0) + 1;
+            existingInboxMessage.NextRetryProcessAfter = PlatformInboxBusMessage.CalculateNextRetryProcessAfter(
+                retriedProcessCount: existingInboxMessage.RetriedProcessCount,
+                retryProcessFailedMessageInSecondsUnit);
 
             await inboxBusMessageRepo.UpdateAsync(existingInboxMessage, cancellationToken: cancellationToken);
 

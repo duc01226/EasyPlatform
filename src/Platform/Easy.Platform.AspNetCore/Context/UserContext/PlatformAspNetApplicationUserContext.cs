@@ -2,7 +2,6 @@ using System.Security.Claims;
 using Easy.Platform.Application.Context.UserContext;
 using Easy.Platform.AspNetCore.Context.UserContext.UserContextKeyToClaimTypeMapper.Abstract;
 using Easy.Platform.Common.JsonSerialization;
-using Easy.Platform.Common.Utils;
 using Microsoft.AspNetCore.Http;
 
 namespace Easy.Platform.AspNetCore.Context.UserContext;
@@ -169,13 +168,11 @@ public class PlatformAspNetApplicationUserContext : IPlatformApplicationUserCont
     {
         var contextKeyMappedToOneOfClaimTypes = claimTypeMapper.ToOneOfClaimTypes(contextKey);
 
-        var matchedClaimStringValues = contextKeyMappedToOneOfClaimTypes
-                                           .Select(
-                                               contextKeyMappedToJwtClaimType =>
-                                                   userClaims.FindAll(contextKeyMappedToJwtClaimType)
-                                                       .Select(p => p.Value)
-                                                       .ToList())
-                                           .FirstOrDefault(p => p.Any()) ??
+        var matchedClaimStringValues = contextKeyMappedToOneOfClaimTypes.Select(
+                                           contextKeyMappedToJwtClaimType =>
+                                               userClaims.FindAll(contextKeyMappedToJwtClaimType)
+                                                   .Select(p => p.Value)
+                                                   .ToList()).FirstOrDefault(p => p.Any()) ??
                                        new List<string>();
 
         // Try Get Deserialized value from matchedClaimStringValues
@@ -238,10 +235,9 @@ public class PlatformAspNetApplicationUserContext : IPlatformApplicationUserCont
         if (isTryGetListValueSuccess)
             return true;
 
-        return Util.Jsons.TryDeserialize(
+        return PlatformJsonSerializer.TryDeserialize(
             stringValues.LastOrDefault(),
-            out foundValue,
-            PlatformJsonSerializer.CurrentOptions.Value);
+            out foundValue);
     }
 
     private bool TryGetParsedListValueFromUserClaimStringValues<T>(
@@ -263,11 +259,10 @@ public class PlatformAspNetApplicationUserContext : IPlatformApplicationUserCont
                         if (listItemType == typeof(string))
                             return matchedClaimStringValue;
 
-                        var parsedItemResult = Util.Jsons.TryDeserialize(
+                        var parsedItemResult = PlatformJsonSerializer.TryDeserialize(
                             matchedClaimStringValue,
                             listItemType,
-                            out var itemDeserializedValue,
-                            PlatformJsonSerializer.CurrentOptions.Value);
+                            out var itemDeserializedValue);
 
                         if (parsedItemResult == false)
                             isParsedAllItemSuccess = false;
@@ -279,8 +274,7 @@ public class PlatformAspNetApplicationUserContext : IPlatformApplicationUserCont
             if (isParsedAllItemSuccess)
             {
                 // Serialize then Deserialize to type T so ensure parse matchedClaimStringValues to type T successfully
-                foundValue =
-                    PlatformJsonSerializer.Deserialize<T>(PlatformJsonSerializer.Serialize(parsedItemList));
+                foundValue = PlatformJsonSerializer.Deserialize<T>(PlatformJsonSerializer.Serialize(parsedItemList));
                 return true;
             }
         }

@@ -17,12 +17,14 @@ public class PlatformRabbitMqConsumeInboxBusMessageHostedService : PlatformConsu
         IServiceProvider serviceProvider,
         IPlatformApplicationSettingContext applicationSettingContext,
         PlatformRabbitMqOptions options,
-        IPlatformMessageBusManager messageBusManager) : base(
+        IPlatformMessageBusManager messageBusManager,
+        PlatformInboxConfig inboxConfig) : base(
         applicationLifetime,
         loggerFactory,
         serviceProvider,
         applicationSettingContext,
-        messageBusManager)
+        messageBusManager,
+        inboxConfig)
     {
         this.options = options;
     }
@@ -35,10 +37,5 @@ public class PlatformRabbitMqConsumeInboxBusMessageHostedService : PlatformConsu
     protected override double LogErrorSlowProcessWarningTimeMilliseconds()
     {
         return options.LogErrorSlowProcessWarningTimeMilliseconds;
-    }
-
-    protected override double RetryProcessFailedMessageDelayTimeInSeconds()
-    {
-        return options.RequeueDelayTimeInSeconds;
     }
 }

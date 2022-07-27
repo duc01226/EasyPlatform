@@ -106,24 +106,36 @@ public static class ListExtension
         return !items.Contains(item);
     }
 
-    public static List<T> AddDistinct<T>(this List<T> items, T item)
+    public static List<T> AddDistinct<T>(this IList<T> items, T item)
     {
         if (!items.Contains(item))
             items.Add(item);
 
-        return items;
+        return items.ToList();
     }
 
-    public static List<T> WhereIf<T>(this List<T> items, bool condition, Expression<Func<T, bool>> predicate)
+    public static List<T> WhereIf<T>(this IList<T> items, bool condition, Expression<Func<T, bool>> predicate)
     {
         return condition
             ? items.Where(predicate.Compile()).ToList()
-            : items;
+            : items.ToList();
     }
 
-    public static bool ContainsAll<T>(this List<T> items, List<T> containAllItems)
+    public static bool ContainsAll<T>(this IList<T> items, IList<T> containAllItems)
     {
         return items.Intersect(containAllItems).Count() >= containAllItems.Count;
+    }
+
+    public static bool ItemsMatch<T, T1>(this IList<T> items, IList<T1> matchedWithItems, Func<T, T1, bool> mustMatch)
+    {
+        if (items.Count != matchedWithItems.Count)
+            return false;
+
+        for (var i = 0; i < items.Count; i++)
+            if (mustMatch(items[i], matchedWithItems[i]) == false)
+                return false;
+
+        return true;
     }
 
     public static void ForEach<T>(this IEnumerable<T> items, Action<T> actionOnEachItem)

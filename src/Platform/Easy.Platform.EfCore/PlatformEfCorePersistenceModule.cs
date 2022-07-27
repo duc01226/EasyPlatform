@@ -51,7 +51,7 @@ public abstract class PlatformEfCorePersistenceModule<TDbContext> : PlatformPers
             ServiceLifeTime.Transient,
             Assembly,
             replaceIfExist: true,
-            ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+            DependencyInjectionExtension.ReplaceServiceStrategy.ByService);
         if (!serviceCollection.Any(
             p => p.ServiceType == typeof(IUnitOfWork) &&
                  p.ImplementationType?.IsAssignableTo(typeof(IPlatformEfCoreUnitOfWork<TDbContext>)) == true))

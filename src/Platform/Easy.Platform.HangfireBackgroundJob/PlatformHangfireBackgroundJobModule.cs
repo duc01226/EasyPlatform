@@ -38,7 +38,7 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
         serviceCollection.RegisterAllForImplementation<PlatformHangfireBackgroundJobScheduler>(
             ServiceLifeTime.Transient,
             replaceIfExist: true,
-            replaceStrategy: ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+            replaceStrategy: DependencyInjectionExtension.ReplaceServiceStrategy.ByService);
 
         serviceCollection.Register(
             typeof(IPlatformBackgroundJobProcessingService),
@@ -51,7 +51,7 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
             },
             ServiceLifeTime.Singleton,
             replaceIfExist: true,
-            replaceStrategy: ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+            replaceStrategy: DependencyInjectionExtension.ReplaceServiceStrategy.ByService);
     }
 
     protected override async Task InternalInit(IServiceScope serviceScope)

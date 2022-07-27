@@ -371,17 +371,11 @@ public partial class PlatformRabbitMqHostedService : PlatformHostedService
                             .IsEmpty())
                         {
                             var matchedConsumerType =
-                                Util.Types.FindMatchedGenericType(
-                                    messageBusConsumerType,
-                                    typeof(IPlatformMessageBusFreeFormatMessageConsumer<>)
-                                        .GetGenericTypeDefinition()) ??
-                                Util.Types.FindMatchedGenericType(
-                                    messageBusConsumerType,
-                                    typeof(IPlatformMessageBusConsumer<>).GetGenericTypeDefinition());
+                                messageBusConsumerType.FindMatchedGenericType(typeof(IPlatformMessageBusFreeFormatMessageConsumer<>)) ??
+                                messageBusConsumerType.FindMatchedGenericType(typeof(IPlatformMessageBusConsumer<>));
 
                             var matchedDefaultFreeFormatMessageRoutingKey =
-                                PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.BuildForConsumer(
-                                    matchedConsumerType);
+                                PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.BuildForConsumer(matchedConsumerType);
 
                             return matchedDefaultFreeFormatMessageRoutingKey.Match(rabbitMqMessage.RoutingKey);
                         }
@@ -417,7 +411,7 @@ public partial class PlatformRabbitMqHostedService : PlatformHostedService
                 $"Message: {Encoding.UTF8.GetString(rabbitMqMessage.Body.Span)}");
 
             // Reject the message.
-            Util.Tasks.CatchException(() => currentChannel.BasicReject(rabbitMqMessage.DeliveryTag, false));
+            Util.TaskRunner.CatchException(() => currentChannel.BasicReject(rabbitMqMessage.DeliveryTag, false));
         }
     }
 
@@ -432,7 +426,7 @@ public partial class PlatformRabbitMqHostedService : PlatformHostedService
             // Summary: requeue: true =>  the broker will requeue the delivery (or multiple deliveries, as will be explained shortly) with the specified delivery tag
             // Why multiple: true for Nack: to fix requeue true for multiple consumer instance by eject or requeue multiple messages at once.
             // Because if all consumers requeue because they cannot process a delivery due to a transient condition, they will create a requeue/redelivery loop. Such loops can be costly in terms of network bandwidth and CPU resources
-            Util.Tasks.QueueDelayAsyncAction(
+            Util.TaskRunner.QueueDelayAsyncAction(
                 token => Task.Run(
                     () =>
                     {
@@ -468,7 +462,7 @@ public partial class PlatformRabbitMqHostedService : PlatformHostedService
         // of IPlatformMessageBusConsumer<TMessagePayload>
         var consumerMessageType = PlatformMessageBusBaseConsumer.GetConsumerMessageType(consumer);
 
-        var busMessage = Util.Tasks.CatchExceptionContinueThrow(
+        var busMessage = Util.TaskRunner.CatchExceptionContinueThrow(
             () => PlatformJsonSerializer.Deserialize(
                 args.Body.Span,
                 consumerMessageType,

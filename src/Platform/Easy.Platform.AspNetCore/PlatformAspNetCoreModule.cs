@@ -179,7 +179,7 @@ public abstract class PlatformAspNetCoreModule : PlatformModule
             typeof(PlatformAspNetApplicationUserContextAccessor),
             ServiceLifeTime.Singleton,
             replaceIfExist: true,
-            ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+            DependencyInjectionExtension.ReplaceServiceStrategy.ByService);
 
         RegisterUserContextKeyToClaimTypeMapper(serviceCollection);
     }

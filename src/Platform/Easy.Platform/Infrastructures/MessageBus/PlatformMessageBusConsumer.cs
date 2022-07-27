@@ -99,7 +99,7 @@ public abstract class PlatformMessageBusBaseConsumer : IPlatformMessageBusBaseCo
             if (logger == null)
                 throw new ArgumentNullException(nameof(logger));
 
-            await Util.Tasks.ProfilingAsync(
+            await Util.TaskRunner.ProfilingAsync(
                 asyncTask: () => DoInvokeConsumer(
                     consumer,
                     eventBusMessage,
@@ -161,8 +161,9 @@ public abstract class PlatformMessageBusBaseConsumer : IPlatformMessageBusBaseCo
     }
 }
 
-public abstract class PlatformMessageBusBaseConsumer<TMessage> : PlatformMessageBusBaseConsumer,
-    IPlatformMessageBusBaseConsumer<TMessage>
+public abstract class PlatformMessageBusBaseConsumer<TMessage>
+    : PlatformMessageBusBaseConsumer,
+        IPlatformMessageBusBaseConsumer<TMessage>
     where TMessage : class, new()
 {
     protected readonly ILogger Logger;
@@ -191,9 +192,9 @@ public abstract class PlatformMessageBusBaseConsumer<TMessage> : PlatformMessage
     protected abstract Task InternalHandleAsync(TMessage message, string routingKey);
 }
 
-public abstract class PlatformMessageBusFreeFormatMessageConsumer<TMessage> :
-    PlatformMessageBusBaseConsumer<TMessage>,
-    IPlatformMessageBusFreeFormatMessageConsumer<TMessage>
+public abstract class PlatformMessageBusFreeFormatMessageConsumer<TMessage>
+    : PlatformMessageBusBaseConsumer<TMessage>,
+        IPlatformMessageBusFreeFormatMessageConsumer<TMessage>
     where TMessage : class, IPlatformBusFreeFormatMessage, new()
 {
     protected PlatformMessageBusFreeFormatMessageConsumer(ILoggerFactory loggerFactory) : base(loggerFactory)

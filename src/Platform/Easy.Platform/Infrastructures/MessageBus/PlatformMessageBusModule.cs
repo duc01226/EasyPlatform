@@ -22,7 +22,7 @@ public abstract class PlatformMessageBusModule : PlatformInfrastructureModule
         serviceCollection.Register<IPlatformMessageBusManager, PlatformMessageBusManager>(
             ServiceLifeTime.Transient,
             replaceIfExist: true,
-            ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+            DependencyInjectionExtension.ReplaceServiceStrategy.ByService);
         serviceCollection.Register(
             typeof(PlatformMessageBusApplicationSetting),
             provider => new PlatformMessageBusApplicationSetting

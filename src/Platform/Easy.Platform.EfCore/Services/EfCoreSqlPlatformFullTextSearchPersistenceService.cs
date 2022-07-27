@@ -1,6 +1,5 @@
 using System.Linq.Expressions;
 using Easy.Platform.Common.Extensions;
-using Easy.Platform.Common.Utils;
 using Easy.Platform.Persistence.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -105,9 +104,9 @@ public class EfCoreSqlPlatformFullTextSearchPersistenceService : PlatformFullTex
 
         var searchWords = BuildSearchWords(searchText.Trim());
         var fullTextSearchPropNames =
-            inFullTextSearchProps.Where(p => p != null).Select(Util.Expressions.GetPropertyName).ToList();
+            inFullTextSearchProps.Where(p => p != null).Select(ExpressionExtension.GetPropertyName).ToList();
         var includeStartWithPropNames =
-            includeStartWithProps?.Where(p => p != null).Select(Util.Expressions.GetPropertyName).ToList();
+            includeStartWithProps?.Where(p => p != null).Select(ExpressionExtension.GetPropertyName).ToList();
 
         var searchedQuery = BuildSearchQuery(
             query,

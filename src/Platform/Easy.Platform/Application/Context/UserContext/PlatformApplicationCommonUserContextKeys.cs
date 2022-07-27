@@ -1,4 +1,4 @@
-using Easy.Platform.Common.Utils;
+using Easy.Platform.Common.Extensions;
 
 namespace Easy.Platform.Application.Context.UserContext;
 
@@ -27,7 +27,7 @@ public static class PlatformApplicationCommonUserContextKeys
 
     public static T GetUserId<T>(this IPlatformApplicationUserContext context)
     {
-        return Util.Strings.Parse<T>(context.GetUserId());
+        return context.GetUserId().ParseToSerializableType<T>();
     }
 
     public static string GetUserName(this IPlatformApplicationUserContext context)
@@ -52,7 +52,16 @@ public static class PlatformApplicationCommonUserContextKeys
 
     public static string GetUserFullName(this IPlatformApplicationUserContext context)
     {
-        return context.GetValue<string>(UserFullName);
+        return context.GetValue<string>(UserFullName) ?? context.GetUserCalculatedFullName();
+    }
+
+    public static string GetUserCalculatedFullName(this IPlatformApplicationUserContext context)
+    {
+        var userFirstNamePart = ((context.GetUserFirstName() ?? string.Empty) + " ").Trim();
+        var userMiddleNamePart = ((context.GetUserMiddleName() ?? string.Empty) + " ").Trim();
+        var userLastNamePart = context.GetUserLastName() ?? string.Empty;
+
+        return $"{userFirstNamePart}{userMiddleNamePart}{userLastNamePart}";
     }
 
     public static string GetUserFirstName(this IPlatformApplicationUserContext context)

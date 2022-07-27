@@ -23,7 +23,7 @@ public static class TaskExt
                 t =>
                     t.Status == TaskStatus.Faulted
                         ? fallback(t.Exception)
-                        : Util.Tasks.Async(t.Result))
+                        : Util.TaskRunner.Async(t.Result))
             .Unwrap();
     }
 }

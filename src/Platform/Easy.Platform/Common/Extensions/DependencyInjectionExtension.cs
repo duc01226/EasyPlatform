@@ -1,11 +1,10 @@
 using System.Reflection;
 using Easy.Platform.Common.DependencyInjection;
-using Easy.Platform.Common.Utils;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Easy.Platform.Common.Extensions;
 
-public static class ServiceCollectionExtension
+public static class DependencyInjectionExtension
 {
     public enum ReplaceServiceStrategy
     {
@@ -153,7 +152,7 @@ public static class ServiceCollectionExtension
     }
 
     /// <summary>
-    /// <inheritdoc cref="RegisterAllForImplementation(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Type,Easy.Platform.Common.DependencyInjection.ServiceLifeTime,bool,Easy.Platform.Common.Extensions.ServiceCollectionExtension.ReplaceServiceStrategy)"/>
+    /// <inheritdoc cref="RegisterAllForImplementation(IServiceCollection,Type,ServiceLifeTime,bool,DependencyInjectionExtension.ReplaceServiceStrategy)"/>
     /// </summary>
     public static IServiceCollection RegisterAllForImplementation<TImplementation>(
         this IServiceCollection services,
@@ -506,11 +505,11 @@ public static class ServiceCollectionExtension
         if (implementationType.IsGenericType)
             implementationType
                 .GetInterfaces()
-                .Where(p => p.IsGenericType && Util.Types.MatchGenericArguments(p, implementationType))
+                .Where(implementationTypeInterface => implementationType.MatchGenericArguments(implementationTypeInterface))
                 .ToList()
                 .ForEach(
                     implementationTypeInterface => services.Register(
-                        Util.Types.FixTypeReference(implementationTypeInterface),
+                        implementationTypeInterface.FixMissingFullNameGenericType(),
                         implementationType,
                         lifeTime,
                         replaceIfExist,
@@ -522,7 +521,7 @@ public static class ServiceCollectionExtension
                 .ToList()
                 .ForEach(
                     implementationTypeInterface => services.Register(
-                        Util.Types.FixTypeReference(implementationTypeInterface),
+                        implementationTypeInterface.FixMissingFullNameGenericType(),
                         implementationType,
                         lifeTime,
                         replaceIfExist,
@@ -557,11 +556,11 @@ public static class ServiceCollectionExtension
         if (implementationType.IsGenericType)
             implementationType
                 .GetInterfaces()
-                .Where(p => p.IsGenericType && Util.Types.MatchGenericArguments(p, implementationType))
+                .Where(implementationTypeInterface => implementationType.MatchGenericArguments(implementationTypeInterface))
                 .ToList()
                 .ForEach(
                     implementationTypeInterface => services.Register(
-                        Util.Types.FixTypeReference(implementationTypeInterface),
+                        implementationTypeInterface.FixMissingFullNameGenericType(),
                         implementationFactory,
                         lifeTime,
                         replaceIfExist,
@@ -573,7 +572,7 @@ public static class ServiceCollectionExtension
                 .ToList()
                 .ForEach(
                     implementationTypeInterface => services.Register(
-                        Util.Types.FixTypeReference(implementationTypeInterface),
+                        implementationTypeInterface.FixMissingFullNameGenericType(),
                         implementationFactory,
                         lifeTime,
                         replaceIfExist,

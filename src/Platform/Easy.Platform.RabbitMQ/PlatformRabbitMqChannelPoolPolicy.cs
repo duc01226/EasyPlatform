@@ -47,7 +47,7 @@ public class PlatformRabbitMqChannelPoolPolicy : IPooledObjectPolicy<IModel>
         if (obj.IsOpen)
             return true;
 
-        Util.Tasks.CatchException(obj.Dispose);
+        Util.TaskRunner.CatchException(obj.Dispose);
 
         return false;
     }

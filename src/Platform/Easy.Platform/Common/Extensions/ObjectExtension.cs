@@ -12,6 +12,14 @@ public static class ObjectExtension
         return target;
     }
 
+    public static T WithIf<T>(this T target, bool condition, Action<T> action)
+    {
+        if (condition)
+            action(target);
+
+        return target;
+    }
+
     public static T ThrowIfNull<T>(this T target, Func<Exception> exception)
     {
         return target.ThrowIf(isThrow: target => target == null, exception);

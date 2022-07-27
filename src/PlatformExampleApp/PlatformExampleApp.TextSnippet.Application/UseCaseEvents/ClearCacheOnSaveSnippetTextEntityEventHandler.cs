@@ -27,7 +27,7 @@ public class ClearCacheOnSaveSnippetTextEntityEventHandler : PlatformCqrsEntityE
         // Delay because when save snippet text, fulltext index take amount of time to update, so that we wait
         // amount of time for fulltext index update
         // We also set executeOnceImmediately=true to clear cache immediately in case of some index is updated fast
-        Util.Tasks.QueueIntervalAsyncAction(
+        Util.TaskRunner.QueueIntervalAsyncAction(
             token => cacheRepositoryProvider.Get()
                 .RemoveCollectionAsync<TextSnippetCollectionCacheKeyProvider>(token),
             intervalTimeInSeconds: 5,

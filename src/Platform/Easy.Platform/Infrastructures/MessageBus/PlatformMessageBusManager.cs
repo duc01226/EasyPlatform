@@ -1,5 +1,5 @@
 using System.Reflection;
-using Easy.Platform.Common.Utils;
+using Easy.Platform.Common.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Easy.Platform.Infrastructures.MessageBus;
@@ -71,20 +71,12 @@ public class PlatformMessageBusManager : IPlatformMessageBusManager
     public List<PlatformBusMessageRoutingKey> AllDefaultFreeFormatMessageRoutingKeyForDefinedConsumers()
     {
         return AllDefinedMessageBusConsumerTypes()
-            .Where(p => !p.GetCustomAttributes<PlatformMessageBusConsumerAttribute>().Any())
+            .Where(messageBusConsumerType => !messageBusConsumerType.GetCustomAttributes<PlatformMessageBusConsumerAttribute>().Any())
             .Select(
-                p =>
-                    Util.Types.FindMatchedGenericType(
-                        givenType: p,
-                        matchedToGenericTypeDefinition: typeof(IPlatformMessageBusConsumer<>)
-                            .GetGenericTypeDefinition()) ??
-                    Util.Types.FindMatchedGenericType(
-                        givenType: p,
-                        matchedToGenericTypeDefinition: typeof(IPlatformMessageBusFreeFormatMessageConsumer<>)
-                            .GetGenericTypeDefinition()))
-            .Select(
-                consumerType =>
-                    PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.BuildForConsumer(consumerType))
+                messageBusConsumerType =>
+                    messageBusConsumerType.FindMatchedGenericType(typeof(IPlatformMessageBusConsumer<>)) ??
+                    messageBusConsumerType.FindMatchedGenericType(typeof(IPlatformMessageBusFreeFormatMessageConsumer<>)))
+            .Select(PlatformBuildDefaultFreeFormatMessageRoutingKeyHelper.BuildForConsumer)
             .Distinct()
             .ToList();
     }

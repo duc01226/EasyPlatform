@@ -11,7 +11,7 @@ public class TextSnippetAssociatedEntity : TextSnippetEntity
 {
     public TextSnippetAssociatedEntity(TextSnippetEntity textSnippetEntity, UserEntity createdByUser)
     {
-        Util.Copy(textSnippetEntity, this);
+        Util.Values.CopyValues(textSnippetEntity, this);
         CreatedByUser = createdByUser;
     }
 

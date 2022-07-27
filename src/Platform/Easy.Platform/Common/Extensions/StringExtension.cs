@@ -1,3 +1,5 @@
+using Easy.Platform.Common.JsonSerialization;
+
 namespace Easy.Platform.Common.Extensions;
 
 public static class StringExtension
@@ -15,5 +17,10 @@ public static class StringExtension
     public static string ThrowIfNullOrEmpty(this string target, Func<Exception> exception)
     {
         return target.ThrowIf(isThrow: target => string.IsNullOrEmpty(target), exception);
+    }
+
+    public static T ParseToSerializableType<T>(this string strValue)
+    {
+        return PlatformJsonSerializer.Deserialize<T>(PlatformJsonSerializer.Serialize(strValue));
     }
 }

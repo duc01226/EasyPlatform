@@ -16,6 +16,7 @@ namespace Easy.Platform.Application.MessageBus.InboxPattern;
 public abstract class PlatformConsumeInboxBusMessageHostedService : PlatformIntervalProcessHostedService
 {
     private readonly IPlatformApplicationSettingContext applicationSettingContext;
+    private readonly PlatformInboxConfig inboxConfig;
 
     private bool isProcessing;
 
@@ -24,10 +25,12 @@ public abstract class PlatformConsumeInboxBusMessageHostedService : PlatformInte
         ILoggerFactory loggerFactory,
         IServiceProvider serviceProvider,
         IPlatformApplicationSettingContext applicationSettingContext,
-        IPlatformMessageBusManager messageBusManager) : base(applicationLifetime, loggerFactory)
+        IPlatformMessageBusManager messageBusManager,
+        PlatformInboxConfig inboxConfig) : base(applicationLifetime, loggerFactory)
     {
         ServiceProvider = serviceProvider;
         this.applicationSettingContext = applicationSettingContext;
+        this.inboxConfig = inboxConfig;
         ConsumerByNameToTypeDic = messageBusManager
             .AllDefinedMessageBusConsumerTypes()
             .ToDictionary(PlatformInboxMessageBusConsumerHelper.GetConsumerByValue);
@@ -97,7 +100,10 @@ public abstract class PlatformConsumeInboxBusMessageHostedService : PlatformInte
                 {
                     try
                     {
-                        await InvokeConsumerAsync(scope, toHandleMessage, cancellationToken);
+                        await InvokeConsumerAsync(
+                            scope,
+                            toHandleMessage,
+                            cancellationToken);
                     }
                     catch (Exception e)
                     {
@@ -141,7 +147,7 @@ public abstract class PlatformConsumeInboxBusMessageHostedService : PlatformInte
 
             var consumerMessageType = PlatformMessageBusBaseConsumer.GetConsumerMessageType(consumer);
 
-            var eventBusMessage = Util.Tasks.CatchExceptionContinueThrow(
+            var eventBusMessage = Util.TaskRunner.CatchExceptionContinueThrow(
                 () => PlatformJsonSerializer.Deserialize(
                     toHandleInboxMessage.JsonMessage,
                     consumerMessageType,
@@ -168,6 +174,7 @@ public abstract class PlatformConsumeInboxBusMessageHostedService : PlatformInte
                 scope.ServiceProvider.GetService<IPlatformInboxBusMessageRepository>(),
                 new Exception(
                     $"[{GetType().Name}] Error resolve consumer type {toHandleInboxMessage.ConsumerBy}. InboxId:{toHandleInboxMessage.Id} "),
+                RetryProcessFailedMessageDelayTimeInSecondsUnit(),
                 cancellationToken);
         }
     }
@@ -187,9 +194,7 @@ public abstract class PlatformConsumeInboxBusMessageHostedService : PlatformInte
                         scope.ServiceProvider.GetService<IPlatformInboxBusMessageRepository>();
 
                     var toHandleMessages = inboxEventBusMessageRepo!.GetAllQuery()
-                        .Where(
-                            PlatformInboxBusMessage.ToHandleInboxEventBusMessagesExpr(
-                                MessageProcessingMaximumTimeInSeconds()))
+                        .Where(PlatformInboxBusMessage.ToHandleInboxEventBusMessagesExpr(MessageProcessingMaximumTimeInSeconds()))
                         .OrderBy(p => p.LastConsumeDate)
                         .Take(NumberOfProcessMessagesBatch())
                         .ToList();
@@ -260,11 +265,12 @@ public abstract class PlatformConsumeInboxBusMessageHostedService : PlatformInte
     }
 
     /// <summary>
-    /// Config the time in seconds to retry process failed message from lastConsumeDate. Default is 60
+    /// This is used to calculate the next retry process message time.
+    /// Ex: NextRetryProcessAfter = DateTime.UtcNow.AddSeconds(retryProcessFailedMessageInSecondsUnit * Math.Pow(2, retriedProcessCount ?? 0));
     /// </summary>
-    protected virtual double RetryProcessFailedMessageDelayTimeInSeconds()
+    protected virtual double RetryProcessFailedMessageDelayTimeInSecondsUnit()
     {
-        return 60;
+        return inboxConfig.RetryProcessFailedMessageInSecondsUnit;
     }
 
     protected bool HasInboxEventBusMessageRepositoryRegistered()
@@ -288,12 +294,14 @@ public class PlatformDefaultConsumeInboxBusMessageHostedService : PlatformConsum
         ILoggerFactory loggerFactory,
         IServiceProvider serviceProvider,
         IPlatformApplicationSettingContext applicationSettingContext,
-        IPlatformMessageBusManager messageBusManager) : base(
+        IPlatformMessageBusManager messageBusManager,
+        PlatformInboxConfig inboxConfig) : base(
         applicationLifetime,
         loggerFactory,
         serviceProvider,
         applicationSettingContext,
-        messageBusManager)
+        messageBusManager,
+        inboxConfig)
     {
     }
 }

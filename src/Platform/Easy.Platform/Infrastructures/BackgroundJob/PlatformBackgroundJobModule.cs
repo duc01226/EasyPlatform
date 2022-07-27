@@ -105,12 +105,12 @@ public abstract class PlatformBackgroundJobModule : PlatformInfrastructureModule
             ServiceLifeTime.Transient,
             Assembly,
             replaceIfExist: true,
-            replaceStrategy: ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+            replaceStrategy: DependencyInjectionExtension.ReplaceServiceStrategy.ByService);
 
         serviceCollection.RegisterAllFromType<IPlatformBackgroundJobProcessingService>(
             ServiceLifeTime.Singleton,
             Assembly,
             replaceIfExist: true,
-            replaceStrategy: ServiceCollectionExtension.ReplaceServiceStrategy.ByService);
+            replaceStrategy: DependencyInjectionExtension.ReplaceServiceStrategy.ByService);
     }
 }

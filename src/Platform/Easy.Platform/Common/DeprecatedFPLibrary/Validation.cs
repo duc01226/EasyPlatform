@@ -123,19 +123,22 @@ public static class Validation
     }
 
     public static Validation<Func<T2, TR>> Apply<T1, T2, TR>(
-        this Validation<Func<T1, T2, TR>> @this, Validation<T1> arg)
+        this Validation<Func<T1, T2, TR>> @this,
+        Validation<T1> arg)
     {
         return Apply(@this.Map(F.Curry), arg);
     }
 
     public static Validation<Func<T2, T3, TR>> Apply<T1, T2, T3, TR>(
-        this Validation<Func<T1, T2, T3, TR>> @this, Validation<T1> arg)
+        this Validation<Func<T1, T2, T3, TR>> @this,
+        Validation<T1> arg)
     {
         return Apply(@this.Map(F.CurryFirst), arg);
     }
 
     public static Validation<TRr> Map<TR, TRr>(
-        this Validation<TR> @this, Func<TR, TRr> f)
+        this Validation<TR> @this,
+        Func<TR, TRr> f)
     {
         return @this.IsValid
             ? F.Valid(f(@this.Value))
@@ -143,7 +146,8 @@ public static class Validation
     }
 
     public static Validation<T> MapErrors<T>(
-        this Validation<T> @this, Func<List<Error>, List<Error>> fMapErrors)
+        this Validation<T> @this,
+        Func<List<Error>, List<Error>> fMapErrors)
     {
         return @this.IsValid
             ? @this
@@ -151,34 +155,39 @@ public static class Validation
     }
 
     public static Validation<T> MapErrors<T>(
-        this Validation<T> @this, Func<List<Error>, IEnumerable<string>> fMapErrors)
+        this Validation<T> @this,
+        Func<List<Error>, IEnumerable<string>> fMapErrors)
     {
         return @this.IsValid
             ? @this
             : F.Invalid(fMapErrors(@this.Errors).Select(p => (Error)p));
     }
 
-    public static Validation<Func<T2, TR>> Map<T1, T2, TR>(this Validation<T1> @this,
+    public static Validation<Func<T2, TR>> Map<T1, T2, TR>(
+        this Validation<T1> @this,
         Func<T1, T2, TR> func)
     {
         return @this.Map(func.Curry());
     }
 
     public static Validation<ValueTuple> ForEach<TR>(
-        this Validation<TR> @this, Action<TR> act)
+        this Validation<TR> @this,
+        Action<TR> act)
     {
         return Map(@this, act.ToFunc());
     }
 
     public static Validation<T> Do<T>(
-        this Validation<T> @this, Action<T> action)
+        this Validation<T> @this,
+        Action<T> action)
     {
         @this.ForEach(action);
         return @this;
     }
 
     public static Validation<TR> Bind<T, TR>(
-        this Validation<T> val, Func<T, Validation<TR>> f)
+        this Validation<T> val,
+        Func<T, Validation<TR>> f)
     {
         return val.Match(
             invalid: err => F.Invalid(err),
@@ -186,7 +195,8 @@ public static class Validation
     }
 
     public static Validation<TR> Bind<T, TR>(
-        this Validation<T> val, Validation<TR> valNext)
+        this Validation<T> val,
+        Validation<TR> valNext)
     {
         return val.Match(
             invalid: err => F.Invalid(err),
@@ -194,26 +204,30 @@ public static class Validation
     }
 
     public static Validation<(T, TR)> BindCombine<T, TR>(
-        this Validation<T> val, Func<T, Validation<TR>> f)
+        this Validation<T> val,
+        Func<T, Validation<TR>> f)
     {
         return val.Bind(t => f(t).Map(r => (t, r)));
     }
 
     // Task
     public static Task<Validation<TR>> BindAsync<T, TR>(
-        this Task<Validation<T>> val, Func<T, Task<Validation<TR>>> f)
+        this Task<Validation<T>> val,
+        Func<T, Task<Validation<TR>>> f)
     {
         return val.Bind(valT => valT.TraverseBind(f));
     }
 
     public static Task<Validation<TR>> BindAsync<T, TR>(
-        this Validation<T> val, Func<T, Task<Validation<TR>>> f)
+        this Validation<T> val,
+        Func<T, Task<Validation<TR>>> f)
     {
         return val.TraverseBind(f);
     }
 
     public static Task<Validation<TR>> BindAsync<T, TR>(
-        this Task<Validation<T>> val, Func<T, Validation<TR>> f)
+        this Task<Validation<T>> val,
+        Func<T, Validation<TR>> f)
     {
         return val.Map(validationT => validationT.Bind(f));
     }
@@ -221,24 +235,27 @@ public static class Validation
     public static Task<Validation<TR>> TraverseBind<T, TR>(this Validation<T> @this, Func<T, Task<Validation<TR>>> func)
     {
         return @this.Match(
-            invalid: reasons => Util.Tasks.Async(F.Invalid<TR>(reasons)),
+            invalid: reasons => Util.TaskRunner.Async(F.Invalid<TR>(reasons)),
             valid: t => func(t));
     }
 
     public static Task<Validation<TR>> MapAsync<T, TR>(
-        this Task<Validation<T>> val, Func<T, Task<TR>> f)
+        this Task<Validation<T>> val,
+        Func<T, Task<TR>> f)
     {
         return val.Bind(valT => valT.TraverseMap(f));
     }
 
     public static Task<Validation<TR>> MapAsync<T, TR>(
-        this Validation<T> val, Func<T, Task<TR>> f)
+        this Validation<T> val,
+        Func<T, Task<TR>> f)
     {
         return val.TraverseMap(f);
     }
 
     public static Task<Validation<TR>> MapAsync<T, TR>(
-        this Task<Validation<T>> val, Func<T, TR> f)
+        this Task<Validation<T>> val,
+        Func<T, TR> f)
     {
         return val.Map(validationT => validationT.Map(f));
     }
@@ -246,32 +263,37 @@ public static class Validation
     public static Task<Validation<TR>> TraverseMap<T, TR>(this Validation<T> @this, Func<T, Task<TR>> func)
     {
         return @this.Match(
-            invalid: reasons => Util.Tasks.Async(F.Invalid<TR>(reasons)),
+            invalid: reasons => Util.TaskRunner.Async(F.Invalid<TR>(reasons)),
             valid: t => func(t).Map(_ => F.Valid(_)));
     }
 
     public static Task<Validation<T>> DoAsync<T, TAction>(
-        this Task<Validation<T>> @this, Func<T, Task<TAction>> action)
+        this Task<Validation<T>> @this,
+        Func<T, Task<TAction>> action)
     {
         return @this.MapAsync(t => action(t).Map(tAction => t));
     }
 
     public static Task<Validation<T>> DoAsync<T, TAction>(
-        this Task<Validation<T>> @this, Func<T, TAction> action)
+        this Task<Validation<T>> @this,
+        Func<T, TAction> action)
     {
         return @this.MapAsync(t => action(t).Pipe(tAction => t));
     }
 
     // LINQ
 
-    public static Validation<TR> Select<T, TR>(this Validation<T> @this,
+    public static Validation<TR> Select<T, TR>(
+        this Validation<T> @this,
         Func<T, TR> map)
     {
         return @this.Map(map);
     }
 
-    public static Validation<TRr> SelectMany<T, TR, TRr>(this Validation<T> @this,
-        Func<T, Validation<TR>> bind, Func<T, TR, TRr> project)
+    public static Validation<TRr> SelectMany<T, TR, TRr>(
+        this Validation<T> @this,
+        Func<T, Validation<TR>> bind,
+        Func<T, TR, TRr> project)
     {
         return @this.Match(
             invalid: err => F.Invalid(err),
@@ -327,10 +349,11 @@ public struct Validation<T>
 
     public static implicit operator Validation<T>(Error error)
     {
-        return new Validation<T>(new[]
-        {
-            error
-        });
+        return new Validation<T>(
+            new[]
+            {
+                error
+            });
     }
 
     public static implicit operator Validation<T>(Validation.Invalid left)
@@ -370,12 +393,12 @@ public struct Validation<T>
 
     public Task<TR> MatchAsync<TR>(Func<List<Error>, TR> invalid, Func<T, Task<TR>> valid)
     {
-        return Match(errors => Util.Tasks.Async(invalid(errors)), valid);
+        return Match(errors => Util.TaskRunner.Async(invalid(errors)), valid);
     }
 
     public Task<ValueTuple> MatchAsync(Action<List<Error>> invalid, Action<T> valid)
     {
-        return Match(errors => Util.Tasks.Async(invalid.ToFunc()(errors)), value => Util.Tasks.Async(valid.ToFunc()(value)));
+        return Match(errors => Util.TaskRunner.Async(invalid.ToFunc()(errors)), value => Util.TaskRunner.Async(valid.ToFunc()(value)));
     }
 
     public IEnumerable<T> AsEnumerable()
