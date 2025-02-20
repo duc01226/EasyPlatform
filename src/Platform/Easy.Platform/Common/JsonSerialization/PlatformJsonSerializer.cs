@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -13,6 +14,8 @@ namespace Easy.Platform.Common.JsonSerialization;
 /// </summary>
 public static class PlatformJsonSerializer
 {
+    public const int DefaultJsonSerializerOptionsMaxDepth = 64;
+
     public static readonly ConcurrentDictionary<string, JsonConverter> AdditionalDefaultConverters = new();
 
     /// <summary>
@@ -55,6 +58,7 @@ public static class PlatformJsonSerializer
         options.ReadCommentHandling = JsonCommentHandling.Skip;
         options.PropertyNameCaseInsensitive = true;
         options.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.MaxDepth = DefaultJsonSerializerOptionsMaxDepth;
 
         if (useCamelCaseNaming)
             options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -91,6 +95,30 @@ public static class PlatformJsonSerializer
         customConverters?.ForEach(options.Converters.Add);
 
         return options;
+    }
+
+    public static void ConfigApplyCurrentOptions(
+        JsonSerializerOptions options)
+    {
+        options.TypeInfoResolver = CurrentOptions.Value.TypeInfoResolver;
+        options.DefaultIgnoreCondition = CurrentOptions.Value.DefaultIgnoreCondition;
+        options.ReadCommentHandling = CurrentOptions.Value.ReadCommentHandling;
+        options.PropertyNameCaseInsensitive = CurrentOptions.Value.PropertyNameCaseInsensitive;
+        options.ReferenceHandler = CurrentOptions.Value.ReferenceHandler;
+        options.PropertyNamingPolicy = CurrentOptions.Value.PropertyNamingPolicy;
+        options.DictionaryKeyPolicy = CurrentOptions.Value.DictionaryKeyPolicy;
+        options.Encoder = CurrentOptions.Value.Encoder;
+        options.MaxDepth = CurrentOptions.Value.MaxDepth;
+        options.AllowTrailingCommas = CurrentOptions.Value.AllowTrailingCommas;
+        options.WriteIndented = CurrentOptions.Value.WriteIndented;
+        options.IgnoreReadOnlyProperties = CurrentOptions.Value.IgnoreReadOnlyProperties;
+        options.IgnoreReadOnlyFields = CurrentOptions.Value.IgnoreReadOnlyFields;
+        options.IncludeFields = CurrentOptions.Value.IncludeFields;
+        options.NumberHandling = CurrentOptions.Value.NumberHandling;
+        options.DefaultBufferSize = CurrentOptions.Value.DefaultBufferSize;
+        options
+            .PipeAction(p => p.Converters.Clear())
+            .PipeAction(options => CurrentOptions.Value.Converters.ForEach(converter => options.Converters.Add(converter)));
     }
 
     /// <summary>

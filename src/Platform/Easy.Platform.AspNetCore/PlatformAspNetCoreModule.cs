@@ -5,11 +5,15 @@ using Easy.Platform.AspNetCore.Constants;
 using Easy.Platform.AspNetCore.Context.RequestContext;
 using Easy.Platform.AspNetCore.Context.RequestContext.RequestContextKeyToClaimTypeMapper;
 using Easy.Platform.AspNetCore.Context.RequestContext.RequestContextKeyToClaimTypeMapper.Abstract;
+using Easy.Platform.AspNetCore.OpenApi;
 using Easy.Platform.Common;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.HostingBackgroundServices;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Persistence;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -52,6 +56,13 @@ public abstract class PlatformAspNetCoreModule : PlatformModule
     /// </summary>
     protected virtual bool AutoSeedApplicationDataOnInit => true;
 
+    protected virtual bool AddOpenApi => false;
+
+    protected virtual void AddOpenApiOptionsConfig(OpenApiOptions options)
+    {
+        options.AddDocumentTransformer<PlatformBearerSecuritySchemeTransformer>();
+    }
+
     /// <summary>
     /// Gets the allowed CORS origins for the module.
     /// </summary>
@@ -72,10 +83,13 @@ public abstract class PlatformAspNetCoreModule : PlatformModule
     {
         base.InternalRegister(serviceCollection);
 
+        serviceCollection.Configure<JsonOptions>(
+            options => PlatformJsonSerializer.ConfigApplyCurrentOptions(options.SerializerOptions));
         RegisterRequestContext(serviceCollection);
         AddDefaultCorsPolicy(serviceCollection);
         serviceCollection.AddHttpClient();
         GetServicesRegisterScanAssemblies().ForEach(assembly => serviceCollection.RegisterHostedServicesFromType(assembly, typeof(PlatformHostingBackgroundService)));
+        if (AddOpenApi) serviceCollection.AddOpenApi(AddOpenApiOptionsConfig);
     }
 
     protected override async Task InternalInit(IServiceScope serviceScope)
@@ -209,9 +223,6 @@ public static class InitPlatformAspNetCoreModuleExtension
     public static async Task InitPlatformAspNetCoreModule<TModule>(this IApplicationBuilder app)
         where TModule : PlatformAspNetCoreModule
     {
-        using (var scope = app.ApplicationServices.CreateScope())
-        {
-            await scope.ServiceProvider.GetRequiredService<TModule>().Init(app);
-        }
+        using (var scope = app.ApplicationServices.CreateScope()) await scope.ServiceProvider.GetRequiredService<TModule>().Init(app);
     }
 }
