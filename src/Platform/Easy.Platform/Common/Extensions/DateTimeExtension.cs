@@ -549,6 +549,21 @@ public static class DateTimeExtension
         return !dt1.EqualIgnoringNanoseconds(dt2);
     }
 
+    public static DateTime SubtractYears(this DateTime date, int value)
+    {
+        return date.AddYears(-value);
+    }
+
+    public static DateTime SubtractMonths(this DateTime date, int value)
+    {
+        return date.AddMonths(-value);
+    }
+
+    public static DateTime SubtractDays(this DateTime date, double value)
+    {
+        return date.AddDays(-value);
+    }
+
     /// <summary>
     /// Represents the days of the week, starting from Monday and ending on Sunday.
     /// </summary>

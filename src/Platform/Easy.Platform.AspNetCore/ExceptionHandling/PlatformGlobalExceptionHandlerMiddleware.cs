@@ -55,76 +55,97 @@ public class PlatformGlobalExceptionHandlerMiddleware : PlatformMiddleware
             catch (Exception exception)
             {
                 if (exception is OperationCanceledException or TaskCanceledException)
-                    Logger.LogWarning(exception.BeautifyStackTrace(), "Exception {Exception}", exception.GetType().Name);
+                {
+                    Logger.LogWarning(
+                        exception.BeautifyStackTrace(),
+                        "Exception {Exception}. RequestId: {RequestId}. RequestContext: {RequestContext}",
+                        exception.GetType().Name,
+                        context.TraceIdentifier,
+                        RequestContextAccessor.Current.GetAllKeyValues().ToJson());
+                }
                 else
-                    Logger.LogError(exception.BeautifyStackTrace(), "Exception {Exception}", exception.GetType().Name);
+                {
+                    Logger.LogError(
+                        exception.BeautifyStackTrace(),
+                        "Exception {Exception}. RequestId: {RequestId}. RequestContext: {RequestContext}",
+                        exception.GetType().Name,
+                        context.TraceIdentifier,
+                        RequestContextAccessor.Current.GetAllKeyValues().ToJson());
+                }
             }
         }
     }
 
-    protected virtual Task OnException(HttpContext context, Exception exception)
+    protected virtual async Task OnException(HttpContext context, Exception exception)
     {
         if (exception is BadHttpRequestException or OperationCanceledException or TaskCanceledException)
         {
-            Logger.LogWarning(exception, "Exception {Exception}", exception.GetType().Name);
-            return Task.CompletedTask;
+            Logger.LogWarning(
+                exception.BeautifyStackTrace(),
+                "Exception {Exception}. RequestId: {RequestId}. RequestContext: {RequestContext}",
+                exception.GetType().Name,
+                context.TraceIdentifier,
+                RequestContextAccessor.Current.GetAllKeyValues().ToJson());
         }
-
-        var errorResponse = exception
-            .WhenIs<Exception, PlatformPermissionException, PlatformAspNetMvcErrorResponse>(
-                permissionException => new PlatformAspNetMvcErrorResponse(
-                    PlatformAspNetMvcErrorInfo.FromPermissionException(permissionException, DeveloperExceptionEnabled),
-                    HttpStatusCode.Forbidden,
-                    context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
-            .WhenIs<IPlatformValidationException>(
-                validationException => new PlatformAspNetMvcErrorResponse(
-                    PlatformAspNetMvcErrorInfo.FromValidationException(validationException, DeveloperExceptionEnabled),
-                    HttpStatusCode.BadRequest,
-                    context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
-            .WhenIs<PlatformApplicationException>(
-                applicationException => new PlatformAspNetMvcErrorResponse(
-                    PlatformAspNetMvcErrorInfo.FromApplicationException(applicationException, DeveloperExceptionEnabled),
-                    HttpStatusCode.BadRequest,
-                    context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
-            .WhenIs<PlatformNotFoundException>(
-                domainNotFoundException => new PlatformAspNetMvcErrorResponse(
-                    PlatformAspNetMvcErrorInfo.FromNotFoundException(domainNotFoundException, DeveloperExceptionEnabled),
-                    HttpStatusCode.NotFound,
-                    context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
-            .WhenIs<PlatformDomainException>(
-                domainException => new PlatformAspNetMvcErrorResponse(
-                    PlatformAspNetMvcErrorInfo.FromDomainException(domainException, DeveloperExceptionEnabled),
-                    HttpStatusCode.BadRequest,
-                    context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
-            .Else(
-                exception =>
-                {
-                    Logger.LogError(
-                        exception.BeautifyStackTrace(),
-                        "[UnexpectedRequestError] There is an unexpected exception during the processing of the request. RequestId: {RequestId}. RequestContext: {RequestContext}",
-                        context.TraceIdentifier,
-                        RequestContextAccessor.Current.GetAllKeyValues().ToJson());
-
-                    return new PlatformAspNetMvcErrorResponse(
+        else
+        {
+            var errorResponse = await exception
+                .WhenIs<Exception, PlatformPermissionException, PlatformAspNetMvcErrorResponse>(
+                    permissionException => new PlatformAspNetMvcErrorResponse(
+                        PlatformAspNetMvcErrorInfo.FromPermissionException(permissionException, DeveloperExceptionEnabled),
+                        HttpStatusCode.Forbidden,
+                        context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
+                .WhenIs<IPlatformValidationException>(
+                    validationException => new PlatformAspNetMvcErrorResponse(
+                        PlatformAspNetMvcErrorInfo.FromValidationException(validationException, DeveloperExceptionEnabled),
+                        HttpStatusCode.BadRequest,
+                        context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
+                .WhenIs<PlatformApplicationException>(
+                    applicationException => new PlatformAspNetMvcErrorResponse(
+                        PlatformAspNetMvcErrorInfo.FromApplicationException(applicationException, DeveloperExceptionEnabled),
+                        HttpStatusCode.BadRequest,
+                        context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
+                .WhenIs<PlatformNotFoundException>(
+                    domainNotFoundException => new PlatformAspNetMvcErrorResponse(
+                        PlatformAspNetMvcErrorInfo.FromNotFoundException(domainNotFoundException, DeveloperExceptionEnabled),
+                        HttpStatusCode.NotFound,
+                        context.TraceIdentifier).PipeAction(_ => LogUnexpectedRequestError(exception, context)))
+                .WhenIs<PlatformDomainException>(
+                    domainException => new PlatformAspNetMvcErrorResponse(
+                        PlatformAspNetMvcErrorInfo.FromDomainException(domainException, DeveloperExceptionEnabled),
+                        HttpStatusCode.BadRequest,
+                        context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
+                .Else(
+                    exception => new PlatformAspNetMvcErrorResponse(
                         PlatformAspNetMvcErrorInfo.FromUnknownException(exception, DeveloperExceptionEnabled),
                         HttpStatusCode.InternalServerError,
-                        context.TraceIdentifier);
-                })
-            .Execute();
+                        context.TraceIdentifier).PipeAction(_ => LogUnexpectedRequestError(exception, context)))
+                .ExecuteAsync();
 
-        context.Response.ContentType = "application/json";
-        context.Response.StatusCode = errorResponse.StatusCode;
-        return context.Response.WriteAsync(
-            PlatformJsonSerializer.Serialize(errorResponse, options => options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase),
-            context.RequestAborted);
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = errorResponse.StatusCode;
+            await context.Response.WriteAsync(
+                PlatformJsonSerializer.Serialize(errorResponse, options => options.PropertyNamingPolicy = JsonNamingPolicy.CamelCase),
+                context.RequestAborted);
+        }
     }
 
     protected void LogKnownRequestWarning(Exception exception, HttpContext context)
     {
         Logger.LogWarning(
-            exception,
-            "[KnownRequestWarning] There is a {ExceptionType} during the processing of the request. RequestId: {RequestId}",
+            exception.BeautifyStackTrace(),
+            "[KnownRequestWarning] There is a {ExceptionType} during the processing of the request. RequestId: {RequestId}. RequestContext: {RequestContext}",
             exception.GetType(),
-            context.TraceIdentifier);
+            context.TraceIdentifier,
+            RequestContextAccessor.Current.GetAllKeyValues().ToJson());
+    }
+
+    protected void LogUnexpectedRequestError(Exception exception, HttpContext context)
+    {
+        Logger.LogError(
+            exception.BeautifyStackTrace(),
+            "[UnexpectedRequestError] There is an unexpected exception during the processing of the request. RequestId: {RequestId}. RequestContext: {RequestContext}",
+            context.TraceIdentifier,
+            RequestContextAccessor.Current.GetAllKeyValues().ToJson());
     }
 }

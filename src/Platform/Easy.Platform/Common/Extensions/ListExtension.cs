@@ -219,6 +219,11 @@ public static class ListExtension
         return items == null || !items.Any();
     }
 
+    public static bool IsNotNullOrEmpty<T>(this IEnumerable<T>? items)
+    {
+        return !IsNullOrEmpty(items);
+    }
+
     public static bool NotExist<T>(this IEnumerable<T> items, Func<T, bool> predicate)
     {
         return !items.Any(predicate);
