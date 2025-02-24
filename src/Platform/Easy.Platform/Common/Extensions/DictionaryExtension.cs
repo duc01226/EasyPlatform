@@ -199,7 +199,7 @@ public static class DictionaryExtension
         {
             return (T)objValue;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return default;
         }

@@ -12,9 +12,9 @@ public readonly struct PlatformCacheKey
     public const string DefaultContext = "UnknowContext";
     public const string DefaultCollection = "All";
     public const string DefaultRequestKey = "All";
-    public const string RequestKeySeparator = ".";
+    public const string RequestKeySeparator = "---";
     public const string RequestKeySeparatorAutoValidReplaced = "_";
-    public const string RequestKeyPartsSeparator = "--";
+    public const string RequestKeyPartsSeparator = "-+-";
 
     public PlatformCacheKey(string requestKey = DefaultRequestKey)
     {
@@ -86,7 +86,12 @@ public readonly struct PlatformCacheKey
     public static PlatformCacheKey FromFullCacheKeyString(string fullCacheKeyString)
     {
         var cacheKeyParts = fullCacheKeyString.Split(RequestKeySeparator).ToList();
-        return new PlatformCacheKey(cacheKeyParts[0], cacheKeyParts[1], cacheKeyParts[2]);
+
+        var context = cacheKeyParts.Count > 0 ? cacheKeyParts[0] : DefaultContext;
+        var collection = cacheKeyParts.Count > 1 ? cacheKeyParts[1] : DefaultCollection;
+        var requestKey = cacheKeyParts.Count > 2 ? cacheKeyParts.Skip(2).JoinToString(RequestKeySeparator) : DefaultRequestKey;
+
+        return new PlatformCacheKey(context, collection, requestKey);
     }
 
     public static string BuildRequestKey(string[] requestKeyParts)
@@ -94,18 +99,14 @@ public readonly struct PlatformCacheKey
         if (requestKeyParts.Length == 0)
             throw new ArgumentException("requestKeyParts must be not empty.", nameof(requestKeyParts));
 
-        return
-            $"{RequestKeyPrefix}{requestKeyParts.Select(p => (p ?? NullValue).ToJson() ?? "").JoinToString(RequestKeyPartsSeparator)}{RequestKeySuffix}";
+        return $"{requestKeyParts.Select(p => (p ?? NullValue).ToJson() ?? "").JoinToString(RequestKeyPartsSeparator)}";
     }
 
-    public const string RequestKeyPrefix = "[";
-    public const string RequestKeySuffix = "]";
     public const string NullValue = "(NULL)";
 
     public static string[] SplitRequestKeyParts(string requestKey)
     {
         return requestKey
-            .Substring(RequestKeyPrefix.Length, requestKey.Length - RequestKeySuffix.Length)
             .Split(RequestKeyPartsSeparator)
             .Select(
                 requestKeyPartJsonString =>

@@ -36,39 +36,45 @@ public interface IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
     void Set<T>(
         T value,
         PlatformCacheEntryOptions cacheOptions = null,
-        string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
+        string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+        List<string> tags = null);
 
-    void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string[] requestKeyParts = null);
+    void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string[] requestKeyParts = null, List<string> tags = null);
 
     Task SetAsync<T>(
         T value,
         PlatformCacheEntryOptions cacheOptions = null,
         string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+        List<string> tags = null,
         CancellationToken token = default);
 
     Task SetAsync<T>(
         T value,
         PlatformCacheEntryOptions cacheOptions = null,
         string[] requestKeyParts = null,
+        List<string> tags = null,
         CancellationToken token = default);
 
     void Set<T>(
         T value,
         double? absoluteExpirationInSeconds = null,
-        string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey);
+        string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+        List<string> tags = null);
 
-    void Set<T>(T value, double? absoluteExpirationInSeconds = null, string[] requestKeyParts = null);
+    void Set<T>(T value, double? absoluteExpirationInSeconds = null, string[] requestKeyParts = null, List<string> tags = null);
 
     Task SetAsync<T>(
         T value,
         double? absoluteExpirationInSeconds = null,
         string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+        List<string> tags = null,
         CancellationToken token = default);
 
     Task SetAsync<T>(
         T value,
         double? absoluteExpirationInSeconds = null,
         string[] requestKeyParts = null,
+        List<string> tags = null,
         CancellationToken token = default);
 
     Task RemoveAsync(
@@ -102,23 +108,27 @@ public interface IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
         Func<Task<TData>> request,
         string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
         PlatformCacheEntryOptions cacheOptions = null,
+        List<string> tags = null,
         CancellationToken token = default);
 
     Task<TData> CacheRequestAsync<TData>(
         Func<Task<TData>> request,
         string[] requestKeyParts = null,
         PlatformCacheEntryOptions cacheOptions = null,
+        List<string> tags = null,
         CancellationToken token = default);
 
     Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
         Func<Task<TData>> request,
         string[] requestKeyParts = null,
+        List<string> tags = null,
         CancellationToken token = default)
         where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions;
 
     Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
         Func<Task<TData>> request,
         string requestKey,
+        List<string> tags = null,
         CancellationToken token = default)
         where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions;
 
@@ -126,12 +136,14 @@ public interface IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
         Func<Task<TData>> request,
         string requestKey,
         double? absoluteExpirationInSeconds,
+        List<string> tags = null,
         CancellationToken token = default);
 
     Task<TData> CacheRequestAsync<TData>(
         Func<Task<TData>> request,
         string[] requestKeyParts,
         double? absoluteExpirationInSeconds,
+        List<string> tags = null,
         CancellationToken token = default);
 }
 
@@ -180,20 +192,22 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
     public void Set<T>(
         T value,
         PlatformCacheEntryOptions cacheOptions = null,
-        string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey)
+        string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+        List<string> tags = null)
     {
-        CacheRepository().Set(CollectionCacheKeyProvider.GetKey(requestKey), value, cacheOptions);
+        CacheRepository().Set(CollectionCacheKeyProvider.GetKey(requestKey), value, cacheOptions, tags);
     }
 
-    public void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string[] requestKeyParts = null)
+    public void Set<T>(T value, PlatformCacheEntryOptions cacheOptions = null, string[] requestKeyParts = null, List<string> tags = null)
     {
-        CacheRepository().Set(CollectionCacheKeyProvider.GetKey(requestKeyParts), value, cacheOptions);
+        CacheRepository().Set(CollectionCacheKeyProvider.GetKey(requestKeyParts), value, cacheOptions, tags);
     }
 
     public async Task SetAsync<T>(
         T value,
         PlatformCacheEntryOptions cacheOptions = null,
         string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         await CacheRepository()
@@ -201,6 +215,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
                 CollectionCacheKeyProvider.GetKey(requestKey),
                 value,
                 cacheOptions,
+                tags,
                 token);
     }
 
@@ -208,6 +223,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
         T value,
         PlatformCacheEntryOptions cacheOptions = null,
         string[] requestKeyParts = null,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         await CacheRepository()
@@ -215,34 +231,37 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
                 CollectionCacheKeyProvider.GetKey(requestKeyParts),
                 value,
                 cacheOptions,
+                tags,
                 token);
     }
 
     public void Set<T>(
         T value,
         double? absoluteExpirationInSeconds = null,
-        string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey)
+        string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+        List<string> tags = null)
     {
         var defaultCacheOptions = CacheRepository()
             .GetDefaultCacheEntryOptions()
             .WithOptionalCustomAbsoluteExpirationInSeconds(absoluteExpirationInSeconds);
 
-        Set(value, defaultCacheOptions, requestKey);
+        Set(value, defaultCacheOptions, requestKey, tags);
     }
 
-    public void Set<T>(T value, double? absoluteExpirationInSeconds = null, string[] requestKeyParts = null)
+    public void Set<T>(T value, double? absoluteExpirationInSeconds = null, string[] requestKeyParts = null, List<string> tags = null)
     {
         var defaultCacheOptions = CacheRepository()
             .GetDefaultCacheEntryOptions()
             .WithOptionalCustomAbsoluteExpirationInSeconds(absoluteExpirationInSeconds);
 
-        Set(value, defaultCacheOptions, requestKeyParts);
+        Set(value, defaultCacheOptions, requestKeyParts, tags);
     }
 
     public async Task SetAsync<T>(
         T value,
         double? absoluteExpirationInSeconds = null,
         string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         var defaultCacheOptions = CacheRepository()
@@ -253,6 +272,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
             value,
             defaultCacheOptions,
             requestKey,
+            tags,
             token);
     }
 
@@ -260,6 +280,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
         T value,
         double? absoluteExpirationInSeconds = null,
         string[] requestKeyParts = null,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         var defaultCacheOptions = CacheRepository()
@@ -270,6 +291,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
             value,
             defaultCacheOptions,
             requestKeyParts,
+            tags,
             token);
     }
 
@@ -318,6 +340,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
         Func<Task<TData>> request,
         string requestKey = PlatformContextCacheKeyProvider.DefaultRequestKey,
         PlatformCacheEntryOptions cacheOptions = null,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         return CacheRepository()
@@ -325,6 +348,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
                 request,
                 CollectionCacheKeyProvider.GetKey(requestKey),
                 cacheOptions,
+                tags,
                 token);
     }
 
@@ -332,6 +356,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
         Func<Task<TData>> request,
         string[] requestKeyParts = null,
         PlatformCacheEntryOptions cacheOptions = null,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         return CacheRepository()
@@ -339,12 +364,14 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
                 request,
                 CollectionCacheKeyProvider.GetKey(requestKeyParts),
                 cacheOptions,
+                tags,
                 token);
     }
 
     public Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
         Func<Task<TData>> request,
         string[] requestKeyParts = null,
+        List<string> tags = null,
         CancellationToken token = default)
         where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions
     {
@@ -352,12 +379,14 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
             request,
             requestKeyParts,
             ServiceProvider.GetService<TConfigurationCacheOptions>(),
+            tags,
             token);
     }
 
     public Task<TData> CacheRequestUseConfigOptionsAsync<TConfigurationCacheOptions, TData>(
         Func<Task<TData>> request,
         string requestKey,
+        List<string> tags = null,
         CancellationToken token = default)
         where TConfigurationCacheOptions : PlatformConfigurationCacheEntryOptions
     {
@@ -365,6 +394,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
             request,
             requestKey,
             ServiceProvider.GetService<TConfigurationCacheOptions>(),
+            tags,
             token);
     }
 
@@ -372,6 +402,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
         Func<Task<TData>> request,
         string requestKey,
         double? absoluteExpirationInSeconds,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         var defaultCacheOptions = CacheRepository()
@@ -382,6 +413,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
             request,
             requestKey,
             defaultCacheOptions,
+            tags,
             token);
     }
 
@@ -389,6 +421,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
         Func<Task<TData>> request,
         string[] requestKeyParts,
         double? absoluteExpirationInSeconds,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         var defaultCacheOptions = CacheRepository()
@@ -399,6 +432,7 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
             request,
             requestKeyParts,
             defaultCacheOptions,
+            tags,
             token);
     }
 
@@ -445,5 +479,24 @@ public class PlatformCollectionDistributedCacheRepository<TCollectionCacheKeyPro
     public override PlatformCacheRepositoryType CacheRepositoryType()
     {
         return PlatformCacheRepositoryType.Distributed;
+    }
+}
+
+public class PlatformCollectionHybridCacheRepository<TCollectionCacheKeyProvider> : PlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
+    where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
+{
+    public PlatformCollectionHybridCacheRepository(
+        IPlatformCacheRepositoryProvider cacheRepositoryProvider,
+        TCollectionCacheKeyProvider collectionCacheKeyProvider,
+        IServiceProvider serviceProvider) : base(
+        cacheRepositoryProvider,
+        collectionCacheKeyProvider,
+        serviceProvider)
+    {
+    }
+
+    public override PlatformCacheRepositoryType CacheRepositoryType()
+    {
+        return PlatformCacheRepositoryType.Hybrid;
     }
 }

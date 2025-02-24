@@ -21,7 +21,7 @@ public class PlatformAutoClearDeprecatedGlobalRequestCachedKeysBackgroundService
 
     protected override TimeSpan ProcessTriggerIntervalTime()
     {
-        return 10.Minutes();
+        return 1.Days();
     }
 
     protected override async Task IntervalProcessAsync(CancellationToken cancellationToken)
@@ -30,7 +30,7 @@ public class PlatformAutoClearDeprecatedGlobalRequestCachedKeysBackgroundService
             async () =>
             {
                 await (cacheRepositoryProvider.TryGet(PlatformCacheRepositoryType.Distributed)?.ProcessClearDeprecatedGlobalRequestCachedKeys() ?? Task.CompletedTask);
-                await (cacheRepositoryProvider.TryGet(PlatformCacheRepositoryType.Memory)?.ProcessClearDeprecatedGlobalRequestCachedKeys() ?? Task.CompletedTask);
+                await (cacheRepositoryProvider.TryGet(PlatformCacheRepositoryType.Hybrid)?.ProcessClearDeprecatedGlobalRequestCachedKeys() ?? Task.CompletedTask);
             },
             cancellationToken: cancellationToken);
     }

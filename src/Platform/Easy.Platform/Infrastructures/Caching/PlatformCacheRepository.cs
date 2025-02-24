@@ -1,9 +1,15 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.Security.Cryptography;
+using Easy.Platform.Application;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.Extensions.WhenCases;
+using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Common.Validations;
+using Microsoft.Diagnostics.Runtime;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -20,7 +26,7 @@ namespace Easy.Platform.Infrastructures.Caching;
 /// <br />
 /// Overall, the IPlatformCacheRepository interface is crucial for abstracting the underlying caching mechanism, allowing the rest of the application to interact with the cache in a consistent and technology-agnostic manner.
 /// </summary>
-public interface IPlatformCacheRepository
+public interface IPlatformCacheRepository : IDisposable
 {
     public const string DefaultGlobalContext = "__DefaultGlobalCacheContext__";
     public static readonly ActivitySource ActivitySource = new($"{nameof(IPlatformCacheRepository)}");
@@ -46,7 +52,7 @@ public interface IPlatformCacheRepository
     /// <param name="cacheKey">A string identifying the requested value.</param>
     /// <param name="value">The value to set in the cache.</param>
     /// <param name="cacheOptions">The cache options for the value.</param>
-    public void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null);
+    public void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, List<string> tags = null);
 
     /// <summary>
     /// Sets the value with the given key.
@@ -60,6 +66,7 @@ public interface IPlatformCacheRepository
         PlatformCacheKey cacheKey,
         T value,
         PlatformCacheEntryOptions cacheOptions = null,
+        List<string> tags = null,
         CancellationToken token = default);
 
     /// <summary>
@@ -76,12 +83,14 @@ public interface IPlatformCacheRepository
     /// <param name="cacheKey">A string identifying the requested value.</param>
     /// <param name="value">The value to set in the cache.</param>
     /// <param name="absoluteExpirationInSeconds">The absoluteExpirationInSeconds cache options for the value.</param>
+    /// <param name="tags">Tags associated with the cache. Help to remove the cache by tag</param>
     /// <param name="token">Optional. The <see cref="CancellationToken" /> used to propagate notifications that the operation should be canceled.</param>
     /// <returns>The <see cref="Task" /> that represents the asynchronous operation.</returns>
     public Task SetAsync<T>(
         PlatformCacheKey cacheKey,
         T value,
         double? absoluteExpirationInSeconds = null,
+        List<string> tags = null,
         CancellationToken token = default);
 
     /// <summary>
@@ -91,6 +100,22 @@ public interface IPlatformCacheRepository
     /// <param name="token">Optional. The <see cref="CancellationToken" /> used to propagate notifications that the operation should be canceled.</param>
     /// <returns>The <see cref="Task" /> that represents the asynchronous operation.</returns>
     public Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default);
+
+    /// <summary>
+    /// Removes the value with the given key.
+    /// </summary>
+    /// <param name="cacheKeys">A list string identifying the requested value.</param>
+    /// <param name="token">Optional. The <see cref="CancellationToken" /> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>The <see cref="Task" /> that represents the asynchronous operation.</returns>
+    public Task RemoveAsync(List<PlatformCacheKey> cacheKeys, CancellationToken token = default);
+
+    /// <summary>
+    /// Removes cache entries associated with the specified tags.
+    /// </summary>
+    /// <param name="tags">The tags associated with the cache entries to remove.</param>
+    /// <param name="token">Optional. The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+    public abstract Task RemoveByTagsAsync(List<string> tags, CancellationToken token = default);
 
     /// <summary>
     /// Removes the value with the given key predicate.
@@ -112,11 +137,13 @@ public interface IPlatformCacheRepository
     /// <param name="request">The request function return data to set in the cache.</param>
     /// <param name="cacheKey">A string identifying the requested value.</param>
     /// <param name="cacheOptions">The cache options for the value.</param>
+    /// <param name="tags">Tags associated with the cache. Help to remove the cache by tag</param>
     /// <param name="token">Optional. The <see cref="CancellationToken" /> used to propagate notifications that the operation should be canceled.</param>
     public Task<TData> CacheRequestAsync<TData>(
         Func<Task<TData>> request,
         PlatformCacheKey cacheKey,
         PlatformCacheEntryOptions cacheOptions = null,
+        List<string> tags = null,
         CancellationToken token = default);
 
     /// <summary>
@@ -125,11 +152,13 @@ public interface IPlatformCacheRepository
     /// <param name="request">The request function return data to set in the cache.</param>
     /// <param name="cacheKey">A string identifying the requested value.</param>
     /// <param name="absoluteExpirationInSeconds">The absoluteExpirationInSeconds cache options for the value.</param>
+    /// <param name="tags">Tags associated with the cache. Help to remove the cache by tag</param>
     /// <param name="token">Optional. The <see cref="CancellationToken" /> used to propagate notifications that the operation should be canceled.</param>
     public Task<TData> CacheRequestAsync<TData>(
         Func<Task<TData>> request,
         PlatformCacheKey cacheKey,
         double? absoluteExpirationInSeconds = null,
+        List<string> tags = null,
         CancellationToken token = default);
 
     /// <summary>
@@ -149,23 +178,31 @@ public interface IPlatformCacheRepository
 
 public abstract class PlatformCacheRepository : IPlatformCacheRepository
 {
-    public static readonly string CachedKeysCollectionName = "___PlatformGlobalCacheKeys___";
+    public static readonly string GlobalAllRequestCachedKeysCollectionName = "___PlatformGlobalCacheKeys___";
+    public static readonly string TaggedKeysCacheKeyCollectionPart = "___PlatformGlobalCacheTags___";
 
     protected readonly PlatformCacheSettings CacheSettings;
 
     protected readonly IServiceProvider ServiceProvider;
 
+    protected readonly IPlatformApplicationSettingContext ApplicationSettingContext;
+
+    protected readonly SemaphoreSlim SetGlobalCachedKeysAsyncLock = new(1, 1);
+
     private readonly Lazy<ILogger> loggerLazy;
+    private bool disposed;
 
     public PlatformCacheRepository(
         IServiceProvider serviceProvider,
         ILoggerFactory loggerFactory,
-        PlatformCacheSettings cacheSettings)
+        PlatformCacheSettings cacheSettings,
+        IPlatformApplicationSettingContext applicationSettingContext)
     {
         ServiceProvider = serviceProvider;
         loggerLazy = new Lazy<ILogger>(
             () => loggerFactory.CreateLogger(typeof(PlatformCacheRepository).GetNameOrGenericTypeName() + $"-{GetType().Name}"));
         CacheSettings = cacheSettings;
+        ApplicationSettingContext = applicationSettingContext;
     }
 
     protected ILogger Logger => loggerLazy.Value;
@@ -174,12 +211,13 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
 
     public abstract Task<T> GetAsync<T>(PlatformCacheKey cacheKey, CancellationToken token = default);
 
-    public abstract void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null);
+    public abstract void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, List<string> tags = null);
 
     public abstract Task SetAsync<T>(
         PlatformCacheKey cacheKey,
         T value,
         PlatformCacheEntryOptions cacheOptions = null,
+        List<string> tags = null,
         CancellationToken token = default);
 
     public void Set<T>(PlatformCacheKey cacheKey, T value, double? absoluteExpirationInSeconds = null)
@@ -194,6 +232,7 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
         PlatformCacheKey cacheKey,
         T value,
         double? absoluteExpirationInSeconds = null,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         var defaultCacheOptions = GetDefaultCacheEntryOptions()
@@ -203,14 +242,44 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
             cacheKey,
             value,
             defaultCacheOptions,
+            tags,
             token);
     }
 
     public abstract Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default);
 
-    public abstract Task RemoveAsync(
+    public abstract Task RemoveAsync(List<PlatformCacheKey> cacheKeys, CancellationToken token = default);
+
+    public virtual async Task RemoveByTagsAsync(List<string> tags, CancellationToken token = default)
+    {
+        if (tags != null)
+        {
+            var tagKeyWithTaggedKeysList = await tags.ParallelAsync(
+                async tag =>
+                {
+                    var tagKey = new PlatformCacheKey(ApplicationSettingContext.ApplicationName, TaggedKeysCacheKeyCollectionPart, tag);
+
+                    return (tagKey, taggedKeys: await GetTaggedKeys(tagKey, token));
+                });
+
+            var toRemoveCacheKeys = tagKeyWithTaggedKeysList.SelectMany(p => p.taggedKeys).ToHashSet();
+
+            await RemoveAsync(toRemoveCacheKeys.SelectList(PlatformCacheKey.FromFullCacheKeyString), token);
+            await tagKeyWithTaggedKeysList.ParallelAsync(
+                tagKeyWithUpdatedTaggedKeysItem => GetDistributedCache().RemoveAsync(tagKeyWithUpdatedTaggedKeysItem.tagKey, token));
+        }
+    }
+
+    public async Task RemoveAsync(
         Func<PlatformCacheKey, bool> cacheKeyPredicate,
-        CancellationToken token = default);
+        CancellationToken token = default)
+    {
+        var allCachedKeys = await LoadGlobalAllRequestCachedKeys();
+
+        var matchedKeys = allCachedKeys.Select(p => p.Key).Where(cacheKeyPredicate).ToList();
+
+        if (matchedKeys.Any()) await RemoveAsync(matchedKeys, token);
+    }
 
     public async Task RemoveCollectionAsync<TCollectionCacheKeyProvider>(CancellationToken token = default)
         where TCollectionCacheKeyProvider : PlatformCollectionCacheKeyProvider
@@ -224,6 +293,7 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
         Func<Task<TData>> request,
         PlatformCacheKey cacheKey,
         PlatformCacheEntryOptions cacheOptions = null,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         var cachedDataResult = await TryGetAsync<TData>(cacheKey, token);
@@ -241,6 +311,7 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
                         cacheKey,
                         requestedData,
                         cacheOptions,
+                        tags,
                         token);
                 },
                 loggerFactory: () => Logger,
@@ -255,6 +326,7 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
         Func<Task<TData>> request,
         PlatformCacheKey cacheKey,
         double? absoluteExpirationInSeconds = null,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         return CacheRequestAsync(
@@ -262,9 +334,9 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
             cacheKey,
             new PlatformCacheEntryOptions
             {
-                AbsoluteExpirationInSeconds = absoluteExpirationInSeconds ??
-                                              PlatformCacheEntryOptions.DefaultExpirationInSeconds
+                AbsoluteExpirationInSeconds = absoluteExpirationInSeconds
             },
+            tags,
             token);
     }
 
@@ -273,7 +345,20 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
         return ServiceProvider.GetService<PlatformCacheEntryOptions>() ?? CacheSettings.DefaultCacheEntryOptions;
     }
 
-    public abstract Task ProcessClearDeprecatedGlobalRequestCachedKeys();
+    public virtual async Task ProcessClearDeprecatedGlobalRequestCachedKeys()
+    {
+        await SetGlobalCachedKeysAsync(
+            async toUpdateRequestCachedKeys =>
+            {
+                await toUpdateRequestCachedKeys
+                    .SelectList(p => p.Key)
+                    .ParallelAsync(
+                        async key =>
+                        {
+                            if (await GetDistributedCache().GetAsync(key).Then(p => p.IsNullOrEmpty())) toUpdateRequestCachedKeys.TryRemove(key, out _);
+                        });
+            });
+    }
 
     protected async Task<PlatformValidationResult<T>> TryGetAsync<T>(PlatformCacheKey cacheKey, CancellationToken token = default)
     {
@@ -293,11 +378,12 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
         PlatformCacheKey cacheKey,
         T value,
         PlatformCacheEntryOptions cacheOptions = null,
+        List<string> tags = null,
         CancellationToken token = default)
     {
         try
         {
-            await SetAsync(cacheKey, value, cacheOptions, token);
+            await SetAsync(cacheKey, value, cacheOptions, tags, token);
         }
         catch (Exception ex)
         {
@@ -308,7 +394,12 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
     /// <summary>
     /// Used to build a unique cache key to store list of all request cached keys
     /// </summary>
-    public abstract PlatformCacheKey GetGlobalAllRequestCachedKeysCacheKey();
+    public virtual PlatformCacheKey GetGlobalAllRequestCachedKeysCacheKey()
+    {
+        return new PlatformCacheKey(
+            context: ApplicationSettingContext.ApplicationName,
+            collection: GlobalAllRequestCachedKeysCollectionName);
+    }
 
     protected async Task<ConcurrentDictionary<PlatformCacheKey, object>> LoadGlobalAllRequestCachedKeys()
     {
@@ -340,5 +431,96 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
             AbsoluteExpirationRelativeToNow = options?.AbsoluteExpirationRelativeToNow() ?? CacheSettings.DefaultCacheEntryOptions.AbsoluteExpirationRelativeToNow(),
             SlidingExpiration = options?.SlidingExpiration() ?? CacheSettings.DefaultCacheEntryOptions.SlidingExpiration()
         };
+    }
+
+    protected HybridCacheEntryOptions MapToHybridCacheEntryOptions(PlatformCacheEntryOptions options)
+    {
+        return new HybridCacheEntryOptions
+        {
+            Expiration = options?.AbsoluteExpirationRelativeToNow() ?? CacheSettings.DefaultCacheEntryOptions.AbsoluteExpirationRelativeToNow()
+        };
+    }
+
+    protected async Task AssociateCacheKeyWithTags(
+        PlatformCacheKey cacheKey,
+        List<string>? tags,
+        CancellationToken token = default)
+    {
+        if (tags != null)
+        {
+            foreach (var tag in tags)
+            {
+                var tagKey = new PlatformCacheKey(ApplicationSettingContext.ApplicationName, TaggedKeysCacheKeyCollectionPart, tag);
+
+                var existingKeys = await GetTaggedKeys(tagKey, token) ?? [];
+
+                if (existingKeys.Add(cacheKey)) await SetAsync(tagKey, existingKeys, absoluteExpirationInSeconds: null, null, token);
+            }
+        }
+    }
+
+    protected async Task<HashSet<string>> GetTaggedKeys(PlatformCacheKey tagKey, CancellationToken token)
+    {
+        var result = await GetDistributedCache().GetAsync(tagKey, token);
+
+        return result == null ? [] : PlatformJsonSerializer.Deserialize<HashSet<string>>(result);
+    }
+
+    protected abstract IDistributedCache GetDistributedCache();
+
+    protected virtual async Task UpdateGlobalCachedKeys(Action<ConcurrentDictionary<PlatformCacheKey, object>> updateCachedKeysAction)
+    {
+        await SetGlobalCachedKeysAsync(async globalCachedKeys => updateCachedKeysAction(globalCachedKeys));
+    }
+
+    protected virtual async Task SetGlobalCachedKeysAsync(Func<ConcurrentDictionary<PlatformCacheKey, object>, Task> modifyGlobalCachedKeysFunc)
+    {
+        await SetGlobalCachedKeysAsyncLock.ExecuteLockActionAsync(
+            async () =>
+            {
+                var globalCachedKeys = await LoadGlobalAllRequestCachedKeys().ThenActionAsync(modifyGlobalCachedKeysFunc);
+                var globalAllRequestCacheKeysCacheKey = GetGlobalAllRequestCachedKeysCacheKey();
+
+                var modifiedCacheValue = globalCachedKeys.Select(p => p.Key).ToList();
+
+                if (!modifiedCacheValue.Any())
+                    await RemoveAsync(globalAllRequestCacheKeysCacheKey);
+                else
+                {
+                    await GetDistributedCache()
+                        .SetAsync(
+                            globalAllRequestCacheKeysCacheKey,
+                            PlatformJsonSerializer.SerializeToUtf8Bytes(modifiedCacheValue),
+                            MapToDistributedCacheEntryOptions(
+                                new PlatformCacheEntryOptions
+                                {
+                                    UnusedExpirationInSeconds = null,
+                                    AbsoluteExpirationInSeconds = null
+                                }));
+                }
+            });
+    }
+
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (disposing) DisposeManagedResource();
+
+            // Release unmanaged resources
+
+            disposed = true;
+        }
+    }
+
+    protected virtual void DisposeManagedResource()
+    {
+        SetGlobalCachedKeysAsyncLock.Dispose();
     }
 }

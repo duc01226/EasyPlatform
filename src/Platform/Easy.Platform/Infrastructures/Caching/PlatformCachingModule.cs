@@ -3,8 +3,13 @@ using Easy.Platform.Common;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Infrastructures.Caching.BuiltInCacheRepositories;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Easy.Platform.Infrastructures.Caching;
 
@@ -70,6 +75,27 @@ public class PlatformCachingModule : PlatformInfrastructureModule
     {
         base.InternalRegister(serviceCollection);
 
+        serviceCollection.Register(
+            provider => new MemoryDistributedCache(
+                new OptionsWrapper<MemoryDistributedCacheOptions>(new MemoryDistributedCacheOptions()),
+                provider.GetService<ILoggerFactory>()),
+            ServiceLifeTime.Singleton);
+        serviceCollection.Register<IDistributedCache>(
+            provider => provider.GetService<MemoryDistributedCache>(),
+            ServiceLifeTime.Singleton);
+
+#pragma warning disable EXTEXP0018
+        serviceCollection.AddHybridCache(
+            options =>
+            {
+                var platformSettings = new PlatformCacheSettings().With(settings => ConfigCacheSettings(serviceCollection.BuildServiceProvider(), settings));
+
+                options.DefaultEntryOptions = new HybridCacheEntryOptions()
+                {
+                    Expiration = platformSettings.DefaultCacheEntryOptions.AbsoluteExpirationRelativeToNow()
+                };
+            });
+#pragma warning restore EXTEXP0018
         serviceCollection.Register<IPlatformCacheRepositoryProvider, PlatformCacheRepositoryProvider>(ServiceLifeTime.Singleton);
         serviceCollection.Register(
             typeof(PlatformCacheSettings),
@@ -87,12 +113,19 @@ public class PlatformCachingModule : PlatformInfrastructureModule
                 .Distinct()
                 .ToArray());
 
-        // Register built-in default memory cache
+        // Register built-in default Memory cache and Hybrid cache
         serviceCollection.Register(
             typeof(IPlatformCacheRepository),
             typeof(PlatformMemoryCacheRepository),
             ServiceLifeTime.Singleton);
         serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionMemoryCacheRepository<>));
+
+        // Register built-in default Hybrid cache
+        serviceCollection.Register(
+            typeof(IPlatformCacheRepository),
+            typeof(PlatformHybridCacheRepository),
+            ServiceLifeTime.Singleton);
+        serviceCollection.RegisterAllForImplementation(typeof(PlatformCollectionHybridCacheRepository<>));
 
         // Register Distributed Cache
         var tempCheckHasDistributedCacheInstance = DistributedCacheRepositoryProvider(serviceCollection.BuildServiceProvider(), Configuration);

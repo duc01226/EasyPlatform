@@ -1,3 +1,4 @@
+using Easy.Platform.Application.RequestContext;
 using Easy.Platform.AspNetCore.Controllers;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Infrastructures.Caching;
@@ -25,7 +26,8 @@ public class TextSnippetController : PlatformBaseController
         IPlatformCqrs cqrs,
         IPlatformCacheRepositoryProvider cacheRepositoryProvider,
         IConfiguration configuration,
-        ITextSnippetDbContext textSnippetDbContext) : base(cqrs, cacheRepositoryProvider, configuration)
+        IPlatformApplicationRequestContextAccessor requestContextAccessor,
+        ITextSnippetDbContext textSnippetDbContext) : base(cqrs, cacheRepositoryProvider, configuration, requestContextAccessor)
     {
         this.textSnippetDbContext = textSnippetDbContext;
     }

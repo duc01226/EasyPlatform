@@ -1,24 +1,27 @@
 using System.Collections.Concurrent;
 using Easy.Platform.Application;
+using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
-using Easy.Platform.Infrastructures.Caching;
+using Easy.Platform.Common.Utils;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Easy.Platform.RedisCache;
+namespace Easy.Platform.Infrastructures.Caching.BuiltInCacheRepositories;
 
-public class PlatformRedisDistributedCacheRepository : PlatformCacheRepository, IPlatformDistributedCacheRepository
+public class PlatformHybridCacheRepository : PlatformCacheRepository
 {
-    private readonly Microsoft.Extensions.Caching.StackExchangeRedis.RedisCache redisCache;
+    private readonly HybridCache hybridCache;
 
-    public PlatformRedisDistributedCacheRepository(
+    public PlatformHybridCacheRepository(
         IServiceProvider serviceProvider,
         IPlatformApplicationSettingContext applicationSettingContext,
         ILoggerFactory loggerFactory,
-        PlatformCacheSettings cacheSettings) : base(serviceProvider, loggerFactory, cacheSettings, applicationSettingContext)
+        PlatformCacheSettings cacheSettings,
+        HybridCache hybridCache) : base(serviceProvider, loggerFactory, cacheSettings, applicationSettingContext)
     {
-        redisCache = serviceProvider.GetServices<IDistributedCache>().OfType<Microsoft.Extensions.Caching.StackExchangeRedis.RedisCache>().FirstOrDefault();
+        this.hybridCache = hybridCache;
     }
 
     public override T Get<T>(PlatformCacheKey cacheKey)
@@ -28,7 +31,7 @@ public class PlatformRedisDistributedCacheRepository : PlatformCacheRepository, 
 
     public override async Task<T> GetAsync<T>(PlatformCacheKey cacheKey, CancellationToken token = default)
     {
-        using (var activity = IPlatformCacheRepository.ActivitySource.StartActivity($"DistributedCache.{nameof(GetAsync)}"))
+        using (var activity = IPlatformCacheRepository.ActivitySource.StartActivity($"HybridCache.{nameof(GetAsync)}"))
         {
             activity?.AddTag("cacheKey", cacheKey);
 
@@ -40,11 +43,11 @@ public class PlatformRedisDistributedCacheRepository : PlatformCacheRepository, 
                         return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                             async () =>
                             {
-                                var result = await redisCache.GetAsync(cacheKey, token);
+                                var result = await GetDistributedCache().GetAsync(cacheKey, token);
 
                                 try
                                 {
-                                    return result == null ? default : PlatformJsonSerializer.Deserialize<T>(result);
+                                    return result is null ? default : PlatformJsonSerializer.Deserialize<T>(result);
                                 }
                                 catch (Exception e)
                                 {
@@ -79,14 +82,14 @@ public class PlatformRedisDistributedCacheRepository : PlatformCacheRepository, 
         List<string> tags = null,
         CancellationToken token = default)
     {
-        using (var activity = IPlatformCacheRepository.ActivitySource.StartActivity($"DistributedCache.{nameof(SetAsync)}"))
+        using (var activity = IPlatformCacheRepository.ActivitySource.StartActivity($"HybridCache.{nameof(SetAsync)}"))
         {
             activity?.AddTag("cacheKey", cacheKey);
 
             await CacheSettings.ExecuteWithSlowWarning(
                 async () =>
                 {
-                    await SetToRedisCacheAsync(cacheKey, value, cacheOptions, tags, token);
+                    await SetToHybridCacheAsync(cacheKey, value, cacheOptions, tags, token);
 
                     await UpdateGlobalCachedKeys(p => p.TryAdd(cacheKey, null));
                 },
@@ -113,7 +116,7 @@ public class PlatformRedisDistributedCacheRepository : PlatformCacheRepository, 
     {
         try
         {
-            await redisCache.RemoveAsync(cacheKey, token);
+            await hybridCache.RemoveAsync(cacheKey, token);
         }
         catch (Exception ex)
         {
@@ -123,29 +126,33 @@ public class PlatformRedisDistributedCacheRepository : PlatformCacheRepository, 
 
     public override async Task RemoveAsync(List<PlatformCacheKey> cacheKeys, CancellationToken token = default)
     {
-        if (cacheKeys.Any())
-        {
-            await SetGlobalCachedKeysAsync(
-                async allCachedKeys =>
-                {
-                    var clonedCacheKeys = cacheKeys.ToArray();
+        if (cacheKeys.IsEmpty()) return;
 
-                    await clonedCacheKeys.ParallelAsync(
-                        async matchedKey =>
-                        {
-                            await InternalRemoveAsync(matchedKey, token);
-                            allCachedKeys.TryRemove(matchedKey, out _);
-                        });
-                });
-        }
+        await SetGlobalCachedKeysAsync(
+            async allCachedKeys =>
+            {
+                var clonedMatchedKeys = cacheKeys.ToArray();
+
+                await clonedMatchedKeys.ParallelAsync(
+                    async matchedKey =>
+                    {
+                        await InternalRemoveAsync(matchedKey, token);
+                        allCachedKeys.TryRemove(matchedKey, out _);
+                    });
+            });
+    }
+
+    public override async Task RemoveByTagsAsync(List<string> tags, CancellationToken token = default)
+    {
+        await hybridCache.RemoveByTagAsync(tags, token);
     }
 
     protected override IDistributedCache GetDistributedCache()
     {
-        return redisCache;
+        return ServiceProvider.GetService<IDistributedCache>();
     }
 
-    private async Task SetToRedisCacheAsync<T>(
+    private async Task SetToHybridCacheAsync<T>(
         PlatformCacheKey cacheKey,
         T value,
         PlatformCacheEntryOptions cacheOptions = null,
@@ -154,17 +161,16 @@ public class PlatformRedisDistributedCacheRepository : PlatformCacheRepository, 
     {
         try
         {
-            await redisCache.SetAsync(
+            await hybridCache.SetAsync(
                 cacheKey,
                 PlatformJsonSerializer.SerializeToUtf8Bytes(value),
-                MapToDistributedCacheEntryOptions(cacheOptions),
-                token);
-
-            await AssociateCacheKeyWithTags(cacheKey, tags, token);
+                MapToHybridCacheEntryOptions(cacheOptions),
+                cancellationToken: token,
+                tags: tags);
         }
         catch (Exception ex)
         {
-            throw new Exception($"{GetType().Name} SetToRedisCacheAsync failed.[CacheKey: {cacheKey}]. {ex.Message}", ex);
+            throw new Exception($"{GetType().Name} SetToHybridCacheAsync failed.[CacheKey: {cacheKey}]. {ex.Message}", ex);
         }
     }
 
@@ -182,7 +188,7 @@ public class PlatformRedisDistributedCacheRepository : PlatformCacheRepository, 
                     await RemoveAsync(globalAllRequestCacheKeysCacheKey);
                 else
                 {
-                    await SetToRedisCacheAsync(
+                    await SetToHybridCacheAsync(
                         globalAllRequestCacheKeysCacheKey,
                         modifiedCacheValue,
                         new PlatformCacheEntryOptions

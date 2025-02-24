@@ -197,11 +197,18 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
             async () =>
             {
                 var cacheProvider = serviceScope.ServiceProvider.GetService<IPlatformCacheRepositoryProvider>();
+                if (cacheProvider == null) return;
 
-                var distributedCacheRepository = cacheProvider?.TryGet(PlatformCacheRepositoryType.Distributed);
+                await Enum.GetValues<PlatformCacheRepositoryType>()
+                    .Where(p => p != PlatformCacheRepositoryType.Memory)
+                    .ForEachAsync(
+                        async cacheRepositoryType =>
+                        {
+                            var cacheRepository = cacheProvider.TryGet(cacheRepositoryType);
 
-                if (distributedCacheRepository != null)
-                    await distributedCacheRepository.RemoveAsync(p => options.AutoClearContexts.Contains(p.Context));
+                            if (cacheRepository != null)
+                                await cacheRepository.RemoveAsync(p => options.AutoClearContexts.Contains(p.Context));
+                        });
             },
             retryAttempt => 10.Seconds(),
             10,

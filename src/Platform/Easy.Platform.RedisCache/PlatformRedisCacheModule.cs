@@ -30,7 +30,6 @@ public abstract class PlatformRedisCacheModule : PlatformCachingModule
     {
         return new PlatformRedisDistributedCacheRepository(
             serviceProvider,
-            serviceProvider.GetRequiredService<IOptions<RedisCacheOptions>>(),
             serviceProvider.GetRequiredService<IPlatformApplicationSettingContext>(),
             serviceProvider.GetRequiredService<ILoggerFactory>(),
             serviceProvider.GetRequiredService<PlatformCacheSettings>());
@@ -39,6 +38,8 @@ public abstract class PlatformRedisCacheModule : PlatformCachingModule
     protected override void InternalRegister(IServiceCollection serviceCollection)
     {
         base.InternalRegister(serviceCollection);
+
+        serviceCollection.AddStackExchangeRedisCache(SetupRedisCacheOptions);
 
         serviceCollection.AddOptions();
         serviceCollection.Configure<RedisCacheOptions>(InternalRegisterSetupRedisCacheOptions);

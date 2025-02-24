@@ -7,7 +7,7 @@ namespace Easy.Platform.Infrastructures.Caching;
 /// </summary>
 public class PlatformCacheEntryOptions
 {
-    public const int DefaultExpirationInSeconds = 3600;
+    public const int DefaultExpirationInSeconds = 3600 * 24;
 
     /// <summary>
     /// Gets or sets how long a cache entry can be inactive (e.g. not accessed) before it will be removed.
