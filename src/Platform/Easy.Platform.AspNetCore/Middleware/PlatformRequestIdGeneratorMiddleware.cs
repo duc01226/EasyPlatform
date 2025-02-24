@@ -1,7 +1,10 @@
+using BenchmarkDotNet.Engines;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.AspNetCore.Constants;
 using Easy.Platform.AspNetCore.Middleware.Abstracts;
+using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.SignalR.Protocol;
 
 namespace Easy.Platform.AspNetCore.Middleware;
 
@@ -30,9 +33,11 @@ public class PlatformRequestIdGeneratorMiddleware : PlatformMiddleware
                 PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
                 out var existedRequestId) ||
             string.IsNullOrEmpty(existedRequestId))
+        {
             context.Request.Headers.Upsert(
                 PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
                 Ulid.NewUlid().ToString());
+        }
 
         // Set the trace identifier for the context
         context.TraceIdentifier = context.Request.Headers[PlatformAspnetConstant.CommonHttpHeaderNames.RequestId];
@@ -45,9 +50,12 @@ public class PlatformRequestIdGeneratorMiddleware : PlatformMiddleware
             () =>
             {
                 if (!context.Response.Headers.ContainsKey(PlatformAspnetConstant.CommonHttpHeaderNames.RequestId))
+                {
                     context.Response.Headers.Append(
                         PlatformAspnetConstant.CommonHttpHeaderNames.RequestId,
                         new[] { context.TraceIdentifier });
+                }
+
                 return Task.CompletedTask;
             });
 

@@ -5,6 +5,7 @@ using Easy.Platform.AspNetCore.Constants;
 using Easy.Platform.AspNetCore.Context.RequestContext;
 using Easy.Platform.AspNetCore.Context.RequestContext.RequestContextKeyToClaimTypeMapper;
 using Easy.Platform.AspNetCore.Context.RequestContext.RequestContextKeyToClaimTypeMapper.Abstract;
+using Easy.Platform.AspNetCore.Middleware;
 using Easy.Platform.AspNetCore.OpenApi;
 using Easy.Platform.Common;
 using Easy.Platform.Common.DependencyInjection;
@@ -64,6 +65,14 @@ public abstract class PlatformAspNetCoreModule : PlatformModule
     }
 
     /// <summary>
+    /// Configures the options for the slow request warning middleware. See <see cref="PlatformSlowRequestWarningMiddleware"/>
+    /// </summary>
+    /// <param name="options"></param>
+    protected virtual void SlowRequestWarningMiddlewareOptionsConfig(PlatformSlowRequestWarningMiddlewareOptions options)
+    {
+    }
+
+    /// <summary>
     /// Gets the allowed CORS origins for the module.
     /// </summary>
     /// <param name="configuration">The configuration for the module.</param>
@@ -90,6 +99,7 @@ public abstract class PlatformAspNetCoreModule : PlatformModule
         serviceCollection.AddHttpClient();
         GetServicesRegisterScanAssemblies().ForEach(assembly => serviceCollection.RegisterHostedServicesFromType(assembly, typeof(PlatformHostingBackgroundService)));
         if (AddOpenApi) serviceCollection.AddOpenApi(AddOpenApiOptionsConfig);
+        serviceCollection.Configure<PlatformSlowRequestWarningMiddlewareOptions>(SlowRequestWarningMiddlewareOptionsConfig);
     }
 
     protected override async Task InternalInit(IServiceScope serviceScope)

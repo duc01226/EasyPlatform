@@ -133,8 +133,7 @@ static void ConfigureRequestPipeline(WebApplication app)
 
     // Reference middleware orders: https://docs.microsoft.com/en-us/aspnet/core/fundamentals/middleware/?view=aspnetcore-5.0#middleware-order
 
-    app.UseGlobalExceptionHandlerMiddleware();
-    app.UseRequestIdGeneratorMiddleware();
+    app.UsePlatformDefaultRecommendedMiddlewares();
 
     app.UseRouting();
 
@@ -142,14 +141,14 @@ static void ConfigureRequestPipeline(WebApplication app)
      * With endpoint routing, the CORS middleware must be configured to execute between the calls to UseRouting and UseEndpoints.
      * Incorrect configuration will cause the middleware to stop functioning correctly.
      */
-    app.UseDefaultCorsPolicy();
+    app.UsePlatformDefaultCorsPolicy();
 
     app.UseAuthentication();
     app.UseAuthorization();
 
     app.UseEndpoints(endpoints => endpoints.MapControllers());
 
-    app.UseDefaultResponseHealthCheckForPath();
+    app.UseDefaultResponseHealthCheckForEmptyPath();
 }
 
 static async Task BeforeRunInit(WebApplication webApplication)

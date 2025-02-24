@@ -137,23 +137,24 @@ public abstract class PlatformMessageBusConsumer : IPlatformMessageBusConsumer
         ILogger? logger = null)
     {
         if (messageBusConfig.EnableLogConsumerProcessTime && !consumer.DisableSlowProcessWarning())
+        {
             await Util.TaskRunner.ProfileExecutionAsync(
                 asyncTask: () => DoInvokeConsumer(consumer, busMessage, routingKey),
                 afterExecution: elapsedMilliseconds =>
                 {
-                    var logMessage =
-                        $"ElapsedMilliseconds:{elapsedMilliseconds}. Consumer:{consumer.GetType().FullName}. RoutingKey:{routingKey}. TrackingId:{busMessage.As<IPlatformTrackableBusMessage>()?.TrackingId ?? "n/a"}.";
-
                     var toCheckSlowProcessWarningTimeMilliseconds = consumer.SlowProcessWarningTimeMilliseconds() ??
                                                                     messageBusConfig.LogSlowProcessWarningTimeMilliseconds;
                     if (elapsedMilliseconds >= toCheckSlowProcessWarningTimeMilliseconds)
+                    {
                         logger?.LogWarning(
-                            "[MessageBus] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. {LogMessage}. MessageContent: {BusMessage}",
+                            "[MessageBus] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. Consumer:{Consumer} BusMessage: {BusMessage}",
                             toCheckSlowProcessWarningTimeMilliseconds,
                             elapsedMilliseconds,
-                            logMessage,
+                            consumer.GetType().FullName,
                             busMessage.ToJson());
+                    }
                 });
+        }
         else
             await DoInvokeConsumer(consumer, busMessage, routingKey);
     }
@@ -209,11 +210,13 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
             if (!NoNeedCheckHandleWhen && !await HandleWhen(message, routingKey)) return;
 
             if (RetryOnFailedTimes > 0)
+            {
                 // Retry RetryOnFailedTimes to help resilient consumer. Sometime parallel, create/update concurrency could lead to error
                 await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                     () => ExecuteHandleLogicAsync(message, routingKey),
                     retryCount: RetryOnFailedTimes,
                     sleepDurationProvider: retryAttempt => RetryOnFailedDelaySeconds.Seconds());
+            }
             else
                 await ExecuteHandleLogicAsync(message, routingKey);
         }

@@ -15,7 +15,7 @@ public static class ConfigureWebApplicationExtensions
     /// This middleware will add a generated guid request id in to headers. It should be added at the first middleware or
     /// second after UseGlobalExceptionHandlerMiddleware
     /// </summary>
-    public static IApplicationBuilder UseRequestIdGeneratorMiddleware(this IApplicationBuilder applicationBuilder)
+    public static IApplicationBuilder UsePlatformRequestIdGeneratorMiddleware(this IApplicationBuilder applicationBuilder)
     {
         return applicationBuilder.UseMiddleware<PlatformRequestIdGeneratorMiddleware>();
     }
@@ -24,9 +24,33 @@ public static class ConfigureWebApplicationExtensions
     /// This middleware should be used it at the first level to catch exception from any next middleware.
     /// <see cref="PlatformGlobalExceptionHandlerMiddleware" /> will be used.
     /// </summary>
-    public static IApplicationBuilder UseGlobalExceptionHandlerMiddleware(this IApplicationBuilder applicationBuilder)
+    public static IApplicationBuilder UsePlatformGlobalExceptionHandlerMiddleware(this IApplicationBuilder applicationBuilder)
     {
         return applicationBuilder.UseMiddleware<PlatformGlobalExceptionHandlerMiddleware>();
+    }
+
+    /// <summary>
+    /// This middleware will add a warning log if the request is slow. <see cref="PlatformSlowRequestWarningMiddleware" /> will be used.
+    /// </summary>
+    /// <returns></returns>
+    public static IApplicationBuilder UsePlatformSlowRequestWarningMiddleware(this IApplicationBuilder applicationBuilder)
+    {
+        return applicationBuilder.UseMiddleware<PlatformSlowRequestWarningMiddleware>();
+    }
+
+    /// <summary>
+    /// This method will add the recommended middlewares for the platform.
+    /// </summary>
+    /// <returns></returns>
+    public static IApplicationBuilder UsePlatformDefaultRecommendedMiddlewares(
+        this IApplicationBuilder applicationBuilder,
+        bool includeGlobalExceptionHandlerMiddleware = true)
+    {
+        if (includeGlobalExceptionHandlerMiddleware) applicationBuilder.UsePlatformGlobalExceptionHandlerMiddleware();
+        applicationBuilder.UsePlatformRequestIdGeneratorMiddleware();
+        applicationBuilder.UsePlatformSlowRequestWarningMiddleware();
+
+        return applicationBuilder;
     }
 
     /// <summary>
@@ -36,7 +60,7 @@ public static class ConfigureWebApplicationExtensions
     /// Use <see cref="PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy" /> in dev environment,
     /// if not then <see cref="PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy" /> will be used
     /// </summary>
-    public static IApplicationBuilder UseDefaultCorsPolicy(
+    public static IApplicationBuilder UsePlatformDefaultCorsPolicy(
         this IApplicationBuilder applicationBuilder,
         string specificCorPolicy = null)
     {
@@ -53,12 +77,12 @@ public static class ConfigureWebApplicationExtensions
     /// If the request path is empty default, return "Service is up" for health check that this api service is online.<br />
     /// This should be placed after UseEndpoints or MapControllers
     /// </summary>
-    public static void UseDefaultResponseHealthCheckForPath(this IApplicationBuilder applicationBuilder, params string[] supportPaths)
+    public static void UseDefaultResponseHealthCheckForEmptyPath(this IApplicationBuilder applicationBuilder, params string[] additionalHealthCheckPaths)
     {
         applicationBuilder.Use(
             async (context, next) =>
             {
-                if (context.Request.Path == "/" || supportPaths.Any(supportPath => context.Request.Path == $"/{supportPath.TrimStart('/')}"))
+                if (context.Request.Path == "/" || additionalHealthCheckPaths.Any(supportPath => context.Request.Path == $"/{supportPath.TrimStart('/')}"))
                     await context.Response.WriteAsync("Service is up.");
                 else await next();
             });
