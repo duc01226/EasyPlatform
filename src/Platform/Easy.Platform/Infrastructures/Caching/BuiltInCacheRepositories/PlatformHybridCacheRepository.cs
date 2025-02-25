@@ -142,9 +142,12 @@ public class PlatformHybridCacheRepository : PlatformCacheRepository
             });
     }
 
-    public override async Task RemoveByTagsAsync(List<string> tags, CancellationToken token = default)
+    public override async Task RemoveByTagsAsync(List<string> tags, Func<PlatformCacheKey, bool> cacheKeyPredicate = null, CancellationToken token = default)
     {
-        await hybridCache.RemoveByTagAsync(tags, token);
+        await base.RemoveByTagsAsync(tags, cacheKeyPredicate, token);
+
+        if (cacheKeyPredicate == null)
+            await hybridCache.RemoveByTagAsync(tags, token);
     }
 
     protected override IDistributedCache GetDistributedCache()
@@ -166,7 +169,9 @@ public class PlatformHybridCacheRepository : PlatformCacheRepository
                 PlatformJsonSerializer.SerializeToUtf8Bytes(value),
                 MapToHybridCacheEntryOptions(cacheOptions),
                 cancellationToken: token,
-                tags: tags);
+                tags: PlatformCacheKey.CombineWithCacheKeyContextAndCollectionTag(cacheKey, tags));
+
+            await AssociateCacheKeyWithTags(cacheKey, PlatformCacheKey.CombineWithCacheKeyContextAndCollectionTag(cacheKey, tags), token);
         }
         catch (Exception ex)
         {

@@ -46,7 +46,7 @@ internal sealed class ClearCacheOnSaveSnippetTextEntityEventHandler : PlatformCq
 
         var removeFilterRequestCacheKeyParts = SearchSnippetTextQuery.BuildCacheRequestKeyParts(request: null, userId: null, companyId: null);
 
-        // Queue task to clear cache every 5 seconds for 3 times (mean that after 5,10,15s).
+        // Queue task to clear cache every 5 seconds for 2 times.
         // Delay because when save snippet text, fulltext index take amount of time to update, so that we wait
         // amount of time for fulltext index update
         // We also set executeOnceImmediately=true to clear cache immediately in case of some index is updated fast
@@ -56,7 +56,7 @@ internal sealed class ClearCacheOnSaveSnippetTextEntityEventHandler : PlatformCq
                 .RemoveAsync(cacheRequestKeyPartsPredicate: keyParts => keyParts[1] == removeFilterRequestCacheKeyParts[1], token),
             intervalTimeInSeconds: 5,
             CreateGlobalLogger,
-            maximumIntervalExecutionCount: 3,
+            maximumIntervalExecutionCount: 2,
             executeOnceImmediately: true,
             cancellationToken);
     }

@@ -115,7 +115,7 @@ public class PlatformMemoryCacheRepository : PlatformCacheRepository, IPlatformM
                 MapToDistributedCacheEntryOptions(cacheOptions),
                 token);
 
-            await AssociateCacheKeyWithTags(cacheKey, tags, token);
+            await AssociateCacheKeyWithTags(cacheKey, PlatformCacheKey.CombineWithCacheKeyContextAndCollectionTag(cacheKey, tags), token);
         }
         catch (Exception ex)
         {

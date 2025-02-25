@@ -1,3 +1,4 @@
+using Easy.Platform.Common.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Easy.Platform.Infrastructures.Caching;
@@ -97,12 +98,30 @@ public interface IPlatformCollectionCacheRepository<TCollectionCacheKeyProvider>
     /// The method will remove all cache entries where the cache request key satisfies the condition provided by the predicate function.
     /// </remarks>
     Task RemoveAsync(
-        Func<string, bool> cacheRequestKeyPredicate,
+        Func<string, bool>? cacheRequestKeyPredicate,
         CancellationToken token = default);
 
+    /// <summary>
+    /// Asynchronously removes the cache entries that match the specified predicate.
+    /// </summary>
+    /// <param name="cacheRequestKeyPartsPredicate">The function to test each cache request key parts for a condition.</param>
+    /// <param name="token">A cancellation token that can be used to cancel the operation.</param>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <remarks>
+    /// The method will remove all cache entries where the cache request key satisfies the condition provided by the predicate function.
+    /// </remarks>
     Task RemoveAsync(
-        Func<string[], bool> cacheRequestKeyPartsPredicate,
+        Func<string[], bool>? cacheRequestKeyPartsPredicate,
         CancellationToken token = default);
+
+    /// <summary>
+    /// Removes cache entries associated with the specified tags.
+    /// </summary>
+    /// <param name="tags">The tags associated with the cache entries to remove.</param>
+    /// <param name="cacheKeyPredicate">An optional function filter the requested value predicate.</param>
+    /// <param name="token">Optional. The <see cref="CancellationToken"/> used to propagate notifications that the operation should be canceled.</param>
+    /// <returns>The <see cref="Task"/> that represents the asynchronous operation.</returns>
+    Task RemoveByTagsAsync(List<string> tags, Func<PlatformCacheKey, bool> cacheKeyPredicate = null, CancellationToken token = default);
 
     Task<TData> CacheRequestAsync<TData>(
         Func<Task<TData>> request,
@@ -309,18 +328,17 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
 
     public async Task RemoveAllAsync()
     {
-        await RemoveAsync((Func<string, bool>)(p => true));
+        await RemoveAsync(cacheRequestKeyPredicate: null);
     }
 
     public async Task RemoveAsync(
         Func<string, bool> cacheRequestKeyPredicate,
         CancellationToken token = default)
     {
-        var matchCollectionKeyPredicate = CollectionCacheKeyProvider.MatchCollectionKeyPredicate();
-
         await CacheRepository()
-            .RemoveAsync(
-                cacheKey => matchCollectionKeyPredicate(cacheKey) && cacheRequestKeyPredicate(cacheKey.RequestKey),
+            .RemoveByTagsAsync(
+                [PlatformCacheKey.BuildCacheKeyContextAndCollectionTag(CollectionCacheKeyProvider.Context, CollectionCacheKeyProvider.Collection)],
+                cacheRequestKeyPredicate != null ? cacheKey => cacheRequestKeyPredicate(cacheKey.RequestKey) : null,
                 token);
     }
 
@@ -328,11 +346,24 @@ public abstract class PlatformCollectionCacheRepository<TCollectionCacheKeyProvi
         Func<string[], bool> cacheRequestKeyPartsPredicate,
         CancellationToken token = default)
     {
-        var matchCollectionKeyPredicate = CollectionCacheKeyProvider.MatchCollectionKeyPredicate();
+        await CacheRepository()
+            .RemoveByTagsAsync(
+                [PlatformCacheKey.BuildCacheKeyContextAndCollectionTag(CollectionCacheKeyProvider.Context, CollectionCacheKeyProvider.Collection)],
+                cacheRequestKeyPartsPredicate != null ? cacheKey => cacheRequestKeyPartsPredicate(cacheKey.RequestKeyParts()) : null,
+                token);
+    }
+
+    public async Task RemoveByTagsAsync(List<string> tags, Func<PlatformCacheKey, bool> cacheKeyPredicate = null, CancellationToken token = default)
+    {
+        var taggedKeys = await tags.ParallelAsync(tag => CacheRepository().GetTaggedKeys(tag, token)).Then(taggedKeysList => taggedKeysList.Flatten().ToHashSet());
 
         await CacheRepository()
-            .RemoveAsync(
-                cacheKey => matchCollectionKeyPredicate(cacheKey) && cacheRequestKeyPartsPredicate(cacheKey.RequestKeyParts()),
+            .RemoveByTagsAsync(
+                [PlatformCacheKey.BuildCacheKeyContextAndCollectionTag(CollectionCacheKeyProvider.Context, CollectionCacheKeyProvider.Collection)],
+                cacheKey =>
+                {
+                    return cacheKeyPredicate?.Invoke(cacheKey) != false && taggedKeys.Contains(cacheKey);
+                },
                 token);
     }
 

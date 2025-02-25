@@ -207,7 +207,8 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
                             var cacheRepository = cacheProvider.TryGet(cacheRepositoryType);
 
                             if (cacheRepository != null)
-                                await cacheRepository.RemoveAsync(p => options.AutoClearContexts.Contains(p.Context));
+                                await cacheRepository.RemoveByTagsAsync(
+                                    options.AutoClearContexts.SelectList(autoClearContext => PlatformCacheKey.BuildCacheKeyContextTag(autoClearContext)));
                         });
             },
             retryAttempt => 10.Seconds(),

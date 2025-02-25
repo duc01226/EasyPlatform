@@ -1,5 +1,4 @@
 using Easy.Platform.Common.Extensions;
-using Easy.Platform.Common.JsonSerialization;
 
 namespace Easy.Platform.Infrastructures.Caching;
 
@@ -9,12 +8,17 @@ namespace Easy.Platform.Infrastructures.Caching;
 public readonly struct PlatformCacheKey
     : IEquatable<PlatformCacheKey>
 {
-    public const string DefaultContext = "UnknowContext";
+    public const string DefaultContext = "__DefaultGlobalCacheContext__";
     public const string DefaultCollection = "All";
     public const string DefaultRequestKey = "All";
-    public const string RequestKeySeparator = "---";
+    public const string RequestKeySeparator = "---:";
     public const string RequestKeySeparatorAutoValidReplaced = "_";
     public const string RequestKeyPartsSeparator = "-+-";
+    public const string RequestKeyPartsPrefix = "(";
+    public const string RequestKeyPartsSuffix = ")";
+    public const string SpecialDistributedCacheKeyFolderSeparator = ":";
+    public const string SpecialDistributedCacheKeyFolderSeparatorAutoValidReplaced = "=";
+    public const string NullValue = "(NULL)";
 
     public PlatformCacheKey(string requestKey = DefaultRequestKey)
     {
@@ -70,7 +74,8 @@ public readonly struct PlatformCacheKey
 
     public static string AutoFixKeyPartValue(string keyPartValue)
     {
-        return keyPartValue?.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced);
+        return keyPartValue?.Replace(RequestKeySeparator, RequestKeySeparatorAutoValidReplaced)
+            .Replace(SpecialDistributedCacheKeyFolderSeparator, SpecialDistributedCacheKeyFolderSeparatorAutoValidReplaced);
     }
 
     public static implicit operator string(PlatformCacheKey platformCacheKey)
@@ -99,28 +104,23 @@ public readonly struct PlatformCacheKey
         if (requestKeyParts.Length == 0)
             throw new ArgumentException("requestKeyParts must be not empty.", nameof(requestKeyParts));
 
-        return $"{requestKeyParts.Select(p => (p ?? NullValue).ToJson() ?? "").JoinToString(RequestKeyPartsSeparator)}";
+        return requestKeyParts
+            .Select(
+                p =>
+                    $"{RequestKeyPartsPrefix}{(p ?? NullValue).Replace(SpecialDistributedCacheKeyFolderSeparator, SpecialDistributedCacheKeyFolderSeparatorAutoValidReplaced)}{RequestKeyPartsSuffix}")
+            .JoinToString(RequestKeyPartsSeparator);
     }
-
-    public const string NullValue = "(NULL)";
 
     public static string[] SplitRequestKeyParts(string requestKey)
     {
         return requestKey
             .Split(RequestKeyPartsSeparator)
             .Select(
-                requestKeyPartJsonString =>
+                requestKeyPartString =>
                 {
-                    try
-                    {
-                        var deserializedStr = PlatformJsonSerializer.Deserialize<string>(requestKeyPartJsonString);
-
-                        return deserializedStr == NullValue ? null : deserializedStr;
-                    }
-                    catch (Exception)
-                    {
-                        return requestKeyPartJsonString;
-                    }
+                    return requestKeyPartString.Substring(
+                        RequestKeyPartsPrefix.Length,
+                        requestKeyPartString.Length - RequestKeyPartsPrefix.Length - RequestKeyPartsSuffix.Length);
                 })
             .ToArray();
     }
@@ -153,5 +153,20 @@ public readonly struct PlatformCacheKey
     public static bool operator !=(PlatformCacheKey left, PlatformCacheKey right)
     {
         return !(left == right);
+    }
+
+    public static List<string> CombineWithCacheKeyContextAndCollectionTag(PlatformCacheKey cacheKey, List<string>? tags)
+    {
+        return (tags ?? []).Concat([BuildCacheKeyContextTag(cacheKey.Context), BuildCacheKeyContextAndCollectionTag(cacheKey.Context, cacheKey.Collection)]).ToList();
+    }
+
+    public static string BuildCacheKeyContextAndCollectionTag(string cacheKeyContext, string cacheKeyCollection)
+    {
+        return $"{BuildCacheKeyContextTag(cacheKeyContext)};Collection={cacheKeyCollection}";
+    }
+
+    public static string BuildCacheKeyContextTag(string cacheKeyContext)
+    {
+        return $"Context={cacheKeyContext}";
     }
 }
