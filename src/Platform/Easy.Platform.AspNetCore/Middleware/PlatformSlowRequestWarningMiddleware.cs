@@ -76,5 +76,5 @@ public class PlatformSlowRequestWarningMiddlewareOptions
     /// <summary>
     /// Gets or sets the slow process warning time in milliseconds.
     /// </summary>
-    public int SlowProcessWarningTimeMilliseconds { get; set; } = 1000;
+    public int SlowProcessWarningTimeMilliseconds { get; set; } = 500;
 }

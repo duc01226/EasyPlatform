@@ -17,7 +17,7 @@ public interface IPlatformMessageBusConfig
 public class PlatformMessageBusConfig
     : IPlatformMessageBusConfig
 {
-    public const long DefaultProcessWarningTimeMilliseconds = 1000;
+    public const long DefaultProcessWarningTimeMilliseconds = 500;
 
     /// <summary>
     /// Config the time to true to log consumer process time

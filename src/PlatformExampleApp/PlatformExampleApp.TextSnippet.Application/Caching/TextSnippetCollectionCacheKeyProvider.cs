@@ -1,5 +1,6 @@
 using Easy.Platform.Application;
 using Easy.Platform.Application.Caching;
+using PlatformExampleApp.TextSnippet.Application.UseCaseQueries;
 
 namespace PlatformExampleApp.TextSnippet.Application.Caching;
 
@@ -10,5 +11,5 @@ public class TextSnippetCollectionCacheKeyProvider : PlatformApplicationCollecti
     {
     }
 
-    public override string Collection => TextSnippetApplicationConstants.CacheKeyCollectionNames.TextSnippet;
+    public override string Collection => nameof(SearchSnippetTextQuery);
 }

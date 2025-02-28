@@ -53,7 +53,8 @@ public class TextSnippetController : PlatformBaseController
         return await CacheRepositoryProvider.GetCollection<TextSnippetCollectionCacheKeyProvider>()
             .CacheRequestAsync(
                 () => Cqrs.SendQuery(request),
-                requestKeyParts: SearchSnippetTextQuery.BuildCacheRequestKeyParts(request, userId: null, companyId: null));
+                requestKeyParts: SearchSnippetTextQuery.BuildCacheRequestKeyParts(request, userId: null, companyId: null),
+                tags: [SearchSnippetTextQuery.BuildCacheRequestTag(RequestContext.UserId())]);
 
         // Using distributed cache and also use CacheRequestUseConfigOptionsAsync for convenient
         //return await CacheRepositoryProvider.GetCollection<TextSnippetCollectionCacheKeyProvider>(PlatformCacheRepositoryType.Distributed)

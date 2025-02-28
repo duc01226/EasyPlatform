@@ -366,8 +366,9 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
 
                 if (existingEntity != null &&
                     !ReferenceEquals(entity, existingEntity) &&
-                    (changedFields?.Count == 0 ||
-                     (changedFields?.Count == 1 && entityUpdatedDateAuditField != null && entityUpdatedDateAuditField.Name == changedFields.First().Key)) &&
+                    (changedFields == null ||
+                     changedFields.Count == 0 ||
+                     (changedFields.Count == 1 && entityUpdatedDateAuditField != null && entityUpdatedDateAuditField.Name == changedFields.First().Key)) &&
                     checkDiff)
                     return (toBeUpdatedEntity: entity, bulkWriteOp: null, existingEntity, currentInMemoryConcurrencyUpdateToken: null);
 
@@ -396,9 +397,11 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                 }
 
 
-                var updateDefinition = changedFields?.Select(
-                        field => Builders<TEntity>.Update.Set(field.Key, field.Value))
-                    .Pipe(updateDefinitions => Builders<TEntity>.Update.Combine(updateDefinitions));
+                var updateDefinition = changedFields?.Any() == true
+                    ? changedFields
+                        .Select(field => Builders<TEntity>.Update.Set(field.Key, field.Value))
+                        .Pipe(updateDefinitions => Builders<TEntity>.Update.Combine(updateDefinitions))
+                    : null;
                 Expression<Func<TEntity, bool>> toBeUpdatedEntityFilter = toBeUpdatedEntity is IRowVersionEntity
                     ? p => p.Id.Equals(toBeUpdatedEntity.Id) &&
                            (((IRowVersionEntity)p).ConcurrencyUpdateToken == null ||
@@ -882,8 +885,9 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
 
         if (existingEntity != null &&
             !ReferenceEquals(entity, existingEntity) &&
-            (changedFields?.Count == 0 ||
-             (changedFields?.Count == 1 && entityUpdatedDateAuditField != null && entityUpdatedDateAuditField.Name == changedFields.First().Key)) &&
+            (changedFields == null ||
+             changedFields.Count == 0 ||
+             (changedFields.Count == 1 && entityUpdatedDateAuditField != null && entityUpdatedDateAuditField.Name == changedFields.First().Key)) &&
             checkDiff)
             return entity;
 
@@ -916,9 +920,11 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                 existingEntity,
                 entity =>
                 {
-                    var updateDefinition = changedFields?.Select(
-                            field => Builders<TEntity>.Update.Set(field.Key, field.Value))
-                        .Pipe(updateDefinitions => Builders<TEntity>.Update.Combine(updateDefinitions));
+                    var updateDefinition = changedFields?.Any() == true
+                        ? changedFields.Select(
+                                field => Builders<TEntity>.Update.Set(field.Key, field.Value))
+                            .Pipe(updateDefinitions => Builders<TEntity>.Update.Combine(updateDefinitions))
+                        : null;
 
                     return updateDefinition != null
                         ? GetTable<TEntity>()
@@ -969,9 +975,11 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                 existingEntity ?? MappedUnitOfWork?.GetCachedExistingOriginalEntity<TEntity>(entity.Id.ToString()),
                 _ =>
                 {
-                    var updateDefinition = changedFields?.Select(
-                            field => Builders<TEntity>.Update.Set(field.Key, field.Value))
-                        .Pipe(updateDefinitions => Builders<TEntity>.Update.Combine(updateDefinitions));
+                    var updateDefinition = changedFields?.Any() == true
+                        ? changedFields.Select(
+                                field => Builders<TEntity>.Update.Set(field.Key, field.Value))
+                            .Pipe(updateDefinitions => Builders<TEntity>.Update.Combine(updateDefinitions))
+                        : null;
 
                     return updateDefinition != null
                         ? GetTable<TEntity>()

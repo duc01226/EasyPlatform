@@ -31,6 +31,30 @@ public sealed class SearchSnippetTextQuery : PlatformCqrsPagedQuery<SearchSnippe
             userId,
             companyId);
     }
+
+    public static async Task ClearCache(
+        IPlatformCacheRepositoryProvider cacheRepositoryProvider,
+        TextSnippetEntity changedEntityData,
+        Dictionary<string, object> requestContext,
+        Func<ILogger> loggerFactory,
+        CancellationToken cancellationToken = default)
+    {
+        // Queue task to clear cache every 5 seconds for 2 times.
+        // Delay because when save data, fulltext index take amount of time to update, so that we wait amount of time for fulltext index update
+        // We also set executeOnceImmediately=true to clear cache immediately in case of some index is updated fast
+        Util.TaskRunner.QueueIntervalAsyncActionInBackground(
+            token => cacheRepositoryProvider.Get().RemoveByTagsAsync([BuildCacheRequestTag(changedEntityData.CreatedByUserId)], token: token),
+            intervalTimeInSeconds: 5,
+            loggerFactory,
+            maximumIntervalExecutionCount: 2,
+            executeOnceImmediately: true,
+            cancellationToken);
+    }
+
+    public static string BuildCacheRequestTag(string createdByUserId)
+    {
+        return $"Query:{nameof(SearchSnippetTextQuery)};CreatedByUserId:{createdByUserId}";
+    }
 }
 
 public sealed class SearchSnippetTextQueryResult : PlatformCqrsQueryPagedResult<TextSnippetEntityDto>
@@ -92,6 +116,7 @@ internal sealed class SearchSnippetTextQueryHandler : PlatformCqrsQueryApplicati
         // STEP 1: Build Queries
         var fullItemsQueryBuilder = repository.GetQueryBuilder(
             builderFn: query => query
+                .Where(p => p.CreatedByUserId == RequestContext.UserId())
                 .PipeIf(
                     request.SearchText.IsNotNullOrEmpty(),
                     _ => fullTextSearchPersistenceService.Search(

@@ -97,7 +97,7 @@ public static class PlatformCqrsDomainEventsSupportEntityEventExtensions
     /// <br />
     /// This method is used in event handlers, such as CreateGoalActionHistoryOnUpdateGoalEntityEventHandler and SendEmailOnCreateOrUpdateAttendanceRequestEntityEventHandler, to check if specific fields were updated and to handle these updates accordingly. For example, if the Measurement field of a Goal entity was updated, an action history might be created; or if the Status field of an AttendanceRequest entity was updated, an email notification might be sent.
     /// </remarks>
-    public static ISupportDomainEventsEntity.FieldUpdatedDomainEvent<TValue> FindFieldUpdatedEvent<TValue, TEntity>(
+    public static ISupportDomainEventsEntity.FieldUpdatedDomainEvent<TValue>? FindFieldUpdatedEvent<TValue, TEntity>(
         this IPlatformCqrsDomainEventsSupportEntityEvent<TEntity> @event,
         Expression<Func<TEntity, TValue>> field)
     {
