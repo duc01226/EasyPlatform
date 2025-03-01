@@ -1,5 +1,6 @@
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.Logging;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Domain.Exceptions;
@@ -472,10 +473,11 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         {
             logger.LogError(
                 exception.BeautifyStackTrace(),
-                "UpdateExistingOutboxMessageFailedAsync. [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage: {OutboxJsonMessage}]].",
+                "UpdateExistingOutboxMessageFailedAsync. [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
                 exception.Message,
                 existingOutboxMessage.MessageTypeFullName,
-                existingOutboxMessage.JsonMessage);
+                LoggingConstants.DefaultRecommendedMaxLogsLength,
+                existingOutboxMessage.JsonMessage.TakeTop(LoggingConstants.DefaultRecommendedMaxLogsLength));
 
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 async () =>

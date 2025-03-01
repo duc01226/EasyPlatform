@@ -14,10 +14,9 @@ public interface IPlatformMessageBusConfig
     long LogSlowProcessWarningTimeMilliseconds { get; set; }
 }
 
-public class PlatformMessageBusConfig
-    : IPlatformMessageBusConfig
+public class PlatformMessageBusConfig : IPlatformMessageBusConfig
 {
-    public const long DefaultProcessWarningTimeMilliseconds = 500;
+    public const long DefaultProcessWarningTimeMilliseconds = 1000;
 
     /// <summary>
     /// Config the time to true to log consumer process time

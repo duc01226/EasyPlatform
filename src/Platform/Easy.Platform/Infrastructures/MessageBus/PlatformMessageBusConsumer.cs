@@ -1,6 +1,7 @@
 #nullable enable
 using System.Text.Json;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.Logging;
 using Easy.Platform.Common.Utils;
 using Microsoft.Extensions.Logging;
 
@@ -147,11 +148,12 @@ public abstract class PlatformMessageBusConsumer : IPlatformMessageBusConsumer
                     if (elapsedMilliseconds >= toCheckSlowProcessWarningTimeMilliseconds)
                     {
                         logger?.LogWarning(
-                            "[MessageBus] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. Consumer:{Consumer} BusMessage: {BusMessage}",
+                            "[MessageBus] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. Consumer:{Consumer} BusMessage (Top {DefaultRecommendedMaxLogsLength} characters): {BusMessage}",
                             toCheckSlowProcessWarningTimeMilliseconds,
                             elapsedMilliseconds,
                             consumer.GetType().FullName,
-                            busMessage.ToJson());
+                            LoggingConstants.DefaultRecommendedMaxLogsLength,
+                            busMessage.ToJson().TakeTop(LoggingConstants.DefaultRecommendedMaxLogsLength));
                     }
                 });
         }

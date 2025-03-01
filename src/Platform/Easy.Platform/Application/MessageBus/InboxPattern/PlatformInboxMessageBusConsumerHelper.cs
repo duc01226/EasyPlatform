@@ -1,6 +1,7 @@
 using Easy.Platform.Application.MessageBus.Consumers;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.Logging;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Domain.Exceptions;
@@ -929,11 +930,12 @@ public static class PlatformInboxMessageBusConsumerHelper
             loggerFactory()
                 .LogError(
                     exception.BeautifyStackTrace(),
-                    "UpdateExistingInboxFailedMessageAsync. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxJsonMessage (Top 1000 characters): {InboxJsonMessage}]];",
+                    "UpdateExistingInboxFailedMessageAsync. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]];",
                     exception.Message,
                     message.GetType().GetNameOrGenericTypeName(),
                     consumerType?.GetNameOrGenericTypeName() ?? "n/a",
-                    existingInboxMessage.JsonMessage.TakeTop(1000));
+                    LoggingConstants.DefaultRecommendedMaxLogsLength,
+                    existingInboxMessage.JsonMessage.TakeTop(LoggingConstants.DefaultRecommendedMaxLogsLength));
 
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 async () =>
@@ -969,11 +971,12 @@ public static class PlatformInboxMessageBusConsumerHelper
             loggerFactory()
                 .LogError(
                     ex.BeautifyStackTrace(),
-                    "UpdateExistingInboxFailedMessageAsync failed. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxJsonMessage (Top 1000 characters): {InboxJsonMessage}]];",
+                    "UpdateExistingInboxFailedMessageAsync failed. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]];",
                     ex.Message,
                     existingInboxMessage.MessageTypeFullName,
                     existingInboxMessage.ConsumerBy,
-                    existingInboxMessage.JsonMessage.TakeTop(1000));
+                    LoggingConstants.DefaultRecommendedMaxLogsLength,
+                    existingInboxMessage.JsonMessage.TakeTop(LoggingConstants.DefaultRecommendedMaxLogsLength));
         }
     }
 
