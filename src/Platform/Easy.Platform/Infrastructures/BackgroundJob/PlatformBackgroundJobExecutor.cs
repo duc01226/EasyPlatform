@@ -43,7 +43,7 @@ public abstract class PlatformBackgroundJobExecutor<TParam> : IPlatformBackgroun
     {
         RootServiceProvider = rootServiceProvider;
         LoggerFactory = loggerFactory;
-        loggerLazy = new Lazy<ILogger>(() => LoggerFactory.CreateLogger(typeof(PlatformBackgroundJobExecutor).GetNameOrGenericTypeName() + $"-{GetType().Name}"));
+        loggerLazy = new Lazy<ILogger>(() => LoggerFactory.CreateLogger(typeof(PlatformBackgroundJobExecutor).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}"));
     }
 
     protected ILogger Logger => loggerLazy.Value;

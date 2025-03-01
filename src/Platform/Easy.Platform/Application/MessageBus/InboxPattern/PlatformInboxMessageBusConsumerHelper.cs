@@ -929,11 +929,11 @@ public static class PlatformInboxMessageBusConsumerHelper
             loggerFactory()
                 .LogError(
                     exception.BeautifyStackTrace(),
-                    "UpdateExistingInboxFailedMessageAsync. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxJsonMessage: {InboxJsonMessage}]];",
+                    "UpdateExistingInboxFailedMessageAsync. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxJsonMessage (Top 1000 characters): {InboxJsonMessage}]];",
                     exception.Message,
                     message.GetType().GetNameOrGenericTypeName(),
                     consumerType?.GetNameOrGenericTypeName() ?? "n/a",
-                    existingInboxMessage.JsonMessage);
+                    existingInboxMessage.JsonMessage.TakeTop(1000));
 
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 async () =>
@@ -969,11 +969,11 @@ public static class PlatformInboxMessageBusConsumerHelper
             loggerFactory()
                 .LogError(
                     ex.BeautifyStackTrace(),
-                    "UpdateExistingInboxFailedMessageAsync failed. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxJsonMessage: {InboxJsonMessage}]];",
+                    "UpdateExistingInboxFailedMessageAsync failed. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxJsonMessage (Top 1000 characters): {InboxJsonMessage}]];",
                     ex.Message,
                     existingInboxMessage.MessageTypeFullName,
                     existingInboxMessage.ConsumerBy,
-                    existingInboxMessage.JsonMessage);
+                    existingInboxMessage.JsonMessage.TakeTop(1000));
         }
     }
 

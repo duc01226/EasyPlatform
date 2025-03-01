@@ -1,3 +1,4 @@
+using System.Threading;
 using Easy.Platform.Application.Cqrs.Events.InboxSupport;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.RequestContext;
@@ -54,6 +55,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     private double retryOnFailedDelaySeconds = Util.TaskRunner.DefaultResilientDelaySeconds;
     private int retryOnFailedTimes = Util.TaskRunner.DefaultResilientRetryCount;
     private bool? throwExceptionOnHandleFailed;
+    private bool? cachedCheckHandleWhen;
 
     public PlatformCqrsEventApplicationHandler(
         ILoggerFactory loggerFactory,
@@ -329,8 +331,6 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
 
     protected async Task RunHandleAsync(TEvent @event, CancellationToken cancellationToken, int? retryCount = null)
     {
-        if (!await HandleWhen(@event)) return;
-
         if (ApplicationSettingContext.IsDebugInformationMode)
             Logger.Value.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(RunHandleAsync));
 
@@ -343,7 +343,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                     // If not then create new scope to open new uow so that multiple events handlers from an event do not get conflicted
                     // uow in the same scope if not open new scope
                     if (AllowHandleInBackgroundThread(@event) || CanExecuteHandlingEventUsingInboxConsumer(@event))
-                        await UnitOfWorkManager.ExecuteUowTask(() => HandleAsync(@event, cancellationToken));
+                        await UnitOfWorkManager.ExecuteUowTask(() => CheckToRunHandleAsync(@event, cancellationToken));
                     else
                     {
                         await RootServiceProvider.ExecuteInjectScopedAsync(
@@ -353,12 +353,12 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                                     () => serviceProvider.GetRequiredService(GetType())
                                         .As<PlatformCqrsEventApplicationHandler<TEvent>>()
                                         .With(newInstance => CopyPropertiesToNewInstanceBeforeExecution(this, newInstance))
-                                        .HandleAsync(@event, cancellationToken));
+                                        .CheckToRunHandleAsync(@event, cancellationToken));
                             });
                     }
                 }
                 else
-                    await HandleAsync(@event, cancellationToken);
+                    await CheckToRunHandleAsync(@event, cancellationToken);
             },
             retryCount: retryCount ?? RetryOnFailedTimes,
             sleepDurationProvider: p => RetryOnFailedDelaySeconds.Seconds(),
@@ -366,6 +366,16 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
 
         if (ApplicationSettingContext.IsDebugInformationMode)
             Logger.Value.LogInformation("{Type} {Method} FINISHED", GetType().FullName, nameof(RunHandleAsync));
+    }
+
+    private async Task CheckToRunHandleAsync(TEvent @event, CancellationToken cancellationToken)
+    {
+        if (await CheckHandleWhen(@event)) await HandleAsync(@event, cancellationToken);
+    }
+
+    private async Task<bool> CheckHandleWhen(TEvent @event)
+    {
+        return cachedCheckHandleWhen ??= await HandleWhen(@event);
     }
 
     protected bool HasInboxMessageSupport()

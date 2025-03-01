@@ -79,12 +79,15 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
     public async Task<TResult> Handle(TQuery request, CancellationToken cancellationToken)
     {
         if (RetryOnFailedTimes > 0)
+        {
             return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 () => DoExecuteHandleAsync(request, cancellationToken),
                 retryCount: RetryOnFailedTimes,
                 sleepDurationProvider: i => RetryOnFailedDelaySeconds.Seconds(),
                 ignoreExceptionTypes: IPlatformCqrsQueryApplicationHandler.IgnoreFailedRetryExceptionTypes,
                 cancellationToken: cancellationToken);
+        }
+
         return await DoExecuteHandleAsync(request, cancellationToken);
     }
 
@@ -108,7 +111,8 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
                         onException: ex =>
                         {
                             if (!ex.IsPlatformLogicException())
-                                LoggerFactory.CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
+                            {
+                                LoggerFactory.CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}")
                                     .LogError(
                                         ex.BeautifyStackTrace(),
                                         "[{Tag1}] Query:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{Request}. RequestContext:{RequestContext}",
@@ -118,8 +122,10 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
                                         request.AuditInfo?.AuditTrackId,
                                         request.ToJson(),
                                         RequestContext.GetAllKeyValues().ToJson());
+                            }
                             else
-                                LoggerFactory.CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
+                            {
+                                LoggerFactory.CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}")
                                     .LogWarning(
                                         "[{Tag1}] Query:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{Request}.",
                                         "LogicErrorWarning",
@@ -127,6 +133,7 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
                                         ex.Message,
                                         request.AuditInfo?.AuditTrackId,
                                         request.ToJson());
+                            }
                         });
 
                     return result;
@@ -150,6 +157,7 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
             Logger.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(Handle));
 
         if (IsDistributedTracingEnabled)
+        {
             using (var activity =
                 IPlatformCqrsCommandApplicationHandler.ActivitySource.StartActivity($"QueryApplicationHandler.{nameof(Handle)}"))
             {
@@ -158,6 +166,7 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
 
                 return await handleFunc();
             }
+        }
 
         var result = await handleFunc();
 

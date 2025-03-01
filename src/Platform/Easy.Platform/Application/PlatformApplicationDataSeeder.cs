@@ -1,4 +1,5 @@
 using Easy.Platform.Common;
+using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Configuration;
@@ -57,7 +58,7 @@ public abstract class PlatformApplicationDataSeeder : IPlatformApplicationDataSe
         Configuration = configuration;
         LoggerFactory = loggerFactory;
         RootServiceProvider = rootServiceProvider;
-        loggerLazy = new Lazy<ILogger>(() => loggerFactory.CreateLogger(GetType()));
+        loggerLazy = new Lazy<ILogger>(() => loggerFactory.CreateLogger(typeof(PlatformApplicationDataSeeder).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}"));
         ApplicationSettingContext = serviceProvider.GetRequiredService<IPlatformApplicationSettingContext>();
     }
 
@@ -89,11 +90,13 @@ public abstract class PlatformApplicationDataSeeder : IPlatformApplicationDataSe
             async () =>
             {
                 if (AutoBeginUow)
+                {
                     using (var uow = UnitOfWorkManager.Begin())
                     {
                         await InternalSeedData(isReplaceNewSeedData);
                         await uow.CompleteAsync();
                     }
+                }
                 else
                     await InternalSeedData(isReplaceNewSeedData);
             });

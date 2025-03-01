@@ -133,7 +133,7 @@ public class RabbitMqPooledObjectPolicy : IPooledObjectPolicy<IConnection>
         catch (Exception ex)
         {
             throw new Exception(
-                $"{GetType().Name} CreateConnection failed. [[Exception:{ex}]]. FullStackTrace:{fullStackTrace}]]",
+                $"{GetType().Name} CreateConnection failed. FullStackTrace:{fullStackTrace}]]",
                 ex);
         }
     }
@@ -162,7 +162,7 @@ public class RabbitMqPooledObjectPolicy : IPooledObjectPolicy<IConnection>
         catch (Exception ex)
         {
             throw new Exception(
-                $"{GetType().Name} CreateConnection failed. [[Exception:{ex}]]. FullStackTrace:{fullStackTrace}]]",
+                $"{GetType().Name} CreateConnection failed. FullStackTrace:{fullStackTrace}]]",
                 ex);
         }
     }

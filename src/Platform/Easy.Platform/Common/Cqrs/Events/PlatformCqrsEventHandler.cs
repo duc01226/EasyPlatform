@@ -108,11 +108,13 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
             // so that it wont be disposed when run in background thread, this handler ServiceProvider will be disposed
             if (AllowHandleInBackgroundThread(@event) &&
                 NotNeedWaitHandlerExecutionFinishedImmediately(@event))
+            {
                 Util.TaskRunner.QueueActionInBackground(
                     async () => await ExecuteHandleInNewScopeAsync(@event, cancellationToken),
-                    loggerFactory: () => LoggerFactory.CreateLogger(typeof(PlatformCqrsEventHandler<>).GetNameOrGenericTypeName() + $"-{GetType().Name}"),
+                    loggerFactory: () => LoggerFactory.CreateLogger(typeof(PlatformCqrsEventHandler<>).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}"),
                     cancellationToken: default,
                     logFullStackTraceBeforeBackgroundTask: false);
+            }
             else
                 await ExecuteRetryHandleAsync(this, @event);
         }
@@ -174,6 +176,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
         {
             // Retry RetryOnFailedTimes to help resilient PlatformCqrsEventHandler. Sometime parallel, create/update concurrency could lead to error
             if (RetryOnFailedTimes > 0)
+            {
                 await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                     async () => await handlerNewInstance.ExecuteHandleAsync(notification, default),
                     retryCount: RetryOnFailedTimes,
@@ -183,6 +186,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
                         if (retryAttempt > 2)
                             handlerNewInstance.LogError(notification, e.BeautifyStackTrace(), LoggerFactory, "Retry");
                     });
+            }
             else
                 await handlerNewInstance.ExecuteHandleAsync(notification, default);
         }
@@ -204,6 +208,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     protected async Task ExecuteHandleWithTracingAsync(TEvent @event, Func<Task> handleAsync)
     {
         if (IsDistributedTracingEnabled)
+        {
             using (var activity = IPlatformCqrsEventHandler.ActivitySource.StartActivity($"EventHandler.{nameof(ExecuteHandleAsync)}"))
             {
                 activity?.AddTag("Type", GetType().FullName);
@@ -212,6 +217,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
 
                 await handleAsync();
             }
+        }
         else await handleAsync();
     }
 
@@ -232,6 +238,6 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
 
     public ILogger CreateLogger(ILoggerFactory loggerFactory)
     {
-        return loggerFactory.CreateLogger(typeof(PlatformCqrsEventHandler<>).GetNameOrGenericTypeName() + $"-{GetType().Name}");
+        return loggerFactory.CreateLogger(typeof(PlatformCqrsEventHandler<>).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}");
     }
 }

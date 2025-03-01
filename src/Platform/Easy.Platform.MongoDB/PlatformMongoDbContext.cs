@@ -149,7 +149,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
             Logger.LogError(ex.BeautifyStackTrace(), "PlatformMongoDbContext {Type} Initialize failed.", GetType().Name);
 
             throw new Exception(
-                $"{GetType().Name} Initialize failed. [[Exception:{ex}]]. FullStackTrace:{fullStackTrace}]]",
+                $"{GetType().Name} Initialize failed. FullStackTrace:{fullStackTrace}]]",
                 ex);
         }
 

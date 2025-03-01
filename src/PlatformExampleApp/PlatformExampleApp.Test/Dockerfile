@@ -5,7 +5,11 @@ FROM mcr.microsoft.com/dotnet/sdk:9.0 AS base
 
 FROM base AS final
 WORKDIR /app
+
+# Copy NuGet config and editorconfig
+COPY NuGetDocker.Config ./nuget.config
 COPY ./.editorconfig ./.editorconfig
+
 COPY Platform/Easy.Platform/Easy.Platform.csproj Platform/Easy.Platform/
 COPY Platform/Easy.Platform.AspNetCore/Easy.Platform.AspNetCore.csproj Platform/Easy.Platform.AspNetCore/
 COPY Platform/Easy.Platform.EfCore/Easy.Platform.EfCore.csproj Platform/Easy.Platform.EfCore/

@@ -181,7 +181,9 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
     protected readonly ILoggerFactory LoggerFactory;
     private readonly Lazy<ILogger> loggerLazy;
 
-    public PlatformMessageBusConsumer(ILoggerFactory loggerFactory)
+    private bool? cachedCheckHandleWhen;
+
+    protected PlatformMessageBusConsumer(ILoggerFactory loggerFactory)
     {
         LoggerFactory = loggerFactory;
         loggerLazy = new Lazy<ILogger>(() => CreateLogger(loggerFactory, GetType()));
@@ -207,7 +209,7 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
     {
         try
         {
-            if (!NoNeedCheckHandleWhen && !await HandleWhen(message, routingKey)) return;
+            if (!NoNeedCheckHandleWhen && !await CheckHandleWhen(message, routingKey)) return;
 
             if (RetryOnFailedTimes > 0)
             {
@@ -225,6 +227,11 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
             IPlatformMessageBusConsumer.LogError(Logger, GetType(), message, e.BeautifyStackTrace());
             throw;
         }
+    }
+
+    private async Task<bool> CheckHandleWhen(TMessage message, string routingKey)
+    {
+        return cachedCheckHandleWhen ??= await HandleWhen(message, routingKey);
     }
 
     public abstract Task HandleLogicAsync(TMessage message, string routingKey);
@@ -246,7 +253,7 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
 
     public static ILogger CreateLogger(ILoggerFactory loggerFactory, Type type)
     {
-        return loggerFactory.CreateLogger(type);
+        return loggerFactory.CreateLogger(typeof(PlatformMessageBusConsumer).GetFullNameOrGenericTypeFullName() + $"-{type.Name}");
     }
 
     public ILogger CreateLogger()

@@ -408,7 +408,7 @@ dotnet_diagnostic.IDE0005.severity = suggestion
 dotnet_diagnostic.IDE0010.severity = suggestion
 dotnet_diagnostic.IDE0011.severity = none
 dotnet_diagnostic.IDE0039.severity = error
-dotnet_diagnostic.IDE0040.severity = error
+dotnet_diagnostic.IDE0040.severity = none
 dotnet_diagnostic.IDE0044.severity = error
 dotnet_diagnostic.IDE0050.severity = error
 dotnet_diagnostic.IDE0051.severity = error
@@ -439,6 +439,7 @@ dotnet_diagnostic.IDE0290.severity = suggestion
 dotnet_diagnostic.IDE0100.severity = suggestion
 dotnet_diagnostic.IDE0240.severity = suggestion
 dotnet_diagnostic.IDE0066.severity = suggestion
+dotnet_diagnostic.IDE0071.severity = error
 
 dotnet_diagnostic.SA1101.severity = error
 dotnet_diagnostic.SA1413.severity = error
@@ -462,7 +463,7 @@ dotnet_diagnostic.CA1304.severity = suggestion
 dotnet_diagnostic.CA1305.severity = suggestion
 dotnet_diagnostic.CA1822.severity = suggestion
 dotnet_diagnostic.CA2254.severity = error
-dotnet_diagnostic.CA1848.severity = suggestion
+dotnet_diagnostic.CA1848.severity = none
 dotnet_diagnostic.CA1707.severity = none
 dotnet_diagnostic.CA2201.severity = none
 dotnet_diagnostic.CA1725.severity = error
@@ -497,6 +498,7 @@ dotnet_diagnostic.CA1861.severity = suggestion
 dotnet_diagnostic.CA1862.severity = suggestion
 dotnet_diagnostic.CA1863.severity = suggestion
 dotnet_diagnostic.CA1869.severity = suggestion
+dotnet_diagnostic.CA2263.severity = suggestion
 
 dotnet_diagnostic.CS0628.severity = error
 dotnet_diagnostic.CS4014.severity = error
@@ -723,6 +725,8 @@ dotnet_diagnostic.S1144.severity = none
 dotnet_diagnostic.S1186.severity = suggestion
 
 dotnet_diagnostic.S2857.severity = none
+dotnet_diagnostic.S6667.severity = none
+dotnet_diagnostic.S6934.severity = none
 
 dotnet_diagnostic.S6602.severity = suggestion
 dotnet_diagnostic.S6603.severity = suggestion
@@ -733,6 +737,13 @@ dotnet_diagnostic.S6608.severity = suggestion
 dotnet_diagnostic.S2589.severity = suggestion
 dotnet_diagnostic.S6575.severity = suggestion
 dotnet_diagnostic.S2583.severity = suggestion
+dotnet_diagnostic.S2139.severity = none
+dotnet_diagnostic.S127.severity = none
+dotnet_diagnostic.S3993.severity = none
+dotnet_diagnostic.S6964.severity = suggestion
+dotnet_diagnostic.S1244.severity = none
+dotnet_diagnostic.S6932.severity = none
+dotnet_diagnostic.S1694.severity = none
 
 # S3878: Remove array creation and simply pass element for params parameter
 dotnet_diagnostic.S3878.severity = suggestion
@@ -759,3 +770,6 @@ dotnet_diagnostic.ASYNC0002.severity = none
 
 dotnet_diagnostic.IDE0130.severity = warning
 dotnet_diagnostic.IDE0305.severity = suggestion
+
+
+resharper_arrange_type_member_modifiers_highlighting=none

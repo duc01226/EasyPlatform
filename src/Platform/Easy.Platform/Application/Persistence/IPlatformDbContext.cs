@@ -79,7 +79,9 @@ public interface IPlatformDbContext : IDisposable
                             retryCount: MigrationRetryCount);
                     });
             },
-            loggerFactory: () => rootServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger(GetType()));
+            loggerFactory: () =>
+                rootServiceProvider.GetRequiredService<ILoggerFactory>()
+                    .CreateLogger(typeof(IPlatformDbContext).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}"));
     }
 
     public static void LogDataMigrationFailedError(ILogger logger, Exception ex, string migrationExecutionName)

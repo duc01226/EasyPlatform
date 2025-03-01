@@ -107,7 +107,8 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
                         onException: ex =>
                         {
                             if (!ex.IsPlatformLogicException())
-                                LoggerFactory.CreateLogger(typeof(PlatformCqrsCommandApplicationHandler<>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
+                            {
+                                LoggerFactory.CreateLogger(typeof(PlatformCqrsCommandApplicationHandler<>).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}")
                                     .LogError(
                                         ex.BeautifyStackTrace(),
                                         "[{Tag1}] Command:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{Request}. RequestContext:{RequestContext}",
@@ -117,8 +118,10 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
                                         request.AuditInfo?.AuditTrackId,
                                         request.ToJson(),
                                         RequestContext.GetAllKeyValues().ToJson());
+                            }
                             else
-                                LoggerFactory.CreateLogger(typeof(PlatformCqrsCommandApplicationHandler<>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
+                            {
+                                LoggerFactory.CreateLogger(typeof(PlatformCqrsCommandApplicationHandler<>).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}")
                                     .LogWarning(
                                         "[{Tag1}] Command:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{Request}.",
                                         "LogicErrorWarning",
@@ -126,14 +129,17 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
                                         ex.Message,
                                         request.AuditInfo?.AuditTrackId,
                                         request.ToJson());
+                            }
                         });
 
                     if (RootServiceProvider.IsAnyImplementationAssignableToServiceTypeRegistered(
                         typeof(IPlatformCqrsEventHandler<PlatformCqrsCommandEvent<TCommand, TResult>>)))
+                    {
                         await Cqrs.Value.SendEvent(
                             new PlatformCqrsCommandEvent<TCommand, TResult>(request, result, PlatformCqrsCommandEventAction.Executed)
                                 .With(p => p.SetRequestContextValues(RequestContext.GetAllKeyValues())),
                             cancellationToken);
+                    }
 
                     return result;
                 });
@@ -156,6 +162,7 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
             Logger.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(Handle));
 
         if (IsDistributedTracingEnabled)
+        {
             using (var activity =
                 IPlatformCqrsCommandApplicationHandler.ActivitySource.StartActivity($"CommandApplicationHandler.{nameof(Handle)}"))
             {
@@ -164,6 +171,7 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
 
                 return await handleFunc();
             }
+        }
 
         var result = await handleFunc();
 
@@ -190,12 +198,15 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
     protected virtual async Task<TResult> ExecuteHandleAsync(TCommand request, CancellationToken cancellationToken)
     {
         if (RetryOnFailedTimes > 0)
+        {
             return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 () => DoExecuteHandleAsync(request, cancellationToken),
                 retryCount: RetryOnFailedTimes,
                 sleepDurationProvider: i => RetryOnFailedDelaySeconds.Seconds(),
                 ignoreExceptionTypes: IPlatformCqrsCommandApplicationHandler.IgnoreFailedRetryExceptionTypes,
                 cancellationToken: cancellationToken);
+        }
+
         return await DoExecuteHandleAsync(request, cancellationToken);
     }
 

@@ -1,7 +1,5 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Linq.Expressions;
-using System.Reflection;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
@@ -305,7 +303,7 @@ public abstract class PlatformUnitOfWork : IPlatformUnitOfWork
             await InvokeOnSaveChangesFailedActions(new PlatformUnitOfWorkFailedArgs(ex));
 
             throw new Exception(
-                $"{GetType().Name} save changes uow failed. [[Exception:{ex}]]",
+                $"{GetType().Name} save changes uow failed.",
                 ex);
         }
     }

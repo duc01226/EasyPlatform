@@ -465,7 +465,7 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
 
     public ILogger CreateLogger(ILoggerFactory loggerFactory)
     {
-        return loggerFactory.CreateLogger(GetType());
+        return loggerFactory.CreateLogger(typeof(PlatformModule).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}");
     }
 
     protected static void ExecuteRegisterByAssemblyOnlyOnce(Action<Assembly> action, List<Assembly> assemblies, string actionName)
