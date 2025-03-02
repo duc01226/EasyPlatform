@@ -744,6 +744,7 @@ dotnet_diagnostic.S6964.severity = suggestion
 dotnet_diagnostic.S1244.severity = none
 dotnet_diagnostic.S6932.severity = none
 dotnet_diagnostic.S1694.severity = none
+dotnet_diagnostic.S1066.severity = none
 
 # S3878: Remove array creation and simply pass element for params parameter
 dotnet_diagnostic.S3878.severity = suggestion

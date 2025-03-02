@@ -1,4 +1,5 @@
 #nullable enable
+using System.Diagnostics;
 using System.Text.Json;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Logging;
@@ -56,10 +57,11 @@ public interface IPlatformMessageBusConsumer
     {
         logger.LogError(
             e.BeautifyStackTrace(),
-            "Error Consume message bus. [ConsumerType:{ConsumerType}]; [MessageType:{MessageType}]; [MessageContent:{MessageContent}];",
+            "Error Consume message bus. [ConsumerType:{ConsumerType}]; [MessageType:{MessageType}]; [MessageJson (Top {DefaultRecommendedMaxLogsLength} characters):{MessageContent}];",
             consumerType.FullName,
             message.GetType().GetNameOrGenericTypeName(),
-            message.ToJson());
+            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+            message.ToJson().TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
     }
 }
 
@@ -152,8 +154,8 @@ public abstract class PlatformMessageBusConsumer : IPlatformMessageBusConsumer
                             toCheckSlowProcessWarningTimeMilliseconds,
                             elapsedMilliseconds,
                             consumer.GetType().FullName,
-                            LoggingConstants.DefaultRecommendedMaxLogsLength,
-                            busMessage.ToJson().TakeTop(LoggingConstants.DefaultRecommendedMaxLogsLength));
+                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                            busMessage.ToJson().TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
                     }
                 });
         }
@@ -197,6 +199,8 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
 
     public virtual double RetryOnFailedDelaySeconds { get; set; } = Util.TaskRunner.DefaultResilientDelaySeconds;
 
+    public virtual bool LogErrorOnException => true;
+
     public override Task HandleAsync(object message, string routingKey)
     {
         return HandleAsync(message.Cast<TMessage>(), routingKey);
@@ -226,7 +230,8 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
         }
         catch (Exception e)
         {
-            IPlatformMessageBusConsumer.LogError(Logger, GetType(), message, e.BeautifyStackTrace());
+            if (LogErrorOnException)
+                IPlatformMessageBusConsumer.LogError(Logger, GetType(), message, e.BeautifyStackTrace());
             throw;
         }
     }

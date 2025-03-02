@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Ben.Demystifier" Version="0.4.1" />
     <PackageReference Include="FluentValidation" Version="11.11.0" />
     <PackageReference Include="MediatR" Version="12.4.1" />
     <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.2.0-preview.1.25105.6" />

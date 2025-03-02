@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Easy.Platform.Application.MessageBus.Consumers;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
@@ -934,8 +935,8 @@ public static class PlatformInboxMessageBusConsumerHelper
                     exception.Message,
                     message.GetType().GetNameOrGenericTypeName(),
                     consumerType?.GetNameOrGenericTypeName() ?? "n/a",
-                    LoggingConstants.DefaultRecommendedMaxLogsLength,
-                    existingInboxMessage.JsonMessage.TakeTop(LoggingConstants.DefaultRecommendedMaxLogsLength));
+                    PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                    existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
 
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 async () =>
@@ -975,8 +976,8 @@ public static class PlatformInboxMessageBusConsumerHelper
                     ex.Message,
                     existingInboxMessage.MessageTypeFullName,
                     existingInboxMessage.ConsumerBy,
-                    LoggingConstants.DefaultRecommendedMaxLogsLength,
-                    existingInboxMessage.JsonMessage.TakeTop(LoggingConstants.DefaultRecommendedMaxLogsLength));
+                    PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                    existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
         }
     }
 

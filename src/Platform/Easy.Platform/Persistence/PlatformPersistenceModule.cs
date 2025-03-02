@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Application.Persistence;

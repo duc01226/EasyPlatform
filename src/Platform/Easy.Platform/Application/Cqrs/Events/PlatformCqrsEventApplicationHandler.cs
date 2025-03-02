@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Threading;
 using Easy.Platform.Application.Cqrs.Events.InboxSupport;
 using Easy.Platform.Application.MessageBus.InboxPattern;

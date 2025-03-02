@@ -361,7 +361,7 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
         {
             Logger.LogInformation("[PlatformModule] InitPerformanceProfiling. Config:{Config}", config.ToFormattedJson());
 
-            Profiler.Instance.SetCPUTrackingEnabled(config.Enabled == true && (config.CPUTrackingEnabled ?? true));
+            Profiler.Instance.SetCPUTrackingEnabled(config.Enabled == true && (config.CpuTrackingEnabled ?? true));
             Profiler.Instance.SetAllocationTrackingEnabled(config.Enabled == true && (config.AllocationTrackingEnabled ?? true));
             Profiler.Instance.SetContentionTrackingEnabled(config.Enabled == true && (config.ContentionTrackingEnabled ?? false));
             Profiler.Instance.SetExceptionTrackingEnabled(config.Enabled == true && (config.ExceptionTrackingEnabled ?? false));
@@ -643,7 +643,7 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
         /// PYROSCOPE_PROFILING_WALLTIME_ENABLED environment variables. If CPU/wall profiling is not
         /// configured, this function will have no effect.
         /// </summary>
-        public bool? CPUTrackingEnabled { get; set; } = true;
+        public bool? CpuTrackingEnabled { get; set; } = true;
 
         /// <summary>
         /// Enables or disables allocation profiling dynamically.

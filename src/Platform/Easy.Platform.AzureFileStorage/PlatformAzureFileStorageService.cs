@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -423,9 +424,13 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
     private static void EnsureFileResourceNameValid(string resourceName, string resourceType)
     {
         if (string.IsNullOrWhiteSpace(resourceName))
+        {
             throw new ArgumentException(
                 string.Format(CultureInfo.InvariantCulture, "Invalid {0} name. The {0} name may not be null, empty, or whitespace only.", resourceType));
+        }
+
         if (resourceName.Length < 1 || resourceName.Length > byte.MaxValue)
+        {
             throw new ArgumentException(
                 string.Format(
                     CultureInfo.InvariantCulture,
@@ -433,9 +438,13 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
                     resourceType,
                     1,
                     (int)byte.MaxValue));
+        }
+
         if (!FileDirectoryRegex.IsMatch(resourceName))
+        {
             throw new ArgumentException(
                 string.Format(CultureInfo.InvariantCulture, "Invalid {0} name. Check MSDN for more information about valid {0} naming.", resourceType));
+        }
     }
 
     public PlatformValidationResult<string> ValidateFileName(string fileName)
@@ -445,8 +454,11 @@ public class PlatformAzureFileStorageService : IPlatformFileStorageService
             // Copy from Microsoft.Azure.Storage.NameValidator
             EnsureFileResourceNameValid(fileName, "file");
             if (fileName.EndsWith('/'))
+            {
                 throw new ArgumentException(
                     string.Format(CultureInfo.InvariantCulture, "Invalid {0} name. Check MSDN for more information about valid {0} naming.", "file"));
+            }
+
             if (ReservedFileNames.Any(p => p.Equals(fileName, StringComparison.OrdinalIgnoreCase)))
                 throw new ArgumentException(string.Format(CultureInfo.InvariantCulture, "Invalid {0} name. This {0} name is reserved.", "file"));
 

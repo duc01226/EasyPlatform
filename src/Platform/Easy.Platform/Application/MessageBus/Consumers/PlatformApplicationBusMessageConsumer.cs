@@ -88,6 +88,8 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
     protected IServiceProvider ServiceProvider { get; }
     protected IPlatformUnitOfWorkManager UnitOfWorkManager { get; }
 
+    public override bool LogErrorOnException => HandleExistingInboxMessage == null && !IsHandlingLogicForInboxMessage;
+
     /// <summary>
     /// Gets a value indicating whether to automatically open a unit of work when handling a message.
     /// </summary>

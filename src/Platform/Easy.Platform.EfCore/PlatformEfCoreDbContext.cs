@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Linq.Expressions;
 using Easy.Platform.Application.Persistence;
 using Easy.Platform.Application.RequestContext;

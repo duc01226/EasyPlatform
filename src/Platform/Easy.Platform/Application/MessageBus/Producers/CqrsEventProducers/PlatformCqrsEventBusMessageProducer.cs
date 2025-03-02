@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Easy.Platform.Application.Cqrs.Events;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;

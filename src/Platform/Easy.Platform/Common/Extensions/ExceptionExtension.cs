@@ -16,9 +16,4 @@ public static class ExceptionExtension
                 exception.StackTrace
             });
     }
-
-    public static Exception BeautifyStackTrace(this Exception exception)
-    {
-        return exception.Demystify();
-    }
 }

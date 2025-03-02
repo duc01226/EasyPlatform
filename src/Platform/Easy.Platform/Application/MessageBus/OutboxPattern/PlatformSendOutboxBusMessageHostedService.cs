@@ -1,4 +1,5 @@
 #pragma warning disable IDE0055
+using System.Diagnostics;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.HostingBackgroundServices;

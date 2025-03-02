@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Logging;
@@ -476,8 +477,8 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 "UpdateExistingOutboxMessageFailedAsync. [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
                 exception.Message,
                 existingOutboxMessage.MessageTypeFullName,
-                LoggingConstants.DefaultRecommendedMaxLogsLength,
-                existingOutboxMessage.JsonMessage.TakeTop(LoggingConstants.DefaultRecommendedMaxLogsLength));
+                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
 
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 async () =>

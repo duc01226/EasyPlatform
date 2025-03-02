@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using Easy.Platform.Application.BackgroundJob;
 using Easy.Platform.Application.Cqrs.Commands;
@@ -207,8 +208,10 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
                             var cacheRepository = cacheProvider.TryGet(cacheRepositoryType);
 
                             if (cacheRepository != null)
+                            {
                                 await cacheRepository.RemoveByTagsAsync(
                                     options.AutoClearContexts.SelectList(autoClearContext => PlatformCacheKey.BuildCacheKeyContextTag(autoClearContext)));
+                            }
                         });
             },
             retryAttempt => 10.Seconds(),
