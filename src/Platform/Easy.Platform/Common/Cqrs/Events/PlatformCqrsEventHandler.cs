@@ -111,7 +111,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
             {
                 Util.TaskRunner.QueueActionInBackground(
                     async () => await ExecuteHandleInNewScopeAsync(@event, cancellationToken),
-                    loggerFactory: () => LoggerFactory.CreateLogger(typeof(PlatformCqrsEventHandler<>).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}"),
+                    loggerFactory: () => LoggerFactory.CreateLogger(typeof(PlatformCqrsEventHandler<>).GetNameOrGenericTypeName() + $"-{GetType().Name}"),
                     cancellationToken: default,
                     logFullStackTraceBeforeBackgroundTask: false);
             }
@@ -238,6 +238,6 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
 
     public ILogger CreateLogger(ILoggerFactory loggerFactory)
     {
-        return loggerFactory.CreateLogger(typeof(PlatformCqrsEventHandler<>).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}");
+        return loggerFactory.CreateLogger(typeof(PlatformCqrsEventHandler<>).GetNameOrGenericTypeName() + $"-{GetType().Name}");
     }
 }

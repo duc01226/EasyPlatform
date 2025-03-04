@@ -79,48 +79,41 @@ public class PlatformGlobalExceptionHandlerMiddleware : PlatformMiddleware
 
     protected virtual async Task OnException(HttpContext context, Exception exception)
     {
-        if (exception is BadHttpRequestException or OperationCanceledException or TaskCanceledException)
-        {
-            Logger.LogWarning(
-                exception.BeautifyStackTrace(),
-                "Exception {Exception}. RequestId: {RequestId}. RequestContext: {RequestContext}",
-                exception.GetType().Name,
-                context.TraceIdentifier,
-                RequestContextAccessor.Current.GetAllKeyValues().ToJson());
-        }
-        else
+        HandleLogException(Logger, context, exception, RequestContextAccessor);
+
+        if (exception is not (BadHttpRequestException or OperationCanceledException or TaskCanceledException))
         {
             var errorResponse = await exception
                 .WhenIs<Exception, PlatformPermissionException, PlatformAspNetMvcErrorResponse>(
                     permissionException => new PlatformAspNetMvcErrorResponse(
                         PlatformAspNetMvcErrorInfo.FromPermissionException(permissionException, DeveloperExceptionEnabled),
                         HttpStatusCode.Forbidden,
-                        context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
+                        context.TraceIdentifier))
                 .WhenIs<IPlatformValidationException>(
                     validationException => new PlatformAspNetMvcErrorResponse(
                         PlatformAspNetMvcErrorInfo.FromValidationException(validationException, DeveloperExceptionEnabled),
                         HttpStatusCode.BadRequest,
-                        context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
+                        context.TraceIdentifier))
                 .WhenIs<PlatformApplicationException>(
                     applicationException => new PlatformAspNetMvcErrorResponse(
                         PlatformAspNetMvcErrorInfo.FromApplicationException(applicationException, DeveloperExceptionEnabled),
                         HttpStatusCode.BadRequest,
-                        context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
+                        context.TraceIdentifier))
                 .WhenIs<PlatformNotFoundException>(
                     domainNotFoundException => new PlatformAspNetMvcErrorResponse(
                         PlatformAspNetMvcErrorInfo.FromNotFoundException(domainNotFoundException, DeveloperExceptionEnabled),
                         HttpStatusCode.NotFound,
-                        context.TraceIdentifier).PipeAction(_ => LogUnexpectedRequestError(exception, context)))
+                        context.TraceIdentifier))
                 .WhenIs<PlatformDomainException>(
                     domainException => new PlatformAspNetMvcErrorResponse(
                         PlatformAspNetMvcErrorInfo.FromDomainException(domainException, DeveloperExceptionEnabled),
                         HttpStatusCode.BadRequest,
-                        context.TraceIdentifier).PipeAction(_ => LogKnownRequestWarning(exception, context)))
+                        context.TraceIdentifier))
                 .Else(
                     exception => new PlatformAspNetMvcErrorResponse(
                         PlatformAspNetMvcErrorInfo.FromUnknownException(exception, DeveloperExceptionEnabled),
                         HttpStatusCode.InternalServerError,
-                        context.TraceIdentifier).PipeAction(_ => LogUnexpectedRequestError(exception, context)))
+                        context.TraceIdentifier))
                 .ExecuteAsync();
 
             context.Response.ContentType = "application/json";
@@ -131,22 +124,54 @@ public class PlatformGlobalExceptionHandlerMiddleware : PlatformMiddleware
         }
     }
 
-    protected void LogKnownRequestWarning(Exception exception, HttpContext context)
+    public static void HandleLogException(ILogger logger, HttpContext context, Exception exception, IPlatformApplicationRequestContextAccessor requestContextAccessor)
     {
-        Logger.LogWarning(
+        switch (exception)
+        {
+            case BadHttpRequestException or OperationCanceledException or TaskCanceledException:
+                logger.LogWarning(
+                    exception.BeautifyStackTrace(),
+                    "Exception {Exception}. RequestId: {RequestId}. RequestContext: {RequestContext}",
+                    exception.GetType().Name,
+                    context.TraceIdentifier,
+                    requestContextAccessor.Current.GetAllKeyValues().ToJson());
+                break;
+            case PlatformPermissionException or
+                IPlatformValidationException or
+                PlatformApplicationException or
+                PlatformDomainException:
+                LogKnownRequestWarning(logger, exception, context, requestContextAccessor);
+                break;
+            default:
+                LogUnexpectedRequestError(logger, exception, context, requestContextAccessor);
+                break;
+        }
+    }
+
+    public static void LogKnownRequestWarning(
+        ILogger logger,
+        Exception exception,
+        HttpContext context,
+        IPlatformApplicationRequestContextAccessor requestContextAccessor)
+    {
+        logger.LogWarning(
             exception.BeautifyStackTrace(),
             "[KnownRequestWarning] There is a {ExceptionType} during the processing of the request. RequestId: {RequestId}. RequestContext: {RequestContext}",
             exception.GetType(),
             context.TraceIdentifier,
-            RequestContextAccessor.Current.GetAllKeyValues().ToJson());
+            requestContextAccessor.Current.GetAllKeyValues().ToJson());
     }
 
-    protected void LogUnexpectedRequestError(Exception exception, HttpContext context)
+    public static void LogUnexpectedRequestError(
+        ILogger logger,
+        Exception exception,
+        HttpContext context,
+        IPlatformApplicationRequestContextAccessor requestContextAccessor)
     {
-        Logger.LogError(
+        logger.LogError(
             exception.BeautifyStackTrace(),
             "[UnexpectedRequestError] There is an unexpected exception during the processing of the request. RequestId: {RequestId}. RequestContext: {RequestContext}",
             context.TraceIdentifier,
-            RequestContextAccessor.Current.GetAllKeyValues().ToJson());
+            requestContextAccessor.Current.GetAllKeyValues().ToJson());
     }
 }

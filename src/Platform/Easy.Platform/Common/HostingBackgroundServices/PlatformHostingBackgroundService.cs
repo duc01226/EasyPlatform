@@ -189,7 +189,7 @@ public abstract class PlatformHostingBackgroundService : IHostedService, IDispos
     /// <returns>The created logger instance.</returns>
     public ILogger CreateLogger(ILoggerFactory loggerFactory)
     {
-        return loggerFactory.CreateLogger(typeof(PlatformHostingBackgroundService).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}");
+        return loggerFactory.CreateLogger(typeof(PlatformHostingBackgroundService).GetNameOrGenericTypeName() + $"-{GetType().Name}");
     }
 
     /// <summary>

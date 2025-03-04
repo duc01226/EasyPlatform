@@ -12,19 +12,57 @@ public static class UrlExtension
     /// <summary>
     /// Converts a string to a Uri.
     /// </summary>
-    /// <param name="url">The string to convert.</param>
+    /// <param name="absoluteUrl">The string to convert.</param>
     /// <returns>The Uri created from the string.</returns>
-    public static Uri ToUri(this string url, params ValueTuple<string, object?>[] queryParams)
+    public static Uri ToUri(this string absoluteUrl, params ValueTuple<string, object?>[] queryParams)
     {
-        return new UriBuilder(url)
+        return new UriBuilder(absoluteUrl)
             .PipeIf(
                 queryParams.Any(),
                 uriBuilder =>
                     uriBuilder.With(
-                        p => p.Query = HttpUtility.ParseQueryString(string.Empty)
-                            .PipeAction(queryCollection => queryParams.ForEach(queryParam => queryCollection[queryParam.Item1] = queryParam.Item2?.ToString()))
-                            .ToString()))
+                        p => p.Query = p.Query.UpsertQueryParams()))
             .Uri;
+    }
+
+    public static string WithUrlQueryParams(this string absoluteOrRelativeUrl, params (string key, object? value)[] queryParams)
+    {
+        if (queryParams.IsEmpty())
+            return absoluteOrRelativeUrl;
+
+        var questionMarkIndex = absoluteOrRelativeUrl.IndexOf('?');
+
+        var baseUrlPart = questionMarkIndex >= 0 ? absoluteOrRelativeUrl.Substring(0, questionMarkIndex) : absoluteOrRelativeUrl;
+        var existingQueryPart = questionMarkIndex >= 0 && questionMarkIndex < absoluteOrRelativeUrl.Length - 1
+            ? absoluteOrRelativeUrl.Substring(questionMarkIndex + 1)
+            : string.Empty;
+
+        return existingQueryPart.IsNullOrEmpty() ? baseUrlPart : $"{baseUrlPart}?{existingQueryPart.UpsertQueryParams(queryParams)}";
+    }
+
+    public static string UpsertQueryParams(this string query, params (string key, object? value)[] queryParams)
+    {
+        if (queryParams.IsEmpty())
+            return query;
+
+        // Parse the existing query string.
+        var queryCollection = HttpUtility.ParseQueryString(query)
+            .PipeAction(
+                queryCollection =>
+                {
+                    // Add (or overwrite) the provided query parameters.
+                    foreach (var (key, value) in queryParams) queryCollection[key] = value?.ToString();
+                });
+
+        // Manually rebuild the query string so that spaces are encoded as %20.
+        /*
+         * By default, when you use HttpUtility.ParseQueryString() and then call its ToString() method, the resulting query string is encoded using the application/x-www-form-urlencoded standard. In this encoding, spaces are represented as + rather than %20. This behavior is intentional and standard in many parts of the .NET Framework.
+         *
+         * However, some external systems or APIs expect spaces to be encoded strictly as %20. The UriBuilder itself works as designed; it relies on the query string provided. If you require %20 encoding for spaces, you need to manually rebuild the query string using Uri.EscapeDataString(), which encodes spaces as %20.
+         */
+        return queryCollection.AllKeys
+            .SelectList(key => $"{Uri.EscapeDataString(key!)}={Uri.EscapeDataString(queryCollection[key] ?? "")}")
+            .JoinToString("&");
     }
 
     /// <summary>

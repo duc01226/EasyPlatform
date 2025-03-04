@@ -81,7 +81,7 @@ public interface IPlatformDbContext : IDisposable
             },
             loggerFactory: () =>
                 rootServiceProvider.GetRequiredService<ILoggerFactory>()
-                    .CreateLogger(typeof(IPlatformDbContext).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}"));
+                    .CreateLogger(typeof(IPlatformDbContext).GetNameOrGenericTypeName() + $"-{GetType().Name}"));
     }
 
     public static void LogDataMigrationFailedError(ILogger logger, Exception ex, string migrationExecutionName)

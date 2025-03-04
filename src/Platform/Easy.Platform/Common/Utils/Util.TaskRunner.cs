@@ -1152,7 +1152,7 @@ public static partial class Util
             var maxWaitMilliseconds = maxWaitSeconds * 1000;
             var result = getResult(target);
 
-            while (!condition(result))
+            while (!condition(result) && !cancellationToken.IsCancellationRequested)
             {
                 if (cancellationToken.IsCancellationRequested) throw new TaskCanceledException();
 
@@ -1196,7 +1196,7 @@ public static partial class Util
             var maxWaitMilliseconds = maxWaitSeconds * 1000;
             var result = getResult(target);
 
-            while (!condition(result))
+            while (!condition(result) && !cancellationToken.IsCancellationRequested)
             {
                 if ((DateTime.UtcNow - startWaitTime).TotalMilliseconds < maxWaitMilliseconds)
                 {
@@ -1234,7 +1234,7 @@ public static partial class Util
             var maxWaitMilliseconds = maxWaitSeconds * 1000;
             var result = await getResult(target);
 
-            while (!condition(result))
+            while (!condition(result) && !cancellationToken.IsCancellationRequested)
             {
                 if ((DateTime.UtcNow - startWaitTime).TotalMilliseconds < maxWaitMilliseconds)
                 {
@@ -1266,14 +1266,15 @@ public static partial class Util
             Func<bool> condition,
             Func<T, TAny> continueWaitOnlyWhen = null,
             double maxWaitSeconds = DefaultWaitUntilMaxSeconds,
-            string waitForMsg = null)
+            string waitForMsg = null,
+            CancellationToken cancellationToken = default)
         {
             var startWaitTime = DateTime.UtcNow;
             var maxWaitMilliseconds = maxWaitSeconds * 1000;
 
             try
             {
-                while (!condition())
+                while (!condition() && !cancellationToken.IsCancellationRequested)
                 {
                     // Retry check condition again to continueWaitOnlyWhen throw error only when condition not matched
                     // Sometime when continueWaitOnlyWhen execute the condition is matched
@@ -1306,9 +1307,10 @@ public static partial class Util
             Func<bool> condition,
             Action<T> continueWaitOnlyWhen,
             double maxWaitSeconds = DefaultWaitUntilMaxSeconds,
-            string waitForMsg = null)
+            string waitForMsg = null,
+            CancellationToken cancellationToken = default)
         {
-            return WaitUntil(target, condition, continueWaitOnlyWhen?.ToFunc(), maxWaitSeconds, waitForMsg);
+            return WaitUntil(target, condition, continueWaitOnlyWhen?.ToFunc(), maxWaitSeconds, waitForMsg, cancellationToken);
         }
 
         /// <summary>
@@ -1343,7 +1345,7 @@ public static partial class Util
             {
                 var result = getResult(target);
 
-                while (!condition(result))
+                while (!condition(result) && !cancellationToken.IsCancellationRequested)
                 {
                     if (cancellationToken.IsCancellationRequested) throw new TaskCanceledException();
 
@@ -1354,7 +1356,7 @@ public static partial class Util
                         {
                             result = getResult(target);
 
-                            if (!condition(result)) continueWaitOnlyWhen?.Invoke(target);
+                            if (!condition(result) && !cancellationToken.IsCancellationRequested) continueWaitOnlyWhen?.Invoke(target);
 
                             return Task.CompletedTask;
                         },
@@ -1466,7 +1468,6 @@ public static partial class Util
                 throw new Exception($"{(waitForMsg != null ? $"WaitFor: '{waitForMsg}'" : "Wait")} failed." + $"{Environment.NewLine}Error: {e.Message}");
             }
         }
-
 
         public static Task<TResult> WaitUntilGetSuccessAsync<T, TResult>(
             T target,

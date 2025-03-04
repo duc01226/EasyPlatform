@@ -260,7 +260,7 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
 
     public static ILogger CreateLogger(ILoggerFactory loggerFactory, Type type)
     {
-        return loggerFactory.CreateLogger(typeof(PlatformMessageBusConsumer).GetFullNameOrGenericTypeFullName() + $"-{type.Name}");
+        return loggerFactory.CreateLogger(typeof(PlatformMessageBusConsumer).GetNameOrGenericTypeName() + $"-{type.Name}");
     }
 
     public ILogger CreateLogger()

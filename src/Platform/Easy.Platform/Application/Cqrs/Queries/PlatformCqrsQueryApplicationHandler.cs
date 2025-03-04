@@ -112,7 +112,7 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
                         {
                             if (!ex.IsPlatformLogicException())
                             {
-                                LoggerFactory.CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}")
+                                LoggerFactory.CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
                                     .LogError(
                                         ex.BeautifyStackTrace(),
                                         "[{Tag1}] Query:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{Request}. RequestContext:{RequestContext}",
@@ -125,7 +125,7 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
                             }
                             else
                             {
-                                LoggerFactory.CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}")
+                                LoggerFactory.CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
                                     .LogWarning(
                                         "[{Tag1}] Query:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{Request}.",
                                         "LogicErrorWarning",

@@ -58,7 +58,7 @@ public abstract class PlatformApplicationDataSeeder : IPlatformApplicationDataSe
         Configuration = configuration;
         LoggerFactory = loggerFactory;
         RootServiceProvider = rootServiceProvider;
-        loggerLazy = new Lazy<ILogger>(() => loggerFactory.CreateLogger(typeof(PlatformApplicationDataSeeder).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}"));
+        loggerLazy = new Lazy<ILogger>(() => loggerFactory.CreateLogger(typeof(PlatformApplicationDataSeeder).GetNameOrGenericTypeName() + $"-{GetType().Name}"));
         ApplicationSettingContext = serviceProvider.GetRequiredService<IPlatformApplicationSettingContext>();
     }
 

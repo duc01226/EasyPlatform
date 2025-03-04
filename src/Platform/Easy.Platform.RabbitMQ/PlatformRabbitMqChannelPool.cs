@@ -55,7 +55,14 @@ public class PlatformRabbitMqChannelPool : IDisposable
     private void InitInternalObjectPool()
     {
         if (InternalObjectPool == null)
-            InitInternalObjectPoolLock.ExecuteLockAction(() => InternalObjectPool ??= new DefaultObjectPool<IChannel>(ChannelPoolPolicy, PoolSize));
+        {
+            InitInternalObjectPoolLock.ExecuteLockAction(
+                () =>
+                {
+                    InternalObjectPool ??= new DefaultObjectPool<IChannel>(ChannelPoolPolicy, PoolSize);
+                },
+                CancellationToken.None);
+        }
     }
 
     public void Return(IChannel obj)

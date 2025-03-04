@@ -15,8 +15,8 @@ public class PlatformCacheSettings
     {
         if (SlowWarning.IsEnabled)
         {
-            // Store stack trace before call redisCache.Value.GetAsync to keep the original stack trace to log
-            // after redisCache.Value.GetAsync will lose full stack trace (may because it connects async to other external service)
+            // Store stack trace before call executeFn to keep the original stack trace to log
+            // after executeFn could lose full stack trace (may because it connects async to other external service)
             var fullStackTrace = PlatformEnvironment.StackTrace();
 
             var startQueryTimeStamp = Stopwatch.GetTimestamp();
@@ -26,6 +26,7 @@ public class PlatformCacheSettings
             var queryElapsedTime = Stopwatch.GetElapsedTime(startQueryTimeStamp);
 
             if (queryElapsedTime.TotalMilliseconds >= SlowWarning.GetSlowQueryMillisecondsThreshold(forSetData))
+            {
                 loggerFactory()
                     .Log(
                         SlowWarning.IsLogWarningAsError ? LogLevel.Error : LogLevel.Warning,
@@ -35,6 +36,7 @@ public class PlatformCacheSettings
                         forSetData.ToString(),
                         queryElapsedTime.TotalMilliseconds,
                         fullStackTrace);
+            }
 
             return result;
         }

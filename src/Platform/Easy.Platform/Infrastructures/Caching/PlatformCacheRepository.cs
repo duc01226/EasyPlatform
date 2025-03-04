@@ -198,25 +198,105 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
     {
         ServiceProvider = serviceProvider;
         loggerLazy = new Lazy<ILogger>(
-            () => loggerFactory.CreateLogger(typeof(PlatformCacheRepository).GetFullNameOrGenericTypeFullName() + $"-{GetType().Name}"));
+            () => loggerFactory.CreateLogger(typeof(PlatformCacheRepository).GetNameOrGenericTypeName() + $"-{GetType().Name}"));
         CacheSettings = cacheSettings;
         ApplicationSettingContext = applicationSettingContext;
     }
 
     protected ILogger Logger => loggerLazy.Value;
 
-    public abstract T Get<T>(PlatformCacheKey cacheKey);
+    public virtual T Get<T>(PlatformCacheKey cacheKey)
+    {
+        return GetAsync<T>(cacheKey).GetResult();
+    }
 
-    public abstract Task<T> GetAsync<T>(PlatformCacheKey cacheKey, CancellationToken token = default);
+    public virtual async Task<T> GetAsync<T>(PlatformCacheKey cacheKey, CancellationToken token = default)
+    {
+        using (var activity = IPlatformCacheRepository.ActivitySource.StartActivity($"{nameof(PlatformCacheRepository)}.{nameof(GetAsync)}"))
+        {
+            activity?.AddTag("cacheKey", cacheKey);
 
-    public abstract void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, List<string> tags = null);
+            return await CacheSettings.ExecuteWithSlowWarning(
+                async () =>
+                {
+                    try
+                    {
+                        return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+                            async () =>
+                            {
+                                var result = await GetDistributedCache().GetAsync(cacheKey, token);
 
-    public abstract Task SetAsync<T>(
+                                try
+                                {
+                                    return result == null || result.Length == 0 ? default : PlatformJsonSerializer.Deserialize<T>(result);
+                                }
+                                catch (Exception e)
+                                {
+                                    Logger.LogError(e.BeautifyStackTrace(), "GetAsync Deserialize failed. CacheKey:{CacheKey}", cacheKey);
+
+                                    // WHY: If parse failed, the cached data could be obsolete. Then just clear the cache
+                                    await RemoveAsync(cacheKey, token);
+
+                                    return default;
+                                }
+                            },
+                            cancellationToken: token);
+                    }
+                    catch (Exception e)
+                    {
+                        throw new Exception($"{GetType().Name} GetAsync failed. {e.Message}.", e);
+                    }
+                },
+                () => Logger);
+        }
+    }
+
+    public virtual void Set<T>(PlatformCacheKey cacheKey, T value, PlatformCacheEntryOptions cacheOptions = null, List<string> tags = null)
+    {
+        SetAsync(cacheKey, value, cacheOptions, tags).WaitResult();
+    }
+
+    public virtual async Task SetAsync<T>(
         PlatformCacheKey cacheKey,
         T value,
         PlatformCacheEntryOptions cacheOptions = null,
         List<string> tags = null,
-        CancellationToken token = default);
+        CancellationToken token = default)
+    {
+        await CacheSettings.ExecuteWithSlowWarning(
+            async () =>
+            {
+                await SetToDistributedCacheAsync(cacheKey, value, cacheOptions, tags, token);
+
+                await UpdateGlobalCachedKeys(p => p.TryAdd(cacheKey, null));
+            },
+            () => Logger,
+            true);
+    }
+
+    protected virtual async Task SetToDistributedCacheAsync<T>(
+        PlatformCacheKey cacheKey,
+        T value,
+        PlatformCacheEntryOptions cacheOptions = null,
+        List<string> tags = null,
+        CancellationToken token = default)
+    {
+        try
+        {
+            await GetDistributedCache()
+                .SetAsync(
+                    cacheKey,
+                    PlatformJsonSerializer.SerializeToUtf8Bytes(value),
+                    MapToDistributedCacheEntryOptions(cacheOptions),
+                    token);
+
+            await AssociateCacheKeyWithTags(cacheKey, PlatformCacheKey.CombineWithCacheKeyContextAndCollectionTag(cacheKey, tags), token);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"{GetType().Name} SetCacheAsync failed. [CacheKey: {cacheKey}]. {ex.Message}", ex);
+        }
+    }
 
     public void Set<T>(PlatformCacheKey cacheKey, T value, double? absoluteExpirationInSeconds = null)
     {
@@ -244,9 +324,50 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
             token);
     }
 
-    public abstract Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default);
+    public virtual async Task RemoveAsync(PlatformCacheKey cacheKey, CancellationToken token = default)
+    {
+        await CacheSettings.ExecuteWithSlowWarning(
+            async () =>
+            {
+                await InternalRemoveAsync(cacheKey, token);
 
-    public abstract Task RemoveAsync(List<PlatformCacheKey> cacheKeys, CancellationToken token = default);
+                if (GetGlobalAllRequestCachedKeysCacheKey() != cacheKey)
+                    await UpdateGlobalCachedKeys(p => p.TryRemove(cacheKey, out _));
+            },
+            () => Logger,
+            true);
+    }
+
+    protected virtual async Task InternalRemoveAsync(PlatformCacheKey cacheKey, CancellationToken token)
+    {
+        try
+        {
+            await GetDistributedCache().RemoveAsync(cacheKey, token);
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"{GetType().Name} RemoveAsync failed. [CacheKey: {cacheKey}]. {ex.Message}", ex);
+        }
+    }
+
+    public virtual async Task RemoveAsync(List<PlatformCacheKey> cacheKeys, CancellationToken token = default)
+    {
+        if (cacheKeys.Any())
+        {
+            await SetGlobalCachedKeysAsync(
+                async allCachedKeys =>
+                {
+                    var clonedCacheKeys = cacheKeys.ToArray();
+
+                    await clonedCacheKeys.ParallelAsync(
+                        async matchedKey =>
+                        {
+                            await InternalRemoveAsync(matchedKey, token);
+                            allCachedKeys.TryRemove(matchedKey, out _);
+                        });
+                });
+        }
+    }
 
     public virtual async Task RemoveByTagsAsync(List<string> tags, Func<PlatformCacheKey, bool> cacheKeyPredicate = null, CancellationToken token = default)
     {
