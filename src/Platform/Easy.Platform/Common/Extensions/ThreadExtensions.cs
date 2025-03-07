@@ -136,4 +136,31 @@ public static class ThreadExtensions
             lockObj.TryRelease();
         }
     }
+
+    /// <summary>
+    /// Asynchronously executes the specified function within a lock acquired from the provided SemaphoreSlim object and returns the result.
+    /// </summary>
+    /// <param name="lockObj">The SemaphoreSlim object to acquire the lock from.</param>
+    /// <param name="action">The function to be executed within the lock.</param>
+    /// <param name="cancellationToken">A CancellationToken to observe while waiting for the task to complete.</param>
+    /// <returns>The result of the executed function.</returns>
+    /// <remarks>
+    /// This method will asynchronously wait until the lock is acquired.
+    /// The lock is always released before the method returns, even if the action delegate throws an exception.
+    /// </remarks>
+    public static async Task<T> ExecuteLockActionAsync<T>(this SemaphoreSlim lockObj, Func<T> action, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await lockObj.WaitAsync(cancellationToken);
+
+            var result = await Task.Run(action, cancellationToken);
+
+            return result;
+        }
+        finally
+        {
+            lockObj.TryRelease();
+        }
+    }
 }

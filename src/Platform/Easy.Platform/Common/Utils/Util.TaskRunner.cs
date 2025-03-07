@@ -1878,7 +1878,7 @@ public static partial class Util
         /// <summary>
         /// Execute an action with timeout. Return (isInTime (value is false), result (default type value)) with default action result type is it's timed out. Return (isInTime (value is true), result) true with action result if the action execute successfully
         /// </summary>
-        public static async Task<ValueTuple<bool, TResult>> RunWithTimeout<TResult>(
+        public static async Task<ValueTuple<bool, TResult?>> RunWithTimeout<TResult>(
             Func<CancellationToken, Task<TResult>> fn,
             TimeSpan timeout,
             CancellationToken cancellationToken = default,
@@ -1914,7 +1914,7 @@ public static partial class Util
         }
 
         /// <inheritdoc cref="RunWithTimeout(Func{CancellationToken,Task},TimeSpan,CancellationToken,Action?)" />
-        public static Task<(bool, TResult)> RunWithTimeout<TResult>(
+        public static Task<(bool, TResult?)> RunWithTimeout<TResult>(
             Func<TResult> fn,
             TimeSpan timeout,
             CancellationToken cancellationToken = default,
