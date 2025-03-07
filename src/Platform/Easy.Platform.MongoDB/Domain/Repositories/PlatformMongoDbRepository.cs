@@ -47,6 +47,11 @@ public abstract class PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext
 
     public override IQueryable<TEntity> GetQuery(IPlatformUnitOfWork uow, params Expression<Func<TEntity, object?>>[] loadRelatedEntities)
     {
+        return GetQuery(uow, loadRelatedEntities, forAsyncEnumerable: false);
+    }
+
+    public override IQueryable<TEntity> GetQuery(IPlatformUnitOfWork uow, Expression<Func<TEntity, object?>>[] loadRelatedEntities, bool forAsyncEnumerable)
+    {
         return GetTable(uow).AsQueryable();
     }
 

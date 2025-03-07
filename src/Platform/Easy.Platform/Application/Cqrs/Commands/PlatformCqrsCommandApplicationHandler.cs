@@ -77,7 +77,7 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
     /// <summary>
     /// Gets the number of retry attempts after a failure.
     /// </summary>
-    public virtual int RetryOnFailedTimes { get; set; } = Util.TaskRunner.DefaultResilientRetryCount;
+    public virtual int RetryOnFailedTimes { get; set; } = 0;
 
     public virtual double RetryOnFailedDelaySeconds { get; set; } = Util.TaskRunner.DefaultResilientDelaySeconds;
 

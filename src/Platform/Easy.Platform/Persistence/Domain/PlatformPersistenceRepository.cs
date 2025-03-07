@@ -127,7 +127,8 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
     {
         return ExecuteAutoOpenUowUsingOnceTimeForRead(
                 (_, query) => ToAsyncEnumerable(query.WhereIf(predicate != null, predicate), cancellationToken).ToEnumerable(),
-                loadRelatedEntities)
+                loadRelatedEntities,
+                forAsyncEnumerable: true)
             .GetResult();
     }
 
@@ -143,7 +144,8 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
     {
         return ExecuteAutoOpenUowUsingOnceTimeForRead(
                 (_, query) => ToAsyncEnumerable(queryBuilder(query), cancellationToken),
-                loadRelatedEntities)
+                loadRelatedEntities,
+                forAsyncEnumerable: true)
             .GetResult();
     }
 
@@ -154,7 +156,8 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
     {
         return ExecuteAutoOpenUowUsingOnceTimeForRead(
                 (uow, query) => ToAsyncEnumerable(queryBuilder(uow, query), cancellationToken),
-                loadRelatedEntities)
+                loadRelatedEntities,
+                forAsyncEnumerable: true)
             .GetResult();
     }
 

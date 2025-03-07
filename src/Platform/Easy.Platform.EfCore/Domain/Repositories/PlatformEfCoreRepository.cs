@@ -52,9 +52,12 @@ public abstract class PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext>
 
     public override IQueryable<TEntity> GetQuery(IPlatformUnitOfWork uow, params Expression<Func<TEntity, object?>>[] loadRelatedEntities)
     {
-        // Note: apply .PipeIf(uow.IsUsingOnceTransientUow, query => query.AsNoTracking())
-        // If EF Core finds an existing entity, then the same instance is returned, which can potentially use less memory and be faster than a no-tracking.
-        // Actual after benchmark see that AsNoTracking ACTUALLY SLOWER. Still apply to fix case select OwnedEntities without parents work
+        return GetQuery(uow, loadRelatedEntities, forAsyncEnumerable: false);
+    }
+
+    public override IQueryable<TEntity> GetQuery(IPlatformUnitOfWork uow, Expression<Func<TEntity, object?>>[] loadRelatedEntities, bool forAsyncEnumerable)
+    {
+        // Using IAsyncEnumerable<T> with await foreach (Best for Large Data). Go through each item and release memory like stream
         return GetTable(uow)
             .AsQueryable()
             .PipeIf(

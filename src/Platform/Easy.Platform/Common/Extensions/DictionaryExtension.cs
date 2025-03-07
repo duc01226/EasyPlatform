@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Concurrent;
+using System.Reflection;
 using Easy.Platform.Common.JsonSerialization;
 
 namespace Easy.Platform.Common.Extensions;
@@ -204,4 +205,9 @@ public static class DictionaryExtension
             return default;
         }
     }
+
+    public static Dictionary<string, object> ToDictionary(this object obj) =>
+        obj?.GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .ToDictionary(p => p.Name, p => p.GetValue(obj));
 }

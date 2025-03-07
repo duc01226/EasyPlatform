@@ -1,5 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Text.Json.Serialization;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Common.Cqrs.Events;
@@ -423,6 +425,26 @@ public class PlatformCqrsEntityEvent<TEntity> : PlatformCqrsEntityEvent, IPlatfo
     public string SubQueuePrefix()
     {
         return EntityData?.GetId()?.ToString();
+    }
+
+    public List<ISupportDomainEventsEntity.FieldUpdatedDomainEvent> GetUpdatedFields()
+    {
+        if (EntityData == null || ExistingOriginalEntityData == null)
+            return [];
+
+        return typeof(TEntity)
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(prop => prop.GetCustomAttribute<JsonIgnoreAttribute>() == null)
+            .Select(
+                prop =>
+                {
+                    var oldValue = prop.GetValue(ExistingOriginalEntityData);
+                    var newValue = prop.GetValue(EntityData);
+
+                    return oldValue.IsValuesDifferent(newValue) ? ISupportDomainEventsEntity.FieldUpdatedDomainEvent.Create(prop.Name, oldValue, newValue) : null;
+                })
+            .Where(p => p != null)
+            .ToList();
     }
 }
 

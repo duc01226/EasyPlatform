@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using static Easy.Platform.Common.Extensions.QueryableExtension;
 
 namespace Easy.Platform.Common.Extensions;
 
@@ -84,6 +85,46 @@ public static class QueryableExtension
         var selector = Expression.Lambda<Func<T, object>>(prop, item);
 
         return selector;
+    }
+
+    /// <summary>
+    /// Performs a left join on two sequences.
+    /// </summary>
+    /// <typeparam name="TOuter">The type of the elements of the outer sequence.</typeparam>
+    /// <typeparam name="TInner">The type of the elements of the inner sequence.</typeparam>
+    /// <typeparam name="TKey">The type of the join key.</typeparam>
+    /// <typeparam name="TResult">The type of the result elements.</typeparam>
+    /// <param name="outer">The outer sequence.</param>
+    /// <param name="inner">The inner sequence.</param>
+    /// <param name="outerKeySelector">A function to extract the join key from each element of the outer sequence.</param>
+    /// <param name="innerKeySelector">A function to extract the join key from each element of the inner sequence.</param>
+    /// <param name="resultSelector">
+    /// A function to create a result element from an outer element and an inner element.
+    /// If no matching inner element is found, <paramref name="resultSelector"/> will receive null for that inner element.
+    /// </param>
+    /// <returns>An IQueryable of the result type.</returns>
+    public static IQueryable<TResult> LeftJoin<TOuter, TInner, TKey, TResult>(
+        this IQueryable<TOuter> outer,
+        IQueryable<TInner> inner,
+        Expression<Func<TOuter, TKey>> outerKeySelector,
+        Expression<Func<TInner, TKey>> innerKeySelector,
+        Expression<Func<LeftJoinResultSelectorItem<TOuter, TInner>, TResult>> resultSelector)
+    {
+        return outer.GroupJoin(
+                inner,
+                outerKeySelector,
+                innerKeySelector,
+                (outerItem, innerItems) => new { outerItem, innerItems })
+            .SelectMany(
+                x => x.innerItems.DefaultIfEmpty(),
+                (x, innerItem) => new LeftJoinResultSelectorItem<TOuter, TInner> { OuterItem = x.outerItem, InnerItem = innerItem })
+            .Select(resultSelector);
+    }
+
+    public class LeftJoinResultSelectorItem<TOuter, TInner>
+    {
+        public TOuter OuterItem { get; set; }
+        public TInner InnerItem { get; set; }
     }
 }
 

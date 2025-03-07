@@ -144,7 +144,7 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
 
     public void SetCachedOriginalEntitiesInUowForTrackingCompareAfterUpdate<TResult>(TResult? result, TUow uow)
     {
-        if (uow == null)
+        if (uow == null || result is null)
             return;
 
         if (result is TEntity resultSingleEntity)
@@ -153,7 +153,7 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
             resultMultipleEntities.ForEach(p => uow.SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p));
         else if (result is ICollection<KeyValuePair<TPrimaryKey, TEntity>> resultMultipleEntitiesDict && resultMultipleEntitiesDict.Any())
             resultMultipleEntitiesDict.ForEach(p => uow.SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p.Value));
-        else if (result?.GetType().IsAnonymousType() == true)
+        else if (result.GetType().IsAnonymousType())
         {
             foreach (var property in result.GetType().GetProperties())
                 SetCachedOriginalEntitiesInUowForTrackingCompareAfterUpdate(property.GetValue(result), uow);
@@ -252,6 +252,8 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
     }
 
     public abstract IQueryable<TEntity> GetQuery(IPlatformUnitOfWork uow, params Expression<Func<TEntity, object?>>[] loadRelatedEntities);
+
+    public abstract IQueryable<TEntity> GetQuery(IPlatformUnitOfWork uow, Expression<Func<TEntity, object?>>[] loadRelatedEntities, bool forAsyncEnumerable);
 
     public IQueryable<TEntity> GetCurrentUowQuery(params Expression<Func<TEntity, object?>>[] loadRelatedEntities)
     {
@@ -495,14 +497,15 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
     protected virtual async Task<TResult> ExecuteAutoOpenUowUsingOnceTimeForRead<TResult>(
         Func<IPlatformUnitOfWork, IQueryable<TEntity>, Task<TResult>> readDataFn,
         Expression<Func<TEntity, object>>[] loadRelatedEntities,
-        bool forceOpenUowUsingOnce = false)
+        bool forceOpenUowUsingOnce = false,
+        bool forAsyncEnumerable = false)
     {
         var currentActiveUow = forceOpenUowUsingOnce ? null : UnitOfWorkManager.TryGetCurrentActiveUow();
 
         if (currentActiveUow == null)
         {
             if (DoesSupportParallelExecution())
-                return await ExecuteReadData(GlobalUow, readDataFn, loadRelatedEntities);
+                return await ExecuteReadData(GlobalUow, readDataFn, loadRelatedEntities, forAsyncEnumerable);
             else
             {
                 var useOnceTransientUow = UnitOfWorkManager.CreateNewUow(true);
@@ -510,7 +513,7 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
 
                 try
                 {
-                    useOnceTransientUowResult = await ExecuteReadData(useOnceTransientUow, readDataFn, loadRelatedEntities);
+                    useOnceTransientUowResult = await ExecuteReadData(useOnceTransientUow, readDataFn, loadRelatedEntities, forAsyncEnumerable);
 
                     return useOnceTransientUowResult;
                 }
@@ -522,7 +525,9 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
         }
         else
         {
-            var result = await ExecuteUowReadQueryThreadSafe(currentActiveUow, uow => ExecuteReadData(uow, readDataFn, loadRelatedEntities));
+            var result = await ExecuteUowReadQueryThreadSafe(
+                currentActiveUow,
+                uow => ExecuteReadData(uow, readDataFn, loadRelatedEntities, forAsyncEnumerable: forAsyncEnumerable));
 
             // If there is opening uow, may get data for update => set cached original entities for track update
             SetCachedOriginalEntitiesInUowForTrackingCompareAfterUpdate(result, currentActiveUow.UowOfType<TUow>());
@@ -562,17 +567,19 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
     protected Task<TResult> ExecuteReadData<TResult>(
         IPlatformUnitOfWork uow,
         Func<IPlatformUnitOfWork, IQueryable<TEntity>, Task<TResult>> readDataFn,
-        Expression<Func<TEntity, object>>[] loadRelatedEntities)
+        Expression<Func<TEntity, object>>[] loadRelatedEntities,
+        bool forAsyncEnumerable = false)
     {
-        return readDataFn(uow, GetQuery(uow, loadRelatedEntities));
+        return readDataFn(uow, GetQuery(uow, loadRelatedEntities, forAsyncEnumerable));
     }
 
     protected virtual Task<TResult> ExecuteAutoOpenUowUsingOnceTimeForRead<TResult>(
         Func<IPlatformUnitOfWork, IQueryable<TEntity>, TResult> readDataFn,
         Expression<Func<TEntity, object>>[] loadRelatedEntities,
-        bool forceOpenUowUsingOnce = false)
+        bool forceOpenUowUsingOnce = false,
+        bool forAsyncEnumerable = false)
     {
-        return ExecuteAutoOpenUowUsingOnceTimeForRead(ReadDataFnAsync, loadRelatedEntities, forceOpenUowUsingOnce);
+        return ExecuteAutoOpenUowUsingOnceTimeForRead(ReadDataFnAsync, loadRelatedEntities, forceOpenUowUsingOnce, forAsyncEnumerable);
 
         async Task<TResult> ReadDataFnAsync(IPlatformUnitOfWork unitOfWork, IQueryable<TEntity> entities)
         {
