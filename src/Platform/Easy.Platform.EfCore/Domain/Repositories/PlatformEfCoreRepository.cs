@@ -60,6 +60,7 @@ public abstract class PlatformEfCoreRepository<TEntity, TPrimaryKey, TDbContext>
         // Using IAsyncEnumerable<T> with await foreach (Best for Large Data). Go through each item and release memory like stream
         return GetTable(uow)
             .AsQueryable()
+            .PipeIf(forAsyncEnumerable, query => query.AsNoTrackingWithIdentityResolution())
             .PipeIf(
                 loadRelatedEntities.Any(),
                 query => loadRelatedEntities.Aggregate(query, (query, loadRelatedEntityFn) => query.Include(loadRelatedEntityFn).DefaultIfEmpty()));
