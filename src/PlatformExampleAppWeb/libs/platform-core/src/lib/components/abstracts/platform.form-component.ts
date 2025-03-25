@@ -268,7 +268,7 @@ export abstract class PlatformFormComponent<TViewModel extends IPlatformVm>
         this.registerFormEventsSignalAndChangeDetection();
         this.isFormGivenFromInput = true;
 
-        this.selfValidateForm();
+        this.selfValidateForm(false);
         // First time try validate form just to show errors but still want to imark form as pristine like it's never touched
         this.form.markAsPristine();
     }

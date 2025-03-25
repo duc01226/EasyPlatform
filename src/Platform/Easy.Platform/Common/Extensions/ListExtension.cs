@@ -1123,4 +1123,9 @@ public static class ListExtension
 
         return result;
     }
+
+    public static List<T> DuplicatedItems<T>(this IEnumerable<T> items) where T : IEquatable<T>
+    {
+        return items.GroupBy(p => p).Where(p => p.Count() > 1).Select(p => p.Key).ToList();
+    }
 }
