@@ -52,7 +52,7 @@ import {
     tapLimit,
     tapOnce
 } from '../rxjs';
-import { immutableUpdate, ImmutableUpdateOptions, list_remove, toPlainObj } from '../utils';
+import { cloneDeep, immutableUpdate, ImmutableUpdateOptions, list_remove, toPlainObj } from '../utils';
 import { PlatformVm } from './generic.view-model';
 
 export const requestStateDefaultKey = 'Default';
@@ -154,10 +154,13 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
     private _vm$?: Observable<TViewModel>;
     public get vm$(): Observable<TViewModel> {
         if (this._vm$ == undefined) {
+            // refCount: false => vm$ will not be unsubscribed when no one is subscribed to it
+            // => so that vm$ will not be re-initialized when no one is subscribed to it
+            // => prevent re-initialize vm$ when subscribe to vm$ after unsubscribe
             this._vm$ = <Observable<TViewModel>>combineLatest([this.initVmState(), this.internalSelect(s => s)]).pipe(
                 map(([_, vm]) => (this.vmStateInitiated || this.vmStateDataLoaded ? vm : undefined)),
                 filter(vm => vm != null),
-                shareReplay({ bufferSize: 1, refCount: true })
+                shareReplay({ bufferSize: 1, refCount: false })
             );
 
             this.subscribeCacheStateOnChanged();
@@ -258,9 +261,6 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
                 this.setClonedDeepStateToCheckDataMutation(cachedData);
 
                 if (cachedData.isStateSuccess) this.vmStateDataLoaded = true;
-
-                // Clear defaultState to free memory
-                this.defaultState = undefined;
             } else {
                 this._innerStore = new ComponentStore(this.defaultState);
                 this.setClonedDeepStateToCheckDataMutation(this.defaultState);
@@ -272,6 +272,10 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
         this.innerStore.ngOnDestroy();
         this.destroyed$.next(true);
         this.cancelAllStoredSubscriptions();
+    }
+
+    public resetToDefaultState() {
+        if (this.defaultState) this.updateState(cloneDeep(this.defaultState), { assignDeepLevel: 1 });
     }
 
     /**
@@ -1118,12 +1122,12 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
     protected subscribeCacheStateOnChanged() {
         if (this.vm$ == undefined) return;
 
-        if (this.enableCache)
-            this.storeAnonymousSubscription(
-                this.vm$.pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true })).subscribe(vm => {
-                    if (!vm.isStateLoading && !vm.isStateReloading) this.cacheService.set(this.getCachedStateKey(), vm);
-                })
-            );
+        this.storeAnonymousSubscription(
+            this.vm$.pipe(throttleTime(1000, asyncScheduler, { leading: true, trailing: true })).subscribe(vm => {
+                if (!vm.isStateLoading && !vm.isStateReloading && this.enableCache)
+                    this.cacheService.set(this.getCachedStateKey(), vm);
+            })
+        );
     }
 
     private getCachedStateKey(): string {
