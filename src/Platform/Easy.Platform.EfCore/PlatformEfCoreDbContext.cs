@@ -701,7 +701,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
             // Run DetachLocalIfAny to prevent
             // The instance of entity type cannot be tracked because another instance of this type with the same key is already being tracked
             var (toBeUpdatedEntity, isEntityTracked, isEntityNotTrackedOrTrackedModified) = entity
-                .Pipe(p => DetachLocalIfAnyDifferentTrackedEntity<TEntity, TPrimaryKey>(p, existingEntity))
+                .Pipe(p => DetachLocalIfAnyDifferentTrackedEntity<TEntity, TPrimaryKey>(p, existingEntity, forceAlwaysDetach: !checkDiff))
                 .WithIf(
                     p => p.isEntityNotTrackedOrTrackedModified && entity is IDateAuditedEntity && !onlySetData,
                     p => p.entity.As<IDateAuditedEntity>().With(auditedEntity => auditedEntity.LastUpdatedDate = DateTime.UtcNow).As<TEntity>())
@@ -722,7 +722,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
                 existingEntity,
                 entity =>
                 {
-                    var updatedEntity = !isEntityTracked || existingEntity == null
+                    var updatedEntity = !isEntityTracked || existingEntity == null || !checkDiff
                         ? GetTable<TEntity>()
                             .Update(entity)
                             .Entity
@@ -807,21 +807,23 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
 
     protected (TEntity entity, bool isEntityTracked, bool isEntityNotTrackedOrTrackedModified) DetachLocalIfAnyDifferentTrackedEntity<TEntity, TPrimaryKey>(
         TEntity entity,
-        TEntity checkEntityModifiedByExistingEntity)
+        TEntity checkEntityModifiedByExistingEntity,
+        bool forceAlwaysDetach = false)
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        return DetachLocalIfAnyDifferentTrackedEntity(entity, entry => entry.Id.Equals(entity.Id), checkEntityModifiedByExistingEntity);
+        return DetachLocalIfAnyDifferentTrackedEntity(entity, entry => entry.Id.Equals(entity.Id), checkEntityModifiedByExistingEntity, forceAlwaysDetach);
     }
 
     protected (TEntity entity, bool isEntityTracked, bool isEntityNotTrackedOrTrackedModified) DetachLocalIfAnyDifferentTrackedEntity<TEntity>(
         TEntity entity,
         Func<TEntity, bool> findExistingEntityPredicate,
-        TEntity checkEntityModifiedByExistingEntity)
+        TEntity checkEntityModifiedByExistingEntity,
+        bool forceAlwaysDetach = false)
         where TEntity : class, IEntity, new()
     {
         var local = GetTable<TEntity>().Local.FirstOrDefault(findExistingEntityPredicate);
 
-        if (local != null && !ReferenceEquals(local, entity))
+        if (local != null && (!ReferenceEquals(local, entity) || forceAlwaysDetach))
             GetTable<TEntity>().Entry(local).State = EntityState.Detached;
 
         var isEntityTracked = local == entity;

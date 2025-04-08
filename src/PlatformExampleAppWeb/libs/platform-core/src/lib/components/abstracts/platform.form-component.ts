@@ -2,9 +2,7 @@
 import {
     computed,
     Directive,
-    EnvironmentInjector,
     EventEmitter,
-    inject,
     Input,
     OnInit,
     Output,
@@ -91,8 +89,6 @@ export abstract class PlatformFormComponent<TViewModel extends IPlatformVm>
     // because we are using vm() signal, when updateVmOnFormValuesChange => setTimeout to ensure the value
     // in vm signal is updated => then run validation to make sure it works correctly if validation logic is using vm signal value
     public static readonly processFormValidationsDelays = 10;
-
-    protected environmentInjector = inject(EnvironmentInjector);
 
     public constructor() {
         super();

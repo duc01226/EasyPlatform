@@ -1,13 +1,4 @@
-import {
-    computed,
-    Directive,
-    EnvironmentInjector,
-    inject,
-    OnInit,
-    runInInjectionContext,
-    Signal,
-    untracked
-} from '@angular/core';
+import { computed, Directive, OnInit, runInInjectionContext, Signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 import { combineLatest, map, Observable } from 'rxjs';
@@ -71,8 +62,6 @@ export abstract class PlatformVmStoreComponent<
     extends PlatformComponent
     implements OnInit
 {
-    private environmentInjector = inject(EnvironmentInjector);
-
     public constructor(public store: TViewModelStore) {
         super();
     }
@@ -109,7 +98,7 @@ export abstract class PlatformVmStoreComponent<
         this.store.initInnerStore();
 
         if (
-            this.store.vmStateInitiated &&
+            this.store.vmStateInitiated.value &&
             (this.store.currentState().isStateSuccess || this.store.currentState().isStateError) &&
             list_all(this.additionalStores, p => p.currentState().isStateSuccess || p.currentState().isStateError)
         )
@@ -214,7 +203,9 @@ export abstract class PlatformVmStoreComponent<
     }
 
     public override get isLoadingToInitVm(): Signal<boolean> {
-        this._isLoadingToInitVm ??= computed(() => this.isStateLoading() == true && this.vm() == undefined);
+        this._isLoadingToInitVm ??= computed(
+            () => (this.isStateLoading() || this.isStateReloading()) && this.vm() == undefined
+        );
         return this._isLoadingToInitVm;
     }
 

@@ -33,4 +33,19 @@ public static class PostgresSqlMigrationUtil
             END $$;",
             suppressTransaction);
     }
+
+    public static void DropColumnIfExists(MigrationBuilder migrationBuilder, string columnName, string table, bool suppressTransaction = false)
+    {
+        migrationBuilder.Sql(
+            $@"DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1 FROM information_schema.columns
+                    WHERE table_name = '{table}' AND column_name = '{columnName}'
+                ) THEN
+                    EXECUTE 'ALTER TABLE ""{table}"" DROP COLUMN ""{columnName}""';
+                END IF;
+            END $$;",
+            suppressTransaction);
+    }
 }

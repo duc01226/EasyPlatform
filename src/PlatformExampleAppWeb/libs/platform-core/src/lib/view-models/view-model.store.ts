@@ -26,7 +26,6 @@ import {
     Observer,
     of,
     OperatorFunction,
-    share,
     shareReplay,
     Subscription,
     switchMap,
@@ -52,7 +51,7 @@ import {
     tapLimit,
     tapOnce
 } from '../rxjs';
-import { cloneDeep, immutableUpdate, ImmutableUpdateOptions, list_remove, toPlainObj } from '../utils';
+import { cloneDeep, immutableUpdate, ImmutableUpdateOptions, keys, list_remove, toPlainObj } from '../utils';
 import { PlatformVm } from './generic.view-model';
 
 export const requestStateDefaultKey = 'Default';
@@ -127,7 +126,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
     private cachedLoading$: Dictionary<Signal<boolean | undefined>> = {};
     private cachedReloading$: Dictionary<Signal<boolean | undefined>> = {};
     private defaultState?: TViewModel;
-    private environmentInjector = inject(EnvironmentInjector);
+    protected environmentInjector = inject(EnvironmentInjector);
 
     constructor(defaultState: TViewModel) {
         this.defaultState = defaultState;
@@ -136,8 +135,8 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
     }
 
     public vmStateInitiating: boolean = false;
-    public vmStateInitiated: boolean = false;
-    public vmStateDataLoaded: boolean = false;
+    public vmStateInitiated: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+    public vmStateDataLoaded: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
     public cacheService = inject(PlatformCachingService);
 
     public get enableCache(): boolean {
@@ -158,8 +157,8 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
             // => so that vm$ will not be re-initialized when no one is subscribed to it
             // => prevent re-initialize vm$ when subscribe to vm$ after unsubscribe
             this._vm$ = <Observable<TViewModel>>combineLatest([this.initVmState(), this.internalSelect(s => s)]).pipe(
-                map(([_, vm]) => (this.vmStateInitiated || this.vmStateDataLoaded ? vm : undefined)),
-                filter(vm => vm != null),
+                map(([_, vm]) => (this.vmStateInitiated.value || this.vmStateDataLoaded.value ? vm : undefined)),
+                filter(vm => vm != undefined),
                 shareReplay({ bufferSize: 1, refCount: false })
             );
 
@@ -199,24 +198,57 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
 
     protected abstract cachedStateKeyName(): string;
 
+    private _additionalStores?: PlatformVmStore<PlatformVm>[];
+    public get additionalStores(): PlatformVmStore<PlatformVm>[] {
+        if (this._additionalStores == null) {
+            // ignore ['additionalStores', 'isStateError$', 'isStateLoading$', 'errorMsg$'] to prevent maximum call stack error
+            // use keys => access to properies => trigger it self a gain. isStateError, isStateLoading are using additionalStores
+            // is also affected
+            this._additionalStores = keys(this, true, [
+                'additionalStores',
+                'isStateError',
+                'isStateLoading',
+                'isStateReloading',
+                'isStateSuccess',
+                'isStatePending',
+                'state$',
+                'vm',
+                'vm$',
+                'enableCache',
+                'destroyed$',
+                'innerStore'
+            ])
+                .filter(key => this[key] instanceof PlatformVmStore)
+                .map(key => <PlatformVmStore<PlatformVm>>this[key]);
+        }
+
+        return this._additionalStores;
+    }
+
+    private beforeInitVmCalledOnce: boolean = false;
+
     /**
      * Triggers the onInitVm function and initializes the store's view model state.
      */
     public initVmState(): Observable<boolean> {
-        if (!this.vmStateInitiating && !this.vmStateInitiated) {
+        if (!this.vmStateInitiating && !this.vmStateInitiated.value) {
             this.vmStateInitiating = true;
 
-            this.beforeInitVm();
+            if (!this.beforeInitVmCalledOnce) {
+                this.beforeInitVm();
+                this.beforeInitVmCalledOnce = true;
+            }
 
-            const initOrReloadVm$ = this.initOrReloadVm(this.vmStateDataLoaded).pipe(take(2)) ?? of(null); //take(2) support api cache and implicit reload
+            const initOrReloadVm$ = this.initOrReloadVm(this.vmStateDataLoaded.value).pipe(take(2)) ?? of(null); //take(2) support api cache and implicit reload
 
             return initOrReloadVm$.pipe(
                 delay(1, asyncScheduler), // Mimic real async incase observable is not async
-                map(_ => {
-                    if (!this.vmStateInitiated) {
-                        this.vmStateInitiating = false;
-                        this.vmStateInitiated = true;
-                        this.vmStateDataLoaded = true;
+                tap(_ => {
+                    this.vmStateInitiating = false;
+
+                    if (!this.vmStateInitiated.value) {
+                        this.vmStateInitiated.next(true);
+                        this.vmStateDataLoaded.next(true);
 
                         this.setupIntervalCheckDataMutation();
 
@@ -224,15 +256,17 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
                             this.updateState(<Partial<TViewModel>>{ status: 'Success' });
                         }
                     }
-
+                }),
+                catchError(err => {
+                    this.vmStateInitiating = false;
                     return this.vmStateInitiated;
                 }),
-                catchError(err => of(false)),
+                switchMap(_ => this.vmStateInitiated),
                 distinctUntilObjectValuesChanged()
             );
         }
 
-        return of(this.vmStateInitiated);
+        return this.vmStateInitiated;
     }
 
     public setupIntervalCheckDataMutation() {
@@ -260,7 +294,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
                 this._innerStore = new ComponentStore(cachedData);
                 this.setClonedDeepStateToCheckDataMutation(cachedData);
 
-                if (cachedData.isStateSuccess) this.vmStateDataLoaded = true;
+                if (cachedData.isStateSuccess) this.vmStateDataLoaded.next(true);
             } else {
                 this._innerStore = new ComponentStore(this.defaultState);
                 this.setClonedDeepStateToCheckDataMutation(this.defaultState);
@@ -293,8 +327,23 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
     public abstract initOrReloadVm: (isReload: boolean) => Observable<unknown>;
 
     public reload() {
+        this.additionalStores.forEach(p => p.reload());
+
         this.clearAllErrorMsgs();
-        return this.initOrReloadVm(this.currentState().isStateSuccessOrReloading).pipe(take(2)); //take(2) support api cache and implicit reload
+
+        // take(2) support api cache and implicit reload
+        return this.vmStateInitiated.value
+            ? this.initOrReloadVm(this.currentState().isStateSuccessOrReloading).pipe(
+                  take(2),
+                  this.subscribeUntilDestroyed()
+              )
+            : this.initVmState().pipe(
+                  switchMap(vmInitiated =>
+                      vmInitiated ? this.initOrReloadVm(this.currentState().isStateSuccessOrReloading) : of(null)
+                  ),
+                  take(2),
+                  this.subscribeUntilDestroyed()
+              );
     }
 
     public clearAllErrorMsgs() {
@@ -314,7 +363,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
                 // toSignal must be used in an injection context
                 runInInjectionContext(this.environmentInjector, () => {
                     this._isStatePending = toSignal(
-                        this.select(_ => _.isStatePending),
+                        this.internalSelect(_ => _.isStatePending),
                         { initialValue: true }
                     );
                 });
@@ -331,7 +380,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
                 // toSignal must be used in an injection context
                 runInInjectionContext(this.environmentInjector, () => {
                     this._isStateLoading = toSignal(
-                        this.select(_ => _.isStateLoading || this.currentState().isLoading()),
+                        this.internalSelect(_ => _.isStateLoading || this.currentState().isLoading()),
                         { initialValue: false }
                     );
                 });
@@ -348,7 +397,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
                 // toSignal must be used in an injection context
                 runInInjectionContext(this.environmentInjector, () => {
                     this._isStateReloading = toSignal(
-                        this.select(_ => _.isStateReloading || this.currentState().isReloading()),
+                        this.internalSelect(_ => _.isStateReloading || this.currentState().isReloading()),
                         { initialValue: false }
                     );
                 });
@@ -365,7 +414,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
                 // toSignal must be used in an injection context
                 runInInjectionContext(this.environmentInjector, () => {
                     this._isStateSuccess = toSignal(
-                        this.select(_ => _.isStateSuccess),
+                        this.internalSelect(_ => _.isStateSuccess),
                         { initialValue: false }
                     );
                 });
@@ -382,7 +431,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
                 // toSignal must be used in an injection context
                 runInInjectionContext(this.environmentInjector, () => {
                     this._isStateSuccessOrReloading = toSignal(
-                        this.select(_ => _.isStateSuccessOrReloading),
+                        this.internalSelect(_ => _.isStateSuccessOrReloading),
                         { initialValue: false }
                     );
                 });
@@ -399,7 +448,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
                 // toSignal must be used in an injection context
                 runInInjectionContext(this.environmentInjector, () => {
                     this._isStateError = toSignal(
-                        this.select(_ => _.isStateError),
+                        this.internalSelect(_ => _.isStateError),
                         { initialValue: false }
                     );
                 });
@@ -410,14 +459,14 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
 
     private _isStatePending$?: Observable<boolean>;
     public get isStatePending$(): Observable<boolean> {
-        this._isStatePending$ ??= this.select(_ => _.isStatePending);
+        this._isStatePending$ ??= this.internalSelect(_ => _.isStatePending);
 
         return this._isStatePending$;
     }
 
     private _isStateLoading$?: Observable<boolean>;
     public get isStateLoading$(): Observable<boolean> {
-        this._isStateLoading$ ??= this.select(
+        this._isStateLoading$ ??= this.internalSelect(
             _ => _.isStateLoading || this.currentState().isAnyLoadingRequest() == true
         );
 
@@ -426,7 +475,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
 
     private _isStateReloading$?: Observable<boolean>;
     public get isStateReloading$(): Observable<boolean> {
-        this._isStateReloading$ ??= this.select(
+        this._isStateReloading$ ??= this.internalSelect(
             _ => _.isStateReloading || this.currentState().isAnyReloadingRequest() == true
         );
 
@@ -435,21 +484,21 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
 
     private _isStateSuccess$?: Observable<boolean>;
     public get isStateSuccess$(): Observable<boolean> {
-        this._isStateSuccess$ ??= this.select(_ => _.isStateSuccess);
+        this._isStateSuccess$ ??= this.internalSelect(_ => _.isStateSuccess);
 
         return this._isStateSuccess$;
     }
 
     private _isStateSuccessOrReloading$?: Observable<boolean>;
     public get isStateSuccessOrReloading$(): Observable<boolean> {
-        this._isStateSuccessOrReloading$ ??= this.select(_ => _.isStateSuccess || _.isStateReloading);
+        this._isStateSuccessOrReloading$ ??= this.internalSelect(_ => _.isStateSuccess || _.isStateReloading);
 
         return this._isStateSuccessOrReloading$;
     }
 
     private _isStateError$?: Observable<boolean>;
     public get isStateError$(): Observable<boolean> {
-        this._isStateError$ ??= this.select(_ => _.isStateError);
+        this._isStateError$ ??= this.internalSelect(_ => _.isStateError);
 
         return this._isStateError$;
     }
@@ -739,7 +788,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
         requestKey ??= requestStateDefaultKey;
 
         if (this.cachedErrorMsgObservable$[requestKey] == null) {
-            this.cachedErrorMsgObservable$[requestKey] = this.select(_ => _.getErrorMsg(requestKey));
+            this.cachedErrorMsgObservable$[requestKey] = this.internalSelect(_ => _.getErrorMsg(requestKey));
         }
         return this.cachedErrorMsgObservable$[requestKey]!;
     };
@@ -750,7 +799,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
         }`;
 
         if (this.cachedErrorMsgObservable$[combinedCacheRequestKey] == null) {
-            this.cachedErrorMsgObservable$[combinedCacheRequestKey] = this.select(_ =>
+            this.cachedErrorMsgObservable$[combinedCacheRequestKey] = this.internalSelect(_ =>
                 _.getAllErrorMsgs(requestKeys, excludeKeys)
             );
         }
@@ -809,7 +858,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
             untracked(() => {
                 // toSignal must be used in an injection context
                 runInInjectionContext(this.environmentInjector, () => {
-                    this.cachedLoading$[requestKey] = toSignal(this.select(_ => _.isLoading(requestKey)));
+                    this.cachedLoading$[requestKey] = toSignal(this.internalSelect(_ => _.isLoading(requestKey)));
                 });
             });
         }
@@ -828,7 +877,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
             untracked(() => {
                 // toSignal must be used in an injection context
                 runInInjectionContext(this.environmentInjector, () => {
-                    this.cachedReloading$[requestKey] = toSignal(this.select(_ => _.isReloading(requestKey)));
+                    this.cachedReloading$[requestKey] = toSignal(this.internalSelect(_ => _.isReloading(requestKey)));
                 });
             });
         }
@@ -847,11 +896,16 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
         projector: (s: TViewModel) => Result,
         config?: PlatformStoreSelectConfig
     ): Observable<Result> {
-        // autoInitVmState for case using store select only but not use vm$ in template
-        return this.internalSelect<Result>(projector, config).pipe(tapOnce({ next: () => this.autoInitVmState() }));
+        return defer(() => {
+            return this.internalSelectObservable(this.vm$, config).pipe(
+                map(projector),
+                distinctUntilObjectValuesChanged()
+            );
+        });
     }
 
     private setupSetClonedDeepStateToCheckDataMutationHasDone: boolean = false;
+
     private setupSetClonedDeepStateToCheckDataMutation() {
         if (PLATFORM_CORE_GLOBAL_ENV.isLocalDev && !this.setupSetClonedDeepStateToCheckDataMutationHasDone) {
             this.setupSetClonedDeepStateToCheckDataMutationHasDone = true;
@@ -870,32 +924,54 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
         config?: PlatformStoreSelectConfig
     ): Observable<Result> {
         return defer(() => {
-            this.setupSetClonedDeepStateToCheckDataMutation();
-
             const selectConfig = config ?? this.defaultSelectConfig;
 
-            let selectResult$ = this.innerStore.select(projector, selectConfig);
-
-            // ThrottleTime explain: Delay to enhance performance
-            // { leading: true, trailing: true } <=> emit the first item to ensure not delay, but also ignore the sub-sequence,
-            // and still emit the latest item to ensure data is latest
-            if (selectConfig.throttleTimeDuration != undefined && selectConfig.throttleTimeDuration > 0)
-                selectResult$ = selectResult$.pipe(
-                    throttleTime(selectConfig.throttleTimeDuration ?? 0, asyncScheduler, {
-                        leading: true,
-                        trailing: true
-                    })
-                );
-
-            return <Observable<Result>>selectResult$.pipe(
-                map(result => {
-                    setTimeout(() => {
-                        this.ensureStateNotMutated();
-                    }, 500);
-                    return result;
-                })
+            return this.internalSelectObservable(
+                <Observable<Result>>this.innerStore.select(projector, selectConfig),
+                selectConfig
             );
         });
+    }
+
+    protected internalSelectObservable<Result>(
+        observable: Observable<Result>,
+        config?: PlatformStoreSelectConfig
+    ): Observable<Result> {
+        this.setupSetClonedDeepStateToCheckDataMutation();
+
+        const selectConfig = config ?? this.defaultSelectConfig;
+
+        let selectResult$ = observable;
+
+        // ThrottleTime explain: Delay to enhance performance
+        // { leading: true, trailing: true } <=> emit the first item to ensure not delay, but also ignore the sub-sequence,
+        // and still emit the latest item to ensure data is latest
+        if (selectConfig.throttleTimeDuration != undefined && selectConfig.throttleTimeDuration > 0)
+            selectResult$ = selectResult$.pipe(
+                throttleTime(selectConfig.throttleTimeDuration ?? 0, asyncScheduler, {
+                    leading: true,
+                    trailing: true
+                })
+            );
+
+        // autoInitVmState for case using store select only but not use vm$ in template
+        return selectResult$.pipe(
+            map(result => {
+                setTimeout(() => {
+                    this.ensureStateNotMutated();
+                }, 500);
+                return result;
+            }),
+            tapOnce({
+                next: () => {
+                    // setTimeout to autoInitVmState in queue, prevent access init vm$ immediately, may lock account or has some issues if
+                    // access signal => cause select => cause access $vm immdeiately in constructor my lock the loading process
+                    setTimeout(() => {
+                        this.autoInitVmState();
+                    });
+                }
+            })
+        );
     }
 
     protected autoInitVmState() {
@@ -979,7 +1055,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
                     )
                 ),
                 this.untilDestroyed(),
-                share(), // (IV)
+                shareReplay({ bufferSize: 1, refCount: true }), // (IV)
                 this.subscribeUntilDestroyed(undefined, sub => {
                     if (options?.effectSubscriptionHandleFn != null) options?.effectSubscriptionHandleFn(sub);
                     if (otherOptions?.effectSubscriptionHandleFn != null) otherOptions?.effectSubscriptionHandleFn(sub);
@@ -1033,7 +1109,7 @@ export abstract class PlatformVmStore<TViewModel extends PlatformVm> implements 
      * @returns Operator function to map the emitted value to the current view model state.
      */
     public switchMapVm<T>(): OperatorFunction<T, TViewModel> {
-        return switchMap(p => this.select(vm => vm));
+        return switchMap(p => this.internalSelect(vm => vm));
     }
 
     /**

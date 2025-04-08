@@ -1,20 +1,34 @@
 using System.Linq.Expressions;
-using static Easy.Platform.Common.Extensions.QueryableExtension;
+using System.Reflection;
 
 namespace Easy.Platform.Common.Extensions;
 
 public static class QueryableExtension
 {
     /// <summary>
-    /// Applies pagination to the provided query.
+    /// Applies pagination to the provided query. If the query is not already ordered,
+    /// it orders by the "Id" property automatically.
     /// </summary>
     /// <typeparam name="T">The type of the elements of source.</typeparam>
-    /// <param name="query">The IQueryable[T] to apply pagination to.</param>
+    /// <param name="query">The IQueryable&lt;T&gt; to apply pagination to.</param>
     /// <param name="skipCount">The number of elements to skip before returning the remaining elements.</param>
     /// <param name="maxResultCount">The maximum number of elements to return.</param>
-    /// <returns>A new IQueryable[T] that has pagination applied.</returns>
+    /// <returns>A new IQueryable&lt;T&gt; that has pagination applied.</returns>
     public static IQueryable<T> PageBy<T>(this IQueryable<T> query, int? skipCount, int? maxResultCount)
     {
+        // Check if the query is not already ordered and T has a property named "Id"
+        var idProperty = typeof(T).GetProperty("Id", BindingFlags.Public | BindingFlags.Instance);
+        if (query is not IOrderedQueryable<T> && idProperty != null)
+        {
+            var parameter = Expression.Parameter(typeof(T), "x");
+            // Use the found Id property
+            var property = Expression.Property(parameter, idProperty);
+            // Convert the property to object to support different types for Id
+            var converted = Expression.Convert(property, typeof(object));
+            var orderByExp = Expression.Lambda<Func<T, object>>(converted, parameter);
+            query = query.OrderBy(orderByExp);
+        }
+
         return query
             .PipeIf(skipCount >= 0, q => q.Skip(skipCount!.Value))
             .PipeIf(maxResultCount >= 0, q => q.Take(maxResultCount!.Value));

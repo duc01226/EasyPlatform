@@ -6,13 +6,16 @@ import {
     Directive,
     effect,
     ElementRef,
+    EnvironmentInjector,
     inject,
     OnChanges,
     OnDestroy,
     OnInit,
+    runInInjectionContext,
     signal,
     Signal,
     SimpleChanges,
+    untracked,
     WritableSignal
 } from '@angular/core';
 
@@ -64,75 +67,89 @@ export abstract class PlatformComponent implements OnInit, AfterViewInit, OnDest
 
     private devModeCheckLoadingStateElementTimeoutId?: number;
 
+    protected environmentInjector = inject(EnvironmentInjector);
+
     constructor() {
-        // Setup dev mode check has loading
-        if (this.devModeCheckLoadingStateElement != undefined && PLATFORM_CORE_GLOBAL_ENV.isLocalDev) {
-            effect(() => {
-                if (this.devModeCheckLoadingStateElementTimeoutId != undefined)
-                    clearTimeout(this.devModeCheckLoadingStateElementTimeoutId);
-                if (this.isStateLoading()) {
-                    this.devModeCheckLoadingStateElementTimeoutId = setTimeout(() => {
-                        if (this.devModeCheckLoadingStateElement == undefined || !this.isStateLoading()) return;
+        // setTimeout to delay action to queue => run after inherit component init logic has been executed
+        setTimeout(() => {
+            //untracked to fix NG0602: A disallowed function is called inside a reactive context
+            untracked(() => {
+                // toSignal must be used in an injection context
+                runInInjectionContext(this.environmentInjector, () => {
+                    // Setup dev mode check has loading
+                    if (this.devModeCheckLoadingStateElement != undefined && PLATFORM_CORE_GLOBAL_ENV.isLocalDev) {
+                        effect(() => {
+                            if (this.devModeCheckLoadingStateElementTimeoutId != undefined)
+                                clearTimeout(this.devModeCheckLoadingStateElementTimeoutId);
+                            if (this.isStateLoading()) {
+                                this.devModeCheckLoadingStateElementTimeoutId = setTimeout(() => {
+                                    if (this.devModeCheckLoadingStateElement == undefined || !this.isStateLoading())
+                                        return;
 
-                        const devModeCheckLoadingStateElements =
-                            typeof this.devModeCheckLoadingStateElement == 'string'
-                                ? [this.devModeCheckLoadingStateElement]
-                                : this.devModeCheckLoadingStateElement;
-                        const findInRootElement = this.devModeCheckLoadingOrErrorAllowInGlobalDocumentBody
-                            ? document
-                            : this.elementRef.nativeElement;
+                                    const devModeCheckLoadingStateElements =
+                                        typeof this.devModeCheckLoadingStateElement == 'string'
+                                            ? [this.devModeCheckLoadingStateElement]
+                                            : this.devModeCheckLoadingStateElement;
+                                    const findInRootElement = this.devModeCheckLoadingOrErrorAllowInGlobalDocumentBody
+                                        ? document
+                                        : this.elementRef.nativeElement;
 
-                        if (
-                            this.isStateLoading() &&
-                            this.devModeCheckLoadingStateElementOnlyWhen &&
-                            devModeCheckLoadingStateElements.find(
-                                elementSelector =>
-                                    !this.isStateLoading() || findInRootElement.querySelector(elementSelector) != null
-                            ) == null
-                        ) {
-                            if (!this.isStateLoading() || this.destroyed$.value) return;
+                                    if (
+                                        this.isStateLoading() &&
+                                        this.devModeCheckLoadingStateElementOnlyWhen &&
+                                        devModeCheckLoadingStateElements.find(
+                                            elementSelector =>
+                                                !this.isStateLoading() ||
+                                                findInRootElement.querySelector(elementSelector) != null
+                                        ) == null
+                                    ) {
+                                        if (!this.isStateLoading() || this.destroyed$.value) return;
 
-                            const msg = `[DEV-ERROR] ${this.elementRef.nativeElement.tagName} Component in loading state but no loading element found`;
-                            alert(msg);
-                            console.error(new Error(msg));
-                        }
-                    }, PlatformComponent.checkLoadingDelayTimeMs);
-                }
+                                        const msg = `[DEV-ERROR] ${this.elementRef.nativeElement.tagName} Component in loading state but no loading element found`;
+                                        alert(msg);
+                                        console.error(new Error(msg));
+                                    }
+                                }, PlatformComponent.checkLoadingDelayTimeMs);
+                            }
+                        });
+                    }
+
+                    //Setup dev mode check error has alert
+                    if (this.devModeCheckErrorStateElement != undefined && PLATFORM_CORE_GLOBAL_ENV.isLocalDev) {
+                        effect(() => {
+                            if (this.errorMsg$() != null) {
+                                setTimeout(() => {
+                                    if (this.devModeCheckErrorStateElement == undefined) return;
+
+                                    const devModeCheckErrorStateElements =
+                                        typeof this.devModeCheckErrorStateElement == 'string'
+                                            ? [this.devModeCheckErrorStateElement]
+                                            : this.devModeCheckErrorStateElement;
+                                    const findInRootElement = this.devModeCheckLoadingOrErrorAllowInGlobalDocumentBody
+                                        ? document
+                                        : this.elementRef.nativeElement;
+
+                                    if (
+                                        this.errorMsg$() != null &&
+                                        devModeCheckErrorStateElements.find(
+                                            elementSelector =>
+                                                this.errorMsg$() == null ||
+                                                findInRootElement.querySelector(elementSelector) != null
+                                        ) == null
+                                    ) {
+                                        if (this.errorMsg$() == null || this.destroyed$.value) return;
+
+                                        const msg = `[DEV-ERROR] ${this.elementRef.nativeElement.tagName} Component in error state but no error element found`;
+                                        alert(msg);
+                                        console.error(new Error(msg));
+                                    }
+                                });
+                            }
+                        });
+                    }
+                });
             });
-        }
-
-        //Setup dev mode check error has alert
-        if (this.devModeCheckErrorStateElement != undefined && PLATFORM_CORE_GLOBAL_ENV.isLocalDev) {
-            effect(() => {
-                if (this.errorMsg$() != null) {
-                    setTimeout(() => {
-                        if (this.devModeCheckErrorStateElement == undefined) return;
-
-                        const devModeCheckErrorStateElements =
-                            typeof this.devModeCheckErrorStateElement == 'string'
-                                ? [this.devModeCheckErrorStateElement]
-                                : this.devModeCheckErrorStateElement;
-                        const findInRootElement = this.devModeCheckLoadingOrErrorAllowInGlobalDocumentBody
-                            ? document
-                            : this.elementRef.nativeElement;
-
-                        if (
-                            this.errorMsg$() != null &&
-                            devModeCheckErrorStateElements.find(
-                                elementSelector =>
-                                    this.errorMsg$() == null || findInRootElement.querySelector(elementSelector) != null
-                            ) == null
-                        ) {
-                            if (this.errorMsg$() == null || this.destroyed$.value) return;
-
-                            const msg = `[DEV-ERROR] ${this.elementRef.nativeElement.tagName} Component in error state but no error element found`;
-                            alert(msg);
-                            console.error(new Error(msg));
-                        }
-                    });
-                }
-            });
-        }
+        });
     }
 
     public toast: ToastrService = inject(ToastrService);
