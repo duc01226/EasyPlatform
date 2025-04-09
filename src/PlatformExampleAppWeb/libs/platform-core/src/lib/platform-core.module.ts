@@ -4,7 +4,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { RouterModule } from '@angular/router';
-import { TranslateModule, TranslateModuleConfig } from '@ngx-translate/core';
+import { MissingTranslationHandler, TranslateModule, TranslateModuleConfig } from '@ngx-translate/core';
 import { GlobalConfig, ToastrModule } from 'ngx-toastr';
 
 import {
@@ -27,7 +27,7 @@ import { PLATFORM_CORE_GLOBAL_ENV } from './platform-core-global-environment';
 import { PlatformCoreModuleConfig } from './platform-core.config';
 import { PlatformGlobalErrorHandler } from './platform-global-error-handler';
 import { PlatformServiceWorkerService } from './platform-service-worker';
-import { PlatformTranslateConfig } from './translations';
+import { PlatformDefaultMissingTranslationHandler, PlatformTranslateConfig } from './translations';
 import { list_selectMany } from './utils';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -170,7 +170,13 @@ export class PlatformCoreModule {
             {
                 ngModule: RouterModule
             },
-            TranslateModule.forRoot(config.translate?.config),
+            TranslateModule.forRoot({
+                missingTranslationHandler: {
+                    provide: MissingTranslationHandler,
+                    useClass: PlatformDefaultMissingTranslationHandler
+                },
+                ...(config.translate?.config ?? {})
+            }),
             ToastrModule.forRoot(
                 config.toastConfig ?? {
                     newestOnTop: true,

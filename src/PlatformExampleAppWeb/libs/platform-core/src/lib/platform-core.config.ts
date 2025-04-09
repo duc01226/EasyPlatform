@@ -5,6 +5,7 @@ export class PlatformCoreModuleConfig {
 
     public constructor(data?: Partial<PlatformCoreModuleConfig>) {
         this.isDevelopment = data?.isDevelopment ?? false;
+        this.disableMissingTranslationWarnings = data?.disableMissingTranslationWarnings ?? false;
         this.httpRequestTimeoutInSeconds = data?.httpRequestTimeoutInSeconds ?? this.DEFAULT_TIMEOUT_SECONDS;
         this.maxCacheRequestDataPerApiRequestName =
             data?.maxCacheRequestDataPerApiRequestName ??
@@ -12,6 +13,7 @@ export class PlatformCoreModuleConfig {
     }
 
     public isDevelopment: boolean = false;
+    public disableMissingTranslationWarnings: boolean = false;
     public httpRequestTimeoutInSeconds: number = this.DEFAULT_TIMEOUT_SECONDS;
     public maxCacheRequestDataPerApiRequestName: number =
         PlatformCoreModuleConfig.defaultMaxCacheRequestDataPerApiRequestName;
