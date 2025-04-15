@@ -387,7 +387,7 @@ export abstract class PlatformFormComponent<TViewModel extends IPlatformVm>
          throttle interval: --[~~~~~~~~~~~I~~~~~~~~~~~]---[~~~~~~~~~~~]--[~~~~~~~~~~~I~
          output_2:          --0-----------1---------------2--------------3-----------4-
 
-         */
+		 */
         keys(this.form.controls).forEach(formControlKey => {
             this.storeSubscription(
                 buildControlValueChangesSubscriptionKey(formControlKey),
@@ -556,7 +556,7 @@ export abstract class PlatformFormComponent<TViewModel extends IPlatformVm>
             const vmFormKeyValue = vmFormValues[formKey];
             const formControl = formControls[vmFormKey];
 
-            if (isDifferent(vmFormKeyValue, currentReactiveFormValues[formKey])) {
+            if (isDifferent(vmFormKeyValue, currentReactiveFormValues[formKey], false, true)) {
                 if (formControl instanceof FormArray && vmFormKeyValue instanceof Array) {
                     const listControlformConfig = <
                         PlatformFormGroupControlConfigPropArray<ArrayElement<TViewModel[keyof TViewModel]>>

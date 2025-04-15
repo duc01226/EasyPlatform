@@ -8,7 +8,7 @@ export class PlatformDefaultMissingTranslationHandler implements MissingTranslat
 
     public handle(params: MissingTranslationHandlerParams) {
         if (this.moduleConfig.isDevelopment && !this.moduleConfig.disableMissingTranslationWarnings) {
-            const message = `[WARNING] Missing translation for key '${params.key}' in '${params.translateService.currentLang}'`;
+            const message = `[DEV-WARNING] Missing translation for key '${params.key}' in '${params.translateService.currentLang}'. Click F12 to see warning logs for more details.`;
             console.warn(message);
 
             this.showNonBlockingWarning(message);
@@ -49,6 +49,6 @@ export class PlatformDefaultMissingTranslationHandler implements MissingTranslat
 
         setTimeout(() => {
             banner.remove();
-        }, 4000); // Auto-remove after 4 seconds
+        }, 5000); // Auto-remove after 5 seconds
     }
 }

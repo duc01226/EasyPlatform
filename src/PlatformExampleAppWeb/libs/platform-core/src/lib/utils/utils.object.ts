@@ -12,7 +12,6 @@ import {
 import { PartialDeep } from 'type-fest';
 import { Time } from '../common-types';
 import { PLATFORM_CORE_GLOBAL_ENV } from '../platform-core-global-environment';
-import { any } from './_common-functions';
 import { list_distinct } from './utils.list';
 
 export function keys<T extends object>(
@@ -278,38 +277,83 @@ export function values<T>(object?: Dictionary<T> | ArrayLike<T> | undefined): T[
     return lodashValues(object);
 }
 
-export function isDifferent<T>(value1: T, value2: T, shallowCheckFirstLevel: boolean = false) {
-    if (value1 == undefined && value2 == undefined) return false;
-    if (value1 == undefined && value2 != undefined) return true;
-    if (value1 != undefined && value2 == undefined) return true;
-    if (typeof value1 != 'object' && typeof value2 != 'object') {
-        return value1 != value2;
-    }
-    if (value1 instanceof Array && value2 instanceof Array && value1.length != value2.length) {
-        return true;
-    }
-    if (value1 instanceof Date && value2 instanceof Date) {
-        return value1.getTime() != value2.getTime();
-    }
-    if (value1 instanceof Set && value2 instanceof Set) {
-        return JSON.stringify(Array.from(value1)) != JSON.stringify(Array.from(value2));
+/**
+ * Compare two values for difference, with optional shallow-first-level optimization,
+ * and an option to treat undefined and null as the same.
+ *
+ * @param value1
+ * @param value2
+ * @param shallowCheckFirstLevel – if true, only shallow-check first-level props
+ * @param treatNullUndefinedEqual – if true, undefined and null are normalized to null
+ */
+export function isDifferent<T>(
+    value1: T,
+    value2: T,
+    shallowCheckFirstLevel: boolean = false,
+    treatNullUndefinedEqual: boolean = false
+): boolean {
+    // quick undefined/null checks
+    const v1 = norm(value1);
+    const v2 = norm(value2);
+
+    if (v1 == null && v2 == null) return false;
+    if (v1 == null && v2 != null) return true;
+    if (v1 != null && v2 == null) return true;
+
+    // primitives (non-object) after normalization
+    if (typeof v1 !== 'object' && typeof v2 !== 'object') return v1 !== v2;
+
+    // both arrays?
+    if (Array.isArray(v1) && Array.isArray(v2) && v1.length !== v2.length) return true;
+
+    // both dates?
+    if (v1 instanceof Date && v2 instanceof Date) return v1.getTime() !== v2.getTime();
+
+    // both objects?
+    if (typeof v1 === 'object' && typeof v2 === 'object') {
+        const keys1 = keys(v1 as any);
+        const keys2 = keys(v2 as any);
+
+        if (keys1.length !== keys2.length) return true;
+
+        if (shallowCheckFirstLevel) {
+            for (const key of keys1) {
+                const e1 = norm((v1 as any)[key]);
+                const e2 = norm((v2 as any)[key]);
+
+                if (e1 == null && e2 == null) continue;
+                if (e1 == null || e2 == null) return true;
+                if (typeof e1 !== 'object' && typeof e2 !== 'object') {
+                    if (e1 !== e2) return true;
+                } else {
+                    if (JSON.stringify(e1, replacer) !== JSON.stringify(e2, replacer)) return true;
+                }
+            }
+            return false;
+        }
+
+        // deep-check via JSON
+        return JSON.stringify(v1, replacer) !== JSON.stringify(v2, replacer);
     }
 
-    const value1Keys = keys(<any>value1);
-    const value2Keys = keys(<any>value2);
+    // fallback: consider different
+    return true;
 
-    if (value1Keys.length != value2Keys.length) return true;
-    if (shallowCheckFirstLevel) {
-        return any(value1Keys, value1Key => {
-            if ((<any>value1)[value1Key] == (<any>value2)[value1Key]) return false;
-            if (typeof (<any>value1)[value1Key] != 'object' && typeof (<any>value2)[value1Key] != 'object') return true;
-            return JSON.stringify((<any>value1)[value1Key]) != JSON.stringify((<any>value2)[value1Key]);
-        });
+    // JSON.stringify replacer: normalize undefined→null at any depth
+    function replacer(_key: string, value: any) {
+        if (treatNullUndefinedEqual && value === undefined) {
+            return null;
+        }
+        return value;
     }
 
-    const result = JSON.stringify(value1) != JSON.stringify(value2);
-
-    return result;
+    // helper to normalize undefined/null to null if requested
+    function norm(x: any): any {
+        if (treatNullUndefinedEqual && (x === undefined || x === null)) {
+            return null;
+        }
+        return x;
+    }
 }
 
 export function changedKeys<T>(value1: T, value2: T): (keyof T)[] {
