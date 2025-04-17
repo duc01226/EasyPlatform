@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
-using Easy.Platform.Common.Logging;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Domain.Exceptions;
@@ -472,13 +471,14 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     {
         try
         {
+            // Destructure the JSON so Serilog stores its fields (avoiding a duplicate blob in Properties)
             logger.LogError(
                 exception.BeautifyStackTrace(),
-                "UpdateExistingOutboxMessageFailedAsync. [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                "UpdateExistingOutboxMessageFailedAsync. [[Error:{Error}]]; [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage: {@OutboxJsonMessage}]];",
                 exception.Message,
                 existingOutboxMessage.MessageTypeFullName,
-                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                existingOutboxMessage.JsonMessage.JsonDeserialize<object>()
+            );
 
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 async () =>

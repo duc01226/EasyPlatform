@@ -172,6 +172,8 @@ public class PlatformApplicationBusMessageProducer : IPlatformApplicationBusMess
         string sourceOutboxUowId = null,
         CancellationToken cancellationToken = default) where TMessage : class, new()
     {
+        if (message == null) return null;
+
         // Send the message to the bus, using the appropriate routing key and outbox options.
         return await SendMessageAsync(
             message,

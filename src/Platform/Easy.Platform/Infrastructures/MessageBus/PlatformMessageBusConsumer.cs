@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Text.Json;
 using Easy.Platform.Common.Extensions;
-using Easy.Platform.Common.Logging;
 using Easy.Platform.Common.Utils;
 using Microsoft.Extensions.Logging;
 
@@ -55,13 +54,13 @@ public interface IPlatformMessageBusConsumer
         Exception e)
         where TMessage : class, new()
     {
+        // Destructure JSON so Serilog treats it as structured data (avoiding duplicate blob in Properties)
         logger.LogError(
             e.BeautifyStackTrace(),
-            "Error Consume message bus. [ConsumerType:{ConsumerType}]; [MessageType:{MessageType}]; [MessageJson (Top {DefaultRecommendedMaxLogsLength} characters):{MessageContent}];",
+            "Error Consume message bus. [ConsumerType:{ConsumerType}]; [MessageType:{MessageType}]; [MessageJson:{@MessageContent}];",
             consumerType.FullName,
             message.GetType().GetNameOrGenericTypeName(),
-            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-            message.ToJson().TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+            message);
     }
 }
 
@@ -150,12 +149,11 @@ public abstract class PlatformMessageBusConsumer : IPlatformMessageBusConsumer
                     if (elapsedMilliseconds >= toCheckSlowProcessWarningTimeMilliseconds)
                     {
                         logger?.LogWarning(
-                            "[MessageBus] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. Consumer:{Consumer} BusMessage (Top {DefaultRecommendedMaxLogsLength} characters): {BusMessage}",
+                            "[MessageBus] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. Consumer:{Consumer}; BusMessage:{@BusMessage}",
                             toCheckSlowProcessWarningTimeMilliseconds,
                             elapsedMilliseconds,
                             consumer.GetType().FullName,
-                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                            busMessage.ToJson().TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                            busMessage);
                     }
                 });
         }
