@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Easy.Platform.Application.MessageBus.Consumers;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
+using Easy.Platform.Common.Logging;
 using Easy.Platform.Common.Timing;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Domain.Exceptions;
@@ -927,16 +928,15 @@ public static class PlatformInboxMessageBusConsumerHelper
     {
         try
         {
-            // Destructure the JSON so Serilog stores its fields (avoiding duplicate big string in Properties)
             loggerFactory()
                 .LogError(
                     exception.BeautifyStackTrace(),
-                    "UpdateExistingInboxFailedMessageAsync. [[Error:{Error}]]; [[MessageType:{MessageType}]]; [[ConsumerType:{ConsumerType}]]; [[InboxJsonMessage: {@InboxJsonMessage}]];",
+                    "UpdateExistingInboxFailedMessageAsync. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]];",
                     exception.Message,
                     message.GetType().GetNameOrGenericTypeName(),
                     consumerType?.GetNameOrGenericTypeName() ?? "n/a",
-                    existingInboxMessage.JsonMessage.JsonDeserialize<object>()
-                );
+                    PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                    existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
 
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 async () =>
