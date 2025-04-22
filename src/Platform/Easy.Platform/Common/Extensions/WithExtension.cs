@@ -145,6 +145,13 @@ public static class WithExtension
         return target;
     }
 
+    public static async Task<T> WithIf<T>(this T target, Func<T, bool> @if, params Func<T, Task>[] actions)
+    {
+        if (@if(target))
+            await actions.ForEachAsync(action => action(target));
+        return target;
+    }
+
     /// <summary>
     /// Applies a sequence of asynchronous actions to the target object if the specified condition is true, and returns the updated object.
     /// </summary>

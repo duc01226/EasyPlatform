@@ -500,9 +500,33 @@ public static class ListExtension
     }
 
     /// <inheritdoc cref="ForEachAsync{T}(IEnumerable{T},Func{T,int,Task})" />
+    public static Task ForEach<T>(this IEnumerable<T> items, Func<T, Task> action)
+    {
+        return items.ForEachAsync((item, index) => action(item));
+    }
+
+    /// <inheritdoc cref="ForEachAsync{T}(IEnumerable{T},Func{T,int,Task})" />
+    public static Task ForEach<T>(this IEnumerable<T> items, Func<T, int, Task> action)
+    {
+        return items.ForEachAsync((item, index) => action(item, index));
+    }
+
+    /// <inheritdoc cref="ForEachAsync{T}(IEnumerable{T},Func{T,int,Task})" />
     public static Task ForEachAsync<T, TActionResult>(this IEnumerable<T> items, Func<T, Task<TActionResult>> action)
     {
         return items.ForEachAsync((item, index) => action(item));
+    }
+
+    /// <inheritdoc cref="ForEachAsync{T}(IEnumerable{T},Func{T,int,Task})" />
+    public static Task ForEach<T, TActionResult>(this IEnumerable<T> items, Func<T, Task<TActionResult>> action)
+    {
+        return items.ForEachAsync((item, index) => action(item));
+    }
+
+    /// <inheritdoc cref="ForEachAsync{T}(IEnumerable{T},Func{T,int,Task})" />
+    public static Task ForEach<T, TActionResult>(this IEnumerable<T> items, Func<T, int, Task<TActionResult>> action)
+    {
+        return items.ForEachAsync((item, index) => action(item, index));
     }
 
     /// <summary>
