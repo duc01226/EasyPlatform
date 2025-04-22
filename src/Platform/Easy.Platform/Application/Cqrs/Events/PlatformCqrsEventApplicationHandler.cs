@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Threading;
 using Easy.Platform.Application.Cqrs.Events.InboxSupport;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.RequestContext;
@@ -157,7 +156,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     /// </remarks>
     public virtual bool CanExecuteHandlingEventUsingInboxConsumer(TEvent @event)
     {
-        return HasInboxMessageSupport() && NotNeedWaitHandlerExecutionFinishedImmediately(@event);
+        return HasInboxMessageSupport() && (NotNeedWaitHandlerExecutionFinishedImmediately(@event) || IsCurrentInstanceCalledFromInboxBusMessageConsumer);
     }
 
     /// <summary>
@@ -237,10 +236,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                     {
                         // Execute task in background separated thread task
                         Util.TaskRunner.QueueActionInBackground(
-                            async () =>
-                            {
-                                await ExecuteHandleInNewScopeAsync(@event, cancellationToken);
-                            },
+                            () => ExecuteHandleInNewScopeAsync(@event, cancellationToken),
                             cancellationToken: cancellationToken);
                     });
             }
@@ -252,6 +248,11 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
             if (ThrowExceptionOnHandleFailed) throw;
             LogError(@event, e.BeautifyStackTrace(), LoggerFactory);
         }
+    }
+
+    protected override bool NeedWaitHandlerExecutionFinishedImmediately(TEvent @event)
+    {
+        return base.NeedWaitHandlerExecutionFinishedImmediately(@event) || IsCurrentInstanceCalledFromInboxBusMessageConsumer;
     }
 
     /// <summary>
@@ -274,7 +275,6 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                 requestContextAccessor.Current.SetValues(@event.RequestContext);
 
             if (CanExecuteHandlingEventUsingInboxConsumer(@event) &&
-                !IsCurrentInstanceCalledFromInboxBusMessageConsumer &&
                 NotNeedWaitHandlerExecutionFinishedImmediately(@event))
             {
                 try
@@ -302,13 +302,12 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                     else
                     {
                         await RootServiceProvider.ExecuteInjectScopedAsync(
-                            async (
-                                IServiceProvider serviceProvider,
-                                PlatformInboxConfig inboxConfig,
-                                IPlatformInboxBusMessageRepository inboxMessageRepository,
-                                IPlatformApplicationSettingContext applicationSettingContext) =>
-                            {
-                                await HandleExecutingInboxConsumerAsync(
+                            (
+                                    IServiceProvider serviceProvider,
+                                    PlatformInboxConfig inboxConfig,
+                                    IPlatformInboxBusMessageRepository inboxMessageRepository,
+                                    IPlatformApplicationSettingContext applicationSettingContext) =>
+                                HandleExecutingInboxConsumerAsync(
                                     @event,
                                     serviceProvider,
                                     inboxConfig,
@@ -316,8 +315,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                                     applicationSettingContext,
                                     currentBusMessageIdentity,
                                     null,
-                                    cancellationToken);
-                            });
+                                    cancellationToken));
                     }
                 }
             }
@@ -336,7 +334,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
             Logger.Value.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(RunHandleAsync));
 
         await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync<PlatformDomainRowVersionConflictException>(
-            async () =>
+            () =>
             {
                 if (AutoOpenUow)
                 {
@@ -344,22 +342,19 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                     // If not then create new scope to open new uow so that multiple events handlers from an event do not get conflicted
                     // uow in the same scope if not open new scope
                     if (AllowHandleInBackgroundThread(@event) || CanExecuteHandlingEventUsingInboxConsumer(@event))
-                        await UnitOfWorkManager.ExecuteUowTask(() => CheckToRunHandleAsync(@event, cancellationToken));
+                        return UnitOfWorkManager.ExecuteUowTask(() => CheckToRunHandleAsync(@event, cancellationToken));
                     else
                     {
-                        await RootServiceProvider.ExecuteInjectScopedAsync(
-                            async (IPlatformUnitOfWorkManager unitOfWorkManager, IServiceProvider serviceProvider) =>
-                            {
-                                await unitOfWorkManager.ExecuteUowTask(
-                                    () => serviceProvider.GetRequiredService(GetType())
-                                        .As<PlatformCqrsEventApplicationHandler<TEvent>>()
-                                        .With(newInstance => CopyPropertiesToNewInstanceBeforeExecution(this, newInstance))
-                                        .CheckToRunHandleAsync(@event, cancellationToken));
-                            });
+                        return RootServiceProvider.ExecuteInjectScopedAsync(
+                            (IPlatformUnitOfWorkManager unitOfWorkManager, IServiceProvider serviceProvider) => unitOfWorkManager.ExecuteUowTask(
+                                () => serviceProvider.GetRequiredService(GetType())
+                                    .As<PlatformCqrsEventApplicationHandler<TEvent>>()
+                                    .With(newInstance => CopyPropertiesToNewInstanceBeforeExecution(this, newInstance))
+                                    .CheckToRunHandleAsync(@event, cancellationToken)));
                     }
                 }
                 else
-                    await CheckToRunHandleAsync(@event, cancellationToken);
+                    return CheckToRunHandleAsync(@event, cancellationToken);
             },
             retryCount: retryCount ?? RetryOnFailedTimes,
             sleepDurationProvider: p => RetryOnFailedDelaySeconds.Seconds(),
@@ -397,7 +392,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
         var eventSubQueuePrefix = @event.As<IPlatformSubMessageQueuePrefixSupport>()?.SubQueuePrefix();
 
         await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-            async () => await PlatformInboxMessageBusConsumerHelper.HandleExecutingInboxConsumerAsync(
+            () => PlatformInboxMessageBusConsumerHelper.HandleExecutingInboxConsumerAsync(
                 rootServiceProvider: RootServiceProvider,
                 currentScopeServiceProvider: serviceProvider,
                 consumerType: typeof(PlatformCqrsEventInboxBusMessageConsumer),

@@ -706,9 +706,9 @@ public static class TaskExtension
         return target;
     }
 
-    public static async Task Timeout(this Task task, TimeSpan maxTimeout)
+    public static Task Timeout(this Task task, TimeSpan maxTimeout)
     {
-        await task.Then(ValueTuple.Create).Timeout(maxTimeout);
+        return task.Then(ValueTuple.Create).Timeout(maxTimeout);
     }
 
     public static async Task<T> Timeout<T>(this Task<T> task, TimeSpan maxTimeout)

@@ -18,11 +18,7 @@ public static class RetryPolicyExtension
     {
         try
         {
-            retryPolicy.Execute(
-                () =>
-                {
-                    action();
-                });
+            retryPolicy.Execute(action);
         }
         catch (Exception e)
         {
@@ -48,11 +44,7 @@ public static class RetryPolicyExtension
     {
         try
         {
-            return retryPolicy.Execute(
-                () =>
-                {
-                    return action();
-                });
+            return retryPolicy.Execute(() => action());
         }
         catch (Exception e)
         {
@@ -76,11 +68,7 @@ public static class RetryPolicyExtension
     {
         try
         {
-            retryPolicy.Execute(
-                () =>
-                {
-                    action();
-                });
+            retryPolicy.Execute(() => action());
         }
         catch (Exception e)
         {
@@ -106,11 +94,7 @@ public static class RetryPolicyExtension
     {
         try
         {
-            return retryPolicy.Execute(
-                () =>
-                {
-                    return action();
-                });
+            return retryPolicy.Execute(() => action());
         }
         catch (Exception e)
         {
@@ -138,10 +122,7 @@ public static class RetryPolicyExtension
         try
         {
             await retryPolicy.ExecuteAsync(
-                async _ =>
-                {
-                    await action();
-                },
+                _ => action(),
                 cancellationToken);
         }
         catch (Exception e)
@@ -173,10 +154,7 @@ public static class RetryPolicyExtension
         try
         {
             return await retryPolicy.ExecuteAsync(
-                async _ =>
-                {
-                    return await action();
-                },
+                _ => action(),
                 cancellationToken);
         }
         catch (Exception e)

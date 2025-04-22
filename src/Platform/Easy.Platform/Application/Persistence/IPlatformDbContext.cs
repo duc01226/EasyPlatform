@@ -64,21 +64,18 @@ public interface IPlatformDbContext : IDisposable
                 previousMigrationName: index == 0 ? null : mainThreadMigrations[index - 1].Name));
 
         Util.TaskRunner.QueueActionInBackground(
-            async () =>
-            {
-                await backgroundThreadMigrations.ForEachAsync(
-                    async (migrationExecution, index) =>
-                    {
-                        await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                            () => rootServiceProvider.ExecuteInjectScopedAsync(
-                                async (IServiceProvider sp, TDbContext dbContext) =>
-                                    await dbContext.ExecuteDataMigrationExecutor(
-                                        PlatformDataMigrationExecutor<TDbContext>.CreateNewInstance(sp, migrationExecution.GetType()),
-                                        previousMigrationName: index == 0 ? null : backgroundThreadMigrations[index - 1].Name)),
-                            sleepDurationProvider: retry => MigrationRetryDelaySeconds.Seconds(),
-                            retryCount: MigrationRetryCount);
-                    });
-            },
+            () => backgroundThreadMigrations.ForEachAsync(
+                async (migrationExecution, index) =>
+                {
+                    await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+                        () => rootServiceProvider.ExecuteInjectScopedAsync(
+                            async (IServiceProvider sp, TDbContext dbContext) =>
+                                await dbContext.ExecuteDataMigrationExecutor(
+                                    PlatformDataMigrationExecutor<TDbContext>.CreateNewInstance(sp, migrationExecution.GetType()),
+                                    previousMigrationName: index == 0 ? null : backgroundThreadMigrations[index - 1].Name)),
+                        sleepDurationProvider: retry => MigrationRetryDelaySeconds.Seconds(),
+                        retryCount: MigrationRetryCount);
+                }),
             loggerFactory: () =>
                 rootServiceProvider.GetRequiredService<ILoggerFactory>()
                     .CreateLogger(typeof(IPlatformDbContext).GetNameOrGenericTypeName() + $"-{GetType().Name}"));

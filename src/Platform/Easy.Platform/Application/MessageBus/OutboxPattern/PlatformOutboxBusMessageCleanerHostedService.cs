@@ -184,7 +184,7 @@ public class PlatformOutboxBusMessageCleanerHostedService : PlatformIntervalHost
             if (toIgnoreMessageCount > 0)
             {
                 await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                    async () => await ServiceProvider.ExecuteInjectScopedScrollingPagingAsync<PlatformOutboxBusMessage>(
+                    () => ServiceProvider.ExecuteInjectScopedScrollingPagingAsync<PlatformOutboxBusMessage>(
                         maxExecutionCount: toIgnoreMessageCount / NumberOfDeleteMessagesBatch(),
                         async (IPlatformOutboxBusMessageRepository outboxEventBusMessageRepo) =>
                         {

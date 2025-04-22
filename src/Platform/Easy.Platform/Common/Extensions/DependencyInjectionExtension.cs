@@ -1538,7 +1538,7 @@ public static class DependencyInjectionExtension
         params object[] manuallyParams)
     {
         return Util.Pager.ExecuteScrollingPagingAsync(
-            async () => await serviceProvider.ExecuteInjectScopedAsync<List<TItem>>(method, manuallyParams),
+            () => serviceProvider.ExecuteInjectScopedAsync<List<TItem>>(method, manuallyParams),
             maxExecutionCount);
     }
 
@@ -1554,7 +1554,7 @@ public static class DependencyInjectionExtension
         params object[] manuallyParams)
     {
         return Util.Pager.ExecuteScrollingPagingAsync(
-            async () => await serviceProvider.ExecuteInjectScopedAsync<List<TItem>>(method, manuallyParams),
+            () => serviceProvider.ExecuteInjectScopedAsync<List<TItem>>(method, manuallyParams),
             maxExecutionCount,
             pageDelayTime);
     }

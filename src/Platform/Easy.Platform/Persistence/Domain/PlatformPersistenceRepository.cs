@@ -311,17 +311,17 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             uow);
     }
 
-    public override async Task<TEntity> CreateOrUpdateAsync(
+    public override Task<TEntity> CreateOrUpdateAsync(
         TEntity entity,
         bool dismissSendEvent = false,
         bool checkDiff = true,
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default)
     {
-        return await CreateOrUpdateAsync(null, entity, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken);
+        return CreateOrUpdateAsync(null, entity, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken);
     }
 
-    public override async Task<TEntity> CreateOrUpdateAsync(
+    public override Task<TEntity> CreateOrUpdateAsync(
         IPlatformUnitOfWork uow,
         TEntity entity,
         bool dismissSendEvent = false,
@@ -329,10 +329,10 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default)
     {
-        return await CreateOrUpdateAsync(uow, entity, existingEntity: null, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken);
+        return CreateOrUpdateAsync(uow, entity, existingEntity: null, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken);
     }
 
-    public override async Task<TEntity> CreateOrUpdateAsync(
+    public override Task<TEntity> CreateOrUpdateAsync(
         IPlatformUnitOfWork uow,
         TEntity entity,
         TEntity? existingEntity,
@@ -341,7 +341,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default)
     {
-        return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+        return Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
             async () =>
             {
                 if (IsDistributedTracingEnabled)
@@ -373,7 +373,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             cancellationToken: cancellationToken);
     }
 
-    public override async Task<TEntity> CreateOrUpdateAsync(
+    public override Task<TEntity> CreateOrUpdateAsync(
         TEntity entity,
         Expression<Func<TEntity, bool>> customCheckExistingPredicate,
         bool dismissSendEvent = false,
@@ -381,7 +381,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default)
     {
-        return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+        return Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
             async () =>
             {
                 if (IsDistributedTracingEnabled)
@@ -416,7 +416,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             cancellationToken: cancellationToken);
     }
 
-    public override async Task<List<TEntity>> CreateOrUpdateManyAsync(
+    public override Task<List<TEntity>> CreateOrUpdateManyAsync(
         List<TEntity> entities,
         bool dismissSendEvent = false,
         bool checkDiff = true,
@@ -424,10 +424,10 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default)
     {
-        return await CreateOrUpdateManyAsync(null, entities, dismissSendEvent, checkDiff, customCheckExistingPredicateBuilder, eventCustomConfig, cancellationToken);
+        return CreateOrUpdateManyAsync(null, entities, dismissSendEvent, checkDiff, customCheckExistingPredicateBuilder, eventCustomConfig, cancellationToken);
     }
 
-    public override async Task<List<TEntity>> CreateOrUpdateManyAsync(
+    public override Task<List<TEntity>> CreateOrUpdateManyAsync(
         IPlatformUnitOfWork uow,
         List<TEntity> entities,
         bool dismissSendEvent = false,
@@ -436,7 +436,7 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default)
     {
-        return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+        return Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
             async () =>
             {
                 if (entities.IsNullOrEmpty()) return entities;
@@ -485,11 +485,11 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
         return UpdateAsync(null, entity, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken);
     }
 
-    public override async Task<TEntity> SetAsync(
+    public override Task<TEntity> SetAsync(
         TEntity entity,
         CancellationToken cancellationToken = default)
     {
-        return await SetAsync(null, entity, cancellationToken);
+        return SetAsync(null, entity, cancellationToken);
     }
 
     public override async Task<TEntity> SetAsync(
@@ -725,22 +725,22 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
             uow => GetUowDbContext(uow).DeleteManyAsync<TEntity, TPrimaryKey>(entityIds, dismissSendEvent, eventCustomConfig, cancellationToken));
     }
 
-    public override async Task<int> DeleteManyAsync(
+    public override Task<int> DeleteManyAsync(
         Expression<Func<TEntity, bool>> predicate,
         bool dismissSendEvent = false,
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default)
     {
-        return await DeleteManyAsync(null, predicate, dismissSendEvent, eventCustomConfig, cancellationToken);
+        return DeleteManyAsync(null, predicate, dismissSendEvent, eventCustomConfig, cancellationToken);
     }
 
-    public override async Task<int> DeleteManyAsync(
+    public override Task<int> DeleteManyAsync(
         Func<IQueryable<TEntity>, IQueryable<TEntity>> queryBuilder,
         bool dismissSendEvent = false,
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default)
     {
-        return await DeleteManyAsync(null, queryBuilder, dismissSendEvent, eventCustomConfig, cancellationToken);
+        return DeleteManyAsync(null, queryBuilder, dismissSendEvent, eventCustomConfig, cancellationToken);
     }
 
     public override async Task<int> DeleteManyAsync(

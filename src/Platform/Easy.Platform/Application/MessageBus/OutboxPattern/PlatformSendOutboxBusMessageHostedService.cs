@@ -139,9 +139,9 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
     /// </summary>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-    protected virtual async Task SendOutboxEventBusMessages(CancellationToken cancellationToken)
+    protected virtual Task SendOutboxEventBusMessages(CancellationToken cancellationToken)
     {
-        await ServiceProvider.ExecuteInjectScopedAsync(
+        return ServiceProvider.ExecuteInjectScopedAsync(
             async (IPlatformOutboxBusMessageRepository outboxBusMessageRepository) =>
             {
                 // Continue processing messages as long as there are messages to handle.
@@ -339,47 +339,44 @@ public class PlatformSendOutboxBusMessageHostedService : PlatformIntervalHosting
         try
         {
             return await ServiceProvider.ExecuteInjectScopedAsync<List<PlatformOutboxBusMessage>>(
-                async (IPlatformOutboxBusMessageRepository outboxEventBusMessageRepo) =>
-                {
-                    return await outboxEventBusMessageRepo.UowManager()
-                        .ExecuteUowTask(
-                            async () =>
-                            {
-                                // Check if there are any messages to handle for the given prefix.
-                                if (!await AnyCanHandleOutboxBusMessages(messageGroupedByTypeIdPrefix, outboxEventBusMessageRepo)) return [];
+                (IPlatformOutboxBusMessageRepository outboxEventBusMessageRepo) => outboxEventBusMessageRepo.UowManager()
+                    .ExecuteUowTask(
+                        async () =>
+                        {
+                            // Check if there are any messages to handle for the given prefix.
+                            if (!await AnyCanHandleOutboxBusMessages(messageGroupedByTypeIdPrefix, outboxEventBusMessageRepo)) return [];
 
-                                // Retrieve a batch of messages to handle.
-                                var toHandleMessages = await outboxEventBusMessageRepo.GetAllAsync(
-                                    queryBuilder: query => CanHandleMessagesByTypeIdPrefixQueryBuilder(query, messageGroupedByTypeIdPrefix)
-                                        .Take(customPageSize ?? OutboxConfig.MaxParallelProcessingMessagesCount),
-                                    cancellationToken);
+                            // Retrieve a batch of messages to handle.
+                            var toHandleMessages = await outboxEventBusMessageRepo.GetAllAsync(
+                                queryBuilder: query => CanHandleMessagesByTypeIdPrefixQueryBuilder(query, messageGroupedByTypeIdPrefix)
+                                    .Take(customPageSize ?? OutboxConfig.MaxParallelProcessingMessagesCount),
+                                cancellationToken);
 
-                                // If there are no messages or another instance is already processing messages with the same prefix, return an empty list.
-                                if (toHandleMessages.IsEmpty() ||
-                                    await outboxEventBusMessageRepo.AnyAsync(
-                                        PlatformOutboxBusMessage.CheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessageExpr(toHandleMessages.First()),
-                                        cancellationToken)) return [];
+                            // If there are no messages or another instance is already processing messages with the same prefix, return an empty list.
+                            if (toHandleMessages.IsEmpty() ||
+                                await outboxEventBusMessageRepo.AnyAsync(
+                                    PlatformOutboxBusMessage.CheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessageExpr(toHandleMessages.First()),
+                                    cancellationToken)) return [];
 
-                                // Mark the retrieved messages as "Processing" and update their last send date.
-                                toHandleMessages.ForEach(
-                                    p =>
-                                    {
-                                        p.SendStatus = PlatformOutboxBusMessage.SendStatuses.Processing;
-                                        p.LastSendDate = DateTime.UtcNow;
-                                        p.LastProcessingPingDate = DateTime.UtcNow;
-                                    });
+                            // Mark the retrieved messages as "Processing" and update their last send date.
+                            toHandleMessages.ForEach(
+                                p =>
+                                {
+                                    p.SendStatus = PlatformOutboxBusMessage.SendStatuses.Processing;
+                                    p.LastSendDate = DateTime.UtcNow;
+                                    p.LastProcessingPingDate = DateTime.UtcNow;
+                                });
 
-                                // Update the messages in the database.
-                                await outboxEventBusMessageRepo.UpdateManyAsync(
-                                    toHandleMessages,
-                                    dismissSendEvent: true,
-                                    checkDiff: false,
-                                    eventCustomConfig: null,
-                                    cancellationToken);
+                            // Update the messages in the database.
+                            await outboxEventBusMessageRepo.UpdateManyAsync(
+                                toHandleMessages,
+                                dismissSendEvent: true,
+                                checkDiff: false,
+                                eventCustomConfig: null,
+                                cancellationToken);
 
-                                return toHandleMessages;
-                            });
-                });
+                            return toHandleMessages;
+                        }));
         }
         catch (PlatformDomainRowVersionConflictException conflictDomainException)
         {

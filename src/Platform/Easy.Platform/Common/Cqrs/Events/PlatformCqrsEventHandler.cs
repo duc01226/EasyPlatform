@@ -110,9 +110,9 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
                 NotNeedWaitHandlerExecutionFinishedImmediately(@event))
             {
                 Util.TaskRunner.QueueActionInBackground(
-                    async () => await ExecuteHandleInNewScopeAsync(@event, cancellationToken),
+                    () => ExecuteHandleInNewScopeAsync(@event, cancellationToken),
                     loggerFactory: () => LoggerFactory.CreateLogger(typeof(PlatformCqrsEventHandler<>).GetNameOrGenericTypeName() + $"-{GetType().Name}"),
-                    cancellationToken: default,
+                    cancellationToken: CancellationToken.None,
                     logFullStackTraceBeforeBackgroundTask: false);
             }
             else
@@ -130,7 +130,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
         return !NeedWaitHandlerExecutionFinishedImmediately(@event);
     }
 
-    protected bool NeedWaitHandlerExecutionFinishedImmediately(TEvent @event)
+    protected virtual bool NeedWaitHandlerExecutionFinishedImmediately(TEvent @event)
     {
         return @event.MustWaitHandlerExecutionFinishedImmediately(GetType()) || MustWaitHandlerExecutionFinishedImmediately;
     }
@@ -178,7 +178,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
             if (RetryOnFailedTimes > 0)
             {
                 await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                    async () => await handlerNewInstance.ExecuteHandleAsync(notification, default),
+                    () => handlerNewInstance.ExecuteHandleAsync(notification, CancellationToken.None),
                     retryCount: RetryOnFailedTimes,
                     sleepDurationProvider: retryAttempt => RetryOnFailedDelaySeconds.Seconds(),
                     onRetry: (e, delayTime, retryAttempt, context) =>
@@ -188,7 +188,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
                     });
             }
             else
-                await handlerNewInstance.ExecuteHandleAsync(notification, default);
+                await handlerNewInstance.ExecuteHandleAsync(notification, CancellationToken.None);
         }
         catch (Exception e)
         {
@@ -209,7 +209,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     {
         if (IsDistributedTracingEnabled)
         {
-            using (var activity = IPlatformCqrsEventHandler.ActivitySource.StartActivity($"EventHandler.{nameof(ExecuteHandleAsync)}"))
+            using (var activity = IPlatformCqrsEventHandler.ActivitySource.StartActivity($"EventHandler.{nameof(ExecuteHandleWithTracingAsync)}"))
             {
                 activity?.AddTag("Type", GetType().FullName);
                 activity?.AddTag("EventType", typeof(TEvent).FullName);

@@ -433,21 +433,21 @@ public static class ListExtension
     /// </remarks>
     /// <exception cref="ArgumentNullException">Thrown when the items collection or the action is null.</exception>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when maxConcurrent is less than 1.</exception>
-    public static async Task ParallelAsync<T>(
+    public static Task ParallelAsync<T>(
         this IEnumerable<T> items,
         Func<T, int, Task> action,
         int? maxConcurrent = null)
     {
-        await Util.TaskRunner.ParallelAsync(items, action, maxConcurrent);
+        return Util.TaskRunner.ParallelAsync(items, action, maxConcurrent);
     }
 
     /// <inheritdoc cref="Util.TaskRunner.ParallelAsync{TResult,T}" />
-    public static async Task<List<TResult>> ParallelAsync<T, TResult>(
+    public static Task<List<TResult>> ParallelAsync<T, TResult>(
         this IEnumerable<T> items,
         Func<T, int, Task<TResult>> action,
         int? maxConcurrent = null)
     {
-        return await Util.TaskRunner.ParallelAsync(items, action, maxConcurrent);
+        return Util.TaskRunner.ParallelAsync(items, action, maxConcurrent);
     }
 
     /// <inheritdoc cref="ForEachAsync{T}(IEnumerable{T},Func{T,int,Task})" />
@@ -839,7 +839,7 @@ public static class ListExtension
     /// <param name="items">The IEnumerable containing the elements to concatenate.</param>
     /// <param name="separator">The string to use as a separator. The separator is included in the returned string only if the IEnumerable has more than one element.</param>
     /// <returns>A string that consists of the elements in the IEnumerable delimited by the separator string. If the IEnumerable is null or contains no elements, the method returns String.Empty.</returns>
-    public static string JoinToString<T>(this IEnumerable<T>? items, string separator = "") where T : notnull
+    public static string JoinToString<T>(this IEnumerable<T>? items, string separator = "")
     {
         return items != null ? string.Join(separator, items.Select(p => p?.ToString() ?? string.Empty)) : string.Empty;
     }
@@ -851,7 +851,7 @@ public static class ListExtension
     /// <param name="items">The collection whose members to concatenate.</param>
     /// <param name="separator">The string to use as a separator. separator is included in the returned string only if items has more than one element.</param>
     /// <returns>A string that consists of the members of items delimited by the separator string. If items has no members, the method returns String.Empty.</returns>
-    public static string JoinToString<T>(this IEnumerable<T> items, char separator) where T : notnull
+    public static string JoinToString<T>(this IEnumerable<T>? items, char separator)
     {
         return JoinToString(items, separator.ToString());
     }

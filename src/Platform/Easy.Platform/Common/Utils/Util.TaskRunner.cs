@@ -134,18 +134,15 @@ public static partial class Util
                     try
                     {
                         await QueueDelayAsyncAction(
-                            async _ =>
-                            {
-                                await WaitRetryThrowFinalExceptionAsync(
-                                    LimitLockAction,
-                                    retryDelayProvider,
-                                    retryCount.Value,
-                                    onRetry: (ex, span, retryAttempt, context) =>
-                                    {
-                                        loggerFactory?.Invoke().LogError(ex.BeautifyStackTrace(), "Run in background thread retry failed.");
-                                    },
-                                    cancellationToken: cancellationToken);
-                            },
+                            _ => WaitRetryThrowFinalExceptionAsync(
+                                LimitLockAction,
+                                retryDelayProvider,
+                                retryCount.Value,
+                                onRetry: (ex, span, retryAttempt, context) =>
+                                {
+                                    loggerFactory?.Invoke().LogError(ex.BeautifyStackTrace(), "Run in background thread retry failed.");
+                                },
+                                cancellationToken: cancellationToken),
                             delayTimeSeconds.Seconds(),
                             cancellationToken);
                     }
@@ -209,18 +206,15 @@ public static partial class Util
                     try
                     {
                         await QueueDelayAsyncAction(
-                            async _ =>
-                            {
-                                await WaitRetryThrowFinalExceptionAsync(
-                                    LimitLockAction,
-                                    retryDelayProvider,
-                                    retryCount.Value,
-                                    onRetry: (ex, span, retryAttempt, context) =>
-                                    {
-                                        loggerFactory?.Invoke().LogError(ex.BeautifyStackTrace(), "Run in background thread retry failed.");
-                                    },
-                                    cancellationToken: cancellationToken);
-                            },
+                            _ => WaitRetryThrowFinalExceptionAsync(
+                                LimitLockAction,
+                                retryDelayProvider,
+                                retryCount.Value,
+                                onRetry: (ex, span, retryAttempt, context) =>
+                                {
+                                    loggerFactory?.Invoke().LogError(ex.BeautifyStackTrace(), "Run in background thread retry failed.");
+                                },
+                                cancellationToken: cancellationToken),
                             delayTimeSeconds.Seconds(),
                             cancellationToken);
                     }
@@ -268,17 +262,14 @@ public static partial class Util
                     try
                     {
                         await QueueDelayAction(
-                            () =>
-                            {
-                                WaitRetryThrowFinalException(
-                                    action,
-                                    retryDelayProvider,
-                                    retryCount.Value,
-                                    onRetry: (ex, span, retryAttempt, context) =>
-                                    {
-                                        loggerFactory?.Invoke().LogError(ex.BeautifyStackTrace(), "Run in background thread retry failed.");
-                                    });
-                            },
+                            () => WaitRetryThrowFinalException(
+                                action,
+                                retryDelayProvider,
+                                retryCount.Value,
+                                onRetry: (ex, span, retryAttempt, context) =>
+                                {
+                                    loggerFactory?.Invoke().LogError(ex.BeautifyStackTrace(), "Run in background thread retry failed.");
+                                }),
                             delayTimeSeconds.Seconds(),
                             cancellationToken);
                     }
@@ -1032,13 +1023,13 @@ public static partial class Util
         /// <summary>
         /// See <see cref="WaitUntilAsync(Func{Task{bool}},double,double,string)" /> with default fast small wait seconds max wait and interval also
         /// </summary>
-        public static async Task FastWaitUntilAsync(
+        public static Task FastWaitUntilAsync(
             Func<Task<bool>> condition,
             double maxWaitSeconds = 5,
             double waitIntervalSeconds = 1,
             string waitForMsg = null)
         {
-            await WaitUntilAsync(condition, maxWaitSeconds, waitIntervalSeconds, waitForMsg);
+            return WaitUntilAsync(condition, maxWaitSeconds, waitIntervalSeconds, waitForMsg);
         }
 
         /// <summary>

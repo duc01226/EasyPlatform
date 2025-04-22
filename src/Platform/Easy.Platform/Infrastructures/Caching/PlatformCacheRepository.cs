@@ -444,15 +444,12 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
             var requestedData = await request();
 
             Util.TaskRunner.QueueActionInBackground(
-                async () =>
-                {
-                    await TrySetAsync(
-                        cacheKey,
-                        requestedData,
-                        cacheOptions,
-                        tags,
-                        token);
-                },
+                () => TrySetAsync(
+                    cacheKey,
+                    requestedData,
+                    cacheOptions,
+                    tags,
+                    token),
                 loggerFactory: () => Logger,
                 cancellationToken: token,
                 logFullStackTraceBeforeBackgroundTask: false);
@@ -545,15 +542,12 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
         try
         {
             return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                async () =>
-                {
-                    return await GetAsync<List<PlatformCacheKey>>(cacheKey: GetGlobalAllRequestCachedKeysCacheKey())
-                        .Then(keys => keys ?? [])
-                        .Then(
-                            globalRequestCacheKeys => globalRequestCacheKeys
-                                .Select(p => new KeyValuePair<PlatformCacheKey, object>(p, null))
-                                .Pipe(items => new ConcurrentDictionary<PlatformCacheKey, object>(items)));
-                });
+                () => GetAsync<List<PlatformCacheKey>>(cacheKey: GetGlobalAllRequestCachedKeysCacheKey())
+                    .Then(keys => keys ?? [])
+                    .Then(
+                        globalRequestCacheKeys => globalRequestCacheKeys
+                            .Select(p => new KeyValuePair<PlatformCacheKey, object>(p, null))
+                            .Pipe(items => new ConcurrentDictionary<PlatformCacheKey, object>(items))));
         }
         catch (Exception e)
         {

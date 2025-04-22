@@ -48,4 +48,18 @@ public static class PostgresSqlMigrationUtil
             END $$;",
             suppressTransaction);
     }
+
+    /// <summary>
+    /// Sanitize strings in an object by removing null characters to fix Postgres SQL errors invalid byte sequence.
+    /// </summary>
+    public static T SanitizeStrings<T>(T obj)
+    {
+        foreach (var prop in typeof(T).GetProperties().Where(p => p.PropertyType == typeof(string)))
+        {
+            var value = (string)prop.GetValue(obj);
+            if (value?.Contains('\0') == true) prop.SetValue(obj, value.Replace("\0", ""));
+        }
+
+        return obj;
+    }
 }

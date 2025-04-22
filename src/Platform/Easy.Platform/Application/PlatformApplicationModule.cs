@@ -138,7 +138,7 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
             if (inBackground)
             {
                 Util.TaskRunner.QueueActionInBackground(
-                    async () => await RunDataSeeders(dataSeeders, inNewScope: true),
+                    () => RunDataSeeders(dataSeeders, inNewScope: true),
                     loggerFactory: () => CreateLogger(LoggerFactory));
             }
             else

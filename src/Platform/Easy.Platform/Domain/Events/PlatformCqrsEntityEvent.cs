@@ -176,10 +176,7 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
             else
             {
                 await rootServiceProvider.ExecuteInjectScopedAsync(
-                    async (IPlatformCqrs cqrs) =>
-                    {
-                        await cqrs.SendEvent(entityEvent, cancellationToken);
-                    });
+                    (IPlatformCqrs cqrs) => cqrs.SendEvent(entityEvent, cancellationToken));
             }
         }
     }
@@ -214,7 +211,7 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
                IsAnyBulkEntitiesEventHandlerRegisteredForEntity<TEntity, TPrimaryKey>(rootServiceProvider);
     }
 
-    public static async Task SendEvent<TEntity>(
+    public static Task SendEvent<TEntity>(
         IPlatformRootServiceProvider rootServiceProvider,
         IPlatformUnitOfWork? mappedToDbContextUow,
         TEntity entity,
@@ -226,7 +223,7 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
         CancellationToken cancellationToken)
         where TEntity : class, IEntity, new()
     {
-        await SendEvent<PlatformCqrsEntityEvent<TEntity>>(
+        return SendEvent<PlatformCqrsEntityEvent<TEntity>>(
             rootServiceProvider,
             mappedToDbContextUow,
             () => new PlatformCqrsEntityEvent<TEntity>(entity, crudAction).WithIf(
@@ -238,7 +235,7 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
             cancellationToken);
     }
 
-    public static async Task SendBulkEntitiesEvent<TEntity, TPrimaryKey>(
+    public static Task SendBulkEntitiesEvent<TEntity, TPrimaryKey>(
         IPlatformRootServiceProvider rootServiceProvider,
         [AllowNull] IPlatformUnitOfWork mappedToDbContextUow,
         List<TEntity> entities,
@@ -249,7 +246,7 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
         CancellationToken cancellationToken)
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        await SendEvent<PlatformCqrsBulkEntitiesEvent<TEntity, TPrimaryKey>>(
+        return SendEvent<PlatformCqrsBulkEntitiesEvent<TEntity, TPrimaryKey>>(
             rootServiceProvider,
             mappedToDbContextUow,
             () => new PlatformCqrsBulkEntitiesEvent<TEntity, TPrimaryKey>(entities, crudAction),
@@ -272,11 +269,11 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
     {
         var result = await deleteEntityAction(entity)
             .ThenActionAsync(
-                async _ =>
+                _ =>
                 {
                     if (!dismissSendEvent)
                     {
-                        await SendEvent(
+                        return SendEvent(
                             rootServiceProvider,
                             mappedToDbContextUow,
                             entity,
@@ -287,6 +284,8 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
                             eventStackTrace,
                             cancellationToken);
                     }
+
+                    return Task.CompletedTask;
                 });
 
         return result;
@@ -305,11 +304,11 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
     {
         var result = await createEntityAction(entity)
             .ThenActionAsync(
-                async _ =>
+                _ =>
                 {
                     if (!dismissSendEvent)
                     {
-                        await SendEvent(
+                        return SendEvent(
                             rootServiceProvider,
                             mappedToDbContextUow,
                             entity,
@@ -320,6 +319,8 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
                             eventStackTrace,
                             cancellationToken);
                     }
+
+                    return Task.CompletedTask;
                 });
 
         return result;
@@ -342,11 +343,11 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
 
         var (result, _) = await updateEntityAction(entity)
             .ThenActionAsync(
-                async p =>
+                p =>
                 {
                     if (!dismissSendEvent && p.isDataChanged)
                     {
-                        await SendEvent(
+                        return SendEvent(
                             rootServiceProvider,
                             unitOfWork,
                             entity,
@@ -357,6 +358,8 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
                             eventStackTrace,
                             cancellationToken);
                     }
+
+                    return Task.CompletedTask;
                 });
 
         return result;

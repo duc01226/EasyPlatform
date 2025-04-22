@@ -195,11 +195,11 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
     /// <param name="request">The CQRS command to handle.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <returns>The result of handling the CQRS command.</returns>
-    protected virtual async Task<TResult> ExecuteHandleAsync(TCommand request, CancellationToken cancellationToken)
+    protected virtual Task<TResult> ExecuteHandleAsync(TCommand request, CancellationToken cancellationToken)
     {
         if (RetryOnFailedTimes > 0)
         {
-            return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+            return Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 () => DoExecuteHandleAsync(request, cancellationToken),
                 retryCount: RetryOnFailedTimes,
                 sleepDurationProvider: i => RetryOnFailedDelaySeconds.Seconds(),
@@ -207,7 +207,7 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
                 cancellationToken: cancellationToken);
         }
 
-        return await DoExecuteHandleAsync(request, cancellationToken);
+        return DoExecuteHandleAsync(request, cancellationToken);
     }
 
     /// <summary>
@@ -220,7 +220,7 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
     {
         if (AutoOpenUow == false) return await HandleAsync(request, cancellationToken);
 
-        return await UnitOfWorkManager.ExecuteUowTask(async () => await HandleAsync(request, cancellationToken));
+        return await UnitOfWorkManager.ExecuteUowTask(() => HandleAsync(request, cancellationToken));
     }
 }
 

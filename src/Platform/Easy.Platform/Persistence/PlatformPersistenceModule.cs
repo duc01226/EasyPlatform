@@ -271,10 +271,7 @@ public abstract class PlatformPersistenceModule<TDbContext> : PlatformPersistenc
             // if the db server container is not created on run docker compose,
             // the migration action could fail for network related exception. So that we do retry to ensure that Initialize action run successfully.
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                async () =>
-                {
-                    await serviceScope.ServiceProvider.GetRequiredService<TDbContext>().MigrateDataAsync(serviceScope.ServiceProvider);
-                },
+                () => serviceScope.ServiceProvider.GetRequiredService<TDbContext>().MigrateDataAsync(serviceScope.ServiceProvider),
                 retryAttempt => DefaultDbInitAndMigrationRetryDelaySeconds.Seconds(),
                 DefaultDbInitAndMigrationRetryCount,
                 exception => Logger.LogError(
@@ -294,10 +291,7 @@ public abstract class PlatformPersistenceModule<TDbContext> : PlatformPersistenc
         // if the db server container is not created on run docker compose,
         // the migration action could fail for network related exception. So that we do retry to ensure that Initialize action run successfully.
         await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-            async () =>
-            {
-                await serviceScope.ServiceProvider.GetRequiredService<TDbContext>().Initialize(serviceScope.ServiceProvider);
-            },
+            () => serviceScope.ServiceProvider.GetRequiredService<TDbContext>().Initialize(serviceScope.ServiceProvider),
             retryAttempt => 10.Seconds(),
             DefaultDbInitAndMigrationRetryCount,
             exception => Logger.LogError(

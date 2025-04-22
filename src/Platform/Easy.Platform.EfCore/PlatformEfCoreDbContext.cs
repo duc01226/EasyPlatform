@@ -247,7 +247,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
                 entities => SendBulkEntitiesEvent<TEntity, TPrimaryKey>(entities, PlatformCqrsEntityEventCrudAction.Created, eventCustomConfig, cancellationToken));
     }
 
-    public async Task<TEntity> UpdateAsync<TEntity, TPrimaryKey>(
+    public Task<TEntity> UpdateAsync<TEntity, TPrimaryKey>(
         TEntity entity,
         bool dismissSendEvent,
         bool checkDiff = true,
@@ -255,16 +255,16 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         CancellationToken cancellationToken = default)
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        return await UpdateAsync<TEntity, TPrimaryKey>(entity, null, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken);
+        return UpdateAsync<TEntity, TPrimaryKey>(entity, null, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken);
     }
 
-    public async Task<TEntity> SetAsync<TEntity, TPrimaryKey>(TEntity entity, CancellationToken cancellationToken = default)
+    public Task<TEntity> SetAsync<TEntity, TPrimaryKey>(TEntity entity, CancellationToken cancellationToken = default)
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        return await InternalUpdateOrSetAsync<TEntity, TPrimaryKey>(entity, null, dismissSendEvent: true, checkDiff: false, null, onlySetData: true, cancellationToken);
+        return InternalUpdateOrSetAsync<TEntity, TPrimaryKey>(entity, null, dismissSendEvent: true, checkDiff: false, null, onlySetData: true, cancellationToken);
     }
 
-    public async Task<List<TEntity>> UpdateManyAsync<TEntity, TPrimaryKey>(
+    public Task<List<TEntity>> UpdateManyAsync<TEntity, TPrimaryKey>(
         List<TEntity> entities,
         bool dismissSendEvent = false,
         bool checkDiff = true,
@@ -272,7 +272,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         CancellationToken cancellationToken = default)
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        return await entities
+        return entities
             .SelectAsync(
                 entity => UpdateAsync<TEntity, TPrimaryKey>(entity, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken))
             .ThenActionIfAsync(
@@ -485,7 +485,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         }
     }
 
-    public async Task<TEntity> CreateOrUpdateAsync<TEntity, TPrimaryKey>(
+    public Task<TEntity> CreateOrUpdateAsync<TEntity, TPrimaryKey>(
         TEntity entity,
         Expression<Func<TEntity, bool>> customCheckExistingPredicate = null,
         bool dismissSendEvent = false,
@@ -493,7 +493,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default) where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        return await CreateOrUpdateAsync<TEntity, TPrimaryKey>(
+        return CreateOrUpdateAsync<TEntity, TPrimaryKey>(
             entity,
             null,
             customCheckExistingPredicate,
@@ -569,11 +569,13 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
             if (customCheckExistingPredicateBuilder == null &&
                 entities.FirstOrDefault()?.As<IUniqueCompositeIdSupport<TEntity>>()?.FindByUniqueCompositeIdExpr() == null)
             {
-                var existingEntityIds = await existingEntitiesQuery.ToListAsync(cancellationToken)
-                    .Then(
-                        items => items
-                            .PipeAction(items => items.ForEach(p => SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p)))
-                            .Pipe(existingEntities => existingEntities.Select(p => p.Id).ToHashSet()));
+                var existingEntityIds = await ContextThreadSafeLock.ExecuteLockActionAsync(
+                    () => existingEntitiesQuery.ToListAsync(cancellationToken)
+                        .Then(
+                            items => items
+                                .PipeAction(items => items.ForEach(p => SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p)))
+                                .Pipe(existingEntities => existingEntities.Select(p => p.Id).ToHashSet())),
+                    cancellationToken);
                 var (toUpdateEntities, newEntities) = entities.WhereSplitResult(p => existingEntityIds.Contains(p.Id));
 
                 // Ef core is not thread safe so that couldn't use when all
@@ -591,10 +593,12 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
             }
             else
             {
-                var existingEntities = await existingEntitiesQuery.ToListAsync(cancellationToken)
-                    .Then(
-                        items => items
-                            .PipeAction(items => items.ForEach(p => SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p))));
+                var existingEntities = await ContextThreadSafeLock.ExecuteLockActionAsync(
+                    () => existingEntitiesQuery.ToListAsync(cancellationToken)
+                        .Then(
+                            items => items
+                                .PipeAction(items => items.ForEach(p => SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p)))),
+                    cancellationToken);
 
                 var toUpsertEntityToExistingEntityPairs = entities.Select(
                     toUpsertEntity =>
@@ -634,7 +638,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         return loggerFactory.CreateLogger(typeof(PlatformEfCoreDbContext<>).GetNameOrGenericTypeName() + $"-{GetType().Name}");
     }
 
-    public async Task<TEntity> UpdateAsync<TEntity, TPrimaryKey>(
+    public Task<TEntity> UpdateAsync<TEntity, TPrimaryKey>(
         TEntity entity,
         TEntity? existingEntity,
         bool dismissSendEvent,
@@ -643,7 +647,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         CancellationToken cancellationToken = default)
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        return await InternalUpdateOrSetAsync<TEntity, TPrimaryKey>(
+        return InternalUpdateOrSetAsync<TEntity, TPrimaryKey>(
             entity,
             existingEntity,
             dismissSendEvent,

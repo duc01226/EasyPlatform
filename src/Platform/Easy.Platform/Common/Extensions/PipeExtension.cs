@@ -17,6 +17,8 @@ public static class PipeExtension
 
     /// <summary>
     /// Executes a specified function on the target object and returns the target object.
+    /// Useful for applying side effects or chaining logic in a fluent style.
+    /// If the function returns a Task, it waits for its completion.
     /// </summary>
     /// <typeparam name="TTarget">The type of the target object.</typeparam>
     /// <typeparam name="TResult">The type of the result returned by the function.</typeparam>
@@ -25,9 +27,77 @@ public static class PipeExtension
     /// <returns>The target object after the function has been executed.</returns>
     public static TTarget PipeAction<TTarget, TResult>(this TTarget target, Func<TTarget, TResult> fn)
     {
-        fn(target);
+        var result = fn(target);
+
+        if (result is Task resultTask) resultTask.WaitResult();
 
         return target;
+    }
+
+    /// <summary>
+    /// Asynchronously executes a specified action on the target object and returns the target object.
+    /// Useful for chaining asynchronous operations in a fluent style without altering the object itself.
+    /// </summary>
+    /// <typeparam name="TTarget">The type of the target object.</typeparam>
+    /// <param name="target">The target object on which the action is executed.</param>
+    /// <param name="fn">An asynchronous function to execute on the target object.</param>
+    /// <returns>A task that represents the asynchronous operation, containing the original target object.</returns>
+    public static async Task<TTarget> PipeAction<TTarget>(this TTarget target, Func<TTarget, Task> fn)
+    {
+        await fn(target);
+
+        return target;
+    }
+
+    /// <summary>
+    /// Asynchronously executes a specified function on the target object, ignores the result,
+    /// and returns the target object. Useful for chaining asynchronous operations that return a result
+    /// when you only care about side effects.
+    /// </summary>
+    /// <typeparam name="TTarget">The type of the target object.</typeparam>
+    /// <typeparam name="TResult">The type of the result returned by the function.</typeparam>
+    /// <param name="target">The target object on which the function is executed.</param>
+    /// <param name="fn">An asynchronous function to execute on the target object that returns a result.</param>
+    /// <returns>A task that represents the asynchronous operation, containing the original target object.</returns>
+    public static async Task<TTarget> PipeAction<TTarget, TResult>(this TTarget target, Func<TTarget, Task<TResult>> fn)
+    {
+        await fn(target);
+
+        return target;
+    }
+
+    /// <summary>
+    /// Executes a specified function on the target object if the given condition is met,
+    /// and returns the target object.
+    /// </summary>
+    /// <typeparam name="TTarget">The type of the target object.</typeparam>
+    /// <typeparam name="TResult">The type of the result returned by the function.</typeparam>
+    /// <param name="target">The target object on which the function may be executed.</param>
+    /// <param name="condition">A predicate that determines whether the function should be executed.</param>
+    /// <param name="fn">The function to be executed on the target object if the condition is true.</param>
+    /// <returns>The target object, either modified or unmodified depending on the condition.</returns>
+    public static TTarget PipeActionIf<TTarget, TResult>(this TTarget target, Func<TTarget, bool> condition, Func<TTarget, TResult> fn)
+    {
+        if (!condition(target)) return target;
+
+        return PipeAction(target, fn);
+    }
+
+    /// <summary>
+    /// Asynchronously executes a specified function on the target object if the given asynchronous condition is met,
+    /// and returns the target object.
+    /// </summary>
+    /// <typeparam name="TTarget">The type of the target object.</typeparam>
+    /// <typeparam name="TResult">The type of the result returned by the function.</typeparam>
+    /// <param name="target">The target object on which the function may be executed.</param>
+    /// <param name="condition">An asynchronous predicate that determines whether the function should be executed.</param>
+    /// <param name="fn">The function to be executed on the target object if the condition evaluates to true.</param>
+    /// <returns>A task that represents the asynchronous operation, containing the target object.</returns>
+    public static async Task<TTarget> PipeActionIf<TTarget, TResult>(this TTarget target, Func<TTarget, Task<bool>> condition, Func<TTarget, TResult> fn)
+    {
+        if (!await condition(target)) return target;
+
+        return PipeAction(target, fn);
     }
 
     /// <summary>

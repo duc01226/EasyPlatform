@@ -29,10 +29,12 @@ public abstract class PlatformPersistenceUnitOfWork<TDbContext> : PlatformUnitOf
 
     public TDbContext DbContext => DbContextLazy.Value;
 
-    protected override async Task InternalSaveChangesAsync(CancellationToken cancellationToken)
+    protected override Task InternalSaveChangesAsync(CancellationToken cancellationToken)
     {
         if (DbContextLazy.IsValueCreated)
-            await DbContext.SaveChangesAsync(cancellationToken);
+            return DbContext.SaveChangesAsync(cancellationToken);
+
+        return Task.CompletedTask;
     }
 
     // Protected implementation of Dispose pattern.

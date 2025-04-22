@@ -315,10 +315,10 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         return UpdateAsync<TEntity, TPrimaryKey>(entity, null, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken);
     }
 
-    public async Task<TEntity> SetAsync<TEntity, TPrimaryKey>(TEntity entity, CancellationToken cancellationToken = default)
+    public Task<TEntity> SetAsync<TEntity, TPrimaryKey>(TEntity entity, CancellationToken cancellationToken = default)
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        return await InternalUpdateOrSetAsync<TEntity, TPrimaryKey>(entity, null, dismissSendEvent: true, checkDiff: false, null, onlySetData: true, cancellationToken);
+        return InternalUpdateOrSetAsync<TEntity, TPrimaryKey>(entity, null, dismissSendEvent: true, checkDiff: false, null, onlySetData: true, cancellationToken);
     }
 
     public async Task<List<TEntity>> UpdateManyAsync<TEntity, TPrimaryKey>(
@@ -532,14 +532,14 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         return entity;
     }
 
-    public async Task<TEntity> DeleteAsync<TEntity, TPrimaryKey>(
+    public Task<TEntity> DeleteAsync<TEntity, TPrimaryKey>(
         TEntity entity,
         bool dismissSendEvent,
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default)
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        return await PlatformCqrsEntityEvent.ExecuteWithSendingDeleteEntityEvent<TEntity, TPrimaryKey, TEntity>(
+        return PlatformCqrsEntityEvent.ExecuteWithSendingDeleteEntityEvent<TEntity, TPrimaryKey, TEntity>(
                 RootServiceProvider,
                 MappedUnitOfWork,
                 entity,
@@ -676,7 +676,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         return CreateAsync<TEntity, TPrimaryKey>(entity, dismissSendEvent, false, eventCustomConfig, cancellationToken);
     }
 
-    public async Task<TEntity> CreateOrUpdateAsync<TEntity, TPrimaryKey>(
+    public Task<TEntity> CreateOrUpdateAsync<TEntity, TPrimaryKey>(
         TEntity entity,
         Expression<Func<TEntity, bool>> customCheckExistingPredicate = null,
         bool dismissSendEvent = false,
@@ -684,7 +684,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         Action<PlatformCqrsEntityEvent> eventCustomConfig = null,
         CancellationToken cancellationToken = default) where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        return await CreateOrUpdateAsync<TEntity, TPrimaryKey>(
+        return CreateOrUpdateAsync<TEntity, TPrimaryKey>(
             entity,
             null,
             customCheckExistingPredicate,
@@ -823,7 +823,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         return loggerFactory.CreateLogger(typeof(PlatformMongoDbContext<>).GetNameOrGenericTypeName() + $"-{GetType().Name}");
     }
 
-    public async Task<TEntity> UpdateAsync<TEntity, TPrimaryKey>(
+    public Task<TEntity> UpdateAsync<TEntity, TPrimaryKey>(
         TEntity entity,
         TEntity? existingEntity,
         bool dismissSendEvent,
@@ -832,7 +832,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         CancellationToken cancellationToken = default)
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        return await InternalUpdateOrSetAsync<TEntity, TPrimaryKey>(
+        return InternalUpdateOrSetAsync<TEntity, TPrimaryKey>(
             entity,
             existingEntity,
             dismissSendEvent,
@@ -1215,9 +1215,9 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
         return EntityTypeToCollectionNameDictionary.Value.TryGetValue(typeof(TEntity), out collectionName);
     }
 
-    protected async Task<bool> IsEnsureIndexesMigrationExecuted()
+    protected Task<bool> IsEnsureIndexesMigrationExecuted()
     {
-        return await MigrationHistoryCollection.AsQueryable().AnyAsync(p => p.Name == EnsureIndexesMigrationName);
+        return MigrationHistoryCollection.AsQueryable().AnyAsync(p => p.Name == EnsureIndexesMigrationName);
     }
 
     protected async Task<TEntity> CreateAsync<TEntity, TPrimaryKey>(
