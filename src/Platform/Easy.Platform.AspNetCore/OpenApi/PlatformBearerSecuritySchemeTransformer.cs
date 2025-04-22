@@ -41,7 +41,7 @@ public class PlatformBearerSecuritySchemeTransformer : IOpenApiDocumentTransform
                 operation.Value.Security.Add(
                     new OpenApiSecurityRequirement
                     {
-                        [new OpenApiSecurityScheme { Reference = new OpenApiReference { Id = "Bearer", Type = ReferenceType.SecurityScheme } }] = Array.Empty<string>()
+                        [new OpenApiSecurityScheme { Reference = new OpenApiReference { Id = "Bearer", Type = ReferenceType.SecurityScheme } }] = []
                     });
             }
         }

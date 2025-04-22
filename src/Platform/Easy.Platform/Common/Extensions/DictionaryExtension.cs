@@ -34,6 +34,42 @@ public static class DictionaryExtension
         return dictionary;
     }
 
+    public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
+    {
+        if (key is null) return defaultValue;
+
+        return dictionary.TryGetValue(key, out var value) ? value : defaultValue;
+    }
+
+    public static TValue GetValueOrDefault<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
+    {
+        if (key is null) return defaultValue;
+
+        return dictionary.TryGetValue(key, out var value) ? value : defaultValue;
+    }
+
+    public static TValue GetValueOrDefault<TKey, TValue>(this ConcurrentDictionary<TKey, TValue> dictionary, TKey key)
+    {
+        return dictionary.GetValueOrDefault(key, default);
+    }
+
+    public static TValue GetValueOrDefault<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key)
+    {
+        return dictionary.GetValueOrDefault(key, default);
+    }
+
+    public static TValue GetValueOrDefault<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key)
+    {
+        return dictionary.GetValueOrDefault(key, default);
+    }
+
+    public static TValue GetValueOrDefault<TKey, TValue>(this ConcurrentDictionary<TKey, TValue> dictionary, TKey key, TValue defaultValue)
+    {
+        if (key is null) return defaultValue;
+
+        return dictionary.TryGetValue(key, out var value) ? value : defaultValue;
+    }
+
     public static TDic UpsertMany<TDic, TKey, TValue>(this TDic dictionary, IDictionary<TKey, TValue> values) where TDic : IDictionary<TKey, TValue>
     {
         values.ForEach(item => dictionary.Upsert(item.Key, item.Value));
