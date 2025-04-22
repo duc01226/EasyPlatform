@@ -145,6 +145,17 @@ public static class WithExtension
         return target;
     }
 
+    /// <summary>
+    /// Executes the provided actions on the target object if the specified condition is met.
+    /// </summary>
+    /// <typeparam name="T">The type of the target object.</typeparam>
+    /// <param name="target">The target object.</param>
+    /// <param name="if">A function that defines the condition based on the target object.</param>
+    /// <param name="actions">The actions to be executed on the target object if the condition is met.</param>
+    /// <returns>The target object after potentially applying the actions.</returns>
+    /// <remarks>
+    /// This method is useful for applying changes to an object conditionally in a fluent manner.
+    /// </remarks>
     public static async Task<T> WithIf<T>(this T target, Func<T, bool> @if, params Func<T, Task>[] actions)
     {
         if (@if(target))
