@@ -155,7 +155,7 @@ public static class ListExtension
     /// <param name="items">The list of items to upsert.</param>
     /// <param name="upsertByFn">The function to extract a key from each item for upsert comparison.</param>
     /// <param name="upsertItems">The collection of items to upsert into the list.</param>
-    /// <param name="updateFn">Optional. The function to perform an update when an item with the same key already exists in the list.</param>
+    /// <param name="updateFn">Optional. The function to perform an update when an item with the same key already exists in the list. Function should be: (currentItem, newUpsertItem) => finalUpsertItem</param>
     /// <remarks>
     /// This method iterates through the provided collection of items to upsert. For each item, it uses the specified key function to determine if an item with the same key already exists in the list.
     /// If found, it either replaces the existing item or performs a custom update based on the provided update function. If not found, the item is added to the list.
@@ -177,6 +177,33 @@ public static class ListExtension
             else
                 items.Add(upsertItem);
         }
+    }
+
+    /// <summary>
+    /// Replaces a list of items by removing any items that do not match the selector key in the new values,
+    /// and upserts (updates or inserts) the remaining items.
+    /// </summary>
+    /// <typeparam name="T">The type of elements in the list.</typeparam>
+    /// <typeparam name="TKey">The type of the key used for comparison.</typeparam>
+    /// <param name="items">The list to modify.</param>
+    /// <param name="keySelector">A function to extract the key from each item.</param>
+    /// <param name="newItems">The collection of new items to use for replacement.</param>
+    /// <param name="updateFn">Optional. A function to update an existing item. If null, the item will be replaced.</param>
+    public static void ReplaceBy<T, TKey>(
+        this IList<T> items,
+        Func<T, TKey> keySelector,
+        IEnumerable<T> newItems,
+        Func<T, T, T>? updateFn = null)
+        where TKey : notnull
+    {
+        var newItemsList = newItems.ToList();
+        var newKeys = new HashSet<TKey>(newItemsList.Select(keySelector));
+
+        // Remove items not present in the new keys
+        items.RemoveWhere(item => !newKeys.Contains(keySelector(item)));
+
+        // Upsert the new items
+        items.UpsertBy(item => keySelector(item), newItemsList, updateFn);
     }
 
     /// <summary>

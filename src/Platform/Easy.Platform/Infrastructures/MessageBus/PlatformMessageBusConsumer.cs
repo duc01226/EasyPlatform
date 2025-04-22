@@ -57,11 +57,10 @@ public interface IPlatformMessageBusConsumer
     {
         logger.LogError(
             e.BeautifyStackTrace(),
-            "Error Consume message bus. [ConsumerType:{ConsumerType}]; [MessageType:{MessageType}]; [MessageJson (Top {DefaultRecommendedMaxLogsLength} characters):{MessageContent}];",
+            "Error Consume message bus. [ConsumerType:{ConsumerType}]; [MessageType:{MessageType}]; [Message:{@Message}];",
             consumerType.FullName,
             message.GetType().GetNameOrGenericTypeName(),
-            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-            message.ToJson().TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+            message);
     }
 }
 

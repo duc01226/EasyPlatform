@@ -150,17 +150,16 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     {
         try
         {
-            await RootServiceProvider.ExecuteInjectScopedAsync(
-                async (IServiceProvider sp) =>
-                {
-                    var thisHandlerNewInstance = sp.GetRequiredService(GetType())
-                        .As<PlatformCqrsEventHandler<TEvent>>()
-                        .With(newInstance => CopyPropertiesToNewInstanceBeforeExecution(this, newInstance));
+            await RootServiceProvider.ExecuteInjectScopedAsync(async (IServiceProvider sp) =>
+            {
+                var thisHandlerNewInstance = sp.GetRequiredService(GetType())
+                    .As<PlatformCqrsEventHandler<TEvent>>()
+                    .With(newInstance => CopyPropertiesToNewInstanceBeforeExecution(this, newInstance));
 
-                    await thisHandlerNewInstance
-                        .With(p => p.ForceCurrentInstanceHandleInCurrentThread = true)
-                        .Handle(notification, cancellationToken);
-                });
+                await thisHandlerNewInstance
+                    .With(p => p.ForceCurrentInstanceHandleInCurrentThread = true)
+                    .Handle(notification, cancellationToken);
+            });
         }
         catch (Exception e)
         {
@@ -226,12 +225,12 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
         CreateLogger(loggerFactory)
             .LogError(
                 exception.BeautifyStackTrace(),
-                "[PlatformCqrsEventHandler] {Prefix} Handle event failed. [[Message:{Message}]] [[EventType:{EventType}]]; [[HandlerType:{HandlerType}]]. [[EventContent:{EventContent}]].",
+                "[PlatformCqrsEventHandler] {Prefix} Handle event failed. [[Message:{Message}]] [[EventType:{EventType}]]; [[HandlerType:{HandlerType}]]. [[EventContent:{@EventContent}]].",
                 prefix,
                 exception.Message,
                 notification.GetType().Name,
                 GetType().Name,
-                notification.ToJson());
+                notification);
     }
 
     protected abstract Task HandleAsync(TEvent @event, CancellationToken cancellationToken);

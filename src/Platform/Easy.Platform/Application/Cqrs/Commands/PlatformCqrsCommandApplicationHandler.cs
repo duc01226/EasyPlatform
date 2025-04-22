@@ -106,30 +106,17 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
                         () => ExecuteHandleAsync(request, cancellationToken),
                         onException: ex =>
                         {
-                            if (!ex.IsPlatformLogicException())
-                            {
-                                LoggerFactory.CreateLogger(typeof(PlatformCqrsCommandApplicationHandler<>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
-                                    .LogError(
-                                        ex.BeautifyStackTrace(),
-                                        "[{Tag1}] Command:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{Request}. RequestContext:{RequestContext}",
-                                        "UnknownError",
-                                        request.GetType().Name,
-                                        ex.Message,
-                                        request.AuditInfo?.AuditTrackId,
-                                        request.ToJson(),
-                                        RequestContext.GetAllKeyValues().ToJson());
-                            }
-                            else
-                            {
-                                LoggerFactory.CreateLogger(typeof(PlatformCqrsCommandApplicationHandler<>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
-                                    .LogWarning(
-                                        "[{Tag1}] Command:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{Request}.",
-                                        "LogicErrorWarning",
-                                        request.GetType().Name,
-                                        ex.Message,
-                                        request.AuditInfo?.AuditTrackId,
-                                        request.ToJson());
-                            }
+                            LoggerFactory.CreateLogger(typeof(PlatformCqrsCommandApplicationHandler<>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
+                                .Log(
+                                    !ex.IsPlatformLogicException() ? LogLevel.Error : LogLevel.Warning,
+                                    ex.BeautifyStackTrace(),
+                                    "[{Tag1}] Command:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{@Request}. RequestContext:{@RequestContext}",
+                                    "UnknownError",
+                                    request.GetType().Name,
+                                    ex.Message,
+                                    request.AuditInfo?.AuditTrackId,
+                                    request,
+                                    RequestContext.GetAllKeyValues());
                         });
 
                     if (RootServiceProvider.IsAnyImplementationAssignableToServiceTypeRegistered(

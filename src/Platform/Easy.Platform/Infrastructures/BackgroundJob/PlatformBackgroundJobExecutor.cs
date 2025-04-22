@@ -109,19 +109,12 @@ public abstract class PlatformBackgroundJobExecutor<TParam> : IPlatformBackgroun
         }
         catch (Exception e)
         {
-            var paramContent = param?.ToJson();
-
-            if (paramContent.IsNotNullOrEmpty())
-            {
-                Logger.LogError(
-                    e.BeautifyStackTrace(),
-                    "[BackgroundJob] Job {BackgroundJobType_Name} execution was failed. ParamType:{ParamType}. ParamContent:{ParamContent}",
-                    GetType().Name,
-                    param.GetType().Name,
-                    paramContent);
-            }
-            else
-                Logger.LogError(e.BeautifyStackTrace(), "[BackgroundJob] Job {BackgroundJobType_Name} execution was failed.", GetType().Name);
+            Logger.LogError(
+                e.BeautifyStackTrace(),
+                "[BackgroundJob] Job {BackgroundJobType_Name} execution was failed. ParamType:{ParamType}. ParamContent:{@ParamContent}",
+                GetType().Name,
+                param.GetType().Name,
+                param);
 
             throw;
         }

@@ -110,30 +110,17 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
                         () => HandleAsync(request, cancellationToken),
                         onException: ex =>
                         {
-                            if (!ex.IsPlatformLogicException())
-                            {
-                                LoggerFactory.CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
-                                    .LogError(
-                                        ex.BeautifyStackTrace(),
-                                        "[{Tag1}] Query:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{Request}. RequestContext:{RequestContext}",
-                                        "UnknownError",
-                                        request.GetType().Name,
-                                        ex.Message,
-                                        request.AuditInfo?.AuditTrackId,
-                                        request.ToJson(),
-                                        RequestContext.GetAllKeyValues().ToJson());
-                            }
-                            else
-                            {
-                                LoggerFactory.CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
-                                    .LogWarning(
-                                        "[{Tag1}] Query:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{Request}.",
-                                        "LogicErrorWarning",
-                                        request.GetType().Name,
-                                        ex.Message,
-                                        request.AuditInfo?.AuditTrackId,
-                                        request.ToJson());
-                            }
+                            LoggerFactory.CreateLogger(typeof(PlatformCqrsQueryApplicationHandler<,>).GetNameOrGenericTypeName() + $"-{GetType().Name}")
+                                .Log(
+                                    !ex.IsPlatformLogicException() ? LogLevel.Error : LogLevel.Warning,
+                                    ex.BeautifyStackTrace(),
+                                    "[{Tag1}] Query:{RequestName} has error {Error}. AuditTrackId:{AuditTrackId}. Request:{@Request}. RequestContext:{@RequestContext}",
+                                    "UnknownError",
+                                    request.GetType().Name,
+                                    ex.Message,
+                                    request.AuditInfo?.AuditTrackId,
+                                    request,
+                                    RequestContext.GetAllKeyValues());
                         });
 
                     return result;
