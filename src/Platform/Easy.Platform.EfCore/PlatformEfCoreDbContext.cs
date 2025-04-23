@@ -35,10 +35,9 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         DbContextOptions<TDbContext> options) : base(options)
     {
         // Use lazy because we are using this.GetService to support EfCore pooling => force constructor must take only DbContextOptions<TDbContext>
-        lazyPersistenceConfiguration = new Lazy<PlatformPersistenceConfiguration<TDbContext>>(
-            () => Util.TaskRunner.CatchException(
-                this.GetService<PlatformPersistenceConfiguration<TDbContext>>,
-                (PlatformPersistenceConfiguration<TDbContext>)null));
+        lazyPersistenceConfiguration = new Lazy<PlatformPersistenceConfiguration<TDbContext>>(() => Util.TaskRunner.CatchException(
+            this.GetService<PlatformPersistenceConfiguration<TDbContext>>,
+            (PlatformPersistenceConfiguration<TDbContext>)null));
         lazyRequestContextAccessor = new Lazy<IPlatformApplicationRequestContextAccessor>(this.GetService<IPlatformApplicationRequestContextAccessor>);
         lazyRootServiceProvider = new Lazy<IPlatformRootServiceProvider>(this.GetService<IPlatformRootServiceProvider>);
 
@@ -240,8 +239,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
         return entities
-            .SelectAsync(
-                entity => CreateAsync<TEntity, TPrimaryKey>(entity, dismissSendEvent, eventCustomConfig, cancellationToken))
+            .SelectAsync(entity => CreateAsync<TEntity, TPrimaryKey>(entity, dismissSendEvent, eventCustomConfig, cancellationToken))
             .ThenActionIfAsync(
                 !dismissSendEvent,
                 entities => SendBulkEntitiesEvent<TEntity, TPrimaryKey>(entities, PlatformCqrsEntityEventCrudAction.Created, eventCustomConfig, cancellationToken));
@@ -273,8 +271,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
         return entities
-            .SelectAsync(
-                entity => UpdateAsync<TEntity, TPrimaryKey>(entity, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken))
+            .SelectAsync(entity => UpdateAsync<TEntity, TPrimaryKey>(entity, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken))
             .ThenActionIfAsync(
                 !dismissSendEvent,
                 entities => SendBulkEntitiesEvent<TEntity, TPrimaryKey>(entities, PlatformCqrsEntityEventCrudAction.Updated, eventCustomConfig, cancellationToken));
@@ -364,8 +361,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         {
             var deleteEntitiesPredicate = entities.FirstOrDefault()?.As<IUniqueCompositeIdSupport<TEntity>>()?.FindByUniqueCompositeIdExpr() != null
                 ? entities
-                    .Select(
-                        entity => entity.As<IUniqueCompositeIdSupport<TEntity>>().FindByUniqueCompositeIdExpr())
+                    .Select(entity => entity.As<IUniqueCompositeIdSupport<TEntity>>().FindByUniqueCompositeIdExpr())
                     .Aggregate((currentExpr, nextExpr) => currentExpr.Or(nextExpr))
                 : p => entities.Select(e => e.Id).Contains(p.Id);
 
@@ -379,8 +375,11 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
 
         return await entities
             .SelectAsync(entity => DeleteAsync<TEntity, TPrimaryKey>(entity, false, eventCustomConfig, cancellationToken))
-            .ThenActionAsync(
-                entities => SendBulkEntitiesEvent<TEntity, TPrimaryKey>(entities, PlatformCqrsEntityEventCrudAction.Deleted, eventCustomConfig, cancellationToken));
+            .ThenActionAsync(entities => SendBulkEntitiesEvent<TEntity, TPrimaryKey>(
+                entities,
+                PlatformCqrsEntityEventCrudAction.Deleted,
+                eventCustomConfig,
+                cancellationToken));
     }
 
     public async Task<int> DeleteManyAsync<TEntity, TPrimaryKey>(
@@ -554,16 +553,14 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
 
             var existingEntitiesQuery = GetQuery<TEntity>()
                 .AsNoTracking()
-                .Pipe(
-                    query => customCheckExistingPredicateBuilder != null ||
-                             entities.FirstOrDefault()?.As<IUniqueCompositeIdSupport<TEntity>>()?.FindByUniqueCompositeIdExpr() != null
-                        ? query.Where(
-                            entities
-                                .Select(
-                                    entity => customCheckExistingPredicateBuilder?.Invoke(entity) ??
+                .Pipe(query => customCheckExistingPredicateBuilder != null ||
+                               entities.FirstOrDefault()?.As<IUniqueCompositeIdSupport<TEntity>>()?.FindByUniqueCompositeIdExpr() != null
+                    ? query.Where(
+                        entities
+                            .Select(entity => customCheckExistingPredicateBuilder?.Invoke(entity) ??
                                               entity.As<IUniqueCompositeIdSupport<TEntity>>().FindByUniqueCompositeIdExpr())
-                                .Aggregate((currentExpr, nextExpr) => currentExpr.Or(nextExpr)))
-                        : query.Where(p => entityIds.Contains(p.Id)));
+                            .Aggregate((currentExpr, nextExpr) => currentExpr.Or(nextExpr)))
+                    : query.Where(p => entityIds.Contains(p.Id)));
 
             // Only need to check by entityIds if no custom check condition
             if (customCheckExistingPredicateBuilder == null &&
@@ -571,10 +568,9 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
             {
                 var existingEntityIds = await ContextThreadSafeLock.ExecuteLockActionAsync(
                     () => existingEntitiesQuery.ToListAsync(cancellationToken)
-                        .Then(
-                            items => items
-                                .PipeAction(items => items.ForEach(p => SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p)))
-                                .Pipe(existingEntities => existingEntities.Select(p => p.Id).ToHashSet())),
+                        .Then(items => items
+                            .PipeAction(items => items.ForEach(p => SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p)))
+                            .Pipe(existingEntities => existingEntities.Select(p => p.Id).ToHashSet())),
                     cancellationToken);
                 var (toUpdateEntities, newEntities) = entities.WhereSplitResult(p => existingEntityIds.Contains(p.Id));
 
@@ -595,23 +591,21 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
             {
                 var existingEntities = await ContextThreadSafeLock.ExecuteLockActionAsync(
                     () => existingEntitiesQuery.ToListAsync(cancellationToken)
-                        .Then(
-                            items => items
-                                .PipeAction(items => items.ForEach(p => SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p)))),
+                        .Then(items => items
+                            .PipeAction(items => items.ForEach(p => SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p)))),
                     cancellationToken);
 
-                var toUpsertEntityToExistingEntityPairs = entities.Select(
-                    toUpsertEntity =>
-                    {
-                        var matchedExistingEntity = existingEntities.FirstOrDefault(
-                            existingEntity => customCheckExistingPredicateBuilder?.Invoke(toUpsertEntity).Compile()(existingEntity) ??
-                                              toUpsertEntity.As<IUniqueCompositeIdSupport<TEntity>>().FindByUniqueCompositeIdExpr().Compile()(existingEntity));
+                var toUpsertEntityToExistingEntityPairs = entities.Select(toUpsertEntity =>
+                {
+                    var matchedExistingEntity = existingEntities.FirstOrDefault(existingEntity =>
+                        customCheckExistingPredicateBuilder?.Invoke(toUpsertEntity).Compile()(existingEntity) ??
+                        toUpsertEntity.As<IUniqueCompositeIdSupport<TEntity>>().FindByUniqueCompositeIdExpr().Compile()(existingEntity));
 
-                        // Update to correct the id of toUpdateEntity to the matched existing entity Id
-                        if (matchedExistingEntity != null) toUpsertEntity.Id = matchedExistingEntity.Id;
+                    // Update to correct the id of toUpdateEntity to the matched existing entity Id
+                    if (matchedExistingEntity != null) toUpsertEntity.Id = matchedExistingEntity.Id;
 
-                        return new { toUpsertEntity, matchedExistingEntity };
-                    });
+                    return new { toUpsertEntity, matchedExistingEntity };
+                });
 
                 var (existingToUpdateEntities, newEntities) = toUpsertEntityToExistingEntityPairs.WhereSplitResult(p => p.matchedExistingEntity != null);
 
@@ -716,7 +710,9 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
                         .As<TEntity>());
 
             // is entity tracked as not modified any things then return
-            if (!isEntityNotTrackedOrTrackedModified && checkDiff)
+            if (!isEntityNotTrackedOrTrackedModified &&
+                checkDiff &&
+                (entity is not ISupportDomainEventsEntity || entity.As<ISupportDomainEventsEntity>().GetDomainEvents().IsEmpty()))
                 return entity;
 
             var result = await PlatformCqrsEntityEvent.ExecuteWithSendingUpdateEntityEvent<TEntity, TPrimaryKey, TEntity>(
@@ -890,11 +886,10 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         modelBuilder.ApplyConfigurationsFromAssembly(
             GetType().Assembly,
             entityConfigType => applyForLimitedEntityTypes == null ||
-                                applyForLimitedEntityTypes.Any(
-                                    limitedEntityType => typeof(IEntityTypeConfiguration<>)
-                                        .GetGenericTypeDefinition()
-                                        .MakeGenericType(limitedEntityType)
-                                        .Pipe(entityConfigType.IsAssignableTo)));
+                                applyForLimitedEntityTypes.Any(limitedEntityType => typeof(IEntityTypeConfiguration<>)
+                                    .GetGenericTypeDefinition()
+                                    .MakeGenericType(limitedEntityType)
+                                    .Pipe(entityConfigType.IsAssignableTo)));
     }
 
     /// <summary>

@@ -82,44 +82,42 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
             // If standalone scope for outbox is enabled, execute the sending logic in a new scope.
             if (outboxConfig.StandaloneScopeForOutbox)
             {
-                await serviceProvider.ExecuteInjectScopedAsync(
-                    (
-                        IPlatformOutboxBusMessageRepository outboxBusMessageRepository,
-                        IPlatformMessageBusProducer messageBusProducer,
-                        IPlatformUnitOfWorkManager unitOfWorkManager) => SendOutboxMessageAsync(
-                        message,
-                        routingKey,
-                        retryProcessFailedMessageInSecondsUnit,
-                        handleExistingOutboxMessage,
-                        null,
-                        subQueueMessageIdPrefix,
-                        needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
-                        cancellationToken,
-                        CreateLogger(),
-                        outboxBusMessageRepository,
-                        messageBusProducer,
-                        unitOfWorkManager));
+                await serviceProvider.ExecuteInjectScopedAsync((
+                    IPlatformOutboxBusMessageRepository outboxBusMessageRepository,
+                    IPlatformMessageBusProducer messageBusProducer,
+                    IPlatformUnitOfWorkManager unitOfWorkManager) => SendOutboxMessageAsync(
+                    message,
+                    routingKey,
+                    retryProcessFailedMessageInSecondsUnit,
+                    handleExistingOutboxMessage,
+                    null,
+                    subQueueMessageIdPrefix,
+                    needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+                    cancellationToken,
+                    CreateLogger(),
+                    outboxBusMessageRepository,
+                    messageBusProducer,
+                    unitOfWorkManager));
             }
             // Otherwise, execute the sending logic in the current scope.
             else
             {
-                await serviceProvider.ExecuteInjectAsync(
-                    (
-                        IPlatformOutboxBusMessageRepository outboxBusMessageRepository,
-                        IPlatformMessageBusProducer messageBusProducer,
-                        IPlatformUnitOfWorkManager unitOfWorkManager) => SendOutboxMessageAsync(
-                        message,
-                        routingKey,
-                        retryProcessFailedMessageInSecondsUnit,
-                        handleExistingOutboxMessage,
-                        sourceOutboxUowId,
-                        subQueueMessageIdPrefix,
-                        needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
-                        cancellationToken,
-                        CreateLogger(),
-                        outboxBusMessageRepository,
-                        messageBusProducer,
-                        unitOfWorkManager));
+                await serviceProvider.ExecuteInjectAsync((
+                    IPlatformOutboxBusMessageRepository outboxBusMessageRepository,
+                    IPlatformMessageBusProducer messageBusProducer,
+                    IPlatformUnitOfWorkManager unitOfWorkManager) => SendOutboxMessageAsync(
+                    message,
+                    routingKey,
+                    retryProcessFailedMessageInSecondsUnit,
+                    handleExistingOutboxMessage,
+                    sourceOutboxUowId,
+                    subQueueMessageIdPrefix,
+                    needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+                    cancellationToken,
+                    CreateLogger(),
+                    outboxBusMessageRepository,
+                    messageBusProducer,
+                    unitOfWorkManager));
             }
         }
         // If no outbox message repository is configured, send the message directly to the message bus.
@@ -283,27 +281,26 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                             {
                                 if (!cancellationToken.IsCancellationRequested)
                                 {
-                                    await rootServiceProvider.ExecuteInjectScopedAsync(
-                                        async (IPlatformOutboxBusMessageRepository outboxBusMessageRepository) =>
+                                    await rootServiceProvider.ExecuteInjectScopedAsync(async (IPlatformOutboxBusMessageRepository outboxBusMessageRepository) =>
+                                    {
+                                        using (var uow = outboxBusMessageRepository.UowManager().Begin())
                                         {
-                                            using (var uow = outboxBusMessageRepository.UowManager().Begin())
+                                            var toUpdateExistingOutboxMessage = await outboxBusMessageRepository.GetByIdAsync(
+                                                existingOutboxMessage.Id,
+                                                cancellationToken);
+
+                                            if (!cancellationToken.IsCancellationRequested)
                                             {
-                                                var toUpdateExistingOutboxMessage = await outboxBusMessageRepository.GetByIdAsync(
-                                                    existingOutboxMessage.Id,
-                                                    cancellationToken);
+                                                await outboxBusMessageRepository.SetAsync(
+                                                    toUpdateExistingOutboxMessage.With(p => p.LastProcessingPingDate = Clock.UtcNow),
+                                                    cancellationToken: cancellationToken);
 
-                                                if (!cancellationToken.IsCancellationRequested)
-                                                {
-                                                    await outboxBusMessageRepository.SetAsync(
-                                                        toUpdateExistingOutboxMessage.With(p => p.LastProcessingPingDate = Clock.UtcNow),
-                                                        cancellationToken: cancellationToken);
-
-                                                    existingOutboxMessage.LastProcessingPingDate = toUpdateExistingOutboxMessage.LastProcessingPingDate;
-                                                }
-
-                                                await uow.CompleteAsync(cancellationToken);
+                                                existingOutboxMessage.LastProcessingPingDate = toUpdateExistingOutboxMessage.LastProcessingPingDate;
                                             }
-                                        });
+
+                                            await uow.CompleteAsync(cancellationToken);
+                                        }
+                                    });
                                 }
 
                                 await Task.Delay(PlatformOutboxBusMessage.CheckProcessingPingIntervalSeconds.Seconds(), cancellationToken);
@@ -416,32 +413,31 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
             {
                 if (toUpdateOutboxMessage.SendStatus == PlatformOutboxBusMessage.SendStatuses.Processed) return Task.CompletedTask;
 
-                return serviceProvider.ExecuteInjectScopedAsync(
-                    (IPlatformOutboxBusMessageRepository outboxBusMessageRepository) => outboxBusMessageRepository.UowManager()
-                        .ExecuteUowTask(
-                            async () =>
-                            {
-                                outboxBusMessageRepository.UowManager()
-                                    .CurrentActiveUow()
-                                    .SetCachedExistingOriginalEntity<PlatformOutboxBusMessage, string>(toUpdateOutboxMessage, true);
+                return serviceProvider.ExecuteInjectScopedAsync((IPlatformOutboxBusMessageRepository outboxBusMessageRepository) => outboxBusMessageRepository
+                    .UowManager()
+                    .ExecuteUowTask(async () =>
+                    {
+                        outboxBusMessageRepository.UowManager()
+                            .CurrentActiveUow()
+                            .SetCachedExistingOriginalEntity<PlatformOutboxBusMessage, string>(toUpdateOutboxMessage, true);
 
-                                try
-                                {
-                                    toUpdateOutboxMessage.LastSendDate = DateTime.UtcNow;
-                                    toUpdateOutboxMessage.LastProcessingPingDate = DateTime.UtcNow;
-                                    toUpdateOutboxMessage.SendStatus = PlatformOutboxBusMessage.SendStatuses.Processed;
+                        try
+                        {
+                            toUpdateOutboxMessage.LastSendDate = DateTime.UtcNow;
+                            toUpdateOutboxMessage.LastProcessingPingDate = DateTime.UtcNow;
+                            toUpdateOutboxMessage.SendStatus = PlatformOutboxBusMessage.SendStatuses.Processed;
 
-                                    await outboxBusMessageRepository.SetAsync(toUpdateOutboxMessage, cancellationToken);
-                                }
-                                catch (PlatformDomainRowVersionConflictException)
-                                {
-                                    // If a concurrency conflict occurs, retrieve the latest version of the message and retry.
-                                    toUpdateOutboxMessage = await serviceProvider.ExecuteInjectScopedAsync<PlatformOutboxBusMessage>(
-                                        (IPlatformOutboxBusMessageRepository outboxBusMessageRepository) =>
-                                            outboxBusMessageRepository.GetByIdAsync(toUpdateOutboxMessage.Id, cancellationToken));
-                                    throw;
-                                }
-                            }));
+                            await outboxBusMessageRepository.SetAsync(toUpdateOutboxMessage, cancellationToken);
+                        }
+                        catch (PlatformDomainRowVersionConflictException)
+                        {
+                            // If a concurrency conflict occurs, retrieve the latest version of the message and retry.
+                            toUpdateOutboxMessage = await serviceProvider.ExecuteInjectScopedAsync<PlatformOutboxBusMessage>((
+                                    IPlatformOutboxBusMessageRepository outboxBusMessageRepository) =>
+                                outboxBusMessageRepository.GetByIdAsync(toUpdateOutboxMessage.Id, cancellationToken));
+                            throw;
+                        }
+                    }));
             },
             sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
             retryCount: DefaultResilientRetiredCount,
@@ -475,24 +471,23 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
 
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                () => rootServiceProvider.ExecuteInjectScopedAsync(
-                    async (IPlatformOutboxBusMessageRepository outboxBusMessageRepository) =>
-                    {
-                        // Retrieve the latest version of the outbox message to prevent concurrency issues.
-                        var latestCurrentExistingOutboxMessage = await outboxBusMessageRepository.FirstOrDefaultAsync(
-                            p => p.Id == existingOutboxMessage.Id && p.SendStatus == PlatformOutboxBusMessage.SendStatuses.Processing,
-                            cancellationToken);
+                () => rootServiceProvider.ExecuteInjectScopedAsync(async (IPlatformOutboxBusMessageRepository outboxBusMessageRepository) =>
+                {
+                    // Retrieve the latest version of the outbox message to prevent concurrency issues.
+                    var latestCurrentExistingOutboxMessage = await outboxBusMessageRepository.FirstOrDefaultAsync(
+                        p => p.Id == existingOutboxMessage.Id && p.SendStatus == PlatformOutboxBusMessage.SendStatuses.Processing,
+                        cancellationToken);
 
-                        if (latestCurrentExistingOutboxMessage != null)
-                        {
-                            await UpdateExistingOutboxMessageFailedAsync(
-                                latestCurrentExistingOutboxMessage,
-                                exception,
-                                retryProcessFailedMessageInSecondsUnit,
-                                cancellationToken,
-                                outboxBusMessageRepository);
-                        }
-                    }),
+                    if (latestCurrentExistingOutboxMessage != null)
+                    {
+                        await UpdateExistingOutboxMessageFailedAsync(
+                            latestCurrentExistingOutboxMessage,
+                            exception,
+                            retryProcessFailedMessageInSecondsUnit,
+                            cancellationToken,
+                            outboxBusMessageRepository);
+                    }
+                }),
                 retryCount: DefaultResilientRetiredCount,
                 sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
                 cancellationToken: cancellationToken);
@@ -501,8 +496,11 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         {
             logger.LogError(
                 ex.BeautifyStackTrace(),
-                "UpdateExistingOutboxMessageFailedAsync failed. [[Error:{Error}]]].",
-                ex.Message);
+                "UpdateExistingOutboxMessageFailedAsync. [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                ex.Message,
+                existingOutboxMessage.MessageTypeFullName,
+                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
         }
     }
 
@@ -621,22 +619,21 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 else
                 {
                     // If there's an active unit of work, add an action to send the message after the unit of work completes.
-                    sourceOutboxUowActiveUow!.OnSaveChangesCompletedActions.Add(
-                        async () =>
-                        {
-                            // Try to process sending the outbox message immediately after the unit of work completes.
-                            // Execute task in background separated thread task
-                            Util.TaskRunner.QueueActionInBackground(
-                                () => SendExistingOutboxMessageInNewScopeAsync(
-                                    toProcessOutboxMessage,
-                                    message,
-                                    routingKey,
-                                    retryProcessFailedMessageInSecondsUnit,
-                                    needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
-                                    cancellationToken,
-                                    logger),
-                                cancellationToken: cancellationToken);
-                        });
+                    sourceOutboxUowActiveUow!.OnSaveChangesCompletedActions.Add(async () =>
+                    {
+                        // Try to process sending the outbox message immediately after the unit of work completes.
+                        // Execute task in background separated thread task
+                        Util.TaskRunner.QueueActionInBackground(
+                            () => SendExistingOutboxMessageInNewScopeAsync(
+                                toProcessOutboxMessage,
+                                message,
+                                routingKey,
+                                retryProcessFailedMessageInSecondsUnit,
+                                needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+                                cancellationToken,
+                                logger),
+                            cancellationToken: cancellationToken);
+                    });
                 }
             }
         }
