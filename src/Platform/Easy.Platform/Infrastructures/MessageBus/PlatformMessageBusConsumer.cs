@@ -216,16 +216,11 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
         {
             if (!NoNeedCheckHandleWhen && !await CheckHandleWhen(message, routingKey)) return;
 
-            if (RetryOnFailedTimes > 0)
-            {
-                // Retry RetryOnFailedTimes to help resilient consumer. Sometime parallel, create/update concurrency could lead to error
-                await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                    () => ExecuteHandleLogicAsync(message, routingKey),
-                    retryCount: RetryOnFailedTimes,
-                    sleepDurationProvider: retryAttempt => RetryOnFailedDelaySeconds.Seconds());
-            }
-            else
-                await ExecuteHandleLogicAsync(message, routingKey);
+            // Retry RetryOnFailedTimes to help resilient consumer. Sometime parallel, create/update concurrency could lead to error
+            await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+                () => ExecuteHandleLogicAsync(message, routingKey),
+                retryCount: RetryOnFailedTimes,
+                sleepDurationProvider: retryAttempt => RetryOnFailedDelaySeconds.Seconds());
         }
         catch (Exception e)
         {

@@ -55,7 +55,7 @@ public class ResolvedMethod
     public StringBuilder Append(StringBuilder builder)
         => Append(builder, true);
 
-    public StringBuilder Append(StringBuilder builder, bool fullName)
+    public StringBuilder Append(StringBuilder builder, bool fullName, bool includeParametersInfo = true)
     {
         if (IsAsync) builder.Append("async ");
 
@@ -94,15 +94,20 @@ public class ResolvedMethod
         builder.Append('(');
         if (MethodBase != null)
         {
-            var isFirst = true;
-            foreach (var param in Parameters)
+            if (includeParametersInfo)
             {
-                if (isFirst)
-                    isFirst = false;
-                else
-                    builder.Append(", ");
-                param.Append(builder);
+                var isFirst = true;
+                foreach (var param in Parameters)
+                {
+                    if (isFirst)
+                        isFirst = false;
+                    else
+                        builder.Append(", ");
+                    param.Append(builder);
+                }
             }
+            else if (Parameters.Any())
+                builder.Append("<hidden>");
         }
         else
             builder.Append('?');

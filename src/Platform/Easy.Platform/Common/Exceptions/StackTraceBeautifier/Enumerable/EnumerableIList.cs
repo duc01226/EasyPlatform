@@ -12,11 +12,11 @@ public static class EnumerableIList
 
 public readonly struct EnumerableIList<T> : IEnumerableIList<T>, IList<T>
 {
-    private readonly IList<T> list;
+    private readonly IList<T> list = [];
 
     public EnumerableIList(IList<T> list)
     {
-        this.list = list;
+        this.list = list ?? [];
     }
 
     public EnumeratorIList<T> GetEnumerator() => new(list);
@@ -34,34 +34,34 @@ public readonly struct EnumerableIList<T> : IEnumerableIList<T>, IList<T>
     public T this[int index] { get => list[index]; set => list[index] = value; }
 
     /// <inheritdoc />
-    public int Count => list.Count;
+    public int Count => list?.Count ?? 0;
 
     /// <inheritdoc />
-    public bool IsReadOnly => list.IsReadOnly;
+    public bool IsReadOnly => list?.IsReadOnly ?? false;
 
     /// <inheritdoc />
-    public void Add(T item) => list.Add(item);
+    public void Add(T item) => list?.Add(item);
 
     /// <inheritdoc />
-    public void Clear() => list.Clear();
+    public void Clear() => list?.Clear();
 
     /// <inheritdoc />
-    public bool Contains(T item) => list.Contains(item);
+    public bool Contains(T item) => list?.Contains(item) ?? false;
 
     /// <inheritdoc />
-    public void CopyTo(T[] array, int arrayIndex) => list.CopyTo(array, arrayIndex);
+    public void CopyTo(T[] array, int arrayIndex) => list?.CopyTo(array, arrayIndex);
 
     /// <inheritdoc />
-    public int IndexOf(T item) => list.IndexOf(item);
+    public int IndexOf(T item) => list?.IndexOf(item) ?? -1;
 
     /// <inheritdoc />
-    public void Insert(int index, T item) => list.Insert(index, item);
+    public void Insert(int index, T item) => list?.Insert(index, item);
 
     /// <inheritdoc />
-    public bool Remove(T item) => list.Remove(item);
+    public bool Remove(T item) => list?.Remove(item) ?? true;
 
     /// <inheritdoc />
-    public void RemoveAt(int index) => list.RemoveAt(index);
+    public void RemoveAt(int index) => list?.RemoveAt(index);
 
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 

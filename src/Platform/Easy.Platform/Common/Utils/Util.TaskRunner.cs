@@ -14,7 +14,7 @@ public static partial class Util
     {
         public const int DefaultWaitUntilMaxSeconds = 30;
         public const int DefaultWaitIntervalSeconds = 2;
-        public const int DefaultResilientRetryCount = 3;
+        public const int DefaultResilientRetryCount = 2;
         public const int DefaultResilientDelaySeconds = 1;
         public const int DefaultBackgroundResilientRetryCount = 20;
         public static readonly Func<int, TimeSpan> DefaultBackgroundRetryDelayProvider = retryAttempt => retryAttempt.Seconds();
@@ -655,6 +655,8 @@ public static partial class Util
             Action<Exception, TimeSpan, int, Context> onRetry = null,
             CancellationToken cancellationToken = default) where TException : Exception
         {
+            if (retryCount == 0) return executeFunc();
+
             return Policy
                 .Handle<TException>()
                 .WaitAndRetryAsync(
@@ -677,6 +679,8 @@ public static partial class Util
             List<Type> ignoreExceptionTypes = null,
             CancellationToken cancellationToken = default) where TException : Exception
         {
+            if (retryCount == 0) return executeFunc();
+
             return Policy
                 .Handle<TException>(ex => ignoreExceptionTypes == null || !ignoreExceptionTypes.Any(ignoreExType => ex.GetType().IsAssignableTo(ignoreExType)))
                 .WaitAndRetryAsync(
@@ -750,10 +754,7 @@ public static partial class Util
                     sleepDurationProvider ?? (retryAttempt => TimeSpan.FromSeconds(DefaultWaitIntervalSeconds)),
                     onRetry ?? ((exception, timeSpan, currentRetry, context) => { }))
                 .ExecuteAndCaptureAsync(
-                    async ct =>
-                    {
-                        await executeFunc(ct);
-                    },
+                    ct => executeFunc(ct),
                     cancellationToken);
         }
 
@@ -781,10 +782,7 @@ public static partial class Util
                     sleepDurationProvider ?? (retryAttempt => TimeSpan.FromSeconds(DefaultWaitIntervalSeconds)),
                     onRetry ?? ((exception, timeSpan, currentRetry, context) => { }))
                 .ExecuteAndCaptureAsync(
-                    async ct =>
-                    {
-                        return await executeFunc();
-                    },
+                    ct => executeFunc(),
                     cancellationToken);
         }
 
@@ -805,6 +803,8 @@ public static partial class Util
             Action<Exception> onBeforeThrowFinalExceptionFn = null,
             Action<Exception, TimeSpan, int, Context> onRetry = null)
         {
+            if (retryCount == 0) return executeFunc();
+
             return Policy
                 .Handle<Exception>()
                 .WaitAndRetry(
@@ -837,11 +837,7 @@ public static partial class Util
                     retryCount,
                     sleepDurationProvider ?? (retryAttempt => TimeSpan.FromSeconds(DefaultWaitIntervalSeconds)),
                     onRetry ?? ((exception, timeSpan, currentRetry, context) => { }))
-                .ExecuteAndCapture(
-                    () =>
-                    {
-                        return executeFunc();
-                    });
+                .ExecuteAndCapture(executeFunc);
         }
 
         /// <summary>
@@ -860,15 +856,19 @@ public static partial class Util
             Action<Exception> onBeforeThrowFinalExceptionFn = null,
             Action<Exception, TimeSpan, int, Context> onRetry = null)
         {
-            Policy
-                .Handle<Exception>()
-                .WaitAndRetry(
-                    retryCount,
-                    sleepDurationProvider ?? (retryAttempt => TimeSpan.FromSeconds(DefaultWaitIntervalSeconds)),
-                    onRetry ?? ((exception, timeSpan, currentRetry, context) => { }))
-                .ExecuteAndThrowFinalException(
-                    executeAction,
-                    onBeforeThrowFinalExceptionFn ?? (exception => { }));
+            if (retryCount == 0) executeAction();
+            else
+            {
+                Policy
+                    .Handle<Exception>()
+                    .WaitAndRetry(
+                        retryCount,
+                        sleepDurationProvider ?? (retryAttempt => TimeSpan.FromSeconds(DefaultWaitIntervalSeconds)),
+                        onRetry ?? ((exception, timeSpan, currentRetry, context) => { }))
+                    .ExecuteAndThrowFinalException(
+                        executeAction,
+                        onBeforeThrowFinalExceptionFn ?? (exception => { }));
+            }
         }
 
         public static PolicyResult WaitRetry(
@@ -883,11 +883,7 @@ public static partial class Util
                     retryCount,
                     sleepDurationProvider ?? (retryAttempt => TimeSpan.FromSeconds(DefaultWaitIntervalSeconds)),
                     onRetry ?? ((exception, timeSpan, currentRetry, context) => { }))
-                .ExecuteAndCapture(
-                    () =>
-                    {
-                        executeAction();
-                    });
+                .ExecuteAndCapture(executeAction);
         }
 
         /// <inheritdoc cref="WaitRetryThrowFinalException{T}" />
@@ -898,6 +894,8 @@ public static partial class Util
             Action<TException> onBeforeThrowFinalExceptionFn = null,
             Action<Exception, TimeSpan, int, Context> onRetry = null) where TException : Exception
         {
+            if (retryCount == 0) return executeFunc();
+
             return Policy
                 .Handle<TException>()
                 .WaitAndRetry(
@@ -931,11 +929,7 @@ public static partial class Util
                     retryCount,
                     sleepDurationProvider ?? (retryAttempt => TimeSpan.FromSeconds(DefaultWaitIntervalSeconds)),
                     onRetry ?? ((exception, timeSpan, currentRetry, context) => { }))
-                .ExecuteAndCapture(
-                    () =>
-                    {
-                        return executeFunc();
-                    });
+                .ExecuteAndCapture(executeFunc);
         }
 
         public static void Wait(int millisecondsToWait)
@@ -1269,11 +1263,10 @@ public static partial class Util
                 {
                     // Retry check condition again to continueWaitOnlyWhen throw error only when condition not matched
                     // Sometime when continueWaitOnlyWhen execute the condition is matched
-                    WaitRetryThrowFinalException(
-                        () =>
-                        {
-                            if (!condition()) continueWaitOnlyWhen?.Invoke(target);
-                        });
+                    WaitRetryThrowFinalException(() =>
+                    {
+                        if (!condition()) continueWaitOnlyWhen?.Invoke(target);
+                    });
 
                     if ((DateTime.UtcNow - startWaitTime).TotalMilliseconds < maxWaitMilliseconds)
                         Thread.Sleep(DefaultWaitIntervalSeconds * 1000);

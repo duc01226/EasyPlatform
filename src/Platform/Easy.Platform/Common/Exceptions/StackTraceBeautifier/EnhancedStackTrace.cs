@@ -91,11 +91,12 @@ public partial class EnhancedStackTrace : StackTrace, IEnumerable<EnhancedStackF
 
             var frame = frames[i];
 
-            sb.Append("   at ");
-            frame.MethodInfo.Append(sb, false);
+            var fileName = frame.GetFileName();
 
-            if (frame.GetFileName() is { } fileName
-                && !string.IsNullOrEmpty(fileName))
+            sb.Append("   at ");
+            frame.MethodInfo.Append(sb, false, includeParametersInfo: string.IsNullOrEmpty(fileName));
+
+            if (!string.IsNullOrEmpty(fileName))
             {
                 sb.Append(" in ");
                 sb.Append(TryGetFullPath(fileName));
@@ -104,7 +105,7 @@ public partial class EnhancedStackTrace : StackTrace, IEnumerable<EnhancedStackF
             var lineNo = frame.GetFileLineNumber();
             if (lineNo != 0)
             {
-                sb.Append(":line ");
+                sb.Append(":LINE ");
                 sb.Append(lineNo);
             }
         }

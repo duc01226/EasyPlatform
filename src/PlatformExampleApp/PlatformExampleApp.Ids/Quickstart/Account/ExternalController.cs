@@ -77,7 +77,7 @@ public class ExternalController : Controller
         // read external identity from the temporary cookie
         var result =
             await HttpContext.AuthenticateAsync(IdentityServerConstants.ExternalCookieAuthenticationScheme);
-        if (result?.Succeeded != true)
+        if (result.Succeeded != true)
             throw new Exception("External authentication error");
 
         if (logger.IsEnabled(LogLevel.Debug))

@@ -174,20 +174,15 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
         try
         {
             // Retry RetryOnFailedTimes to help resilient PlatformCqrsEventHandler. Sometime parallel, create/update concurrency could lead to error
-            if (RetryOnFailedTimes > 0)
-            {
-                await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                    () => handlerNewInstance.ExecuteHandleAsync(notification, CancellationToken.None),
-                    retryCount: RetryOnFailedTimes,
-                    sleepDurationProvider: retryAttempt => RetryOnFailedDelaySeconds.Seconds(),
-                    onRetry: (e, delayTime, retryAttempt, context) =>
-                    {
-                        if (retryAttempt > 2)
-                            handlerNewInstance.LogError(notification, e.BeautifyStackTrace(), LoggerFactory, "Retry");
-                    });
-            }
-            else
-                await handlerNewInstance.ExecuteHandleAsync(notification, CancellationToken.None);
+            await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+                () => handlerNewInstance.ExecuteHandleAsync(notification, CancellationToken.None),
+                retryCount: RetryOnFailedTimes,
+                sleepDurationProvider: retryAttempt => RetryOnFailedDelaySeconds.Seconds(),
+                onRetry: (e, delayTime, retryAttempt, context) =>
+                {
+                    if (retryAttempt > 1)
+                        handlerNewInstance.LogError(notification, e.BeautifyStackTrace(), LoggerFactory, "Retry");
+                });
         }
         catch (Exception e)
         {

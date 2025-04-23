@@ -44,7 +44,7 @@ public static class RetryPolicyExtension
     {
         try
         {
-            return retryPolicy.Execute(() => action());
+            return retryPolicy.Execute(action);
         }
         catch (Exception e)
         {
@@ -68,7 +68,7 @@ public static class RetryPolicyExtension
     {
         try
         {
-            retryPolicy.Execute(() => action());
+            retryPolicy.Execute(action);
         }
         catch (Exception e)
         {
@@ -94,7 +94,7 @@ public static class RetryPolicyExtension
     {
         try
         {
-            return retryPolicy.Execute(() => action());
+            return retryPolicy.Execute(action);
         }
         catch (Exception e)
         {

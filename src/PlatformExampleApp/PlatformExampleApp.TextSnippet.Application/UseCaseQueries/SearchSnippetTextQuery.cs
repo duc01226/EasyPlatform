@@ -146,9 +146,7 @@ internal sealed class SearchSnippetTextQueryHandler : PlatformCqrsQueryApplicati
             repository.GetAllAsync(
                 query => fullItemsQueryBuilder(query)
                     .OrderByDescending(p => p.CreatedDate)
-                    .PipeIf(
-                        request.IsPagedRequestValid(),
-                        query => query.PageBy(request.SkipCount, request.MaxResultCount)),
+                    .PageBy(request.SkipCount, request.MaxResultCount),
                 cancellationToken),
             repository.CountAsync(fullItemsQueryBuilder, cancellationToken));
 

@@ -16,6 +16,8 @@ public static class QueryableExtension
     /// <returns>A new IQueryable&lt;T&gt; that has pagination applied.</returns>
     public static IQueryable<T> PageBy<T>(this IQueryable<T> query, int? skipCount, int? maxResultCount)
     {
+        if (!(skipCount is > 0 || maxResultCount is >= 0)) return query;
+
         // Check if the query is not already ordered and T has a property named "Id"
         var idProperty = typeof(T).GetProperty("Id", BindingFlags.Public | BindingFlags.Instance);
         if (query is not IOrderedQueryable<T> && idProperty != null)
@@ -30,8 +32,8 @@ public static class QueryableExtension
         }
 
         return query
-            .PipeIf(skipCount >= 0, q => q.Skip(skipCount!.Value))
-            .PipeIf(maxResultCount >= 0, q => q.Take(maxResultCount!.Value));
+            .PipeIf(skipCount is > 0, q => q.Skip(skipCount!.Value))
+            .PipeIf(maxResultCount is >= 0, q => q.Take(maxResultCount!.Value));
     }
 
     /// <summary>
@@ -161,12 +163,11 @@ internal sealed class ParameterRebinder : ExpressionVisitor
     public static Expression ReplaceParameters<T>(Expression<T> targetExpr, Expression<T> sourceExpr)
     {
         var currentTargetToSourceParamsMap = sourceExpr.Parameters
-            .Select(
-                (sourceParam, firstParamIndex) => new
-                {
-                    sourceParam,
-                    targetParam = targetExpr.Parameters[firstParamIndex]
-                })
+            .Select((sourceParam, firstParamIndex) => new
+            {
+                sourceParam,
+                targetParam = targetExpr.Parameters[firstParamIndex]
+            })
             .ToDictionary(p => p.targetParam, p => p.sourceParam);
 
         return new ParameterRebinder(currentTargetToSourceParamsMap).Visit(targetExpr.Body);

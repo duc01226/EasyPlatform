@@ -184,17 +184,12 @@ public abstract class PlatformCqrsCommandApplicationHandler<TCommand, TResult> :
     /// <returns>The result of handling the CQRS command.</returns>
     protected virtual Task<TResult> ExecuteHandleAsync(TCommand request, CancellationToken cancellationToken)
     {
-        if (RetryOnFailedTimes > 0)
-        {
-            return Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                () => DoExecuteHandleAsync(request, cancellationToken),
-                retryCount: RetryOnFailedTimes,
-                sleepDurationProvider: i => RetryOnFailedDelaySeconds.Seconds(),
-                ignoreExceptionTypes: IPlatformCqrsCommandApplicationHandler.IgnoreFailedRetryExceptionTypes,
-                cancellationToken: cancellationToken);
-        }
-
-        return DoExecuteHandleAsync(request, cancellationToken);
+        return Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+            () => DoExecuteHandleAsync(request, cancellationToken),
+            retryCount: RetryOnFailedTimes,
+            sleepDurationProvider: i => RetryOnFailedDelaySeconds.Seconds(),
+            ignoreExceptionTypes: IPlatformCqrsCommandApplicationHandler.IgnoreFailedRetryExceptionTypes,
+            cancellationToken: cancellationToken);
     }
 
     /// <summary>

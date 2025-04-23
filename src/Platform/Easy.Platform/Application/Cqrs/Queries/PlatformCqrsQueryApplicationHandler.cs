@@ -78,17 +78,12 @@ public abstract class PlatformCqrsQueryApplicationHandler<TQuery, TResult>
     /// <returns>The result of handling the CQRS query.</returns>
     public async Task<TResult> Handle(TQuery request, CancellationToken cancellationToken)
     {
-        if (RetryOnFailedTimes > 0)
-        {
-            return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                () => DoExecuteHandleAsync(request, cancellationToken),
-                retryCount: RetryOnFailedTimes,
-                sleepDurationProvider: i => RetryOnFailedDelaySeconds.Seconds(),
-                ignoreExceptionTypes: IPlatformCqrsQueryApplicationHandler.IgnoreFailedRetryExceptionTypes,
-                cancellationToken: cancellationToken);
-        }
-
-        return await DoExecuteHandleAsync(request, cancellationToken);
+        return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+            () => DoExecuteHandleAsync(request, cancellationToken),
+            retryCount: RetryOnFailedTimes,
+            sleepDurationProvider: i => RetryOnFailedDelaySeconds.Seconds(),
+            ignoreExceptionTypes: IPlatformCqrsQueryApplicationHandler.IgnoreFailedRetryExceptionTypes,
+            cancellationToken: cancellationToken);
     }
 
     /// <summary>

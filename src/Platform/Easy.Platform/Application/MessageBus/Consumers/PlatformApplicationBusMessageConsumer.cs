@@ -132,14 +132,13 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
     /// <param name="message">The message being consumed.</param>
     /// <param name="routingKey">The routing key of the message.</param>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-    public override async Task ExecuteHandleLogicAsync(TMessage message, string routingKey)
+    public override Task ExecuteHandleLogicAsync(TMessage message, string routingKey)
     {
         // If the inbox pattern is enabled and allowed, handle the message using the inbox pattern.
-        if (InboxBusMessageRepo != null && AllowUseInboxMessage && !IsHandlingLogicForInboxMessage)
-            await HandleExecutingInboxConsumerAsync(message, routingKey);
         // Otherwise, handle the message directly.
-        else
-            await HandleMessageDirectly(message, routingKey);
+        return InboxBusMessageRepo != null && AllowUseInboxMessage && !IsHandlingLogicForInboxMessage
+            ? HandleExecutingInboxConsumerAsync(message, routingKey)
+            : HandleMessageDirectly(message, routingKey);
     }
 
     public async Task HandleMessageDirectly(TMessage message, string routingKey, int? retryCount = null)
@@ -178,9 +177,9 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
             Logger.LogInformation("{Type} {Method} FINISHED", GetType().FullName, nameof(HandleMessageDirectly));
     }
 
-    private async Task HandleExecutingInboxConsumerAsync(TMessage message, string routingKey)
+    private Task HandleExecutingInboxConsumerAsync(TMessage message, string routingKey)
     {
-        await PlatformInboxMessageBusConsumerHelper.HandleExecutingInboxConsumerAsync(
+        return PlatformInboxMessageBusConsumerHelper.HandleExecutingInboxConsumerAsync(
             RootServiceProvider,
             currentScopeServiceProvider: ServiceProvider,
             consumerType: GetType(),

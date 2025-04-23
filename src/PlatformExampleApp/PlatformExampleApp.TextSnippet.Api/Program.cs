@@ -4,6 +4,7 @@ using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.EfCore.Logging.Exceptions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using PlatformExampleApp.TextSnippet.Api;
@@ -31,8 +32,6 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     ConfigureServices(builder.Services);
-
-    builder.Host.UseSerilog();
 
     // UseCustomHttpsCert: Demo can do this to help solve using https both in docker and outside machine in local still works by make it use the same https cert.
     // Fix for case api server to server call https trusting problem
@@ -64,9 +63,16 @@ catch (Exception e)
 
 static void ConfigureServices(IServiceCollection services)
 {
+    services.AddSerilog();
     services.AddControllers()
         .AddPlatformModelBinderProviders()
         .AddPlatformJsonOptions(useCamelCaseNaming: false);
+    services.Configure<KestrelServerOptions>(
+        options =>
+        {
+            // Allow some libs could write data into response body stream use write function, not write async to fix System.InvalidOperationException: Synchronous operations are disallowed.
+            options.AllowSynchronousIO = true;
+        });
 
     //Use OpenApi instead of SwaggerGen
     //services.AddEndpointsApiExplorer(); // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
