@@ -197,8 +197,7 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
         IPlatformApplicationSettingContext applicationSettingContext)
     {
         ServiceProvider = serviceProvider;
-        loggerLazy = new Lazy<ILogger>(
-            () => loggerFactory.CreateLogger(typeof(PlatformCacheRepository).GetNameOrGenericTypeName() + $"-{GetType().Name}"));
+        loggerLazy = new Lazy<ILogger>(() => loggerFactory.CreateLogger(typeof(PlatformCacheRepository).GetNameOrGenericTypeName() + $"-{GetType().Name}"));
         CacheSettings = cacheSettings;
         ApplicationSettingContext = applicationSettingContext;
     }
@@ -228,6 +227,14 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
 
                                 try
                                 {
+                                    // if the very first byte is 0x03 (In ASCII this is the “End of Text” control character), bail out
+                                    if (result is { Length: > 0 } && result[0] == 0x03)
+                                    {
+                                        Logger.LogWarning("GetAsync: cached value for {CacheKey} starts with 0x03 → skipping deserialize", cacheKey);
+
+                                        return default;
+                                    }
+
                                     return result == null || result.Length == 0 ? default : PlatformJsonSerializer.Deserialize<T>(result);
                                 }
                                 catch (Exception e)
@@ -354,18 +361,16 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
     {
         if (cacheKeys.Any())
         {
-            await SetGlobalCachedKeysAsync(
-                async allCachedKeys =>
-                {
-                    var clonedCacheKeys = cacheKeys.ToArray();
+            await SetGlobalCachedKeysAsync(async allCachedKeys =>
+            {
+                var clonedCacheKeys = cacheKeys.ToArray();
 
-                    await clonedCacheKeys.ParallelAsync(
-                        async matchedKey =>
-                        {
-                            await InternalRemoveAsync(matchedKey, token);
-                            allCachedKeys.TryRemove(matchedKey, out _);
-                        });
+                await clonedCacheKeys.ParallelAsync(async matchedKey =>
+                {
+                    await InternalRemoveAsync(matchedKey, token);
+                    allCachedKeys.TryRemove(matchedKey, out _);
                 });
+            });
         }
     }
 
@@ -373,34 +378,32 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
     {
         if (tags != null)
         {
-            var tagKeyWithTaggedKeysList = await tags.ParallelAsync(
-                async tag =>
-                {
-                    var tagKey = BuildTagKey(tag);
+            var tagKeyWithTaggedKeysList = await tags.ParallelAsync(async tag =>
+            {
+                var tagKey = BuildTagKey(tag);
 
-                    var taggedKeys = await GetTaggedKeys(tagKey, token);
+                var taggedKeys = await GetTaggedKeys(tagKey, token);
 
-                    var toRemoveTaggedKeys = cacheKeyPredicate == null
-                        ? taggedKeys
-                        : taggedKeys.Select(PlatformCacheKey.FromFullCacheKeyString).Where(p => cacheKeyPredicate(p)).Select(p => p.ToString()).ToHashSet();
-                    var afterRemoveRemainingTaggedKeys = cacheKeyPredicate == null
-                        ? []
-                        : taggedKeys.Select(PlatformCacheKey.FromFullCacheKeyString).Where(p => !cacheKeyPredicate(p)).Select(p => p.ToString()).ToHashSet();
+                var toRemoveTaggedKeys = cacheKeyPredicate == null
+                    ? taggedKeys
+                    : taggedKeys.Select(PlatformCacheKey.FromFullCacheKeyString).Where(p => cacheKeyPredicate(p)).Select(p => p.ToString()).ToHashSet();
+                var afterRemoveRemainingTaggedKeys = cacheKeyPredicate == null
+                    ? []
+                    : taggedKeys.Select(PlatformCacheKey.FromFullCacheKeyString).Where(p => !cacheKeyPredicate(p)).Select(p => p.ToString()).ToHashSet();
 
-                    return (tagKey, toRemoveTaggedKeys, afterRemoveRemainingTaggedKeys);
-                });
+                return (tagKey, toRemoveTaggedKeys, afterRemoveRemainingTaggedKeys);
+            });
 
             await tagKeyWithTaggedKeysList.SelectMany(p => p.toRemoveTaggedKeys)
                 .ToHashSet()
                 .Pipe(toRemoveCacheKeys => RemoveAsync(toRemoveCacheKeys.SelectList(PlatformCacheKey.FromFullCacheKeyString), token));
-            await tagKeyWithTaggedKeysList.ParallelAsync(
-                tagKeyWithUpdatedTaggedKeysItem => tagKeyWithUpdatedTaggedKeysItem.afterRemoveRemainingTaggedKeys.Count == 0
-                    ? GetDistributedCache().RemoveAsync(tagKeyWithUpdatedTaggedKeysItem.tagKey, token)
-                    : GetDistributedCache()
-                        .SetAsync(
-                            tagKeyWithUpdatedTaggedKeysItem.tagKey,
-                            PlatformJsonSerializer.SerializeToUtf8Bytes(tagKeyWithUpdatedTaggedKeysItem.afterRemoveRemainingTaggedKeys),
-                            token));
+            await tagKeyWithTaggedKeysList.ParallelAsync(tagKeyWithUpdatedTaggedKeysItem => tagKeyWithUpdatedTaggedKeysItem.afterRemoveRemainingTaggedKeys.Count == 0
+                ? GetDistributedCache().RemoveAsync(tagKeyWithUpdatedTaggedKeysItem.tagKey, token)
+                : GetDistributedCache()
+                    .SetAsync(
+                        tagKeyWithUpdatedTaggedKeysItem.tagKey,
+                        PlatformJsonSerializer.SerializeToUtf8Bytes(tagKeyWithUpdatedTaggedKeysItem.afterRemoveRemainingTaggedKeys),
+                        token));
         }
     }
 
@@ -483,17 +486,15 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
 
     public virtual async Task ProcessClearDeprecatedGlobalRequestCachedKeys()
     {
-        await SetGlobalCachedKeysAsync(
-            async toUpdateRequestCachedKeys =>
-            {
-                await toUpdateRequestCachedKeys
-                    .SelectList(p => p.Key)
-                    .ParallelAsync(
-                        async key =>
-                        {
-                            if (await GetDistributedCache().GetAsync(key).Then(p => p.IsNullOrEmpty())) toUpdateRequestCachedKeys.TryRemove(key, out _);
-                        });
-            });
+        await SetGlobalCachedKeysAsync(async toUpdateRequestCachedKeys =>
+        {
+            await toUpdateRequestCachedKeys
+                .SelectList(p => p.Key)
+                .ParallelAsync(async key =>
+                {
+                    if (await GetDistributedCache().GetAsync(key).Then(p => p.IsNullOrEmpty())) toUpdateRequestCachedKeys.TryRemove(key, out _);
+                });
+        });
     }
 
     protected async Task<PlatformValidationResult<T>> TryGetAsync<T>(PlatformCacheKey cacheKey, CancellationToken token = default)
@@ -541,13 +542,11 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
     {
         try
         {
-            return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                () => GetAsync<List<PlatformCacheKey>>(cacheKey: GetGlobalAllRequestCachedKeysCacheKey())
-                    .Then(keys => keys ?? [])
-                    .Then(
-                        globalRequestCacheKeys => globalRequestCacheKeys
-                            .Select(p => new KeyValuePair<PlatformCacheKey, object>(p, null))
-                            .Pipe(items => new ConcurrentDictionary<PlatformCacheKey, object>(items))));
+            return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(() => GetAsync<List<PlatformCacheKey>>(cacheKey: GetGlobalAllRequestCachedKeysCacheKey())
+                .Then(keys => keys ?? [])
+                .Then(globalRequestCacheKeys => globalRequestCacheKeys
+                    .Select(p => new KeyValuePair<PlatformCacheKey, object>(p, null))
+                    .Pipe(items => new ConcurrentDictionary<PlatformCacheKey, object>(items))));
         }
         catch (Exception e)
         {
@@ -618,30 +617,29 @@ public abstract class PlatformCacheRepository : IPlatformCacheRepository
 
     protected virtual async Task SetGlobalCachedKeysAsync(Func<ConcurrentDictionary<PlatformCacheKey, object>, Task> modifyGlobalCachedKeysFunc)
     {
-        await SetGlobalCachedKeysAsyncLock.ExecuteLockActionAsync(
-            async () =>
+        await SetGlobalCachedKeysAsyncLock.ExecuteLockActionAsync(async () =>
+        {
+            var globalCachedKeys = await LoadGlobalAllRequestCachedKeys().ThenActionAsync(modifyGlobalCachedKeysFunc);
+            var globalAllRequestCacheKeysCacheKey = GetGlobalAllRequestCachedKeysCacheKey();
+
+            var modifiedCacheValue = globalCachedKeys.Select(p => p.Key).ToList();
+
+            if (!modifiedCacheValue.Any())
+                await RemoveAsync(globalAllRequestCacheKeysCacheKey);
+            else
             {
-                var globalCachedKeys = await LoadGlobalAllRequestCachedKeys().ThenActionAsync(modifyGlobalCachedKeysFunc);
-                var globalAllRequestCacheKeysCacheKey = GetGlobalAllRequestCachedKeysCacheKey();
-
-                var modifiedCacheValue = globalCachedKeys.Select(p => p.Key).ToList();
-
-                if (!modifiedCacheValue.Any())
-                    await RemoveAsync(globalAllRequestCacheKeysCacheKey);
-                else
-                {
-                    await GetDistributedCache()
-                        .SetAsync(
-                            globalAllRequestCacheKeysCacheKey,
-                            PlatformJsonSerializer.SerializeToUtf8Bytes(modifiedCacheValue),
-                            MapToDistributedCacheEntryOptions(
-                                new PlatformCacheEntryOptions
-                                {
-                                    UnusedExpirationInSeconds = null,
-                                    AbsoluteExpirationInSeconds = null
-                                }));
-                }
-            });
+                await GetDistributedCache()
+                    .SetAsync(
+                        globalAllRequestCacheKeysCacheKey,
+                        PlatformJsonSerializer.SerializeToUtf8Bytes(modifiedCacheValue),
+                        MapToDistributedCacheEntryOptions(
+                            new PlatformCacheEntryOptions
+                            {
+                                UnusedExpirationInSeconds = null,
+                                AbsoluteExpirationInSeconds = null
+                            }));
+            }
+        });
     }
 
     public void Dispose()
