@@ -928,13 +928,12 @@ public static class PlatformInboxMessageBusConsumerHelper
                 loggerFactory()
                     .LogError(
                         exception.BeautifyStackTrace(),
-                        "UpdateExistingInboxFailedMessageAsync. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[EventHandlerTypeFullName: {EventHandlerTypeFullName}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]];",
+                        "UpdateExistingInboxFailedMessageAsync. [[Error:{Error}]]; [[MessageType: {MessageType}]]; [[ConsumerType: {ConsumerType}]]; [[EventHandlerTypeFullName: {EventHandlerTypeFullName}]]; [[InboxJsonMessagePayload: {@InboxJsonMessagePayload}]];",
                         exception.Message,
                         message.GetType().GetNameOrGenericTypeName(),
                         consumerType?.GetNameOrGenericTypeName() ?? "n/a",
                         cqrsEventJsonMessage.Payload.EventHandlerTypeFullName,
-                        PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                        cqrsEventJsonMessage.Payload.ToJson().TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                        cqrsEventJsonMessage.Payload);
             }
 
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(

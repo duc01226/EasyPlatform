@@ -1,3 +1,6 @@
+using System.IO;
+using System.Text;
+using Easy.Platform.Application.RequestContext;
 using Easy.Platform.AspNetCore.Middleware.Abstracts;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -6,31 +9,24 @@ using Microsoft.Extensions.Options;
 namespace Easy.Platform.AspNetCore.Middleware;
 
 /// <summary>
-/// Middleware to log warnings for slow requests.
+/// Middleware to log warnings for slow requests and include request payload.
 /// </summary>
 public class PlatformSlowRequestWarningMiddleware : PlatformMiddleware
 {
-    /// <summary>
-    /// Gets the options for the middleware.
-    /// </summary>
     protected readonly PlatformSlowRequestWarningMiddlewareOptions Options;
-
-    /// <summary>
-    /// Gets the logger for the middleware.
-    /// </summary>
     protected readonly ILogger<PlatformSlowRequestWarningMiddleware> Logger;
+    protected readonly IPlatformApplicationRequestContextAccessor RequestContextAccessor;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PlatformSlowRequestWarningMiddleware"/> class.
     /// </summary>
-    /// <param name="next">The next middleware in the pipeline.</param>
-    /// <param name="options">The options for the middleware.</param>
-    /// <param name="loggerFactory">The logger factory.</param>
     public PlatformSlowRequestWarningMiddleware(
         RequestDelegate next,
         IOptions<PlatformSlowRequestWarningMiddlewareOptions> options,
-        ILoggerFactory loggerFactory) : base(next)
+        ILoggerFactory loggerFactory,
+        IPlatformApplicationRequestContextAccessor requestContextAccessor) : base(next)
     {
+        RequestContextAccessor = requestContextAccessor;
         Logger = loggerFactory.CreateLogger<PlatformSlowRequestWarningMiddleware>();
         Options = options.Value;
     }
@@ -38,34 +34,52 @@ public class PlatformSlowRequestWarningMiddleware : PlatformMiddleware
     /// <summary>
     /// Invokes the middleware asynchronously.
     /// </summary>
-    /// <param name="context">The HTTP context.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
     protected override async Task InternalInvokeAsync(HttpContext context)
     {
+        var payload = context.Request.Method is "POST" or "PUT" or "PATCH"
+                      && context.Request.ContentType?.Contains("application/json") == true
+            ? await ReadRequestBodyAsync(context)
+            : "n/a";
+        var queryString = context.Request.QueryString.HasValue
+            ? context.Request.QueryString.Value
+            : "n/a";
+
         await Util.TaskRunner.ProfileExecutionAsync(
             asyncTask: () => Next(context),
-            afterExecution: elapsedMilliseconds =>
+            afterExecution: elapsedMs =>
             {
-                if (elapsedMilliseconds >= SlowProcessWarningTimeMilliseconds())
+                if (elapsedMs >= Options.SlowProcessWarningTimeMilliseconds)
                 {
                     Logger?.LogWarning(
-                        "[ApiRequest] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. RequestPath:{RequestPath} RequestMethod: {RequestMethod}",
+                        "[ApiRequest] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. RequestPath:{RequestPath}. RequestMethod:{RequestMethod}. QueryString:{QueryString}. Payload:{Payload}. RequestContext:{@RequestContext}",
                         SlowProcessWarningTimeMilliseconds(),
-                        elapsedMilliseconds,
+                        elapsedMs,
                         context.Request.Path,
-                        context.Request.Method);
+                        context.Request.Method,
+                        queryString,
+                        payload,
+                        RequestContextAccessor.Current.GetAllKeyValues());
                 }
             });
+    }
+
+    private static async Task<string> ReadRequestBodyAsync(HttpContext context)
+    {
+        context.Request.EnableBuffering();
+
+        using (var requestPayloadStream = new MemoryStream())
+        {
+            await context.Request.Body.CopyToAsync(requestPayloadStream)
+                .ThenAction(() => context.Request.Body.Seek(0, SeekOrigin.Begin));
+
+            return Encoding.UTF8.GetString(requestPayloadStream.ToArray());
+        }
     }
 
     /// <summary>
     /// Gets the slow process warning time in milliseconds.
     /// </summary>
-    /// <returns>The slow process warning time in milliseconds.</returns>
-    protected int SlowProcessWarningTimeMilliseconds()
-    {
-        return Options.SlowProcessWarningTimeMilliseconds;
-    }
+    protected int SlowProcessWarningTimeMilliseconds() => Options.SlowProcessWarningTimeMilliseconds;
 }
 
 /// <summary>

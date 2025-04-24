@@ -19,9 +19,7 @@ public static class UrlExtension
         return new UriBuilder(absoluteUrl)
             .PipeIf(
                 queryParams.Any(),
-                uriBuilder =>
-                    uriBuilder.With(
-                        p => p.Query = p.Query.UpsertQueryParams()))
+                uriBuilder => uriBuilder.With(p => p.Query = p.Query.UpsertQueryParams(queryParams)))
             .Uri;
     }
 
@@ -47,12 +45,11 @@ public static class UrlExtension
 
         // Parse the existing query string.
         var queryCollection = HttpUtility.ParseQueryString(query)
-            .PipeAction(
-                queryCollection =>
-                {
-                    // Add (or overwrite) the provided query parameters.
-                    foreach (var (key, value) in queryParams) queryCollection[key] = value?.ToString();
-                });
+            .PipeAction(queryCollection =>
+            {
+                // Add (or overwrite) the provided query parameters.
+                foreach (var (key, value) in queryParams) queryCollection[key] = value?.ToString();
+            });
 
         // Manually rebuild the query string so that spaces are encoded as %20.
         /*

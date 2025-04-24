@@ -149,12 +149,11 @@ public abstract class PlatformMessageBusConsumer : IPlatformMessageBusConsumer
                     if (elapsedMilliseconds >= toCheckSlowProcessWarningTimeMilliseconds)
                     {
                         logger?.LogWarning(
-                            "[MessageBus] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. Consumer:{Consumer} BusMessage (Top {DefaultRecommendedMaxLogsLength} characters): {BusMessage}",
+                            "[MessageBus] SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. ElapsedMilliseconds:{ElapsedMilliseconds}. Consumer:{Consumer} BusMessage:{@BusMessage}",
                             toCheckSlowProcessWarningTimeMilliseconds,
                             elapsedMilliseconds,
                             consumer.GetType().FullName,
-                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
-                            busMessage.ToJson().TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                            busMessage);
                     }
                 });
         }
