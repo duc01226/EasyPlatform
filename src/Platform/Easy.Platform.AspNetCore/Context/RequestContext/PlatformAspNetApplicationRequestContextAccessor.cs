@@ -21,11 +21,19 @@ public class PlatformAspNetApplicationRequestContextAccessor : PlatformDefaultAp
         var httpContextAccessor = ServiceProvider.GetService<IHttpContextAccessor>();
         var claimTypeMapper = ServiceProvider.GetService<IPlatformApplicationRequestContextKeyToClaimTypeMapper>();
         var applicationSettingContext = ServiceProvider.GetService<IPlatformApplicationSettingContext>();
+        var lazyLoadRequestContextAccessorRegisters = ServiceProvider.GetService<PlatformApplicationLazyLoadRequestContextAccessorRegisters>();
 
         if (httpContextAccessor == null || claimTypeMapper == null)
+        {
             throw new Exception(
                 "[Developer] Missing registered IHttpContextAccessor or IPlatformApplicationRequestContextKeyToClaimTypeMapper");
+        }
 
-        return new PlatformAspNetApplicationRequestContext(httpContextAccessor, claimTypeMapper, applicationSettingContext);
+        return new PlatformAspNetApplicationRequestContext(
+            httpContextAccessor,
+            claimTypeMapper,
+            applicationSettingContext,
+            ServiceProvider,
+            lazyLoadRequestContextAccessorRegisters);
     }
 }

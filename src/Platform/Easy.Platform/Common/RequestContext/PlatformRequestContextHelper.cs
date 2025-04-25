@@ -5,29 +5,62 @@ namespace Easy.Platform.Common.RequestContext;
 
 public static class PlatformRequestContextHelper
 {
-    public static bool TryGetValue<T>(IDictionary<string, object> requestContext, string contextKey, out T item)
+    public static bool TryGetValue<T, TItem>(IDictionary<string, TItem> requestContext, string contextKey, out T item)
     {
         // contextKey.ToLower() to support search case-insensitive for some server auto normalize the header context key
         var originalValue = requestContext.TryGetValue(contextKey, out var fromOriginalContextKeyValue)
             ? fromOriginalContextKeyValue
             : requestContext.TryGetValueOrDefault(contextKey.ToLower());
 
-        if (originalValue != null)
+        if (originalValue is not null)
         {
-            if (typeof(T) != typeof(string) &&
-                (originalValue is string || !originalValue.GetType().IsAssignableTo(typeof(T))))
+            if (originalValue is Lazy<object?> originalLazyValue)
             {
-                var originalValueStr = originalValue.As<string>();
+                // if the caller asked for a Task<Something>
+                if (originalLazyValue.Value is Task<object?> rawTask
+                    && typeof(T).IsGenericType
+                    && typeof(T).GetGenericTypeDefinition() == typeof(Task<>))
+                {
+                    // grab U from Task<U>
+                    var uType = typeof(T).GetGenericArguments()[0];
 
-                var isParsedSuccess = TryGetParsedValuesFromStringValues(
-                    out item,
-                    originalValueStr != null ? [originalValueStr] : [originalValue.ToJson()]);
+                    // find our UnboxAsync<U> helper and bind it
+                    var unboxMethod = typeof(TaskExtension)
+                        .GetMethod(nameof(TaskExtension.UnboxAsync))!
+                        .MakeGenericMethod(uType);
 
-                return isParsedSuccess;
+                    // invoke UnboxAsync<U>(rawTask) → returns Task<U>
+                    var boxed = unboxMethod.Invoke(null, [rawTask])!;
+
+                    // now safely cast to T (which we know is Task<U>)
+                    item = (T)boxed;
+                    return true;
+                }
+
+                // otherwise cast to the plain T
+                if (originalLazyValue.Value is T tVal)
+                {
+                    item = tVal;
+                    return true;
+                }
             }
+            else
+            {
+                if (typeof(T) != typeof(string) &&
+                    (originalValue is string || !originalValue.GetType().IsAssignableTo(typeof(T))))
+                {
+                    var originalValueStr = originalValue.As<string>();
 
-            item = (T)originalValue;
-            return true;
+                    var isParsedSuccess = TryGetParsedValuesFromStringValues(
+                        out item,
+                        originalValueStr != null ? [originalValueStr] : [originalValue.ToJson()]);
+
+                    return isParsedSuccess;
+                }
+
+                item = (T)(object)originalValue;
+                return true;
+            }
         }
 
         item = default;
@@ -116,19 +149,18 @@ public static class PlatformRequestContextHelper
             var listItemType = firstValueListInterface.GetGenericArguments()[0];
 
             var parsedItemList = matchedClaimStringValues
-                .Select(
-                    matchedClaimStringValue =>
-                    {
-                        if (listItemType == typeof(string))
-                            return new { itemDeserializedValue = (object)matchedClaimStringValue, isParsedItemSucceeded = true };
+                .Select(matchedClaimStringValue =>
+                {
+                    if (listItemType == typeof(string))
+                        return new { itemDeserializedValue = (object)matchedClaimStringValue, isParsedItemSucceeded = true };
 
-                        var isParsedItemSucceeded = PlatformJsonSerializer.TryDeserialize(
-                            matchedClaimStringValue,
-                            listItemType,
-                            out var itemDeserializedValue);
+                    var isParsedItemSucceeded = PlatformJsonSerializer.TryDeserialize(
+                        matchedClaimStringValue,
+                        listItemType,
+                        out var itemDeserializedValue);
 
-                        return new { itemDeserializedValue, isParsedItemSucceeded };
-                    })
+                    return new { itemDeserializedValue, isParsedItemSucceeded };
+                })
                 .ToList();
 
             if (parsedItemList.All(p => p.isParsedItemSucceeded))

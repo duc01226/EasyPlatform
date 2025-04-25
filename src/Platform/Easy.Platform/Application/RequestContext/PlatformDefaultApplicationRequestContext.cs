@@ -16,10 +16,17 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
     protected readonly IPlatformApplicationSettingContext ApplicationSettingContext;
     protected readonly ConcurrentDictionary<string, object?> FullRequestContextData = new();
     protected readonly ConcurrentDictionary<string, object?> IgnoreRequestContextKeysRequestContextData = new();
+    protected readonly IServiceProvider ServiceProvider;
+    protected readonly Dictionary<string, Lazy<object?>> LazyLoadCurrentRequestContextAccessorRegisters;
 
-    public PlatformDefaultApplicationRequestContext(IPlatformApplicationSettingContext applicationSettingContext)
+    public PlatformDefaultApplicationRequestContext(
+        IServiceProvider serviceProvider,
+        IPlatformApplicationSettingContext applicationSettingContext,
+        PlatformApplicationLazyLoadRequestContextAccessorRegisters lazyLoadRequestContextAccessorRegisters)
     {
+        ServiceProvider = serviceProvider;
         ApplicationSettingContext = applicationSettingContext;
+        LazyLoadCurrentRequestContextAccessorRegisters = lazyLoadRequestContextAccessorRegisters.Current;
     }
 
     public T GetValue<T>(string contextKey)
@@ -27,6 +34,7 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
         ArgumentNullException.ThrowIfNull(contextKey);
 
         if (PlatformRequestContextHelper.TryGetValue(FullRequestContextData, contextKey, out T item)) return item;
+        if (PlatformRequestContextHelper.TryGetValue(LazyLoadCurrentRequestContextAccessorRegisters, contextKey, out T lazyItem)) return lazyItem;
 
         return default;
     }

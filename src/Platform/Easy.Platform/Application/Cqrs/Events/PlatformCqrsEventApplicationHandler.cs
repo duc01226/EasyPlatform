@@ -80,6 +80,8 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
 
     protected Lazy<ILogger> Logger { get; }
 
+    protected IPlatformApplicationRequestContext RequestContext => requestContextAccessor.Current;
+
     protected IPlatformApplicationSettingContext ApplicationSettingContext { get; }
 
     public virtual bool AutoDeleteProcessedInboxEventMessage => true;
@@ -221,6 +223,8 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
         {
             if (@event.RequestContext == null || @event.RequestContext.IsEmpty())
                 @event.SetRequestContextValues(requestContextAccessor.Current.GetAllKeyValues());
+            else if (ForceCurrentInstanceHandleInCurrentThread)
+                requestContextAccessor.Current.SetValues(@event.RequestContext);
 
             if (RootServiceProvider.GetService<PlatformModule.DistributedTracingConfig>()?.DistributedTracingStackTraceEnabled() == true &&
                 @event.StackTrace == null)
@@ -266,13 +270,10 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     /// If the event cannot be handled using an inbox consumer, it checks if a unit of work should be automatically opened and handles the event accordingly.
     /// </remarks>
     /// <returns>A Task representing the asynchronous operation.</returns>
-    protected virtual async Task DoExecuteHandleAsync(TEvent @event, CancellationToken cancellationToken)
+    protected async Task DoExecuteHandleAsync(TEvent @event, CancellationToken cancellationToken)
     {
         try
         {
-            if (AllowHandleInBackgroundThread(@event) && @event.RequestContext?.Any() == true)
-                requestContextAccessor.Current.SetValues(@event.RequestContext);
-
             if (CanExecuteHandlingEventUsingInboxConsumer(@event) &&
                 NotNeedWaitHandlerExecutionFinishedImmediately(@event))
             {
@@ -340,18 +341,18 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                     // If not then create new scope to open new uow so that multiple events handlers from an event do not get conflicted
                     // uow in the same scope if not open new scope
                     if (AllowHandleInBackgroundThread(@event) || CanExecuteHandlingEventUsingInboxConsumer(@event))
-                        return UnitOfWorkManager.ExecuteUowTask(() => CheckToRunHandleAsync(@event, cancellationToken));
+                        return UnitOfWorkManager.ExecuteUowTask(() => CheckToHandleAsync(@event, cancellationToken));
                     else
                     {
                         return RootServiceProvider.ExecuteInjectScopedAsync((IPlatformUnitOfWorkManager unitOfWorkManager, IServiceProvider serviceProvider) =>
                             unitOfWorkManager.ExecuteUowTask(() => serviceProvider.GetRequiredService(GetType())
                                 .As<PlatformCqrsEventApplicationHandler<TEvent>>()
                                 .With(newInstance => CopyPropertiesToNewInstanceBeforeExecution(this, newInstance))
-                                .CheckToRunHandleAsync(@event, cancellationToken)));
+                                .CheckToHandleAsync(@event, cancellationToken)));
                     }
                 }
                 else
-                    return CheckToRunHandleAsync(@event, cancellationToken);
+                    return CheckToHandleAsync(@event, cancellationToken);
             },
             retryCount: retryCount ?? RetryOnFailedTimes,
             sleepDurationProvider: p => RetryOnFailedDelaySeconds.Seconds(),
@@ -361,9 +362,9 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
             Logger.Value.LogInformation("{Type} {Method} FINISHED", GetType().FullName, nameof(RunHandleAsync));
     }
 
-    private async Task CheckToRunHandleAsync(TEvent @event, CancellationToken cancellationToken)
+    private async Task CheckToHandleAsync(TEvent @event, CancellationToken cancellationToken)
     {
-        if (await CheckHandleWhen(@event)) await HandleAsync(@event, cancellationToken);
+        if (await CheckHandleWhen(@event)) await ExecuteHandleWithTracingAsync(@event, () => HandleAsync(@event, cancellationToken));
     }
 
     private async Task<bool> CheckHandleWhen(TEvent @event)

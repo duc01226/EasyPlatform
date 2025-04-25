@@ -26,10 +26,7 @@ public static class DictionaryExtension
     /// </remarks>
     public static TDic Upsert<TDic, TKey, TValue>(this TDic dictionary, TKey key, TValue value) where TDic : IDictionary<TKey, TValue>
     {
-        if (dictionary.ContainsKey(key))
-            dictionary[key] = value;
-        else
-            dictionary.Add(key, value);
+        dictionary[key] = value;
 
         return dictionary;
     }

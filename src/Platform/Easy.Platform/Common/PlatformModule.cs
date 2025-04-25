@@ -311,24 +311,23 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
     public List<IPlatformModule> AllDependencyChildModules(IServiceCollection useServiceCollection = null, bool includeDeepChildModules = true)
     {
         return ModuleTypeDependencies()
-            .Select(
-                moduleTypeProvider =>
-                {
-                    var moduleType = moduleTypeProvider(Configuration);
-                    var serviceProvider = useServiceCollection?.BuildServiceProvider() ?? ServiceProvider;
+            .Select(moduleTypeProvider =>
+            {
+                var moduleType = moduleTypeProvider(Configuration);
+                var serviceProvider = useServiceCollection?.BuildServiceProvider() ?? ServiceProvider;
 
-                    var dependModule = serviceProvider.GetService(moduleType)
-                        .As<IPlatformModule>()
-                        .Ensure(
-                            dependModule => dependModule != null,
-                            $"Module {GetType().Name} depend on {moduleType.Name} but Module {moduleType.Name} does not implement IPlatformModule");
+                var dependModule = serviceProvider.GetService(moduleType)
+                    .As<IPlatformModule>()
+                    .Ensure(
+                        dependModule => dependModule != null,
+                        $"Module {GetType().Name} depend on {moduleType.Name} but Module {moduleType.Name} does not implement IPlatformModule");
 
-                    dependModule.IsChildModule = true;
+                dependModule.IsChildModule = true;
 
-                    return includeDeepChildModules
-                        ? dependModule.AllDependencyChildModules(useServiceCollection).ConcatSingle(dependModule)
-                        : [dependModule];
-                })
+                return includeDeepChildModules
+                    ? dependModule.AllDependencyChildModules(useServiceCollection).ConcatSingle(dependModule)
+                    : [dependModule];
+            })
             .Flatten()
             .ToList();
     }
@@ -441,19 +440,18 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
                 var allDependencyModulesTracingSources = allDependencyModules.SelectMany(p => p.TracingSources());
 
                 serviceCollection.AddOpenTelemetry()
-                    .WithTracing(
-                        builder => builder
-                            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(distributedTracingConfig.AppName ?? GetType().Assembly.GetName().Name!))
-                            .AddSource(TracingSources().Concat(CommonTracingSources()).Concat(allDependencyModulesTracingSources).Distinct().ToArray())
-                            .WithIf(AdditionalTracingConfigure != null, AdditionalTracingConfigure)
-                            .WithIf(distributedTracingConfig.AdditionalTraceConfig != null, distributedTracingConfig.AdditionalTraceConfig)
-                            .WithIf(distributedTracingConfig.AddOtlpExporterConfig != null, p => p.AddOtlpExporter(distributedTracingConfig.AddOtlpExporterConfig))
-                            .WithIf(
-                                allDependencyModules.Any(),
-                                p => allDependencyModules
-                                    .Where(dependencyModule => dependencyModule.AdditionalTracingConfigure != null)
-                                    .Select(dependencyModule => dependencyModule.AdditionalTracingConfigure)
-                                    .ForEach(dependencyModuleAdditionalTracingConfigure => dependencyModuleAdditionalTracingConfigure(p))));
+                    .WithTracing(builder => builder
+                        .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService(distributedTracingConfig.AppName ?? GetType().Assembly.GetName().Name!))
+                        .AddSource(TracingSources().Concat(CommonTracingSources()).Concat(allDependencyModulesTracingSources).Distinct().ToArray())
+                        .WithIf(AdditionalTracingConfigure != null, AdditionalTracingConfigure)
+                        .WithIf(distributedTracingConfig.AdditionalTraceConfig != null, distributedTracingConfig.AdditionalTraceConfig)
+                        .WithIf(distributedTracingConfig.AddOtlpExporterConfig != null, p => p.AddOtlpExporter(distributedTracingConfig.AddOtlpExporterConfig))
+                        .WithIf(
+                            allDependencyModules.Any(),
+                            p => allDependencyModules
+                                .Where(dependencyModule => dependencyModule.AdditionalTracingConfigure != null)
+                                .Select(dependencyModule => dependencyModule.AdditionalTracingConfigure)
+                                .ForEach(dependencyModuleAdditionalTracingConfigure => dependencyModuleAdditionalTracingConfigure(p))));
             }
         }
     }
@@ -470,18 +468,17 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
 
     protected static void ExecuteRegisterByAssemblyOnlyOnce(Action<Assembly> action, List<Assembly> assemblies, string actionName)
     {
-        assemblies.ForEach(
-            assembly =>
+        assemblies.ForEach(assembly =>
+        {
+            var executedRegisterByAssemblyKey = $"Action:{ExecutedRegisterByAssemblies.ContainsKey(actionName)};Assembly:{assembly.FullName}";
+
+            if (!ExecutedRegisterByAssemblies.ContainsKey(executedRegisterByAssemblyKey))
             {
-                var executedRegisterByAssemblyKey = $"Action:{ExecutedRegisterByAssemblies.ContainsKey(actionName)};Assembly:{assembly.FullName}";
+                action(assembly);
 
-                if (!ExecutedRegisterByAssemblies.ContainsKey(executedRegisterByAssemblyKey))
-                {
-                    action(assembly);
-
-                    ExecutedRegisterByAssemblies.TryAdd(executedRegisterByAssemblyKey, assembly);
-                }
-            });
+                ExecutedRegisterByAssemblies.TryAdd(executedRegisterByAssemblyKey, assembly);
+            }
+        });
     }
 
     /// <summary>
@@ -629,7 +626,7 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
 
         public bool DistributedTracingStackTraceEnabled()
         {
-            return Enabled || PlatformEnvironment.IsDevelopment;
+            return Enabled;
         }
     }
 

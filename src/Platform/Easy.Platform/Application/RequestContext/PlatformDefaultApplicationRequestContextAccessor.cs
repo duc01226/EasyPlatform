@@ -1,3 +1,5 @@
+using Microsoft.Extensions.DependencyInjection;
+
 namespace Easy.Platform.Application.RequestContext;
 
 /// <summary>
@@ -32,19 +34,24 @@ public class PlatformDefaultApplicationRequestContextAccessor : IPlatformApplica
                 // because we want to set a new current user context.
                 holder.Context = null;
 
+            // WHY: Use an object indirection to hold the Context in the AsyncLocal,
+            // so it can be cleared in all ExecutionContexts when its cleared.
             if (value != null)
-                // WHY: Use an object indirection to hold the Context in the AsyncLocal,
-                // so it can be cleared in all ExecutionContexts when its cleared.
+            {
                 RequestContextCurrentThread.Value = new RequestContextHolder
                 {
                     Context = value
                 };
+            }
         }
     }
 
     protected virtual IPlatformApplicationRequestContext CreateNewContext()
     {
-        return new PlatformDefaultApplicationRequestContext(new PlatformApplicationSettingContext(ServiceProvider));
+        return new PlatformDefaultApplicationRequestContext(
+            ServiceProvider,
+            new PlatformApplicationSettingContext(ServiceProvider),
+            ServiceProvider.GetService<PlatformApplicationLazyLoadRequestContextAccessorRegisters>());
     }
 
     protected sealed class RequestContextHolder

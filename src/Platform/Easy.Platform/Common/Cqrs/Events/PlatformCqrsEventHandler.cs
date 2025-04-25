@@ -145,7 +145,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     }
 
     protected async Task ExecuteHandleInNewScopeAsync(
-        TEvent notification,
+        TEvent @event,
         CancellationToken cancellationToken = default)
     {
         try
@@ -158,36 +158,36 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
 
                 await thisHandlerNewInstance
                     .With(p => p.ForceCurrentInstanceHandleInCurrentThread = true)
-                    .Handle(notification, cancellationToken);
+                    .Handle(@event, cancellationToken);
             });
         }
         catch (Exception e)
         {
-            LogError(notification, e, LoggerFactory);
+            LogError(@event, e, LoggerFactory);
         }
     }
 
     protected async Task ExecuteRetryHandleAsync(
         PlatformCqrsEventHandler<TEvent> handlerNewInstance,
-        TEvent notification)
+        TEvent @event)
     {
         try
         {
             // Retry RetryOnFailedTimes to help resilient PlatformCqrsEventHandler. Sometime parallel, create/update concurrency could lead to error
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-                () => handlerNewInstance.ExecuteHandleAsync(notification, CancellationToken.None),
+                () => handlerNewInstance.ExecuteHandleAsync(@event, CancellationToken.None),
                 retryCount: RetryOnFailedTimes,
                 sleepDurationProvider: retryAttempt => RetryOnFailedDelaySeconds.Seconds(),
                 onRetry: (e, delayTime, retryAttempt, context) =>
                 {
                     if (retryAttempt > 1)
-                        handlerNewInstance.LogError(notification, e.BeautifyStackTrace(), LoggerFactory, "Retry");
+                        handlerNewInstance.LogError(@event, e.BeautifyStackTrace(), LoggerFactory, "Retry");
                 });
         }
         catch (Exception e)
         {
             if (ThrowExceptionOnHandleFailed) throw;
-            handlerNewInstance.LogError(notification, e.BeautifyStackTrace(), LoggerFactory);
+            handlerNewInstance.LogError(@event, e.BeautifyStackTrace(), LoggerFactory);
         }
     }
 

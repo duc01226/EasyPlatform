@@ -147,35 +147,33 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
 
         async Task RunDataSeeders(List<IGrouping<int, IPlatformApplicationDataSeeder>> dataSeederGroups, bool inNewScope = false)
         {
-            await dataSeederGroups.ForEachAsync(
-                async dataSeederGroup =>
+            await dataSeederGroups.ForEachAsync(async dataSeederGroup =>
+            {
+                await dataSeederGroup.ParallelAsync(async seeder =>
                 {
-                    await dataSeederGroup.ParallelAsync(
-                        async seeder =>
+                    if (seeder.DelaySeedingInBackgroundBySeconds > 0)
+                    {
+                        Logger.LogInformation(
+                            "[SeedData] {Seeder} is SCHEDULED running in background after {DelaySeedingInBackgroundBySeconds} seconds.",
+                            seeder.GetType().Name,
+                            seeder.DelaySeedingInBackgroundBySeconds);
+
+                        await Task.Delay(seeder.DelaySeedingInBackgroundBySeconds.Seconds());
+                    }
+
+                    if (inNewScope)
+                    {
+                        using (var newScope = ServiceProvider.CreateScope())
                         {
-                            if (seeder.DelaySeedingInBackgroundBySeconds > 0)
-                            {
-                                Logger.LogInformation(
-                                    "[SeedData] {Seeder} is SCHEDULED running in background after {DelaySeedingInBackgroundBySeconds} seconds.",
-                                    seeder.GetType().Name,
-                                    seeder.DelaySeedingInBackgroundBySeconds);
+                            var dataSeeder = newScope.ServiceProvider.GetService(seeder.GetType()).As<IPlatformApplicationDataSeeder>();
 
-                                await Task.Delay(seeder.DelaySeedingInBackgroundBySeconds.Seconds());
-                            }
-
-                            if (inNewScope)
-                            {
-                                using (var newScope = ServiceProvider.CreateScope())
-                                {
-                                    var dataSeeder = newScope.ServiceProvider.GetService(seeder.GetType()).As<IPlatformApplicationDataSeeder>();
-
-                                    await ExecuteDataSeederWithLog(dataSeeder, Logger);
-                                }
-                            }
-                            else
-                                await ExecuteDataSeederWithLog(seeder, Logger);
-                        });
+                            await ExecuteDataSeederWithLog(dataSeeder, Logger);
+                        }
+                    }
+                    else
+                        await ExecuteDataSeederWithLog(seeder, Logger);
                 });
+            });
         }
     }
 
@@ -202,17 +200,16 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
 
                 await Enum.GetValues<PlatformCacheRepositoryType>()
                     .Where(p => p != PlatformCacheRepositoryType.Memory)
-                    .ForEachAsync(
-                        async cacheRepositoryType =>
-                        {
-                            var cacheRepository = cacheProvider.TryGet(cacheRepositoryType);
+                    .ForEachAsync(async cacheRepositoryType =>
+                    {
+                        var cacheRepository = cacheProvider.TryGet(cacheRepositoryType);
 
-                            if (cacheRepository != null)
-                            {
-                                await cacheRepository.RemoveByTagsAsync(
-                                    options.AutoClearContexts.SelectList(autoClearContext => PlatformCacheKey.BuildCacheKeyContextTag(autoClearContext)));
-                            }
-                        });
+                        if (cacheRepository != null)
+                        {
+                            await cacheRepository.RemoveByTagsAsync(
+                                options.AutoClearContexts.SelectList(autoClearContext => PlatformCacheKey.BuildCacheKeyContextTag(autoClearContext)));
+                        }
+                    });
             },
             retryAttempt => 10.Seconds(),
             10,
@@ -281,12 +278,10 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
             .Select(moduleType => new { ModuleType = moduleType, serviceProvider.GetService(moduleType).As<IPlatformApplicationModule>().ExecuteInitPriority })
             .OrderByDescending(p => p.ExecuteInitPriority)
             .Select(p => p.ModuleType)
-            .ForEachAsync(
-                async moduleType =>
-                {
-                    await serviceProvider.ExecuteScopedAsync(
-                        scope => scope.ServiceProvider.GetService(moduleType).As<IPlatformApplicationModule>().SeedData(scope));
-                });
+            .ForEachAsync(async moduleType =>
+            {
+                await serviceProvider.ExecuteScopedAsync(scope => scope.ServiceProvider.GetService(moduleType).As<IPlatformApplicationModule>().SeedData(scope));
+            });
     }
 
     public async Task ExecuteDependencyApplicationModuleSeedData()
@@ -333,8 +328,8 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
 
         if (AutoClearMemoryEnabled)
         {
-            serviceCollection.RegisterHostedService(
-                sp => new PlatformAutoClearMemoryHostingBackgroundService(sp, sp.GetRequiredService<ILoggerFactory>(), AutoClearMemoryIntervalTimeSeconds));
+            serviceCollection.RegisterHostedService(sp =>
+                new PlatformAutoClearMemoryHostingBackgroundService(sp, sp.GetRequiredService<ILoggerFactory>(), AutoClearMemoryIntervalTimeSeconds));
         }
 
         serviceCollection.Register<IPlatformApplicationBackgroundJobScheduler, PlatformApplicationBackgroundJobScheduler>();
@@ -396,7 +391,7 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
             serviceCollection.Register<IPlatformApplicationSettingContext>(DefaultApplicationSettingContextFactory, ServiceLifeTime.Singleton);
     }
 
-    private static void RegisterDefaultApplicationRequestContext(IServiceCollection serviceCollection)
+    private void RegisterDefaultApplicationRequestContext(IServiceCollection serviceCollection)
     {
         if (serviceCollection.All(p => p.ServiceType != typeof(IPlatformApplicationRequestContextAccessor)))
         {
@@ -407,6 +402,31 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
                 true,
                 DependencyInjectionExtension.CheckRegisteredStrategy.ByService);
         }
+
+        serviceCollection.Register(
+            sp => new PlatformApplicationLazyLoadRequestContextAccessorRegisters(
+                sp,
+                sp.GetRequiredService<IPlatformApplicationRequestContextAccessor>(),
+                LazyLoadRequestContextAccessorRegistersFactory()),
+            ServiceLifeTime.Singleton,
+            true,
+            DependencyInjectionExtension.CheckRegisteredStrategy.ByService);
+    }
+
+    /// <summary>
+    /// Creates a dictionary of asynchronous factory functions to populate the lazy-load request context on first access.
+    /// Each entry maps a context key to an async factory that, given the service provider and request context accessor,
+    /// returns the corresponding context value. <see cref="PlatformApplicationLazyLoadRequestContextAccessorRegisters"/>
+    /// </summary>
+    /// <returns>
+    /// A dictionary keyed by context key, where each value is a function:
+    /// (<see cref="IServiceProvider"/>, <see cref="IPlatformApplicationRequestContextAccessor"/>)
+    /// =&gt; <see cref="Task{Object}"?> producing the context value.
+    /// </returns>
+    protected virtual Dictionary<string, Func<IServiceProvider, IPlatformApplicationRequestContextAccessor, Task<object?>>>
+        LazyLoadRequestContextAccessorRegistersFactory()
+    {
+        return [];
     }
 
     /// <summary>

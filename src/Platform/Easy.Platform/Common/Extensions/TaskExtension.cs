@@ -252,10 +252,9 @@ public static class TaskExtension
         Func<Exception, TR> faulted,
         Func<T, TR> completed)
     {
-        return task.ContinueWith(
-            t => t.Status == TaskStatus.Faulted
-                ? faulted(t.Exception)
-                : completed(t.GetResult()));
+        return task.ContinueWith(t => t.Status == TaskStatus.Faulted
+            ? faulted(t.Exception)
+            : completed(t.GetResult()));
     }
 
     /// <summary>
@@ -394,10 +393,9 @@ public static class TaskExtension
         this Task<T> task,
         Func<Exception, T> fallback)
     {
-        return task.ContinueWith(
-            t => t.Status == TaskStatus.Faulted
-                ? fallback(t.Exception)
-                : t.GetResult());
+        return task.ContinueWith(t => t.Status == TaskStatus.Faulted
+            ? fallback(t.Exception)
+            : t.GetResult());
     }
 
     /// <summary>
@@ -1119,4 +1117,17 @@ public static class TaskExtension
     }
 
     #endregion
+
+    /// <summary>
+    /// Takes a Task&lt;object&gt;, awaits it, and then returns
+    /// the result if it’s actually a T – otherwise default(T).
+    /// Works for both classes and structs.
+    /// </summary>
+    public static async Task<T> UnboxAsync<T>(this Task<object?> source)
+    {
+        var o = await source.ConfigureAwait(false);
+        return o is T t
+            ? t
+            : default!;
+    }
 }

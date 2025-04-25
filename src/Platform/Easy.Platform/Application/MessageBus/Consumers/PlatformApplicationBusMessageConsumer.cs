@@ -146,14 +146,15 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
         if (ApplicationSettingContext.IsDebugInformationMode)
             Logger.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(HandleMessageDirectly));
 
+        // Update the request context with information from the message.
+        if (message is IPlatformTrackableBusMessage trackableBusMessage)
+            RequestContextAccessor.Current.SetValues(trackableBusMessage.RequestContext);
+
         await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync<PlatformDomainRowVersionConflictException>(
             async () =>
             {
                 try
                 {
-                    // Update the request context with information from the message.
-                    if (message is IPlatformTrackableBusMessage trackableBusMessage) RequestContextAccessor.Current.UpsertMany(trackableBusMessage.RequestContext);
-
                     // If auto-opening a unit of work is enabled, handle the message within a unit of work.
                     if (AutoOpenUow)
                         await UnitOfWorkManager.ExecuteUowTask(() => HandleLogicAsync(message, routingKey));

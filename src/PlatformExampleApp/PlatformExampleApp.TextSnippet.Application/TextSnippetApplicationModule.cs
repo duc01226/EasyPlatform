@@ -1,9 +1,14 @@
 using Easy.Platform.Application;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
+using Easy.Platform.Application.RequestContext;
+using Easy.Platform.Infrastructures.Caching;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PlatformExampleApp.TextSnippet.Application.RequestContext;
 using PlatformExampleApp.TextSnippet.Domain;
+using PlatformExampleApp.TextSnippet.Domain.Entities;
+using PlatformExampleApp.TextSnippet.Domain.Repositories;
 
 namespace PlatformExampleApp.TextSnippet.Application;
 
@@ -69,5 +74,32 @@ public class TextSnippetApplicationModule : PlatformApplicationModule
     protected override PlatformOutboxConfig OutboxConfigProvider(IServiceProvider serviceProvider)
     {
         return base.OutboxConfigProvider(serviceProvider).With(c => c.MaxStoreProcessedMessageCount = 100);
+    }
+
+    protected override Dictionary<string, Func<IServiceProvider, IPlatformApplicationRequestContextAccessor, Task<object?>>>
+        LazyLoadRequestContextAccessorRegistersFactory()
+    {
+        return new Dictionary<string, Func<IServiceProvider, IPlatformApplicationRequestContextAccessor, Task<object?>>>
+        {
+            {
+                ApplicationCustomRequestContextKeys.CurrentEmployeeKey,
+                GetCurrentEmployee
+            }
+        };
+    }
+
+    private static async Task<object> GetCurrentEmployee(IServiceProvider provider, IPlatformApplicationRequestContextAccessor accessor)
+    {
+        return await provider.ExecuteInjectScopedAsync<TextSnippetEntity>(async (
+            ITextSnippetRootRepository<TextSnippetEntity> repository,
+            IPlatformCacheRepositoryProvider cacheRepositoryProvider) =>
+        {
+            return await cacheRepositoryProvider.Get()
+                .CacheRequestAsync(
+                    () => repository.FirstAsync(predicate: p => p.SnippetText == accessor.Current.GetValue<string>("ExampleCurrentLoggingSelectedInfo")),
+                    ApplicationCustomRequestContextKeys.CurrentEmployeeCacheKey(accessor.Current.GetValue<string>("ExampleCurrentLoggingSelectedInfo")),
+                    (PlatformCacheEntryOptions)null,
+                    tags: ApplicationCustomRequestContextKeys.CurrentEmployeeCacheTags(accessor.Current.GetValue<string>("ExampleCurrentLoggingSelectedInfo")));
+        });
     }
 }

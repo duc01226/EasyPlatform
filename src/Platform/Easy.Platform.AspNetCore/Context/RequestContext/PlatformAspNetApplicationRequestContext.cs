@@ -19,6 +19,8 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
 
     protected readonly IPlatformApplicationSettingContext ApplicationSettingContext;
     protected readonly ConcurrentDictionary<string, object?> IgnoreRequestContextKeysRequestContextData = new();
+    protected readonly IServiceProvider ServiceProvider;
+    protected readonly Dictionary<string, Lazy<object?>> LazyLoadCurrentRequestContextAccessorRegisters;
 
     private readonly IPlatformApplicationRequestContextKeyToClaimTypeMapper claimTypeMapper;
     private readonly IHttpContextAccessor httpContextAccessor;
@@ -28,11 +30,15 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
     public PlatformAspNetApplicationRequestContext(
         IHttpContextAccessor httpContextAccessor,
         IPlatformApplicationRequestContextKeyToClaimTypeMapper claimTypeMapper,
-        IPlatformApplicationSettingContext applicationSettingContext)
+        IPlatformApplicationSettingContext applicationSettingContext,
+        IServiceProvider serviceProvider,
+        PlatformApplicationLazyLoadRequestContextAccessorRegisters lazyLoadRequestContextAccessorRegisters)
     {
         this.httpContextAccessor = httpContextAccessor;
         this.claimTypeMapper = claimTypeMapper;
         ApplicationSettingContext = applicationSettingContext;
+        ServiceProvider = serviceProvider;
+        LazyLoadCurrentRequestContextAccessorRegisters = lazyLoadRequestContextAccessorRegisters.Current;
     }
 
     public ConcurrentDictionary<string, object?> FullCachedRequestContextData { get; } = new();
@@ -214,7 +220,7 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
     /// <br />
     /// The IPlatformApplicationRequestContextKeyToClaimTypeMapper instance is used to map user context keys to claim types, which can be useful when working with claims-based identity.
     /// </remarks>
-    public static T? GetValue<T>(
+    public T? GetValue<T>(
         string contextKey,
         HttpContext? useHttpContext,
         IPlatformApplicationSettingContext applicationSettingContext,
@@ -237,6 +243,9 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
 
             return foundValue;
         }
+
+        hasFoundValue = PlatformRequestContextHelper.TryGetValue(LazyLoadCurrentRequestContextAccessorRegisters, contextKey, out T lazyItem);
+        if (hasFoundValue) return lazyItem;
 
         hasFoundValue = false;
         return default;
@@ -266,17 +275,16 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
             return includeIgnoredKeys ? FullCachedRequestContextData : IgnoreRequestContextKeysRequestContextData;
 
         return GetAllKeys(useHttpContext, includeIgnoredKeys)
-            .Select(
-                key => new KeyValuePair<string, object?>(
+            .Select(key => new KeyValuePair<string, object?>(
+                key,
+                GetValue<object>(
                     key,
-                    GetValue<object>(
-                        key,
-                        useHttpContext,
-                        ApplicationSettingContext,
-                        FullCachedRequestContextData,
-                        IgnoreRequestContextKeysRequestContextData,
-                        out _,
-                        claimTypeMapper)))
+                    useHttpContext,
+                    ApplicationSettingContext,
+                    FullCachedRequestContextData,
+                    IgnoreRequestContextKeysRequestContextData,
+                    out _,
+                    claimTypeMapper)))
             .ToDictionary(p => p.Key, p => p.Value);
     }
 
@@ -345,10 +353,9 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
 
         var stringRequestHeaderValues =
             contextKeyMappedToOneOfClaimTypes
-                .Select(
-                    contextKeyMappedToJwtClaimType => requestHeaders
-                        .Where(p => p.Key == contextKeyMappedToJwtClaimType || p.Key == contextKeyMappedToJwtClaimType.ToLower())
-                        .SelectList(p => p.Value.ToString()))
+                .Select(contextKeyMappedToJwtClaimType => requestHeaders
+                    .Where(p => p.Key == contextKeyMappedToJwtClaimType || p.Key == contextKeyMappedToJwtClaimType.ToLower())
+                    .SelectList(p => p.Value.ToString()))
                 .FirstOrDefault(p => p.Any()) ??
             [];
 
