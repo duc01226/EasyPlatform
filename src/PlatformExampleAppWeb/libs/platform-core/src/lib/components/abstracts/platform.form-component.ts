@@ -608,7 +608,8 @@ export abstract class PlatformFormComponent<TViewModel extends IPlatformVm>
         const reactiveFormValues: Partial<TViewModel> = {};
 
         keys(this.formConfig.controls).forEach(formControlKey => {
-            (<Dictionary<unknown>>reactiveFormValues)[formControlKey] = this.form.controls[formControlKey].value;
+            (<Dictionary<unknown>>reactiveFormValues)[formControlKey] =
+                this.form.controls[formControlKey].getRawValue();
         });
 
         return reactiveFormValues;
