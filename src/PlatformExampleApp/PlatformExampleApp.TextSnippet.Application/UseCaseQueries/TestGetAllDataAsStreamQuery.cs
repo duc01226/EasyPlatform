@@ -1,3 +1,5 @@
+#region
+
 using System.Diagnostics.CodeAnalysis;
 using Easy.Platform.Application.Cqrs.Queries;
 using Easy.Platform.Application.RequestContext;
@@ -7,6 +9,8 @@ using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Application.Dtos.EntityDtos;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
+
+#endregion
 
 // ReSharper disable UnusedVariable
 
@@ -46,10 +50,8 @@ internal sealed class TestGetAllDataAsStreamQueryHandler : PlatformCqrsQueryAppl
         // Test get very big data stream to see data downloading streaming by return IAsyncEnumerable.
         // Return data as stream using IAsyncEnumerable do not load all data or sub list of data into memory, it stream each item async
         var asyncEnumerableResult = Enumerable.Range(0, 10000)
-            .SelectManyAsync(
-                p => textSnippetRepository.GetAllAsyncEnumerable(queryBuilder: query => query, cancellationToken: cancellationToken)
-                    .Select(p => new TextSnippetEntityDto(p)));
-
+            .SelectManyAsync(p => textSnippetRepository.GetAllAsyncEnumerable(queryBuilder: query => query, cancellationToken: cancellationToken)
+                .Select(p => new TextSnippetEntityDto(p)));
         // Test use enumerable to see the memory different
         var enumerableResult = GetEnumerableResult();
         var enumerableResultFromAsyncEnumerable = GetEnumerableResultFromAsyncEnumerable();
@@ -76,8 +78,7 @@ internal sealed class TestGetAllDataAsStreamQueryHandler : PlatformCqrsQueryAppl
     private IEnumerable<TextSnippetEntityDto> GetEnumerableResultFromAsyncEnumerable()
     {
         return Enumerable.Range(0, 10000)
-            .SelectManyAsync(
-                p => textSnippetRepository.GetAllAsyncEnumerable(queryBuilder: query => query).Select(p => new TextSnippetEntityDto(p)))
+            .SelectManyAsync(p => textSnippetRepository.GetAllAsyncEnumerable(queryBuilder: query => query).Select(p => new TextSnippetEntityDto(p)))
             .ToEnumerable();
     }
 }

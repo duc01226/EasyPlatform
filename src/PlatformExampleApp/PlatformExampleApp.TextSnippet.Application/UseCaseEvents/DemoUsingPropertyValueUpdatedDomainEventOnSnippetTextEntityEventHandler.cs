@@ -1,8 +1,12 @@
+#region
+
 using Easy.Platform.Application.Cqrs.Events;
 using Easy.Platform.Domain.Events;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
+
+#endregion
 
 namespace PlatformExampleApp.TextSnippet.Application.UseCaseEvents;
 
@@ -39,20 +43,25 @@ internal sealed class DemoUsingFieldUpdatedDomainEventOnSnippetTextEntityEventHa
 
         // DEMO USING PROPERTY CHANGED DOMAIN EVENT
         var snippetTextPropUpdatedEvent = @event.FindFieldUpdatedEvent(p => p.SnippetText);
+
         if (snippetTextPropUpdatedEvent != null)
+        {
             CreateGlobalLogger()
                 .LogInformation(
                     "TextSnippetEntity Id:'{EntityDataId}' SnippetText updated. Prev: {OriginalValue}. New: {NewValue}",
                     @event.EntityData.Id,
                     snippetTextPropUpdatedEvent.OriginalValue,
                     snippetTextPropUpdatedEvent.NewValue);
+        }
 
         if (@event.HasAnyFieldUpdatedEvents(p => p.Address, p => p.AddressStrings, p => p.Addresses) &&
             SomeCustomBuildMessageResult(@event.ExistingOriginalEntityData).IsValuesDifferent(SomeCustomBuildMessageResult(@event.EntityData)))
+        {
             CreateGlobalLogger()
                 .LogInformation(
                     "TextSnippetEntity Id:'{Id}' FullText Address Info updated",
                     @event.EntityData.Id);
+        }
     }
 
     private static object SomeCustomBuildMessageResult(TextSnippetEntity entityData)

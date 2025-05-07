@@ -1,9 +1,13 @@
+#region
+
 using Easy.Platform.Common.Cqrs;
 using Easy.Platform.Domain.Services;
 using Easy.Platform.Domain.UnitOfWork;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Events;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
+
+#endregion
 
 namespace PlatformExampleApp.TextSnippet.Domain.Services;
 
@@ -33,16 +37,7 @@ public class TransferSnippetTextToMultiDbDemoEntityNameService : PlatformDomainS
         if (firstFoundMultiDbDemoEntity == null || firstFoundTextSnippet == null)
             return new TransferSnippetTextToMultiDbDemoEntityNameResult();
 
-        var dispatchEvent = TransferSnippetTextToMultiDbDemoEntityNameDomainEvent.Create(
-            firstFoundTextSnippet.SnippetText,
-            firstFoundMultiDbDemoEntity.Clone());
-
-        firstFoundTextSnippet.DemoDoSomeDomainEntityLogicAction_EncryptSnippetText();
-
-        firstFoundMultiDbDemoEntity.Name = firstFoundTextSnippet.SnippetText;
-
-        await textSnippetRepository.UpdateAsync(firstFoundTextSnippet);
-        await multiDbDemoEntityRepository.UpdateAsync(firstFoundMultiDbDemoEntity);
+        var dispatchEvent = await DoTransferSnippetTextToMultiDbDemoEntityName(firstFoundTextSnippet, firstFoundMultiDbDemoEntity);
 
         await SendEvent(dispatchEvent);
 
@@ -51,6 +46,23 @@ public class TransferSnippetTextToMultiDbDemoEntityNameService : PlatformDomainS
             UpdatedMultiDbDemoEntity = firstFoundMultiDbDemoEntity,
             FirstFoundTextSnippet = firstFoundTextSnippet
         };
+    }
+
+    private async Task<TransferSnippetTextToMultiDbDemoEntityNameDomainEvent> DoTransferSnippetTextToMultiDbDemoEntityName(
+        TextSnippetEntity firstFoundTextSnippet,
+        MultiDbDemoEntity firstFoundMultiDbDemoEntity)
+    {
+        var dispatchEvent = TransferSnippetTextToMultiDbDemoEntityNameDomainEvent.Create(
+            firstFoundTextSnippet.SnippetText,
+            firstFoundMultiDbDemoEntity.Clone());
+
+        firstFoundTextSnippet.DemoDoSomeDomainEntityLogicAction_EncryptSnippetText();
+        firstFoundMultiDbDemoEntity.Name = firstFoundTextSnippet.SnippetText;
+
+        await textSnippetRepository.UpdateAsync(firstFoundTextSnippet);
+        await multiDbDemoEntityRepository.UpdateAsync(firstFoundMultiDbDemoEntity);
+
+        return dispatchEvent;
     }
 
     public class TransferSnippetTextToMultiDbDemoEntityNameResult

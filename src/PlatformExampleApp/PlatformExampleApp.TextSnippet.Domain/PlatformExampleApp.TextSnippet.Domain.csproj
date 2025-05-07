@@ -20,4 +20,7 @@
     <ProjectReference Include="..\..\Platform\Easy.Platform\Easy.Platform.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Platform\Easy.Platform.CustomAnalyzers\Easy.Platform.CustomAnalyzers.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+  </ItemGroup>
 </Project>

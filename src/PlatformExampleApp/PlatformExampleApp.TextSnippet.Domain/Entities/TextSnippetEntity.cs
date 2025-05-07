@@ -1,3 +1,5 @@
+#region
+
 using System.Security.Cryptography;
 using System.Text;
 using Easy.Platform.Common.Validations.Validators;
@@ -6,6 +8,8 @@ using Easy.Platform.Domain.Exceptions.Extensions;
 using FluentValidation;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
 using PlatformExampleApp.TextSnippet.Domain.ValueObjects;
+
+#endregion
 
 namespace PlatformExampleApp.TextSnippet.Domain.Entities;
 
@@ -92,12 +96,12 @@ public class TextSnippetEntity : RootAuditedEntity<TextSnippetEntity, string, st
 
     public TextSnippetEntity DemoDoSomeDomainEntityLogicAction_EncryptSnippetText()
     {
-        var originalSnippetText = SnippetText;
-
         var bytes = Encoding.UTF8.GetBytes(SnippetText);
+
         var hash = SHA256.HashData(bytes);
 
         SnippetText = Convert.ToBase64String(hash);
+        var originalSnippetText = SnippetText;
 
         AddDomainEvent(
             new EncryptSnippetTextDomainEvent

@@ -16,6 +16,7 @@ COPY ["Platform/Easy.Platform.MongoDB/Easy.Platform.MongoDB.csproj", "Platform/E
 COPY ["Platform/Easy.Platform.RabbitMQ/Easy.Platform.RabbitMQ.csproj", "Platform/Easy.Platform.RabbitMQ/"]
 COPY ["Platform/Easy.Platform.RedisCache/Easy.Platform.RedisCache.csproj", "Platform/Easy.Platform.RedisCache/"]
 COPY ["Platform/Easy.Platform.AzureFileStorage/Easy.Platform.AzureFileStorage.csproj", "Platform/Easy.Platform.AzureFileStorage/"]
+COPY ["Platform/Easy.Platform.CustomAnalyzers/Easy.Platform.CustomAnalyzers.csproj", "Platform/Easy.Platform.CustomAnalyzers/"]
 COPY ["PlatformExampleApp/PlatformExampleApp.Shared/PlatformExampleApp.Shared.csproj", "PlatformExampleApp/PlatformExampleApp.Shared/"]
 
 RUN dotnet restore "Platform/Easy.Platform/Easy.Platform.csproj"
@@ -27,6 +28,7 @@ RUN dotnet restore "Platform/Easy.Platform.MongoDB/Easy.Platform.MongoDB.csproj"
 RUN dotnet restore "Platform/Easy.Platform.RabbitMQ/Easy.Platform.RabbitMQ.csproj"
 RUN dotnet restore "Platform/Easy.Platform.RedisCache/Easy.Platform.RedisCache.csproj"
 RUN dotnet restore "Platform/Easy.Platform.AzureFileStorage/Easy.Platform.AzureFileStorage.csproj"
+RUN dotnet restore "Platform/Easy.Platform.CustomAnalyzers/Easy.Platform.CustomAnalyzers.csproj"
 RUN dotnet restore "PlatformExampleApp/PlatformExampleApp.Shared/PlatformExampleApp.Shared.csproj"
 
 # Copy the main service .csproj files and restore
@@ -51,16 +53,17 @@ COPY --from=restore-stage /src .
 # Copy the rest of the Platform and Shared code and build
 COPY Platform Platform/
 COPY PlatformExampleApp/PlatformExampleApp.Shared PlatformExampleApp/PlatformExampleApp.Shared/
-RUN dotnet build "Platform/Easy.Platform/Easy.Platform.csproj" -c Release -o /app --no-restore
-RUN dotnet build "Platform/Easy.Platform.AspNetCore/Easy.Platform.AspNetCore.csproj" -c Release -o /app --no-restore
-RUN dotnet build "Platform/Easy.Platform.EfCore/Easy.Platform.EfCore.csproj" -c Release -o /app --no-restore
-RUN dotnet build "Platform/Easy.Platform.FireBasePushNotification/Easy.Platform.FirebasePushNotification.csproj" -c Release -o /app --no-restore
-RUN dotnet build "Platform/Easy.Platform.HangfireBackgroundJob/Easy.Platform.HangfireBackgroundJob.csproj" -c Release -o /app --no-restore
-RUN dotnet build "Platform/Easy.Platform.MongoDB/Easy.Platform.MongoDB.csproj" -c Release -o /app --no-restore
-RUN dotnet build "Platform/Easy.Platform.RabbitMQ/Easy.Platform.RabbitMQ.csproj" -c Release -o /app --no-restore
-RUN dotnet build "Platform/Easy.Platform.RedisCache/Easy.Platform.RedisCache.csproj" -c Release -o /app --no-restore
-RUN dotnet build "Platform/Easy.Platform.AzureFileStorage/Easy.Platform.AzureFileStorage.csproj" -c Release -o /app --no-restore
-RUN dotnet build "PlatformExampleApp/PlatformExampleApp.Shared/PlatformExampleApp.Shared.csproj" -c Release -o /app --no-restore
+RUN dotnet build "Platform/Easy.Platform/Easy.Platform.csproj" -c Release --no-restore
+RUN dotnet build "Platform/Easy.Platform.AspNetCore/Easy.Platform.AspNetCore.csproj" -c Release --no-restore
+RUN dotnet build "Platform/Easy.Platform.EfCore/Easy.Platform.EfCore.csproj" -c Release --no-restore
+RUN dotnet build "Platform/Easy.Platform.FireBasePushNotification/Easy.Platform.FirebasePushNotification.csproj" -c Release --no-restore
+RUN dotnet build "Platform/Easy.Platform.HangfireBackgroundJob/Easy.Platform.HangfireBackgroundJob.csproj" -c Release --no-restore
+RUN dotnet build "Platform/Easy.Platform.MongoDB/Easy.Platform.MongoDB.csproj" -c Release --no-restore
+RUN dotnet build "Platform/Easy.Platform.RabbitMQ/Easy.Platform.RabbitMQ.csproj" -c Release --no-restore
+RUN dotnet build "Platform/Easy.Platform.RedisCache/Easy.Platform.RedisCache.csproj" -c Release --no-restore
+RUN dotnet build "Platform/Easy.Platform.AzureFileStorage/Easy.Platform.AzureFileStorage.csproj" -c Release --no-restore
+RUN dotnet build "Platform/Easy.Platform.CustomAnalyzers/Easy.Platform.CustomAnalyzers.csproj" -c Release --no-restore
+RUN dotnet build "PlatformExampleApp/PlatformExampleApp.Shared/PlatformExampleApp.Shared.csproj" -c Release --no-restore
 
 # Stage 3: Build the main service
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build

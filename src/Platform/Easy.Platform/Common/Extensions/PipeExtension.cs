@@ -84,6 +84,22 @@ public static class PipeExtension
     }
 
     /// <summary>
+    /// Executes a specified function on the target object if the given condition is met,
+    /// and returns the target object.
+    /// </summary>
+    /// <typeparam name="TTarget">The type of the target object.</typeparam>
+    /// <param name="target">The target object on which the function may be executed.</param>
+    /// <param name="condition">A predicate that determines whether the function should be executed.</param>
+    /// <param name="fn">The function to be executed on the target object if the condition is true.</param>
+    /// <returns>The target object, either modified or unmodified depending on the condition.</returns>
+    public static async Task<TTarget> PipeActionAsyncIf<TTarget>(this TTarget target, Func<TTarget, bool> condition, Func<TTarget, Task> fn)
+    {
+        if (condition(target)) await PipeAction(target, fn);
+
+        return target;
+    }
+
+    /// <summary>
     /// Asynchronously executes a specified function on the target object if the given asynchronous condition is met,
     /// and returns the target object.
     /// </summary>

@@ -1,3 +1,5 @@
+#region
+
 using System.Diagnostics.CodeAnalysis;
 using Easy.Platform.Application.Cqrs.Commands;
 using Easy.Platform.Application.Exceptions.Extensions;
@@ -12,6 +14,8 @@ using PlatformExampleApp.TextSnippet.Application.Dtos.EntityDtos;
 using PlatformExampleApp.TextSnippet.Application.Infrastructures;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
+
+#endregion
 
 // ReSharper disable UnusedVariable
 
@@ -203,12 +207,11 @@ internal sealed class SaveSnippetTextCommandHandler : PlatformCqrsCommandApplica
         PlatformValidationResult<SaveSnippetTextCommand> requestSelfValidation,
         CancellationToken cancellationToken)
     {
-        return requestSelfValidation.AndAsync(
-            request =>
-            {
-                // Logic async validation here, example connect database to validate something
-                return PlatformValidationResult.Valid(request).BoxedInTask();
-            });
+        return requestSelfValidation.AndAsync(request =>
+        {
+            // Logic async validation here, example connect database to validate something
+            return PlatformValidationResult.Valid(request).BoxedInTask();
+        });
     }
 
     [SuppressMessage("Style", "IDE0039:Use local function", Justification = "<Pending>")]
@@ -235,28 +238,23 @@ internal sealed class SaveSnippetTextCommandHandler : PlatformCqrsCommandApplica
             .WhenValue(PlatformCqrsEntityEventCrudAction.Updated, _ => "Updated")
             .When(status => status == PlatformCqrsEntityEventCrudAction.Deleted, _ => "Deleted")
             .ExecuteAsync(); // .When(status => status == XXX) <=> .WhenValue(XXX)
-
         // THIS IS NOT RELATED to SaveSnippetText logic. Demo some other common USE FULL EXTENSIONS
         var demoGetItemsByExecuteAsyncOnEachOtherItems = await Util.ListBuilder.New("UserId1", "UserId2")
-            .SelectAsync(
-                userId => new
-                {
-                    Id = userId,
-                    Name = $"User {userId}"
-                }.BoxedInTask()); // return [{Id:"UserId1",Name:"User UserId1"},{Id:"UserId2",Name:"User UserId2"}]
+            .SelectAsync(userId => new
+            {
+                Id = userId,
+                Name = $"User {userId}"
+            }.BoxedInTask()); // return [{Id:"UserId1",Name:"User UserId1"},{Id:"UserId2",Name:"User UserId2"}]
         var demoGetItemsByExecuteAsyncOnEachOtherItemsWithItemIndex = await Util.ListBuilder.New("UserId1", "UserId2")
-            .SelectAsync(
-                (userId, itemIndex) => new
-                {
-                    Id = userId,
-                    Name = $"User Index{itemIndex} {userId}"
-                }.BoxedInTask()); // return [{Id:"UserId1",Name:"User Index0 UserId1"},{Id:"UserId2",Name:"User Index1 UserId2"}]
+            .SelectAsync((userId, itemIndex) => new
+            {
+                Id = userId,
+                Name = $"User Index{itemIndex} {userId}"
+            }.BoxedInTask()); // return [{Id:"UserId1",Name:"User Index0 UserId1"},{Id:"UserId2",Name:"User Index1 UserId2"}]
         await Util.ListBuilder.New("UserId1", "UserId2")
-            .ForEachAsync(
-                (userId, itemIndex) => Task.Run(
-                    () => logger.LogInformation("{UserId} {ItemIndex}", userId, itemIndex),
-                    cancellationToken)); // Demo ForEach call async function
-
+            .ForEachAsync((userId, itemIndex) => Task.Run(
+                () => logger.LogInformation("{UserId} {ItemIndex}", userId, itemIndex),
+                cancellationToken)); // Demo ForEach call async function
         // Check that an obj could be a object as other type. Like xxx as TXX in c#. Return null if it could not be parsed.
         // This case return null so that EnsureFound will throw not found
         // var demoFluentAs = request.As<TextSnippetEntity>().EnsureFound();
@@ -307,17 +305,15 @@ internal sealed class SaveSnippetTextCommandHandler : PlatformCqrsCommandApplica
 
         // STEP 2: Do validation and ensure that all logic is valid
         var validToSaveEntity = await toSaveEntity
-            .With(
-                toSaveEntity =>
-                {
-                    //toSaveEntity.SnippetText += " Update";  //Demo Update Data By With Support Chaining
-                })
+            .With(toSaveEntity =>
+            {
+                //toSaveEntity.SnippetText += " Update";  //Demo Update Data By With Support Chaining
+            })
             .ValidateSavePermission(userId: RequestContext.UserId<string>()) // Demo Permission Logic
             .And(entity => toSaveEntity.ValidateSomeSpecificIsXxxLogic()) // Demo domain business logic
             .AndAsync(entity => toSaveEntity.ValidateSomeSpecificIsXxxLogicAsync(textSnippetEntityRepository, multiDbDemoEntityRepository)) // Demo domain business logic
             .AndAsync(ValidateSomeThisCommandApplicationLogic) // Demo application business logic
             .EnsureValidAsync(); // Throw PermissionException, or DomainException, or ApplicationException on invalid for each stage
-
         // ADDITIONAL DEMO STEP 2 - Bonus Demo Alternative Validation directly on object
         // (Not recommended because of easily violate SingleResponsibility or duplicate code)
         var validToSaveEntity1 = toSaveEntity
