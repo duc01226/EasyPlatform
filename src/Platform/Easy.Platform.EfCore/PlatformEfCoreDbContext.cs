@@ -1,3 +1,5 @@
+#region
+
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq.Expressions;
@@ -14,6 +16,8 @@ using Easy.Platform.Persistence.DataMigration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
+
+#endregion
 
 namespace Easy.Platform.EfCore;
 
@@ -51,11 +55,6 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
 
     public bool IsUsingLazyLoadingProxy { get; set; }
 
-    public DbSet<PlatformDataMigrationHistory> DataMigrationHistoryDbSet()
-    {
-        return Set<PlatformDataMigrationHistory>();
-    }
-
     protected PlatformPersistenceConfiguration<TDbContext>? PersistenceConfiguration => lazyPersistenceConfiguration.Value;
 
     protected IPlatformRootServiceProvider RootServiceProvider => lazyRootServiceProvider.Value;
@@ -63,6 +62,8 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
     protected IPlatformApplicationRequestContextAccessor RequestContextAccessor => lazyRequestContextAccessor.Value;
 
     protected SemaphoreSlim ContextThreadSafeLock { get; } = new(ContextMaxConcurrentThreadLock, ContextMaxConcurrentThreadLock);
+
+    public virtual bool DisableDbSchemaMigrateOnInitialize => false;
 
     public IPlatformUnitOfWork? MappedUnitOfWork { get; set; }
 
@@ -123,7 +124,7 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
             ChangeTracker.Entries()
                 .Where(p => p.State == EntityState.Modified || p.State == EntityState.Added || p.State == EntityState.Deleted)
                 .Select(p => p.Entity.As<IEntity>()?.GetId()?.ToString())
-                .Where(p => p != null)
+                .WhereNotNull()
                 .ForEach(id => MappedUnitOfWork?.RemoveCachedExistingOriginalEntity(id));
             ChangeTracker.Clear();
 
@@ -140,8 +141,6 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
     {
         Database.ExecuteSqlRaw(command);
     }
-
-    public virtual bool DisableDbSchemaMigrateOnInitialize => false;
 
     public virtual async Task Initialize(IServiceProvider serviceProvider)
     {
@@ -625,6 +624,11 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
         }
 
         return entities;
+    }
+
+    public DbSet<PlatformDataMigrationHistory> DataMigrationHistoryDbSet()
+    {
+        return Set<PlatformDataMigrationHistory>();
     }
 
     public ILogger CreateLogger(ILoggerFactory loggerFactory)

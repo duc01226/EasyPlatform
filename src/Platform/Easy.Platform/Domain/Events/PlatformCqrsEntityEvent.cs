@@ -1,3 +1,5 @@
+#region
+
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -11,6 +13,8 @@ using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.DependencyInjection;
+
+#endregion
 
 namespace Easy.Platform.Domain.Events;
 
@@ -175,8 +179,7 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
                 await mappedToDbContextUow.CreatedByUnitOfWorkManager.CurrentSameScopeCqrs.SendEvent(entityEvent, cancellationToken);
             else
             {
-                await rootServiceProvider.ExecuteInjectScopedAsync(
-                    (IPlatformCqrs cqrs) => cqrs.SendEvent(entityEvent, cancellationToken));
+                await rootServiceProvider.ExecuteInjectScopedAsync((IPlatformCqrs cqrs) => cqrs.SendEvent(entityEvent, cancellationToken));
             }
         }
     }
@@ -268,25 +271,24 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
         CancellationToken cancellationToken = default) where TEntity : class, IEntity<TPrimaryKey>, new()
     {
         var result = await deleteEntityAction(entity)
-            .ThenActionAsync(
-                _ =>
+            .ThenActionAsync(_ =>
+            {
+                if (!dismissSendEvent)
                 {
-                    if (!dismissSendEvent)
-                    {
-                        return SendEvent(
-                            rootServiceProvider,
-                            mappedToDbContextUow,
-                            entity,
-                            entity,
-                            PlatformCqrsEntityEventCrudAction.Deleted,
-                            eventCustomConfig,
-                            requestContext,
-                            eventStackTrace,
-                            cancellationToken);
-                    }
+                    return SendEvent(
+                        rootServiceProvider,
+                        mappedToDbContextUow,
+                        entity,
+                        entity,
+                        PlatformCqrsEntityEventCrudAction.Deleted,
+                        eventCustomConfig,
+                        requestContext,
+                        eventStackTrace,
+                        cancellationToken);
+                }
 
-                    return Task.CompletedTask;
-                });
+                return Task.CompletedTask;
+            });
 
         return result;
     }
@@ -303,25 +305,24 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
         CancellationToken cancellationToken = default) where TEntity : class, IEntity<TPrimaryKey>, new()
     {
         var result = await createEntityAction(entity)
-            .ThenActionAsync(
-                _ =>
+            .ThenActionAsync(_ =>
+            {
+                if (!dismissSendEvent)
                 {
-                    if (!dismissSendEvent)
-                    {
-                        return SendEvent(
-                            rootServiceProvider,
-                            mappedToDbContextUow,
-                            entity,
-                            null,
-                            PlatformCqrsEntityEventCrudAction.Created,
-                            eventCustomConfig,
-                            requestContext,
-                            eventStackTrace,
-                            cancellationToken);
-                    }
+                    return SendEvent(
+                        rootServiceProvider,
+                        mappedToDbContextUow,
+                        entity,
+                        null,
+                        PlatformCqrsEntityEventCrudAction.Created,
+                        eventCustomConfig,
+                        requestContext,
+                        eventStackTrace,
+                        cancellationToken);
+                }
 
-                    return Task.CompletedTask;
-                });
+                return Task.CompletedTask;
+            });
 
         return result;
     }
@@ -342,25 +343,24 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
             entity.AutoAddFieldUpdatedEvent(existingOriginalEntity);
 
         var (result, _) = await updateEntityAction(entity)
-            .ThenActionAsync(
-                p =>
+            .ThenActionAsync(p =>
+            {
+                if (!dismissSendEvent && p.isDataChanged)
                 {
-                    if (!dismissSendEvent && p.isDataChanged)
-                    {
-                        return SendEvent(
-                            rootServiceProvider,
-                            unitOfWork,
-                            entity,
-                            existingOriginalEntity,
-                            PlatformCqrsEntityEventCrudAction.Updated,
-                            eventCustomConfig,
-                            requestContext,
-                            eventStackTrace,
-                            cancellationToken);
-                    }
+                    return SendEvent(
+                        rootServiceProvider,
+                        unitOfWork,
+                        entity,
+                        existingOriginalEntity,
+                        PlatformCqrsEntityEventCrudAction.Updated,
+                        eventCustomConfig,
+                        requestContext,
+                        eventStackTrace,
+                        cancellationToken);
+                }
 
-                    return Task.CompletedTask;
-                });
+                return Task.CompletedTask;
+            });
 
         return result;
     }
@@ -438,15 +438,14 @@ public class PlatformCqrsEntityEvent<TEntity> : PlatformCqrsEntityEvent, IPlatfo
         return typeof(TEntity)
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(prop => prop.GetCustomAttribute<JsonIgnoreAttribute>() == null)
-            .Select(
-                prop =>
-                {
-                    var oldValue = prop.GetValue(ExistingOriginalEntityData);
-                    var newValue = prop.GetValue(EntityData);
+            .Select(prop =>
+            {
+                var oldValue = prop.GetValue(ExistingOriginalEntityData);
+                var newValue = prop.GetValue(EntityData);
 
-                    return oldValue.IsValuesDifferent(newValue) ? ISupportDomainEventsEntity.FieldUpdatedDomainEvent.Create(prop.Name, oldValue, newValue) : null;
-                })
-            .Where(p => p != null)
+                return oldValue.IsValuesDifferent(newValue) ? ISupportDomainEventsEntity.FieldUpdatedDomainEvent.Create(prop.Name, oldValue, newValue) : null;
+            })
+            .WhereNotNull()
             .ToList();
     }
 }
@@ -475,10 +474,9 @@ public class PlatformCqrsBulkEntitiesEvent<TEntity, TPrimaryKey> : PlatformCqrsE
                     group => group.Key,
                     group => group
                         .AsEnumerable()
-                        .SelectMany(
-                            entity => entity.As<ISupportDomainEventsEntity>()
-                                .GetDomainEvents()
-                                .Select(p => new KeyValuePair<string, string>(p.Key, PlatformJsonSerializer.Serialize(p.Value))))
+                        .SelectMany(entity => entity.As<ISupportDomainEventsEntity>()
+                            .GetDomainEvents()
+                            .Select(p => new KeyValuePair<string, string>(p.Key, PlatformJsonSerializer.Serialize(p.Value))))
                         .ToList());
         }
     }

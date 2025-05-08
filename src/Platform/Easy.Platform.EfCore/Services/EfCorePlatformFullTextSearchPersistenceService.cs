@@ -1,8 +1,12 @@
+#region
+
 using System.Linq.Expressions;
 using Easy.Platform.Persistence.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Query.Internal;
+
+#endregion
 
 namespace Easy.Platform.EfCore.Services;
 
@@ -79,12 +83,11 @@ public abstract class EfCorePlatformFullTextSearchPersistenceService : PlatformF
         // WHY: Should use union instead of OR because UNION is better at performance
         // https://stackoverflow.com/questions/16438556/combining-free-text-search-with-another-condition-is-slow
         return fullTextSearchPropNames
-            .Select(
-                fullTextSearchPropName => BuildFullTextSearchForSinglePropQueryPart(
-                    query,
-                    fullTextSearchPropName,
-                    ignoredSpecialCharactersSearchWords,
-                    exactMatch))
+            .Select(fullTextSearchPropName => BuildFullTextSearchForSinglePropQueryPart(
+                query,
+                fullTextSearchPropName,
+                ignoredSpecialCharactersSearchWords,
+                exactMatch))
             .Aggregate((current, next) => current.Union(next));
     }
 
@@ -119,14 +122,14 @@ public abstract class EfCorePlatformFullTextSearchPersistenceService : PlatformF
         // Generate full-text search property names, supporting deep paths
         var fullTextSearchPropNames =
             inFullTextSearchProps
-                .Where(p => p != null)
+                .WhereNotNull()
                 .Select(p => p.GetPropertyName(EfCoreOwnsOneDeeperObjectColumnSeparator))
                 .ToList();
 
         // Generate include-start-with property names, supporting deep paths
         var includeStartWithPropNames =
             includeStartWithProps?
-                .Where(p => p != null)
+                .WhereNotNull()
                 .Select(p => p.GetPropertyName(EfCoreOwnsOneDeeperObjectColumnSeparator))
                 .ToList();
 

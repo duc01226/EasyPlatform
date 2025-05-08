@@ -1,6 +1,10 @@
+#region
+
 using System.Runtime.CompilerServices;
 using Easy.Platform.Common.Extensions.WhenCases;
 using Easy.Platform.Common.Utils;
+
+#endregion
 
 namespace Easy.Platform.Common.Extensions;
 
@@ -294,67 +298,6 @@ public static class TaskExtension
         var targetValue = await task;
         return @if(targetValue) ? await nextTask(targetValue) : defaultValue;
     }
-
-    /// <summary>
-    /// Asynchronously executes a function on the result of a task and returns a tuple containing the original task result and the result of the function.
-    /// </summary>
-    /// <typeparam name="T">The result type of the task.</typeparam>
-    /// <typeparam name="T1">The result type of the function.</typeparam>
-    /// <param name="task">The task to execute the function on.</param>
-    /// <param name="getWith">The function to execute on the task result.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result is a tuple containing the original task result and the result of the function.</returns>
-    public static Task<ValueTuple<T, T1>> ThenGetWith<T, T1>(this Task<T> task, Func<T, T1> getWith)
-    {
-        return task.Then(p => (p, getWith(p)));
-    }
-
-    /// <summary>
-    /// Asynchronously executes a function on the result of a task and returns a tuple containing the original task result and the result of the function.
-    /// </summary>
-    /// <typeparam name="T">The type of the result of the original task.</typeparam>
-    /// <typeparam name="T1">The type of the result of the function.</typeparam>
-    /// <param name="task">The original task.</param>
-    /// <param name="getWith">The function to execute on the result of the original task.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result is a tuple containing the original task result and the result of the function.</returns>
-    public static async Task<ValueTuple<T, T1>> ThenGetWith<T, T1>(this Task<T> task, Func<T, Task<T1>> getWith)
-    {
-        var value = await task;
-        var withValue = await getWith(value);
-        return (value, withValue);
-    }
-
-    /// <summary>
-    /// Asynchronously executes the provided functions after the completion of the target task.
-    /// </summary>
-    /// <typeparam name="T">The type of the result of the target task.</typeparam>
-    /// <typeparam name="T1">The type of the result of the first function.</typeparam>
-    /// <typeparam name="T2">The type of the result of the second function.</typeparam>
-    /// <param name="task">The target task.</param>
-    /// <param name="getWith1">The first function to execute after the task completes.</param>
-    /// <param name="getWith2">The second function to execute after the first function completes. It takes the results of the task and the first function as parameters.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a tuple with the results of the task, the first function, and the second function.</returns>
-    public static async Task<ValueTuple<T, T1, T2>> ThenGetWith<T, T1, T2>(this Task<T> task, Func<T, T1> getWith1, Func<T, T1, T2> getWith2)
-    {
-        var (value, value1) = await task.ThenGetWith(getWith1);
-        return (value, value1, getWith2(value, value1));
-    }
-
-    /// <summary>
-    /// Asynchronously executes a task and then applies two functions to the result of the task.
-    /// </summary>
-    /// <typeparam name="T">The type of the result of the task.</typeparam>
-    /// <typeparam name="T1">The type of the result of the first function.</typeparam>
-    /// <typeparam name="T2">The type of the result of the second function.</typeparam>
-    /// <param name="task">The task to execute.</param>
-    /// <param name="getWith1">The first function to apply to the result of the task. This function should return a Task of type T1.</param>
-    /// <param name="getWith2">The second function to apply to the result of the first function and the result of the task. This function should return a Task of type T2.</param>
-    /// <returns>A Task that represents the asynchronous operation. The result of the Task is a tuple containing the result of the task, the result of the first function, and the result of the second function.</returns>
-    public static async Task<ValueTuple<T, T1, T2>> ThenGetWith<T, T1, T2>(this Task<T> task, Func<T, Task<T1>> getWith1, Func<T, T1, Task<T2>> getWith2)
-    {
-        var (value, value1) = await task.ThenGetWith(getWith1);
-        return (value, value1, await getWith2(value, value1));
-    }
-
 
     /// <summary>
     /// Use WaitResult to help if exception to see the stack trace. <br />
@@ -747,6 +690,55 @@ public static class TaskExtension
         lock (lockObj) fn(target).Wait();
     }
 
+    /// <summary>
+    /// Takes a Task&lt;object&gt;, awaits it, and then returns
+    /// the result if it’s actually a T – otherwise default(T).
+    /// Works for both classes and structs.
+    /// </summary>
+    public static async Task<T> UnboxAsync<T>(this Task<object?> source)
+    {
+        var o = await source.ConfigureAwait(false);
+        return o is T t
+            ? t
+            : default!;
+    }
+
+    public static async Task<ValueTuple<T, T1>> ThenGetWith<T, T1>(this Task<T> objTask, Func<T, T1> getWith)
+    {
+        var obj = await objTask;
+        return (obj, getWith(obj));
+    }
+
+    public static async Task<ValueTuple<T, T1>> ThenGetWith<T, T1>(this Task<T> objTask, Func<T, Task<T1>> getWith)
+    {
+        var obj = await objTask;
+        return (obj, await getWith(obj));
+    }
+
+    public static async Task<ValueTuple<T, T1, T2>> ThenGetWith<T, T1, T2>(this Task<ValueTuple<T, T1>> objTask, Func<T, T1, T2> getWith)
+    {
+        var obj = await objTask;
+        return (obj.Item1, obj.Item2, getWith(obj.Item1, obj.Item2));
+    }
+
+    public static async Task<ValueTuple<T, T1, T2>> ThenGetWith<T, T1, T2>(this Task<ValueTuple<T, T1>> objTask, Func<T, T1, Task<T2>> getWith)
+    {
+        var obj = await objTask;
+        return (obj.Item1, obj.Item2, await getWith(obj.Item1, obj.Item2));
+    }
+
+    public static async Task<ValueTuple<T, T1, T2, T3>> ThenGetWith<T, T1, T2, T3>(this Task<ValueTuple<T, T1, T2>> objTask, Func<T, T1, T2, T3> getWith)
+    {
+        var obj = await objTask;
+        return (obj.Item1, obj.Item2, obj.Item3, getWith(obj.Item1, obj.Item2, obj.Item3));
+    }
+
+    public static async Task<ValueTuple<T, T1, T2, T3>> ThenGetWith<T, T1, T2, T3>(this Task<ValueTuple<T, T1, T2>> objTask, Func<T, T1, T2, Task<T3>> getWith)
+    {
+        var obj = await objTask;
+        return (obj.Item1, obj.Item2, obj.Item3, await getWith(obj.Item1, obj.Item2, obj.Item3));
+    }
+
     #region Tuple await all
 
     public static TaskAwaiter<(T1, T2)> GetAwaiter<T1, T2>(this (Task<T1>, Task<T2>) tasksTuple)
@@ -1117,17 +1109,4 @@ public static class TaskExtension
     }
 
     #endregion
-
-    /// <summary>
-    /// Takes a Task&lt;object&gt;, awaits it, and then returns
-    /// the result if it’s actually a T – otherwise default(T).
-    /// Works for both classes and structs.
-    /// </summary>
-    public static async Task<T> UnboxAsync<T>(this Task<object?> source)
-    {
-        var o = await source.ConfigureAwait(false);
-        return o is T t
-            ? t
-            : default!;
-    }
 }

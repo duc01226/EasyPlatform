@@ -1,3 +1,5 @@
+#region
+
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
@@ -8,6 +10,8 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Easy.Platform.Common.JsonSerialization;
+
+#endregion
 
 namespace Easy.Platform.Common.Extensions;
 
@@ -162,10 +166,9 @@ public static class ObjectGeneralExtension
     private static List<PropertyInfo> CachedIsValuesDifferentTypeToPropsDictFactory(Type type)
     {
         return type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(
-                propInfo => propInfo.GetCustomAttribute<JsonIgnoreAttribute>() == null &&
-                            propInfo.GetCustomAttribute<PlatformIgnoreCheckValueDiffAttribute>() == null &&
-                            propInfo.GetCustomAttribute<IgnoreDataMemberAttribute>() == null)
+            .Where(propInfo => propInfo.GetCustomAttribute<JsonIgnoreAttribute>() == null &&
+                               propInfo.GetCustomAttribute<PlatformIgnoreCheckValueDiffAttribute>() == null &&
+                               propInfo.GetCustomAttribute<IgnoreDataMemberAttribute>() == null)
             .ToList();
     }
 
@@ -239,14 +242,13 @@ public static class ObjectGeneralExtension
         if (properties.Count == 0) return null;
 
         var changedFields = properties
-            .Select(
-                prop =>
-                {
-                    var updatedObjectValue = prop.GetValue(updatedObject);
-                    var originalObjectValue = prop.GetValue(originalObject);
+            .Select(prop =>
+            {
+                var updatedObjectValue = prop.GetValue(updatedObject);
+                var originalObjectValue = prop.GetValue(originalObject);
 
-                    return (propName: prop.Name, updatedObjectValue, isValuesDifferent: IsValuesDifferent(updatedObjectValue, originalObjectValue));
-                })
+                return (propName: prop.Name, updatedObjectValue, isValuesDifferent: IsValuesDifferent(updatedObjectValue, originalObjectValue));
+            })
             .Where(p => p.isValuesDifferent)
             .Select(p => new KeyValuePair<string, object>(p.propName, p.updatedObjectValue));
 
@@ -443,6 +445,36 @@ public static class ObjectGeneralExtension
     public static bool Is<TObject>(this TObject obj, Func<TObject, bool> func)
     {
         return func(obj);
+    }
+
+    public static ValueTuple<T, T1> GetWith<T, T1>(this T obj, Func<T, T1> getWith)
+    {
+        return (obj, getWith(obj));
+    }
+
+    public static async Task<ValueTuple<T, T1>> GetWith<T, T1>(this T obj, Func<T, Task<T1>> getWith)
+    {
+        return (obj, await getWith(obj));
+    }
+
+    public static ValueTuple<T, T1, T2> GetWith<T, T1, T2>(this ValueTuple<T, T1> obj, Func<T, T1, T2> getWith)
+    {
+        return (obj.Item1, obj.Item2, getWith(obj.Item1, obj.Item2));
+    }
+
+    public static async Task<ValueTuple<T, T1, T2>> GetWith<T, T1, T2>(this ValueTuple<T, T1> obj, Func<T, T1, Task<T2>> getWith)
+    {
+        return (obj.Item1, obj.Item2, await getWith(obj.Item1, obj.Item2));
+    }
+
+    public static ValueTuple<T, T1, T2, T3> GetWith<T, T1, T2, T3>(this ValueTuple<T, T1, T2> obj, Func<T, T1, T2, T3> getWith)
+    {
+        return (obj.Item1, obj.Item2, obj.Item3, getWith(obj.Item1, obj.Item2, obj.Item3));
+    }
+
+    public static async Task<ValueTuple<T, T1, T2, T3>> GetWith<T, T1, T2, T3>(this ValueTuple<T, T1, T2> obj, Func<T, T1, T2, Task<T3>> getWith)
+    {
+        return (obj.Item1, obj.Item2, obj.Item3, await getWith(obj.Item1, obj.Item2, obj.Item3));
     }
 }
 

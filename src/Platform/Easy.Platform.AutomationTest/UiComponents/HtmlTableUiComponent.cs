@@ -1,5 +1,9 @@
+#region
+
 using Easy.Platform.AutomationTest.Extensions;
 using OpenQA.Selenium;
+
+#endregion
 
 namespace Easy.Platform.AutomationTest.UiComponents;
 
@@ -125,7 +129,7 @@ public class HtmlTableUiComponent : UiComponent<HtmlTableUiComponent>
 
                 return rowCells
                     .Select((cellElement, cellIndex) => TryBuildCell(headers, cellElement, cellIndex))
-                    .Where(p => p != null)
+                    .WhereNotNull()
                     .As<IEnumerable<Cell>>();
             }
             // catch StaleElementReferenceException when if table has been updated and render again then just consider that row is empty no cell

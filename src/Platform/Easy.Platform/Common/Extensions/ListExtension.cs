@@ -1,10 +1,15 @@
 #nullable enable
+
+#region
+
 using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using Easy.Platform.Common.Utils;
+
+#endregion
 
 namespace Easy.Platform.Common.Extensions;
 
@@ -295,12 +300,11 @@ public static class ListExtension
     {
         var distinctByItemKeys = distinctByKeySelector != null ? items.Select(p => distinctByKeySelector(p)).ToHashSet() : null;
 
-        addItems.ForEach(
-            addItem =>
-            {
-                if ((distinctByItemKeys != null && !distinctByItemKeys.Contains(distinctByKeySelector!(addItem))) ||
-                    (distinctByItemKeys == null && !items.Contains(addItem))) items.Add(addItem);
-            });
+        addItems.ForEach(addItem =>
+        {
+            if ((distinctByItemKeys != null && !distinctByItemKeys.Contains(distinctByKeySelector!(addItem))) ||
+                (distinctByItemKeys == null && !items.Contains(addItem))) items.Add(addItem);
+        });
 
         return items.ToList();
     }
@@ -310,6 +314,27 @@ public static class ListExtension
         return condition
             ? items.Where(predicate.Compile()).ToList()
             : items.ToList();
+    }
+
+    public static IEnumerable<T> WhereNotNull<T>(this IEnumerable<T> items)
+    {
+#pragma warning disable S2955
+        return items.Where(p => p != null)!;
+#pragma warning restore S2955
+    }
+
+    public static List<T> WhereNotNull<T>(this List<T?> items)
+    {
+#pragma warning disable S2955
+        return items.Where(p => p != null).ToList()!;
+#pragma warning restore S2955
+    }
+
+    public static IQueryable<T> WhereNotNull<T>(this IQueryable<T?> items)
+    {
+#pragma warning disable S2955
+        return items.Where(p => p != null)!;
+#pragma warning restore S2955
     }
 
     public static bool ContainsAll<T>(this IEnumerable<T> items, IList<T> containAllItems)
@@ -1062,12 +1087,11 @@ public static class ListExtension
         var matchedFilterResult = new List<TSource>();
         var remainingFilterResult = new List<TSource>();
 
-        source.ForEach(
-            item =>
-            {
-                if (predicate(item)) matchedFilterResult.Add(item);
-                else remainingFilterResult.Add(item);
-            });
+        source.ForEach(item =>
+        {
+            if (predicate(item)) matchedFilterResult.Add(item);
+            else remainingFilterResult.Add(item);
+        });
 
         return (matchedFilterResult, remainingFilterResult);
     }

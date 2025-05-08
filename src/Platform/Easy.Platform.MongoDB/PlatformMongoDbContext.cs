@@ -1,3 +1,5 @@
+#region
+
 using System.Diagnostics;
 using System.Linq.Expressions;
 using Easy.Platform.Application;
@@ -17,6 +19,8 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
+
+#endregion
 
 namespace Easy.Platform.MongoDB;
 
@@ -1285,7 +1289,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
             .Assembly.GetTypes()
             .Where(p => p.IsAssignableTo(typeof(PlatformMongoMigrationExecutor<TDbContext>)) && !p.IsAbstract)
             .Select(p => (PlatformMongoMigrationExecutor<TDbContext>)Activator.CreateInstance(p))
-            .Where(p => p != null)
+            .WhereNotNull()
             .ToList();
         return results;
     }
