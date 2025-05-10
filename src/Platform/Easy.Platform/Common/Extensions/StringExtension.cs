@@ -3,6 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Contracts;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Web;
 using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Validations;
 
@@ -203,5 +204,37 @@ public static class StringExtension
     public static bool EqualsIgnoreCase(this string? str, string? value)
     {
         return (str == null && value == null) || (str != null && value != null && str.Equals(value, StringComparison.OrdinalIgnoreCase));
+    }
+
+    // <summary>
+    /// Strips HTML tags from a string while preserving readable formatting.
+    /// Converts HTML line-break elements (like &lt;br&gt;, &lt;p&gt;, &lt;li&gt;, etc.) into line breaks,
+    /// decodes HTML entities (like &amp;nbsp;, &amp;amp;), and removes all remaining HTML tags.
+    /// Normalizes whitespace and collapses extra blank lines.
+    /// </summary>
+    /// <param name="html">The HTML string to clean.</param>
+    /// <returns>A plain text string with formatting preserved for readability.</returns>
+    public static string StripHtml(this string html)
+    {
+        if (string.IsNullOrWhiteSpace(html)) return string.Empty;
+
+        var text = html;
+
+        // Replace line-break tags with newlines
+        text = Regex.Replace(text, @"<(br|p|div|li|h[1-6])[^>]*>", "\n", RegexOptions.IgnoreCase);
+        text = Regex.Replace(text, @"</(p|div|li|h[1-6])>", "\n", RegexOptions.IgnoreCase);
+
+        // Decode HTML entities like &nbsp;, &amp;, etc.
+        text = HttpUtility.HtmlDecode(text);
+
+        // Remove remaining HTML tags
+        text = Regex.Replace(text, "<.*?>", string.Empty);
+
+        // Normalize line breaks and spaces
+        text = Regex.Replace(text, @"\n{2,}", "\n"); // collapse multiple \n
+        text = Regex.Replace(text, @"[ \t]+", " "); // collapse multiple spaces/tabs
+        text = text.Trim();
+
+        return text;
     }
 }

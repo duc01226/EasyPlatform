@@ -21,9 +21,9 @@ namespace Easy.Platform.CustomAnalyzers.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public sealed class StepFlowAnalyzer : DiagnosticAnalyzer
 {
-    public const string MissingBlankLineId = "CUSTOM_ANALYZERS_STEP001";
-    public const string UnexpectedBlankLineId = "CUSTOM_ANALYZERS_STEP002";
-    public const string MissingPrevOutputsId = "CUSTOM_ANALYZERS_STEP003";
+    public const string MissingBlankLineId = "EASY_PLATFORM_ANALYZERS_STEP001";
+    public const string UnexpectedBlankLineId = "EASY_PLATFORM_ANALYZERS_STEP002";
+    public const string MissingPrevOutputsId = "EASY_PLATFORM_ANALYZERS_STEP003";
 
     private static readonly Dictionary<string, DiagnosticDescriptor> Rules = new()
     {

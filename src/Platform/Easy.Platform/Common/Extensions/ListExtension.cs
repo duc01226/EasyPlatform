@@ -184,6 +184,11 @@ public static class ListExtension
         }
     }
 
+    public static void UpsertBy<T>(this List<T> items, Func<T, object?> upsertByFn, IList<T> upsertItems, Func<T, T, T>? updateFn = null)
+    {
+        UpsertBy(items.As<IList<T>>(), upsertByFn, upsertItems, updateFn);
+    }
+
     /// <summary>
     /// Replaces a list of items by removing any items that do not match the selector key in the new values,
     /// and upserts (updates or inserts) the remaining items.
@@ -1202,5 +1207,121 @@ public static class ListExtension
     public static List<T> DuplicatedItems<T>(this IEnumerable<T> items) where T : IEquatable<T>
     {
         return items.GroupBy(p => p).Where(p => p.Count() > 1).Select(p => p.Key).ToList();
+    }
+
+    /// <summary>
+    /// Removes all elements from the collection that satisfy the provided predicate.
+    /// </summary>
+    /// <typeparam name="T">Element type.</typeparam>
+    /// <param name="source">The collection to modify.</param>
+    /// <param name="predicate">Function to test each element.</param>
+    /// <param name="removedItems">Outputs the list of elements that were removed.</param>
+    public static void RemoveWhere<T>(
+        this ICollection<T> source,
+        Func<T, bool> predicate,
+        out List<T> removedItems)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(predicate);
+
+        // Gather to-remove to avoid modifying while iterating
+        var toRemove = source.Where(predicate).ToList();
+        foreach (var item in toRemove)
+            source.Remove(item);
+
+        removedItems = toRemove;
+    }
+
+    /// <summary>
+    /// Inserts new items or updates existing ones in the collection based on a key.
+    /// </summary>
+    /// <typeparam name="T">Element type.</typeparam>
+    /// <typeparam name="TKey">Key type.</typeparam>
+    /// <param name="source">The collection to modify.</param>
+    /// <param name="keySelector">Function to extract the key from each element.</param>
+    /// <param name="newItems">The items to upsert.</param>
+    /// <param name="updateFn">
+    /// Optional: given (existingItem, newItem), returns the item to keep.
+    /// If null, the existing item is removed and the new item is added.
+    /// </param>
+    public static void UpsertBy<T>(
+        this ICollection<T> source,
+        Func<T, object?> keySelector,
+        IEnumerable<T> newItems,
+        Func<T, T, T>? updateFn = null)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(keySelector);
+        ArgumentNullException.ThrowIfNull(newItems);
+
+        // Build a lookup of existing items by key
+        var existingByKey = source
+            .GroupBy(keySelector)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        foreach (var newItem in newItems)
+        {
+            var key = keySelector(newItem);
+            if (existingByKey.TryGetValue(key, out var existing))
+            {
+                if (updateFn != null)
+                {
+                    // replace existing with the result of updateFn
+                    var updated = updateFn(existing, newItem);
+                    // remove old, add updated
+                    source.Remove(existing);
+                    source.Add(updated);
+                    // update map for subsequent upserts
+                    existingByKey[key] = updated;
+                }
+                else if (!ReferenceEquals(existing, newItem))
+                {
+                    // no custom update: replace
+                    source.Remove(existing);
+                    source.Add(newItem);
+                    existingByKey[key] = newItem;
+                }
+            }
+            else
+            {
+                // new key: just add
+                source.Add(newItem);
+                existingByKey[key] = newItem;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Replaces a collection's contents by removing any items whose keys are not present
+    /// in the newItems, then upserting (insert or update) the items in newItems.
+    /// </summary>
+    /// <typeparam name="T">Element type.</typeparam>
+    /// <typeparam name="TKey">Key type.</typeparam>
+    /// <param name="source">The collection to modify.</param>
+    /// <param name="keySelector">Function to extract the key from each element.</param>
+    /// <param name="newItems">The new set of items to replace/upsert with.</param>
+    /// <param name="updateFn">
+    /// Optional: given (existingItem, newItem), returns the item to keep.
+    /// If null, the existing item is removed and the new item is added.
+    /// </param>
+    public static void ReplaceBy<T>(
+        this ICollection<T> source,
+        Func<T, object?> keySelector,
+        IEnumerable<T> newItems,
+        Func<T, T, T>? updateFn = null)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(keySelector);
+        ArgumentNullException.ThrowIfNull(newItems);
+
+        // Materialize newItems to avoid multiple enumeration
+        var newList = newItems.ToList();
+        var newKeys = new HashSet<object?>(newList.Select(keySelector));
+
+        // Remove any existing items not in the new key set
+        source.RemoveWhere(item => !newKeys.Contains(keySelector(item)), out _);
+
+        // Upsert all new items
+        source.UpsertBy(keySelector, newList, updateFn);
     }
 }

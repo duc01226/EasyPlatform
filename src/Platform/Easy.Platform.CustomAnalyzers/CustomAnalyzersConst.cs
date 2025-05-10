@@ -6,5 +6,6 @@ public static class CustomAnalyzersConst
     {
         public const string Usage = "Usage";
         public const string CodeFlow = "CodeFlow";
+        public const string Performance = "Performance";
     }
 }

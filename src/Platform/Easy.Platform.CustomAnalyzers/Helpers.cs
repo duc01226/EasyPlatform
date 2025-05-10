@@ -147,6 +147,12 @@ internal static class Helpers
                 t.IsKind(SyntaxKind.SingleLineCommentTrivia) ||
                 t.IsKind(SyntaxKind.MultiLineCommentTrivia));
 
+    public static bool IsHashSet(ITypeSymbol type)
+    {
+        return type.OriginalDefinition is INamedTypeSymbol namedType &&
+               namedType.ConstructedFrom?.ToDisplayString() == "System.Collections.Generic.HashSet<T>";
+    }
+
     /// <summary>
     /// Wraps statement info with its syntax node, output symbols, and referenced identifiers.
     /// </summary>

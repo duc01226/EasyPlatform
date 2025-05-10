@@ -1,9 +1,13 @@
+#region
+
 using Easy.Platform.Application;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
+
+#endregion
 
 namespace PlatformExampleApp.TextSnippet.Application.DataSeeders;
 
@@ -37,6 +41,7 @@ public sealed class DummyPerformanceTestTextSnippetApplicationDataSeeder : Platf
         if (await textSnippetRepository.CountAsync() >= numberOfItemsGroupSeedTextSnippet)
             return;
 
+#pragma warning disable EASY_PLATFORM_ANALYZERS_PERF002
         for (var i = 0; i < numberOfItemsGroupSeedTextSnippet; i++)
         {
             using (var uow = UnitOfWorkManager.Begin())
@@ -54,5 +59,6 @@ public sealed class DummyPerformanceTestTextSnippetApplicationDataSeeder : Platf
                 await uow.CompleteAsync();
             }
         }
+#pragma warning restore EASY_PLATFORM_ANALYZERS_PERF002
     }
 }

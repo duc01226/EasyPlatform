@@ -1,9 +1,13 @@
+#region
+
 using Easy.Platform.Application;
 using Easy.Platform.Domain.UnitOfWork;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.Repositories;
+
+#endregion
 
 namespace PlatformExampleApp.TextSnippet.Application.DataSeeders;
 
@@ -42,6 +46,7 @@ public sealed class TextSnippetApplicationDataSeeder : PlatformApplicationDataSe
         if (await textSnippetRepository.AnyAsync(p => p.SnippetText.StartsWith("Example")))
             return;
 
+#pragma warning disable EASY_PLATFORM_ANALYZERS_PERF002
         for (var i = 0; i < 20; i++)
         {
             await multiDbDemoEntityRepository.CreateOrUpdateAsync(
@@ -51,6 +56,7 @@ public sealed class TextSnippetApplicationDataSeeder : PlatformApplicationDataSe
                     Name = $"Multi Db Demo Entity {i}"
                 });
         }
+#pragma warning restore EASY_PLATFORM_ANALYZERS_PERF002
     }
 
     private async Task SeedTextSnippet()
@@ -60,6 +66,7 @@ public sealed class TextSnippetApplicationDataSeeder : PlatformApplicationDataSe
         if (await textSnippetRepository.CountAsync() >= numberOfItemsGroupSeedTextSnippet)
             return;
 
+#pragma warning disable EASY_PLATFORM_ANALYZERS_PERF002
         for (var i = 0; i < numberOfItemsGroupSeedTextSnippet; i++)
         {
             await textSnippetRepository.CreateOrUpdateAsync(
@@ -72,5 +79,6 @@ public sealed class TextSnippetApplicationDataSeeder : PlatformApplicationDataSe
                 TextSnippetEntity.Create(id: Ulid.NewUlid().ToString(), snippetText: $"Example Ghi {i}", fullText: $"This is full text of Example Ghi {i} snippet text"),
                 customCheckExistingPredicate: p => p.SnippetText == $"Example Ghi {i}");
         }
+#pragma warning restore EASY_PLATFORM_ANALYZERS_PERF002
     }
 }

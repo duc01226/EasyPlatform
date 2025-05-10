@@ -13,7 +13,7 @@ namespace Easy.Platform.CustomAnalyzers.Analyzers;
 [DiagnosticAnalyzer(LanguageNames.CSharp)]
 public class DisallowUsingStaticAnalyzer : DiagnosticAnalyzer
 {
-    public const string DiagnosticId = "CUSTOM_ANALYZERS_DISALLOW_USING_STATIC";
+    public const string DiagnosticId = "EASY_PLATFORM_ANALYZERS_DISALLOW_USING_STATIC";
 
     private static readonly DiagnosticDescriptor Rule = new(
         DiagnosticId,
