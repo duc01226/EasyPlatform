@@ -1,3 +1,4 @@
+using Easy.Platform.Common;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Common.Extensions;
 using Microsoft.Extensions.Configuration;
@@ -26,6 +27,9 @@ public abstract class PlatformMessageBusModule : PlatformInfrastructureModule
 
     protected virtual PlatformMessageBusConfig MessageBusConfigFactory(IServiceProvider sp)
     {
-        return new PlatformMessageBusConfig();
+        return new PlatformMessageBusConfig
+        {
+            EnableLogConsumerProcessTime = !PlatformEnvironment.IsDevelopment
+        };
     }
 }

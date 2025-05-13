@@ -17,9 +17,9 @@ public interface IPlatformBackgroundJobExecutor
     public void Execute();
 
     /// <summary>
-    /// Config the time in milliseconds to log warning if the process job time is over ProcessWarningTimeMilliseconds.
+    /// Config the time to log warning if the process job time is over ProcessWarningTime.
     /// </summary>
-    public double? SlowProcessWarningTimeMilliseconds();
+    public TimeSpan? SlowProcessWarningTime();
 }
 
 /// <summary>
@@ -54,9 +54,9 @@ public abstract class PlatformBackgroundJobExecutor<TParam> : IPlatformBackgroun
     protected ILoggerFactory LoggerFactory { get; }
 
     /// <summary>
-    /// Config the time in milliseconds to log warning if the process job time is over ProcessWarningTimeMilliseconds.
+    /// Config the time to log warning if the process job time is over ProcessWarningTime.
     /// </summary>
-    public virtual double? SlowProcessWarningTimeMilliseconds()
+    public virtual TimeSpan? SlowProcessWarningTime()
     {
         return null;
     }
@@ -65,7 +65,9 @@ public abstract class PlatformBackgroundJobExecutor<TParam> : IPlatformBackgroun
     {
         try
         {
-            if (SlowProcessWarningTimeMilliseconds() > 0)
+            var slowProcessWarningTimeTotalMilliseconds = SlowProcessWarningTime()?.TotalMilliseconds ?? 0;
+
+            if (slowProcessWarningTimeTotalMilliseconds > 0)
             {
                 if (LogDebugInformation())
                     Logger.LogInformation("BackgroundJobExecutor invoking background job {GetTypeFullName} STARTED", GetType().FullName);
@@ -78,12 +80,12 @@ public abstract class PlatformBackgroundJobExecutor<TParam> : IPlatformBackgroun
                             var logMessage =
                                 $"ElapsedMilliseconds:{elapsedMilliseconds}.";
 
-                            if (elapsedMilliseconds >= SlowProcessWarningTimeMilliseconds())
+                            if (elapsedMilliseconds >= slowProcessWarningTimeTotalMilliseconds)
                             {
                                 Logger.LogWarning(
                                     "BackgroundJobExecutor invoking background job {GetTypeFullName} FINISHED. SlowProcessWarningTimeMilliseconds:{SlowProcessWarningTimeMilliseconds}. {LogMessage}",
                                     GetType().FullName,
-                                    SlowProcessWarningTimeMilliseconds(),
+                                    slowProcessWarningTimeTotalMilliseconds,
                                     logMessage);
                             }
                             else if (LogDebugInformation())

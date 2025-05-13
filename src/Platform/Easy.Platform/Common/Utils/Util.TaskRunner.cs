@@ -16,7 +16,6 @@ public static partial class Util
         public const int DefaultWaitIntervalSeconds = 2;
         public const int DefaultResilientRetryCount = 2;
         public const int DefaultResilientDelaySeconds = 1;
-        public const int DefaultBackgroundResilientRetryCount = 20;
         public static readonly Func<int, TimeSpan> DefaultBackgroundRetryDelayProvider = retryAttempt => retryAttempt.Seconds();
 
         public static readonly Lazy<SemaphoreSlim> BackgroundActionQueueLimitLock =
@@ -34,14 +33,16 @@ public static partial class Util
 
         public static int DefaultParallelIoTaskMaxConcurrent { get; set; } = GetDefaultParallelIoTaskMaxConcurrent();
 
-        public static int DefaultParallelComputeTaskMaxConcurrent { get; set; } =
-            (Environment.ProcessorCount * DefaultNumberOfParallelComputeTasksPerCpuRatio)
-            .PipeIf(PlatformEnvironment.IsDevelopment, p => Math.Min(p, DefaultNumberOfParallelComputeTasksPerCpuRatio * 2));
+        public static int DefaultParallelComputeTaskMaxConcurrent { get; set; } = GetDefaultNumberOfParallelIoTaskMaxConcurrent();
 
         public static int GetDefaultParallelIoTaskMaxConcurrent()
         {
-            return (Environment.ProcessorCount * DefaultNumberOfParallelIoTasksPerCpuRatio)
-                .PipeIf(PlatformEnvironment.IsDevelopment, p => Math.Min(p, DefaultNumberOfParallelIoTasksPerCpuRatio * 2));
+            return Environment.ProcessorCount * DefaultNumberOfParallelIoTasksPerCpuRatio;
+        }
+
+        public static int GetDefaultNumberOfParallelIoTaskMaxConcurrent()
+        {
+            return Environment.ProcessorCount * DefaultNumberOfParallelComputeTasksPerCpuRatio;
         }
 
         /// <summary>
@@ -106,7 +107,6 @@ public static partial class Util
             CancellationToken cancellationToken = default,
             bool logFullStackTraceBeforeBackgroundTask = false)
         {
-            retryCount ??= DefaultBackgroundResilientRetryCount;
             retryDelayProvider ??= DefaultBackgroundRetryDelayProvider;
 
             // Must use stack trace BEFORE Task.Run to run some new action in background. BECAUSE after call get data function, the stack trace get lost, only back to task.run.
@@ -137,7 +137,7 @@ public static partial class Util
                             _ => WaitRetryThrowFinalExceptionAsync(
                                 LimitLockAction,
                                 retryDelayProvider,
-                                retryCount.Value,
+                                retryCount ?? DefaultResilientRetryCount,
                                 onRetry: (ex, span, retryAttempt, context) =>
                                 {
                                     loggerFactory?.Invoke().LogError(ex.BeautifyStackTrace(), "Run in background thread retry failed.");
@@ -176,7 +176,6 @@ public static partial class Util
             CancellationToken cancellationToken = default,
             bool logFullStackTraceBeforeBackgroundTask = false)
         {
-            retryCount ??= DefaultBackgroundResilientRetryCount;
             retryDelayProvider ??= DefaultBackgroundRetryDelayProvider;
 
             // Must use stack trace BEFORE Task.Run to run some new action in background. BECAUSE after call get data function, the stack trace get lost, only back to task.run.
@@ -209,7 +208,7 @@ public static partial class Util
                             _ => WaitRetryThrowFinalExceptionAsync(
                                 LimitLockAction,
                                 retryDelayProvider,
-                                retryCount.Value,
+                                retryCount ?? DefaultResilientRetryCount,
                                 onRetry: (ex, span, retryAttempt, context) =>
                                 {
                                     loggerFactory?.Invoke().LogError(ex.BeautifyStackTrace(), "Run in background thread retry failed.");
@@ -248,7 +247,6 @@ public static partial class Util
             CancellationToken cancellationToken = default,
             bool logFullStackTraceBeforeBackgroundTask = false)
         {
-            retryCount ??= DefaultBackgroundResilientRetryCount;
             retryDelayProvider ??= DefaultBackgroundRetryDelayProvider;
 
             // Must use stack trace BEFORE Task.Run to run some new action in background. BECAUSE after call get data function, the stack trace get lost, only back to task.run.
@@ -265,7 +263,7 @@ public static partial class Util
                             () => WaitRetryThrowFinalException(
                                 action,
                                 retryDelayProvider,
-                                retryCount.Value,
+                                retryCount ?? DefaultResilientRetryCount,
                                 onRetry: (ex, span, retryAttempt, context) =>
                                 {
                                     loggerFactory?.Invoke().LogError(ex.BeautifyStackTrace(), "Run in background thread retry failed.");

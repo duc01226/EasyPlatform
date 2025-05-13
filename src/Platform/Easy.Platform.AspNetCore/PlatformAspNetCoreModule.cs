@@ -65,11 +65,12 @@ public abstract class PlatformAspNetCoreModule : PlatformModule
     }
 
     /// <summary>
-    /// Configures the options for the slow request warning middleware. See <see cref="PlatformSlowRequestWarningMiddleware"/>
+    /// Configures the options for the slow request warning middleware. See <see cref="PlatformSlowRequestWarningMiddleware"/>.
     /// </summary>
     /// <param name="options"></param>
     protected virtual void SlowRequestWarningMiddlewareOptionsConfig(PlatformSlowRequestWarningMiddlewareOptions options)
     {
+        options.Enabled = !PlatformEnvironment.IsDevelopment;
     }
 
     /// <summary>
@@ -92,8 +93,7 @@ public abstract class PlatformAspNetCoreModule : PlatformModule
     {
         base.InternalRegister(serviceCollection);
 
-        serviceCollection.Configure<JsonOptions>(
-            options => PlatformJsonSerializer.ConfigApplyCurrentOptions(options.SerializerOptions));
+        serviceCollection.Configure<JsonOptions>(options => PlatformJsonSerializer.ConfigApplyCurrentOptions(options.SerializerOptions));
         RegisterRequestContext(serviceCollection);
         AddDefaultCorsPolicy(serviceCollection);
         serviceCollection.AddHttpClient();
@@ -136,27 +136,25 @@ public abstract class PlatformAspNetCoreModule : PlatformModule
     /// <param name="serviceCollection">The service collection to add the policy to.</param>
     protected virtual void AddDefaultCorsPolicy(IServiceCollection serviceCollection)
     {
-        serviceCollection.AddCors(
-            options => options.AddPolicy(
-                PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy,
-                builder =>
-                    builder.AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .WithExposedHeaders(DefaultCorsPolicyExposedHeaders())
-                        .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
+        serviceCollection.AddCors(options => options.AddPolicy(
+            PlatformAspNetCoreModuleDefaultPolicies.DevelopmentCorsPolicy,
+            builder =>
+                builder.AllowAnyOrigin()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .WithExposedHeaders(DefaultCorsPolicyExposedHeaders())
+                    .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
 
-        serviceCollection.AddCors(
-            options => options.AddPolicy(
-                PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy,
-                builder =>
-                    builder.WithOrigins(GetAllowCorsOrigins(Configuration) ?? [])
-                        .SetIsOriginAllowedToAllowWildcardSubdomains()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader()
-                        .AllowCredentials()
-                        .WithExposedHeaders(DefaultCorsPolicyExposedHeaders())
-                        .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
+        serviceCollection.AddCors(options => options.AddPolicy(
+            PlatformAspNetCoreModuleDefaultPolicies.CorsPolicy,
+            builder =>
+                builder.WithOrigins(GetAllowCorsOrigins(Configuration) ?? [])
+                    .SetIsOriginAllowedToAllowWildcardSubdomains()
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials()
+                    .WithExposedHeaders(DefaultCorsPolicyExposedHeaders())
+                    .SetPreflightMaxAge(DefaultCorsPolicyPreflightMaxAge())));
     }
 
     /// <summary>

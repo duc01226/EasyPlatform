@@ -15,7 +15,7 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
 
     protected readonly IPlatformApplicationSettingContext ApplicationSettingContext;
     protected readonly ConcurrentDictionary<string, object?> FullRequestContextData = new();
-    protected readonly ConcurrentDictionary<string, object?> IgnoreRequestContextKeysRequestContextData = new();
+    protected readonly ConcurrentDictionary<string, object?> NotIgnoredRequestContextKeysRequestContextData = new();
     protected readonly IServiceProvider ServiceProvider;
     protected readonly Dictionary<string, Lazy<object?>> LazyLoadCurrentRequestContextAccessorRegisters;
 
@@ -33,8 +33,12 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
     {
         ArgumentNullException.ThrowIfNull(contextKey);
 
-        if (PlatformRequestContextHelper.TryGetValue(FullRequestContextData, contextKey, out T item)) return item;
-        if (PlatformRequestContextHelper.TryGetValue(LazyLoadCurrentRequestContextAccessorRegisters, contextKey, out T lazyItem)) return lazyItem;
+        if (PlatformRequestContextHelper.TryGetValue(FullRequestContextData, contextKey, out T? foundValue)) return foundValue;
+        if (PlatformRequestContextHelper.TryGetValue(LazyLoadCurrentRequestContextAccessorRegisters, contextKey, out foundValue))
+        {
+            FullRequestContextData.TryAdd(contextKey, foundValue);
+            return foundValue;
+        }
 
         return default;
     }
@@ -52,7 +56,7 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
 
         FullRequestContextData.Upsert(contextKey, value);
         if (!ApplicationSettingContext.GetIgnoreRequestContextKeys().Contains(contextKey))
-            IgnoreRequestContextKeysRequestContextData.Upsert(contextKey, value);
+            NotIgnoredRequestContextKeysRequestContextData.Upsert(contextKey, value);
     }
 
     public List<string> GetAllIncludeIgnoredKeys()
@@ -67,25 +71,25 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
 
     public List<string> GetAllKeys()
     {
-        return IgnoreRequestContextKeysRequestContextData.Keys.ToList();
+        return NotIgnoredRequestContextKeysRequestContextData.Keys.ToList();
     }
 
     public IDictionary<string, object?> GetAllKeyValues()
     {
-        return IgnoreRequestContextKeysRequestContextData;
+        return NotIgnoredRequestContextKeysRequestContextData;
     }
 
     public void Add(KeyValuePair<string, object> item)
     {
         FullRequestContextData.Upsert(item.Key, item.Value);
         if (!ApplicationSettingContext.GetIgnoreRequestContextKeys().Contains(item.Key))
-            IgnoreRequestContextKeysRequestContextData.Upsert(item.Key, item.Value);
+            NotIgnoredRequestContextKeysRequestContextData.Upsert(item.Key, item.Value);
     }
 
     public void Clear()
     {
         FullRequestContextData.Clear();
-        IgnoreRequestContextKeysRequestContextData.Clear();
+        NotIgnoredRequestContextKeysRequestContextData.Clear();
     }
 
     public bool Contains(KeyValuePair<string, object> item)
@@ -101,7 +105,7 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
 
     public bool Remove(KeyValuePair<string, object> item)
     {
-        IgnoreRequestContextKeysRequestContextData.Remove(item.Key, out _);
+        NotIgnoredRequestContextKeysRequestContextData.Remove(item.Key, out _);
         return FullRequestContextData.Remove(item.Key, out _);
     }
 
@@ -122,7 +126,7 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
     {
         FullRequestContextData.Upsert(key, value);
         if (!ApplicationSettingContext.GetIgnoreRequestContextKeys().Contains(key))
-            IgnoreRequestContextKeysRequestContextData.Upsert(key, value);
+            NotIgnoredRequestContextKeysRequestContextData.Upsert(key, value);
     }
 
     public bool ContainsKey(string key)
@@ -132,7 +136,7 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
 
     public bool Remove(string key)
     {
-        IgnoreRequestContextKeysRequestContextData.Remove(key, out _);
+        NotIgnoredRequestContextKeysRequestContextData.Remove(key, out _);
         return FullRequestContextData.Remove(key, out _);
     }
 
@@ -148,7 +152,7 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
         {
             FullRequestContextData[key] = value;
             if (!ApplicationSettingContext.GetIgnoreRequestContextKeys().Contains(key))
-                IgnoreRequestContextKeysRequestContextData.Upsert(key, value);
+                NotIgnoredRequestContextKeysRequestContextData.Upsert(key, value);
         }
     }
 

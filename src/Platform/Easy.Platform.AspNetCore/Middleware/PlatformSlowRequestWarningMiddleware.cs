@@ -2,6 +2,7 @@ using System.IO;
 using System.Text;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.AspNetCore.Middleware.Abstracts;
+using Easy.Platform.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -16,6 +17,7 @@ public class PlatformSlowRequestWarningMiddleware : PlatformMiddleware
     protected readonly PlatformSlowRequestWarningMiddlewareOptions Options;
     protected readonly ILogger<PlatformSlowRequestWarningMiddleware> Logger;
     protected readonly IPlatformApplicationRequestContextAccessor RequestContextAccessor;
+    protected readonly IServiceProvider ServiceProvider;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="PlatformSlowRequestWarningMiddleware"/> class.
@@ -24,9 +26,11 @@ public class PlatformSlowRequestWarningMiddleware : PlatformMiddleware
         RequestDelegate next,
         IOptions<PlatformSlowRequestWarningMiddlewareOptions> options,
         ILoggerFactory loggerFactory,
-        IPlatformApplicationRequestContextAccessor requestContextAccessor) : base(next)
+        IPlatformApplicationRequestContextAccessor requestContextAccessor,
+        IServiceProvider serviceProvider) : base(next)
     {
         RequestContextAccessor = requestContextAccessor;
+        ServiceProvider = serviceProvider;
         Logger = loggerFactory.CreateLogger<PlatformSlowRequestWarningMiddleware>();
         Options = options.Value;
     }
@@ -36,6 +40,12 @@ public class PlatformSlowRequestWarningMiddleware : PlatformMiddleware
     /// </summary>
     protected override async Task InternalInvokeAsync(HttpContext context)
     {
+        if (!Options.Enabled)
+        {
+            await Next(context);
+            return;
+        }
+
         var payload = context.Request.Method is "POST" or "PUT" or "PATCH"
                       && context.Request.ContentType?.Contains("application/json") == true
             ? await ReadRequestBodyAsync(context)
@@ -91,4 +101,9 @@ public class PlatformSlowRequestWarningMiddlewareOptions
     /// Gets or sets the slow process warning time in milliseconds.
     /// </summary>
     public int SlowProcessWarningTimeMilliseconds { get; set; } = 500;
+
+    /// <summary>
+    /// Value to determine enabling Warning for slow profile or not. Default value is !PlatformEnvironment.IsDevelopment;
+    /// </summary>
+    public bool Enabled { get; set; } = !PlatformEnvironment.IsDevelopment;
 }

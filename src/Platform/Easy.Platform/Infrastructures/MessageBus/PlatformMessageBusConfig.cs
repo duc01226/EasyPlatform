@@ -1,4 +1,6 @@
 #nullable enable
+using Easy.Platform.Common;
+
 namespace Easy.Platform.Infrastructures.MessageBus;
 
 public interface IPlatformMessageBusConfig
@@ -21,7 +23,7 @@ public class PlatformMessageBusConfig : IPlatformMessageBusConfig
     /// <summary>
     /// Config the time to true to log consumer process time
     /// </summary>
-    public bool EnableLogConsumerProcessTime { get; set; } = true;
+    public bool EnableLogConsumerProcessTime { get; set; } = !PlatformEnvironment.IsDevelopment;
 
     /// <summary>
     /// Config the time in milliseconds to log warning if the process consumer time is over LogConsumerProcessWarningTimeMilliseconds.
