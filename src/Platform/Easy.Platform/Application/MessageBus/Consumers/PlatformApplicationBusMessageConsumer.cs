@@ -194,10 +194,10 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
             retryProcessFailedMessageInSecondsUnit: InboxConfig.RetryProcessFailedMessageInSecondsUnit,
             handleExistingInboxMessage: HandleExistingInboxMessage,
             currentScopeConsumerInstance: this,
+            handleInUow: null,
             subQueueMessageIdPrefix: message.As<IPlatformSubMessageQueuePrefixSupport>()?.SubQueuePrefix(),
             autoDeleteProcessedMessageImmediately: AutoDeleteProcessedInboxEventMessageImmediately,
             needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage: NeedToCheckAnySameConsumerOtherPreviousNotProcessedInboxMessage,
-            handleInUow: null,
             allowHandleNewInboxMessageInBackground: AllowHandleNewInboxMessageInBackground);
     }
 }

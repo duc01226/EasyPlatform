@@ -350,7 +350,12 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                         p => p != null,
                         p => MappedUnitOfWork?.SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p));
 
-                if (!existingEntity.Id.Equals(entity.Id)) entity.Id = existingEntity.Id;
+                if (!existingEntity.Id.Equals(entity.Id))
+                {
+                    IUniqueCompositeIdSupport.EnsureNotUpdatePropFindInUniqueCompositeExpr<TEntity, TPrimaryKey>(entity, existingEntity);
+
+                    entity.Id = existingEntity.Id;
+                }
             }
 
             if (isEntityRowVersionEntityMissingConcurrencyUpdateToken)
@@ -714,6 +719,8 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
 
         if (existingEntity != null)
         {
+            IUniqueCompositeIdSupport.EnsureNotUpdatePropFindInUniqueCompositeExpr<TEntity, TPrimaryKey>(entity, existingEntity);
+
             return await UpdateAsync<TEntity, TPrimaryKey>(
                 entity.WithIf(!entity.Id.Equals(existingEntity.Id), entity => entity.Id = existingEntity.Id),
                 existingEntity,
@@ -859,7 +866,12 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                     p => p != null,
                     p => MappedUnitOfWork?.SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p));
 
-            if (!existingEntity.Id.Equals(entity.Id)) entity.Id = existingEntity.Id;
+            if (!existingEntity.Id.Equals(entity.Id))
+            {
+                IUniqueCompositeIdSupport.EnsureNotUpdatePropFindInUniqueCompositeExpr<TEntity, TPrimaryKey>(entity, existingEntity);
+
+                entity.Id = existingEntity.Id;
+            }
         }
 
         if (isEntityRowVersionEntityMissingConcurrencyUpdateToken && !onlySetData)

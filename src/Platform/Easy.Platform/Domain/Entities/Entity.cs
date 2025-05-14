@@ -1,10 +1,13 @@
+#region
+
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using System.Reflection;
 using Easy.Platform.Common.Extensions;
-using Easy.Platform.Common.JsonSerialization;
 using Easy.Platform.Common.Validations;
 using Easy.Platform.Common.Validations.Validators;
+
+#endregion
 
 namespace Easy.Platform.Domain.Entities;
 
@@ -36,17 +39,16 @@ public interface IEntity
 
             // Get the IDs of the entities => Ensure ids are the correct type (cast to the correct primary key type) => Create the Expression for the ids array
             var idsExpr = entities.SelectList(entity => Convert.ChangeType(entity.GetId(), idType))
-                .Pipe(
-                    typedIds =>
-                    {
-                        // Create an instance of a list of the specified ID type using Activator.CreateInstance
-                        var listInstance = Activator.CreateInstance(listIdType);
+                .Pipe(typedIds =>
+                {
+                    // Create an instance of a list of the specified ID type using Activator.CreateInstance
+                    var listInstance = Activator.CreateInstance(listIdType);
 
-                        // Use reflection to add the items to the list
-                        foreach (var id in typedIds) listIdAddMethodInfo.Invoke(listInstance, [id]);
+                    // Use reflection to add the items to the list
+                    foreach (var id in typedIds) listIdAddMethodInfo.Invoke(listInstance, [id]);
 
-                        return Expression.Constant(listInstance, listIdType);
-                    });
+                    return Expression.Constant(listInstance, listIdType);
+                });
 
             // Create the 'Contains' expression
             var containsExpr = Expression.Call(containsMethod, idsExpr, idPropertyExpr);
@@ -63,10 +65,9 @@ public interface IEntity
                 .ToArray();
 
             // Aggregate the conditions with OR
-            var combinedCondition = conditions.Aggregate(
-                (current, next) => Expression.Lambda<Func<TEntity, bool>>(
-                    Expression.OrElse(current.Body, Expression.Invoke(next, current.Parameters)),
-                    current.Parameters));
+            var combinedCondition = conditions.Aggregate((current, next) => Expression.Lambda<Func<TEntity, bool>>(
+                Expression.OrElse(current.Body, Expression.Invoke(next, current.Parameters)),
+                current.Parameters));
 
             return combinedCondition;
         }
@@ -322,6 +323,16 @@ public interface IUniqueCompositeIdSupport
     /// Default should return Null if no unique composite ID is defined.
     /// </summary>
     public string UniqueCompositeId();
+
+    public static void EnsureNotUpdatePropFindInUniqueCompositeExpr<TEntity, TPrimaryKey>(TEntity entity, TEntity existingEntity)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        if (!entity.Id.Equals(default(TPrimaryKey)) && !entity.Id.Equals(existingEntity.Id))
+        {
+            throw new Exception(
+                $"Update {typeof(TEntity).Name} entity with Id {entity.Id} is different from existing entity with Id {existingEntity.Id}. You might update one of property in {nameof(IUniqueCompositeIdSupport<IEntity>.FindByUniqueCompositeIdExpr)}, which is not allowed");
+        }
+    }
 }
 
 public interface IUniqueCompositeIdSupport<TEntity> : IUniqueCompositeIdSupport
@@ -489,9 +500,7 @@ public abstract class Entity<TEntity, TPrimaryKey>
     /// <returns>Clone of the entity.</returns>
     public virtual TEntity Clone()
     {
-        // doNotTryUseRuntimeType = true to Serialize normally not using the runtime type to prevent error.
-        // If using runtime type, the EF Core entity lazy loading proxies will be the runtime type => lead to error
-        return PlatformJsonSerializer.Deserialize<TEntity>(PlatformJsonSerializer.Serialize(this.As<TEntity>()));
+        return this.As<TEntity>().DeepClone(includeJsonIgnoredProps: true);
     }
 
     /// <summary>

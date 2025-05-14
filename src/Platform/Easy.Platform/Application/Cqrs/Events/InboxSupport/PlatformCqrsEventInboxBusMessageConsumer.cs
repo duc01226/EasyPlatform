@@ -55,11 +55,6 @@ public class PlatformCqrsEventInboxBusMessageConsumer : PlatformApplicationMessa
                 if (eventHandlerInstanceResult.Value.CanExecuteHandlingEventUsingInboxConsumer(eventInstanceResult.Value) &&
                     await eventHandlerInstanceResult.Value.HandleWhen(eventInstanceResult.Value))
                     await eventHandlerInstanceResult.Value.Handle(eventInstanceResult.Value, CancellationToken.None);
-                else
-                {
-                    throw new Exception(
-                        $"Event handler [{eventHandlerInstanceResult.Value.GetType().FullName}] is not allowed to handle event [{eventInstanceResult.Value.GetType().FullName}] using inbox consumer.");
-                }
             }
             else
             {

@@ -20,6 +20,7 @@ public static class ObjectGeneralExtension
     private static readonly ConcurrentDictionary<Type, List<PropertyInfo>> CachedIsValuesDifferentTypeToPropsDict = new();
     private static readonly ConcurrentDictionary<Type, ConcurrentDictionary<Type, bool>> CachedCheckTypeIsAssignableFromDict = new();
     private static readonly ConcurrentDictionary<string, List<PropertyInfo>> CachedGetChangedFieldsTypeToPropsDict = new();
+    private static readonly ConcurrentDictionary<Type, List<PropertyInfo>> CachedDeepCloneRestoreJsonIgnoredPropsDict = new();
 
     /// <summary>
     /// Checks if the values of two objects are different.
@@ -414,22 +415,73 @@ public static class ObjectGeneralExtension
         return obj;
     }
 
-    public static TObject DeepClone<TObject>(this TObject obj, Expression<Func<PropertyInfo, bool>> clonePropPredicate = null)
+    public static TObject DeepClone<TObject>(
+        this TObject obj,
+        Expression<Func<PropertyInfo, bool>> clonePropPredicate = null,
+        bool includeJsonIgnoredProps = false)
     {
-        // ReSharper disable once ExpressionIsAlwaysNull
-        return obj is null || !obj.GetType().IsMutableType()
-            ? obj
-            : PlatformJsonSerializer.Deserialize<TObject>(PlatformJsonSerializer.Serialize(obj, customSerializerOptions: null, propPredicate: clonePropPredicate));
+        // If null or immutable, just return as‑is
+        if (obj is null || !obj.GetType().IsMutableType())
+            return obj;
+
+        // 1) JSON round‑trip clone:
+        var clone = PlatformJsonSerializer.Deserialize<TObject>(
+            PlatformJsonSerializer.Serialize(
+                obj,
+                customSerializerOptions: null,
+                propPredicate: clonePropPredicate
+            )
+        );
+
+        // 2) Optionally restore [JsonIgnore] props:
+        DeepCloneRestoreJsonIgnoredProps(obj, typeof(TObject), includeJsonIgnoredProps, clone);
+
+        return clone;
     }
 
-    public static object DeepClone(this object obj, Type objType, Expression<Func<PropertyInfo, bool>> clonePropPredicate = null)
+    public static object DeepClone(this object obj, Type objType, Expression<Func<PropertyInfo, bool>> clonePropPredicate = null, bool includeJsonIgnoredProps = false)
     {
-        // ReSharper disable once ExpressionIsAlwaysNull
-        return obj is null || !obj.GetType().IsMutableType()
-            ? obj
-            : PlatformJsonSerializer.Deserialize(
-                PlatformJsonSerializer.Serialize(obj, customSerializerOptions: null, propPredicate: clonePropPredicate, objType: objType),
-                objType);
+        // If null or immutable, just return as‑is
+        if (obj is null || !obj.GetType().IsMutableType())
+            return obj;
+
+        // 1) JSON round‑trip clone:
+        var clone = PlatformJsonSerializer.Deserialize(
+            PlatformJsonSerializer.Serialize(
+                obj,
+                customSerializerOptions: null,
+                propPredicate: clonePropPredicate
+            ),
+            objType
+        );
+
+        // 2) Optionally restore [JsonIgnore] props:
+        DeepCloneRestoreJsonIgnoredProps(obj, objType, includeJsonIgnoredProps, clone);
+
+        return clone;
+    }
+
+    private static void DeepCloneRestoreJsonIgnoredProps(object obj, Type objType, bool includeJsonIgnoredProps, object clone)
+    {
+        if (includeJsonIgnoredProps)
+        {
+            var jsonIgnoredProps = CachedDeepCloneRestoreJsonIgnoredPropsDict.GetOrAdd(
+                objType,
+                objType => objType
+                    .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(p => p.CanRead
+                                && p.CanWrite
+                                && p.IsDefined(typeof(JsonIgnoreAttribute), inherit: true))
+                    .ToList());
+
+            foreach (var prop in jsonIgnoredProps)
+            {
+                // copy original value back onto the clone
+                var originalValue = prop.GetValue(obj);
+
+                prop.SetValue(clone, originalValue);
+            }
+        }
     }
 
     public static bool Is<TObject>(this TObject obj, Expression<Func<TObject, bool>> expr)

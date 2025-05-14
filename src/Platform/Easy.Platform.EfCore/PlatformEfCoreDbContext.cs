@@ -526,6 +526,8 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
 
         if (existingEntity != null)
         {
+            IUniqueCompositeIdSupport.EnsureNotUpdatePropFindInUniqueCompositeExpr<TEntity, TPrimaryKey>(entity, existingEntity);
+
             return await UpdateAsync<TEntity, TPrimaryKey>(
                 entity.WithIf(!entity.Id.Equals(existingEntity.Id), entity => entity.Id = existingEntity.Id),
                 existingEntity,
@@ -686,7 +688,12 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
                         p => p != null,
                         p => SetCachedExistingOriginalEntity<TEntity, TPrimaryKey>(p));
 
-                if (!existingEntity.Id.Equals(entity.Id)) entity.Id = existingEntity.Id;
+                if (!existingEntity.Id.Equals(entity.Id))
+                {
+                    IUniqueCompositeIdSupport.EnsureNotUpdatePropFindInUniqueCompositeExpr<TEntity, TPrimaryKey>(entity, existingEntity);
+
+                    entity.Id = existingEntity.Id;
+                }
             }
 
             if (isEntityRowVersionEntityMissingConcurrencyUpdateToken && !onlySetData)

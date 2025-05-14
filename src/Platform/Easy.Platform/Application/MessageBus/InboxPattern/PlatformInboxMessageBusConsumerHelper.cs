@@ -54,6 +54,7 @@ public static class PlatformInboxMessageBusConsumerHelper
     /// <param name="autoDeleteProcessedMessageImmediately">Indicates whether processed messages should be deleted immediately.</param>
     /// <param name="needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage">Indicates whether to check for other unprocessed messages with the same sub-queue message ID prefix.</param>
     /// <param name="allowHandleNewInboxMessageInBackground">allowHandleNewInboxMessageInBackground</param>
+    /// <param name="allowTryConsumeMessageImmediatelyBeforeCreateInboxMessage"></param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     public static async Task HandleExecutingInboxConsumerAsync<TMessage>(
@@ -70,11 +71,12 @@ public static class PlatformInboxMessageBusConsumerHelper
         double retryProcessFailedMessageInSecondsUnit,
         PlatformInboxBusMessage handleExistingInboxMessage,
         IPlatformApplicationMessageBusConsumer<TMessage> currentScopeConsumerInstance,
-        IPlatformUnitOfWork? handleInUow,
+        IPlatformUnitOfWork handleInUow,
         string subQueueMessageIdPrefix,
         bool autoDeleteProcessedMessageImmediately = false,
         bool needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage = true,
         bool allowHandleNewInboxMessageInBackground = true,
+        bool allowTryConsumeMessageImmediatelyBeforeCreateInboxMessage = true,
         CancellationToken cancellationToken = default) where TMessage : class, new()
     {
         // If there's an existing inbox message that's not processed or ignored, handle it directly.
@@ -114,6 +116,7 @@ public static class PlatformInboxMessageBusConsumerHelper
                 needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
                 subQueueMessageIdPrefix,
                 retryProcessFailedMessageInSecondsUnit,
+                allowTryConsumeMessageImmediatelyBeforeCreateInboxMessage,
                 allowHandleNewInboxMessageInBackground,
                 cancellationToken);
         }
@@ -124,6 +127,7 @@ public static class PlatformInboxMessageBusConsumerHelper
     /// </summary>
     /// <typeparam name="TMessage">The type of the message being consumed.</typeparam>
     /// <param name="rootServiceProvider">The root service provider.</param>
+    /// <param name="currentScopeServiceProvider"></param>
     /// <param name="consumerType">The type of the consumer handling the message.</param>
     /// <param name="currentScopeConsumerInstance">currentScopeConsumerInstance</param>
     /// <param name="inboxBusMessageRepository">The repository for accessing inbox messages.</param>
@@ -137,8 +141,8 @@ public static class PlatformInboxMessageBusConsumerHelper
     /// <param name="needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage">Indicates whether to check for other unprocessed messages with the same sub-queue message ID prefix.</param>
     /// <param name="subQueueMessageIdPrefix">A prefix for the message ID, used for sub-queueing.</param>
     /// <param name="retryProcessFailedMessageInSecondsUnit">The time unit in seconds for retrying failed message processing.</param>
+    /// <param name="allowTryConsumeMessageImmediatelyBeforeCreateInboxMessage">Allow TryConsumeMessageImmediatelyBeforeCreateInboxMessage</param>
     /// <param name="allowHandleNewInboxMessageInBackground">allowHandleNewInboxMessageInBackground</param>
-    /// <param name="inboxConfig"></param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
     private static async Task SaveAndTryConsumeNewInboxMessageAsync<TMessage>(
@@ -152,16 +156,18 @@ public static class PlatformInboxMessageBusConsumerHelper
         string forApplicationName,
         string routingKey,
         Func<ILogger> loggerFactory,
-        IPlatformUnitOfWork? handleInUow,
+        IPlatformUnitOfWork handleInUow,
         bool autoDeleteProcessedMessage,
         bool needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
         string subQueueMessageIdPrefix,
         double retryProcessFailedMessageInSecondsUnit,
+        bool allowTryConsumeMessageImmediatelyBeforeCreateInboxMessage,
         bool allowHandleNewInboxMessageInBackground,
         CancellationToken cancellationToken) where TMessage : class, new()
     {
         // if message can handle parallel without check in order sub queue then can try to execute immediately
-        if (message.As<IPlatformSubMessageQueuePrefixSupport>()?.SubQueuePrefix().IsNullOrEmpty() == true)
+        if (message.As<IPlatformSubMessageQueuePrefixSupport>()?.SubQueuePrefix().IsNullOrEmpty() == true &&
+            allowTryConsumeMessageImmediatelyBeforeCreateInboxMessage)
         {
             try
             {
