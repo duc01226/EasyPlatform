@@ -88,7 +88,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
 
     protected IPlatformApplicationSettingContext ApplicationSettingContext { get; }
 
-    public virtual bool AutoDeleteProcessedInboxEventMessage => false;
+    public virtual bool AutoDeleteProcessedInboxEventMessage => true;
 
     public int RetryEventInboxBusMessageConsumerOnFailedDelaySeconds { get; set; } = 1;
 
