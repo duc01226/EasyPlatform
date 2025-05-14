@@ -1,3 +1,5 @@
+#region
+
 using Easy.Platform.Application.MessageBus.OutboxPattern;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common.Extensions;
@@ -5,6 +7,8 @@ using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
+#endregion
 
 namespace Easy.Platform.Application.MessageBus.Producers;
 
@@ -244,6 +248,7 @@ public class PlatformApplicationBusMessageProducer : IPlatformApplicationBusMess
                 OutboxConfig.RetryProcessFailedMessageInSecondsUnit,
                 subQueueMessageIdPrefix: message.As<IPlatformSubMessageQueuePrefixSupport>()?.SubQueuePrefix(),
                 needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage: true,
+                autoDeleteProcessedMessage: OutboxConfig.AutoDeleteProcessedMessage,
                 handleExistingOutboxMessage: null,
                 sourceOutboxUowId: sourceOutboxUowId,
                 cancellationToken);

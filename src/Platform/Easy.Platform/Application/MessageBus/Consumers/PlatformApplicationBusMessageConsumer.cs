@@ -1,3 +1,5 @@
+#region
+
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
@@ -8,6 +10,8 @@ using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
+#endregion
 
 namespace Easy.Platform.Application.MessageBus.Consumers;
 
@@ -82,13 +86,13 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
         ApplicationSettingContext = rootServiceProvider.GetRequiredService<IPlatformApplicationSettingContext>();
     }
 
+    public override bool LogErrorOnException => HandleExistingInboxMessage == null && !IsHandlingLogicForInboxMessage;
+
     protected IPlatformInboxBusMessageRepository InboxBusMessageRepo { get; }
     protected PlatformInboxConfig InboxConfig { get; }
     protected IPlatformRootServiceProvider RootServiceProvider { get; }
     protected IServiceProvider ServiceProvider { get; }
     protected IPlatformUnitOfWorkManager UnitOfWorkManager { get; }
-
-    public override bool LogErrorOnException => HandleExistingInboxMessage == null && !IsHandlingLogicForInboxMessage;
 
     /// <summary>
     /// Gets a value indicating whether to automatically open a unit of work when handling a message.
@@ -119,7 +123,7 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
     public PlatformInboxBusMessage HandleExistingInboxMessage { get; set; }
 
     /// <inheritdoc />
-    public bool AutoDeleteProcessedInboxEventMessageImmediately { get; set; }
+    public bool AutoDeleteProcessedInboxEventMessageImmediately { get; set; } = true;
 
     /// <inheritdoc />
     public bool IsHandlingLogicForInboxMessage { get; set; }

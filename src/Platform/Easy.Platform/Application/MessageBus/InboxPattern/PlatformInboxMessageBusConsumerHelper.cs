@@ -1,3 +1,5 @@
+#region
+
 using System.Diagnostics;
 using Easy.Platform.Application.Cqrs.Events.InboxSupport;
 using Easy.Platform.Application.MessageBus.Consumers;
@@ -12,6 +14,8 @@ using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
+#endregion
 
 namespace Easy.Platform.Application.MessageBus.InboxPattern;
 
@@ -73,7 +77,7 @@ public static class PlatformInboxMessageBusConsumerHelper
         IPlatformApplicationMessageBusConsumer<TMessage> currentScopeConsumerInstance,
         IPlatformUnitOfWork handleInUow,
         string subQueueMessageIdPrefix,
-        bool autoDeleteProcessedMessageImmediately = false,
+        bool autoDeleteProcessedMessageImmediately = true,
         bool needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage = true,
         bool allowHandleNewInboxMessageInBackground = true,
         bool allowTryConsumeMessageImmediatelyBeforeCreateInboxMessage = true,
@@ -558,10 +562,10 @@ public static class PlatformInboxMessageBusConsumerHelper
                     .With(b => b.AutoDeleteProcessedInboxEventMessageImmediately = autoDeleteProcessedMessage)
                     .HandleAsync(message, routingKey);
 
+                await startIntervalPingProcessingCts.CancelAsync();
+
                 try
                 {
-                    await startIntervalPingProcessingCts.CancelAsync();
-
                     // If auto-deletion is enabled, delete the processed message.
                     if (autoDeleteProcessedMessage)
                     {

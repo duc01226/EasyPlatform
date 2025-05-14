@@ -1,3 +1,5 @@
+#region
+
 using System.Diagnostics;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
@@ -9,6 +11,8 @@ using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
+#endregion
 
 namespace Easy.Platform.Application.MessageBus.OutboxPattern;
 
@@ -62,6 +66,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     /// <param name="retryProcessFailedMessageInSecondsUnit">The time unit in seconds for retrying failed message sending.</param>
     /// <param name="subQueueMessageIdPrefix">A prefix for the message ID, used for sub-queueing.</param>
     /// <param name="needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage">Indicates whether to check for other unprocessed messages with the same sub-queue message ID prefix.</param>
+    /// <param name="autoDeleteProcessedMessage">AutoDeleteProcessedMessage</param>
     /// <param name="handleExistingOutboxMessage">An existing outbox message to handle, if applicable.</param>
     /// <param name="sourceOutboxUowId">The ID of the unit of work that originated the outbox message.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
@@ -72,6 +77,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         double retryProcessFailedMessageInSecondsUnit,
         string subQueueMessageIdPrefix,
         bool needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+        bool autoDeleteProcessedMessage,
         PlatformOutboxBusMessage handleExistingOutboxMessage = null,
         string sourceOutboxUowId = null,
         CancellationToken cancellationToken = default) where TMessage : class, new()
@@ -93,6 +99,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                     null,
                     subQueueMessageIdPrefix,
                     needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+                    autoDeleteProcessedMessage,
                     cancellationToken,
                     CreateLogger(),
                     outboxBusMessageRepository,
@@ -113,6 +120,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                     sourceOutboxUowId,
                     subQueueMessageIdPrefix,
                     needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+                    autoDeleteProcessedMessage,
                     cancellationToken,
                     CreateLogger(),
                     outboxBusMessageRepository,
@@ -136,6 +144,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     /// <param name="sourceOutboxUowId">The ID of the unit of work that originated the outbox message.</param>
     /// <param name="subQueueMessageIdPrefix">A prefix for the message ID, used for sub-queueing.</param>
     /// <param name="needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage">Indicates whether to check for other unprocessed messages with the same sub-queue message ID prefix.</param>
+    /// <param name="autoDeleteProcessedMessage">AutoDeleteProcessedMessage</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <param name="logger">The logger to use for logging.</param>
     /// <param name="outboxBusMessageRepository">The repository for accessing outbox messages.</param>
@@ -150,6 +159,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         string sourceOutboxUowId,
         string subQueueMessageIdPrefix,
         bool needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+        bool autoDeleteProcessedMessage,
         CancellationToken cancellationToken,
         ILogger logger,
         IPlatformOutboxBusMessageRepository outboxBusMessageRepository,
@@ -167,6 +177,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 routingKey,
                 retryProcessFailedMessageInSecondsUnit,
                 needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+                autoDeleteProcessedMessage,
                 cancellationToken,
                 logger,
                 messageBusProducer,
@@ -182,6 +193,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 sourceOutboxUowId,
                 subQueueMessageIdPrefix,
                 needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+                autoDeleteProcessedMessage,
                 cancellationToken,
                 logger,
                 unitOfWorkManager,
@@ -198,6 +210,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     /// <param name="routingKey">The routing key for the message.</param>
     /// <param name="retryProcessFailedMessageInSecondsUnit">The time unit in seconds for retrying failed message sending.</param>
     /// <param name="needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage">Indicates whether to check for other unprocessed messages with the same sub-queue message ID prefix.</param>
+    /// <param name="autoDeleteProcessedMessage">AutoDeleteProcessedMessage</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <param name="logger">The logger to use for logging.</param>
     /// <param name="messageBusProducer">The message bus producer used for sending messages.</param>
@@ -209,6 +222,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         string routingKey,
         double retryProcessFailedMessageInSecondsUnit,
         bool needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+        bool autoDeleteProcessedMessage,
         CancellationToken cancellationToken,
         ILogger logger,
         IPlatformMessageBusProducer messageBusProducer,
@@ -242,11 +256,22 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
 
                 await startIntervalPingProcessingCts.CancelAsync();
 
-                // Update the outbox message as processed after successful sending.
-                await UpdateExistingOutboxMessageProcessedAsync(
-                    rootServiceProvider,
-                    existingOutboxMessage,
-                    cancellationToken);
+                // If auto-deletion is enabled, delete the processed message.
+                if (autoDeleteProcessedMessage)
+                {
+                    await DeleteExistingOutboxProcessedMessageAsync(
+                        serviceProvider,
+                        existingOutboxMessage,
+                        cancellationToken);
+                }
+                else
+                {
+                    // Update the outbox message as processed after successful sending.
+                    await UpdateExistingOutboxMessageProcessedAsync(
+                        rootServiceProvider,
+                        existingOutboxMessage,
+                        cancellationToken);
+                }
             }
         }
         catch (Exception exception)
@@ -261,6 +286,29 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         finally
         {
             startIntervalPingProcessingCts.Dispose();
+        }
+    }
+
+    public async Task DeleteExistingOutboxProcessedMessageAsync(
+        IServiceProvider serviceProvider,
+        PlatformOutboxBusMessage existingOutboxMessage,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
+                () => serviceProvider.ExecuteInjectScopedAsync((IPlatformOutboxBusMessageRepository outboxBusMessageRepo) => outboxBusMessageRepo.DeleteManyAsync(
+                    predicate: p => p.Id == existingOutboxMessage.Id,
+                    dismissSendEvent: true,
+                    eventCustomConfig: null,
+                    cancellationToken)),
+                sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
+                retryCount: DefaultResilientRetiredCount,
+                cancellationToken: cancellationToken);
+        }
+        catch (Exception e)
+        {
+            CreateLogger().LogError(e.BeautifyStackTrace(), "Try DeleteExistingOutboxProcessedMessageAsync failed");
         }
     }
 
@@ -360,6 +408,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     /// <param name="routingKey">The routing key for the message.</param>
     /// <param name="retryProcessFailedMessageInSecondsUnit">The time unit in seconds for retrying failed message sending.</param>
     /// <param name="needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage">Indicates whether to check for other unprocessed messages with the same sub-queue message ID prefix.</param>
+    /// <param name="autoDeleteProcessedMessage">AutoDeleteProcessedMessage</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <param name="logger">The logger to use for logging.</param>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
@@ -369,6 +418,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         string routingKey,
         double retryProcessFailedMessageInSecondsUnit,
         bool needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+        bool autoDeleteProcessedMessage,
         CancellationToken cancellationToken,
         ILogger logger)
         where TMessage : class, new()
@@ -382,6 +432,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 routingKey,
                 retryProcessFailedMessageInSecondsUnit,
                 needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+                autoDeleteProcessedMessage,
                 cancellationToken,
                 logger);
         }
@@ -542,6 +593,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     /// <param name="sourceOutboxUowId">The ID of the unit of work that originated the outbox message.</param>
     /// <param name="subQueueMessageIdPrefix">A prefix for the message ID, used for sub-queueing.</param>
     /// <param name="needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage">Indicates whether to check for other unprocessed messages with the same sub-queue message ID prefix.</param>
+    /// <param name="autoDeleteProcessedMessage">AutoDeleteProcessedMessage</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <param name="logger">The logger to use for logging.</param>
     /// <param name="unitOfWorkManager">The unit of work manager.</param>
@@ -554,6 +606,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
         string sourceOutboxUowId,
         string subQueueMessageIdPrefix,
         bool needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+        bool autoDeleteProcessedMessage,
         CancellationToken cancellationToken,
         ILogger logger,
         IPlatformUnitOfWorkManager unitOfWorkManager,
@@ -610,6 +663,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                             routingKey,
                             retryProcessFailedMessageInSecondsUnit,
                             needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+                            autoDeleteProcessedMessage,
                             cancellationToken,
                             logger),
                         loggerFactory: CreateLogger,
@@ -630,6 +684,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                                 routingKey,
                                 retryProcessFailedMessageInSecondsUnit,
                                 needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
+                                autoDeleteProcessedMessage,
                                 cancellationToken,
                                 logger),
                             cancellationToken: cancellationToken);

@@ -92,7 +92,9 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
 
     public int RetryEventInboxBusMessageConsumerOnFailedDelaySeconds { get; set; } = 1;
 
-    public int RetryEventInboxBusMessageConsumerMaxCount { get; set; } = 3;
+    public int RetryEventInboxBusMessageConsumerOnFailedDelayMaxSeconds { get; set; } = 60;
+
+    public int RetryEventInboxBusMessageConsumerMaxCount { get; set; } = int.MaxValue;
 
     public override int RetryOnFailedTimes
     {
@@ -413,7 +415,10 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                 allowTryConsumeMessageImmediatelyBeforeCreateInboxMessage: false,
                 cancellationToken: cancellationToken),
             retryCount: RetryEventInboxBusMessageConsumerMaxCount,
-            sleepDurationProvider: retryAttempt => RetryEventInboxBusMessageConsumerOnFailedDelaySeconds.Seconds(),
+            sleepDurationProvider: retryAttempt => Math.Min(
+                    RetryEventInboxBusMessageConsumerOnFailedDelaySeconds + retryAttempt,
+                    RetryEventInboxBusMessageConsumerOnFailedDelayMaxSeconds)
+                .Seconds(),
             cancellationToken: cancellationToken,
             onRetry: (exception, retryTime, retryAttempt, context) => Logger.Value.LogError(
                 exception.BeautifyStackTrace(),

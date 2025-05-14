@@ -1,4 +1,8 @@
+#region
+
 using Easy.Platform.Common.Utils;
+
+#endregion
 
 namespace Easy.Platform.Application.MessageBus.OutboxPattern;
 
@@ -11,6 +15,11 @@ public class PlatformOutboxConfig
     /// Ex: NextRetryProcessAfterDate = DateTime.UtcNow.AddSeconds(retryProcessFailedMessageInSecondsUnit * Math.Pow(2, retriedProcessCount ?? 0));
     /// </summary>
     public double RetryProcessFailedMessageInSecondsUnit { get; set; } = PlatformOutboxBusMessage.DefaultRetryProcessFailedMessageInSecondsUnit;
+
+    /// <summary>
+    /// AutoDeleteProcessedMessage
+    /// </summary>
+    public bool AutoDeleteProcessedMessage { get; set; } = true;
 
     /// <summary>
     /// Set StandaloneScopeForOutbox = true only when apply platform for old code/project have not open and complete uow. Remove it after finish refactoring
