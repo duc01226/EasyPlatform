@@ -35,6 +35,8 @@ public static class PlatformInboxMessageBusConsumerHelper
     /// </summary>
     public const int DefaultResilientRetiredDelaySeconds = 1;
 
+    public const int DefaultMaxResilientRetiredDelaySeconds = 60;
+
     /// <summary>
     /// Handles the execution of an inbox consumer, ensuring that messages are processed only once.
     /// This method checks for existing inbox messages and handles them accordingly, or creates a new inbox message and attempts to consume it.
@@ -259,6 +261,7 @@ public static class PlatformInboxMessageBusConsumerHelper
                     subQueueMessageIdPrefix,
                     needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
                     applicationSettingContext,
+                    loggerFactory,
                     cancellationToken);
 
             if (toProcessInboxMessage != null)
@@ -347,8 +350,9 @@ public static class PlatformInboxMessageBusConsumerHelper
     /// <param name="subQueueMessageIdPrefix">A prefix for the message ID, used for sub-queueing.</param>
     /// <param name="needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage">Indicates whether to check for other unprocessed messages with the same sub-queue message ID prefix.</param>
     /// <param name="applicationSettingContext">applicationSettingContext</param>
+    /// <param name="loggerFactory"></param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
-    private static async Task<(PlatformInboxBusMessage?, PlatformInboxBusMessage?)> GetOrCreateToProcessInboxMessage<TMessage>(
+    private static async Task<(PlatformInboxBusMessage, PlatformInboxBusMessage)> GetOrCreateToProcessInboxMessage<TMessage>(
         Type consumerType,
         IPlatformInboxBusMessageRepository inboxBusMessageRepository,
         TMessage message,
@@ -357,6 +361,7 @@ public static class PlatformInboxMessageBusConsumerHelper
         string subQueueMessageIdPrefix,
         bool needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage,
         IPlatformApplicationSettingContext applicationSettingContext,
+        Func<ILogger> loggerFactory,
         CancellationToken cancellationToken) where TMessage : class, new()
     {
         return await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
@@ -411,9 +416,25 @@ public static class PlatformInboxMessageBusConsumerHelper
 
                 return (toProcessInboxMessage, existedInboxMessage);
             },
-            _ => DefaultResilientRetiredDelaySeconds.Seconds(),
-            DefaultResilientRetiredCount,
-            cancellationToken: cancellationToken);
+            retryCount: DefaultResilientRetiredCount,
+            cancellationToken: cancellationToken,
+            sleepDurationProvider: retryAttempt =>
+                Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+            onRetry: (ex, delayTime, retryCount, context) =>
+            {
+                if (retryCount > 1)
+                {
+                    loggerFactory()
+                        .LogError(
+                            ex.BeautifyStackTrace(),
+                            "[{Type}]: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]].",
+                            nameof(PlatformInboxMessageBusConsumerHelper),
+                            ex.Message,
+                            message.GetType().GetNameOrGenericTypeName(),
+                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                            message.ToJson().TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                }
+            });
     }
 
     /// <summary>
@@ -547,7 +568,7 @@ public static class PlatformInboxMessageBusConsumerHelper
                 await inboxBusMessageRepository.AnyAsync(
                     PlatformInboxBusMessage.CheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessageExpr(existingInboxMessage),
                     cancellationToken))
-                await RevertExistingInboxToNewMessageAsync(existingInboxMessage, inboxBusMessageRepository, cancellationToken);
+                await RevertExistingInboxToNewMessageAsync(existingInboxMessage, inboxBusMessageRepository, loggerFactory, cancellationToken);
             else
             {
                 StartIntervalPingProcessing(
@@ -581,6 +602,7 @@ public static class PlatformInboxMessageBusConsumerHelper
                         await UpdateExistingInboxProcessedMessageAsync(
                             serviceProvider.GetRequiredService<IPlatformRootServiceProvider>(),
                             existingInboxMessage,
+                            loggerFactory,
                             cancellationToken);
                     }
                 }
@@ -668,10 +690,12 @@ public static class PlatformInboxMessageBusConsumerHelper
                             }
                         },
                         cancellationToken: cancellationToken,
-                        retryCount: 100,
+                        retryCount: DefaultResilientRetiredCount,
+                        sleepDurationProvider: retryAttempt =>
+                            Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
                         onRetry: (ex, delayRetryTime, retryAttempt, context) =>
                         {
-                            if (retryAttempt > 10) loggerFactory().LogError(ex.BeautifyStackTrace(), "Update PlatformInboxBusMessage LastProcessingPingTime failed");
+                            if (retryAttempt > 1) loggerFactory().LogError(ex.BeautifyStackTrace(), "Update PlatformInboxBusMessage LastProcessingPingTime failed");
                         });
                 }
             },
@@ -691,6 +715,7 @@ public static class PlatformInboxMessageBusConsumerHelper
     public static Task RevertExistingInboxToNewMessageAsync(
         PlatformInboxBusMessage existingInboxMessage,
         IPlatformInboxBusMessageRepository inboxBusMessageRepository,
+        Func<ILogger> loggerFactory,
         CancellationToken cancellationToken)
     {
         return Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
@@ -703,9 +728,25 @@ public static class PlatformInboxMessageBusConsumerHelper
                         .With(p => p.ConsumeStatus = PlatformInboxBusMessage.ConsumeStatuses.New),
                     cancellationToken: cancellationToken);
             },
-            sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
             retryCount: DefaultResilientRetiredCount,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken,
+            sleepDurationProvider: retryAttempt =>
+                Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+            onRetry: (ex, delayTime, retryCount, context) =>
+            {
+                if (retryCount > 1)
+                {
+                    loggerFactory()
+                        .LogError(
+                            ex.BeautifyStackTrace(),
+                            "[{Type}]: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]].",
+                            nameof(PlatformInboxMessageBusConsumerHelper),
+                            ex.Message,
+                            existingInboxMessage.MessageTypeFullName,
+                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                            existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                }
+            });
     }
 
     /// <summary>
@@ -779,6 +820,7 @@ public static class PlatformInboxMessageBusConsumerHelper
                             await UpdateExistingInboxProcessedMessageAsync(
                                 serviceProvider.GetRequiredService<IPlatformRootServiceProvider>(),
                                 existingInboxMessage,
+                                loggerFactory,
                                 cancellationToken);
                         }
                     }),
@@ -820,6 +862,7 @@ public static class PlatformInboxMessageBusConsumerHelper
     public static Task UpdateExistingInboxProcessedMessageAsync(
         IPlatformRootServiceProvider serviceProvider,
         PlatformInboxBusMessage existingInboxMessage,
+        Func<ILogger> loggerFactory,
         CancellationToken cancellationToken = default)
     {
         var toUpdateInboxMessage = existingInboxMessage;
@@ -854,9 +897,25 @@ public static class PlatformInboxMessageBusConsumerHelper
                         }
                     }));
             },
-            sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
             retryCount: DefaultResilientRetiredCount,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken,
+            sleepDurationProvider: retryAttempt =>
+                Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+            onRetry: (ex, delayTime, retryCount, context) =>
+            {
+                if (retryCount > 1)
+                {
+                    loggerFactory()
+                        .LogError(
+                            ex.BeautifyStackTrace(),
+                            "[{Type}]: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]].",
+                            nameof(PlatformInboxMessageBusConsumerHelper),
+                            ex.Message,
+                            existingInboxMessage.MessageTypeFullName,
+                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                            existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                }
+            });
     }
 
     /// <summary>
@@ -881,9 +940,25 @@ public static class PlatformInboxMessageBusConsumerHelper
                     dismissSendEvent: true,
                     eventCustomConfig: null,
                     cancellationToken)),
-                sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
                 retryCount: DefaultResilientRetiredCount,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken,
+                sleepDurationProvider: retryAttempt =>
+                    Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+                onRetry: (ex, delayTime, retryCount, context) =>
+                {
+                    if (retryCount > 1)
+                    {
+                        loggerFactory()
+                            .LogError(
+                                ex.BeautifyStackTrace(),
+                                "[{Type}]: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]].",
+                                nameof(PlatformInboxMessageBusConsumerHelper),
+                                ex.Message,
+                                existingInboxMessage.MessageTypeFullName,
+                                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                                existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                    }
+                });
         }
         catch (Exception e)
         {
@@ -967,9 +1042,25 @@ public static class PlatformInboxMessageBusConsumerHelper
                             inboxBusMessageRepo);
                     }
                 }),
-                sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
                 retryCount: DefaultResilientRetiredCount,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken,
+                sleepDurationProvider: retryAttempt =>
+                    Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+                onRetry: (ex, delayTime, retryCount, context) =>
+                {
+                    if (retryCount > 1)
+                    {
+                        loggerFactory()
+                            .LogError(
+                                ex.BeautifyStackTrace(),
+                                "[{Type}]: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[InboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {InboxJsonMessage}]].",
+                                nameof(PlatformInboxMessageBusConsumerHelper),
+                                ex.Message,
+                                existingInboxMessage.MessageTypeFullName,
+                                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                                existingInboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                    }
+                });
         }
         catch (Exception ex)
         {

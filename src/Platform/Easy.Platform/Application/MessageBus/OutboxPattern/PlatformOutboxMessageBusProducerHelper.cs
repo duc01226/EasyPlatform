@@ -32,6 +32,8 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     /// </summary>
     public const int DefaultResilientRetiredDelaySeconds = 1;
 
+    public const int DefaultMaxResilientRetiredDelaySeconds = 60;
+
     private readonly IPlatformMessageBusProducer messageBusProducer;
     private readonly PlatformOutboxConfig outboxConfig;
     private readonly IPlatformRootServiceProvider rootServiceProvider;
@@ -250,9 +252,23 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                 // Retry sending the message multiple times in case of transient errors.
                 await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                     () => messageBusProducer.SendAsync(message, routingKey, cancellationToken),
-                    sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
                     retryCount: DefaultResilientRetiredCount,
-                    cancellationToken: cancellationToken);
+                    cancellationToken: cancellationToken,
+                    sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+                    onRetry: (ex, delayTime, retryCount, context) =>
+                    {
+                        if (retryCount > 1)
+                        {
+                            logger.LogError(
+                                ex.BeautifyStackTrace(),
+                                "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                                GetType().Name,
+                                ex.Message,
+                                existingOutboxMessage.MessageTypeFullName,
+                                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                                existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                        }
+                    });
 
                 await startIntervalPingProcessingCts.CancelAsync();
 
@@ -302,9 +318,24 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                     dismissSendEvent: true,
                     eventCustomConfig: null,
                     cancellationToken)),
-                sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
                 retryCount: DefaultResilientRetiredCount,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken,
+                sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+                onRetry: (ex, delayTime, retryCount, context) =>
+                {
+                    if (retryCount > 1)
+                    {
+                        CreateLogger()
+                            .LogError(
+                                ex.BeautifyStackTrace(),
+                                "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                                GetType().Name,
+                                ex.Message,
+                                existingOutboxMessage.MessageTypeFullName,
+                                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                                existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                    }
+                });
         }
         catch (Exception e)
         {
@@ -359,10 +390,23 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                             }
                         },
                         cancellationToken: cancellationToken,
-                        retryCount: 100,
-                        onRetry: (ex, delayRetryTime, retryAttempt, context) =>
+                        retryCount: DefaultResilientRetiredCount,
+                        sleepDurationProvider: retryAttempt =>
+                            Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+                        onRetry: (ex, delayTime, retryCount, context) =>
                         {
-                            if (retryAttempt > 10) loggerFactory().LogError(ex.BeautifyStackTrace(), "Update PlatformOutboxBusMessage LastProcessingPingTime failed");
+                            if (retryCount > 1)
+                            {
+                                loggerFactory()
+                                    .LogError(
+                                        ex.BeautifyStackTrace(),
+                                        "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                                        GetType().Name,
+                                        ex.Message,
+                                        existingOutboxMessage.MessageTypeFullName,
+                                        PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                                        existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                            }
                         });
                 }
             },
@@ -379,7 +423,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     /// <param name="outboxBusMessageRepository">The repository for accessing outbox messages.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-    public static async Task RevertExistingOutboxToNewMessageAsync(
+    public async Task RevertExistingOutboxToNewMessageAsync(
         PlatformOutboxBusMessage existingOutboxMessage,
         IPlatformOutboxBusMessageRepository outboxBusMessageRepository,
         CancellationToken cancellationToken)
@@ -394,9 +438,24 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                         .With(p => p.SendStatus = PlatformOutboxBusMessage.SendStatuses.New),
                     cancellationToken: cancellationToken);
             },
-            sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
             retryCount: DefaultResilientRetiredCount,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken,
+            sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+            onRetry: (ex, delayTime, retryCount, context) =>
+            {
+                if (retryCount > 1)
+                {
+                    CreateLogger()
+                        .LogError(
+                            ex.BeautifyStackTrace(),
+                            "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                            GetType().Name,
+                            ex.Message,
+                            existingOutboxMessage.MessageTypeFullName,
+                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                            existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                }
+            });
     }
 
     /// <summary>
@@ -452,7 +511,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     /// <param name="existingOutboxMessage">The existing outbox message to update.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <returns>A <see cref="Task" /> representing the asynchronous operation.</returns>
-    public static async Task UpdateExistingOutboxMessageProcessedAsync(
+    public async Task UpdateExistingOutboxMessageProcessedAsync(
         IPlatformRootServiceProvider serviceProvider,
         PlatformOutboxBusMessage existingOutboxMessage,
         CancellationToken cancellationToken)
@@ -490,9 +549,24 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                         }
                     }));
             },
-            sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
             retryCount: DefaultResilientRetiredCount,
-            cancellationToken: cancellationToken);
+            cancellationToken: cancellationToken,
+            sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+            onRetry: (ex, delayTime, retryCount, context) =>
+            {
+                if (retryCount > 1)
+                {
+                    CreateLogger()
+                        .LogError(
+                            ex.BeautifyStackTrace(),
+                            "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                            GetType().Name,
+                            ex.Message,
+                            existingOutboxMessage.MessageTypeFullName,
+                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                            existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                }
+            });
     }
 
     /// <summary>
@@ -540,8 +614,23 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
                     }
                 }),
                 retryCount: DefaultResilientRetiredCount,
-                sleepDurationProvider: retryAttempt => DefaultResilientRetiredDelaySeconds.Seconds(),
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken,
+                sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+                onRetry: (ex, delayTime, retryCount, context) =>
+                {
+                    if (retryCount > 1)
+                    {
+                        CreateLogger()
+                            .LogError(
+                                ex.BeautifyStackTrace(),
+                                "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                                GetType().Name,
+                                ex.Message,
+                                existingOutboxMessage.MessageTypeFullName,
+                                PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                                existingOutboxMessage.JsonMessage.TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                    }
+                });
         }
         catch (Exception ex)
         {
@@ -703,7 +792,7 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
     /// <param name="subQueueMessageIdPrefix">A prefix for the message ID, used for sub-queueing.</param>
     /// <param name="cancellationToken">A <see cref="CancellationToken" /> that can be used to cancel the operation.</param>
     /// <param name="outboxBusMessageRepository">The repository for accessing outbox messages.</param>
-    private static async Task<PlatformOutboxBusMessage?> GetOrCreateToProcessOutboxMessage<TMessage>(
+    private async Task<PlatformOutboxBusMessage?> GetOrCreateToProcessOutboxMessage<TMessage>(
         TMessage message,
         string routingKey,
         string subQueueMessageIdPrefix,
@@ -760,9 +849,24 @@ public class PlatformOutboxMessageBusProducerHelper : IPlatformHelper
 
                 return toProcessOutboxMessage;
             },
-            _ => DefaultResilientRetiredDelaySeconds.Seconds(),
-            DefaultResilientRetiredCount,
-            cancellationToken: cancellationToken);
+            retryCount: DefaultResilientRetiredCount,
+            cancellationToken: cancellationToken,
+            sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + DefaultResilientRetiredDelaySeconds, DefaultMaxResilientRetiredDelaySeconds).Seconds(),
+            onRetry: (ex, delayTime, retryCount, context) =>
+            {
+                if (retryCount > 1)
+                {
+                    CreateLogger()
+                        .LogError(
+                            ex.BeautifyStackTrace(),
+                            "[{Type}] Retry: [[Error:{Error}]]. [[Type:{MessageTypeFullName}]]; [[OutboxJsonMessage (Top {DefaultRecommendedMaxLogsLength} characters): {OutboxJsonMessage}]].",
+                            GetType().Name,
+                            ex.Message,
+                            message.GetType().GetNameOrGenericTypeName(),
+                            PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength,
+                            message.ToJson().TakeTop(PlatformLoggingGlobalConfiguration.DefaultRecommendedMaxLogsLength));
+                }
+            });
     }
 
     /// <summary>

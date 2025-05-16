@@ -1,4 +1,7 @@
 #nullable enable
+
+#region
+
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Reflection;
@@ -9,6 +12,8 @@ using Easy.Platform.AspNetCore.Context.RequestContext.RequestContextKeyToClaimTy
 using Easy.Platform.Common.RequestContext;
 using Microsoft.AspNetCore.Http;
 
+#endregion
+
 namespace Easy.Platform.AspNetCore.Context.RequestContext;
 
 public class PlatformAspNetApplicationRequestContext : IPlatformApplicationRequestContext
@@ -18,9 +23,9 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
             .First(p => p.IsGenericMethod && p.Name == nameof(GetValue) && p.GetGenericArguments().Length == 1 && p.IsPublic);
 
     protected readonly IPlatformApplicationSettingContext ApplicationSettingContext;
+    protected readonly Dictionary<string, Lazy<object?>> LazyLoadCurrentRequestContextAccessorRegisters;
     protected readonly ConcurrentDictionary<string, object?> NotIgnoredRequestContextKeysRequestContextData = new();
     protected readonly IServiceProvider ServiceProvider;
-    protected readonly Dictionary<string, Lazy<object?>> LazyLoadCurrentRequestContextAccessorRegisters;
 
     private readonly IPlatformApplicationRequestContextKeyToClaimTypeMapper claimTypeMapper;
     private readonly IHttpContextAccessor httpContextAccessor;
@@ -260,7 +265,7 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
         if (cachedRequestContextDataInitiated)
             return includeIgnoredKeys ? FullCachedRequestContextData.Keys.ToList() : NotIgnoredRequestContextKeysRequestContextData.Keys.ToList();
 
-        var manuallySetValueItemsDicKeys = FullCachedRequestContextData.Select(p => p.Key);
+        var manuallySetValueItemsDicKeys = includeIgnoredKeys ? FullCachedRequestContextData.Keys.ToList() : NotIgnoredRequestContextKeysRequestContextData.Keys.ToList();
         var userClaimsTypeKeys = useHttpContext?.User.Claims.Select(p => p.Type) ?? [];
         var requestHeadersKeys = useHttpContext?.Request.Headers.Select(p => p.Key) ?? [];
 
@@ -275,21 +280,24 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
 
     protected IDictionary<string, object?> GetAllKeyValues(HttpContext? useHttpContext, bool includeIgnoredKeys = false)
     {
-        if (cachedRequestContextDataInitiated)
-            return includeIgnoredKeys ? FullCachedRequestContextData : NotIgnoredRequestContextKeysRequestContextData;
-
-        return GetAllKeys(useHttpContext, includeIgnoredKeys)
-            .Select(key => new KeyValuePair<string, object?>(
-                key,
-                GetValue<object>(
+        if (!cachedRequestContextDataInitiated)
+        {
+            // Get value from all keys to init all value into dictionary
+            _ = GetAllKeys(useHttpContext, includeIgnoredKeys)
+                .Select(key => new KeyValuePair<string, object?>(
                     key,
-                    useHttpContext,
-                    ApplicationSettingContext,
-                    FullCachedRequestContextData,
-                    NotIgnoredRequestContextKeysRequestContextData,
-                    out _,
-                    claimTypeMapper)))
-            .ToDictionary(p => p.Key, p => p.Value);
+                    GetValue<object>(
+                        key,
+                        useHttpContext,
+                        ApplicationSettingContext,
+                        FullCachedRequestContextData,
+                        NotIgnoredRequestContextKeysRequestContextData,
+                        out _,
+                        claimTypeMapper)))
+                .ToList();
+        }
+
+        return includeIgnoredKeys ? FullCachedRequestContextData : NotIgnoredRequestContextKeysRequestContextData;
     }
 
     /// <summary>
