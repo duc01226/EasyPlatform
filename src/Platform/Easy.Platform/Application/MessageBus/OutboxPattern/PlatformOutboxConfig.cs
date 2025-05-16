@@ -19,7 +19,7 @@ public class PlatformOutboxConfig
     /// <summary>
     /// AutoDeleteProcessedMessage
     /// </summary>
-    public bool AutoDeleteProcessedMessage { get; set; } = true;
+    public bool AutoDeleteProcessedMessage { get; set; } = false;
 
     /// <summary>
     /// Set StandaloneScopeForOutbox = true only when apply platform for old code/project have not open and complete uow. Remove it after finish refactoring

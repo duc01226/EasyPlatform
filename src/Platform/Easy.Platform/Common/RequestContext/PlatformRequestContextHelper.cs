@@ -1,5 +1,9 @@
+#region
+
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.JsonSerialization;
+
+#endregion
 
 namespace Easy.Platform.Common.RequestContext;
 
@@ -51,11 +55,15 @@ public static class PlatformRequestContextHelper
                 {
                     var originalValueStr = originalValue.As<string>();
 
-                    var isParsedSuccess = TryGetParsedValuesFromStringValues(
-                        out item,
-                        originalValueStr != null ? [originalValueStr] : [originalValue.ToJson()]);
+                    var originalValueJsonStr = originalValueStr == null ? originalValue.ToJson() : null;
 
-                    return isParsedSuccess;
+                    if (originalValueStr == null &&
+                        PlatformJsonSerializer.TryDeserialize(originalValueJsonStr, out item))
+                        return true;
+
+                    return TryGetParsedValuesFromStringValues(
+                        out item,
+                        originalValueStr != null ? [originalValueStr] : [originalValueJsonStr]);
                 }
 
                 item = (T)(object)originalValue;

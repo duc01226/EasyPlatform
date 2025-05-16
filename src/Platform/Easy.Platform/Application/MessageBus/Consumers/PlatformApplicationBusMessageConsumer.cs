@@ -5,6 +5,7 @@ using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
+using Easy.Platform.Common.Validations.Extensions;
 using Easy.Platform.Domain.Exceptions;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.Infrastructures.MessageBus;
@@ -22,6 +23,8 @@ namespace Easy.Platform.Application.MessageBus.Consumers;
 /// </summary>
 public interface IPlatformApplicationMessageBusConsumer : IPlatformMessageBusConsumer
 {
+    public const string RequestContextConsumerPipeLineKey = "ConsumerPipeLine";
+
     /// <summary>
     /// Gets or sets the message to be handled if it exists in the inbox.
     /// </summary>
@@ -123,7 +126,7 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
     public PlatformInboxBusMessage HandleExistingInboxMessage { get; set; }
 
     /// <inheritdoc />
-    public bool AutoDeleteProcessedInboxEventMessageImmediately { get; set; } = true;
+    public bool AutoDeleteProcessedInboxEventMessageImmediately { get; set; } = false;
 
     /// <inheritdoc />
     public bool IsHandlingLogicForInboxMessage { get; set; }
@@ -152,7 +155,11 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
 
         // Update the request context with information from the message.
         if (message is IPlatformTrackableBusMessage trackableBusMessage)
+        {
             RequestContextAccessor.Current.SetValues(trackableBusMessage.RequestContext);
+
+            ProcessConsumerPipeLineInRequestContextAndEnsureNoCircularPipeLine(trackableBusMessage, routingKey);
+        }
 
         await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync<PlatformDomainRowVersionConflictException>(
             async () =>
@@ -180,6 +187,29 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
 
         if (ApplicationSettingContext.IsDebugInformationMode)
             Logger.LogInformation("{Type} {Method} FINISHED", GetType().FullName, nameof(HandleMessageDirectly));
+    }
+
+    private void ProcessConsumerPipeLineInRequestContextAndEnsureNoCircularPipeLine(IPlatformTrackableBusMessage trackableBusMessage, string routingKey)
+    {
+        var requestContextConsumerPipeLine =
+            RequestContextAccessor.Current.GetValue<List<string>>(IPlatformApplicationMessageBusConsumer.RequestContextConsumerPipeLineKey) ?? [];
+
+        // Prevent: A => [B, B => C, B => C => D] => A.
+        if (requestContextConsumerPipeLine.Count >= 4)
+        {
+            // p => p.Take(p.Count - 1).Count(p => p == routingKey) >= 2 => circular 2 times => could be forever
+            requestContextConsumerPipeLine
+                .ValidateNot(
+                    mustNot: p => p.Take(p.Count - 1).Count(p => p == routingKey) >= 2,
+                    $"The current [RequestContextConsumerPipeLine:{requestContextConsumerPipeLine.ToJson()}] lead to {routingKey} has circular call error.")
+                .EnsureValid();
+        }
+
+        if (requestContextConsumerPipeLine.LastOrDefault() != routingKey)
+            requestContextConsumerPipeLine.Add(routingKey);
+
+        trackableBusMessage.RequestContext.Upsert(IPlatformApplicationMessageBusConsumer.RequestContextConsumerPipeLineKey, requestContextConsumerPipeLine);
+        RequestContextAccessor.Current.Upsert(IPlatformApplicationMessageBusConsumer.RequestContextConsumerPipeLineKey, requestContextConsumerPipeLine);
     }
 
     private Task HandleExecutingInboxConsumerAsync(TMessage message, string routingKey)

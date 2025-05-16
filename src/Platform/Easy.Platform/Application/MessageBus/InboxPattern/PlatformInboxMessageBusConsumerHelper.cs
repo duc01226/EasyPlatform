@@ -77,7 +77,7 @@ public static class PlatformInboxMessageBusConsumerHelper
         IPlatformApplicationMessageBusConsumer<TMessage> currentScopeConsumerInstance,
         IPlatformUnitOfWork handleInUow,
         string subQueueMessageIdPrefix,
-        bool autoDeleteProcessedMessageImmediately = true,
+        bool autoDeleteProcessedMessageImmediately = false,
         bool needToCheckAnySameSubQueueMessageIdPrefixOtherPreviousNotProcessedMessage = true,
         bool allowHandleNewInboxMessageInBackground = true,
         bool allowTryConsumeMessageImmediatelyBeforeCreateInboxMessage = true,

@@ -8,6 +8,7 @@ using Easy.Platform.Common;
 using Easy.Platform.Common.Cqrs.Events;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
+using Easy.Platform.Common.Validations.Extensions;
 using Easy.Platform.Domain.Events;
 using Easy.Platform.Domain.Exceptions;
 using Easy.Platform.Domain.UnitOfWork;
@@ -28,6 +29,8 @@ namespace Easy.Platform.Application.Cqrs.Events;
 /// </remarks>
 public interface IPlatformCqrsEventApplicationHandler : IPlatformCqrsEventHandler
 {
+    public const string RequestContextEventHandlerPipeLineKey = "EventHandlerPipeLine";
+
     /// <summary>
     /// Gets a value indicating whether to enable Inbox Event Bus Message.
     /// </summary>
@@ -88,7 +91,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
 
     protected IPlatformApplicationSettingContext ApplicationSettingContext { get; }
 
-    public virtual bool AutoDeleteProcessedInboxEventMessage => true;
+    public virtual bool AutoDeleteProcessedInboxEventMessage => false;
 
     public int RetryEventInboxBusMessageConsumerOnFailedDelaySeconds { get; set; } = 1;
 
@@ -328,8 +331,12 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
 
     protected async Task RunHandleAsync(TEvent @event, CancellationToken cancellationToken, int? retryCount = null)
     {
+        if (!await CheckHandleWhen(@event)) return;
+
         if (ApplicationSettingContext.IsDebugInformationMode)
             Logger.Value.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(RunHandleAsync));
+
+        ProcessEventHandlerPipeLineInRequestContextAndEnsureNoCircularPipeLine(@event);
 
         await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync<PlatformDomainRowVersionConflictException>(
             () =>
@@ -359,6 +366,32 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
 
         if (ApplicationSettingContext.IsDebugInformationMode)
             Logger.Value.LogInformation("{Type} {Method} FINISHED", GetType().FullName, nameof(RunHandleAsync));
+    }
+
+    private void ProcessEventHandlerPipeLineInRequestContextAndEnsureNoCircularPipeLine(TEvent @event)
+    {
+        var requestContextEventHandlerPipeLine =
+            RequestContext.GetValue<List<string>>(IPlatformCqrsEventApplicationHandler.RequestContextEventHandlerPipeLineKey) ?? [];
+        var routingKey = PlatformBusMessageRoutingKey.BuildDefaultRoutingKey(
+            typeof(TEvent),
+            ServiceProvider.GetRequiredService<IPlatformApplicationSettingContext>().ApplicationName);
+
+        // Prevent: A => [B, B => C, B => C => D] => A.
+        if (requestContextEventHandlerPipeLine.Count >= 4)
+        {
+            // p => p.Take(p.Count - 1).Count(p => p == routingKey) >= 2 => circular 2 times => could be forever
+            requestContextEventHandlerPipeLine
+                .ValidateNot(
+                    mustNot: p => p.Take(p.Count - 1).Count(p => p == routingKey) >= 2,
+                    $"The current [RequestContextEventHandlerPipeLine:{requestContextEventHandlerPipeLine.ToJson()}] lead to {routingKey} has circular call error.")
+                .EnsureValid();
+        }
+
+        if (requestContextEventHandlerPipeLine.LastOrDefault() != routingKey)
+            requestContextEventHandlerPipeLine.Add(routingKey);
+
+        @event.RequestContext.Upsert(IPlatformCqrsEventApplicationHandler.RequestContextEventHandlerPipeLineKey, requestContextEventHandlerPipeLine);
+        RequestContext.Upsert(IPlatformCqrsEventApplicationHandler.RequestContextEventHandlerPipeLineKey, requestContextEventHandlerPipeLine);
     }
 
     private async Task CheckToHandleAsync(TEvent @event, CancellationToken cancellationToken)

@@ -1,5 +1,9 @@
+#region
+
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.RequestContext;
+
+#endregion
 
 namespace Easy.Platform.Application.RequestContext;
 
@@ -82,6 +86,13 @@ public interface IPlatformApplicationRequestContext : IDictionary<string, object
     object GetValue(Type valueType, string contextKey);
 
     void SetValue(object value, string contextKey);
+
+    public IPlatformApplicationRequestContext Upsert(string key, object value)
+    {
+        SetValue(value, key);
+
+        return this;
+    }
 
     /// <summary>
     /// Get all keys of current request context except
