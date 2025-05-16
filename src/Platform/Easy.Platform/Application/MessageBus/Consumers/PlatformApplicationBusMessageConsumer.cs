@@ -1,5 +1,6 @@
 #region
 
+using System.Diagnostics;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.RequestContext;
 using Easy.Platform.Common;
@@ -183,7 +184,12 @@ public abstract class PlatformApplicationMessageBusConsumer<TMessage> : Platform
                 }
             },
             retryCount: retryCount ?? RetryOnFailedTimes,
-            sleepDurationProvider: p => RetryOnFailedDelaySeconds.Seconds());
+            sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + RetryOnFailedDelaySeconds, MaxRetryOnFailedDelaySeconds).Seconds(),
+            onRetry: (e, delayTime, retryAttempt, context) =>
+            {
+                if (retryAttempt > 1)
+                    IPlatformMessageBusConsumer.LogError(Logger, GetType(), message, e.BeautifyStackTrace(), "Retry");
+            });
 
         if (ApplicationSettingContext.IsDebugInformationMode)
             Logger.LogInformation("{Type} {Method} FINISHED", GetType().FullName, nameof(HandleMessageDirectly));

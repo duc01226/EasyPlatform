@@ -1,10 +1,14 @@
 #nullable enable
+
+#region
+
 using System.Diagnostics;
 using System.Text.Json;
 using Easy.Platform.Common.Extensions;
-using Easy.Platform.Common.Logging;
 using Easy.Platform.Common.Utils;
 using Microsoft.Extensions.Logging;
+
+#endregion
 
 namespace Easy.Platform.Infrastructures.MessageBus;
 
@@ -52,12 +56,14 @@ public interface IPlatformMessageBusConsumer
         ILogger logger,
         Type consumerType,
         TMessage message,
-        Exception e)
+        Exception e,
+        string prefix = "")
         where TMessage : class, new()
     {
         logger.LogError(
             e.BeautifyStackTrace(),
-            "Error Consume message bus. [ConsumerType:{ConsumerType}]; [MessageType:{MessageType}]; [Message:{@Message}];",
+            "Error Consume message bus.{Prefix} [ConsumerType:{ConsumerType}]; [MessageType:{MessageType}]; [Message:{@Message}];",
+            prefix,
             consumerType.FullName,
             message.GetType().GetNameOrGenericTypeName(),
             message);
@@ -197,6 +203,8 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
 
     public virtual double RetryOnFailedDelaySeconds { get; set; } = Util.TaskRunner.DefaultResilientDelaySeconds;
 
+    public virtual double MaxRetryOnFailedDelaySeconds { get; set; } = 60;
+
     public virtual bool LogErrorOnException => true;
 
     public override Task HandleAsync(object message, string routingKey)
@@ -219,7 +227,12 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 () => ExecuteHandleLogicAsync(message, routingKey),
                 retryCount: RetryOnFailedTimes,
-                sleepDurationProvider: retryAttempt => RetryOnFailedDelaySeconds.Seconds());
+                sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + RetryOnFailedDelaySeconds, MaxRetryOnFailedDelaySeconds).Seconds(),
+                onRetry: (e, delayTime, retryAttempt, context) =>
+                {
+                    if (retryAttempt > 1)
+                        IPlatformMessageBusConsumer.LogError(Logger, GetType(), message, e.BeautifyStackTrace(), "Retry");
+                });
         }
         catch (Exception e)
         {
@@ -227,11 +240,6 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
                 IPlatformMessageBusConsumer.LogError(Logger, GetType(), message, e.BeautifyStackTrace());
             throw;
         }
-    }
-
-    private async Task<bool> CheckHandleWhen(TMessage message, string routingKey)
-    {
-        return cachedCheckHandleWhen ??= await HandleWhen(message, routingKey);
     }
 
     public abstract Task HandleLogicAsync(TMessage message, string routingKey);
@@ -249,6 +257,11 @@ public abstract class PlatformMessageBusConsumer<TMessage> : PlatformMessageBusC
     public override async Task<bool> HandleWhen(object message, string routingKey)
     {
         return await HandleWhen(message.Cast<TMessage>(), routingKey);
+    }
+
+    private async Task<bool> CheckHandleWhen(TMessage message, string routingKey)
+    {
+        return cachedCheckHandleWhen ??= await HandleWhen(message, routingKey);
     }
 
     public static ILogger CreateLogger(ILoggerFactory loggerFactory, Type type)

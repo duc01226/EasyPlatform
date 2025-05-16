@@ -61,7 +61,7 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     private bool? cachedCheckHandleWhen;
 
     private double retryOnFailedDelaySeconds = Util.TaskRunner.DefaultResilientDelaySeconds;
-    private int retryOnFailedTimes = Util.TaskRunner.DefaultResilientRetryCount;
+    private int? retryOnFailedTimes;
     private bool? throwExceptionOnHandleFailed;
 
     public PlatformCqrsEventApplicationHandler(
@@ -101,7 +101,8 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
 
     public override int RetryOnFailedTimes
     {
-        get => !HasInboxMessageSupport() && !MustWaitHandlerExecutionFinishedImmediately ? retryOnFailedTimes * 100 : retryOnFailedTimes;
+        get => retryOnFailedTimes ??
+               (!HasInboxMessageSupport() && !MustWaitHandlerExecutionFinishedImmediately ? int.MaxValue : Util.TaskRunner.DefaultResilientRetryCount);
         set => retryOnFailedTimes = value;
     }
 
@@ -361,7 +362,12 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                     return CheckToHandleAsync(@event, cancellationToken);
             },
             retryCount: retryCount ?? RetryOnFailedTimes,
-            sleepDurationProvider: p => RetryOnFailedDelaySeconds.Seconds(),
+            sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + RetryOnFailedDelaySeconds, MaxRetryOnFailedDelaySeconds).Seconds(),
+            onRetry: (e, delayTime, retryAttempt, context) =>
+            {
+                if (retryAttempt > 1)
+                    LogError(@event, e.BeautifyStackTrace(), LoggerFactory, "Retry");
+            },
             cancellationToken: cancellationToken);
 
         if (ApplicationSettingContext.IsDebugInformationMode)

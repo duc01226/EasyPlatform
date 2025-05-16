@@ -1,9 +1,13 @@
+#region
+
 using System.Diagnostics;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+
+#endregion
 
 namespace Easy.Platform.Common.Cqrs.Events;
 
@@ -58,6 +62,8 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     protected bool IsDistributedTracingEnabled { get; set; }
 
     public virtual double RetryOnFailedDelaySeconds { get; set; } = Util.TaskRunner.DefaultResilientDelaySeconds;
+
+    public virtual double MaxRetryOnFailedDelaySeconds { get; set; } = 60;
 
     /// <summary>
     /// The MustWaitHandlerExecutionFinishedImmediately method is part of the IPlatformCqrsEvent interface and its implementation is in the PlatformCqrsEvent class. This method is used to determine whether the execution of a specific event handler should be waited for to finish immediately or not.
@@ -177,7 +183,7 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
             await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
                 () => handlerNewInstance.ExecuteHandleAsync(@event, CancellationToken.None),
                 retryCount: RetryOnFailedTimes,
-                sleepDurationProvider: retryAttempt => RetryOnFailedDelaySeconds.Seconds(),
+                sleepDurationProvider: retryAttempt => Math.Min(retryAttempt + RetryOnFailedDelaySeconds, MaxRetryOnFailedDelaySeconds).Seconds(),
                 onRetry: (e, delayTime, retryAttempt, context) =>
                 {
                     if (retryAttempt > 1)
