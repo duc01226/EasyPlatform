@@ -1,0 +1,145 @@
+<!-- Platform Loading Error Indicator Component Template (WebV2) -->
+<div
+    class="platform-loading-error-indicator"
+    [class.--loading]="showLoading$()"
+    [class.--reloading]="showReloading$()"
+    [class.--progress-bar]="showProgressBar$()"
+    [class.--skeleton-loading]="showSkeletonLoading$()"
+    [class.--error]="showError$()"
+    [class.--hidden]="isHidden$()"
+    [class.--progress-bar-absolute-position-mode]="progressBarPositionMode === 'absolute'"
+    [class.--custom-loading-template]="hasCustomLoadingContent"
+    [class.--custom-reloading-template]="hasCustomReloadingContent"
+    [class.--custom-error-template]="hasCustomErrorContent"
+    [attr.aria-live]="'polite'"
+    [attr.aria-atomic]="true"
+>
+    <!-- Progress Bar Section (Default for Reloading) -->
+    <div
+        class="platform-loading-error-indicator__progress-bar-container"
+        [class.--absolute-position-mode]="progressBarPositionMode === 'absolute'"
+        *ngIf="showProgressBar$() && !hasCustomReloadingContent"
+        role="progressbar"
+        aria-label="Reloading"
+    >
+        <!-- Simple CSS progress bar without Angular Material dependency -->
+        <div class="platform-loading-error-indicator__progress-bar" aria-label="Reloading in progress">
+            <div class="progress-bar-fill"></div>
+        </div>
+    </div>
+
+    <!-- Custom Loading Template Section -->
+    <div
+        class="platform-loading-error-indicator__loading-custom platform-loading-error-indicator__custom-content"
+        *ngIf="showLoading$() && hasCustomLoadingContent"
+        role="progressbar"
+        aria-label="Loading content"
+    >
+        <ng-content select="[slot=loading]"></ng-content>
+    </div>
+
+    <!-- Skeleton Loading Section (Default for Loading) -->
+    <div
+        class="platform-loading-error-indicator__skeleton-loading"
+        *ngIf="showSkeletonLoading$() && !hasCustomLoadingContent"
+        role="progressbar"
+        aria-label="Loading content"
+    >
+        <!-- Basic skeleton loading UI -->
+        <div class="skeleton-placeholder">
+            <div class="skeleton-line skeleton-line--title"></div>
+            <div class="skeleton-line skeleton-line--text"></div>
+            <div class="skeleton-line skeleton-line--text skeleton-line--short"></div>
+        </div>
+    </div>
+
+    <!-- Custom Reloading Template Section -->
+    <div
+        class="platform-loading-error-indicator__reloading-custom platform-loading-error-indicator__custom-content"
+        *ngIf="showReloading$() && hasCustomReloadingContent"
+        role="progressbar"
+        aria-label="Reloading content"
+    >
+        <ng-content select="[slot=reloading]"></ng-content>
+    </div>
+
+    <!-- Fallback Custom Loading Template (when reloading but no reloading template) -->
+    <div
+        class="platform-loading-error-indicator__loading-custom-fallback platform-loading-error-indicator__custom-content"
+        *ngIf="showReloading$() && !hasCustomReloadingContent && hasCustomLoadingContent"
+        role="progressbar"
+        aria-label="Reloading content"
+    >
+        <ng-content select="[slot=loading]"></ng-content>
+    </div>
+
+    <!-- Error State Section -->
+    <div class="platform-loading-error-indicator__error" *ngIf="showError$()" role="alert" [attr.aria-label]="'Error: ' + errorMessage$()">
+        <!-- Default Error Template -->
+        <div class="platform-loading-error-indicator__error-default" *ngIf="!hasCustomErrorContent">
+            <div class="platform-loading-error-indicator__error-content">
+                <!-- CSS-only error icon -->
+                <span class="platform-loading-error-indicator__error-icon" aria-hidden="true"></span>
+                <span class="platform-loading-error-indicator__error-message">
+                    {{ errorMessage$() }}
+                </span>
+            </div>
+
+            <div class="platform-loading-error-indicator__error-actions" *ngIf="enableReloadAction || enableDismissAction">
+                <button
+                    *ngIf="enableReloadAction"
+                    (click)="onReload()"
+                    class="platform-loading-error-indicator__action-btn --reload"
+                    type="button"
+                    [attr.aria-label]="'Retry'"
+                    [attr.title]="'Retry'"
+                >
+                    <!-- CSS-only refresh icon -->
+                    <span class="action-icon refresh-icon" aria-hidden="true"></span>
+                </button>
+
+                <button
+                    *ngIf="enableDismissAction"
+                    (click)="onDismiss()"
+                    class="platform-loading-error-indicator__action-btn --dismiss"
+                    type="button"
+                    [attr.aria-label]="'Dismiss error'"
+                    [attr.title]="'Dismiss'"
+                >
+                    <!-- CSS-only close icon -->
+                    <span class="action-icon close-icon" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Custom Error Template via ng-content -->
+        <div class="platform-loading-error-indicator__error-custom" *ngIf="hasCustomErrorContent">
+            <ng-content select="[slot=error]"></ng-content>
+
+            <!-- Default actions still available for custom content -->
+            <div class="platform-loading-error-indicator__error-actions" *ngIf="(enableReloadAction || enableDismissAction) && !hasCustomActions">
+                <button
+                    *ngIf="enableReloadAction"
+                    (click)="onReload()"
+                    class="platform-loading-error-indicator__action-btn --reload"
+                    type="button"
+                    [attr.aria-label]="'Retry'"
+                    [attr.title]="'Retry'"
+                >
+                    <span class="action-icon refresh-icon" aria-hidden="true"></span>
+                </button>
+
+                <button
+                    *ngIf="enableDismissAction"
+                    (click)="onDismiss()"
+                    class="platform-loading-error-indicator__action-btn --dismiss"
+                    type="button"
+                    [attr.aria-label]="'Dismiss error'"
+                    [attr.title]="'Dismiss'"
+                >
+                    <span class="action-icon close-icon" aria-hidden="true"></span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
