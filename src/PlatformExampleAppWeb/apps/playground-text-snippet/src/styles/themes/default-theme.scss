@@ -1,0 +1,19 @@
+@use '@angular/material' as mat;
+
+// Apply the custom theme globally
+html {
+    @include mat.theme(
+        (
+            color: (
+                primary: mat.$blue-palette,
+                // Primary color palette (use a valid color palette like $blue-palette)
+                tertiary: mat.$violet-palette,
+                // Tertiary color palette (use another valid color palette)
+                theme-type: light // Light theme type
+            ),
+            typography: Roboto,
+            // Use Roboto typography (or replace with your choice)
+            density: 0 // Adjust the density as per your needs (0 for default)
+        )
+    );
+}
