@@ -1,0 +1,457 @@
+/* Platform Loading Error Indicator Component Styles */
+/* Angular Material danger-style error indicator with loading states */
+
+.platform-loading-error-indicator {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+    &.--hidden {
+        display: none;
+    }
+
+    // State-based classes
+    &.--loading {
+        opacity: 1;
+    }
+
+    &.--reloading {
+        opacity: 1;
+    }
+
+    &.--progress-bar {
+        position: relative;
+    }
+
+    &.--skeleton-loading {
+        min-height: 80px;
+    }
+
+    &.--progress-bar-absolute-position-mode {
+        position: relative;
+    }
+
+    // Progress Bar Container
+    &__progress-bar-container {
+        width: 100%;
+        position: relative;
+
+        &.--absolute-position-mode {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+    }
+
+    // Progress Bar Styles
+    &__progress-bar {
+        width: 100%;
+        height: 4px;
+
+        // Angular Material progress bar customization
+        ::ng-deep .mat-progress-bar {
+            height: 4px;
+
+            .mat-progress-bar-buffer {
+                background-color: rgba(63, 81, 181, 0.1); // Material indigo-100
+            }
+
+            .mat-progress-bar-primary {
+                background-color: #3f51b5; // Material indigo-500
+            }
+
+            .mat-progress-bar-secondary {
+                background-color: rgba(63, 81, 181, 0.3); // Material indigo-300
+            }
+        }
+
+        // Reloading state - different color
+        .--reloading & {
+            ::ng-deep .mat-progress-bar {
+                .mat-progress-bar-buffer {
+                    background-color: rgba(255, 152, 0, 0.1); // Material orange-100
+                }
+
+                .mat-progress-bar-primary {
+                    background-color: #ff9800; // Material orange-500
+                }
+
+                .mat-progress-bar-secondary {
+                    background-color: rgba(255, 152, 0, 0.3); // Material orange-300
+                }
+            }
+        }
+    }
+
+    // Skeleton Loading Styles
+    &__skeleton-loading {
+        padding: 16px;
+        width: 100%;
+
+        .skeleton-placeholder {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .skeleton-line {
+            height: 16px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 4px;
+
+            &.skeleton-line--title {
+                height: 20px;
+                width: 60%;
+            }
+
+            &.skeleton-line--text {
+                height: 14px;
+                width: 100%;
+            }
+
+            &.skeleton-line--short {
+                width: 75%;
+            }
+        }
+    }
+
+    // Error State Styles (Angular Material Danger Style)
+    &__error {
+        display: flex;
+        align-items: flex-start;
+        width: 100%;
+        min-height: 48px;
+        padding: 16px;
+        border-radius: 4px;
+        border-left: 4px solid #f44336; // Material Design Error Red (Red-500)
+        background-color: #ffebee; // Material Design Error Background (Red-50)
+        color: #b71c1c; // Material Design Error Text (Red-900)
+        font-size: 14px;
+        line-height: 1.5;
+        font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+
+        // Material Design elevation shadow
+        box-shadow: 0 2px 1px -1px rgba(0, 0, 0, 0.2), 0 1px 1px 0 rgba(0, 0, 0, 0.14), 0 1px 3px 0 rgba(0, 0, 0, 0.12);
+
+        // Subtle animation on appearance
+        animation: slideIn 0.2s ease-out;
+    }
+
+    &__error-default,
+    &__error-custom {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 12px;
+    }
+
+    &__error-content {
+        display: flex;
+        align-items: flex-start;
+        flex: 1;
+        gap: 12px;
+
+        .platform-loading-error-indicator__error-icon {
+            flex-shrink: 0;
+            color: transparent;
+            font-size: 24px;
+            width: 24px;
+            height: 24px;
+            margin-top: -2px; // Align with text baseline
+            position: relative;
+            display: inline-block;
+
+            // Create error icon (triangle with exclamation)
+            &::before {
+                content: '';
+                position: absolute;
+                top: 2px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 0;
+                height: 0;
+                border-left: 10px solid transparent;
+                border-right: 10px solid transparent;
+                border-bottom: 18px solid #f44336;
+            }
+
+            &::after {
+                content: '!';
+                position: absolute;
+                top: 6px;
+                left: 50%;
+                transform: translateX(-50%);
+                color: white;
+                font-weight: bold;
+                font-size: 14px;
+                line-height: 1;
+                z-index: 1;
+            }
+        }
+
+        .platform-loading-error-indicator__error-message {
+            flex: 1;
+            word-break: break-word;
+            line-height: 1.5;
+            margin: 0;
+
+            // Ensure proper text wrapping
+            overflow-wrap: break-word;
+            hyphens: auto;
+        }
+    }
+
+    &__error-actions {
+        display: flex;
+        align-items: flex-start;
+        flex-shrink: 0;
+        gap: 4px;
+    }
+
+    &__action-btn {
+        width: 40px !important;
+        height: 40px !important;
+        color: #d32f2f !important; // Material Design Error Red (Red-700)
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+        // Material button styling
+        border-radius: 50% !important;
+
+        &:hover {
+            background-color: rgba(244, 67, 54, 0.08) !important; // Red-500 with 8% opacity
+            color: #c62828 !important; // Material Design Error Red (Red-800)
+        }
+
+        &:focus {
+            background-color: rgba(244, 67, 54, 0.12) !important; // Red-500 with 12% opacity
+            outline: 2px solid rgba(244, 67, 54, 0.2);
+            outline-offset: 2px;
+        }
+
+        &:active {
+            background-color: rgba(244, 67, 54, 0.16) !important; // Red-500 with 16% opacity
+        }
+
+        &.--reload {
+            // Reload button - ready for specific styling if needed
+            position: relative;
+        }
+
+        &.--dismiss {
+            // Dismiss button - ready for specific styling if needed
+            position: relative;
+        }
+
+        .mat-icon {
+            font-size: 20px !important;
+            width: 20px !important;
+            height: 20px !important;
+            line-height: 20px !important;
+            color: transparent !important;
+            position: relative;
+            display: inline-block;
+        }
+
+        // Close icon (X)
+        &.--dismiss .mat-icon {
+            &::before,
+            &::after {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                width: 14px;
+                height: 2px;
+                background-color: currentColor;
+                color: #d32f2f;
+            }
+
+            &::before {
+                transform: translate(-50%, -50%) rotate(45deg);
+            }
+
+            &::after {
+                transform: translate(-50%, -50%) rotate(-45deg);
+            }
+        }
+
+        // Refresh icon (circular arrow)
+        &.--reload .mat-icon {
+            &::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 14px;
+                height: 14px;
+                border: 2px solid #d32f2f;
+                border-top-color: transparent;
+                border-radius: 50%;
+            }
+
+            &::after {
+                content: '';
+                position: absolute;
+                top: 3px;
+                left: 50%;
+                transform: translateX(-50%) rotate(45deg);
+                width: 0;
+                height: 0;
+                border-left: 3px solid transparent;
+                border-right: 3px solid transparent;
+                border-bottom: 4px solid #d32f2f;
+            }
+        }
+
+        // Remove default Material button styles that might interfere
+        ::ng-deep .mat-button-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        ::ng-deep .mat-button-ripple,
+        ::ng-deep .mat-button-focus-overlay {
+            border-radius: 50% !important;
+        }
+    }
+
+    // Custom content container
+    &__error-custom {
+        ::ng-deep [slot='error'] {
+            flex: 1;
+            display: block;
+
+            // Inherit error styling for custom content
+            color: inherit;
+            font-size: inherit;
+            line-height: inherit;
+
+            // Reset margins for custom content
+            > *:first-child {
+                margin-top: 0;
+            }
+
+            > *:last-child {
+                margin-bottom: 0;
+            }
+        }
+    }
+}
+
+// Animation keyframes
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes skeleton-loading {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+// Responsive design adjustments
+@media (max-width: 768px) {
+    .platform-loading-error-indicator {
+        &__error {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        &__error-default,
+        &__error-custom {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 12px;
+        }
+
+        &__error-actions {
+            align-self: flex-end;
+            margin-top: 0;
+        }
+
+        &__error-content {
+            align-items: flex-start;
+        }
+    }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+    .platform-loading-error-indicator {
+        &__error {
+            border-left-width: 6px;
+            background-color: #fff;
+            color: #000;
+            border-color: #d32f2f;
+        }
+
+        &__error-content .platform-loading-error-indicator__error-icon {
+            color: #d32f2f;
+        }
+
+        &__action-btn {
+            color: #d32f2f !important;
+            border: 2px solid #d32f2f !important;
+
+            &:hover {
+                background-color: #d32f2f !important;
+                color: #fff !important;
+            }
+        }
+    }
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+    .platform-loading-error-indicator {
+        &__error {
+            animation: none;
+        }
+
+        &__action-btn {
+            transition: none;
+        }
+    }
+}
+
+// Dark theme support (if needed)
+@media (prefers-color-scheme: dark) {
+    .platform-loading-error-indicator {
+        &__error {
+            background-color: #330e0e; // Dark red background
+            color: #ffcdd2; // Light red text (Red-100)
+            border-left-color: #ef5350; // Lighter red border (Red-400)
+        }
+
+        &__error-content .platform-loading-error-indicator__error-icon {
+            color: #ef5350; // Red-400 for better dark theme contrast
+        }
+
+        &__action-btn {
+            color: #ef5350 !important;
+
+            &:hover {
+                background-color: rgba(239, 83, 80, 0.12) !important;
+                color: #ffab91 !important; // Red-200
+            }
+        }
+    }
+}
