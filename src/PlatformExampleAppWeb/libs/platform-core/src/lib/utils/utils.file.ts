@@ -4,10 +4,10 @@ export function file_isValidExtension(file: File, allowedFileType: string, separ
     const extensions = file.name.match(/\.[^.]+$/);
     if (!extensions?.length) return false;
 
-    const acceptedFileType = allowedFileType.split(separator);
+    const acceptedFileType = allowedFileType.split(separator).map(type => type.toLowerCase());
     if (!acceptedFileType.length) return false;
 
-    return acceptedFileType.includes(extensions[extensions.length - 1]!);
+    return acceptedFileType.includes(extensions[extensions.length - 1]!.toLowerCase());
 }
 
 export function file_renameDuplicateName(originalFileName: string, existingFileNames: string[]) {

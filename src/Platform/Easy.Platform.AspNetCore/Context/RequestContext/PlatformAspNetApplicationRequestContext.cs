@@ -583,7 +583,10 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
         {
             // This property will be 'true' if the request has been aborted
             // or has completed normally.
-            if (useHttpContext == null || useHttpContext.Request?.Headers is null || useHttpContext.RequestAborted.IsCancellationRequested)
+            if (useHttpContext == null ||
+                useHttpContext.Features is null ||
+                useHttpContext.Request?.Headers is null ||
+                useHttpContext.RequestAborted.IsCancellationRequested)
             {
                 foundValue = default;
                 return false;

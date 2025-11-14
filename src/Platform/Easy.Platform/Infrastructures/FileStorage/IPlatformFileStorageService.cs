@@ -1,8 +1,12 @@
+#region
+
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using Easy.Platform.Common.Validations;
 using Easy.Platform.Infrastructures.Abstract;
 using Microsoft.AspNetCore.Http;
+
+#endregion
 
 namespace Easy.Platform.Infrastructures.FileStorage;
 
@@ -50,7 +54,7 @@ public interface IPlatformFileStorageService : IPlatformInfrastructureService
         {
             DefaultPrivateRootDirectoryName => PlatformFileStorageOptions.PublicAccessTypes.None,
             DefaultPublicRootDirectoryName => PlatformFileStorageOptions.PublicAccessTypes.Container,
-            _ => null,
+            _ => null
         };
     }
 
@@ -129,7 +133,7 @@ public interface IPlatformFileStorageService : IPlatformInfrastructureService
     /// <param name="rootDirectory">The root directory where the file should be located (e.g., "private" or "public").</param>
     /// <param name="filePath">The relative path of the file within the root directory.</param>
     /// <returns>True if the file exists, false otherwise.</returns>
-    Task<bool> ExistsAsync([NotNull] string rootDirectory, [NotNull] string filePath);
+    Task<bool> ExistsAsync([NotNull] string rootDirectory, [NotNull] string filePath, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a file from cloud storage using its full path identifier.
@@ -186,7 +190,7 @@ public interface IPlatformFileStorageService : IPlatformInfrastructureService
     /// <param name="expirationTime">Optional time duration for which the URI will be valid. If null, a default expiration will be used.</param>
     /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
     /// <returns>A URI that provides temporary access to the file.</returns>
-    Task<Uri> CreateSharedAccessUriAsync(
+    Task<Uri?> CreateSharedAccessUriAsync(
         string rootDirectory,
         string filePath,
         TimeSpan? expirationTime = null,
@@ -200,7 +204,7 @@ public interface IPlatformFileStorageService : IPlatformInfrastructureService
     /// <param name="sourceFullFilePath">The complete path to the source file, including the root directory.</param>
     /// <param name="destinationFullFilePath">The complete path where the file should be copied to, including the root directory.</param>
     /// <returns>The full path of the newly created copy of the file.</returns>
-    Task<string> CopyFileAsync(string sourceFullFilePath, string destinationFullFilePath);
+    Task<string> CopyFileAsync(string sourceFullFilePath, string destinationFullFilePath, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Moves a file from one location to another within the storage system.
@@ -209,7 +213,26 @@ public interface IPlatformFileStorageService : IPlatformInfrastructureService
     /// <param name="fullFilePath">The complete path to the source file to be moved, including the root directory.</param>
     /// <param name="newLocationFullFilePath">The complete path where the file should be moved to, including the root directory.</param>
     /// <returns>The full path of the file at its new location.</returns>
-    Task<string> MoveFileAsync(string fullFilePath, string newLocationFullFilePath);
+    Task<string> MoveFileAsync(string fullFilePath, string newLocationFullFilePath, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Performs server-side blob copy, eliminating SSL stream conflicts and improving performance.
+    /// This method uses native copy operation instead of download→upload pattern.
+    /// </summary>
+    /// <param name="sourceFullFilePath">Source blob path (e.g., "private/path/to/file.pdf")</param>
+    /// <param name="rootDirectory">Destination root directory (e.g., "private" or "public")</param>
+    /// <param name="destinationFilePath">Destination file path within root directory</param>
+    /// <param name="publicAccessType">Optional public access type override for destination</param>
+    /// <param name="fileDescription">Optional description override for destination file metadata</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>File storage item with metadata of the copied file</returns>
+    Task<IPlatformFileStorageFileItem> CopyBlobWithMetadataAsync(
+        string sourceFullFilePath,
+        string rootDirectory,
+        string destinationFilePath,
+        PlatformFileStorageOptions.PublicAccessTypes? publicAccessType = null,
+        string fileDescription = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the base endpoint URL for the file storage service.
@@ -225,7 +248,7 @@ public interface IPlatformFileStorageService : IPlatformInfrastructureService
     /// <param name="rootDirectory">The root directory where the target directory is located (e.g., "private" or "public").</param>
     /// <param name="directoryPath">The relative path of the directory within the root directory.</param>
     /// <returns>A directory object that provides access to the directory's contents and properties.</returns>
-    IPlatformFileStorageDirectory GetDirectory(string rootDirectory, string directoryPath);
+    Task<IPlatformFileStorageDirectory> GetDirectoryAsync(string rootDirectory, string directoryPath);
 
     /// <summary>
     /// Gets a file item object representing a specific file in the storage system.
@@ -234,7 +257,7 @@ public interface IPlatformFileStorageService : IPlatformInfrastructureService
     /// <param name="rootDirectory">The root directory where the file is located (e.g., "private" or "public").</param>
     /// <param name="filePath">The relative path of the file within the root directory.</param>
     /// <returns>A file item object that provides access to the file's metadata and properties.</returns>
-    IPlatformFileStorageFileItem GetFileItem(string rootDirectory, string filePath);
+    Task<IPlatformFileStorageFileItem> GetFileItemAsync(string rootDirectory, string filePath, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Validates a file name to ensure it complies with the storage system's naming requirements.
