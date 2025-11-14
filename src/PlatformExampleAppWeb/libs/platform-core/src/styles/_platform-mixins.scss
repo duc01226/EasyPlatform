@@ -1,3 +1,5 @@
+@use 'platform-variables' as *;
+
 @mixin flex-layout-media($media-type) {
     @if ($media-type== 'xs' or $media-type== 'lt-sm') {
         @media (max-width: $platform-media-breakpoint-xs) {
