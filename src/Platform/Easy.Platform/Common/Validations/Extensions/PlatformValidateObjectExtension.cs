@@ -197,9 +197,7 @@ public static class PlatformValidateObjectExtension
 
     private static string BuildDefaultNotFoundErrorMsg<T>(string errorMsg)
     {
-        if (typeof(T) == typeof(string) || typeof(T).IsPrimitive || typeof(T) == typeof(DateTime)) return errorMsg;
-
-        return $"{errorMsg} {typeof(T).GetNameOrGenericTypeName()}";
+        return BuildDefaultErrorMsg<T>(errorMsg);
     }
 
     public static PlatformValidationResult<T[]> ValidateFound<T>(this T[]? objects, string errorMsg = DefaultNotFoundMessage)
@@ -289,4 +287,24 @@ public static class PlatformValidateObjectExtension
     }
 
     #endregion
+
+    #region ValidateNotFound
+
+    public const string DefaultAlreadyExistedMessage = "Already Existed";
+
+    public static PlatformValidationResult<T> ValidateNotFound<T>(this T? obj, string errorMsg = DefaultAlreadyExistedMessage)
+    {
+        return obj is null
+            ? PlatformValidationResult.Valid(obj)
+            : PlatformValidationResult.Invalid(obj!, errorMsg == DefaultAlreadyExistedMessage ? BuildDefaultErrorMsg<T>(errorMsg) : errorMsg);
+    }
+
+    #endregion
+
+    private static string BuildDefaultErrorMsg<T>(string errorMsg)
+    {
+        if (typeof(T) == typeof(string) || typeof(T).IsPrimitive || typeof(T) == typeof(DateTime)) return errorMsg;
+
+        return $"{errorMsg} {typeof(T).GetNameOrGenericTypeName()}";
+    }
 }

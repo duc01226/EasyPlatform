@@ -1234,6 +1234,8 @@ public interface IPlatformQueryableRootRepository<TEntity, TPrimaryKey>
 
                     var updatedItems = await UpdateManyAsync(uow, pagingUpdateItems, dismissSendEvent, checkDiff, eventCustomConfig, cancellationToken);
 
+                    await uow.CompleteAsync(cancellationToken);
+
                     return updatedItems;
                 }
             },

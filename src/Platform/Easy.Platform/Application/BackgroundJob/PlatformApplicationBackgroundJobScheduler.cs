@@ -66,6 +66,11 @@ public class PlatformApplicationBackgroundJobScheduler : IPlatformApplicationBac
         return InnerInfrastructureScheduler.Schedule<TJobExecutor, TJobExecutorParam>(jobExecutorParam, delay);
     }
 
+    public Task RemoveJobIfExist(string jobId)
+    {
+        return InnerInfrastructureScheduler.RemoveJobIfExist(jobId);
+    }
+
     public async Task UpsertRecurringJob<TJobExecutor>(Func<string> cronExpression = null, TimeZoneInfo timeZone = null)
         where TJobExecutor : IPlatformBackgroundJobExecutor
     {

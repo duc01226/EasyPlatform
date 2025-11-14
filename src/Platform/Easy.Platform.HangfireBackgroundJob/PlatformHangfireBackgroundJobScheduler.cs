@@ -41,19 +41,23 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
     public async Task<string> Schedule<TJobExecutor>(DateTimeOffset enqueueAt)
         where TJobExecutor : IPlatformBackgroundJobExecutor
     {
-        return await Task.Run(() => BackgroundJob.Schedule(() => ExecuteBackgroundJobByType(typeof(TJobExecutor), null, CurrentRequestContextValuesAsJsonStr()), enqueueAt));
+        return await Task.Run(() => BackgroundJob.Schedule(
+            () => ExecuteBackgroundJobByType(typeof(TJobExecutor), null, CurrentRequestContextValuesAsJsonStr()),
+            enqueueAt));
     }
 
     public async Task<string> Schedule<TJobExecutor, TJobExecutorParam>(DateTimeOffset enqueueAt, TJobExecutorParam? jobExecutorParam)
         where TJobExecutor : IPlatformBackgroundJobExecutor<TJobExecutorParam>
         where TJobExecutorParam : class
     {
-        return await Task.Run(
-            () =>
-                BackgroundJob.Schedule(
-                    () => ExecuteBackgroundJobByType(typeof(TJobExecutor), jobExecutorParam != null ? jobExecutorParam.ToJson(true) : null, CurrentRequestContextValuesAsJsonStr()),
-                    enqueueAt
-                )
+        return await Task.Run(() =>
+            BackgroundJob.Schedule(
+                () => ExecuteBackgroundJobByType(
+                    typeof(TJobExecutor),
+                    jobExecutorParam != null ? jobExecutorParam.ToJson(true) : null,
+                    CurrentRequestContextValuesAsJsonStr()),
+                enqueueAt
+            )
         );
     }
 
@@ -65,8 +69,9 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
     public async Task<string> Schedule<TJobExecutor>(TimeSpan? delay = null)
         where TJobExecutor : IPlatformBackgroundJobExecutor
     {
-        return await Task.Run(
-            () => BackgroundJob.Schedule(() => ExecuteBackgroundJobByType(typeof(TJobExecutor), null, CurrentRequestContextValuesAsJsonStr()), delay ?? TimeSpan.Zero)
+        return await Task.Run(() => BackgroundJob.Schedule(
+            () => ExecuteBackgroundJobByType(typeof(TJobExecutor), null, CurrentRequestContextValuesAsJsonStr()),
+            delay ?? TimeSpan.Zero)
         );
     }
 
@@ -74,13 +79,20 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         where TJobExecutor : IPlatformBackgroundJobExecutor<TJobExecutorParam>
         where TJobExecutorParam : class
     {
-        return await Task.Run(
-            () =>
-                BackgroundJob.Schedule(
-                    () => ExecuteBackgroundJobByType(typeof(TJobExecutor), jobExecutorParam != null ? jobExecutorParam.ToJson(true) : null, CurrentRequestContextValuesAsJsonStr()),
-                    delay ?? TimeSpan.Zero
-                )
+        return await Task.Run(() =>
+            BackgroundJob.Schedule(
+                () => ExecuteBackgroundJobByType(
+                    typeof(TJobExecutor),
+                    jobExecutorParam != null ? jobExecutorParam.ToJson(true) : null,
+                    CurrentRequestContextValuesAsJsonStr()),
+                delay ?? TimeSpan.Zero
+            )
         );
+    }
+
+    public async Task RemoveJobIfExist(string jobId)
+    {
+        await Task.Run(() => BackgroundJob.Delete(jobId));
     }
 
     public async Task UpsertRecurringJob<TJobExecutor>(Func<string>? cronExpression = null, TimeZoneInfo? timeZone = null)
@@ -99,7 +111,10 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         });
     }
 
-    public async Task UpsertRecurringJob<TJobExecutor, TJobExecutorParam>(TJobExecutorParam? jobExecutorParam, Func<string>? cronExpression = null, TimeZoneInfo? timeZone = null)
+    public async Task UpsertRecurringJob<TJobExecutor, TJobExecutorParam>(
+        TJobExecutorParam? jobExecutorParam,
+        Func<string>? cronExpression = null,
+        TimeZoneInfo? timeZone = null)
         where TJobExecutor : IPlatformBackgroundJobExecutor<TJobExecutorParam>
         where TJobExecutorParam : class
     {
@@ -163,7 +178,12 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         });
     }
 
-    public async Task UpsertRecurringJob(string recurringJobId, Type jobExecutorType, object? jobExecutorParam, Func<string>? cronExpression = null, TimeZoneInfo? timeZone = null)
+    public async Task UpsertRecurringJob(
+        string recurringJobId,
+        Type jobExecutorType,
+        object? jobExecutorParam,
+        Func<string>? cronExpression = null,
+        TimeZoneInfo? timeZone = null)
     {
         await Task.Run(() =>
         {
@@ -216,91 +236,14 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
     {
         return await Task.Run(() =>
         {
-            using (var connection = JobStorage.Current.GetConnection())
-            {
-                return connection.GetRecurringJobs().Select(p => p.Id).ToHashSet();
-            }
-        });
-    }
-
-    /// <summary>
-    /// Detects recurring jobs that cannot be properly deserialized due to serialization format mismatch.
-    /// This happens when job implementation changes (e.g., base class refactoring) but job ID remains the same.
-    ///
-    /// Common scenarios:
-    /// - Job refactored from PlatformApplicationBackgroundJobExecutor to PlatformApplicationBatchScrollingBackgroundJobExecutor
-    /// - Job signature changed (added/removed generic parameters)
-    /// - Assembly version changes with incompatible serialization settings
-    /// </summary>
-    /// <returns>Set of job IDs that have invalid serialization and should be recreated</returns>
-    private async Task<HashSet<string>> DetectInvalidRecurringJobs()
-    {
-        return await Task.Run(() =>
-        {
-            var invalidJobIds = new HashSet<string>();
-
-            try
-            {
-                using (var connection = JobStorage.Current.GetConnection())
-                {
-                    var recurringJobs = connection.GetRecurringJobs();
-
-                    foreach (var recurringJob in recurringJobs)
-                    {
-                        // Check if Hangfire already caught a deserialization exception
-                        // Hangfire stores JobLoadException in LoadException property instead of throwing
-                        if (recurringJob.LoadException != null)
-                        {
-                            invalidJobIds.Add(recurringJob.Id);
-
-                            // Log for diagnostics
-                            serviceProvider
-                                .GetService<ILogger<PlatformHangfireBackgroundJobScheduler>>()
-                                ?.LogWarning(
-                                    recurringJob.LoadException,
-                                    "Recurring job '{JobId}' has invalid serialization and will be recreated. "
-                                        + "This typically happens after refactoring job implementations (e.g., changing base class). "
-                                        + "LoadException: {ExceptionMessage}",
-                                    recurringJob.Id,
-                                    recurringJob.LoadException.Message
-                                );
-                            continue;
-                        }
-
-                        // Additional validation: Check if the job method can be invoked
-                        var job = recurringJob.Job;
-                        if (job == null || job.Type == null || job.Method == null)
-                        {
-                            invalidJobIds.Add(recurringJob.Id);
-
-                            serviceProvider
-                                .GetService<ILogger<PlatformHangfireBackgroundJobScheduler>>()
-                                ?.LogWarning(
-                                    "Recurring job '{JobId}' has incomplete job definition (Job={JobNull}, Type={TypeNull}, Method={MethodNull}) and will be recreated.",
-                                    recurringJob.Id,
-                                    job == null,
-                                    job?.Type == null,
-                                    job?.Method == null
-                                );
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                // If we can't connect to storage, log and continue
-                serviceProvider
-                    .GetService<ILogger<PlatformHangfireBackgroundJobScheduler>>()
-                    ?.LogWarning(ex, "Failed to detect invalid recurring jobs. Jobs will be processed normally.");
-            }
-
-            return invalidJobIds;
+            using (var connection = JobStorage.Current.GetConnection()) return connection.GetRecurringJobs().Select(p => p.Id).ToHashSet();
         });
     }
 
     public async Task ReplaceAllRecurringBackgroundJobs(List<IPlatformBackgroundJobExecutor> newAllRecurringJobs)
     {
-        var newCurrentRecurringJobExecutorToIdPairs = newAllRecurringJobs.Select(p => (JobExecutor: p, JobExecutorId: BuildAutoRecurringJobIdByType(p.GetType()))).ToHashSet();
+        var newCurrentRecurringJobExecutorToIdPairs =
+            newAllRecurringJobs.Select(p => (JobExecutor: p, JobExecutorId: BuildAutoRecurringJobIdByType(p.GetType()))).ToHashSet();
 
         var newCurrentRecurringJobExecutorIds = newCurrentRecurringJobExecutorToIdPairs.Select(p => p.JobExecutorId).ToHashSet();
         var allExistingRecurringJobIds = await AllExistingRecurringJobIds();
@@ -382,7 +325,10 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         return await Task.Run(() =>
         {
             return BackgroundJob.Schedule(
-                () => ExecuteBackgroundJobByType(jobExecutorType, jobExecutorParam != null ? jobExecutorParam.ToJson(true) : null, CurrentRequestContextValuesAsJsonStr()),
+                () => ExecuteBackgroundJobByType(
+                    jobExecutorType,
+                    jobExecutorParam != null ? jobExecutorParam.ToJson(true) : null,
+                    CurrentRequestContextValuesAsJsonStr()),
                 enqueueAt
             );
         });
@@ -407,6 +353,80 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
         });
     }
 
+    /// <summary>
+    /// Detects recurring jobs that cannot be properly deserialized due to serialization format mismatch.
+    /// This happens when job implementation changes (e.g., base class refactoring) but job ID remains the same.
+    /// Common scenarios:
+    /// - Job refactored from PlatformApplicationBackgroundJobExecutor to PlatformApplicationBatchScrollingBackgroundJobExecutor
+    /// - Job signature changed (added/removed generic parameters)
+    /// - Assembly version changes with incompatible serialization settings
+    /// </summary>
+    /// <returns>Set of job IDs that have invalid serialization and should be recreated</returns>
+    private async Task<HashSet<string>> DetectInvalidRecurringJobs()
+    {
+        return await Task.Run(() =>
+        {
+            var invalidJobIds = new HashSet<string>();
+
+            try
+            {
+                using (var connection = JobStorage.Current.GetConnection())
+                {
+                    var recurringJobs = connection.GetRecurringJobs();
+
+                    foreach (var recurringJob in recurringJobs)
+                    {
+                        // Check if Hangfire already caught a deserialization exception
+                        // Hangfire stores JobLoadException in LoadException property instead of throwing
+                        if (recurringJob.LoadException != null)
+                        {
+                            invalidJobIds.Add(recurringJob.Id);
+
+                            // Log for diagnostics
+                            serviceProvider
+                                .GetService<ILogger<PlatformHangfireBackgroundJobScheduler>>()
+                                ?.LogWarning(
+                                    recurringJob.LoadException,
+                                    "Recurring job '{JobId}' has invalid serialization and will be recreated. "
+                                    + "This typically happens after refactoring job implementations (e.g., changing base class). "
+                                    + "LoadException: {ExceptionMessage}",
+                                    recurringJob.Id,
+                                    recurringJob.LoadException.Message
+                                );
+                            continue;
+                        }
+
+                        // Additional validation: Check if the job method can be invoked
+                        var job = recurringJob.Job;
+                        if (job == null || job.Type == null || job.Method == null)
+                        {
+                            invalidJobIds.Add(recurringJob.Id);
+
+                            serviceProvider
+                                .GetService<ILogger<PlatformHangfireBackgroundJobScheduler>>()
+                                ?.LogWarning(
+                                    "Recurring job '{JobId}' has incomplete job definition (Job={JobNull}, Type={TypeNull}, Method={MethodNull}) and will be recreated.",
+                                    recurringJob.Id,
+                                    job == null,
+                                    job?.Type == null,
+                                    job?.Method == null
+                                );
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // If we can't connect to storage, log and continue
+                serviceProvider
+                    .GetService<ILogger<PlatformHangfireBackgroundJobScheduler>>()
+                    ?.LogWarning(ex, "Failed to detect invalid recurring jobs. Jobs will be processed normally.");
+            }
+
+            return invalidJobIds;
+        });
+    }
+
     public static string EnsureValidToUpsertRecurringJob(Type jobExecutorType, Func<string>? cronExpression)
     {
         EnsureJobExecutorTypeValid(jobExecutorType);
@@ -421,14 +441,16 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
     {
         await Task.Run(async () =>
         {
-            var withParamJobExecutorType = jobExecutor.GetType().GetInterfaces().FirstOrDefault(x => x.IsAssignableToGenericType(typeof(IPlatformBackgroundJobExecutor<>)));
+            var withParamJobExecutorType =
+                jobExecutor.GetType().GetInterfaces().FirstOrDefault(x => x.IsAssignableToGenericType(typeof(IPlatformBackgroundJobExecutor<>)));
 
             if (withParamJobExecutorType != null)
             {
                 // Parse job executor param to correct type
                 var (jobExecutorParamType, jobExecutorParam) = withParamJobExecutorType
                     .GetGenericArguments()[0]
-                    .GetWith(jobExecutorParamType => jobExecutorParamJson != null ? PlatformJsonSerializer.Deserialize(jobExecutorParamJson, jobExecutorParamType) : null);
+                    .GetWith(jobExecutorParamType =>
+                        jobExecutorParamJson != null ? PlatformJsonSerializer.Deserialize(jobExecutorParamJson, jobExecutorParamType) : null);
 
                 // Execute job executor method
                 jobExecutor.GetType().GetMethod(nameof(IPlatformBackgroundJobExecutor.Execute), [jobExecutorParamType])!.Invoke(jobExecutor, [jobExecutorParam]);
@@ -441,9 +463,7 @@ public class PlatformHangfireBackgroundJobScheduler : IPlatformBackgroundJobSche
     public static void EnsureJobExecutorTypeValid(Type jobExecutorType)
     {
         if (!jobExecutorType.IsAssignableTo(typeof(IPlatformBackgroundJobExecutor)))
-        {
             throw new Exception("JobExecutor type is invalid. Must be assignable to IPlatformBackgroundJobExecutor");
-        }
     }
 
     private string CurrentRequestContextValuesAsJsonStr()

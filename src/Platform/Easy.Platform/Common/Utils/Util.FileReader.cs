@@ -47,11 +47,12 @@ public static partial class Util
 
         public static async Task<byte[]> ReadStreamAsBytesAsync(Func<Stream> openReadStream)
         {
-            using (var reader = new StreamReader(openReadStream()))
+            using (var sourceStream = openReadStream())
             {
-                using (var ms = new MemoryStream(reader.BaseStream.Length > int.MaxValue ? int.MaxValue : (int)reader.BaseStream.Length))
+                using (var ms = new MemoryStream())
                 {
-                    await reader.BaseStream.CopyToAsync(ms);
+                    await sourceStream.CopyToAsync(ms);
+
                     return ms.ToArray();
                 }
             }
@@ -117,10 +118,7 @@ public static partial class Util
         /// <returns>All file content as a string.</returns>
         public static string ReadFileAsString(string filePath)
         {
-            using (var reader = new StreamReader(filePath))
-            {
-                return reader.ReadToEnd();
-            }
+            using (var reader = new StreamReader(filePath)) return reader.ReadToEnd();
         }
 
         /// <summary>
@@ -155,10 +153,7 @@ public static partial class Util
 
         public static async Task<List<T>> GetUnzipFiles<T>(Stream zipFileStream, Func<ZipArchiveEntry, Task<T>> readFileFn)
         {
-            using (var newZipArchive = new ZipArchive(zipFileStream, ZipArchiveMode.Read))
-            {
-                return await newZipArchive.Entries.SelectAsync(readFileFn);
-            }
+            using (var newZipArchive = new ZipArchive(zipFileStream, ZipArchiveMode.Read)) return await newZipArchive.Entries.SelectAsync(readFileFn);
         }
 
         public static async Task<Stream> ZipFilesAsStream<TFileContent>(
@@ -174,10 +169,7 @@ public static partial class Util
                     var fileZipEntry = newZipArchive.CreateEntry(file.FileName);
 
                     // Write not-zip file content to a zip file item
-                    using (var writer = new StreamWriter(fileZipEntry.Open(), file.FileEncoding))
-                    {
-                        await writer.WriteAsync(readFileAsCharsFn(file.FileContent));
-                    }
+                    using (var writer = new StreamWriter(fileZipEntry.Open(), file.FileEncoding)) await writer.WriteAsync(readFileAsCharsFn(file.FileContent));
                 }
             }
 

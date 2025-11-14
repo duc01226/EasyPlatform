@@ -89,6 +89,12 @@ public interface IPlatformBackgroundJobScheduler
         where TJobExecutorParam : class;
 
     /// <summary>
+    /// Remove job if jobId existed
+    /// </summary>
+    /// <param name="recurringJobId">Job id</param>
+    public Task RemoveJobIfExist(string jobId);
+
+    /// <summary>
     /// Add or update a recurring job. Use <see cref="Util.CronBuilder" /> for common cron.//
     /// </summary>
     /// <param name="cronExpression">

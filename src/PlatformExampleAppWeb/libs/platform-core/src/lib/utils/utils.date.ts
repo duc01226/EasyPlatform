@@ -1,7 +1,19 @@
-import moment, { Moment } from 'moment';
+import dayjs, { Dayjs } from 'dayjs/esm/index.js';
+import isoWeek from 'dayjs/esm/plugin/isoWeek/index.js';
+import quarterOfYear from 'dayjs/esm/plugin/quarterOfYear/index.js';
+import timezone from 'dayjs/esm/plugin/timezone/index.js';
+import utc from 'dayjs/esm/plugin/utc/index.js';
 
 import { Time } from '../../lib/common-types';
 import { MONTH, MONTH_DISPLAY, WEEKDAY, WORKING_TIME_DAY_DISPLAY } from '../common-values/weekdays.const';
+
+dayjs.extend(utc);
+dayjs.extend(timezone);
+dayjs.extend(quarterOfYear);
+dayjs.extend(isoWeek);
+
+// Type alias for backwards compatibility
+export type Moment = Dayjs;
 
 export function date_setHours(date: Date, hours: number): Date {
     return new Date(new Date(date).setHours(hours));
@@ -11,6 +23,10 @@ export function date_setToEndOfDay(date: Date): Date {
     return new Date(new Date(date).setHours(23, 59, 59, 0));
 }
 
+/**
+ * Sets date to end of day (23:59:59) in UTC. May shift to next day depending on timezone.
+ * @example date_setToEndOfDayUTC(new Date('2023-01-01')) // Could be 2023-01-02 in UTC if in negative offset timezone
+ */
 export function date_setToEndOfDayUTC(date: Date): Date {
     return date_toUTCTime(date_setToEndOfDay(date));
 }
@@ -19,6 +35,10 @@ export function date_getStartOfMonth(date: Date): Date {
     return new Date(date.getFullYear(), date.getMonth(), 1);
 }
 
+/**
+ * Gets the first day of the month in UTC. May shift to previous month depending on timezone.
+ * @example date_getStartOfMonthUTC(new Date('2023-01-15')) // Could be 2022-12-31 in UTC if in positive offset timezone
+ */
 export function date_getStartOfMonthUTC(date: Date): Date {
     return date_toUTCTime(date_getStartOfMonth(date));
 }
@@ -27,6 +47,10 @@ export function date_getEndOfMonth(date: Date): Date {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0);
 }
 
+/**
+ * Gets the last day of the month in UTC. May shift to next month depending on timezone.
+ * @example date_getEndOfMonthUTC(new Date('2023-01-15')) // Could be 2023-02-01 in UTC if in negative offset timezone
+ */
 export function date_getEndOfMonthUTC(date: Date): Date {
     return date_toUTCTime(date_getEndOfMonth(date));
 }
@@ -35,6 +59,10 @@ export function date_setToStartOfDay(date: Date): Date {
     return new Date(new Date(date).setHours(0, 0, 0, 0));
 }
 
+/**
+ * Sets date to start of day (00:00:00) in UTC. May shift to previous day depending on timezone.
+ * @example date_setToStartOfDayUTC(new Date('2023-01-01 15:30')) // Could be 2022-12-31 in UTC if in positive offset timezone
+ */
 export function date_setToStartOfDayUTC(date: Date): Date {
     return date_toUTCTime(date_setToStartOfDay(date));
 }
@@ -43,12 +71,12 @@ export function date_setToMiddleOfDay(date: Date): Date {
     return new Date(new Date(date).setHours(12, 0, 0, 0));
 }
 
+/**
+ * Sets date to middle of day (12:00:00) in UTC. May shift to different day depending on timezone.
+ * @example date_setToMiddleOfDayUTC(new Date('2023-01-01')) // Could be 2022-12-31 or 2023-01-02 in UTC depending on timezone
+ */
 export function date_setToMiddleOfDayUTC(date: Date): Date {
     return date_toUTCTime(date_setToMiddleOfDay(date));
-}
-
-export function date_getEndOfYear(date: Date): Date {
-    return new Date(date.getFullYear(), 11, 31);
 }
 
 export function date_getStartOfYear(date: Date): Date {
@@ -60,7 +88,7 @@ export function date_daysInRange(startDate: Date, stopDate: Date): Date[] {
     let currentDate: Date = new Date(startDate);
     while (currentDate <= stopDate) {
         dateArray.push(new Date(currentDate));
-        currentDate = moment(currentDate).add(1, 'days').toDate();
+        currentDate = dayjs(currentDate).add(1, 'day').toDate();
     }
 
     return dateArray;
@@ -79,20 +107,21 @@ export function date_countDaysFromNow(value: Date): number {
 export function date_countWeeksFromNow(value: Date): number {
     const present = new Date();
     const date = new Date(value);
-    const diff = moment(date).diff(moment(present), 'weeks', true);
+    const diff = dayjs(date).diff(dayjs(present), 'week', true);
     return Math.floor(diff);
 }
 
 export function date_countMonthsFromNow(value: Date): number {
     const present = new Date();
     const date = new Date(value);
-    const diff = moment(date).diff(moment(present), 'months', true);
+    const diff = dayjs(date).diff(dayjs(present), 'month', true);
     return Math.floor(diff);
 }
 
 export function date_addYear(date: Date, year: number): Date {
-    date.setFullYear(date.getFullYear() + year);
-    return new Date(date);
+    const newDate = new Date(date); // Create a copy
+    newDate.setFullYear(newDate.getFullYear() + year);
+    return newDate;
 }
 
 export function date_getDurationInfo(miliseconds: number): {
@@ -208,6 +237,10 @@ export function date_startOfToday(): Date {
     return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
 }
 
+/**
+ * Gets the start of today (00:00:00) in UTC. May shift to yesterday depending on timezone.
+ * @example date_startOfTodayUTC() // If today is Jan 1 locally, could be Dec 31 in UTC if in positive offset timezone
+ */
 export function date_startOfTodayUTC(): Date {
     return date_toUTCTime(date_startOfToday());
 }
@@ -217,6 +250,10 @@ export function date_endOfToday(): Date {
     return new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
 }
 
+/**
+ * Gets the end of today (23:59:59) in UTC. May shift to tomorrow depending on timezone.
+ * @example date_endOfTodayUTC() // If today is Jan 1 locally, could be Jan 2 in UTC if in negative offset timezone
+ */
 export function date_endOfTodayUTC(): Date {
     return date_toUTCTime(date_endOfToday());
 }
@@ -228,6 +265,10 @@ export function date_startOfYear(year?: number): Date {
     return new Date(year, 0, 1, 0, 0, 0, 0);
 }
 
+/**
+ * Gets the first day of the year (Jan 1) in UTC. May shift to previous year depending on timezone.
+ * @example date_startOfYearUTC(2023) // Could be 2022-12-31 in UTC if in positive offset timezone
+ */
 export function date_startOfYearUTC(year?: number): Date {
     return date_toUTCTime(date_startOfYear(year));
 }
@@ -239,6 +280,10 @@ export function date_endOfYear(year?: number): Date {
     return new Date(year, 11, 31, 23, 59, 59);
 }
 
+/**
+ * Gets the last day of the year (Dec 31) in UTC. May shift to next year depending on timezone.
+ * @example date_endOfYearUTC(2023) // Could be 2024-01-01 in UTC if in negative offset timezone
+ */
 export function date_endOfYearUTC(year?: number): Date {
     return date_toUTCTime(date_endOfYear(year));
 }
@@ -247,6 +292,10 @@ export function date_endOfMonth(date: Date): Date {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59);
 }
 
+/**
+ * Gets the last moment of the month (23:59:59) in UTC. May shift to next month depending on timezone.
+ * @example date_endOfMonthUTC(new Date('2023-01-15')) // Could be 2023-02-01 in UTC if in negative offset timezone
+ */
 export function date_endOfMonthUTC(date: Date): Date {
     return date_toUTCTime(date_endOfMonth(date));
 }
@@ -255,6 +304,10 @@ export function date_startOfMonth(date: Date): Date {
     return new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0);
 }
 
+/**
+ * Gets the first moment of the month (00:00:00) in UTC. May shift to previous month depending on timezone.
+ * @example date_startOfMonthUTC(new Date('2023-01-15')) // Could be 2022-12-31 in UTC if in positive offset timezone
+ */
 export function date_startOfMonthUTC(date: Date): Date {
     return date_toUTCTime(date_startOfMonth(date));
 }
@@ -270,7 +323,7 @@ export function date_SundayOfWeek(date: Date): Date {
 }
 
 export function date_format(date: Date, format: string): string {
-    return moment(date).format(format);
+    return dayjs(date).format(format);
 }
 
 export function date_timeDiff(value1: Date, value2: Date): number {
@@ -278,54 +331,79 @@ export function date_timeDiff(value1: Date, value2: Date): number {
 }
 
 export function date_startOfQuarter(date: Date): Date {
-    return moment(date).startOf('quarter').toDate();
+    return dayjs(date).startOf('quarter').toDate();
 }
 
+/**
+ * Gets the first day of the quarter in UTC. May shift to previous quarter depending on timezone.
+ * @example date_startOfQuarterUTC(new Date('2023-04-01')) // Could be 2023-03-31 in UTC if in positive offset timezone
+ */
 export function date_startOfQuarterUTC(date: Date): Date {
     return date_toUTCTime(date_startOfQuarter(date));
 }
 
 export function date_endOfQuarter(date: Date): Date {
-    return moment(date).endOf('quarter').toDate();
+    return dayjs(date).endOf('quarter').toDate();
 }
 
+/**
+ * Gets the last day of the quarter in UTC. May shift to next quarter depending on timezone.
+ * @example date_endOfQuarterUTC(new Date('2023-06-30')) // Could be 2023-07-01 in UTC if in negative offset timezone
+ */
 export function date_endOfQuarterUTC(date: Date): Date {
     return date_toUTCTime(date_endOfQuarter(date));
 }
 
 export function date_startOfWeek(date: Date): Date {
-    return moment(date).startOf('isoWeek').toDate();
+    return dayjs(date).startOf('isoWeek').toDate();
 }
 
+/**
+ * Gets the first day of the ISO week (Monday) in UTC. May shift to previous week depending on timezone.
+ * @example date_startOfWeekUTC(new Date('2023-01-02')) // Could be 2022-12-26 in UTC if in positive offset timezone
+ */
 export function date_startOfWeekUTC(date: Date): Date {
     return date_toUTCTime(date_startOfWeek(date));
 }
 
 export function date_endOfWeek(date: Date): Date {
-    return moment(date).endOf('isoWeek').toDate();
+    return dayjs(date).endOf('isoWeek').toDate();
 }
 
+/**
+ * Gets the last day of the ISO week (Sunday) in UTC. May shift to next week depending on timezone.
+ * @example date_endOfWeekUTC(new Date('2023-01-01')) // Could be 2023-01-02 in UTC if in negative offset timezone
+ */
 export function date_endOfWeekUTC(date: Date): Date {
     return date_toUTCTime(date_endOfWeek(date));
 }
 
 export function date_addQuarters(currentDate: Date, numberOfQuarters: number): Date {
-    return moment(currentDate).add(numberOfQuarters, 'quarter').toDate();
+    return dayjs(currentDate).add(numberOfQuarters, 'quarter').toDate();
 }
 
 export function date_addWeeks(currentDate: Date, numberOfWeeks: number): Date {
-    return moment(currentDate).add(numberOfWeeks, 'week').toDate();
+    return dayjs(currentDate).add(numberOfWeeks, 'week').toDate();
 }
 
 export function date_isDateExist(dateList: Date[], dateToFind: Date): boolean {
     return dateList.some(date => date_compareOnlyDay(dateToFind, date) === 0);
 }
 
-export type WeekDays = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thusday' | 'Friday' | 'Sartuday' | 'Sunday';
+export type WeekDays = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+
+const WEEKDAY_INDEX_MAP: Record<WeekDays, number> = {
+    Sunday: 0,
+    Monday: 1,
+    Tuesday: 2,
+    Wednesday: 3,
+    Thursday: 4,
+    Friday: 5,
+    Saturday: 6
+};
 
 export function date_getNextWeekday(date: Date, dayToFind: WeekDays): Date {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thusday', 'Friday', 'Sartuday'];
-    const dayIndex = days.findIndex(v => v === dayToFind);
+    const dayIndex = WEEKDAY_INDEX_MAP[dayToFind];
     const dateCopy = new Date(date.getTime());
     return new Date(dateCopy.setDate(dateCopy.getDate() + ((7 - dateCopy.getDay() + dayIndex) % 7 || 7)));
 }
@@ -361,6 +439,19 @@ export function date_getHourAndMinute(date: Date): string {
     return `${hours < 10 ? '0' + hours : hours}:${minutes < 10 ? '0' + minutes : minutes}`;
 }
 
+/**
+ * Converts a local date to UTC by adjusting for timezone offset.
+ * Note: This can shift the date value (e.g., from Jan 1 to Dec 31) when crossing day boundaries.
+ *
+ * @param date - The local date to convert to UTC
+ * @returns A new Date object with UTC time values
+ *
+ * @example
+ * // If local timezone is UTC+7 and date is 2023-01-01 02:00:00 local time
+ * const localDate = new Date(2023, 0, 1, 2, 0, 0);
+ * const utcDate = date_toUTCTime(localDate);
+ * // utcDate will be 2022-12-31 19:00:00 UTC (shifted to previous day)
+ */
 export function date_toUTCTime(date: Date): Date {
     return new Date(date.getTime() - date.getTimezoneOffset() * 60000);
 }
@@ -405,8 +496,8 @@ export function date_localTimeZoneOffset(): number {
     return -(new Date().getTimezoneOffset() / 60);
 }
 
-export function date_convertToTimeZone(date: Date, timeZone: string): Moment {
-    // Convert the date to the target timezone using moment-timezone
-    const convertedDate = moment(date).tz(timeZone);
+export function date_convertToTimeZone(date: Date, timeZone: string): Dayjs {
+    // Convert the date to the target timezone using dayjs-timezone
+    const convertedDate = dayjs(date).tz(timeZone);
     return convertedDate;
 }

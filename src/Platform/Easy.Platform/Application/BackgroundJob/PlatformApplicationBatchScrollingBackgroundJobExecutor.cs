@@ -269,7 +269,7 @@ public abstract class PlatformApplicationBatchScrollingBackgroundJobExecutor<TEn
     /// <param name="param">Job parameters</param>
     /// <param name="batchKey">Usually null for batch key discovery</param>
     /// <returns>Queryable that yields unique batch keys</returns>
-    protected abstract IQueryable<TBatchKey> EntitiesBatchKeyQueryBuilder(IQueryable<TEntity> query, object? param, string? batchKey = null);
+    protected abstract IQueryable<TBatchKey> EntitiesBatchKeyQueryBuilder(IQueryable<TEntity> query, TParam? param, string? batchKey = null);
 
     /// <summary>
     /// Processes a list of entities within a specific batch.

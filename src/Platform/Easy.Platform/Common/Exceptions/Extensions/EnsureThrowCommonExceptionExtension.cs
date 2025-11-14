@@ -180,4 +180,16 @@ public static class EnsureThrowCommonExceptionExtension
         items.ForEach(item => selector(item).EnsureFound(errorMessageSelector(item)));
         return items;
     }
+
+    public static async Task<T> EnsureNotFound<T>(this Task<T> objectTask, string errorMsg = PlatformValidateObjectExtension.DefaultAlreadyExistedMessage)
+    {
+        var obj = await objectTask;
+        return obj.EnsureNotFound(errorMsg);
+    }
+
+    public static T EnsureNotFound<T>(this T? obj, string errorMsg = PlatformValidateObjectExtension.DefaultAlreadyExistedMessage)
+    {
+        if (obj is Task) throw new Exception($"Target should not be a task. You might want to use {nameof(EnsureNotFound)} instead.");
+        return obj.ValidateNotFound(errorMsg).EnsureValid()!;
+    }
 }
