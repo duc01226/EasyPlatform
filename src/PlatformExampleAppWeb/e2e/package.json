@@ -1,0 +1,19 @@
+{
+    "name": "playground-text-snippet-e2e",
+    "version": "1.0.0",
+    "description": "E2E tests for Playground Text Snippet App using Playwright",
+    "scripts": {
+        "test": "playwright test",
+        "test:smoke": "playwright test --grep @P0",
+        "test:critical": "playwright test --grep \"@P0|@P1\"",
+        "test:headed": "playwright test --headed",
+        "test:debug": "playwright test --debug",
+        "test:ui": "playwright test --ui",
+        "report": "playwright show-report",
+        "codegen": "playwright codegen http://localhost:4001"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.40.0",
+        "@types/node": "^20.10.0"
+    }
+}

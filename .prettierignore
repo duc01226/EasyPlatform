@@ -1,0 +1,10 @@
+# Add files here to ignore them from prettier formatting
+
+/dist
+/coverage
+/.nx/cache
+
+# C# files - use dotnet format instead (respects .editorconfig)
+*.cs
+*.csx
+*.cake

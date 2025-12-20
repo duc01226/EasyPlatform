@@ -1,0 +1,9 @@
+sentinels-1.1.1.dist-info/INSTALLER,sha256=zuuue4knoyJ-UwPPXg8fezS7VCrXJQrAP7zeNuwvFQg,4
+sentinels-1.1.1.dist-info/METADATA,sha256=G8BaaKg69zXYAQA2vOs8d8W9dsEgXNJ0nkP1HBNDnv4,3016
+sentinels-1.1.1.dist-info/RECORD,,
+sentinels-1.1.1.dist-info/WHEEL,sha256=qtCwoSJWgHk21S1Kb4ihdzI2rlJ1ZKaIurTj_ngOhyQ,87
+sentinels-1.1.1.dist-info/licenses/LICENSE,sha256=Edju1FlCMtNSxVP1AO2A42As6DC7JLf2sRDXOXQpq4M,1526
+sentinels/__init__.py,sha256=1ho0KMsm3AySk_5d2oJZ37l2iaYilufH2r926469luE,1231
+sentinels/__pycache__/__init__.cpython-312.pyc,,
+sentinels/__pycache__/__version__.cpython-312.pyc,,
+sentinels/__version__.py,sha256=WyOjD6mJekJI74uApk3wQ8NTy5KfX4gu2qmjJAf0qU4,95

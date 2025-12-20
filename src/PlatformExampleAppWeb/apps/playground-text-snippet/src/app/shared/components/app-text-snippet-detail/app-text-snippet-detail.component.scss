@@ -1,0 +1,50 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEXT SNIPPET DETAIL COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+platform-example-web-text-snippet-detail {
+    position: relative;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+}
+
+%form-field {
+    width: calculaterem(500px);
+    min-width: calculaterem(200px);
+    max-width: 100%;
+}
+
+.text-snippet-detail {
+    &__main-form {
+        @include stack($space-5);
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    &__snippet-text-form-field {
+        @extend %form-field;
+    }
+
+    &__full-text-form-field {
+        @extend %form-field;
+    }
+
+    &__error {
+        @include error-banner;
+        margin-bottom: $space-4;
+    }
+
+    &__btn-container {
+        @include flex-start;
+        gap: $space-3;
+        margin-top: $space-4;
+    }
+
+    &__full-text-input {
+        height: calculaterem(200px);
+    }
+}

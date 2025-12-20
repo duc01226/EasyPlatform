@@ -1,0 +1,264 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// APP ROOT LAYOUT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+platform-example-web-root {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 100vh;
+    background: $color-neutral-50;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMMON PATTERNS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+%app-container {
+    padding: $space-6;
+
+    @include flex-layout-media('lt-md') {
+        padding: $space-4;
+    }
+}
+
+%app-panel {
+    @include card-elevated;
+    overflow: hidden;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// APP STRUCTURE
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.app {
+    // Error Display
+    &__errors {
+        @include error-banner;
+        margin: $space-4;
+    }
+
+    &__errors-content {
+        flex: 1;
+    }
+
+    // Header
+    &__header {
+        display: flex;
+        flex-shrink: 0;
+        flex-direction: column;
+        align-items: center;
+        padding: $space-6;
+        background: white;
+        border-bottom: 1px solid $color-neutral-200;
+    }
+
+    // Main Content Area
+    &__main {
+        display: flex;
+        flex: 1;
+        flex-direction: row;
+        gap: $space-6;
+        padding: $space-6;
+    }
+
+    // Sidebar
+    &__side-bar {
+        display: flex;
+        flex-shrink: 0;
+        flex-direction: column;
+        gap: $space-4;
+        width: $app-sidebar-width;
+        max-width: calculaterem(400px);
+
+        @extend %app-container;
+    }
+
+    // Search Input
+    &__search-input {
+        width: 100%;
+        max-width: calculaterem(300px);
+
+        .mat-mdc-form-field {
+            width: 100%;
+        }
+    }
+
+    // Text Snippet Grid
+    &__text-snippet-items-grid {
+        @extend %app-panel;
+        min-width: calculaterem(280px);
+        max-width: 100%;
+
+        > table {
+            width: 100%;
+            border-collapse: collapse;
+
+            .mat-cell {
+                padding: $space-3 $space-4;
+            }
+        }
+    }
+
+    &__text-snippet-items-grid-row {
+        cursor: pointer;
+        transition: background-color $transition-fast;
+
+        &:hover {
+            background-color: $color-neutral-50;
+        }
+
+        &.-selected {
+            font-weight: $font-weight-medium;
+            background-color: $color-primary-50;
+
+            &:hover {
+                background-color: $color-primary-100;
+            }
+        }
+    }
+
+    &__text-snippet-items-grid-cell {
+        min-width: calculaterem(100px);
+        overflow: hidden;
+        font-size: $font-size-base;
+        color: $color-neutral-900;
+        text-overflow: ellipsis;
+        word-break: break-word;
+        white-space: normal;
+    }
+
+    // Detail Panel
+    &__detail {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+
+        @extend %app-container;
+    }
+
+    &__loading-text-snippet-items-error + * {
+        margin-top: $space-4;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // TAB NAVIGATION
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__tabs {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        background: white;
+        border-radius: $radius-lg;
+        box-shadow: $shadow-sm;
+
+        .mat-mdc-tab-header {
+            background: $color-neutral-50;
+            border-bottom: 1px solid $color-neutral-200;
+            border-radius: $radius-lg $radius-lg 0 0;
+        }
+
+        .mat-mdc-tab-body-wrapper {
+            flex: 1;
+        }
+
+        .tab-icon {
+            margin-right: $space-2;
+            color: inherit;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // TASK MANAGEMENT LAYOUT
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__task-container {
+        display: flex;
+        flex-direction: row;
+        gap: $space-6;
+        height: 100%;
+        min-height: calculaterem(600px);
+        padding: $space-6;
+    }
+
+    &__task-list {
+        flex: 1;
+        min-width: calculaterem(400px);
+        max-width: 60%;
+        overflow: auto;
+        background: white;
+        border-radius: $radius-lg;
+        box-shadow: $shadow-sm;
+    }
+
+    &__task-detail {
+        @extend %app-panel;
+        flex-shrink: 0;
+        width: calculaterem(480px);
+        max-width: 40%;
+        overflow: auto;
+    }
+
+    // Empty State
+    &__empty-state {
+        @include app-empty-state;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// RESPONSIVE STYLES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+@include flex-layout-media('lt-md') {
+    .app {
+        &__main {
+            flex-direction: column;
+            gap: $space-4;
+            padding: $space-4;
+        }
+
+        &__text-snippet-items-grid {
+            max-height: calculaterem(300px);
+            overflow: auto;
+        }
+
+        &__header {
+            align-items: flex-start;
+            padding: $space-4;
+        }
+
+        &__side-bar {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        &__task-container {
+            flex-direction: column;
+            gap: $space-4;
+            min-height: auto;
+            padding: $space-4;
+        }
+
+        &__task-list {
+            min-width: 100%;
+            max-width: 100%;
+            border-radius: $radius-md;
+        }
+
+        &__task-detail {
+            width: 100%;
+            max-width: 100%;
+            border-radius: $radius-md;
+        }
+
+        &__tabs {
+            border-radius: $radius-md;
+
+            .mat-mdc-tab-header {
+                border-radius: $radius-md $radius-md 0 0;
+            }
+        }
+    }
+}

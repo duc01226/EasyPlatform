@@ -1,0 +1,246 @@
+<div class="task-list">
+    <!-- Error Display -->
+    @if (errorMsg$()) {
+        <div class="task-list__error">
+            <mat-error>{{ errorMsg$() }}</mat-error>
+            <button mat-icon-button (click)="store.clearAllErrorMsgs()">
+                <mat-icon>close</mat-icon>
+            </button>
+            <button mat-icon-button (click)="onRefresh()">
+                <mat-icon>refresh</mat-icon>
+            </button>
+        </div>
+    }
+
+    @if (vm(); as vm) {
+        <!-- Statistics Cards -->
+        @if (vm.statistics) {
+            <div class="task-list__statistics">
+                <div class="stat-card">
+                    <div class="stat-card__value">{{ vm.statistics.totalCount }}</div>
+                    <div class="stat-card__label">Total Tasks</div>
+                </div>
+                <div class="stat-card stat-card--active">
+                    <div class="stat-card__value">{{ vm.statistics.activeCount }}</div>
+                    <div class="stat-card__label">Active</div>
+                </div>
+                <div class="stat-card stat-card--completed">
+                    <div class="stat-card__value">{{ vm.statistics.completedCount }}</div>
+                    <div class="stat-card__label">Completed</div>
+                </div>
+                <div class="stat-card stat-card--overdue">
+                    <div class="stat-card__value">{{ vm.statistics.overdueCount }}</div>
+                    <div class="stat-card__label">Overdue</div>
+                </div>
+                <div class="stat-card stat-card--due-soon">
+                    <div class="stat-card__value">{{ vm.statistics.dueSoonCount }}</div>
+                    <div class="stat-card__label">Due Soon</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-card__value">{{ vm.statistics.completionRate | number: '1.0-0' }}%</div>
+                    <div class="stat-card__label">Completion Rate</div>
+                </div>
+            </div>
+        }
+
+        <!-- Filters Section -->
+        <div class="task-list__filters">
+            <!-- Search Input -->
+            <mat-form-field class="task-list__search" appearance="outline">
+                <mat-label>Search tasks</mat-label>
+                <input matInput [ngModel]="vm.searchText" (ngModelChange)="onSearchTextChange($event)" placeholder="Search by title or description..." />
+                <mat-icon matSuffix>search</mat-icon>
+            </mat-form-field>
+
+            <!-- Status Filter Chips -->
+            <div class="task-list__filter-group">
+                <label class="filter-label">Status:</label>
+                <mat-chip-listbox multiple aria-label="Status filter">
+                    @for (status of statusOptions; track status.value) {
+                        <mat-chip-option [selected]="isStatusSelected(status.value)" (selectionChange)="onToggleStatus(status.value)">
+                            <mat-icon matChipAvatar>{{ status.icon }}</mat-icon>
+                            {{ status.label }}
+                        </mat-chip-option>
+                    }
+                </mat-chip-listbox>
+            </div>
+
+            <!-- Priority Filter Chips -->
+            <div class="task-list__filter-group">
+                <label class="filter-label">Priority:</label>
+                <mat-chip-listbox multiple aria-label="Priority filter">
+                    @for (priority of priorityOptions; track priority.value) {
+                        <mat-chip-option
+                            [selected]="isPrioritySelected(priority.value)"
+                            (selectionChange)="onTogglePriority(priority.value)"
+                            [class]="getPriorityClass(priority.value)"
+                        >
+                            {{ priority.label }}
+                        </mat-chip-option>
+                    }
+                </mat-chip-listbox>
+            </div>
+
+            <!-- Quick Filters -->
+            <div class="task-list__quick-filters">
+                <mat-button-toggle-group multiple>
+                    <mat-button-toggle [checked]="vm.overdueOnly" (change)="onToggleOverdueOnly()" matTooltip="Show only overdue tasks">
+                        <mat-icon>warning</mat-icon>
+                        Overdue
+                        @if (vm.overdueCount > 0) {
+                            <span class="badge badge--warning">{{ vm.overdueCount }}</span>
+                        }
+                    </mat-button-toggle>
+                    <mat-button-toggle [checked]="vm.dueSoonOnly" (change)="onToggleDueSoonOnly()" matTooltip="Show tasks due within 3 days">
+                        <mat-icon>schedule</mat-icon>
+                        Due Soon
+                    </mat-button-toggle>
+                    <mat-button-toggle [checked]="vm.includeDeleted" (change)="onToggleIncludeDeleted()" matTooltip="Include deleted tasks">
+                        <mat-icon>delete_outline</mat-icon>
+                        Include Deleted
+                    </mat-button-toggle>
+                </mat-button-toggle-group>
+
+                @if (vm.hasActiveFilters()) {
+                    <button mat-stroked-button (click)="onClearFilters()" class="clear-filters-btn">
+                        <mat-icon>clear</mat-icon>
+                        Clear Filters
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="task-list__actions">
+            <button mat-raised-button color="primary" (click)="onCreateNewTask()">
+                <mat-icon>add</mat-icon>
+                New Task
+            </button>
+            <button mat-icon-button (click)="onRefresh()" matTooltip="Refresh">
+                <mat-icon>refresh</mat-icon>
+            </button>
+        </div>
+
+        <!-- Loading Progress -->
+        @if (isLoading$('loadTasks')()) {
+            <mat-progress-bar mode="indeterminate" class="task-list__loading"></mat-progress-bar>
+        }
+
+        <!-- Tasks Table -->
+        <div class="task-list__table-container">
+            <table mat-table [dataSource]="vm.tasks" [trackBy]="trackByTaskId" class="task-list__table">
+                <!-- Status Column -->
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef>Status</th>
+                    <td mat-cell *matCellDef="let task">
+                        <mat-icon [matTooltip]="getStatusLabel(task.status)">
+                            {{ getStatusIcon(task.status) }}
+                        </mat-icon>
+                        @if (task.isDeleted) {
+                            <mat-icon class="deleted-icon" matTooltip="Deleted">delete</mat-icon>
+                        }
+                    </td>
+                </ng-container>
+
+                <!-- Priority Column -->
+                <ng-container matColumnDef="priority">
+                    <th mat-header-cell *matHeaderCellDef>Priority</th>
+                    <td mat-cell *matCellDef="let task">
+                        <span class="priority-badge" [class]="getPriorityClass(task.priority)">
+                            {{ getPriorityLabel(task.priority) }}
+                        </span>
+                    </td>
+                </ng-container>
+
+                <!-- Title Column -->
+                <ng-container matColumnDef="title">
+                    <th mat-header-cell *matHeaderCellDef>Title</th>
+                    <td mat-cell *matCellDef="let task">
+                        <div class="task-title">
+                            <span class="task-title__text">{{ task.title }}</span>
+                            @if (task.subTasks?.length > 0) {
+                                <span class="task-title__subtasks" matTooltip="Subtasks progress"> {{ task.completionPercentage | number: '1.0-0' }}% </span>
+                            }
+                        </div>
+                        @if (task.description) {
+                            <div class="task-description">{{ task.description }}</div>
+                        }
+                    </td>
+                </ng-container>
+
+                <!-- Due Date Column -->
+                <ng-container matColumnDef="dueDate">
+                    <th mat-header-cell *matHeaderCellDef>Due Date</th>
+                    <td mat-cell *matCellDef="let task">
+                        <div class="due-date" [class.overdue]="task.isOverdue" [class.due-soon]="task.isDueSoon && !task.isOverdue">
+                            {{ formatDate(task.dueDate) }}
+                            @if (task.daysUntilDue != null && task.daysUntilDue <= 3 && !task.isOverdue) {
+                                <span class="days-until">({{ task.daysUntilDue }} days)</span>
+                            }
+                            @if (task.isOverdue) {
+                                <mat-icon class="overdue-icon" matTooltip="Overdue">warning</mat-icon>
+                            }
+                        </div>
+                    </td>
+                </ng-container>
+
+                <!-- Actions Column -->
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef>Actions</th>
+                    <td mat-cell *matCellDef="let task">
+                        <div class="task-actions">
+                            @if (task.isDeleted) {
+                                <button mat-icon-button (click)="onRestoreTask(task); $event.stopPropagation()" matTooltip="Restore">
+                                    <mat-icon>restore</mat-icon>
+                                </button>
+                                <button
+                                    mat-icon-button
+                                    color="warn"
+                                    (click)="onDeleteTask(task, true); $event.stopPropagation()"
+                                    matTooltip="Delete permanently"
+                                >
+                                    <mat-icon>delete_forever</mat-icon>
+                                </button>
+                            } @else {
+                                <button mat-icon-button (click)="onDeleteTask(task, false); $event.stopPropagation()" matTooltip="Delete">
+                                    <mat-icon>delete</mat-icon>
+                                </button>
+                            }
+                        </div>
+                    </td>
+                </ng-container>
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns" [class]="getRowClass(row)" (click)="onSelectTask(row)"></tr>
+
+                <!-- No data row -->
+                <tr class="mat-row no-data-row" *matNoDataRow>
+                    <td class="mat-cell" [attr.colspan]="displayedColumns.length">
+                        @if (isLoading$('loadTasks')()) {
+                            Loading tasks...
+                        } @else {
+                            No tasks found matching your filters
+                        }
+                    </td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <mat-paginator
+            [length]="vm.totalTasks"
+            [pageIndex]="vm.currentPageNumber"
+            [pageSize]="vm.pageSize"
+            [pageSizeOptions]="[10, 25, 50]"
+            (page)="onPageChange($event)"
+            showFirstLastButtons
+        ></mat-paginator>
+    }
+
+    <!-- Global Loading Spinner -->
+    @if (isLoading$('loadStatistics')() && !vm()) {
+        <div class="task-list__spinner-overlay">
+            <mat-spinner></mat-spinner>
+        </div>
+    }
+</div>

@@ -1,0 +1,124 @@
+@use './styles/index' as *;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// GLOBAL STYLES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Reset & Box Sizing
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+// Root Styles
+html,
+body {
+    height: 100%;
+}
+
+html {
+    font-size: $app-root-font-size;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    margin: 0;
+    font-family: $font-family-base;
+    font-size: $font-size-base;
+    line-height: 1.5;
+    color: $color-neutral-900;
+    background-color: $color-neutral-50;
+}
+
+// Typography Defaults
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin: 0;
+    font-weight: $font-weight-semibold;
+    line-height: 1.25;
+    color: $color-neutral-900;
+}
+
+h1 {
+    font-size: $font-size-3xl;
+}
+
+h2 {
+    font-size: $font-size-2xl;
+}
+
+h3 {
+    font-size: $font-size-xl;
+}
+
+h4 {
+    font-size: $font-size-lg;
+}
+
+p {
+    margin: 0;
+}
+
+a {
+    color: $color-primary-600;
+    text-decoration: none;
+    transition: color $transition-fast;
+
+    &:hover {
+        color: $color-primary-700;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// UTILITY CLASSES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.text-muted {
+    color: $color-neutral-500;
+}
+
+.text-primary {
+    color: $color-primary-600;
+}
+
+.text-success {
+    color: $color-success;
+}
+
+.text-warning {
+    color: $color-warning;
+}
+
+.text-error {
+    color: $color-error;
+}
+
+.bg-surface {
+    background: white;
+}
+
+.bg-surface-variant {
+    background: $color-neutral-50;
+}
+
+.rounded-md {
+    border-radius: $radius-md;
+}
+
+.rounded-lg {
+    border-radius: $radius-lg;
+}
+
+.shadow-sm {
+    box-shadow: $shadow-sm;
+}
+
+.shadow-md {
+    box-shadow: $shadow-md;
+}

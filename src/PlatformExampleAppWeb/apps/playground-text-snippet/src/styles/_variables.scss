@@ -1,0 +1,21 @@
+// Forward platform variables to make them available to all importers
+@forward 'platform-variables';
+@use 'platform-variables' as *;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// APP-SPECIFIC DESIGN TOKENS
+// Re-export platform tokens and add app-level customizations
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// App-specific overrides (if needed)
+// Override any platform tokens here for app-specific customization
+
+// Container widths
+$app-container-max-width: calculaterem(1400px);
+$app-sidebar-width: calculaterem(280px);
+$app-content-max-width: calculaterem(1000px);
+
+// App-specific spacing
+$app-page-padding: $space-6;
+$app-section-gap: $space-8;
+$app-card-padding: $space-5;

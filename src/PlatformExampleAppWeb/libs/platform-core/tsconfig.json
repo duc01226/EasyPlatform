@@ -1,0 +1,35 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "files": [],
+    "include": ["**/*.d.ts"],
+    "references": [
+        {
+            "path": "./tsconfig.lib.json"
+        },
+        {
+            "path": "./tsconfig.lib.prod.json"
+        }
+    ],
+    "compilerOptions": {
+        "target": "ES2022",
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "noUncheckedIndexedAccess": true,
+        "strictNullChecks": true,
+        "strictFunctionTypes": false,
+        "noImplicitOverride": true,
+        "noPropertyAccessFromIndexSignature": false,
+        "noImplicitReturns": false,
+        "noFallthroughCasesInSwitch": true,
+        "types": ["custom-global"]
+    },
+    "angularCompilerOptions": {
+        "enableI18nLegacyMessageIdFormat": false,
+        "strictInjectionParameters": true,
+        "strictInputAccessModifiers": true,
+        "strictTemplates": true,
+        "extendedDiagnostics": {
+            "defaultCategory": "error"
+        }
+    }
+}

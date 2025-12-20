@@ -1,0 +1,325 @@
+{
+    "$schema": "./workflows.schema.json",
+    "commandMapping": {
+        "code": {
+            "claude": "/code",
+            "copilot": "@workspace /code"
+        },
+        "code-review": {
+            "claude": "/review/codebase",
+            "copilot": "@workspace /code-review"
+        },
+        "cook": {
+            "claude": "/cook",
+            "copilot": "@workspace /cook"
+        },
+        "debug": {
+            "claude": "/debug",
+            "copilot": "@workspace /debug"
+        },
+        "docs-update": {
+            "claude": "/docs/update",
+            "copilot": "@workspace /docs-update"
+        },
+        "fix": {
+            "claude": "/fix",
+            "copilot": "@workspace /fix"
+        },
+        "investigate": {
+            "claude": "/investigate",
+            "copilot": "@workspace /investigate"
+        },
+        "plan": {
+            "claude": "/plan",
+            "copilot": "@workspace /plan"
+        },
+        "scout": {
+            "claude": "/scout",
+            "copilot": "@workspace /scout"
+        },
+        "test": {
+            "claude": "/test",
+            "copilot": "@workspace /test"
+        },
+        "watzup": {
+            "claude": "/watzup",
+            "copilot": "@workspace /watzup"
+        }
+    },
+    "description": "Workflow automation configuration for Claude Code and GitHub Copilot (multilingual)",
+    "settings": {
+        "allowOverride": true,
+        "confirmHighImpact": true,
+        "enabled": true,
+        "overridePrefix": "quick:",
+        "showDetection": true,
+        "supportedLanguages": [
+            "en",
+            "vi",
+            "zh",
+            "ja",
+            "ko"
+        ]
+    },
+    "version": "1.1.0",
+    "workflows": {
+        "bugfix": {
+            "confirmFirst": false,
+            "description": "Systematic debugging and fix workflow",
+            "excludePatterns": [
+                "\\b(implement|add|create|build)\\s+new\\b",
+                "\\bfeature\\b",
+                "\\b(improve|refactor|clean)\\b.*\\b(handling|code|logic)\\b",
+                "(thêm|tạo).*mới",
+                "tính năng",
+                "(cải thiện|nâng cao).*(code|xử lý)",
+                "(改善|提升|改进).*(代码|处理)",
+                "(改善|向上).*(コード|処理)",
+                "(개선|향상).*(코드|처리)"
+            ],
+            "name": "Bug Fix",
+            "priority": 20,
+            "sequence": [
+                "debug",
+                "plan",
+                "fix",
+                "test"
+            ],
+            "triggerPatterns": [
+                "\\b(bug|fix|broken|issue|crash|fail|exception)\\b",
+                "\\b(error|errors)\\s+(in|with|on|when|while|returned|returning)\\b",
+                "\\bnot\\s+working\\b",
+                "\\bdoesn'?t\\s+work\\b",
+                "\\b(debug|troubleshoot|diagnose)\\b",
+                "\\bregression\\b",
+                "\\breturning\\s+errors?\\b",
+                "(sửa|fix)\\s*(lỗi|bug|error)",
+                "(lỗi|bug|hỏng|crash|không hoạt động)",
+                "không\\s+(chạy|hoạt động|làm việc)",
+                "(debug|gỡ lỗi|kiểm tra lỗi)",
+                "(修复|修正|解决).*(bug|错误|问题)",
+                "(bug|错误|崩溃|异常|故障)",
+                "不(工作|运行)",
+                "(修正|直す).*(バグ|エラー|問題)",
+                "(バグ|エラー|クラッシュ|障害)",
+                "動(か|き)ない",
+                "(수정|고치다).*(버그|오류|문제)",
+                "(버그|오류|크래시|장애)",
+                "작동.*안"
+            ]
+        },
+        "documentation": {
+            "confirmFirst": false,
+            "description": "Documentation creation and update workflow",
+            "excludePatterns": [
+                "\\b(implement|fix|test)\\b",
+                "(thêm|sửa|test).*tính năng",
+                "(实现|修复|测试)",
+                "(実装|修正|テスト)",
+                "(구현|수정|테스트)"
+            ],
+            "name": "Documentation Update",
+            "priority": 30,
+            "sequence": [
+                "docs-update",
+                "watzup"
+            ],
+            "triggerPatterns": [
+                "\\b(doc|document|readme|documentation)\\b",
+                "\\bupdate.*\\b(doc|readme)\\b",
+                "\\bwrite.*\\b(doc|documentation)\\b",
+                "\\badd.*\\bcomment\\b",
+                "(cập nhật|viết|thêm).*(tài liệu|doc|readme)",
+                "(tài liệu|hướng dẫn|documentation)",
+                "(更新|编写|添加).*(文档|文件|readme)",
+                "(文档|文件|说明)",
+                "(更新|書く|追加).*(ドキュメント|文書|readme)",
+                "(ドキュメント|文書|説明)",
+                "(업데이트|작성|추가).*(문서|문서화|readme)",
+                "(문서|설명서)"
+            ]
+        },
+        "feature": {
+            "confirmFirst": true,
+            "description": "Full feature development workflow with planning, implementation, testing, and documentation",
+            "excludePatterns": [
+                "\\b(fix|bug|error|broken|issue)\\b",
+                "\\b(doc|document|readme)\\b",
+                "\\b(test|spec)\\s+only\\b",
+                "(sửa|lỗi|bug|hỏng)",
+                "(修复|错误|bug)",
+                "(修正|バグ|エラー)",
+                "(수정|버그|오류)"
+            ],
+            "name": "Feature Implementation",
+            "priority": 10,
+            "sequence": [
+                "plan",
+                "cook",
+                "test",
+                "code-review",
+                "docs-update",
+                "watzup"
+            ],
+            "triggerPatterns": [
+                "\\b(implement|add|create|build|develop|make)\\b.*\\b(feature|functionality|capability|module|component)\\b",
+                "\\bnew\\s+(feature|functionality|capability)\\b",
+                "\\b(implement|add|create|build)\\s+(?!test|doc|comment)",
+                "\\bfeature\\s*:?\\s*\\w+",
+                "(thêm|tạo|xây dựng|phát triển|làm)\\s+(tính năng|chức năng|feature|module)",
+                "(thêm|tạo|implement)\\s+(?!test|doc)",
+                "tính năng mới",
+                "(添加|创建|开发|实现|构建).*(功能|特性|模块)",
+                "新(功能|特性)",
+                "(追加|作成|開発|実装).*(機能|フィーチャー)",
+                "(機能|フィーチャー).*(追加|作成)",
+                "新機能",
+                "(추가|생성|개발|구현).*(기능|피처)",
+                "(기능|피처).*(추가|생성|개발)",
+                "새\\s*기능"
+            ]
+        },
+        "investigation": {
+            "confirmFirst": false,
+            "description": "Codebase exploration and understanding workflow",
+            "excludePatterns": [
+                "\\b(implement|fix|create|add)\\b",
+                "\\bwhat\\s+time\\b",
+                "(thêm|sửa|tạo|implement)",
+                "(添加|修复|创建|实现)",
+                "(追加|修正|作成|実装)",
+                "(추가|수정|생성|구현)",
+                "mấy giờ",
+                "几点",
+                "何時",
+                "몇 시"
+            ],
+            "name": "Code Investigation",
+            "priority": 50,
+            "sequence": [
+                "scout",
+                "investigate"
+            ],
+            "triggerPatterns": [
+                "\\bhow\\s+(does|do|is|are)\\b.*\\b(work|function|implemented|handle)\\b",
+                "\\bwhere\\s+(is|are|does)\\b.*\\b(code|logic|function|class|handler|handled)\\b",
+                "\\bexplain\\s+(the|how|this)\\b.*\\b(code|logic|pattern|implementation|system|feature)\\b",
+                "\\bunderstand\\s+(the|how|this)\\b",
+                "\\b(find|locate|search|explore)\\b.*\\b(code|file|function|class)\\b",
+                "\\binvestigate\\b",
+                "\\bwalk\\s*through\\b",
+                "\\bwhat\\s+(is|are|does)\\b.*\\b(this|the)\\b.*\\b(code|logic|doing)\\b",
+                "(làm sao|như thế nào|cách).*(hoạt động|chạy|xử lý)",
+                "(ở đâu|chỗ nào).*(code|mã|logic|hàm|class)",
+                "(code|mã|logic|hàm|class).*(ở đâu|chỗ nào)",
+                "(giải thích|hiểu).*(code|logic|pattern|hệ thống)",
+                "(tìm|tìm kiếm|khám phá).*(code|file|hàm|class)",
+                "(điều tra|nghiên cứu|phân tích)",
+                "(怎么|如何).*(工作|运行|处理)",
+                "(在哪|哪里).*(代码|逻辑|函数|类)",
+                "(代码|逻辑|函数|类).*(在哪|哪里)",
+                "(解释|理解).*(代码|逻辑|模式|系统)",
+                "(查找|搜索|探索).*(代码|文件|函数|类)",
+                "(调查|研究|分析)",
+                "(どう|どのように).*(動|機能|処理)",
+                "(どこ).*(コード|ロジック|関数|クラス)",
+                "(コード|ロジック|関数|クラス).*(どこ|はどこ)",
+                "(説明|理解).*(コード|ロジック|パターン|システム)",
+                "(検索|探す).*(コード|ファイル|関数|クラス)",
+                "(調査|研究|分析)",
+                "(어떻게).*(작동|동작|처리)",
+                "(어디).*(코드|로직|함수|클래스)",
+                "(코드|로직|함수|클래스).*(어디|어디에)",
+                "(설명|이해).*(코드|로직|패턴|시스템)",
+                "(찾기|검색|탐색).*(코드|파일|함수|클래스)",
+                "(조사|연구|분석)"
+            ]
+        },
+        "refactor": {
+            "confirmFirst": true,
+            "description": "Code improvement and restructuring workflow",
+            "excludePatterns": [
+                "\\b(bug|broken|crash|fail)\\b",
+                "\\bnew\\s+feature\\b",
+                "\\bfix\\s+(the|a|this)?\\s*(bug|issue|error)\\b",
+                "(sửa|fix).*lỗi",
+                "(bug|hỏng|crash)",
+                "(修复|解决).*(bug|错误)",
+                "(bug|崩溃)",
+                "(修正|直す).*(バグ|エラー)",
+                "(バグ|クラッシュ)",
+                "(수정|고치다).*(버그|오류)",
+                "(버그|크래시)"
+            ],
+            "name": "Code Refactoring",
+            "priority": 25,
+            "sequence": [
+                "plan",
+                "code",
+                "test",
+                "code-review"
+            ],
+            "triggerPatterns": [
+                "\\b(refactor|restructure|reorganize|clean\\s*up)\\b",
+                "\\bimprove\\s+(the|this)?\\s*\\w*\\s*(code|handling|logic|structure|performance)\\b",
+                "\\b(extract|move|rename|split|merge)\\s+(method|function|class|component)\\b",
+                "\\btechnical\\s+debt\\b",
+                "(refactor|tái cấu trúc|cải thiện|dọn dẹp).*(code|mã)",
+                "(cải thiện|nâng cao).*(code|xử lý|logic|hiệu suất)",
+                "(重构|重组|清理|改进).*(代码|结构)",
+                "(改善|提升).*(代码|处理|逻辑|性能)",
+                "(リファクタリング|リファクター|整理|改善).*(コード|構造)",
+                "(コード|構造).*(リファクタリング|リファクター|整理|改善)",
+                "(改善|向上).*(コード|処理|ロジック|パフォーマンス)",
+                "リファクタリング",
+                "(리팩토링|리팩터|정리|개선).*(코드|구조)",
+                "(코드|구조).*(리팩토링|리팩터|정리|개선)",
+                "(개선|향상).*(코드|처리|로직|성능)",
+                "리팩토링"
+            ]
+        },
+        "review": {
+            "confirmFirst": false,
+            "description": "Code review and quality check workflow",
+            "excludePatterns": [],
+            "name": "Code Review",
+            "priority": 35,
+            "sequence": [
+                "code-review",
+                "watzup"
+            ],
+            "triggerPatterns": [
+                "\\breview\\b.*\\b(code|changes|pr|pull\\s*request|my)\\b",
+                "\\b(check|audit|analyze)\\s+(the\\s+)?(code|changes|pr|pull\\s*request)\\b",
+                "\\bcode\\s+quality\\b",
+                "\\bpr\\s+review\\b",
+                "\\breview\\s+(my|the|this)\\b",
+                "(review|xem xét|kiểm tra).*(code|mã|thay đổi|pr)",
+                "(kiểm tra|đánh giá).*(chất lượng|code)",
+                "(审查|检查|审核).*(代码|更改|pr)",
+                "(代码|质量).*审查",
+                "(レビュー|確認|チェック).*(コード|変更|pr)",
+                "(コード|品質).*(レビュー|チェック|確認)",
+                "コード.*レビュー",
+                "(리뷰|검토|확인).*(코드|변경|pr)",
+                "(코드|품질).*(리뷰|검토|확인)",
+                "코드.*리뷰"
+            ]
+        },
+        "testing": {
+            "confirmFirst": false,
+            "description": "Test creation and execution workflow",
+            "excludePatterns": [],
+            "name": "Testing",
+            "priority": 40,
+            "sequence": [
+                "test"
+            ],
+            "triggerPatterns": [
+                "\\b(add|write|create)\\s+(test|spec|unit\\s*test)\\b",
+                "\\btest\\s+coverage\\b",
+                "\\b(run|execute)\\s+test\\b"
+            ]
+        }
+    }
+}

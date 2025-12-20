@@ -1,0 +1,168 @@
+<div class="task-detail">
+    @if (vm(); as vm) {
+        <!-- Deleted Task Banner -->
+        @if (vm.isDeleted) {
+            <div class="task-detail__deleted-banner">
+                <mat-icon>delete</mat-icon>
+                <span>This task has been deleted</span>
+                <button mat-stroked-button color="primary" (click)="onRestore()" [disabled]="isLoading$('restoreTask')()">
+                    <mat-icon>restore</mat-icon>
+                    Restore Task
+                </button>
+            </div>
+        }
+
+        <!-- Error Display -->
+        @if (vm.saveError) {
+            <div class="task-detail__error">
+                <mat-error>{{ vm.saveError }}</mat-error>
+                <button mat-icon-button (click)="updateVm({ saveError: null })">
+                    <mat-icon>close</mat-icon>
+                </button>
+            </div>
+        }
+
+        <!-- Form -->
+        <form *ngIf="form" [formGroup]="form" class="task-detail__form" (ngSubmit)="onSave()">
+            <!-- Title -->
+            <mat-form-field appearance="outline" class="task-detail__field task-detail__field--full">
+                <mat-label>Title</mat-label>
+                <input matInput formControlName="title" placeholder="Enter task title..." />
+                @if (hasError('title', 'required')) {
+                    <mat-error>{{ getErrorMessage('title') }}</mat-error>
+                }
+                @if (hasError('title', 'maxlength')) {
+                    <mat-error>{{ getErrorMessage('title') }}</mat-error>
+                }
+            </mat-form-field>
+
+            <!-- Description -->
+            <mat-form-field appearance="outline" class="task-detail__field task-detail__field--full">
+                <mat-label>Description</mat-label>
+                <textarea matInput formControlName="description" placeholder="Enter task description..." rows="3"></textarea>
+                @if (hasError('description', 'maxlength')) {
+                    <mat-error>{{ getErrorMessage('description') }}</mat-error>
+                }
+            </mat-form-field>
+
+            <!-- Status & Priority Row -->
+            <div class="task-detail__row">
+                <mat-form-field appearance="outline" class="task-detail__field">
+                    <mat-label>Status</mat-label>
+                    <mat-select formControlName="taskStatus">
+                        @for (option of statusOptions; track option.value) {
+                            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="task-detail__field">
+                    <mat-label>Priority</mat-label>
+                    <mat-select formControlName="priority">
+                        @for (option of priorityOptions; track option.value) {
+                            <mat-option [value]="option.value">{{ option.label }}</mat-option>
+                        }
+                    </mat-select>
+                </mat-form-field>
+            </div>
+
+            <!-- Date Range Row -->
+            <div class="task-detail__row">
+                <mat-form-field appearance="outline" class="task-detail__field">
+                    <mat-label>Start Date</mat-label>
+                    <input matInput [matDatepicker]="startPicker" formControlName="startDate" />
+                    <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+                    <mat-datepicker #startPicker></mat-datepicker>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="task-detail__field">
+                    <mat-label>Due Date</mat-label>
+                    <input matInput [matDatepicker]="duePicker" formControlName="dueDate" />
+                    <mat-datepicker-toggle matIconSuffix [for]="duePicker"></mat-datepicker-toggle>
+                    <mat-datepicker #duePicker></mat-datepicker>
+                    @if (hasError('dueDate', 'dateRangeInvalid')) {
+                        <mat-error>{{ getErrorMessage('dueDate') }}</mat-error>
+                    }
+                </mat-form-field>
+            </div>
+
+            <!-- Subtasks Section -->
+            <div class="task-detail__subtasks">
+                <div class="task-detail__subtasks-header">
+                    <h3>
+                        <mat-icon>checklist</mat-icon>
+                        Subtasks ({{ subTasksArray.length }})
+                    </h3>
+                    <button type="button" mat-stroked-button (click)="addSubTask()" [disabled]="subTasksArray.length >= 50">
+                        <mat-icon>add</mat-icon>
+                        Add Subtask
+                    </button>
+                </div>
+
+                @if (subTasksArray.length === 0) {
+                    <div class="task-detail__subtasks-empty">
+                        <mat-icon>inbox</mat-icon>
+                        <span>No subtasks yet. Click "Add Subtask" to create one.</span>
+                    </div>
+                }
+
+                <div class="task-detail__subtasks-list" formArrayName="subTasks">
+                    @for (subTask of subTasksArray.controls; track trackBySubTaskId($index, subTask); let i = $index) {
+                        <div class="subtask-item" [formGroupName]="i">
+                            <mat-checkbox [checked]="subTask.get('isCompleted')?.value" (change)="toggleSubTaskCompletion(i)" color="primary"></mat-checkbox>
+
+                            <mat-form-field appearance="outline" class="subtask-item__title">
+                                <input matInput formControlName="title" placeholder="Subtask title..." [class.completed]="subTask.get('isCompleted')?.value" />
+                                @if (subTask.get('title')?.hasError('required') && subTask.get('title')?.touched) {
+                                    <mat-error>Title is required</mat-error>
+                                }
+                            </mat-form-field>
+
+                            <button type="button" mat-icon-button color="warn" (click)="removeSubTask(i)" matTooltip="Remove subtask">
+                                <mat-icon>delete</mat-icon>
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                @if (subTasksArray.length > 0) {
+                    <div class="task-detail__subtasks-progress">
+                        <span> {{ completedSubTasksCount }} of {{ subTasksArray.length }} completed </span>
+                    </div>
+                }
+            </div>
+
+            <!-- Form Actions -->
+            <div class="task-detail__actions">
+                <button type="button" mat-stroked-button (click)="onCancel()" [disabled]="isLoading$('saveTask')()">Cancel</button>
+
+                @if (vm.isDirty()) {
+                    <button type="button" mat-stroked-button (click)="onReset()" [disabled]="isLoading$('saveTask')()">
+                        <mat-icon>refresh</mat-icon>
+                        Reset
+                    </button>
+                }
+
+                <button type="submit" mat-raised-button color="primary" [disabled]="isLoading$('saveTask')() || (vm.isDeleted && !vm.isCreateMode())">
+                    @if (isLoading$('saveTask')()) {
+                        <mat-spinner diameter="20"></mat-spinner>
+                    }
+                    <mat-icon [hidden]="isLoading$('saveTask')()">save</mat-icon>
+                    <span [hidden]="isLoading$('saveTask')()">{{ vm.isCreateMode() ? 'Create Task' : 'Save Changes' }}</span>
+                </button>
+            </div>
+        </form>
+
+        <!-- Mode Indicator -->
+        <div class="task-detail__mode-indicator">
+            @if (vm.isCreateMode()) {
+                <span class="mode-badge mode-badge--create">Creating New Task</span>
+            } @else {
+                <span class="mode-badge mode-badge--edit">Editing Task</span>
+            }
+            @if (vm.isDirty()) {
+                <span class="mode-badge mode-badge--dirty">Unsaved Changes</span>
+            }
+        </div>
+    }
+</div>

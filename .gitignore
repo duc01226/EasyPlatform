@@ -129,6 +129,7 @@ $tf/
 _ReSharper*/
 *.[Rr]e[Ss]harper
 *.DotSettings.user
+!*.DotSettings
 
 # TeamCity is a build add-in
 _TeamCity*
@@ -438,11 +439,16 @@ $RECYCLE.BIN/
 .idea/
 *.sln.iml
 
-##
-## Visual Studio Code
-##
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+nul
+.env
+
+
+**/.nx/**
+src/PlatformExampleAppWeb/e2e/playwright-report/
+
+
+.claude/memory/session-log.md
+.claude/settings.local.json
+
+# Auto Claude data directory
+.auto-claude/

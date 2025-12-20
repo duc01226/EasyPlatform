@@ -1,0 +1,59 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.platform-mat-mdc-spinner {
+    display: inline-flex;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-direction: column;
+
+    > mat-spinner {
+        display: flex;
+        flex-grow: 1;
+        flex-basis: 100%;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        height: 100%;
+        min-height: 0;
+        max-height: 100%;
+
+        &.-with-backdrop {
+            display: inline-flex;
+            flex-grow: 0;
+            flex-basis: auto;
+            width: auto;
+            height: auto;
+        }
+
+        &.mat-progress-spinner {
+            svg {
+                max-width: 100%;
+                max-height: 100%;
+            }
+        }
+    }
+
+    &.-with-backdrop {
+        position: absolute;
+        inset: 0;
+        z-index: $platform-z-index-level-max;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        background: rgb(0 0 0 / 30%);
+
+        > mat-spinner {
+            flex-grow: 0;
+            flex-basis: auto;
+            width: auto;
+            height: auto;
+        }
+
+        &.-transparent {
+            background: transparent;
+        }
+    }
+}

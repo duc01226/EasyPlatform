@@ -1,0 +1,27 @@
+{
+    "compileOnSave": false,
+    "compilerOptions": {
+        "rootDir": ".",
+        "sourceMap": true,
+        "declaration": false,
+        "moduleResolution": "node",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "importHelpers": true,
+        "target": "ES2022",
+        "module": "esnext",
+        "lib": ["ES2022", "dom"],
+        "skipLibCheck": true,
+        "skipDefaultLibCheck": true,
+        "strictNullChecks": true,
+        "allowSyntheticDefaultImports": true,
+        "baseUrl": ".",
+        "paths": {
+            "@libs/platform-core": ["libs/platform-core/src/index.ts"],
+            "@libs/apps-domains/text-snippet-domain": ["libs/apps-domains/text-snippet-domain/src/index.ts"]
+        },
+        "typeRoots": ["node_modules/@types", "./typings"],
+        "types": ["custom-global"]
+    },
+    "exclude": ["node_modules", "tmp"]
+}

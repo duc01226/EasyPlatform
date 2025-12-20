@@ -1,0 +1,110 @@
+{
+    "[csharp]": {
+        "editor.codeActionsOnSave": {
+            "source.fixAll": "never",
+            "source.organizeImports": "never"
+        },
+        "editor.formatOnPaste": false,
+        "editor.formatOnSave": false,
+        "editor.formatOnType": false
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+        "editor.formatOnSave": true,
+        "editor.quickSuggestions": {
+            "comments": "off",
+            "other": "on",
+            "strings": "on"
+        }
+    },
+    "chat.agent.maxRequests": 300,
+    "chat.customAgentInSubagent.enabled": true,
+    "chat.detectParticipant.enabled": true,
+    "chat.mcp.access": "all",
+    "chat.useClaudeSkills": true,
+    "chat.useNestedAgentsMdFiles": true,
+    "dotnet.defaultSolution": "src\\Easy.Platform.sln",
+    "editor.aiStats.enabled": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.fixAll.sort-json": "explicit",
+        "source.fixAll.tslint": "explicit",
+        "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.detectIndentation": false,
+    "editor.fontLigatures": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnSave": true,
+    "editor.formatOnSaveMode": "file",
+    "editor.formatOnType": false,
+    "editor.inlineSuggest.enabled": true,
+    "editor.inlineSuggest.showToolbar": "onHover",
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.wordWrap": "off",
+    "editor.wordWrapColumn": 120,
+    "eslint.alwaysShowStatus": true,
+    "files.encoding": "utf8",
+    "files.exclude": {
+        "**/.git": true
+    },
+    "files.insertFinalNewline": true,
+    "files.trimTrailingWhitespace": true,
+    "files.watcherExclude": {
+        "**/.git": true,
+        "**/coverage": true,
+        "**/dist": true,
+        "**/lib": true,
+        "**/node_modules": true,
+        "**/temp": true
+    },
+    "github.copilot.chat.agent.autoFix": true,
+    "github.copilot.chat.agent.thinkingTool": true,
+    "github.copilot.chat.checkpoints.enabled": true,
+    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
+    "github.copilot.chat.codesearch.enabled": true,
+    "github.copilot.chat.commitMessageGeneration.instructions": [
+        {
+            "file": ".github/git-commit-instructions.md"
+        }
+    ],
+    "github.copilot.chat.followUps": "always",
+    "github.copilot.chat.generateTests.codeLens": true,
+    "github.copilot.chat.localeOverride": "en",
+    "github.copilot.chat.pullRequestDescriptionGeneration.instructions": [
+        {
+            "file": ".github/pull-request-instructions.md"
+        }
+    ],
+    "github.copilot.chat.review.selection.enabled": true,
+    "github.copilot.chat.runCommand.enabled": true,
+    "github.copilot.chat.scopeSelect": true,
+    "github.copilot.chat.terminalChatLocation": "quickChat",
+    "github.copilot.chat.useAgentSkills": true,
+    "github.copilot.chat.useProjectTemplates": true,
+    "github.copilot.chat.vision.enabled": true,
+    "github.copilot.enable": {
+        "*": true,
+        "dockercompose": true,
+        "json": true,
+        "markdown": true,
+        "plaintext": true,
+        "scminput": false,
+        "yaml": true
+    },
+    "github.copilot.nextEditSuggestions.enabled": true,
+    "github.copilot.renameSuggestions.triggerAutomatically": true,
+    "markdown.copyFiles.destination": {
+        "**/*": "docs/images/${documentBaseName}/"
+    },
+    "markdown.extension.toc.levels": "2..4",
+    "search.exclude": {
+        "**/.angular": true,
+        "**/dist": true,
+        "**/lib": true,
+        "**/node_modules": true
+    },
+    "sort-json.settings.isCaseSensitive": false,
+    "sort-json.settings.sortMode": "Objects Only"
+}

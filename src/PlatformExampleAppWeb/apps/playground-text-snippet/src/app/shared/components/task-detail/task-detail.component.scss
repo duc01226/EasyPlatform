@@ -1,0 +1,211 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TASK DETAIL COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.task-detail {
+    @include stack($space-5);
+    max-width: calculaterem(800px);
+    padding: $space-6;
+    margin: 0 auto;
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // DELETED BANNER
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__deleted-banner {
+        @include warning-banner;
+        color: $color-error-dark;
+        background: $color-error-light;
+        border-left-color: $color-error;
+
+        mat-icon {
+            color: $color-error;
+        }
+
+        span {
+            flex: 1;
+            font-weight: $font-weight-medium;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // ERROR DISPLAY
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__error {
+        @include error-banner;
+
+        mat-error {
+            flex: 1;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // FORM
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__form {
+        @include stack($space-5);
+    }
+
+    &__field {
+        flex: 1;
+        min-width: calculaterem(200px);
+
+        &--full {
+            width: 100%;
+        }
+    }
+
+    &__row {
+        @include app-form-row;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // SUBTASKS
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__subtasks {
+        padding: $space-5;
+        margin-top: $space-4;
+        background: white;
+        border: 1px solid $color-neutral-200;
+        border-radius: $radius-lg;
+    }
+
+    &__subtasks-header {
+        @include flex-between;
+        margin-bottom: $space-4;
+        padding-bottom: $space-4;
+        border-bottom: 1px solid $color-neutral-100;
+
+        h3 {
+            @include flex-start;
+            gap: $space-2;
+            margin: 0;
+            font-size: $font-size-md;
+            font-weight: $font-weight-semibold;
+            color: $color-neutral-900;
+
+            mat-icon {
+                color: $color-neutral-500;
+            }
+        }
+    }
+
+    &__subtasks-empty {
+        @include flex-center;
+        flex-direction: column;
+        gap: $space-2;
+        padding: $space-6;
+        color: $color-neutral-500;
+
+        mat-icon {
+            width: calculaterem(48px);
+            height: calculaterem(48px);
+            font-size: calculaterem(48px);
+            color: $color-neutral-300;
+        }
+    }
+
+    &__subtasks-list {
+        @include stack($space-2);
+    }
+
+    &__subtasks-progress {
+        padding-top: $space-3;
+        margin-top: $space-3;
+        font-size: $font-size-sm;
+        color: $color-neutral-500;
+        border-top: 1px solid $color-neutral-100;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // SUBTASK ITEM
+    // ═══════════════════════════════════════════════════════════════════════════════
+    .subtask-item {
+        @include flex-start;
+        gap: $space-2;
+        padding: $space-3;
+        background: $color-neutral-50;
+        border: 1px solid $color-neutral-200;
+        border-radius: $radius-md;
+        transition: all $transition-fast;
+
+        &:hover {
+            background: white;
+            border-color: $color-neutral-300;
+            box-shadow: $shadow-xs;
+        }
+
+        &__title {
+            flex: 1;
+
+            input.completed {
+                color: $color-neutral-400;
+                text-decoration: line-through;
+            }
+        }
+
+        .mat-mdc-form-field-subscript-wrapper {
+            display: none;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // ACTIONS
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__actions {
+        @include flex-start;
+        gap: $space-3;
+        justify-content: flex-end;
+        padding-top: $space-6;
+        margin-top: $space-6;
+        border-top: 1px solid $color-neutral-200;
+
+        button {
+            @include flex-start;
+            gap: $space-2;
+
+            mat-spinner {
+                margin-right: $space-2;
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // MODE INDICATOR
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__mode-indicator {
+        @include flex-start;
+        gap: $space-2;
+        margin-top: $space-4;
+    }
+
+    .mode-badge {
+        @include badge-base;
+
+        &--create {
+            color: $color-success-dark;
+            background: $color-success-light;
+        }
+
+        &--edit {
+            color: $color-primary-700;
+            background: $color-primary-100;
+        }
+
+        &--dirty {
+            color: $color-warning-dark;
+            background: $color-warning-light;
+        }
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// FORM FIELD ADJUSTMENTS
+// ═══════════════════════════════════════════════════════════════════════════════
+.task-detail__subtasks-list {
+    .mat-mdc-form-field {
+        margin-bottom: 0;
+    }
+}

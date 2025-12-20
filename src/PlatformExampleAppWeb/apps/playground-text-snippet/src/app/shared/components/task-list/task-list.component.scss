@@ -1,0 +1,367 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TASK LIST COMPONENT
+// ═══════════════════════════════════════════════════════════════════════════════
+
+.task-list {
+    @include stack($space-5);
+    padding: $space-5;
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // ERROR DISPLAY
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__error {
+        @include error-banner;
+
+        mat-error {
+            flex: 1;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // STATISTICS CARDS
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__statistics {
+        @include cluster($space-4);
+    }
+
+    .stat-card {
+        flex: 1;
+        min-width: calculaterem(120px);
+        padding: $space-5;
+        text-align: center;
+        background: white;
+        border: 1px solid $color-neutral-200;
+        border-radius: $radius-lg;
+        transition: all $transition-base;
+
+        &:hover {
+            border-color: $color-neutral-300;
+            box-shadow: $shadow-sm;
+            transform: translateY(-2px);
+        }
+
+        &__value {
+            font-size: $font-size-2xl;
+            font-weight: $font-weight-bold;
+            color: $color-neutral-900;
+        }
+
+        &__label {
+            margin-top: $space-1;
+            font-size: $font-size-xs;
+            font-weight: $font-weight-medium;
+            color: $color-neutral-500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        &--active {
+            background: $color-primary-50;
+            border-color: $color-primary-200;
+
+            .stat-card__value {
+                color: $color-primary-600;
+            }
+        }
+
+        &--completed {
+            background: $color-success-light;
+            border-color: rgba($color-success, 0.3);
+
+            .stat-card__value {
+                color: $color-success-dark;
+            }
+        }
+
+        &--overdue {
+            background: $color-error-light;
+            border-color: rgba($color-error, 0.3);
+
+            .stat-card__value {
+                color: $color-error-dark;
+            }
+        }
+
+        &--due-soon {
+            background: $color-warning-light;
+            border-color: rgba($color-warning, 0.3);
+
+            .stat-card__value {
+                color: $color-warning-dark;
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // FILTERS
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__filters {
+        @include stack($space-4);
+        padding: $space-5;
+        background: white;
+        border: 1px solid $color-neutral-200;
+        border-radius: $radius-lg;
+    }
+
+    &__search {
+        width: 100%;
+        max-width: calculaterem(400px);
+    }
+
+    &__filter-group {
+        @include cluster($space-3);
+
+        .filter-label {
+            min-width: calculaterem(60px);
+            font-size: $font-size-sm;
+            font-weight: $font-weight-medium;
+            color: $color-neutral-600;
+        }
+    }
+
+    &__quick-filters {
+        @include cluster($space-3);
+        padding-top: $space-3;
+        border-top: 1px solid $color-neutral-100;
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: calculaterem(20px);
+            height: calculaterem(20px);
+            padding: 0 $space-2;
+            margin-left: $space-2;
+            font-size: $font-size-xs;
+            font-weight: $font-weight-semibold;
+            border-radius: $radius-full;
+
+            &--warning {
+                color: white;
+                background: $color-error;
+            }
+        }
+
+        .clear-filters-btn {
+            margin-left: auto;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // ACTIONS BAR
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__actions {
+        @include flex-start;
+        gap: $space-2;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // LOADING STATES
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__loading {
+        margin: -#{$space-5} -#{$space-5} 0;
+        border-radius: $radius-lg $radius-lg 0 0;
+        overflow: hidden;
+    }
+
+    &__spinner-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: $platform-z-index-level-3;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(white, 0.85);
+        backdrop-filter: blur(2px);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // TABLE
+    // ═══════════════════════════════════════════════════════════════════════════════
+    &__table-container {
+        overflow-x: auto;
+        background: white;
+        border: 1px solid $color-neutral-200;
+        border-radius: $radius-lg;
+    }
+
+    &__table {
+        width: 100%;
+
+        th {
+            font-size: $font-size-sm;
+            font-weight: $font-weight-semibold;
+            color: $color-neutral-600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: $color-neutral-50;
+        }
+
+        tr {
+            cursor: pointer;
+            transition: background-color $transition-fast;
+
+            &:hover {
+                background-color: $color-neutral-50;
+            }
+
+            &.row-selected {
+                background-color: $color-primary-50 !important;
+
+                &:hover {
+                    background-color: $color-primary-100 !important;
+                }
+            }
+
+            &.row-overdue {
+                background-color: $color-error-light;
+
+                &:hover {
+                    background-color: rgba($color-error, 0.15);
+                }
+            }
+
+            &.row-due-soon {
+                background-color: $color-warning-light;
+
+                &:hover {
+                    background-color: rgba($color-warning, 0.15);
+                }
+            }
+
+            &.row-deleted {
+                background-color: $color-neutral-100;
+                opacity: 0.6;
+
+                td {
+                    text-decoration: line-through;
+                }
+            }
+        }
+
+        .no-data-row {
+            td {
+                padding: $space-12;
+                font-size: $font-size-base;
+                color: $color-neutral-500;
+                text-align: center;
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // PRIORITY BADGES
+    // ═══════════════════════════════════════════════════════════════════════════════
+    .priority-badge {
+        @include badge-base;
+
+        &.priority-low {
+            color: $color-success-dark;
+            background: $color-success-light;
+        }
+
+        &.priority-medium {
+            color: $color-primary-700;
+            background: $color-primary-100;
+        }
+
+        &.priority-high {
+            color: $color-warning-dark;
+            background: $color-warning-light;
+        }
+
+        &.priority-critical {
+            color: $color-error-dark;
+            background: $color-error-light;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // TASK CELLS
+    // ═══════════════════════════════════════════════════════════════════════════════
+    .task-title {
+        @include flex-start;
+        gap: $space-2;
+
+        &__text {
+            font-weight: $font-weight-medium;
+            color: $color-neutral-900;
+        }
+
+        &__subtasks {
+            padding: $space-1 $space-2;
+            font-size: $font-size-xs;
+            font-weight: $font-weight-medium;
+            color: $color-neutral-600;
+            background: $color-neutral-100;
+            border-radius: $radius-sm;
+        }
+    }
+
+    .task-description {
+        max-width: calculaterem(300px);
+        margin-top: $space-1;
+        overflow: hidden;
+        font-size: $font-size-sm;
+        color: $color-neutral-500;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .due-date {
+        @include flex-start;
+        gap: $space-1;
+        font-size: $font-size-sm;
+
+        &.overdue {
+            font-weight: $font-weight-medium;
+            color: $color-error-dark;
+        }
+
+        &.due-soon {
+            color: $color-warning-dark;
+        }
+
+        .days-until {
+            font-size: $font-size-xs;
+            color: $color-neutral-500;
+        }
+
+        .overdue-icon {
+            width: calculaterem(18px);
+            height: calculaterem(18px);
+            font-size: calculaterem(18px);
+            color: $color-error;
+        }
+    }
+
+    .deleted-icon {
+        width: calculaterem(16px);
+        height: calculaterem(16px);
+        margin-left: $space-1;
+        font-size: calculaterem(16px);
+        color: $color-neutral-500;
+    }
+
+    .task-actions {
+        @include flex-start;
+        gap: $space-1;
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CHIP STYLING
+// ═══════════════════════════════════════════════════════════════════════════════
+.mat-mdc-chip.priority-high,
+.mat-mdc-chip.priority-critical {
+    --mdc-chip-elevated-container-color: #{$color-warning-light};
+    --mdc-chip-label-text-color: #{$color-warning-dark};
+
+    &.mat-mdc-chip-selected {
+        --mdc-chip-elevated-selected-container-color: #{$color-warning};
+        --mdc-chip-selected-label-text-color: white;
+    }
+}

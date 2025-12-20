@@ -1,0 +1,54 @@
+{
+    "assertions": [
+        "This is a .NET 9 + Angular 19 enterprise monorepo (EasyPlatform) using Easy.Platform framework",
+        "Backend: Use service-specific repositories (I<ServiceName>RootRepository, I<ServiceName>PlatformRootRepository, I<ServiceName>PlatformRootRepository) - never generic IPlatformRootRepository",
+        "Backend: Use PlatformValidationResult fluent API (.And(), .AndAsync()) - never throw ValidationException",
+        "Backend: Side effects (notifications, emails, external APIs) go in Entity Event Handlers (UseCaseEvents/) - never in command handlers",
+        "Backend: DTOs own mapping via PlatformEntityDto<TEntity, TKey>.MapToEntity() or PlatformDto<T>.MapToObject() - never map in handlers",
+        "Backend: Command + Result + Handler in ONE file under UseCaseCommands/{Feature}/",
+        "Backend: Cross-service communication via RabbitMQ message bus only - never direct database access",
+        "Frontend: Extend AppBaseComponent, AppBaseVmStoreComponent, or AppBaseFormComponent - never raw Component",
+        "Frontend: Use PlatformVmStore for state management - never manual signals",
+        "Frontend: Extend PlatformApiService for HTTP calls - never direct HttpClient",
+        "Frontend: Always use .pipe(this.untilDestroyed()) for subscriptions - never manual unsubscribe",
+        "Frontend: All template elements must have BEM classes (block__element --modifier)",
+        "Architecture: Search for existing implementations before creating new code",
+        "Architecture: Place logic in LOWEST layer (Entity > Service > Component) to enable reuse",
+        "Architecture: Plan before implementing non-trivial tasks - use EnterPlanMode"
+    ],
+    "codingLevel": 4,
+    "locale": {
+        "responseLanguage": null,
+        "thinkingLanguage": null
+    },
+    "paths": {
+        "docs": "docs",
+        "plans": "plans"
+    },
+    "plan": {
+        "dateFormat": "YYMMDD-HHmm",
+        "issuePrefix": "GH-",
+        "namingFormat": "{date}-{issue}-{slug}",
+        "reportsDir": "reports",
+        "resolution": {
+            "branchPattern": "(?:feat|fix|chore|refactor|docs)/(?:[^/]+/)?(.+)",
+            "order": ["session", "branch"]
+        },
+        "validation": {
+            "focusAreas": ["assumptions", "risks", "tradeoffs", "architecture"],
+            "maxQuestions": 8,
+            "minQuestions": 3,
+            "mode": "prompt"
+        }
+    },
+    "privacyBlock": true,
+    "project": {
+        "framework": "auto",
+        "packageManager": "auto",
+        "type": "auto"
+    },
+    "trust": {
+        "enabled": false,
+        "passphrase": null
+    }
+}

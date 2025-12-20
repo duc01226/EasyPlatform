@@ -1,0 +1,10 @@
+// Forward variables and mixins so they're available to importers
+@forward 'variables';
+@forward 'mixins';
+
+// Use modules for their side effects (styles)
+@use 'variables' as *;
+@use 'mixins' as *;
+@use 'material-core' as *;
+@use './themes/default-theme' as *;
+@use './components' as *;

@@ -1,0 +1,105 @@
+// Forward platform mixins to make them available to all importers
+@forward 'platform-mixins';
+@use 'platform-mixins' as *;
+@use 'variables' as *;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// APP-SPECIFIC MIXINS
+// Re-export platform mixins and add app-level patterns
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Page Layout
+@mixin app-page-container {
+    display: flex;
+    flex-direction: column;
+    gap: $app-section-gap;
+    max-width: $app-content-max-width;
+    padding: $app-page-padding;
+    margin: 0 auto;
+}
+
+// Empty State
+@mixin app-empty-state {
+    @include flex-center;
+    flex-direction: column;
+    gap: $space-4;
+    padding: $space-12 $space-6;
+    color: $color-neutral-500;
+    text-align: center;
+
+    .empty-icon {
+        width: 48px;
+        height: 48px;
+        color: $color-neutral-300;
+    }
+
+    .empty-title {
+        margin: 0;
+        font-size: $font-size-md;
+        font-weight: $font-weight-medium;
+        color: $color-neutral-700;
+    }
+
+    .empty-description {
+        margin: 0;
+        font-size: $font-size-base;
+        color: $color-neutral-500;
+    }
+}
+
+// Data Table
+@mixin app-data-table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th,
+    td {
+        padding: $space-3 $space-4;
+        text-align: left;
+    }
+
+    th {
+        font-size: $font-size-sm;
+        font-weight: $font-weight-semibold;
+        color: $color-neutral-600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        background: $color-neutral-50;
+        border-bottom: 1px solid $color-neutral-200;
+    }
+
+    td {
+        font-size: $font-size-base;
+        color: $color-neutral-900;
+        border-bottom: 1px solid $color-neutral-100;
+    }
+
+    tbody tr {
+        transition: background-color $transition-fast;
+
+        &:hover {
+            background: $color-neutral-50;
+        }
+    }
+}
+
+// Form Section
+@mixin app-form-section {
+    @include card-elevated;
+    padding: $app-card-padding;
+}
+
+@mixin app-form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $space-4;
+
+    @include flex-layout-media('lt-md') {
+        flex-direction: column;
+    }
+}
+
+@mixin app-form-field {
+    flex: 1;
+    min-width: 200px;
+}
