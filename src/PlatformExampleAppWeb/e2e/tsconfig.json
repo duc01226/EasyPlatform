@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "noEmit": true,
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "baseUrl": ".",
+        "paths": {
+            "@page-objects/*": ["./page-objects/*"],
+            "@fixtures/*": ["./fixtures/*"],
+            "@utils/*": ["./utils/*"]
+        }
+    },
+    "include": ["**/*.ts"],
+    "exclude": ["node_modules"]
+}

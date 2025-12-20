@@ -1,0 +1,76 @@
+{
+    "$schema": "./node_modules/nx/schemas/nx-schema.json",
+    "affected": {
+        "defaultBase": "master"
+    },
+    "cli": {
+        "packageManager": "yarn"
+    },
+    "defaultProject": "playground-text-snippet",
+    "generators": {
+        "@nx/angular:application": {
+            "e2eTestRunner": "none",
+            "linter": "eslint",
+            "style": "scss",
+            "unitTestRunner": "jest"
+        },
+        "@nx/angular:component": {
+            "style": "scss"
+        },
+        "@nx/angular:library": {
+            "linter": "eslint",
+            "strict": false,
+            "unitTestRunner": "jest"
+        }
+    },
+    "namedInputs": {
+        "default": ["{projectRoot}/**/*", "sharedGlobals"],
+        "production": [
+            "default",
+            "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+            "!{projectRoot}/tsconfig.spec.json",
+            "!{projectRoot}/jest.config.[jt]s",
+            "!{projectRoot}/.eslintrc.json",
+            "!{projectRoot}/src/test-setup.[jt]s"
+        ],
+        "sharedGlobals": []
+    },
+    "plugins": [
+        {
+            "plugin": "nx-stylelint/plugin",
+            "options": {
+                "targetName": "stylelint",
+                "extensions": ["css", "scss"]
+            }
+        }
+    ],
+    "targetDefaults": {
+        "@nx/jest:jest": {
+            "cache": true,
+            "configurations": {
+                "ci": {
+                    "ci": true,
+                    "codeCoverage": true
+                }
+            },
+            "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"],
+            "options": {
+                "passWithNoTests": true
+            }
+        },
+        "build": {
+            "dependsOn": ["^build"],
+            "inputs": ["production", "^production"]
+        },
+        "lint": {
+            "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
+        },
+        "stylelint": {
+            "inputs": ["default", "{workspaceRoot}/.stylelintrc.json"],
+            "cache": true
+        }
+    },
+    "tasksRunnerOptions": {
+        "default": {}
+    }
+}

@@ -1,0 +1,21 @@
+{
+  "configurations": [
+    {
+      "console": "integratedTerminal",
+      "cwd": "${workspaceFolder}/src/PlatformExampleAppWeb/e2e",
+      "internalConsoleOptions": "neverOpen",
+      "name": "Debug PlatformExampleAppWeb e2e Playwright Tests",
+      "request": "launch",
+      "runtimeArgs": [
+        "playwright",
+        "test",
+        "--config=playwright.config.ts",
+        "--headed",
+        "${fileBasename}"
+      ],
+      "runtimeExecutable": "npx",
+      "type": "node"
+    }
+  ],
+  "version": "0.2.0"
+}

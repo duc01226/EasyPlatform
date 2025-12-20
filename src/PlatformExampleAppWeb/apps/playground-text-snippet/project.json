@@ -1,0 +1,105 @@
+{
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "name": "playground-text-snippet",
+    "projectType": "application",
+    "sourceRoot": "apps/playground-text-snippet/src",
+    "tags": [],
+    "targets": {
+        "build": {
+            "configurations": {
+                "development": {
+                    "buildOptimizer": false,
+                    "extractLicenses": false,
+                    "namedChunks": true,
+                    "optimization": false,
+                    "sourceMap": true,
+                    "vendorChunk": true
+                },
+                "docker-dev": {
+                    "buildOptimizer": false,
+                    "extractLicenses": false,
+                    "fileReplacements": [
+                        {
+                            "replace": "apps/playground-text-snippet/src/environments/environment.ts",
+                            "with": "apps/playground-text-snippet/src/environments/environment.docker-dev.ts"
+                        }
+                    ],
+                    "namedChunks": true,
+                    "optimization": false,
+                    "sourceMap": true,
+                    "vendorChunk": true
+                }
+            },
+            "defaultConfiguration": "development",
+            "executor": "@angular-devkit/build-angular:browser-esbuild",
+            "options": {
+                "allowedCommonJsDependencies": ["moment"],
+                "assets": ["apps/playground-text-snippet/src/favicon.ico", "apps/playground-text-snippet/src/assets"],
+                "index": "apps/playground-text-snippet/src/index.html",
+                "inlineStyleLanguage": "scss",
+                "main": "apps/playground-text-snippet/src/main.ts",
+                "ngswConfigPath": "apps/playground-text-snippet/ngsw-config.json",
+                "outputPath": "dist/apps/playground-text-snippet",
+                "polyfills": "apps/playground-text-snippet/src/polyfills.ts",
+                "scripts": [],
+                "serviceWorker": true,
+                "stylePreprocessorOptions": {
+                    "includePaths": ["apps/playground-text-snippet/src/styles", "libs/platform-core/src/styles"]
+                },
+                "styles": [
+                    "apps/playground-text-snippet/src/styles.scss",
+                    {
+                        "bundleName": "default-theme",
+                        "inject": false,
+                        "input": "apps/playground-text-snippet/src/styles/themes/default-theme.scss"
+                    },
+                    {
+                        "bundleName": "deeppurple-amber-theme",
+                        "inject": false,
+                        "input": "apps/playground-text-snippet/src/styles/themes/deeppurple-amber-theme.scss"
+                    }
+                ],
+                "tsConfig": "apps/playground-text-snippet/tsconfig.app.json"
+            },
+            "outputs": ["{options.outputPath}"]
+        },
+        "extract-i18n": {
+            "executor": "@angular-devkit/build-angular:extract-i18n",
+            "options": {
+                "buildTarget": "playground-text-snippet:build"
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint"
+        },
+        "stylelint": {
+            "executor": "nx-stylelint:lint",
+            "outputs": ["{options.outputFile}"],
+            "options": {
+                "lintFilePatterns": ["apps/playground-text-snippet/**/*.scss", "apps/playground-text-snippet/**/*.css"]
+            }
+        },
+        "serve": {
+            "configurations": {
+                "development": {
+                    "buildTarget": "playground-text-snippet:build:development"
+                },
+                "production": {
+                    "buildTarget": "playground-text-snippet:build:production"
+                }
+            },
+            "defaultConfiguration": "development",
+            "executor": "@angular-devkit/build-angular:dev-server",
+            "options": {
+                "port": 4001
+            }
+        },
+        "test": {
+            "executor": "@nx/jest:jest",
+            "options": {
+                "jestConfig": "apps/playground-text-snippet/jest.config.ts"
+            },
+            "outputs": ["{workspaceRoot}/coverage/apps/playground-text-snippet"]
+        }
+    }
+}

@@ -1,0 +1,109 @@
+<header class="app__header">
+    <h1>Welcome to {{ title }}!</h1>
+</header>
+
+<ng-container *ngIf="vm() as vm">
+    <div *ngIf="errorMsg$()" class="app__errors">
+        <mat-error class="app__errors-content">{{ errorMsg$() }}</mat-error>
+
+        <button (click)="store.clearAllErrorMsgs()" mat-icon-button>
+            <mat-icon>close</mat-icon>
+        </button>
+        <button (click)="reload()" mat-icon-button>
+            <mat-icon>refresh</mat-icon>
+        </button>
+    </div>
+
+    <!-- Tab Navigation -->
+    <mat-tab-group class="app__tabs" animationDuration="200ms">
+        <!-- Text Snippets Tab -->
+        <mat-tab>
+            <ng-template mat-tab-label>
+                <mat-icon class="tab-icon">text_snippet</mat-icon>
+                Text Snippets
+            </ng-template>
+
+            <main class="app__main">
+                <div class="app__side-bar">
+                    <mat-form-field class="app__search-input" appearance="fill">
+                        <mat-label>{{ 'Search text snippet' | translate }}</mat-label>
+                        <input [ngModel]="vm.searchText" (ngModelChange)="onSearchTextChange($event)" matInput (keyup.enter)="loadSnippetTextItems()" />
+                    </mat-form-field>
+
+                    <mat-error *ngIf="getErrorMsg$('loadSnippetTextItems')()" class="app__loading-text-snippet-items-error">{{
+                        getErrorMsg$('loadSnippetTextItems')()
+                    }}</mat-error>
+
+                    <div *ngIf="vm.textSnippetItems" class="app__text-snippet-items-grid">
+                        <table [dataSource]="vm.textSnippetItems" mat-table aria-label="TextSnippetItems table">
+                            <ng-container matColumnDef="SnippetText">
+                                <th *matHeaderCellDef mat-header-cell>SnippetText</th>
+                                <td
+                                    *matCellDef="let element"
+                                    [ngClass]="'app__text-snippet-items-grid-cell'"
+                                    [innerHtml]="element.data.snippetText | platformHighlight: vm.searchText"
+                                    mat-cell
+                                ></td>
+                            </ng-container>
+
+                            <ng-container matColumnDef="FullText">
+                                <th *matHeaderCellDef mat-header-cell>FullText (Click on row to see detail)</th>
+                                <td *matCellDef="let element" [ngClass]="'app__text-snippet-items-grid-cell'" mat-cell>
+                                    {{ element.data.fullText }}
+                                </td>
+                            </ng-container>
+
+                            <tr *matHeaderRowDef="textSnippetsItemGridDisplayedColumns" mat-header-row></tr>
+                            <tr
+                                *matRowDef="let row; columns: textSnippetsItemGridDisplayedColumns"
+                                class="app__text-snippet-items-grid-row"
+                                [ngClass]="{ '-selected': row.data.id == vm.selectedSnippetTextId }"
+                                (click)="toggleSelectTextSnippedGridRow(row)"
+                                mat-row
+                            ></tr>
+                        </table>
+                        <mat-paginator
+                            [length]="vm.totalTextSnippetItems"
+                            [pageIndex]="vm.currentTextSnippetItemsPageNumber"
+                            [pageSize]="vm.textSnippetItemsPageSize()"
+                            (page)="onTextSnippetGridChangePage($event)"
+                        ></mat-paginator>
+                    </div>
+                </div>
+                <div class="app__detail">
+                    <platform-example-web-text-snippet-detail></platform-example-web-text-snippet-detail>
+                </div>
+            </main>
+            <div *ngIf="isLoading$('loadSnippetTextItems')()" class="platform-mat-mdc-spinner -with-backdrop">
+                <mat-spinner></mat-spinner>
+            </div>
+        </mat-tab>
+
+        <!-- Task Management Tab -->
+        <mat-tab>
+            <ng-template mat-tab-label>
+                <mat-icon class="tab-icon">task_alt</mat-icon>
+                Task Management
+            </ng-template>
+
+            <div class="app__task-container">
+                <!-- Task List (left side) -->
+                <div class="app__task-list">
+                    <app-task-list (taskSelected)="onTaskSelected($event)" (createTask)="onCreateTask()"></app-task-list>
+                </div>
+
+                <!-- Task Detail (right side) -->
+                @if (showTaskDetail()) {
+                    <div class="app__task-detail">
+                        <app-task-detail
+                            [task]="selectedTask()"
+                            (taskSaved)="onTaskSaved($event)"
+                            (cancelled)="onTaskDetailCancelled()"
+                            (taskRestored)="onTaskRestored($event)"
+                        ></app-task-detail>
+                    </div>
+                }
+            </div>
+        </mat-tab>
+    </mat-tab-group>
+</ng-container>

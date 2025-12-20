@@ -1,0 +1,37 @@
+@use '@angular/material' as mat;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MATERIAL DESIGN 3 DEFAULT THEME
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Apply standard Material Design 3 theme
+html {
+    @include mat.theme(
+        (
+            color: (
+                primary: mat.$azure-palette,
+                tertiary: mat.$blue-palette,
+                theme-type: light
+            ),
+            typography: Roboto,
+            density: 0
+        )
+    );
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+    html {
+        @include mat.theme(
+            (
+                color: (
+                    primary: mat.$azure-palette,
+                    tertiary: mat.$blue-palette,
+                    theme-type: dark
+                ),
+                typography: Roboto,
+                density: 0
+            )
+        );
+    }
+}

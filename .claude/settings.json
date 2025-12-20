@@ -1,0 +1,166 @@
+{
+    "alwaysThinkingEnabled": true,
+    "attribution": {
+        "commit": "Generated with [Claude Code](https://claude.com/claude-code)",
+        "pr": "Generated with [Claude Code](https://claude.com/claude-code)"
+    },
+    "cleanupPeriodDays": 30,
+    "enabledPlugins": {
+        "code-review@claude-plugins-official": true,
+        "commit-commands@claude-plugins-official": true,
+        "csharp-lsp@claude-plugins-official": true,
+        "frontend-design@claude-plugins-official": true,
+        "github@claude-plugins-official": true,
+        "playwright@claude-plugins-official": true,
+        "typescript-lsp@claude-plugins-official": true
+    },
+    "env": {
+        "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1"
+    },
+    "hooks": {
+        "Notification": [
+            {
+                "hooks": [
+                    {
+                        "command": "node .claude/hooks/notify-waiting.js",
+                        "type": "command"
+                    }
+                ]
+            }
+        ],
+        "PostToolUse": [
+            {
+                "hooks": [
+                    {
+                        "command": "node .claude/hooks/format-file.js",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Write|Edit"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node .claude/hooks/error-recovery.js",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Bash"
+            }
+        ],
+        "PreToolUse": [
+            {
+                "hooks": [
+                    {
+                        "command": "node .claude/hooks/validate-bash-command.js",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Bash"
+            }
+        ],
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "command": "node .claude/hooks/session-start.js",
+                        "type": "command"
+                    }
+                ]
+            }
+        ],
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "command": "node .claude/hooks/session-end.js",
+                        "type": "command"
+                    }
+                ]
+            }
+        ]
+    },
+    "permissions": {
+        "allow": [
+            "Bash",
+            "Edit",
+            "ExitPlanMode",
+            "NotebookEdit",
+            "Skill",
+            "SlashCommand",
+            "WebFetch",
+            "WebSearch",
+            "Write",
+            "Read",
+            "Glob",
+            "Grep",
+            "Bash(npm run:*)",
+            "Bash(dotnet:*)",
+            "Bash(nx:*)",
+            "Bash(git:*)",
+            "mcp__filesystem__list_directory",
+            "mcp__filesystem__directory_tree",
+            "mcp__filesystem__read_text_file",
+            "mcp__filesystem__read_multiple_files"
+        ],
+        "ask": [
+            "Bash(git push:*)",
+            "Bash(npm publish:*)",
+            "Bash(docker push:*)",
+            "Bash(docker run:*)",
+            "Bash(dotnet publish:*)",
+            "Bash(az:*)",
+            "Bash(aws:*)",
+            "Bash(gcloud:*)"
+        ],
+        "defaultMode": "acceptEdits",
+        "deny": [
+            "Bash(rm -rf /*)",
+            "Bash(rm -rf ~/*)",
+            "Bash(rm -rf .)",
+            "Bash(rm -rf $HOME:*)",
+            "Bash(git push --force:*)",
+            "Bash(git push -f:*)",
+            "Bash(git push origin main --force:*)",
+            "Bash(git push origin master --force:*)",
+            "Bash(git reset --hard:*)",
+            "Bash(git clean -fd:*)",
+            "Bash(git clean -fdx:*)",
+            "Bash(git branch -D:*)",
+            "Bash(git stash drop:*)",
+            "Bash(git rebase -i:*)",
+            "Bash(git add -i:*)",
+            "Bash(chmod 777:*)",
+            "Bash(chmod -R 777:*)",
+            "Edit(**/.env*)",
+            "Edit(.env*)",
+            "Edit(**/secrets/**)",
+            "Edit(**/credentials*)",
+            "Edit(**/generated/**)",
+            "Edit(**/obj/**)",
+            "Edit(**/bin/**)",
+            "Edit(**/dist/**)",
+            "Edit(**/node_modules/**)",
+            "Edit(.github/workflows/**)",
+            "Edit(**/appsettings.Production.json)",
+            "Read(**/.env*)",
+            "Read(.env*)",
+            "Read(**/secrets/**)",
+            "Read(**/credentials*)",
+            "Read(~/.ssh/**)",
+            "Read(~/.aws/**)",
+            "Read(~/.config/gcloud/**)",
+            "Read(**/appsettings.Production.json)",
+            "Write(**/.env*)",
+            "Write(.env*)",
+            "Write(**/secrets/**)",
+            "Write(**/credentials*)",
+            "Write(**/generated/**)",
+            "Write(**/obj/**)",
+            "Write(**/bin/**)",
+            "Write(**/dist/**)",
+            "Write(**/node_modules/**)",
+            "Write(**/appsettings.Production.json)"
+        ]
+    }
+}

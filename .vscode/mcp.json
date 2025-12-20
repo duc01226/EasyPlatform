@@ -1,0 +1,30 @@
+{
+  "servers": {
+    "context7": {
+      "args": ["/c", "npx", "-y", "@upstash/context7-mcp@latest"],
+      "command": "cmd",
+      "env": {
+        "DEFAULT_MINIMUM_TOKENS": "10000",
+        "UPSTASH_VECTOR_REST_TOKEN": "your-token-here",
+        "UPSTASH_VECTOR_REST_URL": "https://your-endpoint.upstash.io"
+      }
+    },
+    "memory": {
+      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-memory"],
+      "command": "cmd"
+    },
+    "playwright": {
+      "args": ["/c", "npx", "@playwright/mcp"],
+      "command": "cmd"
+    },
+    "sequential-thinking": {
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "command": "cmd"
+    }
+  }
+}
