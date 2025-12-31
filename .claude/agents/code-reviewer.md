@@ -68,13 +68,18 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
 
 2. **Systematic Review**: Work through each concern area methodically:
    - Code structure and organization
+   - **Class Responsibility Violations** (CRITICAL - check first):
+     - Backend: Mapping methods in Handler → should be in Command/DTO
+     - Frontend: Constants at module level → should be static in Model class
+     - Frontend: Display logic in Component → should be getter in Model
+     - Frontend: Column arrays in Component → should be static in Model
    - Logic correctness and edge cases
    - Type safety and error handling
    - Performance implications
    - Security considerations
 
 3. **Prioritization**: Categorize findings by severity:
-   - **Critical**: Security vulnerabilities, data loss risks, breaking changes
+   - **Critical**: Security vulnerabilities, data loss risks, breaking changes, **class responsibility violations**
    - **High**: Performance issues, type safety problems, missing error handling
    - **Medium**: Code smells, maintainability concerns, documentation gaps
    - **Low**: Style inconsistencies, minor optimizations
@@ -106,6 +111,11 @@ Structure your review as a comprehensive report with:
 
 ### Critical Issues
 [List any security vulnerabilities or breaking issues]
+
+### Class Responsibility Violations
+| File | Violation | Fix |
+|------|-----------|-----|
+| [file] | [what's wrong] | [how to fix] |
 
 ### High Priority Findings
 [Performance problems, type safety issues, etc.]

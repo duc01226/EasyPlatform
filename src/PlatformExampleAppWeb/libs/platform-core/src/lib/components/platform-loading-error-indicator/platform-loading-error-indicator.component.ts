@@ -151,6 +151,7 @@ export class PlatformLoadingErrorIndicatorComponent extends PlatformComponent im
 
     /**
      * Whether to suppress error message display.
+     * When true, no error messages will be shown.
      * @default false
      */
     @Input() public notShowErrorMsg: boolean = false;

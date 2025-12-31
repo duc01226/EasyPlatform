@@ -1,8 +1,8 @@
-import dayjs, { Dayjs } from 'dayjs';
-import isoWeek from 'dayjs/plugin/isoWeek';
-import quarterOfYear from 'dayjs/plugin/quarterOfYear';
-import timezone from 'dayjs/plugin/timezone';
-import utc from 'dayjs/plugin/utc';
+import dayjs, { Dayjs } from 'dayjs/esm/index.js';
+import isoWeek from 'dayjs/esm/plugin/isoWeek/index.js';
+import quarterOfYear from 'dayjs/esm/plugin/quarterOfYear/index.js';
+import timezone from 'dayjs/esm/plugin/timezone/index.js';
+import utc from 'dayjs/esm/plugin/utc/index.js';
 
 import { Time } from '../../lib/common-types';
 import { MONTH, MONTH_DISPLAY, WEEKDAY, WORKING_TIME_DAY_DISPLAY } from '../common-values/weekdays.const';
@@ -241,6 +241,11 @@ export function date_startOfToday(): Date {
  * Gets the start of today (00:00:00) in UTC. May shift to yesterday depending on timezone.
  * @example date_startOfTodayUTC() // If today is Jan 1 locally, could be Dec 31 in UTC if in positive offset timezone
  */
+
+export function date_startOfDay(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0);
+}
+
 export function date_startOfTodayUTC(): Date {
     return date_toUTCTime(date_startOfToday());
 }

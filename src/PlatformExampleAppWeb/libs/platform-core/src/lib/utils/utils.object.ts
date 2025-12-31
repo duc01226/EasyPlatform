@@ -263,10 +263,13 @@ export function isDifferent<T>(value1: T, value2: T, shallowCheckFirstLevel: boo
 
     // both objects?
     if (typeof v1 === 'object' && typeof v2 === 'object') {
-        const objectKeys = lodashUniq([...keys(v1 as any), ...keys(v2 as any)]);
+        const keys1 = keys(v1 as any);
+        const keys2 = keys(v2 as any);
+
+        if (keys1.length !== keys2.length) return true;
 
         if (shallowCheckFirstLevel) {
-            for (const key of objectKeys) {
+            for (const key of keys1) {
                 const e1 = norm((v1 as any)[key]);
                 const e2 = norm((v2 as any)[key]);
 

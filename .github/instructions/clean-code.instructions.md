@@ -80,17 +80,60 @@ Entity/Model (Lowest)  →  Service  →  Component/Handler (Highest)
 
 **Anti-Pattern**: Logic in component/handler that should be in entity → leads to duplicated code.
 
+### CRITICAL: Class Responsibility Violations to ALWAYS Check
+
+**Backend Violations (NEVER do these):**
+```csharp
+// ❌ WRONG: Mapping in Handler - violates class responsibility
+private void MapCommandToEntity(SaveEntityCommand request, Entity entity)
+{
+    entity.Name = request.Name;
+    entity.Value = request.Value;
+}
+
+// ✅ CORRECT: Mapping belongs to Command class
+public class SaveEntityCommand
+{
+    public Entity UpdateEntity(Entity entity)
+    {
+        entity.Name = Name;
+        entity.Value = Value;
+        return entity;
+    }
+}
+```
+
+**Frontend Violations (NEVER do these):**
+```typescript
+// ❌ WRONG: Constants at module level or in component
+const ADMIN_ROLES = ['Admin', 'HR', 'HRManager'];
+readonly displayedColumns = ['name', 'date', 'status'];
+
+// ✅ CORRECT: Constants in domain model class
+export class KudosCompanySetting {
+    public static readonly adminRoles = ['Admin', 'HR', 'HRManager'];
+}
+export class KudosTransaction {
+    public static readonly listColumns = ['name', 'date', 'status'];
+    public static getStatusCssClass(status: Status): string { ... }
+}
+```
+
 **Frontend Examples:**
 
-- Dropdown options → static method in entity: `Entity.getOptions()`
-- Display logic (CSS class, text) → instance method in entity: `entity.getStatusCssClass()`
-- Default values → static method in entity: `Entity.getDefaultValue()`
-- Command building → factory class in service: `CommandFactory.buildSaveCommand(formValues)`
+- Dropdown options → static property in model: `Entity.dropdownOptions`
+- Display logic (CSS class, text) → instance getter in model: `entity.statusCssClass`
+- Table columns → static property in model: `Entity.listColumns`, `Entity.previewColumns`
+- Role constants → static property in model: `Entity.adminRoles`
+- Default values → static method in model: `Entity.getDefaultValue()`
+- Command building → method in ViewModel: `vm.buildCommand()`
 
 **Backend Examples:**
 
 - Query conditions → static expression in entity: `Entity.IsActiveExpr()`
 - Validation rules → instance method in entity: `entity.Validate()`
+- Entity mapping → method in Command: `command.UpdateEntity(entity)`
+- Entity mapping → method in DTO: `dto.MapToEntity(entity)`
 - Reused logic → Helper class or Repository extension
 
 ## Frontend Component Rules

@@ -8,6 +8,15 @@ export const PlatformTranslationCurrentLangLocalStorageKey = 'i18n';
 
 @Injectable({ providedIn: 'root' })
 export class PlatformTranslateService {
+    /**
+     * Tracks the latest requested language while a language load is in progress.
+     * This ensures that if multiple language requests come in during loading,
+     * only the final requested language is applied after the current load completes.
+     */
+    private pendingLanguage: string | null = null;
+    private isLanguageLoading = false;
+    private currentLoadingLanguage: string | null = null;
+
     constructor(
         private ngxTranslate: TranslateService,
         private config: PlatformTranslateConfig
@@ -25,7 +34,7 @@ export class PlatformTranslateService {
     public setDefaultLang(useLanguage: string) {
         this.defaultLanguage = useLanguage;
         this.ngxTranslate.setDefaultLang(this.defaultLanguage);
-        this.ngxTranslate.use(this.getCurrentLang() ?? this.defaultLanguage);
+        this.useLanguage(this.getCurrentLang() ?? this.defaultLanguage);
     }
 
     public setRestrictSupportLangs(value: string[] | null | undefined) {
@@ -86,7 +95,51 @@ export class PlatformTranslateService {
 
     public setCurrentLang(lang: string): void {
         localStorage.setItem(PlatformTranslationCurrentLangLocalStorageKey, lang);
-        this.ngxTranslate.use(lang);
+        this.useLanguage(lang);
+    }
+
+    /**
+     * Queues a language change request. If a language load is already in progress,
+     * the request is stored as pending and will be processed after the current load completes.
+     * Only the latest pending language is kept, ensuring the final requested language is always applied last.
+     */
+    private useLanguage(lang: string): void {
+        this.pendingLanguage = lang;
+        this.processLanguageQueue();
+    }
+
+    /**
+     * Processes the language queue. If no load is in progress and there's a pending language
+     * different from what's currently loaded, it starts loading the pending language.
+     * After completion, it recursively checks for any new pending requests.
+     */
+    private processLanguageQueue(): void {
+        if (this.isLanguageLoading || this.pendingLanguage == null) return;
+
+        // Skip if the pending language is the same as what's currently being loaded
+        if (this.pendingLanguage === this.currentLoadingLanguage) {
+            this.pendingLanguage = null;
+            return;
+        }
+
+        const langToLoad = this.pendingLanguage;
+        this.pendingLanguage = null;
+        this.isLanguageLoading = true;
+        this.currentLoadingLanguage = langToLoad;
+
+        this.ngxTranslate.use(langToLoad).subscribe({
+            next: () => {
+                this.isLanguageLoading = false;
+                // After completion, check if a newer language was requested while loading
+                this.processLanguageQueue();
+            },
+            error: () => {
+                this.isLanguageLoading = false;
+                this.currentLoadingLanguage = null;
+                // On error, still try to process any pending language
+                this.processLanguageQueue();
+            }
+        });
     }
 }
 

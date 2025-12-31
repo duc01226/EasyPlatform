@@ -23,13 +23,6 @@
         },
         "lint": {
             "executor": "@nx/eslint:lint"
-        },
-        "stylelint": {
-            "executor": "nx-stylelint:lint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["libs/platform-core/**/*.scss", "libs/platform-core/**/*.css"]
-            }
         }
     },
     "tags": []

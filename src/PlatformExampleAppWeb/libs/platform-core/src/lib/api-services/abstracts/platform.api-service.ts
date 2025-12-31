@@ -825,6 +825,11 @@ export abstract class PlatformApiService extends PlatformHttpService {
             );
         }
 
+        const customErrorResponse = this.convertCustomApiErrorResponse(errorResponse);
+        if (customErrorResponse != null) {
+            return this.throwError<T>(customErrorResponse, apiRequestPath, apiRequestPayload);
+        }
+
         return this.throwError<T>(
             {
                 error: {
@@ -837,6 +842,133 @@ export abstract class PlatformApiService extends PlatformHttpService {
             apiRequestPath,
             apiRequestPayload
         );
+    }
+
+    /**
+     * Converts custom API error responses to platform standardized error format.
+     *
+     * @remarks
+     * This is a protected hook method designed to be **overridden in derived classes**
+     * when you need to handle custom error response formats from specific backend APIs.
+     *
+     * **Default Behavior:**
+     * - Returns `null`, indicating no custom error conversion
+     * - Falls through to standard platform error handling
+     *
+     * **When to Override:**
+     * - Your API returns custom error response structures not matching platform format
+     * - You need to map backend-specific error codes to platform error codes
+     * - You want to extract additional error metadata from custom responses
+     * - Your API uses non-standard HTTP error responses
+     *
+     * **Override Guidelines:**
+     * - Return `null` if the error doesn't match your custom format (fallback to default handling)
+     * - Return a complete `IPlatformApiServiceErrorResponse` object for custom errors
+     * - Always include `error.code` and `error.message` in the response
+     * - Preserve `requestId` if available from the server response
+     *
+     * @param errorResponse - HTTP error response or generic Error from the request
+     * @returns Platform-standardized error response, or `null` to use default error handling
+     *
+     * @example
+     * **Override to handle custom error format:**
+     * ```typescript
+     * @Injectable()
+     * export class MyApiService extends PlatformApiService {
+     *   protected convertCustomApiErrorResponse(
+     *     errorResponse: HttpErrorResponse | Error
+     *   ): IPlatformApiServiceErrorResponse | null {
+     *     // Only handle HttpErrorResponse, not generic Error
+     *     if (!(errorResponse instanceof HttpErrorResponse)) {
+     *       return null;
+     *     }
+     *
+     *     // Check if response matches your custom format
+     *     const customError = errorResponse.error;
+     *     if (customError?.errorType && customError?.errorMessage) {
+     *       return {
+     *         error: {
+     *           code: this.mapCustomErrorCode(customError.errorType),
+     *           message: customError.errorMessage,
+     *           details: customError.details,
+     *           developerExceptionMessage: customError.stackTrace
+     *         },
+     *         statusCode: errorResponse.status,
+     *         requestId: customError.requestId ?? ''
+     *       };
+     *     }
+     *
+     *     // Return null to fallback to default handling
+     *     return null;
+     *   }
+     *
+     *   private mapCustomErrorCode(customCode: string): string {
+     *     switch (customCode) {
+     *       case 'VALIDATION_ERROR': return PlatformApiServiceErrorInfoCode.ValidationException;
+     *       case 'NOT_FOUND': return PlatformApiServiceErrorInfoCode.EntityNotFoundException;
+     *       default: return PlatformApiServiceErrorInfoCode.Unknown;
+     *     }
+     *   }
+     * }
+     * ```
+     *
+     * @example
+     * **Handle legacy API error format:**
+     * ```typescript
+     * protected convertCustomApiErrorResponse(
+     *   errorResponse: HttpErrorResponse | Error
+     * ): IPlatformApiServiceErrorResponse | null {
+     *   if (!(errorResponse instanceof HttpErrorResponse)) return null;
+     *
+     *   // Legacy API returns: { success: false, errorCode: 1001, msg: "..." }
+     *   const legacyError = errorResponse.error;
+     *   if (legacyError?.success === false && legacyError?.errorCode) {
+     *     return {
+     *       error: {
+     *         code: `LEGACY_ERROR_${legacyError.errorCode}`,
+     *         message: legacyError.msg || 'Unknown error',
+     *         details: legacyError.details
+     *       },
+     *       statusCode: errorResponse.status,
+     *       requestId: legacyError.traceId ?? ''
+     *     };
+     *   }
+     *
+     *   return null;
+     * }
+     * ```
+     *
+     * @example
+     * **Extract detailed validation errors:**
+     * ```typescript
+     * protected convertCustomApiErrorResponse(
+     *   errorResponse: HttpErrorResponse | Error
+     * ): IPlatformApiServiceErrorResponse | null {
+     *   if (!(errorResponse instanceof HttpErrorResponse)) return null;
+     *
+     *   const error = errorResponse.error;
+     *   if (error?.validationErrors && Array.isArray(error.validationErrors)) {
+     *     const validationMessages = error.validationErrors
+     *       .map(e => `${e.field}: ${e.message}`)
+     *       .join('; ');
+     *
+     *     return {
+     *       error: {
+     *         code: PlatformApiServiceErrorInfoCode.ValidationException,
+     *         message: validationMessages || 'Validation failed',
+     *         details: error.validationErrors
+     *       },
+     *       statusCode: errorResponse.status,
+     *       requestId: error.requestId ?? ''
+     *     };
+     *   }
+     *
+     *   return null;
+     * }
+     * ```
+     */
+    protected convertCustomApiErrorResponse(errorResponse: HttpErrorResponse | Error): IPlatformApiServiceErrorResponse | null {
+        return null;
     }
 
     /**

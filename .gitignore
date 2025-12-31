@@ -456,3 +456,5 @@ src/PlatformExampleAppWeb/e2e/playwright-report/
 # Python virtual environments
 .venv/
 **/skills/.venv/
+
+*plans/reports/

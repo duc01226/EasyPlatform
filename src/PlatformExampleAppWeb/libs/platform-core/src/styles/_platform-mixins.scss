@@ -1,55 +1,55 @@
 @use 'platform-variables' as *;
 
 @mixin flex-layout-media($media-type) {
-    @if $media-type== 'xs' or $media-type== 'lt-sm' {
+    @if ($media-type== 'xs' or $media-type== 'lt-sm') {
         @media (max-width: $platform-media-breakpoint-xs) {
             @content;
         }
-    } @else if $media-type== 'gt-xs' {
+    } @else if($media-type== 'gt-xs') {
         @media (min-width: $platform-media-breakpoint-gt-xs) {
             @content;
         }
-    } @else if $media-type== 'sm' {
+    } @else if($media-type== 'sm') {
         @media (min-width: $platform-media-breakpoint-gt-xs) and (max-width: $platform-media-breakpoint-sm) {
             @content;
         }
-    } @else if $media-type== 'gt-sm' {
+    } @else if($media-type== 'gt-sm') {
         @media (min-width: $platform-media-breakpoint-gt-sm) {
             @content;
         }
-    } @else if $media-type== 'lt-md' {
+    } @else if($media-type== 'lt-md') {
         @media (max-width: $platform-media-breakpoint-sm) {
             @content;
         }
-    } @else if $media-type== 'md' {
+    } @else if($media-type== 'md') {
         @media (min-width: $platform-media-breakpoint-gt-sm) and (max-width: $platform-media-breakpoint-md) {
             @content;
         }
-    } @else if $media-type== 'gt-md' {
+    } @else if($media-type== 'gt-md') {
         @media (min-width: $platform-media-breakpoint-gt-md) {
             @content;
         }
-    } @else if $media-type== 'lt-lg' {
+    } @else if($media-type== 'lt-lg') {
         @media (max-width: $platform-media-breakpoint-md) {
             @content;
         }
-    } @else if $media-type== 'lg' {
+    } @else if($media-type== 'lg') {
         @media (min-width: $platform-media-breakpoint-gt-md) and (max-width: $platform-media-breakpoint-lg) {
             @content;
         }
-    } @else if $media-type== 'gt-lg' {
+    } @else if($media-type== 'gt-lg') {
         @media (min-width: $platform-media-breakpoint-gt-lg) {
             @content;
         }
-    } @else if $media-type== 'lt-xl' {
+    } @else if($media-type== 'lt-xl') {
         @media (max-width: $platform-media-breakpoint-lg) {
             @content;
         }
-    } @else if $media-type== 'xl' {
+    } @else if($media-type== 'xl') {
         @media (min-width: $platform-media-breakpoint-gt-lg) and (max-width: $platform-media-breakpoint-xl) {
             @content;
         }
-    } @else if $media-type== 'gt-xl' {
+    } @else if($media-type== 'gt-xl') {
         @media (min-width: $platform-media-breakpoint-gt-xl) {
             @content;
         }
@@ -57,288 +57,7 @@
 }
 
 @mixin truncate-text {
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// MODERN UI MIXINS - Design System Components
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// Card Styles
-@mixin card-base {
-    background: white;
-    border: 1px solid $color-neutral-200;
-    border-radius: $radius-lg;
-}
-
-@mixin card-elevated {
-    @include card-base;
-    box-shadow: $shadow-sm;
-}
-
-@mixin card-hover {
-    transition: all $transition-base;
-
-    &:hover {
-        border-color: $color-neutral-300;
-        box-shadow: $shadow-md;
-    }
-}
-
-@mixin card-interactive {
-    @include card-elevated;
-    @include card-hover;
-    cursor: pointer;
-}
-
-// Focus States
-@mixin focus-ring {
-    &:focus,
-    &:focus-visible {
-        outline: none;
-        box-shadow: 0 0 0 3px rgba($color-primary-500, 0.15);
-    }
-}
-
-@mixin focus-ring-inset {
-    &:focus,
-    &:focus-visible {
-        outline: none;
-        box-shadow: inset 0 0 0 2px $color-primary-500;
-    }
-}
-
-// Button Styles
-@mixin button-base {
-    display: inline-flex;
-    gap: $space-2;
-    align-items: center;
-    justify-content: center;
-    padding: $space-2 $space-4;
-    font-size: $font-size-base;
-    font-weight: $font-weight-medium;
-    border-radius: $radius-md;
-    transition: all $transition-fast;
-    cursor: pointer;
-
-    &:disabled {
-        cursor: not-allowed;
-        opacity: 0.5;
-    }
-}
-
-@mixin button-primary {
-    @include button-base;
-    color: white;
-    background: $color-primary-600;
-    border: none;
-
-    &:hover:not(:disabled) {
-        background: $color-primary-700;
-    }
-
-    &:active:not(:disabled) {
-        background: $color-primary-800;
-    }
-}
-
-@mixin button-secondary {
-    @include button-base;
-    color: $color-neutral-700;
-    background: white;
-    border: 1px solid $color-neutral-300;
-
-    &:hover:not(:disabled) {
-        background: $color-neutral-50;
-        border-color: $color-neutral-400;
-    }
-}
-
-@mixin button-ghost {
-    @include button-base;
-    color: $color-neutral-600;
-    background: transparent;
-    border: none;
-
-    &:hover:not(:disabled) {
-        color: $color-neutral-900;
-        background: $color-neutral-100;
-    }
-}
-
-// Input Styles
-@mixin input-base {
-    width: 100%;
-    padding: $space-2 $space-3;
-    font-size: $font-size-base;
-    color: $color-neutral-900;
-    background: white;
-    border: 1px solid $color-neutral-300;
-    border-radius: $radius-md;
-    transition:
-        border-color $transition-fast,
-        box-shadow $transition-fast;
-
-    &::placeholder {
-        color: $color-neutral-400;
-    }
-
-    &:hover:not(:disabled):not(:focus) {
-        border-color: $color-neutral-400;
-    }
-
-    &:focus {
-        border-color: $color-primary-500;
-        outline: none;
-        box-shadow: 0 0 0 3px rgba($color-primary-500, 0.1);
-    }
-
-    &:disabled {
-        cursor: not-allowed;
-        background: $color-neutral-50;
-        opacity: 0.7;
-    }
-}
-
-// Badge Styles
-@mixin badge-base {
-    display: inline-flex;
-    align-items: center;
-    padding: $space-1 $space-2;
-    font-size: $font-size-xs;
-    font-weight: $font-weight-medium;
-    line-height: 1;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-radius: $radius-sm;
-}
-
-@mixin badge-primary {
-    @include badge-base;
-    color: $color-primary-700;
-    background: $color-primary-100;
-}
-
-@mixin badge-success {
-    @include badge-base;
-    color: $color-success-dark;
-    background: $color-success-light;
-}
-
-@mixin badge-warning {
-    @include badge-base;
-    color: $color-warning-dark;
-    background: $color-warning-light;
-}
-
-@mixin badge-error {
-    @include badge-base;
-    color: $color-error-dark;
-    background: $color-error-light;
-}
-
-@mixin badge-neutral {
-    @include badge-base;
-    color: $color-neutral-600;
-    background: $color-neutral-100;
-}
-
-// Status Indicator
-@mixin status-dot($color) {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    background: $color;
-    border-radius: $radius-full;
-}
-
-// Layout Helpers
-@mixin flex-center {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-@mixin flex-between {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-@mixin flex-start {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-}
-
-@mixin stack($gap: $space-4) {
-    display: flex;
-    flex-direction: column;
-    gap: $gap;
-}
-
-@mixin cluster($gap: $space-4) {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $gap;
-    align-items: center;
-}
-
-// Section Styles
-@mixin section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: $space-4;
-    margin-bottom: $space-4;
-    border-bottom: 1px solid $color-neutral-200;
-}
-
-@mixin section-title {
-    margin: 0;
-    font-size: $font-size-md;
-    font-weight: $font-weight-semibold;
-    color: $color-neutral-900;
-}
-
-// Error States
-@mixin error-banner {
-    display: flex;
-    gap: $space-3;
-    align-items: center;
-    padding: $space-4;
-    color: $color-error-dark;
-    background: $color-error-light;
-    border-left: 3px solid $color-error;
-    border-radius: $radius-md;
-}
-
-@mixin warning-banner {
-    display: flex;
-    gap: $space-3;
-    align-items: center;
-    padding: $space-4;
-    color: $color-warning-dark;
-    background: $color-warning-light;
-    border-left: 3px solid $color-warning;
-    border-radius: $radius-md;
-}
-
-// Loading States
-@mixin skeleton-pulse {
-    background: linear-gradient(90deg, $color-neutral-100 0%, $color-neutral-200 50%, $color-neutral-100 100%);
-    background-size: 200% 100%;
-    animation: skeleton-loading 1.5s infinite;
-}
-
-@keyframes skeleton-loading {
-    0% {
-        background-position: 200% 0;
-    }
-
-    100% {
-        background-position: -200% 0;
-    }
 }

@@ -18,6 +18,17 @@
         "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1"
     },
     "hooks": {
+        "PostToolUse": [
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/post-edit-prettier.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Edit|Write"
+            }
+        ],
         "Notification": [
             {
                 "hooks": [

@@ -108,8 +108,10 @@ async function main() {
 
     // Core rules (minimal)
     lines.push(`## Rules`);
+    lines.push(`- Follow: .claude/workflows/development-rules.md`);
     lines.push(`- Reports → ${reportsPath}`);
     lines.push(`- YAGNI / KISS / DRY`);
+    lines.push(`- **Class Responsibility:** Logic in LOWEST layer (Model > Service > Component). Mapping → Command/DTO. Constants → Model.`);
     lines.push(`- Concise, list unresolved Qs at end`);
 
     // Naming templates (computed directly for reliable injection)

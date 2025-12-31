@@ -26,6 +26,11 @@
 - Use reasonable code quality standards that enhance developer productivity
 - Use try catch error handling & cover security standards
 - Use `code-reviewer` agent to review code after every implementation
+- **[CRITICAL] Class Responsibility Rule:**
+  - Logic belongs in LOWEST layer: Entity/Model > Service > Component/Handler
+  - Backend: Entity mapping → Command.UpdateEntity() or DTO.MapToEntity(), NOT in Handler
+  - Frontend: Constants, column arrays, role lists → static properties in Model class, NOT in Component
+  - Frontend: Display logic (CSS class, status text) → instance getter in Model, NOT switch in Component
 
 ## Pre-commit/Push Rules
 - Run linting before commit

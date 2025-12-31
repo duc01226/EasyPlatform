@@ -70,7 +70,11 @@ export class PlatformServiceWorkerService {
      * @param onNewAppVersionAvailableFn - Optional callback when new version is available
      * @param handleNewVersionMsgFn - Optional custom handler for version messages
      */
-    public setupCheckNewAppVersionProcess(onNewAppVersionAvailableFn?: () => unknown, handleNewVersionMsgFn?: (msg: string) => void) {
+    public setupCheckNewAppVersionProcess(
+        onNewAppVersionAvailableFn?: () => unknown,
+        handleNewVersionMsgFn?: (msg: string) => void,
+        option?: { disableShowNewVersionAlert?: boolean; disableDownloadNewVersionBlocker?: boolean }
+    ) {
         if (!this.swUpdate || !this.swUpdate.isEnabled) {
             PlatformServiceWorkerService.unregisterRegisteredServiceWorker();
         } else {
@@ -86,7 +90,8 @@ export class PlatformServiceWorkerService {
 
                             if (
                                 date_timeDiff(new Date(), this.startCheckNewAppVersionTime) / 1000 <=
-                                PlatformServiceWorkerService.maxWaitingForAutoReloadNewVersionSeconds
+                                    PlatformServiceWorkerService.maxWaitingForAutoReloadNewVersionSeconds &&
+                                !option?.disableDownloadNewVersionBlocker
                             ) {
                                 this.showDownloadBlocker();
                             }
@@ -108,7 +113,8 @@ export class PlatformServiceWorkerService {
                             if (
                                 date_timeDiff(new Date(), this.startCheckNewAppVersionTime) / 1000 <=
                                     PlatformServiceWorkerService.maxWaitingForAutoReloadNewVersionSeconds ||
-                                this.isShowingDownloadBlocker()
+                                this.isShowingDownloadBlocker() ||
+                                option?.disableShowNewVersionAlert
                             ) {
                                 console.log('Auto reload to get new version.');
                                 this.reloadPageWithNewVersion();

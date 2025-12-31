@@ -1,8 +1,5 @@
-/* ═══════════════════════════════════════════════════════════════════════════════
-   PLATFORM LOADING ERROR INDICATOR
-   ═══════════════════════════════════════════════════════════════════════════════ */
-
-@use '../../../styles/platform-variables' as *;
+/* Platform Loading Error Indicator Component Styles (WebV2) */
+/* Modern Signal-based loading and error indicator with Material Design styling */
 
 .platform-loading-error-indicator {
     display: flex;
@@ -13,12 +10,13 @@
         display: none;
     }
 
+    // State-based classes
     &.--loading {
-        opacity: 100%;
+        opacity: 1;
     }
 
     &.--reloading {
-        opacity: 100%;
+        opacity: 1;
     }
 
     &.--progress-bar {
@@ -33,77 +31,75 @@
         position: relative;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // PROGRESS BAR
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // Progress Bar Container
     &__progress-bar-container {
-        position: relative;
         width: 100%;
+        position: relative;
 
         &.--absolute-position-mode {
             position: absolute;
             top: 0;
-            right: 0;
             left: 0;
-            z-index: $platform-z-index-level-3;
+            right: 0;
+            z-index: 1000;
         }
     }
 
+    // Progress Bar Styles (CSS-only, no Angular Material dependency)
     &__progress-bar {
-        position: relative;
         width: 100%;
-        height: 3px;
+        height: 4px;
+        background-color: rgba(63, 81, 181, 0.1); // Material indigo-100
+        border-radius: 2px;
         overflow: hidden;
-        background-color: $color-primary-100;
-        border-radius: $radius-full;
+        position: relative;
 
         .progress-bar-fill {
             height: 100%;
-            background-color: $color-primary-500;
-            border-radius: $radius-full;
-            transition: transform $transition-base;
-            transform-origin: top left;
+            background-color: #3f51b5; // Material indigo-500
+            border-radius: 2px;
             animation: progress-indeterminate 2s infinite linear;
+            transform-origin: top left;
+            transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        // Reloading state - different color
         .--reloading & {
-            background-color: $color-warning-light;
+            background-color: rgba(255, 152, 0, 0.1); // Material orange-100
 
             .progress-bar-fill {
-                background-color: $color-warning;
+                background-color: #ff9800; // Material orange-500
             }
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // SKELETON LOADING
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // Skeleton Loading Styles
     &__skeleton-loading {
+        padding: 16px;
         width: 100%;
-        padding: $space-4;
 
         .skeleton-placeholder {
             display: flex;
             flex-direction: column;
-            gap: $space-2;
+            gap: 8px;
             width: 100%;
         }
 
         .skeleton-line {
-            height: $space-4;
-            background: linear-gradient(90deg, $color-neutral-100 25%, $color-neutral-200 50%, $color-neutral-100 75%);
+            height: 16px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
             background-size: 200% 100%;
-            border-radius: $radius-sm;
             animation: skeleton-loading 1.5s infinite;
+            border-radius: 4px;
 
             &.skeleton-line--title {
+                height: 20px;
                 width: 60%;
-                height: $space-5;
             }
 
             &.skeleton-line--text {
+                height: 14px;
                 width: 100%;
-                height: $font-size-base;
             }
 
             &.skeleton-line--short {
@@ -112,18 +108,17 @@
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // CUSTOM CONTENT
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // Custom content containers
     &__custom-content {
+        padding: 16px;
         width: 100%;
-        padding: $space-4;
 
         ::ng-deep [slot='loading'],
         ::ng-deep [slot='reloading'] {
             display: block;
             width: 100%;
 
+            // Reset margins for custom content
             > *:first-child {
                 margin-top: 0;
             }
@@ -143,139 +138,148 @@
         min-height: 48px;
     }
 
-    // ═══════════════════════════════════════════════════════════════════════════════
-    // ERROR STATE
-    // ═══════════════════════════════════════════════════════════════════════════════
+    // Error State Styles (Material Design)
     &__error {
         display: flex;
         align-items: flex-start;
         width: 100%;
         min-height: 48px;
-        padding: $space-4;
-        font-family: $font-family-base;
-        font-size: $font-size-base;
+        padding: 16px;
+        border-radius: 4px;
+        border-left: 4px solid #f44336; // Material Design Error Red (Red-500)
+        background-color: #ffebee; // Material Design Error Background (Red-50)
+        color: #b71c1c; // Material Design Error Text (Red-900)
+        font-size: 14px;
         line-height: 1.5;
-        color: $color-error-dark;
-        background-color: $color-error-light;
-        border-left: 3px solid $color-error;
-        border-radius: $radius-md;
-        box-shadow: $shadow-sm;
-        animation: slideIn $transition-base;
+        font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+
+        // Material Design elevation shadow
+        box-shadow:
+            0 2px 1px -1px rgba(0, 0, 0, 0.2),
+            0 1px 1px 0 rgba(0, 0, 0, 0.14),
+            0 1px 3px 0 rgba(0, 0, 0, 0.12);
+
+        // Subtle animation on appearance
+        animation: slideIn 0.2s ease-out;
     }
 
     &__error-default,
     &__error-custom {
         display: flex;
-        gap: $space-3;
         align-items: center;
         width: 100%;
+        gap: 12px;
     }
 
     &__error-content {
         display: flex;
-        flex: 1;
-        gap: $space-3;
         align-items: flex-start;
+        flex: 1;
+        gap: 12px;
 
         .platform-loading-error-indicator__error-icon {
-            position: relative;
-            display: inline-block;
             flex-shrink: 0;
             width: 24px;
             height: 24px;
-            margin-top: -2px;
+            margin-top: -2px; // Align with text baseline
+            position: relative;
+            display: inline-block;
 
+            // Create error icon (triangle with exclamation) using CSS
             &::before {
+                content: '';
                 position: absolute;
                 top: 2px;
                 left: 50%;
+                transform: translateX(-50%);
                 width: 0;
                 height: 0;
-                content: '';
-                border-right: 10px solid transparent;
-                border-bottom: 18px solid $color-error;
                 border-left: 10px solid transparent;
-                transform: translateX(-50%);
+                border-right: 10px solid transparent;
+                border-bottom: 18px solid #f44336;
             }
 
             &::after {
+                content: '!';
                 position: absolute;
                 top: 6px;
                 left: 50%;
-                z-index: 1;
-                font-size: $font-size-base;
-                font-weight: $font-weight-bold;
-                line-height: 1;
-                color: white;
-                content: '!';
                 transform: translateX(-50%);
+                color: white;
+                font-weight: bold;
+                font-size: 14px;
+                line-height: 1;
+                z-index: 1;
             }
         }
 
         .platform-loading-error-indicator__error-message {
             flex: 1;
-            margin: 0;
-            hyphens: auto;
-            line-height: 1.5;
             word-break: break-word;
+            line-height: 1.5;
+            margin: 0;
+
+            // Ensure proper text wrapping
             overflow-wrap: break-word;
+            hyphens: auto;
         }
     }
 
     &__error-actions {
         display: flex;
-        flex-shrink: 0;
-        gap: $space-1;
         align-items: flex-start;
-        margin-top: -$space-2;
+        flex-shrink: 0;
+        gap: 4px;
+        margin-top: -8px; // Compensate for button padding
     }
 
     &__action-btn {
+        width: 40px !important;
+        height: 40px !important;
+        color: #d32f2f !important; // Material Design Error Red (Red-700)
+        background: transparent;
+        border: none;
+        border-radius: 50% !important;
+        cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 36px !important;
-        height: 36px !important;
-        padding: $space-2;
-        color: $color-error-dark !important;
-        cursor: pointer;
-        background: transparent;
-        border: none;
-        border-radius: $radius-full !important;
-        transition: all $transition-fast;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 8px;
 
         &:hover {
-            color: $color-error !important;
-            background-color: rgba($color-error, 0.1) !important;
+            background-color: rgba(244, 67, 54, 0.08) !important; // Red-500 with 8% opacity
+            color: #c62828 !important; // Material Design Error Red (Red-800)
         }
 
         &:focus {
-            background-color: rgba($color-error, 0.15) !important;
-            outline: 2px solid rgba($color-error, 0.3);
+            background-color: rgba(244, 67, 54, 0.12) !important; // Red-500 with 12% opacity
+            outline: 2px solid rgba(244, 67, 54, 0.2);
             outline-offset: 2px;
         }
 
         &:active {
-            background-color: rgba($color-error, 0.2) !important;
+            background-color: rgba(244, 67, 54, 0.16) !important; // Red-500 with 16% opacity
         }
 
         .action-icon {
+            width: 20px;
+            height: 20px;
             position: relative;
             display: inline-block;
-            width: 18px;
-            height: 18px;
         }
 
+        // Close icon (X) using CSS
         .close-icon {
             &::before,
             &::after {
+                content: '';
                 position: absolute;
                 top: 50%;
                 left: 50%;
-                width: 12px;
+                width: 14px;
                 height: 2px;
-                content: '';
-                background-color: currentcolor;
+                background-color: currentColor;
             }
 
             &::before {
@@ -287,43 +291,48 @@
             }
         }
 
+        // Refresh icon (circular arrow) using CSS
         .refresh-icon {
             &::before {
+                content: '';
                 position: absolute;
                 top: 50%;
                 left: 50%;
-                width: 12px;
-                height: 12px;
-                content: '';
-                border: 2px solid currentcolor;
+                transform: translate(-50%, -50%);
+                width: 14px;
+                height: 14px;
+                border: 2px solid currentColor;
                 border-top-color: transparent;
                 border-radius: 50%;
-                transform: translate(-50%, -50%);
             }
 
             &::after {
+                content: '';
                 position: absolute;
                 top: 3px;
                 left: 50%;
+                transform: translateX(-50%) rotate(45deg);
                 width: 0;
                 height: 0;
-                content: '';
-                border-right: 3px solid transparent;
-                border-bottom: 4px solid currentcolor;
                 border-left: 3px solid transparent;
-                transform: translateX(-50%) rotate(45deg);
+                border-right: 3px solid transparent;
+                border-bottom: 4px solid currentColor;
             }
         }
     }
 
+    // Custom content container
     &__error-custom {
         ::ng-deep [slot='error'] {
-            display: block;
             flex: 1;
+            display: block;
+
+            // Inherit error styling for custom content
+            color: inherit;
             font-size: inherit;
             line-height: inherit;
-            color: inherit;
 
+            // Reset margins for custom content
             > *:first-child {
                 margin-top: 0;
             }
@@ -335,18 +344,14 @@
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ANIMATIONS
-// ═══════════════════════════════════════════════════════════════════════════════
-
+// Animation keyframes
 @keyframes slideIn {
     from {
-        opacity: 0%;
+        opacity: 0;
         transform: translateY(-8px);
     }
-
     to {
-        opacity: 100%;
+        opacity: 1;
         transform: translateY(0);
     }
 }
@@ -355,7 +360,6 @@
     0% {
         background-position: -200% 0;
     }
-
     100% {
         background-position: 200% 0;
     }
@@ -365,37 +369,31 @@
     0% {
         transform: translateX(-100%) scaleX(0);
     }
-
     20% {
         transform: translateX(-100%) scaleX(0);
     }
-
     40% {
         transform: translateX(0%) scaleX(0.4);
     }
-
     100% {
         transform: translateX(100%) scaleX(0.5);
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// RESPONSIVE
-// ═══════════════════════════════════════════════════════════════════════════════
-
-@media (width <= 768px) {
+// Responsive design adjustments
+@media (max-width: 768px) {
     .platform-loading-error-indicator {
         &__error {
             flex-direction: column;
-            gap: $space-3;
             align-items: flex-start;
+            gap: 12px;
         }
 
         &__error-default,
         &__error-custom {
             flex-direction: column;
-            gap: $space-3;
             align-items: stretch;
+            gap: 12px;
         }
 
         &__error-actions {
@@ -409,37 +407,35 @@
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// ACCESSIBILITY
-// ═══════════════════════════════════════════════════════════════════════════════
-
+// High contrast mode support
 @media (prefers-contrast: high) {
     .platform-loading-error-indicator {
         &__error {
-            color: #000;
+            border-left-width: 6px;
             background-color: #fff;
-            border-color: $color-error-dark;
-            border-left-width: 5px;
+            color: #000;
+            border-color: #d32f2f;
         }
 
         &__error-content .platform-loading-error-indicator__error-icon {
             &::before {
-                border-bottom-color: $color-error-dark;
+                border-bottom-color: #d32f2f;
             }
         }
 
         &__action-btn {
-            color: $color-error-dark !important;
-            border: 2px solid $color-error-dark !important;
+            color: #d32f2f !important;
+            border: 2px solid #d32f2f !important;
 
             &:hover {
+                background-color: #d32f2f !important;
                 color: #fff !important;
-                background-color: $color-error-dark !important;
             }
         }
     }
 }
 
+// Reduced motion support
 @media (prefers-reduced-motion: reduce) {
     .platform-loading-error-indicator {
         &__error {
@@ -460,43 +456,40 @@
     }
 }
 
-// ═══════════════════════════════════════════════════════════════════════════════
-// DARK THEME
-// ═══════════════════════════════════════════════════════════════════════════════
-
+// Dark theme support
 @media (prefers-color-scheme: dark) {
     .platform-loading-error-indicator {
         &__error {
-            color: #fecaca;
-            background-color: rgba($color-error, 0.15);
-            border-left-color: $color-error;
+            background-color: #330e0e; // Dark red background
+            color: #ffcdd2; // Light red text (Red-100)
+            border-left-color: #ef5350; // Lighter red border (Red-400)
         }
 
         &__error-content .platform-loading-error-indicator__error-icon {
             &::before {
-                border-bottom-color: $color-error;
+                border-bottom-color: #ef5350; // Red-400 for better dark theme contrast
             }
         }
 
         &__action-btn {
-            color: $color-error !important;
+            color: #ef5350 !important;
 
             &:hover {
-                color: #fecaca !important;
-                background-color: rgba($color-error, 0.2) !important;
+                background-color: rgba(239, 83, 80, 0.12) !important;
+                color: #ffab91 !important; // Red-200
             }
         }
 
         &__progress-bar {
-            background-color: rgba($color-primary-500, 0.15);
+            background-color: rgba(239, 83, 80, 0.1);
 
             .progress-bar-fill {
-                background-color: $color-primary-400;
+                background-color: #ef5350;
             }
         }
 
         .skeleton-line {
-            background: linear-gradient(90deg, $color-neutral-700 25%, $color-neutral-600 50%, $color-neutral-700 75%);
+            background: linear-gradient(90deg, #424242 25%, #616161 50%, #424242 75%);
         }
     }
 }

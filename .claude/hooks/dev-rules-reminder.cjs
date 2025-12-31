@@ -156,6 +156,7 @@ function buildReminder({ thinkingLanguage, responseLanguage, devRulesPath, catal
     ...(skillsVenv ? [`- Python scripts in .claude/skills/: Use \`${skillsVenv}\``] : []),
     `- When skills' scripts are failed to execute, always fix them and run again, repeat until success.`,
     `- Follow **YAGNI (You Aren't Gonna Need It) - KISS (Keep It Simple, Stupid) - DRY (Don't Repeat Yourself)** principles`,
+    `- **[CRITICAL] Class Responsibility Rule:** Logic belongs in LOWEST layer (Entity/Model > Service > Component/Handler). Backend: mapping → Command/DTO, not Handler. Frontend: constants/columns/roles → Model class, not Component.`,
     `- Sacrifice grammar for the sake of concision when writing reports.`,
     `- In reports, list any unresolved questions at the end, if any.`,
     `- IMPORTANT: Ensure token consumption efficiency while maintaining high quality.`,
