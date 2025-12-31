@@ -452,3 +452,7 @@ src/PlatformExampleAppWeb/e2e/playwright-report/
 
 # Auto Claude data directory
 .auto-claude/
+
+# Python virtual environments
+.venv/
+**/skills/.venv/

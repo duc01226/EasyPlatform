@@ -1,3 +1,0 @@
-[console_scripts]
-docx2pdf=docx2pdf:cli
-
