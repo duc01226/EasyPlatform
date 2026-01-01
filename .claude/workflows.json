@@ -21,6 +21,11 @@
             "claude": "/docs/update",
             "copilot": "@workspace /docs-update"
         },
+        "dual-pass-review": {
+            "claude": "/dual-pass-review",
+            "copilot": "@workspace /dual-pass-review",
+            "description": "Mandatory dual-pass code review after any code changes"
+        },
         "fix": {
             "claude": "/fix",
             "copilot": "@workspace /fix"
@@ -53,19 +58,13 @@
         "enabled": true,
         "overridePrefix": "quick:",
         "showDetection": true,
-        "supportedLanguages": [
-            "en",
-            "vi",
-            "zh",
-            "ja",
-            "ko"
-        ]
+        "supportedLanguages": ["en", "vi", "zh", "ja", "ko"]
     },
     "version": "1.1.0",
     "workflows": {
         "bugfix": {
             "confirmFirst": false,
-            "description": "Systematic debugging and fix workflow",
+            "description": "Systematic debugging and fix workflow with dual-pass review",
             "excludePatterns": [
                 "\\b(implement|add|create|build)\\s+new\\b",
                 "\\bfeature\\b",
@@ -79,12 +78,7 @@
             ],
             "name": "Bug Fix",
             "priority": 20,
-            "sequence": [
-                "debug",
-                "plan",
-                "fix",
-                "test"
-            ],
+            "sequence": ["debug", "plan", "fix", "post-task-review", "code-review", "dual-pass-review", "test"],
             "triggerPatterns": [
                 "\\b(bug|fix|broken|issue|crash|fail|exception)\\b",
                 "\\b(error|errors)\\s+(in|with|on|when|while|returned|returning)\\b",
@@ -111,19 +105,10 @@
         "documentation": {
             "confirmFirst": false,
             "description": "Documentation creation and update workflow",
-            "excludePatterns": [
-                "\\b(implement|fix|test)\\b",
-                "(thêm|sửa|test).*tính năng",
-                "(实现|修复|测试)",
-                "(実装|修正|テスト)",
-                "(구현|수정|테스트)"
-            ],
+            "excludePatterns": ["\\b(implement|fix|test)\\b", "(thêm|sửa|test).*tính năng", "(实现|修复|测试)", "(実装|修正|テスト)", "(구현|수정|테스트)"],
             "name": "Documentation Update",
             "priority": 30,
-            "sequence": [
-                "docs-update",
-                "watzup"
-            ],
+            "sequence": ["docs-update", "watzup"],
             "triggerPatterns": [
                 "\\b(doc|document|readme|documentation)\\b",
                 "\\bupdate.*\\b(doc|readme)\\b",
@@ -141,7 +126,7 @@
         },
         "feature": {
             "confirmFirst": true,
-            "description": "Full feature development workflow with planning, implementation, testing, and documentation",
+            "description": "Full feature development workflow with planning, implementation, testing, dual-pass review, and documentation",
             "excludePatterns": [
                 "\\b(fix|bug|error|broken|issue)\\b",
                 "\\b(doc|document|readme)\\b",
@@ -153,14 +138,7 @@
             ],
             "name": "Feature Implementation",
             "priority": 10,
-            "sequence": [
-                "plan",
-                "cook",
-                "test",
-                "code-review",
-                "docs-update",
-                "watzup"
-            ],
+            "sequence": ["plan", "cook", "post-task-review", "code-review", "dual-pass-review", "test", "docs-update", "watzup"],
             "triggerPatterns": [
                 "\\b(implement|add|create|build|develop|make)\\b.*\\b(feature|functionality|capability|module|component)\\b",
                 "\\bnew\\s+(feature|functionality|capability)\\b",
@@ -196,10 +174,7 @@
             ],
             "name": "Code Investigation",
             "priority": 50,
-            "sequence": [
-                "scout",
-                "investigate"
-            ],
+            "sequence": ["scout", "investigate"],
             "triggerPatterns": [
                 "\\bhow\\s+(does|do|is|are)\\b.*\\b(work|function|implemented|handle)\\b",
                 "\\bwhere\\s+(is|are|does)\\b.*\\b(code|logic|function|class|handler|handled)\\b",
@@ -237,7 +212,7 @@
         },
         "refactor": {
             "confirmFirst": true,
-            "description": "Code improvement and restructuring workflow",
+            "description": "Code improvement and restructuring workflow with dual-pass review",
             "excludePatterns": [
                 "\\b(bug|broken|crash|fail)\\b",
                 "\\bnew\\s+feature\\b",
@@ -253,12 +228,7 @@
             ],
             "name": "Code Refactoring",
             "priority": 25,
-            "sequence": [
-                "plan",
-                "code",
-                "test",
-                "code-review"
-            ],
+            "sequence": ["plan", "code", "post-task-review", "code-review", "dual-pass-review", "test"],
             "triggerPatterns": [
                 "\\b(refactor|restructure|reorganize|clean\\s*up)\\b",
                 "\\bimprove\\s+(the|this)?\\s*\\w*\\s*(code|handling|logic|structure|performance)\\b",
@@ -284,10 +254,7 @@
             "excludePatterns": [],
             "name": "Code Review",
             "priority": 35,
-            "sequence": [
-                "code-review",
-                "watzup"
-            ],
+            "sequence": ["code-review", "watzup"],
             "triggerPatterns": [
                 "\\breview\\b.*\\b(code|changes|pr|pull\\s*request|my)\\b",
                 "\\b(check|audit|analyze)\\s+(the\\s+)?(code|changes|pr|pull\\s*request)\\b",
@@ -312,14 +279,8 @@
             "excludePatterns": [],
             "name": "Testing",
             "priority": 40,
-            "sequence": [
-                "test"
-            ],
-            "triggerPatterns": [
-                "\\b(add|write|create)\\s+(test|spec|unit\\s*test)\\b",
-                "\\btest\\s+coverage\\b",
-                "\\b(run|execute)\\s+test\\b"
-            ]
+            "sequence": ["test"],
+            "triggerPatterns": ["\\b(add|write|create)\\s+(test|spec|unit\\s*test)\\b", "\\btest\\s+coverage\\b", "\\b(run|execute)\\s+test\\b"]
         }
     }
 }

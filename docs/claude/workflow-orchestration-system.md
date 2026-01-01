@@ -364,7 +364,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
         "\\b(fix|bug|error|broken|issue)\\b",
         "\\b(doc|document|readme)\\b"
       ],
-      "sequence": ["plan", "cook", "test", "code-review", "docs-update", "watzup"],
+      "sequence": ["plan", "cook", "test", "dual-pass-review", "docs-update", "watzup"],
       "confirmFirst": true,
       "priority": 10
     },
@@ -382,7 +382,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
         "\\b(implement|add|create|build)\\s+new\\b",
         "\\bfeature\\b"
       ],
-      "sequence": ["debug", "plan", "fix", "test"],
+      "sequence": ["debug", "plan", "fix", "test", "dual-pass-review"],
       "confirmFirst": false,
       "priority": 20
     },
@@ -397,7 +397,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
       "excludePatterns": [
         "\\b(bug|broken|crash|fail)\\b"
       ],
-      "sequence": ["plan", "code", "test", "code-review"],
+      "sequence": ["plan", "code", "test", "dual-pass-review"],
       "confirmFirst": true,
       "priority": 25
     },
@@ -427,6 +427,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
     "fix": { "claude": "/fix" },
     "debug": { "claude": "/debug" },
     "code-review": { "claude": "/review/codebase" },
+    "dual-pass-review": { "claude": "/dual-pass-review", "description": "Mandatory dual-pass review" },
     "docs-update": { "claude": "/docs/update" },
     "watzup": { "claude": "/watzup" },
     "scout": { "claude": "/scout" },
@@ -661,10 +662,11 @@ Step 3: Claude calls Skill tool with skill="test"
   → Claude runs tests
   → Verifies all tests pass
 
-Step 4: Claude calls Skill tool with skill="code-review"
-  → Skill loads review.md template
-  → Claude reviews its implementation
-  → Reports any issues
+Step 4: Claude calls Skill tool with skill="dual-pass-review"
+  → First Pass: Reviews unstaged changes for correctness + convention compliance
+  → If first pass made corrections: Execute Second Pass
+  → Second Pass: Full re-review of current unstaged changes
+  → Generates review summary with approval status
 
 Step 5: Claude calls Skill tool with skill="docs-update"
   → Updates documentation
@@ -805,6 +807,78 @@ Each workflow step maps to a skill template that guides Claude's behavior for th
 
 ---
 
+## Dual-Pass Review System
+
+The dual-pass review is a **mandatory quality gate** that runs after any code changes to ensure correctness and convention compliance.
+
+### How It Works
+
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                    DUAL-PASS REVIEW FLOW                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Code Changes Made (cook/fix/code)                              │
+│           │                                                     │
+│           ▼                                                     │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │ FIRST PASS: Review Unstaged Changes                     │    │
+│  │  - Task correctness                                     │    │
+│  │  - Convention compliance (CLAUDE.md patterns)           │    │
+│  │  - Development rules (YAGNI, KISS, DRY)                 │    │
+│  │  - Code quality                                         │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│           │                                                     │
+│           ▼                                                     │
+│     Issues Found?                                               │
+│        │      │                                                 │
+│        No     Yes                                               │
+│        │      │                                                 │
+│        │      ▼                                                 │
+│        │  Fix Issues → Changes Made                             │
+│        │      │                                                 │
+│        │      ▼                                                 │
+│        │  ┌─────────────────────────────────────────────────┐   │
+│        │  │ SECOND PASS: Full Re-review                     │   │
+│        │  │  - All dimensions checked again                 │   │
+│        │  │  - Verify fixes correct                         │   │
+│        │  │  - No regressions introduced                    │   │
+│        │  └─────────────────────────────────────────────────┘   │
+│        │      │                                                 │
+│        ▼      ▼                                                 │
+│  ┌─────────────────────────────────────────────────────────┐    │
+│  │ Generate Review Summary                                  │    │
+│  │  - APPROVED / NEEDS ATTENTION                           │    │
+│  │  - Passes executed: 1 or 2                              │    │
+│  │  - Ready for commit: Yes/No                             │    │
+│  └─────────────────────────────────────────────────────────┘    │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Review Dimensions
+
+| Dimension | What It Checks |
+| --------- | -------------- |
+| Task Correctness | Changes address original requirement, no missing pieces |
+| Convention Compliance | Clean Architecture, CQRS patterns, BEM naming, base classes |
+| Development Rules | YAGNI, KISS, DRY, logic in lowest layer |
+| Code Quality | Syntax errors, naming, SRP, error handling, security |
+
+### Workflows Using Dual-Pass Review
+
+| Workflow | Sequence |
+| -------- | -------- |
+| Feature | plan → cook → test → **dual-pass-review** → docs-update → watzup |
+| Bug Fix | debug → plan → fix → test → **dual-pass-review** |
+| Refactor | plan → code → test → **dual-pass-review** |
+
+### Key Principle
+
+**Second pass is CONDITIONAL** - Only executes if first pass made corrections. This prevents unnecessary overhead when code is already clean.
+
+---
+
 ## Best Practices
 
 1. **Define Clear Patterns**: Use specific regex patterns that minimize false positives
@@ -812,6 +886,7 @@ Each workflow step maps to a skill template that guides Claude's behavior for th
 3. **Set Appropriate Priorities**: Ensure most specific workflows have lower priority numbers
 4. **Require Confirmation for High-Impact**: Set `confirmFirst: true` for feature/refactor workflows
 5. **Keep Sequences Focused**: Fewer steps = faster execution, more steps = thorough coverage
+6. **Dual-Pass Review**: Always included after code changes to catch issues before commit
 
 ---
 
