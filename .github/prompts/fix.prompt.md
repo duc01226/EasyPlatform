@@ -1,125 +1,109 @@
 ---
-description: "Intelligent bug fixing workflow with root cause analysis"
+agent: agent
+description: Analyze and fix issues with intelligent routing based on issue type. Handles bugs, type errors, UI issues, CI/CD failures, and more.
 ---
 
-# Fix Prompt
+# Fix Issues
 
-## Overview
+Analyze and fix the reported issue.
 
-Systematic approach to fixing bugs, errors, and issues with proper root cause analysis before implementing solutions.
+## Issue Description
+$input
 
-## Workflow
+## Decision Tree
 
-### Phase 1: Issue Classification
+Route to specialized fix approach based on issue type:
 
-Identify the type of issue:
+### A) Type Errors
+**Keywords:** type, typescript, tsc, type error, TS2xxx
 
-| Type | Indicators | Approach |
-|------|------------|----------|
-| Build/Compile Error | Build fails, type errors | Check compiler output, fix syntax/types |
-| Runtime Error | Exceptions, crashes | Trace stack, identify root cause |
-| Logic Bug | Wrong behavior | Compare expected vs actual, trace data flow |
-| UI Issue | Visual/interaction problems | Inspect DOM, check styles/events |
-| Test Failure | Tests failing | Read test assertions, understand expectations |
-| CI/CD Failure | Pipeline errors | Check logs, identify failing step |
+**Approach:**
+1. Run type checker: `npm run typecheck` or `dotnet build`
+2. List all type errors with file:line
+3. Analyze root causes (often cascading from one source)
+4. Fix in dependency order
 
-### Phase 2: Root Cause Analysis
+### B) UI/UX Issues
+**Keywords:** ui, ux, design, layout, style, visual, button, css, responsive
 
-**CRITICAL: Never fix symptoms. Always find root cause.**
+**Approach:**
+1. Understand the visual issue
+2. Find relevant component in `libs/` or `apps/`
+3. Check BEM class structure
+4. Fix styling/layout while preserving component patterns
 
-1. **Reproduce the Issue**
-   - Get exact steps to reproduce
-   - Identify minimal reproduction case
-   - Note environment conditions
+### C) CI/CD Issues
+**Keywords:** github actions, pipeline, ci/cd, workflow, deployment, build failed
 
-2. **Trace Backwards**
-   - Start from error/symptom
-   - Follow call stack/data flow backwards
-   - Identify where behavior diverges from expected
+**Approach:**
+1. Check workflow file in `.github/workflows/`
+2. Analyze failure logs
+3. Identify root cause (dependency, environment, script)
+4. Fix workflow or underlying code
 
-3. **Evidence Collection**
-   - Gather logs, stack traces
-   - Check recent changes (git log, git diff)
-   - Verify assumptions with code evidence
+### D) Test Failures
+**Keywords:** test, spec, jest, failing test, test suite
 
-### Phase 3: Solution Design
+**Approach:**
+1. Run specific test: `npm test -- --testPathPattern={file}`
+2. Analyze failure message
+3. Determine if test or code is wrong
+4. Fix appropriately
 
-Before implementing:
+### E) Backend Errors
+**Keywords:** api, 500, exception, null reference, database
 
-1. **Identify affected areas**
-   - What files need changes?
-   - What tests need updates?
-   - What could break?
+**Approach:**
+1. Check logs for stack trace
+2. Trace to specific handler/service
+3. Verify repository usage (service-specific, not generic)
+4. Fix with proper validation patterns
 
-2. **Consider alternatives**
-   - Is there a simpler fix?
-   - Does this fix the root cause or just symptoms?
-   - Will this cause regressions?
+### F) Complex/System-wide Issues
+**Keywords:** complex, architecture, refactor, major, system-wide
 
-3. **Plan verification**
-   - How to verify fix works?
-   - What tests to add/update?
-   - How to prevent recurrence?
+**Approach:**
+1. Use `@plan` to create implementation plan first
+2. Break into smaller fixable units
+3. Address systematically
 
-### Phase 4: Implementation
+## Fix Process
 
-1. Make minimal, focused changes
-2. Follow existing code patterns
-3. Add/update tests for the fix
-4. Verify fix works locally
-5. Check for regressions
+### Step 1: Reproduce/Understand
+- Verify the issue exists
+- Understand expected vs actual behavior
+- Identify affected code paths
 
-### Phase 5: Verification
+### Step 2: Root Cause Analysis
+- Don't fix symptoms, fix causes
+- Trace error to source
+- Check for related issues
 
-```bash
-# Build verification
-dotnet build
-npm run build
+### Step 3: Implement Fix
+Follow EasyPlatform patterns:
+- Backend: Use `PlatformValidationResult`, service-specific repos
+- Frontend: Extend platform base classes, use `untilDestroyed()`
+- No side effects in handlers (use UseCaseEvents/)
 
-# Test verification
-dotnet test
-npm run test
+### Step 4: Verify Fix
+- Ensure original issue is resolved
+- Check for regressions
+- Run related tests
 
-# Manual verification
-# Run the reproduction steps - should no longer fail
-```
+## Verification Checklist
+
+Before claiming fix is complete:
+- [ ] Issue is reproduced/understood?
+- [ ] Root cause identified (not just symptom)?
+- [ ] Fix follows platform patterns?
+- [ ] No new issues introduced?
+- [ ] Related tests pass?
 
 ## Anti-Patterns to Avoid
 
-| Anti-Pattern | Why It's Wrong | Correct Approach |
-|--------------|----------------|------------------|
-| Fixing symptoms | Masks real issue, will recur | Find and fix root cause |
-| Guessing solutions | Wastes time, may introduce bugs | Trace with evidence |
-| Broad changes | Risk of regressions | Minimal targeted fixes |
-| Skipping tests | Bugs recur | Add test for the fix |
-| Not reproducing | Can't verify fix | Always reproduce first |
-
-## Output Format
-
-When reporting fix:
-
-```markdown
-## Issue Analysis
-- **Type**: [Build/Runtime/Logic/UI/Test/CI]
-- **Root Cause**: [What actually caused the issue]
-- **Evidence**: [How you determined the cause]
-
-## Fix Applied
-- **Files Changed**: [List of files]
-- **Changes**: [Summary of changes]
-- **Why This Fix**: [Explanation]
-
-## Verification
-- **Tests**: [Tests added/updated]
-- **Manual Check**: [Steps verified]
-- **Build Status**: [Pass/Fail]
-```
-
-## Important
-
-- Always trace to root cause before fixing
-- Never assume - verify with code evidence
-- Minimal changes = minimal risk
-- Every fix needs verification
-
-**IMPORTANT:** Focus on understanding the issue before attempting fixes. A fix without understanding is just guessing.
+| Don't | Do |
+|-------|-----|
+| `throw new ValidationException()` | Use `PlatformValidationResult` fluent API |
+| Side effects in handler | Use Entity Event Handler in `UseCaseEvents/` |
+| `IPlatformRootRepository<T>` | Use service-specific repository |
+| Manual subscriptions | Use `.pipe(this.untilDestroyed())` |

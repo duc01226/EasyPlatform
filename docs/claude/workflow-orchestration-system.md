@@ -617,12 +617,12 @@ Add a dark mode toggle to the settings page
 [System Reminder - from dev-rules-reminder.cjs]
 ## Session
 - DateTime: 12/31/2025, 11:28:03 AM
-- CWD: C:\GitSources\BravoSUITE2
+- CWD: C:\GitSources\EasyPlatform
 
 ## Plan Context
 - Plan: none
 - Reports: plans/reports/
-- Branch: feature/new-kudos-feature
+- Branch: feature/new-feature
 - Validation: mode=prompt, questions=3-8
 
 ## Naming

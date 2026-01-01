@@ -549,10 +549,10 @@ _(Add as many Epic as needed)_
 Example:
 **Critical Cross-Service Integration Patterns for Employee Management:**
 
-#### **1. Employee Entity Synchronization (bravoTALENTS → bravoGROWTH)**
+#### **1. Employee Entity Synchronization (TextSnippetService → TextSnippetService)**
 
-- **Producer**: `EmployeeEntityEventBusMessageProducer` in bravoTALENTS
-- **Consumer**: `UpsertOrDeleteEmployeeInfoOnEmployeeEntityEventBusConsumer` in bravoGROWTH
+- **Producer**: `EmployeeEntityEventBusMessageProducer` in TextSnippetService
+- **Consumer**: `UpsertOrDeleteEmployeeInfoOnEmployeeEntityEventBusConsumer` in TextSnippetService
 - **Message**: `EmployeeEntityEventBusMessage`
 - **Business Logic**: When Employee entities are created/updated in TALENTS (recruitment pipeline), they automatically sync to GROWTH for performance review workflows, goal management, and organizational hierarchy management. The consumer only syncs essential fields like UserId, Email, ManagerId, and Status to maintain loose coupling.
 
@@ -628,7 +628,7 @@ Example:
 ```
 Frontend → CandidatesController → MoveApplicationInPipelineCommand →
 Pipeline Repository → Validation Logic → Application Repository →
-History Tracking → Message Bus → bravoINSIGHTS Integration →
+History Tracking → Message Bus → AnalyticsService Integration →
 Event Publishing
 ```
 
@@ -1124,12 +1124,12 @@ Find all package.json files:
 
 ```bash
 # WebV2 (Nx workspace - Angular 19)
-src/WebV2/package.json
-src/WebV2/apps/*/package.json
-src/WebV2/libs/*/package.json
+src/PlatformExampleAppWeb/package.json
+src/PlatformExampleAppWeb/apps/*/package.json
+src/PlatformExampleAppWeb/libs/*/package.json
 
 # Legacy Web (Angular 8-12)
-src/Web/*/package.json
+src/PlatformExampleAppWeb/*/package.json
 ```
 
 For each package.json, document:
@@ -2317,16 +2317,16 @@ For each screenshot in the raw screenshots folder:
 #### **PHASE 1C: SHARED COMPONENT DISCOVERY**
 
 1. **Common Component Library Search:**
-    - Search for `bravo-` prefixed selectors in templates (from `@orient/bravo-common` or `bravo-common`)
+    - Search for `platform-` prefixed selectors in templates (from `@libs/platform-core`)
     - Search for `app-` prefixed shared selectors
     - Search for Material Design components (`mat-`)
 
 2. **Document in `## Common/Shared Components Used`:**
 
-    | Component   | Selector       | Purpose        | Location     |
-    | ----------- | -------------- | -------------- | ------------ |
-    | BravoButton | `bravo-button` | Action buttons | bravo-common |
-    | BravoTable  | `bravo-table`  | Data tables    | bravo-common |
+    | Component        | Selector           | Purpose        | Location      |
+    | ---------------- | ------------------ | -------------- | ------------- |
+    | PlatformButton   | `platform-button`  | Action buttons | platform-core |
+    | PlatformTable    | `platform-table`   | Data tables    | platform-core |
 
 3. **SCSS Analysis:**
     - Read main `variables.scss` and `mixins.scss` files
@@ -2680,14 +2680,14 @@ Replace these placeholders when using this prompt:
 
 | Placeholder                     | Description                                  | Example                                                   |
 | ------------------------------- | -------------------------------------------- | --------------------------------------------------------- |
-| `[source-code-app-path]`        | Path to the Angular application source code  | `src/Web/bravoTALENTSClient`                              |
-| `[raw-screenshots-folder-path]` | Path to folder containing raw UI screenshots | `docs/ui-frontend/Web/bravoTALENTSClient/raw-screenshots` |
+| `[source-code-app-path]`        | Path to the Angular application source code  | `src/PlatformExampleAppWeb/TextSnippetServiceClient`                              |
+| `[raw-screenshots-folder-path]` | Path to folder containing raw UI screenshots | `docs/ui-frontend/Web/TextSnippetServiceClient/raw-screenshots` |
 
 ### Example Usage
 
 ```
 Analyze UI screenshots and generate component documentation:
-- Source Code: src/WebV2/apps/growth-for-company
+- Source Code: src/PlatformExampleAppWeb/apps/playground-text-snippet
 - Screenshots: docs/ui-frontend/WebV2/raw-screenshots
 ```
 

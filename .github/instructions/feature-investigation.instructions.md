@@ -1,6 +1,6 @@
 ---
-applyTo: "**"
-description: "Comprehensive feature investigation and code analysis protocol for understanding existing logic before implementation"
+applyTo: '**'
+description: 'Comprehensive feature investigation and code analysis protocol for understanding existing logic before implementation'
 ---
 
 # Feature Investigation & Code Analysis Protocol
@@ -17,7 +17,7 @@ You are to operate as an expert full-stack .NET Angular principal developer and 
 
 **IMPORTANT**: Always think hard, plan step-by-step to-do list first before execution. Always remember to-do list, never compact or summarize it when memory context limit is reached. Always preserve and carry your to-do list through every operation. Todo list must cover all phases, from start to end, including child tasks in each phase - everything is flattened out into a long detailed todo list.
 
-## 🛡️ CORE ANTI-HALLUCINATION PROTOCOLS
+## CORE ANTI-HALLUCINATION PROTOCOLS
 
 ### ASSUMPTION_VALIDATION_CHECKPOINT
 
@@ -31,9 +31,9 @@ Before every major operation:
 
 Before claiming any relationship:
 
-- "I believe X calls Y because..." → show actual code
-- "This follows pattern Z because..." → cite specific examples
-- "Service A owns B because..." → grep for actual boundaries
+- "I believe X calls Y because..." -> show actual code
+- "This follows pattern Z because..." -> cite specific examples
+- "Service A owns B because..." -> grep for actual boundaries
 
 ### TOOL_EFFICIENCY_PROTOCOL
 
@@ -51,7 +51,7 @@ Every 10 operations:
 3. Check if we're solving the right problem
 4. Update the `Current Focus` bullet point within the `## Progress` section
 
-## 📋 QUICK REFERENCE CHECKLIST
+## QUICK REFERENCE CHECKLIST
 
 **Before any major operation:**
 
@@ -66,9 +66,9 @@ Every 10 operations:
 
 **Emergency:**
 
-- **Context Drift** → Re-read **## Metadata** section
-- **Assumption Creep** → Halt, validate with code
-- **Evidence Gap** → Mark as "inferred"
+- **Context Drift** -> Re-read **## Metadata** section
+- **Assumption Creep** -> Halt, validate with code
+- **Evidence Gap** -> Mark as "inferred"
 
 ---
 
@@ -82,10 +82,9 @@ Your sole objective is to build a structured knowledge model in a Markdown analy
 
 Create the analysis file with the following structure:
 
-````markdown
+```markdown
 ## Metadata
 
-```markdown
 [Full original task description/prompt]
 
 **Task Description:**
@@ -96,8 +95,6 @@ Create the analysis file with the following structure:
 
 **Source Code Structure:**
 [Copy complete Source Code Structure from ai-prompt-context.md]
-```
-````
 
 ## Progress
 
@@ -154,8 +151,7 @@ Create the analysis file with the following structure:
 ## Platform Pattern Usage
 
 [Documentation of platform patterns used]
-
-````
+```
 
 **Step 2: Comprehensive File Discovery**
 
@@ -320,7 +316,7 @@ Read and analyze the file, adding detailed results to `## Knowledge Graph` secti
     - `handleLogicWorkflow`: Complete processing flow step-by-step
     - `dependencyWaiting`: How it waits for dependencies (TryWaitUntilAsync)
 - **codeFlow**: Step-by-step execution flow
-  - Input → Processing → Output
+  - Input -> Processing -> Output
   - Decision points and branching logic
   - Error handling paths
 - **performanceConsiderations**: Async patterns, caching, pagination
@@ -329,9 +325,7 @@ Read and analyze the file, adding detailed results to `## Knowledge Graph` secti
 
 **Code Examples:**
 
-```csharp
-// Include relevant code snippets that demonstrate key logic
-```
+[Include relevant code snippets that demonstrate key logic]
 
 **Key Insights:**
 
@@ -359,9 +353,9 @@ After processing every 10 files:
 
 ## Processed Files
 
-1. ✅ [File path] - Entity (Analyzed)
-2. ✅ [File path] - Command (Analyzed)
-3. ✅ [File path] - Query (Analyzed)
+1. [File path] - Entity (Analyzed)
+2. [File path] - Command (Analyzed)
+3. [File path] - Query (Analyzed)
 ...
 ```
 
@@ -375,19 +369,6 @@ After analyzing ALL files, write a comprehensive analysis under these headings:
 ### 1. Complete End-to-End Workflows Discovered
 
 **Workflow 1: [Feature Name] - Main Flow**
-
-```mermaid
-graph TD
-    A[User Action] --> B[Frontend Component]
-    B --> C[API Service]
-    C --> D[Backend Controller]
-    D --> E[CQRS Command/Query]
-    E --> F[Domain Entity]
-    F --> G[Repository]
-    G --> H[Database]
-    E --> I[Event Handler]
-    I --> J[Side Effects]
-```
 
 **Detailed Flow:**
 
@@ -457,77 +438,70 @@ graph TD
 
 **Frontend to Backend Flow:**
 
-```
 1. User Interface Layer
-   ├─ Component: [path]
-   │  ├─ User Input Collection
-   │  ├─ Client-Side Validation
-   │  └─ API Service Call
-   │
+   - Component: [path]
+   - User Input Collection
+   - Client-Side Validation
+   - API Service Call
+
 2. API Layer
-   ├─ Controller: [path]
-   │  ├─ Route: [endpoint]
-   │  ├─ Authorization Check
-   │  └─ CQRS Dispatch
-   │
+   - Controller: [path]
+   - Route: [endpoint]
+   - Authorization Check
+   - CQRS Dispatch
+
 3. Application Layer
-   ├─ Command/Query Handler: [path]
-   │  ├─ Request Validation
-   │  ├─ Business Logic Execution
-   │  ├─ Repository Operations
-   │  └─ Result Construction
-   │
+   - Command/Query Handler: [path]
+   - Request Validation
+   - Business Logic Execution
+   - Repository Operations
+   - Result Construction
+
 4. Domain Layer
-   ├─ Entity: [path]
-   │  ├─ Business Rule Validation
-   │  ├─ State Mutation
-   │  └─ Domain Event Raising
-   │
+   - Entity: [path]
+   - Business Rule Validation
+   - State Mutation
+   - Domain Event Raising
+
 5. Infrastructure Layer
-   ├─ Repository: [path]
-   │  ├─ Query Building
-   │  ├─ Database Operations
-   │  └─ Entity Tracking
-   │
+   - Repository: [path]
+   - Query Building
+   - Database Operations
+   - Entity Tracking
+
 6. Event Processing Layer
-   ├─ Event Handler: [path]
-   │  ├─ Event Filtering (HandleWhen)
-   │  ├─ Side Effect Execution
-   │  └─ External Integration
-```
+   - Event Handler: [path]
+   - Event Filtering (HandleWhen)
+   - Side Effect Execution
+   - External Integration
 
 **Cross-Service Integration Flow:**
 
-```
 Service A (Producer)
-   ├─ Entity Change: [entity]
-   ├─ Event Raised: [event type]
-   ├─ Message Bus Producer: [producer class]
-   │  └─ Publishes: [MessageType]
-   │
+   - Entity Change: [entity]
+   - Event Raised: [event type]
+   - Message Bus Producer: [producer class]
+   - Publishes: [MessageType]
+
 RabbitMQ Message Bus
-   │
+
 Service B (Consumer)
-   ├─ Message Bus Consumer: [consumer class]
-   │  ├─ Consumes: [MessageType]
-   │  ├─ HandleWhen: [filtering logic]
-   │  ├─ Dependency Waiting: [TryWaitUntilAsync]
-   │  └─ Processing: [detailed steps]
-   │
-   ├─ Local Entity Sync: [entity]
-   └─ Side Effects: [describe]
-```
+   - Message Bus Consumer: [consumer class]
+   - Consumes: [MessageType]
+   - HandleWhen: [filtering logic]
+   - Dependency Waiting: [TryWaitUntilAsync]
+   - Processing: [detailed steps]
+   - Local Entity Sync: [entity]
+   - Side Effects: [describe]
 
 **Background Job Processing:**
 
-```
 Scheduled Trigger
-   ├─ Background Job: [job class]
-   │  ├─ Schedule: [cron expression]
-   │  ├─ Pagination Logic: [describe]
-   │  ├─ Processing: [detailed steps]
-   │  └─ Error Handling: [describe]
-```
+   - Background Job: [job class]
+   - Schedule: [cron expression]
+   - Pagination Logic: [describe]
+   - Processing: [detailed steps]
+   - Error Handling: [describe]
 
 ---
 
@@ -558,26 +532,11 @@ Scheduled Trigger
 
 **Service Dependencies:**
 
-```
-bravoGROWTH
-   ├─ Depends on: Accounts (User data)
-   ├─ Publishes to: bravoINSIGHTS (Analytics events)
-   └─ Consumes from: bravoTALENTS (Employee data)
-
-bravoTALENTS
-   ├─ Depends on: Accounts (Authentication)
-   └─ Publishes to: bravoGROWTH (Candidate hired events)
-```
+[Describe service dependencies]
 
 **Component Dependencies:**
 
-```
-EmployeeListComponent
-   ├─ Store: EmployeeListStore
-   ├─ API Service: EmployeeApiService
-   ├─ Child Components: EmployeeCardComponent
-   └─ Shared Services: AuthService, ThemeService
-```
+[Describe component dependencies with stores, services, child components]
 
 ---
 
@@ -616,21 +575,21 @@ EmployeeListComponent
 ### 8. Platform Pattern Usage
 
 **Backend Patterns Used:**
-- ✅ CQRS Commands: [list files]
-- ✅ CQRS Queries: [list files]
-- ✅ Repository Pattern: [list repositories]
-- ✅ Event Handlers: [list handlers]
-- ✅ Message Bus: [list producers/consumers]
-- ✅ Background Jobs: [list jobs]
-- ✅ Validation: PlatformValidationResult usage
-- ✅ Error Handling: PlatformException patterns
+- CQRS Commands: [list files]
+- CQRS Queries: [list files]
+- Repository Pattern: [list repositories]
+- Event Handlers: [list handlers]
+- Message Bus: [list producers/consumers]
+- Background Jobs: [list jobs]
+- Validation: PlatformValidationResult usage
+- Error Handling: PlatformException patterns
 
 **Frontend Patterns Used:**
-- ✅ Component Hierarchy: [base classes used]
-- ✅ State Management: [stores used]
-- ✅ Form Patterns: [form components]
-- ✅ API Services: [service files]
-- ✅ Reactive Patterns: [observables, signals]
+- Component Hierarchy: [base classes used]
+- State Management: [stores used]
+- Form Patterns: [form components]
+- API Services: [service files]
+- Reactive Patterns: [observables, signals]
 
 ---
 
@@ -790,7 +749,7 @@ Create a summary document for quick reference:
 - [Key rule 2]
 
 **Integration points:**
-- [Service A] → [Service B]: [via message type]
+- [Service A] -> [Service B]: [via message type]
 
 **Important notes:**
 - [Critical consideration 1]
@@ -908,7 +867,7 @@ If file list exceeds 100 files:
 
 ## Anti-Patterns to Avoid
 
-### ❌ DON'T
+### DON'T
 
 - Make assumptions without code evidence
 - Skip file analysis for "unimportant" files
@@ -919,7 +878,7 @@ If file list exceeds 100 files:
 - Skip cross-service integration analysis
 - Document incomplete workflows
 
-### ✅ DO
+### DO
 
 - Validate every assumption with code
 - Analyze all HIGH PRIORITY files
@@ -932,4 +891,3 @@ If file list exceeds 100 files:
 - Present uncertainties clearly
 - Use batch operations efficiently
 - Re-anchor context regularly
-````

@@ -1,145 +1,204 @@
 ---
-mode: 'agent'
-tools: ['editFiles', 'codebase', 'terminal']
+agent: 'agent'
 description: 'Generate unit tests following EasyPlatform testing patterns'
+tools: ['read', 'edit', 'search', 'execute']
 ---
 
-# Create Unit Test
+# Create Unit Tests
 
-Generate unit tests for the following code:
+## Required Reading
 
-**Target:** ${input:targetPath}
-**Test Framework:** ${input:framework:xUnit|Jest}
+**Before implementing, you MUST read the appropriate guide:**
 
-## Requirements
-
-1. Follow Given-When-Then (Arrange-Act-Assert) structure
-2. Use descriptive test method names: `MethodName_Scenario_ExpectedResult`
-3. Mock all external dependencies
-4. Cover success, failure, and edge cases
+- **Backend (C#):** `docs/claude/backend-csharp-complete-guide.md`
+- **Frontend (TS):** `docs/claude/frontend-typescript-complete-guide.md`
 
 ---
 
-## .NET (xUnit) Template
+Generate unit tests for the following:
 
-**File location:** `{Project}.Tests/UseCaseCommands/{Feature}/{Handler}Tests.cs`
+**Target:** ${input:target}
+**Test Type:** ${input:type:Command Handler,Query Handler,Entity,Service,Component,Store}
 
+## Test File Location
+
+```
+Backend:
+{Service}.Tests/
+├── UseCaseCommands/
+│   └── {Feature}/
+│       └── Save{Entity}CommandHandlerTests.cs
+├── UseCaseQueries/
+│   └── {Feature}/
+│       └── Get{Entity}ListQueryHandlerTests.cs
+└── Domain/
+    └── {Entity}Tests.cs
+
+Frontend:
+src/PlatformExampleAppWeb/libs/{lib}/src/lib/
+├── {feature}/
+│   └── {feature}.component.spec.ts
+└── stores/
+    └── {feature}.store.spec.ts
+```
+
+---
+
+## Backend Test Patterns
+
+### Command Handler Test
 ```csharp
-using Xunit;
-using Moq;
-using FluentAssertions;
-
-namespace YourService.Tests.UseCaseCommands.{Feature};
-
-public class {Handler}Tests
+public class Save{Entity}CommandHandlerTests : PlatformApplicationTestBase<{Service}Module>
 {
-    private readonly Mock<IPlatformQueryableRootRepository<{Entity}, string>> _repositoryMock;
-    private readonly Mock<ILoggerFactory> _loggerFactoryMock;
-    private readonly {Handler} _handler;
+    private readonly Mock<I{Service}RootRepository<{Entity}>> mockRepository;
+    private readonly Save{Entity}CommandHandler handler;
 
-    public {Handler}Tests()
+    public Save{Entity}CommandHandlerTests()
     {
-        _repositoryMock = new Mock<IPlatformQueryableRootRepository<{Entity}, string>>();
-        _loggerFactoryMock = new Mock<ILoggerFactory>();
-        _loggerFactoryMock.Setup(x => x.CreateLogger(It.IsAny<string>()))
-            .Returns(Mock.Of<ILogger>());
-
-        _handler = new {Handler}(
-            _loggerFactoryMock.Object,
-            Mock.Of<IPlatformUnitOfWorkManager>(),
-            Mock.Of<IServiceProvider>(),
-            Mock.Of<IPlatformRootServiceProvider>(),
-            _repositoryMock.Object);
+        mockRepository = new Mock<I{Service}RootRepository<{Entity}>>();
+        handler = CreateHandler<Save{Entity}CommandHandler>(
+            services => services.AddScoped(_ => mockRepository.Object));
     }
 
     [Fact]
-    public async Task HandleAsync_ValidRequest_ReturnsSuccess()
+    public async Task HandleAsync_WhenValidCommand_ShouldCreateEntity()
     {
         // Arrange
-        var request = new {Command} { Name = "Test" };
-        var entity = new {Entity} { Id = "1", Name = "Test" };
-
-        _repositoryMock
-            .Setup(x => x.CreateOrUpdateAsync(It.IsAny<{Entity}>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(entity);
+        var command = new Save{Entity}Command { Name = "Test" };
+        mockRepository.Setup(r => r.CreateAsync(It.IsAny<{Entity}>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Entity e, CancellationToken _) => e);
 
         // Act
-        var result = await _handler.HandleAsync(request, CancellationToken.None);
+        var result = await handler.HandleAsync(command, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
-        result.Entity.Should().NotBeNull();
-        _repositoryMock.Verify(x => x.CreateOrUpdateAsync(It.IsAny<{Entity}>(), It.IsAny<CancellationToken>()), Times.Once);
+        result.Entity.Name.Should().Be("Test");
+        mockRepository.Verify(r => r.CreateAsync(It.IsAny<{Entity}>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task HandleAsync_InvalidRequest_ThrowsValidationException()
+    public async Task HandleAsync_WhenInvalidCommand_ShouldReturnValidationError()
     {
         // Arrange
-        var request = new {Command} { Name = "" }; // Invalid: empty name
+        var command = new Save{Entity}Command { Name = "" };
 
-        // Act & Assert
-        await Assert.ThrowsAsync<PlatformValidationException>(
-            () => _handler.HandleAsync(request, CancellationToken.None));
+        // Act
+        var result = await handler.HandleAsync(command, CancellationToken.None);
+
+        // Assert
+        result.IsValid.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("Name is required");
+    }
+}
+```
+
+### Query Handler Test
+```csharp
+public class Get{Entity}ListQueryHandlerTests : PlatformApplicationTestBase<{Service}Module>
+{
+    [Fact]
+    public async Task HandleAsync_WhenItemsExist_ShouldReturnPagedResult()
+    {
+        // Arrange
+        var entities = new List<{Entity}>
+        {
+            new {Entity} { Id = "1", Name = "Test1" },
+            new {Entity} { Id = "2", Name = "Test2" }
+        };
+        mockRepository.Setup(r => r.GetAllAsync(...)).ReturnsAsync(entities);
+        mockRepository.Setup(r => r.CountAsync(...)).ReturnsAsync(2);
+
+        var query = new Get{Entity}ListQuery { MaxResultCount = 10 };
+
+        // Act
+        var result = await handler.HandleAsync(query, CancellationToken.None);
+
+        // Assert
+        result.Items.Should().HaveCount(2);
+        result.TotalCount.Should().Be(2);
     }
 
     [Fact]
-    public async Task HandleAsync_EntityNotFound_ThrowsNotFoundException()
+    public async Task HandleAsync_WithSearchText_ShouldFilterResults()
     {
         // Arrange
-        var request = new {Command} { Id = "nonexistent" };
+        var query = new Get{Entity}ListQuery { SearchText = "test" };
 
-        _repositoryMock
-            .Setup(x => x.GetByIdAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((Task<{Entity}>)null!);
+        // Act
+        var result = await handler.HandleAsync(query, CancellationToken.None);
 
-        // Act & Assert
-        await Assert.ThrowsAsync<PlatformNotFoundException>(
-            () => _handler.HandleAsync(request, CancellationToken.None));
+        // Assert
+        mockSearchService.Verify(s => s.Search(
+            It.IsAny<IQueryable<{Entity}>>(),
+            "test",
+            It.IsAny<Expression<Func<{Entity}, object>>[]>()), Times.Once);
+    }
+}
+```
+
+### Entity Test
+```csharp
+public class {Entity}Tests
+{
+    [Fact]
+    public void UniqueExpr_ShouldMatchCorrectEntity()
+    {
+        // Arrange
+        var entities = new List<{Entity}>
+        {
+            new { Id = "1", CompanyId = "C1", Code = "A" },
+            new { Id = "2", CompanyId = "C1", Code = "B" },
+            new { Id = "3", CompanyId = "C2", Code = "A" }
+        }.AsQueryable();
+
+        // Act
+        var result = entities.Where({Entity}.UniqueExpr("C1", "A")).ToList();
+
+        // Assert
+        result.Should().HaveCount(1);
+        result[0].Id.Should().Be("1");
+    }
+
+    [Theory]
+    [InlineData("", false)]
+    [InlineData("Valid Name", true)]
+    public void Validate_ShouldReturnExpectedResult(string name, bool expectedValid)
+    {
+        // Arrange
+        var entity = new {Entity} { Name = name };
+
+        // Act
+        var result = entity.Validate();
+
+        // Assert
+        result.IsValid.Should().Be(expectedValid);
     }
 }
 ```
 
 ---
 
-## Angular (Jest) Template
+## Frontend Test Patterns
 
-**File location:** `{component}.component.spec.ts`
-
+### Component Test
 ```typescript
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { of, throwError } from 'rxjs';
-
-import { {Component}Component } from './{component}.component';
-import { {Component}Store } from './{component}.store';
-import { {Entity}ApiService } from '@libs/apps-domains/{domain}';
-
-describe('{Component}Component', () => {
-  let component: {Component}Component;
-  let fixture: ComponentFixture<{Component}Component>;
-  let apiServiceMock: jest.Mocked<{Entity}ApiService>;
-  let storeMock: jest.Mocked<{Component}Store>;
+describe('{Feature}Component', () => {
+  let component: {Feature}Component;
+  let fixture: ComponentFixture<{Feature}Component>;
+  let mockStore: jasmine.SpyObj<{Feature}Store>;
 
   beforeEach(async () => {
-    apiServiceMock = {
-      getList: jest.fn(),
-      save: jest.fn(),
-    } as any;
-
-    storeMock = {
-      load{Entity}s: jest.fn(),
-      vm$: of({ {entity}s: [], loading: false }),
-    } as any;
+    mockStore = jasmine.createSpyObj('{Feature}Store', ['loadItems'], {
+      vm$: signal({ items: [], loading: false })
+    });
 
     await TestBed.configureTestingModule({
-      declarations: [{Component}Component],
-      providers: [
-        { provide: {Entity}ApiService, useValue: apiServiceMock },
-        { provide: {Component}Store, useValue: storeMock },
-      ],
+      imports: [{Feature}Component],
+      providers: [{ provide: {Feature}Store, useValue: mockStore }]
     }).compileComponents();
 
-    fixture = TestBed.createComponent({Component}Component);
+    fixture = TestBed.createComponent({Feature}Component);
     component = fixture.componentInstance;
   });
 
@@ -147,72 +206,78 @@ describe('{Component}Component', () => {
     expect(component).toBeTruthy();
   });
 
-  describe('ngOnInit', () => {
-    it('should load {entity}s on init', () => {
-      // Arrange & Act
-      fixture.detectChanges();
-
-      // Assert
-      expect(storeMock.load{Entity}s).toHaveBeenCalled();
-    });
+  it('should load items on init', () => {
+    fixture.detectChanges();
+    expect(mockStore.loadItems).toHaveBeenCalled();
   });
 
-  describe('on{Action}', () => {
-    it('should emit {event} when action triggered', () => {
-      // Arrange
-      const emitSpy = jest.spyOn(component.{event}, 'emit');
-      const mock{Entity} = { id: '1', name: 'Test' };
+  it('should display loading indicator when loading', () => {
+    mockStore.vm$.set({ items: [], loading: true });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.loading')).toBeTruthy();
+  });
+});
+```
 
-      // Act
-      component.on{Action}(mock{Entity});
+### Store Test
+```typescript
+describe('{Feature}Store', () => {
+  let store: {Feature}Store;
+  let mockApi: jasmine.SpyObj<{Feature}ApiService>;
 
-      // Assert
-      expect(emitSpy).toHaveBeenCalledWith(mock{Entity});
+  beforeEach(() => {
+    mockApi = jasmine.createSpyObj('{Feature}ApiService', ['getList', 'save']);
+
+    TestBed.configureTestingModule({
+      providers: [
+        {Feature}Store,
+        { provide: {Feature}ApiService, useValue: mockApi }
+      ]
     });
+
+    store = TestBed.inject({Feature}Store);
   });
 
-  describe('error handling', () => {
-    it('should handle API errors gracefully', () => {
-      // Arrange
-      apiServiceMock.getList.mockReturnValue(throwError(() => new Error('API Error')));
+  it('should load items successfully', fakeAsync(() => {
+    const items = [{ id: '1', name: 'Test' }];
+    mockApi.getList.and.returnValue(of(items));
 
-      // Act
-      fixture.detectChanges();
+    store.loadItems();
+    tick();
 
-      // Assert
-      expect(component.getErrorMsg$()).toBeDefined();
-    });
-  });
+    expect(store.vm$().items).toEqual(items);
+    expect(store.isLoading$('loadItems')()).toBeFalse();
+  }));
+
+  it('should handle error on load', fakeAsync(() => {
+    mockApi.getList.and.returnValue(throwError(() => new Error('API Error')));
+
+    store.loadItems();
+    tick();
+
+    expect(store.getErrorMsg$('loadItems')()).toContain('API Error');
+  }));
 });
 ```
 
 ---
 
-## Test Categories
-
-Generate tests for:
-
-1. **Happy path** - Normal successful execution
-2. **Validation** - Invalid input handling
-3. **Not found** - Missing entity scenarios
-4. **Authorization** - Permission checks
-5. **Edge cases** - Empty lists, null values, boundary conditions
-6. **Error handling** - Exception propagation
-
----
-
-## Naming Convention
+## Test Naming Convention
 
 ```
-// .NET
-MethodName_Scenario_ExpectedResult
-HandleAsync_ValidRequest_ReturnsSuccess
-HandleAsync_EmptyName_ThrowsValidationException
-GetEmployees_NoActiveEmployees_ReturnsEmptyList
+MethodName_WhenCondition_ShouldExpectedBehavior
 
-// TypeScript
-describe('methodName', () => {
-  it('should do X when Y', () => {});
-  it('should throw error when invalid input', () => {});
-});
+Examples:
+- HandleAsync_WhenValidCommand_ShouldCreateEntity
+- HandleAsync_WhenEntityNotFound_ShouldThrowNotFoundException
+- UniqueExpr_WithMatchingData_ShouldReturnSingleResult
+- LoadItems_WhenApiSucceeds_ShouldUpdateState
 ```
+
+## Coverage Requirements
+
+- [ ] Happy path scenarios
+- [ ] Validation failures
+- [ ] Edge cases (null, empty, boundary values)
+- [ ] Error handling paths
+- [ ] Async operations

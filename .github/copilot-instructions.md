@@ -1,781 +1,790 @@
-# EasyPlatform - GitHub Copilot Instructions
+# EasyPlatform Development Guidelines
 
-> **.NET 9 + Angular 19 Enterprise Development Framework**
+> **Development Platform Framework** - .NET 9 + Angular 19
 
 ## Project Overview
 
-EasyPlatform is a comprehensive development framework for building enterprise applications featuring:
+EasyPlatform is a comprehensive development platform framework providing infrastructure for building microservices with Clean Architecture, CQRS, and event-driven design. It includes a complete example application (TextSnippet) demonstrating all patterns.
 
--   **Microservices Architecture** with Clean Architecture layers (Domain, Application, Persistence, API)
--   **CQRS Pattern** with event-driven design and automatic entity events
--   **Cross-Service Communication** via RabbitMQ message bus
--   **Multi-Database Support** (MongoDB, SQL Server, PostgreSQL)
+**Structure:**
+
+-   **Easy.Platform:** Core framework components (CQRS, validation, repositories, messaging)
+-   **PlatformExampleApp:** Example microservice demonstrating all patterns (TextSnippet)
+-   **PlatformExampleAppWeb:** Angular 19 frontend example application
 
 ## Tech Stack
 
-| Layer          | Technology                      |
-| -------------- | ------------------------------- |
-| Backend        | .NET 9, C# 13, ASP.NET Core     |
-| Frontend       | Angular 19, TypeScript 5.x, Nx  |
-| Databases      | MongoDB, SQL Server, PostgreSQL |
-| Messaging      | RabbitMQ                        |
-| Infrastructure | Docker, Redis                   |
+| Layer         | Technology                                                      |
+| ------------- | --------------------------------------------------------------- |
+| **Backend**   | .NET 9, Clean Architecture, CQRS, MongoDB/SQL Server/PostgreSQL |
+| **Frontend**  | Angular 19, Nx workspace, component-based architecture          |
+| **Framework** | Easy.Platform (custom infrastructure)                           |
+| **Messaging** | RabbitMQ message bus for cross-service communication            |
 
-## Project Structure
+## Core Principles (MANDATORY)
 
-```
-src/Platform/                         # Easy.Platform framework (core libraries)
-├── Easy.Platform/                    # Core: CQRS, validation, repositories
-├── Easy.Platform.AspNetCore/         # ASP.NET Core integration
-├── Easy.Platform.MongoDB/            # MongoDB data access
-├── Easy.Platform.RabbitMQ/           # Message bus implementation
-└── Easy.Platform.*/                  # Other infrastructure modules
+**Backend Rules:**
 
-src/PlatformExampleApp/               # Example microservice implementation
-├── *.Api/                            # ASP.NET Core Web API
-├── *.Application/                    # CQRS handlers, jobs, events
-├── *.Domain/                         # Entities, domain events
-└── *.Persistence*/                   # Database implementations
+1. Use platform repositories (`IPlatformQueryableRootRepository<TEntity, TKey>`) with extension methods
+2. Use `PlatformValidationResult` fluent API (`.And()`, `.AndAsync()`) - never `throw ValidationException`
+3. Side effects (notifications, emails, external APIs) go in Entity Event Handlers (`UseCaseEvents/`) - never in command handlers
+4. DTOs own mapping via `PlatformEntityDto<TEntity, TKey>.MapToEntity()` or `PlatformDto<T>.MapToObject()` - never map in handlers
+5. Command + Result + Handler in ONE file under `UseCaseCommands/{Feature}/`
+6. Cross-service communication via RabbitMQ message bus only - never direct database access
 
-src/PlatformExampleAppWeb/            # Angular 19 Nx workspace
-├── apps/playground-text-snippet/     # Example frontend app
-└── libs/
-    ├── platform-core/                # Framework base classes
-    └── apps-domains/                 # Business domain code
-```
+**Frontend Rules:** 7. Extend `AppBaseComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent` - never raw `Component` 8. Use `PlatformVmStore` for state management - never manual signals 9. Extend `PlatformApiService` for HTTP calls - never direct `HttpClient` 10. Always use `.pipe(this.untilDestroyed())` for subscriptions - never manual unsubscribe 11. All template elements MUST have BEM classes (`block__element --modifier`)
 
-## Automatic Workflow Detection (MUST FOLLOW)
+**Architecture Rules:** 12. Search for existing implementations before creating new code 13. Place logic in LOWEST layer (Entity > Service > Component) to enable reuse 14. Plan before implementing non-trivial tasks 15. Follow Clean Architecture layers: Domain -> Application -> Infrastructure -> Presentation
 
-Before responding to any task request, analyze the user's prompt to detect intent and follow the appropriate workflow.
+## Automatic Workflow Detection (CRITICAL - MUST FOLLOW)
 
-### Intent Detection Rules
+> **This is NOT optional.** Before responding to ANY development task, you MUST detect intent and follow the appropriate workflow. This ensures consistent, high-quality development across the team.
 
-| Intent                     | Trigger Keywords                                    | Workflow Sequence                                             |
-| -------------------------- | --------------------------------------------------- | ------------------------------------------------------------- |
-| **Feature Implementation** | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/test` → `/code-review` → `/docs-update` |
-| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working  | `/debug` → `/plan` → `/fix` → `/test`                         |
-| **Documentation**          | docs, document, readme, update docs                 | `/docs-update` → `/watzup`                                    |
-| **Refactoring**            | refactor, restructure, clean up, improve code       | `/plan` → `/code` → `/test` → `/code-review`                  |
-| **Code Review**            | review, check, audit code, PR review                | `/code-review` → `/watzup`                                    |
-| **Investigation**          | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                     |
+### Workflow Configuration
 
-### Workflow Execution Protocol
+Full workflow patterns are defined in **`.claude/workflows.json`** - the single source of truth for both Claude and Copilot. Supports multilingual triggers (EN, VI, ZH, JA, KO).
 
-1. **DETECT:** Analyze user prompt for intent keywords
-2. **ANNOUNCE:** Tell user: `"Detected: [Intent]. Following workflow: [sequence]"`
-3. **CONFIRM (for features/refactors):** Ask: `"Proceed with this workflow? (yes/no/quick)"`
-4. **EXECUTE:** Follow each step in sequence using the prompts in `.github/prompts/`
+For detailed routing logic, see the **`workflow-router`** agent in `.github/agents/workflow-router.md`.
 
-### Override
+### Quick Reference - Workflow Detection
 
--   **Skip detection:** Prefix message with `quick:` (e.g., `quick: add a button`)
--   **Explicit command:** Start with `/` (e.g., `/fix the login bug`)
+| Intent            | Trigger Keywords                                     | Workflow Sequence                                                       |
+| ----------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Feature**       | implement, add, create, build, develop, new feature  | `/plan` -> `/cook` -> `/test` -> `/code-review` -> `/docs-update` -> `/watzup` |
+| **Bug Fix**       | bug, fix, error, broken, crash, not working, debug   | `/debug` -> `/plan` -> `/fix` -> `/test`                                     |
+| **Documentation** | docs, document, readme, update docs                  | `/docs-update` -> `/watzup`                                                  |
+| **Refactoring**   | refactor, improve, clean up, restructure             | `/plan` -> `/code` -> `/test` -> `/code-review`                              |
+| **Code Review**   | review, check, audit code, PR review                 | `/code-review` -> `/watzup`                                                  |
+| **Investigation** | how does, where is, explain, understand, find        | `/scout` -> `/investigate`                                                   |
 
-### Example
+### Prompt File Mapping
+
+Each workflow step executes a prompt file from `.github/prompts/`:
+
+| Step           | File                      | Purpose                  |
+| -------------- | ------------------------- | ------------------------ |
+| `/plan`        | `plan.prompt.md`          | Create implementation plan |
+| `/cook`        | `cook.prompt.md`          | Implement feature        |
+| `/code`        | `code.prompt.md`          | Execute existing plan    |
+| `/test`        | `test.prompt.md`          | Run tests                |
+| `/fix`         | `fix.prompt.md`           | Apply fixes              |
+| `/debug`       | `debug.prompt.md`         | Investigate issues       |
+| `/code-review` | `code-review.prompt.md`   | Review code quality      |
+| `/docs-update` | `docs-update.prompt.md`   | Update documentation     |
+| `/watzup`      | `watzup.prompt.md`        | Summarize changes        |
+| `/scout`       | `scout.prompt.md`         | Explore codebase         |
+| `/investigate` | `investigate.prompt.md`   | Deep dive analysis       |
+
+### Workflow Execution Protocol (MANDATORY STEPS)
+
+You MUST follow these steps for EVERY development request:
+
+1. **DETECT** - Analyze user prompt against workflow patterns
+2. **ANNOUNCE** - State the detected workflow: `"Detected: **{Workflow}** workflow. Following: {sequence}"`
+3. **CONFIRM** - For features/refactors, ask: `"Proceed with this workflow? (yes/no/quick)"`
+4. **EXECUTE** - Follow each step in sequence using prompts from `.github/prompts/`
+
+### Override Methods
+
+| Method           | Example                    | Effect                           |
+| ---------------- | -------------------------- | -------------------------------- |
+| `quick:` prefix  | `quick: add a button`      | Skip workflow, direct handling   |
+| Explicit command | `/plan implement dark mode`| Bypass detection, run command    |
+| Say "quick"      | When asked "Proceed?"      | Abort workflow, handle directly  |
+
+### Example Interaction
 
 **User:** "Add a dark mode toggle to the settings page"
 
-**Response:**
+**Copilot Response:**
+```
+Detected: **Feature Implementation** workflow. Following: /plan -> /cook -> /test -> /code-review -> /docs-update -> /watzup
 
-> Detected: **Feature Implementation** workflow. I will follow: `/plan` → `/cook` → `/test` → `/code-review` → `/docs-update`
->
-> Proceed with this workflow? (yes/no/quick)
+Proceed with this workflow? (yes/no/quick)
+```
 
-## Build & Test Commands
+**User:** "yes"
+
+**Copilot:** *Reads and executes `.github/prompts/plan.prompt.md` first, then `cook.prompt.md`, then `test.prompt.md`, etc.*
+
+## Architecture Overview
+
+```
+src/Platform/                    # Easy.Platform framework components
+├── Easy.Platform/               # Core (CQRS, validation, repositories)
+├── Easy.Platform.AspNetCore/    # ASP.NET Core integration
+├── Easy.Platform.MongoDB/       # MongoDB patterns
+├── Easy.Platform.RabbitMQ/      # Message bus
+└── Easy.Platform.*/             # Other modules
+
+src/PlatformExampleApp/          # Example microservice (TextSnippet)
+├── *.Api/                       # Web API layer
+├── *.Application/               # CQRS handlers, jobs, events
+├── *.Domain/                    # Entities, domain events
+├── *.Persistence*/              # Database implementations
+└── *.Shared/                    # Cross-service utilities
+
+src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
+├── apps/playground-text-snippet/# Example app
+└── libs/
+    ├── platform-core/           # Base classes, utilities
+    ├── apps-domains/            # Business domain code
+    ├── share-styles/            # SCSS themes
+    └── share-assets/            # Static assets
+```
+
+## Essential Documentation
+
+| Document                           | Purpose                          |
+| ---------------------------------- | -------------------------------- |
+| `README.md`                        | Platform overview & quick start  |
+| `EasyPlatform.README.md`           | Framework deep dive & patterns   |
+| `docs/claude/08-clean-code-rules.md`| Coding standards & anti-patterns |
+| `.github/AI-DEBUGGING-PROTOCOL.md` | Debugging protocol for AI agents |
+
+## How This Documentation Works
+
+**Documentation Architecture:**
+
+-   **This file (`copilot-instructions.md`)**: Quick reference, core principles, decision trees
+-   **`.github/instructions/`**: Deep dive patterns (auto-loaded based on file paths via `applyTo`)
+-   **`.github/prompts/`**: Task-specific prompts (plan, fix, scout, brainstorm, investigate)
+-   **`.github/AGENTS.md`**: Specialized agent roles with decision tree
+-   **`docs/claude/`**: Domain-specific pattern deep dives (Memory Bank)
+-   **Framework docs**: `EasyPlatform.README.md`, platform component deep dive
+
+## Memory Bank (Persistent Context)
+
+**Use @workspace to reference these key files for deep domain knowledge:**
+
+| Context Needed                                | Reference via @workspace                           |
+| --------------------------------------------- | -------------------------------------------------- |
+| Backend patterns (CQRS, Repository, Events)   | `@workspace docs/claude/03-backend-patterns.md`    |
+| Frontend patterns (Components, Forms, Stores) | `@workspace docs/claude/04-frontend-patterns.md`   |
+| Architecture & Service boundaries             | `@workspace docs/claude/01-planning-protocol.md`   |
+| Advanced fluent helpers & utilities           | `@workspace docs/claude/07-advanced-patterns.md`   |
+| What NOT to do                                | `@workspace docs/claude/07-advanced-patterns.md`   |
+| Debugging & troubleshooting                   | `@workspace docs/claude/02-investigation-protocol.md` |
+| Agent roles & when to use them                | `@workspace .github/AGENTS.md`                     |
+| Framework deep dive                           | `@workspace EasyPlatform.README.md`                |
+
+**When to load Memory Bank context:**
+
+-   Starting complex multi-file tasks -> Load architecture docs
+-   Backend development -> Load backend-patterns.md
+-   Frontend development -> Load frontend-patterns.md
+-   Code review -> Load anti-patterns section
+-   Debugging -> Load investigation-protocol.md
+-   Planning which agent to use -> Load AGENTS.md
+
+**How AI Agents Use This:**
+
+When you ask me to code/debug/analyze, I automatically:
+
+1. **Always load** this file for core principles and decision trees
+2. **Auto-load** relevant instruction files from `.github/instructions/` based on file paths being modified
+3. **Invoke skills** from `.claude/skills/` for complex tasks (debugging, feature planning, testing)
+4. **Search codebase** for existing patterns before implementing
+
+Example: When you ask me to "add a CQRS command to save text snippet data", I:
+
+-   Read this file -> See "Use CQRS pattern, platform repository"
+-   Auto-load `backend-dotnet.instructions.md` (applies to `*.cs` files)
+-   Auto-load `cqrs-patterns.instructions.md` (applies to `*Command*.cs`)
+-   Search for existing `Save*Command.cs` patterns
+-   Implement following discovered patterns
+
+**You don't need to tell me which files to read - the system loads them automatically based on context.**
+
+## Detailed Pattern Instructions
+
+See `.github/instructions/` for path-specific detailed patterns:
+
+| Topic                 | Instruction File                        | Applies To                        |
+| --------------------- | --------------------------------------- | --------------------------------- |
+| .NET Backend          | `backend-dotnet.instructions.md`        | `src/PlatformExampleApp/**/*.cs`  |
+| Angular Frontend      | `frontend-angular.instructions.md`      | `src/PlatformExampleAppWeb/**/*.ts` |
+| CQRS Patterns         | `cqrs-patterns.instructions.md`         | Commands/Queries                  |
+| Validation            | `validation.instructions.md`            | All validation logic              |
+| Entity Development    | `entity-development.instructions.md`    | Domain entities                   |
+| Entity Events         | `entity-events.instructions.md`         | Side effects                      |
+| Repository            | `repository.instructions.md`            | Data access                       |
+| Message Bus           | `message-bus.instructions.md`           | Cross-service sync                |
+| Background Jobs       | `background-jobs.instructions.md`       | Scheduled tasks                   |
+| Migrations            | `migrations.instructions.md`            | Data/schema migrations            |
+| Performance           | `performance.instructions.md`           | Optimization                      |
+| Security              | `security.instructions.md`              | Auth, permissions                 |
+| Testing               | `testing.instructions.md`               | Test patterns                     |
+| Clean Code            | `clean-code.instructions.md`            | All code                          |
+| Bug Investigation     | `bug-investigation.instructions.md`     | Debugging                         |
+| Feature Investigation | `feature-investigation.instructions.md` | Code exploration                  |
+
+## Quick Decision Trees
+
+**Backend Task:**
+
+-   New API endpoint -> `PlatformBaseController` + CQRS Command
+-   Business logic -> Command Handler in Application layer
+-   Data access -> Platform repository + extensions
+-   Cross-service sync -> Entity Event Consumer
+-   Scheduled task -> `PlatformApplicationBackgroundJob`
+-   Migration -> `PlatformDataMigrationExecutor` or EF Core
+
+**Frontend Task:**
+
+-   Simple display -> `AppBaseComponent`
+-   Complex state -> `AppBaseVmStoreComponent` + `PlatformVmStore`
+-   Forms -> `AppBaseFormComponent` with validation
+-   API calls -> Service extending `PlatformApiService`
+
+**Repository Selection:**
+
+-   Primary: `IPlatformQueryableRootRepository<TEntity, TKey>`
+-   Complex queries: Create `RepositoryExtensions` with static expressions
+-   When queryable not needed: `IPlatformRootRepository<TEntity, TKey>`
+
+## Critical Anti-Patterns
+
+**Backend:**
+
+-   Direct cross-service database access (use message bus)
+-   Custom repository interfaces (use platform repositories + extensions)
+-   Manual validation (use `PlatformValidationResult`)
+-   Side effects in command handlers (use entity event handlers)
+-   DTO mapping in handlers (use `PlatformDto.MapToObject()`)
+
+**Frontend:**
+
+-   Direct `HttpClient` usage (use `PlatformApiService`)
+-   Manual state management (use `PlatformVmStore`)
+-   Assuming method names without verification (check base class APIs)
+-   Skipping `untilDestroyed()` for subscriptions
+
+## Code Responsibility Hierarchy (CRITICAL)
+
+**Place logic in the LOWEST appropriate layer to enable reuse and prevent duplication:**
+
+```
+Entity/Model (Lowest)  ->  Service  ->  Component (Highest)
+```
+
+| Layer            | Responsibility                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------- |
+| **Entity/Model** | Business logic, display helpers, static factory methods, default values, validation rules   |
+| **Service**      | API calls, command factories, data transformation                                           |
+| **Component**    | UI event handling ONLY - delegates all logic to lower layers                                |
+
+**Anti-Pattern**: Logic in component that should be in model -> leads to duplicated code across components.
+
+```typescript
+// WRONG: Logic in component
+readonly statusOptions = [{ value: 1, label: 'Active' }, ...]; // Duplicated if another component needs it
+
+// CORRECT: Logic in entity/model
+readonly statusOptions = TextSnippetStatus.getOptions(); // Single source of truth
+```
+
+## Universal Clean Code Rules
+
+-   Single Responsibility: One method/class does one thing
+-   Consistent abstraction level in methods
+-   Reuse code, don't duplicate patterns
+-   Meaningful names that explain intent
+-   Group parallel operations (no dependencies) together
+-   Follow Input -> Process -> Output pattern
+-   Use early validation and guard clauses
+-   90% Logic Rule: Place logic where 90% of it belongs
+
+## Development Commands
 
 ```bash
 # Backend
 dotnet build EasyPlatform.sln
-dotnet test
 dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
 
 # Frontend
 cd src/PlatformExampleAppWeb
 npm install
 nx serve playground-text-snippet
-nx test platform-core
 nx build playground-text-snippet
+nx test platform-core
 
 # Infrastructure
 docker-compose -f src/platform-example-app.docker-compose.yml up -d
 ```
 
-## Database Connections (Development)
+## Getting Help
 
-| Service    | Connection      | Credentials         |
-| ---------- | --------------- | ------------------- |
-| SQL Server | localhost,14330 | sa / 123456Abc      |
-| MongoDB    | localhost:27017 | root / rootPassXXX  |
-| PostgreSQL | localhost:54320 | postgres / postgres |
-| Redis      | localhost:6379  | -                   |
-| RabbitMQ   | localhost:15672 | guest / guest       |
-
-## Critical Coding Guidelines
-
-1. **Repository Pattern**: Use `IPlatformQueryableRootRepository<TEntity, TKey>` for data access
-2. **CQRS Organization**: Command + Handler + Result in ONE file
-3. **Validation**: Use `PlatformValidationResult` fluent API with `.And()`, `.AndAsync()`
-4. **Side Effects**: Use entity event handlers, NEVER direct calls in command handlers
-5. **Entities**: Use static expressions for queries (e.g., `IsActiveExpr()`)
-6. **DTOs**: Extend `PlatformEntityDto<TEntity, TKey>` with `MapToEntity()`
-7. **Frontend Components**: Extend `AppBaseVmStoreComponent` for complex state
-8. **State Management**: Use `PlatformVmStore` with `effectSimple()` and `tapResponse()`
-9. **Clean Architecture**: Domain -> Application -> Persistence -> API (dependencies flow inward)
-10. **Cross-Service**: Use message bus for communication, never direct DB access
-
-## Reference Documentation
-
--   `README.md` - Platform overview & quick start
--   `CLEAN-CODE-RULES.md` - Coding standards & anti-patterns
--   `.github/AI-DEBUGGING-PROTOCOL.md` - Debugging protocol
--   `src/PlatformExampleApp/` - Working backend examples
--   `src/PlatformExampleAppWeb/apps/playground-text-snippet/` - Frontend examples
-
-## Path-Specific Instructions
-
-Detailed patterns are automatically loaded based on file context:
-
--   **Backend (.cs files)**: See `.github/instructions/backend-dotnet.instructions.md`
--   **Frontend (.ts/.html)**: See `.github/instructions/frontend-angular.instructions.md`
--   **Testing**: See `.github/instructions/testing.instructions.md`
--   **Clean Code**: See `.github/instructions/clean-code.instructions.md`
--   **Quick Reference**: See `.github/instructions/quick-reference.instructions.md`
--   **All Resources**: See `.github/COPILOT-INDEX.md`
+1. Study Platform Example: `src/PlatformExampleApp`
+2. Search existing implementations in codebase
+3. Check instruction files in `.github/instructions/`
+4. Review `docs/claude/` documentation
 
 ---
 
-## Effective Prompting Tips
+# EasyPlatform - Code Pattern Reference
 
-### Good Prompts
+## Backend (C#)
 
-```
-"Create a SaveEmployeeCommand following EasyPlatform CQRS patterns"
-"Add async validation to check if email is unique in the company"
-"Create Angular list component with PlatformVmStore for employees"
-"Add entity event handler to send notification on employee creation"
-```
-
-### Avoid These
-
-```
-"Make a save function" (too vague - which entity? what operation?)
-"Fix this" (no context - what's broken?)
-"Do the thing" (unclear intent)
-"Create a service" (which layer? what pattern?)
-```
-
-### Context Tips
-
--   Open related files before asking (entity, DTO, existing similar command)
--   Reference specific patterns by name (e.g., "PlatformVmStore", "CQRS command")
--   Include business requirements in prompt
--   Mention the layer you're working in (Domain, Application, API, Frontend)
-
----
-
-## Keyboard Shortcuts (VS Code)
-
-| Action              | Windows      | Mac         |
-| ------------------- | ------------ | ----------- |
-| Inline suggestion   | (auto)       | (auto)      |
-| Accept suggestion   | `Tab`        | `Tab`       |
-| Reject suggestion   | `Esc`        | `Esc`       |
-| Next suggestion     | `Alt+]`      | `Option+]`  |
-| Previous suggestion | `Alt+[`      | `Option+[`  |
-| Inline chat         | `Ctrl+I`     | `Cmd+I`     |
-| Chat panel          | `Ctrl+Alt+I` | `Cmd+Alt+I` |
-| Accept word         | `Ctrl+Right` | `Cmd+Right` |
-| Trigger suggestion  | `Alt+\`      | `Option+\`  |
-
----
-
-## Slash Commands Reference
-
-| Command     | Use For                          | Example                            |
-| ----------- | -------------------------------- | ---------------------------------- |
-| `/explain`  | Understand existing code         | Select code, type `/explain`       |
-| `/fix`      | Propose bug fixes                | Select buggy code, type `/fix`     |
-| `/tests`    | Generate unit tests              | Select function, type `/tests`     |
-| `/doc`      | Add documentation/comments       | Select code, type `/doc`           |
-| `/optimize` | Improve performance              | Select slow code, type `/optimize` |
-| `/simplify` | Reduce complexity                | Select complex code, `/simplify`   |
-| `/new`      | Create new file from description | Type `/new Angular component`      |
-
----
-
-## Model Recommendations
-
-| Task Type             | Recommended Model | Notes                    |
-| --------------------- | ----------------- | ------------------------ |
-| Quick code completion | GPT-4o            | Fast, good for inline    |
-| Complex architecture  | Claude Sonnet     | Better reasoning         |
-| Debugging/analysis    | Claude Sonnet     | Good at tracing issues   |
-| Refactoring           | GPT-4o            | Fast iterations          |
-| Test generation       | GPT-4o            | Good pattern recognition |
-| Documentation         | Claude Sonnet     | Better prose             |
-| Multi-file changes    | Claude Sonnet     | Better context handling  |
-| Quick questions       | GPT-4o-mini       | Fast, cost-effective     |
-
----
-
-## Context Management
-
-### Before Starting a Task
-
-1. Open 2-3 most relevant files (entity, DTO, similar existing implementation)
-2. Close unrelated files/tabs to reduce noise
-3. Clear old conversation if switching to unrelated topic
-
-### During Work
-
--   Reference files explicitly with `#filename`
--   Use `@workspace` for codebase-wide questions
--   Delete unhelpful exchanges from chat history
--   Break large tasks into focused sub-tasks
-
-### For Complex Tasks
-
--   Start fresh conversation for new major topics
--   Summarize progress at checkpoints
--   Keep the most critical context files open
--   Use the Task tool for multi-step operations
-
----
-
-## File Naming Conventions
-
-### Backend
-
-| Type           | Pattern                                                     | Example                                                     |
-| -------------- | ----------------------------------------------------------- | ----------------------------------------------------------- |
-| Command        | `Save{Entity}Command.cs`                                    | `SaveEmployeeCommand.cs`                                    |
-| Query          | `Get{Entity}ListQuery.cs`                                   | `GetEmployeeListQuery.cs`                                   |
-| Entity Event   | `{Action}On{Event}{Entity}EntityEventHandler.cs`            | `SendNotificationOnCreateEmployeeEntityEventHandler.cs`     |
-| Consumer       | `UpsertOrDelete{Entity}On{Source}EntityEventBusConsumer.cs` | `UpsertOrDeleteEmployeeOnEmployeeEntityEventBusConsumer.cs` |
-| Background Job | `{JobName}BackgroundJob.cs`                                 | `SyncEmployeesBackgroundJob.cs`                             |
-| Entity         | `{EntityName}.cs`                                           | `Employee.cs`                                               |
-| Entity DTO     | `{Entity}Dto.cs` or `{Entity}EntityDto.cs`                  | `EmployeeDto.cs`                                            |
-| Repository Ext | `{Entity}RepositoryExtensions.cs`                           | `EmployeeRepositoryExtensions.cs`                           |
-
-### Frontend
-
-| Type        | Pattern                       | Example                      |
-| ----------- | ----------------------------- | ---------------------------- |
-| Component   | `{feature}.component.ts`      | `employee-list.component.ts` |
-| Store       | `{feature}.store.ts`          | `employee-list.store.ts`     |
-| Form        | `{feature}-form.component.ts` | `employee-form.component.ts` |
-| API Service | `{entity}-api.service.ts`     | `employee-api.service.ts`    |
-| Model/DTO   | `{entity}.model.ts`           | `employee.model.ts`          |
-| Validator   | `{entity}.validators.ts`      | `employee.validators.ts`     |
-
----
-
-## Top 10 Common Mistakes
-
-| #   | Mistake                                   | Correct Approach                                |
-| --- | ----------------------------------------- | ----------------------------------------------- |
-| 1   | Side effects in command handlers          | Use entity event handlers for notifications     |
-| 2   | Command/Handler/Result in separate files  | Keep ALL THREE in ONE file                      |
-| 3   | Using `HttpClient` directly in Angular    | Use `PlatformApiService` base class             |
-| 4   | Forgetting `untilDestroyed()` on streams  | Always pipe with `this.untilDestroyed()`        |
-| 5   | Manual state with signals                 | Use `PlatformVmStore` for complex state         |
-| 6   | Generic repository interface              | Use `IPlatformQueryableRootRepository<T,K>`     |
-| 7   | Mapping DTOs in command handlers          | Use DTO's `MapToEntity()` method                |
-| 8   | Skipping async validation                 | Override `ValidateRequestAsync` in handler      |
-| 9   | Direct cross-service database access      | Use message bus for cross-service communication |
-| 10  | Missing `app-loading-and-error-indicator` | Wrap async content with loading indicator       |
-
----
-
-## Quick Decision Guide
-
-```
-Need side effect after save?     → Entity Event Handler (NOT in command handler)
-Cross-service data sync?         → Message Bus Consumer
-Scheduled recurring task?        → Background Job with [PlatformRecurringJob("cron")]
-Complex frontend state?          → PlatformVmStore + AppBaseVmStoreComponent
-Form with validation?            → AppBaseFormComponent + initialFormConfig
-API communication?               → Extend PlatformApiService
-Reusable entity DTO?             → Extend PlatformEntityDto<TEntity, TKey>
-Data filtering in query?         → Use static expressions in entity class
-```
-
----
-
-# Code Patterns Reference
-
-## Backend Patterns
-
-### 1. Clean Architecture
+### Entity & Domain
 
 ```csharp
-// Domain Layer
-public class Employee : RootEntity<Employee, string>
-{
-    [TrackFieldUpdatedDomainEvent]
-    public string Name { get; set; } = "";
-    public static Expression<Func<Employee, bool>> IsActiveExpr() => e => e.Status == Status.Active;
-}
+// Entity types
+public class TextSnippet : RootEntity<TextSnippet, string> { }
+public class AuditedTextSnippet : RootAuditedEntity<AuditedTextSnippet, string, string> { }
 
-public class AuditedEmployee : RootAuditedEntity<AuditedEmployee, string, string> { }
+// Field tracking
+[TrackFieldUpdatedDomainEvent]
+public string Name { get; set; } = "";
 
-// Application Layer - CQRS Handler
-public class SaveEmployeeCommandHandler : PlatformCqrsCommandApplicationHandler<SaveEmployeeCommand, SaveEmployeeCommandResult>
-{
-    protected override async Task<SaveEmployeeCommandResult> HandleAsync(SaveEmployeeCommand req, CancellationToken ct)
-    {
-        var employee = await repository.GetByIdAsync(req.Id, ct);
-        employee.Name = req.Name;
-        var saved = await repository.CreateOrUpdateAsync(employee, ct);
-        return new SaveEmployeeCommandResult { Id = saved.Id };
-    }
-}
+// Computed property (MUST have empty set)
+[ComputedEntityProperty]
+public string FullName { get => $"{FirstName} {LastName}".Trim(); set { } }
 
-// Service Layer - Controller
-[ApiController, Route("api/[controller]")]
-public class EmployeeController : PlatformBaseController
-{
-    [HttpPost]
-    public async Task<IActionResult> Save([FromBody] SaveEmployeeCommand cmd) => Ok(await Cqrs.SendAsync(cmd));
-}
+// Static expressions
+public static Expression<Func<Entity, bool>> UniqueExpr(string companyId, string code)
+    => e => e.CompanyId == companyId && e.Code == code;
+
+public static Expression<Func<Entity, bool>> CompositeExpr(string companyId, bool includeInactive = false)
+    => OfCompanyExpr(companyId).AndAlsoIf(!includeInactive, () => e => e.IsActive);
+
+public static Expression<Func<Entity, object?>>[] DefaultFullTextSearchColumns()
+    => [e => e.Name, e => e.Code, e => e.Content];
 ```
 
-### 2. Repository Pattern
+### Repository
 
 ```csharp
-IPlatformQueryableRootRepository<TEntity, TKey>  // Primary
-IPlatformRootRepository<TEntity, TKey>           // When queryable not needed
+// Platform repositories
+IPlatformQueryableRootRepository<TextSnippet, string>  // Primary - with IQueryable support
+IPlatformRootRepository<TextSnippet, string>           // When queryable not needed
 
-// Extension pattern
-public static class EntityRepositoryExtensions
-{
-    public static async Task<Entity> GetByCodeAsync(this IPlatformQueryableRootRepository<Entity, string> repo, string code, CancellationToken ct = default)
-        => await repo.FirstOrDefaultAsync(Entity.CodeExpr(code), ct).EnsureFound();
-
-    public static async Task<List<Entity>> GetByIdsValidatedAsync(this IPlatformQueryableRootRepository<Entity, string> repo, List<string> ids, CancellationToken ct = default)
-        => await repo.GetAllAsync(p => ids.Contains(p.Id), ct).EnsureFoundAllBy(p => p.Id, ids);
-
-    public static async Task<string> GetIdByCodeAsync(this IPlatformQueryableRootRepository<Entity, string> repo, string code, CancellationToken ct = default)
-        => await repo.FirstOrDefaultAsync(q => q.Where(Entity.CodeExpr(code)).Select(p => p.Id), ct).EnsureFound();
-}
-```
-
-### 3. Repository API
-
-```csharp
+// CRUD operations
 await repository.CreateAsync(entity, ct);
-await repository.CreateManyAsync(entities, ct);
 await repository.UpdateAsync(entity, ct);
-await repository.UpdateManyAsync(entities, dismissSendEvent: false, checkDiff: true, ct);
 await repository.CreateOrUpdateAsync(entity, ct);
-await repository.CreateOrUpdateManyAsync(entities, ct);
-await repository.DeleteAsync(entityId, ct);
-await repository.DeleteManyAsync(expr => expr.Status == Status.Deleted, ct);
-await repository.GetByIdAsync(id, ct, loadRelatedEntities: p => p.Company);
+await repository.DeleteAsync(id, ct);
+await repository.UpdateManyAsync(entities, dismissSendEvent: false, checkDiff: true, ct);
+
+// Query operations
+await repository.GetByIdAsync(id, ct, loadRelatedEntities: p => p.Author, p => p.Category);
 await repository.FirstOrDefaultAsync(expr, ct);
 await repository.GetAllAsync(expr, ct);
 await repository.GetByIdsAsync(ids, ct);
-var queryBuilder = repository.GetQueryBuilder((uow, q) => q.Where(...).OrderBy(...));
 await repository.CountAsync(expr, ct);
 await repository.AnyAsync(expr, ct);
+
+// Query builder
+var queryBuilder = repository.GetQueryBuilder((uow, q) => q.Where(...).OrderBy(...));
+
+// Extension pattern
+public static async Task<TextSnippet> GetByCodeAsync(
+    this IPlatformQueryableRootRepository<TextSnippet, string> repo, string code, CancellationToken ct = default)
+    => await repo.FirstOrDefaultAsync(TextSnippet.ByCodeExpr(code), ct).EnsureFound();
+
+// Projection
+await repo.FirstOrDefaultAsync(q => q.Where(expr).Select(e => e.Id), ct);
 ```
 
-### 4. Validation Patterns
+### Validation
 
 ```csharp
 // Sync validation
 public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
     => base.Validate()
         .And(_ => Name.IsNotNullOrEmpty(), "Name required")
-        .And(_ => Age >= 18, "Must be 18+");
+        .And(_ => FromDate <= ToDate, "Invalid range");
 
 // Async validation
-protected override async Task<PlatformValidationResult<SaveCommand>> ValidateRequestAsync(PlatformValidationResult<SaveCommand> v, CancellationToken ct)
-    => await v
+protected override async Task<PlatformValidationResult<TCommand>> ValidateRequestAsync(
+    PlatformValidationResult<TCommand> validation, CancellationToken ct)
+    => await validation
         .AndAsync(r => repo.GetByIdsAsync(r.Ids, ct).ThenValidateFoundAllAsync(r.Ids, ids => $"Not found: {ids}"))
-        .AndNotAsync(r => repo.AnyAsync(p => r.Ids.Contains(p.Id) && p.IsExternal, ct), "Externals not allowed");
+        .AndNotAsync(r => repo.AnyAsync(e => e.IsExternal && r.Ids.Contains(e.Id), ct), "External not allowed");
 
 // Chained with Of<>
-public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
-    => this.Validate(p => p.Id.IsNotNullOrEmpty(), "Id required")
-        .And(p => p.FromDate <= p.ToDate, "Invalid range")
-        .Of<IPlatformCqrsRequest>();
+return this.Validate(p => p.Id.IsNotNullOrEmpty(), "Id required")
+    .And(p => p.Status != Status.Deleted, "Cannot be deleted")
+    .Of<IPlatformCqrsRequest>();
 
 // Ensure pattern
-var entity = await repo.GetByIdAsync(id, ct).EnsureFound($"Not found: {id}").Then(x => x.Validate().EnsureValid());
+await repo.GetByIdAsync(id, ct).EnsureFound($"Not found: {id}").Then(x => x.Validate().EnsureValid());
 ```
 
-### 5. Cross-Service Communication
+### CQRS Command (all in one file)
 
 ```csharp
-public class EmployeeEventProducer : PlatformCqrsEntityEventBusMessageProducer<EmployeeEventBusMessage, Employee, string> { }
-
-public class EmployeeEventConsumer : PlatformApplicationMessageBusConsumer<EmployeeEventBusMessage>
-{
-    protected override async Task HandleLogicAsync(EmployeeEventBusMessage msg) { /* sync logic */ }
-}
-```
-
-### 6. Full-Text Search
-
-```csharp
-var queryBuilder = repository.GetQueryBuilder(q => q
-    .Where(t => t.IsActive)
-    .PipeIf(req.SearchText.IsNotNullOrEmpty(), q => searchService.Search(q, req.SearchText, Entity.SearchColumns(), fullTextAccurateMatch: true)));
-
-var (total, items) = await (
-    repository.CountAsync((uow, q) => queryBuilder(uow, q), ct),
-    repository.GetAllAsync((uow, q) => queryBuilder(uow, q).OrderByDescending(e => e.CreatedDate).PageBy(req.Skip, req.Take), ct)
-);
-
-// Entity search columns
-public static Expression<Func<Entity, object>>[] SearchColumns() => [e => e.Name, e => e.Code];
-```
-
-### 7. CQRS Command Pattern (Command + Result + Handler in ONE file)
-
-```csharp
-public sealed class SaveEntityCommand : PlatformCqrsCommand<SaveEntityCommandResult>
+public sealed class SaveTextSnippetCommand : PlatformCqrsCommand<SaveTextSnippetCommandResult>
 {
     public string Id { get; set; } = "";
     public string Name { get; set; } = "";
-    public override PlatformValidationResult<IPlatformCqrsRequest> Validate() => base.Validate().And(_ => Name.IsNotNullOrEmpty(), "Name required");
+
+    public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
+        => base.Validate().And(_ => Name.IsNotNullOrEmpty(), "Name required");
 }
 
-public sealed class SaveEntityCommandResult : PlatformCqrsCommandResult { public EntityDto Entity { get; set; } = null!; }
-
-internal sealed class SaveEntityCommandHandler : PlatformCqrsCommandApplicationHandler<SaveEntityCommand, SaveEntityCommandResult>
+public sealed class SaveTextSnippetCommandResult : PlatformCqrsCommandResult
 {
-    protected override async Task<PlatformValidationResult<SaveEntityCommand>> ValidateRequestAsync(PlatformValidationResult<SaveEntityCommand> v, CancellationToken ct)
-        => await v.AndAsync(r => repo.GetByIdsAsync(r.RelatedIds, ct).ThenValidateFoundAllAsync(r.RelatedIds, ids => $"Not found: {ids}"));
+    public TextSnippetDto Entity { get; set; } = null!;
+}
 
-    protected override async Task<SaveEntityCommandResult> HandleAsync(SaveEntityCommand req, CancellationToken ct)
+internal sealed class SaveTextSnippetCommandHandler :
+    PlatformCqrsCommandApplicationHandler<SaveTextSnippetCommand, SaveTextSnippetCommandResult>
+{
+    protected override async Task<SaveTextSnippetCommandResult> HandleAsync(SaveTextSnippetCommand req, CancellationToken ct)
     {
         var entity = req.Id.IsNullOrEmpty()
             ? req.MapToNewEntity().With(e => e.CreatedBy = RequestContext.UserId())
-            : await repo.GetByIdAsync(req.Id, ct).Then(e => req.UpdateEntity(e));
-        await entity.ValidateAsync(repo, ct).EnsureValidAsync();
-        var saved = await repo.CreateOrUpdateAsync(entity, ct);
-        return new SaveEntityCommandResult { Entity = new EntityDto(saved) };
+            : await repository.GetByIdAsync(req.Id, ct).Then(e => req.UpdateEntity(e));
+
+        await entity.ValidateAsync(repository, ct).EnsureValidAsync();
+        await repository.CreateOrUpdateAsync(entity, ct);
+        return new SaveTextSnippetCommandResult { Entity = new TextSnippetDto(entity) };
     }
 }
 ```
 
-### 8. Query Pattern
+### CQRS Query
 
 ```csharp
-public sealed class GetEntityListQuery : PlatformCqrsPagedQuery<GetEntityListQueryResult, EntityDto>
+public sealed class GetTextSnippetListQuery : PlatformCqrsPagedQuery<GetTextSnippetListQueryResult, TextSnippetDto>
 {
     public List<Status> Statuses { get; set; } = [];
     public string? SearchText { get; set; }
 }
 
-internal sealed class GetEntityListQueryHandler : PlatformCqrsQueryApplicationHandler<GetEntityListQuery, GetEntityListQueryResult>
+internal sealed class GetTextSnippetListQueryHandler :
+    PlatformCqrsQueryApplicationHandler<GetTextSnippetListQuery, GetTextSnippetListQueryResult>
 {
-    protected override async Task<GetEntityListQueryResult> HandleAsync(GetEntityListQuery req, CancellationToken ct)
+    protected override async Task<GetTextSnippetListQueryResult> HandleAsync(GetTextSnippetListQuery req, CancellationToken ct)
     {
-        var qb = repo.GetQueryBuilder((uow, q) => q
+        var qb = repository.GetQueryBuilder((uow, q) => q
             .Where(e => e.CompanyId == RequestContext.CurrentCompanyId())
             .WhereIf(req.Statuses.Any(), e => req.Statuses.Contains(e.Status))
             .PipeIf(req.SearchText.IsNotNullOrEmpty(), q => searchService.Search(q, req.SearchText, Entity.SearchColumns())));
 
         var (total, items) = await (
-            repo.CountAsync((uow, q) => qb(uow, q), ct),
-            repo.GetAllAsync((uow, q) => qb(uow, q).OrderByDescending(e => e.CreatedDate).PageBy(req.Skip, req.Take), ct, e => e.Related)
+            repository.CountAsync((uow, q) => qb(uow, q), ct),
+            repository.GetAllAsync((uow, q) => qb(uow, q).OrderByDescending(e => e.CreatedDate).PageBy(req.SkipCount, req.MaxResultCount), ct)
         );
-        return new GetEntityListQueryResult(items, total, req);
+        return new GetTextSnippetListQueryResult(items, total, req);
     }
 }
 ```
 
-### 9. Event-Driven Side Effects
+### Entity DTO
 
 ```csharp
-// ❌ WRONG - direct side effect
-await repo.CreateAsync(entity, ct);
-await notificationService.SendAsync(entity);
-
-// ✅ CORRECT - just save, platform auto-raises event
-await repo.CreateAsync(entity, ct);
-
-// Event handler (UseCaseEvents/[Feature]/)
-internal sealed class SendNotificationOnCreateHandler : PlatformCqrsEntityEventApplicationHandler<Entity>
+public class TextSnippetDto : PlatformEntityDto<TextSnippet, string>
 {
-    public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> e)
-        => !e.RequestContext.IsSeedingTestingData() && e.CrudAction == PlatformCqrsEntityEventCrudAction.Created;
-
-    protected override async Task HandleAsync(PlatformCqrsEntityEvent<Entity> e, CancellationToken ct)
-        => await notificationService.SendAsync(e.EntityData);
-}
-```
-
-### 10. Entity Pattern
-
-```csharp
-[TrackFieldUpdatedDomainEvent]
-public sealed class Entity : RootEntity<Entity, string>
-{
-    [TrackFieldUpdatedDomainEvent] public string Name { get; set; } = "";
-    [JsonIgnore] public Company? Company { get; set; }
-
-    public static Expression<Func<Entity, bool>> UniqueExpr(string companyId, string code) => e => e.CompanyId == companyId && e.Code == code;
-    public static Expression<Func<Entity, bool>> FilterExpr(List<Status> s) => e => s.ToHashSet().Contains(e.Status!.Value);
-    public static Expression<Func<Entity, bool>> CompositeExpr(string companyId) => OfCompanyExpr(companyId).AndAlsoIf(true, () => e => e.IsActive);
-    public static Expression<Func<Entity, object?>>[] SearchColumns() => [e => e.Name, e => e.Code];
-
-    // Async expression with external dependency
-    public static async Task<Expression<Func<Entity, bool>>> FilterWithLicenseExprAsync(IRepository<License> licenseRepo, string companyId, CancellationToken ct = default)
-    {
-        var hasLicense = await licenseRepo.HasLicenseAsync(companyId, ct);
-        return hasLicense ? PremiumFilterExpr() : StandardFilterExpr();
-    }
-
-    [ComputedEntityProperty] public bool IsRoot { get => Id == RootId; set { } }
-    [ComputedEntityProperty] public string FullName { get => $"{First} {Last}".Trim(); set { } }
-
-    public static List<string> ValidateEntity(Entity? e) => e == null ? ["Not found"] : !e.IsActive ? ["Inactive"] : [];
-}
-```
-
-### 11. Entity DTO Pattern
-
-```csharp
-public class EmployeeDto : PlatformEntityDto<Employee, string>
-{
-    public EmployeeDto() { }
-    public EmployeeDto(Employee e, User? u) : base(e) { Id = e.Id; Name = e.Name ?? u?.Name ?? ""; }
+    public TextSnippetDto() { }
+    public TextSnippetDto(TextSnippet e, User? u) : base(e) { FullName = e.FullName ?? u?.FullName ?? ""; }
 
     public string? Id { get; set; }
-    public string Name { get; set; } = "";
-    public OrgDto? Company { get; set; }
+    public string FullName { get; set; } = "";
+    public CategoryDto? Category { get; set; }
 
-    public EmployeeDto WithCompany(Org c) { Company = new OrgDto(c); return this; }
+    public TextSnippetDto WithCategory(Category c) { Category = new CategoryDto(c); return this; }
 
     protected override object? GetSubmittedId() => Id;
     protected override string GenerateNewId() => Ulid.NewUlid().ToString();
-    protected override Employee MapToEntity(Employee e, MapToEntityModes m) { e.Name = Name; return e; }
+    protected override TextSnippet MapToEntity(TextSnippet e, MapToEntityModes mode) { e.FullName = FullName; return e; }
 }
 
-// Usage
-var dtos = employees.SelectList(e => new EmployeeDto(e, e.User).WithCompany(e.Company!));
+// Value object DTO
+public sealed class ConfigDto : PlatformDto<ConfigValue>
+{
+    public string ClientId { get; set; } = "";
+    public override ConfigValue MapToObject() => new() { ClientId = ClientId };
+}
 ```
 
-### 12. Fluent Helpers
+### Entity Event Handler (side effects)
 
 ```csharp
-.With(e => e.Name = x).WithIf(cond, e => e.Status = Active)
-.Then(e => e.Process()).ThenAsync(async e => await e.ValidateAsync(ct))
-.EnsureFound("Not found").EnsureFoundAllBy(x => x.Id, ids).EnsureValidAsync()
-.AndAlso(expr).AndAlsoIf(cond, () => expr).OrElse(expr)
-.ThenSelect(e => e.Id).ParallelAsync(async i => await Process(i), maxConcurrent: 10)
+// Location: UseCaseEvents/[Feature]/[Action]On[Event][Entity]EntityEventHandler.cs
+internal sealed class SendNotificationOnCreateTextSnippetEntityEventHandler
+    : PlatformCqrsEntityEventApplicationHandler<TextSnippet>
+{
+    public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<TextSnippet> @event)
+        => @event.CrudAction == PlatformCqrsEntityEventCrudAction.Created;
 
-var (entity, files) = await (repo.CreateOrUpdateAsync(e, ct), files.ParallelAsync(f => Upload(f, ct)));
+    protected override async Task HandleAsync(PlatformCqrsEntityEvent<TextSnippet> @event, CancellationToken ct)
+        => await notificationService.SendAsync(@event.EntityData);
+}
 ```
 
-### 13. Background Jobs
+### Cross-Service Communication
 
 ```csharp
+// Entity Event Bus Producer (auto-publishes on entity changes)
+public class TextSnippetEntityEventBusMessageProducer :
+    PlatformCqrsEntityEventBusMessageProducer<TextSnippetEntityEventBusMessage, TextSnippet, string> { }
+```
+
+### Message Bus Consumer
+
+```csharp
+internal sealed class UpsertEntityConsumer : PlatformApplicationMessageBusConsumer<EntityEventBusMessage>
+{
+    public override async Task<bool> HandleWhen(EntityEventBusMessage msg, string routingKey) => true;
+
+    public override async Task HandleLogicAsync(EntityEventBusMessage msg, string routingKey)
+    {
+        var (companyMissing, _) = await (
+            Util.TaskRunner.TryWaitUntilAsync(() => companyRepo.AnyAsync(c => c.Id == msg.Payload.EntityData.CompanyId), maxWaitSeconds: 300).Then(p => !p),
+            Util.TaskRunner.TryWaitUntilAsync(() => userRepo.AnyAsync(u => u.Id == msg.Payload.EntityData.UserId), maxWaitSeconds: 300).Then(p => !p)
+        );
+        if (companyMissing) return;
+
+        var existing = await repository.FirstOrDefaultAsync(e => e.Id == msg.Payload.EntityData.Id);
+        if (existing == null)
+            await repository.CreateAsync(msg.Payload.EntityData.ToEntity().With(e => e.LastMessageSyncDate = msg.CreatedUtcDate));
+        else if (existing.LastMessageSyncDate <= msg.CreatedUtcDate)
+            await repository.UpdateAsync(msg.Payload.EntityData.UpdateEntity(existing).With(e => e.LastMessageSyncDate = msg.CreatedUtcDate));
+    }
+}
+```
+
+### Background Jobs
+
+```csharp
+// Paged job
 [PlatformRecurringJob("0 3 * * *")]
-public sealed class PagedJob : PlatformApplicationPagedBackgroundJobExecutor
+public sealed class SimpleJob : PlatformApplicationPagedBackgroundJobExecutor
 {
     protected override int PageSize => 50;
-    protected override async Task ProcessPagedAsync(int? skip, int? take, object? p, IServiceProvider sp, IPlatformUnitOfWorkManager uow)
-        => await repo.GetAllAsync(q => Query(q).PageBy(skip, take)).Then(items => items.ParallelAsync(Process));
-    protected override async Task<int> MaxItemsCount(PlatformApplicationPagedBackgroundJobParam<object?> p) => await repo.CountAsync(Query);
+    protected override async Task ProcessPagedAsync(int? skip, int? take, object? param, IServiceProvider sp, IPlatformUnitOfWorkManager uow)
+        => await repository.GetAllAsync(q => QueryBuilder(q).PageBy(skip, take)).Then(items => items.ParallelAsync(ProcessItem));
+    protected override async Task<int> MaxItemsCount(PlatformApplicationPagedBackgroundJobParam<object?> param)
+        => await repository.CountAsync(q => QueryBuilder(q));
 }
 
+// Batch scrolling job
 [PlatformRecurringJob("0 0 * * *")]
 public sealed class BatchJob : PlatformApplicationBatchScrollingBackgroundJobExecutor<Entity, string>
 {
     protected override int BatchKeyPageSize => 50;
     protected override int BatchPageSize => 25;
-    protected override IQueryable<Entity> EntitiesQueryBuilder(IQueryable<Entity> q, object? p, string? k) => q.WhereIf(k != null, e => e.CompanyId == k);
-    protected override IQueryable<string> EntitiesBatchKeyQueryBuilder(IQueryable<Entity> q, object? p, string? k) => EntitiesQueryBuilder(q, p, k).Select(e => e.CompanyId).Distinct();
-    protected override async Task ProcessEntitiesAsync(List<Entity> e, string k, object? p, IServiceProvider sp) => await e.ParallelAsync(Process);
+    protected override IQueryable<Entity> EntitiesQueryBuilder(IQueryable<Entity> q, object? param, string? batchKey = null)
+        => q.Where(BaseFilter()).WhereIf(batchKey != null, e => e.CompanyId == batchKey);
+    protected override IQueryable<string> EntitiesBatchKeyQueryBuilder(IQueryable<Entity> q, object? param, string? batchKey = null)
+        => EntitiesQueryBuilder(q, param, batchKey).Select(e => e.CompanyId).Distinct();
+    protected override async Task ProcessEntitiesAsync(List<Entity> entities, string batchKey, object? param, IServiceProvider sp)
+        => await entities.ParallelAsync(e => ProcessEntity(e), maxConcurrent: 1);
 }
 
-// Scrolling pattern (data affected by processing, always queries from start)
-public override async Task ProcessAsync(Param p) => await UnitOfWorkManager.ExecuteInjectScopedScrollingPagingAsync<Entity>(
-    ExecutePaged, await repo.CountAsync(q => Query(q, p)) / PageSize, p, PageSize);
-
-// Job coordination (master schedules child jobs)
-await companies.ParallelAsync(async cId => await DateRangeBuilder.BuildDateRange(start, end).ParallelAsync(date =>
-    BackgroundJobScheduler.Schedule<ChildJob, Param>(Clock.UtcNow, new Param { CompanyId = cId, Date = date })));
+// Cron examples
+[PlatformRecurringJob("0 0 * * *")]              // Daily midnight
+[PlatformRecurringJob("*/5 * * * *")]            // Every 5 min
+[PlatformRecurringJob("5 0 * * *", executeOnStartUp: true)]  // Daily + startup
 ```
 
-### 14. Message Bus Consumer
+### Data Migration
 
 ```csharp
-internal sealed class EntityConsumer : PlatformApplicationMessageBusConsumer<EntityEventBusMessage>
+// EF Core migration
+public partial class AddSnippetFields : Migration
 {
-    public override async Task<bool> HandleWhen(EntityEventBusMessage m, string r) => true;
-    public override async Task HandleLogicAsync(EntityEventBusMessage m, string r)
-    {
-        if (m.Payload.CrudAction == Created || (m.Payload.CrudAction == Updated && !m.Payload.EntityData.IsDeleted))
-        {
-            var (companyMissing, userMissing) = await (
-                Util.TaskRunner.TryWaitUntilAsync(() => companyRepo.AnyAsync(c => c.Id == m.Payload.EntityData.CompanyId), maxWaitSeconds: 300).Then(p => !p),
-                Util.TaskRunner.TryWaitUntilAsync(() => userRepo.AnyAsync(u => u.Id == m.Payload.EntityData.UserId), maxWaitSeconds: 300).Then(p => !p));
-            if (companyMissing || userMissing) return;
-
-            var existing = await repo.FirstOrDefaultAsync(e => e.Id == m.Payload.EntityData.Id);
-            if (existing == null) await repo.CreateAsync(m.Payload.EntityData.ToEntity().With(e => e.LastSyncDate = m.CreatedUtcDate));
-            else if (existing.LastSyncDate <= m.CreatedUtcDate) await repo.UpdateAsync(m.Payload.EntityData.UpdateEntity(existing).With(e => e.LastSyncDate = m.CreatedUtcDate));
-        }
-        if (m.Payload.CrudAction == Deleted) await repo.DeleteAsync(m.Payload.EntityData.Id);
-    }
+    protected override void Up(MigrationBuilder mb) { mb.AddColumn<string>("Category", "TextSnippets"); }
 }
-```
+// Commands: dotnet ef migrations add Name | dotnet ef database update
 
-### 15. Data Migration
-
-```csharp
+// MongoDB/Platform migration (SQL Server/PostgreSQL)
 public class MigrateData : PlatformDataMigrationExecutor<DbContext>
 {
-    public override string Name => "20251022_MigrateData";
+    public override string Name => "20251022000000_MigrateData";
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 22);
     public override bool AllowRunInBackgroundThread => true;
 
-    public override async Task Execute(DbContext db)
+    public override async Task Execute(DbContext dbContext)
     {
-        var qb = repo.GetQueryBuilder(q => q.Where(Filter()));
-        await RootServiceProvider.ExecuteInjectScopedPagingAsync(await repo.CountAsync(q => qb(q)), 200, ExecutePage, qb);
-    }
-
-    static async Task<List<Entity>> ExecutePage(int skip, int take, Func<IQueryable<Entity>, IQueryable<Entity>> qb, IRepo<Entity> r, IPlatformUnitOfWorkManager u)
-    {
-        using var uow = u.Begin();
-        var items = await r.GetAllAsync(q => qb(q).OrderBy(e => e.Id).Skip(skip).Take(take));
-        await r.UpdateManyAsync(items, dismissSendEvent: true, checkDiff: false, ct: default);
-        await uow.CompleteAsync();
-        return items;
+        await RootServiceProvider.ExecuteInjectScopedPagingAsync(
+            maxItemCount: await repository.CountAsync(q => q.Where(FilterExpr())),
+            pageSize: 200,
+            async (skip, take, repo, uow) => {
+                using var unit = uow.Begin();
+                var items = await repo.GetAllAsync(q => q.OrderBy(e => e.Id).Skip(skip).Take(take));
+                await repo.UpdateManyAsync(items, dismissSendEvent: true, checkDiff: false);
+                await unit.CompleteAsync();
+                return items;
+            });
     }
 }
+
+// MongoDB migration (for MongoDB databases)
+internal sealed class EnsureIndexesMigration : PlatformMongoMigrationExecutor<ServiceDbContext>
+{
+    public override string Name => "20250130000000_EnsureIndexes";
+    public override DateTime? OnlyForDbInitBeforeDate => new(2025, 01, 30);
+    public override DateTime? ExpirationDate => new(2026, 01, 01); // Optional: auto-delete after date
+
+    public override async Task Execute(ServiceDbContext dbContext)
+    {
+        await dbContext.EnsureInboxBusMessageCollectionIndexesAsync(true);
+        await dbContext.EnsureOutboxBusMessageCollectionIndexesAsync(true);
+    }
+}
+```
+
+### Fluent Helpers
+
+```csharp
+// Mutation & transformation
+await repo.GetByIdAsync(id).With(e => e.Name = newName).WithIf(cond, e => e.Status = Active);
+await repo.GetByIdAsync(id).Then(e => e.Process()).ThenAsync(e => e.ValidateAsync(svc, ct));
+await repo.GetByIdAsync(id).EnsureFound($"Not found: {id}");
+await repo.GetByIdsAsync(ids, ct).EnsureFoundAllBy(x => x.Id, ids);
+
+// Expression composition
+Entity.OfCompanyExpr(companyId).AndAlso(StatusExpr(statuses)).AndAlsoIf(deptIds.Any(), () => DeptExpr(deptIds));
+
+// Parallel operations
+var (entity, files) = await (repo.CreateOrUpdateAsync(entity, ct), files.ParallelAsync(f => fileService.UploadAsync(f, ct)));
+var ids = await repo.GetByIdsAsync(ids, ct).ThenSelect(e => e.Id);
+await items.ParallelAsync(item => ProcessAsync(item, ct), maxConcurrent: 10);
+
+// Conditional actions
+await repo.GetByIdAsync(id).PipeActionIf(cond, e => e.Update()).PipeActionAsyncIf(() => svc.Any(), e => e.Sync());
+
+// Task extensions
+task.WaitResult();
+await target.WaitUntilGetValidResultAsync(t => repo.GetByIdAsync(t.Id), r => r != null, maxWaitSeconds: 30);
+```
+
+### Authorization & Controller
+
+```csharp
+[ApiController]
+[Route("api/[controller]")]
+public class TextSnippetController : PlatformBaseController
+{
+    [PlatformAuthorize(PlatformRoles.Admin, PlatformRoles.Manager)]
+    [HttpPost]
+    public async Task<IActionResult> Save([FromBody] SaveCommand cmd) => Ok(await Cqrs.SendAsync(cmd));
+}
+
+// Entity-level filter
+public static Expression<Func<TextSnippet, bool>> UserCanAccessExpr(string userId, string companyId)
+    => e => e.UserId == userId || (e.CompanyId == companyId && e.IsPublic);
+```
+
+### Helper vs Util
+
+```csharp
+// Helper (with dependencies)
+public class TextSnippetHelper : IPlatformHelper
+{
+    private readonly IPlatformApplicationRequestContext requestContext;
+    public TextSnippetHelper(IPlatformApplicationRequestContextAccessor accessor) { requestContext = accessor.Current; }
+    public async Task<TextSnippet> GetOrCreateAsync(string userId, string companyId, CancellationToken ct)
+        => await repo.FirstOrDefaultAsync(TextSnippet.UniqueExpr(userId, companyId), ct) ?? await CreateAsync(userId, companyId, ct);
+}
+
+// Util (pure functions)
+public static class TextSnippetUtil
+{
+    public static string GetFullName(TextSnippet e) => $"{e.FirstName} {e.LastName}".Trim();
+    public static bool IsActive(TextSnippet e) => e.Status == Active && !e.ExpirationDate.HasValue;
+}
+```
+
+### Request Context
+
+```csharp
+RequestContext.CurrentCompanyId() / .UserId() / .ProductScope()
+await RequestContext.CurrentUser()
+RequestContext.HasRequestAdminRoleInCompany()
+```
+
+### List Extensions
+
+```csharp
+.IsNullOrEmpty() / .IsNotNullOrEmpty()
+.RemoveWhere(predicate, out removedItems)
+.UpsertBy(keySelector, items, updateFn)
+.ReplaceBy(keySelector, newItems, updateFn)
+.SelectList(selector)  // Select().ToList()
+.ThenSelect(selector)  // For Task<List<T>>
+.ForEachAsync(action, maxConcurrent)
+.AddDistinct(item, keySelector)
+```
+
+### Advanced Patterns
+
+```csharp
+// Object deep comparison (change detection)
+if (propertyInfo.GetValue(entity).IsValuesDifferent(propertyInfo.GetValue(existingEntity)))
+    entity.AddFieldUpdatedEvent(propertyInfo, oldValue, newValue);
+
+// Domain Service (Strategy pattern)
+public static class PermissionService {
+    private static readonly Dictionary<string, IRoleBasedPermissionCheckHandler> RoleHandlers = ...;
+    public static Expression<Func<TextSnippet, bool>> GetCanManageExpr(IList<string> roles)
+        => roles.Aggregate(e => false, (expr, role) => expr.OrElse(RoleHandlers[role].GetExpr()));
+}
+
+// Background Job Coordination (Master schedules child jobs)
+await companies.ParallelAsync(async companyId =>
+    await DateRangeBuilder.BuildDateRange(start, end).ParallelAsync(date =>
+        BackgroundJobScheduler.Schedule<ChildJob, Param>(Clock.UtcNow, new Param { CompanyId = companyId, Date = date })));
 ```
 
 ---
 
-## Frontend Patterns
+## Frontend (TypeScript)
 
-### 1. Component Hierarchy
-
-```typescript
-PlatformComponent → PlatformVmComponent → PlatformFormComponent
-                  → PlatformVmStoreComponent
-
-AppBaseComponent → AppBaseVmComponent → AppBaseFormComponent
-                 → AppBaseVmStoreComponent
-
-FeatureComponent extends AppBaseVmStoreComponent<State, Store>
-```
-
-### 2. Platform Component API
+### Component Hierarchy
 
 ```typescript
-// PlatformComponent
-status$: WritableSignal<'Pending'|'Loading'|'Success'|'Error'>;
-observerLoadingErrorState<T>(key?: string): OperatorFunction<T, T>;
-isLoading$(key?: string): Signal<boolean | null>;
-untilDestroyed<T>(): MonoTypeOperatorFunction<T>;
-tapResponse<T>(next?, error?, complete?): OperatorFunction<T, T>;
+PlatformComponent -> PlatformVmComponent -> PlatformFormComponent
+                  -> PlatformVmStoreComponent
 
-// PlatformVmComponent
-vm: WritableSignal<T | undefined>;
-currentVm(): T;
-updateVm(partial): T;
-abstract initOrReloadVm: (isReload: boolean) => Observable<T | undefined>;
-
-// PlatformVmStoreComponent
-constructor(public store: TStore) {}
-vm: Signal<T | undefined>;
-reload(): void;
-
-// PlatformFormComponent
-form: FormGroup<PlatformFormGroupControls<T>>;
-mode: 'create'|'update'|'view';
-validateForm(): boolean;
-abstract initialFormConfig: () => PlatformFormConfig<T>;
+AppBaseComponent -> AppBaseVmComponent -> AppBaseFormComponent
+                 -> AppBaseVmStoreComponent
 ```
 
-### 3. Component Usage
+## Component HTML Template Standard (BEM Classes)
 
-```typescript
-// PlatformComponent
-export class ListComponent extends PlatformComponent {
-    load() {
-        this.api
-            .get()
-            .pipe(
-                this.observerLoadingErrorState('load'),
-                this.tapResponse(d => (this.data = d)),
-                this.untilDestroyed()
-            )
-            .subscribe();
-    }
-}
+**All UI elements in component templates MUST have BEM classes, even without styling needs.** This makes HTML self-documenting like OOP class hierarchy.
 
-// PlatformVmStore
-@Injectable()
-export class MyStore extends PlatformVmStore<MyVm> {
-    loadData = this.effectSimple(() => this.api.get().pipe(this.tapResponse(d => this.updateState({ data: d }))));
-    readonly data$ = this.select(s => s.data);
-}
+```html
+<!-- CORRECT: All elements have BEM classes for structure clarity -->
+<div class="snippet-card">
+    <div class="snippet-card__header">
+        <img class="snippet-card__icon" [src]="snippet.icon" />
+        <span class="snippet-card__title">{{ snippet.title }}</span>
+    </div>
+    <div class="snippet-card__body">
+        <p class="snippet-card__content">{{ snippet.content }}</p>
+        <div class="snippet-card__actions">
+            <button class="snippet-card__btn --primary">Edit</button>
+        </div>
+    </div>
+</div>
 
-// PlatformVmStoreComponent
-export class ListComponent extends PlatformVmStoreComponent<MyVm, MyStore> {
-    constructor(store: MyStore) {
-        super(store);
-    }
-    refresh() {
-        this.reload();
-    }
-}
-
-// PlatformFormComponent
-export class FormComponent extends AppBaseFormComponent<FormVm> {
-    protected initialFormConfig = () => ({
-        controls: { email: new FormControl(this.currentVm().email, [Validators.required], [ifAsyncValidator(() => !this.isViewMode, uniqueValidator)]) },
-        dependentValidations: { email: ['name'] }
-    });
-    submit() {
-        if (this.validateForm()) {
-            /* save */
-        }
-    }
-}
+<!-- WRONG: Elements without classes - harder to understand structure -->
+<div class="snippet-card">
+    <div>
+        <img [src]="snippet.icon" />
+        <span>{{ snippet.title }}</span>
+    </div>
+    <div>
+        <p>{{ snippet.content }}</p>
+        <div>
+            <button>Edit</button>
+        </div>
+    </div>
+</div>
 ```
 
-### 4. API Service
+**BEM Naming Convention:**
 
-```typescript
-@Injectable({ providedIn: 'root' })
-export class EntityApiService extends PlatformApiService {
-    protected get apiUrl() {
-        return environment.apiUrl + '/api/Entity';
-    }
-    getAll(q?: Query): Observable<Entity[]> {
-        return this.get('', q);
-    }
-    save(cmd: SaveCmd): Observable<Result> {
-        return this.post('', cmd);
-    }
-    search(c: Search): Observable<Entity[]> {
-        return this.post('/search', c, { enableCache: true });
-    }
-}
-```
+-   **Block**: Component name (e.g., `snippet-card`)
+-   **Element**: Child using `block__element` (e.g., `snippet-card__header`)
+-   **Modifier**: Separate class with `--` prefix (e.g., `snippet-card__btn --primary --large`)
 
-### 5. FormArray
-
-```typescript
-protected initialFormConfig = () => ({
-  controls: {
-    items: { modelItems: () => vm.items, itemControl: (i, idx) => new FormGroup({ name: new FormControl(i.name, [Validators.required]) }) }
-  }
-});
-```
-
-### 6. Component SCSS Standard
+## Component SCSS Standard
 
 Always style both the **host element** (Angular selector) and the **main wrapper class**:
 
@@ -783,21 +792,22 @@ Always style both the **host element** (Angular selector) and the **main wrapper
 @import '~assets/scss/variables';
 
 // Host element styling - ensures Angular element is a proper block container
-app-entity-list {
+my-component {
     display: flex;
     flex-direction: column;
 }
 
 // Main wrapper class with full styling
-.entity-list {
+.my-component {
     display: flex;
     flex-direction: column;
     width: 100%;
     flex-grow: 1;
 
     &__header {
-        /* BEM child elements */
+        // BEM child elements...
     }
+
     &__content {
         flex: 1;
         overflow-y: auto;
@@ -805,183 +815,255 @@ app-entity-list {
 }
 ```
 
-**Why both?** Host element makes Angular element a real layout element; main class contains full styling matching the wrapper div.
+**Why both?**
 
-### BEM Naming Convention (MANDATORY)
+-   **Host element**: Makes the Angular element a real layout element (not an unknown element without display)
+-   **Main class**: Contains the full styling, matches the wrapper div in HTML
 
-**CRITICAL:** Every UI element in a component template MUST have a BEM class (`block__element`), even if it doesn't need special styling. This follows OOP principles for readability.
+### Platform Component API
 
-**BEM Structure:** `block` → `block__element` → `block__element --modifier1 --modifier2`
+```typescript
+export abstract class PlatformComponent {
+  status$: WritableSignal<ComponentStateStatus>;
+  observerLoadingErrorState<T>(requestKey?: string): OperatorFunction<T, T>;
+  isLoading$(requestKey?: string): Signal<boolean | null>;
+  untilDestroyed<T>(): MonoTypeOperatorFunction<T>;
+  tapResponse<T>(nextFn?, errorFn?): OperatorFunction<T, T>;
+}
 
-**Modifier Convention - Use space-separated `--modifier` classes:**
+export abstract class PlatformVmComponent<TViewModel> extends PlatformComponent {
+  vm: WritableSignal<TViewModel | undefined>;
+  currentVm(): TViewModel;
+  updateVm(partial): TViewModel;
+  protected abstract initOrReloadVm: (isReload: boolean) => Observable<TViewModel | undefined>;
+}
 
-```html
-<!-- ✅ CORRECT: Space-separated modifiers -->
-<button class="user-card__btn --primary --large">Save</button>
+export abstract class PlatformVmStoreComponent<TViewModel, TStore> extends PlatformComponent {
+  constructor(public store: TStore) {}
+  vm: Signal<TViewModel | undefined>;
+  reload(): void;
+}
 
-<!-- ❌ WRONG: Suffix-style modifiers -->
-<button class="user-card__btn--primary user-card__btn--large">Save</button>
+export abstract class PlatformFormComponent<TViewModel> extends PlatformVmComponent<TViewModel> {
+  form: FormGroup<PlatformFormGroupControls<TViewModel>>;
+  mode: PlatformFormMode;
+  isViewMode/isCreateMode/isUpdateMode(): boolean;
+  validateForm(): boolean;
+  protected abstract initialFormConfig: () => PlatformFormConfig<TViewModel>;
+}
 ```
 
-```scss
-.user-card {
-    &__btn {
-        &.--primary {
-            background: $primary-color;
-        }
-        &.--large {
-            padding: 1rem 2rem;
-        }
+### Component Usage
+
+```typescript
+export class SnippetListComponent extends PlatformComponent {
+    loadSnippets() {
+        this.snippetService
+            .getSnippets()
+            .pipe(
+                this.observerLoadingErrorState('loadSnippets'),
+                this.tapResponse(snippets => (this.snippets = snippets)),
+                this.untilDestroyed()
+            )
+            .subscribe();
+    }
+}
+
+export class SnippetListStore extends PlatformVmStore<SnippetListVm> {
+    loadSnippets = this.effectSimple(() => this.api.getSnippets().pipe(this.tapResponse(snippets => this.updateState({ snippets }))));
+    readonly snippets$ = this.select(state => state.snippets);
+}
+
+export class SnippetListComponent extends AppBaseVmStoreComponent<SnippetListVm, SnippetListStore> {
+    constructor(store: SnippetListStore) {
+        super(store);
+    }
+    onRefresh() {
+        this.reload();
     }
 }
 ```
 
-### 7. Advanced Frontend
+### Form Component
 
 ```typescript
-// @Watch decorator
-@Watch('onChanged') public data?: Data;
-@WatchWhenValuesDiff('search') public term = '';
-private onChanged(v: Data, c: SimpleChange<Data>) { if (!c.isFirstTimeSet) this.update(); }
+export class SnippetFormComponent extends AppBaseFormComponent<SnippetFormVm> {
+  protected initialFormConfig = () => ({
+    controls: {
+      title: new FormControl(this.currentVm().title, [Validators.required],
+        [ifAsyncValidator(() => !this.isViewMode, checkTitleUniqueValidator(...))])
+    },
+    dependentValidations: { title: ['content'] }
+  });
+  onSubmit() { if (this.validateForm()) { /* process */ } }
+}
 
-// RxJS operators
-this.search$.pipe(skipDuplicates(500), applyIf(this.enabled$, debounceTime(300)), tapOnce({ next: v => this.init(v) }), distinctUntilObjectValuesChanged(), this.untilDestroyed()).subscribe();
+// FormArray
+protected initialFormConfig = () => ({
+  controls: {
+    tags: {
+      modelItems: () => vm.tags,
+      itemControl: (tag) => new FormGroup({ name: new FormControl(tag.name, [Validators.required]) })
+    }
+  }
+});
+```
 
-// Form validators
-new FormControl('', [Validators.required, noWhitespaceValidator, startEndValidator('err', c => c.parent?.get('start')?.value, c => c.value)], [ifAsyncValidator(c => c.valid, uniqueValidator)]);
+### API Service
 
-// Utilities
-import { date_format, date_addDays, date_timeDiff, list_groupBy, list_distinctBy, list_sortBy, string_isEmpty, string_truncate, dictionary_map, dictionary_filter, immutableUpdate, deepClone, removeNullProps, guid_generate, task_delay, task_debounce } from '@libs/platform-core';
-
-// Module import
-import { PlatformCoreModule } from '@libs/platform-core';
-@NgModule({ imports: [PlatformCoreModule] })
-
-// Platform Directives
-<div platformSwipeToScroll>/* Horizontal scroll with drag */</div>
-<input [platformDisabledControl]="isDisabled" />
-
-// PlatformComponent APIs
-trackByItem = this.ngForTrackByItemProp<User>('id');
-trackByList = this.ngForTrackByImmutableList(this.users);
-storeSubscription('dataLoad', this.data$.subscribe(...));
-cancelStoredSubscription('dataLoad');
-isLoading$('req1'); isLoading$('req2');
-getAllErrorMsgs$(['req1', 'req2']);
-loadingRequestsCount(); reloadingRequestsCount();
-protected get devModeCheckLoadingStateElement() { return '.spinner'; }
-protected get devModeCheckErrorStateElement() { return '.error'; }
-
-// Store with caching
-@Injectable()
-export class MyStore extends PlatformVmStore<MyVm> {
-  protected get enableCaching() { return true; }
-  protected cachedStateKeyName = () => 'MyStore';
-  protected vmConstructor = (d?: Partial<MyVm>) => new MyVm(d);
-  protected beforeInitVm = () => this.loadInitialData();
-  loadData = this.effectSimple(() => this.api.get().pipe(this.observerLoadingErrorState('load'), this.tapResponse(d => this.updateState({ data: d }))));
+```typescript
+@Injectable({ providedIn: 'root' })
+export class TextSnippetApiService extends PlatformApiService {
+    protected get apiUrl() {
+        return environment.apiUrl + '/api/TextSnippet';
+    }
+    getSnippets(query?: Query): Observable<TextSnippet[]> {
+        return this.get<TextSnippet[]>('', query);
+    }
+    saveSnippet(cmd: SaveCommand): Observable<Result> {
+        return this.post<Result>('', cmd);
+    }
+    search(criteria: Search): Observable<TextSnippet[]> {
+        return this.post('/search', criteria, { enableCache: true });
+    }
 }
 ```
 
----
-
-## Authorization
-
-```csharp
-// Controller
-[PlatformAuthorize(PlatformRoles.Admin, PlatformRoles.Manager)]
-[HttpPost] public async Task<IActionResult> Save([FromBody] Cmd c) => Ok(await Cqrs.SendAsync(c));
-
-// Handler validation
-protected override async Task<PlatformValidationResult<T>> ValidateRequestAsync(...)
-    => await v.AndNotAsync(_ => !RequestContext.HasRole(PlatformRoles.Admin), "Admin only")
-              .AndAsync(_ => repo.AnyAsync(e => e.CompanyId == RequestContext.CurrentCompanyId()), "Same company");
-
-// Entity filter
-public static Expression<Func<E, bool>> AccessExpr(string userId, string companyId) => e => e.UserId == userId || (e.CompanyId == companyId && e.IsPublic);
-```
+### Watch Decorator & RxJS
 
 ```typescript
-// Component
-get canEdit() { return this.hasRole(PlatformRoles.Admin) && this.isOwnCompany(); }
+export class MyComponent {
+    @Watch('onChanged') public pagedResult?: PagedResult<Item>;
+    @WatchWhenValuesDiff('search') public searchTerm: string = '';
 
-// Template
+    private onChanged(value: PagedResult<Item>, change: SimpleChange<PagedResult<Item>>) {
+        if (!change.isFirstTimeSet) this.updateUI();
+    }
+}
+
+this.search$
+    .pipe(
+        skipDuplicates(500),
+        applyIf(this.isEnabled$, debounceTime(300)),
+        onCancel(() => this.cleanup()),
+        tapOnce({ next: v => this.init(v) }),
+        distinctUntilObjectValuesChanged(),
+        this.untilDestroyed()
+    )
+    .subscribe();
+```
+
+### Form Validators
+
+```typescript
+new FormControl(
+    '',
+    [
+        Validators.required,
+        noWhitespaceValidator,
+        startEndValidator(
+            'invalidRange',
+            ctrl => ctrl.parent?.get('start')?.value,
+            ctrl => ctrl.value
+        )
+    ],
+    [ifAsyncValidator(ctrl => ctrl.valid, titleUniqueValidator)]
+);
+```
+
+### Store with Caching
+
+```typescript
+@Injectable()
+export class MyStore extends PlatformVmStore<MyVm> {
+    protected get enableCaching() {
+        return true;
+    }
+    protected cachedStateKeyName = () => 'MyStore';
+    protected vmConstructor = (data?: Partial<MyVm>) => new MyVm(data);
+
+    loadData = this.effectSimple(() => this.api.getData().pipe(this.tapResponse(data => this.updateState({ data }))), 'loadData');
+    readonly data$ = this.select(state => state.data);
+    readonly loading$ = this.isLoading$('loadData');
+}
+```
+
+### Authorization
+
+```typescript
+export class SnippetFormComponent extends AppBaseFormComponent<SnippetFormVm> {
+  get canEdit() { return this.hasRole(PlatformRoles.Admin, PlatformRoles.Manager) && this.isOwnCompany(); }
+}
 @if (hasRole(PlatformRoles.Admin)) { <button (click)="delete()">Delete</button> }
-
-// Route guard
 canActivate(): Observable<boolean> { return this.authService.hasRole$(PlatformRoles.Admin); }
 ```
 
----
+### Platform Directives
 
-## Migration
+```typescript
+<div platformSwipeToScroll>/* Horizontal scroll with drag */</div>
+<input [platformDisabledControl]="isDisabled" />
+```
 
-```csharp
-// EF Core
-public partial class AddField : Migration { protected override void Up(MigrationBuilder m) { m.AddColumn<string>("Dept", "Employees"); } }
+### Utilities
 
-// MongoDB
-public class MigrateData : PlatformMongoMigrationExecutor<ServiceDbContext>
-{
-    public override string Name => "20240115_Migrate";
-    public override async Task Execute() => await RootServiceProvider.ExecuteInjectScopedPagingAsync(await repo.CountAsync(q => q.Where(...)), 200,
-        async (skip, take, r, u) => { var items = await r.GetAllAsync(q => q.Skip(skip).Take(take)); await r.UpdateManyAsync(items, dismissSendEvent: true); return items; });
-}
+```typescript
+import { date_addDays, list_groupBy, string_isEmpty, immutableUpdate, guid_generate, task_delay } from '@libs/platform-core';
 
-// Cross-DB migration (first-time setup, use events for ongoing sync)
-public class SyncData : PlatformDataMigrationExecutor<TargetDbContext>
-{
-    public override DateTime? OnlyForDbsCreatedBeforeDate => new(2024, 1, 15);
-    public override async Task Execute(TargetDbContext db) => await targetRepo.CreateManyAsync(
-        (await sourceDbContext.Entities.Where(e => e.CreatedDate < cutoffDate).ToListAsync()).Select(e => e.MapToTargetEntity()));
-}
+trackByItem = this.ngForTrackByItemProp<Snippet>('id');
+storeSubscription('dataLoad', this.data$.subscribe(...));
+cancelStoredSubscription('dataLoad');
 ```
 
 ---
 
-## Helper vs Util
+## Infrastructure
 
-```csharp
-// Helper (with dependencies)
-public class EntityHelper { private readonly IRepo<E> repo; public async Task<E> GetOrCreateAsync(string code, CancellationToken ct) => await repo.FirstOrDefaultAsync(t => t.Code == code, ct) ?? await CreateAsync(code, ct); }
+### VS Code Extensions
 
-// Util (pure functions)
-public static class EntityUtil { public static string FullName(E e) => $"{e.First} {e.Last}".Trim(); public static bool IsActive(E e) => e.Status == Active; }
+```json
+{
+    "recommendations": [
+        "angular.ng-template",
+        "esbenp.prettier-vscode",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit",
+        "nrwl.angular-console",
+        "dbaeumer.vscode-eslint",
+        "firsttris.vscode-jest-runner",
+        "sonarsource.sonarlint-vscode",
+        "eamodio.gitlens",
+        "streetsidesoftware.code-spell-checker"
+    ]
+}
 ```
 
----
+### Commands
 
-## Advanced Backend
+```bash
+# Backend
+dotnet build EasyPlatform.sln
+dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
 
-```csharp
-.IsNullOrEmpty() / .IsNotNullOrEmpty() / .RemoveWhere(pred, out removed) / .UpsertBy(key, items, update) / .SelectList(sel) / .ThenSelect(sel) / .ParallelAsync(fn, max) / .AddDistinct(item, key)
+# Frontend
+cd src/PlatformExampleAppWeb
+npm install
+nx serve playground-text-snippet
+nx build playground-text-snippet
+nx test platform-core
 
-var entity = dto.NotHasSubmitId() ? dto.MapToNewEntity().With(e => e.CreatedBy = RequestContext.UserId()) : await repo.GetByIdAsync(dto.Id, ct).Then(x => dto.UpdateToEntity(x));
+# Infrastructure
+docker-compose -f src/platform-example-app.docker-compose.yml up -d
+```
 
-RequestContext.CurrentCompanyId() / .UserId() / .ProductScope() / .HasRequestAdminRoleInCompany()
+### Database Connections
 
-var (a, b, c) = await (repo1.GetAllAsync(...), repo2.GetAllAsync(...), repo3.GetAllAsync(...));
-
-public sealed class Helper : IPlatformHelper { private readonly IPlatformApplicationRequestContext ctx; public Helper(IPlatformApplicationRequestContextAccessor a) { ctx = a.Current; } }
-
-.With(e => e.Name = x).PipeActionIf(cond, e => e.Update()).PipeActionAsyncIf(async () => await svc.Any(), async e => await e.Sync())
-
-public static Expression<Func<E, bool>> ComplexExpr(int s, string c, int? m) => BaseExpr(s, c).AndAlso(e => e.User!.IsActive).AndAlsoIf(m != null, () => e => e.Start <= Clock.UtcNow.AddMonths(-m!.Value));
-
-// Domain Service Pattern (strategy for permissions)
-public static class PermissionService {
-    static readonly Dictionary<string, IRoleBasedPermissionCheckHandler> RoleHandlers = ...;
-    public static Expression<Func<E, bool>> GetCanManageExpr(IList<string> roles) => roles.Aggregate(e => false, (expr, role) => expr.OrElse(RoleHandlers[role].GetExpr()));
-}
-
-// Object Deep Comparison
-if (prop.GetValue(entity).IsValuesDifferent(prop.GetValue(existing))) entity.AddFieldUpdatedEvent(prop, oldVal, newVal);
-
-// Task Extensions
-task.WaitResult();  // NOT task.Wait() - preserves stack trace
-await target.WaitUntilGetValidResultAsync(t => repo.GetByIdAsync(t.Id), r => r != null, maxWaitSeconds: 30);
-.ThenGetWith(selector)  // Returns (T, T1)
-.ThenIfOrDefault(condition, nextTask, defaultValue)
+```
+SQL Server:  localhost,14330  (sa / 123456Abc)
+MongoDB:     localhost:27017  (root / rootPassXXX)
+PostgreSQL:  localhost:54320  (postgres / postgres)
+Redis:       localhost:6379
+RabbitMQ:    localhost:15672  (guest / guest)
 ```
 
 ---
@@ -989,70 +1071,14 @@ await target.WaitUntilGetValidResultAsync(t => repo.GetByIdAsync(t.Id), r => r !
 ## Anti-Patterns
 
 ```csharp
-// ❌ Direct cross-service DB access → ✅ Use message bus
-// ❌ Custom repository interface → ✅ Use platform repo + extensions
-// ❌ Manual validation throw → ✅ Use PlatformValidationResult fluent API
-// ❌ Side effects in handler → ✅ Use entity event handlers
-// ❌ DTO mapping in handler → ✅ DTO owns mapping via MapToObject()/MapToEntity()
-
-// ✅ Correct DTO mapping
-public sealed class ConfigDto : PlatformDto<ConfigValue> { public override ConfigValue MapToObject() => new() { ClientId = ClientId }; }
-var config = req.Config.MapToObject().With(p => p.Secret = encrypt(p.Secret));
+// Direct cross-service DB access -> Use message bus
+// Custom repository interfaces -> Use platform repos with extensions
+// throw new ValidationException() -> Use PlatformValidationResult fluent API
+// Side effects in command handler -> Use entity event handlers
+// DTO mapping in handler -> Use PlatformDto.MapToObject()
 ```
 
 ```typescript
-// ❌ Direct HttpClient → ✅ Extend PlatformApiService
-// ❌ Manual signals → ✅ Use PlatformVmStore
-// ❌ Missing untilDestroyed() → ✅ Always use .pipe(this.untilDestroyed())
-```
-
----
-
-## Code Responsibility Hierarchy (CRITICAL)
-
-**Place logic in the LOWEST appropriate layer to enable reuse and prevent duplication:**
-
-```
-Entity/Model (Lowest)  →  Service  →  Component (Highest)
-```
-
-| Layer            | Responsibility                                                                                              |
-| ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Entity/Model** | Business logic, display helpers, static factory methods, default values, dropdown options, validation rules |
-| **Service**      | API calls, command factories, data transformation                                                           |
-| **Component**    | UI event handling ONLY - delegates all logic to lower layers                                                |
-
-**Anti-Pattern**: Logic in component that should be in model → leads to duplicated code across components.
-
-```typescript
-// ❌ WRONG: Logic in component
-readonly providerTypes = [{ value: 1, label: 'ITViec' }, ...]; // Duplicated if another component needs it
-
-// ✅ CORRECT: Logic in entity/model
-readonly providerTypes = JobBoardProviderConfiguration.getApiProviderTypeOptions(); // Single source of truth
-```
-
----
-
-## Templates
-
-```csharp
-public sealed class Save{E}Command : PlatformCqrsCommand<Save{E}CommandResult> { public string Name { get; set; } = ""; public override PlatformValidationResult<IPlatformCqrsRequest> Validate() => base.Validate().And(_ => Name.IsNotNullOrEmpty(), "Required"); }
-internal sealed class Save{E}CommandHandler : PlatformCqrsCommandApplicationHandler<Save{E}Command, Save{E}CommandResult> { protected override async Task<Save{E}CommandResult> HandleAsync(Save{E}Command r, CancellationToken ct) { /* impl */ } }
-```
-
-```typescript
-@Component({ selector: 'app-{e}-list', template: `<app-loading [target]="this">@if (vm(); as vm) { @for (i of vm.items; track i.id) { <div>{{i.name}}</div> } }</app-loading>`, providers: [{E}Store] })
-export class {E}Component extends AppBaseVmStoreComponent<{E}State, {E}Store> { ngOnInit() { this.store.load(); } }
-```
-
----
-
-## Commands
-
-```bash
-dotnet build EasyPlatform.sln
-dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
-cd src/PlatformExampleAppWeb && npm install && nx serve playground-text-snippet
-docker-compose -f src/platform-example-app.docker-compose.yml up -d
+// constructor(private http: HttpClient) -> Use PlatformApiService
+// Manual signals for state -> Use PlatformVmStore
 ```

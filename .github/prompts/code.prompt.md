@@ -1,189 +1,100 @@
 ---
-description: "Code implementation workflow with planning and verification"
+agent: 'agent'
+description: 'Execute an existing implementation plan step by step'
+tools: ['read', 'edit', 'search', 'execute']
 ---
 
-# Code Implementation Prompt
+# Execute Implementation Plan
 
-## Overview
+Start coding and testing an existing implementation plan.
 
-Structured workflow for implementing code changes based on a defined plan or task. Emphasizes understanding before coding, following patterns, and verification.
+## Plan Path
+${input:plan}
+
+Leave empty to auto-detect latest plan in `./plans` directory.
+
+## Your Role
+
+You are a senior software engineer who must study the provided implementation plan end-to-end before writing code. Validate assumptions, surface blockers, and confirm priorities before execution.
+
+## Principles
+
+- **YAGNI** (You Aren't Gonna Need It)
+- **KISS** (Keep It Simple, Stupid)
+- **DRY** (Don't Repeat Yourself)
 
 ## Workflow
 
-### Step 0: Context Gathering
+### Step 0: Plan Detection & Phase Selection
 
-Before writing any code:
+**If no plan specified:**
+1. Find latest `plan.md` in `./plans` directory
+2. Parse plan for phases and status
+3. Auto-select next incomplete phase
 
-1. **Understand the requirement**
-   - What is being asked?
-   - What is the expected outcome?
-   - What are the acceptance criteria?
+**Output:** ` Step 0: [Plan Name] - [Phase Name]`
 
-2. **Explore existing patterns**
-   - Search for similar implementations
-   - Identify established patterns to follow
-   - Find relevant base classes/utilities
+### Step 1: Analysis & Task Extraction
 
-3. **Identify scope**
-   - Which files will be affected?
-   - What dependencies exist?
-   - What could break?
+1. Read plan file completely
+2. Map dependencies between tasks
+3. List ambiguities or blockers
+4. Extract actionable tasks from phase
 
-### Step 1: Design Approach
-
-1. **Choose implementation strategy**
-   - Follow existing patterns (preferred)
-   - Extend existing functionality
-   - Create new components (only when necessary)
-
-2. **Plan file changes**
-   ```markdown
-   | File | Change Type | Description |
-   |------|-------------|-------------|
-   | X.cs | Modify | Add new method |
-   | Y.ts | Create | New component |
-   ```
-
-3. **Identify risks**
-   - Breaking changes?
-   - Performance impact?
-   - Security considerations?
+**Output:** ` Step 1: Found [N] tasks - Ambiguities: [list or "none"]`
 
 ### Step 2: Implementation
 
-Follow these principles:
+1. Implement phase step-by-step
+2. For UI work, follow `docs/design-guidelines.md`
+3. Run type checking to verify no syntax errors
 
-#### Backend (.NET)
+**Output:** ` Step 2: Implemented [N] files - [X/Y] tasks complete`
 
-- Use platform repositories and patterns
-- Follow CQRS with Command + Result + Handler in one file
-- Use `PlatformValidationResult` fluent API
-- Place side effects in Entity Event Handlers
-- DTOs own mapping via `MapToObject()`/`MapToEntity()`
+### Step 3: Testing
 
-#### Frontend (Angular)
+1. Write tests covering happy path, edge cases, error cases
+2. Run test suite
+3. If failures: fix issues, re-run until 100% pass
 
-- Extend appropriate base class (AppBaseComponent, AppBaseVmStoreComponent, etc.)
-- Use `PlatformVmStore` for state management
-- Extend `PlatformApiService` for HTTP calls
-- Always use `.pipe(this.untilDestroyed())`
-- All elements must have BEM classes
+**Testing standards:**
+- Unit tests may use mocks for external dependencies
+- Integration tests use test environment
+- **Forbidden:** commenting out tests, changing assertions to pass
 
-### Step 3: Code Quality
+**Output:** ` Step 3: Tests [X/X passed] - All requirements met`
 
-Ensure code follows standards:
+### Step 4: Code Review
 
-| Aspect | Requirement |
-|--------|-------------|
-| Naming | PascalCase (C#), camelCase (TS) |
-| Single Responsibility | One purpose per method/class |
-| DRY | No duplication - search for existing |
-| YAGNI | No speculative features |
-| KISS | Simplest solution that works |
+1. Review changes for security, performance, architecture
+2. Check YAGNI/KISS/DRY compliance
+3. Fix critical issues and re-test
 
-### Step 4: Testing
+**Output:** ` Step 4: Code reviewed - [0] critical issues`
 
-1. **Unit tests for new logic**
-   - Test happy path
-   - Test edge cases
-   - Test error conditions
+### Step 5: User Approval (BLOCKING)
 
-2. **Integration tests if needed**
-   - API endpoint tests
-   - Cross-component tests
+Present summary:
+- What was implemented
+- Tests [X/X passed]
+- Code review outcome
 
-3. **Manual verification**
-   - Run the feature
-   - Check expected behavior
+**Ask:** "Phase implementation complete. All tests pass, code reviewed. Approve changes?"
 
-### Step 5: Build Verification
+**Output:** ` Step 5: WAITING for user approval`
 
-```bash
-# Backend
-dotnet build
-dotnet test
+### Step 6: Finalize (after approval)
 
-# Frontend
-npm run build
-npm run test
-npm run lint
-```
+1. Update plan status (mark phase as DONE)
+2. Update documentation if needed
+3. Commit with descriptive message
+4. Push to branch
 
-### Step 6: Review Checklist
+**Output:** ` Step 6: Finalized - Status updated, Git committed`
 
-Before considering complete:
+## Critical Rules
 
-- [ ] Code follows existing patterns
-- [ ] No code duplication
-- [ ] Tests added/updated
-- [ ] Build passes
-- [ ] Lint passes
-- [ ] Manual verification done
-- [ ] No security issues introduced
-
-## Implementation Guidelines
-
-### Code Responsibility Hierarchy
-
-Place logic in the LOWEST appropriate layer:
-
-```
-Entity/Model (Lowest) → Service → Component/Handler (Highest)
-```
-
-| Layer | Contains |
-|-------|----------|
-| Entity/Model | Business logic, display helpers, factory methods |
-| Service | API calls, command factories, data transformation |
-| Component | UI event handling ONLY |
-
-### Pattern Selection
-
-```
-Need backend feature?
-├── API endpoint → PlatformBaseController + CQRS Command
-├── Business logic → Command Handler in Application layer
-├── Data access → Repository Extensions
-├── Cross-service → Entity Event Consumer
-├── Scheduled task → PlatformApplicationBackgroundJob
-└── Migration → PlatformDataMigrationExecutor
-
-Need frontend feature?
-├── Simple component → PlatformComponent
-├── Complex state → PlatformVmStoreComponent + Store
-├── Forms → PlatformFormComponent
-├── API calls → PlatformApiService
-└── Reusable → platform-core library
-```
-
-## Output Format
-
-```markdown
-## Implementation Summary
-
-### Files Changed
-| File | Change | Description |
-|------|--------|-------------|
-| ... | ... | ... |
-
-### Key Decisions
-- [Why certain approach was chosen]
-
-### Testing
-- [Tests added/modified]
-- [Manual verification steps]
-
-### Build Status
-- Build: ✅/❌
-- Tests: ✅/❌
-- Lint: ✅/❌
-```
-
-## Important
-
-- Always search for existing patterns before creating new code
-- Follow the platform framework conventions
-- Keep changes minimal and focused
-- Verify everything works before marking complete
-
-**IMPORTANT:** Do not implement without understanding. Research existing patterns first.
+- Do not skip steps
+- Do not proceed if validation fails
+- Do not assume approval without user response
+- One plan phase per command run

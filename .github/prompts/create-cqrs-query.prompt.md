@@ -1,10 +1,18 @@
 ---
-mode: 'agent'
-tools: ['editFiles', 'codebase', 'terminal']
-description: 'Scaffold CQRS query with handler following EasyPlatform patterns'
+agent: 'agent'
+description: 'Generate a CQRS Query with Handler and Result following EasyPlatform patterns'
+tools: ['read', 'edit', 'search', 'execute']
 ---
 
 # Create CQRS Query
+
+## Required Reading
+
+**Before implementing, you MUST read:**
+
+**`docs/claude/backend-csharp-complete-guide.md`** - Complete patterns for CQRS queries, GetQueryBuilder, expressions
+
+---
 
 Create a new CQRS Query with Handler and Result for the following entity:
 

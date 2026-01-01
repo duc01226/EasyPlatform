@@ -1,6 +1,5 @@
 ---
 applyTo: '**'
-description: 'Universal clean code rules and coding standards for EasyPlatform'
 ---
 
 # EasyPlatform Clean Code Rules
@@ -17,13 +16,9 @@ description: 'Universal clean code rules and coding standards for EasyPlatform'
 - Constants: UPPER_SNAKE_CASE (MAX_RETRY_COUNT)
 - Boolean variables: Use is, has, can, should prefixes (isVisible, hasPermission)
 - Code Organization: Group related functionality together; Separate concerns (business logic, data access, presentation); Use meaningful file/folder structure; Keep dependencies flowing inward (Dependency Inversion)
-- Code Flow (Step-by-Step Pattern): Clear step-by-step flow with spacing; Group parallel operations (no dependencies) together; Follow Input → Process → Output pattern; Use early validation and guard clauses;
+- Code Flow (Step-by-Step Pattern): Clear step-by-step flow with spacing; Group parallel operations (no dependencies) together; Follow Input -> Process -> Output pattern; Use early validation and guard clauses;
 - Responsibility Placement: Business logic belongs to domain entities. Use static expressions for queries in entities. Instance validation methods in entities. DTO creation belongs to DTO classes.
-- Validation Patterns: Use PlatformValidationResult fluent API. Chain validation with .And(), .AndAsync(), .AndNot() methods. Return validation results with meaningful error messages.
-    - Validation Methods: `Validate[Context]()` returns `PlatformValidationResult<T>`, never throws
-    - Ensure Methods: `Ensure[Context]Valid()` returns `void` or `T`, throws `PlatformValidationException` if invalid
-    - At call site: Use `Validate...().EnsureValid()` instead of creating wrapper `Ensure...` methods
-    - `EnsureFound()` - Throws if null; `EnsureFoundAllBy()` - Validates collection completeness
+- Validation Patterns: Use PlatformValidationResult fluent API. Chain validation with .And(), .AndAsync(), .AndNot() methods. Return validation results with meaningful error messages. Methods starting with `Validate` (e.g., `Validate[Context]()`) return `PlatformValidationResult`, never throw. Methods starting with `Ensure` (e.g., `Ensure[Context]Valid()`) throw if invalid. At call site: Use `Validate...().EnsureValid()` instead of creating wrapper methods.
 - Collections: Always use plural names (users, orders, items)
 
 ### Microservices Architecture Rules
@@ -54,7 +49,7 @@ description: 'Universal clean code rules and coding standards for EasyPlatform'
 
 - Clear step-by-step flow with spacing
 - Group parallel operations (no dependencies) together
-- Follow Input → Process → Output pattern
+- Follow Input -> Process -> Output pattern
 - Use early validation and guard clauses
 
 ### Responsibility Placement
@@ -69,7 +64,7 @@ description: 'Universal clean code rules and coding standards for EasyPlatform'
 **Place logic in the LOWEST appropriate layer to enable reuse and prevent duplication:**
 
 ```
-Entity/Model (Lowest)  →  Service  →  Component/Handler (Highest)
+Entity/Model (Lowest)  ->  Service  ->  Component/Handler (Highest)
 ```
 
 | Layer            | Responsibility                                                             |
@@ -78,81 +73,169 @@ Entity/Model (Lowest)  →  Service  →  Component/Handler (Highest)
 | **Service**      | API calls, command factories, data transformation                          |
 | **Component**    | UI event handling ONLY - delegates all logic to lower layers               |
 
-**Anti-Pattern**: Logic in component/handler that should be in entity → leads to duplicated code.
+**Anti-Pattern**: Logic in component/handler that should be in entity leads to duplicated code.
 
-### CRITICAL: Class Responsibility Violations to ALWAYS Check
+#### Backend Violations and Fixes
 
-**Backend Violations (NEVER do these):**
 ```csharp
-// ❌ WRONG: Mapping in Handler - violates class responsibility
-private void MapCommandToEntity(SaveEntityCommand request, Entity entity)
+// WRONG: Mapping in Handler - violates class responsibility
+internal sealed class SaveEntityCommandHandler : PlatformCqrsCommandApplicationHandler<SaveEntityCommand, SaveEntityCommandResult>
 {
-    entity.Name = request.Name;
-    entity.Value = request.Value;
+    protected override async Task<SaveEntityCommandResult> HandleAsync(SaveEntityCommand request, CancellationToken ct)
+    {
+        var entity = await repository.GetByIdAsync(request.Id, ct).EnsureFound();
+        // This mapping logic should NOT be in Handler
+        entity.Name = request.Name;
+        entity.Value = request.Value;
+        entity.UpdatedDate = Clock.UtcNow;
+        await repository.UpdateAsync(entity, ct);
+        return new SaveEntityCommandResult { Entity = new EntityDto(entity) };
+    }
 }
 
-// ✅ CORRECT: Mapping belongs to Command class
-public class SaveEntityCommand
+// CORRECT: Mapping belongs to Command class
+public sealed class SaveEntityCommand : PlatformCqrsCommand<SaveEntityCommandResult>
 {
+    public string Id { get; set; } = "";
+    public string Name { get; set; } = "";
+    public string Value { get; set; } = "";
+
+    // Command owns the mapping responsibility
     public Entity UpdateEntity(Entity entity)
     {
         entity.Name = Name;
         entity.Value = Value;
+        entity.UpdatedDate = Clock.UtcNow;
         return entity;
+    }
+}
+
+internal sealed class SaveEntityCommandHandler : PlatformCqrsCommandApplicationHandler<SaveEntityCommand, SaveEntityCommandResult>
+{
+    protected override async Task<SaveEntityCommandResult> HandleAsync(SaveEntityCommand request, CancellationToken ct)
+    {
+        var entity = await repository.GetByIdAsync(request.Id, ct).EnsureFound();
+        request.UpdateEntity(entity); // Delegates to Command
+        await repository.UpdateAsync(entity, ct);
+        return new SaveEntityCommandResult { Entity = new EntityDto(entity) };
     }
 }
 ```
 
-**Frontend Violations (NEVER do these):**
-```typescript
-// ❌ WRONG: Constants at module level or in component
-const ADMIN_ROLES = ['Admin', 'HR', 'HRManager'];
-readonly displayedColumns = ['name', 'date', 'status'];
+#### Frontend Violations and Fixes
 
-// ✅ CORRECT: Constants in domain model class
-export class KudosCompanySetting {
+```typescript
+// WRONG: Constants at module level or in component - violates class responsibility
+const ADMIN_ROLES = ['Admin', 'HR', 'HRManager']; // Module-level constant
+const PROVIDER_TYPES = [{ value: 1, label: 'Type1' }, { value: 2, label: 'Type2' }]; // Module-level
+
+@Component({ ... })
+export class EntityListComponent extends AppBaseVmStoreComponent<EntityListVm, EntityListStore> {
+    // These should NOT be in Component
+    readonly displayedColumns = ['name', 'date', 'status', 'actions'];
+    readonly adminRoles = ADMIN_ROLES;
+
+    // Display logic should NOT be in Component
+    getStatusCssClass(status: EntityStatus): string {
+        switch (status) {
+            case EntityStatus.Approved: return 'badge--success';
+            case EntityStatus.Pending: return 'badge--warning';
+            case EntityStatus.Rejected: return 'badge--danger';
+            default: return 'badge--default';
+        }
+    }
+}
+
+// CORRECT: Constants and display logic in domain model class
+export class EntityCompanySetting {
+    // Static constants in Model
     public static readonly adminRoles = ['Admin', 'HR', 'HRManager'];
 }
-export class KudosTransaction {
-    public static readonly listColumns = ['name', 'date', 'status'];
-    public static getStatusCssClass(status: Status): string { ... }
+
+export class EntityTransaction {
+    id: string = '';
+    status: EntityStatus = EntityStatus.Pending;
+
+    // Static list columns in Model
+    public static readonly listColumns = ['name', 'date', 'status', 'actions'];
+
+    // Static method for status display
+    public static getStatusCssClass(status: EntityStatus): string {
+        const statusMap: Record<EntityStatus, string> = {
+            [EntityStatus.Approved]: 'badge--success',
+            [EntityStatus.Pending]: 'badge--warning',
+            [EntityStatus.Rejected]: 'badge--danger'
+        };
+        return statusMap[status] ?? 'badge--default';
+    }
+
+    // Instance getter for convenience
+    public get statusCssClass(): string {
+        return EntityTransaction.getStatusCssClass(this.status);
+    }
+}
+
+export class EntityProvider {
+    // Dropdown options in Model
+    public static readonly dropdownOptions = [
+        { value: 1, label: 'Type1' },
+        { value: 2, label: 'Type2' }
+    ];
+
+    public static getDisplayLabel(value: number): string {
+        return this.dropdownOptions.find(x => x.value === value)?.label ?? '';
+    }
+}
+
+@Component({ ... })
+export class EntityListComponent extends AppBaseVmStoreComponent<EntityListVm, EntityListStore> {
+    // Component just references Model
+    readonly displayedColumns = EntityTransaction.listColumns;
+    readonly adminRoles = EntityCompanySetting.adminRoles;
+    readonly providerTypes = EntityProvider.dropdownOptions;
 }
 ```
 
-**Frontend Examples:**
+#### Pattern Summary Tables
 
-- Dropdown options → static property in model: `Entity.dropdownOptions`
-- Display logic (CSS class, text) → instance getter in model: `entity.statusCssClass`
-- Table columns → static property in model: `Entity.listColumns`, `Entity.previewColumns`
-- Role constants → static property in model: `Entity.adminRoles`
-- Default values → static method in model: `Entity.getDefaultValue()`
-- Command building → method in ViewModel: `vm.buildCommand()`
+**Frontend Patterns:**
 
-**Backend Examples:**
+| Pattern | Where | Example |
+|---------|-------|---------|
+| Dropdown options | static property in model | `Entity.dropdownOptions` |
+| Display logic | instance getter in model | `entity.statusCssClass` |
+| Table columns | static property in model | `Entity.listColumns` |
+| Role constants | static property in model | `Entity.adminRoles` |
+| Default values | static method in model | `Entity.getDefaultValue()` |
+| Command building | method in ViewModel | `vm.buildCommand()` |
 
-- Query conditions → static expression in entity: `Entity.IsActiveExpr()`
-- Validation rules → instance method in entity: `entity.Validate()`
-- Entity mapping → method in Command: `command.UpdateEntity(entity)`
-- Entity mapping → method in DTO: `dto.MapToEntity(entity)`
-- Reused logic → Helper class or Repository extension
+**Backend Patterns:**
+
+| Pattern | Where | Example |
+|---------|-------|---------|
+| Query conditions | static expression in entity | `Entity.IsActiveExpr()` |
+| Validation rules | instance method in entity | `entity.Validate()` |
+| Entity mapping | method in Command | `command.UpdateEntity(entity)` |
+| Entity mapping | method in DTO | `dto.MapToEntity(entity)` |
+| Reused logic | Helper class or Repository extension | `repo.GetByCodeAsync(code)` |
 
 ## Frontend Component Rules
 
 ### Component Hierarchy Decision
 
-- Simple UI display → Extend `AppBaseComponent`
-- Complex state management → Extend `AppBaseVmStoreComponent<State, Store>`
-- Form with validation → Extend `AppBaseFormComponent<FormVm>`
-- Component with store and form → Extend `AppBaseVmStoreComponent` + inject form service
-- Platform library component → Extend `PlatformComponent` (rare)
+- Simple UI display -> Extend `AppBaseComponent`
+- Complex state management -> Extend `AppBaseVmStoreComponent<State, Store>`
+- Form with validation -> Extend `AppBaseFormComponent<FormVm>`
+- Component with store and form -> Extend `AppBaseVmStoreComponent` + inject form service
+- Platform library component -> Extend `PlatformComponent` (rare)
 
 ### Component Reuse vs New Component Decision
 
-- Can the requirement be met by passing additional generic, optional inputs to an existing component/form without leaking foreign domain logic? → Reuse existing component
-- Can we compose a thin wrapper (template-only/minimal TS) around existing store/components instead of introducing a new store/component? → Create wrapper
-- Do not inject other domain's concepts into a component → Enhance with neutral inputs
-- Existing components cannot reasonably fulfill the requirement even with generic enhancements → Create new component
-- The new behavior would complicate existing components with unrelated concerns or violate separation of concerns → Create new component
+- Can the requirement be met by passing additional generic, optional inputs to an existing component/form without leaking foreign domain logic? -> Reuse existing component
+- Can we compose a thin wrapper (template-only/minimal TS) around existing store/components instead of introducing a new store/component? -> Create wrapper
+- Do not inject other domain's concepts into a component -> Enhance with neutral inputs
+- Existing components cannot reasonably fulfill the requirement even with generic enhancements -> Create new component
+- The new behavior would complicate existing components with unrelated concerns or violate separation of concerns -> Create new component
 - Prefer a thin tab/wrapper + reused store/components over a full new panel with its own store
 - Keep new inputs optional and backward-compatible
 
@@ -172,18 +255,8 @@ export class KudosTransaction {
 - Each microservice has its own database and maintains data consistency through event-driven architecture
 - Producer Naming: `[Entity]EntityEventBusMessageProducer`
 - Consumer Naming: `UpsertOrDelete[Entity]InfoOn[SourceEntity]EntityEventBusConsumer`
+- Message Naming: `[Entity]EntityEventBusMessage`
 - Consumers don't need to sync all properties from the producer - they can define only the subset of properties they need
-
-### Message Naming Convention
-
-| Type    | Producer Role | Pattern                                           | Example                                            |
-| ------- | ------------- | ------------------------------------------------- | -------------------------------------------------- |
-| Event   | Leader        | `<ServiceName><Feature><Action>EventBusMessage`   | `CandidateJobBoardApiSyncCompletedEventBusMessage` |
-| Request | Follower      | `<ConsumerServiceName><Feature>RequestBusMessage` | `JobCreateNonexistentJobsRequestBusMessage`        |
-
-- **Event messages**: Producer defines the schema (leader). Named with producer's service name prefix.
-- **Request messages**: Consumer defines the schema (leader). Named with consumer's service name prefix.
-- **Consumer naming**: Consumer class name matches the message it consumes.
 
 ### Cross-Database Migration Guidelines
 

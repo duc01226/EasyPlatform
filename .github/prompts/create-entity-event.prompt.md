@@ -1,10 +1,18 @@
 ---
-mode: 'agent'
-tools: ['editFiles', 'codebase', 'terminal']
-description: 'Scaffold entity event handler for side effects following EasyPlatform patterns'
+agent: 'agent'
+description: 'Generate an Entity Event Handler for side effects following EasyPlatform patterns'
+tools: ['read', 'edit', 'search', 'execute']
 ---
 
 # Create Entity Event Handler
+
+## Required Reading
+
+**Before implementing, you MUST read:**
+
+**`docs/claude/backend-csharp-complete-guide.md`** - Complete patterns for entity events, side effects, message bus
+
+---
 
 Create an Entity Event Handler for side effects triggered by entity CRUD operations:
 

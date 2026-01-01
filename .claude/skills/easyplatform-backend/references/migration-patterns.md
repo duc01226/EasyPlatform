@@ -39,7 +39,7 @@ Is this a schema change?
 
 ```bash
 # Navigate to persistence project
-cd src/Services/bravoGROWTH/Growth.Persistence
+cd src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence
 
 # Add migration
 dotnet ef migrations add AddEmployeePhoneNumber
@@ -93,7 +93,7 @@ public sealed class MigrateEmployeePhoneNumbers : PlatformDataMigrationExecutor<
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 15);
     public override bool AllowRunInBackgroundThread => true;
 
-    private readonly IGrowthRootRepository<Employee> employeeRepo;
+    private readonly IPlatformQueryableRootRepository<Employee, string> employeeRepo;
     private const int PageSize = 200;
 
     public override async Task Execute(GrowthDbContext dbContext)
@@ -122,7 +122,7 @@ public sealed class MigrateEmployeePhoneNumbers : PlatformDataMigrationExecutor<
         int skip,
         int take,
         Func<IPlatformUnitOfWork, IQueryable<Employee>, IQueryable<Employee>> queryBuilder,
-        IGrowthRootRepository<Employee> repo,
+        IPlatformQueryableRootRepository<Employee, string> repo,
         IPlatformUnitOfWorkManager uowManager)
     {
         using var unitOfWork = uowManager.Begin();

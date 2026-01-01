@@ -1,441 +1,730 @@
 ---
-applyTo: "src/**/*.cs,**/*.csproj"
+applyTo: 'src/PlatformExampleApp/**/*.cs,src/Platform/**/*.cs'
+excludeAgent: ['copilot-code-review']
+description: '.NET backend development patterns for EasyPlatform microservices'
 ---
 
-# EasyPlatform .NET Backend Development Instructions
+# Backend .NET Development Patterns
 
-## Clean Architecture Layers
+## Required Reading
 
-**Domain Layer**: Entities, domain events, value objects
-**Application Layer**: CQRS handlers, events, jobs, validators
-**Persistence Layer**: DbContext, migrations, repository implementations
-**Service Layer**: Controllers, startup configuration
+**For comprehensive C# patterns, you MUST read:**
+
+**`docs/claude/backend-csharp-complete-guide.md`**
+
+This guide contains complete patterns for CQRS, validation, repositories, entity events, background jobs, migrations, and more.
+
+---
+
+## Repository Pattern (CRITICAL)
+
+**Always use platform repositories:**
 
 ```csharp
-// Domain Entity
-public sealed class Employee : RootEntity<Employee, string>
-{
-    [TrackFieldUpdatedDomainEvent]
-    public string Name { get; set; } = "";
+// Primary - Platform Queryable Repository
+IPlatformQueryableRootRepository<Entity, Key>
 
-    public static Expression<Func<Employee, bool>> IsActiveExpr()
-        => e => e.Status == Status.Active;
-
-    public static Expression<Func<Employee, object>>[] SearchColumns()
-        => [e => e.Name, e => e.Code];
-}
+// Fallback only when queryable not needed
+IPlatformRootRepository<Entity, Key>
 ```
 
-## Repository Pattern
-
-**ALWAYS use platform repositories** - never create custom repository interfaces.
+## Repository API Complete Reference
 
 ```csharp
-// Repository injection
-private readonly IPlatformQueryableRootRepository<Employee, string> repository;
+// CREATE
+await repository.CreateAsync(entity, cancellationToken);
+await repository.CreateManyAsync(entities, cancellationToken);
 
-// Repository extensions (static expressions)
+// UPDATE
+await repository.UpdateAsync(entity, cancellationToken);
+await repository.UpdateManyAsync(entities, dismissSendEvent: false, checkDiff: true, cancellationToken);
+
+// CREATE OR UPDATE (Upsert)
+await repository.CreateOrUpdateAsync(entity, cancellationToken);
+await repository.CreateOrUpdateManyAsync(entities, cancellationToken);
+
+// DELETE
+await repository.DeleteAsync(entityId, cancellationToken);
+await repository.DeleteManyAsync(entities, cancellationToken);
+await repository.DeleteManyAsync(expr => expr.Status == Status.Deleted, cancellationToken);
+
+// GET BY ID
+var entity = await repository.GetByIdAsync(id, cancellationToken);
+// With eager loading
+var entity = await repository.GetByIdAsync(id, cancellationToken,
+    loadRelatedEntities: p => p.Employee, p => p.Company);
+
+// GET SINGLE
+var entity = await repository.FirstOrDefaultAsync(expr, cancellationToken);
+var entity = await repository.GetSingleOrDefaultAsync(expr, cancellationToken);
+
+// GET MULTIPLE
+var entities = await repository.GetAllAsync(expr, cancellationToken);
+var entities = await repository.GetByIdsAsync(ids, cancellationToken);
+
+// QUERY BUILDERS (Reusable Queries)
+var query = repository.GetQuery(uow);
+var queryBuilder = repository.GetQueryBuilder((uow, query) =>
+    query.Where(...).OrderBy(...));
+
+// COUNT & EXISTS
+var count = await repository.CountAsync(expr, cancellationToken);
+var exists = await repository.AnyAsync(expr, cancellationToken);
+```
+
+## Repository Extension Pattern
+
+```csharp
+// Location: {Service}.Domain\Repositories\Extensions\{Entity}RepositoryExtensions.cs
 public static class EmployeeRepositoryExtensions
 {
-    public static async Task<Employee> GetByCodeAsync(
-        this IPlatformQueryableRootRepository<Employee, string> repo,
-        string code,
-        CancellationToken ct = default)
-        => await repo.FirstOrDefaultAsync(Employee.CodeExpr(code), ct)
-            .EnsureFound($"Employee not found: {code}");
+    public static async Task<Employee> GetByUniqueExprAsync(
+        this IPlatformQueryableRootRepository<Employee, string> employeeRepository,
+        int productScope,
+        string employeeCompanyId,
+        string employeeUserId,
+        CancellationToken cancellationToken = default,
+        params Expression<Func<Employee, object?>>[] loadRelatedEntities)
+    {
+        return await employeeRepository
+            .FirstOrDefaultAsync(
+                Employee.UniqueExpr(productScope, employeeCompanyId, employeeUserId),
+                cancellationToken,
+                loadRelatedEntities)
+            .EnsureFound();
+    }
 
-    public static async Task<List<Employee>> GetByIdsValidatedAsync(
-        this IPlatformQueryableRootRepository<Employee, string> repo,
-        List<string> ids,
-        CancellationToken ct = default)
-        => await repo.GetAllAsync(p => ids.Contains(p.Id), ct)
-            .EnsureFoundAllBy(p => p.Id, ids);
+    // Projected result (performance optimization)
+    public static async Task<string> GetEmployeeIdByUniqueExprAsync(
+        this IPlatformQueryableRootRepository<Employee, string> employeeRepository,
+        int productScope,
+        string employeeCompanyId,
+        string employeeUserId,
+        CancellationToken cancellationToken = default)
+    {
+        return await employeeRepository
+            .FirstOrDefaultAsync(
+                queryBuilder: query => query
+                    .Where(Employee.UniqueExpr(productScope, employeeCompanyId, employeeUserId))
+                    .Select(p => p.Id),  // Projection - only fetch ID
+                cancellationToken: cancellationToken)
+            .EnsureFound();
+    }
 }
 ```
 
-## Repository API
+## CQRS Pattern (Command + Handler + Result = ONE FILE)
+
+**File location:** `{Service}.Application/UseCaseCommands/{Feature}/Save{Entity}Command.cs`
 
 ```csharp
-// Create
-await repository.CreateAsync(entity, ct);
-await repository.CreateManyAsync(entities, ct);
-
-// Update
-await repository.UpdateAsync(entity, ct);
-await repository.UpdateManyAsync(entities, dismissSendEvent: false, checkDiff: true, ct);
-
-// Create or Update
-await repository.CreateOrUpdateAsync(entity, ct);
-await repository.CreateOrUpdateManyAsync(entities, ct);
-
-// Delete
-await repository.DeleteAsync(entityId, ct);
-await repository.DeleteManyAsync(expr => expr.Status == Status.Deleted, ct);
-
-// Query
-await repository.GetByIdAsync(id, ct, loadRelatedEntities: p => p.Company);
-await repository.FirstOrDefaultAsync(expr, ct);
-await repository.GetAllAsync(expr, ct);
-await repository.GetByIdsAsync(ids, ct);
-
-// Query Builder (for complex queries)
-var queryBuilder = repository.GetQueryBuilder((uow, q) => q
-    .Where(e => e.CompanyId == companyId)
-    .WhereIf(condition, e => e.Status == Status.Active)
-    .OrderBy(e => e.Name));
-
-// Count and existence
-await repository.CountAsync(expr, ct);
-await repository.AnyAsync(expr, ct);
-
-// Parallel tuple queries
-var (total, items) = await (
-    repository.CountAsync((uow, q) => queryBuilder(uow, q), ct),
-    repository.GetAllAsync((uow, q) => queryBuilder(uow, q).Skip(0).Take(10), ct)
-);
-```
-
-## Validation Patterns
-
-**Use PlatformValidationResult fluent API** - never throw exceptions manually.
-
-```csharp
-// Sync validation
-public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
-    => base.Validate()
-        .And(_ => Name.IsNotNullOrEmpty(), "Name is required")
-        .And(_ => Age >= 18, "Must be 18 or older")
-        .And(_ => Email.Contains("@"), "Invalid email format");
-
-// Async validation in handler
-protected override async Task<PlatformValidationResult<SaveCommand>> ValidateRequestAsync(
-    PlatformValidationResult<SaveCommand> v,
-    CancellationToken ct)
-    => await v
-        .AndAsync(r => repository.GetByIdsAsync(r.RelatedIds, ct)
-            .ThenValidateFoundAllAsync(r.RelatedIds, ids => $"Not found: {string.Join(", ", ids)}"))
-        .AndNotAsync(r => repository.AnyAsync(p => p.Code == r.Code, ct), "Code already exists");
-
-// Chained with Of<>
-public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
-    => this.Validate(p => p.Id.IsNotNullOrEmpty(), "Id required")
-        .And(p => p.FromDate <= p.ToDate, "Invalid date range")
-        .Of<IPlatformCqrsRequest>();
-
-// Ensure pattern
-var entity = await repository.GetByIdAsync(id, ct)
-    .EnsureFound($"Entity not found: {id}")
-    .Then(x => x.Validate().EnsureValid());
-```
-
-## CQRS File Organization
-
-**Command + Result + Handler in ONE file** - never split into separate files.
-
-```csharp
-// SaveEntityCommand.cs - contains all three components
-
-public sealed class SaveEntityCommand : PlatformCqrsCommand<SaveEntityCommandResult>
+// Command
+public sealed class SaveEmployeeCommand : PlatformCqrsCommand<SaveEmployeeCommandResult>
 {
     public string? Id { get; set; }
-    public string Name { get; set; } = "";
-    public List<string> RelatedIds { get; set; } = [];
+    public string Name { get; set; } = string.Empty;
+    public List<IFormFile> Files { get; set; } = [];
 
     public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
-        => base.Validate()
-            .And(_ => Name.IsNotNullOrEmpty(), "Name is required");
-}
-
-public sealed class SaveEntityCommandResult : PlatformCqrsCommandResult
-{
-    public EntityDto Entity { get; set; } = null!;
-}
-
-internal sealed class SaveEntityCommandHandler
-    : PlatformCqrsCommandApplicationHandler<SaveEntityCommand, SaveEntityCommandResult>
-{
-    protected override async Task<PlatformValidationResult<SaveEntityCommand>> ValidateRequestAsync(
-        PlatformValidationResult<SaveEntityCommand> v,
-        CancellationToken ct)
-        => await v
-            .AndAsync(r => repository.GetByIdsAsync(r.RelatedIds, ct)
-                .ThenValidateFoundAllAsync(r.RelatedIds, ids => $"Related entities not found: {ids}"));
-
-    protected override async Task<SaveEntityCommandResult> HandleAsync(
-        SaveEntityCommand req,
-        CancellationToken ct)
     {
+        return base.Validate()
+            .And(_ => Name.IsNotNullOrEmpty(), "Name is required")
+            .And(_ => FromDate <= ToDate, "Invalid date range");
+    }
+}
+
+// Result (same file)
+public sealed class SaveEmployeeCommandResult : PlatformCqrsCommandResult
+{
+    public EmployeeDto Entity { get; set; } = null!;
+}
+
+// Handler (same file)
+internal sealed class SaveEmployeeCommandHandler :
+    PlatformCqrsCommandApplicationHandler<SaveEmployeeCommand, SaveEmployeeCommandResult>
+{
+    private readonly IPlatformQueryableRootRepository<Employee, string> repository;
+
+    // Async validation
+    protected override async Task<PlatformValidationResult<SaveEmployeeCommand>> ValidateRequestAsync(
+        PlatformValidationResult<SaveEmployeeCommand> validation, CancellationToken ct)
+    {
+        return await validation
+            .AndAsync(req => repository.GetByIdsAsync(req.RelatedIds, ct)
+                .ThenValidateFoundAllAsync(req.RelatedIds, ids => $"Not found: {ids}"));
+    }
+
+    protected override async Task<SaveEmployeeCommandResult> HandleAsync(
+        SaveEmployeeCommand req, CancellationToken ct)
+    {
+        // 1. Get or create
         var entity = req.Id.IsNullOrEmpty()
             ? req.MapToNewEntity().With(e => e.CreatedBy = RequestContext.UserId())
             : await repository.GetByIdAsync(req.Id, ct).Then(e => req.UpdateEntity(e));
 
+        // 2. Validate and save (parallel operations)
         await entity.ValidateAsync(repository, ct).EnsureValidAsync();
+        var (saved, files) = await (
+            repository.CreateOrUpdateAsync(entity, ct),
+            req.Files.ParallelAsync(f => fileService.UploadAsync(f, ct))
+        );
 
-        var saved = await repository.CreateOrUpdateAsync(entity, ct);
-
-        return new SaveEntityCommandResult { Entity = new EntityDto(saved) };
+        return new SaveEmployeeCommandResult { Entity = new EmployeeDto(saved) };
     }
 }
 ```
 
-## Event-Driven Side Effects
-
-**NEVER call side effects in command handlers** - use entity event handlers.
+## Query Pattern with GetQueryBuilder
 
 ```csharp
-// ❌ WRONG - direct side effect in handler
-protected override async Task<SaveResult> HandleAsync(SaveCommand req, CancellationToken ct)
+// Query
+public sealed class GetEntityListQuery : PlatformCqrsPagedQuery<GetEntityListQueryResult, EntityDto>
 {
-    var entity = await repository.CreateAsync(entity, ct);
-    await notificationService.SendAsync(entity); // ❌ WRONG
-    return new SaveResult { Id = entity.Id };
+    public List<Status> Statuses { get; set; } = [];
+    public string? SearchText { get; set; }
 }
 
-// ✅ CORRECT - just save, platform auto-raises event
-protected override async Task<SaveResult> HandleAsync(SaveCommand req, CancellationToken ct)
+// Handler
+internal sealed class GetEntityListQueryHandler :
+    PlatformCqrsQueryApplicationHandler<GetEntityListQuery, GetEntityListQueryResult>
 {
-    var saved = await repository.CreateOrUpdateAsync(entity, ct);
-    return new SaveResult { Id = saved.Id };
-}
+    private readonly IPlatformQueryableRootRepository<Entity, string> repository;
+    private readonly IPlatformFullTextSearchPersistenceService searchService;
 
-// Event handler in UseCaseEvents/[Feature]/ folder
-internal sealed class SendNotificationOnCreateHandler
-    : PlatformCqrsEntityEventApplicationHandler<Entity>
-{
-    public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> e)
-        => !e.RequestContext.IsSeedingTestingData()
-        && e.CrudAction == PlatformCqrsEntityEventCrudAction.Created;
+    protected override async Task<GetEntityListQueryResult> HandleAsync(GetEntityListQuery req, CancellationToken ct)
+    {
+        // Build reusable query
+        var queryBuilder = repository.GetQueryBuilder((uow, q) => q
+            .Where(e => e.CompanyId == RequestContext.CurrentCompanyId())
+            .WhereIf(req.Statuses.Any(), e => req.Statuses.Contains(e.Status))
+            .PipeIf(req.SearchText.IsNotNullOrEmpty(), q =>
+                searchService.Search(q, req.SearchText, Entity.SearchColumns())));
 
-    protected override async Task HandleAsync(
-        PlatformCqrsEntityEvent<Entity> e,
-        CancellationToken ct)
-        => await notificationService.SendAsync(e.EntityData);
+        // Parallel tuple queries
+        var (total, items, counts) = await (
+            repository.CountAsync((uow, q) => queryBuilder(uow, q), ct),
+            repository.GetAllAsync((uow, q) => queryBuilder(uow, q)
+                .OrderByDescending(e => e.CreatedDate)
+                .PageBy(req.SkipCount, req.MaxResultCount), ct, e => e.RelatedEntity),
+            repository.GetAllAsync((uow, q) => queryBuilder(uow, q)
+                .GroupBy(e => e.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() }), ct)
+        );
+
+        return new GetEntityListQueryResult(items, total, req, counts.ToDictionary(x => x.Status, x => x.Count));
+    }
 }
 ```
 
-## Entity Patterns
+## Validation Patterns
 
 ```csharp
-public sealed class Employee : RootEntity<Employee, string>
+// Sync validation (in Command class)
+public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
+{
+    return base.Validate()
+        .And(_ => Name.IsNotNullOrEmpty(), "Name required")
+        .And(_ => TimeZone.IsNotNullOrEmpty(), "TimeZone is required")
+        .And(_ => Util.TimeZoneParser.TryGetTimeZoneById(TimeZone) != null, "TimeZone is invalid")
+        .And(_ => StartDate <= EndDate, "Invalid range");
+}
+
+// Async validation (in Handler)
+protected override async Task<PlatformValidationResult<SaveLeaveRequestCommand>> ValidateRequestAsync(
+    PlatformValidationResult<SaveLeaveRequestCommand> requestSelfValidation,
+    CancellationToken cancellationToken)
+{
+    return await requestSelfValidation
+        .AndAsync(async request => await employeeRepository
+            .GetByIdsAsync(request.WatcherIds, cancellationToken)
+            .ThenSelect(existingEmployee => existingEmployee.Id)
+            .ThenValidateFoundAllAsync(
+                request.WatcherIds,
+                notFoundIds => $"Not found watcher ids: {PlatformJsonSerializer.Serialize(notFoundIds)}"))
+        .AndNotAsync(
+            request => employeeRepository.AnyAsync(
+                p => request.Data.OwnerEmployeeIds.Contains(p.Id) && p.IsExternalUser == true,
+                cancellationToken),
+            "External users can't create a goal"
+        );
+}
+
+// Chained Validation with Of<>
+public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
+{
+    return this
+        .Validate(p => p.CheckInEventId.IsNotNullOrEmpty(), "CheckInEventId is required")
+        .And(
+            p => p.UpdateType == ActionTypes.SingleCheckIn ||
+                 (p.UpdateType == ActionTypes.SeriesAndFollowingCheckIn &&
+                  p.FrequencyInfo != null &&
+                  p.ToUpdateCheckInDate.Date >= Clock.UtcNow.Date),
+            "New CheckIn date must greater than Current date OR Missing FrequencyInfo")
+        .Of<IPlatformCqrsRequest>();
+}
+
+// Ensure Pattern - Inline validation that throws
+var toSaveCheckInEvent = await checkInEventRepository
+    .GetByIdAsync(request.CheckInEventId, cancellationToken)
+    .EnsureFound($"CheckIn Event not found, Id : {request.CheckInEventId}")
+    .Then(x => x.ValidateCanBeUpdated().EnsureValid());
+```
+
+## Full-Text Search Patterns
+
+```csharp
+// Inject IPlatformFullTextSearchPersistenceService in query handlers
+protected override async Task<GetEmployeeListQueryResult> HandleAsync(
+    GetEmployeeListQuery request, CancellationToken cancellationToken)
+{
+    var queryBuilder = employeeRepository.GetQueryBuilder(query =>
+        query
+            .Where(Employee.OfficialEmployeeExpr(RequestContext.ProductScope()))
+            .PipeIf(
+                request.SearchText.IsNotNullOrEmpty(),
+                query => fullTextSearchPersistenceService.Search(
+                    query,
+                    request.SearchText,
+                    Employee.DefaultFullTextSearchColumns(),  // Define searchable properties
+                    fullTextAccurateMatch: true,              // true = exact phrase, false = fuzzy
+                    includeStartWithProps: Employee.DefaultFullTextSearchColumns()
+                )
+            )
+    );
+
+    var (totalCount, pagedItems) = await (
+        employeeRepository.CountAsync((uow, query) => queryBuilder(uow, query), cancellationToken),
+        employeeRepository.GetAllAsync(
+            (uow, query) => queryBuilder(uow, query)
+                .OrderByDescending(e => e.CreatedDate)
+                .PageBy(request.SkipCount, request.MaxResultCount),
+            cancellationToken)
+    );
+
+    return new GetEmployeeListQueryResult(pagedItems, totalCount, request);
+}
+
+// Define searchable columns in entity
+public partial class Employee : RootEntity<Employee, string>
+{
+    public static Expression<Func<Employee, object>>[] DefaultFullTextSearchColumns()
+    {
+        return new Expression<Func<Employee, object>>[]
+        {
+            e => e.FullName,
+            e => e.Email,
+            e => e.PhoneNumber,
+            e => e.EmployeeCode,
+            e => e.FullTextSearch
+        };
+    }
+}
+```
+
+## Entity Event Handlers (Side Effects)
+
+**Never call side effects in command handlers!** Use entity event handlers:
+
+```csharp
+// Location: UseCaseEvents/{Feature}/Send{Action}On{Event}{Entity}EntityEventHandler.cs
+internal sealed class SendNotificationOnCreateEmployeeEntityEventHandler
+    : PlatformCqrsEntityEventApplicationHandler<Employee>  // Single generic parameter!
+{
+    private readonly INotificationService notificationService;
+
+    public SendNotificationOnCreateEmployeeEntityEventHandler(
+        ILoggerFactory loggerFactory,
+        IPlatformUnitOfWorkManager unitOfWorkManager,
+        IServiceProvider serviceProvider,
+        IPlatformRootServiceProvider rootServiceProvider,
+        INotificationService notificationService)
+        : base(loggerFactory, unitOfWorkManager, serviceProvider, rootServiceProvider)
+    {
+        this.notificationService = notificationService;
+    }
+
+    // Filter: Only handle Created events - NOTE: async Task<bool>, not bool!
+    public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Employee> @event)
+    {
+        if (@event.RequestContext.IsSeedingTestingData()) return false;
+        return @event.CrudAction == PlatformCqrsEntityEventCrudAction.Created;
+    }
+
+    protected override async Task HandleAsync(
+        PlatformCqrsEntityEvent<Employee> @event,
+        CancellationToken ct)
+    {
+        var entity = @event.EntityData;
+        await notificationService.SendAsync(entity);
+    }
+}
+```
+
+## Entity Development Patterns
+
+```csharp
+// Entity with field tracking and static expressions
+[TrackFieldUpdatedDomainEvent]
+public sealed class Entity : RootEntity<Entity, string>
 {
     [TrackFieldUpdatedDomainEvent]
     public string Name { get; set; } = "";
 
+    public string CompanyId { get; set; } = "";
+
     [JsonIgnore]
     public Company? Company { get; set; }
 
-    // Static expressions for queries
-    public static Expression<Func<Employee, bool>> UniqueExpr(string companyId, string code)
+    // Static expression patterns
+    public static Expression<Func<Entity, bool>> UniqueExpr(string companyId, string code)
         => e => e.CompanyId == companyId && e.Code == code;
 
-    public static Expression<Func<Employee, bool>> FilterExpr(List<Status> statuses)
-        => e => statuses.ToHashSet().Contains(e.Status!.Value);
+    public static Expression<Func<Entity, bool>> FilterByStatusExpr(List<Status> statuses)
+    {
+        var statusSet = statuses.ToHashSet();
+        return e => e.Status.HasValue && statusSet.Contains(e.Status.Value);
+    }
 
-    // Composite expressions
-    public static Expression<Func<Employee, bool>> CompositeExpr(string companyId)
-        => OfCompanyExpr(companyId).AndAlsoIf(true, () => e => e.IsActive);
+    public static Expression<Func<Entity, bool>> CompositeExpr(string companyId, bool includeInactive = false)
+        => OfCompanyExpr(companyId).AndAlsoIf(!includeInactive, () => e => e.IsActive);
 
-    // Search columns for full-text search
-    public static Expression<Func<Employee, object?>>[] SearchColumns()
-        => [e => e.Name, e => e.Code];
+    // Search columns
+    public static Expression<Func<Entity, object?>>[] DefaultFullTextSearchColumns()
+        => [e => e.Name, e => e.Code, e => e.Email];
 
-    // Computed properties (MUST have empty setter for serialization)
+    // Computed properties - MUST have empty set { } for EF Core compatibility
     [ComputedEntityProperty]
-    public bool IsRoot { get => Id == RootId; set { } }
+    public bool IsRoot
+    {
+        get => Id == RootId;
+        set { }  // Required empty setter
+    }
 
     [ComputedEntityProperty]
-    public string FullName { get => $"{FirstName} {LastName}".Trim(); set { } }
+    public string FullName
+    {
+        get => $"{FirstName} {LastName}".Trim();
+        set { }  // Required empty setter
+    }
 
-    // Validation
-    public static List<string> ValidateEntity(Employee? e)
-        => e == null ? ["Not found"]
-            : !e.IsActive ? ["Employee is inactive"]
-            : [];
+    // Instance methods
+    public void Reset() { /* ... */ }
+
+    public static List<string> ValidateEntity(Entity? entity)
+    {
+        var errors = new List<string>();
+        if (entity == null) errors.Add("Entity not found");
+        if (!entity.IsActive) errors.Add("Entity inactive");
+        return errors;
+    }
 }
 ```
 
-## DTO Mapping Patterns
-
-**DTOs own mapping logic** - never map in handlers.
+## Entity DTO Patterns
 
 ```csharp
-public class EmployeeDto : PlatformEntityDto<Employee, string>
+// Location: {Service}.Application\EntityDtos\EmployeeEntityDto.cs
+public class EmployeeEntityDto : PlatformEntityDto<Employee, string>
 {
-    public EmployeeDto() { }
+    public EmployeeEntityDto() { }
 
-    public EmployeeDto(Employee e, User? u) : base(e)
+    public EmployeeEntityDto(Employee entity, User? userEntity) : base(entity)
     {
-        Id = e.Id;
-        Name = e.Name ?? u?.Name ?? "";
+        Id = entity.Id;
+        EmployeeId = entity.Id!;
+        FullName = entity.FullName ?? userEntity?.FullName ?? "";
+        Email = userEntity?.Email ?? "";
+        Position = entity.Position;
+        Status = entity.Status;
     }
 
+    // Core properties
     public string? Id { get; set; }
-    public string Name { get; set; } = "";
-    public CompanyDto? Company { get; set; }
+    public string EmployeeId { get; set; } = "";
+    public string FullName { get; set; } = "";
 
-    public EmployeeDto WithCompany(Company c)
+    // Optional load properties (via With* methods)
+    public OrganizationEntityDto? AssociatedCompany { get; set; }
+    public List<OrganizationEntityDto>? Departments { get; set; }
+
+    // With* fluent methods for optional loading
+    public EmployeeEntityDto WithFullAssociatedCompany(OrganizationalUnit company)
     {
-        Company = new CompanyDto(c);
+        AssociatedCompany = new OrganizationEntityDto(company);
         return this;
     }
 
-    protected override object? GetSubmittedId() => Id;
+    public EmployeeEntityDto WithAssociatedDepartments(List<OrganizationalUnit> departments)
+    {
+        Departments = departments.Select(org => new OrganizationEntityDto(org)).ToList();
+        return this;
+    }
 
+    // Platform overrides
+    protected override object? GetSubmittedId() => Id;
     protected override string GenerateNewId() => Ulid.NewUlid().ToString();
 
-    protected override Employee MapToEntity(Employee e, MapToEntityModes m)
+    protected override Employee MapToEntity(Employee entity, MapToEntityModes mode)
     {
-        e.Name = Name;
-        return e;
+        entity.Position = Position;
+        entity.Status = Status;
+        return entity;
     }
 }
 
-// Usage in handler
-var dtos = employees.SelectList(e => new EmployeeDto(e, e.User).WithCompany(e.Company!));
+// Usage in Query Handler
+var employees = await repository.GetAllAsync(expr, ct, e => e.User, e => e.Departments);
+var dtos = employees.SelectList(e => new EmployeeEntityDto(e, e.User)
+    .WithAssociatedDepartments(e.Departments?.SelectList(d => d.OrganizationalUnit!) ?? []));
 ```
 
 ## Fluent Helpers
 
 ```csharp
-// With pattern (mutation)
-entity.With(e => e.Name = "New")
+// Mutation helpers
+var entity = await repository.GetByIdAsync(id)
+    .With(e => e.Name = newName)
     .WithIf(condition, e => e.Status = Status.Active);
 
-// Then pattern (transformation)
-await repository.GetByIdAsync(id, ct)
-    .Then(e => e.Process())
-    .ThenAsync(async e => await e.ValidateAsync(ct));
+// Transformation helpers
+var dto = await repository.GetByIdAsync(id)
+    .Then(e => e.PerformLogic())
+    .ThenAsync(async e => await e.ValidateAsync(service, ct));
 
-// Ensure pattern (validation)
-var entity = await repository.FirstOrDefaultAsync(expr, ct)
-    .EnsureFound("Entity not found");
-
-await repository.GetByIdsAsync(ids, ct)
-    .EnsureFoundAllBy(e => e.Id, ids);
+// Safety helpers
+await entity.ValidateAsync(repo, ct).EnsureValidAsync();
+var entity = await repository.GetByIdAsync(id).EnsureFound($"Not found: {id}");
+var items = await repository.GetByIdsAsync(ids, ct).EnsureFoundAllBy(x => x.Id, ids);
 
 // Expression composition
-var expr = baseExpr.AndAlso(e => e.IsActive)
-    .AndAlsoIf(condition, () => e => e.Status == Status.Pending)
-    .OrElse(e => e.IsAdmin);
+var expr = Entity.OfCompanyExpr(companyId)
+    .AndAlso(Entity.FilterByStatusExpr(statuses))
+    .AndAlsoIf(deptIds.Any(), () => Entity.FilterByDeptExpr(deptIds));
 
-// Parallel processing
-await items.ParallelAsync(async i => await ProcessAsync(i, ct), maxConcurrent: 10);
+// Collection helpers
+var ids = await repository.GetByIdsAsync(ids, ct).ThenSelect(e => e.Id);
+await items.ParallelAsync(async item => await ProcessAsync(item, ct), maxConcurrent: 10);
 
-// Tuple results
+// Parallel operations
 var (entity, files) = await (
-    repository.CreateOrUpdateAsync(e, ct),
-    files.ParallelAsync(f => UploadAsync(f, ct))
+    repository.CreateOrUpdateAsync(entity, ct),
+    files.ParallelAsync(f => fileService.UploadAsync(f, path, ct))
 );
 ```
 
-## Background Jobs
+## Background Job Patterns
 
 ```csharp
-// Daily job at 3 AM
+// Pattern 1: Simple Paged (skip/take pagination)
 [PlatformRecurringJob("0 3 * * *")]
-public sealed class DailyReportJob : PlatformApplicationPagedBackgroundJobExecutor
+public sealed class SimpleJob : PlatformApplicationPagedBackgroundJobExecutor
 {
     protected override int PageSize => 50;
 
-    protected override async Task ProcessPagedAsync(
-        int? skip, int? take, object? param,
-        IServiceProvider sp, IPlatformUnitOfWorkManager uow)
-        => await repository.GetAllAsync(q => Query(q).PageBy(skip, take))
-            .Then(items => items.ParallelAsync(ProcessAsync));
+    protected override async Task ProcessPagedAsync(int? skip, int? take, object? param, IServiceProvider sp, IPlatformUnitOfWorkManager uow)
+    {
+        var items = await repository.GetAllAsync(q => QueryBuilder(q).PageBy(skip, take));
+        await items.ParallelAsync(async item => await ProcessItem(item));
+    }
 
-    protected override async Task<int> MaxItemsCount(
-        PlatformApplicationPagedBackgroundJobParam<object?> p)
-        => await repository.CountAsync(Query);
+    protected override async Task<int> MaxItemsCount(PlatformApplicationPagedBackgroundJobParam<object?> param)
+        => await repository.CountAsync(q => QueryBuilder(q));
 }
 
-// Every 5 minutes + run on startup
-[PlatformRecurringJob("*/5 * * * *", executeOnStartUp: true)]
-public sealed class SyncJob : PlatformApplicationBatchScrollingBackgroundJobExecutor<Entity, string>
+// Pattern 2: Batch Scrolling (two-level: batch keys + entities within batch)
+[PlatformRecurringJob("0 0 * * *")]
+public sealed class BatchJob : PlatformApplicationBatchScrollingBackgroundJobExecutor<Entity, string>
 {
-    protected override int BatchKeyPageSize => 50;
-    protected override int BatchPageSize => 25;
+    protected override int BatchKeyPageSize => 50;  // Companies per page
+    protected override int BatchPageSize => 25;     // Entities per company
 
-    protected override IQueryable<Entity> EntitiesQueryBuilder(
-        IQueryable<Entity> q, object? param, string? batchKey)
-        => q.WhereIf(batchKey != null, e => e.CompanyId == batchKey);
+    protected override IQueryable<Entity> EntitiesQueryBuilder(IQueryable<Entity> q, object? param, string? batchKey = null)
+        => q.Where(BaseFilter()).WhereIf(batchKey != null, e => e.CompanyId == batchKey);
 
-    protected override IQueryable<string> EntitiesBatchKeyQueryBuilder(
-        IQueryable<Entity> q, object? param, string? batchKey)
-        => EntitiesQueryBuilder(q, param, batchKey)
-            .Select(e => e.CompanyId)
-            .Distinct();
+    protected override IQueryable<string> EntitiesBatchKeyQueryBuilder(IQueryable<Entity> q, object? param, string? batchKey = null)
+        => EntitiesQueryBuilder(q, param, batchKey).Select(e => e.CompanyId).Distinct();
 
-    protected override async Task ProcessEntitiesAsync(
-        List<Entity> entities, string batchKey, object? param, IServiceProvider sp)
-        => await entities.ParallelAsync(ProcessAsync);
+    protected override async Task ProcessEntitiesAsync(List<Entity> entities, string batchKey, object? param, IServiceProvider sp)
+    {
+        await entities.ParallelAsync(async e => await ProcessEntity(e), maxConcurrent: 1);
+    }
 }
+
+// Cron schedules
+[PlatformRecurringJob("0 0 * * *")]              // Daily midnight
+[PlatformRecurringJob("*/5 * * * *")]            // Every 5 min
+[PlatformRecurringJob("5 0 * * *", executeOnStartUp: true)]  // Daily + on startup
 ```
 
-## Message Bus Consumers
+## Message Bus Patterns
 
 ```csharp
-internal sealed class EmployeeEventConsumer
-    : PlatformApplicationMessageBusConsumer<EmployeeEventBusMessage>
+// Entity Event Consumer
+internal sealed class UpsertOrDeleteEntityConsumer : PlatformApplicationMessageBusConsumer<EntityEventBusMessage>
 {
-    public override async Task<bool> HandleWhen(
-        EmployeeEventBusMessage msg, string routingKey)
-        => true;
+    private readonly IPlatformQueryableRootRepository<Entity, string> repository;
 
-    public override async Task HandleLogicAsync(
-        EmployeeEventBusMessage msg, string routingKey)
+    public override async Task<bool> HandleWhen(EntityEventBusMessage msg, string routingKey)
+        => true;  // Filter logic here
+
+    public override async Task HandleLogicAsync(EntityEventBusMessage msg, string routingKey)
     {
-        if (msg.Payload.CrudAction == Created
-            || (msg.Payload.CrudAction == Updated && !msg.Payload.EntityData.IsDeleted))
+        // CREATE/UPDATE
+        if (msg.Payload.CrudAction == Created || (msg.Payload.CrudAction == Updated && !msg.Payload.EntityData.IsDeleted))
         {
-            var existing = await repository.FirstOrDefaultAsync(
-                e => e.Id == msg.Payload.EntityData.Id);
+            // Wait for dependencies
+            var (companyMissing, userMissing) = await (
+                Util.TaskRunner.TryWaitUntilAsync(() => companyRepo.AnyAsync(c => c.Id == msg.Payload.EntityData.CompanyId), maxWaitSeconds: 300).Then(p => !p),
+                Util.TaskRunner.TryWaitUntilAsync(() => userRepo.AnyAsync(u => u.Id == msg.Payload.EntityData.UserId), maxWaitSeconds: 300).Then(p => !p)
+            );
+
+            if (companyMissing || userMissing) return;  // Skip if dependencies missing
+
+            var existing = await repository.FirstOrDefaultAsync(e => e.Id == msg.Payload.EntityData.Id);
 
             if (existing == null)
-                await repository.CreateAsync(
-                    msg.Payload.EntityData.ToEntity()
-                        .With(e => e.LastSyncDate = msg.CreatedUtcDate));
-            else if (existing.LastSyncDate <= msg.CreatedUtcDate)
-                await repository.UpdateAsync(
-                    msg.Payload.EntityData.UpdateEntity(existing)
-                        .With(e => e.LastSyncDate = msg.CreatedUtcDate));
+                await repository.CreateAsync(msg.Payload.EntityData.ToEntity().With(e => e.LastMessageSyncDate = msg.CreatedUtcDate));
+            else if (existing.LastMessageSyncDate <= msg.CreatedUtcDate)
+                await repository.UpdateAsync(msg.Payload.EntityData.UpdateEntity(existing).With(e => e.LastMessageSyncDate = msg.CreatedUtcDate));
         }
 
-        if (msg.Payload.CrudAction == Deleted)
+        // DELETE
+        if (msg.Payload.CrudAction == Deleted || (msg.Payload.CrudAction == Updated && msg.Payload.EntityData.IsDeleted))
             await repository.DeleteAsync(msg.Payload.EntityData.Id);
     }
 }
 ```
 
-## Anti-Patterns
+## Data Migration Patterns
 
 ```csharp
-// ❌ WRONG: Direct cross-service DB access
-var data = await otherDbContext.Entities.ToListAsync();
+// Data migration with paging
+public class MigrateData : PlatformDataMigrationExecutor<DbContext>
+{
+    public override string Name => "20251022000000_MigrateData";
+    public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 22);
+    public override bool AllowRunInBackgroundThread => true;
 
-// ✅ CORRECT: Use message bus
-public class EntityEventConsumer : PlatformApplicationMessageBusConsumer<EntityMessage> { }
+    public override async Task Execute(DbContext dbContext)
+    {
+        var queryBuilder = repository.GetQueryBuilder(q => q.Where(FilterExpr()));
+        await RootServiceProvider.ExecuteInjectScopedPagingAsync(
+            maxItemCount: await repository.CountAsync(q => queryBuilder(q)),
+            pageSize: 200,
+            ExecutePaging,
+            queryBuilder);
+    }
 
-// ❌ WRONG: Custom repository interface
-public interface IEmployeeRepository { Task<Employee> GetByCodeAsync(string code); }
+    private static async Task<List<Entity>> ExecutePaging(int skip, int take, Func<IQueryable<Entity>, IQueryable<Entity>> qb, IRepo<Entity> repo, IPlatformUnitOfWorkManager uow)
+    {
+        using (var unitOfWork = uow.Begin())
+        {
+            var items = await repo.GetAllAsync(q => qb(q).OrderBy(e => e.Id).Skip(skip).Take(take));
+            await repo.UpdateManyAsync(items, dismissSendEvent: true, checkDiff: false, cancellationToken: default);
+            await unitOfWork.CompleteAsync();
+            return items;
+        }
+    }
+}
+```
 
-// ✅ CORRECT: Repository extensions with static expressions
-public static class EmployeeRepositoryExtensions {
-    public static async Task<Employee> GetByCodeAsync(
-        this IPlatformQueryableRootRepository<Employee, string> repo,
-        string code, CancellationToken ct = default)
-        => await repo.FirstOrDefaultAsync(Employee.CodeExpr(code), ct).EnsureFound();
+## Authorization Patterns
+
+```csharp
+// Controller level
+[PlatformAuthorize(PlatformRoles.Admin, PlatformRoles.Manager)]
+[HttpPost]
+public async Task<IActionResult> Save([FromBody] SaveCommand cmd) => Ok(await Cqrs.SendAsync(cmd));
+
+// Command handler validation
+protected override async Task<PlatformValidationResult<T>> ValidateRequestAsync(...)
+{
+    return await validation
+        .AndNotAsync(_ => !RequestContext.HasRole(PlatformRoles.Admin), "Admin only")
+        .AndAsync(_ => repository.AnyAsync(e => e.CompanyId == RequestContext.CurrentCompanyId()), "Same company only");
 }
 
-// ❌ WRONG: Manual validation throw
-if (string.IsNullOrEmpty(Name)) throw new Exception("Name required");
+// Entity-level query filter
+public static Expression<Func<Employee, bool>> UserCanAccessExpr(string userId, string companyId)
+    => e => e.UserId == userId || (e.CompanyId == companyId && e.IsPublic);
 
-// ✅ CORRECT: PlatformValidationResult fluent API
-public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
-    => base.Validate().And(_ => Name.IsNotNullOrEmpty(), "Name required");
-
-// ❌ WRONG: Mapping in handler
-var config = new Config { Name = req.Dto.Name, Code = req.Dto.Code };
-
-// ✅ CORRECT: DTO owns mapping
-var config = req.Dto.MapToObject().With(c => c.CreatedBy = RequestContext.UserId());
+// Usage
+var employees = await repository.GetAllAsync(Employee.OfCompanyExpr(companyId).AndAlso(Employee.UserCanAccessExpr(userId, companyId)), ct);
 ```
+
+## Helper vs Util Decision Guide
+
+```
+Business Logic with Dependencies (DB, Services)?
+├── YES → Helper (Application layer, injectable service)
+│   └── Location: {Service}.Application\Helpers\{Entity}Helper.cs
+└── NO → Util (Pure functions, static class)
+    └── Location: Easy.Platform.Application.Utils or {Service}.Application.Utils
+```
+
+```csharp
+// Helper pattern (with dependencies)
+public class EmployeeHelper
+{
+    private readonly IPlatformQueryableRootRepository<Employee, string> repository;
+
+    public async Task<Employee> GetOrCreateEmployeeAsync(string userId, string companyId, CancellationToken ct)
+    {
+        return await repository.FirstOrDefaultAsync(Employee.UniqueExpr(userId, companyId), ct)
+            ?? await CreateEmployeeAsync(userId, companyId, ct);
+    }
+}
+
+// Util pattern (pure functions)
+public static class EmployeeUtil
+{
+    public static string GetFullName(Employee e) => $"{e.FirstName} {e.LastName}".Trim();
+    public static bool IsActive(Employee e) => e.Status == EmploymentStatus.Active && !e.TerminationDate.HasValue;
+}
+```
+
+## Advanced Patterns Reference
+
+```csharp
+// List Extensions
+.IsNullOrEmpty() / .IsNotNullOrEmpty()
+.RemoveWhere(predicate, out removedItems)
+.UpsertBy(keySelector, items, updateFn)
+.SelectList(selector)  // Like Select().ToList()
+.ThenSelect(selector)  // For Task<List<T>>
+.ForEachAsync(async action, maxConcurrent)
+
+// Request Context Methods
+RequestContext.CurrentCompanyId() / .UserId() / .ProductScope()
+await RequestContext.CurrentEmployee()
+RequestContext.HasRequestAdminRoleInCompany()
+
+// Task Tuple Await Pattern
+var (users, companies, settings) = await (
+    userRepository.GetAllAsync(...),
+    companyRepository.GetAllAsync(...),
+    settingsRepository.GetAllAsync(...)
+);
+
+// Conditional Actions
+var entity = await repository.GetByIdAsync(id)
+    .With(e => e.Name = newName)
+    .PipeActionIf(condition, e => e.UpdateTimestamp())
+    .PipeActionAsyncIf(async () => await externalService.Any(), async e => await e.SyncExternal());
+
+// Advanced Expression Composition
+public static Expression<Func<Employee, bool>> CanBeReviewParticipantExpr(int scope, string companyId, int? minMonths, string? eventId)
+    => OfficialEmployeeExpr(scope, companyId)
+        .AndAlso(e => e.User != null && e.User.IsActive)
+        .AndAlsoIf(minMonths != null, () => e => e.StartDate <= Clock.UtcNow.AddMonths(-minMonths!.Value))
+        .AndAlsoIf(eventId.IsNotNullOrEmpty(), () => e => e.ReviewParticipants.Any(p => p.EventId == eventId));
+```
+
+## Anti-Patterns
+
+- **Never** create separate files for Command/Handler/Result
+- **Never** call side effects (notifications, external APIs) in handlers
+- **Never** map DTO to entity in handler (use DTO's `MapToEntity()`)
+- **Never** use generic repository when service-specific exists
+- **Never** catch exceptions in handler (let platform handle)
+- **Never** add manual `AddDomainEvent()` - platform auto-raises entity events on CRUD

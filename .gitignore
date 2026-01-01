@@ -458,3 +458,5 @@ src/PlatformExampleAppWeb/e2e/playwright-report/
 **/skills/.venv/
 
 *plans/reports/
+
+temp/

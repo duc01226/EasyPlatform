@@ -1,8 +1,20 @@
 ---
-applyTo: "src/PlatformExampleAppWeb/**/*.ts,src/PlatformExampleAppWeb/**/*.html,src/PlatformExampleAppWeb/**/*.scss"
+applyTo: 'src/PlatformExampleAppWeb/**/*.ts,src/PlatformExampleAppWeb/**/*.html'
+excludeAgent: ['copilot-code-review']
+description: 'Angular frontend development patterns for EasyPlatform'
 ---
 
 # Frontend Angular Development Patterns
+
+## Required Reading
+
+**For comprehensive TypeScript patterns, you MUST read:**
+
+**`docs/claude/frontend-typescript-complete-guide.md`**
+
+This guide contains complete patterns for components, stores, forms, API services, RxJS operators, and more.
+
+---
 
 ## Component Hierarchy
 
@@ -20,7 +32,23 @@ AppBaseComponent                     // + Auth, roles, company context
 └── AppBaseVmStoreComponent         // + Store + auth + loading/error
 ```
 
-## Component Selection Guide
+## Design System Documentation (MANDATORY)
+
+**Before creating any frontend component, read the design system documentation:**
+
+| Application               | Design System Location |
+| ------------------------- | ---------------------- |
+| **PlatformExampleAppWeb** | `docs/design-system/`  |
+
+**Key docs to read:**
+
+- `README.md` - Component overview, base classes, library summary
+- `02-component-catalog.md` - Available components and usage examples
+- `01-design-tokens.md` - Colors, typography, spacing tokens
+- `03-form-patterns.md` - Form validation, modes, error handling patterns
+- `07-technical-guide.md` - Implementation checklist, best practices
+
+## Component Selection
 
 | Need                 | Base Class                              |
 | -------------------- | --------------------------------------- |
@@ -28,72 +56,194 @@ AppBaseComponent                     // + Auth, roles, company context
 | Complex state        | `AppBaseVmStoreComponent<State, Store>` |
 | Form with validation | `AppBaseFormComponent<FormVm>`          |
 
-## Store Pattern (Complex State Management)
+## Component HTML Template Standard (BEM Classes)
+
+**All UI elements in component templates MUST have BEM classes, even without styling needs.** This makes HTML self-documenting like OOP class hierarchy.
+
+```html
+<!-- CORRECT: All elements have BEM classes for structure clarity -->
+<div class="employee-list">
+    <div class="employee-list__header">
+        <h1 class="employee-list__title">Employees</h1>
+        <button class="employee-list__btn --refresh">Refresh</button>
+    </div>
+    <div class="employee-list__content">
+        @for (item of vm.items; track item.id) {
+        <div class="employee-list__item">
+            <span class="employee-list__item-name">{{ item.name }}</span>
+            <span class="employee-list__item-role">{{ item.role }}</span>
+        </div>
+        }
+    </div>
+    <div class="employee-list__footer">
+        <span class="employee-list__count">{{ vm.total }} employees</span>
+    </div>
+</div>
+
+<!-- WRONG: Elements without classes - structure unclear -->
+<div class="employee-list">
+    <div>
+        <h1>Employees</h1>
+        <button>Refresh</button>
+    </div>
+    <div>
+        @for (item of vm.items; track item.id) {
+        <div>
+            <span>{{ item.name }}</span>
+            <span>{{ item.role }}</span>
+        </div>
+        }
+    </div>
+</div>
+```
+
+**BEM Naming Convention:**
+
+- **Block**: Component name (e.g., `employee-list`)
+- **Element**: Child using `block__element` (e.g., `employee-list__header`)
+- **Modifier**: Separate class with `--` prefix (e.g., `employee-list__btn --refresh --small`)
+
+## Component SCSS Standard
+
+Always style both the **host element** (Angular selector) and the **main wrapper class**:
+
+```scss
+@import '~assets/scss/variables';
+
+// Host element styling - ensures Angular element is a proper block container
+my-component {
+    display: flex;
+    flex-direction: column;
+}
+
+// Main wrapper class with full styling
+.my-component {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex-grow: 1;
+
+    &__header {
+        // BEM child elements...
+    }
+
+    &__content {
+        flex: 1;
+        overflow-y: auto;
+    }
+}
+```
+
+**Why both?**
+
+- **Host element**: Makes the Angular element a real layout element (not an unknown element without display)
+- **Main class**: Contains the full styling, matches the wrapper div in HTML
+
+## Platform Component API Reference
+
+**Location**: `src/PlatformExampleAppWeb/libs/platform-core/src/lib/components/abstracts/`
+
+```typescript
+// PlatformComponent - Foundation (lifecycle, signals, subscriptions)
+export abstract class PlatformComponent {
+  // State signals
+  public status$: WritableSignal<ComponentStateStatus>;  // 'Pending'|'Loading'|'Reloading'|'Success'|'Error'
+  public isStateLoading/isStateError/isStateSuccess(): Signal<boolean>;
+  public errorMsg$(): Signal<string | undefined>;
+
+  // Multi-request state tracking
+  public observerLoadingErrorState<T>(requestKey?: string): OperatorFunction<T, T>;
+  public isLoading$(requestKey?: string): Signal<boolean | null>;
+  public getErrorMsg$(requestKey?: string): Signal<string | undefined>;
+
+  // Subscription management
+  public untilDestroyed<T>(): MonoTypeOperatorFunction<T>;
+
+  // Response handling
+  protected tapResponse<T>(nextFn?, errorFn?, completeFn?): OperatorFunction<T, T>;
+
+  // Effects
+  public effectSimple<T, R>(...): ReturnType;
+}
+
+// PlatformVmComponent - ViewModel management
+export abstract class PlatformVmComponent<TViewModel> extends PlatformComponent {
+  public get vm(): WritableSignal<TViewModel | undefined>;
+  public currentVm(): TViewModel;
+  protected updateVm(partialOrUpdaterFn, onVmChanged?, options?): TViewModel;
+  @Input('vm') vmInput; @Output('vmChange') vmChangeEvent;
+  protected abstract initOrReloadVm: (isReload: boolean) => Observable<TViewModel | undefined>;
+}
+
+// PlatformVmStoreComponent - ComponentStore integration
+export abstract class PlatformVmStoreComponent<TViewModel, TStore> extends PlatformComponent {
+  constructor(public store: TStore) {}
+  public get vm(): Signal<TViewModel | undefined>;
+  public currentVm(): TViewModel;
+  public updateVm(partialOrUpdaterFn, options?): void;
+  public reload(): void;  // Reloads all stores
+}
+
+// PlatformFormComponent - Reactive forms
+export abstract class PlatformFormComponent<TViewModel> extends PlatformVmComponent<TViewModel> {
+  public get form(): FormGroup<PlatformFormGroupControls<TViewModel>>;
+  public formStatus$: WritableSignal<FormControlStatus>;
+  public get mode(): PlatformFormMode;  // 'create'|'update'|'view'
+  public isViewMode/isCreateMode/isUpdateMode(): boolean;
+  public validateForm(): boolean;
+  public formControls(key: keyof TViewModel): FormControl;
+  protected abstract initialFormConfig: () => PlatformFormConfig<TViewModel>;
+}
+```
+
+## Store Pattern
 
 ```typescript
 @Injectable()
-export class TextSnippetStore extends PlatformVmStore<TextSnippetState> {
-    private snippetApi = inject(TextSnippetApiService);
+export class EmployeeStore extends PlatformVmStore<EmployeeState> {
+    private employeeApi = inject(EmployeeApiService);
 
-    // Cache configuration (optional)
+    // Enable caching (optional)
     protected get enableCaching() {
         return true;
     }
-    protected cachedStateKeyName = () => 'TextSnippetStore';
-    protected vmConstructor = (data?: Partial<TextSnippetState>) => new TextSnippetState(data);
-    protected beforeInitVm = () => this.loadInitialData();
+    protected cachedStateKeyName = () => 'EmployeeStore';
+    protected vmConstructor = (data?: Partial<EmployeeState>) => new EmployeeState(data);
 
-    // Effects for async operations
-    public loadSnippets = this.effectSimple(() =>
-        this.snippetApi.getList().pipe(
-            this.observerLoadingErrorState('loadSnippets'),
-            this.tapResponse(snippets => this.updateState({ snippets }))
-        )
-    );
-
-    public saveSnippet = this.effectSimple<SaveCommand>((cmd$) =>
-        cmd$.pipe(
-            switchMap(cmd => this.snippetApi.save(cmd).pipe(
-                this.observerLoadingErrorState('saveSnippet'),
-                this.tapResponse(
-                    result => {
-                        this.updateState(state => ({
-                            snippets: [...state.snippets, result.data]
-                        }));
-                        this.showSuccessMessage('Saved successfully');
-                    }
-                )
-            ))
-        )
+    public loadEmployees = this.effectSimple(
+        () => this.employeeApi.getEmployees().pipe(this.tapResponse(employees => this.updateState({ employees }))),
+        'loadEmployees'
     );
 
     // State selectors
-    public readonly snippets$ = this.select(state => state.snippets);
-    public readonly loading$ = this.isLoading$('loadSnippets');
-    public readonly saving$ = this.isLoading$('saveSnippet');
+    public readonly employees$ = this.select(state => state.employees);
+    public readonly loading$ = this.isLoading$('loadEmployees');
 }
+```
 
-// Component using store
+## Component with Store
+
+```typescript
 @Component({
-    selector: 'app-text-snippet-list',
+    selector: 'app-employee-list',
     template: `
         <app-loading-and-error-indicator [target]="this">
             @if (vm(); as vm) {
-                @for (item of vm.snippets; track item.id) {
-                    <div class="snippet-list__item">{{ item.snippetText }}</div>
+                @for (item of vm.employees; track item.id) {
+                    <div>{{ item.name }}</div>
                 }
             }
         </app-loading-and-error-indicator>
     `,
-    providers: [TextSnippetStore]
+    providers: [EmployeeStore]
 })
-export class TextSnippetListComponent extends AppBaseVmStoreComponent<TextSnippetState, TextSnippetStore> {
-    constructor(store: TextSnippetStore) {
+export class EmployeeListComponent extends AppBaseVmStoreComponent<EmployeeState, EmployeeStore> {
+    constructor(store: EmployeeStore) {
         super(store);
     }
 
     ngOnInit() {
-        this.store.loadSnippets();
+        this.store.loadEmployees();
     }
 
     onRefresh() {
@@ -102,102 +252,261 @@ export class TextSnippetListComponent extends AppBaseVmStoreComponent<TextSnippe
 }
 ```
 
-## Form Pattern with Validation
+## Form Pattern
 
 ```typescript
-export class TextSnippetFormComponent extends AppBaseFormComponent<TextSnippetFormVm> {
-    private snippetApi = inject(TextSnippetApiService);
-
+export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> {
     protected initialFormConfig = () => ({
         controls: {
-            snippetText: new FormControl(
-                this.currentVm().snippetText,
-                [Validators.required, Validators.maxLength(1000)],
-                [ifAsyncValidator(() => !this.isViewMode, this.checkUniqueCode.bind(this))]
-            ),
-            category: new FormControl(
-                this.currentVm().category,
-                [Validators.required]
-            ),
-            tags: {
-                modelItems: () => this.currentVm().tags,
-                itemControl: (tag, index) => new FormGroup({
-                    name: new FormControl(tag.name, [Validators.required]),
-                    value: new FormControl(tag.value)
-                })
-            }
+            email: new FormControl(
+                this.currentVm().email,
+                [Validators.required, Validators.email],
+                [ifAsyncValidator(() => !this.isViewMode, checkEmailUniqueValidator(this.employeeApi))]
+            )
         },
-        dependentValidations: {
-            snippetText: ['category'],  // When snippetText changes, revalidate category
-            category: ['tags']
-        }
+        dependentValidations: { email: ['firstName'] }
     });
-
-    private checkUniqueCode(control: AbstractControl): Observable<ValidationErrors | null> {
-        return this.snippetApi.checkCodeExists(control.value).pipe(
-            map(exists => exists ? { codeExists: true } : null),
-            catchError(() => of(null))
-        );
-    }
 
     onSubmit() {
         if (this.validateForm()) {
-            const command = {
-                id: this.currentVm().id,
-                snippetText: this.currentVm().snippetText,
-                category: this.currentVm().category,
-                tags: this.currentVm().tags
-            };
-
-            this.snippetApi.save(command)
-                .pipe(
-                    this.observerLoadingErrorState('save'),
-                    this.tapResponse(() => {
-                        this.showSuccessMessage('Saved successfully');
-                        this.router.navigate(['../'], { relativeTo: this.route });
-                    }),
-                    this.untilDestroyed()
-                )
-                .subscribe();
+            // Process this.currentVm()
         }
     }
 }
+```
+
+## FormArray Pattern
+
+```typescript
+// FormArray pattern (from product-form.component.ts)
+protected initialFormConfig = () => ({
+  controls: {
+    specifications: {
+      modelItems: () => this.currentVm().specifications,
+      itemControl: (spec, index) => new FormGroup({
+        name: new FormControl(spec.name, [Validators.required]),
+        value: new FormControl(spec.value, [Validators.required])
+      })
+    }
+  },
+  dependentValidations: { price: ['category'] }
+});
 ```
 
 ## API Service Pattern
 
 ```typescript
 @Injectable({ providedIn: 'root' })
-export class TextSnippetApiService extends PlatformApiService {
+export class EmployeeApiService extends PlatformApiService {
     protected get apiUrl() {
-        return environment.apiUrl + '/api/TextSnippet';
+        return environment.apiUrl + '/api/Employee';
     }
 
-    getList(query?: Query): Observable<TextSnippetDto[]> {
-        return this.get<TextSnippetDto[]>('', query);
+    getEmployees(query?: Query): Observable<Employee[]> {
+        return this.get<Employee[]>('', query);
     }
 
-    getById(id: string): Observable<TextSnippetDto> {
-        return this.get<TextSnippetDto>(`/${id}`);
+    saveEmployee(cmd: SaveCommand): Observable<Result> {
+        return this.post<Result>('', cmd);
     }
 
-    save(cmd: SaveCommand): Observable<SaveResult> {
-        return this.post<SaveResult>('', cmd);
+    searchEmployees(criteria: Search): Observable<Employee[]> {
+        return this.post('/search', criteria, { enableCache: true });
+    }
+}
+```
+
+## Authorization Patterns
+
+```typescript
+// Component properties
+export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> {
+  get canEdit() { return this.hasRole(PlatformRoles.Admin, PlatformRoles.Manager) && this.isOwnCompany(); }
+  get canDelete() { return this.hasRole(PlatformRoles.Admin); }
+}
+
+// Template guards
+@if (hasRole(PlatformRoles.Admin)) {
+  <button (click)="delete()">Delete</button>
+}
+
+// Route guard
+canActivate(): Observable<boolean> {
+  return this.authService.hasRole$(PlatformRoles.Admin);
+}
+```
+
+## Platform Core Library Reference
+
+**Location**: `src/PlatformExampleAppWeb/libs/platform-core/`
+
+```typescript
+// Foundation: Extend BaseComponent/BaseDirective (lifecycle, detectChanges(), untilDestroy())
+export class MyComponent extends BaseComponent { }
+export class MyDirective extends BaseDirective { }
+
+// Module import
+import { PlatformCoreModule } from '@libs/platform-core';
+@NgModule({ imports: [PlatformCoreModule] })
+```
+
+## Key Helpers
+
+```typescript
+// Subscription management
+this.data$.pipe(this.untilDestroyed()).subscribe();
+
+// Loading/error state
+this.apiCall$.pipe(this.observerLoadingErrorState('key')).subscribe();
+this.isLoading$('key');
+this.getErrorMsg$('key');
+getAllErrorMsgs$(['req1', 'req2']);
+
+// Track-by for performance
+trackByItem = this.ngForTrackByItemProp<User>('id');
+trackByList = this.ngForTrackByImmutableList(this.users);
+
+// Named subscription management
+this.storeSubscription('dataLoad', this.data$.subscribe(...));
+this.cancelStoredSubscription('dataLoad');
+```
+
+## @Watch Decorator Pattern
+
+```typescript
+import { Watch, WatchWhenValuesDiff, SimpleChange } from '@libs/platform-core';
+
+export class MyComponent {
+    @Watch('onPageResultChanged')
+    public pagedResult?: PagedResult<Item>;
+
+    @WatchWhenValuesDiff('performSearch') // Only triggers on actual value change
+    public searchTerm: string = '';
+
+    private onPageResultChanged(value: PagedResult<Item> | undefined, change: SimpleChange<PagedResult<Item>>) {
+        if (!change.isFirstTimeSet) {
+            this.updateUI();
+        }
     }
 
-    delete(id: string): Observable<void> {
-        return this.delete<void>(`/${id}`);
+    private performSearch(term: string) {
+        this.apiService
+            .search(term)
+            .pipe(this.untilDestroyed())
+            .subscribe(results => (this.results = results));
     }
+}
+```
 
-    search(criteria: SearchCriteria): Observable<TextSnippetDto[]> {
-        return this.post('/search', criteria, {
-            enableCache: true,  // Cache GET-like POST requests
-            cacheTimeInSeconds: 300
-        });
+## Custom RxJS Operators
+
+```typescript
+import { skipDuplicates, applyIf, onCancel, tapOnce, distinctUntilObjectValuesChanged } from '@libs/platform-core';
+
+this.search$
+    .pipe(
+        skipDuplicates(500), // Skip duplicates within 500ms
+        applyIf(this.isEnabled$, debounceTime(300)), // Conditional operator
+        onCancel(() => this.cleanup()), // Handle cancellation
+        tapOnce({ next: v => this.initOnce(v) }), // Execute only on first emission
+        distinctUntilObjectValuesChanged(), // Deep object comparison
+        this.untilDestroyed()
+    )
+    .subscribe();
+```
+
+## Advanced Form Validators
+
+```typescript
+import { ifAsyncValidator, startEndValidator, noWhitespaceValidator, validator } from '@libs/platform-core';
+
+new FormControl(
+    '',
+    [
+        Validators.required,
+        noWhitespaceValidator,
+        startEndValidator(
+            'invalidRange',
+            ctrl => ctrl.parent?.get('start')?.value,
+            ctrl => ctrl.value,
+            { allowEqual: false }
+        )
+    ],
+    [
+        ifAsyncValidator(ctrl => ctrl.valid, emailUniqueValidator) // Only run if sync valid
+    ]
+);
+```
+
+## Platform Directives
+
+```typescript
+// Horizontal scroll with drag
+<div platformSwipeToScroll>/* content */</div>
+
+// Disabled control
+<input [platformDisabledControl]="isDisabled" />
+```
+
+## Utility Functions
+
+```typescript
+import {
+    date_addDays,
+    date_format,
+    date_timeDiff,
+    list_groupBy,
+    list_distinctBy,
+    list_sortBy,
+    string_isEmpty,
+    string_truncate,
+    string_toCamelCase,
+    dictionary_map,
+    dictionary_filter,
+    dictionary_values,
+    immutableUpdate,
+    deepClone,
+    removeNullProps,
+    guid_generate,
+    task_delay,
+    task_debounce
+} from '@libs/platform-core';
+
+// Date utilities
+const nextWeek = date_addDays(new Date(), 7);
+const formatted = date_format(date, 'YYYY-MM-DD');
+
+// List utilities
+const grouped = list_groupBy(items, x => x.category);
+const unique = list_distinctBy(items, x => x.id);
+
+// Object utilities
+const updated = immutableUpdate(state, { loading: true });
+const cloned = deepClone(complexObject);
+```
+
+## Working Examples Reference
+
+**Location**: `src/PlatformExampleAppWeb/apps/playground-text-snippet/`
+
+| Example          | File                            | Use Case                                           |
+| ---------------- | ------------------------------- | -------------------------------------------------- |
+| Loading/Error    | `*-demo.component.ts`           | Auto state binding, custom templates               |
+| Basic Form       | `*-form.component.ts`           | Simple forms, basic validation                     |
+| Advanced Form    | `*-form.component.ts`           | FormArrays, async validation, dependent validation |
+| State Management | `*.component.ts` + `*.store.ts` | ComponentStore, CRUD, pagination, search           |
+| API Service      | `*-api.service.ts`              | Caching, mock data, error simulation               |
+
+## Dev Mode Validation
+
+```typescript
+export class MyComponent extends PlatformComponent {
+    // Dev-mode validation for loading/error state elements
+    protected get devModeCheckLoadingStateElement() {
+        return '.spinner';
     }
-
-    checkCodeExists(code: string): Observable<boolean> {
-        return this.get<boolean>(`/check-code/${code}`);
+    protected get devModeCheckErrorStateElement() {
+        return '.error';
     }
 }
 ```
@@ -213,457 +522,27 @@ export class TextSnippetApiService extends PlatformApiService {
 | **Component**    | UI event handling ONLY - delegates all logic to lower layers                          |
 
 ```typescript
-// ❌ WRONG: Logic in component (leads to duplication)
-export class ConfigFormComponent {
-    readonly authTypes = [
-        { value: 1, label: 'OAuth2' },
-        { value: 2, label: 'SAML' },
-        { value: 3, label: 'API Key' }
-    ];
+// WRONG: Logic in component (leads to duplication)
+readonly authTypes = [{ value: 1, label: 'OAuth2' }, { value: 3, label: 'API Key' }];
+getStatusClass(config) { return config.isEnabled ? 'active' : 'disabled'; }
 
-    getStatusClass(config: Config) {
-        return config.isEnabled ? 'status-active' : 'status-disabled';
-    }
-
-    getStatusText(config: Config) {
-        return config.isEnabled ? 'Active' : 'Disabled';
-    }
-}
-
-// ✅ CORRECT: Logic in entity/model (90% belongs to entity)
-export class AuthConfigurationDisplay {
-    // Static dropdown options
-    static readonly authTypes = [
-        { value: 1, label: 'OAuth2' },
-        { value: 2, label: 'SAML' },
-        { value: 3, label: 'API Key' }
-    ];
-
-    static getAuthTypeLabel(value: number): string {
-        return this.authTypes.find(t => t.value === value)?.label ?? 'Unknown';
-    }
-
-    // Instance display methods
-    getStatusCssClass(): string {
-        return this.isEnabled ? 'status-active' : 'status-disabled';
-    }
-
-    getStatusText(): string {
-        return this.isEnabled ? 'Active' : 'Disabled';
-    }
-
-    getDisplayName(): string {
-        return `${this.name} (${AuthConfigurationDisplay.getAuthTypeLabel(this.authType)})`;
-    }
-}
-
-// Component now just uses entity
-export class ConfigFormComponent {
-    readonly authTypes = AuthConfigurationDisplay.authTypes;
-
-    // Delegates to entity
-    getStatusClass(config: AuthConfigurationDisplay) {
-        return config.getStatusCssClass();
-    }
-}
+// CORRECT: Logic in entity/model
+readonly authTypes = AuthConfigurationDisplay.getApiAuthTypeOptions();
+getStatusClass(config) { return config.getStatusCssClass(); } // Delegates to entity
 ```
 
-## BEM Naming Convention (MANDATORY)
+**Common Mistakes:**
 
-**CRITICAL:** Every UI element MUST have a BEM class, even without special styling. Treat CSS classes as OOP structure.
-
-### BEM Structure
-
-```
-block              → Component wrapper (e.g., .user-card)
-block__element     → Child element (e.g., .user-card__title)
-block__element --modifier → State/variant (e.g., .user-card__btn --primary --large)
-```
-
-### Modifier Convention: Space-Separated `--modifier`
-
-```html
-<!-- ✅ CORRECT: Space-separated modifiers -->
-<button class="user-card__btn --primary --large">Save</button>
-<div class="entity-list__item --selected --highlighted">Item</div>
-
-<!-- ❌ WRONG: Suffix-style modifiers -->
-<button class="user-card__btn--primary user-card__btn--large">Save</button>
-```
-
-### Template Example
-
-```html
-<!-- ✅ CORRECT: Every element has a BEM class -->
-<div class="user-card">
-    <div class="user-card__header">
-        <img class="user-card__avatar" [src]="user.avatar" />
-        <h2 class="user-card__title">{{ user.name }}</h2>
-        <span class="user-card__badge --premium">Premium</span>
-    </div>
-    <div class="user-card__content">
-        <p class="user-card__description">{{ user.bio }}</p>
-    </div>
-    <div class="user-card__footer">
-        <button class="user-card__btn --secondary" (click)="onCancel()">Cancel</button>
-        <button class="user-card__btn --primary" (click)="onSave()">Save</button>
-    </div>
-</div>
-
-<!-- ❌ WRONG: Elements without BEM classes -->
-<div class="user-card">
-    <div><!-- Missing class! -->
-        <img [src]="user.avatar" /><!-- Missing class! -->
-        <h2>{{ user.name }}</h2><!-- Missing class! -->
-    </div>
-</div>
-```
-
-### SCSS with Modifiers
-
-```scss
-@import '~assets/scss/variables';
-
-// Host element - makes Angular element a proper block container
-my-user-card {
-    display: flex;
-    flex-direction: column;
-}
-
-// Main wrapper class with full styling
-.user-card {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    border: 1px solid $border-color;
-    border-radius: 8px;
-
-    &__header {
-        padding: 1rem;
-        border-bottom: 1px solid $border-color;
-    }
-
-    &__avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-    }
-
-    &__title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin: 0;
-    }
-
-    &__badge {
-        padding: 0.25rem 0.5rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-
-        &.--premium {
-            background: $premium-color;
-            color: white;
-        }
-
-        &.--trial {
-            background: $trial-color;
-            color: $text-color;
-        }
-    }
-
-    &__btn {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-
-        &.--primary {
-            background: $primary-color;
-            color: white;
-        }
-
-        &.--secondary {
-            background: transparent;
-            border: 1px solid $border-color;
-        }
-
-        &.--large {
-            padding: 1rem 2rem;
-            font-size: 1.125rem;
-        }
-    }
-}
-```
-
-## RxJS Operators and Utilities
-
-```typescript
-import {
-    skipDuplicates,
-    applyIf,
-    onCancel,
-    tapOnce,
-    distinctUntilObjectValuesChanged
-} from '@libs/platform-core';
-
-// Custom operators
-this.search$
-    .pipe(
-        skipDuplicates(500), // Skip duplicates within 500ms
-        applyIf(this.isEnabled$, debounceTime(300)), // Conditional operator
-        onCancel(() => this.cleanup()), // Handle cancellation
-        tapOnce({ next: v => this.initOnce(v) }), // Execute only on first emission
-        distinctUntilObjectValuesChanged(), // Deep object comparison
-        this.untilDestroyed()
-    )
-    .subscribe();
-```
-
-## Watch Decorator Patterns
-
-```typescript
-import { Watch, WatchWhenValuesDiff, SimpleChange } from '@libs/platform-core';
-
-export class MyComponent {
-    // Watch for any property change
-    @Watch('onPageResultChanged')
-    public pagedResult?: PagedResult<Item>;
-
-    // Only trigger on actual value change (not reference)
-    @WatchWhenValuesDiff('performSearch')
-    public searchTerm: string = '';
-
-    private onPageResultChanged(
-        value: PagedResult<Item> | undefined,
-        change: SimpleChange<PagedResult<Item>>
-    ) {
-        if (!change.isFirstTimeSet) {
-            this.updateUI();
-        }
-    }
-
-    private performSearch(term: string) {
-        this.apiService
-            .search(term)
-            .pipe(this.untilDestroyed())
-            .subscribe(results => (this.results = results));
-    }
-}
-```
-
-## Form Validators
-
-```typescript
-import {
-    ifAsyncValidator,
-    startEndValidator,
-    noWhitespaceValidator,
-    validator
-} from '@libs/platform-core';
-
-// Sync validators
-new FormControl('', [
-    Validators.required,
-    noWhitespaceValidator,
-    Validators.email,
-    Validators.minLength(3),
-    Validators.maxLength(200)
-]);
-
-// Range validator (start/end dates)
-startDate: new FormControl('', [Validators.required]),
-endDate: new FormControl('', [
-    Validators.required,
-    startEndValidator(
-        'invalidRange',
-        ctrl => ctrl.parent?.get('startDate')?.value,
-        ctrl => ctrl.value,
-        { allowEqual: false }
-    )
-]);
-
-// Async validators (only run if sync valid)
-email: new FormControl('', [Validators.required, Validators.email], [
-    ifAsyncValidator(ctrl => ctrl.valid, this.checkEmailUnique.bind(this))
-]);
-```
-
-## Utility Functions
-
-```typescript
-import {
-    // Date utilities
-    date_addDays,
-    date_format,
-    date_timeDiff,
-    date_isWeekend,
-    date_startOfDay,
-    date_endOfDay,
-
-    // List utilities
-    list_groupBy,
-    list_distinctBy,
-    list_sortBy,
-    list_findMax,
-    list_findMin,
-
-    // String utilities
-    string_isEmpty,
-    string_truncate,
-    string_toCamelCase,
-    string_toKebabCase,
-    string_capitalize,
-
-    // Dictionary utilities
-    dictionary_map,
-    dictionary_filter,
-    dictionary_values,
-    dictionary_keys,
-
-    // Object utilities
-    immutableUpdate,
-    deepClone,
-    removeNullProps,
-    objectEqual,
-
-    // Task utilities
-    task_delay,
-    task_debounce,
-    task_retry,
-
-    // GUID utilities
-    guid_generate,
-    guid_isValid
-} from '@libs/platform-core';
-
-// Usage examples
-const formatted = date_format(new Date(), 'yyyy-MM-dd');
-const grouped = list_groupBy(items, item => item.category);
-const truncated = string_truncate(longText, 100);
-const updated = immutableUpdate(state, { count: state.count + 1 });
-```
-
-## Platform Component APIs
-
-```typescript
-export class MyComponent extends PlatformComponent {
-    // Track-by for performance
-    trackByItem = this.ngForTrackByItemProp<User>('id');
-    trackByList = this.ngForTrackByImmutableList(this.users);
-
-    // Named subscription management
-    protected storeSubscription('dataLoad', this.data$.subscribe(...));
-    protected cancelStoredSubscription('dataLoad');
-
-    // Multiple request state tracking
-    isLoading$('request1');
-    isLoading$('request2');
-    getAllErrorMsgs$(['req1', 'req2']);
-    loadingRequestsCount();
-    reloadingRequestsCount();
-
-    // Dev-mode state validation
-    protected get devModeCheckLoadingStateElement() {
-        return '.spinner';
-    }
-    protected get devModeCheckErrorStateElement() {
-        return '.error';
-    }
-}
-```
-
-## Authorization in Components
-
-```typescript
-export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> {
-    // Role checks
-    get canEdit() {
-        return this.hasRole(PlatformRoles.Admin, PlatformRoles.Manager) && this.isOwnCompany();
-    }
-
-    get canDelete() {
-        return this.hasRole(PlatformRoles.Admin);
-    }
-
-    get isOwnCompany() {
-        return this.currentVm().companyId === this.currentCompanyId();
-    }
-
-    // Context access
-    get currentUserId() {
-        return this.authService.currentUserId();
-    }
-
-    get currentCompanyId() {
-        return this.authService.currentCompanyId();
-    }
-}
-
-// Template guards
-@if (hasRole(PlatformRoles.Admin)) {
-    <button (click)="delete()">Delete</button>
-}
-
-@if (canEdit) {
-    <input [(ngModel)]="vm.name" />
-} @else {
-    <span>{{ vm.name }}</span>
-}
-```
-
-## Platform Directives
-
-```html
-<!-- Swipe to scroll horizontally -->
-<div platformSwipeToScroll>
-    <div class="scrollable-content">...</div>
-</div>
-
-<!-- Conditional disable -->
-<input [platformDisabledControl]="isDisabled" />
-```
+- Dropdown options defined in component - should be static method in entity
+- Display logic (CSS class, status text) in component - should be instance method in entity
+- Command building in component - should be factory class in service
 
 ## Anti-Patterns
 
-```typescript
-// ❌ WRONG: Direct HTTP client usage
-constructor(private http: HttpClient) {}
-this.http.get('/api/employees').subscribe();
-
-// ✅ CORRECT: Use platform API services
-constructor(private employeeApi: EmployeeApiService) {}
-this.employeeApi.getList().subscribe();
-
-// ❌ WRONG: Manual state management
-employees = signal([]);
-loading = signal(false);
-
-// ✅ CORRECT: Use platform store pattern
-constructor(private store: EmployeeStore) {}
-
-// ❌ WRONG: Missing subscription cleanup
-this.data$.subscribe(); // Memory leak!
-
-// ✅ CORRECT: Always use untilDestroyed()
-this.data$.pipe(this.untilDestroyed()).subscribe();
-
-// ❌ WRONG: Skip loading/error state handling
-this.apiCall$.subscribe();
-
-// ✅ CORRECT: Use observerLoadingErrorState
-this.apiCall$.pipe(this.observerLoadingErrorState('key')).subscribe();
-
-// ❌ WRONG: Logic in component (duplication)
-readonly statusOptions = [{ value: 1, label: 'Active' }];
-
-// ✅ CORRECT: Logic in entity/model (reusable)
-readonly statusOptions = EmployeeStatus.dropdownOptions;
-
-// ❌ WRONG: Elements without BEM classes
-<div><span>{{ user.name }}</span></div>
-
-// ✅ CORRECT: ALL elements have BEM classes
-<div class="user-card__header">
-    <span class="user-card__name">{{ user.name }}</span>
-</div>
-```
+- **Never** use `HttpClient` directly (use `PlatformApiService`)
+- **Never** manage state manually (use `PlatformVmStore`)
+- **Never** assume base class methods (verify via IntelliSense)
+- **Never** skip `untilDestroyed()` for subscriptions
+- **Never** use direct component state for complex UI (use Store pattern)
+- **Never** forget to provide Store in component's `providers` array
+- **Never** put reusable logic in component (move to entity/model for reuse)

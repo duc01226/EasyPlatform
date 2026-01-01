@@ -32,7 +32,7 @@
 
 ## Overview
 
-The **Goal Management Feature** in bravoGROWTH service provides comprehensive **OKR (Objectives and Key Results)** and **SMART goal** management capabilities for enterprise HR platforms. The system supports both company-wide and individual employee goals with granular permission controls, automated notifications, and seamless integration with Performance Review and Check-In features.
+The **Goal Management Feature** in TextSnippet service provides comprehensive **OKR (Objectives and Key Results)** and **SMART goal** management capabilities for enterprise HR platforms. The system supports both company-wide and individual employee goals with granular permission controls, automated notifications, and seamless integration with Performance Review and Check-In features.
 
 The feature implements a dual-app architecture serving both **company-level goal management** (HR managers, team leads) and **employee self-service** (individual goal tracking, progress updates).
 
@@ -61,11 +61,11 @@ The feature implements a dual-app architecture serving both **company-level goal
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              BravoSUITE Platform                                 │
+│                              EasyPlatform Platform                                 │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                  │
 │  ┌────────────────────────┐                       ┌────────────────────────────┐│
-│  │  bravoGROWTH Service   │                       │   Frontend Applications    ││
+│  │  TextSnippet Service   │                       │   Frontend Applications    ││
 │  │                        │                       │                            ││
 │  │ ┌────────────────────┐ │                       │ ┌────────────────────────┐ ││
 │  │ │  Domain Layer      │ │                       │ │  growth-for-company    │ ││
@@ -88,7 +88,7 @@ The feature implements a dual-app architecture serving both **company-level goal
 │  │ │  • GetDashboard    │ │                       │                            ││
 │  │ │  • GetVisibility   │ │                       │ ┌────────────────────────┐ ││
 │  │ │  • Validate...     │ │                       │ │  Shared Domain Library │ ││
-│  │ └────────────────────┘ │                       │ │  @libs/bravo-domain    │ ││
+│  │ └────────────────────┘ │                       │ │  @libs/apps-domains    │ ││
 │  │         │              │                       │ │  • Goal models         │ ││
 │  │         ▼              │                       │ │  • GoalPermission      │ ││
 │  │ ┌────────────────────┐ │                       │ │  • API Service         │ ││
@@ -119,9 +119,9 @@ The feature implements a dual-app architecture serving both **company-level goal
 
 ### Service Responsibilities
 
-#### bravoGROWTH Service (Primary Owner)
+#### TextSnippet Service (Primary Owner)
 
-**Location**: `src/Services/bravoGROWTH/`
+**Location**: `src/PlatformExampleApp/TextSnippet/`
 
 **Domain Layer** (`Growth.Domain/Entities/GoalManagement/`):
 
@@ -157,11 +157,11 @@ The feature implements a dual-app architecture serving both **company-level goal
 
 - **GoalController.cs** (103 lines): 15 RESTful endpoints
 
-**Persistence Layer**: MongoDB with `IGrowthRootRepository<Goal>`
+**Persistence Layer**: MongoDB with `IPlatformQueryableRootRepository<Goal>`
 
 #### Frontend Applications
 
-**Location**: `src/WebV2/`
+**Location**: `src/PlatformExampleAppWeb/`
 
 **Company App** (`apps/growth-for-company/src/app/routes/goals/`):
 
@@ -173,7 +173,7 @@ The feature implements a dual-app architecture serving both **company-level goal
 - Goal management component (same as company, `forManagement=false`)
 - Accessed by: Individual employees for personal goal tracking
 
-**Shared Domain Library** (`libs/bravo-domain/src/goal/`):
+**Shared Domain Library** (`libs/apps-domains/src/goal/`):
 
 - **Domain Models** (3 files, 807 lines):
   - `goal.model.ts` (789 lines): Goal, GoalPermission, GoalMeasurement, GoalStats
@@ -203,7 +203,7 @@ The feature implements a dual-app architecture serving both **company-level goal
 | Pattern                   | Usage                            | Location                                                                                    |
 | ------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------- |
 | **CQRS**                  | Command/Query separation         | `SaveGoalCommand`, `GetGoalListQuery`                                                       |
-| **Repository**            | Data access abstraction          | `IGrowthRootRepository<Goal>`                                                               |
+| **Repository**            | Data access abstraction          | `IPlatformQueryableRootRepository<Goal>`                                                               |
 | **Event-Driven**          | Async side effects               | Platform auto-raises `PlatformCqrsEntityEvent` → Event handlers                             |
 | **Strategy**              | Permission calculation           | `GoalPermission.permissions` dictionary                                                     |
 | **Template Method**       | Common query logic               | `GetGoalListQueryHelper.BuildListGoalExpression()`                                          |
@@ -228,7 +228,7 @@ The feature implements a dual-app architecture serving both **company-level goal
 
 #### 1. Goal Entity
 
-**Location**: `src/Services/bravoGROWTH/Growth.Domain/Entities/GoalManagement/Goal.cs` (186 lines)
+**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/Goal.cs` (186 lines)
 
 **Purpose**: Main aggregate root representing an OKR Objective, KeyResult, or SMART goal with complete lifecycle management, field tracking, and computed properties.
 
@@ -299,7 +299,7 @@ public static Expression<Func<Goal, bool>> IsOverdueExpr()
 
 #### 2. GoalEmployee Entity
 
-**Location**: `src/Services/bravoGROWTH/Growth.Domain/Entities/GoalManagement/GoalEmployee.cs` (50 lines)
+**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalEmployee.cs` (50 lines)
 
 **Purpose**: Many-to-many join entity linking employees to goals in different roles (Owner, Watcher, Approver).
 
@@ -319,19 +319,19 @@ public class GoalEmployee : Entity<GoalEmployee, string>
 
 #### 3. GoalCheckIn Entity
 
-**Location**: `src/Services/bravoGROWTH/Growth.Domain/Entities/GoalManagement/GoalCheckIn.cs` (37 lines)
+**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalCheckIn.cs` (37 lines)
 
 **Purpose**: Links goals to check-in events for progress tracking through recurring check-ins.
 
 #### 4. GoalPerformanceReviewParticipant Entity
 
-**Location**: `src/Services/bravoGROWTH/Growth.Domain/Entities/GoalManagement/GoalPerformanceReviewParticipant.cs` (47 lines)
+**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalPerformanceReviewParticipant.cs` (47 lines)
 
 **Purpose**: Links goals to performance review participants for goal-based performance evaluations.
 
 ### Enumerations
 
-**Location**: `src/WebV2/libs/bravo-domain/src/goal/domain-models/goal.enum.ts` (96 lines)
+**Location**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.enum.ts` (96 lines)
 
 #### GoalTypes (3 values)
 
@@ -533,9 +533,9 @@ public saveGoal(command: SaveGoalCommand): Observable<SaveGoalCommandResult> {
 
 **Evidence**:
 
-- Form component: `src/WebV2/libs/bravo-domain/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:120-250`
-- Permission model: `src/WebV2/libs/bravo-domain/src/goal/domain-models/goal.model.ts:560-610`
-- API service: `src/WebV2/libs/bravo-domain/src/goal/api-services/goal-management-api.service.ts:45-55`
+- Form component: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:120-250`
+- Permission model: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.model.ts:560-610`
+- API service: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/api-services/goal-management-api.service.ts:45-55`
 
 #### Backend Flow
 
@@ -630,9 +630,9 @@ protected override async Task<SaveGoalCommandResult> HandleAsync(
 
 **Evidence**:
 
-- Command handler: `src/Services/bravoGROWTH/Growth.Application/UseCaseCommands/GoalManagement/SaveGoalCommand.cs:65-120`
-- Validation: `src/Services/bravoGROWTH/Growth.Application/UseCaseCommands/GoalManagement/SaveGoalCommand.cs:85-145`
-- Repository: Uses `IGrowthRootRepository<Goal>`
+- Command handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/SaveGoalCommand.cs:65-120`
+- Validation: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/SaveGoalCommand.cs:85-145`
+- Repository: Uses `IPlatformQueryableRootRepository<Goal>`
 
 **Step 4: Automatic Event Handlers** (platform triggers automatically on `CreateOrUpdateAsync`)
 
@@ -699,8 +699,8 @@ internal sealed class CreateHistoryLogOnGoalChangedEventHandler
 
 **Evidence**:
 
-- Email handler: `src/Services/bravoGROWTH/Growth.Application/UseCaseEvents/GoalManagement/SendEmailOnCUDGoalEntityEventHandler.cs:25-60`
-- History handler: `src/Services/bravoGROWTH/Growth.Application/UseCaseEvents/GoalManagement/CreateHistoryLogOnGoalChangedEventHandler.cs:15-37`
+- Email handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/SendEmailOnCUDGoalEntityEventHandler.cs:25-60`
+- History handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/CreateHistoryLogOnGoalChangedEventHandler.cs:15-37`
 
 **Complete Flow Diagram**:
 
@@ -942,8 +942,8 @@ export class GoalPermission {
 
 **Evidence**:
 
-- Permission model: `src/WebV2/libs/bravo-domain/src/goal/domain-models/goal.model.ts:620-750`
-- Permission enum: `src/WebV2/libs/bravo-domain/src/goal/domain-models/goal.model.ts:560-582`
+- Permission model: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.model.ts:620-750`
+- Permission enum: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.model.ts:560-582`
 
 #### Form Field Disabling
 
@@ -977,7 +977,7 @@ private disableControlIf(controlName: keyof GoalFormVm, condition: boolean): voi
 
 **Evidence**:
 
-- Form component: `src/WebV2/libs/bravo-domain/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:450-480`
+- Form component: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:450-480`
 
 ---
 
@@ -1057,7 +1057,7 @@ protected override async Task<DeleteGoalCommandResult> HandleAsync(
 
 **Evidence**:
 
-- Delete handler: `src/Services/bravoGROWTH/Growth.Application/UseCaseCommands/GoalManagement/DeleteGoalCommand.cs:45-91`
+- Delete handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/DeleteGoalCommand.cs:45-91`
 
 #### Cascade Deletion on Employee Removal
 
@@ -1095,7 +1095,7 @@ internal sealed class DeleteGoalOnDeleteEmployeeEntityEventHandler
 
 **Evidence**:
 
-- Cascade handler: `src/Services/bravoGROWTH/Growth.Application/UseCaseEvents/GoalManagement/DeleteGoalOnDeleteEmployeeEntityEventHandler.cs:15-50`
+- Cascade handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/DeleteGoalOnDeleteEmployeeEntityEventHandler.cs:15-50`
 
 ---
 
@@ -1210,8 +1210,8 @@ public setUpStoreFromQueryParams(queryParams: {
 
 **Evidence**:
 
-- Store: `src/WebV2/libs/bravo-domain/src/goal/components/goal-management/goal-management.store.ts:81-246`
-- Query DTO: `src/WebV2/libs/bravo-domain/src/goal/query-dtos/get-goal-list.query.ts:45-204`
+- Store: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-management/goal-management.store.ts:81-246`
+- Query DTO: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/query-dtos/get-goal-list.query.ts:45-204`
 
 #### Backend Flow
 
@@ -1324,8 +1324,8 @@ protected override async Task<GetGoalListQueryResult> HandleAsync(
 
 **Evidence**:
 
-- Query handler: `src/Services/bravoGROWTH/Growth.Application/UseCaseQueries/GoalManagement/GetGoalListQuery.cs:75-125`
-- Query helper: `src/Services/bravoGROWTH/Growth.Application/Helpers/GetGoalListQueryHelper.cs:35-127`
+- Query handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseQueries/GoalManagement/GetGoalListQuery.cs:75-125`
+- Query helper: `src/PlatformExampleApp/TextSnippet/Growth.Application/Helpers/GetGoalListQueryHelper.cs:35-127`
 
 ---
 
@@ -1395,7 +1395,7 @@ internal sealed class SendEmailOnCUDGoalEntityEventHandler
 
 **Evidence**:
 
-- Email handler: `src/Services/bravoGROWTH/Growth.Application/UseCaseEvents/GoalManagement/SendEmailOnCUDGoalEntityEventHandler.cs:25-60`
+- Email handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/SendEmailOnCUDGoalEntityEventHandler.cs:25-60`
 
 #### Deadline Reminders (Background Job)
 
@@ -1459,7 +1459,7 @@ public sealed class GoalDeadlinesSendReminderBackgroundJobExecutor
 
 **Evidence**:
 
-- Background job: `src/Services/bravoGROWTH/Growth.Application/BackgroundJobExecutors/GoalManagement/GoalDeadlinesSendReminderBackgroundJobExecutor.cs:35-107`
+- Background job: `src/PlatformExampleApp/TextSnippet/Growth.Application/BackgroundJobExecutors/GoalManagement/GoalDeadlinesSendReminderBackgroundJobExecutor.cs:35-107`
 
 ---
 
@@ -1480,7 +1480,7 @@ public sealed class GoalDeadlinesSendReminderBackgroundJobExecutor
 
 **Evidence**:
 
-- Entity: `src/Services/bravoGROWTH/Growth.Domain/Entities/GoalManagement/GoalPerformanceReviewParticipant.cs:15-47`
+- Entity: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalPerformanceReviewParticipant.cs:15-47`
 
 #### Check-In Integration
 
@@ -1546,14 +1546,14 @@ internal sealed class UpdateGoalCurrentValueMeasurementCommandHandler
 
 **Evidence**:
 
-- Check-in entity: `src/Services/bravoGROWTH/Growth.Domain/Entities/GoalManagement/GoalCheckIn.cs:15-37`
-- Update command: `src/Services/bravoGROWTH/Growth.Application/UseCaseCommands/GoalManagement/UpdateGoalCurrentValueMeasurementCommand.cs:25-72`
+- Check-in entity: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalCheckIn.cs:15-37`
+- Update command: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/UpdateGoalCurrentValueMeasurementCommand.cs:25-72`
 
 ## API Reference
 
 **Base URL**: `{apiUrl}/api/Goal`
 
-**Location**: `src/Services/bravoGROWTH/Growth.Service/Controllers/GoalController.cs` (103 lines)
+**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Service/Controllers/GoalController.cs` (103 lines)
 
 ### Endpoints
 
@@ -1575,7 +1575,7 @@ internal sealed class UpdateGoalCurrentValueMeasurementCommandHandler
 | POST   | `/link-check-in`              | `LinkGoalToCheckInCommand`                 | Link goal to check-in event                 |
 | DELETE | `/unlink-performance-review`  | `UnlinkGoalFromPerformanceReviewCommand`   | Unlink goal from performance review         |
 
-**Evidence**: Controller with 15 endpoints at `src/Services/bravoGROWTH/Growth.Service/Controllers/GoalController.cs:25-103`
+**Evidence**: Controller with 15 endpoints at `src/PlatformExampleApp/TextSnippet/Growth.Service/Controllers/GoalController.cs:25-103`
 
 ### Request/Response Examples
 
@@ -1726,7 +1726,7 @@ GET /api/Goal?viewType=MyGoals&statuses=Progressing,AtRisk&searchText=customer&m
 | `pageIndex`        | `number`            | Zero-based page index                              |
 | `maxResultCount`   | `number`            | Page size (default: 20)                            |
 
-**Evidence**: Query DTO at `src/WebV2/libs/bravo-domain/src/goal/query-dtos/get-goal-list.query.ts:45-204`
+**Evidence**: Query DTO at `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/query-dtos/get-goal-list.query.ts:45-204`
 
 ---
 
@@ -1781,8 +1781,8 @@ The Goal Management feature implements a **23-permission field-level access cont
 
 **Evidence**:
 
-- Permission model: `src/WebV2/libs/bravo-domain/src/goal/domain-models/goal.model.ts:620-750`
-- Permission enum (23 actions): `src/WebV2/libs/bravo-domain/src/goal/domain-models/goal.model.ts:560-582`
+- Permission model: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.model.ts:620-750`
+- Permission enum (23 actions): `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.model.ts:560-582`
 
 **For detailed implementation**, see [Goal Editing with Permissions](#goal-editing-with-permissions) workflow.
 
@@ -1843,7 +1843,7 @@ The Goal Management feature implements a **23-permission field-level access cont
 
 #### 1. GoalManagementComponent
 
-**Location**: `src/WebV2/libs/bravo-domain/src/goal/components/goal-management/goal-management.component.ts` (280 lines)
+**Location**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-management/goal-management.component.ts` (280 lines)
 
 **Purpose**: Container component for goal list page with state management, filtering, and pagination.
 
@@ -1890,11 +1890,11 @@ public openGoalDetailPanelDialog(goalId: string, parentGoalId?: string): void; /
 <app-goal-management [forManagement]="false" [defaultViewType]="GoalViewType.MyGoals" />
 ```
 
-**Evidence**: `src/WebV2/libs/bravo-domain/src/goal/components/goal-management/goal-management.component.ts:45-280`
+**Evidence**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-management/goal-management.component.ts:45-280`
 
 #### 2. GoalManagementStore
 
-**Location**: `src/WebV2/libs/bravo-domain/src/goal/components/goal-management/goal-management.store.ts` (260 lines)
+**Location**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-management/goal-management.store.ts` (260 lines)
 
 **Purpose**: NgRx-style reactive state management for goal list with automatic cache persistence.
 
@@ -1924,11 +1924,11 @@ public setSelectedGoalId(selectedGoal: Goal | null): void;
 public setUpStoreFromQueryParams(queryParams: {...}): void; // Deep linking support
 ```
 
-**Evidence**: `src/WebV2/libs/bravo-domain/src/goal/components/goal-management/goal-management.store.ts:22-260`
+**Evidence**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-management/goal-management.store.ts:22-260`
 
 #### 3. UpsertGoalFormComponent
 
-**Location**: `src/WebV2/libs/bravo-domain/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts` (865 lines)
+**Location**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts` (865 lines)
 
 **Purpose**: Complex reactive form for create/edit/view goal with 23 permission-based field controls.
 
@@ -1963,11 +1963,11 @@ protected initialFormConfig = (): PlatformFormConfig<GoalFormVm> => ({
 });
 ```
 
-**Evidence**: `src/WebV2/libs/bravo-domain/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:120-865`
+**Evidence**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:120-865`
 
 #### 4. GoalDetailPanelComponent
 
-**Location**: `src/WebV2/libs/bravo-domain/src/goal/components/goal-detail-panel/goal-detail-panel.component.ts` (366 lines)
+**Location**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-detail-panel/goal-detail-panel.component.ts` (366 lines)
 
 **Purpose**: Slide-in side panel for viewing goal details and quick progress updates.
 
@@ -1978,11 +1978,11 @@ protected initialFormConfig = (): PlatformFormConfig<GoalFormVm> => ({
 - **Linked Entities**: Display linked check-ins and performance reviews
 - **Parent/Child**: Show parent Objective for KeyResults
 
-**Evidence**: `src/WebV2/libs/bravo-domain/src/goal/components/goal-detail-panel/goal-detail-panel.component.ts:45-366`
+**Evidence**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-detail-panel/goal-detail-panel.component.ts:45-366`
 
 #### 5. GoalOverviewComponent
 
-**Location**: `src/WebV2/apps/growth-for-company/src/app/routes/goals/goal-overview.component.ts` (286 lines)
+**Location**: `src/PlatformExampleAppWeb/apps/growth-for-company/src/app/routes/goals/goal-overview.component.ts` (286 lines)
 
 **Purpose**: Dashboard component with stats cards + embedded goal management table.
 
@@ -1993,7 +1993,7 @@ protected initialFormConfig = (): PlatformFormConfig<GoalFormVm> => ({
 - **Export**: CSV/Excel export functionality
 - **Embeds**: `<app-goal-management>` component below stats
 
-**Evidence**: `src/WebV2/apps/growth-for-company/src/app/routes/goals/goal-overview.component.ts:45-286`
+**Evidence**: `src/PlatformExampleAppWeb/apps/growth-for-company/src/app/routes/goals/goal-overview.component.ts:45-286`
 
 ---
 
@@ -2768,7 +2768,7 @@ var (total, statusCounts) = await (
 
 ## Related Documentation
 
-### BravoSUITE Platform Documentation
+### EasyPlatform Platform Documentation
 
 - **[CLAUDE.md](../../CLAUDE.md)** - Complete platform development guide
   - Backend patterns: CQRS, Clean Architecture, Repository patterns
@@ -2813,7 +2813,7 @@ var (total, statusCounts) = await (
 
 ### API Documentation
 
-- **Backend API**: `https://api.bravosuite.com/swagger` (Production)
+- **Backend API**: `https://api.easyplatform.com/swagger` (Production)
 - **Backend API**: `http://localhost:5010/swagger` (Development - Growth service)
 - **Frontend Development**: `http://localhost:4206` (Growth app)
 - **Frontend Development**: `http://localhost:4205` (Employee app)
@@ -2823,7 +2823,7 @@ var (total, statusCounts) = await (
 #### Backend (.NET 8)
 
 ```
-src/Services/bravoGROWTH/
+src/PlatformExampleApp/TextSnippet/
 ├── Growth.Domain/Entities/GoalManagement/
 │   ├── Goal.cs                              # Main entity
 │   ├── GoalEmployee.cs                      # Many-to-many join
@@ -2851,7 +2851,7 @@ src/Services/bravoGROWTH/
 #### Frontend (Angular 19)
 
 ```
-src/WebV2/libs/bravo-domain/src/goal/
+src/PlatformExampleAppWeb/libs/apps-domains/src/goal/
 ├── domain-models/
 │   ├── goal.model.ts                        # TypeScript entity model
 │   ├── goal.enum.ts                         # Enums (6 enumerations)
@@ -2908,17 +2908,17 @@ src/WebV2/libs/bravo-domain/src/goal/
 
 ### Testing Resources
 
-- **Unit Tests**: `src/Services/bravoGROWTH/Growth.Application.Tests/`
-- **Integration Tests**: `src/AutomationTest/bravoGROWTH/`
+- **Unit Tests**: `src/PlatformExampleApp/TextSnippet/Growth.Application.Tests/`
+- **Integration Tests**: `src/AutomationTest/TextSnippet/`
 - **E2E Tests**: `src/AutomationTest/WebV2/goals/`
 
 ### Support and Contribution
 
 - **Issue Tracker**: GitHub Issues (internal repository)
-- **Slack Channel**: `#bravosuite-development`
+- **Slack Channel**: `#easyplatform-development`
 - **Code Review**: All changes require PR review by senior developer
 - **CI/CD**: Azure DevOps pipelines (`azure-pipelines.yml`)
 
 ---
 
-_This document provides comprehensive technical documentation for the Goal Management feature in BravoSUITE. Generated with evidence-based analysis from 36 source files (22 backend .NET/C#, 14 frontend Angular 19 TypeScript). Last updated: 2025-12-23._
+_This document provides comprehensive technical documentation for the Goal Management feature in EasyPlatform. Generated with evidence-based analysis from 36 source files (22 backend .NET/C#, 14 frontend Angular 19 TypeScript). Last updated: 2025-12-23._

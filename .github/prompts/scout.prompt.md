@@ -1,199 +1,140 @@
 ---
-description: "Fast codebase exploration to find relevant files"
+agent: agent
+description: Quickly locate relevant files across the codebase for a specific task. Fast, token-efficient file search.
 ---
 
-# Scout Prompt
+# Scout Codebase
 
-## Overview
+Search the codebase for files needed to complete the task.
 
-Quickly search the codebase to find files and code relevant to a specific task. Designed for fast, token-efficient exploration.
+## Search Request
+$input
 
-## Purpose
+## Core Mission
 
-When you need to:
-- Find files related to a feature
-- Locate implementations of a pattern
-- Understand where code lives
-- Gather context for a task
+Rapidly locate relevant files across the EasyPlatform codebase using efficient search strategies.
 
-## Workflow
+## Search Process
 
-### Step 1: Understand the Goal
+### Step 1: Analyze Request
+- Understand what files the user needs
+- Identify key directories that likely contain relevant files
+- Consider project structure
 
-What are we looking for?
+### Step 2: Key Directories
 
-| Goal Type | Search Strategy |
-|-----------|-----------------|
-| Feature code | Search by domain terms |
-| Pattern usage | Search for base class/interface |
-| API endpoints | Search controllers, routes |
-| Data models | Search entities, DTOs |
-| Configuration | Search appsettings, env files |
-| Tests | Search *Tests.cs, *.spec.ts |
+**Backend:**
+- `src/PlatformExampleApp/` - Example microservice (TextSnippet)
+- `src/Platform/Easy.Platform/` - Framework core
 
-### Step 2: Search Strategy
+**Frontend:**
+- `src/PlatformExampleAppWeb/apps/` - Angular applications
+- `src/PlatformExampleAppWeb/libs/platform-core/` - Frontend framework
+- `src/PlatformExampleAppWeb/libs/apps-domains/` - Business domain (APIs, models)
 
-Use multiple search approaches in parallel:
+### Step 3: Search Patterns
 
-#### File Pattern Search
+Use these patterns based on what you're looking for:
+
+**Commands/Handlers:**
 ```
-# Find by file name pattern
-*.Entity.cs - Domain entities
-*Controller.cs - API controllers
-*Command*.cs - CQRS commands
-*Query*.cs - CQRS queries
-*.component.ts - Angular components
-*.service.ts - Angular services
-*.store.ts - State stores
+**/UseCaseCommands/**/*{keyword}*.cs
+**/Save{Entity}Command.cs
 ```
 
-#### Content Search
+**Queries:**
 ```
-# Search for specific terms
-ClassName - Find class definition
-MethodName - Find method usage
-InterfaceName - Find implementations
+**/UseCaseQueries/**/*{keyword}*.cs
+**/Get{Entity}*Query.cs
 ```
 
-#### Directory Focus
+**Events:**
 ```
-# Backend
-src/PlatformExampleApp/ - Example app
-src/Platform/ - Framework code
-
-# Frontend
-src/PlatformExampleAppWeb/apps/ - Applications
-src/PlatformExampleAppWeb/libs/ - Libraries
+**/UseCaseEvents/**/*.cs
+**/*EntityEventHandler.cs
 ```
 
-### Step 3: Parallel Exploration
+**Entities:**
+```
+**/Domain/Entities/**/*.cs
+**/{Entity}.cs
+```
 
-Divide search into parallel tasks:
+**Frontend Components:**
+```
+**/*{keyword}*.component.ts
+**/*{keyword}*.store.ts
+**/*{keyword}*.service.ts
+```
+
+**API Services:**
+```
+**/services/**/*api*.ts
+**/*-api.service.ts
+```
+
+### Step 4: Execute Search
+
+Use glob patterns for file names:
+```
+**/payment*.{cs,ts}
+**/Employee*.cs
+```
+
+Use grep for content search:
+```
+class SaveEmployeeCommand
+interface IEmployeeApiService
+@Component.*employee
+```
+
+### Step 5: Synthesize Results
+
+Present results organized by category:
 
 ```markdown
-## Search Tasks
+## Search Results: {query}
 
-### Task 1: Domain/Entity Layer
-- Search: src/**/Domain/**/*.cs
-- Look for: Entity definitions, domain events
+### Backend Files
+**Commands:**
+- `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/UseCaseCommands/TextSnippet/SaveTextSnippetCommand.cs`
 
-### Task 2: Application Layer
-- Search: src/**/Application/**/*.cs
-- Look for: Commands, queries, handlers
+**Queries:**
+- `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/UseCaseQueries/TextSnippet/GetTextSnippetListQuery.cs`
 
-### Task 3: API Layer
-- Search: src/**/*Controller.cs
-- Look for: Endpoints, routes
+**Entities:**
+- `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/Entities/TextSnippetEntity.cs`
 
-### Task 4: Frontend
-- Search: src/**/*.component.ts
-- Look for: UI components, templates
+### Frontend Files
+**Components:**
+- `src/PlatformExampleAppWeb/libs/apps-domains/src/lib/text-snippet/text-snippet-list.component.ts`
+
+**Services:**
+- `src/PlatformExampleAppWeb/libs/apps-domains/src/lib/text-snippet/text-snippet-api.service.ts`
+
+### Related Files
+- [Additional relevant files]
+
+### Suggested Starting Points
+1. [Most relevant file] - [Why to start here]
+2. [Second most relevant] - [Why]
 ```
 
-### Step 4: Report Findings
+## Quality Standards
 
-Compile results concisely:
+- **Speed:** Complete searches quickly
+- **Accuracy:** Return only files directly relevant
+- **Coverage:** Search all likely directories
+- **Efficiency:** Minimum tool calls needed
+- **Clarity:** Organized, actionable results
 
-```markdown
-## Scout Report
+## Common Searches
 
-### Relevant Files Found
-
-| File | Purpose | Relevance |
-|------|---------|-----------|
-| path/to/file.cs | Entity definition | High |
-| path/to/other.ts | Component | Medium |
-
-### Key Patterns Identified
-- Pattern 1: How X is implemented
-- Pattern 2: Where Y is used
-
-### Recommended Entry Points
-1. Start with: [file]
-2. Then explore: [related file]
-
-### Unresolved Questions
-- Could not find: [what was missing]
-- Need clarification: [what's unclear]
-```
-
-## Search Tips
-
-### Backend (.NET)
-
-| Looking For | Search Pattern |
-|-------------|----------------|
-| Entity | `*Entity.cs`, `class * : RootEntity` |
-| Command | `*Command.cs`, `: PlatformCqrsCommand` |
-| Query | `*Query.cs`, `: PlatformCqrsQuery` |
-| Handler | `*Handler.cs`, `ApplicationHandler` |
-| Repository | `Repository`, `GetAllAsync` |
-| Event | `*Event*.cs`, `EntityEvent` |
-| Job | `*Job*.cs`, `BackgroundJob` |
-| Migration | `*Migration*.cs` |
-
-### Frontend (Angular)
-
-| Looking For | Search Pattern |
-|-------------|----------------|
-| Component | `*.component.ts` |
-| Store | `*.store.ts`, `PlatformVmStore` |
-| Service | `*.service.ts`, `PlatformApiService` |
-| Model | `*.model.ts`, `*.dto.ts` |
-| Form | `FormComponent`, `FormGroup` |
-
-### Cross-Cutting
-
-| Looking For | Search Pattern |
-|-------------|----------------|
-| Configuration | `appsettings*.json`, `environment.ts` |
-| Tests | `*Tests.cs`, `*.spec.ts` |
-| Constants | `*Constants*`, `*Enum*` |
-| Shared | `Shared`, `Common` |
-
-## Output Guidelines
-
-- **Be concise** - Sacrifice grammar for brevity
-- **Prioritize** - High relevance first
-- **Link files** - Include full paths
-- **Note gaps** - List what wasn't found
-- **Suggest next** - Recommend where to look next
-
-## Example Report
-
-```markdown
-## Scout: User Authentication
-
-### Files Found (8)
-
-**High Relevance**
-- `src/Domain/User/UserEntity.cs` - User entity
-- `src/Application/Auth/LoginCommand.cs` - Login logic
-- `src/Api/AuthController.cs` - Auth endpoints
-
-**Medium Relevance**
-- `src/Application/Auth/TokenService.cs` - Token handling
-- `libs/auth/auth.service.ts` - Frontend auth
-
-**Related**
-- `src/Domain/User/UserRole.cs` - Roles enum
-- `libs/auth/auth.guard.ts` - Route protection
-
-### Patterns
-- Uses JWT tokens
-- Roles stored in claims
-- Frontend uses interceptor
-
-### Unresolved
-- Password reset flow not found
-- MFA implementation unclear
-```
-
-## Important
-
-- Focus on finding, not implementing
-- Use parallel searches for speed
-- Report concisely
-- Note what's missing or unclear
-
-**IMPORTANT:** This is a discovery tool. Quick exploration, not deep analysis.
+| Looking for... | Search in... |
+|---------------|--------------|
+| Entity CRUD | `UseCaseCommands/`, `UseCaseQueries/` |
+| Business logic | `Domain/Entities/`, `*Service.cs` |
+| API endpoints | `Controllers/`, `*Controller.cs` |
+| Frontend feature | `libs/apps-domains/`, `apps/` |
+| Shared code | `libs/platform-core/` |
+| Platform patterns | `src/Platform/`, `libs/platform-core/` |

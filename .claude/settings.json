@@ -9,7 +9,7 @@
         "code-review@claude-plugins-official": true,
         "commit-commands@claude-plugins-official": true,
         "csharp-lsp@claude-plugins-official": true,
-        "frontend-design@claude-plugins-official": false,
+        "frontend-design@claude-plugins-official": true,
         "github@claude-plugins-official": true,
         "playwright@claude-plugins-official": false,
         "typescript-lsp@claude-plugins-official": true
@@ -18,6 +18,16 @@
         "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1"
     },
     "hooks": {
+        "Notification": [
+            {
+                "hooks": [
+                    {
+                        "command": "node .claude/hooks/notify-waiting.js",
+                        "type": "command"
+                    }
+                ]
+            }
+        ],
         "PostToolUse": [
             {
                 "hooks": [
@@ -27,16 +37,6 @@
                     }
                 ],
                 "matcher": "Edit|Write"
-            }
-        ],
-        "Notification": [
-            {
-                "hooks": [
-                    {
-                        "command": "node .claude/hooks/notify-waiting.js",
-                        "type": "command"
-                    }
-                ]
             }
         ],
         "PreCompact": [
@@ -63,6 +63,27 @@
                     }
                 ],
                 "matcher": "Bash|Glob|Grep|Read|Edit|Write"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/design-system-context.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/backend-csharp-context.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/frontend-typescript-context.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/scss-styling-context.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Edit|Write|MultiEdit"
             }
         ],
         "SessionEnd": [

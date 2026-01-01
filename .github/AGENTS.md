@@ -1,374 +1,182 @@
----
-name: EasyPlatform Agent
-description: Autonomous coding agent for EasyPlatform .NET 9 + Angular 19 enterprise monorepo with CQRS, PlatformVmStore, and BEM patterns
-tools: ['codebase', 'terminal', 'editFiles', 'createFiles', 'search']
----
+# EasyPlatform Agent Guidelines
 
-# EasyPlatform - Copilot Workspace Agent Guidelines
+> Specialized AI agents for common development tasks
 
-> Instructions for autonomous AI agents (Copilot Workspace) on how to plan, reason, and execute tasks in this codebase.
+## Automatic Workflow Detection (CRITICAL)
 
----
+**BEFORE responding to ANY task, you MUST:**
+1. **DETECT** intent from user prompt (see workflow patterns below)
+2. **ANNOUNCE** the detected workflow
+3. **CONFIRM** for high-impact workflows (features, refactors)
+4. **EXECUTE** each step in the workflow sequence
 
-## Before Any Implementation
+**Workflow Configuration:** `.claude/workflows.json` (single source of truth)
+**Workflow Router Agent:** `.github/agents/workflow-router.md`
 
-### Pre-Flight Checklist (MANDATORY)
-
-1. **Check recent changes**: `git log --oneline -10` and `git diff HEAD~5`
-2. **Verify branch**: Ensure working on correct feature branch
-3. **Search for existing patterns**: Use grep/search before creating new code
-4. **Review CLAUDE.md**: Reference project patterns and architecture rules
+See root `AGENTS.md` for detailed workflow detection rules.
 
 ---
 
-## Planning Workflow
+## Available Agents
 
-### Phase 1: Investigation (MANDATORY)
+### Workflow & Routing
 
-**Before writing ANY code:**
+| Agent | Purpose | Trigger Keywords | Model |
+|-------|---------|------------------|-------|
+| **workflow-router** | Detect intent from prompts, route to appropriate workflows | (auto-invoked) | haiku |
 
-1. Identify the domain/service boundary
-2. Search for existing implementations of similar patterns
-3. Verify platform base classes available
-4. Check for integration points (message bus, events)
-5. Review CLAUDE.md and docs/claude/ for relevant patterns
+### Core Development Agents
 
-### Phase 2: Design
+| Agent | Purpose | Trigger Keywords | Model |
+|-------|---------|------------------|-------|
+| **planner** | Research, analyze, create implementation plans for features/architecture | plan, design, architect, how should I, strategy | opus |
+| **code-reviewer** | Comprehensive code quality assessment, security audit, performance analysis | review, refactor, improve, clean up, analyze quality, PR review | sonnet |
+| **debugger** | Investigate issues, analyze system behavior, diagnose performance problems | bug, error, fix, debug, stack trace, exception, crash, logs | sonnet |
+| **tester** | Validate code quality through testing, coverage analysis, build verification | test, coverage, unit test, integration test, validate | haiku |
+| **fullstack-developer** | Execute implementation phases, handle backend/frontend/infrastructure tasks | implement, build, create, develop, code | sonnet |
 
-**For any non-trivial change:**
+### Research & Planning Agents
 
-1. List all files that will be modified
-2. Identify dependencies between changes
-3. Plan test coverage approach
-4. Consider rollback strategy
-5. Estimate effort and risk
+| Agent | Purpose | Trigger Keywords | Model |
+|-------|---------|------------------|-------|
+| **researcher** | Comprehensive research on technologies, documentation, best practices | research, investigate, find docs, explore, compare | haiku |
+| **scout** | Quickly locate relevant files across large codebases | find files, locate, search codebase, where is | haiku |
+| **scout-external** | File location using external agentic tools (Gemini, OpenCode) | find files external, deep search | haiku |
+| **brainstormer** | Generate creative ideas, explore alternatives, problem-solving | brainstorm, ideas, alternatives, what if | sonnet |
 
-### Phase 3: Implementation Order
+### Documentation & Management Agents
 
-**Execute changes in this order:**
+| Agent | Purpose | Trigger Keywords | Model |
+|-------|---------|------------------|-------|
+| **docs-manager** | Manage technical documentation, PDRs, standards, doc updates | document, docs, update readme, standards | haiku |
+| **project-manager** | Project oversight, progress tracking, coordination | status, progress, track, coordinate | sonnet |
+| **git-manager** | Stage, commit, push code with conventional commits | commit, push, git, version control | haiku |
+| **journal-writer** | Document technical difficulties, failures, lessons learned | journal, postmortem, failure, lesson | sonnet |
 
-1. Domain layer (entities, value objects)
-2. Application layer (commands, queries, events)
-3. Persistence layer (repositories, migrations)
-4. API layer (controllers, DTOs)
-5. Tests (unit, integration)
+### Specialized Agents
 
----
+| Agent | Purpose | Trigger Keywords | Model |
+|-------|---------|------------------|-------|
+| **database-admin** | Database queries, optimization, migrations, health assessment | database, query, sql, migration, optimize db | sonnet |
+| **ui-ux-designer** | Interface designs, wireframes, design systems, accessibility | design, UI, UX, wireframe, layout, responsive | inherit |
+| **copywriter** | High-converting marketing copy, social media, landing pages | copy, headline, marketing, content | haiku |
+| **mcp-manager** | Manage MCP server integrations, discover tools/prompts/resources | mcp, tools, server, integration | haiku |
 
-## Architecture Rules
-
-### Service Boundaries
-
-#### Backend Architecture
+## Quick Decision Tree
 
 ```
-src/PlatformExampleApp/
-├── *.Domain/           → Entities, domain events
-├── *.Application/      → CQRS handlers, background jobs
-├── *.Persistence*/     → Data access implementations
-└── *.Api/              → Web API controllers
+What do you need?
+├── Plan/Architecture
+│   ├── New feature design → planner
+│   ├── Technical research → researcher
+│   └── Creative solutions → brainstormer
+│
+├── Implementation
+│   ├── Build feature → fullstack-developer
+│   ├── Database work → database-admin
+│   └── UI/UX design → ui-ux-designer
+│
+├── Quality Assurance
+│   ├── Code review → code-reviewer
+│   ├── Run tests → tester
+│   └── Debug issues → debugger
+│
+├── File Operations
+│   ├── Find files → scout
+│   └── Deep search → scout-external
+│
+├── Documentation
+│   ├── Update docs → docs-manager
+│   └── Record failures → journal-writer
+│
+├── Git Operations
+│   └── Commit/push → git-manager
+│
+└── Project Management
+    ├── Track progress → project-manager
+    └── Marketing copy → copywriter
 ```
 
-#### Frontend Architecture
-
-```
-src/PlatformExampleAppWeb/
-├── apps/               → Application entry points
-└── libs/
-    ├── platform-core/  → Framework base classes (DO NOT MODIFY)
-    └── apps-domains/   → Business domain code
-```
-
-### Cross-Service Communication Rules
-
-#### ALLOWED
-
-- RabbitMQ message bus for async communication
-- Entity event producers/consumers
-- Shared DTOs in `*.Shared` projects
-
-#### FORBIDDEN
-
-- Direct database access across service boundaries
-- Synchronous HTTP calls between services (prefer message bus)
-- Shared domain entities between services
-
----
-
-## File Modification Rules
-
-### Backend Code
-
-**When modifying backend code:**
-
-1. **Entity changes** → Also update related DTOs and mappings
-2. **Command/Query changes** → Keep handler in same file
-3. **Validation changes** → Use `PlatformValidationResult` fluent API
-4. **Side effects** → Create entity event handler, NOT in command handler
-5. **Repository logic** → Use static expressions in entity, extend repository
-
-### Frontend Code
-
-**When modifying frontend code:**
-
-1. **Component changes** → Ensure extends `AppBase*Component`
-2. **State changes** → Use `PlatformVmStore`, not manual signals
-3. **API calls** → Use `PlatformApiService` extension
-4. **Subscriptions** → Always add `.pipe(this.untilDestroyed())`
-5. **Templates** → ALL elements must have BEM classes
-
----
-
-## Testing Requirements
-
-### Before Completing a Task
-
-1. **Backend**: Run `dotnet test` for affected projects
-2. **Frontend**: Run `nx test` for affected libraries
-3. **Integration**: Verify with `docker-compose up -d` if database changes
-4. **Type checks**: Run `dotnet build` or `nx build`
-
-### Test Coverage Expectations
-
-- New commands/queries: Unit tests for handler
-- New entities: Validation tests
-- New API endpoints: Integration tests
-- New components: Component tests with loading/error states
-
----
-
-## Commit Guidelines
-
-### Commit Message Format
-
-```
-<type>(<scope>): <description>
-
-[optional body]
-
-[optional footer]
-```
-
-### Types
-
-- `feat`: New feature
-- `fix`: Bug fix
-- `refactor`: Code refactoring
-- `docs`: Documentation
-- `test`: Test additions
-- `chore`: Maintenance
-
-### Scopes
-
-- `backend`: Backend changes
-- `frontend`: Frontend changes
-- `platform`: Framework changes
-- `infra`: Infrastructure changes
-
----
-
-## Error Handling Protocol
-
-### When Errors Occur
-
-1. **Read the full error message** - Don't assume based on partial info
-2. **Check the stack trace** - Identify the actual source
-3. **Search for similar issues** - Check existing code for patterns
-4. **Verify assumptions** - Don't guess, use evidence
-
-### Anti-Hallucination Rules
-
-- NEVER assume code exists without searching
-- NEVER assume file paths without verification
-- NEVER assume API shapes without reading interfaces
-- ALWAYS verify with grep/search before claiming
-- ALWAYS read CLAUDE.md and relevant docs/claude/ files
-
----
-
-## Multi-File Changes
-
-### Coordination Rules
-
-1. **Plan all changes first** - List all files before editing
-2. **Maintain consistency** - Update all related files together
-3. **Test incrementally** - Verify after each logical group
-4. **Document dependencies** - Note which changes depend on others
-
-### Example: Adding New Entity
-
-```
-Files to modify:
-1. *.Domain/Entities/NewEntity.cs          → Entity definition
-2. *.Application/Dtos/NewEntityDto.cs      → DTO with mapping
-3. *.Application/Commands/SaveNewEntity.cs → CQRS command + handler
-4. *.Application/Queries/GetNewEntity.cs   → CQRS query + handler
-5. *.Api/Controllers/NewEntityController.cs → API endpoint
-6. *.Domain/RepositoryExtensions/...cs     → Repository extension
-```
-
----
-
-## Performance Considerations
-
-### Database Operations
-
-- Use `PageBy(skip, take)` for pagination
-- Use static expressions for queries (e.g., `IsActiveExpr()`)
-- Batch operations with `CreateManyAsync`, `UpdateManyAsync`
-- Use query builders for complex filtering
-
-### Background Jobs
-
-- Use `PlatformApplicationPagedBackgroundJobExecutor` for large datasets
-- Implement `ProcessPagedAsync` with proper batching
-- Add appropriate scheduling via `[PlatformRecurringJob]`
-- Consider scrolling pattern for data affected by processing
-
----
-
-## Security Checklist
-
-Before completing any task:
-
-- [ ] Authorization checks on all endpoints (`[PlatformAuthorize]`)
-- [ ] Input validation on all DTOs (sync and async)
-- [ ] No secrets/credentials in code
-- [ ] Entity-level access filters applied
-- [ ] SQL injection prevention (use parameterized queries)
-- [ ] XSS prevention (proper encoding in frontend)
-
----
-
-## Development Rules
-
-### YAGNI/KISS/DRY Principles
-
-- **YAGNI**: Every solution must honor "You Aren't Gonna Need It"
-- **KISS**: Keep It Simple, Stupid - choose simplest approach
-- **DRY**: Don't Repeat Yourself - search before creating
-
-### Real Code Only
-
-- Never mock or simulate - implement the real functionality
-- Test first: Write tests that validate actual behavior
-- Review before commit: Run type checks and linting
-
-### Code Responsibility Hierarchy
-
-Place logic in LOWEST appropriate layer:
-
-```
-Entity/Model (Lowest) → Service → Component/Handler (Highest)
-```
-
-- **Entity/Model**: Business logic, display helpers, factory methods, defaults, dropdown options
-- **Service**: API calls, command factories, data transformation
-- **Component**: UI event handling ONLY - delegates to lower layers
-
----
-
-## File Organization
-
-### Backend (.NET)
-
-- Commands: `UseCaseCommands/{Feature}/`
-- Queries: `UseCaseQueries/{Feature}/`
-- Events: `UseCaseEvents/{Feature}/`
-- Entities: `Domain/Entities/`
-- Repository Extensions: `Domain/RepositoryExtensions/`
-- DTOs: `Application/Dtos/`
-
-### Frontend (Angular)
-
-- Features: `features/{feature}/`
-- Components: `.component.ts`, `.store.ts`, `.html`, `.scss`
-- Services: `services/`
-- Models: `models/`
-
----
-
-## Quality Gates
-
-Before claiming work complete:
-
-1. **Type check passes** (`dotnet build` / `nx build`)
-2. **Tests pass** (100% required)
-3. **No critical linting errors**
-4. **Code reviewed for patterns compliance**
-5. **All BEM classes applied to frontend elements**
-6. **All subscriptions have `.untilDestroyed()`**
-
----
-
-## Quick Reference
-
-### Key Base Classes
-
-| Layer      | Base Class                                   | Purpose              |
-| ---------- | -------------------------------------------- | -------------------- |
-| Entity     | `RootEntity<T, TKey>`                        | Domain entities      |
-| Command    | `PlatformCqrsCommand<TResult>`               | CQRS commands        |
-| Query      | `PlatformCqrsQuery<TResult>`                 | CQRS queries         |
-| Handler    | `PlatformCqrsCommandApplicationHandler`      | Command handlers     |
-| Event      | `PlatformCqrsEntityEventApplicationHandler`  | Entity event handler |
-| Component  | `AppBaseVmStoreComponent`                    | Angular components   |
-| Store      | `PlatformVmStore<T>`                         | State management     |
-| API        | `PlatformApiService`                         | HTTP client wrapper  |
-
-### Key Patterns
-
-| Pattern            | Location           | Example                                      |
-| ------------------ | ------------------ | -------------------------------------------- |
-| Repository         | `*.Application/`   | `IPlatformQueryableRootRepository<T, TKey>`  |
-| Validation         | Commands           | `.And()`, `.AndAsync()`, `.EnsureValid()`    |
-| Side Effects       | `UseCaseEvents/`   | `PlatformCqrsEntityEventApplicationHandler`  |
-| Background Jobs    | `BackgroundJobs/`  | `PlatformApplicationBackgroundJobExecutor`   |
-| Message Bus        | `MessageBusConsumers/` | `PlatformApplicationMessageBusConsumer`  |
-
----
-
-## Critical Architecture Assertions
-
-### Backend
-
-1. Use service-specific repositories with static expressions
-2. Use PlatformValidationResult fluent API - never throw ValidationException
-3. Side effects in entity event handlers - never in command handlers
-4. DTOs own mapping via MapToEntity() or MapToObject()
-5. Command + Result + Handler in ONE file
-6. Cross-service via message bus - never direct DB access
-
-### Frontend
-
-7. Extend AppBase components - never raw Component
-8. Use PlatformVmStore - never manual signals
-9. Extend PlatformApiService - never direct HttpClient
-10. Always use .untilDestroyed() - never manual unsubscribe
-11. ALL elements MUST have BEM classes
-12. Use PlatformFormComponent for forms with validation
-
-### Architecture
-
-13. Search before creating new code
-14. Place logic in lowest layer (Entity > Service > Component)
-15. Plan before implementing non-trivial tasks
-16. 90% rule: If logic belongs 90% to class A, put it in class A
-
----
-
-## Documentation References
-
-- **Project Instructions**: `CLAUDE.md` (MUST READ FIRST)
-- **Planning Protocol**: `docs/claude/01-planning-protocol.md`
-- **Investigation Protocol**: `docs/claude/02-investigation-protocol.md`
-- **Backend Patterns**: `docs/claude/03-backend-patterns.md`
-- **Frontend Patterns**: `docs/claude/04-frontend-patterns.md`
-- **Authorization**: `docs/claude/05-authorization-patterns.md`
-- **Decision Trees**: `docs/claude/06-decision-trees.md`
-- **Advanced Patterns**: `docs/claude/07-advanced-patterns.md`
-- **Clean Code Rules**: `docs/claude/08-clean-code-rules.md`
-
----
-
-_Always consult CLAUDE.md and docs/claude/ files before making architectural decisions._
+## Agent Protocols
+
+### Core Anti-Hallucination Rules
+
+All agents MUST follow these protocols:
+
+1. **ASSUMPTION_VALIDATION_CHECKPOINT**
+   - "What assumptions am I making about [X]?"
+   - "Have I verified this with actual code evidence?"
+   - "Could I be wrong about [specific pattern/relationship]?"
+
+2. **EVIDENCE_CHAIN_VALIDATION**
+   - "I believe X calls Y because..." → show actual code
+   - "This follows pattern Z because..." → cite specific examples
+   - "Service A owns B because..." → grep for actual boundaries
+
+3. **CONTEXT_ANCHOR_SYSTEM**
+   - Every 10 operations, re-read original task
+   - Verify current operation aligns with goals
+   - Check if solving the right problem
+
+### Agent Principles
+
+All agents follow:
+- **YAGNI** - You Aren't Gonna Need It
+- **KISS** - Keep It Simple, Stupid
+- **DRY** - Don't Repeat Yourself
+- **Token Efficiency** - Concise output, sacrifice grammar for clarity
+
+### Tool Efficiency
+
+- Batch multiple searches with OR patterns
+- Use parallel Read operations for related files
+- Combine semantic searches with related keywords
+- Complete operations within time targets (scout: 3-5 min)
+
+## EasyPlatform-Specific Rules
+
+### Backend Verification
+
+Before modifying backend code, verify:
+- [ ] Correct repository type (`IPlatformQueryableRootRepository<T>`)
+- [ ] Validation uses fluent API (`.And()`, `.AndAsync()`)
+- [ ] No side effects in handlers (use `UseCaseEvents/` instead)
+- [ ] DTO mapping in DTO class (`PlatformEntityDto.MapToEntity()`)
+- [ ] Command/Handler/Result in ONE file
+- [ ] Cross-service uses message bus only
+
+### Frontend Verification
+
+Before modifying frontend code, verify:
+- [ ] Correct base class inheritance (`AppBaseComponent`, `AppBaseVmStoreComponent`)
+- [ ] Uses `PlatformVmStore` for state
+- [ ] Subscriptions use `.pipe(this.untilDestroyed())`
+- [ ] API calls through `PlatformApiService`
+- [ ] BEM classes on all template elements
+
+## Agent Communication
+
+Agents should:
+1. **Present findings** before making changes
+2. **Request approval** for significant modifications
+3. **Maintain backward compatibility**
+4. **Preserve existing tests**
+5. **Follow platform patterns**
+6. **Update plan files** with task status and next steps
+
+## Report Output Standards
+
+All agent reports should:
+- Use naming pattern from injected hooks (includes full path + computed date)
+- Include executive summary (3-4 sentences)
+- List unresolved questions at the end
+- Sacrifice grammar for concision
+- Categorize findings by severity (Critical/High/Medium/Low)
+
+## Reference Documentation
+
+- `.github/copilot-instructions.md` - Global development rules
+- `.github/instructions/` - Pattern-specific instructions
+- `.github/prompts/` - Task-specific prompts
+- `docs/claude/` - Detailed pattern documentation
+- `CLAUDE.md` - Project-wide AI instructions

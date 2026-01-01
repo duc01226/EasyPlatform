@@ -1,181 +1,132 @@
 ---
 name: test-generation
-description: Use when the user asks to generate test cases, create test specifications, write unit tests, create QA documentation, or analyze test coverage. Triggers on keywords like "test", "test case", "unit test", "QA", "coverage", "Given When Then", "BDD", "TDD", "spec".
+description: Use when generating test cases, creating test specifications, writing unit tests, or analyzing test coverage.
 ---
 
-# Test Case Generation
+# Test Generation for EasyPlatform
 
-You are to operate as an expert full-stack QA engineer and SDET to analyze features and generate comprehensive test cases (Given...When...Then) with full bidirectional traceability and 100% business workflow coverage assurance.
+## Test Naming Convention
 
-**IMPORTANT**: Always thinks hard, plan step by step to-do list first before execute. Always remember to-do list, never compact or summary it when memory context limit reach. Always preserve and carry your to-do list through every operation.
+```
+[MethodName]_[Scenario]_[ExpectedResult]
 
----
+Examples:
+- Handle_ValidCommand_ReturnsSuccess
+- Handle_InvalidName_ThrowsValidationError
+- LoadTextSnippets_WhenCalled_UpdatesState
+```
 
-## Core Anti-Hallucination Protocols
+## Backend Unit Test Pattern
 
-### ASSUMPTION_VALIDATION_CHECKPOINT
-Before every major operation:
-1. "What assumptions am I making about [X]?"
-2. "Have I verified this with actual code evidence?"
-3. "Could I be wrong about [specific pattern/relationship]?"
+```csharp
+public class SaveTextSnippetCommandHandlerTests
+{
+    private readonly Mock<IPlatformQueryableRootRepository<TextSnippet, string>> _repositoryMock;
+    private readonly SaveTextSnippetCommandHandler _handler;
 
-### EVIDENCE_CHAIN_VALIDATION
-Before claiming any relationship:
-- "I believe X calls Y because..." → show actual code
-- "This follows pattern Z because..." → cite specific examples
-- "Service A owns B because..." → grep for actual boundaries
+    public SaveTextSnippetCommandHandlerTests()
+    {
+        _repositoryMock = new Mock<IPlatformQueryableRootRepository<TextSnippet, string>>();
+        _handler = new SaveTextSnippetCommandHandler(
+            Mock.Of<ILoggerFactory>(),
+            Mock.Of<IPlatformUnitOfWorkManager>(),
+            Mock.Of<IServiceProvider>(),
+            Mock.Of<IPlatformRootServiceProvider>(),
+            _repositoryMock.Object);
+    }
 
-### TOOL_EFFICIENCY_PROTOCOL
-- Batch multiple Grep searches into single calls with OR patterns
-- Use parallel Read operations for related files
-- Combine semantic searches with related keywords
+    [Fact]
+    public async Task Handle_NewTextSnippet_CreatesSuccessfully()
+    {
+        // Arrange
+        var command = new SaveTextSnippetCommand { SnippetText = "Hello World" };
+        _repositoryMock
+            .Setup(r => r.CreateOrUpdateAsync(It.IsAny<TextSnippet>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TextSnippet e, CancellationToken _) => e);
 
-### CONTEXT_ANCHOR_SYSTEM
-Every 10 operations:
-1. Re-read the original task description from the `## Metadata` section
-2. Verify the current operation aligns with original goals
-3. Update the `Current Focus` in `## Progress` section
+        // Act
+        var result = await _handler.Handle(command, CancellationToken.None);
 
----
+        // Assert
+        Assert.NotNull(result.Entity);
+        Assert.Equal("Hello World", result.Entity.SnippetText);
+    }
+}
+```
 
-## PHASE 1: EXTERNAL MEMORY-DRIVEN TEST ANALYSIS
+## Frontend Component Test
 
-Build a structured knowledge model in `ai_task_analysis_notes/[feature-name].ai_task_analysis_notes.md`.
+```typescript
+describe('TextSnippetListComponent', () => {
+    let component: TextSnippetListComponent;
+    let fixture: ComponentFixture<TextSnippetListComponent>;
+    let store: TextSnippetStore;
 
-### PHASE 1A: INITIALIZATION AND DISCOVERY
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [TextSnippetListComponent],
+            providers: [{ provide: TextSnippetApiService, useValue: jasmine.createSpyObj('TextSnippetApiService', ['getTextSnippets']) }]
+        }).compileComponents();
 
-1. **Initialize** the analysis file with standard headings
-2. **Discovery searches** for all feature-related files
-3. Prioritize: **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers, front-end Components**
+        fixture = TestBed.createComponent(TextSnippetListComponent);
+        component = fixture.componentInstance;
+        store = TestBed.inject(TextSnippetStore);
+    });
 
-### PHASE 1B: SYSTEMATIC FILE ANALYSIS FOR TESTING
+    it('should load text snippets on init', () => {
+        spyOn(store, 'loadTextSnippets');
+        fixture.detectChanges();
+        expect(store.loadTextSnippets).toHaveBeenCalled();
+    });
+});
+```
 
-**IMPORTANT: MUST DO WITH TODO LIST**
-
-For each file, document in `## Knowledge Graph`:
-- Standard fields plus testing-specific:
-- `coverageTargets`: Specific coverage goals
-- `edgeCases`: Edge cases and boundary conditions
-- `businessScenarios`: Business scenarios supported
-- `detailedFunctionalRequirements`: Business logic and functional requirements
-- `detailedTestCases`: Business logic test cases (Given...When...Then)
-
----
-
-## PHASE 2: OVERALL ANALYSIS
-
-Write comprehensive summary showing:
-- Complete end-to-end workflows discovered
-- Key architectural patterns and relationships
-- All business logic workflows
-- Integration points and dependencies
-
----
-
-## PHASE 3: APPROVAL GATE
-
-**CRITICAL**: Present test plan with coverage analysis for explicit approval. **DO NOT** proceed without it.
-
----
-
-## PHASE 4: EXECUTION
-
-Write comprehensive feature requirements document, test cases, and coverage analysis into `ai_spec_docs/[feature-name].ai_spec_doc.md`.
-
-Generate test cases in **4 priority groups**: Critical, High, Medium, Low.
-
-### MANDATORY DOCUMENT STRUCTURE
+## BDD Test Case Format
 
 ```markdown
-# [Feature Name] - Comprehensive QA Test Cases
+### TC-001: Create TextSnippet Successfully
 
-## Table of Contents
-1. [Feature Overview](#1-feature-overview)
-2. [Entity Relationship Diagram](#2-entity-relationship-diagram)
-3. [Detailed Test Cases](#3-detailed-test-cases)
-4. [Traceability Matrix](#4-traceability-matrix)
-5. [Coverage Analysis](#5-coverage-analysis)
+**Feature Module:** TextSnippet Management
+**Priority:** Critical
 
-## 1. Feature Overview
-
-**Epic:** [Epic Name]
-- **Summary (The Why):** As a [user type], I want to [action], so that [benefit].
-
-**User Story 1:** [Story Title]
-- **ID:** US-XXX-001
-- **Story:** As a [role], I want to [action], so that [benefit].
-- **Acceptance Criteria:**
-  - AC 1: GIVEN [context] WHEN [action] THEN [result]
-  - AC 2: ...
-
-**Business Requirements:**
-- [Each business requirement]
-
-**Roles/Permission Authorization:**
-- [Each role and permission]
-
-### 1-A. Cross Services Business Logic Overview
-[Cross Service Consumer Producer Business Logic]
-
-## 2. Entity Relationship Diagram
-
-### Core Entities and Relationships
-[Entity descriptions with properties and relationships]
-
-### Mermaid Diagram
-[Entity relationship mermaid diagram]
-
-## 3. Detailed Test Cases
-
-### [Priority Level (Critical/High/Medium/Low)]:
-
-#### TC-001: [Test Case Name]
-**Feature Module:** [Module]
-**Business Requirement:** BR-XXX
-**Priority:** Critical/High/Medium/Low
-
-**Given** [initial context]
-**And** [additional context]
-**When** [action performed]
+**Given** a user is on the text snippet creation page
+**And** the form is empty
+**When** the user fills required fields (snippet text, full text)
+**And** clicks Save
 **Then** the system should:
-- [Expected outcome 1]
-- [Expected outcome 2]
 
-**Component Interaction Flow:**
-```
-Frontend → Controller → Command/Query → Repository → Event → Consumer
-```
+- Create the text snippet record
+- Display success notification
+- Navigate to text snippet list
 
-**Test Data:**
-- [Required test data]
+**Edge Cases:**
 
-**Expected Outcomes:**
-- [Detailed outcomes]
-
-**Edge Cases to Validate:**
-- [Edge case 1]
-- [Edge case 2]
-
-## 4. Traceability Matrix
-[Bidirectional mapping between tests and business components]
-
-## 5. Coverage Analysis
-[Multi-dimensional coverage validation with percentages]
+- Duplicate text validation
+- Required field validation
+- Max length validation
 ```
 
----
+## Test Categories
 
-## PHASE 5: Review Table of Contents
+| Priority | Description             | Coverage Target |
+| -------- | ----------------------- | --------------- |
+| Critical | Core business workflows | 100%            |
+| High     | Important features      | 90%             |
+| Medium   | Secondary features      | 80%             |
+| Low      | Edge cases, error paths | 70%             |
 
-Update `## Table of Contents` with detailed sub-section links.
+## Coverage Targets
 
----
+- **Commands/Queries**: All validation paths, happy path, error scenarios
+- **Entities**: Validation methods, computed properties, expressions
+- **Components**: Initialization, user interactions, state changes
+- **Services**: API calls, error handling, caching
 
-## Test Case Guidelines
+## Best Practices
 
-- **Evidence-based testing**: Base test cases on actual code behavior
-- **Complete coverage**: Cover all conditional logic paths
-- **Component tracing**: Include workflow between components
-- **Priority classification**: Critical (P0), High (P1), Medium (P2), Low (P3)
-- **BDD format**: Use Given/When/Then consistently
-- **Traceability**: Link test cases to requirements bidirectionally
+- Test behavior, not implementation details
+- Use meaningful test names
+- One assertion per test (when possible)
+- Mock external dependencies
+- Test edge cases and error scenarios
+- Keep tests independent and isolated

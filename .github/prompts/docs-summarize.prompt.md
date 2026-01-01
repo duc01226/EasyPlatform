@@ -1,78 +1,57 @@
 ---
-description: "Summarize existing documentation and provide analysis"
+agent: 'agent'
+description: 'Analyze the codebase and generate a documentation summary report'
+tools: ['read', 'search']
 ---
 
-# Documentation Summarize Prompt
+# Summarize Documentation
 
-## Overview
+Analyze the codebase based on existing documentation and generate a summary report.
 
-Analyze the existing documentation in `docs/` directory and produce a summary report with insights and recommendations.
+## Input Parameters
 
-## Arguments
+**Focused Topics:** ${input:topics}
+Specify topics to focus on (e.g., "authentication", "API endpoints", "frontend components")
+Default: all topics
 
-- **Focused Topics**: Specific areas to focus on (default: all)
-- **Scan Codebase**: Whether to scan codebase for verification (default: false)
+**Scan Codebase:** ${input:scan:No,Yes}
+Whether to scan the actual codebase or rely on existing documentation
+Default: No (use existing docs)
 
-## Workflow
+## Process
 
-### Phase 1: Documentation Inventory
+### If Using Existing Documentation
+1. Read `docs/codebase-summary.md` for context
+2. Read relevant documentation files in `docs/`
+3. Generate summary based on focused topics
 
-1. List all documentation files in `docs/` directory
-2. Analyze `docs/codebase-summary.md` as primary reference
-3. Identify documentation coverage
+### If Scanning Codebase
+1. Explore directories relevant to focused topics
+2. Cross-reference with existing documentation
+3. Identify any gaps or outdated information
 
-### Phase 2: Analysis
+## Output Format
 
-Analyze documentation for:
-
-| Aspect | Check |
-|--------|-------|
-| Completeness | Are all major features documented? |
-| Accuracy | Does documentation match current code? |
-| Consistency | Is terminology consistent across docs? |
-| Currency | Are there outdated references? |
-
-### Phase 3: Summary Report
-
-Generate a summary containing:
+Provide a structured summary report:
 
 ```markdown
 ## Documentation Summary Report
 
-### Inventory
-| Document | Last Updated | Coverage | Status |
-|----------|--------------|----------|--------|
-| ... | ... | ... | ✅/⚠️/❌ |
+### Topics Covered
+- [Topic 1]: Brief summary
+- [Topic 2]: Brief summary
 
-### Coverage Analysis
-- Well documented areas: [list]
-- Missing documentation: [list]
-- Outdated sections: [list]
+### Key Findings
+- [Finding 1]
+- [Finding 2]
 
-### Quality Assessment
-- Clarity: [rating]
-- Completeness: [rating]
-- Maintainability: [rating]
+### Documentation Gaps (if any)
+- [Gap 1]
+- [Gap 2]
 
 ### Recommendations
-1. [Priority recommendation]
-2. [Secondary recommendation]
+- [Recommendation 1]
+- [Recommendation 2]
 ```
 
-## Key Documentation Files
-
-| File | Purpose |
-|------|---------|
-| `docs/project-overview-pdr.md` | Project overview and requirements |
-| `docs/codebase-summary.md` | Codebase structure |
-| `docs/code-standards.md` | Coding conventions |
-| `docs/system-architecture.md` | Architecture overview |
-| `README.md` | Quick start guide |
-
-## Important
-
-- Use `docs/` directory as the source of truth
-- Do not scan the entire codebase unless explicitly requested
-- Focus on documentation analysis, not code review
-
-**IMPORTANT:** Do not start implementing code. Focus only on documentation analysis.
+**IMPORTANT**: This is a read-only analysis - do not modify any files.

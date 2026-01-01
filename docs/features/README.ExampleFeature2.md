@@ -39,7 +39,7 @@
 
 ## Overview
 
-The Job Board Integration feature enables BravoSUITE to automatically fetch job applications from external job board platforms (ITViec, VietnamWorks, TopCV, LinkedIn, etc.). The system supports **two integration methods**:
+The Job Board Integration feature enables EasyPlatform to automatically fetch job applications from external job board platforms (ITViec, VietnamWorks, TopCV, LinkedIn, etc.). The system supports **two integration methods**:
 
 1. **Email-Based Scanning (ScanMailBox)**: Monitors company email inboxes via IMAP for job application notification emails from job boards, parses candidate information, and creates applications automatically.
 
@@ -95,7 +95,7 @@ The Job Board Integration feature enables BravoSUITE to automatically fetch job 
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
-│                              BravoSUITE Platform                                 │
+│                              EasyPlatform Platform                                 │
 ├─────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                  │
 │  ┌────────────────────────┐       RabbitMQ        ┌────────────────────────────┐│
