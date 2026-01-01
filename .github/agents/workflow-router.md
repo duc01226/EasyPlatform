@@ -35,10 +35,10 @@ Key workflows (from workflows.json):
 
 | Workflow | Triggers | Sequence |
 |----------|----------|----------|
-| **feature** | implement, add, create, build | `/plan` → `/cook` → `/test` → `/code-review` → `/docs-update` → `/watzup` |
-| **bugfix** | bug, fix, error, broken, crash | `/debug` → `/plan` → `/fix` → `/test` |
+| **feature** | implement, add, create, build | `/plan` → `/cook` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test` → `/docs-update` → `/watzup` |
+| **bugfix** | bug, fix, error, broken, crash | `/debug` → `/plan` → `/fix` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test` |
 | **documentation** | docs, document, readme | `/docs-update` → `/watzup` |
-| **refactor** | refactor, improve, clean up | `/plan` → `/code` → `/test` → `/code-review` |
+| **refactor** | refactor, improve, clean up | `/plan` → `/code` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test` |
 | **review** | review, check, audit code, PR | `/code-review` → `/watzup` |
 | **investigation** | how does, where is, explain | `/scout` → `/investigate` |
 
@@ -47,17 +47,19 @@ Key workflows (from workflows.json):
 Each workflow step maps to a prompt file in `.github/prompts/`:
 
 ```
-/plan        → plan.prompt.md
-/cook        → cook.prompt.md
-/code        → code.prompt.md
-/test        → test.prompt.md
-/fix         → fix.prompt.md
-/debug       → debug.prompt.md
-/code-review → code-review.prompt.md
-/docs-update → docs-update.prompt.md
-/watzup      → watzup.prompt.md
-/scout       → scout.prompt.md
-/investigate → investigate.prompt.md
+/plan             → plan.prompt.md
+/cook             → cook.prompt.md
+/code             → code.prompt.md
+/test             → test.prompt.md
+/fix              → fix.prompt.md
+/debug            → debug.prompt.md
+/post-task-review → post-task-review.prompt.md
+/code-review      → code-review.prompt.md
+/dual-pass-review → dual-pass-review.prompt.md
+/docs-update      → docs-update.prompt.md
+/watzup           → watzup.prompt.md
+/scout            → scout.prompt.md
+/investigate      → investigate.prompt.md
 ```
 
 ## Output Format
@@ -118,12 +120,12 @@ This agent is automatically referenced by:
 ### Feature Request
 **Input:** "Add a dark mode toggle to the settings page"
 **Output:** Feature Implementation workflow (100% confidence)
-**Sequence:** /plan → /cook → /test → /code-review → /docs-update
+**Sequence:** /plan → /cook → /post-task-review → /code-review → /dual-pass-review → /test → /docs-update → /watzup
 
 ### Bug Report
 **Input:** "The login button is not working"
 **Output:** Bug Fix workflow (100% confidence)
-**Sequence:** /debug → /plan → /fix → /test
+**Sequence:** /debug → /plan → /fix → /post-task-review → /code-review → /dual-pass-review → /test
 
 ### Investigation
 **Input:** "How does the authentication flow work?"

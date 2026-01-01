@@ -105,13 +105,13 @@ Claude Code's hook system allows JavaScript scripts to run at specific lifecycle
 
 #### Hook Event Reference
 
-| Event | When It Fires | Purpose |
-|-------|---------------|---------|
-| `SessionStart` | Session begins, resumes, clears, compacts | Initialize environment variables, detect project type |
-| `UserPromptSubmit` | Every user message submitted | Detect intent, inject workflow instructions |
-| `PreToolUse` | Before any tool execution | Block unauthorized operations, enforce policies |
-| `PreCompact` | Before context window compaction | Track context state for statusline |
-| `SessionEnd` | Session ends or clears | Cleanup, write markers |
+| Event              | When It Fires                             | Purpose                                               |
+| ------------------ | ----------------------------------------- | ----------------------------------------------------- |
+| `SessionStart`     | Session begins, resumes, clears, compacts | Initialize environment variables, detect project type |
+| `UserPromptSubmit` | Every user message submitted              | Detect intent, inject workflow instructions           |
+| `PreToolUse`       | Before any tool execution                 | Block unauthorized operations, enforce policies       |
+| `PreCompact`       | Before context window compaction          | Track context state for statusline                    |
+| `SessionEnd`       | Session ends or clears                    | Cleanup, write markers                                |
 
 ---
 
@@ -364,7 +364,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
         "\\b(fix|bug|error|broken|issue)\\b",
         "\\b(doc|document|readme)\\b"
       ],
-      "sequence": ["plan", "cook", "test", "dual-pass-review", "docs-update", "watzup"],
+      "sequence": ["plan", "cook","dual-pass-review", "code-review",  "test", "docs-update", "watzup"],
       "confirmFirst": true,
       "priority": 10
     },
@@ -382,7 +382,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
         "\\b(implement|add|create|build)\\s+new\\b",
         "\\bfeature\\b"
       ],
-      "sequence": ["debug", "plan", "fix", "test", "dual-pass-review"],
+      "sequence": ["debug", "plan", "fix", "dual-pass-review", "code-review","test"],
       "confirmFirst": false,
       "priority": 20
     },
@@ -397,7 +397,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
       "excludePatterns": [
         "\\b(bug|broken|crash|fail)\\b"
       ],
-      "sequence": ["plan", "code", "test", "dual-pass-review"],
+      "sequence": ["plan", "code","dual-pass-review", "code-review", "test"],
       "confirmFirst": true,
       "priority": 25
     },
@@ -440,15 +440,15 @@ Defines all workflow types, their trigger patterns, and step sequences:
 
 Lower priority number = higher preference when multiple workflows match:
 
-| Workflow | Priority | Use Case |
-|----------|----------|----------|
-| Feature | 10 | New functionality (highest priority) |
-| Bugfix | 20 | Error fixes |
-| Refactor | 25 | Code improvement |
-| Documentation | 30 | Doc updates |
-| Review | 35 | Code review |
-| Testing | 40 | Test creation |
-| Investigation | 50 | Codebase exploration (lowest priority) |
+| Workflow      | Priority | Use Case                               |
+| ------------- | -------- | -------------------------------------- |
+| Feature       | 10       | New functionality (highest priority)   |
+| Bugfix        | 20       | Error fixes                            |
+| Refactor      | 25       | Code improvement                       |
+| Documentation | 30       | Doc updates                            |
+| Review        | 35       | Code review                            |
+| Testing       | 40       | Test creation                          |
+| Investigation | 50       | Codebase exploration (lowest priority) |
 
 ---
 
@@ -681,12 +681,12 @@ Step 6: Claude calls Skill tool with skill="watzup"
 
 The LLM doesn't have built-in workflow logic. Instead, it follows instructions because they're injected as system context:
 
-| Layer | Mechanism | What Happens |
-|-------|-----------|--------------|
-| **Hook** | JavaScript script | Runs BEFORE LLM, analyzes prompt |
-| **Injection** | stdout → system-reminder | Instructions appended to LLM's context |
-| **Inference** | LLM reads "MUST FOLLOW" | LLM treats injected text as authoritative |
-| **Tools** | Skill/Bash/Read/Edit | LLM calls tools to execute each workflow step |
+| Layer         | Mechanism                | What Happens                                  |
+| ------------- | ------------------------ | --------------------------------------------- |
+| **Hook**      | JavaScript script        | Runs BEFORE LLM, analyzes prompt              |
+| **Injection** | stdout → system-reminder | Instructions appended to LLM's context        |
+| **Inference** | LLM reads "MUST FOLLOW"  | LLM treats injected text as authoritative     |
+| **Tools**     | Skill/Bash/Read/Edit     | LLM calls tools to execute each workflow step |
 
 **Key Insight:** Instructions with phrases like "MUST FOLLOW", "Instructions", and numbered steps influence LLM behavior because they appear as system-level guidance that the model is trained to respect.
 
@@ -694,16 +694,16 @@ The LLM doesn't have built-in workflow logic. Instead, it follows instructions b
 
 ## Workflow Detection Matrix
 
-| User Prompt | Matched Patterns | Excluded By | Result |
-|-------------|------------------|-------------|--------|
-| "Add dark mode feature" | `add.*feature` | - | Feature workflow |
-| "Fix the login bug" | `fix`, `bug` | - | Bugfix workflow |
-| "Add a fix for the crash" | `add`, `fix` | `fix` excludes feature | Bugfix wins |
-| "/plan dark mode" | - | `^\/\w+` (explicit) | Skip detection |
-| "quick: add button" | - | `quick:` prefix | Skip detection |
-| "How does auth work?" | `how does.*work` | - | Investigation |
-| "Refactor the user service" | `refactor` | - | Refactor workflow |
-| "Update the README" | `readme` | - | Documentation workflow |
+| User Prompt                 | Matched Patterns | Excluded By            | Result                 |
+| --------------------------- | ---------------- | ---------------------- | ---------------------- |
+| "Add dark mode feature"     | `add.*feature`   | -                      | Feature workflow       |
+| "Fix the login bug"         | `fix`, `bug`     | -                      | Bugfix workflow        |
+| "Add a fix for the crash"   | `add`, `fix`     | `fix` excludes feature | Bugfix wins            |
+| "/plan dark mode"           | -                | `^\/\w+` (explicit)    | Skip detection         |
+| "quick: add button"         | -                | `quick:` prefix        | Skip detection         |
+| "How does auth work?"       | `how does.*work` | -                      | Investigation          |
+| "Refactor the user service" | `refactor`       | -                      | Refactor workflow      |
+| "Update the README"         | `readme`         | -                      | Documentation workflow |
 
 ---
 
@@ -771,7 +771,7 @@ Result: Skips the full workflow, handles request directly.
     "feature": {
       "triggerPatterns": ["..."],
       "excludePatterns": ["..."],
-      "sequence": ["plan", "cook", "test"],
+      "sequence": ["plan", "cook","dual-pass-review", "code-review", "test"],
       "priority": 10
     }
   }
@@ -858,20 +858,20 @@ The dual-pass review is a **mandatory quality gate** that runs after any code ch
 
 ### Review Dimensions
 
-| Dimension | What It Checks |
-| --------- | -------------- |
-| Task Correctness | Changes address original requirement, no missing pieces |
+| Dimension             | What It Checks                                              |
+| --------------------- | ----------------------------------------------------------- |
+| Task Correctness      | Changes address original requirement, no missing pieces     |
 | Convention Compliance | Clean Architecture, CQRS patterns, BEM naming, base classes |
-| Development Rules | YAGNI, KISS, DRY, logic in lowest layer |
-| Code Quality | Syntax errors, naming, SRP, error handling, security |
+| Development Rules     | YAGNI, KISS, DRY, logic in lowest layer                     |
+| Code Quality          | Syntax errors, naming, SRP, error handling, security        |
 
 ### Workflows Using Dual-Pass Review
 
-| Workflow | Sequence |
-| -------- | -------- |
-| Feature | plan → cook → test → **dual-pass-review** → docs-update → watzup |
-| Bug Fix | debug → plan → fix → test → **dual-pass-review** |
-| Refactor | plan → code → test → **dual-pass-review** |
+| Workflow | Sequence                                                         |
+| -------- | ---------------------------------------------------------------- |
+| Feature  | plan → cook → test → **dual-pass-review** → docs-update → watzup |
+| Bug Fix  | debug → plan → fix → test → **dual-pass-review**                 |
+| Refactor | plan → code → test → **dual-pass-review**                        |
 
 ### Key Principle
 

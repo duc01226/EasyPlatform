@@ -61,11 +61,12 @@
 
 ### Code Review
 
-| Resource                                               | Type  | Description            |
-| ------------------------------------------------------ | ----- | ---------------------- |
-| [code-review](skills/code-review/SKILL.md)             | Skill | Code review workflow   |
-| [tasks-code-review](skills/tasks-code-review/SKILL.md) | Skill | Task-based code review |
-| [code-review.agent.md](agents/code-review.agent.md)    | Agent | Autonomous code review |
+| Resource                                               | Type  | Description              |
+| ------------------------------------------------------ | ----- | ------------------------ |
+| [code-review](skills/code-review/SKILL.md)             | Skill | Code review workflow     |
+| [dual-pass-review](skills/dual-pass-review/SKILL.md)   | Skill | Two-pass review process  |
+| [tasks-code-review](skills/tasks-code-review/SKILL.md) | Skill | Task-based code review   |
+| [code-review.agent.md](agents/code-review.agent.md)    | Agent | Autonomous code review   |
 
 ### Testing
 
@@ -190,6 +191,8 @@
 | [debugging.prompt.md](prompts/debugging.prompt.md) | Systematic debugging strategies |
 | [testing.prompt.md](prompts/testing.prompt.md) | Test planning and execution |
 | [code-review.prompt.md](prompts/code-review.prompt.md) | Code review workflow |
+| [post-task-review.prompt.md](prompts/post-task-review.prompt.md) | Post-implementation convention review |
+| [dual-pass-review.prompt.md](prompts/dual-pass-review.prompt.md) | Two-pass code review with corrections |
 | [brainstorm.prompt.md](prompts/brainstorm.prompt.md) | Solution brainstorming with YAGNI/KISS/DRY |
 | [scout.prompt.md](prompts/scout.prompt.md) | Fast codebase exploration |
 | [codebase-review.prompt.md](prompts/codebase-review.prompt.md) | Comprehensive codebase analysis |

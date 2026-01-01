@@ -48,32 +48,34 @@ For detailed routing logic, see the **`workflow-router`** agent in `.github/agen
 
 ### Quick Reference - Workflow Detection
 
-| Intent            | Trigger Keywords                                     | Workflow Sequence                                                       |
-| ----------------- | ---------------------------------------------------- | ----------------------------------------------------------------------- |
-| **Feature**       | implement, add, create, build, develop, new feature  | `/plan` -> `/cook` -> `/test` -> `/code-review` -> `/docs-update` -> `/watzup` |
-| **Bug Fix**       | bug, fix, error, broken, crash, not working, debug   | `/debug` -> `/plan` -> `/fix` -> `/test`                                     |
-| **Documentation** | docs, document, readme, update docs                  | `/docs-update` -> `/watzup`                                                  |
-| **Refactoring**   | refactor, improve, clean up, restructure             | `/plan` -> `/code` -> `/test` -> `/code-review`                              |
-| **Code Review**   | review, check, audit code, PR review                 | `/code-review` -> `/watzup`                                                  |
-| **Investigation** | how does, where is, explain, understand, find        | `/scout` -> `/investigate`                                                   |
+| Intent            | Trigger Keywords                                     | Workflow Sequence                                                                                    |
+| ----------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **Feature**       | implement, add, create, build, develop, new feature  | `/plan` -> `/cook` -> `/post-task-review` -> `/code-review` -> `/dual-pass-review` -> `/test` -> `/docs-update` -> `/watzup` |
+| **Bug Fix**       | bug, fix, error, broken, crash, not working, debug   | `/debug` -> `/plan` -> `/fix` -> `/post-task-review` -> `/test`                                                |
+| **Documentation** | docs, document, readme, update docs                  | `/docs-update` -> `/watzup`                                                                                    |
+| **Refactoring**   | refactor, improve, clean up, restructure             | `/plan` -> `/code` -> `/post-task-review` -> `/dual-pass-review` -> `/test` -> `/code-review`                   |
+| **Code Review**   | review, check, audit code, PR review                 | `/code-review` -> `/dual-pass-review` -> `/watzup`                                                             |
+| **Investigation** | how does, where is, explain, understand, find        | `/scout` -> `/investigate`                                                                                     |
 
 ### Prompt File Mapping
 
 Each workflow step executes a prompt file from `.github/prompts/`:
 
-| Step           | File                      | Purpose                  |
-| -------------- | ------------------------- | ------------------------ |
-| `/plan`        | `plan.prompt.md`          | Create implementation plan |
-| `/cook`        | `cook.prompt.md`          | Implement feature        |
-| `/code`        | `code.prompt.md`          | Execute existing plan    |
-| `/test`        | `test.prompt.md`          | Run tests                |
-| `/fix`         | `fix.prompt.md`           | Apply fixes              |
-| `/debug`       | `debug.prompt.md`         | Investigate issues       |
-| `/code-review` | `code-review.prompt.md`   | Review code quality      |
-| `/docs-update` | `docs-update.prompt.md`   | Update documentation     |
-| `/watzup`      | `watzup.prompt.md`        | Summarize changes        |
-| `/scout`       | `scout.prompt.md`         | Explore codebase         |
-| `/investigate` | `investigate.prompt.md`   | Deep dive analysis       |
+| Step                | File                          | Purpose                       |
+| ------------------- | ----------------------------- | ----------------------------- |
+| `/plan`             | `plan.prompt.md`              | Create implementation plan    |
+| `/cook`             | `cook.prompt.md`              | Implement feature             |
+| `/code`             | `code.prompt.md`              | Execute existing plan         |
+| `/test`             | `test.prompt.md`              | Run tests                     |
+| `/fix`              | `fix.prompt.md`               | Apply fixes                   |
+| `/debug`            | `debug.prompt.md`             | Investigate issues            |
+| `/code-review`      | `code-review.prompt.md`       | Review code quality           |
+| `/post-task-review` | `post-task-review.prompt.md`  | Post-implementation review    |
+| `/dual-pass-review` | `dual-pass-review.prompt.md`  | Two-pass correction review    |
+| `/docs-update`      | `docs-update.prompt.md`       | Update documentation          |
+| `/watzup`           | `watzup.prompt.md`            | Summarize changes             |
+| `/scout`            | `scout.prompt.md`             | Explore codebase              |
+| `/investigate`      | `investigate.prompt.md`       | Deep dive analysis            |
 
 ### Workflow Execution Protocol (MANDATORY STEPS)
 

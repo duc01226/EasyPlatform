@@ -402,14 +402,14 @@ Before responding to any task request, analyze the user's prompt to detect inten
 
 ### Intent Detection Rules
 
-| Intent                     | Trigger Keywords                                    | Workflow Sequence                                             |
-| -------------------------- | --------------------------------------------------- | ------------------------------------------------------------- |
-| **Feature Implementation** | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/test` → `/code-review` → `/docs-update` |
-| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working  | `/debug` → `/plan` → `/fix` → `/test`                         |
-| **Documentation**          | docs, document, readme, update docs                 | `/docs-update` → `/watzup`                                    |
-| **Refactoring**            | refactor, restructure, clean up, improve code       | `/plan` → `/code` → `/test` → `/code-review`                  |
-| **Code Review**            | review, check, audit code, PR review                | `/code-review` → `/watzup`                                    |
-| **Investigation**          | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                     |
+| Intent                     | Trigger Keywords                                    | Workflow Sequence                                                                                           |
+| -------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Feature Implementation** | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test` → `/docs-update` → `/watzup` |
+| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working  | `/debug` → `/plan` → `/fix` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test`          |
+| **Documentation**          | docs, document, readme, update docs                 | `/docs-update` → `/watzup`                                                                                  |
+| **Refactoring**            | refactor, restructure, clean up, improve code       | `/plan` → `/code` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test`                    |
+| **Code Review**            | review, check, audit code, PR review                | `/code-review` → `/watzup`                                                                                  |
+| **Investigation**          | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                                                                   |
 
 ### Workflow Execution Protocol
 
@@ -429,7 +429,7 @@ Before responding to any task request, analyze the user's prompt to detect inten
 
 **Response:**
 
-> Detected: **Feature Implementation**. Following workflow: `/plan` → `/cook` → `/test` → `/code-review` → `/docs-update`
+> Detected: **Feature Implementation**. Following workflow: `/plan` → `/cook` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test` → `/docs-update` → `/watzup`
 >
 > Proceed with this workflow? (yes/no/quick)
 
