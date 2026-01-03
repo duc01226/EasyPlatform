@@ -12,7 +12,7 @@ $input
 
 ## Core Mission
 
-Rapidly locate relevant files across the EasyPlatform codebase using efficient search strategies.
+Rapidly locate relevant files across the large EasyPlatform codebase using efficient search strategies.
 
 ## Search Process
 
@@ -24,12 +24,14 @@ Rapidly locate relevant files across the EasyPlatform codebase using efficient s
 ### Step 2: Key Directories
 
 **Backend:**
-- `src/PlatformExampleApp/` - Example microservice (TextSnippet)
+- `src/PlatformExampleApp/PlatformExampleApp.TextSnippet*/` - TextSnippet example service
 - `src/Platform/Easy.Platform/` - Framework core
+- `src/PlatformExampleApp.Shared/` - Shared contracts/messages
 
 **Frontend:**
 - `src/PlatformExampleAppWeb/apps/` - Angular applications
 - `src/PlatformExampleAppWeb/libs/platform-core/` - Frontend framework
+- `src/PlatformExampleAppWeb/libs/platform-core/` - Shared UI components
 - `src/PlatformExampleAppWeb/libs/apps-domains/` - Business domain (APIs, models)
 
 ### Step 3: Search Patterns
@@ -97,20 +99,20 @@ Present results organized by category:
 
 ### Backend Files
 **Commands:**
-- `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/UseCaseCommands/TextSnippet/SaveTextSnippetCommand.cs`
+- `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/UseCaseCommands/{Feature}/Save{Entity}Command.cs`
 
 **Queries:**
-- `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/UseCaseQueries/TextSnippet/GetTextSnippetListQuery.cs`
+- `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/UseCaseQueries/{Feature}/Get{Entity}ListQuery.cs`
 
 **Entities:**
-- `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/Entities/TextSnippetEntity.cs`
+- `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/Entities/{Entity}.cs`
 
 ### Frontend Files
 **Components:**
-- `src/PlatformExampleAppWeb/libs/apps-domains/src/lib/text-snippet/text-snippet-list.component.ts`
+- `src/PlatformExampleAppWeb/apps/playground-text-snippet/src/app/{feature}/{feature}-list.component.ts`
 
 **Services:**
-- `src/PlatformExampleAppWeb/libs/apps-domains/src/lib/text-snippet/text-snippet-api.service.ts`
+- `src/PlatformExampleAppWeb/libs/apps-domains/src/lib/{feature}/{feature}-api.service.ts`
 
 ### Related Files
 - [Additional relevant files]
@@ -136,5 +138,5 @@ Present results organized by category:
 | Business logic | `Domain/Entities/`, `*Service.cs` |
 | API endpoints | `Controllers/`, `*Controller.cs` |
 | Frontend feature | `libs/apps-domains/`, `apps/` |
-| Shared code | `libs/platform-core/` |
+| Shared code | `libs/platform-core/`, `PlatformExampleApp.Shared/` |
 | Platform patterns | `src/Platform/`, `libs/platform-core/` |

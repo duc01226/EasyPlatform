@@ -27,7 +27,7 @@ Options: all, unit, integration, e2e, specific-path
 dotnet test EasyPlatform.sln
 
 # Specific project
-dotnet test src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Tests/PlatformExampleApp.TextSnippet.Tests.csproj
+dotnet test src/PlatformExampleApp/TextSnippet/TextSnippet.Tests/TextSnippet.Tests.csproj
 
 # With verbosity
 dotnet test --verbosity normal --logger "console;verbosity=detailed"
@@ -39,10 +39,10 @@ dotnet test --verbosity normal --logger "console;verbosity=detailed"
 nx run-many --target=test --all
 
 # Specific library
-nx test platform-core
+nx test apps-domains
 
 # With coverage
-nx test platform-core --coverage
+nx test apps-domains --coverage
 ```
 
 ### Step 3: Analyze Results

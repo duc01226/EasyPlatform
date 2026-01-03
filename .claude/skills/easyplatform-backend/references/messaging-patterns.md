@@ -22,7 +22,7 @@
 ### Message Definition (Shared)
 
 ```
-Bravo.Shared/
+PlatformExampleApp.Shared/
 └── CrossServiceMessages/
     └── {Entity}EntityEventBusMessage.cs
 ```
@@ -32,7 +32,7 @@ Bravo.Shared/
 ## Message Definition
 
 ```csharp
-// In Bravo.Shared
+// In PlatformExampleApp.Shared
 public sealed class EmployeeEntityEventBusMessage
     : PlatformCqrsEntityEventBusMessage<EmployeeEventData, string>
 {

@@ -39,7 +39,7 @@ Is this a schema change?
 
 ```bash
 # Navigate to persistence project
-cd src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence
+cd src/PlatformExampleApp/TextSnippet/Growth.Persistence
 
 # Add migration
 dotnet ef migrations add AddEmployeePhoneNumber
@@ -93,7 +93,7 @@ public sealed class MigrateEmployeePhoneNumbers : PlatformDataMigrationExecutor<
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 15);
     public override bool AllowRunInBackgroundThread => true;
 
-    private readonly IPlatformQueryableRootRepository<Employee, string> employeeRepo;
+    private readonly IPlatformQueryableRootRepository<Employee> employeeRepo;
     private const int PageSize = 200;
 
     public override async Task Execute(GrowthDbContext dbContext)
@@ -122,7 +122,7 @@ public sealed class MigrateEmployeePhoneNumbers : PlatformDataMigrationExecutor<
         int skip,
         int take,
         Func<IPlatformUnitOfWork, IQueryable<Employee>, IQueryable<Employee>> queryBuilder,
-        IPlatformQueryableRootRepository<Employee, string> repo,
+        IPlatformQueryableRootRepository<Employee> repo,
         IPlatformUnitOfWorkManager uowManager)
     {
         using var unitOfWork = uowManager.Begin();
@@ -210,23 +210,23 @@ public sealed class SyncEmployeesFromAccounts : PlatformDataMigrationExecutor<Gr
     public override string Name => "20251015000000_SyncEmployeesFromAccounts";
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 15);
 
-    public override async Task Execute(GrowthDbContext dbContext)
+    public override async Task Execute(TextSnippetDbContext dbContext)
     {
-        var sourceEmployees = await accountsDbContext.Employees
+        var sourceEntities = await accountsDbContext.Entities
             .Where(e => e.CreatedDate < OnlyForDbsCreatedBeforeDate)
             .AsNoTracking()
             .ToListAsync();
 
-        Logger.LogInformation("Syncing {Count} employees from Accounts", sourceEmployees.Count);
+        Logger.LogInformation("Syncing {Count} entities from source", sourceEntities.Count);
 
-        var targetEmployees = sourceEmployees.Select(MapToGrowthEmployee).ToList();
+        var targetEntities = sourceEntities.Select(MapToTargetEntity).ToList();
 
         await RootServiceProvider.ExecuteInjectScopedPagingAsync(
-            maxItemCount: targetEmployees.Count,
+            maxItemCount: targetEntities.Count,
             pageSize: 100,
             async (skip, take, repo, uow) =>
             {
-                var batch = targetEmployees.Skip(skip).Take(take).ToList();
+                var batch = targetEntities.Skip(skip).Take(take).ToList();
                 await repo.CreateManyAsync(batch, dismissSendEvent: true);
                 return batch;
             });

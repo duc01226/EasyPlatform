@@ -1,135 +1,171 @@
 #!/usr/bin/env node
 /**
- * PostToolUse Hook: Auto-Prettier Formatting
+ * Post-Edit Prettier Hook - Automatically formats files after Edit/Write operations
  *
- * Automatically runs Prettier on files after Edit/Write operations.
- * Non-blocking: failures are silently ignored to not disrupt workflow.
+ * Fires: PostToolUse for Edit and Write tools
+ * Purpose: Run Prettier on edited/written files to maintain consistent formatting
  *
- * Trigger: PostToolUse (Edit|Write)
- * Input: JSON with tool_input.file_path
- * Output: None (silent operation)
+ * Features:
+ *   - Supports common web development file types
+ *   - Skips generated/dependency directories
+ *   - Auto-discovers Prettier config by walking up directory tree
+ *   - Non-blocking: failures are silently ignored (10s timeout)
+ *   - Cross-platform: Windows and Unix compatible
  *
  * Exit Codes:
- *   0 - Always (non-blocking)
+ *   0 - Success (non-blocking, allows continuation)
  */
 
 const fs = require('fs');
 const path = require('path');
-const { execSync, spawnSync } = require('child_process');
+const { spawn } = require('child_process');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════
 
 const SUPPORTED_EXTENSIONS = new Set([
-    '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
-    '.json', '.jsonc',
-    '.scss', '.css', '.less',
-    '.html', '.htm',
-    '.md', '.mdx',
-    '.yaml', '.yml',
-    '.graphql', '.gql'
+  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
+  '.json', '.jsonc',
+  '.scss', '.css', '.less',
+  '.html', '.htm',
+  '.md', '.mdx',
+  '.yaml', '.yml',
+  '.graphql', '.gql'
 ]);
 
-const TIMEOUT_MS = 10000; // 10 seconds max
-
-// Paths to skip (generated, dependencies, etc.)
 const SKIP_PATTERNS = [
-    /node_modules/,
-    /\.git\//,
-    /dist\//,
-    /build\//,
-    /obj\//,
-    /bin\//,
-    /\.next\//,
-    /\.nuxt\//,
-    /coverage\//,
-    /\.angular\//
+  /node_modules/,
+  /\.git\//,
+  /dist\//,
+  /build\//,
+  /obj\//,
+  /bin\//,
+  /\.next\//,
+  /\.nuxt\//,
+  /coverage\//,
+  /\.angular\//,
+  /\.cache\//,
+  /\.output\//,
+  /\.vercel\//
 ];
+
+const PRETTIER_CONFIG_FILES = [
+  '.prettierrc',
+  '.prettierrc.json',
+  '.prettierrc.yml',
+  '.prettierrc.yaml',
+  '.prettierrc.js',
+  '.prettierrc.cjs',
+  '.prettierrc.mjs',
+  'prettier.config.js',
+  'prettier.config.cjs',
+  'prettier.config.mjs'
+];
+
+const TIMEOUT_MS = 10000; // 10 seconds
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Check if file extension is supported by Prettier
+ * Check if a file extension is supported by Prettier
  */
-function isSupportedFile(filePath) {
-    const ext = path.extname(filePath).toLowerCase();
-    return SUPPORTED_EXTENSIONS.has(ext);
+function isSupportedExtension(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  return SUPPORTED_EXTENSIONS.has(ext);
 }
 
 /**
- * Check if file should be skipped (generated, dependencies, etc.)
+ * Check if file path matches any skip pattern
  */
 function shouldSkipPath(filePath) {
-    const normalized = filePath.replace(/\\/g, '/');
-    return SKIP_PATTERNS.some(pattern => pattern.test(normalized));
+  const normalizedPath = filePath.replace(/\\/g, '/');
+  return SKIP_PATTERNS.some(pattern => pattern.test(normalizedPath));
 }
 
 /**
- * Find Prettier config file by walking up from file location
+ * Find Prettier binary (local node_modules or npx fallback)
  */
-function findPrettierConfig(startDir) {
-    const configNames = ['.prettierrc', '.prettierrc.json', '.prettierrc.js', '.prettierrc.cjs', 'prettier.config.js', 'prettier.config.cjs'];
-    let dir = startDir;
+function findPrettierBinary(fileDir) {
+  let currentDir = fileDir;
+  const root = path.parse(currentDir).root;
 
-    while (dir !== path.dirname(dir)) {
-        for (const name of configNames) {
-            const configPath = path.join(dir, name);
-            if (fs.existsSync(configPath)) {
-                return configPath;
-            }
-        }
-        // Also check package.json for prettier key
-        const pkgPath = path.join(dir, 'package.json');
-        if (fs.existsSync(pkgPath)) {
-            try {
-                const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
-                if (pkg.prettier) {
-                    return pkgPath; // Config is in package.json
-                }
-            } catch (e) {
-                // Ignore parse errors
-            }
-        }
-        dir = path.dirname(dir);
-    }
-    return null;
-}
-
-/**
- * Find npx executable (cross-platform)
- */
-function findNpx() {
+  while (currentDir !== root) {
     const isWindows = process.platform === 'win32';
-    try {
-        const cmd = isWindows ? 'where npx' : 'which npx';
-        return execSync(cmd, { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim().split('\n')[0];
-    } catch (e) {
-        return isWindows ? 'npx.cmd' : 'npx';
+    const prettierBin = isWindows
+      ? path.join(currentDir, 'node_modules', '.bin', 'prettier.cmd')
+      : path.join(currentDir, 'node_modules', '.bin', 'prettier');
+
+    if (fs.existsSync(prettierBin)) {
+      return prettierBin;
     }
+
+    currentDir = path.dirname(currentDir);
+  }
+
+  return null;
 }
 
 /**
- * Run Prettier on a file
+ * Run Prettier on a file with timeout
  */
-function runPrettier(filePath, configPath) {
-    const npx = findNpx();
-    const args = ['prettier', '--write', filePath];
+function runPrettier(filePath, prettierBin) {
+  return new Promise((resolve) => {
+    const isWindows = process.platform === 'win32';
+    const args = ['--write', '--ignore-unknown', filePath];
 
-    if (configPath) {
-        args.push('--config', configPath);
+    let command, spawnArgs;
+
+    if (prettierBin) {
+      command = prettierBin;
+      spawnArgs = args;
+    } else {
+      command = isWindows ? 'npx.cmd' : 'npx';
+      spawnArgs = ['prettier', ...args];
     }
 
-    const result = spawnSync(npx, args, {
-        encoding: 'utf-8',
-        timeout: TIMEOUT_MS,
-        stdio: ['pipe', 'pipe', 'pipe'],
-        shell: process.platform === 'win32'
+    const child = spawn(command, spawnArgs, {
+      stdio: ['ignore', 'ignore', 'ignore'],
+      timeout: TIMEOUT_MS,
+      windowsHide: true
     });
 
-    return result.status === 0;
+    const timeout = setTimeout(() => {
+      child.kill('SIGTERM');
+      resolve(false);
+    }, TIMEOUT_MS);
+
+    child.on('close', (code) => {
+      clearTimeout(timeout);
+      resolve(code === 0);
+    });
+
+    child.on('error', () => {
+      clearTimeout(timeout);
+      resolve(false);
+    });
+  });
+}
+
+/**
+ * Extract file path from tool input
+ */
+function extractFilePath(payload) {
+  const toolInput = payload.tool_input;
+  if (!toolInput) return null;
+
+  let input = toolInput;
+  if (typeof toolInput === 'string') {
+    try {
+      input = JSON.parse(toolInput);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  return input.file_path || input.path || null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -137,53 +173,61 @@ function runPrettier(filePath, configPath) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function main() {
-    try {
-        // Read stdin (PostToolUse payload)
-        const stdin = fs.readFileSync(0, 'utf-8').trim();
-        if (!stdin) {
-            process.exit(0);
-        }
+  try {
+    const stdin = fs.readFileSync(0, 'utf-8').trim();
+    if (!stdin) process.exit(0);
 
-        const payload = JSON.parse(stdin);
+    const payload = JSON.parse(stdin);
 
-        // Extract file path from tool input
-        const filePath = payload?.tool_input?.file_path;
-        if (!filePath) {
-            process.exit(0);
-        }
-
-        // Normalize path
-        const absolutePath = path.isAbsolute(filePath)
-            ? filePath
-            : path.resolve(process.cwd(), filePath);
-
-        // Skip if file doesn't exist (might have been deleted)
-        if (!fs.existsSync(absolutePath)) {
-            process.exit(0);
-        }
-
-        // Skip unsupported extensions
-        if (!isSupportedFile(absolutePath)) {
-            process.exit(0);
-        }
-
-        // Skip generated/dependency paths
-        if (shouldSkipPath(absolutePath)) {
-            process.exit(0);
-        }
-
-        // Find Prettier config
-        const fileDir = path.dirname(absolutePath);
-        const configPath = findPrettierConfig(fileDir);
-
-        // Run Prettier (silent on failure)
-        runPrettier(absolutePath, configPath);
-
-        process.exit(0);
-    } catch (error) {
-        // Silent failure - don't disrupt workflow
-        process.exit(0);
+    // Only process Edit and Write tools
+    const toolName = payload.tool_name;
+    if (!['Edit', 'Write'].includes(toolName)) {
+      process.exit(0);
     }
+
+    // Only process successful tool calls
+    if (payload.tool_error) {
+      process.exit(0);
+    }
+
+    // Extract file path
+    const filePath = extractFilePath(payload);
+    if (!filePath) {
+      process.exit(0);
+    }
+
+    // Resolve to absolute path
+    const absolutePath = path.isAbsolute(filePath)
+      ? filePath
+      : path.resolve(process.cwd(), filePath);
+
+    // Check if file exists
+    if (!fs.existsSync(absolutePath)) {
+      process.exit(0);
+    }
+
+    // Check if extension is supported
+    if (!isSupportedExtension(absolutePath)) {
+      process.exit(0);
+    }
+
+    // Check if path should be skipped
+    if (shouldSkipPath(absolutePath)) {
+      process.exit(0);
+    }
+
+    // Find Prettier binary
+    const fileDir = path.dirname(absolutePath);
+    const prettierBin = findPrettierBinary(fileDir);
+
+    // Run Prettier (non-blocking, ignore result)
+    await runPrettier(absolutePath, prettierBin);
+
+    process.exit(0);
+  } catch (error) {
+    // Fail silently - formatting is non-critical
+    process.exit(0);
+  }
 }
 
 main();

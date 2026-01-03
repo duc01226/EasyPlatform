@@ -1,8 +1,10 @@
 ---
-name: test-generation
-description: Use for DEVELOPER-focused unit/integration test code with xUnit (C#) and Jest (Angular) patterns. Provides ready-to-use test templates for commands, queries, entities, and components. Best for implementing actual test code. NOT for QA test specifications (use test-generation instead).
+name: tasks-test-generation
+description: Use when creating or enhancing unit tests, integration tests, or defining test strategies for backend and frontend code.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
+
+> **Skill Variant:** Use this skill for **autonomous test generation** with structured templates. For interactive test writing with user feedback, use `test-generation` instead.
 
 # Test Generation Workflow
 
@@ -53,13 +55,13 @@ src/PlatformExampleAppWeb/apps/{app}/src/app/
 ```csharp
 public class SaveEmployeeCommandTests
 {
-    private readonly Mock<IPlatformQueryableRootRepository<Employee, string>> _employeeRepoMock;
+    private readonly Mock<IPlatformQueryableRootRepository<Employee>> _employeeRepoMock;
     private readonly Mock<IPlatformApplicationRequestContextAccessor> _contextMock;
     private readonly SaveEmployeeCommandHandler _handler;
 
     public SaveEmployeeCommandTests()
     {
-        _employeeRepoMock = new Mock<IPlatformQueryableRootRepository<Employee, string>>();
+        _employeeRepoMock = new Mock<IPlatformQueryableRootRepository<Employee>>();
         _contextMock = new Mock<IPlatformApplicationRequestContextAccessor>();
 
         // Setup default context
@@ -153,7 +155,7 @@ public class SaveEmployeeCommandTests
 ```csharp
 public class GetEmployeeListQueryTests
 {
-    private readonly Mock<IPlatformQueryableRootRepository<Employee, string>> _repoMock;
+    private readonly Mock<IPlatformQueryableRootRepository<Employee>> _repoMock;
     private readonly GetEmployeeListQueryHandler _handler;
 
     [Fact]
@@ -218,7 +220,7 @@ public class EmployeeEntityTests
     public async Task ValidateAsync_DuplicateCode_ReturnsError()
     {
         // Arrange
-        var repoMock = new Mock<IPlatformQueryableRootRepository<Employee, string>>();
+        var repoMock = new Mock<IPlatformQueryableRootRepository<Employee>>();
         repoMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Employee, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);  // Duplicate exists
 

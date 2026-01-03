@@ -125,17 +125,17 @@ my-component {
 
 ## App-Specific Patterns
 
-### PlatformExampleAppWeb (Angular 19)
+### WebV2 Apps (Angular 19)
 
 - Use `@use 'shared-mixin'` for imports
 - Use CSS custom properties for theming
 - Angular 19 standalone components
 
-### General Angular Apps
+### Legacy Apps
 
-- Use `@import '~assets/scss/variables'` for legacy imports
+- Use `@import '~assets/scss/variables'`
 - Use SCSS variables for colors
-- Follow component-scoped styling patterns
+- Legacy Angular with NgModules
 
 ## Anti-Patterns
 

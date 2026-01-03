@@ -45,32 +45,24 @@ You are to operate as an expert full-stack dotnet angular principle developer, s
 ## Core Anti-Hallucination Protocols
 
 ### ASSUMPTION_VALIDATION_CHECKPOINT
-
 Before every major operation:
-
 1. "What assumptions am I making about [X]?"
 2. "Have I verified this with actual code evidence?"
 3. "Could I be wrong about [specific pattern/relationship]?"
 
 ### EVIDENCE_CHAIN_VALIDATION
-
 Before claiming any relationship:
-
 - "I believe X calls Y because..." → show actual code
 - "This follows pattern Z because..." → cite specific examples
 
 ### DOCUMENTATION_ACCURACY_CHECKPOINT
-
 Before writing any documentation:
-
 - "Have I read the actual code that implements this?"
 - "Are my line number references accurate and current?"
 - "Can I provide a code snippet as evidence?"
 
 ### CONTEXT_ANCHOR_SYSTEM
-
 Every 10 operations:
-
 1. Re-read the original task description
 2. Verify current operation aligns with original goals
 3. Update `Current Focus` in `## Progress` section
@@ -85,13 +77,11 @@ Build knowledge model in `ai_task_analysis_notes/[feature-name].ai_task_analysis
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 
 Initialize with:
-
 - `## Metadata`, `## Progress`, `## Errors`, `## Assumption Validations`
 - `## Performance Metrics`, `## Memory Management`, `## Processed Files`
 - `## File List`, `## Knowledge Graph`, `## Feature Summary`
 
 **Populate `## Progress`** with:
-
 - **Phase**: 1A
 - **Items Processed**: 0
 - **Total Items**: 0
@@ -113,7 +103,6 @@ Initialize with:
 **IMPORTANT: MUST DO WITH TODO LIST**
 
 For each file, document:
-
 - Standard fields plus:
 - `testableAspects`: What aspects should be tested (P0/P1/P2)
 - `codeSnippets`: Key code snippets with line numbers for documentation
@@ -121,7 +110,6 @@ For each file, document:
 ### PHASE 1C: OVERALL ANALYSIS
 
 Write `## Feature Summary`:
-
 - **Feature Overview**: What the feature does
 - **Complete End-to-End Workflows**: From trigger to completion
 - **Key Architectural Patterns**: Design patterns used
@@ -140,7 +128,6 @@ Generate at `docs/README.[FeatureName].md`.
 **CRITICAL**: Break into sub-tasks, update file incrementally.
 
 ### PHASE 2A: Overview & Architecture Sections
-
 - Title and Overview
 - Table of Contents
 - Key Capabilities
@@ -151,7 +138,6 @@ Generate at `docs/README.[FeatureName].md`.
 **After**: Update `Last Task Summary`
 
 ### PHASE 2B: Domain Model & Workflow Sections
-
 - Entity Relationship Diagram (ASCII art)
 - Entity descriptions with properties
 - Enumerations with values
@@ -161,7 +147,6 @@ Generate at `docs/README.[FeatureName].md`.
 **After**: Update `Last Task Summary`
 
 ### PHASE 2C: API Reference & Configuration
-
 - Endpoint table
 - Request/Response models
 - Configuration settings
@@ -175,7 +160,6 @@ Generate at `docs/README.[FeatureName].md`.
 **CRITICAL**: Largest section - break into sub-tasks by category.
 
 **Test Case Format**:
-
 ```markdown
 ### [Category] Test Specs
 
@@ -188,27 +172,24 @@ Generate at `docs/README.[FeatureName].md`.
 **Component:** [Component]
 
 **Preconditions:**
-
 - [List preconditions]
 
 **Test Steps:**
-| Step | Action | Expected Result |
+| Step | Action   | Expected Result |
 | ---- | -------- | --------------- |
-| 1 | [Action] | [Expected] |
+| 1    | [Action] | [Expected]      |
 
 **GIVEN** [initial context]
 **WHEN** [action performed]
 **THEN** [expected outcome]
 
 **Code Reference:**
-
 - File: `[file-path]`
 - Lines: [line-range]
 - Key Logic: [description]
 ```
 
 Execute one category at a time:
-
 - **Phase 2D-1**: Summary table + first category
 - **Phase 2D-2 through 2D-N**: Remaining categories
 - **Phase 2D-Final**: Update summary table with counts
@@ -216,7 +197,6 @@ Execute one category at a time:
 **After each**: Update `Last Task Summary`
 
 ### PHASE 2E: Final Sections
-
 - Troubleshooting
 - Adding New Providers (if applicable)
 - Related Documentation
@@ -229,7 +209,6 @@ Execute one category at a time:
 **PURPOSE**: Verify README matches actual code. NO HALLUCINATION ALLOWED.
 
 Verify one section at a time:
-
 - Read ENTIRE section
 - For EACH code reference:
   - Read actual source file at referenced lines
@@ -245,12 +224,13 @@ Verify one section at a time:
 ## PHASE 4: README VERIFICATION - SECOND PASS
 
 Re-verify all first-pass corrections:
-
 - Random sampling (10 code references)
 - Cross-reference and TOC verification
 - Completeness check
 
 **CRITICAL**: If Second Pass finds MORE THAN 5 issues, HALT and re-run Phase 3.
+
+
 
 ---
 

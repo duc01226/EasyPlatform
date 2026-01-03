@@ -7,7 +7,8 @@
  * handles app-specific design tokens.
  *
  * Pattern Matching:
- *   src/PlatformExampleAppWeb/*    → Angular 19 example app (shared-mixin)
+ *   src/PlatformExampleAppWeb/*                    → Angular 19 apps (shared-mixin)
+ *   src/PlatformExampleAppWeb/*                      → Legacy Angular apps (variables)
  *   libs/*                         → Shared libraries
  *
  * Exit Codes:
@@ -25,13 +26,20 @@ const SCSS_GUIDE_PATH = 'docs/claude/scss-styling-guide.md';
 
 const FRONTEND_PATTERNS = [
   {
-    name: 'Example App',
+    name: 'WebV2',
     patterns: [
-      /src[\/\\]PlatformExampleAppWeb[\/\\]/i,
+      /src[\/\\]WebV2[\/\\]/i,
       /libs[\/\\]platform-core[\/\\]/i,
-      /libs[\/\\]apps-domains[\/\\]/i
+      /libs[\/\\]platform-core[\/\\]/i
     ],
     description: 'Angular 19 with shared-mixin SCSS system'
+  },
+  {
+    name: 'Legacy Web',
+    patterns: [
+      /src[\/\\]Web[\/\\]/i
+    ],
+    description: 'Legacy Angular with SCSS variables'
   },
   {
     name: 'Libraries',
@@ -44,6 +52,7 @@ const FRONTEND_PATTERNS = [
 
 // App-specific patterns for detailed guidance
 const APP_PATTERNS = {
+  'TextSnippet': /PlatformExampleApp[\/\\].*TextSnippet/i,
   'playground-text-snippet': /PlatformExampleAppWeb[\/\\]apps[\/\\]playground-text-snippet/i
 };
 
@@ -138,16 +147,16 @@ function buildInjection(context, filePath, app) {
     '',
     '1. **BEM Classes:** Use `block__element` with separate `--modifier` class',
     '2. **No Magic Numbers:** Use variables for colors, spacing, breakpoints',
-    '3. **Imports:** Use `@use \'shared-mixin\'` for modern Angular apps',
+    '3. **Imports:** WebV2 uses `@use \'shared-mixin\'`, Legacy uses `@import`',
     '4. **Nesting:** Max 3 levels deep, avoid over-specificity',
     '5. **Component Scope:** Styles scoped to component block class',
     ''
   ];
 
   // Add context-specific guidance
-  if (context.name === 'Example App') {
+  if (context.name === 'WebV2') {
     lines.push(
-      '### Example App SCSS Patterns',
+      '### WebV2 SCSS Patterns',
       '',
       '```scss',
       '// Import pattern',
@@ -160,6 +169,23 @@ function buildInjection(context, filePath, app) {
       '// Flex mixins',
       '@include flex-column-container();',
       '@include flex-row-gap(8px);',
+      '```',
+      ''
+    );
+  } else if (context.name === 'Legacy Web') {
+    lines.push(
+      '### Legacy SCSS Patterns',
+      '',
+      '```scss',
+      '// Import pattern',
+      '@import \'~assets/scss/variables\';',
+      '',
+      '// SCSS Variables',
+      'color: $color-primary;',
+      'background: $color-gray-100;',
+      '',
+      '// Flex mixin',
+      '@include flex-column-container();',
       '```',
       ''
     );

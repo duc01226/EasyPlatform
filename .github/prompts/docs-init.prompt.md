@@ -12,7 +12,7 @@ Analyze the codebase and create initial documentation structure.
 
 1. Run `ls -la` to identify actual project directories
 2. Explore key directories to understand project structure:
-   - `src/PlatformExampleApp/` - Example microservice (TextSnippet)
+   - `src/PlatformExampleApp/` - Backend microservices
    - `src/Platform/` - Framework core
    - `src/PlatformExampleAppWeb/` - Frontend applications
 3. Identify patterns, technologies, and architecture

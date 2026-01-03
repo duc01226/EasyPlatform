@@ -105,5 +105,5 @@ Before claiming fix is complete:
 |-------|-----|
 | `throw new ValidationException()` | Use `PlatformValidationResult` fluent API |
 | Side effects in handler | Use Entity Event Handler in `UseCaseEvents/` |
-| `IPlatformRootRepository<T>` | Use service-specific repository |
+| `IPlatformRootRepository<T>` | Use `IPlatformQueryableRootRepository<T>` etc. |
 | Manual subscriptions | Use `.pipe(this.untilDestroyed())` |

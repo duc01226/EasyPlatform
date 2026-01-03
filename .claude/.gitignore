@@ -56,3 +56,6 @@ GoogleService-Info.plist
 
 .mcp.json
 .gemini/*
+
+# Python virtual environments
+skills/.venv/

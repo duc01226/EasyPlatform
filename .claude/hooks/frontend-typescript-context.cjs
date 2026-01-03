@@ -7,8 +7,10 @@
  * frontend TypeScript files.
  *
  * Pattern Matching:
- *   src/PlatformExampleAppWeb/*    → Angular 19 example app
+ *   src/PlatformExampleAppWeb/*                    → Angular 19 apps
+ *   src/PlatformExampleAppWeb/*                      → Legacy Angular apps
  *   libs/platform-core/*           → Platform core library
+ *   libs/platform-core/*            → Shared components library
  *   libs/apps-domains/*            → Domain library
  *
  * Exit Codes:
@@ -26,11 +28,18 @@ const FRONTEND_GUIDE_PATH = 'docs/claude/frontend-typescript-complete-guide.md';
 
 const FRONTEND_PATTERNS = [
   {
-    name: 'Example App',
+    name: 'WebV2 Apps',
     patterns: [
-      /src[\/\\]PlatformExampleAppWeb[\/\\]/i
+      /src[\/\\]WebV2[\/\\]/i
     ],
-    description: 'Angular 19 standalone example app (TextSnippet)'
+    description: 'Angular 19 standalone apps'
+  },
+  {
+    name: 'Legacy Web Apps',
+    patterns: [
+      /src[\/\\]Web[\/\\]/i
+    ],
+    description: 'Legacy Angular apps'
   },
   {
     name: 'Platform Core',
@@ -38,6 +47,13 @@ const FRONTEND_PATTERNS = [
       /libs[\/\\]platform-core[\/\\]/i
     ],
     description: 'Platform core framework library'
+  },
+  {
+    name: 'Platform Core',
+    patterns: [
+      /libs[\/\\]platform-core[\/\\]/i
+    ],
+    description: 'Shared UI components library'
   },
   {
     name: 'Apps Domains',
@@ -50,6 +66,7 @@ const FRONTEND_PATTERNS = [
 
 // App-specific patterns for more detailed guidance
 const APP_PATTERNS = {
+  'TextSnippet': /PlatformExampleApp[\/\\].*TextSnippet/i,
   'playground-text-snippet': /PlatformExampleAppWeb[\/\\]apps[\/\\]playground-text-snippet/i
 };
 
@@ -170,9 +187,16 @@ function buildInjection(context, filePath, app) {
 
     if (app === 'playground-text-snippet') {
       lines.push(
-        '- Angular 19 standalone components with signals',
-        '- Use `@use \'shared-mixin\'` for SCSS imports',
-        '- Use CSS variables for theming',
+        '- Angular 19 standalone components',
+        '- Use platform-core patterns',
+        '- Follow BEM naming conventions',
+        ''
+      );
+    } else if (app === 'TextSnippet') {
+      lines.push(
+        '- Example application patterns',
+        '- Use platform framework components',
+        '- Follow established coding patterns',
         ''
       );
     }

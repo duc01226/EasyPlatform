@@ -1,6 +1,6 @@
 ---
 agent: 'agent'
-description: 'Generate an Angular component following EasyPlatform patterns'
+description: 'Generate an Angular component following EasyPlatform platform patterns'
 tools: ['read', 'edit', 'search', 'execute']
 ---
 
@@ -18,7 +18,7 @@ tools: ['read', 'edit', 'search', 'execute']
 Create a new Angular component following platform patterns:
 
 **Component Name:** ${input:componentName}
-**App Name:** ${input:appName:playground-text-snippet}
+**App Name:** ${input:appName:playground-text-snippet,employee}
 **Feature Name:** ${input:featureName}
 **Component Type:** ${input:componentType:List with Store,Form,Simple Display}
 

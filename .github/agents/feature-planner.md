@@ -95,7 +95,7 @@ Presentation:        Controllers, API endpoints
 
 ### Pattern Requirements
 - **CQRS**: Command + Handler + Result in ONE file
-- **Repositories**: Use `IPlatformQueryableRootRepository<TEntity, TKey>`
+- **Repositories**: Use service-specific (IPlatformQueryableRootRepository, etc.)
 - **Validation**: Use PlatformValidationResult fluent API
 - **Side Effects**: Use entity event handlers, not direct calls
 - **Cross-Service**: Use message bus, never direct DB access

@@ -68,7 +68,7 @@ Frontend → Controller → Command → Repository → Event → Consumer
 ```csharp
 public class SaveEmployeeCommandHandlerTests
 {
-    private readonly Mock<IPlatformQueryableRootRepository<Employee, string>> _repositoryMock;
+    private readonly Mock<IPlatformQueryableRootRepository<Employee>> _repositoryMock;
     private readonly SaveEmployeeCommandHandler _handler;
 
     [Fact]

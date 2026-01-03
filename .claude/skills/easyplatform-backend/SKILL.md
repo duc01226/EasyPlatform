@@ -1,12 +1,12 @@
 ---
 name: easyplatform-backend
-description: Complete Easy.Platform backend development. Covers CQRS commands/queries, entities, validation, migrations, background jobs, and message bus. Use for any .NET backend task in this monorepo.
+description: Complete Easy.Platform backend development for EasyPlatform. Covers CQRS commands/queries, entities, validation, migrations, background jobs, and message bus. Use for any .NET backend task in this monorepo.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
 # Easy.Platform Backend Development
 
-Complete backend development patterns for EasyPlatform .NET 9 microservices.
+Complete backend development patterns for EasyPlatform .NET 8 microservices.
 
 ## Quick Decision Tree
 
@@ -50,7 +50,7 @@ Complete backend development patterns for EasyPlatform .NET 9 microservices.
 
 ## Critical Rules
 
-1. **Repository:** Use `IPlatformQueryableRootRepository<T, TKey>` - the platform standard
+1. **Repository:** Use service-specific repos (`IPlatformQueryableRootRepository<T>`, `IPlatformQueryableRootRepository<T>`)
 2. **Validation:** Use `PlatformValidationResult` fluent API - NEVER throw exceptions
 3. **Side Effects:** Handle in Entity Event Handlers - NEVER in command handlers
 4. **DTO Mapping:** DTOs own mapping via `PlatformEntityDto<T,K>.MapToEntity()`
@@ -334,7 +334,7 @@ internal sealed class UpsertEmployeeOnEmployeeEventConsumer
 |-------|-----|
 | `throw new ValidationException()` | Use `PlatformValidationResult` fluent API |
 | Side effects in command handler | Entity Event Handler in `UseCaseEvents/` |
-| `IPlatformRootRepository<T>` | `IPlatformQueryableRootRepository<T, TKey>` |
+| `IPlatformRootRepository<T>` | Service-specific: `IPlatformQueryableRootRepository<T>` |
 | Direct cross-service DB access | Message bus |
 | DTO mapping in handler | `PlatformEntityDto.MapToEntity()` |
 | Separate Command/Handler files | ONE file: Command + Result + Handler |
@@ -344,7 +344,7 @@ internal sealed class UpsertEmployeeOnEmployeeEventConsumer
 
 ## Verification Checklist
 
-- [ ] Uses platform repository (`IPlatformQueryableRootRepository<T, TKey>`)
+- [ ] Uses service-specific repository (`I{Service}RootRepository<T>`)
 - [ ] Validation uses fluent API (`.And()`, `.AndAsync()`)
 - [ ] No side effects in command handlers
 - [ ] DTO mapping in DTO class

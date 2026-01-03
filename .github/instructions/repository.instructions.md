@@ -6,15 +6,16 @@ description: "Repository patterns and extensions for EasyPlatform"
 
 # Repository Patterns
 
-## Platform Repositories
+## Service-Specific Repositories (REQUIRED)
 
 ```csharp
-// Use platform queryable repository for all entities
-IPlatformQueryableRootRepository<Entity, string>      // Primary choice
-IPlatformQueryableRootRepository<Entity, TKey>        // With custom key type
+// Always use service-specific repositories
+IPlatformQueryableRootRepository<Employee>              // TextSnippet
+IPlatformQueryableRootRepository<Job>        // TextSnippet
+IPlatformQueryableRootRepository<Survey>       // TextSnippet
 
-// Non-queryable when IQueryable not needed
-IPlatformRootRepository<Entity, string>
+// Fallback only when service-specific not available
+IPlatformQueryableRootRepository<Entity, Key>
 ```
 
 ## Repository API Reference
@@ -67,7 +68,7 @@ var exists = await repository.AnyAsync(expr, ct);
 public static class EmployeeRepositoryExtensions
 {
     public static async Task<Employee> GetByEmailAsync(
-        this IPlatformQueryableRootRepository<Employee, string> repo,
+        this IPlatformQueryableRootRepository<Employee> repo,
         string companyId,
         string email,
         CancellationToken ct = default)
@@ -79,7 +80,7 @@ public static class EmployeeRepositoryExtensions
 
     // Projected result (performance optimization)
     public static async Task<string> GetEmployeeIdAsync(
-        this IPlatformQueryableRootRepository<Employee, string> repo,
+        this IPlatformQueryableRootRepository<Employee> repo,
         string userId,
         string companyId,
         CancellationToken ct = default)
@@ -112,6 +113,6 @@ public static Expression<Func<Employee, bool>> CanBeReviewerExpr(string companyI
 ## Anti-Patterns
 
 - **Never** create custom repository interfaces
+- **Never** use generic repository when service-specific exists
 - **Never** duplicate query logic (use expressions/extensions)
 - **Never** forget eager loading (causes N+1)
-- **Never** use raw DbContext when repository pattern available

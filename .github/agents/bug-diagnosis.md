@@ -310,8 +310,8 @@ PlatformCqrsEntityEventApplicationHandler<TEntity>
 PlatformApplicationMessageBusConsumer<TMessage>
 
 // Repositories
-IPlatformQueryableRootRepository<TEntity, TKey>
-IPlatformRootRepository<TEntity, TKey>
+IPlatformQueryableRootRepository<TEntity>
+IPlatformQueryableRootRepository<TEntity>
 ```
 
 ### Frontend Patterns

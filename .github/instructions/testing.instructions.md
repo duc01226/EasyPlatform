@@ -13,12 +13,12 @@ description: "Testing patterns for EasyPlatform backend and frontend"
 ```csharp
 public class SaveEmployeeCommandHandlerTests
 {
-    private readonly Mock<IPlatformQueryableRootRepository<Employee, string>> _repositoryMock;
+    private readonly Mock<IPlatformQueryableRootRepository<Employee>> _repositoryMock;
     private readonly SaveEmployeeCommandHandler _handler;
 
     public SaveEmployeeCommandHandlerTests()
     {
-        _repositoryMock = new Mock<IPlatformQueryableRootRepository<Employee, string>>();
+        _repositoryMock = new Mock<IPlatformQueryableRootRepository<Employee>>();
         _handler = new SaveEmployeeCommandHandler(
             Mock.Of<ILoggerFactory>(),
             Mock.Of<IPlatformUnitOfWorkManager>(),

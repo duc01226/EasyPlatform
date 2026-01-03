@@ -108,7 +108,7 @@ async function main() {
 
     // Core rules (minimal)
     lines.push(`## Rules`);
-    lines.push(`- Follow: .claude/workflows/development-rules.md`);
+    lines.push(`- **MUST READ:** .claude/workflows/development-rules.md before implementation`);
     lines.push(`- Reports → ${reportsPath}`);
     lines.push(`- YAGNI / KISS / DRY`);
     lines.push(`- **Class Responsibility:** Logic in LOWEST layer (Model > Service > Component). Mapping → Command/DTO. Constants → Model.`);

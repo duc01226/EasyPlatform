@@ -1,5 +1,5 @@
 ---
-applyTo: 'src/PlatformExampleApp/**/*Command*.cs,src/PlatformExampleApp/**/*Query*.cs'
+applyTo: 'src/Services/**/*Command*.cs,src/Services/**/*Query*.cs'
 ---
 
 # CQRS Development Instructions

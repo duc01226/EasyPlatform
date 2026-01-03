@@ -20,7 +20,8 @@ description: Use when creating or modifying Angular components in WebV2 (Angular
 
 | Application                       | Design System Location                           |
 | --------------------------------- | ------------------------------------------------ |
-| **PlatformExampleAppWeb** | `docs/design-system/` |
+| **WebV2 Apps**                    | `docs/design-system/`                            |
+| **TextSnippetClient**             | `src/PlatformExampleAppWeb/apps/playground-text-snippet/docs/design-system/` |
 
 **Key docs to read:**
 

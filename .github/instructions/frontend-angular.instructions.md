@@ -1,5 +1,5 @@
 ---
-applyTo: 'src/PlatformExampleAppWeb/**/*.ts,src/PlatformExampleAppWeb/**/*.html'
+applyTo: 'src/PlatformExampleAppWeb/**/*.ts,src/PlatformExampleAppWeb/**/*.html,src/PlatformExampleAppWeb/**/*.ts'
 excludeAgent: ['copilot-code-review']
 description: 'Angular frontend development patterns for EasyPlatform'
 ---
@@ -32,13 +32,14 @@ AppBaseComponent                     // + Auth, roles, company context
 └── AppBaseVmStoreComponent         // + Store + auth + loading/error
 ```
 
-## Design System Documentation (MANDATORY)
+## 🎨 Design System Documentation (MANDATORY)
 
-**Before creating any frontend component, read the design system documentation:**
+**Before creating any frontend component, read the design system documentation for your target application:**
 
-| Application               | Design System Location |
-| ------------------------- | ---------------------- |
-| **PlatformExampleAppWeb** | `docs/design-system/`  |
+| Application                       | Design System Location                           |
+| --------------------------------- | ------------------------------------------------ |
+| **WebV2 Apps**                    | `docs/design-system/`                            |
+| **TextSnippetClient**             | `src/PlatformExampleAppWeb/apps/playground-text-snippet/docs/design-system/` |
 
 **Key docs to read:**
 
@@ -61,7 +62,7 @@ AppBaseComponent                     // + Auth, roles, company context
 **All UI elements in component templates MUST have BEM classes, even without styling needs.** This makes HTML self-documenting like OOP class hierarchy.
 
 ```html
-<!-- CORRECT: All elements have BEM classes for structure clarity -->
+<!-- ✅ CORRECT: All elements have BEM classes for structure clarity -->
 <div class="employee-list">
     <div class="employee-list__header">
         <h1 class="employee-list__title">Employees</h1>
@@ -80,7 +81,7 @@ AppBaseComponent                     // + Auth, roles, company context
     </div>
 </div>
 
-<!-- WRONG: Elements without classes - structure unclear -->
+<!-- ❌ WRONG: Elements without classes - structure unclear -->
 <div class="employee-list">
     <div>
         <h1>Employees</h1>
@@ -336,7 +337,7 @@ canActivate(): Observable<boolean> {
 }
 ```
 
-## Platform Core Library Reference
+## PlatformCore Library Reference
 
 **Location**: `src/PlatformExampleAppWeb/libs/platform-core/`
 
@@ -345,8 +346,36 @@ canActivate(): Observable<boolean> {
 export class MyComponent extends BaseComponent { }
 export class MyDirective extends BaseDirective { }
 
+// Components
+<platform-select formControlName="ids" [fetchDataFn]="fetchFn" [multiple]="true" [searchable]="true" />
+<platform-alert type="warning" [message]="errorMessage" />
+<platform-table [data]="items" [columns]="columns" />
+
+// Directives
+<div appTextEllipsis [maxTextEllipsisLines]="2">Long text here...</div>
+<button appPopover [popoverContent]="template">Hover me</button>
+<input appAutofocus />
+
+// Pipes
+{{ date | localizedDate:'shortDate' }}
+{{ 'item' | pluralize:count }}
+{{ unsafeHtml | platformSafe:'html' }}
+
+// Services
+constructor(
+  private translateSvc: PlatformTranslateService,
+  private themeSvc: ThemeService,
+  private scriptSvc: PlatformScriptService
+) { }
+
+// Utilities
+PlatformArrayUtil.toDictionary(items, x => x.id);
+PlatformDateUtil.format(new Date(), 'DD/MM/YYYY');
+PlatformStringUtil.isNullOrEmpty(value);
+
 // Module import
 import { PlatformCoreModule } from '@libs/platform-core';
+import { PlatformCoreRootModule } from '@libs/platform-core';  // App root only
 @NgModule({ imports: [PlatformCoreModule] })
 ```
 
@@ -487,15 +516,16 @@ const cloned = deepClone(complexObject);
 
 ## Working Examples Reference
 
-**Location**: `src/PlatformExampleAppWeb/apps/playground-text-snippet/`
+**Location**: `src/PlatformExampleAppWeb/PlatformComponents/src/components/platform-examples/`
 
-| Example          | File                            | Use Case                                           |
-| ---------------- | ------------------------------- | -------------------------------------------------- |
-| Loading/Error    | `*-demo.component.ts`           | Auto state binding, custom templates               |
-| Basic Form       | `*-form.component.ts`           | Simple forms, basic validation                     |
-| Advanced Form    | `*-form.component.ts`           | FormArrays, async validation, dependent validation |
-| State Management | `*.component.ts` + `*.store.ts` | ComponentStore, CRUD, pagination, search           |
-| API Service      | `*-api.service.ts`              | Caching, mock data, error simulation               |
+| Example          | File                                            | Use Case                                           |
+| ---------------- | ----------------------------------------------- | -------------------------------------------------- |
+| Loading/Error    | `loading-error-indicator-demo.component.ts`     | Auto state binding, custom templates               |
+| Basic Form       | `user-form.component.ts`                        | Simple forms, basic validation                     |
+| Advanced Form    | `product-form.component.ts`                     | FormArrays, async validation, dependent validation |
+| Complex Form     | `user-profile-form.component.ts`                | Nested 3+ levels, async validators with debouncing |
+| State Management | `user-list.component.ts` + `user-list.store.ts` | ComponentStore, CRUD, pagination, search           |
+| API Service      | `platform-examples-api.service.ts`              | Caching, mock data, error simulation               |
 
 ## Dev Mode Validation
 
@@ -522,20 +552,20 @@ export class MyComponent extends PlatformComponent {
 | **Component**    | UI event handling ONLY - delegates all logic to lower layers                          |
 
 ```typescript
-// WRONG: Logic in component (leads to duplication)
+// ❌ WRONG: Logic in component (leads to duplication)
 readonly authTypes = [{ value: 1, label: 'OAuth2' }, { value: 3, label: 'API Key' }];
 getStatusClass(config) { return config.isEnabled ? 'active' : 'disabled'; }
 
-// CORRECT: Logic in entity/model
+// ✅ CORRECT: Logic in entity/model
 readonly authTypes = AuthConfigurationDisplay.getApiAuthTypeOptions();
 getStatusClass(config) { return config.getStatusCssClass(); } // Delegates to entity
 ```
 
 **Common Mistakes:**
 
-- Dropdown options defined in component - should be static method in entity
-- Display logic (CSS class, status text) in component - should be instance method in entity
-- Command building in component - should be factory class in service
+- Dropdown options defined in component → should be static method in entity
+- Display logic (CSS class, status text) in component → should be instance method in entity
+- Command building in component → should be factory class in service
 
 ## Anti-Patterns
 

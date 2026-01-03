@@ -1,5 +1,5 @@
 ---
-applyTo: "src/PlatformExampleApp/**/*.cs,src/PlatformExampleAppWeb/**/*.ts"
+applyTo: "src/PlatformExampleApp/**/*.cs,src/PlatformExampleAppWeb/**/*.ts,src/PlatformExampleAppWeb/**/*.ts"
 excludeAgent: ["copilot-code-review"]
 description: "Security patterns and best practices for EasyPlatform"
 ---
@@ -38,13 +38,13 @@ protected override async Task<PlatformValidationResult<T>> ValidateRequestAsync(
 
 **Always filter by company context:**
 ```csharp
-// CORRECT: Use RequestContext for tenant isolation
+// ✅ CORRECT: Use RequestContext for tenant isolation
 var employees = await repository.GetAllAsync(
     Employee.OfCompanyExpr(RequestContext.CurrentCompanyId())
         .AndAlso(Employee.ActiveExpr()),
     cancellationToken);
 
-// WRONG: No tenant isolation
+// ❌ WRONG: No tenant isolation
 var employees = await repository.GetAllAsync(
     Employee.ActiveExpr(),
     cancellationToken);
@@ -82,26 +82,26 @@ public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
 ### Sensitive Data Handling
 
 ```csharp
-// NEVER expose internal IDs in error messages
+// ❌ NEVER expose internal IDs in error messages
 throw new Exception($"User {internalUserId} not found");
 
-// Use generic messages
+// ✅ Use generic messages
 throw new NotFoundException("User not found");
 
-// NEVER log sensitive data
+// ❌ NEVER log sensitive data
 logger.LogInformation($"Password: {password}");
 
-// Log only safe identifiers
+// ✅ Log only safe identifiers
 logger.LogInformation("User login attempt: {UserId}", userId);
 ```
 
 ### SQL Injection Prevention
 
 ```csharp
-// Use parameterized queries (automatic with EF/repositories)
+// ✅ Use parameterized queries (automatic with EF/repositories)
 await repository.GetAllAsync(e => e.Name == searchTerm, ct);
 
-// NEVER concatenate user input
+// ❌ NEVER concatenate user input
 var sql = $"SELECT * FROM Users WHERE Name = '{searchTerm}'";
 ```
 
@@ -112,7 +112,7 @@ var sql = $"SELECT * FROM Users WHERE Name = '{searchTerm}'";
 ### API Service Pattern (Token Handling)
 
 ```typescript
-// Use PlatformApiService - handles auth tokens automatically
+// ✅ Use PlatformApiService - handles auth tokens automatically
 @Injectable({ providedIn: 'root' })
 export class EmployeeApiService extends PlatformApiService {
     protected get apiUrl() { return environment.apiUrl + '/api/Employee'; }
@@ -122,36 +122,36 @@ export class EmployeeApiService extends PlatformApiService {
     }
 }
 
-// NEVER use HttpClient directly
+// ❌ NEVER use HttpClient directly
 constructor(private http: HttpClient) {}  // Missing auth handling
 ```
 
 ### XSS Prevention
 
 ```typescript
-// Angular sanitizes by default in templates
+// ✅ Angular sanitizes by default in templates
 <div>{{ userInput }}</div>
 
-// Be careful with innerHTML - use sanitizer
+// ⚠️ Be careful with innerHTML - use sanitizer
 import { DomSanitizer } from '@angular/platform-browser';
 this.sanitizer.bypassSecurityTrustHtml(content);
 
-// NEVER bypass security without validation
+// ❌ NEVER bypass security without validation
 [innerHTML]="untrustedContent"
 ```
 
 ### Sensitive Data Storage
 
 ```typescript
-// NEVER store secrets in localStorage/sessionStorage
+// ❌ NEVER store secrets in localStorage/sessionStorage
 localStorage.setItem('apiKey', secretKey);
 localStorage.setItem('password', password);
 
-// Store only non-sensitive data
+// ✅ Store only non-sensitive data
 localStorage.setItem('theme', 'dark');
 localStorage.setItem('language', 'en');
 
-// Use secure cookies for auth tokens (handled by platform)
+// ✅ Use secure cookies for auth tokens (handled by platform)
 // Tokens are managed by PlatformApiService automatically
 ```
 

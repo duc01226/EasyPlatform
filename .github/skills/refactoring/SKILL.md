@@ -61,7 +61,7 @@ var employees = await repo.GetAllAsync(
 public static class EmployeeRepositoryExtensions
 {
     public static async Task<List<Employee>> GetActiveByCompanyAsync(
-        this IPlatformQueryableRootRepository<Employee, string> repo, string companyId, CancellationToken ct)
+        this IPlatformQueryableRootRepository<Employee> repo, string companyId, CancellationToken ct)
     {
         return await repo.GetAllAsync(
             Employee.OfCompanyExpr(companyId).AndAlso(Employee.IsActiveExpr()), ct);

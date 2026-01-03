@@ -1,5 +1,5 @@
 ---
-applyTo: 'src/PlatformExampleApp/**/Domain/**/*.cs'
+applyTo: 'src/Services/**/Domain/**/*.cs'
 ---
 
 # Entity Development Instructions

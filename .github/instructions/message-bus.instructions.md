@@ -111,7 +111,7 @@ public class EmployeeStatusChangedMessage : PlatformBusMessage
 
 - Producer defines the message schema
 - Named with producer's service name prefix
-- Example: Candidate service publishes `CandidateJobBoardApiSyncCompletedEventBusMessage`
+- Example: TextSnippet service publishes `CandidateJobBoardApiSyncCompletedEventBusMessage`
 - Consumer class matches: `CandidateJobBoardApiSyncCompletedEventBusMessageConsumer`
 
 **Request Messages (Consumer is Leader):**

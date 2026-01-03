@@ -23,10 +23,6 @@ const {
 } = require('./lib/ck-config-utils.cjs');
 const { writeResetMarker } = require('./lib/context-tracker.cjs');
 
-// Python version cache configuration
-const PYTHON_CACHE_FILE = path.join(__dirname, '.python-cache.json');
-const PYTHON_CACHE_TTL = 86400000; // 24 hours in milliseconds
-
 /**
  * Safely execute shell command with optional timeout
  * @param {string} cmd - Command to execute
@@ -170,36 +166,6 @@ function getPythonVersion() {
   }
 
   return null;
-}
-
-/**
- * Get Python version with caching to avoid repeated detection
- * Caches result for 24 hours to speed up session startup
- */
-function getPythonVersionCached() {
-  try {
-    if (fs.existsSync(PYTHON_CACHE_FILE)) {
-      const cache = JSON.parse(fs.readFileSync(PYTHON_CACHE_FILE, 'utf8'));
-      if (cache && Date.now() - cache.timestamp < PYTHON_CACHE_TTL) {
-        return cache.version;
-      }
-    }
-  } catch (e) {
-    // Cache read failed, proceed with fresh detection
-  }
-
-  const version = getPythonVersion();
-
-  try {
-    fs.writeFileSync(PYTHON_CACHE_FILE, JSON.stringify({
-      version,
-      timestamp: Date.now()
-    }));
-  } catch (e) {
-    // Cache write failed, non-critical
-  }
-
-  return version;
 }
 
 /**
@@ -394,7 +360,7 @@ async function main() {
     // Collect static environment info (computed once per session)
     const staticEnv = {
       nodeVersion: process.version,
-      pythonVersion: getPythonVersionCached(),
+      pythonVersion: getPythonVersion(),
       osPlatform: process.platform,
       gitUrl: getGitRemoteUrl(),
       gitBranch: getGitBranch(),

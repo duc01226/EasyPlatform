@@ -63,9 +63,10 @@ internal sealed class UpsertEmployeeOnEventConsumer :
 
 ## Service Boundaries
 
-| Service     | Owns                     | Syncs From       |
-| ----------- | ------------------------ | ---------------- |
-| TextSnippet | TextSnippets, Categories | Users, Companies |
+| Service      | Owns                               | Syncs From       |
+| ------------ | ---------------------------------- | ---------------- |
+| Accounts     | Users, Companies, Licenses         | -                |
+| TextSnippet  | Snippets, Categories, Tags         | Users, Companies |
 
 ## Key Patterns
 
@@ -78,10 +79,10 @@ internal sealed class UpsertEmployeeOnEventConsumer :
 
 ## Message Naming Convention
 
-| Type    | Pattern                                 | Example                            |
-| ------- | --------------------------------------- | ---------------------------------- |
-| Event   | `{Service}{Feature}{Action}EventBusMsg` | `GrowthEmployeeCreatedEventBusMsg` |
-| Request | `{Consumer}{Feature}RequestBusMsg`      | `TalentsJobDataRequestBusMsg`      |
+| Type    | Pattern                                 | Example                                 |
+| ------- | --------------------------------------- | --------------------------------------- |
+| Event   | `{Service}{Feature}{Action}EventBusMsg` | `TextSnippetCreatedEventBusMsg`         |
+| Request | `{Consumer}{Feature}RequestBusMsg`      | `TextSnippetCategoryDataRequestBusMsg`  |
 
 ## Anti-Patterns
 

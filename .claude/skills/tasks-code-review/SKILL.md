@@ -1,8 +1,10 @@
 ---
-name: code-review
-description: Use for QUICK PR reviews with structured checklists (architecture, patterns, security, performance). Provides step-by-step review process, git diff commands, and review report templates. Best for pull request reviews and pre-commit checks. NOT for deep refactoring analysis (use code-review instead).
+name: tasks-code-review
+description: Use when reviewing code changes, pull requests, or performing refactoring analysis with focus on patterns, security, and performance.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
+
+> **Skill Variant:** Use this skill for **autonomous, comprehensive code reviews** with structured checklists. For interactive code review discussions with user feedback, use `code-review` instead.
 
 # Code Review Workflow
 

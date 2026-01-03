@@ -1,5 +1,5 @@
 ---
-applyTo: "src/PlatformExampleApp/**/*.cs,src/PlatformExampleAppWeb/**/*.ts"
+applyTo: "src/PlatformExampleApp/**/*.cs,src/PlatformExampleAppWeb/**/*.ts,src/PlatformExampleAppWeb/**/*.ts"
 excludeAgent: ["copilot-code-review"]
 description: "Performance optimization patterns for EasyPlatform"
 ---

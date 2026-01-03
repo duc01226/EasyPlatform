@@ -18,9 +18,10 @@ description: Use when implementing state management with PlatformVmStore for com
 
 **Before creating any store, read the design system documentation for your target application:**
 
-| Application               | Design System Location |
-| ------------------------- | ---------------------- |
-| **PlatformExampleAppWeb** | `docs/design-system/`  |
+| Application                       | Design System Location                           |
+| --------------------------------- | ------------------------------------------------ |
+| **WebV2 Apps**                    | `docs/design-system/`                            |
+| **TextSnippetClient**             | `src/PlatformExampleAppWeb/apps/playground-text-snippet/docs/design-system/` |
 
 **Key docs to read:**
 

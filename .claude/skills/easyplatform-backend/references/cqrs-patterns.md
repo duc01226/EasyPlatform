@@ -128,7 +128,7 @@ protected override async Task<GetEntityByIdQueryResult> HandleAsync(
 ```csharp
 // Extension pattern
 public static async Task<Employee> GetByEmailAsync(
-    this IPlatformQueryableRootRepository<Employee, string> repo, string email, CancellationToken ct = default)
+    this IPlatformQueryableRootRepository<Employee> repo, string email, CancellationToken ct = default)
     => await repo.FirstOrDefaultAsync(Employee.ByEmailExpr(email), ct).EnsureFound();
 
 public static async Task<List<Entity>> GetByIdsValidatedAsync(

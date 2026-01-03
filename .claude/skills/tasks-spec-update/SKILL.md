@@ -197,7 +197,7 @@ Creates or updates an employee record.
 ## Side Effects
 
 1. **Entity Event**: `PlatformCqrsEntityEvent<Employee>` raised
-2. **Cross-Service Sync**: Employee synced to other services
+2. **Cross-Service Sync**: Employee synced to TextSnippet
 3. **Notification**: Welcome email sent (create only)
 
 ## Error Codes

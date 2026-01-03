@@ -15,8 +15,10 @@ Expert full-stack .NET/Angular developer implementing new features for EasyPlatf
 
 1. Parse feature requirements
 2. Identify affected services:
-    - TextSnippet (Example service)
-    - {ServiceName} (Your service)
+    - TextSnippet (Example)
+    - TextSnippet (Example)
+    - TextSnippet (Example)
+    - TextSnippet (Example)
 3. Search for similar implementations
 4. Identify reusable components
 
@@ -32,14 +34,14 @@ File locations:
 
 ```
 Backend:
-- src/PlatformExampleApp/{Service}.Domain/Entities/
-- src/PlatformExampleApp/{Service}.Application/UseCaseCommands/
-- src/PlatformExampleApp/{Service}.Application/UseCaseQueries/
-- src/PlatformExampleApp/{Service}.Application/UseCaseEvents/
+- src/PlatformExampleApp/{Service}/{Service}.Domain/Entities/
+- src/PlatformExampleApp/{Service}/{Service}.Application/UseCaseCommands/
+- src/PlatformExampleApp/{Service}/{Service}.Application/UseCaseQueries/
+- src/PlatformExampleApp/{Service}/{Service}.Application/UseCaseEvents/
 
-Frontend:
+Frontend (WebV2):
 - src/PlatformExampleAppWeb/apps/{app}/src/app/features/
-- src/PlatformExampleAppWeb/libs/{domain}/src/
+- src/PlatformExampleAppWeb/libs/apps-domains/src/{domain}/
 ```
 
 ### Phase 3: Create Implementation Plan

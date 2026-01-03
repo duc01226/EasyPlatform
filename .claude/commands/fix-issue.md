@@ -1,34 +1,177 @@
+# Fix GitHub Issue: $ARGUMENTS
+
+Fix a GitHub issue following the systematic debugging workflow based on the `bug-diagnosis` skill.
+
+**IMPORTANT**: Always use external memory at `ai_task_analysis_notes/issue-[number].ai_task_analysis_notes_temp.md` for structured analysis.
+
+## IMPORTANT: Anti-Hallucination Protocols
+
+Before any operation:
+
+1. "What assumptions am I making about this issue?"
+2. "Have I verified this with actual code evidence?"
+3. "Could I be wrong about the root cause?"
+
 ---
-description: Investigate and fix a GitHub issue by number
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, TodoWrite, Task
+
+## Phase 1: Fetch Issue Details
+
+1. **Get issue information:**
+
+    ```bash
+    gh issue view $ARGUMENTS
+    ```
+
+2. **Extract key information:**
+    - Issue title and description
+    - Labels (bug, feature, enhancement)
+    - Related PRs or issues
+    - Assignees and reviewers
+    - Stack traces or error messages
+
+3. **Create analysis notes** at `ai_task_analysis_notes/issue-[number].ai_task_analysis_notes_temp.md`
+
 ---
 
-Investigate and fix GitHub issue #$ARGUMENTS.
+## Phase 2: Understand the Issue
 
-## Steps:
+1. **Analyze the issue:**
+    - What is the expected behavior?
+    - What is the actual behavior?
+    - Are there reproduction steps?
+    - Is there a stack trace or error message?
 
-1. **Get Issue Details**
-   - Run `gh issue view $ARGUMENTS` to get full issue details
-   - Analyze the issue description, error messages, and any linked PRs
+2. **Search codebase for relevant code:**
+    - Use grep for error messages and keywords
+    - Search patterns: `.*EventHandler.*{Entity}`, `.*Consumer.*{Entity}`, etc.
+    - Find related entities/components
+    - Map the affected code paths
 
-2. **Investigate Codebase**
-   - Search codebase for related code using grep/glob
-   - Identify root cause and affected files
-   - Read relevant files to understand the context
+---
 
-3. **Plan the Fix**
-   - Create detailed implementation plan
-   - List all files that need to be modified
-   - Identify any potential side effects
+## Phase 3: Evidence Gathering
 
-4. **Wait for Approval**
-   - Present the plan to the user
-   - **DO NOT proceed without explicit approval**
+1. **Multi-pattern search:**
+    - Static imports and usages
+    - String literals (runtime/config references)
+    - Dynamic invocations (reflection, attributes)
 
-5. **Implement the Fix**
-   - After approval, implement the fix following platform patterns from CLAUDE.md
-   - Make minimal, focused changes
+2. **Trace dependency chains:**
+    - Who calls this code?
+    - Who depends on this code?
+    - Cross-service message flows
 
-6. **Verify**
-   - Run relevant tests to verify the fix
-   - Check for any regressions
+3. **Read actual implementations** (not just interfaces)
+
+4. **Document evidence** with file:line references
+
+---
+
+## Phase 4: Root Cause Analysis
+
+Analyze across dimensions:
+
+1. **Technical**: Code defects, architectural issues
+2. **Business Logic**: Rule violations, validation failures
+3. **Data**: Corruption, integrity violations, race conditions
+4. **Integration**: API contract violations, cross-service failures
+5. **Environmental**: Configuration issues, deployment problems
+
+Document:
+
+- Potential root causes ranked by probability
+- Evidence with file:line references
+- Confidence level (High 90%+, Medium 70-89%, Low <70%)
+
+---
+
+## Phase 5: Propose Fix
+
+1. **Design the fix:**
+    - Minimal changes principle
+    - Follow platform patterns from documentation
+    - Consider edge cases
+
+2. **Risk assessment:**
+    - Impact level (Low/Medium/High)
+    - Regression risk
+    - Affected components
+
+3. **Test plan:**
+    - Unit tests to add
+    - Manual testing steps
+    - Regression considerations
+
+4. **Rollback plan:**
+    - How to revert if fix causes issues
+
+---
+
+## Phase 6: Wait for Approval
+
+**CRITICAL:** Present your analysis and proposed fix in this format:
+
+```markdown
+## Issue Analysis Complete - Approval Required
+
+### Issue
+
+#[number] - [title]
+
+### Root Cause Summary
+
+[Primary root cause with evidence at file:line]
+
+### Proposed Fix
+
+[Fix description with specific files and changes]
+
+### Risk Assessment
+
+- **Risk Level**: [Low/Medium/High]
+- **Regression Risk**: [assessment]
+
+### Confidence Level: [X%]
+
+### Files to Modify:
+
+1. `path/to/file.cs:line` - [change description]
+
+**Awaiting approval to proceed with implementation.**
+```
+
+**DO NOT** make any code changes without explicit user approval.
+
+---
+
+## Phase 7: Implement Fix
+
+After approval:
+
+1. Make the code changes following platform patterns
+2. Add/update tests
+3. Verify fix works
+4. Create PR with issue reference using `gh pr create`
+
+---
+
+## Quick Verification Checklist
+
+Before proposing any change:
+
+- [ ] Searched static imports?
+- [ ] Searched string literals?
+- [ ] Checked dynamic invocations?
+- [ ] Read actual implementations?
+- [ ] Traced dependencies?
+- [ ] Assessed what breaks?
+- [ ] Documented evidence?
+- [ ] Declared confidence?
+
+**If ANY unchecked → DO MORE INVESTIGATION**
+**If confidence < 90% → REQUEST USER CONFIRMATION**
+
+---
+
+Use the `bug-diagnosis` skill for the complete debugging protocol.
+See `.github/AI-DEBUGGING-PROTOCOL.md` for comprehensive guidelines.

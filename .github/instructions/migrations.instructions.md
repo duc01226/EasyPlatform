@@ -92,20 +92,20 @@ dotnet ef database update
 ## Cross-Service Initial Sync Migration
 
 ```csharp
-public class SyncDataFromSourceToTarget : PlatformDataMigrationExecutor<TargetDbContext>
+public class SyncDataFromAccountsToGrowth : PlatformDataMigrationExecutor<GrowthDbContext>
 {
     // Only for one-time initial sync
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2024, 1, 15);
 
-    public override async Task Execute(TargetDbContext dbContext)
+    public override async Task Execute(GrowthDbContext dbContext)
     {
         var cutoffDate = new DateTime(2024, 1, 15);
 
-        var sourceData = await sourceDbContext.Entities
+        var sourceData = await accountsDbContext.Entities
             .Where(e => e.CreatedDate < cutoffDate)
             .ToListAsync();
 
-        var targetData = sourceData.SelectList(e => e.MapToTargetEntity());
+        var targetData = sourceData.SelectList(e => e.MapToGrowthEntity());
 
         await RootServiceProvider.ExecuteInjectScopedPagingAsync(
             maxItemCount: targetData.Count,

@@ -13,7 +13,7 @@ Perform comprehensive code review following EasyPlatform patterns and best pract
 
 - [ ] Clean Architecture layers respected (Domain, Application, Persistence, Service)
 - [ ] CQRS pattern followed (Command + Handler + Result in ONE file)
-- [ ] Platform repositories used (`IPlatformQueryableRootRepository`, etc.)
+- [ ] Service-specific repositories used (`IPlatformQueryableRootRepository`, etc.)
 - [ ] No side effects in command handlers (use entity event handlers)
 - [ ] DTO mapping in DTO classes, not handlers
 - [ ] Static expressions defined in entities

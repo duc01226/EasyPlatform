@@ -50,7 +50,7 @@ public sealed class Save{Entity}CommandResult : PlatformCqrsCommandResult
 internal sealed class Save{Entity}CommandHandler :
     PlatformCqrsCommandApplicationHandler<Save{Entity}Command, Save{Entity}CommandResult>
 {
-    private readonly IPlatformQueryableRootRepository<{Entity}, string> repository;
+    private readonly I{Service}RootRepository<{Entity}> repository;
 
     protected override async Task<Save{Entity}CommandResult> HandleAsync(
         Save{Entity}Command req, CancellationToken ct)

@@ -138,7 +138,7 @@ All agents follow:
 ### Backend Verification
 
 Before modifying backend code, verify:
-- [ ] Correct repository type (`IPlatformQueryableRootRepository<T>`)
+- [ ] Correct repository type (`IPlatformQueryableRootRepository<T>`, `IPlatformQueryableRootRepository<T>`)
 - [ ] Validation uses fluent API (`.And()`, `.AndAsync()`)
 - [ ] No side effects in handlers (use `UseCaseEvents/` instead)
 - [ ] DTO mapping in DTO class (`PlatformEntityDto.MapToEntity()`)

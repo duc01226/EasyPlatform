@@ -268,7 +268,6 @@ function getStepDescription(step) {
     fix: 'Apply fixes',
     debug: 'Investigate and diagnose',
     'code-review': 'Review code quality',
-    'dual-pass-review': 'Dual-pass review (first pass + conditional second pass)',
     'docs-update': 'Update documentation',
     watzup: 'Summarize changes',
     scout: 'Explore codebase',

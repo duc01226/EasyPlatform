@@ -91,7 +91,7 @@ find . -name "*.csproj" -o -name "Directory.Packages.props"
 
 ### Phase 1: Foundation
 
-- Package A: X.Y -> A.B
+- Package A: X.Y → A.B
 - Estimated effort: X hours
 
 ### Phase 2: Framework

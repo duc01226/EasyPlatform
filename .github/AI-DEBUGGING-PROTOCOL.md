@@ -7,7 +7,7 @@
 
 ---
 
-## Table of Contents
+## 📋 Table of Contents
 
 1. [Core Mission](#core-mission)
 2. [When to Apply This Protocol](#when-to-apply-this-protocol)
@@ -29,21 +29,21 @@
 **Primary Objective:** Prevent breaking changes through comprehensive, evidence-based analysis.
 
 **Key Philosophy:**
-- It's better to ask 10 questions than make 1 wrong assumption
-- The best suggestion is one that doesn't break existing functionality
-- Never assume - always verify with code evidence
+- ✅ **It's better to ask 10 questions than make 1 wrong assumption**
+- ✅ **The best suggestion is one that doesn't break existing functionality**
+- ✅ **Never assume - always verify with code evidence**
 
 ---
 
 ## When to Apply This Protocol
 
 **MANDATORY for:**
-- Any code removal or deletion suggestions
-- Bug analysis and debugging
-- Analyzing "unused" or "dead" code
-- Dependency removal recommendations
-- Refactoring that involves removing functionality
-- Major code changes affecting multiple files
+- ❗ Any code removal or deletion suggestions
+- ❗ Bug analysis and debugging
+- ❗ Analyzing "unused" or "dead" code
+- ❗ Dependency removal recommendations
+- ❗ Refactoring that involves removing functionality
+- ❗ Major code changes affecting multiple files
 
 **RECOMMENDED for:**
 - Feature implementation planning
@@ -56,7 +56,7 @@
 
 ## Universal Core Principles
 
-### NEVER (Absolute Prohibitions)
+### ❌ NEVER (Absolute Prohibitions)
 
 1. **NEVER assume without evidence**
    - First impressions are often wrong
@@ -82,7 +82,7 @@
    - Document uncertainties clearly
    - Provide investigation commands for user
 
-### ALWAYS (Mandatory Actions)
+### ✅ ALWAYS (Mandatory Actions)
 
 1. **ALWAYS search multiple patterns**
    ```bash
@@ -135,20 +135,20 @@
 **BEFORE analyzing code as "unused" or proposing removal:**
 
 ```
-[ ] Searched static imports/usage?
-[ ] Searched string literals in code ('.property', "property")?
-[ ] Checked dynamic invocations (element.attr(), element.prop(), runtime calls)?
-[ ] Read actual implementation (not just interfaces)?
-[ ] Traced dependency chains (who depends on this)?
-[ ] Assessed what breaks if removed?
-[ ] Checked for framework integration patterns?
-[ ] Verified no polyfill/side-effect imports?
-[ ] Documented all evidence clearly?
-[ ] Declared confidence level (High/Medium/Low)?
+☐ Searched static imports/usage?
+☐ Searched string literals in code ('.property', "property")?
+☐ Checked dynamic invocations (element.attr(), element.prop(), runtime calls)?
+☐ Read actual implementation (not just interfaces)?
+☐ Traced dependency chains (who depends on this)?
+☐ Assessed what breaks if removed?
+☐ Checked for framework integration patterns?
+☐ Verified no polyfill/side-effect imports?
+☐ Documented all evidence clearly?
+☐ Declared confidence level (High/Medium/Low)?
 
-[+] If ALL boxes checked -> Proceed with recommendation
-[-] If ANY box unchecked -> DO MORE INVESTIGATION
-[!] If confidence < 90% -> REQUEST USER CONFIRMATION
+✅ If ALL boxes checked → Proceed with recommendation
+❌ If ANY box unchecked → DO MORE INVESTIGATION
+⚠️ If confidence < 90% → REQUEST USER CONFIRMATION
 ```
 
 ---
@@ -175,7 +175,7 @@ grep -r ": TypeName\|<TypeName>" --include="*.ts" --include="*.cs"
 grep -r "extends ClassName\|implements InterfaceName" --include="*.ts" --include="*.cs"
 ```
 
-#### 1.2 Dynamic Usage Analysis (String Literals & Runtime) - CRITICAL
+#### 1.2 Dynamic Usage Analysis (String Literals & Runtime) ⚡ CRITICAL
 
 ```bash
 # String literals (property names, attributes)
@@ -312,7 +312,7 @@ grep -r "providers:\|imports:\|@NgModule" --include="*.ts"
 #### 2.1 What Does the Code Do? (Implementation)
 - Read the actual code
 - Understand the logic flow
-- Map inputs -> processing -> outputs
+- Map inputs → processing → outputs
 
 #### 2.2 Why Does the Code Exist? (Purpose)
 - Check git history (`git log` for the file)
@@ -382,7 +382,7 @@ grep -r "providers:\|imports:\|@NgModule" --include="*.ts"
 
 ## Code Removal Safety Protocol
 
-**CRITICAL: Removing code requires EXCEPTIONAL evidence that it's truly unused**
+**⚠️ CRITICAL: Removing code requires EXCEPTIONAL evidence that it's truly unused**
 
 ### Removal Verification Matrix
 
@@ -390,25 +390,25 @@ grep -r "providers:\|imports:\|@NgModule" --include="*.ts"
 
 | Check Type            | Evidence Required                              | Status |
 | --------------------- | ---------------------------------------------- | ------ |
-| Static imports        | No imports found in any file                   | [ ]    |
-| String literals       | No string references to names/properties       | [ ]    |
-| Dynamic invocations   | No `.attr()`, `.prop()`, runtime access        | [ ]    |
-| Template usage        | No HTML references or directives               | [ ]    |
-| Framework integration | Not a polyfill, ControlValueAccessor, provider | [ ]    |
-| Dependency check      | No other code breaks if removed                | [ ]    |
-| Purpose analysis      | Understand WHY it was added (git history)      | [ ]    |
-| Business validation   | Feature still needed or obsolete?              | [ ]    |
+| Static imports        | No imports found in any file                   | ☐      |
+| String literals       | No string references to names/properties       | ☐      |
+| Dynamic invocations   | No `.attr()`, `.prop()`, runtime access        | ☐      |
+| Template usage        | No HTML references or directives               | ☐      |
+| Framework integration | Not a polyfill, ControlValueAccessor, provider | ☐      |
+| Dependency check      | No other code breaks if removed                | ☐      |
+| Purpose analysis      | Understand WHY it was added (git history)      | ☐      |
+| Business validation   | Feature still needed or obsolete?              | ☐      |
 
 **Decision Rules:**
 
 ```
 IF all 8 boxes checked + confidence >= 90% + risk = low:
-  -> Safe to recommend removal
+  → Safe to recommend removal
 
 IF any box unchecked OR confidence < 90% OR risk > low:
-  -> DO NOT recommend removal
-  -> Request user confirmation
-  -> Provide evidence gaps
+  → DO NOT recommend removal
+  → Request user confirmation
+  → Provide evidence gaps
 ```
 
 ### Removal Documentation Template
@@ -468,33 +468,40 @@ IF any box unchecked OR confidence < 90% OR risk > low:
 **Confidence:** [X%] - [High 90-100% / Medium 70-89% / Low <70%]
 
 **Certainties:**
-- [+] [What we're certain about]
-- [+] [What we're certain about]
+- ✅ [What we're certain about]
+- ✅ [What we're certain about]
 
 **Uncertainties:**
-- [!] [What's unclear]
-- [!] [What needs verification]
+- ⚠️ [What's unclear]
+- ⚠️ [What needs verification]
 
 ### Recommendation:
 
 **IF High confidence (>90%) + Low Risk:**
+```
 Safe to remove [CodeName]. All verification checks passed.
 Rollback plan: [how to restore if needed]
+```
 
 **IF Medium confidence (70-89%) OR Medium Risk:**
+```
 Removal possible with caution. Monitor [specific areas] after deployment.
 User confirmation recommended for: [specific concerns]
+```
 
 **IF Low confidence (<70%) OR High Risk:**
-DO NOT REMOVE without user confirmation.
+```
+⚠️ DO NOT REMOVE without user confirmation.
 
 Verification Needed:
 1. [Specific question 1]
 2. [Specific question 2]
 
 Commands for User:
+```bash
 # Command 1 - purpose
 grep -r "pattern" /path
+```
 ```
 
 ---
@@ -512,22 +519,22 @@ grep -r "pattern" /path
 ### Confidence Calculation Factors
 
 **Increase confidence when:**
-- [+] All verification checks completed
-- [+] Multiple search patterns show consistent results
-- [+] Implementation reading confirms expectations
-- [+] Business purpose clearly understood
-- [+] No contradictory evidence found
-- [+] Dependency chain fully mapped
-- [+] Risk level is low
+- ✅ All verification checks completed
+- ✅ Multiple search patterns show consistent results
+- ✅ Implementation reading confirms expectations
+- ✅ Business purpose clearly understood
+- ✅ No contradictory evidence found
+- ✅ Dependency chain fully mapped
+- ✅ Risk level is low
 
 **Decrease confidence when:**
-- [-] Any verification check incomplete
-- [-] Search results inconsistent or ambiguous
-- [-] Implementation purpose unclear
-- [-] Business requirements unknown
-- [-] Contradictory evidence exists
-- [-] Dependency chain has gaps
-- [-] Risk level medium or high
+- ❌ Any verification check incomplete
+- ❌ Search results inconsistent or ambiguous
+- ❌ Implementation purpose unclear
+- ❌ Business requirements unknown
+- ❌ Contradictory evidence exists
+- ❌ Dependency chain has gaps
+- ❌ Risk level medium or high
 
 ### Confidence Documentation Template
 
@@ -537,17 +544,17 @@ grep -r "pattern" /path
 **Overall Confidence:** [X%] - [High/Medium/Low]
 
 ### Evidence Summary:
-- [+] **Static analysis:** [findings with file:line references]
-- [+] **Dynamic usage:** [findings with file:line references]
-- [+] **Implementation reading:** [key insights]
-- [!] **Uncertainties:** [list or "None"]
+- ✅ **Static analysis:** [findings with file:line references]
+- ✅ **Dynamic usage:** [findings with file:line references]
+- ✅ **Implementation reading:** [key insights]
+- ⚠️ **Uncertainties:** [list or "None"]
 
 ### Verification Matrix:
 [X/8] boxes checked in removal verification matrix
 
 ### Search Patterns Executed:
-1. `grep -r "pattern1"` -> [results]
-2. `grep -r "pattern2"` -> [results]
+1. `grep -r "pattern1"` → [results]
+2. `grep -r "pattern2"` → [results]
 3. [etc.]
 
 ### Files Analyzed:
@@ -576,16 +583,21 @@ grep -r "pattern" /path
 ### Recommendation:
 
 **IF Confidence >= 90%:**
+```
 Recommendation is solid. Proceed with [action].
 Monitor [specific areas] for regressions.
+```
 
 **IF Confidence 70-89%:**
+```
 Recommendation is reasonable but has uncertainties.
 User should verify: [specific points]
 Monitor: [specific areas]
+```
 
 **IF Confidence < 70%:**
-Cannot recommend with confidence.
+```
+⚠️ Cannot recommend with confidence.
 Need clarification on:
 1. [Question 1]
 2. [Question 2]
@@ -593,68 +605,69 @@ Need clarification on:
 Suggested verification steps:
 [Steps for user to take]
 ```
+```
 
 ---
 
 ## Red Flags & Warning Signs
 
-### Critical Red Flags (High Alert)
+### 🚩 Critical Red Flags (High Alert)
 
 **Angular libraries with no visible template usage:**
-- [-] **Surface appearance:** "Not used in any template"
-- [+] **Reality:** May provide `ControlValueAccessor` for `[(ngModel)]` binding
-- [?] **Check:** Search for `implements ControlValueAccessor`
-- [i] **Example:** ng-contenteditable library
+- ❌ **Surface appearance:** "Not used in any template"
+- ✅ **Reality:** May provide `ControlValueAccessor` for `[(ngModel)]` binding
+- 🔍 **Check:** Search for `implements ControlValueAccessor`
+- 📝 **Example:** ng-contenteditable library
 
 **Dynamic property access:**
-- [-] **Surface appearance:** "Property not referenced"
-- [+] **Reality:** `element.attr('propertyName', value)` creates runtime dependency
-- [?] **Check:** Search for `.attr(`, `.prop(`, `[propertyName]`
-- [i] **Example:** jQuery-style property manipulation
+- ❌ **Surface appearance:** "Property not referenced"
+- ✅ **Reality:** `element.attr('propertyName', value)` creates runtime dependency
+- 🔍 **Check:** Search for `.attr(`, `.prop(`, `[propertyName]`
+- 📝 **Example:** jQuery-style property manipulation
 
 **Polyfills and init imports:**
-- [-] **Surface appearance:** "Import has no function calls"
-- [+] **Reality:** Side-effect imports initialize framework features
-- [?] **Check:** Search for `/init`, `polyfill`, check if import has side effects
-- [i] **Example:** `@angular/localize/init`
+- ❌ **Surface appearance:** "Import has no function calls"
+- ✅ **Reality:** Side-effect imports initialize framework features
+- 🔍 **Check:** Search for `/init`, `polyfill`, check if import has side effects
+- 📝 **Example:** `@angular/localize/init`
 
 **Framework integration libraries:**
-- [-] **Surface appearance:** "No direct code references"
-- [+] **Reality:** Import once, enable features globally
-- [?] **Check:** Look for `forRoot()`, `providers`, global registration
-- [i] **Example:** Library that extends framework behavior
+- ❌ **Surface appearance:** "No direct code references"
+- ✅ **Reality:** Import once, enable features globally
+- 🔍 **Check:** Look for `forRoot()`, `providers`, global registration
+- 📝 **Example:** Library that extends framework behavior
 
-### Warning Signs (Exercise Caution)
+### ⚠️ Warning Signs (Exercise Caution)
 
 **"This appears to be unused"**
-- STOP: Have you searched for string literals?
-- STOP: Have you checked dynamic property access?
-- STOP: Have you read the actual implementation?
+- 🛑 **STOP:** Have you searched for string literals?
+- 🛑 **STOP:** Have you checked dynamic property access?
+- 🛑 **STOP:** Have you read the actual implementation?
 
 **"No imports found, safe to remove"**
-- STOP: Could this be a polyfill with side effects?
-- STOP: Could this be a provider registered at module level?
-- STOP: Could this be used via runtime configuration?
+- 🛑 **STOP:** Could this be a polyfill with side effects?
+- 🛑 **STOP:** Could this be a provider registered at module level?
+- 🛑 **STOP:** Could this be used via runtime configuration?
 
 **"Looks like..." or "Probably..."**
-- STOP: These are assumptions, not facts
-- STOP: Get concrete evidence before proceeding
-- STOP: Don't guess - verify
+- 🛑 **STOP:** These are assumptions, not facts
+- 🛑 **STOP:** Get concrete evidence before proceeding
+- 🛑 **STOP:** Don't guess - verify
 
 **"Should be straightforward"**
-- STOP: Famous last words before breaking production
-- STOP: Verify with actual code reading
-- STOP: Check for hidden dependencies
+- 🛑 **STOP:** Famous last words before breaking production
+- 🛑 **STOP:** Verify with actual code reading
+- 🛑 **STOP:** Check for hidden dependencies
 
 **"Template doesn't use it"**
-- STOP: Check TypeScript for dynamic property access
-- STOP: Check for property setting in lifecycle hooks
-- STOP: Check for runtime manipulation
+- 🛑 **STOP:** Check TypeScript for dynamic property access
+- 🛑 **STOP:** Check for property setting in lifecycle hooks
+- 🛑 **STOP:** Check for runtime manipulation
 
 **"Only used in one place"**
-- STOP: Verify that place is actually safe to change
-- STOP: Check if that place is critical infrastructure
-- STOP: Assess blast radius of changes
+- 🛑 **STOP:** Verify that place is actually safe to change
+- 🛑 **STOP:** Check if that place is critical infrastructure
+- 🛑 **STOP:** Assess blast radius of changes
 
 ---
 
@@ -665,15 +678,15 @@ Suggested verification steps:
 **Scenario:** Library appeared unused based on template analysis
 
 **Surface Analysis (WRONG):**
-- [-] No visible usage in templates
-- [-] Import statement with no function calls
-- [-] Conclusion: "Safe to remove"
+- ❌ No visible usage in templates
+- ❌ Import statement with no function calls
+- ❌ Conclusion: "Safe to remove"
 
 **Reality (CORRECT):**
-- [+] Library implements `ControlValueAccessor`
-- [+] Enables `[(ngModel)]` on `contenteditable` elements
-- [+] Used via `element.attr('contenteditable', value)` dynamic property setting
-- [+] Framework integration is invisible in templates
+- ✅ Library implements `ControlValueAccessor`
+- ✅ Enables `[(ngModel)]` on `contenteditable` elements
+- ✅ Used via `element.attr('contenteditable', value)` dynamic property setting
+- ✅ Framework integration is invisible in templates
 
 **Key Lessons:**
 1. Framework integration libraries can have ZERO visible template usage
@@ -698,14 +711,14 @@ grep -r "\.attr\(.*contenteditable\)" --include="*.ts"
 **Scenario:** `@angular/localize/init` import appeared unused
 
 **Surface Analysis (WRONG):**
-- [-] Import has no function calls
-- [-] No references to imported symbols
-- [-] Conclusion: "Dead code"
+- ❌ Import has no function calls
+- ❌ No references to imported symbols
+- ❌ Conclusion: "Dead code"
 
 **Reality (CORRECT):**
-- [+] Side-effect import initializes i18n runtime
-- [+] Required for `$localize` template tag to work
-- [+] Removes this import -> all translations break silently
+- ✅ Side-effect import initializes i18n runtime
+- ✅ Required for `$localize` template tag to work
+- ✅ Removes this import → all translations break silently
 
 **Key Lessons:**
 1. Side-effect imports have no visible usage
@@ -730,14 +743,14 @@ grep "localize" package.json
 **Scenario:** Removing `LastMessageSyncDate` field to "simplify" entity
 
 **Surface Analysis (WRONG):**
-- [-] "Only used in one consumer"
-- [-] "Seems redundant"
-- [-] Conclusion: "Can be removed"
+- ❌ "Only used in one consumer"
+- ❌ "Seems redundant"
+- ❌ Conclusion: "Can be removed"
 
 **Reality (CORRECT):**
-- [+] Prevents race conditions when events arrive out-of-order
-- [+] Critical for data consistency in message bus integration
-- [+] Removing it -> data corruption in production
+- ✅ Prevents race conditions when events arrive out-of-order
+- ✅ Critical for data consistency in message bus integration
+- ✅ Removing it → data corruption in production
 
 **Key Lessons:**
 1. "Only used in one place" doesn't mean unimportant
@@ -825,7 +838,7 @@ grep -r "LastMessageSyncDate" --include="*.cs"
 **Removal possible with caution.** User should verify: [specific points]
 
 [IF confidence < 70%:]
-**DO NOT remove.** Need clarification on: [specific questions]
+**⚠️ DO NOT remove.** Need clarification on: [specific questions]
 ```
 
 ### Template 2: Bug Root Cause Analysis
@@ -841,7 +854,9 @@ grep -r "LastMessageSyncDate" --include="*.cs"
 ### Evidence Collection:
 
 #### 1. Error Stack Trace:
+```
 [Full stack trace]
+```
 
 #### 2. Code Analysis:
 **Suspected Files:**
@@ -969,16 +984,16 @@ grep -r "LastMessageSyncDate" --include="*.cs"
 **Structure your confirmation request:**
 
 ```markdown
-## User Confirmation Required
+## ⚠️ User Confirmation Required
 
 ### Summary:
 [One-sentence description of what needs confirmation]
 
 ### What I Found:
-- [+] [Evidence 1 with file:line]
-- [+] [Evidence 2 with file:line]
-- [!] [Uncertainty 1]
-- [!] [Uncertainty 2]
+- ✅ [Evidence 1 with file:line]
+- ✅ [Evidence 2 with file:line]
+- ⚠️ [Uncertainty 1]
+- ⚠️ [Uncertainty 2]
 
 ### What's Unclear:
 1. **[Specific Question 1]**
@@ -999,11 +1014,13 @@ grep -r "LastMessageSyncDate" --include="*.cs"
 - **Option B:** [alternative approach]
 
 ### Verification Commands for User:
+```bash
 # Command 1 - what it checks
 grep -r "pattern" /path
 
 # Command 2 - what it checks
 npm ls package-name
+```
 
 ### Rollback Plan:
 [How to undo if this goes wrong]
@@ -1032,24 +1049,24 @@ Once confirmed, I will proceed with [action].
 **Before submitting ANY analysis, bug fix, or code change recommendation:**
 
 ```
-[ ] Completed all evidence collection steps
-[ ] Documented all search commands and results
-[ ] Read actual implementations (not just searched)
-[ ] Traced full dependency chains
-[ ] Identified business purpose and requirements
-[ ] Assessed risk level
-[ ] Calculated confidence level
-[ ] Documented uncertainties explicitly
-[ ] Provided file:line references for all claims
-[ ] Included rollback plan if applicable
-[ ] Requested user confirmation if confidence < 90%
-[ ] Used evidence documentation templates
-[ ] Checked for red flags and warning signs
-[ ] Applied self-doubt questions
-[ ] Verified no assumptions without evidence
+☐ Completed all evidence collection steps
+☐ Documented all search commands and results
+☐ Read actual implementations (not just searched)
+☐ Traced full dependency chains
+☐ Identified business purpose and requirements
+☐ Assessed risk level
+☐ Calculated confidence level
+☐ Documented uncertainties explicitly
+☐ Provided file:line references for all claims
+☐ Included rollback plan if applicable
+☐ Requested user confirmation if confidence < 90%
+☐ Used evidence documentation templates
+☐ Checked for red flags and warning signs
+☐ Applied self-doubt questions
+☐ Verified no assumptions without evidence
 
-[+] All boxes checked -> Safe to submit
-[-] Any box unchecked -> Complete missing steps before submitting
+✅ All boxes checked → Safe to submit
+❌ Any box unchecked → Complete missing steps before submitting
 ```
 
 ---

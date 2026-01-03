@@ -18,14 +18,16 @@ This guide contains complete patterns for CQRS, validation, repositories, entity
 
 ## Repository Pattern (CRITICAL)
 
-**Always use platform repositories:**
+**Always use service-specific repositories:**
 
 ```csharp
-// Primary - Platform Queryable Repository
-IPlatformQueryableRootRepository<Entity, Key>
+// Preferred - Service-specific
+IPlatformQueryableRootRepository<Employee>           // TextSnippet
+IPlatformQueryableRootRepository<Job>     // TextSnippet
+IPlatformQueryableRootRepository<Survey>    // TextSnippet
 
-// Fallback only when queryable not needed
-IPlatformRootRepository<Entity, Key>
+// Fallback only when service-specific not available
+IPlatformQueryableRootRepository<Entity, Key>
 ```
 
 ## Repository API Complete Reference
@@ -78,8 +80,8 @@ var exists = await repository.AnyAsync(expr, cancellationToken);
 // Location: {Service}.Domain\Repositories\Extensions\{Entity}RepositoryExtensions.cs
 public static class EmployeeRepositoryExtensions
 {
-    public static async Task<Employee> GetByUniqueExprAsync(
-        this IPlatformQueryableRootRepository<Employee, string> employeeRepository,
+    public static async Task<Employee> GetByGetUniqueExpr(
+        this IPlatformQueryableRootRepository<Employee> employeeRepository,
         int productScope,
         string employeeCompanyId,
         string employeeUserId,
@@ -95,8 +97,8 @@ public static class EmployeeRepositoryExtensions
     }
 
     // Projected result (performance optimization)
-    public static async Task<string> GetEmployeeIdByUniqueExprAsync(
-        this IPlatformQueryableRootRepository<Employee, string> employeeRepository,
+    public static async Task<string> GetEmployeeIdByGetUniqueExpr(
+        this IPlatformQueryableRootRepository<Employee> employeeRepository,
         int productScope,
         string employeeCompanyId,
         string employeeUserId,
@@ -143,7 +145,7 @@ public sealed class SaveEmployeeCommandResult : PlatformCqrsCommandResult
 internal sealed class SaveEmployeeCommandHandler :
     PlatformCqrsCommandApplicationHandler<SaveEmployeeCommand, SaveEmployeeCommandResult>
 {
-    private readonly IPlatformQueryableRootRepository<Employee, string> repository;
+    private readonly IPlatformQueryableRootRepository<Employee> repository;
 
     // Async validation
     protected override async Task<PlatformValidationResult<SaveEmployeeCommand>> ValidateRequestAsync(
@@ -188,7 +190,7 @@ public sealed class GetEntityListQuery : PlatformCqrsPagedQuery<GetEntityListQue
 internal sealed class GetEntityListQueryHandler :
     PlatformCqrsQueryApplicationHandler<GetEntityListQuery, GetEntityListQueryResult>
 {
-    private readonly IPlatformQueryableRootRepository<Entity, string> repository;
+    private readonly IServiceRepository<Entity> repository;
     private readonly IPlatformFullTextSearchPersistenceService searchService;
 
     protected override async Task<GetEntityListQueryResult> HandleAsync(GetEntityListQuery req, CancellationToken ct)
@@ -562,7 +564,7 @@ public sealed class BatchJob : PlatformApplicationBatchScrollingBackgroundJobExe
 // Entity Event Consumer
 internal sealed class UpsertOrDeleteEntityConsumer : PlatformApplicationMessageBusConsumer<EntityEventBusMessage>
 {
-    private readonly IPlatformQueryableRootRepository<Entity, string> repository;
+    private readonly IServiceRepository<Entity> repository;
 
     public override async Task<bool> HandleWhen(EntityEventBusMessage msg, string routingKey)
         => true;  // Filter logic here
@@ -666,7 +668,7 @@ Business Logic with Dependencies (DB, Services)?
 // Helper pattern (with dependencies)
 public class EmployeeHelper
 {
-    private readonly IPlatformQueryableRootRepository<Employee, string> repository;
+    private readonly IPlatformQueryableRootRepository<Employee> repository;
 
     public async Task<Employee> GetOrCreateEmployeeAsync(string userId, string companyId, CancellationToken ct)
     {

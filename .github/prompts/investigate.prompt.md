@@ -28,9 +28,10 @@ Before any claim:
 1. Parse the investigation question
 2. Extract keywords for search
 3. Identify likely affected services:
-   - TextSnippet (Example Service)
-   - Platform (Framework Core)
-   - PlatformExampleAppWeb (Frontend apps)
+   - TextSnippet (TextSnippet service)
+   - TextSnippet (Growth/HR Service)
+   - TextSnippet (TextSnippet service)
+   - WebV2 (Frontend apps)
 
 ### Phase 2: Search for Code
 

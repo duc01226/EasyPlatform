@@ -13,21 +13,21 @@ description: Use when generating test cases, creating test specifications, writi
 Examples:
 - Handle_ValidCommand_ReturnsSuccess
 - Handle_InvalidName_ThrowsValidationError
-- LoadTextSnippets_WhenCalled_UpdatesState
+- LoadEmployees_WhenCalled_UpdatesState
 ```
 
 ## Backend Unit Test Pattern
 
 ```csharp
-public class SaveTextSnippetCommandHandlerTests
+public class SaveEmployeeCommandHandlerTests
 {
-    private readonly Mock<IPlatformQueryableRootRepository<TextSnippet, string>> _repositoryMock;
-    private readonly SaveTextSnippetCommandHandler _handler;
+    private readonly Mock<IPlatformQueryableRootRepository<Employee>> _repositoryMock;
+    private readonly SaveEmployeeCommandHandler _handler;
 
-    public SaveTextSnippetCommandHandlerTests()
+    public SaveEmployeeCommandHandlerTests()
     {
-        _repositoryMock = new Mock<IPlatformQueryableRootRepository<TextSnippet, string>>();
-        _handler = new SaveTextSnippetCommandHandler(
+        _repositoryMock = new Mock<IPlatformQueryableRootRepository<Employee>>();
+        _handler = new SaveEmployeeCommandHandler(
             Mock.Of<ILoggerFactory>(),
             Mock.Of<IPlatformUnitOfWorkManager>(),
             Mock.Of<IServiceProvider>(),
@@ -36,20 +36,20 @@ public class SaveTextSnippetCommandHandlerTests
     }
 
     [Fact]
-    public async Task Handle_NewTextSnippet_CreatesSuccessfully()
+    public async Task Handle_NewEmployee_CreatesSuccessfully()
     {
         // Arrange
-        var command = new SaveTextSnippetCommand { SnippetText = "Hello World" };
+        var command = new SaveEmployeeCommand { Name = "John Doe" };
         _repositoryMock
-            .Setup(r => r.CreateOrUpdateAsync(It.IsAny<TextSnippet>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((TextSnippet e, CancellationToken _) => e);
+            .Setup(r => r.CreateOrUpdateAsync(It.IsAny<Employee>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Employee e, CancellationToken _) => e);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
 
         // Assert
         Assert.NotNull(result.Entity);
-        Assert.Equal("Hello World", result.Entity.SnippetText);
+        Assert.Equal("John Doe", result.Entity.Name);
     }
 }
 ```
@@ -57,26 +57,26 @@ public class SaveTextSnippetCommandHandlerTests
 ## Frontend Component Test
 
 ```typescript
-describe('TextSnippetListComponent', () => {
-    let component: TextSnippetListComponent;
-    let fixture: ComponentFixture<TextSnippetListComponent>;
-    let store: TextSnippetStore;
+describe('EmployeeListComponent', () => {
+    let component: EmployeeListComponent;
+    let fixture: ComponentFixture<EmployeeListComponent>;
+    let store: EmployeeStore;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [TextSnippetListComponent],
-            providers: [{ provide: TextSnippetApiService, useValue: jasmine.createSpyObj('TextSnippetApiService', ['getTextSnippets']) }]
+            imports: [EmployeeListComponent],
+            providers: [{ provide: EmployeeApiService, useValue: jasmine.createSpyObj('EmployeeApiService', ['getEmployees']) }]
         }).compileComponents();
 
-        fixture = TestBed.createComponent(TextSnippetListComponent);
+        fixture = TestBed.createComponent(EmployeeListComponent);
         component = fixture.componentInstance;
-        store = TestBed.inject(TextSnippetStore);
+        store = TestBed.inject(EmployeeStore);
     });
 
-    it('should load text snippets on init', () => {
-        spyOn(store, 'loadTextSnippets');
+    it('should load employees on init', () => {
+        spyOn(store, 'loadEmployees');
         fixture.detectChanges();
-        expect(store.loadTextSnippets).toHaveBeenCalled();
+        expect(store.loadEmployees).toHaveBeenCalled();
     });
 });
 ```
@@ -84,26 +84,26 @@ describe('TextSnippetListComponent', () => {
 ## BDD Test Case Format
 
 ```markdown
-### TC-001: Create TextSnippet Successfully
+### TC-001: Create Employee Successfully
 
-**Feature Module:** TextSnippet Management
+**Feature Module:** Employee Management
 **Priority:** Critical
 
-**Given** a user is on the text snippet creation page
+**Given** an HR admin is on the employee creation page
 **And** the form is empty
-**When** the user fills required fields (snippet text, full text)
+**When** the admin fills required fields (name, email, department)
 **And** clicks Save
 **Then** the system should:
 
-- Create the text snippet record
+- Create the employee record
 - Display success notification
-- Navigate to text snippet list
+- Navigate to employee list
 
 **Edge Cases:**
 
-- Duplicate text validation
+- Duplicate email validation
 - Required field validation
-- Max length validation
+- Special characters in name
 ```
 
 ## Test Categories

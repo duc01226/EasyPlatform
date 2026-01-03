@@ -7,18 +7,37 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 # Angular API Service Development Workflow
 
 ## When to Use This Skill
+
 - Creating new API service for backend communication
 - Adding caching to API calls
 - Implementing file upload/download
 - Adding custom headers or interceptors
 
 ## Pre-Flight Checklist
+
 - [ ] Identify backend API base URL
+- [ ] **Read the design system docs** for the target application (see below)
 - [ ] List all endpoints to implement
 - [ ] Determine caching requirements
 - [ ] Search existing services: `grep "{Feature}ApiService" --include="*.ts"`
 
+## 🎨 Design System Documentation (MANDATORY)
+
+**Before creating any API service, read the design system documentation for your target application:**
+
+| Application                       | Design System Location                           |
+| --------------------------------- | ------------------------------------------------ |
+| **WebV2 Apps**                    | `docs/design-system/`                            |
+| **TextSnippetClient**             | `src/PlatformExampleAppWeb/apps/playground-text-snippet/docs/design-system/` |
+
+**Key docs to read:**
+
+- `README.md` - Component overview, base classes, library summary
+- `07-technical-guide.md` - Implementation checklist, best practices
+- `06-state-management.md` - State management and API integration patterns
+
 ## File Location
+
 ```
 src/PlatformExampleAppWeb/libs/apps-domains/src/lib/
 └── {domain}/
@@ -40,30 +59,30 @@ import { environment } from '@env/environment';
 // ═══════════════════════════════════════════════════════════════════════════
 
 export interface FeatureDto {
-  id: string;
-  name: string;
-  code: string;
-  status: FeatureStatus;
-  createdDate: Date;
+    id: string;
+    name: string;
+    code: string;
+    status: FeatureStatus;
+    createdDate: Date;
 }
 
 export interface FeatureListQuery {
-  searchText?: string;
-  statuses?: FeatureStatus[];
-  skipCount?: number;
-  maxResultCount?: number;
+    searchText?: string;
+    statuses?: FeatureStatus[];
+    skipCount?: number;
+    maxResultCount?: number;
 }
 
 export interface PagedResult<T> {
-  items: T[];
-  totalCount: number;
+    items: T[];
+    totalCount: number;
 }
 
 export interface SaveFeatureCommand {
-  id?: string;
-  name: string;
-  code: string;
-  status: FeatureStatus;
+    id?: string;
+    name: string;
+    code: string;
+    status: FeatureStatus;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -72,54 +91,53 @@ export interface SaveFeatureCommand {
 
 @Injectable({ providedIn: 'root' })
 export class FeatureApiService extends PlatformApiService {
+    // ─────────────────────────────────────────────────────────────────────────
+    // CONFIGURATION
+    // ─────────────────────────────────────────────────────────────────────────
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // CONFIGURATION
-  // ─────────────────────────────────────────────────────────────────────────
+    protected get apiUrl(): string {
+        return environment.apiUrl + '/api/Feature';
+    }
 
-  protected get apiUrl(): string {
-    return environment.apiUrl + '/api/Feature';
-  }
+    // ─────────────────────────────────────────────────────────────────────────
+    // QUERY METHODS
+    // ─────────────────────────────────────────────────────────────────────────
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // QUERY METHODS
-  // ─────────────────────────────────────────────────────────────────────────
+    getList(query?: FeatureListQuery): Observable<PagedResult<FeatureDto>> {
+        return this.get<PagedResult<FeatureDto>>('', query);
+    }
 
-  getList(query?: FeatureListQuery): Observable<PagedResult<FeatureDto>> {
-    return this.get<PagedResult<FeatureDto>>('', query);
-  }
+    getById(id: string): Observable<FeatureDto> {
+        return this.get<FeatureDto>(`/${id}`);
+    }
 
-  getById(id: string): Observable<FeatureDto> {
-    return this.get<FeatureDto>(`/${id}`);
-  }
+    getByCode(code: string): Observable<FeatureDto> {
+        return this.get<FeatureDto>('/by-code', { code });
+    }
 
-  getByCode(code: string): Observable<FeatureDto> {
-    return this.get<FeatureDto>('/by-code', { code });
-  }
+    // ─────────────────────────────────────────────────────────────────────────
+    // COMMAND METHODS
+    // ─────────────────────────────────────────────────────────────────────────
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // COMMAND METHODS
-  // ─────────────────────────────────────────────────────────────────────────
+    save(command: SaveFeatureCommand): Observable<FeatureDto> {
+        return this.post<FeatureDto>('', command);
+    }
 
-  save(command: SaveFeatureCommand): Observable<FeatureDto> {
-    return this.post<FeatureDto>('', command);
-  }
+    update(id: string, command: Partial<SaveFeatureCommand>): Observable<FeatureDto> {
+        return this.put<FeatureDto>(`/${id}`, command);
+    }
 
-  update(id: string, command: Partial<SaveFeatureCommand>): Observable<FeatureDto> {
-    return this.put<FeatureDto>(`/${id}`, command);
-  }
+    delete(id: string): Observable<void> {
+        return this.deleteRequest<void>(`/${id}`);
+    }
 
-  delete(id: string): Observable<void> {
-    return this.deleteRequest<void>(`/${id}`);
-  }
+    // ─────────────────────────────────────────────────────────────────────────
+    // VALIDATION METHODS
+    // ─────────────────────────────────────────────────────────────────────────
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // VALIDATION METHODS
-  // ─────────────────────────────────────────────────────────────────────────
-
-  checkCodeExists(code: string, excludeId?: string): Observable<boolean> {
-    return this.get<boolean>('/check-code-exists', { code, excludeId });
-  }
+    checkCodeExists(code: string, excludeId?: string): Observable<boolean> {
+        return this.get<boolean>('/check-code-exists', { code, excludeId });
+    }
 }
 ```
 
@@ -128,47 +146,46 @@ export class FeatureApiService extends PlatformApiService {
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class LookupApiService extends PlatformApiService {
+    protected get apiUrl(): string {
+        return environment.apiUrl + '/api/Lookup';
+    }
 
-  protected get apiUrl(): string {
-    return environment.apiUrl + '/api/Lookup';
-  }
+    // ─────────────────────────────────────────────────────────────────────────
+    // CACHED METHODS
+    // ─────────────────────────────────────────────────────────────────────────
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // CACHED METHODS
-  // ─────────────────────────────────────────────────────────────────────────
+    getCountries(): Observable<CountryDto[]> {
+        return this.get<CountryDto[]>('/countries', null, {
+            enableCache: true,
+            cacheKey: 'countries',
+            cacheDurationMs: 60 * 60 * 1000 // 1 hour
+        });
+    }
 
-  getCountries(): Observable<CountryDto[]> {
-    return this.get<CountryDto[]>('/countries', null, {
-      enableCache: true,
-      cacheKey: 'countries',
-      cacheDurationMs: 60 * 60 * 1000  // 1 hour
-    });
-  }
+    getCurrencies(): Observable<CurrencyDto[]> {
+        return this.get<CurrencyDto[]>('/currencies', null, {
+            enableCache: true,
+            cacheKey: 'currencies'
+        });
+    }
 
-  getCurrencies(): Observable<CurrencyDto[]> {
-    return this.get<CurrencyDto[]>('/currencies', null, {
-      enableCache: true,
-      cacheKey: 'currencies'
-    });
-  }
+    getTimezones(): Observable<TimezoneDto[]> {
+        return this.get<TimezoneDto[]>('/timezones', null, {
+            enableCache: true
+        });
+    }
 
-  getTimezones(): Observable<TimezoneDto[]> {
-    return this.get<TimezoneDto[]>('/timezones', null, {
-      enableCache: true
-    });
-  }
+    // ─────────────────────────────────────────────────────────────────────────
+    // CACHE INVALIDATION
+    // ─────────────────────────────────────────────────────────────────────────
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // CACHE INVALIDATION
-  // ─────────────────────────────────────────────────────────────────────────
+    invalidateCountriesCache(): void {
+        this.clearCache('countries');
+    }
 
-  invalidateCountriesCache(): void {
-    this.clearCache('countries');
-  }
-
-  invalidateAllCache(): void {
-    this.clearAllCache();
-  }
+    invalidateAllCache(): void {
+        this.clearAllCache();
+    }
 }
 ```
 
@@ -177,64 +194,63 @@ export class LookupApiService extends PlatformApiService {
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class DocumentApiService extends PlatformApiService {
-
-  protected get apiUrl(): string {
-    return environment.apiUrl + '/api/Document';
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // FILE UPLOAD
-  // ─────────────────────────────────────────────────────────────────────────
-
-  upload(file: File, metadata?: DocumentMetadata): Observable<DocumentDto> {
-    const formData = new FormData();
-    formData.append('file', file, file.name);
-
-    if (metadata) {
-      formData.append('metadata', JSON.stringify(metadata));
+    protected get apiUrl(): string {
+        return environment.apiUrl + '/api/Document';
     }
 
-    return this.postFormData<DocumentDto>('/upload', formData);
-  }
+    // ─────────────────────────────────────────────────────────────────────────
+    // FILE UPLOAD
+    // ─────────────────────────────────────────────────────────────────────────
 
-  uploadMultiple(files: File[]): Observable<DocumentDto[]> {
-    const formData = new FormData();
-    files.forEach((file, index) => {
-      formData.append(`files[${index}]`, file, file.name);
-    });
+    upload(file: File, metadata?: DocumentMetadata): Observable<DocumentDto> {
+        const formData = new FormData();
+        formData.append('file', file, file.name);
 
-    return this.postFormData<DocumentDto[]>('/upload-multiple', formData);
-  }
+        if (metadata) {
+            formData.append('metadata', JSON.stringify(metadata));
+        }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // FILE DOWNLOAD
-  // ─────────────────────────────────────────────────────────────────────────
+        return this.postFormData<DocumentDto>('/upload', formData);
+    }
 
-  download(id: string): Observable<Blob> {
-    return this.getBlob(`/${id}/download`);
-  }
+    uploadMultiple(files: File[]): Observable<DocumentDto[]> {
+        const formData = new FormData();
+        files.forEach((file, index) => {
+            formData.append(`files[${index}]`, file, file.name);
+        });
 
-  downloadAsBase64(id: string): Observable<string> {
-    return this.get<string>(`/${id}/base64`);
-  }
+        return this.postFormData<DocumentDto[]>('/upload-multiple', formData);
+    }
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // HELPER: Trigger browser download
-  // ─────────────────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // FILE DOWNLOAD
+    // ─────────────────────────────────────────────────────────────────────────
 
-  downloadAndSave(id: string, fileName: string): Observable<void> {
-    return this.download(id).pipe(
-      tap(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = fileName;
-        link.click();
-        window.URL.revokeObjectURL(url);
-      }),
-      map(() => void 0)
-    );
-  }
+    download(id: string): Observable<Blob> {
+        return this.getBlob(`/${id}/download`);
+    }
+
+    downloadAsBase64(id: string): Observable<string> {
+        return this.get<string>(`/${id}/base64`);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // HELPER: Trigger browser download
+    // ─────────────────────────────────────────────────────────────────────────
+
+    downloadAndSave(id: string, fileName: string): Observable<void> {
+        return this.download(id).pipe(
+            tap(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = fileName;
+                link.click();
+                window.URL.revokeObjectURL(url);
+            }),
+            map(() => void 0)
+        );
+    }
 }
 ```
 
@@ -243,30 +259,27 @@ export class DocumentApiService extends PlatformApiService {
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class ExternalApiService extends PlatformApiService {
+    protected get apiUrl(): string {
+        return environment.externalApiUrl;
+    }
 
-  protected get apiUrl(): string {
-    return environment.externalApiUrl;
-  }
+    // Override to add custom headers
+    protected override getDefaultHeaders(): HttpHeaders {
+        return super.getDefaultHeaders().set('X-Api-Key', environment.externalApiKey).set('X-Request-Id', this.generateRequestId());
+    }
 
-  // Override to add custom headers
-  protected override getDefaultHeaders(): HttpHeaders {
-    return super.getDefaultHeaders()
-      .set('X-Api-Key', environment.externalApiKey)
-      .set('X-Request-Id', this.generateRequestId());
-  }
+    // Method with custom headers
+    getWithCustomHeaders(endpoint: string): Observable<any> {
+        return this.get(endpoint, null, {
+            headers: {
+                'X-Custom-Header': 'custom-value'
+            }
+        });
+    }
 
-  // Method with custom headers
-  getWithCustomHeaders(endpoint: string): Observable<any> {
-    return this.get(endpoint, null, {
-      headers: {
-        'X-Custom-Header': 'custom-value'
-      }
-    });
-  }
-
-  private generateRequestId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-  }
+    private generateRequestId(): string {
+        return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
 }
 ```
 
@@ -327,42 +340,43 @@ export class EmployeeSearchComponent {
 
 ## Base PlatformApiService Methods
 
-| Method | Purpose | Example |
-|--------|---------|---------|
-| `get<T>()` | GET request | `this.get<User>('/users/1')` |
-| `post<T>()` | POST request | `this.post<User>('/users', data)` |
-| `put<T>()` | PUT request | `this.put<User>('/users/1', data)` |
-| `patch<T>()` | PATCH request | `this.patch<User>('/users/1', partial)` |
-| `deleteRequest<T>()` | DELETE request | `this.deleteRequest('/users/1')` |
-| `postFormData<T>()` | POST with FormData | `this.postFormData('/upload', formData)` |
-| `getBlob()` | GET binary data | `this.getBlob('/file/download')` |
-| `clearCache()` | Clear specific cache | `this.clearCache('cacheKey')` |
-| `clearAllCache()` | Clear all cache | `this.clearAllCache()` |
+| Method               | Purpose              | Example                                  |
+| -------------------- | -------------------- | ---------------------------------------- |
+| `get<T>()`           | GET request          | `this.get<User>('/users/1')`             |
+| `post<T>()`          | POST request         | `this.post<User>('/users', data)`        |
+| `put<T>()`           | PUT request          | `this.put<User>('/users/1', data)`       |
+| `patch<T>()`         | PATCH request        | `this.patch<User>('/users/1', partial)`  |
+| `deleteRequest<T>()` | DELETE request       | `this.deleteRequest('/users/1')`         |
+| `postFormData<T>()`  | POST with FormData   | `this.postFormData('/upload', formData)` |
+| `getBlob()`          | GET binary data      | `this.getBlob('/file/download')`         |
+| `clearCache()`       | Clear specific cache | `this.clearCache('cacheKey')`            |
+| `clearAllCache()`    | Clear all cache      | `this.clearAllCache()`                   |
 
 ## Request Options
 
 ```typescript
 interface RequestOptions {
-  // Caching
-  enableCache?: boolean;
-  cacheKey?: string;
-  cacheDurationMs?: number;
+    // Caching
+    enableCache?: boolean;
+    cacheKey?: string;
+    cacheDurationMs?: number;
 
-  // Headers
-  headers?: { [key: string]: string };
+    // Headers
+    headers?: { [key: string]: string };
 
-  // Response handling
-  responseType?: 'json' | 'text' | 'blob' | 'arraybuffer';
+    // Response handling
+    responseType?: 'json' | 'text' | 'blob' | 'arraybuffer';
 
-  // Progress tracking
-  reportProgress?: boolean;
-  observe?: 'body' | 'events' | 'response';
+    // Progress tracking
+    reportProgress?: boolean;
+    observe?: 'body' | 'events' | 'response';
 }
 ```
 
 ## Anti-Patterns to AVOID
 
 :x: **Using HttpClient directly**
+
 ```typescript
 // WRONG - bypasses platform features
 constructor(private http: HttpClient) { }
@@ -372,6 +386,7 @@ export class MyApiService extends PlatformApiService { }
 ```
 
 :x: **Hardcoding URLs**
+
 ```typescript
 // WRONG
 return this.get('https://api.example.com/users');
@@ -381,20 +396,26 @@ protected get apiUrl() { return environment.apiUrl + '/api/User'; }
 ```
 
 :x: **Not handling errors in service**
+
 ```typescript
 // WRONG - let errors propagate unhandled
 return this.get('/users');
 
 // CORRECT - component handles via tapResponse
 this.userApi.getUsers().pipe(
-  this.tapResponse(
-    users => { /* success */ },
-    error => { /* handle error */ }
-  )
+    this.tapResponse(
+        users => {
+            /* success */
+        },
+        error => {
+            /* handle error */
+        }
+    )
 );
 ```
 
 :x: **Missing type safety**
+
 ```typescript
 // WRONG - returns any
 getUser(id: string) {
@@ -408,6 +429,7 @@ getUser(id: string): Observable<UserDto> {
 ```
 
 ## Verification Checklist
+
 - [ ] Extends `PlatformApiService`
 - [ ] `apiUrl` getter returns correct base URL
 - [ ] All methods have return type annotations

@@ -36,10 +36,10 @@ git diff
 - [ ] Edge cases handled appropriately
 - [ ] Error handling is complete
 
-**Code Standards (BravoSUITE):**
+**Code Standards (EasyPlatform):**
 
 *Backend:*
-- [ ] Uses service-specific repository (IGrowthRootRepository, ICandidatePlatformRootRepository)
+- [ ] Uses platform repository (IPlatformQueryableRootRepository)
 - [ ] Uses PlatformValidationResult fluent API (.And(), .AndAsync())
 - [ ] Side effects in Entity Event Handlers, not command handlers
 - [ ] DTOs own mapping via MapToEntity()/MapToObject()

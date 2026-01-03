@@ -17,16 +17,16 @@ description: Use when enhancing documentation, adding code comments, creating AP
 
 ```csharp
 /// <summary>
-/// Retrieves text snippets filtered by company and optional criteria.
+/// Retrieves employees filtered by company and optional criteria.
 /// </summary>
 /// <param name="companyId">The company identifier.</param>
 /// <param name="status">Optional status filter.</param>
 /// <param name="ct">Cancellation token.</param>
-/// <returns>List of matching text snippets.</returns>
+/// <returns>List of matching employees.</returns>
 /// <exception cref="UnauthorizedException">When user lacks access.</exception>
-public async Task<List<TextSnippet>> GetTextSnippetsAsync(
+public async Task<List<Employee>> GetEmployeesAsync(
     string companyId,
-    TextSnippetStatus? status = null,
+    EmployeeStatus? status = null,
     CancellationToken ct = default)
 ```
 
@@ -34,20 +34,20 @@ public async Task<List<TextSnippet>> GetTextSnippetsAsync(
 
 ````typescript
 /**
- * Loads text snippets and updates component state.
+ * Loads employees and updates component state.
  *
- * @param companyId - The company to load snippets for
+ * @param companyId - The company to load employees for
  * @param options - Optional filtering options
  * @returns Observable that emits when loading completes
  *
  * @example
  * ```typescript
- * this.loadTextSnippets('company-123', { status: 'active' })
+ * this.loadEmployees('company-123', { status: 'active' })
  *   .pipe(this.untilDestroyed())
  *   .subscribe();
  * ```
  */
-loadTextSnippets(companyId: string, options?: LoadOptions): Observable<void>
+loadEmployees(companyId: string, options?: LoadOptions): Observable<void>
 ````
 
 ## README Structure

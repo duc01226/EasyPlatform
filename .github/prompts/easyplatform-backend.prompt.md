@@ -13,7 +13,7 @@ description: Easy.Platform backend development - CQRS commands/queries, entities
 
 ---
 
-You are implementing backend features for EasyPlatform using the Easy.Platform framework (.NET 9 microservices).
+You are implementing backend features for EasyPlatform using the Easy.Platform framework (.NET 8 microservices).
 
 ## Quick Decision Tree
 
@@ -57,7 +57,7 @@ You are implementing backend features for EasyPlatform using the Easy.Platform f
 
 ## Critical Rules
 
-1. **Repository:** Use service-specific repos (e.g., `ITextSnippetRootRepository<T>`)
+1. **Repository:** Use service-specific repos (`IPlatformQueryableRootRepository<T>`, `IPlatformQueryableRootRepository<T>`)
 2. **Validation:** Use `PlatformValidationResult` fluent API - NEVER throw exceptions
 3. **Side Effects:** Handle in Entity Event Handlers - NEVER in command handlers
 4. **DTO Mapping:** DTOs own mapping via `PlatformEntityDto<T,K>.MapToEntity()`
@@ -215,13 +215,13 @@ internal sealed class SendNotificationOnCreateEmployeeEntityEventHandler
 **Decision:** Schema change → EF Core. Data transformation → PlatformDataMigrationExecutor.
 
 ```csharp
-public sealed class MigratePhoneNumbers : PlatformDataMigrationExecutor<TextSnippetDbContext>
+public sealed class MigratePhoneNumbers : PlatformDataMigrationExecutor<GrowthDbContext>
 {
     public override string Name => "20251015000000_MigratePhoneNumbers";
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 15);
     public override bool AllowRunInBackgroundThread => true;
 
-    public override async Task Execute(TextSnippetDbContext dbContext)
+    public override async Task Execute(GrowthDbContext dbContext)
     {
         await RootServiceProvider.ExecuteInjectScopedPagingAsync(
             maxItemCount: await repository.CountAsync(q => q.Where(FilterExpr())),
@@ -354,7 +354,7 @@ protected override async Task<PlatformValidationResult<TCommand>> ValidateReques
 |-------|-----|
 | `throw new ValidationException()` | Use `PlatformValidationResult` fluent API |
 | Side effects in command handler | Entity Event Handler in `UseCaseEvents/` |
-| `IPlatformRootRepository<T>` | Service-specific repository |
+| `IPlatformRootRepository<T>` | Service-specific: `IPlatformQueryableRootRepository<T>` |
 | Direct cross-service DB access | Message bus |
 | DTO mapping in handler | `PlatformEntityDto.MapToEntity()` |
 | Separate Command/Handler files | ONE file: Command + Result + Handler |
@@ -388,4 +388,6 @@ See `.github/instructions/` for detailed patterns:
 - Message bus patterns (custom messages, naming conventions)
 
 For working examples, study:
-- `src/PlatformExampleApp/` - Reference implementation with TextSnippet service
+- `src/PlatformExampleApp/` - Reference implementation
+- `src/PlatformExampleApp/TextSnippet/` - TextSnippet service patterns
+- `src/PlatformExampleApp/TextSnippet/` - TextSnippet service patterns

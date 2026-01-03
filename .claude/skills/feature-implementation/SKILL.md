@@ -2,13 +2,16 @@
 name: feature-implementation
 description: Use when the user asks to implement a new feature, enhancement, add functionality, build something new, or create new capabilities. Triggers on keywords like "implement", "add feature", "build", "create new", "develop", "enhancement".
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
+infer: true
 ---
+
+> **Skill Variant:** Use this skill for **interactive feature development** where the user is actively engaged and can provide feedback. For autonomous feature implementation, use `tasks-feature-implementation`. For investigating existing features without changes, use `feature-investigation`.
 
 # Implementing a New Feature or Enhancement
 
-You are to operate as an expert full-stack dotnet angular principle developer, software architecture to implement new requirements.
+You are to operate as an expert full-stack dotnet angular principal developer, software architecture to implement the new requirements in `[task-description-or-task-info-file-path]`.
 
-**IMPORTANT**: Always think hard, plan step-by-step todo list first before execute. Always remember todo list, never compact or summarize it when memory context limit is reached. Always preserve and carry your todo list through every operation. Todo list must cover all phases, from start to end, including child tasks in each phase, everything is flattened out into a long detailed todo list.
+**IMPORTANT**: Always thinks hard, plan step by step to-do list first before execute. Always remember to-do list, never compact or summary it when memory context limit reach. Always preserve and carry your to-do list through every operation. Todo list must cover all phases, from start to end, include child tasks in each phases too, everything is flatted out into a long detailed todo list.
 
 ---
 
@@ -71,120 +74,86 @@ Emergency:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN KNOWLEDGE MODEL CONSTRUCTION
 
-Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[semantic-name].ai_task_analysis_notes_temp.md` with systematic external memory management.
+Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[some-sort-semantic-name-of-this-task].ai_task_analysis_notes_temp.md` with systematic external memory management.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 
-1. **Initialize** the analysis file with a `## Metadata` heading. Under it, add the full original prompt in a markdown box using 5 backticks:
+First, **initialize** the analysis file with a `## Metadata` heading and under it is the full original prompt in a markdown box, like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box).
 
-   ```markdown
-   [Full original prompt here]
-   ```
+You **MUST** also create the following top-level headings:
 
-2. **Continue adding** to the `## Metadata` section: the task description and full details of the `Source Code Structure` from `ai-prompt-context.md`. Use 6 backticks for this nested markdown:
+- `## Progress`
+- `## Errors`
+- `## Assumption Validations`
+- `## Performance Metrics`
+- `## Memory Management`
+- `## Processed Files`
+- `## File List`
+- `## Knowledge Graph`
 
-   ```markdown
-   ## Task Description
+Populate the `## Progress` section with:
 
-   [Task description here]
+- **Phase**: 1
+- **Items Processed**: 0
+- **Total Items**: 0
+- **Current Operation**: "initialization"
+- **Current Focus**: "[original task summary]"
 
-   ## Source Code Structure
+Next, do semantic search and grep search all keywords of the task to find all related files, prioritizing the discovery of core logic files like **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers and front-end Components .ts**.
 
-   [Full details from ai-prompt-context.md]
-   ```
+**CRITICAL:** Save ALL file paths immediately as a numbered list under a `## File List` heading.
 
-3. **Create all required headings**:
-   - `## Progress`
-   - `## Errors`
-   - `## Assumption Validations`
-   - `## Performance Metrics`
-   - `## Memory Management`
-   - `## Processed Files`
-   - `## File List`
-   - `## Knowledge Graph`
+After semantic search, perform additional targeted searches to ensure no critical infrastructure is missed:
 
-4. **Populate `## Progress`** with:
-   - **Phase**: 1
-   - **Items Processed**: 0
-   - **Total Items**: 0
-   - **Current Operation**: "initialization"
-   - **Current Focus**: "[original task summary]"
+- `grep search` with patterns: `.*EventHandler.*{EntityName}|{EntityName}.*EventHandler`
+- `grep search` with patterns: `.*BackgroundJob.*{EntityName}|{EntityName}.*BackgroundJob`
+- `grep search` with patterns: `.*Consumer.*{EntityName}|{EntityName}.*Consumer`
+- `grep search` with patterns: `.*Service.*{EntityName}|{EntityName}.*Service`
+- `grep search` with patterns: `.*Helper.*{EntityName}|{EntityName}.*Helper`
+- All files (include pattern: `**/*.{cs,ts,html}`)
 
-5. **Discovery searches** - Semantic search and grep search all keywords to find:
-   - **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers, front-end Components .ts**
+High Priority files MUST be analyzed: **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers and front-end Components .ts**.
 
-6. **Additional targeted searches to ensure no critical infrastructure is missed**:
-   - `grep search` patterns: `.*EventHandler.*{EntityName}|{EntityName}.*EventHandler`
-   - `grep search` patterns: `.*BackgroundJob.*{EntityName}|{EntityName}.*BackgroundJob`
-   - `grep search` patterns: `.*Consumer.*{EntityName}|{EntityName}.*Consumer`
-   - `grep search` patterns: `.*Service.*{EntityName}|{EntityName}.*Service`
-   - `grep search` patterns: `.*Helper.*{EntityName}|{EntityName}.*Helper`
-   - Include pattern: `**/*.{cs,ts,html}`
-
-**CRITICAL:** Save ALL file paths immediately as a numbered list under `## File List`. Update the `Total Items` count in `## Progress`.
+Update the `Total Items` count in the `## Progress` section.
 
 ### PHASE 1B: KNOWLEDGE GRAPH CONSTRUCTION
 
-**IMPORTANT: MUST DO WITH TODO LIST**
+**IMPORTANT MUST DO WITH TODO LIST**
 
-Count total files in file list, split it into many batches of 10 files in priority order. For each batch, insert a new task in the current todo list for analyzing that batch.
+Count total files in file list, split it into many batches of 10 files in priority order, each group insert in the current todo list new task for Analyze each batch of files group for all of files in file list.
 
-**File Analysis Order (by priority)**:
+**CRITICAL:** You must analyze all files in the file list identified as belonging to the highest IMPORTANT priority categories: **Domain Entities, Commands, Queries, Event Handlers, Controllers, Background Jobs, Consumers and front-end Components .ts**.
 
-1. Domain Entities
-2. Commands
-3. Queries
-4. Event Handlers
-5. Controllers
-6. Background Jobs
-7. Consumers
-8. Frontend Components .ts
+For each file in the `## File List` (following the prioritized order if applicable), read and analyze it, add result into `## Knowledge Graph` section. The heading of each analyzed file must have the item order number in heading. Each file analyzing result detail the following information:
 
-**CRITICAL:** You must analyze ALL files in the file list identified as belonging to the highest priority categories.
+**Core Fields:**
 
-For each file, add results into `## Knowledge Graph` section. **The heading of each analyzed file must have the item order number in the heading.**
+- **`filePath`**: The full path to the file
+- **`type`**: The component's classification
+- **`architecturalPattern`**: The main design pattern used
+- **`content`**: A summary of purpose and logic
+- **`symbols`**: Important classes, interfaces, methods
+- **`dependencies`**: All imported modules or `using` statements
+- **`businessContext`**: Comprehensive detail all business logic, how it contributes to the requirements
+- **`referenceFiles`**: Other files that use this file's symbols
+- **`relevanceScore`**: A numerical score (1-10)
+- **`evidenceLevel`**: "verified" or "inferred"
+- **`uncertainties`**: Any aspects you are unsure about
+- **`platformAbstractions`**: Any platform base classes used
+- **`serviceContext`**: Which microservice this file belongs to
+- **`dependencyInjection`**: Any DI registrations
+- **`genericTypeParameters`**: Generic type relationships
 
-**Core fields** for each file:
+**For Consumer Files (CRITICAL):**
 
-- `filePath`: Full path to the file
-- `type`: Component classification
-- `architecturalPattern`: Design pattern used
-- `content`: Purpose and logic summary
-- `symbols`: Classes, interfaces, methods
-- `dependencies`: Imports/using statements
-- `businessContext`: Comprehensive detail of all business logic, how it contributes to requirements
-- `referenceFiles`: Files using this file's symbols
-- `relevanceScore`: 1-10
-- `evidenceLevel`: "verified" or "inferred"
-- `uncertainties`: Unclear aspects
-- `platformAbstractions`: Platform base classes used
-- `serviceContext`: Microservice ownership
-- `dependencyInjection`: DI registrations
-- `genericTypeParameters`: Generic type relationships
+- **`messageBusAnalysis`**: When analyzing any Consumer file (files ending with `Consumer.cs` that extend `PlatformApplicationMessageBusConsumer<T>`), identify the `*BusMessage` type used. Then perform a grep search across ALL services to find files that **send/publish** this message type. List all producer files and their service locations in the `messageBusProducers` field. This analysis is crucial for understanding cross-service integration.
 
-**Message Bus Analysis** (CRITICAL FOR CONSUMERS):
+**Targeted Aspect Analysis:**
+Populate `specificAspects:` key with deeper analysis:
 
-- `messageBusAnalysis`: When analyzing Consumer files (`*Consumer.cs` extending `PlatformApplicationMessageBusConsumer<T>`):
-  1. Identify the `*BusMessage` type used
-  2. Grep search ALL services to find files that send/publish this message
-  3. List all producer files and their service locations in `messageBusProducers`
-
-**Targeted Aspect Analysis** (`targetedAspectAnalysis`):
-
-For **Front-End items**:
-
-- `componentHierarchy`, `routeConfig`, `routeGuards`
-- `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
-
-For **Back-End items**:
-
-- `authorizationPolicies`, `commands`, `queries`
-- `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
-
-For **Consumer items**:
-
-- `messageBusMessage`, `messageBusProducers`
-- `crossServiceIntegration`, `handleLogicWorkflow`
+- **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
+- **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
+- **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
 
 **MANDATORY PROGRESS TRACKING**: After processing every 10 files, you **MUST** update `Items Processed` in `## Progress`, run a `CONTEXT_ANCHOR_CHECK`, and explicitly state your progress. After each file, add its path to the `## Processed Files` list.
 
@@ -194,69 +163,167 @@ Write comprehensive `overallAnalysis:` summary showing:
 
 - Complete end-to-end workflows discovered
 - Key architectural patterns and relationships
-- All business logic workflows: From front-end to back-end
-  - Example: Front-end Component => Controller Api Service => Command/Query => EventHandler => Others (Send email, producer bus message)
-  - Example: Background Job => Event Handler => Others
+- All business logic work flow: From front-end to back-end. (Example: Front-end Component => Controller Api Service => Command/Query => EventHandler => Others (Send email, producer bus message); From background job => event handler => others)
 - Integration points and dependencies
-- Cross-service dependencies identified
 
 ---
 
 ## PHASE 2: PLAN GENERATION
 
-**Prerequisites**: Ensure ALL files are analyzed. Read the ENTIRE analysis notes file.
-
-Generate detailed implementation plan under `## Plan` heading:
-
-- Follow coding conventions from platform documentation
-- Think step-by-step with todo list
-- Reference patterns for each step
+You MUST ensure all files are analyzed. Then read the ENTIRE Markdown analysis notes file. Then Generate a detailed implementation plan under a `## Plan` heading. Your plan **MUST** follow coding convention and patterns in `ai-prompt-context.md`, must ultrathink and think step-by-step todo list to make code changes, for each step must read `ai-prompt-context.md` to follow code convention and patterns.
 
 ### PHASE 2.1: VERIFY AND REFACTOR
 
-First, verify and ensure your implementation plan follows code patterns and conventions from these files:
+First, verify and ensure your implementation plan that code patterns, solution must follow code patterns and example in these files:
 
-- `.github/copilot-instructions.md` - Platform patterns
-- `.github/instructions/frontend-angular.instructions.md` - Frontend patterns
-- `.github/instructions/backend-dotnet.instructions.md` - Backend patterns
-- `.github/instructions/clean-code.instructions.md` - Clean code rules
+- `.github/copilot-instructions.md`
+- `.github/instructions/frontend-angular.instructions.md`
+- `.github/instructions/backend-dotnet.instructions.md`
 
-Then verify and ensure your implementation plan satisfies clean code rules.
+Then verify and ensure your implementation plan satisfy clean code rules in `.github/instructions/clean-code.instructions.md`
 
 ---
 
 ## PHASE 3: APPROVAL GATE
 
-**CRITICAL**: Present the plan for explicit user approval. **DO NOT** proceed without it.
+You must present the plan for my explicit approval. **DO NOT** proceed without it.
+
+**Format for Approval Request:**
+
+```markdown
+## Implementation Plan Complete - Approval Required
+
+### Summary
+
+[Brief description of what will be implemented]
+
+### Files to Create
+
+1. `path/to/file.cs` - [purpose]
+2. `path/to/file.ts` - [purpose]
+
+### Files to Modify
+
+1. `path/to/existing.cs:line` - [change description]
+2. `path/to/existing.ts:line` - [change description]
+
+### Implementation Order
+
+1. [Step 1]
+2. [Step 2]
+3. [Step N]
+
+### Risks & Considerations
+
+- [Risk 1]
+- [Risk 2]
+
+**Awaiting approval to proceed with implementation.**
+```
 
 ---
 
 ## PHASE 4: EXECUTION
 
-Once approved:
+Once approved, execute the plan. Before creating or modifying **ANY** file, you **MUST** first load its relevant entry from your `## Knowledge Graph`. Use all **EXECUTION_SAFEGUARDS**. If any step fails, **HALT**, report the failure, and return to the APPROVAL GATE.
 
-1. Before creating or modifying **ANY** file, you **MUST** first load its relevant entry from your `## Knowledge Graph`
-2. Use all **EXECUTION_SAFEGUARDS**
-3. If any step fails, **HALT**, report the failure, and return to the APPROVAL GATE
+**EXECUTION_SAFEGUARDS:**
+
+- Verify file exists before modification
+- Read current content before editing
+- Check for conflicts with existing code
+- Validate changes against platform patterns
 
 ---
 
 ## SUCCESS VALIDATION
 
-Before completion:
-
-1. Verify implementation against all requirements
-2. Document under `## Success Validation` heading
-3. Summarize changes in `changelog.md`
+Before completion, verify the implementation against all requirements. Document this under a `## Success Validation` heading and summarize changes in `changelog.md`.
 
 ---
 
 ## Coding Guidelines
 
-- **Evidence-based approach**: Use grep and semantic search to verify assumptions
-- **Service boundary discovery**: Find endpoints before assuming responsibilities
-- **Never assume service ownership**: Verify patterns with code evidence
-- **Platform-first approach**: Use established templates
-- **Cross-service sync**: Use event bus, not direct database access
-- **CQRS adherence**: Follow established Command/Query patterns
-- **Clean architecture respect**: Maintain proper layer dependencies
+- **Evidence-based approach:** Use `grep` and semantic search to verify assumptions
+- **Service boundary discovery:** Find endpoints before assuming responsibilities
+- **Never assume service ownership:** Verify patterns with code evidence
+- **Platform-first approach:** Use established templates
+- **Cross-service sync:** Use an event bus, not direct database access
+- **CQRS adherence:** Follow established Command/Query patterns
+- **Clean architecture respect:** Maintain proper layer dependencies
+
+---
+
+## EasyPlatform Architecture Reference
+
+### Backend Layers
+
+```
+Presentation:   Controllers, API endpoints
+Application:    Commands, Queries, EventHandlers, DTOs
+Domain:         Entities, ValueObjects, Expressions
+Infrastructure: Repositories, External services, Messaging
+```
+
+### Key CQRS Flow
+
+```
+Controller → Command/Query → Handler → Repository → Entity
+                                  ↓
+                            EventHandler → Side Effects (notifications, external APIs)
+```
+
+### Message Bus Flow
+
+```
+Service A: EntityEventProducer → RabbitMQ → Service B: Consumer
+```
+
+### Frontend Flow
+
+```
+Component → Store.effect() → ApiService → Backend
+     ↑           ↓
+   Template ← Store.state
+```
+
+### Platform Patterns
+
+```csharp
+// Command/Query handlers
+PlatformCqrsCommandApplicationHandler<TCommand, TResult>
+PlatformCqrsQueryApplicationHandler<TQuery, TResult>
+
+// Entity event handlers (for side effects)
+PlatformCqrsEntityEventApplicationHandler<TEntity>
+
+// Message bus consumers
+PlatformApplicationMessageBusConsumer<TMessage>
+
+// Repositories
+IPlatformQueryableRootRepository<TEntity>
+IPlatformQueryableRootRepository<TEntity>
+```
+
+### Frontend Patterns
+
+```typescript
+// Component hierarchy
+AppBaseComponent            // Simple display
+AppBaseVmStoreComponent     // State management
+AppBaseFormComponent        // Forms with validation
+
+// Store pattern
+PlatformVmStore<TState>
+effectSimple(() => api.call().pipe(tapResponse(...)))
+```
+
+---
+
+## See Also
+
+- `.github/AI-DEBUGGING-PROTOCOL.md` - Debugging protocol
+- `ai-prompt-context.md` - Platform patterns and context
+- `CLAUDE.md` - Codebase instructions
+- `feature-investigation` skill - For exploring existing features (READ-ONLY)
+- `tasks-feature-implementation` skill - Autonomous variant

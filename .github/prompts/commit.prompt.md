@@ -34,9 +34,11 @@ type(scope): description
 
 | Scope | Service |
 |-------|---------|
+| `textsnippet` | TextSnippet example service |
+| `accounts` | Accounts service |
 | `platform` | Easy.Platform framework |
-| `text-snippet` | TextSnippet example service |
-| `web` | Angular frontend |
+| `webv2` | Angular frontend (WebV2) |
+| `web` | Legacy Angular frontend |
 
 ## Rules
 
@@ -50,15 +52,15 @@ type(scope): description
 
 ### Simple feature
 ```
-feat(text-snippet): add snippet export functionality
+feat(textsnippet): add snippet export functionality
 ```
 
 ### Bug fix with body
 ```
-fix(text-snippet): resolve snippet search pagination issue
+fix(textsnippet): resolve search pagination issue
 
 The search was returning incorrect results when filtering by multiple
-tags. Fixed by correcting the query builder expression composition.
+categories. Fixed by correcting the query builder expression composition.
 
 Fixes #1234
 ```
@@ -73,11 +75,11 @@ ValidationHelper class to reduce code duplication.
 
 ### Multiple changes
 ```
-feat(web): implement snippet dashboard
+feat(webv2): implement snippet dashboard
 
 - Add snippet overview component
 - Create dashboard store with statistics
-- Integrate with text-snippet API service
+- Integrate with textsnippet API service
 - Add loading and error states
 
 Related to #5678

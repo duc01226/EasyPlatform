@@ -32,7 +32,7 @@ Brief description of what the project does.
 ## Prerequisites
 
 - Node.js >= 18
-- .NET 9 SDK
+- .NET 8 SDK
 - MongoDB 6.0+
 
 ## Installation
@@ -45,7 +45,7 @@ git clone [url]
 
 # Install frontend dependencies
 
-cd src/PlatformExampleAppWeb && npm install
+cd src/WebV2 && npm install
 
 # Restore backend packages
 
@@ -70,7 +70,7 @@ dotnet restore
 
 # Start development server
 
-nx serve playground-text-snippet
+npm run dev-start:growth
 \`\`\`
 
 ## Development
@@ -79,9 +79,9 @@ nx serve playground-text-snippet
 
 \`\`\`
 src/
-├── Platform/              # Easy.Platform framework
-├── PlatformExampleApp/    # Example microservice (TextSnippet)
-└── PlatformExampleAppWeb/ # Angular 19 frontend
+├── Services/ # Backend microservices
+├── WebV2/ # Angular 19 frontend
+└── Platform/ # Shared platform code
 \`\`\`
 
 ## Testing

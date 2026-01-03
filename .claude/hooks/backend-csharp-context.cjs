@@ -7,8 +7,9 @@
  * backend service files.
  *
  * Pattern Matching:
- *   src/PlatformExampleApp/*        → Example/reference app
+ *   src/PlatformExampleApp/*                  → Backend microservices
  *   src/Platform/*                  → Easy.Platform framework
+ *   src/PlatformExampleApp/*        → Example/reference app
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
@@ -25,11 +26,11 @@ const BACKEND_GUIDE_PATH = 'docs/claude/backend-csharp-complete-guide.md';
 
 const BACKEND_PATTERNS = [
   {
-    name: 'Example App',
+    name: 'Microservices',
     patterns: [
-      /src[\/\\]PlatformExampleApp[\/\\]/i
+      /src[\/\\]Services[\/\\]/i
     ],
-    description: 'Platform example/reference application (TextSnippet)'
+    description: 'Backend microservices (TextSnippet, TextSnippet, TextSnippet, etc.)'
   },
   {
     name: 'Platform Framework',
@@ -37,12 +38,20 @@ const BACKEND_PATTERNS = [
       /src[\/\\]Platform[\/\\]/i
     ],
     description: 'Easy.Platform framework core'
+  },
+  {
+    name: 'Example App',
+    patterns: [
+      /src[\/\\]PlatformExampleApp[\/\\]/i
+    ],
+    description: 'Platform example/reference application'
   }
 ];
 
 // Service-specific patterns for more detailed guidance
 const SERVICE_PATTERNS = {
-  'TextSnippet': /PlatformExampleApp[\/\\].*TextSnippet/i
+  'TextSnippet': /PlatformExampleApp[\/\\].*TextSnippet/i,
+  'ExampleService': /Services[\/\\]Example/i
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -134,7 +143,7 @@ function buildInjection(context, filePath, service) {
     '',
     'This guide contains:',
     '- SOLID, DRY, KISS, YAGNI principles with code examples',
-    '- Repository patterns (use IPlatformQueryableRootRepository<T, TKey>)',
+    '- Repository patterns (use service-specific: IPlatformQueryableRootRepository, IPlatformQueryableRootRepository)',
     '- CQRS Command/Query patterns (Command + Result + Handler in ONE file)',
     '- Entity, DTO, and Validation patterns (PlatformValidationResult fluent API)',
     '- Event-driven architecture (side effects in Entity Event Handlers)',
@@ -142,7 +151,7 @@ function buildInjection(context, filePath, service) {
     '',
     '### Critical Rules',
     '',
-    '1. **Repository:** Use `IPlatformQueryableRootRepository<T, TKey>` - the platform standard',
+    '1. **Repository:** Use `IPlatformQueryableRootRepository<T>`, `IPlatformQueryableRootRepository<T>` - NEVER generic',
     '2. **Validation:** Use `PlatformValidationResult` fluent API - NEVER throw ValidationException',
     '3. **Side Effects:** Handle in `UseCaseEvents/` event handlers - NEVER in command handlers',
     '4. **DTO Mapping:** DTOs own mapping via `PlatformEntityDto.MapToEntity()` - NEVER map in handlers',
@@ -156,16 +165,11 @@ function buildInjection(context, filePath, service) {
       '### Service-Specific Notes',
       '',
       `Working in **${service}** service:`,
+      '',
+      '- Use `IPlatformQueryableRootRepository<T>` for all entities',
+      '- Follow domain-specific patterns in the service',
       ''
     );
-
-    if (service.includes('TextSnippet')) {
-      lines.push(
-        '- Use `IPlatformQueryableRootRepository<T, TKey>` for all entities',
-        '- Example text snippet management domain',
-        ''
-      );
-    }
   }
 
   // Filter out empty lines from middle

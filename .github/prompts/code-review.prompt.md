@@ -17,7 +17,7 @@ Perform a comprehensive code review for the following:
 
 - [ ] Clean Architecture layers respected (Domain, Application, Persistence, Service)
 - [ ] CQRS pattern followed (Command + Handler + Result in ONE file)
-- [ ] Service-specific repositories used (`ITextSnippetRootRepository`, etc.)
+- [ ] Service-specific repositories used (`IPlatformQueryableRootRepository`, etc.)
 - [ ] No side effects in command handlers (use entity event handlers)
 - [ ] DTO mapping in DTO classes, not handlers
 - [ ] Static expressions defined in entities

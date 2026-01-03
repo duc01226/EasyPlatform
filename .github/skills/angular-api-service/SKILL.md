@@ -19,7 +19,8 @@ description: Use when creating API services for backend communication with prope
 
 | Application                       | Design System Location                           |
 | --------------------------------- | ------------------------------------------------ |
-| **PlatformExampleAppWeb** | `docs/design-system/` |
+| **WebV2 Apps**                    | `docs/design-system/`                            |
+| **TextSnippetClient**             | `src/PlatformExampleAppWeb/apps/playground-text-snippet/docs/design-system/` |
 
 **Key docs to read:**
 
@@ -76,10 +77,15 @@ export class EmployeeApiService extends PlatformApiService {
 
 ```
 src/PlatformExampleAppWeb/libs/apps-domains/src/lib/
-└── text-snippet/
-    ├── text-snippet-api.service.ts
-    ├── text-snippet.model.ts
-    └── text-snippet.validators.ts
+├── growth/
+│   └── employee/
+│       ├── employee-api.service.ts
+│       ├── employee.model.ts
+│       └── employee.validators.ts
+├── talents/
+│   └── candidate/
+│       ├── candidate-api.service.ts
+│       └── candidate.model.ts
 ```
 
 ## Usage in Component/Store

@@ -1,8 +1,10 @@
 ---
 name: test-generation
-description: Use for QA-focused BDD test specifications (Given/When/Then) with traceability matrices, coverage analysis, and comprehensive test case documentation. Best for QA teams, acceptance testing, and feature documentation with test cases. NOT for writing unit test code (use tasks-test-generation instead).
+description: Use when the user asks to generate test cases, create test specifications, write unit tests, create QA documentation, or analyze test coverage. Triggers on keywords like "test", "test case", "unit test", "QA", "coverage", "Given When Then", "BDD", "TDD", "spec".
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
+
+> **Skill Variant:** Use this skill for **interactive test writing** where the user is actively engaged and can provide feedback. For autonomous test generation, use `tasks-test-generation` instead.
 
 # Test Case Generation
 

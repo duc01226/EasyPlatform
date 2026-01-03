@@ -54,7 +54,7 @@ src/PlatformExampleApp/*/Persistence/Migrations/    # EF Core migrations
 ### EF Core Schema Migration
 
 ```bash
-dotnet ef migrations add MigrationName --project src/PlatformExampleApp/{Service}.Persistence
+dotnet ef migrations add MigrationName --project src/PlatformExampleApp/{Service}/{Service}.Persistence
 ```
 
 ```csharp

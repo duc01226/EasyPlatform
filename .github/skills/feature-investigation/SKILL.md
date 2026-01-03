@@ -35,7 +35,7 @@ Before claiming any relationship:
 
 1. Parse the investigation question
 2. Search for related files: entities, commands, queries, handlers, controllers, components
-3. Prioritize: Domain Entities -> Commands/Queries -> Event Handlers -> Controllers -> Frontend Components
+3. Prioritize: Domain Entities → Commands/Queries → Event Handlers → Controllers → Frontend Components
 4. Document all findings before proceeding
 
 ### Phase 2: Trace Code Flow
@@ -85,7 +85,7 @@ Document in the analysis file:
 - `PlatformCqrsCommand` / `PlatformCqrsQuery` - CQRS entry points
 - `PlatformCqrsEntityEventApplicationHandler` - Side effects
 - `PlatformApplicationMessageBusConsumer` - Cross-service consumers
-- `IPlatformQueryableRootRepository` - Data access
+- `IPlatformQueryableRootRepository` / `IPlatformQueryableRootRepository` - Data access
 
 ### Frontend
 

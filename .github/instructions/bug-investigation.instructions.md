@@ -5,11 +5,11 @@ description: 'Comprehensive bug diagnosis and debugging protocol for EasyPlatfor
 
 # Bug Investigation & Debugging Protocol
 
-You are to operate as an expert full-stack .NET Angular debugging engineer to diagnose, debug, and fix bugs in the EasyPlatform framework.
+You are to operate as an expert full-stack .NET Angular debugging engineer to diagnose, debug, and fix bugs in the EasyPlatform platform.
 
 **IMPORTANT**: Always think hard, plan step-by-step to-do list first before execution. Always remember to-do list, never compact or summarize it when memory context limit is reached. Always preserve and carry your to-do list through every operation. Todo list must cover all phases, from start to end, including child tasks in each phase - everything is flattened out into a long detailed todo list.
 
-## CORE ANTI-HALLUCINATION PROTOCOLS
+## 🛡️ CORE ANTI-HALLUCINATION PROTOCOLS
 
 ### ASSUMPTION_VALIDATION_CHECKPOINT
 
@@ -23,9 +23,9 @@ Before every major operation:
 
 Before claiming any relationship:
 
-- "I believe X calls Y because..." -> show actual code
-- "This follows pattern Z because..." -> cite specific examples
-- "Service A owns B because..." -> grep for actual boundaries
+- "I believe X calls Y because..." → show actual code
+- "This follows pattern Z because..." → cite specific examples
+- "Service A owns B because..." → grep for actual boundaries
 
 ### TOOL_EFFICIENCY_PROTOCOL
 
@@ -43,7 +43,7 @@ Every 10 operations:
 3. Check if we're solving the right problem
 4. Update the `Current Focus` bullet point within the `## Progress` section
 
-## QUICK REFERENCE CHECKLIST
+## 📋 QUICK REFERENCE CHECKLIST
 
 **Before any major operation:**
 
@@ -58,9 +58,9 @@ Every 10 operations:
 
 **Emergency:**
 
-- **Context Drift** -> Re-read **## Metadata** section
-- **Assumption Creep** -> Halt, validate with code
-- **Evidence Gap** -> Mark as "inferred"
+- **Context Drift** → Re-read **## Metadata** section
+- **Assumption Creep** → Halt, validate with code
+- **Evidence Gap** → Mark as "inferred"
 
 ---
 
@@ -74,9 +74,10 @@ Your sole objective is to build a structured knowledge model in a Markdown analy
 
 Create the analysis file with the following structure:
 
-```markdown
+```````markdown
 ## Metadata
 
+```markdown
 [Full original bug description/prompt]
 
 **Task Description:**
@@ -84,6 +85,8 @@ Create the analysis file with the following structure:
 
 **Source Code Structure:**
 [Copy complete Source Code Structure from ai-prompt-context.md]
+```
+```````
 
 ## Progress
 
@@ -132,9 +135,10 @@ Create the analysis file with the following structure:
 ## Platform Error Patterns
 
 [Platform-specific error handling patterns discovered]
-```
 
-**Step 2: DEBUGGING-SPECIFIC DISCOVERY**
+````
+
+**Step 2: 🐛 DEBUGGING-SPECIFIC DISCOVERY**
 
 Perform ERROR_BOUNDARY_DISCOVERY focusing on:
 
@@ -285,10 +289,10 @@ After analyzing ALL files, write a comprehensive `## Overall Analysis` section s
 [Complete workflows from frontend to backend, including all integration points]
 
 **Example Flow:**
-1. Frontend Component -> API Service -> Command/Query Handler
-2. Command Handler -> Domain Entity -> Repository
-3. Event Handler -> Side Effects (Email, Message Bus)
-4. Background Job -> Event Handler -> External Services
+1. Frontend Component → API Service → Command/Query Handler
+2. Command Handler → Domain Entity → Repository
+3. Event Handler → Side Effects (Email, Message Bus)
+4. Background Job → Event Handler → External Services
 
 ### Key Architectural Patterns
 
@@ -297,17 +301,17 @@ After analyzing ALL files, write a comprehensive `## Overall Analysis` section s
 ### Complete Business Logic Workflows
 
 **Frontend to Backend Flow:**
-- Frontend Component/Form -> HTTP Request -> Controller API
-- Controller -> CQRS Command/Query -> Handler
-- Handler -> Domain Logic -> Repository
-- Repository -> Database -> Response
-- Event Handlers -> Side Effects (Notifications, Message Bus)
-- Background Jobs -> Scheduled Processing -> Event Handlers
+- Frontend Component/Form → HTTP Request → Controller API
+- Controller → CQRS Command/Query → Handler
+- Handler → Domain Logic → Repository
+- Repository → Database → Response
+- Event Handlers → Side Effects (Notifications, Message Bus)
+- Background Jobs → Scheduled Processing → Event Handlers
 
 **Cross-Service Integration:**
-- Service A -> Message Bus Producer -> RabbitMQ
-- RabbitMQ -> Message Bus Consumer -> Service B
-- Service B -> Processing -> Event Handlers
+- Service A → Message Bus Producer → RabbitMQ
+- RabbitMQ → Message Bus Consumer → Service B
+- Service B → Processing → Event Handlers
 
 ### Integration Points and Dependencies
 
@@ -606,10 +610,13 @@ Present the following for explicit user approval:
 ### Rollback Information
 
 **Rollback Command:**
+```bash
 git checkout [previous-commit-hash]
+```
 
 **Rollback Notes:**
 [Any special considerations for rollback]
+```
 ```
 
 ---
@@ -691,7 +698,7 @@ git checkout [previous-commit-hash]
 
 ## Anti-Patterns to Avoid
 
-### DON'T
+### ❌ DON'T
 
 - Make assumptions without code evidence
 - Skip file analysis for "low-priority" files that may be relevant
@@ -702,7 +709,7 @@ git checkout [previous-commit-hash]
 - Compact or summarize todo lists
 - Lose context during long operations
 
-### DO
+### ✅ DO
 
 - Validate every assumption with code
 - Analyze all files in discovery phase
@@ -714,3 +721,4 @@ git checkout [previous-commit-hash]
 - Use external memory (analysis file)
 - Re-anchor context every 10 operations
 - Batch operations for efficiency
+````

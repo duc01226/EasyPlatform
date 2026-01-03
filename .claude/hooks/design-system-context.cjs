@@ -6,7 +6,13 @@
  * frontend files. Uses file path patterns to select the appropriate guide.
  *
  * Pattern Matching:
- *   src/PlatformExampleAppWeb/*    → WebV2DesignSystem.md (Angular 19 example app)
+ *   src/PlatformExampleAppWeb/*                    → WebV2DesignSystem.md
+ *   src/PlatformExampleAppWeb/apps/playground-text-snippet*          → TextSnippetClientDesignSystem.md
+ *   src/PlatformExampleAppWeb/apps/playground-text-snippet*          → TextSnippetClientDesignSystem.md
+ *   src/PlatformExampleAppWeb/apps/playground-text-snippet*             → TextSnippetClientDesignSystem.md
+ *   src/PlatformExampleAppWeb/apps/playground-text-snippet*         → TextSnippetClientDesignSystem.md
+ *   src/PlatformExampleAppWeb/apps/playground-text-snippet*          → TextSnippetClientDesignSystem.md
+ *   src/PlatformExampleAppWeb/apps/playground-text-snippet*          → TextSnippetClientDesignSystem.md
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
@@ -23,14 +29,34 @@ const DESIGN_SYSTEM_DOCS_PATH = 'docs/design-system';
 
 const APP_PATTERNS = [
   {
-    name: 'PlatformExampleAppWeb',
+    name: 'WebV2',
     patterns: [
-      /src[\/\\]PlatformExampleAppWeb[\/\\]/i,
+      /src[\/\\]WebV2[\/\\]/i,
+      /libs[\/\\]platform-core[\/\\]/i,
       /libs[\/\\]apps-domains[\/\\]/i,
       /libs[\/\\]platform-core[\/\\]/i
     ],
     docFile: 'WebV2DesignSystem.md',
     description: 'Angular 19 standalone components with shared-mixin SCSS'
+  },
+  {
+    name: 'TextSnippet',
+    patterns: [
+      /src[\/\\]Web[\/\\]TextSnippet/i,
+      /src[\/\\]Web[\/\\]TextSnippet/i,
+      /src[\/\\]Web[\/\\]TextSnippet/i,
+      /src[\/\\]Web[\/\\]PulseSurveys/i
+    ],
+    docFile: 'TextSnippetClientDesignSystem.md',
+    description: 'Legacy Angular with SCSS variables and sprite icons'
+  },
+  {
+    name: 'ExampleApp',
+    patterns: [
+      /src[\/\\]PlatformExampleAppWeb[\/\\]apps[\/\\]playground-text-snippet/i
+    ],
+    docFile: 'TextSnippetClientDesignSystem.md',
+    description: 'Example Angular application with standard styling'
   }
 ];
 
@@ -124,7 +150,7 @@ function buildInjection(app, filePath) {
   ];
 
   // Add app-specific quick tips
-  if (app.name === 'PlatformExampleAppWeb') {
+  if (app.name === 'WebV2') {
     lines.push(
       '- **SCSS:** Use `@use \'shared-mixin\'` imports',
       '- **Colors:** Use CSS variables `--bg-pri-cl`, `--text-primary-cl`',
@@ -132,9 +158,31 @@ function buildInjection(app, filePath) {
       '- **Components:** Angular 19 standalone with signals',
       '- **BEM:** Block__element with separate --modifier class'
     );
+  } else if (app.name === 'TextSnippet') {
+    lines.push(
+      '- **SCSS:** Use `@import \'~assets/scss/variables\'`',
+      '- **Colors:** Use SCSS variables `$color-primary`, `$color-gray-*`',
+      '- **Icons:** Use sprite icons `<span class="icon icon-name"></span>`',
+      '- **Layout:** Use `flex-column-container` mixin',
+      '- **BEM:** Module-specific prefix (e.g., `module-*`)'
+    );
+  } else if (app.name === 'ExampleApp') {
+    lines.push(
+      '- **Layout:** Use standard grid patterns',
+      '- **BEM:** Use component-specific prefix',
+      '- **Icons:** Use appropriate icon library',
+      '- **Variables:** Import from shared SCSS variables'
+    );
   }
 
-  lines.push('');
+  lines.push(
+    '',
+    '### V1 Modern UI Note',
+    '',
+    'If building **NEW modern UI** in legacy apps, also read:',
+    '`docs/design-system/WebV1ModernStyleGuide.md` for V2 aesthetic guidelines.',
+    ''
+  );
 
   return lines.join('\n');
 }
