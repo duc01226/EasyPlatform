@@ -364,7 +364,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
         "\\b(fix|bug|error|broken|issue)\\b",
         "\\b(doc|document|readme)\\b"
       ],
-      "sequence": ["plan", "cook","dual-pass-review", "code-review",  "test", "docs-update", "watzup"],
+      "sequence": ["plan", "cook", "code-review", "test", "docs-update", "watzup"],
       "confirmFirst": true,
       "priority": 10
     },
@@ -382,7 +382,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
         "\\b(implement|add|create|build)\\s+new\\b",
         "\\bfeature\\b"
       ],
-      "sequence": ["debug", "plan", "fix", "dual-pass-review", "code-review","test"],
+      "sequence": ["debug", "plan", "fix", "code-review", "test"],
       "confirmFirst": false,
       "priority": 20
     },
@@ -397,7 +397,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
       "excludePatterns": [
         "\\b(bug|broken|crash|fail)\\b"
       ],
-      "sequence": ["plan", "code","dual-pass-review", "code-review", "test"],
+      "sequence": ["plan", "code", "code-review", "test"],
       "confirmFirst": true,
       "priority": 25
     },
@@ -427,7 +427,6 @@ Defines all workflow types, their trigger patterns, and step sequences:
     "fix": { "claude": "/fix" },
     "debug": { "claude": "/debug" },
     "code-review": { "claude": "/review/codebase" },
-    "dual-pass-review": { "claude": "/dual-pass-review", "description": "Mandatory dual-pass review" },
     "docs-update": { "claude": "/docs/update" },
     "watzup": { "claude": "/watzup" },
     "scout": { "claude": "/scout" },
@@ -657,16 +656,14 @@ Step 2: Claude calls Skill tool with skill="cook"
   → Claude implements the feature
   → Creates src/components/DarkModeToggle.tsx
 
-Step 3: Claude calls Skill tool with skill="test"
+Step 3: Claude calls Skill tool with skill="code-review"
+  → Reviews changes for correctness + convention compliance
+  → Generates review summary
+
+Step 4: Claude calls Skill tool with skill="test"
   → Skill loads test.md template
   → Claude runs tests
   → Verifies all tests pass
-
-Step 4: Claude calls Skill tool with skill="dual-pass-review"
-  → First Pass: Reviews unstaged changes for correctness + convention compliance
-  → If first pass made corrections: Execute Second Pass
-  → Second Pass: Full re-review of current unstaged changes
-  → Generates review summary with approval status
 
 Step 5: Claude calls Skill tool with skill="docs-update"
   → Updates documentation
@@ -771,7 +768,7 @@ Result: Skips the full workflow, handles request directly.
     "feature": {
       "triggerPatterns": ["..."],
       "excludePatterns": ["..."],
-      "sequence": ["plan", "cook","dual-pass-review", "code-review", "test"],
+      "sequence": ["plan", "cook", "code-review", "test", "docs-update", "watzup"],
       "priority": 10
     }
   }
@@ -807,78 +804,6 @@ Each workflow step maps to a skill template that guides Claude's behavior for th
 
 ---
 
-## Dual-Pass Review System
-
-The dual-pass review is a **mandatory quality gate** that runs after any code changes to ensure correctness and convention compliance.
-
-### How It Works
-
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                    DUAL-PASS REVIEW FLOW                        │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Code Changes Made (cook/fix/code)                              │
-│           │                                                     │
-│           ▼                                                     │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │ FIRST PASS: Review Unstaged Changes                     │    │
-│  │  - Task correctness                                     │    │
-│  │  - Convention compliance (CLAUDE.md patterns)           │    │
-│  │  - Development rules (YAGNI, KISS, DRY)                 │    │
-│  │  - Code quality                                         │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│           │                                                     │
-│           ▼                                                     │
-│     Issues Found?                                               │
-│        │      │                                                 │
-│        No     Yes                                               │
-│        │      │                                                 │
-│        │      ▼                                                 │
-│        │  Fix Issues → Changes Made                             │
-│        │      │                                                 │
-│        │      ▼                                                 │
-│        │  ┌─────────────────────────────────────────────────┐   │
-│        │  │ SECOND PASS: Full Re-review                     │   │
-│        │  │  - All dimensions checked again                 │   │
-│        │  │  - Verify fixes correct                         │   │
-│        │  │  - No regressions introduced                    │   │
-│        │  └─────────────────────────────────────────────────┘   │
-│        │      │                                                 │
-│        ▼      ▼                                                 │
-│  ┌─────────────────────────────────────────────────────────┐    │
-│  │ Generate Review Summary                                  │    │
-│  │  - APPROVED / NEEDS ATTENTION                           │    │
-│  │  - Passes executed: 1 or 2                              │    │
-│  │  - Ready for commit: Yes/No                             │    │
-│  └─────────────────────────────────────────────────────────┘    │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Review Dimensions
-
-| Dimension             | What It Checks                                              |
-| --------------------- | ----------------------------------------------------------- |
-| Task Correctness      | Changes address original requirement, no missing pieces     |
-| Convention Compliance | Clean Architecture, CQRS patterns, BEM naming, base classes |
-| Development Rules     | YAGNI, KISS, DRY, logic in lowest layer                     |
-| Code Quality          | Syntax errors, naming, SRP, error handling, security        |
-
-### Workflows Using Dual-Pass Review
-
-| Workflow | Sequence                                                         |
-| -------- | ---------------------------------------------------------------- |
-| Feature  | plan → cook → test → **dual-pass-review** → docs-update → watzup |
-| Bug Fix  | debug → plan → fix → test → **dual-pass-review**                 |
-| Refactor | plan → code → test → **dual-pass-review**                        |
-
-### Key Principle
-
-**Second pass is CONDITIONAL** - Only executes if first pass made corrections. This prevents unnecessary overhead when code is already clean.
-
----
-
 ## Best Practices
 
 1. **Define Clear Patterns**: Use specific regex patterns that minimize false positives
@@ -886,7 +811,83 @@ The dual-pass review is a **mandatory quality gate** that runs after any code ch
 3. **Set Appropriate Priorities**: Ensure most specific workflows have lower priority numbers
 4. **Require Confirmation for High-Impact**: Set `confirmFirst: true` for feature/refactor workflows
 5. **Keep Sequences Focused**: Fewer steps = faster execution, more steps = thorough coverage
-6. **Dual-Pass Review**: Always included after code changes to catch issues before commit
+6. **Code Review**: Include `/code-review` step after code changes to catch issues before commit
+
+---
+
+## Workflow State Persistence
+
+For long-running workflows, the system now includes **state persistence** to prevent context loss.
+
+### How State Persistence Works
+
+```text
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    WORKFLOW STATE PERSISTENCE                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│  ┌─────────────────┐                                                    │
+│  │ Workflow Detected│──▶ Creates .claude/.workflow-state.json          │
+│  └─────────────────┘                                                    │
+│           │                                                             │
+│           ▼                                                             │
+│  ┌─────────────────┐                                                    │
+│  │ Each User Prompt │──▶ Checks for active workflow                     │
+│  └─────────────────┘    ├─▶ Injects continuation reminder               │
+│           │             └─▶ Shows progress: "Step 2/7"                  │
+│           ▼                                                             │
+│  ┌─────────────────┐                                                    │
+│  │ Skill Completes  │──▶ Updates state, advances to next step          │
+│  └─────────────────┘                                                    │
+│           │                                                             │
+│           ▼                                                             │
+│  ┌─────────────────┐                                                    │
+│  │ Workflow Complete│──▶ Clears state file                             │
+│  └─────────────────┘                                                    │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### State File Schema
+
+```json
+{
+  "workflowId": "bugfix",
+  "workflowName": "Bug Fix",
+  "sequence": ["debug", "plan", "fix", "test"],
+  "currentStep": 0,
+  "completedSteps": [],
+  "startTime": "2026-01-07T15:23:34.000Z",
+  "originalPrompt": "fix the login bug",
+  "ttlHours": 24
+}
+```
+
+### Workflow Control Commands
+
+During an active workflow, users can control progress:
+
+| Command | Effect |
+|---------|--------|
+| `skip` | Skip current step, advance to next |
+| `abort` | Cancel entire workflow |
+| `quick:` prefix | Cancel workflow, execute prompt directly |
+
+### Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| State Library | `.claude/hooks/lib/workflow-state.cjs` | CRUD for workflow state |
+| Workflow Router | `.claude/hooks/workflow-router.cjs` | Detects workflows, injects reminders |
+| Dev Rules Reminder | `.claude/hooks/dev-rules-reminder.cjs` | Shows progress in every prompt |
+| Step Tracker | `.claude/hooks/workflow-step-tracker.cjs` | Advances state on skill completion |
+
+### Benefits
+
+1. **Never forgets**: AI always knows current step and remaining work
+2. **Progress visibility**: User sees step X/Y on every interaction
+3. **Control**: User can skip/abort at any time
+4. **Auto-cleanup**: State expires after 24h or on session clear
 
 ---
 
@@ -898,5 +899,6 @@ The Claude Code workflow orchestration system in this project achieves **declara
 2. **Run automatically**: Hooks intercept prompts and inject instructions
 3. **AI follows**: Claude reads injected instructions and executes workflows
 4. **Override easily**: `quick:` prefix or explicit commands bypass automation
+5. **Never forgets**: State persistence ensures long workflows complete fully
 
 This architecture separates **intent detection** (JavaScript hooks) from **execution** (LLM + skills), creating a maintainable and extensible workflow system.

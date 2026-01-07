@@ -10,6 +10,7 @@
  * - Configurable workflow sequences
  * - Override support (prefix with "quick:" to skip)
  * - Confidence-based confirmation for high-impact workflows
+ * - Persistent workflow state tracking for long-running tasks
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
@@ -17,6 +18,15 @@
 
 const fs = require('fs');
 const path = require('path');
+const {
+  loadState,
+  createState,
+  clearState,
+  markStepComplete,
+  getCurrentStepInfo,
+  buildContinuationReminder,
+  detectWorkflowControl
+} = require('./lib/workflow-state.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION LOADING
@@ -277,6 +287,74 @@ function getStepDescription(step) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+// WORKFLOW STATE HANDLING
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Handle workflow control commands (abort, skip, complete)
+ * @param {string} action - Control action
+ * @param {Object} config - Workflow config
+ * @returns {string|null} Response message or null
+ */
+function handleWorkflowControl(action, config) {
+  const state = loadState();
+  if (!state) return null;
+
+  const info = getCurrentStepInfo();
+
+  switch (action) {
+    case 'abort':
+      clearState();
+      return `\n## Workflow Aborted\n\nThe **${state.workflowName}** workflow has been cancelled.\n`;
+
+    case 'skip':
+      const skipped = markStepComplete(state.sequence[state.currentStep]);
+      if (!skipped) {
+        return `\n## Workflow Complete\n\nAll steps in **${state.workflowName}** have been completed.\n`;
+      }
+      const nextInfo = getCurrentStepInfo();
+      return `\n## Step Skipped\n\nSkipped step: \`${info.claudeCommand}\`\n\n**Next step:** \`${nextInfo.claudeCommand}\` (${nextInfo.stepNumber}/${nextInfo.totalSteps})\n\nPlease execute the next step to continue the workflow.\n`;
+
+    case 'complete':
+      const updated = markStepComplete(state.sequence[state.currentStep]);
+      if (!updated) {
+        return `\n## Workflow Complete\n\nAll steps in **${state.workflowName}** have been completed successfully!\n`;
+      }
+      const next = getCurrentStepInfo();
+      return `\n## Step Completed\n\nCompleted step: \`${info.claudeCommand}\`\n\n**Next step:** \`${next.claudeCommand}\` (${next.stepNumber}/${next.totalSteps})\n\nPlease execute the next step to continue the workflow.\n`;
+
+    default:
+      return null;
+  }
+}
+
+/**
+ * Detect if a skill command was invoked (e.g., "/plan", "/cook")
+ * @param {string} prompt - User prompt
+ * @param {Object} config - Workflow config
+ * @returns {string|null} Step ID if skill invoked, null otherwise
+ */
+function detectSkillInvocation(prompt, config) {
+  const trimmed = prompt.trim();
+
+  // Check if prompt starts with a slash command
+  const match = trimmed.match(/^\/(\w+[-\w]*)/);
+  if (!match) return null;
+
+  const command = match[1].toLowerCase();
+
+  // Map command to step ID
+  for (const [stepId, mapping] of Object.entries(config.commandMapping || {})) {
+    const claudeCmd = mapping.claude || `/${stepId}`;
+    if (claudeCmd.toLowerCase() === `/${command}` || claudeCmd.toLowerCase().endsWith(`/${command}`)) {
+      return stepId;
+    }
+  }
+
+  return command; // Return raw command as fallback
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 // MAIN EXECUTION
 // ═══════════════════════════════════════════════════════════════════════════
 
@@ -295,10 +373,56 @@ async function main() {
     // Check if workflow detection is enabled
     if (!config.settings?.enabled) process.exit(0);
 
-    // Detect intent
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 1: Check for workflow control commands
+    // ─────────────────────────────────────────────────────────────────────────
+    const controlAction = detectWorkflowControl(userPrompt);
+    if (controlAction) {
+      const response = handleWorkflowControl(controlAction, config);
+      if (response) {
+        console.log(response);
+        process.exit(0);
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 2: Check for active workflow and inject continuation reminder
+    // ─────────────────────────────────────────────────────────────────────────
+    const existingState = loadState();
+    if (existingState) {
+      // Check if user is invoking a skill command that matches current step
+      const invokedSkill = detectSkillInvocation(userPrompt, config);
+      const currentStep = existingState.sequence[existingState.currentStep];
+
+      if (invokedSkill && invokedSkill === currentStep) {
+        // User is executing expected step - don't interrupt, just track
+        // The step completion will be handled when skill finishes
+        process.exit(0);
+      }
+
+      // Check for override prefix to abort active workflow
+      if (config.settings.allowOverride && config.settings.overridePrefix) {
+        const lowerPrompt = userPrompt.toLowerCase().trim();
+        if (lowerPrompt.startsWith(config.settings.overridePrefix.toLowerCase())) {
+          clearState();
+          process.exit(0);
+        }
+      }
+
+      // Inject continuation reminder for active workflow
+      const reminder = buildContinuationReminder();
+      if (reminder) {
+        console.log(reminder);
+        process.exit(0);
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 3: Detect new workflow from prompt
+    // ─────────────────────────────────────────────────────────────────────────
     const detection = detectIntent(userPrompt, config);
 
-    // Skip if no workflow detected or skipped
+    // Skip if no workflow detected or explicitly skipped
     if (detection.skipped) {
       if (config.settings.showDetection) {
         console.log(`<!-- Workflow detection skipped: ${detection.reason} -->`);
@@ -309,6 +433,17 @@ async function main() {
     if (!detection.detected) {
       process.exit(0);
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // STEP 4: Create workflow state and generate instructions
+    // ─────────────────────────────────────────────────────────────────────────
+    createState({
+      workflowId: detection.workflowId,
+      workflowName: detection.workflow.name,
+      sequence: detection.workflow.sequence,
+      originalPrompt: userPrompt,
+      commandMapping: config.commandMapping
+    });
 
     // Generate and output instructions
     const instructions = buildWorkflowInstructions(detection, config);

@@ -13,34 +13,32 @@
 
 ### Workflow Detection Rules
 
-| Intent            | Trigger Keywords                            | Workflow Sequence                                                                                           |
-| ----------------- | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Feature**       | implement, add, create, build, develop      | `/plan` → `/cook` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test` → `/docs-update` → `/watzup` |
-| **Bug Fix**       | bug, fix, error, broken, crash, not working | `/debug` → `/plan` → `/fix` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test`          |
-| **Documentation** | docs, document, readme, update docs         | `/docs-update` → `/watzup`                                                                                  |
-| **Refactoring**   | refactor, improve, clean up, restructure    | `/plan` → `/code` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test`                    |
-| **Code Review**   | review, check, audit, PR review             | `/code-review` → `/watzup`                                                                                  |
-| **Investigation** | how does, where is, explain, understand     | `/scout` → `/investigate`                                                                                   |
+| Intent            | Trigger Keywords                            | Workflow Sequence                                                       |
+| ----------------- | ------------------------------------------- | ----------------------------------------------------------------------- |
+| **Feature**       | implement, add, create, build, develop      | `/plan` → `/cook` → `/code-review` → `/test` → `/docs-update` → `/watzup` |
+| **Bug Fix**       | bug, fix, error, broken, crash, not working | `/debug` → `/plan` → `/fix` → `/code-review` → `/test`                    |
+| **Documentation** | docs, document, readme, update docs         | `/docs-update` → `/watzup`                                                |
+| **Refactoring**   | refactor, improve, clean up, restructure    | `/plan` → `/code` → `/code-review` → `/test`                              |
+| **Code Review**   | review, check, audit, PR review             | `/code-review` → `/watzup`                                                |
+| **Investigation** | how does, where is, explain, understand     | `/scout` → `/investigate`                                                 |
 
 ### How to Execute Workflow Steps
 
 Each workflow step maps to a prompt file in `.github/prompts/`:
 
-| Step                | Prompt File                  | Description                         |
-| ------------------- | ---------------------------- | ----------------------------------- |
-| `/plan`             | `plan.prompt.md`             | Create implementation plan          |
-| `/cook`             | `cook.prompt.md`             | Implement feature                   |
-| `/code`             | `code.prompt.md`             | Execute existing plan               |
-| `/test`             | `test.prompt.md`             | Run tests                           |
-| `/fix`              | `fix.prompt.md`              | Apply fixes                         |
-| `/debug`            | `debug.prompt.md`            | Investigate issues                  |
-| `/post-task-review` | `post-task-review.prompt.md` | Review after implementation         |
-| `/code-review`      | `code-review.prompt.md`      | Review code quality                 |
-| `/dual-pass-review` | `dual-pass-review.prompt.md` | Mandatory dual-pass review          |
-| `/docs-update`      | `docs-update.prompt.md`      | Update documentation                |
-| `/watzup`           | `watzup.prompt.md`           | Summarize changes                   |
-| `/scout`            | `scout.prompt.md`            | Explore codebase                    |
-| `/investigate`      | `investigate.prompt.md`      | Deep dive analysis                  |
+| Step           | Prompt File             | Description                |
+| -------------- | ----------------------- | -------------------------- |
+| `/plan`        | `plan.prompt.md`        | Create implementation plan |
+| `/cook`        | `cook.prompt.md`        | Implement feature          |
+| `/code`        | `code.prompt.md`        | Execute existing plan      |
+| `/test`        | `test.prompt.md`        | Run tests                  |
+| `/fix`         | `fix.prompt.md`         | Apply fixes                |
+| `/debug`       | `debug.prompt.md`       | Investigate issues         |
+| `/code-review` | `code-review.prompt.md` | Review code quality        |
+| `/docs-update` | `docs-update.prompt.md` | Update documentation       |
+| `/watzup`      | `watzup.prompt.md`      | Summarize changes          |
+| `/scout`       | `scout.prompt.md`       | Explore codebase           |
+| `/investigate` | `investigate.prompt.md` | Deep dive analysis         |
 
 **Usage:** Read and follow the prompt file instructions for each step in sequence.
 
@@ -130,13 +128,13 @@ Reference agents from `.github/agents/` for specialized tasks:
 ```
 User Request
 |-- Contains "implement/add/create/build"?
-|   +-- YES -> Feature workflow: /plan → /cook → /post-task-review → /code-review → /dual-pass-review → /test → /docs-update → /watzup
+|   +-- YES -> Feature workflow: /plan → /cook → /code-review → /test → /docs-update → /watzup
 |
 |-- Contains "bug/fix/error/broken"?
-|   +-- YES -> Bugfix workflow: /debug → /plan → /fix → /post-task-review → /code-review → /dual-pass-review → /test
+|   +-- YES -> Bugfix workflow: /debug → /plan → /fix → /code-review → /test
 |
 |-- Contains "refactor/improve/clean"?
-|   +-- YES -> Refactor workflow: /plan → /code → /post-task-review → /code-review → /dual-pass-review → /test
+|   +-- YES -> Refactor workflow: /plan → /code → /code-review → /test
 |
 |-- Contains "docs/document/readme"?
 |   +-- YES -> Documentation workflow: /docs-update → /watzup

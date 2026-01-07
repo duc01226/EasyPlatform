@@ -73,7 +73,7 @@
       ],
       "name": "Bug Fix",
       "priority": 20,
-      "sequence": ["debug", "plan", "fix", "post-task-review", "code-review", "dual-pass-review", "test"],
+      "sequence": ["debug", "plan", "fix", "code-review", "test"],
       "triggerPatterns": [
         "\\b(bug|fix|broken|issue|crash|fail|exception)\\b",
         "\\b(error|errors)\\s+(in|with|on|when|while|returned|returning)\\b",
@@ -133,7 +133,7 @@
       ],
       "name": "Feature Implementation",
       "priority": 10,
-      "sequence": ["plan", "cook", "post-task-review", "code-review", "dual-pass-review", "test", "docs-update", "watzup"],
+      "sequence": ["plan", "cook", "code-review", "test", "docs-update", "watzup"],
       "triggerPatterns": [
         "\\b(implement|add|create|build|develop|make)\\b.*\\b(feature|functionality|capability|module|component)\\b",
         "\\bnew\\s+(feature|functionality|capability)\\b",
@@ -223,7 +223,7 @@
       ],
       "name": "Code Refactoring",
       "priority": 25,
-      "sequence": ["plan", "code", "post-task-review", "code-review", "dual-pass-review", "test"],
+      "sequence": ["plan", "code", "code-review", "test"],
       "triggerPatterns": [
         "\\b(refactor|restructure|reorganize|clean\\s*up)\\b",
         "\\bimprove\\s+(the|this)?\\s*\\w*\\s*(code|handling|logic|structure|performance)\\b",

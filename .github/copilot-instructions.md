@@ -50,10 +50,10 @@ For detailed routing logic, see the **`workflow-router`** agent in `.github/agen
 
 | Intent | Trigger Keywords | Workflow Sequence |
 |--------|------------------|-------------------|
-| **Feature** | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/test` → `/dual-pass-review` → `/docs-update` → `/watzup` |
-| **Bug Fix** | bug, fix, error, broken, crash, not working, debug | `/debug` → `/plan` → `/fix` → `/test` → `/dual-pass-review` |
+| **Feature** | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/code-review` → `/test` → `/docs-update` → `/watzup` |
+| **Bug Fix** | bug, fix, error, broken, crash, not working, debug | `/debug` → `/plan` → `/fix` → `/code-review` → `/test` |
 | **Documentation** | docs, document, readme, update docs | `/docs-update` → `/watzup` |
-| **Refactoring** | refactor, improve, clean up, restructure | `/plan` → `/code` → `/test` → `/dual-pass-review` |
+| **Refactoring** | refactor, improve, clean up, restructure | `/plan` → `/code` → `/code-review` → `/test` |
 | **Code Review** | review, check, audit code, PR review | `/code-review` → `/watzup` |
 | **Investigation** | how does, where is, explain, understand, find | `/scout` → `/investigate` |
 
@@ -70,11 +70,42 @@ Each workflow step executes a prompt file from `.github/prompts/`:
 | `/fix` | `fix.prompt.md` | Apply fixes |
 | `/debug` | `debug.prompt.md` | Investigate issues |
 | `/code-review` | `code-review.prompt.md` | Review code quality |
-| `/dual-pass-review` | `dual-pass-review.prompt.md` | Dual-pass review (first pass + conditional second) |
 | `/docs-update` | `docs-update.prompt.md` | Update documentation |
 | `/watzup` | `watzup.prompt.md` | Summarize changes |
-| `/scout` | `scout.prompt.md` | Explore codebase |
-| `/investigate` | `investigate.prompt.md` | Deep dive analysis |
+| `/scout` | `scout.prompt.md` | Priority-categorized file discovery |
+| `/investigate` | `investigate.prompt.md` | Knowledge graph construction + analysis |
+
+### Investigation Workflow (Enhanced)
+
+The `/scout` → `/investigate` workflow now supports **structured knowledge model construction**:
+
+**Scout Phase Features:**
+- Priority-based file categorization (HIGH/MEDIUM/LOW)
+- Numbered file lists for easy reference
+- Cross-service message bus analysis (Consumer → Producer tracing)
+- Structured output with suggested starting points
+
+**Investigate Phase Features:**
+- External memory at `ai_task_analysis_notes/[feature]-investigation.ai_task_analysis_notes_temp.md`
+- Knowledge Graph with detailed file analysis schema (15+ fields per file)
+- Batch processing with TodoWrite (groups of 10 files)
+- Progress tracking (Phase, Items Processed, Total Items)
+- Anti-hallucination checklist before claims
+
+**File Analysis Schema Fields:**
+```
+filePath, type, architecturalPattern, content, symbols, dependencies,
+businessContext, referenceFiles, relevanceScore, evidenceLevel,
+uncertainties, platformAbstractions, serviceContext, dependencyInjection,
+genericTypeParameters, messageBusAnalysis (for Consumers)
+```
+
+**Priority Categories:**
+| Priority | File Types |
+|----------|------------|
+| HIGH | Domain Entities, Commands, Queries, Event Handlers, Controllers, Jobs, Consumers, Components |
+| MEDIUM | Services, Helpers, DTOs, Repositories |
+| LOW | Tests, Config |
 
 ### Workflow Execution Protocol (MANDATORY STEPS)
 

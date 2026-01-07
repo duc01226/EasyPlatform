@@ -120,6 +120,15 @@
             "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/post-edit-prettier.cjs"
           }
         ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/workflow-step-tracker.cjs"
+          }
+        ]
       }
     ],
     "SessionEnd": [

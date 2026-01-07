@@ -1,104 +1,297 @@
 # Investigate Feature: $ARGUMENTS
 
-Investigate and explain how an existing feature or logic works. Follow the systematic investigation workflow based on the `feature-investigation` skill.
+Investigate and explain how an existing feature or logic works using structured knowledge model construction.
 
 **KEY PRINCIPLE**: This is a **READ-ONLY exploration** - no code changes. Focus on understanding and explaining.
 
-**IMPORTANT**: Always use external memory at `ai_task_analysis_notes/[feature-name]-investigation.ai_task_analysis_notes_temp.md` for structured analysis.
+## Variables
 
-## IMPORTANT: Anti-Hallucination Protocols
-
-Before any claim:
-
-1. "What assumptions am I making about this feature?"
-2. "Have I verified this with actual code evidence?"
-3. "Could I be wrong about how this works?"
+- **FEATURE**: $ARGUMENTS (the feature/logic to investigate)
+- **ANALYSIS_FILE**: `ai_task_analysis_notes/$ARGUMENTS-investigation.ai_task_analysis_notes_temp.md`
 
 ---
 
-## Phase 1: Understand the Question
+## PHASE 1A: INITIALIZATION AND DISCOVERY
 
-1. **Parse the investigation question** from: $ARGUMENTS
-2. **Create analysis notes** at `ai_task_analysis_notes/[feature-name]-investigation.ai_task_analysis_notes_temp.md`
-3. **Search for related code** using grep and semantic search:
-    - Extract keywords from the question
-    - Search patterns: `.*Command.*{Feature}`, `.*Query.*{Feature}`, `.*Component.*{Feature}`
-4. **Identify affected services** (TextSnippet, TextSnippet, TextSnippet, etc.)
+### Step 1: Initialize Analysis File
 
----
-
-## Phase 2: Trace the Code Flow
-
-1. **Find entry points** (API endpoint, UI action, scheduled job, message)
-2. **Trace through handlers** (commands, queries, event handlers)
-3. **Document data flow** step by step
-4. **Map side effects** (events, notifications, cross-service calls)
-
----
-
-## Phase 3: Document Findings
-
-Document in the analysis file:
-
-1. **Data Flow Diagram** (text-based)
-2. **Key Files** with file:line references
-3. **Business Logic** extracted from code
-4. **Platform Patterns** identified
-
----
-
-## Phase 4: Present Findings
-
-Present your findings in a clear format:
+Create the analysis file at `ai_task_analysis_notes/[feature-name]-investigation.ai_task_analysis_notes_temp.md` with these required sections:
 
 ```markdown
-## Answer
+## Metadata
 
-[Direct answer to the question in 1-2 paragraphs]
+```markdown
+**Original Prompt:** [User's investigation question]
+**Task Description:** [What we're investigating]
+**Source Code Structure:** See ai-prompt-context.md
+```
+
+## Progress
+
+- **Phase**: 1A
+- **Items Processed**: 0
+- **Total Items**: 0
+- **Current Operation**: "initialization"
+- **Current Focus**: "[feature summary]"
+
+## Errors
+
+[None yet]
+
+## Assumption Validations
+
+| Assumption | Status | Evidence |
+|------------|--------|----------|
+| ... | Pending/Validated/Invalid | ... |
+
+## File List
+
+[Numbered list of files to analyze]
+
+## Knowledge Graph
+
+[Detailed analysis of each file]
+```
+
+### Step 2: Semantic Discovery
+
+Search for related code using multiple patterns:
+
+**Primary Patterns:**
+```
+*Command*{Feature}*           # CQRS Commands
+*Query*{Feature}*             # CQRS Queries
+*{Feature}*EventHandler*      # Entity Event Handlers
+*{Feature}*Consumer*          # Message Bus Consumers
+*{Feature}*BackgroundJob*     # Background Jobs
+*{Feature}*Controller*        # API Controllers
+```
+
+**Secondary Patterns:**
+```
+.*EventHandler.*{Feature}|{Feature}.*EventHandler
+.*BackgroundJob.*{Feature}|{Feature}.*BackgroundJob
+.*Consumer.*{Feature}|{Feature}.*Consumer
+.*Service.*{Feature}|{Feature}.*Service
+.*Helper.*{Feature}|{Feature}.*Helper
+```
+
+**File Types:** `**/*.{cs,ts,html}`
+
+### Step 3: Prioritize Files
+
+**HIGH PRIORITY (Must Analyze):**
+1. Domain Entities (`Domain/Entities/`)
+2. CQRS Commands (`UseCaseCommands/`)
+3. CQRS Queries (`UseCaseQueries/`)
+4. Entity Event Handlers (`UseCaseEvents/`)
+5. Controllers (`Controllers/`)
+6. Background Jobs (`*BackgroundJob*.cs`)
+7. Message Bus Consumers (`*Consumer.cs`)
+8. Frontend Components (`*.component.ts`)
+
+**MEDIUM PRIORITY:**
+- Services, Helpers, DTOs, Repositories
+
+Save ALL file paths as numbered list under `## File List` in analysis file.
+
+---
+
+## PHASE 1B: KNOWLEDGE GRAPH CONSTRUCTION
+
+### Step 1: Batch Processing Setup
+
+Count total files, split into batches of 10. Use TodoWrite to create tasks:
+
+```
+- [ ] Analyze batch 1 (files 1-10)
+- [ ] Analyze batch 2 (files 11-20)
+...
+```
+
+### Step 2: File Analysis Schema
+
+For each file, add to `## Knowledge Graph` with this structure:
+
+```markdown
+### [#] [FileName]
+
+- **filePath**: Full path to file
+- **type**: Entity | Command | Query | EventHandler | Consumer | Controller | Job | Component | Service
+- **architecturalPattern**: CQRS | Repository | EventSourcing | MessageBus | etc.
+- **content**: Summary of purpose and logic
+- **symbols**: Key classes, interfaces, methods
+- **dependencies**: Imported modules / using statements
+- **businessContext**: How it contributes to business requirements
+- **referenceFiles**: Other files using this file's symbols
+- **relevanceScore**: 1-10 (10 = most relevant)
+- **evidenceLevel**: verified | inferred
+- **uncertainties**: Aspects you're unsure about
+- **platformAbstractions**: Base classes used (PlatformCqrsCommand, PlatformEntity, etc.)
+- **serviceContext**: Which microservice owns this
+- **dependencyInjection**: DI registrations
+- **genericTypeParameters**: Generic type relationships
+
+#### Targeted Analysis
+
+**For Backend:**
+- authorizationPolicies, commands, queries, domainEntities
+- repositoryPatterns, businessRuleImplementations
+
+**For Consumers:**
+- messageBusMessage: The `*BusMessage` type consumed
+- messageBusProducers: Files that SEND this message (grep across ALL services)
+- crossServiceIntegration: How services communicate
+
+**For Frontend:**
+- componentHierarchy, routeConfig, stateManagementStores
+- dataBindingPatterns, validationStrategies
+```
+
+### Step 3: Cross-Service Analysis (CRITICAL for Consumers)
+
+When analyzing `*Consumer.cs` files extending `PlatformApplicationMessageBusConsumer<T>`:
+
+1. Identify the `*BusMessage` type
+2. Grep search ALL services for files that **publish** this message
+3. Document producer files and their service locations
+4. Map the cross-service data flow
+
+---
+
+## PHASE 2: CODE FLOW TRACING
+
+### Step 1: Entry Points
+
+Identify how the feature is triggered:
+- API Endpoint → Controller → Command/Query Handler
+- UI Action → Component → API Service → Backend
+- Scheduled Job → BackgroundJob → Handler
+- Message → Consumer → Handler
+
+### Step 2: Trace Execution Path
+
+Document in analysis file:
+
+```markdown
+## Data Flow
+
+[Request] → [Controller] → [Handler] → [Repository] → [Response]
+                              ↓
+                       [Event Handler] → [Side Effects]
+                              ↓
+                       [Message Bus] → [Consumer in Other Service]
+```
+
+### Step 3: Side Effects Mapping
+
+- Entity events raised
+- Messages published to bus
+- External service calls
+- Database operations
+- Notifications triggered
+
+---
+
+## PHASE 3: PRESENT FINDINGS
+
+### Output Format
+
+```markdown
+## Executive Summary
+
+[1-2 paragraph direct answer to the investigation question]
 
 ## How It Works
 
-### 1. [First Step]
+### 1. [Entry Point]
+[Explanation with `file:line` reference]
 
-[Explanation with code reference at `file:line`]
+### 2. [Core Processing]
+[Explanation with `file:line` reference]
 
-### 2. [Second Step]
-
-[Explanation with code reference at `file:line`]
+### 3. [Side Effects]
+[Explanation with `file:line` reference]
 
 ## Key Files
 
-| File                  | Purpose   |
-| --------------------- | --------- |
-| `path/to/file.cs:123` | [Purpose] |
+| File | Type | Purpose | Relevance |
+|------|------|---------|-----------|
+| `path/file.cs:123` | Command | [Purpose] | 10/10 |
 
-## Data Flow
+## Data Flow Diagram
 
-[Text diagram showing the flow]
+```
+[Visual text diagram of the flow]
+```
+
+## Platform Patterns Used
+
+- **Pattern**: How it's applied
+- **Pattern**: How it's applied
+
+## Cross-Service Integration
+
+| Source Service | Message | Target Service | Consumer |
+|----------------|---------|----------------|----------|
+| ... | ... | ... | ... |
+
+## Unresolved Questions
+
+- [Question 1]
+- [Question 2]
 
 ## Want to Know More?
 
-I can explain further:
-
-- [Topic 1]
-- [Topic 2]
+- [Related topic 1]
+- [Related topic 2]
 ```
 
 ---
 
-## Quick Verification Checklist
+## Anti-Hallucination Protocol
 
-Before making any claim:
+Before ANY claim, verify:
 
-- [ ] Found actual code evidence?
+1. "What assumptions am I making?"
+2. "Have I verified with actual code evidence?"
+3. "Could I be wrong about how this works?"
+
+### Verification Checklist
+
+- [ ] Found actual code evidence for each claim?
 - [ ] Traced the full code path?
-- [ ] Checked cross-service flows?
-- [ ] Documented all findings with file:line?
+- [ ] Checked cross-service message flows?
+- [ ] Documented ALL findings with `file:line`?
 - [ ] Answered the original question?
+- [ ] Listed unresolved questions?
 
 **If ANY unchecked → DO MORE INVESTIGATION**
 
 ---
 
-Use the `feature-investigation` skill for the complete investigation protocol.
-See `ai-prompt-context.md` for platform patterns and context.
+## Progress Tracking
+
+Update `## Progress` section after each batch:
+
+```markdown
+- **Phase**: 1B
+- **Items Processed**: 20
+- **Total Items**: 35
+- **Current Operation**: "analyzing batch 3"
+- **Current Focus**: "Event Handlers"
+```
+
+---
+
+## Quick Reference
+
+| Looking for... | Search in... |
+|----------------|--------------|
+| Entity CRUD | `UseCaseCommands/`, `UseCaseQueries/` |
+| Business logic | `Domain/Entities/`, `*Service.cs` |
+| Side effects | `UseCaseEvents/`, `*EventHandler.cs` |
+| Cross-service | `*Consumer.cs`, `*BusMessage.cs` |
+| API endpoints | `Controllers/`, `*Controller.cs` |
+| Frontend | `libs/apps-domains/`, `*.component.ts` |
+| Background processing | `*BackgroundJob*.cs`, `*Job.cs` |

@@ -20,6 +20,10 @@ const {
   resolveNamingPattern,
   normalizePath
 } = require('./lib/ck-config-utils.cjs');
+const {
+  loadState: loadWorkflowState,
+  getCurrentStepInfo
+} = require('./lib/workflow-state.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -94,6 +98,45 @@ function buildPlanContext(sessionId, config) {
   return { reportsPath, gitBranch, planLine, namePattern, validationMode, validationMin, validationMax };
 }
 
+/**
+ * Build workflow progress reminder lines
+ * @returns {string[]} Array of reminder lines, empty if no active workflow
+ */
+function buildWorkflowProgressLines() {
+  try {
+    const state = loadWorkflowState();
+    if (!state) return [];
+
+    const info = getCurrentStepInfo();
+    if (!info) return [];
+
+    const remainingDisplay = info.remainingSteps.map(step => {
+      const cmd = state.commandMapping?.[step];
+      return cmd?.claude || `/${step}`;
+    }).join(' → ');
+
+    const completedDisplay = info.completedSteps.length > 0
+      ? info.completedSteps.map(step => {
+          const cmd = state.commandMapping?.[step];
+          return cmd?.claude || `/${step}`;
+        }).join(', ')
+      : 'None';
+
+    return [
+      ``,
+      `## **[ACTIVE WORKFLOW]** ${info.workflowName}`,
+      `- **Progress:** Step ${info.stepNumber}/${info.totalSteps}`,
+      `- **Current:** Execute \`${info.claudeCommand}\``,
+      `- **Remaining:** ${remainingDisplay}`,
+      `- **Completed:** ${completedDisplay}`,
+      `- **Control:** Say "skip" to skip current step, "abort" to cancel workflow`,
+      ``
+    ];
+  } catch (e) {
+    return [];
+  }
+}
+
 function wasRecentlyInjected(transcriptPath) {
   try {
     if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
@@ -128,7 +171,14 @@ function buildReminder({ thinkingLanguage, responseLanguage, devRulesPath, catal
     languageLines.push(``);
   }
 
+  // Build workflow progress reminder (if active workflow exists)
+  const workflowLines = buildWorkflowProgressLines();
+
   return [
+    // ─────────────────────────────────────────────────────────────────────────
+    // ACTIVE WORKFLOW (if any) - placed at top for visibility
+    // ─────────────────────────────────────────────────────────────────────────
+    ...workflowLines,
     // ─────────────────────────────────────────────────────────────────────────
     // LANGUAGE (thinking + response, if configured)
     // ─────────────────────────────────────────────────────────────────────────

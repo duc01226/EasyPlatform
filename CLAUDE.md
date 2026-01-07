@@ -404,10 +404,10 @@ Before responding to any task request, analyze the user's prompt to detect inten
 
 | Intent                     | Trigger Keywords                                    | Workflow Sequence                                                                                           |
 | -------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Feature Implementation** | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test` → `/docs-update` → `/watzup` |
-| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working  | `/debug` → `/plan` → `/fix` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test`          |
+| **Feature Implementation** | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/review/codebase` → `/test` → `/docs-update` → `/watzup` |
+| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working  | `/debug` → `/plan` → `/fix` → `/review/codebase` → `/test`          |
 | **Documentation**          | docs, document, readme, update docs                 | `/docs-update` → `/watzup`                                                                                  |
-| **Refactoring**            | refactor, restructure, clean up, improve code       | `/plan` → `/code` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test`                    |
+| **Refactoring**            | refactor, restructure, clean up, improve code       | `/plan` → `/code` → `/review/codebase` → `/test`                    |
 | **Code Review**            | review, check, audit code, PR review                | `/code-review` → `/watzup`                                                                                  |
 | **Investigation**          | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                                                                   |
 
@@ -429,7 +429,7 @@ Before responding to any task request, analyze the user's prompt to detect inten
 
 **Response:**
 
-> Detected: **Feature Implementation**. Following workflow: `/plan` → `/cook` → `/post-task-review` → `/code-review` → `/dual-pass-review` → `/test` → `/docs-update` → `/watzup`
+> Detected: **Feature Implementation**. Following workflow: `/plan` → `/cook` → `/review/codebase` → `/test` → `/docs-update` → `/watzup`
 >
 > Proceed with this workflow? (yes/no/quick)
 

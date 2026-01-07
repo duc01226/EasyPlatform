@@ -449,6 +449,7 @@ src/PlatformExampleAppWeb/e2e/playwright-report/
 
 .claude/memory/session-log.md
 .claude/settings.local.json
+.claude/.workflow-state.json
 
 # Auto Claude data directory
 .auto-claude/

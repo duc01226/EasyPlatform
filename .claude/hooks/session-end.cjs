@@ -3,7 +3,7 @@
  * SessionEnd Hook - Cleanup on session end
  *
  * Fires: When session ends (clear, compact, user exit)
- * Purpose: Delete compact marker files to reset context baseline on /clear
+ * Purpose: Delete compact marker files and workflow state to reset context baseline on /clear
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
@@ -11,6 +11,7 @@
 
 const fs = require('fs');
 const { deleteMarker } = require('./lib/context-tracker.cjs');
+const { clearState: clearWorkflowState } = require('./lib/workflow-state.cjs');
 
 async function main() {
   try {
@@ -24,6 +25,8 @@ async function main() {
     // This ensures clean slate for the next session
     if (reason === 'clear' && sessionId) {
       deleteMarker(sessionId);
+      // Also clear workflow state on session clear
+      clearWorkflowState();
     }
 
     process.exit(0);
