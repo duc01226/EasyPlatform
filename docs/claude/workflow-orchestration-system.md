@@ -275,19 +275,23 @@ function buildWorkflowInstructions(detection, config) {
     lines.push('1. **FIRST:** Announce the detected workflow to the user:');
     lines.push(`   > "Detected: **${workflow.name}** workflow. I will follow: ${sequenceDisplay}"`);
     lines.push('');
-    lines.push('2. **ASK:** "Proceed with this workflow? (yes/no/quick)"');
+    lines.push('2. **CREATE TODO LIST (MANDATORY):** Use TodoWrite to create a task for each step');
+    lines.push('');
+    lines.push('3. **ASK:** "Proceed with this workflow? (yes/no/quick)"');
     lines.push('   - "yes" → Execute full workflow');
     lines.push('   - "no" → Ask what they want instead');
     lines.push('   - "quick" → Skip workflow, handle directly');
     lines.push('');
-    lines.push('3. **THEN:** Execute each step in sequence, using the appropriate slash command');
+    lines.push('4. **EXECUTE:** Execute each step, marking todos as completed after each');
   } else {
     lines.push('### Instructions (MUST FOLLOW)');
     lines.push('');
     lines.push('1. **ANNOUNCE:** Tell the user:');
     lines.push(`   > "Detected: **${workflow.name}** workflow. Following: ${sequenceDisplay}"`);
     lines.push('');
-    lines.push('2. **EXECUTE:** Follow the workflow sequence, using each slash command in order');
+    lines.push('2. **CREATE TODO LIST (MANDATORY):** Use TodoWrite to create a task for each step');
+    lines.push('');
+    lines.push('3. **EXECUTE:** Follow the workflow sequence, marking todos as completed after each step');
   }
 
   return lines.join('\n');
@@ -607,12 +611,14 @@ Add a dark mode toggle to the settings page
 1. **FIRST:** Announce the detected workflow to the user:
    > "Detected: **Feature Implementation** workflow. I will follow: /plan → /cook → /test → /code-review → /docs-update → /watzup"
 
-2. **ASK:** "Proceed with this workflow? (yes/no/quick)"
+2. **CREATE TODO LIST (MANDATORY):** Use TodoWrite to create a task for each step
+
+3. **ASK:** "Proceed with this workflow? (yes/no/quick)"
    - "yes" → Execute full workflow
    - "no" → Ask what they want instead
    - "quick" → Skip workflow, handle directly
 
-3. **THEN:** Execute each step in sequence, using the appropriate slash command
+4. **EXECUTE:** Execute each step, marking todos as completed after each
 
 [System Reminder - from dev-rules-reminder.cjs]
 ## Session
@@ -632,44 +638,58 @@ Add a dark mode toggle to the settings page
 
 #### Phase 3: LLM Inference (Claude Follows Instructions)
 
-Claude generates this response:
+Claude generates this response and creates todo list:
 
 ```
 > Detected: **Feature Implementation** workflow.
 > I will follow: /plan → /cook → /test → /code-review → /docs-update → /watzup
 
+[Creates todo list via TodoWrite:]
+- [ ] Execute /plan - Create implementation plan
+- [ ] Execute /cook - Implement feature
+- [ ] Execute /test - Run tests
+- [ ] Execute /code-review - Review changes
+- [ ] Execute /docs-update - Update documentation
+- [ ] Execute /watzup - Summarize changes
+
 Proceed with this workflow? (yes/no/quick)
 ```
 
-#### Phase 4: User Confirms → Sequential Skill Execution
+#### Phase 4: User Confirms → Sequential Skill Execution with Todo Tracking
 
-User says "yes", then Claude executes each step:
+User says "yes", then Claude executes each step with todo tracking:
 
 ```
 Step 1: Claude calls Skill tool with skill="plan"
   → Skill loads plan.md template
   → Claude creates implementation plan
   → Writes to plans/251231-1128-dark-mode/README.md
+  → Marks "/plan" todo as completed ✓
 
 Step 2: Claude calls Skill tool with skill="cook"
   → Skill loads cook.md template
   → Claude implements the feature
   → Creates src/components/DarkModeToggle.tsx
+  → Marks "/cook" todo as completed ✓
 
 Step 3: Claude calls Skill tool with skill="code-review"
   → Reviews changes for correctness + convention compliance
   → Generates review summary
+  → Marks "/code-review" todo as completed ✓
 
 Step 4: Claude calls Skill tool with skill="test"
   → Skill loads test.md template
   → Claude runs tests
   → Verifies all tests pass
+  → Marks "/test" todo as completed ✓
 
 Step 5: Claude calls Skill tool with skill="docs-update"
   → Updates documentation
+  → Marks "/docs-update" todo as completed ✓
 
 Step 6: Claude calls Skill tool with skill="watzup"
   → Generates summary of changes
+  → Marks "/watzup" todo as completed ✓
 ```
 
 ---
@@ -682,10 +702,12 @@ The LLM doesn't have built-in workflow logic. Instead, it follows instructions b
 | ------------- | ------------------------ | --------------------------------------------- |
 | **Hook**      | JavaScript script        | Runs BEFORE LLM, analyzes prompt              |
 | **Injection** | stdout → system-reminder | Instructions appended to LLM's context        |
+| **Todo**      | TodoWrite tool           | Creates task list for each workflow step      |
 | **Inference** | LLM reads "MUST FOLLOW"  | LLM treats injected text as authoritative     |
+| **Tracking**  | TodoWrite updates        | Marks tasks completed after each step         |
 | **Tools**     | Skill/Bash/Read/Edit     | LLM calls tools to execute each workflow step |
 
-**Key Insight:** Instructions with phrases like "MUST FOLLOW", "Instructions", and numbered steps influence LLM behavior because they appear as system-level guidance that the model is trained to respect.
+**Key Insight:** Instructions with phrases like "MUST FOLLOW", "Instructions", and numbered steps influence LLM behavior because they appear as system-level guidance that the model is trained to respect. The **mandatory todo list** reinforces this by creating visible progress tracking.
 
 ---
 
@@ -897,8 +919,10 @@ The Claude Code workflow orchestration system in this project achieves **declara
 
 1. **Define once**: Patterns and sequences in `workflows.json`
 2. **Run automatically**: Hooks intercept prompts and inject instructions
-3. **AI follows**: Claude reads injected instructions and executes workflows
-4. **Override easily**: `quick:` prefix or explicit commands bypass automation
-5. **Never forgets**: State persistence ensures long workflows complete fully
+3. **Todo first**: LLM creates task list BEFORE executing any workflow step (MANDATORY)
+4. **AI follows**: Claude reads injected instructions and executes workflows
+5. **Track progress**: Each step marked completed via TodoWrite after execution
+6. **Override easily**: `quick:` prefix or explicit commands bypass automation
+7. **Never forgets**: State persistence ensures long workflows complete fully
 
-This architecture separates **intent detection** (JavaScript hooks) from **execution** (LLM + skills), creating a maintainable and extensible workflow system.
+This architecture separates **intent detection** (JavaScript hooks) from **execution** (LLM + skills + todo tracking), creating a maintainable and extensible workflow system with visible progress.

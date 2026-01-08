@@ -80,6 +80,31 @@ for (workflow of workflows) {
 }
 ```
 
+## Mandatory Todo Task Creation (CRITICAL)
+
+**Before executing ANY workflow, you MUST create a todo list for each step:**
+
+```
+User: "Fix the login bug"
+     ↓
+Claude creates todo list:
+- [ ] Execute /scout - Find relevant files
+- [ ] Execute /investigate - Build knowledge graph
+- [ ] Execute /debug - Root cause analysis
+- [ ] Execute /plan - Create fix plan
+- [ ] Execute /fix - Implement fix
+- [ ] Execute /code-review - Review changes
+- [ ] Execute /test - Verify fix
+     ↓
+Claude marks each todo as completed after execution
+```
+
+**Why mandatory?**
+- Provides visibility into multi-step progress
+- Prevents skipped steps
+- Enables user to track remaining work
+- Ensures systematic execution
+
 ## Execution Example
 
 ```
@@ -93,7 +118,9 @@ Claude: "Detected: Feature Implementation. Proceed? (yes/no/quick)"
      ↓
 User: "yes"
      ↓
-Claude: Calls Skill("plan") → Skill("cook") → Skill("test")
+Claude: Creates todo list with all workflow steps
+     ↓
+Claude: Executes Skill("plan") → marks todo done → Skill("cook") → marks todo done → ...
 ```
 
 ## Why It Works
@@ -102,8 +129,9 @@ LLM follows workflows because:
 - Instructions injected as `<system-reminder>` blocks
 - Phrases like "MUST FOLLOW" treated as authoritative
 - Numbered steps provide clear execution order
+- **Todo task tracking** provides visible progress and completion markers
 
-**No built-in workflow logic** - just context injection that influences LLM behavior.
+**No built-in workflow logic** - just context injection + todo tracking that influences LLM behavior.
 
 ---
 
