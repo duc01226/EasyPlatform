@@ -1419,13 +1419,22 @@ public static class DependencyInjectionExtension
     }
 
     /// <inheritdoc cref="ExecuteScoped" />
+    /// <remarks>
+    /// Uses <c>await using</c> for proper async disposal of scoped services (e.g., DbContext).
+    /// See <see cref="ExecuteScopedAsync{TResult}"/> remarks for details.
+    /// </remarks>
     public static async Task ExecuteScopedAsync(this IServiceProvider serviceProvider, Func<IServiceScope, Task> method)
     {
+        // Create scope BEFORE Task.Run to prevent serviceProvider being disposed before scope creation
+        // when this method is called without await (fire-and-forget pattern).
         var scope = serviceProvider.CreateTrackedScope();
 
         await Task.Run(async () =>
         {
-            using (scope) await method(scope);
+            await using (scope)
+            {
+                await method(scope);
+            }
         });
     }
 
@@ -1452,11 +1461,32 @@ public static class DependencyInjectionExtension
     }
 
     /// <inheritdoc cref="ExecuteScoped" />
+    /// <remarks>
+    /// <para>
+    /// <b>IMPORTANT - Async Disposal for Scoped Services:</b>
+    /// </para>
+    /// <para>
+    /// Uses <c>await using</c> instead of <c>using</c> to properly dispose async resources.
+    /// This fixes intermittent exceptions when caller scope is disposed (e.g., HTTP request cancellation):
+    /// </para>
+    /// <list type="bullet">
+    /// <item><description>ObjectDisposedException: "Cannot access a disposed context instance"</description></item>
+    /// <item><description>InvalidOperationException: Connection pool race conditions during disposal</description></item>
+    /// </list>
+    /// <para>
+    /// Root cause: Synchronous disposal of scoped services containing async resources (e.g., DbContext)
+    /// can cause race conditions. Async disposal ensures proper cleanup sequence.
+    /// </para>
+    /// </remarks>
     public static async Task<TResult> ExecuteScopedAsync<TResult>(this IServiceProvider serviceProvider, Func<IServiceScope, Task<TResult>> method)
     {
+        // Create scope BEFORE Task.Run to prevent serviceProvider being disposed before scope creation
+        // when this method is called without await (fire-and-forget pattern).
+        var scope = serviceProvider.CreateTrackedScope();
+
         return await Task.Run(async () =>
         {
-            using (var scope = serviceProvider.CreateTrackedScope())
+            await using (scope)
             {
                 // get out var result. do not return directly to prevent scope being disposed before function is executed
                 var result = await method(scope);
@@ -1760,8 +1790,13 @@ public static class DependencyInjectionExtension
     /// will pop the stack.
     /// </summary>
     /// <param name="serviceProvider">The current <see cref="IServiceProvider"/> used to resolve the scope factory.</param>
-    /// <returns>A new <see cref="IServiceScope"/> that will track its provider until disposed.</returns>
-    public static IServiceScope CreateTrackedScope(this IServiceProvider serviceProvider)
+    /// <returns>A new <see cref="TrackedServiceScope"/> that will track its provider until disposed.</returns>
+    /// <remarks>
+    /// Returns <see cref="TrackedServiceScope"/> (which implements both <see cref="IServiceScope"/> and
+    /// <see cref="IAsyncDisposable"/>) to enable async disposal with <c>await using</c> for proper
+    /// cleanup of async resources (e.g., DbContext, connections).
+    /// </remarks>
+    public static TrackedServiceScope CreateTrackedScope(this IServiceProvider serviceProvider)
     {
         var scope = serviceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
 
@@ -1790,8 +1825,25 @@ public static class DependencyInjectionExtension
 
     /// <summary>
     /// Wraps a real IServiceScope so that Dispose() pops our tracker.
+    /// Implements IAsyncDisposable to properly dispose async resources (e.g., DbContext, connections).
     /// </summary>
-    public sealed class TrackedServiceScope : IServiceScope
+    /// <remarks>
+    /// <para>
+    /// <b>IMPORTANT - Async Disposal for Scoped Services:</b>
+    /// </para>
+    /// <para>
+    /// The underlying IServiceScope in .NET 8 implements IAsyncDisposable. When scoped services include
+    /// async resources (e.g., DbContext), synchronous disposal can cause race conditions where the
+    /// connection pool tries to close connections that are still being established.
+    /// </para>
+    /// <para>
+    /// By implementing IAsyncDisposable and using <c>await using</c> in ExecuteScopedAsync, we ensure:
+    /// 1. Proper async cleanup of scoped resources
+    /// 2. No connection pool race condition errors during disposal
+    /// 3. No ObjectDisposedException from premature context disposal
+    /// </para>
+    /// </remarks>
+    public sealed class TrackedServiceScope : IServiceScope, IAsyncDisposable
     {
         private readonly IServiceScope childScope;
 
@@ -1807,6 +1859,16 @@ public static class DependencyInjectionExtension
         {
             ScopedProviderTracker.Remove(childScope.ServiceProvider);
             childScope.Dispose();
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            ScopedProviderTracker.Remove(childScope.ServiceProvider);
+
+            if (childScope is IAsyncDisposable asyncDisposable)
+                await asyncDisposable.DisposeAsync();
+            else
+                childScope.Dispose();
         }
     }
 
