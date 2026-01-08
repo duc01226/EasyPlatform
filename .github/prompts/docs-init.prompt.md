@@ -129,8 +129,42 @@ After documentation creation:
 
 ---
 
+## [CRITICAL] Code Evidence Requirements
+
+**All feature documentation MUST include verifiable code evidence.** This is non-negotiable.
+
+### Evidence Format
+
+```markdown
+**Evidence**: `{RelativeFilePath}:{LineNumber}` or `{RelativeFilePath}:{StartLine}-{EndLine}`
+```
+
+### Evidence Verification Table
+
+| Entity/Component | Documented Lines | Actual Lines | Status |
+|------------------|------------------|--------------|--------|
+| `Entity.cs` | L6-15 | L6-15 | ✅ Verified |
+
+### Status Indicators
+
+- ✅ **Verified**: Line numbers confirmed by reading source
+- ⚠️ **Stale**: Code changed, line numbers need refresh
+- ❌ **Missing**: No evidence provided
+
+### Evidence Sources
+
+| Content Type | Primary Evidence Source |
+|--------------|------------------------|
+| Validation errors | `ErrorMessage.cs` |
+| Entity properties | `{Entity}.cs` |
+| API endpoints | Controller + Handler files |
+| Frontend behavior | `*.service.ts`, `*.component.ts` |
+
+---
+
 ## Quality Checklist
 
+### Structure
 - [ ] Scouted codebase structure (Phase 1)
 - [ ] Investigated architecture (Phase 2)
 - [ ] Created documentation with evidence (Phase 3)
@@ -138,5 +172,11 @@ After documentation creation:
 - [ ] Referenced actual file paths
 - [ ] Included code examples
 - [ ] Documented key patterns
+
+### Code Evidence (MANDATORY)
+- [ ] **EVERY test case has Evidence field** with `file:line` format
+- [ ] **No template placeholders** remain (`{FilePath}`, `{LineRange}`)
+- [ ] **Line numbers verified** by reading actual source files
+- [ ] **Status column included** (✅/⚠️/❌) for verification tables
 
 **IMPORTANT**: Focus on documentation only - do not start implementing code changes.

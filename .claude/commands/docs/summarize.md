@@ -15,6 +15,15 @@ $2: Should scan codebase (`Boolean`, default: `false`)
 ## Should Scan Codebase:
 <should_scan_codebase>$2</should_scan_codebase>
 
+## [CRITICAL] Code Evidence Requirements
+
+All documentation summaries MUST follow evidence rules from `.claude/skills/feature-docs/SKILL.md` → `[CRITICAL] MANDATORY CODE EVIDENCE RULE`
+
+### Quick Reference
+- **Format**: `**Evidence**: {FilePath}:{LineNumber}`
+- **Status**: ✅ Verified / ⚠️ Stale / ❌ Missing
+- **Requirement**: Maintain evidence links when summarizing
+
 ## Important:
 - Use `docs/` directory as the source of truth for documentation.
 - Do not scan the entire codebase unless the user explicitly requests it.

@@ -5,6 +5,8 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Business Requirements](#business-requirements)
+- [Design Reference](#design-reference)
 - [Architecture](#architecture)
 - [Domain Model](#domain-model)
 - [Core Workflows](#core-workflows)
@@ -16,21 +18,22 @@
   - [Notifications & Reminders](#notifications--reminders)
   - [Integrations (Performance Review, Check-In)](#integrations-performance-review-check-in)
 - [API Reference](#api-reference)
-- [Permission System](#permission-system)
 - [Frontend Components](#frontend-components)
+- [Backend Controllers](#backend-controllers)
+- [Cross-Service Integration](#cross-service-integration)
+- [Permission System](#permission-system)
 - [Test Specifications](#test-specifications)
-  - [Goal Creation Test Specs](#goal-creation-test-specs)
-  - [Permission System Test Specs](#permission-system-test-specs)
-  - [Visibility System Test Specs](#visibility-system-test-specs)
-  - [Validation Test Specs](#validation-test-specs)
-  - [Event-Driven Workflow Test Specs](#event-driven-workflow-test-specs)
-  - [Integration Test Specs](#integration-test-specs)
 - [Troubleshooting](#troubleshooting)
 - [Related Documentation](#related-documentation)
+- [Version History](#version-history)
 
 ---
 
 ## Overview
+
+> **Objective**: Provide comprehensive OKR and SMART goal management for enterprise HR platforms with granular permissions, automated notifications, and performance integration.
+>
+> **Core Values**: Configurable - Secure - Scalable - Event-Driven
 
 The **Goal Management Feature** in TextSnippet service provides comprehensive **OKR (Objectives and Key Results)** and **SMART goal** management capabilities for enterprise HR platforms. The system supports both company-wide and individual employee goals with granular permission controls, automated notifications, and seamless integration with Performance Review and Check-In features.
 
@@ -52,6 +55,80 @@ The feature implements a dual-app architecture serving both **company-level goal
 - **Check-In Integration**: Track goal progress through recurring check-ins
 - **Cascade Deletion**: Automatic cleanup when employees are removed from system
 - **Dual-App Support**: Both company management portal and employee self-service app
+
+---
+
+## Business Requirements
+
+> **Objective**: Enable organizations to set, track, and achieve goals using OKR/SMART methodologies
+>
+> **Core Values**: Flexibility - Accountability - Transparency
+
+### Goal Management
+
+#### FR-GOAL-01: Create Goals
+
+| Aspect          | Details                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| **Description** | Users can create SMART goals or OKR objectives with key results         |
+| **Scope**       | HR Managers, Team Leads, Employees (based on permissions)               |
+| **Validation**  | Title required, due date must be future, measurement type required      |
+| **Evidence**    | `SaveGoalCommand.cs:1-428`                                              |
+
+#### FR-GOAL-02: Goal Visibility Control
+
+| Aspect          | Details                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| **Description** | Goals can be configured with 6 visibility levels                        |
+| **Options**     | Public, OnlyMe, MeAndManager, SpecificPeople, ThisOrgUnit, SubOrgs      |
+| **Validation**  | SpecificPeople requires at least one viewer                             |
+| **Evidence**    | `Goal.cs:45-60`, `GetGoalVisibilityQuery.cs:1-75`                       |
+
+#### FR-GOAL-03: Goal Progress Tracking
+
+| Aspect          | Details                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| **Description** | Track goal progress with current/target measurements                    |
+| **Scope**       | Goal owners and approvers                                               |
+| **Output**      | Progress percentage, status auto-calculation                            |
+| **Evidence**    | `UpdateGoalCurrentValueMeasurementCommand.cs:1-72`                      |
+
+### Notifications & Reminders
+
+#### FR-GOAL-04: Automated Email Notifications
+
+| Aspect          | Details                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| **Description** | Send emails on goal create/update/delete events                         |
+| **Access Control** | Event-driven, triggered automatically                                |
+| **Audit**       | All notifications logged                                                |
+| **Evidence**    | `SendEmailOnCUDGoalEntityEventHandler.cs:1-60`                          |
+
+#### FR-GOAL-05: Deadline Reminders
+
+| Aspect          | Details                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| **Description** | Daily job sends reminders 7 days before goal due date                   |
+| **Schedule**    | Cron: `0 9 * * *` (daily 9 AM)                                          |
+| **Output**      | Email notification to goal owner                                        |
+| **Evidence**    | `GoalDeadlinesSendReminderBackgroundJobExecutor.cs:1-107`               |
+
+---
+
+## Design Reference
+
+| Information       | Details                                                                 |
+| ----------------- | ----------------------------------------------------------------------- |
+| **Figma Link**    | _(Contact design team for access)_                                      |
+| **Screenshots**   | _(To be added)_                                                         |
+| **UI Components** | Dashboard cards, DataTable, SlideIn forms, Date pickers                 |
+
+### Key UI Patterns
+
+- **Goal Dashboard**: Stats cards (Total, Progressing, Behind, AtRisk) with filterable table
+- **Goal Form**: SlideIn side panel with dynamic fields based on goal type
+- **Goal Detail**: Read-only panel with progress visualization
+- **Permission-Based UI**: Fields/buttons visibility based on 23 granular permissions
 
 ---
 
@@ -1997,6 +2074,82 @@ protected initialFormConfig = (): PlatformFormConfig<GoalFormVm> => ({
 
 ---
 
+## Backend Controllers
+
+### GoalController
+
+**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Service/Controllers/GoalController.cs`
+
+| Action | Method | Route | Command/Query |
+|--------|--------|-------|---------------|
+| GetList | POST | `/api/Goal/GetGoalList` | GetGoalListQuery |
+| GetDetail | GET | `/api/Goal/GetGoalDetailById` | GetGoalDetailByIdQuery |
+| Save | POST | `/api/Goal/SaveGoal` | SaveGoalCommand |
+| Delete | DELETE | `/api/Goal/DeleteGoal` | DeleteGoalCommand |
+| UpdateMeasurement | POST | `/api/Goal/UpdateGoalCurrentValueMeasurement` | UpdateGoalCurrentValueMeasurementCommand |
+| GetDashboard | GET | `/api/Goal/GetGoalDashboardSummary` | GetGoalDashboardSummaryQuery |
+| GetEmployeeDashboard | GET | `/api/Goal/GetGoalDashboardEmployee` | GetGoalDashboardEmployeeQuery |
+| GetVisibility | GET | `/api/Goal/GetGoalVisibility` | GetGoalVisibilityQuery |
+| ValidateCreate | GET | `/api/Goal/ValidateCurrentEmployeeCanCreateGoal` | ValidateCurrentEmployeeCanCreateGoalQuery |
+
+**Authorization**: All endpoints require `[PlatformAuthorize]` with JWT Bearer token.
+
+**Evidence**: `GoalController.cs:1-103`
+
+---
+
+## Cross-Service Integration
+
+### Message Bus Events
+
+| Event | Producer | Consumer | Purpose |
+|-------|----------|----------|---------|
+| GoalEntityEvent | Growth.Service | NotificationMessage.Service | Sync goal data for notifications |
+| EmployeeDeletedEvent | Accounts.Service | Growth.Service | Cascade delete goals when employee removed |
+
+### Event Flow
+
+```
+Growth.Service                           NotificationMessage.Service
+     │                                          │
+     │  1. Goal Created/Updated/Deleted         │
+     ▼                                          │
+┌─────────────────────┐                         │
+│ SendEmailOnCUD      │                         │
+│ GoalEntityEvent     │────RabbitMQ────────────▶│
+│ Handler             │                         ▼
+└─────────────────────┘                 ┌─────────────────────┐
+                                        │ Email Template      │
+                                        │ Processor           │
+                                        └─────────────────────┘
+
+Accounts.Service                         Growth.Service
+     │                                          │
+     │  1. Employee Deleted                     │
+     ▼                                          │
+┌─────────────────────┐                         │
+│ EmployeeDeleted     │                         │
+│ EventBusProducer    │────RabbitMQ────────────▶│
+└─────────────────────┘                         ▼
+                                        ┌─────────────────────┐
+                                        │ DeleteGoalOn        │
+                                        │ DeleteEmployee      │
+                                        │ EntityEventHandler  │
+                                        └─────────────────────┘
+```
+
+### Event Handlers
+
+| Handler | Trigger | Action |
+|---------|---------|--------|
+| `SendEmailOnCUDGoalEntityEventHandler` | Goal CUD events | Sends email via NotificationMessage |
+| `DeleteGoalOnDeleteEmployeeEntityEventHandler` | Employee deleted | Deletes all goals owned by employee |
+| `CreateHistoryLogOnGoalChangedEventHandler` | Goal field changes | Creates audit log entry |
+
+**Evidence**: `UseCaseEvents/GoalManagement/*.cs`
+
+---
+
 ## Test Specifications
 
 ### Goal Creation Test Specs
@@ -2921,4 +3074,13 @@ src/PlatformExampleAppWeb/libs/apps-domains/src/goal/
 
 ---
 
-_This document provides comprehensive technical documentation for the Goal Management feature in EasyPlatform. Generated with evidence-based analysis from 36 source files (22 backend .NET/C#, 14 frontend Angular 19 TypeScript). Last updated: 2025-12-23._
+## Version History
+
+| Version | Date       | Changes                                                    |
+| ------- | ---------- | ---------------------------------------------------------- |
+| 2.0.0   | 2026-01-08 | Added Business Requirements, Design Reference, Backend Controllers, Cross-Service Integration sections; standardized to template format |
+| 1.0.0   | 2025-12-23 | Initial documentation with 36 source file analysis         |
+
+---
+
+_This document provides comprehensive technical documentation for the Goal Management feature in EasyPlatform. Generated with evidence-based analysis from 36 source files (22 backend .NET/C#, 14 frontend Angular 19 TypeScript). Last updated: 2026-01-08._

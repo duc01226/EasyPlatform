@@ -835,6 +835,50 @@ A: Admins, Managers, and the employee themselves
 - Training Videos: https://training.example.com
 ```
 
+## [CRITICAL] Code Evidence Requirements
+
+**All feature documentation MUST include verifiable code evidence.** This is non-negotiable.
+
+### Evidence Format
+
+```markdown
+**Evidence**: `{RelativeFilePath}:{LineNumber}` or `{RelativeFilePath}:{StartLine}-{EndLine}`
+```
+
+### Evidence Verification Table
+
+All test cases and code references must include evidence verification:
+
+| Entity/Component | Documented Lines | Actual Lines | Status |
+|------------------|------------------|--------------|--------|
+| `Entity.cs` | L6-15 | L6-15 | ✅ Verified |
+| `Handler.cs` | L140-156 | L140-156 | ✅ Verified |
+
+### Status Indicators
+
+- ✅ **Verified**: Line numbers confirmed by reading source
+- ⚠️ **Stale**: Code changed, line numbers need refresh
+- ❌ **Missing**: No evidence provided
+
+### Valid vs Invalid Evidence
+
+| ✅ Valid | ❌ Invalid |
+|----------|-----------|
+| `ErrorMessage.cs:83` | `{FilePath}:{LineRange}` (template) |
+| `Handler.cs:42-52` | `SomeFile.cs` (no line number) |
+| `service.ts:115-118` | "Based on CQRS pattern" (vague) |
+
+### Evidence Sources by Content Type
+
+| Content Type | Primary Evidence Source |
+|--------------|------------------------|
+| Validation errors | `{Module}.Application/Common/Constants/ErrorMessage.cs` |
+| Entity properties | `{Entity}.cs` with line numbers |
+| API endpoints | Controller + Handler files |
+| Frontend behavior | `*.service.ts`, `*.component.ts` |
+
+---
+
 ## Documentation Checklist
 
 ### New Feature Documentation
@@ -849,6 +893,14 @@ A: Admins, Managers, and the employee themselves
 - [ ] User guide updated (if user-facing)
 - [ ] Migration guide (if breaking changes)
 
+### Code Evidence (MANDATORY)
+
+- [ ] **EVERY test case has Evidence field** with `file:line` format
+- [ ] **No template placeholders** remain (`{FilePath}`, `{LineRange}`)
+- [ ] **Line numbers verified** by reading actual source files
+- [ ] **Status column included** (✅/⚠️/❌) for verification tables
+- [ ] **Edge case errors match** constants from `ErrorMessage.cs`
+
 ### Code Review Documentation Check
 
 - [ ] Public APIs have XML/JSDoc comments
@@ -856,6 +908,7 @@ A: Admins, Managers, and the employee themselves
 - [ ] TODO comments have issue numbers
 - [ ] Deprecated code marked with alternatives
 - [ ] Examples provided for non-obvious usage
+- [ ] All code references have verified line numbers
 
 ## Documentation Tools
 

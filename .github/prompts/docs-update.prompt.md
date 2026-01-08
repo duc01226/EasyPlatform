@@ -147,8 +147,42 @@ ${input:requests}
 
 ---
 
+## [CRITICAL] Code Evidence Requirements
+
+**All feature documentation MUST include verifiable code evidence.** This is non-negotiable.
+
+### Evidence Format
+
+```markdown
+**Evidence**: `{RelativeFilePath}:{LineNumber}` or `{RelativeFilePath}:{StartLine}-{EndLine}`
+```
+
+### Evidence Verification Protocol
+
+When updating documentation:
+1. **Read actual source files** at claimed line numbers
+2. **Verify evidence matches** the documented behavior
+3. **Update stale references** - mark with ⚠️ if line numbers changed
+4. **Refresh line numbers** after code changes
+
+### Evidence Verification Table
+
+| Entity/Component | Documented Lines | Actual Lines | Status |
+|------------------|------------------|--------------|--------|
+| `Entity.cs` | L6-15 | L6-15 | ✅ Verified |
+| `Handler.cs` | L45-60 | L52-67 | ⚠️ Stale (update needed) |
+
+### Status Indicators
+
+- ✅ **Verified**: Line numbers confirmed by reading source
+- ⚠️ **Stale**: Code changed, line numbers need refresh
+- ❌ **Missing**: No evidence provided
+
+---
+
 ## Quality Checklist
 
+### Structure
 - [ ] Scouted codebase structure (Phase 1)
 - [ ] Investigated discrepancies (Phase 2)
 - [ ] Updated documentation with evidence (Phase 3)
@@ -156,5 +190,12 @@ ${input:requests}
 - [ ] Referenced actual file paths
 - [ ] Preserved existing structure
 - [ ] Marked deprecated features
+
+### Code Evidence (MANDATORY)
+- [ ] **EVERY test case has Evidence field** with `file:line` format
+- [ ] **No template placeholders** remain (`{FilePath}`, `{LineRange}`)
+- [ ] **Line numbers verified** by reading actual source files
+- [ ] **Stale evidence detected** and marked with ⚠️
+- [ ] **Status column included** (✅/⚠️/❌) for verification tables
 
 **IMPORTANT**: Focus on documentation updates only - do not implement code changes.

@@ -22,4 +22,18 @@ Pass the gathered file list to `docs-manager` agent to create initial documentat
 
 Use `docs/` directory as the source of truth for documentation.
 
+## [CRITICAL] Code Evidence Requirements
+
+All documentation MUST follow evidence rules from `.claude/skills/feature-docs/SKILL.md` → `[CRITICAL] MANDATORY CODE EVIDENCE RULE`
+
+### Quick Reference
+- **Format**: `**Evidence**: {FilePath}:{LineNumber}`
+- **Status**: ✅ Verified / ⚠️ Stale / ❌ Missing
+- **Verification**: 3-pass verification required before completion
+
+### Evidence Verification Table (Required)
+| Entity/Component | Documented Lines | Actual Lines | Status |
+|------------------|------------------|--------------|--------|
+| `Entity.cs` | L6-15 | L6-15 | ✅ Verified |
+
 **IMPORTANT**: **Do not** start implementing.

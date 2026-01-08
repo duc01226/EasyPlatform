@@ -5,39 +5,33 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Business Requirements](#business-requirements)
+- [Design Reference](#design-reference)
 - [Integration Methods](#integration-methods)
 - [Architecture](#architecture)
 - [Email-Based Scanning (ScanMailBox)](#email-based-scanning-scanmailbox)
-  - [Email Scanning Flow](#email-scanning-flow)
-  - [Supported Job Board Email Patterns](#supported-job-board-email-patterns)
-  - [Email Parsing Services](#email-parsing-services)
-  - [IMAP Connection Management](#imap-connection-management)
 - [API-Based Integration](#api-based-integration)
-  - [Domain Model](#domain-model)
-  - [Provider Implementation](#provider-implementation)
-  - [API Sync Process Flow](#api-sync-process-flow)
 - [API Reference](#api-reference)
+- [Frontend Components](#frontend-components)
+- [Backend Controllers](#backend-controllers)
 - [Message Bus Integration](#message-bus-integration)
+- [Permission System](#permission-system)
 - [Configuration Guide](#configuration-guide)
 - [Adding New Providers](#adding-new-providers)
 - [Security Considerations](#security-considerations)
 - [Performance Tuning](#performance-tuning)
 - [Troubleshooting](#troubleshooting)
 - [Test Specifications](#test-specifications)
-  - [Email-Based Scanning Test Specs](#email-based-scanning-test-specs)
-  - [API-Based Integration Test Specs](#api-based-integration-test-specs)
-  - [Configuration Management Test Specs](#configuration-management-test-specs)
-  - [Security Test Specs](#security-test-specs)
-  - [Error Handling Test Specs](#error-handling-test-specs)
-  - [Performance Test Specs](#performance-test-specs)
-  - [Test Implementation Examples](#test-implementation-examples)
-  - [Detailed Code Flow Reference](#detailed-code-flow-reference)
 - [Related Documentation](#related-documentation)
 - [Version History](#version-history)
 
 ---
 
 ## Overview
+
+> **Objective**: Enable automatic fetching of job applications from external job board platforms via email scanning and direct API integration.
+>
+> **Core Values**: Extensible - Secure - Automated - Multi-Provider
 
 The Job Board Integration feature enables EasyPlatform to automatically fetch job applications from external job board platforms (ITViec, VietnamWorks, TopCV, LinkedIn, etc.). The system supports **two integration methods**:
 
@@ -56,6 +50,71 @@ The Job Board Integration feature enables EasyPlatform to automatically fetch jo
 - **CV Download & Parsing**: Automatic candidate CV/resume retrieval and parsing
 - **Secure Credential Storage**: Encrypted storage of passwords and API credentials
 - **Per-Company Configuration**: Each company can configure their own provider integrations
+
+---
+
+## Business Requirements
+
+> **Objective**: Streamline candidate sourcing by automating job application ingestion from multiple platforms
+>
+> **Core Values**: Efficiency - Reliability - Security
+
+### Email Scanning Integration
+
+#### FR-JBI-01: Email Inbox Monitoring
+
+| Aspect          | Details                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| **Description** | Monitor company email inboxes via IMAP for job board notifications      |
+| **Scope**       | HR Admins can configure email credentials per company                   |
+| **Validation**  | Valid IMAP credentials, supported email provider                        |
+| **Evidence**    | `ScanMailBoxModule/`, `JobBoardIntegration` entity                      |
+
+#### FR-JBI-02: Email Parsing
+
+| Aspect          | Details                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| **Description** | Parse candidate info from job board notification emails                 |
+| **Scope**       | Automatic, triggered by new emails matching provider patterns           |
+| **Output**      | Candidate application created in system                                 |
+| **Evidence**    | `EmailParserFactory.cs`, provider-specific parsers                      |
+
+### API Integration
+
+#### FR-JBI-03: Direct API Integration
+
+| Aspect          | Details                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| **Description** | Fetch applications directly from job board REST APIs                    |
+| **Dependencies**| Valid API credentials, provider supports API access                     |
+| **Output**      | Real-time application data with full details                            |
+| **Evidence**    | `JobBoardProviderConfiguration`, `IJobBoardProviderApiClient`           |
+
+#### FR-JBI-04: Scheduled Synchronization
+
+| Aspect          | Details                                                                 |
+| --------------- | ----------------------------------------------------------------------- |
+| **Description** | Background jobs periodically sync new applications                      |
+| **Schedule**    | Configurable per provider (default: every 15 minutes)                   |
+| **Audit**       | Sync history logged with success/failure status                         |
+| **Evidence**    | `JobBoardApiSyncBackgroundJobExecutor.cs`                               |
+
+---
+
+## Design Reference
+
+| Information       | Details                                                                 |
+| ----------------- | ----------------------------------------------------------------------- |
+| **Figma Link**    | _(Contact design team for access)_                                      |
+| **Screenshots**   | _(To be added)_                                                         |
+| **UI Components** | Configuration forms, Provider cards, Sync status indicators             |
+
+### Key UI Patterns
+
+- **Provider Configuration**: Form-based setup with OAuth connection buttons
+- **Email Settings**: IMAP credential form with test connection feature
+- **Sync Dashboard**: Status cards showing last sync time, success rate, pending items
+- **Provider List**: Card grid with enable/disable toggles per provider
 
 ---
 
@@ -1230,6 +1289,63 @@ Authorization: Bearer {token}
 
 ---
 
+## Frontend Components
+
+### Component Hierarchy
+
+```
+JobBoardIntegrationPage (Container)
+├── ProviderListComponent
+│   ├── ProviderCardComponent
+│   └── ProviderConfigFormComponent
+├── EmailSettingsComponent
+│   ├── ImapCredentialsFormComponent
+│   └── OAuthConnectionComponent
+└── SyncDashboardComponent
+    ├── SyncStatusCardComponent
+    └── SyncHistoryTableComponent
+```
+
+### Key Components
+
+| Component | Type | Purpose | Path |
+|-----------|------|---------|------|
+| ProviderListComponent | Container | Lists all job board providers | `apps/bravo-setting/src/app/routes/job-board/` |
+| ProviderConfigFormComponent | Form | Configure API credentials | `apps/bravo-setting/src/app/routes/job-board/` |
+| EmailSettingsComponent | Form | Configure IMAP settings | `apps/bravo-setting/src/app/routes/job-board/` |
+| SyncDashboardComponent | Presentational | Shows sync status and history | `apps/bravo-setting/src/app/routes/job-board/` |
+
+---
+
+## Backend Controllers
+
+### JobBoardProviderConfigurationController
+
+**Location**: `src/Services/Setting/Setting.Service/Controllers/JobBoardProviderConfigurationController.cs`
+
+| Action | Method | Route | Command/Query |
+|--------|--------|-------|---------------|
+| GetList | GET | `/api/JobBoardProviderConfiguration` | GetJobBoardProviderConfigurationsQuery |
+| GetById | GET | `/api/JobBoardProviderConfiguration/{id}` | GetJobBoardProviderConfigurationByIdQuery |
+| Save | POST | `/api/JobBoardProviderConfiguration` | SaveJobBoardProviderConfigurationCommand |
+| Delete | DELETE | `/api/JobBoardProviderConfiguration/{id}` | DeleteJobBoardProviderConfigurationCommand |
+| TriggerSync | POST | `/api/JobBoardProviderConfiguration/trigger-sync` | TriggerJobBoardApiSyncCommand |
+
+### EmailScanningController
+
+**Location**: `src/Services/Setting/Setting.Service/Controllers/EmailScanningController.cs`
+
+| Action | Method | Route | Command/Query |
+|--------|--------|-------|---------------|
+| GetSettings | GET | `/api/EmailScanning/settings` | GetEmailScanningSettingsQuery |
+| SaveSettings | POST | `/api/EmailScanning/settings` | SaveEmailScanningSettingsCommand |
+| TestConnection | POST | `/api/EmailScanning/test-connection` | TestImapConnectionCommand |
+| TriggerScan | POST | `/api/EmailScanning/trigger-scan` | TriggerScanMailBoxCommand |
+
+**Evidence**: `Setting.Service/Controllers/*.cs`
+
+---
+
 ## Message Bus Integration
 
 ### Message Format
@@ -1324,6 +1440,44 @@ public sealed class SettingUpdateJobBoardSyncStateRequestBusMessage : PlatformTr
 1. **Producer** (Candidate Service): `JobBoardApplicationSyncService`
 2. **Message**: `SettingUpdateJobBoardSyncStateRequestBusMessage`
 3. **Consumer** (Setting Service): `SettingUpdateJobBoardSyncStateRequestBusMessageConsumer`
+
+---
+
+## Permission System
+
+### Role Permissions
+
+| Role | View Config | Create | Edit | Delete | Trigger Sync |
+|------|:-----------:|:------:|:----:|:------:|:------------:|
+| System Admin | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Org Unit Admin | ✅ | ✅ | ✅ | ✅ | ✅ |
+| HR Manager | ✅ | ❌ | ❌ | ❌ | ✅ |
+| Other Roles | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+### Permission Checks
+
+**Backend Authorization**:
+```csharp
+// Evidence: JobBoardProviderConfigurationController.cs
+[PlatformAuthorize(PlatformRoles.SystemAdmin, PlatformRoles.OrgUnitAdmin)]
+public async Task<IActionResult> Save([FromBody] SaveJobBoardProviderConfigurationCommand command)
+```
+
+**Frontend Authorization**:
+```typescript
+// Evidence: provider-config.component.ts
+@if (hasRole(PlatformRoles.SystemAdmin) || hasRole(PlatformRoles.OrgUnitAdmin)) {
+  <button class="provider-config__save-btn">Save Configuration</button>
+}
+```
+
+### Data Scope Rules
+
+| Scope | Rule |
+|-------|------|
+| Company | Users can only access configurations for their current company |
+| Provider | API credentials are encrypted and only decrypted during sync |
+| Audit | All configuration changes are logged with user context |
 
 ---
 
@@ -3085,9 +3239,10 @@ ScanMailBoxNewJobApplicationEmailReceivedEventBusMessage  [REUSED]
 | 1.0.1   | 2025-12-17 | Documentation fixes: Updated PartialJobBoardEmails (TopCV→TopCv, added OrientSoftware), fixed IJobBoardApplicationProvider interface signatures, corrected BaseApiJobBoardProvider abstract methods, fixed ITViec API endpoints (/oauth.json, /jobs.json), updated JobBoardProviderFactory to Dictionary-based pattern, corrected file paths in Key Provider Files table, added OrientSoftware to Supported Providers                                                                                                                                                      |
 | 1.0.2   | 2025-12-17 | Documentation fixes: Fixed AuthType enum values (None=0, OAuth2ClientCredentials=1, OAuth2AuthorizationCode=2, ApiKey=3, BasicAuth=4 - removed non-existent BearerToken/Custom), removed non-existent TokenUrl from AuthConfigurationValue entity diagram, updated "Adding New Providers" section with correct method signatures (AuthenticateWithProviderAsync, GetJobsCountInternalAsync, GetJobsPagedInternalAsync, GetApplicationsCountInternalAsync, GetApplicationsPagedInternalAsync, GetDefaultMappingConfig), added ScanOtherMailboxService to email parsers list |
 | 1.0.3   | 2025-12-18 | Bug fix: Added double-checked locking pattern to `BaseApiJobBoardProvider.AuthenticateAsync()` to prevent race condition when multiple concurrent requests try to authenticate for the same configuration. Uses `ConcurrentDictionary<string, SemaphoreSlim>` for per-config locks. Updated documentation with authentication concurrency handling diagram.                                                                                                                                                                                                                |
+| 2.0.0   | 2026-01-08 | Template compliance: Added Business Requirements, Design Reference, Frontend Components, Backend Controllers, Permission System sections; standardized to 15-section template format |
 | 1.1.0   | TBD        | VietnamWorks integration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | 1.2.0   | TBD        | TopCV integration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 ---
 
-_Last Updated: 2025-12-18_
+_Last Updated: 2026-01-08_

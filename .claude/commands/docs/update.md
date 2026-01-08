@@ -28,6 +28,29 @@ Pass the gathered file list to `docs-manager` agent to update documentation:
   $ARGUMENTS
 </additional_requests>
 
+## [CRITICAL] Code Evidence Requirements
+
+All documentation MUST follow evidence rules from `.claude/skills/feature-docs/SKILL.md` → `[CRITICAL] MANDATORY CODE EVIDENCE RULE`
+
+### Quick Reference
+- **Format**: `**Evidence**: {FilePath}:{LineNumber}`
+- **Status**: ✅ Verified / ⚠️ Stale / ❌ Missing
+- **Verification**: 3-pass verification required before completion
+
+### Stale Evidence Detection
+
+When updating documentation:
+1. **Read actual source files** at claimed line numbers
+2. **Verify evidence matches** documented behavior
+3. **Update stale references** - mark with ⚠️ if line numbers changed
+4. **Refresh line numbers** after code changes
+
+### Evidence Verification Table (Required)
+| Entity/Component | Documented Lines | Actual Lines | Status |
+|------------------|------------------|--------------|--------|
+| `Entity.cs` | L6-15 | L6-15 | ✅ Verified |
+| `Handler.cs` | L45-60 | L52-67 | ⚠️ Stale |
+
 ## Important
 - Use `docs/` directory as the source of truth for documentation.
 
