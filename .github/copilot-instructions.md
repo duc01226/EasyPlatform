@@ -113,8 +113,19 @@ You MUST follow these steps for EVERY development request:
 
 1. **DETECT** - Analyze user prompt against workflow patterns
 2. **ANNOUNCE** - State the detected workflow: `"Detected: **{Workflow}** workflow. Following: {sequence}"`
-3. **CONFIRM** - For features/refactors, ask: `"Proceed with this workflow? (yes/no/quick)"`
-4. **EXECUTE** - Follow each step in sequence using prompts from `.github/prompts/`
+3. **CREATE TODO LIST (MANDATORY)** - Use todo tracking to create tasks for each workflow step:
+   ```
+   Example for Bug Fix workflow:
+   - [ ] Execute /scout - Find relevant files
+   - [ ] Execute /investigate - Build knowledge graph
+   - [ ] Execute /debug - Root cause analysis
+   - [ ] Execute /plan - Create fix plan
+   - [ ] Execute /fix - Implement fix
+   - [ ] Execute /code-review - Review changes
+   - [ ] Execute /test - Verify fix
+   ```
+4. **CONFIRM** - For features/refactors, ask: `"Proceed with this workflow? (yes/no/quick)"`
+5. **EXECUTE** - Follow each step in sequence, marking todos as completed after each step
 
 ### Override Methods
 

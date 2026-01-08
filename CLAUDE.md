@@ -415,8 +415,19 @@ Before responding to any task request, analyze the user's prompt to detect inten
 
 1. **DETECT:** Analyze user prompt for intent keywords
 2. **ANNOUNCE:** Tell user: `"Detected: [Intent]. Following workflow: [sequence]"`
-3. **CONFIRM (for features/refactors):** Ask: `"Proceed with this workflow? (yes/no/quick)"`
-4. **EXECUTE:** Follow each step in sequence using the prompts in `.github/prompts/`
+3. **CREATE TODO LIST (MANDATORY):** Use TodoWrite to create tasks for each workflow step:
+   ```
+   Example for Bug Fix workflow:
+   - [ ] Execute /scout - Find relevant files
+   - [ ] Execute /investigate - Build knowledge graph
+   - [ ] Execute /debug - Root cause analysis
+   - [ ] Execute /plan - Create fix plan
+   - [ ] Execute /fix - Implement fix
+   - [ ] Execute /code-review - Review changes
+   - [ ] Execute /test - Verify fix
+   ```
+4. **CONFIRM (for features/refactors):** Ask: `"Proceed with this workflow? (yes/no/quick)"`
+5. **EXECUTE:** Follow each step in sequence, marking todos as completed after each step
 
 ### Override
 

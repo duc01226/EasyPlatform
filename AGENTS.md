@@ -42,6 +42,26 @@ Each workflow step maps to a prompt file in `.github/prompts/`:
 
 **Usage:** Read and follow the prompt file instructions for each step in sequence.
 
+### Workflow Execution Protocol (MANDATORY)
+
+**Before executing ANY workflow, you MUST:**
+
+1. **Create Todo List** - Add each workflow step as a task
+2. **Mark In Progress** - Update current step status as you work
+3. **Mark Completed** - Check off each step when done
+4. **Track Progress** - Never skip the todo tracking
+
+**Example Todo List for Bug Fix:**
+```
+- [ ] /scout - Find relevant files
+- [ ] /investigate - Build knowledge graph
+- [ ] /debug - Root cause analysis
+- [ ] /plan - Create fix plan
+- [ ] /fix - Implement fix
+- [ ] /code-review - Review changes
+- [ ] /test - Verify fix
+```
+
 ### Workflow Configuration
 
 Full workflow patterns are in `.claude/workflows.json` - supports multilingual triggers (EN, VI, ZH, JA, KO).
