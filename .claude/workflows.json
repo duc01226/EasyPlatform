@@ -103,7 +103,7 @@
       "excludePatterns": ["\\b(implement|fix|test)\\b", "(thêm|sửa|test).*tính năng", "(实现|修复|测试)", "(実装|修正|テスト)", "(구현|수정|테스트)"],
       "name": "Documentation Update",
       "priority": 30,
-      "sequence": ["docs-update", "watzup"],
+      "sequence": ["scout", "investigate", "docs-update", "watzup"],
       "triggerPatterns": [
         "\\b(doc|document|readme|documentation)\\b",
         "\\bupdate.*\\b(doc|readme)\\b",

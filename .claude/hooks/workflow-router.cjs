@@ -82,7 +82,7 @@ function getDefaultConfig() {
         name: 'Documentation',
         triggerPatterns: ['\\b(doc|document|readme)\\b'],
         excludePatterns: ['\\b(implement|fix)\\b'],
-        sequence: ['docs-update', 'watzup'],
+        sequence: ['scout', 'investigate', 'docs-update', 'watzup'],
         confirmFirst: false,
         priority: 30
       }

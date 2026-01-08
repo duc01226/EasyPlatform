@@ -187,6 +187,24 @@ For `*Consumer.cs` files found:
 
 ---
 
+## OUTPUT: Handoff to Investigate
+
+**When followed by `@workspace /investigate`:**
+
+Your numbered file list becomes the analysis target. The Investigate prompt will:
+1. **Use your HIGH PRIORITY files** as primary analysis targets
+2. **Reference your file numbers** (e.g., "File #3 from Scout")
+3. **Skip redundant discovery** - trusts your search results
+4. **Follow your Suggested Starting Points** for analysis order
+
+**Ensure your output includes:**
+- ✅ Numbered files in priority tables
+- ✅ Clear "Suggested Starting Points" section
+- ✅ Cross-Service Integration table (for message bus flows)
+- ✅ Purpose column explaining each file's role
+
+---
+
 ## EasyPlatform Key Directories
 
 ### Backend

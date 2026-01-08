@@ -11,6 +11,33 @@ Investigate and explain how an existing feature or logic works using structured 
 
 ---
 
+## INPUT: Scout Output Integration
+
+**If preceded by `/scout`:**
+
+1. **Use the numbered file list** from Scout results as your analysis targets
+2. **Prioritize in this order:**
+   - HIGH PRIORITY files (Domain Entities, Commands, Queries, Event Handlers, Controllers, Jobs, Consumers)
+   - Suggested Starting Points (if provided)
+   - MEDIUM PRIORITY files (Services, Helpers, Components)
+3. **Skip redundant discovery** - Scout already searched the codebase
+4. **Reference files by Scout's numbers** in your analysis (e.g., "File #3 from Scout")
+
+**Scout Output Format Reference:**
+```markdown
+### HIGH PRIORITY (Analyze First)
+| # | File | Purpose |
+|---|------|---------|
+| 1 | `path/Entity.cs` | Core domain entity |
+
+### Suggested Starting Points
+1. **[Most relevant file]** - [Why]
+```
+
+**If NO Scout output available:** Proceed with Phase 1A discovery as normal.
+
+---
+
 ## PHASE 1A: INITIALIZATION AND DISCOVERY
 
 ### Step 1: Initialize Analysis File

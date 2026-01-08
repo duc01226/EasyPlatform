@@ -96,6 +96,24 @@ You succeed when:
 3. The user can immediately proceed with their task using the files you found
 4. You complete the entire operation in under 5 minutes
 
+## OUTPUT: Handoff to Investigate
+
+**When followed by `@workspace /investigate` or `/investigate`:**
+
+Your file list becomes the analysis target. The Investigate agent will:
+1. **Use your HIGH PRIORITY files** as primary analysis targets
+2. **Reference your file numbers** (e.g., "File #3 from Scout")
+3. **Skip redundant discovery** - trusts your search results
+4. **Follow your Suggested Starting Points** for analysis order
+
+**Ensure your output includes:**
+- ✅ Numbered files in priority tables
+- ✅ Clear "Suggested Starting Points" section (3-5 files)
+- ✅ Cross-Service Integration table (for message bus flows)
+- ✅ Purpose column explaining each file's role
+
+---
+
 ## Report Output
 
 Use the naming pattern from the `## Naming` section injected by hooks. The pattern includes full path and computed date.

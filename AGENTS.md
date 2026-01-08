@@ -17,7 +17,7 @@
 | ----------------- | ------------------------------------------- | ----------------------------------------------------------------------- |
 | **Feature**       | implement, add, create, build, develop      | `/plan` → `/cook` → `/code-review` → `/test` → `/docs-update` → `/watzup` |
 | **Bug Fix**       | bug, fix, error, broken, crash, not working | `/debug` → `/plan` → `/fix` → `/code-review` → `/test`                    |
-| **Documentation** | docs, document, readme, update docs         | `/docs-update` → `/watzup`                                                |
+| **Documentation** | docs, document, readme, update docs         | `/scout` → `/investigate` → `/docs-update` → `/watzup`                    |
 | **Refactoring**   | refactor, improve, clean up, restructure    | `/plan` → `/code` → `/code-review` → `/test`                              |
 | **Code Review**   | review, check, audit, PR review             | `/code-review` → `/watzup`                                                |
 | **Investigation** | how does, where is, explain, understand     | `/scout` → `/investigate`                                                 |
@@ -137,7 +137,7 @@ User Request
 |   +-- YES -> Refactor workflow: /plan → /code → /code-review → /test
 |
 |-- Contains "docs/document/readme"?
-|   +-- YES -> Documentation workflow: /docs-update → /watzup
+|   +-- YES -> Documentation workflow: /scout → /investigate → /docs-update → /watzup
 |
 |-- Contains "review/check/audit"?
 |   +-- YES -> Review workflow: /code-review → /watzup

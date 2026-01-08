@@ -37,7 +37,7 @@ Key workflows (from workflows.json):
 |----------|----------|----------|
 | **feature** | implement, add, create, build | `/plan` → `/cook` → `/test` → `/code-review` → `/docs-update` → `/watzup` |
 | **bugfix** | bug, fix, error, broken, crash | `/debug` → `/plan` → `/fix` → `/test` |
-| **documentation** | docs, document, readme | `/docs-update` → `/watzup` |
+| **documentation** | docs, document, readme | `/scout` → `/investigate` → `/docs-update` → `/watzup` |
 | **refactor** | refactor, improve, clean up | `/plan` → `/code` → `/test` → `/code-review` |
 | **review** | review, check, audit code, PR | `/code-review` → `/watzup` |
 | **investigation** | how does, where is, explain | `/scout` → `/investigate` |
