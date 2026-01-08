@@ -6,385 +6,112 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 
 # EasyPlatform Business Feature Documentation
 
-Generate comprehensive business feature documentation following EasyPlatform conventions and folder structure.
+Generate comprehensive business feature documentation following the **GOLD STANDARD** template pattern.
+
+**GOLD STANDARD Reference**: `docs/business-features/bravoTALENTS/detailed-features/README.EmployeeSettingsFeature.md`
+**Template File**: `docs/templates/detailed-feature-docs-template.md`
 
 ---
 
-## Output Structure
+## MANDATORY 15-SECTION STRUCTURE
 
-All documentation MUST be placed in the correct folder structure:
+All feature documentation in `detailed-features/` MUST follow this section order:
 
-```
-docs/
-├── BUSINESS-FEATURES.md              # Master index (UPDATE if new module)
-└── business-features/
-    ├── {Module}/                     # TextSnippet, TextSnippet, TextSnippet, TextSnippet, Accounts, SupportingServices
-    │   ├── README.md                 # Complete module documentation
-    │   ├── INDEX.md                  # Navigation hub
-    │   ├── API-REFERENCE.md          # Endpoint documentation
-    │   ├── TROUBLESHOOTING.md        # Issue resolution guide
-    │   └── detailed-features/
-    │       └── README.{FeatureName}.md  # Deep dive for complex features
-    └── ...
-```
-
-### Module Mapping
-
-| Module Code | Folder Name | Service Path |
-|-------------|-------------|--------------|
-| TextSnippet | `TextSnippet` | `src/PlatformExampleApp/TextSnippet/` |
-| TextSnippet | `TextSnippet` | `src/PlatformExampleApp/TextSnippet/` |
-| TextSnippet | `TextSnippet` | `src/PlatformExampleApp/TextSnippet/` |
-| TextSnippet | `TextSnippet` | `src/PlatformExampleApp/TextSnippet/` |
-| Accounts | `Accounts` | `src/PlatformExampleApp/Accounts/` |
-| Supporting | `SupportingServices` | `src/PlatformExampleApp/{NotificationMessage,ParserApi,PermissionProvider}/` |
+| # | Section | Purpose |
+|---|---------|---------|
+| 1 | Overview | Feature purpose, key capabilities |
+| 2 | Business Requirements | FR-{MOD}-XX format with evidence tables |
+| 3 | Design Reference | Figma links, screenshots, UI patterns |
+| 4 | Architecture | ASCII diagrams, service responsibilities |
+| 5 | Domain Model | Entities, enumerations, value objects |
+| 6 | Core Workflows | Step-by-step flows with key files |
+| 7 | API Reference | Endpoints, request/response examples |
+| 8 | Frontend Components | Component hierarchy and paths |
+| 9 | Backend Controllers | Controller actions mapping |
+| 10 | Cross-Service Integration | Message bus events |
+| 11 | Permission System | Role permission matrix |
+| 12 | Test Specifications | TC-{MOD}-XXX with summary table |
+| 13 | Troubleshooting | Symptoms/Causes/Resolution format |
+| 14 | Related Documentation | Links to related features |
+| 15 | Version History | Versioned changelog |
 
 ---
 
-## Phase 1: Module Detection & Context Gathering
+## Key Format Examples
 
-### Step 1.1: Identify Target Module
-
-Determine which module the feature belongs to by:
-1. User explicitly specifies module name
-2. Feature name/domain implies module (e.g., "Kudos" → TextSnippet, "Candidate" → TextSnippet)
-3. Search codebase for feature-related entities/commands
-
-### Step 1.2: Read Existing Documentation
-
-Before creating new docs, read existing structure:
-```
-1. Read docs/BUSINESS-FEATURES.md (master index)
-2. Read docs/business-features/{Module}/INDEX.md (if exists)
-3. Read docs/business-features/{Module}/README.md (if exists)
-4. Identify what already exists vs what needs creation/update
-```
-
-### Step 1.3: Codebase Analysis
-
-Gather evidence from source code:
-- **Entities**: `src/PlatformExampleApp/{Module}/{Module}.Domain/Entities/`
-- **Commands**: `src/PlatformExampleApp/{Module}/{Module}.Application/UseCaseCommands/`
-- **Queries**: `src/PlatformExampleApp/{Module}/{Module}.Application/UseCaseQueries/`
-- **Controllers**: `src/PlatformExampleApp/{Module}/{Module}.Service/Controllers/`
-- **Frontend**: `src/PlatformExampleAppWeb/apps/playground-text-snippet/` or `src/PlatformExampleAppWeb/libs/apps-domains/`
-
----
-
-## Phase 2: Documentation Templates
-
-### Template: Module README.md
-
-Reference: `docs/business-features/TextSnippet/README.md`
+### Business Requirements (FR-XX)
 
 ```markdown
-# {Module} - [Full Name]
+#### FR-{MOD}-01: {Requirement Title}
 
-**Module**: {Module} ([Description])
-**Last Updated**: {Date}
-**Coverage**: [Sub-modules list]
-
----
-
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Sub-Modules & Features](#sub-modules--features)
-4. [Key Data Models](#key-data-models)
-5. [API Endpoints](#api-endpoints)
-6. [User Roles & Permissions](#user-roles--permissions)
-7. [Common Workflows](#common-workflows)
-8. [Configuration](#configuration)
-9. [Related Documentation](#related-documentation)
-
----
-
-## Overview
-
-[Brief description of module purpose and capabilities]
-
-### Key Capabilities
-- [Capability 1]
-- [Capability 2]
-
----
-
-## Architecture
-
-```
-[ASCII architecture diagram]
+| Aspect          | Details                                              |
+| --------------- | ---------------------------------------------------- |
+| **Description** | {What this requirement enables}                      |
+| **Scope**       | {Who can use / affected entities}                    |
+| **Validation**  | {Business rules and constraints}                     |
+| **Evidence**    | `{FilePath}:{LineRange}`                             |
 ```
 
-### Service Responsibilities
+### Test Specifications (TC-XX)
 
-| Service | Responsibility |
-|---------|---------------|
-| {Module}.Domain | Business entities, validation rules |
-| {Module}.Application | CQRS commands/queries, business logic |
-| {Module}.Service | REST API, controllers |
+**Test Summary Table (MANDATORY)**:
+```markdown
+| Category               | P0 (Critical) | P1 (High) | P2 (Medium) | P3 (Low) | Total |
+| ---------------------- | :-----------: | :-------: | :---------: | :------: | :---: |
+| {Category1}            | {N}           | {N}       | {N}         | {N}      | {N}   |
+| **Total**              | **{N}**       | **{N}**   | **{N}**     | **{N}**  | **{N}**|
+```
 
----
+**Test Case Format**:
+```markdown
+#### TC-{MOD}-001: {Test Name} [P0]
 
-## Sub-Modules & Features
+**Acceptance Criteria**:
+- ✅ {Passing criteria 1}
+- ✅ {Passing criteria 2}
 
-### 1. [Sub-Module Name]
+**GIVEN** {initial context}
+**WHEN** {action performed}
+**THEN** {expected outcome}
 
-#### 1.1 [Feature Name]
-
-**Description**: [What this feature does]
-
-**Backend API**:
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/{controller}` | [Action] |
-
-**Workflow**:
-1. [Step 1]
-2. [Step 2]
+**Edge Cases**:
+- ❌ {Invalid scenario} → {Expected error/behavior}
 
 **Evidence**: `{FilePath}:{LineRange}`
-
----
-
-## Key Data Models
-
-### [Entity Name]
-
-| Property | Type | Description |
-|----------|------|-------------|
-| Id | string | Unique identifier |
-
----
-
-## API Endpoints
-
-See [API-REFERENCE.md](API-REFERENCE.md) for complete endpoint documentation.
-
----
-
-## User Roles & Permissions
-
-| Role | Permissions |
-|------|-------------|
-| Admin | Full access |
-| Manager | [Specific permissions] |
-| Employee | [Limited permissions] |
-
----
-
-## Common Workflows
-
-### Workflow 1: [Name]
-
-```
-[Flow diagram or numbered steps]
 ```
 
----
-
-## Configuration
-
-| Setting | Description | Default |
-|---------|-------------|---------|
-| [Setting] | [Description] | [Value] |
-
----
-
-## Related Documentation
-
-- [Other Module](../OtherModule/README.md)
-- [Test Specifications](../../test-specs/{Module}/README.md)
-- [Backend Patterns](../../claude/backend-patterns.md)
-```
-
-### Template: INDEX.md
+### Troubleshooting Format
 
 ```markdown
-# {Module} Documentation Index
+#### {Issue Title}
 
-> Complete documentation set for {Module}
+**Symptoms**: {Observable problem}
 
----
+**Causes**:
+1. {Cause 1}
+2. {Cause 2}
 
-## Quick Navigation
+**Resolution**:
+- {Step 1}
+- {Step 2}
 
-### Main Documentation
-- **[README.md](README.md)** - Complete module documentation
-- **[API-REFERENCE.md](API-REFERENCE.md)** - REST API reference
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Issue resolution guide
+### Diagnostic Queries
 
-### Detailed Features
-- **[detailed-features/README.{Feature1}.md](detailed-features/README.{Feature1}.md)** - {Feature1} deep dive
-
----
-
-## Documentation by Audience
-
-### For Developers
-1. Read: [README.md](README.md#architecture)
-2. Reference: [API-REFERENCE.md](API-REFERENCE.md)
-
-### For Product Owners
-1. Overview: [README.md](README.md#overview)
-2. Features: [README.md](README.md#sub-modules--features)
-
----
-
-**Last Updated:** {Date}
+```sql
+SELECT * FROM [{Schema}].[{Table}]
+WHERE CompanyId = '{companyId}';
+```
 ```
 
-### Template: Detailed Feature (README.{FeatureName}.md)
-
-Reference: `docs/business-features/TextSnippet/detailed-features/README.KudosFeature.md`
+### Permission System Format
 
 ```markdown
-# {FeatureName} Feature Documentation
-
-**Module**: {Module}
-**Feature**: {FeatureName}
-**Version**: {Version}
-**Last Updated**: {Date}
-
----
-
-## Table of Contents
-
-1. [Overview](#overview)
-2. [Architecture](#architecture)
-3. [Data Models](#data-models)
-4. [API Reference](#api-reference)
-5. [Business Rules](#business-rules)
-6. [Workflows](#workflows)
-7. [Configuration](#configuration)
-8. [Test Specifications](#test-specifications)
-9. [Troubleshooting](#troubleshooting)
-
----
-
-## Overview
-
-[Comprehensive feature description]
-
-### Key Capabilities
-- [Capability with code reference]
-
----
-
-## Architecture
-
+| Role | View | Create | Edit | Delete | Special |
+|------|:----:|:------:|:----:|:------:|---------|
+| Admin | ✅ | ✅ | ✅ | ✅ | Full access |
+| HR Manager | ✅ | ✅ | ✅ | ❌ | Company scope |
+| Employee | ✅ | ❌ | ❌ | ❌ | Own data only |
 ```
-[ASCII diagram showing component relationships]
-```
-
-### Component Breakdown
-
-| Component | Type | Path | Purpose |
-|-----------|------|------|---------|
-| {Entity} | Domain Entity | `src/PlatformExampleApp/{Module}/.../Entities/{Entity}.cs` | [Purpose] |
-| {Command} | CQRS Command | `src/PlatformExampleApp/{Module}/.../UseCaseCommands/{Feature}/{Command}.cs` | [Purpose] |
-
----
-
-## Data Models
-
-### {Entity}
-
-```csharp
-// Evidence: {FilePath}:{LineRange}
-public class {Entity} : RootEntity<{Entity}, string>
-{
-    public string Name { get; set; }
-    // ... key properties
-}
-```
-
----
-
-## API Reference
-
-### Endpoints
-
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/{Controller}/{action}` | [Description] | [Policy] |
-
-### Request/Response Examples
-
-```json
-// POST /api/{Controller}/{action}
-// Request
-{
-  "field": "value"
-}
-
-// Response
-{
-  "success": true,
-  "data": {}
-}
-```
-
----
-
-## Business Rules
-
-| Rule | Description | Evidence |
-|------|-------------|----------|
-| BR-001 | [Rule description] | `{File}:{Line}` |
-
----
-
-## Workflows
-
-### Workflow: [Name]
-
-```
-[Numbered steps or sequence diagram]
-```
-
----
-
-## Configuration
-
-| Setting | Type | Default | Description |
-|---------|------|---------|-------------|
-| [Setting] | [Type] | [Default] | [Description] |
-
----
-
-## Test Specifications
-
-See [Test Specs](../../../test-specs/{Module}/README.md) for complete test coverage.
-
-### Key Test Cases
-- TC-{MOD}-{FEAT}-001: [Test name]
-
----
-
-## Troubleshooting
-
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| [Issue] | [Cause] | [Solution] |
-
----
-
-**Maintained By**: Documentation Team
-```
-
----
-
-## Phase 3: Master Index Update
-
-After creating/updating module docs, update `docs/BUSINESS-FEATURES.md`:
-
-1. Read current content
-2. Verify module is listed in the "Detailed Module Documentation" table
-3. Add link if missing:
-   ```markdown
-   | **{Module}** | [Description] | [View Details](./business-features/{Module}/README.md) |
-   ```
 
 ---
 
@@ -395,21 +122,17 @@ After creating/updating module docs, update `docs/BUSINESS-FEATURES.md`:
 - Read actual source files before documenting
 - Never assume behavior without code evidence
 
-### ACCURACY_CHECKPOINT
-Before writing any documentation:
-- "Have I read the actual code?"
-- "Are my line number references accurate?"
-- "Can I provide a code snippet as evidence?"
-
 ---
 
 ## Quality Checklist
 
-- [ ] Documentation placed in correct folder structure
-- [ ] README.md follows template format
-- [ ] INDEX.md created with navigation links
+- [ ] All 15 mandatory sections present in correct order
+- [ ] Business Requirements use FR-{MOD}-XX format
+- [ ] Test Summary table with P0-P3 counts
+- [ ] Test cases use TC-{MOD}-XXX format with GIVEN/WHEN/THEN
+- [ ] Acceptance criteria use ✅/❌ markers
+- [ ] Edge cases documented with expected errors
+- [ ] Troubleshooting uses Symptoms/Causes/Resolution format
+- [ ] Permission matrix present
+- [ ] Version History table at end
 - [ ] All code references verified with actual files
-- [ ] Master index (BUSINESS-FEATURES.md) updated
-- [ ] Links to test-specs included
-- [ ] ASCII diagrams for architecture
-- [ ] API endpoints documented with examples

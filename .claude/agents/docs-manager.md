@@ -79,6 +79,19 @@ You organize documentation to:
 
 ## Output Standards
 
+### Feature Documentation (GOLD STANDARD)
+
+When creating feature documentation in `docs/business-features/`, use:
+- **Template**: `docs/templates/detailed-feature-docs-template.md`
+- **Reference**: `docs/business-features/bravoTALENTS/detailed-features/README.EmployeeSettingsFeature.md`
+
+**MANDATORY 15 Sections (in order)**:
+1. Overview, 2. Business Requirements (FR-XX), 3. Design Reference, 4. Architecture,
+5. Domain Model, 6. Core Workflows, 7. API Reference, 8. Frontend Components,
+9. Backend Controllers, 10. Cross-Service Integration, 11. Permission System,
+12. Test Specifications (TC-XX with Summary), 13. Troubleshooting (Symptoms/Causes/Resolution),
+14. Related Documentation, 15. Version History
+
 ### Documentation Files
 - Use clear, descriptive filenames following project conventions
 - Maintain consistent Markdown formatting
