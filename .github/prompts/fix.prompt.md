@@ -10,6 +10,36 @@ Analyze and fix the reported issue.
 ## Issue Description
 $input
 
+## Workflow Sequence
+
+This prompt follows the workflow: `@workspace /scout` → `@workspace /investigate` → `@workspace /debug` → `@workspace /plan` → `@workspace /fix` → `@workspace /code-review` → `@workspace /test`
+
+---
+
+## INPUT: Prior Workflow Integration
+
+**If preceded by debug workflow:**
+
+1. **Use the root cause analysis** from Debug step
+2. **Reference the confidence declaration** (90%+ required)
+3. **Follow the evidence trail** already established
+4. **Check for similar issues** already identified by Debug
+5. **Apply fix pattern** identified in Debug's recommendation
+
+**Debug Output Reference:**
+```markdown
+### Root Cause
+[Identified issue with file:line references]
+
+### Confidence: X%
+### Evidence: [List of verified facts]
+### Recommendation: [Approach to fix]
+```
+
+**If NO prior Debug output:** Start with Step 1 Reproduce/Understand.
+
+---
+
 ## Decision Tree
 
 Route to specialized fix approach based on issue type:

@@ -12,6 +12,37 @@ Diagnose and fix the following issue:
 **Error Message/Stack Trace:** ${input:error}
 **Affected Area:** ${input:area:Backend,Frontend,Cross-Service,Database,API}
 
+## Workflow Sequence
+
+This prompt follows the workflow: `@workspace /scout` → `@workspace /investigate` → `@workspace /debug` → `@workspace /plan` → `@workspace /fix` → `@workspace /code-review` → `@workspace /test`
+
+---
+
+## INPUT: Scout/Investigate Integration
+
+**If preceded by `@workspace /scout` → `@workspace /investigate`:**
+
+1. **Use the knowledge graph** from Investigate as your context
+2. **Reference files by Scout's numbers** (e.g., "File #3 from Scout")
+3. **Leverage the data flow diagram** to trace bug impact
+4. **Skip redundant discovery** - you already have the feature context
+5. **Focus on the bug** within the understood feature context
+
+**Scout/Investigate Output Reference:**
+```markdown
+### HIGH PRIORITY Files (from Scout)
+| # | File | Purpose |
+|---|------|---------|
+| 1 | `path/Entity.cs` | Core domain entity |
+
+### Data Flow (from Investigate)
+[Request] → [Controller] → [Handler] → [Repository]
+```
+
+**If NO Scout/Investigate output:** Proceed with Step 1 Evidence Collection as normal.
+
+---
+
 ## Debugging Protocol
 
 ### CRITICAL RULES
