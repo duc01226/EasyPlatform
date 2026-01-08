@@ -51,7 +51,7 @@ For detailed routing logic, see the **`workflow-router`** agent in `.github/agen
 | Intent | Trigger Keywords | Workflow Sequence |
 |--------|------------------|-------------------|
 | **Feature** | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/code-review` → `/test` → `/docs-update` → `/watzup` |
-| **Bug Fix** | bug, fix, error, broken, crash, not working, debug | `/debug` → `/plan` → `/fix` → `/code-review` → `/test` |
+| **Bug Fix** | bug, fix, error, broken, crash, not working, debug | `/scout` → `/investigate` → `/debug` → `/plan` → `/fix` → `/code-review` → `/test` |
 | **Documentation** | docs, document, readme, update docs | `/scout` → `/investigate` → `/docs-update` → `/watzup` |
 | **Refactoring** | refactor, improve, clean up, restructure | `/plan` → `/code` → `/code-review` → `/test` |
 | **Code Review** | review, check, audit code, PR review | `/code-review` → `/watzup` |

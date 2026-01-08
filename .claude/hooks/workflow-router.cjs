@@ -74,7 +74,7 @@ function getDefaultConfig() {
         name: 'Bug Fix',
         triggerPatterns: ['\\b(bug|fix|error|broken|issue)\\b'],
         excludePatterns: [],
-        sequence: ['debug', 'plan', 'fix', 'test'],
+        sequence: ['scout', 'investigate', 'debug', 'plan', 'fix', 'code-review', 'test'],
         confirmFirst: false,
         priority: 20
       },

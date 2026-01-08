@@ -405,7 +405,7 @@ Before responding to any task request, analyze the user's prompt to detect inten
 | Intent                     | Trigger Keywords                                    | Workflow Sequence                                                                                           |
 | -------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | **Feature Implementation** | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/review/codebase` → `/test` → `/docs-update` → `/watzup` |
-| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working  | `/debug` → `/plan` → `/fix` → `/review/codebase` → `/test`          |
+| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working  | `/scout` → `/investigate` → `/debug` → `/plan` → `/fix` → `/review/codebase` → `/test` |
 | **Documentation**          | docs, document, readme, update docs                 | `/scout` → `/investigate` → `/docs-update` → `/watzup`                                                      |
 | **Refactoring**            | refactor, restructure, clean up, improve code       | `/plan` → `/code` → `/review/codebase` → `/test`                    |
 | **Code Review**            | review, check, audit code, PR review                | `/code-review` → `/watzup`                                                                                  |

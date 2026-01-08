@@ -16,7 +16,7 @@
 | Intent            | Trigger Keywords                            | Workflow Sequence                                                       |
 | ----------------- | ------------------------------------------- | ----------------------------------------------------------------------- |
 | **Feature**       | implement, add, create, build, develop      | `/plan` → `/cook` → `/code-review` → `/test` → `/docs-update` → `/watzup` |
-| **Bug Fix**       | bug, fix, error, broken, crash, not working | `/debug` → `/plan` → `/fix` → `/code-review` → `/test`                    |
+| **Bug Fix**       | bug, fix, error, broken, crash, not working | `/scout` → `/investigate` → `/debug` → `/plan` → `/fix` → `/code-review` → `/test` |
 | **Documentation** | docs, document, readme, update docs         | `/scout` → `/investigate` → `/docs-update` → `/watzup`                    |
 | **Refactoring**   | refactor, improve, clean up, restructure    | `/plan` → `/code` → `/code-review` → `/test`                              |
 | **Code Review**   | review, check, audit, PR review             | `/code-review` → `/watzup`                                                |
@@ -131,7 +131,7 @@ User Request
 |   +-- YES -> Feature workflow: /plan → /cook → /code-review → /test → /docs-update → /watzup
 |
 |-- Contains "bug/fix/error/broken"?
-|   +-- YES -> Bugfix workflow: /debug → /plan → /fix → /code-review → /test
+|   +-- YES -> Bugfix workflow: /scout → /investigate → /debug → /plan → /fix → /code-review → /test
 |
 |-- Contains "refactor/improve/clean"?
 |   +-- YES -> Refactor workflow: /plan → /code → /code-review → /test

@@ -73,7 +73,7 @@
       ],
       "name": "Bug Fix",
       "priority": 20,
-      "sequence": ["debug", "plan", "fix", "code-review", "test"],
+      "sequence": ["scout", "investigate", "debug", "plan", "fix", "code-review", "test"],
       "triggerPatterns": [
         "\\b(bug|fix|broken|issue|crash|fail|exception)\\b",
         "\\b(error|errors)\\s+(in|with|on|when|while|returned|returning)\\b",

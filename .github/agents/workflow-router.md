@@ -36,7 +36,7 @@ Key workflows (from workflows.json):
 | Workflow | Triggers | Sequence |
 |----------|----------|----------|
 | **feature** | implement, add, create, build | `/plan` → `/cook` → `/test` → `/code-review` → `/docs-update` → `/watzup` |
-| **bugfix** | bug, fix, error, broken, crash | `/debug` → `/plan` → `/fix` → `/test` |
+| **bugfix** | bug, fix, error, broken, crash | `/scout` → `/investigate` → `/debug` → `/plan` → `/fix` → `/code-review` → `/test` |
 | **documentation** | docs, document, readme | `/scout` → `/investigate` → `/docs-update` → `/watzup` |
 | **refactor** | refactor, improve, clean up | `/plan` → `/code` → `/test` → `/code-review` |
 | **review** | review, check, audit code, PR | `/code-review` → `/watzup` |
