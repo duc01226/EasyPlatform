@@ -16,7 +16,7 @@ EasyPlatform is a comprehensive enterprise platform framework built with microse
 
 | Layer         | Technology                                                          |
 | ------------- | ------------------------------------------------------------------- |
-| **Backend**   | .NET 8, Clean Architecture, CQRS, MongoDB/SQL Server/PostgreSQL     |
+| **Backend**   | .NET 9, Clean Architecture, CQRS, MongoDB/SQL Server/PostgreSQL     |
 | **Frontend**  | Angular 19 (WebV2), Angular 12 (Web), Nx workspace, micro frontends |
 | **Framework** | Easy.Platform (custom infrastructure)                               |
 | **Messaging** | RabbitMQ message bus for cross-service communication                |
@@ -164,7 +164,7 @@ docs/design-system/        # Frontend design system documentation
 | Document                           | Purpose                          |
 | ---------------------------------- | -------------------------------- |
 | `README.md`                        | Platform overview & quick start  |
-| `EasyPlatform.README.md`           | Framework deep dive & patterns   |
+| `docs/architecture-overview.md`    | System architecture & diagrams   |
 | `CLEAN-CODE-RULES.md`              | Coding standards & anti-patterns |
 | `.github/AI-DEBUGGING-PROTOCOL.md` | Debugging protocol for AI agents |
 
@@ -178,7 +178,7 @@ docs/design-system/        # Frontend design system documentation
 -   **`.github/AGENTS.md`**: 17 specialized agent roles with decision tree
 -   **`docs/claude/`**: Domain-specific pattern deep dives (Memory Bank)
 -   **Design system docs**: `docs/design-system/`, platform-specific UI patterns
--   **Framework docs**: `EasyPlatform.README.md`, platform component deep dive
+-   **Framework docs**: `docs/architecture-overview.md`, system architecture
 
 ## Memory Bank (Persistent Context)
 
@@ -193,7 +193,7 @@ docs/design-system/        # Frontend design system documentation
 | What NOT to do                                | `@workspace docs/claude/anti-patterns.md`     |
 | Debugging & troubleshooting                   | `@workspace docs/claude/troubleshooting.md`   |
 | Agent roles & when to use them                | `@workspace .github/AGENTS.md`                |
-| Framework deep dive                           | `@workspace EasyPlatform.README.md`           |
+| System architecture                           | `@workspace docs/architecture-overview.md`    |
 
 **When to load Memory Bank context:**
 

@@ -192,7 +192,7 @@ If confidence < 90% → REQUEST USER CONFIRMATION
 
 ```
 📖 README.md                     # Complete platform overview & quick start
-📖 EasyPlatform.README.md        # Framework deep dive & patterns
+📖 docs/architecture-overview.md # System architecture & diagrams
 📖 CLEAN-CODE-RULES.md           # Coding standards & anti-patterns
 📖 .github/AI-DEBUGGING-PROTOCOL.md  # 🚨 MANDATORY debugging protocol for AI agents
 📖 ai-common-prompt.md           # AI agent prompt library & development patterns

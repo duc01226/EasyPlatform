@@ -26,7 +26,7 @@ This is a **template project** with one example service. Use TextSnippet as a re
 
 ```
 README.md                           # Complete platform overview & quick start
-EasyPlatform.README.md              # Framework deep dive & patterns
+../architecture-overview.md         # System architecture & diagrams
 CLEAN-CODE-RULES.md                 # Coding standards & anti-patterns
 .github/AI-DEBUGGING-PROTOCOL.md    # MANDATORY debugging protocol for AI agents
 ai-prompt-context.md                # Comprehensive development patterns

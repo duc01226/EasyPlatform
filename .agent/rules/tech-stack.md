@@ -10,7 +10,7 @@
 
 ## Frontend (Angular)
 - Framework: Angular 19.1.3, TypeScript 5.6.0, Nx 20.4.0
-- State Management: NgRx ComponentStore 19.0.0 via PlatformVmStore
+- State Management: PlatformVmStore (wrapper over NgRx ComponentStore)
 - Core Library: platform-core (base components, stores, utilities)
 - Styling: SCSS with shared themes
 

@@ -32,7 +32,7 @@ Brief description of what the project does.
 ## Prerequisites
 
 - Node.js >= 18
-- .NET 8 SDK
+- .NET 9 SDK
 - MongoDB 6.0+
 
 ## Installation

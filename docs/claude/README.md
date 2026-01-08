@@ -42,7 +42,7 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 
 - **Root CLAUDE.md**: Essential rules and quick decision trees
 - **ai-prompt-context.md**: Solution planning guidance
-- **EasyPlatform.README.md**: Framework deep dive
+- **../architecture-overview.md**: System architecture & diagrams
 - **.github/AI-DEBUGGING-PROTOCOL.md**: Debugging protocol
 
 ## Usage Tips

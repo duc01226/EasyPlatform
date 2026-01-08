@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 
 # Easy.Platform Backend Development
 
-Complete backend development patterns for EasyPlatform .NET 8 microservices.
+Complete backend development patterns for EasyPlatform .NET 9 microservices.
 
 ## Quick Decision Tree
 

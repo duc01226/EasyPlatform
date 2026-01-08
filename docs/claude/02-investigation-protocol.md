@@ -57,7 +57,7 @@ If confidence < 90% → REQUEST USER CONFIRMATION
 
 ```
 📖 README.md                            # Platform overview
-📖 EasyPlatform.README.md               # Framework deep dive
+📖 ../architecture-overview.md          # System architecture
 📖 CLEAN-CODE-RULES.md                  # Coding standards
 📖 .github/AI-DEBUGGING-PROTOCOL.md    # Debugging protocol
 ```

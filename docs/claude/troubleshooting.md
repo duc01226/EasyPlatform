@@ -210,7 +210,7 @@ await foreach (var entity in repository.AsAsyncEnumerable(expr))
     - Search for patterns in existing handlers/components
 4. **Follow Training Materials:**
     - See README.md learning paths section
-    - Check EasyPlatform.README.md for framework details
+    - Check ../architecture-overview.md for architecture details
 
 ## Debugging Protocol
 

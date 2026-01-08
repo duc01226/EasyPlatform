@@ -59,7 +59,7 @@ docs/
 └── architecture/            # System architecture docs
 
 CLAUDE.md                    # Main AI instructions (root)
-EasyPlatform.README.md       # Framework deep dive
+docs/architecture-overview.md # System architecture
 README.md                    # Project overview
 ```
 

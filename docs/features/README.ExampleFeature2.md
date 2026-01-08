@@ -3223,7 +3223,7 @@ ScanMailBoxNewJobApplicationEmailReceivedEventBusMessage  [REUSED]
 ### Internal Documentation
 
 - [CLAUDE.md](../CLAUDE.md) - Overall coding standards and patterns
-- [EasyPlatform.README.md](../EasyPlatform.README.md) - Platform framework documentation
+- [Architecture Overview](../architecture-overview.md) - System architecture & diagrams
 
 ### External API Documentation
 

@@ -13,7 +13,7 @@ description: Easy.Platform backend development - CQRS commands/queries, entities
 
 ---
 
-You are implementing backend features for EasyPlatform using the Easy.Platform framework (.NET 8 microservices).
+You are implementing backend features for EasyPlatform using the Easy.Platform framework (.NET 9 microservices).
 
 ## Quick Decision Tree
 

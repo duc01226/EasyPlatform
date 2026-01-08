@@ -46,7 +46,7 @@ Before implementing ANY non-trivial task, you MUST:
 | File                                                                 | Purpose                         |
 | -------------------------------------------------------------------- | ------------------------------- |
 | [README.md](README.md)                                               | Platform overview & quick start |
-| [EasyPlatform.README.md](EasyPlatform.README.md)                     | Framework deep dive             |
+| [Architecture Overview](docs/architecture-overview.md)               | System architecture & diagrams  |
 | [.github/AI-DEBUGGING-PROTOCOL.md](.github/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging protocol    |
 | [ai-common-prompt.md](ai-common-prompt.md)                           | AI agent prompt library         |
 
@@ -833,6 +833,27 @@ public class MigrateData : PlatformDataMigrationExecutor<DbContext>
         await r.UpdateManyAsync(items, dismissSendEvent: true, checkDiff: false, ct: default);
         await uow.CompleteAsync();
         return items;
+    }
+}
+```
+
+### 16. Multi-Database Support
+
+```csharp
+// Entity Framework Core (SQL Server/PostgreSQL)
+public class MyEfCorePersistenceModule : PlatformEfCorePersistenceModule<MyDbContext>
+{
+    protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceProvider sp)
+        => options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+}
+
+// MongoDB
+public class MyMongoPersistenceModule : PlatformMongoDbPersistenceModule<MyDbContext>
+{
+    protected override void ConfigureMongoOptions(PlatformMongoOptions<MyDbContext> options)
+    {
+        options.ConnectionString = Configuration.GetSection("MongoDB:ConnectionString").Value;
+        options.Database = Configuration.GetSection("MongoDB:Database").Value;
     }
 }
 ```

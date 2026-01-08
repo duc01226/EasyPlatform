@@ -206,7 +206,7 @@ export class CertificationApiService extends PlatformApiService {
 
 ## Documentation
 
-- [Framework Guide](EasyPlatform.README.md)
+- [Architecture Overview](docs/architecture-overview.md)
 - [Claude AI Instructions](CLAUDE.md)
 - [Backend Patterns](docs/claude/03-backend-patterns.md)
 - [Frontend Patterns](docs/claude/04-frontend-patterns.md)

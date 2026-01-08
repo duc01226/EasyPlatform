@@ -806,7 +806,7 @@ internal sealed class CreateHistoryLogOnGoalChangedEventHandler
 │     │                                                                   │
 │     └──────────────────────────────────────────────────────────────►   │
 │                                                                          │
-│  BACKEND (.NET 8 / MongoDB)                                             │
+│  BACKEND (.NET 9 / MongoDB)                                             │
 │  ═══════════════════════════                                            │
 │                                                                          │
 │  7. GoalController.Save() → Cqrs.SendAsync(SaveGoalCommand)             │
@@ -2927,10 +2927,10 @@ var (total, statusCounts) = await (
   - Backend patterns: CQRS, Clean Architecture, Repository patterns
   - Frontend patterns: PlatformComponent, PlatformVmStore, forms
   - Event-driven architecture: Entity events, message bus
-- **[EasyPlatform.README.md](../../EasyPlatform.README.md)** - Easy.Platform framework deep dive
-  - PlatformVmStore implementation details
-  - Validation patterns (PlatformValidationResult fluent API)
-  - Background job patterns (PlatformApplicationBackgroundJobExecutor)
+- **[Architecture Overview](../architecture-overview.md)** - System architecture & diagrams
+  - Project structure overview
+  - Technology stack details
+  - Cross-service communication patterns
 - **[CLEAN-CODE-RULES.md](../../CLEAN-CODE-RULES.md)** - Coding standards and anti-patterns
   - Code organization and flow patterns
   - Validation method naming conventions
@@ -2973,7 +2973,7 @@ var (total, statusCounts) = await (
 
 ### Code Locations
 
-#### Backend (.NET 8)
+#### Backend (.NET 9)
 
 ```
 src/PlatformExampleApp/TextSnippet/
