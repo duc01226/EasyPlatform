@@ -2,6 +2,7 @@
 
 using Easy.Platform.Common;
 using Easy.Platform.Common.DependencyInjection;
+using Easy.Platform.HangfireBackgroundJob.BackgroundJobs;
 using Easy.Platform.Infrastructures.BackgroundJob;
 using Hangfire;
 using Hangfire.Mongo;
@@ -12,6 +13,8 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
+using MongoDB.Driver;
 
 #endregion
 
@@ -49,6 +52,10 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
             ServiceLifeTime.Singleton,
             replaceStrategy: DependencyInjectionExtension.CheckRegisteredStrategy.ByService);
 
+        // Register MongoDB maintenance job only for MongoDB storage to avoid unnecessary job scheduling
+        if (UseBackgroundJobStorage() == PlatformHangfireBackgroundJobStorageType.Mongo)
+            serviceCollection.RegisterAllForImplementation<PlatformTrimHangfireStateHistoryBackgroundJob>();
+
         GlobalJobFilters.Filters.Add(
             AutomaticRetryOnFailedOptionsBuilder()
                 .Pipe(options => new AutomaticRetryAttribute
@@ -67,7 +74,46 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
         // UseActivator on init so that ServiceProvider have enough all registered services
         GlobalConfiguration.Configuration.UseActivator(new PlatformHangfireActivator(ServiceProvider));
 
+        // Trim StateHistory on startup for MongoDB storage to prevent 16MB document limit
+        // This provides immediate relief for existing oversized documents
+        if (UseBackgroundJobStorage() == PlatformHangfireBackgroundJobStorageType.Mongo) await TrimHangfireStateHistoryOnStartupAsync();
+
         await base.InternalInit(serviceScope);
+    }
+
+    /// <summary>
+    /// Trims StateHistory arrays in Hangfire job documents to prevent MongoDB 16MB BSON limit.
+    /// Runs once on service startup for immediate relief from oversized documents.
+    ///
+    /// <para><strong>Problem:</strong></para>
+    /// <para>Hangfire.Mongo stores job state transitions in StateHistory array within each job document.
+    /// This array grows unbounded, especially for recurring jobs with executeOnStartUp=true.
+    /// When documents exceed 16MB, MongoDB rejects updates with error code 17419.</para>
+    ///
+    /// <para><strong>Solution:</strong></para>
+    /// <para>On startup, trim StateHistory to last MaxStateHistoryEntries (default: 20).
+    /// Combined with daily PlatformTrimHangfireStateHistoryBackgroundJob, this prevents accumulation.</para>
+    /// </summary>
+    protected virtual async Task TrimHangfireStateHistoryOnStartupAsync()
+    {
+        try
+        {
+            var options = PlatformHangfireMongoOptionsHolder.CurrentOptions;
+            if (options == null) return;
+
+            var result = await PlatformTrimHangfireStateHistoryBackgroundJob.TrimStateHistoryAsync(options);
+
+            Logger.LogInformation(
+                "[Hangfire] Trimmed StateHistory on startup. Modified {ModifiedCount} documents.",
+                result.ModifiedCount);
+        }
+        catch (Exception ex)
+        {
+            // Non-blocking: startup should not fail if cleanup fails
+            Logger.LogWarning(
+                ex,
+                "[Hangfire] Failed to trim StateHistory on startup. Will be cleaned by daily maintenance job.");
+        }
     }
 
     protected virtual BackgroundJobServerOptions BackgroundJobServerOptionsConfigure(
@@ -112,6 +158,10 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
                 Util.TaskRunner.WaitRetryThrowFinalException(() =>
                 {
                     var options = UseMongoStorageOptions();
+
+                    // Store options for StateHistory cleanup job
+                    PlatformHangfireMongoOptionsHolder.CurrentOptions = options;
+
                     configuration.UseMongoStorage(
                         options.ConnectionString,
                         options.DatabaseName,
