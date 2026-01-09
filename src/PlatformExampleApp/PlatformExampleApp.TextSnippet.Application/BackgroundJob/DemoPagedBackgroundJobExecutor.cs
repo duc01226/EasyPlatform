@@ -106,25 +106,24 @@ public sealed class DemoPagedBackgroundJobExecutor
     protected override async Task ProcessPagedAsync(
         int? skipCount,
         int? pageSize,
-        DemoPagedParam param,
+        DemoPagedParam? param,
         IServiceProvider serviceProvider,
         IPlatformUnitOfWorkManager uowManager)
     {
         var scopedRepository = serviceProvider.GetRequiredService<ITextSnippetRootRepository<TextSnippetEntity>>();
 
         // Build query based on processing mode
-        var entities = await scopedRepository.GetAllAsync(
-            queryBuilder: query =>
-            {
-                var filteredQuery = BuildQueryForProcessingMode(query, param);
+        var entities = await scopedRepository.GetAllAsync(query =>
+        {
+            var filteredQuery = BuildQueryForProcessingMode(query, param);
 
-                // Apply pagination
-                return filteredQuery
-                    .OrderBy(entity => entity.CreatedDate)
-                    .ThenBy(entity => entity.Id)
-                    .Skip(skipCount ?? 0)
-                    .Take(pageSize ?? param.PageSize);
-            });
+            // Apply pagination
+            return filteredQuery
+                .OrderBy(entity => entity.CreatedDate)
+                .ThenBy(entity => entity.Id)
+                .Skip(skipCount ?? 0)
+                .Take(pageSize ?? param?.PageSize ?? int.MaxValue);
+        });
 
         if (!entities.Any())
         {
@@ -149,9 +148,8 @@ public sealed class DemoPagedBackgroundJobExecutor
     {
         var param = pagedParam?.Param ?? new DemoPagedParam();
 
-        return await textSnippetRepository.CountAsync(
-            queryBuilder: query =>
-                BuildQueryForProcessingMode(query, param));
+        return await textSnippetRepository.CountAsync(query =>
+            BuildQueryForProcessingMode(query, param));
     }
 
     /// <summary>
@@ -160,11 +158,11 @@ public sealed class DemoPagedBackgroundJobExecutor
     /// </summary>
     private static IQueryable<TextSnippetEntity> BuildQueryForProcessingMode(
         IQueryable<TextSnippetEntity> query,
-        DemoPagedParam param)
+        DemoPagedParam? param)
     {
         var baseQuery = query.Where(entity => !string.IsNullOrEmpty(entity.SnippetText));
 
-        return param.ProcessingMode switch
+        return param?.ProcessingMode switch
         {
             PagedProcessingMode.CleanupOld => baseQuery.Where(entity =>
                 entity.CreatedDate < Clock.UtcNow.AddDays(-param.CleanupOlderThanDays)),
@@ -191,12 +189,12 @@ public sealed class DemoPagedBackgroundJobExecutor
     /// </summary>
     private static async Task ProcessEntitiesForMode(
         List<TextSnippetEntity> entities,
-        DemoPagedParam param,
+        DemoPagedParam? param,
         ITextSnippetRootRepository<TextSnippetEntity> repository)
     {
         await entities.ParallelAsync(async entity =>
         {
-            switch (param.ProcessingMode)
+            switch (param?.ProcessingMode)
             {
                 case PagedProcessingMode.CleanupOld:
                     // Demonstrate cleanup: mark for deletion or soft delete
@@ -232,7 +230,7 @@ public sealed class DemoPagedBackgroundJobExecutor
             }
 
             // Add small delay to demonstrate controlled processing
-            if (param.ProcessingDelayMs > 0) await Task.Delay(param.ProcessingDelayMs);
+            if (param?.ProcessingDelayMs > 0) await Task.Delay(param.ProcessingDelayMs);
         });
     }
 }

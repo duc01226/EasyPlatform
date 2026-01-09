@@ -58,9 +58,12 @@ public class TextSnippetEntity : RootAuditedEntity<TextSnippetEntity, string, st
     public string? CategoryId { get; set; }
 
     /// <summary>
-    /// Navigation property to category - demonstrates JsonIgnore for circular reference prevention
+    /// Navigation property to category - demonstrates PlatformNavigationProperty for auto-loading.
+    /// [PlatformNavigationProperty] auto-ignores in BSON. Add [JsonIgnore] manually for API responses.
+    /// Usage: await snippet.LoadNavigationAsync(e => e.SnippetCategory, ct);
     /// </summary>
     [JsonIgnore]
+    [PlatformNavigationProperty(nameof(CategoryId))]
     public TextSnippetCategory? SnippetCategory { get; set; }
 
     /// <summary>

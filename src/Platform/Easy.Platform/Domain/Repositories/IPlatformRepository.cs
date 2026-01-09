@@ -1093,6 +1093,11 @@ public interface IPlatformQueryableRootRepository<TEntity, TPrimaryKey>
     : IPlatformQueryableRepository<TEntity, TPrimaryKey>, IPlatformRootRepository<TEntity, TPrimaryKey>
     where TEntity : class, IRootEntity<TPrimaryKey>, new()
 {
+    /// <summary>
+    /// Repository resolver for navigation property loading.
+    /// </summary>
+    IPlatformRepositoryResolver Resolver { get; }
+
     IPlatformRootServiceProvider GetRootServiceProvider();
 
     public async Task<List<TEntity>> DeleteManyReturnDeletedItemsAsync(

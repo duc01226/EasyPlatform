@@ -1,5 +1,6 @@
 #region
 
+using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using Easy.Platform.Common;
 using Easy.Platform.Common.Cqrs;
@@ -131,6 +132,88 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
     protected IServiceProvider ServiceProvider { get; }
 
     /// <summary>
+    /// Cache for detected repository interface types per repository implementation type.
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, Type?> RepositoryInterfaceTypeCache = new();
+
+    /// <summary>
+    /// Cached resolver instance for this repository.
+    /// </summary>
+    private IPlatformRepositoryResolver? cachedResolver;
+
+    /// <summary>
+    /// Gets the repository resolver for navigation property loading.
+    /// Creates a type-aware resolver using factory with auto-detected interface type.
+    /// </summary>
+    public IPlatformRepositoryResolver Resolver => cachedResolver ??= CreateResolver();
+
+    /// <summary>
+    /// Gets the repository interface type definition for this repository.
+    /// Override to explicitly specify the interface type.
+    /// Default implementation auto-detects from implemented interfaces.
+    /// </summary>
+    /// <returns>Open generic type definition (e.g., typeof(IGrowthRootRepository&lt;&gt;)), or null for default behavior</returns>
+    protected virtual Type? GetRepositoryInterfaceTypeDefinition()
+    {
+        return RepositoryInterfaceTypeCache.GetOrAdd(
+            GetType(),
+            repoType => DetectRepositoryInterfaceType(repoType));
+    }
+
+    private IPlatformRepositoryResolver CreateResolver()
+    {
+        var factory = ServiceProvider.GetRequiredService<IPlatformRepositoryResolverFactory>();
+        var interfaceType = GetRepositoryInterfaceTypeDefinition();
+
+        return interfaceType != null
+            ? factory.Create(interfaceType)
+            : factory.Create();
+    }
+
+    private static Type? DetectRepositoryInterfaceType(Type repositoryType)
+    {
+        // Find nearest interface that inherits from IPlatformQueryableRepository<,>
+        var repoInterface = repositoryType
+            .GetInterfaces()
+            .LastOrDefault(i => i.IsGenericType && IsRepositoryInterface(i));
+
+        return repoInterface?.GetGenericTypeDefinition();
+    }
+
+    private static bool IsRepositoryInterface(Type interfaceType)
+    {
+        return interfaceType.IsGenericType &&
+               interfaceType.IsAssignableToGenericType(typeof(IPlatformQueryableRepository<,>));
+    }
+
+    /// <summary>
+    /// Injects the repository resolver into a loaded entity for navigation property loading support.
+    /// Only applies to ISupportNavigationLoaderEntity instances.
+    /// </summary>
+    /// <param name="entity">Entity to inject resolver into (may be null)</param>
+    /// <returns>The same entity for chaining</returns>
+    protected TEntity InjectResolverIfNavigationLoaderEntity(TEntity entity)
+    {
+        if (entity is ISupportNavigationLoaderEntity navigationLoaderEntity)
+            navigationLoaderEntity.InjectRepositoryResolver(Resolver);
+        return entity;
+    }
+
+    /// <summary>
+    /// Injects the repository resolver into multiple loaded entities for navigation property loading support.
+    /// Only applies to NavigationLoaderEntity instances.
+    /// </summary>
+    /// <param name="entities">Entities to inject resolver into</param>
+    /// <returns>The same list for chaining</returns>
+    protected List<TEntity> InjectResolverIfNavigationLoaderEntities(List<TEntity> entities)
+    {
+        if (entities == null || entities.Count == 0) return entities;
+        foreach (var entity in entities)
+            InjectResolverIfNavigationLoaderEntity(entity);
+        return entities;
+    }
+
+    /// <summary>
     /// Gets the global-scoped Unit of Work instance that spans the entire application scope.
     /// Used for operations that need to coordinate across multiple repositories or services.
     /// </summary>
@@ -196,7 +279,10 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
     /// a specific entity by its identifier. The method will throw an exception if the entity is not found,
     /// making it suitable for scenarios where the entity's existence is guaranteed or expected.
     /// </remarks>
-    public abstract Task<TEntity> GetByIdAsync(TPrimaryKey id, CancellationToken cancellationToken = default, params Expression<Func<TEntity, object?>>[] loadRelatedEntities);
+    public abstract Task<TEntity> GetByIdAsync(
+        TPrimaryKey id,
+        CancellationToken cancellationToken = default,
+        params Expression<Func<TEntity, object?>>[] loadRelatedEntities);
 
     /// <summary>
     /// Retrieves multiple entities by their primary keys with support for loading related entities.
@@ -290,7 +376,8 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
         params Expression<Func<TEntity, object?>>[] loadRelatedEntities
     )
     {
-        return ExecuteAutoOpenUowUsingOnceTimeForRead((uow, query) => GetAllAsyncEnumerable(queryBuilder(uow, query), cancellationToken), loadRelatedEntities).GetResult();
+        return ExecuteAutoOpenUowUsingOnceTimeForRead((uow, query) => GetAllAsyncEnumerable(queryBuilder(uow, query), cancellationToken), loadRelatedEntities)
+            .GetResult();
     }
 
     public abstract IAsyncEnumerable<TEntity> GetAllAsyncEnumerable(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
@@ -316,7 +403,9 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
 
     public abstract Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate = null, CancellationToken cancellationToken = default);
 
-    public abstract Task<bool> AnyAsync<TQueryItemResult>(Func<IQueryable<TEntity>, IQueryable<TQueryItemResult>> queryBuilder, CancellationToken cancellationToken = default);
+    public abstract Task<bool> AnyAsync<TQueryItemResult>(
+        Func<IQueryable<TEntity>, IQueryable<TQueryItemResult>> queryBuilder,
+        CancellationToken cancellationToken = default);
 
     public abstract Task<bool> AnyAsync<TQueryItemResult>(
         Func<IPlatformUnitOfWork, IQueryable<TEntity>, IQueryable<TQueryItemResult>> queryBuilder,
@@ -403,7 +492,9 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
 
     public abstract Task<int> CountAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default);
 
-    public abstract Task<int> CountAsync<TQueryItemResult>(Func<IQueryable<TEntity>, IQueryable<TQueryItemResult>> queryBuilder, CancellationToken cancellationToken = default);
+    public abstract Task<int> CountAsync<TQueryItemResult>(
+        Func<IQueryable<TEntity>, IQueryable<TQueryItemResult>> queryBuilder,
+        CancellationToken cancellationToken = default);
 
     public Func<IQueryable<TEntity>, IQueryable<TResult>> GetQueryBuilder<TResult>(Func<IQueryable<TEntity>, IQueryable<TResult>> builderFn)
     {
@@ -709,7 +800,10 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
         CancellationToken cancellationToken = default
     );
 
-    protected abstract void HandleDisposeUsingOnceTransientUowLogic<TResult>(IPlatformUnitOfWork uow, Expression<Func<TEntity, object>>[] loadRelatedEntities, TResult result);
+    protected abstract void HandleDisposeUsingOnceTransientUowLogic<TResult>(
+        IPlatformUnitOfWork uow,
+        Expression<Func<TEntity, object>>[] loadRelatedEntities,
+        TResult result);
 
     /// <summary>
     /// Return True to determine that this uow is Thread Safe and could support multiple parallel query
@@ -766,7 +860,7 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
         {
             var result = await ExecuteUowReadQueryThreadSafe(
                 currentActiveUow,
-                uow => ExecuteReadData(uow, readDataFn, loadRelatedEntities, forAsyncEnumerable: forAsyncEnumerable)
+                uow => ExecuteReadData(uow, readDataFn, loadRelatedEntities, forAsyncEnumerable)
             );
 
             // If there is opening uow, may get data for update => set cached original entities for track update
@@ -823,13 +917,12 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
     {
         return ExecuteAutoOpenUowUsingOnceTimeForRead(ReadDataFnAsync, loadRelatedEntities, forceOpenUowUsingOnce, forAsyncEnumerable);
 
-        async Task<TResult> ReadDataFnAsync(IPlatformUnitOfWork unitOfWork, IQueryable<TEntity> entities)
-        {
-            return readDataFn(unitOfWork, entities);
-        }
+        async Task<TResult> ReadDataFnAsync(IPlatformUnitOfWork unitOfWork, IQueryable<TEntity> entities) => readDataFn(unitOfWork, entities);
     }
 
-    protected virtual async Task<TResult> ExecuteAutoOpenUowUsingOnceTimeForWrite<TResult>(Func<IPlatformUnitOfWork, Task<TResult>> action, IPlatformUnitOfWork forceUseUow = null)
+    protected virtual async Task<TResult> ExecuteAutoOpenUowUsingOnceTimeForWrite<TResult>(
+        Func<IPlatformUnitOfWork, Task<TResult>> action,
+        IPlatformUnitOfWork forceUseUow = null)
     {
         if (forceUseUow != null)
             return await action(forceUseUow);

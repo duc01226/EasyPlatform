@@ -63,6 +63,9 @@ public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContex
     {
         base.InternalRegister(serviceCollection);
 
+        // Register navigation property BSON ignore convention
+        Conventions.PlatformMongoNavigationConventionRegistration.EnsureRegistered();
+
         serviceCollection.RegisterAllForImplementation<TDbContext>(ServiceLifeTime.Transient);
         serviceCollection.Configure<TMongoOptions>(ExecuteConfigureMongoOptions);
         serviceCollection.Configure<PlatformMongoOptions<TDbContext>>(ExecuteConfigureMongoOptions);

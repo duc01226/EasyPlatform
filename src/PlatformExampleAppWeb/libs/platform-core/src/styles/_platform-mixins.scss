@@ -1,5 +1,91 @@
 @use 'platform-variables' as *;
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// LAYOUT MIXINS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+@mixin flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@mixin flex-start {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+@mixin flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+// Stack: vertical layout with gap
+@mixin stack($gap: $space-4) {
+    display: flex;
+    flex-direction: column;
+    gap: $gap;
+}
+
+// Cluster: horizontal wrapping layout with gap
+@mixin cluster($gap: $space-4) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $gap;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CARD MIXINS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+@mixin card-elevated {
+    background: white;
+    border-radius: $radius-lg;
+    box-shadow: $shadow-sm;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BADGE & BANNER MIXINS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+@mixin badge-base {
+    display: inline-flex;
+    align-items: center;
+    gap: $space-1;
+    padding: $space-1 $space-2;
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    border-radius: $radius-sm;
+}
+
+@mixin error-banner {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-3 $space-4;
+    color: $color-error-dark;
+    background: $color-error-light;
+    border-left: 4px solid $color-error;
+    border-radius: $radius-md;
+}
+
+@mixin warning-banner {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+    padding: $space-3 $space-4;
+    color: $color-warning-dark;
+    background: $color-warning-light;
+    border-left: 4px solid $color-warning;
+    border-radius: $radius-md;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MEDIA QUERIES
+// ═══════════════════════════════════════════════════════════════════════════════
+
 @mixin flex-layout-media($media-type) {
     @if ($media-type== 'xs' or $media-type== 'lt-sm') {
         @media (max-width: $platform-media-breakpoint-xs) {
@@ -55,6 +141,10 @@
         }
     }
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEXT UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════════
 
 @mixin truncate-text {
     white-space: nowrap;

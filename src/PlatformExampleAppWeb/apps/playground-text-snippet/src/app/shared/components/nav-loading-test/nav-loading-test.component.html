@@ -1,0 +1,135 @@
+<div class="nav-loading-test">
+    <div class="nav-loading-test__header">
+        <h2 class="nav-loading-test__title">Navigation Property Loading Test</h2>
+        <p class="nav-loading-test__description">
+            Comprehensive test suite for PlatformNavigationPropertyAttribute deep navigation loading.
+            Tests 7 scenarios: basic navigation, null FK, batch loading, self-referential, multiple expressions, missing entities, and GetByIdsAsync.
+        </p>
+        <div class="nav-loading-test__actions">
+            <button
+                mat-raised-button
+                color="primary"
+                class="nav-loading-test__run-btn"
+                (click)="runTest()"
+                [disabled]="isLoading$('runTest')()">
+                <mat-icon>play_arrow</mat-icon>
+                Run All Tests
+            </button>
+            @if (vm()?.result) {
+                <button
+                    mat-stroked-button
+                    class="nav-loading-test__clear-btn"
+                    (click)="clearResult()">
+                    <mat-icon>clear</mat-icon>
+                    Clear
+                </button>
+            }
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    @if (isLoading$('runTest')()) {
+        <div class="nav-loading-test__loading">
+            <mat-spinner diameter="40"></mat-spinner>
+            <span class="nav-loading-test__loading-text">Running 7 navigation loading tests...</span>
+        </div>
+    }
+
+    <!-- Error State -->
+    @if (getErrorMsg$('runTest')(); as error) {
+        <div class="nav-loading-test__error">
+            <mat-icon>error</mat-icon>
+            <span>{{ error }}</span>
+        </div>
+    }
+
+    <!-- Results -->
+    @if (vm()?.result; as result) {
+        <div class="nav-loading-test__results">
+            <!-- Summary Card -->
+            <mat-card class="nav-loading-test__summary-card">
+                <mat-card-header>
+                    <mat-card-title class="nav-loading-test__summary-title">
+                        <span class="nav-loading-test__provider-badge">{{ result.provider }}</span>
+                        Test Summary
+                    </mat-card-title>
+                    <mat-card-subtitle class="nav-loading-test__subtitle">
+                        Test ID: {{ result.testId }} | {{ result.timestamp | date:'medium' }}
+                    </mat-card-subtitle>
+                </mat-card-header>
+                <mat-card-content>
+                    <div class="nav-loading-test__summary-stats" [class.--success]="result.summary.allTestsPassed" [class.--error]="!result.summary.allTestsPassed">
+                        <div class="nav-loading-test__stat">
+                            <mat-icon class="nav-loading-test__stat-icon">{{ result.summary.allTestsPassed ? 'check_circle' : 'error' }}</mat-icon>
+                            <span class="nav-loading-test__stat-text">{{ result.summary.message }}</span>
+                        </div>
+                        <div class="nav-loading-test__stat-counts">
+                            <span class="nav-loading-test__count --passed">
+                                <mat-icon>check</mat-icon>
+                                {{ result.summary.passedTests }} Passed
+                            </span>
+                            <span class="nav-loading-test__count --failed" [class.--hidden]="result.summary.failedTests === 0">
+                                <mat-icon>close</mat-icon>
+                                {{ result.summary.failedTests }} Failed
+                            </span>
+                            <span class="nav-loading-test__count --total">
+                                {{ result.summary.totalTests }} Total
+                            </span>
+                        </div>
+                    </div>
+                </mat-card-content>
+            </mat-card>
+
+            <!-- Individual Test Results -->
+            <mat-card class="nav-loading-test__tests-card">
+                <mat-card-header>
+                    <mat-card-title>Individual Test Results</mat-card-title>
+                </mat-card-header>
+                <mat-card-content>
+                    <div class="nav-loading-test__test-list">
+                        @for (test of result.tests; track test.name; let i = $index) {
+                            <mat-expansion-panel class="nav-loading-test__test-panel" [class.--passed]="test.passed" [class.--failed]="!test.passed">
+                                <mat-expansion-panel-header>
+                                    <mat-panel-title class="nav-loading-test__test-title">
+                                        <span class="nav-loading-test__test-number">{{ i + 1 }}</span>
+                                        <mat-icon class="nav-loading-test__test-icon" [class.--success]="test.passed" [class.--error]="!test.passed">
+                                            {{ test.passed ? 'check_circle' : 'cancel' }}
+                                        </mat-icon>
+                                        <span class="nav-loading-test__test-name">{{ test.name }}</span>
+                                    </mat-panel-title>
+                                    <mat-panel-description class="nav-loading-test__test-status">
+                                        <span class="nav-loading-test__badge" [class.--success]="test.passed" [class.--error]="!test.passed">
+                                            {{ test.passed ? 'PASSED' : 'FAILED' }}
+                                        </span>
+                                    </mat-panel-description>
+                                </mat-expansion-panel-header>
+                                <div class="nav-loading-test__test-details">
+                                    @if (test.error) {
+                                        <div class="nav-loading-test__test-error">
+                                            <mat-icon>error_outline</mat-icon>
+                                            <span>{{ test.error }}</span>
+                                        </div>
+                                    }
+                                    @if (test.details) {
+                                        <pre class="nav-loading-test__json">{{ test.details | json }}</pre>
+                                    }
+                                </div>
+                            </mat-expansion-panel>
+                        }
+                    </div>
+                </mat-card-content>
+            </mat-card>
+
+            <!-- Full Response (Collapsed) -->
+            <mat-expansion-panel class="nav-loading-test__raw-panel">
+                <mat-expansion-panel-header>
+                    <mat-panel-title>
+                        <mat-icon>code</mat-icon>
+                        View Raw JSON Response
+                    </mat-panel-title>
+                </mat-expansion-panel-header>
+                <pre class="nav-loading-test__json --full">{{ result | json }}</pre>
+            </mat-expansion-panel>
+        </div>
+    }
+</div>

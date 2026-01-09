@@ -2,6 +2,7 @@
 
 using System.Diagnostics;
 using System.Linq.Expressions;
+using System.Reflection;
 using Easy.Platform.Application;
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
@@ -885,7 +886,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                         .FirstOrDefaultAsync(cancellationToken);
             }
 
-            var changedFields = entity.GetChangedFields(existingEntity);
+            var changedFields = entity.GetChangedFields(existingEntity, p => p.GetCustomAttribute<PlatformNavigationPropertyAttribute>() == null);
             var entityUpdatedDateAuditField = LastUpdatedDateAuditFieldAttribute.GetUpdatedDateAuditField(typeof(TEntity));
 
             if (
@@ -1714,7 +1715,7 @@ public abstract class PlatformMongoDbContext<TDbContext> : IPlatformDbContext<TD
                     .FirstOrDefaultAsync(cancellationToken);
         }
 
-        var changedFields = entity.GetChangedFields(existingEntity);
+        var changedFields = entity.GetChangedFields(existingEntity, p => p.GetCustomAttribute<PlatformNavigationPropertyAttribute>() == null);
         var entityUpdatedDateAuditField = LastUpdatedDateAuditFieldAttribute.GetUpdatedDateAuditField(typeof(TEntity));
 
         if (

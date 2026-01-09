@@ -159,7 +159,7 @@ public abstract class PlatformApplicationBatchScrollingBackgroundJobExecutor<TEn
                 // Schedule individual batch job for parallel execution
                 var batchParam = new PlatformBatchScrollingJobParam<TBatchKey, TParam> { Param = param, BatchKey = batchKey };
 
-                await BackgroundJobScheduler.Schedule(jobExecutorType: GetType(), batchParam, DateTimeOffset.UtcNow);
+                await BackgroundJobScheduler.Schedule(GetType(), batchParam, DateTimeOffset.UtcNow);
             });
 
             if (batchKeysPage.Count == 0 || currentPage * BatchKeyPageSize >= totalBatchKeysCount)
@@ -172,7 +172,7 @@ public abstract class PlatformApplicationBatchScrollingBackgroundJobExecutor<TEn
     /// <summary>
     /// Processes a single batch using scrolling pagination
     /// </summary>
-    private async Task ProcessSingleBatchAsync(TBatchKey batchKey, TParam param)
+    private async Task ProcessSingleBatchAsync(TBatchKey batchKey, TParam? param)
     {
         try
         {
@@ -190,7 +190,7 @@ public abstract class PlatformApplicationBatchScrollingBackgroundJobExecutor<TEn
 
                     return entities;
                 },
-                maxExecutionCount: await CountEntitiesAsync(ServiceProvider, query => EntitiesQueryBuilder(query, param, batchKey)) / BatchKeyPageSize
+                await CountEntitiesAsync(ServiceProvider, query => EntitiesQueryBuilder(query, param, batchKey)) / BatchKeyPageSize
             );
         }
         catch (Exception ex)
@@ -232,7 +232,7 @@ public abstract class PlatformApplicationBatchScrollingBackgroundJobExecutor<TEn
     /// <param name="param">Job parameters (can contain additional filtering criteria)</param>
     /// <param name="batchKey">The batch key (null for batch discovery, specific value for batch processing)</param>
     /// <returns>Filtered queryable for entities that need processing</returns>
-    protected abstract IQueryable<TEntity> EntitiesQueryBuilder(IQueryable<TEntity> query, TParam param, TBatchKey? batchKey = default);
+    protected abstract IQueryable<TEntity> EntitiesQueryBuilder(IQueryable<TEntity> query, TParam? param, TBatchKey? batchKey = default);
 
     /// <summary>
     /// Override to include related entities needed for accrual processing
@@ -498,7 +498,7 @@ public class PlatformBatchScrollingJobParam<TBatchKey, TParam>
     /// }
     /// ```
     /// </summary>
-    public TParam Param { get; set; }
+    public TParam? Param { get; set; }
 
     /// <summary>
     /// The batch key for this specific batch execution.

@@ -399,7 +399,7 @@ internal sealed class SaveSnippetTextCommandHandler : PlatformCqrsCommandApplica
                 Name = "First Multi Db Demo Entity"
             };
 
-        firstExistedMultiDbEntity.Name = $"First Multi Db Demo Entity Upserted on {Clock.Now.ToShortDateString()}";
+        firstExistedMultiDbEntity.Name = $"First Multi Db Demo Entity Upserted on {Clock.Now:d}";
 
         await multiDbDemoEntityRepository.CreateOrUpdateAsync(
             firstExistedMultiDbEntity,

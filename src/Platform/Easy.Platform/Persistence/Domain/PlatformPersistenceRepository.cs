@@ -100,7 +100,8 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
         params Expression<Func<TEntity, object?>>[] loadRelatedEntities)
     {
         return ExecuteAutoOpenUowUsingOnceTimeForRead(
-            (_, query) => FirstOrDefaultAsync(query.Where(p => p.Id!.Equals(id)), cancellationToken),
+            (_, query) => FirstOrDefaultAsync(query.Where(p => p.Id!.Equals(id)), cancellationToken)
+                .Then(InjectResolverIfNavigationLoaderEntity),
             loadRelatedEntities);
     }
 
@@ -110,13 +111,14 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
         params Expression<Func<TEntity, object?>>[] loadRelatedEntities)
     {
         return ExecuteAutoOpenUowUsingOnceTimeForRead(
-            (_, query) => ToListAsync(query.Where(p => ids.Contains(p.Id)), cancellationToken),
+            (_, query) => ToListAsync(query.Where(p => ids.Contains(p.Id)), cancellationToken)
+                .Then(InjectResolverIfNavigationLoaderEntities),
             loadRelatedEntities);
     }
 
     public override Task<List<TEntity>> GetAllAsync(IQueryable<TEntity> query, CancellationToken cancellationToken = default)
     {
-        return ToListAsync(query, cancellationToken);
+        return ToListAsync(query, cancellationToken).Then(InjectResolverIfNavigationLoaderEntities);
     }
 
     public override IEnumerable<TEntity> GetAllEnumerable(
@@ -167,7 +169,8 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
     {
         return ExecuteAutoOpenUowUsingOnceTimeForRead(
             (_, query) => FirstOrDefaultAsync(query.WhereIf(predicate != null, predicate), cancellationToken)
-                .EnsureFound($"{typeof(TEntity).Name} is not found"),
+                .EnsureFound($"{typeof(TEntity).Name} is not found")
+                .Then(InjectResolverIfNavigationLoaderEntity),
             loadRelatedEntities);
     }
 
@@ -177,7 +180,8 @@ public abstract class PlatformPersistenceRepository<TEntity, TPrimaryKey, TUow, 
         params Expression<Func<TEntity, object?>>[] loadRelatedEntities)
     {
         return ExecuteAutoOpenUowUsingOnceTimeForRead(
-            (_, query) => FirstOrDefaultAsync(query.WhereIf(predicate != null, predicate), cancellationToken),
+            (_, query) => FirstOrDefaultAsync(query.WhereIf(predicate != null, predicate), cancellationToken)
+                .Then(InjectResolverIfNavigationLoaderEntity),
             loadRelatedEntities);
     }
 

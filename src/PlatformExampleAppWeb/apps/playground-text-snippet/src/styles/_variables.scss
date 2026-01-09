@@ -15,7 +15,7 @@ $app-container-max-width: calculaterem(1400px);
 $app-sidebar-width: calculaterem(280px);
 $app-content-max-width: calculaterem(1000px);
 
-// App-specific spacing
-$app-page-padding: $space-6;
-$app-section-gap: $space-8;
-$app-card-padding: $space-5;
+// App-specific spacing (using rem values directly)
+$app-page-padding: 1.5rem;  // ~24px
+$app-section-gap: 2rem;      // ~32px
+$app-card-padding: 1.25rem;  // ~20px

@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using System.Runtime.CompilerServices;
 using Easy.Platform.Application.Persistence;
+using Easy.Platform.Common.Extensions;
 using Easy.Platform.Domain.Entities;
 using Easy.Platform.Domain.Repositories;
 using Easy.Platform.Domain.UnitOfWork;
@@ -218,6 +219,101 @@ public abstract class PlatformMongoDbRepository<TEntity, TPrimaryKey, TDbContext
     {
         uow.Dispose();
     }
+
+    #region Navigation Loading for MongoDB
+
+    /// <summary>
+    /// Override to load navigation properties after MongoDB query.
+    /// MongoDB doesn't support .Include() like EF Core, so we load post-query.
+    /// </summary>
+    public override async Task<TEntity> GetByIdAsync(
+        TPrimaryKey id,
+        CancellationToken cancellationToken = default,
+        params Expression<Func<TEntity, object?>>[] loadRelatedEntities)
+    {
+        var entity = await base.GetByIdAsync(id, cancellationToken, loadRelatedEntities);
+        return await LoadNavigationsIfNeededAsync(entity, loadRelatedEntities, cancellationToken);
+    }
+
+    /// <summary>
+    /// Override to batch load navigation properties after MongoDB query.
+    /// Uses single query per navigation type to prevent N+1 problem.
+    /// </summary>
+    public override async Task<List<TEntity>> GetByIdsAsync(
+        List<TPrimaryKey> ids,
+        CancellationToken cancellationToken = default,
+        params Expression<Func<TEntity, object?>>[] loadRelatedEntities)
+    {
+        var entities = await base.GetByIdsAsync(ids, cancellationToken, loadRelatedEntities);
+        return await LoadNavigationsIfNeededAsync(entities, loadRelatedEntities, cancellationToken);
+    }
+
+    /// <summary>
+    /// Override to load navigation properties after MongoDB query.
+    /// </summary>
+    public override async Task<TEntity> FirstAsync(
+        Expression<Func<TEntity, bool>> predicate = null,
+        CancellationToken cancellationToken = default,
+        params Expression<Func<TEntity, object?>>[] loadRelatedEntities)
+    {
+        var entity = await base.FirstAsync(predicate, cancellationToken, loadRelatedEntities);
+        return await LoadNavigationsIfNeededAsync(entity, loadRelatedEntities, cancellationToken);
+    }
+
+    /// <summary>
+    /// Override to load navigation properties after MongoDB query.
+    /// </summary>
+    public override async Task<TEntity> FirstOrDefaultAsync(
+        Expression<Func<TEntity, bool>> predicate = null,
+        CancellationToken cancellationToken = default,
+        params Expression<Func<TEntity, object?>>[] loadRelatedEntities)
+    {
+        var entity = await base.FirstOrDefaultAsync(predicate, cancellationToken, loadRelatedEntities);
+        return await LoadNavigationsIfNeededAsync(entity, loadRelatedEntities, cancellationToken);
+    }
+
+    /// <summary>
+    /// Override to batch load navigation properties after MongoDB query.
+    /// </summary>
+    public override async Task<List<TEntity>> GetAllAsync(
+        Expression<Func<TEntity, bool>> predicate = null,
+        CancellationToken cancellationToken = default,
+        params Expression<Func<TEntity, object?>>[] loadRelatedEntities)
+    {
+        var entities = await base.GetAllAsync(predicate, cancellationToken, loadRelatedEntities);
+        return await LoadNavigationsIfNeededAsync(entities, loadRelatedEntities, cancellationToken);
+    }
+
+    /// <summary>
+    /// Loads navigation properties for a single entity if loadRelatedEntities is specified.
+    /// </summary>
+    private async Task<TEntity> LoadNavigationsIfNeededAsync(
+        TEntity entity,
+        Expression<Func<TEntity, object?>>[] loadRelatedEntities,
+        CancellationToken ct)
+    {
+        if (entity == null || loadRelatedEntities.IsNullOrEmpty())
+            return entity;
+
+        return await entity.LoadNavigationsAsync<TEntity, TPrimaryKey>(loadRelatedEntities, Resolver, ct);
+    }
+
+    /// <summary>
+    /// Batch loads navigation properties for multiple entities if loadRelatedEntities is specified.
+    /// Uses single query per navigation type to prevent N+1 problem.
+    /// </summary>
+    private async Task<List<TEntity>> LoadNavigationsIfNeededAsync(
+        List<TEntity> entities,
+        Expression<Func<TEntity, object?>>[] loadRelatedEntities,
+        CancellationToken ct)
+    {
+        if (entities.IsNullOrEmpty() || loadRelatedEntities.IsNullOrEmpty())
+            return entities;
+
+        return await entities.LoadNavigationsAsync<TEntity, TPrimaryKey>(loadRelatedEntities, Resolver, ct);
+    }
+
+    #endregion
 }
 
 public abstract class PlatformMongoDbRootRepository<TEntity, TPrimaryKey, TDbContext>

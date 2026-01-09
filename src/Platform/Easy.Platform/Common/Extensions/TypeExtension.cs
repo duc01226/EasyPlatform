@@ -18,15 +18,13 @@ public static class TypeExtension
     {
         while (true)
         {
-            var givenInterfaceTypes = givenType.GetInterfaces();
+            if (givenType.IsGenericType && givenType.GetGenericTypeDefinition() == genericType) return true;
 
-            foreach (var givenInterfaceType in givenInterfaceTypes)
+            foreach (var givenInterfaceType in givenType.GetInterfaces())
             {
                 if (givenInterfaceType.IsGenericType && givenInterfaceType.GetGenericTypeDefinition() == genericType)
                     return true;
             }
-
-            if (givenType.IsGenericType && givenType.GetGenericTypeDefinition() == genericType) return true;
 
             var baseType = givenType.BaseType;
             if (baseType == null) return false;

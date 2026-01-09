@@ -1,5 +1,4 @@
 using System;
-using Easy.Platform.EfCore.Utils;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PlatformExampleApp.TextSnippet.Persistence.Migrations;

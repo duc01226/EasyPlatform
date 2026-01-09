@@ -19,6 +19,7 @@ import { TaskItemDataModel } from '@libs/apps-domains/text-snippet-domain';
 
 import { AppStore, AppVm, AppVm_TextSnippetItem } from './app.store';
 import { AppTextSnippetDetailComponent } from './shared/components/app-text-snippet-detail';
+import { NavLoadingTestComponent } from './shared/components/nav-loading-test';
 import { TaskDetailComponent } from './shared/components/task-detail';
 import { TaskListComponent } from './shared/components/task-list';
 
@@ -49,7 +50,8 @@ import { TaskListComponent } from './shared/components/task-list';
         AppTextSnippetDetailComponent,
         PlatformHighlightSearchTextPipe,
         TaskListComponent,
-        TaskDetailComponent
+        TaskDetailComponent,
+        NavLoadingTestComponent
     ],
     providers: []
 })

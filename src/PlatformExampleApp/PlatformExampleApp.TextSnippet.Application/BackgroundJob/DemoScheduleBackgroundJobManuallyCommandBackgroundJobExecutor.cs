@@ -35,7 +35,7 @@ public sealed class DemoScheduleBackgroundJobManuallyCommandBackgroundJobExecuto
         await textSnippetEntityRepository.CreateOrUpdateAsync(
             TextSnippetEntity.Create(
                 id: Ulid.Parse("01J0P1B1HNKNVK5XV31D837KGQ").ToString(),
-                snippetText: $"DemoScheduleBackgroundJobManually {Clock.Now.ToShortTimeString()} {param.NewSnippetText ?? ""}",
+                snippetText: $"DemoScheduleBackgroundJobManually {Clock.Now:t} {param.NewSnippetText ?? ""}",
                 fullText: $"DemoScheduleBackgroundJobManually {param.NewSnippetText ?? ""}"));
     }
 }

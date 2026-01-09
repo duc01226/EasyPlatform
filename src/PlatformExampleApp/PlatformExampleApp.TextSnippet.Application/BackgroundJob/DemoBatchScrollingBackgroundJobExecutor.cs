@@ -98,8 +98,8 @@ public sealed class DemoBatchScrollingBackgroundJobExecutor
         return serviceProvider.GetRequiredService<ITextSnippetRootRepository<TextSnippetEntity>>()
             .GetAllAsync(
                 queryBuilder,
-                cancellationToken: cancellationToken,
-                loadRelatedEntities: loadRelatedEntities);
+                cancellationToken,
+                loadRelatedEntities);
     }
 
     /// <summary>
@@ -129,20 +129,20 @@ public sealed class DemoBatchScrollingBackgroundJobExecutor
     /// </summary>
     protected override IQueryable<TextSnippetEntity> EntitiesQueryBuilder(
         IQueryable<TextSnippetEntity> query,
-        DemoBatchScrollingParam param,
+        DemoBatchScrollingParam? param,
         string? batchKey = null)
     {
         var baseQuery = query.Where(entity => !string.IsNullOrEmpty(entity.SnippetText));
 
         // Apply parameter-based filtering
-        if (param.ProcessingMode == BatchProcessingMode.UpdateFullText)
+        if (param?.ProcessingMode == BatchProcessingMode.UpdateFullText)
         {
             // Only process entities that haven't been updated recently
             baseQuery = baseQuery.Where(entity =>
                 string.IsNullOrEmpty(entity.FullText) ||
                 !entity.FullText.Contains("[BatchProcessed]"));
         }
-        else if (param.ProcessingMode == BatchProcessingMode.CleanupOld)
+        else if (param?.ProcessingMode == BatchProcessingMode.CleanupOld)
         {
             // Process old entities for cleanup
             var cutoffDate = Clock.UtcNow.AddDays(-param.CleanupOlderThanDays);
@@ -198,7 +198,7 @@ public sealed class DemoBatchScrollingBackgroundJobExecutor
     protected override async Task ProcessEntitiesAsync(
         List<TextSnippetEntity> entities,
         string batchKey,
-        DemoBatchScrollingParam param,
+        DemoBatchScrollingParam? param,
         IServiceProvider serviceProvider)
     {
         var repository = serviceProvider.GetRequiredService<ITextSnippetRootRepository<TextSnippetEntity>>();
@@ -206,7 +206,7 @@ public sealed class DemoBatchScrollingBackgroundJobExecutor
         await entities.ParallelAsync(
             async entity =>
             {
-                switch (param.ProcessingMode)
+                switch (param?.ProcessingMode)
                 {
                     case BatchProcessingMode.UpdateFullText:
                         // Demonstrate business logic: update FullText with processing info
@@ -222,7 +222,7 @@ public sealed class DemoBatchScrollingBackgroundJobExecutor
                 // Save the updated entity
                 await repository.CreateOrUpdateAsync(entity);
             },
-            maxConcurrent: param.MaxItemsPerBatch > 0 ? Math.Min(param.MaxItemsPerBatch, 10) : 5);
+            param?.MaxItemsPerBatch > 0 ? Math.Min(param.MaxItemsPerBatch, 10) : 5);
     }
 
     /// <summary>

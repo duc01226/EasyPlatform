@@ -29,14 +29,14 @@ public sealed class TextSnippetDbContext : PlatformMongoDbContext<TextSnippetDbC
 
     public IMongoCollection<TextSnippetEntity> TextSnippetCollection => GetCollection<TextSnippetEntity>();
 
-    public IMongoCollection<TaskItemEntity> TaskItemCollection => GetCollection<TaskItemEntity>();
+    public IMongoCollection<TextSnippetCategory> TextSnippetCategoryCollection => GetCollection<TextSnippetCategory>();
 
     public override async Task InternalEnsureIndexesAsync(bool recreate = false)
     {
         if (recreate)
             await Task.WhenAll(
                 TextSnippetCollection.Indexes.DropAllAsync(),
-                TaskItemCollection.Indexes.DropAllAsync());
+                TextSnippetCategoryCollection.Indexes.DropAllAsync());
 
         await Task.WhenAll(
             TextSnippetCollection.Indexes.CreateManyAsync(
@@ -62,44 +62,16 @@ public sealed class TextSnippetDbContext : PlatformMongoDbContext<TextSnippetDbC
                         .Text(p => p.SnippetText)
                         .Text(p => p.FullText))
             ]),
-            TaskItemCollection.Indexes.CreateManyAsync(
+            TextSnippetCategoryCollection.Indexes.CreateManyAsync(
             [
-                // Core query indexes
-                new CreateIndexModel<TaskItemEntity>(
-                    Builders<TaskItemEntity>.IndexKeys.Ascending(p => p.Status)),
-                new CreateIndexModel<TaskItemEntity>(
-                    Builders<TaskItemEntity>.IndexKeys.Ascending(p => p.Priority)),
-                new CreateIndexModel<TaskItemEntity>(
-                    Builders<TaskItemEntity>.IndexKeys.Ascending(p => p.DueDate)),
-                new CreateIndexModel<TaskItemEntity>(
-                    Builders<TaskItemEntity>.IndexKeys.Ascending(p => p.AssigneeId)),
-                new CreateIndexModel<TaskItemEntity>(
-                    Builders<TaskItemEntity>.IndexKeys.Ascending(p => p.IsDeleted)),
-                new CreateIndexModel<TaskItemEntity>(
-                    Builders<TaskItemEntity>.IndexKeys.Ascending(p => p.RelatedSnippetId)),
-
-                // Audit indexes
-                new CreateIndexModel<TaskItemEntity>(
-                    Builders<TaskItemEntity>.IndexKeys.Ascending(p => p.CreatedBy)),
-                new CreateIndexModel<TaskItemEntity>(
-                    Builders<TaskItemEntity>.IndexKeys.Ascending(p => p.CreatedDate)),
-
-                // Compound indexes for common queries
-                new CreateIndexModel<TaskItemEntity>(
-                    Builders<TaskItemEntity>.IndexKeys
-                        .Ascending(p => p.IsDeleted)
-                        .Ascending(p => p.Status)
-                        .Descending(p => p.CreatedDate)),
-                new CreateIndexModel<TaskItemEntity>(
-                    Builders<TaskItemEntity>.IndexKeys
-                        .Ascending(p => p.IsDeleted)
-                        .Ascending(p => p.DueDate)),
-
-                // Full-text search index on Title and Description
-                new CreateIndexModel<TaskItemEntity>(
-                    Builders<TaskItemEntity>.IndexKeys
-                        .Text(p => p.Title)
-                        .Text(p => p.Description))
+                new CreateIndexModel<TextSnippetCategory>(
+                    Builders<TextSnippetCategory>.IndexKeys.Ascending(c => c.ParentCategoryId)),
+                new CreateIndexModel<TextSnippetCategory>(
+                    Builders<TextSnippetCategory>.IndexKeys.Ascending(c => c.Name)),
+                new CreateIndexModel<TextSnippetCategory>(
+                    Builders<TextSnippetCategory>.IndexKeys.Ascending(c => c.IsActive)),
+                new CreateIndexModel<TextSnippetCategory>(
+                    Builders<TextSnippetCategory>.IndexKeys.Ascending(c => c.SortOrder))
             ]));
     }
 
@@ -108,7 +80,7 @@ public sealed class TextSnippetDbContext : PlatformMongoDbContext<TextSnippetDbC
         return
         [
             new KeyValuePair<Type, string>(typeof(TextSnippetEntity), "TextSnippetEntity"),
-            new KeyValuePair<Type, string>(typeof(TaskItemEntity), "TaskItemEntity")
+            new KeyValuePair<Type, string>(typeof(TextSnippetCategory), "TextSnippetCategory")
         ];
     }
 }

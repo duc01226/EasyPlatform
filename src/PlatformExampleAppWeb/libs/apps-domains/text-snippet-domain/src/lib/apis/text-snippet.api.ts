@@ -49,6 +49,14 @@ export class TextSnippetApi extends PlatformApiService {
     public save(command: SaveTextSnippetCommand): Observable<SaveTextSnippetCommandResult> {
         return this.post<SaveTextSnippetCommandResult>('/save', command, { enableCache: false }).pipe(map(_ => new SaveTextSnippetCommandResult(_)));
     }
+
+    /**
+     * Test navigation property loading across all persistence providers.
+     * Creates test data and verifies 1/2/3-level deep navigation loading.
+     */
+    public testNavigationLoading(): Observable<NavLoadingTestResult> {
+        return this.get<NavLoadingTestResult>('/testNavigationLoading', null);
+    }
 }
 
 // ----------------- SearchTextSnippetQuery -------------------
@@ -77,4 +85,38 @@ export class SaveTextSnippetCommandResult extends PlatformResultDto {
         this.savedData = new TextSnippetDataModel(data?.savedData);
     }
     public savedData: TextSnippetDataModel;
+}
+
+// ----------------- NavLoadingTestResult -------------------
+/**
+ * Result from comprehensive navigation loading test.
+ * Contains 7 test cases covering all navigation scenarios.
+ */
+export interface NavLoadingTestResult {
+    provider: string;
+    testId: string;
+    timestamp: string;
+    tests: NavLoadingTestCase[];
+    summary: NavLoadingTestSummary;
+}
+
+/**
+ * Individual test case result
+ */
+export interface NavLoadingTestCase {
+    name: string;
+    passed: boolean;
+    details?: Record<string, unknown>;
+    error?: string;
+}
+
+/**
+ * Test summary with pass/fail counts
+ */
+export interface NavLoadingTestSummary {
+    totalTests: number;
+    passedTests: number;
+    failedTests: number;
+    allTestsPassed: boolean;
+    message: string;
 }

@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
-using PlatformExampleApp.TextSnippet.Domain.Entities;
 using PlatformExampleApp.TextSnippet.Domain.ValueObjects;
 using PlatformExampleApp.TextSnippet.Persistence.PostgreSql;
 
@@ -185,147 +184,6 @@ namespace PlatformExampleApp.TextSnippet.Persistence.PostgreSql.Migrations
                     b.HasIndex("Status");
 
                     b.ToTable("ApplicationDataMigrationHistoryDbSet", (string)null);
-                });
-
-            modelBuilder.Entity("PlatformExampleApp.TextSnippet.Domain.Entities.TaskItemEntity", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<decimal?>("ActualHours")
-                        .HasColumnType("numeric");
-
-                    b.Property<string>("AssigneeId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("CompletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("CompletionPercentage")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("ConcurrencyUpdateToken")
-                        .IsConcurrencyToken()
-                        .HasColumnType("text");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int?>("DaysUntilDue")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DeletedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(4000)
-                        .HasColumnType("character varying(4000)");
-
-                    b.Property<string>("DisplayTitle")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("DueDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal?>("EstimatedHours")
-                        .HasColumnType("numeric");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
-                    b.Property<bool>("IsDueSoon")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsOverdue")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LastUpdatedBy")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("LastUpdatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Priority")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1);
-
-                    b.Property<string>("RelatedSnippetId")
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Status")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(0);
-
-                    b.Property<List<SubTaskItem>>("SubTasks")
-                        .HasColumnType("jsonb");
-
-                    b.PrimitiveCollection<List<string>>("Tags")
-                        .HasColumnType("jsonb");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AssigneeId");
-
-                    b.HasIndex("CreatedBy");
-
-                    b.HasIndex("CreatedDate");
-
-                    b.HasIndex("DueDate");
-
-                    b.HasIndex("IsDeleted");
-
-                    b.HasIndex("LastUpdatedBy");
-
-                    b.HasIndex("LastUpdatedDate");
-
-                    b.HasIndex("Priority");
-
-                    b.HasIndex("RelatedSnippetId");
-
-                    b.HasIndex("Status");
-
-                    b.HasIndex("SubTasks");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("SubTasks"), "GIN");
-
-                    b.HasIndex("Tags");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Tags"), "GIN");
-
-                    b.HasIndex(new[] { "Description" }, "IX_TaskItem_Description_FullTextSearch")
-                        .HasAnnotation("Npgsql:TsVectorConfig", "english");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Description" }, "IX_TaskItem_Description_FullTextSearch"), "GIN");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Description" }, "IX_TaskItem_Description_FullTextSearch"), new[] { "gin_trgm_ops" });
-
-                    b.HasIndex(new[] { "Title" }, "IX_TaskItem_Title_FullTextSearch")
-                        .HasAnnotation("Npgsql:TsVectorConfig", "english");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex(new[] { "Title" }, "IX_TaskItem_Title_FullTextSearch"), "GIN");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "Title" }, "IX_TaskItem_Title_FullTextSearch"), new[] { "gin_trgm_ops" });
-
-                    b.ToTable("TaskItemEntity");
                 });
 
             modelBuilder.Entity("PlatformExampleApp.TextSnippet.Domain.Entities.TextSnippetCategory", b =>
@@ -540,16 +398,6 @@ namespace PlatformExampleApp.TextSnippet.Persistence.PostgreSql.Migrations
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex(new[] { "SnippetText" }, "IX_TextSnippet_SnippetText_FullTextSearch"), new[] { "gin_trgm_ops" });
 
                     b.ToTable("TextSnippetEntity");
-                });
-
-            modelBuilder.Entity("PlatformExampleApp.TextSnippet.Domain.Entities.TaskItemEntity", b =>
-                {
-                    b.HasOne("PlatformExampleApp.TextSnippet.Domain.Entities.TextSnippetEntity", "RelatedSnippet")
-                        .WithMany()
-                        .HasForeignKey("RelatedSnippetId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("RelatedSnippet");
                 });
 
             modelBuilder.Entity("PlatformExampleApp.TextSnippet.Domain.Entities.TextSnippetCategory", b =>

@@ -377,6 +377,11 @@ public string Name { get; set; } = "";
 [ComputedEntityProperty]
 public string FullName { get => $"{FirstName} {LastName}".Trim(); set { } }
 
+// Navigation Property (for non-EF Core repositories like MongoDB)
+public string DepartmentId { get; set; } = "";
+[PlatformNavigationProperty(nameof(DepartmentId))]  // Auto BsonIgnore for MongoDB, manual JsonIgnore if needed
+public Department? Department { get; set; }
+
 // Static expressions
 public static Expression<Func<Entity, bool>> UniqueExpr(string companyId, string code)
     => e => e.CompanyId == companyId && e.Code == code;
@@ -386,6 +391,25 @@ public static Expression<Func<Entity, bool>> CompositeExpr(string companyId, boo
 
 public static Expression<Func<Entity, object?>>[] DefaultFullTextSearchColumns()
     => [e => e.Name, e => e.Code, e => e.Email];
+```
+
+### Navigation Property Loading
+
+```csharp
+// For non-EF Core repositories (e.g., MongoDB) - use PlatformNavigationProperty
+// Single entity - resolver auto-injected by repository
+var employee = await repository.GetByIdAsync(id, ct);
+await employee.LoadNavigationAsync(e => e.Department, ct);
+
+// Batch loading - single DB call for N+1 prevention
+var employees = await repository.GetAllAsync(expr, ct);
+await employees.LoadNavigationAsync(e => e.Department, resolver, ct);
+
+// Collection loading (one-to-many)
+await employee.LoadCollectionNavigationAsync(e => e.Projects, ct);
+
+// For EF Core repositories - use loadRelatedEntities parameter instead
+await repository.GetByIdAsync(id, ct, loadRelatedEntities: p => p.Department, p => p.Company);
 ```
 
 ### Repository

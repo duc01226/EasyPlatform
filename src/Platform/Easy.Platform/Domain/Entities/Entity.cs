@@ -237,6 +237,15 @@ public interface IEntity<TPrimaryKey> : IEntity
     }
 }
 
+public interface ISupportNavigationLoaderEntity : IEntity
+{
+    /// <summary>
+    /// Injects the repository resolver for navigation property loading.
+    /// Thread-safe. Called automatically by repository after loading.
+    /// </summary>
+    public void InjectRepositoryResolver(Repositories.IPlatformRepositoryResolver resolver);
+}
+
 /// <summary>
 /// Represents an entity that supports validation.
 /// </summary>
@@ -747,7 +756,70 @@ public interface IRootEntity<TPrimaryKey> : IEntity<TPrimaryKey>
 /// </summary>
 /// <typeparam name="TEntity">Type of the entity, used for fluent interfaces and self-referencing generics.</typeparam>
 /// <typeparam name="TPrimaryKey">Type of the primary key.</typeparam>
-public abstract class RootEntity<TEntity, TPrimaryKey> : Entity<TEntity, TPrimaryKey>, IRootEntity<TPrimaryKey>
+public abstract class RootEntity<TEntity, TPrimaryKey> : Entity<TEntity, TPrimaryKey>, IRootEntity<TPrimaryKey>, ISupportNavigationLoaderEntity
     where TEntity : Entity<TEntity, TPrimaryKey>, IUniqueCompositeIdSupport<TEntity>, new()
 {
+    [System.Text.Json.Serialization.JsonIgnore]
+    private volatile Repositories.IPlatformRepositoryResolver? repositoryResolver;
+
+    /// <summary>
+    /// Indicates whether a repository resolver has been injected.
+    /// </summary>
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool HasRepositoryResolver => repositoryResolver != null;
+
+    public void InjectRepositoryResolver(Repositories.IPlatformRepositoryResolver resolver)
+    {
+        repositoryResolver = resolver;
+    }
+
+    /// <summary>
+    /// Loads a single navigation property.
+    /// </summary>
+    /// <typeparam name="TNav">Navigation entity type</typeparam>
+    /// <param name="selector">Navigation property selector</param>
+    /// <param name="ct">Cancellation token</param>
+    public async Task LoadNavigationAsync<TNav>(
+        Expression<Func<TEntity, TNav?>> selector,
+        CancellationToken ct = default)
+        where TNav : class, IEntity<TPrimaryKey>, new()
+    {
+        EnsureResolverInjected();
+        await PlatformNavigationLoader.LoadAsync<TEntity, TNav, TPrimaryKey>(
+            this.As<TEntity>(),
+            selector,
+            repositoryResolver!,
+            null,
+            ct);
+    }
+
+    /// <summary>
+    /// Loads a collection navigation property.
+    /// </summary>
+    /// <typeparam name="TNav">Navigation entity type</typeparam>
+    /// <param name="selector">Navigation property selector (List)</param>
+    /// <param name="ct">Cancellation token</param>
+    public async Task LoadCollectionNavigationAsync<TNav>(
+        Expression<Func<TEntity, List<TNav>?>> selector,
+        CancellationToken ct = default)
+        where TNav : class, IEntity<TPrimaryKey>, new()
+    {
+        EnsureResolverInjected();
+        await PlatformNavigationLoader.LoadCollectionAsync<TEntity, TNav, TPrimaryKey>(
+            this.As<TEntity>(),
+            selector,
+            repositoryResolver!,
+            null,
+            ct);
+    }
+
+    private void EnsureResolverInjected()
+    {
+        if (repositoryResolver == null)
+        {
+            throw new InvalidOperationException(
+                $"Repository resolver not injected for {typeof(TEntity).Name}. " +
+                "Entity must be loaded from a repository to use navigation loading.");
+        }
+    }
 }

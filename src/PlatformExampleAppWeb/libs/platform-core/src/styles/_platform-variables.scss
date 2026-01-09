@@ -6,7 +6,94 @@ $app-root-font-size: 16px;
     @return math.div($size, $app-root-font-size) * 1rem;
 }
 
-// Break-points
+// ═══════════════════════════════════════════════════════════════════════════════
+// SPACING SCALE
+// ═══════════════════════════════════════════════════════════════════════════════
+$space-1: 0.25rem;   // 4px
+$space-2: 0.5rem;    // 8px
+$space-3: 0.75rem;   // 12px
+$space-4: 1rem;      // 16px
+$space-5: 1.25rem;   // 20px
+$space-6: 1.5rem;    // 24px
+$space-8: 2rem;      // 32px
+$space-10: 2.5rem;   // 40px
+$space-12: 3rem;     // 48px
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COLOR TOKENS
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// Primary Colors
+$color-primary-50: #eff6ff;
+$color-primary-100: #dbeafe;
+$color-primary-200: #bfdbfe;
+$color-primary-600: #2563eb;
+$color-primary-700: #1d4ed8;
+
+// Neutral Colors
+$color-neutral-50: #f9fafb;
+$color-neutral-100: #f3f4f6;
+$color-neutral-200: #e5e7eb;
+$color-neutral-300: #d1d5db;
+$color-neutral-400: #9ca3af;
+$color-neutral-500: #6b7280;
+$color-neutral-600: #4b5563;
+$color-neutral-700: #374151;
+$color-neutral-900: #111827;
+
+// Semantic Colors
+$color-success: #22c55e;
+$color-success-light: #dcfce7;
+$color-success-dark: #166534;
+
+$color-warning: #f59e0b;
+$color-warning-light: #fef3c7;
+$color-warning-dark: #92400e;
+
+$color-error: #ef4444;
+$color-error-light: #fee2e2;
+$color-error-dark: #991b1b;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TYPOGRAPHY
+// ═══════════════════════════════════════════════════════════════════════════════
+$font-family-base: 'Roboto', 'Helvetica Neue', sans-serif;
+
+$font-size-xs: 0.75rem;    // 12px
+$font-size-sm: 0.875rem;   // 14px
+$font-size-base: 1rem;     // 16px
+$font-size-md: 1.125rem;   // 18px
+$font-size-lg: 1.25rem;    // 20px
+$font-size-xl: 1.5rem;     // 24px
+$font-size-2xl: 1.875rem;  // 30px
+$font-size-3xl: 2.25rem;   // 36px
+
+$font-weight-normal: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SHADOWS & RADII
+// ═══════════════════════════════════════════════════════════════════════════════
+$shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+
+$radius-sm: 0.25rem;  // 4px
+$radius-md: 0.375rem; // 6px
+$radius-lg: 0.5rem;   // 8px
+$radius-full: 9999px;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// TRANSITIONS
+// ═══════════════════════════════════════════════════════════════════════════════
+$transition-fast: 150ms ease;
+$transition-base: 200ms ease;
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// BREAKPOINTS
+// ═══════════════════════════════════════════════════════════════════════════════
 $platform-media-breakpoint-xs: calculateRem(575.98px); // max-width for xs
 $platform-media-breakpoint-gt-xs: calculateRem(576px); // min-width for sm
 $platform-media-breakpoint-sm: calculateRem(767.98px); // max-width for sm
@@ -18,7 +105,9 @@ $platform-media-breakpoint-gt-lg: calculateRem(1200px); // min-width for xl
 $platform-media-breakpoint-xl: calculateRem(1423.98px); // max-width for xl
 $platform-media-breakpoint-gt-xl: calculateRem(1424px); // min-width for xxl
 
-// z-index
+// ═══════════════════════════════════════════════════════════════════════════════
+// Z-INDEX
+// ═══════════════════════════════════════════════════════════════════════════════
 $platform-z-index-level-1: 100;
 $platform-z-index-level-2: 200;
 $platform-z-index-level-3: 300;

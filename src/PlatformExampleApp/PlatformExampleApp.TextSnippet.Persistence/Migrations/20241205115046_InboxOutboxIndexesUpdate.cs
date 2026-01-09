@@ -1,5 +1,4 @@
 using System;
-using Easy.Platform.EfCore.Utils;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -12,13 +11,6 @@ public partial class InboxOutboxIndexesUpdate : Migration
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-        SqlServerMigrationUtil.CreateFullTextIndexIfNotExists(
-            migrationBuilder,
-            "TextSnippetEntity",
-            ["SnippetText", "FullText"],
-            "PK_TextSnippetEntity",
-            "FTS_TextSnippet");
-
         migrationBuilder.DropIndex(
             name: "IX_PlatformOutboxEventBusMessage_CreatedDate_SendStatus",
             table: "PlatformOutboxEventBusMessage");

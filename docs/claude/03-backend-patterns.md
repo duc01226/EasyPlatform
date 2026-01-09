@@ -344,3 +344,55 @@ var (totalCount, items) = await (
         .PageBy(request.SkipCount, request.MaxResultCount), ct)
 );
 ```
+
+## 14. Navigation Property Loading
+
+> Load related entities via `[PlatformNavigationProperty]` attribute for repositories where the underlying persistence doesn't natively support eager loading (e.g., MongoDB). For EF Core, use `loadRelatedEntities` parameter.
+
+```csharp
+// 1. ENTITY DEFINITION - Mark navigation properties with attribute
+public class Employee : RootEntity<Employee, string>
+{
+    public string DepartmentId { get; set; } = "";
+
+    // Navigation property - auto-ignored in BSON for MongoDB, manual [JsonIgnore] if needed for API
+    [PlatformNavigationProperty(nameof(DepartmentId))]
+    public Department? Department { get; set; }
+
+    // Collection navigation (one-to-many via FK list)
+    public List<string> ProjectIds { get; set; } = [];
+
+    [PlatformNavigationProperty(nameof(ProjectIds), Cardinality = PlatformNavigationCardinality.Collection)]
+    public List<Project>? Projects { get; set; }
+}
+
+// 2. SINGLE ENTITY LOADING - Via RootEntity extension method
+var employee = await repository.GetByIdAsync(id, ct);
+await employee.LoadNavigationAsync(e => e.Department, ct);  // Resolver auto-injected by repository
+
+// 3. BATCH LOADING - Single DB call for N+1 prevention
+var employees = await repository.GetAllAsync(expr, ct);
+await employees.LoadNavigationAsync(e => e.Department, resolver, ct);  // Pass resolver explicitly
+
+// 4. COLLECTION LOADING - For one-to-many relationships
+await employee.LoadCollectionNavigationAsync(e => e.Projects, ct);
+
+// 5. CHAINED LOADING (Task extension)
+var employees = await repository.GetAllAsync(expr, ct)
+    .LoadNavigationAsync(e => e.Department, resolver, ct);
+```
+
+**Attribute Options:**
+| Option | Default | Description |
+|--------|---------|-------------|
+| `ForeignKeyProperty` | Required | Name of FK property (e.g., `nameof(DepartmentId)`) |
+| `Cardinality` | `Single` | `Single` = TKey FK, `Collection` = `List<TKey>` FK |
+| `MaxDepth` | `3` | Max recursive loading depth (circular reference protection) |
+
+**Key Behaviors:**
+- **BsonIgnore:** Auto-set by MongoDB convention for MongoDB repositories - no manual attribute needed
+- **JsonIgnore:** Add manually if nav prop should be excluded from API responses
+- **FK Not Found:** Silent null (no exception or warning)
+- **Batch Loading:** Always overwrites existing nav prop values
+- **Cross-Service:** Not supported - use message bus instead
+- **EF Core:** Use `loadRelatedEntities` parameter instead (e.g., `GetByIdAsync(id, ct, loadRelatedEntities: p => p.Company)`)

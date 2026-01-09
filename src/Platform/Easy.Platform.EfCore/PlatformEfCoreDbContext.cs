@@ -2456,7 +2456,9 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
                 var changedFields = entity
                     .GetChangedFields(
                         checkEntityModifiedByExistingEntity,
-                        p => IsValidScalarProperty(p.Name, typeof(TEntity)) || p.GetCustomAttribute<ComputedEntityPropertyAttribute>() != null
+                        p => (IsValidScalarProperty(p.Name, typeof(TEntity)) ||
+                              p.GetCustomAttribute<ComputedEntityPropertyAttribute>() != null) &&
+                             p.GetCustomAttribute<PlatformNavigationPropertyAttribute>() == null
                     )
                     .PipeAction(changedMutableOrComputedFields => changedMutableOrComputedFields?.ForEach(p => Entry(entity!).Property(p.Key).IsModified = true));
 
@@ -2470,8 +2472,9 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
             var changedMutableFields = entity
                 .GetChangedFields(
                     checkEntityModifiedByExistingEntity,
-                    p => (p.PropertyType.IsMutableType() && IsValidScalarProperty(p.Name, typeof(TEntity))) ||
-                         p.GetCustomAttribute<ComputedEntityPropertyAttribute>() != null
+                    p => ((p.PropertyType.IsMutableType() && IsValidScalarProperty(p.Name, typeof(TEntity))) ||
+                          p.GetCustomAttribute<ComputedEntityPropertyAttribute>() != null) &&
+                         p.GetCustomAttribute<PlatformNavigationPropertyAttribute>() == null
                 )
                 .PipeAction(changedMutableOrComputedFields => changedMutableOrComputedFields?.ForEach(p => Entry(entity!).Property(p.Key).IsModified = true));
 

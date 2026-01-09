@@ -71,9 +71,12 @@ public class TextSnippetCategory : RootAuditedEntity<TextSnippetCategory, string
     #region Navigation Properties
 
     /// <summary>
-    /// Parent category - JsonIgnore to prevent circular reference
+    /// Parent category - demonstrates PlatformNavigationProperty for auto-loading.
+    /// [PlatformNavigationProperty] auto-ignores in BSON. Add [JsonIgnore] manually for API responses.
+    /// Usage: await category.LoadNavigationAsync(c => c.ParentCategory, ct);
     /// </summary>
     [JsonIgnore]
+    [PlatformNavigationProperty(nameof(ParentCategoryId))]
     public TextSnippetCategory? ParentCategory { get; set; }
 
     /// <summary>
