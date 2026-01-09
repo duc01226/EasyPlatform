@@ -175,15 +175,16 @@ public abstract class PlatformRepository<TEntity, TPrimaryKey, TUow> : IPlatform
         // Find nearest interface that inherits from IPlatformQueryableRepository<,>
         var repoInterface = repositoryType
             .GetInterfaces()
-            .LastOrDefault(i => i.IsGenericType && IsRepositoryInterface(i));
+            .LastOrDefault(i => i.IsGenericType && IsRepositoryInterface(repositoryType, i));
 
         return repoInterface?.GetGenericTypeDefinition();
     }
 
-    private static bool IsRepositoryInterface(Type interfaceType)
+    private static bool IsRepositoryInterface(Type repositoryType, Type interfaceType)
     {
         return interfaceType.IsGenericType &&
-               interfaceType.IsAssignableToGenericType(typeof(IPlatformQueryableRepository<,>));
+               interfaceType.IsAssignableToGenericType(typeof(IPlatformQueryableRepository<,>)) &&
+               (!repositoryType.IsGenericType || repositoryType.MatchGenericArguments(interfaceType));
     }
 
     /// <summary>

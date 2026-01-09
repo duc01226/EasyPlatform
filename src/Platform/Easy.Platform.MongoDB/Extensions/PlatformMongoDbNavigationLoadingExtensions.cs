@@ -108,12 +108,14 @@ public static class PlatformMongoDbNavigationLoadingExtensions
     /// </summary>
     private static MethodInfo? GetCachedGetByIdMethod(Type repoType, object id)
     {
-        return GetByIdMethodCache.GetOrAdd(repoType, t =>
-            t.GetMethods()
-                .FirstOrDefault(m =>
-                    m.Name == "GetByIdAsync" &&
-                    m.GetParameters().Length >= 2 &&
-                    m.GetParameters()[0].ParameterType.IsInstanceOfType(id)));
+        return GetByIdMethodCache.GetOrAdd(
+            repoType,
+            t =>
+                t.GetMethods()
+                    .FirstOrDefault(m =>
+                        m.Name == "GetByIdAsync" &&
+                        m.GetParameters().Length >= 2 &&
+                        m.GetParameters()[0].ParameterType.IsInstanceOfType(id)));
     }
 
     /// <summary>
@@ -121,12 +123,14 @@ public static class PlatformMongoDbNavigationLoadingExtensions
     /// </summary>
     private static MethodInfo? GetCachedGetByIdsMethod(Type repoType)
     {
-        return GetByIdsMethodCache.GetOrAdd(repoType, t =>
-            t.GetMethods()
-                .FirstOrDefault(m =>
-                    m.Name == "GetByIdsAsync" &&
-                    m.GetParameters().Length >= 2 &&
-                    m.GetParameters()[0].ParameterType.IsGenericType));
+        return GetByIdsMethodCache.GetOrAdd(
+            repoType,
+            t =>
+                t.GetMethods()
+                    .FirstOrDefault(m =>
+                        m.Name == "GetByIdsAsync" &&
+                        m.GetParameters().Length >= 2 &&
+                        m.GetParameters()[0].ParameterType.IsGenericType));
     }
 
     #endregion
@@ -195,6 +199,7 @@ public static class PlatformMongoDbNavigationLoadingExtensions
     {
         public bool IsCollection => Attribute?.Cardinality == PlatformNavigationCardinality.Collection ||
                                     Attribute?.IsReverseNavigation == true;
+
         public bool IsReverseNavigation => Attribute?.IsReverseNavigation == true;
         public Type ElementType => IsCollectionType(PropertyType) ? GetElementTypeOrSelf(PropertyType) : PropertyType;
 
@@ -213,9 +218,7 @@ public static class PlatformMongoDbNavigationLoadingExtensions
                 var genericDef = type.GetGenericTypeDefinition();
                 if (genericDef == typeof(List<>) || genericDef == typeof(IList<>) ||
                     genericDef == typeof(ICollection<>) || genericDef == typeof(IEnumerable<>))
-                {
                     return type.GetGenericArguments()[0];
-                }
             }
 
             return type;
@@ -291,14 +294,6 @@ public static class PlatformMongoDbNavigationLoadingExtensions
         }
 
         return chain;
-    }
-
-    /// <summary>
-    /// Legacy method for backwards compatibility.
-    /// </summary>
-    private static List<NavigationStep> ExtractNavigationChain(LambdaExpression expression)
-    {
-        return ExtractNavigationInfo(expression).Chain;
     }
 
     #endregion
@@ -478,12 +473,11 @@ public static class PlatformMongoDbNavigationLoadingExtensions
             if (step.IsCollection && nav is IEnumerable navCollection)
             {
                 foreach (var item in navCollection.Cast<object>())
-                    if (item != null) values.Add(item);
+                    if (item != null)
+                        values.Add(item);
             }
             else
-            {
                 values.Add(nav);
-            }
         }
 
         return values.Distinct().ToList();
@@ -657,12 +651,11 @@ public static class PlatformMongoDbNavigationLoadingExtensions
             if (step.IsCollection && nav is IEnumerable collection)
             {
                 foreach (var item in collection.Cast<object>())
-                    if (item != null) nextEntities.Add(item);
+                    if (item != null)
+                        nextEntities.Add(item);
             }
             else
-            {
                 nextEntities.Add(nav);
-            }
         }
 
         // Remove duplicates by Id
@@ -760,13 +753,15 @@ public static class PlatformMongoDbNavigationLoadingExtensions
     /// </summary>
     private static MethodInfo? GetCachedGetAllAsyncMethod(Type repoType)
     {
-        return GetAllAsyncMethodCache.GetOrAdd(repoType, t =>
-            t.GetMethods()
-                .FirstOrDefault(m =>
-                    m.Name == "GetAllAsync" &&
-                    m.GetParameters().Length >= 1 &&
-                    m.GetParameters()[0].ParameterType.IsGenericType &&
-                    m.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(Expression<>)));
+        return GetAllAsyncMethodCache.GetOrAdd(
+            repoType,
+            t =>
+                t.GetMethods()
+                    .FirstOrDefault(m =>
+                        m.Name == "GetAllAsync" &&
+                        m.GetParameters().Length >= 1 &&
+                        m.GetParameters()[0].ParameterType.IsGenericType &&
+                        m.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(Expression<>)));
     }
 
     /// <summary>
@@ -894,9 +889,7 @@ public static class PlatformMongoDbNavigationLoadingExtensions
                 step.Property.SetValue(entity, typedList);
             }
             else
-            {
                 SetEmptyCollection(entity, step, navEntityType);
-            }
         }
     }
 
@@ -914,9 +907,9 @@ public static class PlatformMongoDbNavigationLoadingExtensions
 
         // Validate FK property exists
         var fkProp = childType.GetProperty(fkPropertyName)
-            ?? throw new InvalidOperationException(
-                $"Foreign key property '{fkPropertyName}' not found on entity type '{childType.Name}'. " +
-                $"Verify the ReverseForeignKeyProperty attribute value matches an existing property.");
+                     ?? throw new InvalidOperationException(
+                         $"Foreign key property '{fkPropertyName}' not found on entity type '{childType.Name}'. " +
+                         $"Verify the ReverseForeignKeyProperty attribute value matches an existing property.");
 
         var fkAccess = Expression.Property(param, fkProp);
 
@@ -937,9 +930,11 @@ public static class PlatformMongoDbNavigationLoadingExtensions
         {
             var filterParam = filter.Parameters[0];
             if (filterParam.Type != childType)
+            {
                 throw new ArgumentException(
                     $"Filter parameter type '{filterParam.Type.Name}' doesn't match navigation entity type '{childType.Name}'. " +
                     $"Ensure the Where clause lambda parameter matches the collection element type.");
+            }
 
             var filterBody = ReplaceParameter(filter.Body, filterParam, param);
             body = Expression.AndAlso(body, filterBody);
@@ -962,9 +957,9 @@ public static class PlatformMongoDbNavigationLoadingExtensions
 
         // Validate FK property exists
         var fkProp = childType.GetProperty(fkPropertyName)
-            ?? throw new InvalidOperationException(
-                $"Foreign key property '{fkPropertyName}' not found on entity type '{childType.Name}'. " +
-                $"Verify the ReverseForeignKeyProperty attribute value matches an existing property.");
+                     ?? throw new InvalidOperationException(
+                         $"Foreign key property '{fkPropertyName}' not found on entity type '{childType.Name}'. " +
+                         $"Verify the ReverseForeignKeyProperty attribute value matches an existing property.");
 
         var fkAccess = Expression.Property(param, fkProp);
 
@@ -990,9 +985,11 @@ public static class PlatformMongoDbNavigationLoadingExtensions
         {
             var filterParam = filter.Parameters[0];
             if (filterParam.Type != childType)
+            {
                 throw new ArgumentException(
                     $"Filter parameter type '{filterParam.Type.Name}' doesn't match navigation entity type '{childType.Name}'. " +
                     $"Ensure the Where clause lambda parameter matches the collection element type.");
+            }
 
             var filterBody = ReplaceParameter(filter.Body, filterParam, param);
             body = Expression.AndAlso(body, filterBody);
