@@ -2,6 +2,54 @@
 
 > Common issues and solutions for EasyPlatform development
 
+## Investigation Protocol
+
+### Core Principles
+
+- **NEVER** assume based on first glance
+- **ALWAYS** verify with multiple search patterns
+- **CHECK** both static AND dynamic code usage
+- **READ** actual implementation, not just interfaces
+- **TRACE** full dependency chains
+- **DECLARE** confidence level and uncertainties
+- **REQUEST** user confirmation when confidence < 90%
+
+### Quick Verification Checklist
+
+Before removing/changing ANY code:
+
+- [ ] Searched static imports?
+- [ ] Searched string literals in code?
+- [ ] Checked dynamic invocations (attr, prop, runtime)?
+- [ ] Read actual implementations?
+- [ ] Traced who depends on this?
+- [ ] Assessed what breaks if removed?
+- [ ] Documented evidence clearly?
+- [ ] Declared confidence level?
+
+**If ANY unchecked → DO MORE INVESTIGATION**
+**If confidence < 90% → REQUEST USER CONFIRMATION**
+
+### Investigation Steps
+
+1. **Context Discovery**
+   - Extract domain concepts from requirements
+   - Do semantic search to find related entities and components
+   - Do grep search to validate patterns and find evidence
+   - List code usages to map complete ecosystems
+   - Never assume - always verify with code evidence
+
+2. **Service Boundary Verification**
+   - Identify which microservice owns the domain concept
+   - Verify service responsibilities through actual code analysis
+   - Check for existing implementations before creating new ones
+
+3. **Platform Pattern Recognition**
+   - Check CLAUDE.md for pattern guidance
+   - Use established platform patterns over custom solutions
+   - Follow Easy.Platform framework conventions
+   - Verify base class APIs before using component methods
+
 ## Common Issues & Solutions
 
 | Issue                          | Solution                                                               |

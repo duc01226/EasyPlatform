@@ -536,3 +536,99 @@ Cross-Cutting Logic (used in multiple domains)?
 ├── YES → Platform Util (Easy.Platform.Application.Utils)
 └── NO → Domain Util ({Service}.Application.Utils)
 ```
+
+## Navigation Property Loading
+
+> Load related entities via `[PlatformNavigationProperty]` attribute for repositories where the underlying persistence doesn't natively support eager loading (e.g., MongoDB). For EF Core, use `loadRelatedEntities` parameter.
+
+### Two Collection Patterns Supported
+
+| Pattern | Use Case | Configuration |
+|---------|----------|---------------|
+| **FK List** | Parent has `List<Id>` (e.g., `ProjectIds`) | `ForeignKeyProperty` + `Cardinality = Collection` |
+| **Reverse Navigation** | Child has FK to parent (e.g., `Project.EmployeeId`) | `ReverseForeignKeyProperty` |
+
+```csharp
+// ═══════════════════════════════════════════════════════════════════════════
+// ENTITY DEFINITION - Mark navigation properties with attribute
+// ═══════════════════════════════════════════════════════════════════════════
+
+public class Employee : RootEntity<Employee, string>
+{
+    public string DepartmentId { get; set; } = "";
+
+    // Pattern 1: Single navigation - FK on this entity
+    [PlatformNavigationProperty(nameof(DepartmentId))]
+    public Department? Department { get; set; }
+
+    // Pattern 2: Collection via FK list - this entity has List<TKey>
+    public List<string> ProjectIds { get; set; } = [];
+
+    [PlatformNavigationProperty(nameof(ProjectIds), Cardinality = PlatformNavigationCardinality.Collection)]
+    public List<Project>? Projects { get; set; }
+
+    // Pattern 3: Reverse navigation - child has FK pointing to parent
+    // Example: Project has EmployeeId FK, load all projects for this employee
+    [PlatformNavigationProperty(ReverseForeignKeyProperty = nameof(Project.AssignedEmployeeId))]
+    public List<Project>? AssignedProjects { get; set; }
+}
+
+public class Category : RootEntity<Category, string>
+{
+    public string? ParentCategoryId { get; set; }
+
+    // Forward navigation (parent → child)
+    [PlatformNavigationProperty(nameof(ParentCategoryId))]
+    public Category? ParentCategory { get; set; }
+
+    // Reverse navigation (parent ← children)
+    [PlatformNavigationProperty(ReverseForeignKeyProperty = nameof(ParentCategoryId))]
+    public List<Category>? ChildCategories { get; set; }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// LOADING PATTERNS
+// ═══════════════════════════════════════════════════════════════════════════
+
+// 1. SINGLE ENTITY - Forward navigation (FK on this entity)
+var employee = await repository.GetByIdAsync(id, ct);
+await employee.LoadNavigationAsync(e => e.Department, ct);
+
+// 2. SINGLE ENTITY - Reverse navigation (children have FK to this entity)
+var category = await repository.GetByIdAsync(id, ct, loadRelatedEntities: c => c.ChildCategories!);
+
+// 3. REVERSE NAVIGATION WITH .Where() FILTER - Load only matching children
+var category = await repository.GetByIdAsync(id, ct,
+    loadRelatedEntities: c => c.ChildCategories!.Where(child => child.IsActive));
+
+// 4. BATCH LOADING - Single DB call for N+1 prevention (uses IN clause)
+var categories = await repository.GetByIdsAsync(ids, ct,
+    loadRelatedEntities: c => c.ChildCategories!);
+// Results in: SELECT * FROM Categories WHERE ParentCategoryId IN (@id1, @id2, ...)
+
+// 5. BATCH WITH FILTER - Filter applied to all children
+var categories = await repository.GetByIdsAsync(ids, ct,
+    loadRelatedEntities: c => c.ChildCategories!.Where(child => child.IsActive));
+
+// 6. CHAINED LOADING (Task extension)
+var employees = await repository.GetAllAsync(expr, ct)
+    .LoadNavigationAsync(e => e.Department, resolver, ct);
+```
+
+**Attribute Options:**
+| Option | Default | Description |
+|--------|---------|-------------|
+| `ForeignKeyProperty` | `""` | FK property on THIS entity (e.g., `nameof(DepartmentId)`) |
+| `ReverseForeignKeyProperty` | `null` | FK property on RELATED entity pointing to this entity (e.g., `nameof(Project.EmployeeId)`) |
+| `Cardinality` | `Single` | `Single` = TKey FK, `Collection` = `List<TKey>` FK |
+| `MaxDepth` | `3` | Max recursive loading depth (circular reference protection) |
+
+**Key Behaviors:**
+- **BsonIgnore:** Auto-set by MongoDB convention for MongoDB repositories - no manual attribute needed
+- **JsonIgnore:** Add manually if nav prop should be excluded from API responses
+- **FK Not Found:** Silent null (no exception or warning)
+- **Empty Children:** Returns empty `List<>`, not null, when no children exist
+- **Batch Loading:** Uses single query with `IN` clause - efficient N+1 prevention
+- **.Where() Filtering:** Only supported for single-level reverse navigation, not deep chains
+- **Cross-Service:** Not supported - use message bus instead
+- **EF Core:** Use `loadRelatedEntities` parameter (e.g., `GetByIdAsync(id, ct, loadRelatedEntities: p => p.Company)`)

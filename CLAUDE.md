@@ -22,7 +22,7 @@ Before implementing ANY non-trivial task, you MUST:
 
 **Exceptions:** Single-line fixes, user says "just do it", pure research with no changes.
 
-> **Full protocol:** See [docs/claude/01-planning-protocol.md](docs/claude/01-planning-protocol.md)
+> **Full protocol:** See [docs/claude/architecture.md#planning-protocol](docs/claude/architecture.md#planning-protocol)
 
 ---
 
@@ -32,14 +32,14 @@ Before implementing ANY non-trivial task, you MUST:
 
 | File                                                                     | Purpose                                          |
 | ------------------------------------------------------------------------ | ------------------------------------------------ |
-| [01-planning-protocol.md](docs/claude/01-planning-protocol.md)           | Mandatory planning workflow                      |
-| [02-investigation-protocol.md](docs/claude/02-investigation-protocol.md) | Code investigation and debugging                 |
-| [03-backend-patterns.md](docs/claude/03-backend-patterns.md)             | All 13 backend patterns (CQRS, Repository, etc.) |
-| [04-frontend-patterns.md](docs/claude/04-frontend-patterns.md)           | Angular/platform-core patterns                   |
-| [05-authorization-patterns.md](docs/claude/05-authorization-patterns.md) | Security and migration patterns                  |
-| [06-decision-trees.md](docs/claude/06-decision-trees.md)                 | Quick decision guides and templates              |
-| [07-advanced-patterns.md](docs/claude/07-advanced-patterns.md)           | Advanced techniques and anti-patterns            |
-| [08-clean-code-rules.md](docs/claude/08-clean-code-rules.md)             | Universal coding standards                       |
+| [architecture.md](docs/claude/architecture.md)                           | System architecture & planning protocol          |
+| [troubleshooting.md](docs/claude/troubleshooting.md)                     | Investigation protocol & common issues           |
+| [backend-patterns.md](docs/claude/backend-patterns.md)                   | All 13 backend patterns (CQRS, Repository, etc.) |
+| [frontend-patterns.md](docs/claude/frontend-patterns.md)                 | Angular/platform-core patterns                   |
+| [authorization-patterns.md](docs/claude/authorization-patterns.md)       | Security and migration patterns                  |
+| [decision-trees.md](docs/claude/decision-trees.md)                       | Quick decision guides and templates              |
+| [advanced-patterns.md](docs/claude/advanced-patterns.md)                 | Advanced techniques and anti-patterns            |
+| [clean-code-rules.md](docs/claude/clean-code-rules.md)                   | Universal coding standards                       |
 
 ### Other Documentation
 
@@ -168,7 +168,7 @@ Every UI element MUST have a BEM class, even without special styling. This makes
 }
 ```
 
-> **Detailed patterns:** See [03-backend-patterns.md](docs/claude/03-backend-patterns.md) and [04-frontend-patterns.md](docs/claude/04-frontend-patterns.md)
+> **Detailed patterns:** See [backend-patterns.md](docs/claude/backend-patterns.md) and [frontend-patterns.md](docs/claude/frontend-patterns.md)
 
 ### Code Responsibility Hierarchy (CRITICAL)
 
@@ -228,7 +228,7 @@ Need frontend feature?
 └── Reusable → platform-core library
 ```
 
-> **More decision guides:** See [06-decision-trees.md](docs/claude/06-decision-trees.md)
+> **More decision guides:** See [decision-trees.md](docs/claude/decision-trees.md)
 
 ---
 
@@ -252,7 +252,7 @@ Before removing/changing ANY code:
 - [ ] Traced dependencies?
 - [ ] Declared confidence level?
 
-> **Full protocol:** See [02-investigation-protocol.md](docs/claude/02-investigation-protocol.md)
+> **Full protocol:** See [troubleshooting.md#investigation-protocol](docs/claude/troubleshooting.md#investigation-protocol)
 
 ---
 
@@ -336,7 +336,7 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
 - [ ] Input validation
 - [ ] No secrets in code
 
-> **Coding standards:** See [08-clean-code-rules.md](docs/claude/08-clean-code-rules.md)
+> **Coding standards:** See [clean-code-rules.md](docs/claude/clean-code-rules.md)
 
 ---
 
@@ -368,7 +368,7 @@ this.data$.subscribe(...);
 employees = signal([]);
 ```
 
-> **Full anti-patterns:** See [07-advanced-patterns.md](docs/claude/07-advanced-patterns.md)
+> **Full anti-patterns:** See [advanced-patterns.md](docs/claude/advanced-patterns.md)
 
 ---
 
@@ -460,7 +460,7 @@ Before responding to any task request, analyze the user's prompt to detect inten
 - **Code flow:** Input → Process → Output with early validation
 - **90% Logic Rule:** If logic belongs 90% to class A, put it in class A
 
-> **Detailed rules:** See [08-clean-code-rules.md](docs/claude/08-clean-code-rules.md)
+> **Detailed rules:** See [clean-code-rules.md](docs/claude/clean-code-rules.md)
 
 ---
 

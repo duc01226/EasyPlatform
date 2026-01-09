@@ -208,8 +208,8 @@ export class CertificationApiService extends PlatformApiService {
 
 - [Architecture Overview](docs/architecture-overview.md)
 - [Claude AI Instructions](CLAUDE.md)
-- [Backend Patterns](docs/claude/03-backend-patterns.md)
-- [Frontend Patterns](docs/claude/04-frontend-patterns.md)
+- [Backend Patterns](docs/claude/backend-patterns.md)
+- [Frontend Patterns](docs/claude/frontend-patterns.md)
 
 ## Contributing
 

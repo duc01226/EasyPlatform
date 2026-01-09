@@ -652,7 +652,7 @@ ngOnInit() {
 ## References
 
 - [CLAUDE.md](../../CLAUDE.md)
-- [docs/claude/01-planning-protocol.md](../../docs/claude/01-planning-protocol.md)
-- [docs/claude/03-backend-patterns.md](../../docs/claude/03-backend-patterns.md)
-- [docs/claude/04-frontend-patterns.md](../../docs/claude/04-frontend-patterns.md)
+- [docs/claude/architecture.md](../../docs/claude/architecture.md)
+- [docs/claude/backend-patterns.md](../../docs/claude/backend-patterns.md)
+- [docs/claude/frontend-patterns.md](../../docs/claude/frontend-patterns.md)
 - [src/PlatformExampleApp](../../src/PlatformExampleApp)

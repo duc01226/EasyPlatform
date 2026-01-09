@@ -46,15 +46,15 @@ You are a technical documentation specialist ensuring EasyPlatform documentation
 
 ```
 docs/
-├── claude/                  # AI agent patterns (8 rule files)
-│   ├── 01-planning-protocol.md
-│   ├── 02-investigation-protocol.md
-│   ├── 03-backend-patterns.md
-│   ├── 04-frontend-patterns.md
-│   ├── 05-authorization-patterns.md
-│   ├── 06-decision-trees.md
-│   ├── 07-advanced-patterns.md
-│   └── 08-clean-code-rules.md
+├── claude/                  # AI agent patterns
+│   ├── architecture.md      # System architecture & planning protocol
+│   ├── troubleshooting.md   # Investigation protocol & common issues
+│   ├── backend-patterns.md  # Complete backend patterns
+│   ├── frontend-patterns.md # Frontend/Angular patterns
+│   ├── authorization-patterns.md
+│   ├── decision-trees.md
+│   ├── advanced-patterns.md
+│   └── clean-code-rules.md
 ├── pdrs/                    # Product Development Requirements
 └── architecture/            # System architecture docs
 
@@ -150,6 +150,6 @@ README.md                    # Project overview
 | File | Purpose |
 |------|---------|
 | `CLAUDE.md` | AI agent instructions |
-| `docs/claude/03-backend-patterns.md` | Backend patterns |
-| `docs/claude/04-frontend-patterns.md` | Frontend patterns |
+| `docs/claude/backend-patterns.md` | Backend patterns |
+| `docs/claude/frontend-patterns.md` | Frontend patterns |
 | `.github/copilot-instructions.md` | Copilot equivalent |

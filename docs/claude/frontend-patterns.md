@@ -56,6 +56,98 @@
 - **Element**: Child using `block__element` (e.g., `employee-form__header`)
 - **Modifier**: Separate class with `--` prefix (e.g., `employee-form__btn --submit --large`)
 
+### Modifier Convention
+
+**Use space-separated `--modifier` classes (NOT suffix style):**
+
+```html
+<!-- ✅ CORRECT: Space-separated modifiers -->
+<button class="user-card__btn --primary --large">Save</button>
+<div class="entity-list__item --selected --highlighted">Item</div>
+
+<!-- ❌ WRONG: Suffix-style modifiers -->
+<button class="user-card__btn--primary user-card__btn--large">Save</button>
+```
+
+### SCSS with Modifiers
+
+```scss
+.user-card {
+    &__btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        cursor: pointer;
+
+        // Modifier styles
+        &.--primary {
+            background: $primary-color;
+            color: white;
+        }
+
+        &.--secondary {
+            background: transparent;
+            border: 1px solid $border-color;
+        }
+
+        &.--large {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+        }
+
+        &.--disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+
+    &__item {
+        &.--selected {
+            background: $selected-bg;
+        }
+
+        &.--highlighted {
+            border-left: 3px solid $accent-color;
+        }
+    }
+}
+```
+
+## Component SCSS Standard
+
+Always style both the **host element** (Angular selector) and the **main wrapper class**:
+
+```scss
+@import '~assets/scss/variables';
+
+// Host element styling - ensures Angular element is a proper block container
+app-entity-list {
+    display: flex;
+    flex-direction: column;
+}
+
+// Main wrapper class with full styling
+.entity-list {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    flex-grow: 1;
+
+    &__header {
+        // BEM child elements
+    }
+
+    &__content {
+        flex: 1;
+        overflow-y: auto;
+    }
+}
+```
+
+**Why both?**
+
+- **Host element**: Makes the Angular element a real layout element (not an unknown element without display)
+- **Main class**: Contains the full styling, matches the wrapper div in HTML
+
 ## Component Hierarchy
 
 ```typescript

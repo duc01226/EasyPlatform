@@ -331,3 +331,58 @@ export class MyStore extends PlatformVmStore<MyVm> {
 .ThenSelect(e => e.Id)
 .ParallelAsync(async item => await ProcessAsync(item, ct), maxConcurrent: 10)
 ```
+
+## Critical Anti-Patterns to Avoid
+
+### Backend Anti-Patterns
+
+```csharp
+// ❌ DON'T: Direct cross-service database access
+var otherServiceData = await otherDbContext.Entities.ToListAsync();
+// ✅ DO: Use message bus communication
+await messageBus.PublishAsync(new RequestDataMessage());
+
+// ❌ DON'T: Custom repository interfaces
+public interface ICustomEntityRepository : IRepository<Entity>
+// ✅ DO: Use platform repositories with extensions
+public static class EntityRepositoryExtensions { ... }
+
+// ❌ DON'T: Manual validation logic
+if (string.IsNullOrEmpty(request.Name)) throw new ValidationException();
+// ✅ DO: Use Platform validation fluent API
+return request.Validate(r => !string.IsNullOrEmpty(r.Name), "Name required");
+
+// ❌ DON'T: Side effects in command handlers
+await notificationService.SendAsync(entity);
+// ✅ DO: Use entity event handlers
+// (platform auto-raises events on CRUD)
+
+// ❌ DON'T: Map DTO in handler
+var config = new AuthConfigurationValue { ClientId = req.Dto.ClientId, ... };
+// ✅ DO: Let DTO own mapping
+var config = req.Dto.MapToObject().With(p => p.ClientSecret = encrypt(p.ClientSecret));
+```
+
+### Frontend Anti-Patterns
+
+```typescript
+// ❌ DON'T: Direct HTTP client usage
+constructor(private http: HttpClient) {}
+// ✅ DO: Use platform API services
+constructor(private employeeApi: EmployeeApiService) {}
+
+// ❌ DON'T: Manual state management
+employees = signal([]);
+loading = signal(false);
+// ✅ DO: Use platform store pattern
+constructor(private store: EmployeeStore) {}
+
+// ❌ DON'T: Missing subscription cleanup
+this.data$.subscribe(...);
+// ✅ DO: Always use untilDestroyed
+this.data$.pipe(this.untilDestroyed()).subscribe(...);
+
+// ❌ DON'T: Assume method names
+this.someMethod();
+// ✅ DO: Check base class APIs first through IntelliSense
+```

@@ -190,7 +190,7 @@ docs/design-system/        # Frontend design system documentation
 | Frontend patterns (Components, Forms, Stores) | `@workspace docs/claude/frontend-patterns.md` |
 | Architecture & Service boundaries             | `@workspace docs/claude/architecture.md`      |
 | Advanced fluent helpers & utilities           | `@workspace docs/claude/advanced-patterns.md` |
-| What NOT to do                                | `@workspace docs/claude/anti-patterns.md`     |
+| What NOT to do                                | `@workspace docs/claude/advanced-patterns.md` |
 | Debugging & troubleshooting                   | `@workspace docs/claude/troubleshooting.md`   |
 | Agent roles & when to use them                | `@workspace .github/AGENTS.md`                |
 | System architecture                           | `@workspace docs/architecture-overview.md`    |
@@ -200,7 +200,7 @@ docs/design-system/        # Frontend design system documentation
 -   Starting complex multi-file tasks → Load architecture.md
 -   Backend development → Load backend-patterns.md
 -   Frontend development → Load frontend-patterns.md
--   Code review → Load anti-patterns.md
+-   Code review → Load advanced-patterns.md
 -   Debugging → Load troubleshooting.md
 -   Planning which agent to use → Load AGENTS.md
 

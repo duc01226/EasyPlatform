@@ -714,5 +714,5 @@ Updated coding guidelines to always validate required foreign keys.
 ## References
 
 - [.github/AI-DEBUGGING-PROTOCOL.md](../.github/AI-DEBUGGING-PROTOCOL.md)
-- [docs/claude/02-investigation-protocol.md](../../docs/claude/02-investigation-protocol.md)
-- [docs/claude/07-advanced-patterns.md](../../docs/claude/07-advanced-patterns.md)
+- [docs/claude/troubleshooting.md](../../docs/claude/troubleshooting.md)
+- [docs/claude/advanced-patterns.md](../../docs/claude/advanced-patterns.md)

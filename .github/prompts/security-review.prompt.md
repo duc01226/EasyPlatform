@@ -311,5 +311,5 @@ internal sealed class SendNotificationHandler : PlatformCqrsEntityEventApplicati
 ## References
 
 - [OWASP Top 10 2021](https://owasp.org/Top10/)
-- [docs/claude/05-authorization-patterns.md](../../docs/claude/05-authorization-patterns.md)
+- [docs/claude/authorization-patterns.md](../../docs/claude/authorization-patterns.md)
 - [.github/AI-DEBUGGING-PROTOCOL.md](../AI-DEBUGGING-PROTOCOL.md)

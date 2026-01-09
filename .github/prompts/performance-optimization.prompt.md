@@ -554,4 +554,4 @@ logger.LogInformation("Memory used: {Size}MB", (afterMem - beforeMem) / 1024 / 1
 
 - [Entity Framework Performance Best Practices](https://learn.microsoft.com/en-us/ef/core/performance/)
 - [Angular Performance Checklist](https://angular.dev/best-practices/runtime-performance)
-- [docs/claude/06-decision-trees.md](../../docs/claude/06-decision-trees.md)
+- [docs/claude/decision-trees.md](../../docs/claude/decision-trees.md)

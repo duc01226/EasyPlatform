@@ -420,7 +420,7 @@ SELECT * FROM TextSnippets WHERE CategoryId = 'category-id';
 - **[Troubleshooting](./TROUBLESHOOTING.md)** - Common issues and solutions
 - **[Feature Index](./INDEX.md)** - Quick navigation
 - **[Test Specifications](../../test-specs/TextSnippet/README.md)** - Test cases
-- **[Backend Patterns](../../claude/03-backend-patterns.md)** - Platform patterns
+- **[Backend Patterns](../../claude/backend-patterns.md)** - Platform patterns
 
 ---
 

@@ -134,9 +134,9 @@ Reference agents from `.github/agents/` for specialized tasks:
 
 | Document                                            | Purpose                         |
 | --------------------------------------------------- | ------------------------------- |
-| `docs/claude/03-backend-patterns.md`                | Complete backend patterns       |
-| `docs/claude/04-frontend-patterns.md`               | Complete frontend patterns      |
-| `docs/claude/08-clean-code-rules.md`                | Coding standards                |
+| `docs/claude/backend-patterns.md`                   | Complete backend patterns       |
+| `docs/claude/frontend-patterns.md`                  | Complete frontend patterns      |
+| `docs/claude/clean-code-rules.md`                   | Coding standards                |
 | `.github/copilot-instructions.md`                   | Detailed development guidelines |
 | `.github/AGENTS.md`                                 | Agent decision tree             |
 | `.claude/workflows.json`                            | Workflow definitions            |
