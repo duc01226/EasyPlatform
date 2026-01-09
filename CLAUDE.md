@@ -691,7 +691,19 @@ internal sealed class SendNotificationOnCreateHandler : PlatformCqrsEntityEventA
 public sealed class Entity : RootEntity<Entity, string>
 {
     [TrackFieldUpdatedDomainEvent] public string Name { get; set; } = "";
-    [JsonIgnore] public Company? Company { get; set; }
+    public string? ParentId { get; set; }
+
+    // Navigation properties - two collection patterns supported
+    // Pattern 1: Forward navigation (FK on this entity)
+    [JsonIgnore]
+    [PlatformNavigationProperty(nameof(ParentId))]
+    public Entity? Parent { get; set; }
+
+    // Pattern 2: Reverse navigation (child has FK pointing to parent)
+    // Supports .Where() filtering: e => e.Children.Where(c => c.IsActive)
+    [JsonIgnore]
+    [PlatformNavigationProperty(ReverseForeignKeyProperty = nameof(ParentId))]
+    public List<Entity>? Children { get; set; }
 
     public static Expression<Func<Entity, bool>> UniqueExpr(string companyId, string code) => e => e.CompanyId == companyId && e.Code == code;
     public static Expression<Func<Entity, bool>> FilterExpr(List<Status> s) => e => s.ToHashSet().Contains(e.Status!.Value);
@@ -711,6 +723,11 @@ public sealed class Entity : RootEntity<Entity, string>
 
     public static List<string> ValidateEntity(Entity? e) => e == null ? ["Not found"] : !e.IsActive ? ["Inactive"] : [];
 }
+
+// Loading navigation properties
+await repo.GetByIdAsync(id, ct, loadRelatedEntities: e => e.Parent);                    // Forward
+await repo.GetByIdAsync(id, ct, loadRelatedEntities: e => e.Children!);                 // Reverse
+await repo.GetByIdAsync(id, ct, loadRelatedEntities: e => e.Children!.Where(c => c.IsActive)); // Reverse + filter
 ```
 
 ### 11. Entity DTO Pattern

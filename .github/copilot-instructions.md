@@ -395,18 +395,43 @@ public static Expression<Func<Entity, object?>>[] DefaultFullTextSearchColumns()
 
 ### Navigation Property Loading
 
+**Two collection patterns supported:**
+
+| Pattern | Use Case | Attribute |
+|---------|----------|-----------|
+| **FK List** | Parent has `List<Id>` | `ForeignKeyProperty` + `Cardinality = Collection` |
+| **Reverse Navigation** | Child has FK to parent | `ReverseForeignKeyProperty` |
+
 ```csharp
+// Entity definition with both patterns
+public class Category : RootEntity<Category, string>
+{
+    public string? ParentCategoryId { get; set; }
+
+    // Forward navigation (parent → child)
+    [PlatformNavigationProperty(nameof(ParentCategoryId))]
+    public Category? ParentCategory { get; set; }
+
+    // Reverse navigation (parent ← children)
+    [PlatformNavigationProperty(ReverseForeignKeyProperty = nameof(ParentCategoryId))]
+    public List<Category>? ChildCategories { get; set; }
+}
+
 // For non-EF Core repositories (e.g., MongoDB) - use PlatformNavigationProperty
-// Single entity - resolver auto-injected by repository
+// Single entity - forward navigation
 var employee = await repository.GetByIdAsync(id, ct);
 await employee.LoadNavigationAsync(e => e.Department, ct);
 
-// Batch loading - single DB call for N+1 prevention
-var employees = await repository.GetAllAsync(expr, ct);
-await employees.LoadNavigationAsync(e => e.Department, resolver, ct);
+// Single entity - reverse navigation
+var category = await repository.GetByIdAsync(id, ct, loadRelatedEntities: c => c.ChildCategories!);
 
-// Collection loading (one-to-many)
-await employee.LoadCollectionNavigationAsync(e => e.Projects, ct);
+// Reverse navigation with .Where() filter - load only matching children
+var category = await repository.GetByIdAsync(id, ct,
+    loadRelatedEntities: c => c.ChildCategories!.Where(child => child.IsActive));
+
+// Batch loading - single DB call with IN clause for N+1 prevention
+var categories = await repository.GetByIdsAsync(ids, ct,
+    loadRelatedEntities: c => c.ChildCategories!.Where(child => child.IsActive));
 
 // For EF Core repositories - use loadRelatedEntities parameter instead
 await repository.GetByIdAsync(id, ct, loadRelatedEntities: p => p.Department, p => p.Company);

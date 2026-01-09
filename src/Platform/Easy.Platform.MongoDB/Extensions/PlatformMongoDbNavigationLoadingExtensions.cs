@@ -193,12 +193,19 @@ public static class PlatformMongoDbNavigationLoadingExtensions
         Type PropertyType,
         PlatformNavigationPropertyAttribute? Attribute)
     {
-        public bool IsCollection => Attribute?.Cardinality == PlatformNavigationCardinality.Collection;
-        public Type ElementType => IsCollection ? GetElementTypeOrSelf(PropertyType) : PropertyType;
+        public bool IsCollection => Attribute?.Cardinality == PlatformNavigationCardinality.Collection ||
+                                    Attribute?.IsReverseNavigation == true;
+        public bool IsReverseNavigation => Attribute?.IsReverseNavigation == true;
+        public Type ElementType => IsCollectionType(PropertyType) ? GetElementTypeOrSelf(PropertyType) : PropertyType;
 
-        /// <summary>
-        /// Gets element type for collections, or the type itself for non-collections.
-        /// </summary>
+        private static bool IsCollectionType(Type type)
+        {
+            if (!type.IsGenericType) return false;
+            var genericDef = type.GetGenericTypeDefinition();
+            return genericDef == typeof(List<>) || genericDef == typeof(IList<>) ||
+                   genericDef == typeof(ICollection<>) || genericDef == typeof(IEnumerable<>);
+        }
+
         private static Type GetElementTypeOrSelf(Type type)
         {
             if (type.IsGenericType)
@@ -215,23 +222,61 @@ public static class PlatformMongoDbNavigationLoadingExtensions
         }
     }
 
+    /// <summary>
+    /// Holds parsed navigation expression info including chain and optional filter.
+    /// For: e => e.Projects.Where(p => p.IsActive)
+    /// Chain: [Projects], Filter: p => p.IsActive
+    /// </summary>
+    private sealed record NavigationExpressionInfo(
+        List<NavigationStep> Chain,
+        LambdaExpression? Filter);
+
     #endregion
 
     #region Expression Chain Parser (Phase 1)
 
     /// <summary>
-    /// Extracts navigation chain from nested member expressions.
-    /// For: e => e.Parent1.Parent2.Parent3
-    /// Returns: [(Parent1, TEntity), (Parent2, Parent1Type), (Parent3, Parent2Type)]
+    /// Extracts navigation info from expression, detecting .Where() filters.
+    /// For: e => e.Projects.Where(p => p.IsActive)
+    /// Returns: Chain=[Projects], Filter=p => p.IsActive
     /// </summary>
-    private static List<NavigationStep> ExtractNavigationChain(LambdaExpression expression)
+    private static NavigationExpressionInfo ExtractNavigationInfo(LambdaExpression expression)
     {
-        var chain = new List<NavigationStep>();
         var body = expression.Body;
 
         // Handle Convert expressions (boxing to object)
         if (body is UnaryExpression unary && unary.NodeType == ExpressionType.Convert)
             body = unary.Operand;
+
+        LambdaExpression? filter = null;
+
+        // Check for .Where() method call: e => e.Projects.Where(p => p.IsActive)
+        if (body is MethodCallExpression methodCall &&
+            methodCall.Method.Name == "Where" &&
+            methodCall.Arguments.Count >= 2)
+        {
+            // Extract the filter lambda from Where argument
+            var filterArg = methodCall.Arguments[1];
+            if (filterArg is UnaryExpression quote && quote.NodeType == ExpressionType.Quote)
+                filterArg = quote.Operand;
+            if (filterArg is LambdaExpression lambdaFilter)
+                filter = lambdaFilter;
+
+            // Continue parsing from the source (e.g., e.Projects)
+            body = methodCall.Arguments[0];
+        }
+
+        // Parse navigation chain
+        var chain = ExtractNavigationChainFromBody(body);
+        return new NavigationExpressionInfo(chain, filter);
+    }
+
+    /// <summary>
+    /// Extracts navigation chain from expression body (after Where is stripped).
+    /// </summary>
+    private static List<NavigationStep> ExtractNavigationChainFromBody(Expression body)
+    {
+        var chain = new List<NavigationStep>();
 
         // Walk the expression tree from leaf to root
         while (body is MemberExpression member && member.Member is PropertyInfo prop)
@@ -242,10 +287,18 @@ public static class PlatformMongoDbNavigationLoadingExtensions
             // Insert at beginning to maintain root→leaf order
             chain.Insert(0, new NavigationStep(prop, ownerType, prop.PropertyType, attr));
 
-            body = member.Expression;
+            body = member.Expression!;
         }
 
         return chain;
+    }
+
+    /// <summary>
+    /// Legacy method for backwards compatibility.
+    /// </summary>
+    private static List<NavigationStep> ExtractNavigationChain(LambdaExpression expression)
+    {
+        return ExtractNavigationInfo(expression).Chain;
     }
 
     #endregion
@@ -255,6 +308,7 @@ public static class PlatformMongoDbNavigationLoadingExtensions
     /// <summary>
     /// Loads a navigation expression on a single entity.
     /// Handles both single-level and deep navigation chains.
+    /// Supports .Where() filtering for reverse navigation.
     /// </summary>
     private static async Task LoadNavigationExpressionAsync<TEntity, TPrimaryKey>(
         TEntity entity,
@@ -263,14 +317,21 @@ public static class PlatformMongoDbNavigationLoadingExtensions
         CancellationToken ct)
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        var chain = ExtractNavigationChain(navExpr);
-        if (chain.IsNullOrEmpty()) return;
+        var info = ExtractNavigationInfo(navExpr);
+        if (info.Chain.IsNullOrEmpty()) return;
 
         // Single level: use optimized typed path
-        if (chain.Count == 1)
+        if (info.Chain.Count == 1)
         {
-            var step = chain[0];
+            var step = info.Chain[0];
             if (step.Attribute == null) return;
+
+            // Check for reverse navigation (child has FK pointing to parent)
+            if (step.IsReverseNavigation)
+            {
+                await LoadReverseCollectionAsync<TEntity, TPrimaryKey>(entity, step, info.Filter, resolver, ct);
+                return;
+            }
 
             if (step.IsCollection)
                 await LoadCollectionNavigationTypedAsync<TEntity, TPrimaryKey>(entity, step, resolver, ct);
@@ -280,8 +341,8 @@ public static class PlatformMongoDbNavigationLoadingExtensions
             return;
         }
 
-        // Multi-level: recursive chain loading
-        await LoadNavigationChainAsync(entity, chain, resolver, ct);
+        // Multi-level: recursive chain loading (filter not supported for deep chains yet)
+        await LoadNavigationChainAsync(entity, info.Chain, resolver, ct);
     }
 
     /// <summary>
@@ -434,6 +495,7 @@ public static class PlatformMongoDbNavigationLoadingExtensions
 
     /// <summary>
     /// Loads a navigation expression on multiple entities with aggregated batch loading.
+    /// Supports .Where() filtering for reverse navigation.
     /// </summary>
     private static async Task LoadNavigationExpressionBatchAsync<TEntity, TPrimaryKey>(
         List<TEntity> entities,
@@ -442,14 +504,21 @@ public static class PlatformMongoDbNavigationLoadingExtensions
         CancellationToken ct)
         where TEntity : class, IEntity<TPrimaryKey>, new()
     {
-        var chain = ExtractNavigationChain(navExpr);
-        if (chain.IsNullOrEmpty()) return;
+        var info = ExtractNavigationInfo(navExpr);
+        if (info.Chain.IsNullOrEmpty()) return;
 
         // Single level: use optimized typed batch path
-        if (chain.Count == 1)
+        if (info.Chain.Count == 1)
         {
-            var step = chain[0];
+            var step = info.Chain[0];
             if (step.Attribute == null) return;
+
+            // Check for reverse navigation (child has FK pointing to parent)
+            if (step.IsReverseNavigation)
+            {
+                await LoadReverseCollectionBatchAsync<TEntity, TPrimaryKey>(entities, step, info.Filter, resolver, ct);
+                return;
+            }
 
             if (step.IsCollection)
                 await entities.ParallelAsync(entity => LoadCollectionNavigationTypedAsync<TEntity, TPrimaryKey>(entity, step, resolver, ct));
@@ -459,8 +528,8 @@ public static class PlatformMongoDbNavigationLoadingExtensions
             return;
         }
 
-        // Multi-level: aggregated batch chain loading
-        await LoadNavigationChainBatchAsync(entities.Cast<object>().ToList(), typeof(TEntity), chain, resolver, ct);
+        // Multi-level: aggregated batch chain loading (filter not supported for deep chains yet)
+        await LoadNavigationChainBatchAsync(entities.Cast<object>().ToList(), typeof(TEntity), info.Chain, resolver, ct);
     }
 
     /// <summary>
@@ -675,6 +744,323 @@ public static class PlatformMongoDbNavigationLoadingExtensions
         var lambda = Expression.Lambda(converted, param);
 
         await (Task)genericMethod.Invoke(null, [entity, lambda, resolver, null, ct])!;
+    }
+
+    #endregion
+
+    #region Reverse Navigation Loading (Phase 3-4)
+
+    /// <summary>
+    /// Cache for GetAllAsync method with predicate.
+    /// </summary>
+    private static readonly ConcurrentDictionary<Type, MethodInfo?> GetAllAsyncMethodCache = new();
+
+    /// <summary>
+    /// Gets cached GetAllAsync method for a repository type.
+    /// </summary>
+    private static MethodInfo? GetCachedGetAllAsyncMethod(Type repoType)
+    {
+        return GetAllAsyncMethodCache.GetOrAdd(repoType, t =>
+            t.GetMethods()
+                .FirstOrDefault(m =>
+                    m.Name == "GetAllAsync" &&
+                    m.GetParameters().Length >= 1 &&
+                    m.GetParameters()[0].ParameterType.IsGenericType &&
+                    m.GetParameters()[0].ParameterType.GetGenericTypeDefinition() == typeof(Expression<>)));
+    }
+
+    /// <summary>
+    /// Loads reverse navigation collection for a single entity.
+    /// Queries children where child.FK == parent.Id with optional filter.
+    /// </summary>
+    private static async Task LoadReverseCollectionAsync<TEntity, TPrimaryKey>(
+        TEntity entity,
+        NavigationStep step,
+        LambdaExpression? filter,
+        IPlatformRepositoryResolver resolver,
+        CancellationToken ct)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        if (step.Attribute?.ReverseForeignKeyProperty == null) return;
+
+        var navEntityType = step.ElementType;
+        var parentId = entity.Id;
+        if (EqualityComparer<TPrimaryKey>.Default.Equals(parentId, default))
+        {
+            SetEmptyCollection(entity, step, navEntityType);
+            return;
+        }
+
+        // Build predicate: child => child.FK == parentId
+        var predicate = BuildReverseNavigationPredicate(
+            navEntityType,
+            step.Attribute.ReverseForeignKeyProperty,
+            parentId,
+            typeof(TPrimaryKey),
+            filter);
+
+        // Resolve repository for child entity
+        var keyType = GetKeyTypeForEntity(navEntityType);
+        var repo = ResolveRepository(resolver, navEntityType, keyType);
+        if (repo == null) return;
+
+        // Call GetAllAsync with predicate
+        var results = await InvokeGetAllAsync(repo, predicate, ct);
+        step.Property.SetValue(entity, results);
+    }
+
+    /// <summary>
+    /// Batch loads reverse navigation collection for multiple entities.
+    /// Single query: child.FK IN [parent1.Id, parent2.Id, ...] with optional filter.
+    /// </summary>
+    private static async Task LoadReverseCollectionBatchAsync<TEntity, TPrimaryKey>(
+        List<TEntity> entities,
+        NavigationStep step,
+        LambdaExpression? filter,
+        IPlatformRepositoryResolver resolver,
+        CancellationToken ct)
+        where TEntity : class, IEntity<TPrimaryKey>, new()
+    {
+        if (step.Attribute?.ReverseForeignKeyProperty == null) return;
+        if (entities.Count == 0) return;
+
+        var navEntityType = step.ElementType;
+
+        // Collect all parent IDs
+        var parentIds = entities
+            .Select(e => e.Id)
+            .Where(id => !EqualityComparer<TPrimaryKey>.Default.Equals(id, default))
+            .Cast<object>()
+            .Distinct()
+            .ToList();
+
+        if (parentIds.Count == 0)
+        {
+            foreach (var entity in entities)
+                SetEmptyCollection(entity, step, navEntityType);
+            return;
+        }
+
+        // Build predicate: child => parentIds.Contains(child.FK) && [filter]
+        var predicate = BuildReverseNavigationBatchPredicate(
+            navEntityType,
+            step.Attribute.ReverseForeignKeyProperty,
+            parentIds,
+            typeof(TPrimaryKey),
+            filter);
+
+        // Resolve repository for child entity
+        var keyType = GetKeyTypeForEntity(navEntityType);
+        var repo = ResolveRepository(resolver, navEntityType, keyType);
+        if (repo == null) return;
+
+        // Call GetAllAsync with predicate - single query for all parents
+        var allResults = await InvokeGetAllAsync(repo, predicate, ct);
+        if (allResults == null)
+        {
+            foreach (var entity in entities)
+                SetEmptyCollection(entity, step, navEntityType);
+            return;
+        }
+
+        // Group results by FK and distribute to each parent
+        var fkProp = navEntityType.GetProperty(step.Attribute.ReverseForeignKeyProperty);
+        if (fkProp == null) return;
+
+        var resultsByFk = new Dictionary<object, List<object>>();
+        foreach (var item in (IEnumerable)allResults)
+        {
+            var fkValue = fkProp.GetValue(item);
+            if (fkValue == null) continue;
+
+            if (!resultsByFk.TryGetValue(fkValue, out var list))
+            {
+                list = [];
+                resultsByFk[fkValue] = list;
+            }
+
+            list.Add(item);
+        }
+
+        // Assign results to each parent
+        var listType = typeof(List<>).MakeGenericType(navEntityType);
+        foreach (var entity in entities)
+        {
+            var parentId = entity.Id;
+            if (!EqualityComparer<TPrimaryKey>.Default.Equals(parentId, default) && resultsByFk.TryGetValue(parentId!, out var children))
+            {
+                var typedList = (IList)Activator.CreateInstance(listType)!;
+                foreach (var child in children) typedList.Add(child);
+                step.Property.SetValue(entity, typedList);
+            }
+            else
+            {
+                SetEmptyCollection(entity, step, navEntityType);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds predicate: child => child.FK == parentId [&& filter(child)]
+    /// </summary>
+    private static LambdaExpression BuildReverseNavigationPredicate(
+        Type childType,
+        string fkPropertyName,
+        object parentId,
+        Type parentKeyType,
+        LambdaExpression? filter)
+    {
+        var param = Expression.Parameter(childType, "child");
+
+        // Validate FK property exists
+        var fkProp = childType.GetProperty(fkPropertyName)
+            ?? throw new InvalidOperationException(
+                $"Foreign key property '{fkPropertyName}' not found on entity type '{childType.Name}'. " +
+                $"Verify the ReverseForeignKeyProperty attribute value matches an existing property.");
+
+        var fkAccess = Expression.Property(param, fkProp);
+
+        // Handle nullable FK
+        Expression fkExpression = fkAccess;
+        var underlyingFkType = Nullable.GetUnderlyingType(fkProp.PropertyType);
+        if (underlyingFkType != null)
+            fkExpression = Expression.Property(fkAccess, "Value");
+
+        // Build: child.FK == parentId
+        var idConstant = Expression.Constant(parentId, parentKeyType);
+        var equals = Expression.Equal(fkExpression, idConstant);
+
+        Expression body = equals;
+
+        // Combine with filter if present
+        if (filter != null)
+        {
+            var filterParam = filter.Parameters[0];
+            if (filterParam.Type != childType)
+                throw new ArgumentException(
+                    $"Filter parameter type '{filterParam.Type.Name}' doesn't match navigation entity type '{childType.Name}'. " +
+                    $"Ensure the Where clause lambda parameter matches the collection element type.");
+
+            var filterBody = ReplaceParameter(filter.Body, filterParam, param);
+            body = Expression.AndAlso(body, filterBody);
+        }
+
+        return Expression.Lambda(body, param);
+    }
+
+    /// <summary>
+    /// Builds predicate: child => parentIds.Contains(child.FK) [&& filter(child)]
+    /// </summary>
+    private static LambdaExpression BuildReverseNavigationBatchPredicate(
+        Type childType,
+        string fkPropertyName,
+        List<object> parentIds,
+        Type parentKeyType,
+        LambdaExpression? filter)
+    {
+        var param = Expression.Parameter(childType, "child");
+
+        // Validate FK property exists
+        var fkProp = childType.GetProperty(fkPropertyName)
+            ?? throw new InvalidOperationException(
+                $"Foreign key property '{fkPropertyName}' not found on entity type '{childType.Name}'. " +
+                $"Verify the ReverseForeignKeyProperty attribute value matches an existing property.");
+
+        var fkAccess = Expression.Property(param, fkProp);
+
+        // Handle nullable FK
+        Expression fkExpression = fkAccess;
+        var underlyingFkType = Nullable.GetUnderlyingType(fkProp.PropertyType);
+        if (underlyingFkType != null)
+            fkExpression = Expression.Property(fkAccess, "Value");
+
+        // Build: parentIds.Contains(child.FK)
+        var listType = typeof(List<>).MakeGenericType(parentKeyType);
+        var typedList = (IList)Activator.CreateInstance(listType)!;
+        foreach (var id in parentIds) typedList.Add(id);
+
+        var containsMethod = listType.GetMethod("Contains", [parentKeyType])!;
+        var listConstant = Expression.Constant(typedList, listType);
+        var containsCall = Expression.Call(listConstant, containsMethod, fkExpression);
+
+        Expression body = containsCall;
+
+        // Combine with filter if present
+        if (filter != null)
+        {
+            var filterParam = filter.Parameters[0];
+            if (filterParam.Type != childType)
+                throw new ArgumentException(
+                    $"Filter parameter type '{filterParam.Type.Name}' doesn't match navigation entity type '{childType.Name}'. " +
+                    $"Ensure the Where clause lambda parameter matches the collection element type.");
+
+            var filterBody = ReplaceParameter(filter.Body, filterParam, param);
+            body = Expression.AndAlso(body, filterBody);
+        }
+
+        return Expression.Lambda(body, param);
+    }
+
+    /// <summary>
+    /// Replaces a parameter in an expression tree with another expression.
+    /// </summary>
+    private static Expression ReplaceParameter(Expression expression, ParameterExpression oldParam, ParameterExpression newParam)
+    {
+        return new ParameterReplacer(oldParam, newParam).Visit(expression);
+    }
+
+    /// <summary>
+    /// Expression visitor that replaces a parameter with another.
+    /// </summary>
+    private sealed class ParameterReplacer(ParameterExpression oldParam, ParameterExpression newParam) : ExpressionVisitor
+    {
+        protected override Expression VisitParameter(ParameterExpression node)
+        {
+            return node == oldParam ? newParam : base.VisitParameter(node);
+        }
+    }
+
+    /// <summary>
+    /// Gets the key type for an entity type by examining IEntity interface.
+    /// </summary>
+    private static Type GetKeyTypeForEntity(Type entityType)
+    {
+        var entityInterface = entityType.GetInterfaces()
+            .FirstOrDefault(i => i.IsGenericType && i.GetGenericTypeDefinition() == typeof(IEntity<>));
+
+        return entityInterface?.GetGenericArguments()[0] ?? typeof(string);
+    }
+
+    /// <summary>
+    /// Invokes GetAllAsync on repository with expression predicate.
+    /// </summary>
+    private static async Task<object?> InvokeGetAllAsync(
+        object repo,
+        LambdaExpression predicate,
+        CancellationToken ct)
+    {
+        var getAllMethod = GetCachedGetAllAsyncMethod(repo.GetType());
+        if (getAllMethod == null) return null;
+
+        var parameters = getAllMethod.GetParameters();
+        var args = new object?[parameters.Length];
+        args[0] = predicate;
+
+        for (var i = 1; i < parameters.Length; i++)
+        {
+            if (parameters[i].ParameterType == typeof(CancellationToken))
+                args[i] = ct;
+            else if (parameters[i].HasDefaultValue)
+                args[i] = parameters[i].DefaultValue;
+            else
+                args[i] = null;
+        }
+
+        var task = (Task)getAllMethod.Invoke(repo, args)!;
+        await task;
+
+        var resultProp = task.GetType().GetProperty("Result");
+        return resultProp?.GetValue(task);
     }
 
     #endregion

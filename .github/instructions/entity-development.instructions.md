@@ -230,9 +230,43 @@ public sealed class ConfigDto : PlatformDto<ConfigValue>
 - Use `[TrackFieldUpdatedDomainEvent]` on specific properties for granular tracking
 
 ### Navigation Properties
+
+**Two collection patterns supported:**
+
+| Pattern | Use Case | Attribute Configuration |
+|---------|----------|-------------------------|
+| **FK List** | Parent has `List<Id>` (e.g., `ProjectIds`) | `[PlatformNavigationProperty(nameof(ProjectIds), Cardinality = Collection)]` |
+| **Reverse Navigation** | Child has FK to parent | `[PlatformNavigationProperty(ReverseForeignKeyProperty = nameof(Child.ParentId))]` |
+
+```csharp
+// Single navigation (FK on this entity)
+[JsonIgnore]
+[PlatformNavigationProperty(nameof(DepartmentId))]
+public Department? Department { get; set; }
+
+// Collection via FK list (this entity has List<TKey>)
+[JsonIgnore]
+[PlatformNavigationProperty(nameof(ProjectIds), Cardinality = PlatformNavigationCardinality.Collection)]
+public List<Project>? Projects { get; set; }
+
+// Reverse navigation (child has FK pointing to parent)
+// Supports .Where() filtering: c => c.Children.Where(x => x.IsActive)
+[JsonIgnore]
+[PlatformNavigationProperty(ReverseForeignKeyProperty = nameof(ParentCategoryId))]
+public List<Category>? ChildCategories { get; set; }
+```
+
+**Loading with .Where() filter (reverse navigation only):**
+```csharp
+// Load only active children
+await repo.GetByIdAsync(id, ct, loadRelatedEntities: c => c.Children!.Where(x => x.IsActive));
+```
+
+**Key rules:**
 - Always add `[JsonIgnore]` to navigation properties
 - Prevents circular serialization references
 - Collections should be nullable: `List<Child>?`
+- `[PlatformNavigationProperty]` auto-ignores in BSON for MongoDB
 
 ### Static Expressions
 - Return `Expression<Func<T, bool>>` for query filters

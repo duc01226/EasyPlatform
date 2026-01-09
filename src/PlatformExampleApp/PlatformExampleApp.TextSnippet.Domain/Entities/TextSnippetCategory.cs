@@ -80,9 +80,13 @@ public class TextSnippetCategory : RootAuditedEntity<TextSnippetCategory, string
     public TextSnippetCategory? ParentCategory { get; set; }
 
     /// <summary>
-    /// Child categories in hierarchy
+    /// Child categories in hierarchy.
+    /// Demonstrates reverse navigation: child's ParentCategoryId points to this parent's Id.
+    /// Usage: await repo.GetByIdAsync(id, ct, loadRelatedEntities: c => c.ChildCategories)
+    /// With filter: await repo.GetByIdAsync(id, ct, loadRelatedEntities: c => c.ChildCategories.Where(x => x.IsActive))
     /// </summary>
     [JsonIgnore]
+    [PlatformNavigationProperty(ReverseForeignKeyProperty = nameof(ParentCategoryId))]
     public List<TextSnippetCategory>? ChildCategories { get; set; }
 
     /// <summary>

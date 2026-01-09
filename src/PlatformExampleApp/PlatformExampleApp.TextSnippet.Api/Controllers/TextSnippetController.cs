@@ -580,4 +580,262 @@ public class TextSnippetController : PlatformBaseController
             return new { name = "GetByIdsAsync with Deep Navigation", passed = false, error = ex.Message };
         }
     }
+
+    /// <summary>
+    /// Test endpoint to verify REVERSE navigation loading works correctly.
+    /// Reverse navigation: child entity has FK pointing to parent (e.g., Category.ParentCategoryId → Parent).
+    /// Tests loading ChildCategories where child.ParentCategoryId == parent.Id.
+    /// Supports .Where() filtering: c => c.ChildCategories.Where(x => x.IsActive)
+    /// </summary>
+    [HttpGet]
+    [Route("testReverseNavigationLoading")]
+    public async Task<IActionResult> TestReverseNavigationLoading(CancellationToken ct)
+    {
+        var testId = Ulid.NewUlid().ToString()[..8];
+        var results = new List<object>();
+
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // TEST 1: Basic Reverse Navigation - Load children where child.ParentCategoryId == parent.Id
+        // ═══════════════════════════════════════════════════════════════════════════════
+        var test1 = await TestReverseNavBasic(testId, ct);
+        results.Add(test1);
+
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // TEST 2: Reverse Navigation with .Where() Filter
+        // ═══════════════════════════════════════════════════════════════════════════════
+        var test2 = await TestReverseNavWithFilter(testId, ct);
+        results.Add(test2);
+
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // TEST 3: Batch Reverse Navigation - Multiple parents
+        // ═══════════════════════════════════════════════════════════════════════════════
+        var test3 = await TestReverseNavBatch(testId, ct);
+        results.Add(test3);
+
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // TEST 4: Empty Children - Parent with no children
+        // ═══════════════════════════════════════════════════════════════════════════════
+        var test4 = await TestReverseNavEmptyChildren(testId, ct);
+        results.Add(test4);
+
+        // ═══════════════════════════════════════════════════════════════════════════════
+        // SUMMARY
+        // ═══════════════════════════════════════════════════════════════════════════════
+        var passedCount = results.Count(r => (bool)r.GetType().GetProperty("passed")!.GetValue(r)!);
+        var totalCount = results.Count;
+
+        return Ok(
+            new
+            {
+                testId,
+                feature = "Reverse Navigation Collection Loading",
+                description = "Tests loading children where child.FK == parent.Id (e.g., ChildCategories where ParentCategoryId == this.Id)",
+                timestamp = DateTime.UtcNow,
+                tests = results,
+                summary = new
+                {
+                    totalTests = totalCount,
+                    passedTests = passedCount,
+                    failedTests = totalCount - passedCount,
+                    allTestsPassed = passedCount == totalCount,
+                    message = passedCount == totalCount
+                        ? "All reverse navigation loading tests passed successfully!"
+                        : $"{totalCount - passedCount} test(s) failed. Check individual test results."
+                }
+            });
+    }
+
+    /// <summary>
+    /// Test 1: Basic reverse navigation loading
+    /// </summary>
+    private async Task<object> TestReverseNavBasic(string testId, CancellationToken ct)
+    {
+        try
+        {
+            // Create parent with 3 children
+            var parent = TextSnippetCategory.CreateRoot($"RN1-Parent-{testId}", "Parent for reverse nav test");
+            await categoryRepository.CreateAsync(parent, cancellationToken: ct);
+
+            var child1 = TextSnippetCategory.CreateChild(parent.Id, $"RN1-Child1-{testId}", "Child 1");
+            var child2 = TextSnippetCategory.CreateChild(parent.Id, $"RN1-Child2-{testId}", "Child 2");
+            var child3 = TextSnippetCategory.CreateChild(parent.Id, $"RN1-Child3-{testId}", "Child 3");
+            await categoryRepository.CreateManyAsync([child1, child2, child3], cancellationToken: ct);
+
+            // Load parent with children via reverse navigation
+            var loaded = await categoryRepository.GetByIdAsync(
+                parent.Id,
+                ct,
+                loadRelatedEntities: c => c.ChildCategories!);
+
+            var childrenLoaded = loaded?.ChildCategories?.Count == 3;
+            var allChildrenMatch = loaded?.ChildCategories?.All(c => c.ParentCategoryId == parent.Id) ?? false;
+
+            return new
+            {
+                name = "Basic Reverse Navigation (Parent -> ChildCategories)",
+                passed = childrenLoaded && allChildrenMatch,
+                details = new
+                {
+                    childrenCount = loaded?.ChildCategories?.Count ?? 0,
+                    expectedCount = 3,
+                    allChildrenHaveCorrectParentId = allChildrenMatch,
+                    childNames = loaded?.ChildCategories?.Select(c => c.Name).ToList()
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            return new { name = "Basic Reverse Navigation (Parent -> ChildCategories)", passed = false, error = ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// Test 2: Reverse navigation with .Where() filter
+    /// </summary>
+    private async Task<object> TestReverseNavWithFilter(string testId, CancellationToken ct)
+    {
+        try
+        {
+            // Create parent with mixed active/inactive children
+            var parent = TextSnippetCategory.CreateRoot($"RN2-Parent-{testId}", "Parent for filter test");
+            await categoryRepository.CreateAsync(parent, cancellationToken: ct);
+
+            var activeChild1 = TextSnippetCategory.CreateChild(parent.Id, $"RN2-Active1-{testId}", "Active 1");
+            activeChild1.IsActive = true;
+
+            var activeChild2 = TextSnippetCategory.CreateChild(parent.Id, $"RN2-Active2-{testId}", "Active 2");
+            activeChild2.IsActive = true;
+
+            var inactiveChild = TextSnippetCategory.CreateChild(parent.Id, $"RN2-Inactive-{testId}", "Inactive");
+            inactiveChild.IsActive = false;
+
+            await categoryRepository.CreateManyAsync([activeChild1, activeChild2, inactiveChild], cancellationToken: ct);
+
+            // Load parent with FILTERED children (only active)
+            var loadedWithFilter = await categoryRepository.GetByIdAsync(
+                parent.Id,
+                ct,
+                loadRelatedEntities: c => c.ChildCategories!.Where(child => child.IsActive));
+
+            // Load parent with ALL children for comparison
+            var loadedAll = await categoryRepository.GetByIdAsync(
+                parent.Id,
+                ct,
+                loadRelatedEntities: c => c.ChildCategories!);
+
+            var filterWorked = loadedWithFilter?.ChildCategories?.Count == 2;
+            var allChildrenCount = loadedAll?.ChildCategories?.Count == 3;
+            var onlyActiveReturned = loadedWithFilter?.ChildCategories?.All(c => c.IsActive) ?? false;
+
+            return new
+            {
+                name = "Reverse Navigation with .Where() Filter",
+                passed = filterWorked && allChildrenCount && onlyActiveReturned,
+                details = new
+                {
+                    withFilterCount = loadedWithFilter?.ChildCategories?.Count ?? 0,
+                    withoutFilterCount = loadedAll?.ChildCategories?.Count ?? 0,
+                    expectedFilteredCount = 2,
+                    expectedTotalCount = 3,
+                    allFilteredAreActive = onlyActiveReturned,
+                    filteredNames = loadedWithFilter?.ChildCategories?.Select(c => c.Name).ToList()
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            return new { name = "Reverse Navigation with .Where() Filter", passed = false, error = ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// Test 3: Batch reverse navigation - multiple parents at once
+    /// </summary>
+    private async Task<object> TestReverseNavBatch(string testId, CancellationToken ct)
+    {
+        try
+        {
+            // Create 2 parents, each with 2 children
+            var parent1 = TextSnippetCategory.CreateRoot($"RN3-Parent1-{testId}", "Parent 1");
+            var parent2 = TextSnippetCategory.CreateRoot($"RN3-Parent2-{testId}", "Parent 2");
+            await categoryRepository.CreateManyAsync([parent1, parent2], cancellationToken: ct);
+
+            var p1Child1 = TextSnippetCategory.CreateChild(parent1.Id, $"RN3-P1C1-{testId}", "P1 Child 1");
+            var p1Child2 = TextSnippetCategory.CreateChild(parent1.Id, $"RN3-P1C2-{testId}", "P1 Child 2");
+            var p2Child1 = TextSnippetCategory.CreateChild(parent2.Id, $"RN3-P2C1-{testId}", "P2 Child 1");
+            var p2Child2 = TextSnippetCategory.CreateChild(parent2.Id, $"RN3-P2C2-{testId}", "P2 Child 2");
+            await categoryRepository.CreateManyAsync([p1Child1, p1Child2, p2Child1, p2Child2], cancellationToken: ct);
+
+            // Batch load both parents with their children
+            var parentIds = new List<string> { parent1.Id, parent2.Id };
+            var loaded = await categoryRepository.GetByIdsAsync(
+                parentIds,
+                ct,
+                loadRelatedEntities: c => c.ChildCategories!);
+
+            var loadedParent1 = loaded.FirstOrDefault(p => p.Id == parent1.Id);
+            var loadedParent2 = loaded.FirstOrDefault(p => p.Id == parent2.Id);
+
+            var parent1HasCorrectChildren = loadedParent1?.ChildCategories?.Count == 2;
+            var parent2HasCorrectChildren = loadedParent2?.ChildCategories?.Count == 2;
+            var childrenAreCorrectlyDistributed = loadedParent1?.ChildCategories?.All(c => c.ParentCategoryId == parent1.Id) == true
+                                                   && loadedParent2?.ChildCategories?.All(c => c.ParentCategoryId == parent2.Id) == true;
+
+            return new
+            {
+                name = "Batch Reverse Navigation (Multiple Parents)",
+                passed = parent1HasCorrectChildren && parent2HasCorrectChildren && childrenAreCorrectlyDistributed,
+                details = new
+                {
+                    parentsLoaded = loaded.Count,
+                    parent1ChildCount = loadedParent1?.ChildCategories?.Count ?? 0,
+                    parent2ChildCount = loadedParent2?.ChildCategories?.Count ?? 0,
+                    childrenCorrectlyDistributed = childrenAreCorrectlyDistributed,
+                    explanation = "Uses single query with IN clause for all parents, then distributes children"
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            return new { name = "Batch Reverse Navigation (Multiple Parents)", passed = false, error = ex.Message };
+        }
+    }
+
+    /// <summary>
+    /// Test 4: Empty children - parent with no children
+    /// </summary>
+    private async Task<object> TestReverseNavEmptyChildren(string testId, CancellationToken ct)
+    {
+        try
+        {
+            // Create parent WITHOUT any children
+            var parent = TextSnippetCategory.CreateRoot($"RN4-Lonely-{testId}", "Parent with no children");
+            await categoryRepository.CreateAsync(parent, cancellationToken: ct);
+
+            // Load parent with children (should return empty list, not null)
+            var loaded = await categoryRepository.GetByIdAsync(
+                parent.Id,
+                ct,
+                loadRelatedEntities: c => c.ChildCategories!);
+
+            var childrenIsEmptyList = loaded?.ChildCategories != null && loaded.ChildCategories.Count == 0;
+
+            return new
+            {
+                name = "Empty Children (Parent with no children)",
+                passed = childrenIsEmptyList,
+                details = new
+                {
+                    parentLoaded = loaded != null,
+                    childCategoriesIsNotNull = loaded?.ChildCategories != null,
+                    childCategoriesCount = loaded?.ChildCategories?.Count ?? -1,
+                    explanation = "Should return empty List<>, not null, when no children exist"
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            return new { name = "Empty Children (Parent with no children)", passed = false, error = ex.Message };
+        }
+    }
 }
