@@ -4,11 +4,14 @@ description: Create or update EasyPlatform business feature documentation in doc
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
 
+<!-- SYNC: Source of truth is docs/templates/skills/business-feature-docs/SKILL.md -->
+<!-- Keep in sync with .github/skills/business-feature-docs/SKILL.md -->
+
 # EasyPlatform Business Feature Documentation
 
 Generate comprehensive business feature documentation following the **GOLD STANDARD** template pattern.
 
-**GOLD STANDARD Reference**: `docs/business-features/bravoTALENTS/detailed-features/README.EmployeeSettingsFeature.md`
+**GOLD STANDARD Reference**: `docs/features/README.ExampleFeature1.md` (Example App)
 **Template File**: `docs/templates/detailed-feature-docs-template.md`
 
 ---
@@ -33,27 +36,38 @@ docs/
 
 ---
 
-## MANDATORY 15-SECTION STRUCTURE
+## MANDATORY 26-SECTION STRUCTURE
 
 All feature documentation in `detailed-features/` MUST follow this section order:
 
-| # | Section | Purpose |
-|---|---------|---------|
-| 1 | Overview | Feature purpose, key capabilities |
-| 2 | Business Requirements | FR-{MOD}-XX format with evidence tables |
-| 3 | Design Reference | Figma links, screenshots, UI patterns |
-| 4 | Architecture | ASCII diagrams, service responsibilities |
-| 5 | Domain Model | Entities, enumerations, value objects |
-| 6 | Core Workflows | Step-by-step flows with key files |
-| 7 | API Reference | Endpoints, request/response examples |
-| 8 | Frontend Components | Component hierarchy and paths |
-| 9 | Backend Controllers | Controller actions mapping |
-| 10 | Cross-Service Integration | Message bus events |
-| 11 | Permission System | Role permission matrix |
-| 12 | Test Specifications | TC-{MOD}-XXX with summary table |
-| 13 | Troubleshooting | Symptoms/Causes/Resolution format |
-| 14 | Related Documentation | Links to related features |
-| 15 | Version History | Versioned changelog |
+| # | Section | Stakeholder Focus |
+|---|---------|-------------------|
+| 1 | Executive Summary | PO, BA |
+| 2 | Business Value | PO, BA |
+| 3 | Business Requirements | PO, BA |
+| 4 | Business Rules | BA, Dev |
+| 5 | Process Flows | BA, Dev, Architect |
+| 6 | Design Reference | BA, UX, Dev |
+| 7 | System Design | Dev, Architect |
+| 8 | Architecture | Dev, Architect |
+| 9 | Domain Model | Dev, Architect |
+| 10 | API Reference | Dev, Architect |
+| 11 | Frontend Components | Dev |
+| 12 | Backend Controllers | Dev |
+| 13 | Cross-Service Integration | Dev, Architect |
+| 14 | Security Architecture | Dev, Architect |
+| 15 | Performance Considerations | Dev, Architect, DevOps |
+| 16 | Implementation Guide | Dev |
+| 17 | Test Specifications | QA |
+| 18 | Test Data Requirements | QA |
+| 19 | Edge Cases Catalog | QA, Dev |
+| 20 | Regression Impact | QA |
+| 21 | Troubleshooting | Dev, QA, DevOps |
+| 22 | Operational Runbook | DevOps |
+| 23 | Roadmap and Dependencies | PO, BA |
+| 24 | Related Documentation | All |
+| 25 | Glossary | PO, BA |
+| 26 | Version History | All |
 
 ---
 
@@ -89,6 +103,20 @@ Gather evidence from source code:
 
 ## Phase 2: Key Format Examples
 
+### Quick Navigation by Role
+
+```markdown
+| Role | Priority Sections | Key Concerns |
+|------|------------------|--------------|
+| **Product Owner** | Executive Summary, Business Value, Roadmap | ROI, scope, timeline, dependencies |
+| **Business Analyst** | Business Requirements, Business Rules, Process Flows | Requirements traceability, acceptance criteria |
+| **Developer** | Architecture, Domain Model, API Reference, Implementation Guide | Code patterns, integration points |
+| **Tech Architect** | System Design, Architecture, Cross-Service Integration, Performance | System design, scalability, tech debt |
+| **QA Engineer** | Test Specifications, Test Data Requirements, Edge Cases Catalog | Test coverage, automation feasibility |
+| **QC Analyst** | All sections | Evidence verification, documentation accuracy |
+| **DevOps** | Operational Runbook, Troubleshooting, Performance | Deployment, monitoring, incident response |
+```
+
 ### Business Requirements (FR-XX)
 
 ```markdown
@@ -99,7 +127,70 @@ Gather evidence from source code:
 | **Description** | {What this requirement enables}                      |
 | **Scope**       | {Who can use / affected entities}                    |
 | **Validation**  | {Business rules and constraints}                     |
+| **Priority**    | {P0/P1/P2/P3}                                        |
 | **Evidence**    | `{FilePath}:{LineRange}`                             |
+```
+
+### User Stories (US-XX)
+
+```markdown
+#### US-{MOD}-01: {Story Title}
+
+**As a** {role}
+**I want** {goal/desire}
+**So that** {benefit/value}
+
+**Acceptance Criteria**:
+- [ ] AC-01: {Criterion with evidence reference}
+- [ ] AC-02: {Criterion with evidence reference}
+
+**Related Requirements**: FR-{MOD}-01, FR-{MOD}-02
+**Evidence**: `{FilePath}:{LineRange}`
+```
+
+### Business Value
+
+```markdown
+### Value Proposition
+
+| Value Type | Description | Impact | Quantification |
+|------------|-------------|--------|----------------|
+| Revenue | {Revenue impact} | {H/M/L} | {$ or % if available} |
+| Efficiency | {Time/cost savings} | {H/M/L} | {Hours/costs saved} |
+| User Experience | {UX improvement} | {H/M/L} | {NPS/satisfaction improvement} |
+| Compliance | {Regulatory/audit benefit} | {H/M/L} | {Risk reduction} |
+```
+
+### Business Rules
+
+```markdown
+### Validation Rules
+
+| Rule ID | Rule | Condition | Action | Evidence |
+|---------|------|-----------|--------|----------|
+| BR-{MOD}-01 | {Rule name} | {When condition} | {Then action} | `{File}:{Line}` |
+
+### State Transitions
+
+| From State | Event | To State | Conditions | Evidence |
+|------------|-------|----------|------------|----------|
+| Draft | Activate | Active | {Conditions} | `{File}:{Line}` |
+```
+
+### Technical Decisions Log
+
+```markdown
+### Technical Decisions Log
+
+| Decision | Date | Options Considered | Chosen | Rationale | Evidence |
+|----------|------|-------------------|--------|-----------|----------|
+| {Decision title} | {Date} | {Option A, B} | {Chosen} | {Why} | `{File}:{Line}` |
+
+### Technical Debt
+
+| Item | Severity | Impact | Remediation Plan | Evidence |
+|------|----------|--------|------------------|----------|
+| {Debt item} | H/M/L | {Impact} | {Plan} | `{File}:{Line}` |
 ```
 
 ### Test Specifications (TC-XX)
@@ -130,37 +221,95 @@ Gather evidence from source code:
 **Evidence**: `{FilePath}:{LineRange}`
 ```
 
-### Troubleshooting Format
+### Edge Cases Catalog
 
 ```markdown
-#### {Issue Title}
+### Input Validation Edge Cases
 
-**Symptoms**: {Observable problem}
+| ID | Scenario | Input | Expected Behavior | Evidence |
+|----|----------|-------|-------------------|----------|
+| EC-01 | Empty string | `""` | Validation error | `{File}:{Line}` |
+| EC-02 | Max length | `{256 chars}` | Truncate/Error | `{File}:{Line}` |
 
-**Causes**:
-1. {Cause 1}
-2. {Cause 2}
+### Business Logic Edge Cases
 
-**Resolution**:
-- {Step 1}
-- {Step 2}
-
-### Diagnostic Queries
-
-```sql
-SELECT * FROM [{Schema}].[{Table}]
-WHERE CompanyId = '{companyId}';
-```
+| ID | Scenario | Condition | Expected Behavior | Evidence |
+|----|----------|-----------|-------------------|----------|
+| EC-10 | {Scenario} | {Condition} | {Behavior} | `{File}:{Line}` |
 ```
 
-### Permission System Format
+### Operational Runbook
 
 ```markdown
-| Role | View | Create | Edit | Delete | Special |
-|------|:----:|:------:|:----:|:------:|---------|
+### Deployment Checklist
+
+- [ ] Database migrations applied
+- [ ] Configuration values verified
+- [ ] Health checks passing
+- [ ] Smoke tests executed
+- [ ] Rollback plan ready
+
+### Monitoring
+
+| Metric | Alert Threshold | Dashboard | Escalation |
+|--------|-----------------|-----------|------------|
+| Error Rate | >1% | {Dashboard URL} | {Team} |
+```
+
+### Evidence Verification Protocol
+
+```markdown
+## Evidence Verification Protocol
+
+### Verification Summary
+
+| Category | Total Claims | Verified | Stale | Missing | Last Verified |
+|----------|-------------|----------|-------|---------|---------------|
+| Business Requirements | {N} | {N} | {N} | {N} | {Date} |
+| Architecture | {N} | {N} | {N} | {N} | {Date} |
+| Test Specifications | {N} | {N} | {N} | {N} | {Date} |
+| **Total** | **{N}** | **{N}** | **{N}** | **{N}** | |
+
+### Evidence Verification Table
+
+| Claim ID | Claim | File | Documented Lines | Actual Lines | Status | Verified By |
+|----------|-------|------|-----------------|--------------|--------|-------------|
+| FR-{MOD}-01 | {Claim} | `{File}` | L{X}-{Y} | L{X}-{Y} | ✅ Verified | {Name/Date} |
+
+### Audit Trail
+
+| Date | Action | Reviewer | Notes |
+|------|--------|----------|-------|
+| {Date} | Initial verification | {Name} | {Notes} |
+```
+
+### Security Architecture
+
+```markdown
+### Authorization Matrix
+
+| Role | View | Create | Edit | Delete | Special Permissions |
+|------|:----:|:------:|:----:|:------:|---------------------|
 | Admin | ✅ | ✅ | ✅ | ✅ | Full access |
-| HR Manager | ✅ | ✅ | ✅ | ❌ | Company scope |
-| Employee | ✅ | ❌ | ❌ | ❌ | Own data only |
+| Manager | ✅ | ✅ | ✅ | ❌ | Company scope |
+| User | ✅ | ❌ | ❌ | ❌ | Own data only |
+
+### Data Protection
+
+| Data Type | Protection | Evidence |
+|-----------|------------|----------|
+| PII | Encrypted at rest | `{File}:{Line}` |
+```
+
+### Glossary
+
+```markdown
+## Glossary
+
+| Term | Definition | Context |
+|------|------------|---------|
+| {Term} | {Definition for non-technical stakeholders} | {Where used} |
+| {Acronym} | {Full form and meaning} | {Where used} |
 ```
 
 ---
@@ -195,14 +344,29 @@ Before writing any documentation:
 
 ## Quality Checklist
 
-- [ ] All 15 mandatory sections present in correct order
+- [ ] All 26 mandatory sections present in correct order
+- [ ] Quick Navigation by Role included
+- [ ] Executive Summary with key capabilities
+- [ ] Business Value with ROI analysis
+- [ ] User Stories with acceptance criteria (US-XX format)
 - [ ] Business Requirements use FR-{MOD}-XX format
+- [ ] Business Rules with state transitions
+- [ ] Process Flows with diagrams
+- [ ] System Design with technical decisions log
+- [ ] Security Architecture with authorization matrix
+- [ ] Performance Considerations with targets
+- [ ] Implementation Guide with code examples
 - [ ] Test Summary table with P0-P3 counts
+- [ ] Test Data Requirements and fixtures
+- [ ] Edge Cases Catalog (validation, business, concurrency)
+- [ ] Regression Impact analysis
 - [ ] Test cases use TC-{MOD}-XXX format with GIVEN/WHEN/THEN
 - [ ] Acceptance criteria use ✅/❌ markers
-- [ ] Edge cases documented with expected errors
 - [ ] Troubleshooting uses Symptoms/Causes/Resolution format
-- [ ] Permission matrix present
+- [ ] Operational Runbook with deployment checklist
+- [ ] Roadmap and Dependencies
+- [ ] Evidence Verification Protocol with audit trail
+- [ ] Glossary for non-technical stakeholders
 - [ ] Version History table at end
 - [ ] All code references verified with actual files
 - [ ] ASCII diagrams for architecture

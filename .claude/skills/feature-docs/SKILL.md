@@ -4,34 +4,50 @@ description: Use when the user asks to generate comprehensive feature documentat
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
 
+<!-- SYNC: Source of truth is docs/templates/skills/feature-docs/SKILL.md -->
+<!-- Keep in sync with .github/skills/feature-docs/SKILL.md -->
+
 # Feature Documentation Generation & Verification
 
-Generate comprehensive feature documentation following the **GOLD STANDARD** template pattern established in `README.EmployeeSettingsFeature.md`.
+Generate comprehensive feature documentation following the **GOLD STANDARD** template pattern.
 
-**GOLD STANDARD Reference**: `docs/business-features/bravoTALENTS/detailed-features/README.EmployeeSettingsFeature.md`
+**GOLD STANDARD Reference**: `docs/features/README.ExampleFeature1.md` (Example App)
 **Template File**: `docs/templates/detailed-feature-docs-template.md`
 
 ---
 
-## MANDATORY SECTION ORDER
+## MANDATORY 26-SECTION STRUCTURE
 
 All feature documentation MUST follow this section order:
 
-1. **Overview** - Feature purpose and key capabilities
-2. **Business Requirements** - FR-{MOD}-XX format with evidence tables
-3. **Design Reference** - Figma links, screenshots, UI patterns
-4. **Architecture** - ASCII diagrams, service responsibilities
-5. **Domain Model** - Entities, enumerations, value objects
-6. **Core Workflows** - Step-by-step flows with key files
-7. **API Reference** - Endpoints, request/response examples
-8. **Frontend Components** - Component hierarchy and paths
-9. **Backend Controllers** - Controller actions mapping
-10. **Cross-Service Integration** - Message bus events
-11. **Permission System** - Role permission matrix
-12. **Test Specifications** - TC-{MOD}-XXX with summary table
-13. **Troubleshooting** - Symptoms/Causes/Resolution format
-14. **Related Documentation** - Links to related features
-15. **Version History** - Versioned changelog
+| # | Section | Stakeholder Focus |
+|---|---------|-------------------|
+| 1 | Executive Summary | PO, BA |
+| 2 | Business Value | PO, BA |
+| 3 | Business Requirements | PO, BA |
+| 4 | Business Rules | BA, Dev |
+| 5 | Process Flows | BA, Dev, Architect |
+| 6 | Design Reference | BA, UX, Dev |
+| 7 | System Design | Dev, Architect |
+| 8 | Architecture | Dev, Architect |
+| 9 | Domain Model | Dev, Architect |
+| 10 | API Reference | Dev, Architect |
+| 11 | Frontend Components | Dev |
+| 12 | Backend Controllers | Dev |
+| 13 | Cross-Service Integration | Dev, Architect |
+| 14 | Security Architecture | Dev, Architect |
+| 15 | Performance Considerations | Dev, Architect, DevOps |
+| 16 | Implementation Guide | Dev |
+| 17 | Test Specifications | QA |
+| 18 | Test Data Requirements | QA |
+| 19 | Edge Cases Catalog | QA, Dev |
+| 20 | Regression Impact | QA |
+| 21 | Troubleshooting | Dev, QA, DevOps |
+| 22 | Operational Runbook | DevOps |
+| 23 | Roadmap and Dependencies | PO, BA |
+| 24 | Related Documentation | All |
+| 25 | Glossary | PO, BA |
+| 26 | Version History | All |
 
 ---
 
@@ -64,6 +80,22 @@ Generate at `docs/business-features/{Module}/detailed-features/README.{FeatureNa
 | **Description** | {What this requirement enables}         |
 | **Scope**       | {Who can use / affected entities}       |
 | **Evidence**    | `{FilePath}:{LineRange}`                |
+```
+
+**User Stories (US-XX)**:
+```markdown
+#### US-{MOD}-01: {Story Title}
+
+**As a** {role}
+**I want** {goal/desire}
+**So that** {benefit/value}
+
+**Acceptance Criteria**:
+- [ ] AC-01: {Criterion with evidence reference}
+- [ ] AC-02: {Criterion with evidence reference}
+
+**Related Requirements**: FR-{MOD}-01, FR-{MOD}-02
+**Evidence**: `{FilePath}:{LineRange}`
 ```
 
 **Test Summary Table (MANDATORY)**:
@@ -149,15 +181,48 @@ Before writing any documentation:
 
 ---
 
+## Evidence Verification Protocol (QC)
+
+### Verification Summary Table
+```markdown
+| Category | Total Claims | Verified | Stale | Missing | Last Verified |
+|----------|-------------|----------|-------|---------|---------------|
+| Business Requirements | {N} | {N} | {N} | {N} | {Date} |
+| Test Specifications | {N} | {N} | {N} | {N} | {Date} |
+| **Total** | **{N}** | **{N}** | **{N}** | **{N}** | |
+```
+
+### Status Markers
+- ✅ Verified - Line numbers match actual source
+- ⚠️ Stale - Line numbers shifted, content still exists
+- ❌ Missing - Referenced code no longer exists
+
+---
+
 ## Quality Checklist
 
-- [ ] All 15 mandatory sections present in correct order
+- [ ] All 26 mandatory sections present in correct order
+- [ ] Quick Navigation by Role included
+- [ ] Executive Summary with key capabilities
+- [ ] Business Value with ROI analysis
+- [ ] User Stories with acceptance criteria (US-XX format)
 - [ ] Business Requirements use FR-{MOD}-XX format
+- [ ] Business Rules with state transitions
+- [ ] Process Flows with diagrams
+- [ ] System Design with technical decisions log
+- [ ] Security Architecture with authorization matrix
+- [ ] Performance Considerations with targets
+- [ ] Implementation Guide with code examples
 - [ ] Test Summary table with P0-P3 counts
+- [ ] Test Data Requirements and fixtures
+- [ ] Edge Cases Catalog (validation, business, concurrency)
+- [ ] Regression Impact analysis
 - [ ] Test cases use TC-{MOD}-XXX format with GIVEN/WHEN/THEN
 - [ ] Acceptance criteria use ✅/❌ markers
-- [ ] Edge cases documented with expected errors
 - [ ] Troubleshooting uses Symptoms/Causes/Resolution format
-- [ ] Permission matrix present
+- [ ] Operational Runbook with deployment checklist
+- [ ] Roadmap and Dependencies
+- [ ] Evidence Verification Protocol with audit trail
+- [ ] Glossary for non-technical stakeholders
 - [ ] Version History table at end
 - [ ] All code references verified with actual files

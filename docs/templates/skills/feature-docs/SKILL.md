@@ -4,8 +4,10 @@ description: Use when the user asks to generate comprehensive feature documentat
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
 
-<!-- SYNC: Source of truth is docs/templates/skills/feature-docs/SKILL.md -->
-<!-- Keep in sync with .claude/skills/feature-docs/SKILL.md -->
+<!-- SOURCE OF TRUTH: This is the canonical version. Copies exist at:
+     - .claude/skills/feature-docs/SKILL.md
+     - .github/skills/feature-docs/SKILL.md
+     Keep all copies in sync when making changes. -->
 
 # Feature Documentation Generation & Verification
 
