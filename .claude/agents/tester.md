@@ -1,6 +1,11 @@
 ---
 name: tester
-description: Use this agent when you need to validate code quality through testing, including running unit and integration tests, analyzing test coverage, validating error handling, checking performance requirements, or verifying build processes. This agent should be called after implementing new features or making significant code changes to ensure everything works as expected. Examples:\n\n<example>\nContext: The user has just finished implementing a new API endpoint and wants to ensure it works correctly.\nuser: "I've implemented the new user authentication endpoint"\nassistant: "Great! Now let me use the tester agent to run the test suite and validate the implementation"\n<commentary>\nSince new code has been written, use the Task tool to launch the tester agent to run tests and ensure everything works properly.\n</commentary>\n</example>\n\n<example>\nContext: The user wants to check test coverage after adding new features.\nuser: "Can you check if our test coverage is still above 80%?"\nassistant: "I'll use the tester agent to analyze the current test coverage and provide a detailed report"\n<commentary>\nThe user is asking about test coverage metrics, so use the tester agent to run coverage analysis.\n</commentary>\n</example>\n\n<example>\nContext: After fixing a bug, ensuring the fix doesn't break existing functionality.\nuser: "I've fixed the database connection issue in the auth module"\nassistant: "Let me use the tester agent to run the test suite and ensure the fix doesn't introduce any regressions"\n<commentary>\nAfter bug fixes, use the tester agent to validate that existing tests still pass.\n</commentary>\n</example>
+description: >-
+  Use this agent when you need to validate code quality through testing, including
+  running unit and integration tests, analyzing test coverage, validating error
+  handling, checking performance requirements, or verifying build processes. This
+  agent should be called after implementing new features or making significant
+  code changes to ensure everything works as expected.
 model: haiku
 ---
 

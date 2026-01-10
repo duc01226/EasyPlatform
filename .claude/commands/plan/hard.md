@@ -36,11 +36,11 @@ After plan creation, offer validation interview to confirm decisions before impl
 
 **Check `## Plan Context` → `Validation: mode=X, questions=MIN-MAX`:**
 
-| Mode | Behavior |
-|------|----------|
+| Mode     | Behavior                                                                        |
+| -------- | ------------------------------------------------------------------------------- |
 | `prompt` | Ask user: "Validate this plan with a brief interview?" → Yes (Recommended) / No |
-| `auto` | Automatically execute `/plan:validate {plan-path}` |
-| `off` | Skip validation step entirely |
+| `auto`   | Automatically execute `/plan:validate {plan-path}`                              |
+| `off`    | Skip validation step entirely                                                   |
 
 **If mode is `prompt`:** Use `AskUserQuestion` tool with options above.
 **If user chooses validation or mode is `auto`:** Execute `/plan:validate {plan-path}` SlashCommand.
@@ -90,3 +90,5 @@ After plan creation, offer validation interview to confirm decisions before impl
 **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
 **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
 **IMPORTANT**: **Do not** start implementing.
+
+ultrathink

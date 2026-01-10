@@ -59,59 +59,55 @@ Claude Code's hook system allows JavaScript scripts to run at specific lifecycle
 ```json
 {
   "hooks": {
+    "Notification": [{ "hooks": [{ "type": "command", "command": "node .claude/hooks/notify-waiting.js" }] }],
     "SessionStart": [
-      {
-        "matcher": "startup|resume|clear|compact",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/session-init.cjs"
-          }
-        ]
-      }
+      { "matcher": "startup|resume|clear|compact", "hooks": [{ "type": "command", "command": "node .claude/hooks/session-init.cjs" }] },
+      { "matcher": "startup|resume|compact", "hooks": [{ "type": "command", "command": "node .claude/hooks/session-resume.cjs" }] }
     ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/workflow-router.cjs"
-          },
-          {
-            "type": "command",
-            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/dev-rules-reminder.cjs"
-          }
-        ]
-      }
-    ],
+    "SubagentStart": [{ "matcher": "*", "hooks": [{ "type": "command", "command": "node .claude/hooks/subagent-init.cjs" }] }],
+    "UserPromptSubmit": [{ "hooks": [
+      { "type": "command", "command": "node .claude/hooks/workflow-router.cjs" },
+      { "type": "command", "command": "node .claude/hooks/dev-rules-reminder.cjs" }
+    ]}],
     "PreToolUse": [
-      {
-        "matcher": "Bash|Glob|Grep|Read|Edit|Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/scout-block.cjs"
-          },
-          {
-            "type": "command",
-            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/privacy-block.cjs"
-          }
-        ]
-      }
-    ]
+      { "matcher": "Skill", "hooks": [{ "type": "command", "command": "node .claude/hooks/todo-enforcement.cjs" }] },
+      { "matcher": "Bash|Glob|Grep|Read|Edit|Write", "hooks": [
+        { "type": "command", "command": "node .claude/hooks/scout-block.cjs" },
+        { "type": "command", "command": "node .claude/hooks/privacy-block.cjs" }
+      ]},
+      { "matcher": "Edit|Write|MultiEdit", "hooks": [
+        { "type": "command", "command": "node .claude/hooks/design-system-context.cjs" },
+        { "type": "command", "command": "node .claude/hooks/backend-csharp-context.cjs" },
+        { "type": "command", "command": "node .claude/hooks/frontend-typescript-context.cjs" },
+        { "type": "command", "command": "node .claude/hooks/scss-styling-context.cjs" }
+      ]}
+    ],
+    "PreCompact": [{ "matcher": "manual|auto", "hooks": [
+      { "type": "command", "command": "node .claude/hooks/write-compact-marker.cjs" },
+      { "type": "command", "command": "node .claude/hooks/save-context-memory.cjs" }
+    ]}],
+    "PostToolUse": [
+      { "matcher": "TodoWrite", "hooks": [{ "type": "command", "command": "node .claude/hooks/todo-tracker.cjs" }] },
+      { "matcher": "Edit|Write", "hooks": [{ "type": "command", "command": "node .claude/hooks/post-edit-prettier.cjs" }] },
+      { "matcher": "Skill", "hooks": [{ "type": "command", "command": "node .claude/hooks/workflow-step-tracker.cjs" }] }
+    ],
+    "SessionEnd": [{ "matcher": "clear", "hooks": [{ "type": "command", "command": "node .claude/hooks/session-end.cjs" }] }]
   }
 }
 ```
 
 #### Hook Event Reference
 
-| Event              | When It Fires                             | Purpose                                               |
-| ------------------ | ----------------------------------------- | ----------------------------------------------------- |
-| `SessionStart`     | Session begins, resumes, clears, compacts | Initialize environment variables, detect project type |
-| `UserPromptSubmit` | Every user message submitted              | Detect intent, inject workflow instructions           |
-| `PreToolUse`       | Before any tool execution                 | Block unauthorized operations, enforce policies       |
-| `PreCompact`       | Before context window compaction          | Track context state for statusline                    |
-| `SessionEnd`       | Session ends or clears                    | Cleanup, write markers                                |
+| Event | When It Fires | Hooks | Purpose |
+|-------|---------------|-------|---------|
+| `Notification` | Claude needs user attention | `notify-waiting.js` | Desktop/sound notification |
+| `SessionStart` | Session startup/resume/clear/compact | `session-init.cjs`, `session-resume.cjs` | Init env, restore todos from checkpoint |
+| `SubagentStart` | When subagent spawns | `subagent-init.cjs` | Inject context to subagents |
+| `UserPromptSubmit` | Every user message | `workflow-router.cjs`, `dev-rules-reminder.cjs` | Intent detection, context injection |
+| `PreToolUse` | Before tool execution | `todo-enforcement.cjs`, `scout-block.cjs`, `privacy-block.cjs`, `*-context.cjs` | Policy enforcement, context injection |
+| `PreCompact` | Before context compaction | `write-compact-marker.cjs`, `save-context-memory.cjs` | State persistence, checkpoint creation |
+| `PostToolUse` | After tool execution | `todo-tracker.cjs`, `post-edit-prettier.cjs`, `workflow-step-tracker.cjs` | State tracking, formatting |
+| `SessionEnd` | Session clear | `session-end.cjs` | Cleanup state files |
 
 ---
 
@@ -910,6 +906,149 @@ During an active workflow, users can control progress:
 2. **Progress visibility**: User sees step X/Y on every interaction
 3. **Control**: User can skip/abort at any time
 4. **Auto-cleanup**: State expires after 24h or on session clear
+
+---
+
+## Todo Enforcement System
+
+The workspace enforces todo list creation before implementation work via runtime hooks.
+
+### Enforcement Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                   TODO ENFORCEMENT FLOW                          │
+├─────────────────────────────────────────────────────────────────┤
+│  User calls Skill tool (e.g., /cook, /fix)                       │
+│           │                                                      │
+│           ▼                                                      │
+│  PreToolUse event fires → todo-enforcement.cjs executes          │
+│           │                                                      │
+│           ├─ Skill in ALLOWED list? → Pass through               │
+│           ├─ Has "quick:" bypass? → Pass through                 │
+│           └─ Check .todo-state.json for active todos             │
+│                   │                                              │
+│                   ├─ Has todos → Allow execution                 │
+│                   └─ No todos → BLOCK with error message         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Allowed Skills (No Todos Required)
+
+| Category | Skills |
+|----------|--------|
+| Research | `/scout`, `/scout:ext`, `/investigate`, `/research`, `/explore`, `/docs-seeker` |
+| Planning | `/plan`, `/plan:fast`, `/plan:hard`, `/plan:validate`, `/planner` |
+| Status | `/watzup`, `/checkpoint`, `/kanban`, `/context-compact` |
+| Read-only | `/git-diff`, `/git-status`, `/git-log`, `/branch-comparison` |
+
+### Blocked Skills (Todos Required)
+
+| Category | Skills |
+|----------|--------|
+| Implementation | `/cook`, `/fix`, `/code`, `/feature`, `/implement`, `/refactor` |
+| Testing | `/test`, `/tester`, `/debug`, `/build` |
+| Review | `/code-review` |
+| Git | `/commit`, `/git-commit`, `/git-manager` |
+| Docs | `/docs-update` |
+
+### Bypass Mechanism
+
+Use `quick:` prefix to bypass enforcement:
+
+```
+/cook quick: add a simple button
+```
+
+### State Tracking
+
+Todo state persisted in `.claude/.todo-state.json`:
+
+```json
+{
+  "hasTodos": true,
+  "taskCount": 5,
+  "pendingCount": 3,
+  "completedCount": 1,
+  "inProgressCount": 1,
+  "lastTodos": [{ "content": "...", "status": "pending" }],
+  "lastUpdated": "2026-01-10T09:30:00Z"
+}
+```
+
+### Enforcement Components
+
+| File | Event | Purpose |
+|------|-------|---------|
+| `todo-enforcement.cjs` | PreToolUse (Skill) | Block implementation without todos |
+| `todo-tracker.cjs` | PostToolUse (TodoWrite) | Update state on todo changes |
+| `lib/todo-state.cjs` | - | Shared state management library |
+
+---
+
+## Context Preservation System
+
+Automatic checkpoint/restore system prevents loss of todos and progress during context compaction.
+
+### Checkpoint/Restore Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                CONTEXT PRESERVATION FLOW                         │
+├─────────────────────────────────────────────────────────────────┤
+│  SAVE (PreCompact)                    RESTORE (SessionStart)     │
+│  ─────────────────                    ─────────────────────      │
+│  Context compaction triggered          Session startup/resume     │
+│           │                                    │                  │
+│           ▼                                    ▼                  │
+│  save-context-memory.cjs              session-resume.cjs          │
+│           │                                    │                  │
+│           ▼                                    ▼                  │
+│  1. Export todos from state           1. Find latest checkpoint   │
+│  2. Capture context window stats      2. Check age (<24h)         │
+│  3. Write checkpoint file             3. Parse "Active Todos"     │
+│     plans/reports/memory-             4. Restore to state file    │
+│     checkpoint-YYMMDD-HHMMSS.md       5. Output reminder to LLM   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Checkpoint File Format
+
+Saved to `plans/reports/memory-checkpoint-{timestamp}.md`:
+
+```markdown
+# Context Memory Checkpoint
+
+## Session Info
+- **Timestamp:** 2026-01-10T09:30:00Z
+- **Branch:** main
+
+## Todo List State
+- **Total Tasks:** 5
+- **Pending:** 3, **In Progress:** 1
+
+### Active Todos
+1. [ ] Implement dark mode toggle
+2. [~] Update settings component
+3. [x] Create color theme constants
+```
+
+### Age Validation
+
+- **< 24h:** Auto-restore todos on session resume
+- **> 24h:** Warning shown, manual restore required
+
+### Manual Checkpoint
+
+Use `/checkpoint` command for richer context saves with task description, findings, and next steps.
+
+### Preservation Components
+
+| File | Event | Purpose |
+|------|-------|---------|
+| `save-context-memory.cjs` | PreCompact | Save todos to checkpoint |
+| `session-resume.cjs` | SessionStart | Restore todos from checkpoint |
+| `lib/todo-state.cjs` | - | Export/restore todo state |
 
 ---
 

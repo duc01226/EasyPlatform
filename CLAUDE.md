@@ -26,6 +26,37 @@ Before implementing ANY non-trivial task, you MUST:
 
 ---
 
+## CRITICAL: Todo Enforcement (Runtime Enforced)
+
+Implementation skills are **blocked** unless you have active todos. This is enforced by hooks.
+
+### Allowed Without Todos (Research/Planning)
+
+- `/scout`, `/scout:ext`, `/investigate`, `/research`, `/explore`
+- `/plan`, `/plan:fast`, `/plan:hard`, `/plan:validate`
+- `/watzup`, `/checkpoint`, `/kanban`
+
+### Blocked Without Todos (Implementation)
+
+- `/cook`, `/fix`, `/code`, `/feature`, `/implement`
+- `/test`, `/debug`, `/code-review`, `/commit`
+- All other skills not listed above
+
+### Bypass
+
+Use `quick:` prefix to bypass enforcement (not recommended):
+```
+/cook quick: add a button
+```
+
+### Context Preservation
+
+- Todos automatically saved to checkpoints during context compaction
+- Todos auto-restored on session resume (if checkpoint < 24h old)
+- Subagents inherit parent todo state for context continuity
+
+---
+
 ## Documentation Index
 
 ### Rule Files (docs/claude/)

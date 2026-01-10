@@ -75,6 +75,25 @@ Each workflow step executes a prompt file from `.github/prompts/`:
 | `/scout` | `scout.prompt.md` | Priority-categorized file discovery |
 | `/investigate` | `investigate.prompt.md` | Knowledge graph construction + analysis |
 
+### General Developer Prompts
+
+Additional standalone prompts for common development tasks:
+
+| Prompt | File | Purpose |
+|--------|------|---------|
+| `/git-commit-smart` | `git-commit-smart.prompt.md` | Smart conventional commits with auto-generated messages |
+| `/git-cherry-pick` | `git-cherry-pick.prompt.md` | Cherry-pick commits with conflict resolution |
+| `/git-worktree` | `git-worktree.prompt.md` | Git worktree management for parallel development |
+| `/checkpoint` | `checkpoint.prompt.md` | Save memory checkpoint to preserve analysis |
+| `/build` | `build.prompt.md` | Build backend/frontend projects |
+| `/lint` | `lint.prompt.md` | Run linters and fix issues |
+| `/fix-types` | `fix-types.prompt.md` | Fix TypeScript type errors |
+| `/content-enhance` | `content-enhance.prompt.md` | Analyze and enhance UI copy quality |
+| `/content-cro` | `content-cro.prompt.md` | Conversion rate optimization for CTAs |
+| `/journal` | `journal.prompt.md` | Development journal entries |
+| `/context-compact` | `context-compact.prompt.md` | Context compression for long sessions |
+| `/kanban` | `kanban.prompt.md` | View and manage plans dashboard |
+
 ### Investigation Workflow (Enhanced)
 
 The `/scout` → `/investigate` workflow now supports **structured knowledge model construction**:
@@ -175,10 +194,24 @@ docs/design-system/        # Frontend design system documentation
 -   **This file (`copilot-instructions.md`)**: Quick reference, core principles, decision trees
 -   **`.github/instructions/`**: Deep dive patterns (auto-loaded based on file paths via `applyTo`)
 -   **`.github/prompts/`**: Task-specific prompts (plan, fix, scout, brainstorm, investigate)
+-   **`.github/skills/`**: Universal skills (auto-activated based on context)
 -   **`.github/AGENTS.md`**: 17 specialized agent roles with decision tree
 -   **`docs/claude/`**: Domain-specific pattern deep dives (Memory Bank)
 -   **Design system docs**: `docs/design-system/`, platform-specific UI patterns
 -   **Framework docs**: `docs/architecture-overview.md`, system architecture
+
+**Universal Skills (`.github/skills/`):**
+
+| Skill | Purpose |
+|-------|---------|
+| `debugging` | Systematic 4-phase debugging framework with root cause tracing |
+| `frontend-design` | Production-grade UI with design extraction from screenshots |
+| `backend-development` | Node.js/Python/Go/Rust APIs, OWASP security, testing |
+| `devops` | Cloudflare Workers, Docker, GCP deployment |
+| `databases` | MongoDB and PostgreSQL unified guide |
+| `mcp-builder` | Build MCP servers for LLM integrations |
+| `context-optimization` | Token management and context compression |
+| `media-processing` | FFmpeg, ImageMagick, background removal |
 
 ## Memory Bank (Persistent Context)
 

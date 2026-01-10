@@ -1,6 +1,11 @@
 ---
 name: code-reviewer
-description: Use this agent when you need comprehensive code review and quality assessment. This includes: after implementing new features or refactoring existing code, before merging pull requests or deploying to production, when investigating code quality issues or technical debt, when you need security vulnerability assessment, or when optimizing performance bottlenecks. Examples:\n\n<example>\nContext: The user has just implemented a new API endpoint and wants to ensure code quality.\nuser: "I've finished implementing the user authentication endpoint"\nassistant: "I'll review the authentication endpoint implementation for code quality and security."\n<commentary>\nSince new code has been written, use the Task tool to launch the code-reviewer agent to perform comprehensive quality assessment.\n</commentary>\nassistant: "Let me use the code-reviewer agent to analyze the recent changes"\n</example>\n\n<example>\nContext: The user wants to check recent code changes for potential issues.\nuser: "Can you review the changes I just made to the database service?"\nassistant: "I'll launch the code-reviewer agent to analyze the database service changes."\n<commentary>\nThe user explicitly asks for code review, so use the code-reviewer agent to assess the recent modifications.\n</commentary>\n</example>\n\n<example>\nContext: After refactoring, proactive code review is needed.\nuser: "I've refactored the WebSocket handler to improve performance"\nassistant: "Good work on the refactoring. Let me review it for quality and performance."\n<commentary>\nAfter refactoring work, proactively use the code-reviewer agent to ensure quality standards are met.\n</commentary>\nassistant: "I'll use the code-reviewer agent to validate the refactored WebSocket handler"\n</example>
+description: >-
+  Use this agent when you need comprehensive code review and quality assessment.
+  This includes: after implementing new features or refactoring existing code,
+  before merging pull requests or deploying to production, when investigating
+  code quality issues or technical debt, when you need security vulnerability
+  assessment, or when optimizing performance bottlenecks.
 model: sonnet
 ---
 

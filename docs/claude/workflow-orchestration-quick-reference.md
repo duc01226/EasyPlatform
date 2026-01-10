@@ -5,22 +5,34 @@
 ## How It Works
 
 ```
-User Prompt → Hook (workflow-router.cjs) → Pattern Match → Inject Instructions → LLM Follows
+User Prompt → workflow-router.cjs → Intent Detection → Inject Instructions
+                                                              ↓
+Skill Call  → todo-enforcement.cjs → Block/Allow → LLM Executes
+                                                              ↓
+TodoWrite   → todo-tracker.cjs → Update State
+                                                              ↓
+Compaction  → save-context-memory.cjs → Checkpoint
+                                                              ↓
+Resume      → session-resume.cjs → Restore Todos
 ```
 
 1. **Hook intercepts** every prompt before LLM sees it
 2. **Pattern matching** against `workflows.json` determines intent
-3. **Instructions injected** as system context ("MUST FOLLOW: /plan → /cook → /test")
-4. **LLM executes** each skill in sequence
+3. **Todo enforcement** blocks implementation skills without active todos
+4. **Instructions injected** as system context ("MUST FOLLOW: /plan → /cook → /test")
+5. **Context preserved** via checkpoints on compaction, restored on resume
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `.claude/settings.json` | Hook registration (when scripts run) |
+| `.claude/settings.json` | Hook registration (8 event types) |
 | `.claude/workflows.json` | Workflow definitions (patterns, sequences) |
 | `.claude/hooks/workflow-router.cjs` | Core detection engine |
-| `.claude/hooks/dev-rules-reminder.cjs` | Session context injection |
+| `.claude/hooks/todo-enforcement.cjs` | Block implementation without todos |
+| `.claude/hooks/session-resume.cjs` | Auto-restore todos on resume |
+| `.claude/hooks/save-context-memory.cjs` | Save todos before compaction |
+| `.claude/hooks/lib/todo-state.cjs` | Todo state management library |
 
 ## Workflow Types
 
@@ -57,6 +69,29 @@ for (workflow of workflows) {
 | `quick:` prefix | `quick: add a button` | Skip workflow, direct handling |
 | Explicit command | `/plan implement dark mode` | Bypass detection, run command |
 | Say "quick" | When asked "Proceed?" | Abort workflow, handle directly |
+
+## Todo Enforcement
+
+Implementation skills are **blocked** unless you have active todos.
+
+| Allowed (no todos) | Blocked (todos required) |
+|--------------------|--------------------------|
+| `/scout`, `/investigate`, `/research` | `/cook`, `/fix`, `/code` |
+| `/plan`, `/plan:hard`, `/plan:validate` | `/test`, `/debug`, `/build` |
+| `/watzup`, `/checkpoint`, `/kanban` | `/commit`, `/code-review` |
+
+**Bypass:** `quick:` prefix (e.g., `/cook quick: add button`)
+
+## Context Preservation
+
+Todos auto-saved before compaction, auto-restored on resume.
+
+```
+PreCompact → save-context-memory.cjs → plans/reports/memory-checkpoint-*.md
+SessionStart → session-resume.cjs → Restores todos if <24h old
+```
+
+**Manual checkpoint:** `/checkpoint`
 
 ## Configuration Example
 

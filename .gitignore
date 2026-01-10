@@ -450,6 +450,7 @@ src/PlatformExampleAppWeb/e2e/playwright-report/
 .claude/memory/session-log.md
 .claude/settings.local.json
 .claude/.workflow-state.json
+.claude/.todo-state.json
 
 # Auto Claude data directory
 .auto-claude/
@@ -461,3 +462,4 @@ src/PlatformExampleAppWeb/e2e/playwright-report/
 *plans/reports/
 
 temp/
+real-project-settings-compare-claude/
