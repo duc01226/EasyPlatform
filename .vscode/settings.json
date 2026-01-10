@@ -21,7 +21,6 @@
     "chat.customAgentInSubagent.enabled": true,
     "chat.detectParticipant.enabled": true,
     "chat.mcp.access": "all",
-    "chat.useClaudeSkills": true,
     "chat.useNestedAgentsMdFiles": true,
     "dotnet.defaultSolution": "src\\Easy.Platform.sln",
     "editor.aiStats.enabled": true,
@@ -106,5 +105,6 @@
         "**/node_modules": true
     },
     "sort-json.settings.isCaseSensitive": false,
-    "sort-json.settings.sortMode": "Objects Only"
+    "sort-json.settings.sortMode": "Objects Only",
+    "chat.useAgentSkills": true
 }

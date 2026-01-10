@@ -1,3 +1,6 @@
+<!-- Template: v2.0 | 26 Sections | ~1000 lines -->
+<!-- Stakeholders: PO, BA, Dev, Architect, QA, QC, DevOps -->
+
 # {FeatureName} Feature Documentation
 
 **Module**: {Module}

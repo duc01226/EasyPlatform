@@ -4,10 +4,8 @@ description: Create or update EasyPlatform business feature documentation in doc
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
 
-<!-- SOURCE OF TRUTH: This is the canonical version. Copies exist at:
-     - .claude/skills/business-feature-docs/SKILL.md
-     - .github/skills/business-feature-docs/SKILL.md
-     Keep all copies in sync when making changes. -->
+<!-- SOURCE OF TRUTH: docs/templates/skills/business-feature-docs/SKILL.md -->
+<!-- Synced to: .claude/skills/ and .github/skills/ -->
 
 # EasyPlatform Business Feature Documentation
 
