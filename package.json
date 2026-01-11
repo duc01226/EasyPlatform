@@ -1,0 +1,17 @@
+{
+  "name": "easyplatform",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EasyPlatform - .NET 9 + Angular 19 Development Platform Framework",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "husky": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

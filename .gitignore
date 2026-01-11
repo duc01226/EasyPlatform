@@ -470,6 +470,9 @@ orleans.codegen.cs
 .claude/.todo-state.json
 .auto-claude/
 
+# Release notes skill cache (LLM transform results)
+.cache/
+
 # =============================================================================
 # PROJECT-SPECIFIC
 # =============================================================================

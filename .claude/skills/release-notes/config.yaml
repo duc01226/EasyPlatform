@@ -1,0 +1,202 @@
+# Release Notes Configuration
+# Defines how commits are categorized and formatted for release notes
+
+version: "1.0"
+
+# Commit type mappings for release notes sections
+categories:
+  features:
+    types: [feat]
+    heading: "What's New"
+    description: "New features and capabilities"
+    user_facing: true
+    icon: "✨"
+
+  fixes:
+    types: [fix]
+    heading: "Bug Fixes"
+    description: "Bug fixes and corrections"
+    user_facing: true
+    icon: "🐛"
+
+  improvements:
+    types: [perf, refactor]
+    heading: "Improvements"
+    description: "Performance and code improvements"
+    user_facing: true  # perf is user-facing, refactor goes to technical
+    icon: "⚡"
+
+  docs:
+    types: [docs]
+    heading: "Documentation"
+    description: "Documentation updates"
+    user_facing: true  # Only if scope is not 'internal'
+    icon: "📚"
+
+  internal:
+    types: [test, ci, build, chore, style]
+    heading: "Internal Changes"
+    description: "Internal maintenance and CI/CD"
+    user_facing: false
+    icon: "🔧"
+
+# Breaking change detection
+breaking:
+  indicators:
+    - pattern: "^.*!:"
+      description: "Type with ! suffix"
+    - pattern: "BREAKING CHANGE:"
+      location: "body"
+      description: "BREAKING CHANGE in commit body"
+    - pattern: "BREAKING-CHANGE:"
+      location: "footer"
+      description: "BREAKING-CHANGE footer"
+
+# Service boundary detection based on file paths
+services:
+  backend-api:
+    patterns:
+      - "src/PlatformExampleApp/**/*.Api/**"
+    label: "Backend API"
+    impact: "high"
+
+  backend-domain:
+    patterns:
+      - "src/PlatformExampleApp/**/*.Domain/**"
+    label: "Domain Model"
+    impact: "high"
+
+  backend-application:
+    patterns:
+      - "src/PlatformExampleApp/**/*.Application/**"
+    label: "Application Layer"
+    impact: "medium"
+
+  backend-persistence:
+    patterns:
+      - "src/PlatformExampleApp/**/*.Persistence*/**"
+    label: "Persistence"
+    impact: "medium"
+
+  platform-core:
+    patterns:
+      - "src/Platform/Easy.Platform*/**"
+    label: "Platform Core"
+    impact: "critical"
+
+  frontend-apps:
+    patterns:
+      - "src/PlatformExampleAppWeb/apps/**"
+    label: "Frontend Apps"
+    impact: "high"
+
+  frontend-libs:
+    patterns:
+      - "src/PlatformExampleAppWeb/libs/**"
+    label: "Frontend Libraries"
+    impact: "medium"
+
+  ai-tools:
+    patterns:
+      - ".claude/**"
+      - ".github/prompts/**"
+    label: "AI Tooling"
+    impact: "low"
+
+  config:
+    patterns:
+      - ".github/workflows/**"
+      - "*.json"
+      - "*.yml"
+      - "*.yaml"
+    label: "Configuration"
+    impact: "low"
+
+  docs:
+    patterns:
+      - "docs/**"
+      - "*.md"
+    label: "Documentation"
+    impact: "low"
+
+# Commits to exclude from user-facing notes
+exclude:
+  types:
+    - ci
+    - test
+    - style
+  scopes:
+    - deps
+    - internal
+  patterns:
+    - "^chore\\(deps\\):"
+    - "^chore\\(config\\):"
+    - "\\[skip changelog\\]"
+    - "\\[ci skip\\]"
+
+# Output configuration
+output:
+  directory: "docs/release-notes"
+  filename_format: "YYMMDD-{version}.md"
+  changelog_root: "CHANGELOG.md"
+  per_service_changelog: true
+
+# Template sections
+template:
+  sections:
+    - name: "summary"
+      required: true
+    - name: "features"
+      conditional: "has_features"
+    - name: "improvements"
+      conditional: "has_improvements"
+    - name: "fixes"
+      conditional: "has_fixes"
+    - name: "breaking"
+      conditional: "has_breaking"
+    - name: "technical"
+      collapsible: true
+    - name: "contributors"
+      required: true
+
+# Version detection
+versioning:
+  strategy: "per-service"  # or "unified"
+  tag_pattern: "v*.*.*"
+  prerelease_patterns:
+    - "alpha"
+    - "beta"
+    - "rc"
+  version_file: ".version"  # Root version file
+  per_service_dir: ".versions"  # Per-service version directory
+  bump_on_release: true
+
+# Validation settings
+validation:
+  enabled: true
+  min_score: 70  # Default threshold (configurable via --threshold)
+  rules:
+    summary_exists: { weight: 15 }
+    summary_not_empty: { weight: 10 }
+    has_version: { weight: 10 }
+    has_date: { weight: 5 }
+    features_documented: { weight: 10 }
+    fixes_documented: { weight: 10 }
+    no_broken_links: { weight: 10 }
+    no_todo_markers: { weight: 5 }
+    contributors_listed: { weight: 10 }
+    proper_heading_hierarchy: { weight: 5 }
+    no_placeholder_text: { weight: 5 }
+    technical_details_collapsed: { weight: 5 }
+
+# LLM transform settings
+llm_transforms:
+  enabled: true
+  model: "claude-sonnet-4-20250514"
+  cache_ttl_hours: 24
+  transform_types:
+    - summarize
+    - business
+    - enduser
+    - executive
+    - technical
