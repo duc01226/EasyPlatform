@@ -148,6 +148,46 @@ Generate at `docs/business-features/{Module}/detailed-features/README.{FeatureNa
 
 ---
 
+## Phase 2.5: AI Companion Generation
+
+Generate AI-agent optimized companion file alongside the comprehensive documentation.
+
+**Output**: `docs/business-features/{Module}/detailed-features/README.{FeatureName}.ai.md`
+**Template**: `docs/templates/detailed-feature-docs-template.ai.md`
+
+### AI Companion Structure (10 Sections, ~260 lines)
+
+| Section | Content | Source from Full Doc |
+|---------|---------|---------------------|
+| Context | Purpose, entities, service | Executive Summary |
+| File Locations | Exact paths to all key files | Implementation Guide |
+| Domain Model | Properties, expressions | Domain Model |
+| API Contracts | Endpoints, request/response shapes | API Reference |
+| Business Rules | Validation, state transitions | Business Rules |
+| Patterns | Required ✅ / Anti-patterns ❌ | Architecture |
+| Integration | Events, dependencies | Cross-Service Integration |
+| Security | Authorization matrix | Security Architecture |
+| Test Scenarios | Key GIVEN/WHEN/THEN cases | Test Specifications |
+| Quick Reference | Decision tree, code snippets | Implementation Guide |
+
+### Compression Rules
+
+1. **Tables over prose** - Convert paragraphs to table rows
+2. **Paths over descriptions** - `File:Line` over "located in..."
+3. **Signatures over examples** - `{ id: string } → { entity: Dto }` over full code
+4. **Decisions over explanations** - What to do, not why
+
+### AI Companion Quality Check
+
+- [ ] File size ≤300 lines
+- [ ] All file paths are exact and current
+- [ ] API contracts include request/response shapes
+- [ ] Business rules have evidence references
+- [ ] Patterns section has ✅/❌ markers
+- [ ] Evidence chain preserved from full doc
+
+---
+
 ## Phase 3: Verification (2-Pass System)
 
 ### First Pass
@@ -226,3 +266,11 @@ Before writing any documentation:
 - [ ] Glossary for non-technical stakeholders
 - [ ] Version History table at end
 - [ ] All code references verified with actual files
+
+### AI Companion Checklist
+- [ ] AI companion file created at `README.{FeatureName}.ai.md`
+- [ ] AI companion ≤300 lines
+- [ ] File locations section complete with exact paths
+- [ ] API contracts include request/response shapes
+- [ ] All evidence references preserved from full doc
+- [ ] Patterns section has required (✅) and anti-patterns (❌)

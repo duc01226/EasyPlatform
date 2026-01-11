@@ -1,5 +1,7 @@
-<!-- Template: v2.0 | 26 Sections | ~1000 lines -->
+<!-- Template: v2.1 | 26 Sections | ~1000 lines -->
 <!-- Stakeholders: PO, BA, Dev, Architect, QA, QC, DevOps -->
+<!-- AI Companion: Always generate README.{FeatureName}.ai.md alongside this doc -->
+<!-- AI Template: docs/templates/detailed-feature-docs-template.ai.md -->
 
 # {FeatureName} Feature Documentation
 
