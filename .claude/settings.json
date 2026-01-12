@@ -252,6 +252,15 @@
         ]
       },
       {
+        "matcher": "Edit|Write|MultiEdit|TodoWrite",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/edit-count-tracker.cjs"
+          }
+        ]
+      },
+      {
         "matcher": "Edit|Write",
         "hooks": [
           {

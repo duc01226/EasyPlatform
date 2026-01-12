@@ -12,6 +12,7 @@
 const fs = require('fs');
 const { deleteMarker } = require('./lib/context-tracker.cjs');
 const { clearState: clearWorkflowState } = require('./lib/workflow-state.cjs');
+const { clearEditState } = require('./lib/edit-state.cjs');
 
 async function main() {
   try {
@@ -25,8 +26,9 @@ async function main() {
     // This ensures clean slate for the next session
     if (reason === 'clear' && sessionId) {
       deleteMarker(sessionId);
-      // Also clear workflow state on session clear
+      // Clear workflow state and edit state on session clear
       clearWorkflowState();
+      clearEditState();
     }
 
     process.exit(0);
