@@ -47,7 +47,11 @@ const SKIP_PATTERNS = [
   /\.angular\//,
   /\.cache\//,
   /\.output\//,
-  /\.vercel\//
+  /\.vercel\//,
+  // Skip Claude hooks to prevent "file unexpectedly modified" errors
+  // These files are edited frequently and Prettier reformatting causes race conditions
+  /\.claude\/hooks\//,
+  /\.claude\/skills\//
 ];
 
 const PRETTIER_CONFIG_FILES = [

@@ -314,13 +314,13 @@ function buildContextOutput(config, detections, resolved) {
 /**
  * Clean up leftover temp files from previous subagent sessions
  * These files (tmpclaude-xxxx-cwd) are created by Task tool but not always cleaned up
- * Scans hooks directory and subdirectories where these files are actually created
+ * Scans hooks directory, .claude directory, and project root
  */
 function cleanupTempFiles() {
   const tmpFilePattern = /^tmpclaude-[a-f0-9]+-cwd$/;
   let cleaned = 0;
 
-  function cleanDir(dir) {
+  function cleanDir(dir, skipDotDirs = true) {
     try {
       const entries = fs.readdirSync(dir, { withFileTypes: true });
       for (const entry of entries) {
@@ -330,9 +330,11 @@ function cleanupTempFiles() {
             fs.unlinkSync(fullPath);
             cleaned++;
           } catch (e) { /* ignore individual file errors */ }
-        } else if (entry.isDirectory() && !entry.name.startsWith('.')) {
-          // Recurse into subdirectories (skip hidden dirs like .git)
-          cleanDir(fullPath);
+        } else if (entry.isDirectory()) {
+          // Skip .git but allow other dot directories when skipDotDirs=false
+          if (entry.name === '.git' || entry.name === 'node_modules') continue;
+          if (skipDotDirs && entry.name.startsWith('.')) continue;
+          cleanDir(fullPath, skipDotDirs);
         }
       }
     } catch (e) { /* ignore directory read errors */ }
@@ -340,6 +342,11 @@ function cleanupTempFiles() {
 
   // Clean from hooks directory (where temp files are created)
   cleanDir(__dirname);
+  // Clean from .claude directory (including skills subdirs) - allow dot traversal
+  const claudeDir = path.join(process.cwd(), '.claude');
+  if (fs.existsSync(claudeDir)) {
+    cleanDir(claudeDir, false);
+  }
   // Also clean from project root (legacy behavior)
   cleanDir(process.cwd());
 

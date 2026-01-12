@@ -254,6 +254,21 @@ function buildWorkflowInstructions(detection, config) {
   });
   lines.push('');
 
+  // Todo prefix instruction
+  lines.push('### Todo Tracking (REQUIRED)');
+  lines.push('');
+  lines.push('**MUST prefix workflow todos with `[Workflow]`:**');
+  lines.push('```');
+  lines.push('Example todos:');
+  workflow.sequence.slice(0, 3).forEach((step, index) => {
+    const cmd = commandMapping[step];
+    const claudeCmd = cmd?.claude || `/${step}`;
+    const desc = getStepDescription(step);
+    lines.push(`- [Workflow] ${claudeCmd} - ${desc}`);
+  });
+  lines.push('```');
+  lines.push('');
+
   // Alternatives
   if (alternatives && alternatives.length > 0) {
     lines.push(`*Alternative workflows detected: ${alternatives.join(', ')}*`);
@@ -284,6 +299,52 @@ function getStepDescription(step) {
     investigate: 'Deep dive analysis'
   };
   return descriptions[step] || `Execute ${step}`;
+}
+
+/**
+ * Build reminder for workflow intent conflict
+ * When user's prompt suggests a different workflow than the active one
+ * @param {Object} existingState - Current workflow state
+ * @param {Object} newDetection - New workflow detection result
+ * @param {Object} config - Workflow config
+ * @returns {string} Conflict reminder message
+ */
+function buildConflictReminder(existingState, newDetection, config) {
+  const { commandMapping } = config;
+  const currentInfo = getCurrentStepInfo();
+
+  const existingSequence = existingState.sequence.map(step => {
+    const cmd = commandMapping[step];
+    return cmd?.claude || `/${step}`;
+  }).join(' → ');
+
+  const newSequence = newDetection.workflow.sequence.map(step => {
+    const cmd = commandMapping[step];
+    return cmd?.claude || `/${step}`;
+  }).join(' → ');
+
+  const lines = [];
+  lines.push('');
+  lines.push('## Workflow Intent Change Detected');
+  lines.push('');
+  lines.push('Your new message suggests a **different workflow** than the one currently active.');
+  lines.push('');
+  lines.push('| | Active Workflow | New Intent |');
+  lines.push('|---|---|---|');
+  lines.push(`| **Name** | ${existingState.workflowName} | ${newDetection.workflow.name} |`);
+  lines.push(`| **Progress** | Step ${currentInfo.stepNumber}/${currentInfo.totalSteps} | Not started |`);
+  lines.push(`| **Sequence** | ${existingSequence} | ${newSequence} |`);
+  lines.push('');
+  lines.push('### Options');
+  lines.push('');
+  lines.push('1. **Switch to new workflow:** Say "switch" or "abort" to cancel the active workflow and start the new one');
+  lines.push('2. **Continue current workflow:** Say "continue" to keep the active workflow');
+  lines.push('3. **Quick action:** Prefix with "quick:" to skip workflows entirely');
+  lines.push('');
+  lines.push(`*Current step pending: \`${currentInfo.claudeCommand}\`*`);
+  lines.push('');
+
+  return lines.join('\n');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -386,7 +447,7 @@ async function main() {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 2: Check for active workflow and inject continuation reminder
+    // STEP 2: Check for active workflow and handle intent changes
     // ─────────────────────────────────────────────────────────────────────────
     const existingState = loadState();
     if (existingState) {
@@ -407,6 +468,15 @@ async function main() {
           clearState();
           process.exit(0);
         }
+      }
+
+      // NEW: Check if user's prompt suggests a different workflow
+      const newDetection = detectIntent(userPrompt, config);
+      if (newDetection.detected && newDetection.workflowId !== existingState.workflowId) {
+        // User's intent has changed - show conflict reminder
+        const conflictReminder = buildConflictReminder(existingState, newDetection, config);
+        console.log(conflictReminder);
+        process.exit(0);
       }
 
       // Inject continuation reminder for active workflow

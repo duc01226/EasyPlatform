@@ -464,12 +464,16 @@ orleans.codegen.cs
 # =============================================================================
 # CLAUDE CODE / AI TOOLS
 # =============================================================================
-.claude/memory/session-log.md
-.claude/settings.local.json
+# Learned knowledge & session state (user-specific, not shared)
+.claude/memory/
+.claude/patterns/
+.claude/.edit-state.json
 .claude/.workflow-state.json
 .claude/.todo-state.json
-.claude/memory/
-.claude\memory\session-log.md
+.claude/.ace-*.json
+.claude/settings.local.json
+
+# Other AI tools
 .auto-claude/
 
 # Release notes skill cache (LLM transform results)
