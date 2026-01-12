@@ -1,0 +1,18 @@
+version: 1
+last_updated: "2026-01-12T13:44:47.725Z"
+patterns:
+  pat-test-1768224265182:
+    file: "frontend/use-signals-for-state-management.yaml"
+    category: frontend
+    confidence: 0.85
+    tags: ["frontend", "angular", "signals"]
+  pat-260112-2025-u8yrrl:
+    file: "frontend/never-use-console.yaml"
+    category: frontend
+    confidence: 0.6
+    tags: ["frontend", "never", "console", "production", "code", "proper"]
+  pat-260112-2044-md8ltm:
+    file: "frontend/e2e-test-pattern.yaml"
+    category: frontend
+    confidence: 0.6
+    tags: ["frontend", "always", "readonly", "immutable", "properties", "typescript"]
