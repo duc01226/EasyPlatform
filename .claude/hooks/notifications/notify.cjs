@@ -11,8 +11,11 @@ const fs = require('fs');
 const path = require('path');
 const { loadEnv } = require('./lib/env-loader.cjs');
 
-// Provider prefixes to check for enablement
+// Provider prefixes to check for enablement (remote providers)
 const PROVIDER_PREFIXES = ['TELEGRAM', 'DISCORD', 'SLACK'];
+
+// Providers that are enabled by default (local providers)
+const DEFAULT_ENABLED_PROVIDERS = ['desktop'];
 
 /**
  * Read JSON from stdin
@@ -47,11 +50,11 @@ async function readStdin() {
       resolve({});
     });
 
-    // Timeout after 5 seconds (safety)
+    // Timeout after 1 second (Claude Code sends input immediately)
     setTimeout(() => {
       console.error('[notify] Stdin timeout');
       resolve({});
-    }, 5000);
+    }, 1000);
   });
 }
 
@@ -95,13 +98,25 @@ async function main() {
     const cwd = input.cwd || process.cwd();
     const env = loadEnv(cwd);
 
+    // Collect all providers to call
+    const providersToCall = new Set();
+
+    // Add env-configured providers (remote)
+    for (const prefix of PROVIDER_PREFIXES) {
+      if (hasProviderEnv(prefix, env)) {
+        providersToCall.add(prefix.toLowerCase());
+      }
+    }
+
+    // Add default-enabled providers (local)
+    for (const providerName of DEFAULT_ENABLED_PROVIDERS) {
+      providersToCall.add(providerName);
+    }
+
     // Find and call enabled providers
     const results = [];
 
-    for (const prefix of PROVIDER_PREFIXES) {
-      if (!hasProviderEnv(prefix, env)) continue;
-
-      const providerName = prefix.toLowerCase();
+    for (const providerName of providersToCall) {
       const provider = loadProvider(providerName);
 
       if (!provider) {
