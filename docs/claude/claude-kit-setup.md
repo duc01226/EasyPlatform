@@ -2535,6 +2535,102 @@ function generateSolution(pattern) {
 
 ---
 
+## Pattern Learning System
+
+### Overview
+
+The Pattern Learning system provides **explicit pattern teaching** alongside the ACE automatic learning system. While ACE learns from skill execution outcomes, the Pattern Learning system allows users to directly teach Claude patterns, preferences, and conventions.
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    Pattern Learning System                          │
+│                                                                     │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐          │
+│  │    User      │    │   Pattern    │    │   Pattern    │          │
+│  │   /learn     │───▶│   Learner    │───▶│   Storage    │          │
+│  └──────────────┘    │    Hook      │    │    YAML      │          │
+│                      └──────────────┘    └──────────────┘          │
+│                             │                   │                   │
+│                             ▼                   ▼                   │
+│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐          │
+│  │   Session    │◀───│   Pattern    │◀───│   Pattern    │          │
+│  │   Inject     │    │   Injector   │    │   Matcher    │          │
+│  └──────────────┘    └──────────────┘    └──────────────┘          │
+│                                                                     │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| Pattern Learner | `pattern-learner.cjs` | Detects user corrections and explicit teachings |
+| Pattern Injector | `pattern-injector.cjs` | Injects relevant patterns at session start and tool use |
+| Pattern Matcher | `lib/pattern-matcher.cjs` | Calculates relevance scores for pattern selection |
+| Pattern Storage | `lib/pattern-storage.cjs` | YAML storage and index management |
+
+### Hook Events
+
+| Event | Hook | Purpose |
+|-------|------|---------|
+| SessionStart (startup\|resume) | pattern-injector.cjs | Inject patterns at session start |
+| PreToolUse (*) | pattern-injector.cjs | Inject context-relevant patterns |
+| UserPromptSubmit | pattern-learner.cjs | Detect corrections and teachings |
+
+### Usage
+
+**Explicit Teaching:**
+```
+/learn always use PlatformValidationResult instead of throwing exceptions
+/learn [wrong] throw new ValidationException() [right] return PlatformValidationResult.Invalid()
+```
+
+**Pattern Management:**
+```
+/learned-patterns                    # List all patterns
+/learned-patterns view <id>          # View pattern details
+/learned-patterns boost <id>         # Increase confidence
+/learned-patterns archive <id>       # Archive pattern
+```
+
+### Storage Structure
+
+```
+.claude/learned-patterns/
+├── index.yaml              # Pattern lookup index
+├── backend/                # C#/.NET patterns
+├── frontend/               # Angular/TypeScript patterns
+├── workflow/               # Development process patterns
+├── general/                # Cross-cutting patterns
+└── archive/                # Archived patterns
+```
+
+### Confidence System
+
+- **Explicit teaching** (`/learn`): Starts at 80% confidence
+- **Implicit corrections**: Starts at 40% confidence
+- **Confirmation**: +10% confidence
+- **Conflict**: -15% confidence
+- **Decay**: After 30 days unused
+- **Auto-archive**: Below 20% confidence
+
+### Dual System Architecture
+
+The Pattern Learning system operates **independently** from ACE:
+
+| System | Storage | Learning Method | Injection |
+|--------|---------|-----------------|-----------|
+| ACE | `deltas.json` | Automatic from skill outcomes | SessionStart |
+| Patterns | `learned-patterns/*.yaml` | Explicit user teaching | SessionStart + PreToolUse |
+
+Both systems coexist and complement each other:
+- **ACE** learns what works from execution outcomes
+- **Patterns** learn explicit preferences and conventions from users
+
+---
+
 ## Related Documentation
 
 - [Architecture](./architecture.md) - System architecture and planning protocol

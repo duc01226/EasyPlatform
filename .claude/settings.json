@@ -146,6 +146,15 @@
             "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ace-session-inject.cjs"
           }
         ]
+      },
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/pattern-injector.cjs"
+          }
+        ]
       }
     ],
     "SubagentStart": [
@@ -169,17 +178,39 @@
           {
             "type": "command",
             "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/dev-rules-reminder.cjs"
+          },
+          {
+            "type": "command",
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/pattern-learner.cjs"
           }
         ]
       }
     ],
     "PreToolUse": [
       {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/pattern-injector.cjs"
+          }
+        ]
+      },
+      {
         "matcher": "Skill",
         "hooks": [
           {
             "type": "command",
             "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/todo-enforcement.cjs"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/cross-platform-bash.cjs"
           }
         ]
       },

@@ -344,6 +344,46 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
 
 ---
 
+## Cross-Platform Shell Commands (CRITICAL)
+
+**Always use portable shell commands** - This codebase runs on Windows with Git Bash, where Windows commands fail.
+
+### Command Translation Table
+
+| Windows | Portable | Notes |
+|---------|----------|-------|
+| `> nul` | `> /dev/null` | **CRITICAL: Creates "nul" file in Git Bash!** |
+| `2>nul` | `2>/dev/null` | Suppress stderr |
+| `dir /b /s path` | `find "path" -type f` | Recursive file list |
+| `dir /b path` | `ls -1 "path"` | Simple list |
+| `dir path` | `ls -la "path"` | Detailed list |
+| `type file` | `cat file` | Read file |
+| `copy src dst` | `cp src dst` | Copy file |
+| `move src dst` | `mv src dst` | Move file |
+| `del file` | `rm file` | Delete file |
+| `md path` | `mkdir -p "path"` | Create directory |
+| `rd /s path` | `rm -rf path` | Remove directory |
+| `cls` | `clear` | Clear screen |
+
+### Path Format
+
+```bash
+# ❌ WRONG - Backslashes fail in Git Bash
+dir /b /s D:\GitSources\Project\.claude\patterns
+
+# ✅ CORRECT - Forward slashes work everywhere
+find "D:/GitSources/Project/.claude/patterns" -type f
+ls -la "D:/GitSources/Project/.claude/patterns"
+```
+
+### Why This Matters
+
+Git Bash interprets `dir /b` as: "run `dir` (Unix alias for `ls`) with `/b` as a file path argument" - hence the error `dir: cannot access '/b': No such file or directory`.
+
+> **Hook:** `cross-platform-bash.cjs` validates commands and warns about compatibility issues.
+
+---
+
 ## Code Quality Checklist
 
 ### Architecture

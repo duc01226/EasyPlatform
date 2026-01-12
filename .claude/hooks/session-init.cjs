@@ -314,22 +314,36 @@ function buildContextOutput(config, detections, resolved) {
 /**
  * Clean up leftover temp files from previous subagent sessions
  * These files (tmpclaude-xxxx-cwd) are created by Task tool but not always cleaned up
+ * Scans hooks directory and subdirectories where these files are actually created
  */
 function cleanupTempFiles() {
-  try {
-    const cwd = process.cwd();
-    const entries = fs.readdirSync(cwd, { withFileTypes: true });
-    let cleaned = 0;
-    for (const entry of entries) {
-      if (entry.isFile() && /^tmpclaude-[a-f0-9]+-cwd$/.test(entry.name)) {
-        fs.unlinkSync(path.join(cwd, entry.name));
-        cleaned++;
+  const tmpFilePattern = /^tmpclaude-[a-f0-9]+-cwd$/;
+  let cleaned = 0;
+
+  function cleanDir(dir) {
+    try {
+      const entries = fs.readdirSync(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isFile() && tmpFilePattern.test(entry.name)) {
+          try {
+            fs.unlinkSync(fullPath);
+            cleaned++;
+          } catch (e) { /* ignore individual file errors */ }
+        } else if (entry.isDirectory() && !entry.name.startsWith('.')) {
+          // Recurse into subdirectories (skip hidden dirs like .git)
+          cleanDir(fullPath);
+        }
       }
-    }
-    return cleaned;
-  } catch (e) {
-    return 0;
+    } catch (e) { /* ignore directory read errors */ }
   }
+
+  // Clean from hooks directory (where temp files are created)
+  cleanDir(__dirname);
+  // Also clean from project root (legacy behavior)
+  cleanDir(process.cwd());
+
+  return cleaned;
 }
 
 /**

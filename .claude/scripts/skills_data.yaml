@@ -64,6 +64,14 @@
   has_scripts: false
   name: code-review
   path: code-review/SKILL.md
+- category: utilities
+  description: Simplifies and refines code for clarity, consistency, and maintainability
+    while preserving all functionality. Focuses on recently modified code unless instructed
+    otherwise. Uses code-simplifier:code-simplifier subagent for execution.
+  has_references: false
+  has_scripts: false
+  name: code-simplifier
+  path: code-simplifier/SKILL.md
 - category: database
   description: Work with MongoDB (document database, BSON documents, aggregation pipelines,
     Atlas cloud) and PostgreSQL (relational database, SQL queries, psql CLI, pgAdmin).
@@ -368,3 +376,20 @@
   has_scripts: true
   name: web-frameworks
   path: web-frameworks/SKILL.md
+- category: learning
+  description: Teach Claude a new pattern, preference, or convention explicitly. Use
+    when you want to save a correction, preference, or coding pattern for future sessions.
+    Triggers on keywords like "remember this", "always do", "never do", "learn this pattern",
+    "/learn".
+  has_references: false
+  has_scripts: false
+  name: learn
+  path: learn/SKILL.md
+- category: learning
+  description: Manage learned patterns - list, view, archive, boost or penalize confidence.
+    Use when you want to see what patterns Claude has learned, review pattern effectiveness,
+    or manage the pattern library.
+  has_references: false
+  has_scripts: true
+  name: learned-patterns
+  path: learned-patterns/SKILL.md

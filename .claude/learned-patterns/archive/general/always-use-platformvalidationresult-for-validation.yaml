@@ -1,0 +1,25 @@
+id: pat-260112-1902-3uu8b5
+category: general
+type: preference
+trigger:
+  keywords: ["always", "platformvalidationresult", "validation"]
+  file_patterns: []
+  context: Always use PlatformValidationResult for validation
+content:
+  wrong:
+
+  right: PlatformValidationResult for validation
+  rationale: Always use PlatformValidationResult for validation
+metadata:
+  source: explicit-teaching
+  confidence: 0.8
+  first_seen: 2026-01-12
+  last_confirmed: 2026-01-12
+  occurrences: 1
+  confirmations: 1
+  conflicts: 0
+  related_files: []
+  archived: true
+  archived_date: "2026-01-12T12:03:50.874Z"
+  archived_reason: test pattern cleanup
+tags: ["general", "always", "platformvalidationresult", "validation"]
