@@ -1,7 +1,7 @@
 ---
 name: git-manager
 description: Stage, commit, and push code changes with conventional commits. Use when user says "commit", "push", or finishes a feature/fix.
-model: haiku
+model: inherit
 tools: Glob, Grep, Read, Bash
 ---
 
@@ -196,14 +196,14 @@ EOF
 
 ### PR Error Handling
 
-| Error | Detection | Action |
-|-------|-----------|--------|
-| Branch not on remote | "Branch not on remote yet" output | `git push -u origin HEAD`, retry |
-| Empty diff | No commits/files in output | Warn user: "No changes to create PR for" |
-| Diverged branches | Push rejected | `git pull --rebase origin $HEAD`, resolve conflicts, push |
-| Network failure | Command timeout/failure | Retry once, then report connectivity issue |
-| Protected branch | Push rejected with protection msg | Warn user: PR required (cannot push directly) |
-| No upstream set | "no upstream branch" error | `git push -u origin HEAD` |
+| Error                | Detection                         | Action                                                    |
+| -------------------- | --------------------------------- | --------------------------------------------------------- |
+| Branch not on remote | "Branch not on remote yet" output | `git push -u origin HEAD`, retry                          |
+| Empty diff           | No commits/files in output        | Warn user: "No changes to create PR for"                  |
+| Diverged branches    | Push rejected                     | `git pull --rebase origin $HEAD`, resolve conflicts, push |
+| Network failure      | Command timeout/failure           | Retry once, then report connectivity issue                |
+| Protected branch     | Push rejected with protection msg | Warn user: PR required (cannot push directly)             |
+| No upstream set      | "no upstream branch" error        | `git push -u origin HEAD`                                 |
 
 **Fallback for gemini unavailable:**
 1. Extract commit subjects: `git log origin/$BASE...origin/$HEAD --pretty=%s`
@@ -384,11 +384,11 @@ Split into:
 
 ## Performance Targets
 
-| Metric             | Single | Multi | Baseline | Improvement   |
-| ------------------ | ------ | ----- | -------- | ------------- |
-| Tool calls         | 2-3    | 3-4   | 15       | 73-80% fewer  |
-| Total tokens       | 5-8K   | 8-12K | 26K      | 54-69% less   |
-| Execution time     | 10-15s | 15-25s| 53s      | 53-72% faster |
-| Cost per commit    | $0.015 | $0.025| $0.078   | 68-81% cheaper|
+| Metric          | Single | Multi  | Baseline | Improvement    |
+| --------------- | ------ | ------ | -------- | -------------- |
+| Tool calls      | 2-3    | 3-4    | 15       | 73-80% fewer   |
+| Total tokens    | 5-8K   | 8-12K  | 26K      | 54-69% less    |
+| Execution time  | 10-15s | 15-25s | 53s      | 53-72% faster  |
+| Cost per commit | $0.015 | $0.025 | $0.078   | 68-81% cheaper |
 
 At 100 commits/month (70% single, 30% multi): **$5.13 saved per user per month**

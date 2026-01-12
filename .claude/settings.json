@@ -114,7 +114,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/notify-waiting.js"
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs"
           }
         ]
       }
@@ -135,6 +135,15 @@
           {
             "type": "command",
             "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/session-resume.cjs"
+          }
+        ]
+      },
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ace-session-inject.cjs"
           }
         ]
       }
@@ -220,6 +229,14 @@
           {
             "type": "command",
             "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/save-context-memory.cjs"
+          },
+          {
+            "type": "command",
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ace-reflector-analysis.cjs"
+          },
+          {
+            "type": "command",
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ace-curator-pruner.cjs"
           }
         ]
       }
@@ -244,11 +261,24 @@
         ]
       },
       {
+        "matcher": "Bash|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ace-event-emitter.cjs"
+          }
+        ]
+      },
+      {
         "matcher": "Skill",
         "hooks": [
           {
             "type": "command",
             "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/workflow-step-tracker.cjs"
+          },
+          {
+            "type": "command",
+            "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ace-feedback-tracker.cjs"
           }
         ]
       }

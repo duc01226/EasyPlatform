@@ -1,0 +1,130 @@
+# Release Notes Template Configuration
+# Single source of truth for Claude and Copilot skills
+# Run: node scripts/release-notes/generate-skills.cjs to regenerate
+
+version: 1.0.0
+
+metadata:
+  output_dir: docs/release-notes
+  filename_format: "YYMMDD-{slug}.md"
+  changelog_file: CHANGELOG.md
+  auto_save: true  # Both individual note and CHANGELOG are saved automatically
+  legacy_dir: release-notes  # Historical notes location
+
+sections:
+  - name: summary
+    required: true
+    label: "Summary"
+    description: "One paragraph end-user summary"
+
+  - name: features
+    label: "New Features"
+    item_format: "**{scope}**: {description}"
+    description: "Entirely new capabilities"
+
+  - name: improvements
+    label: "Improvements"
+    item_format: "- {description}"
+    description: "Enhancements to existing features"
+
+  - name: fixes
+    label: "Bug Fixes"
+    item_format: "- {description}"
+    description: "Corrections of incorrect behavior"
+
+  - name: breaking
+    label: "Breaking Changes"
+    warning: true
+    requires_migration: true
+    description: "Changes requiring user action"
+
+  - name: technical
+    label: "Technical Details"
+    subsections:
+      - backend
+      - frontend
+      - database
+    description: "Implementation info for developers"
+
+  - name: docs
+    label: "Related Documentation"
+    description: "Links to feature docs, API refs"
+
+# Map commit types to release note sections
+commit_mapping:
+  feat: features
+  fix: fixes
+  docs: null
+  refactor: improvements
+  perf: improvements
+  chore: null
+  style: null
+  test: null
+  ci: null
+  build: null
+  feature: features
+  devtools: null
+  platform: features
+
+# Writing guidelines for generated content
+guidelines:
+  - principle: User-Focused
+    description: Write for end-users, not developers
+
+  - principle: Concise
+    description: One sentence per item
+
+  - principle: Categorized
+    description: Group by type (features/fixes/improvements)
+
+  - principle: Linked
+    description: Reference related documentation
+
+  - principle: Dated
+    description: Always include date in filename
+
+# Template for generated release note
+template: |
+  # Release Notes: {title}
+
+  **Date:** {date}
+  **Version:** {version}
+  **Status:** Draft
+
+  ---
+
+  ## Summary
+
+  {summary}
+
+  ## New Features
+
+  {features}
+
+  ## Improvements
+
+  {improvements}
+
+  ## Bug Fixes
+
+  {fixes}
+
+  ## Breaking Changes
+
+  {breaking}
+
+  ## Technical Details
+
+  ### Backend
+  {backend}
+
+  ### Frontend
+  {frontend}
+
+  ## Related Documentation
+
+  {docs}
+
+  ---
+
+  *Generated with [Claude Code](https://claude.com/claude-code)*

@@ -468,6 +468,8 @@ orleans.codegen.cs
 .claude/settings.local.json
 .claude/.workflow-state.json
 .claude/.todo-state.json
+.claude/memory/
+.claude\memory\session-log.md
 .auto-claude/
 
 # Release notes skill cache (LLM transform results)
@@ -477,8 +479,11 @@ orleans.codegen.cs
 # PROJECT-SPECIFIC
 # =============================================================================
 temp/
-real-project-settings-compare-claude/
+other-project-settings-compare-claude/
 
 # Auto-generated plans (date-prefixed: YYMMDD-HHMM-slug)
 plans/reports/
 plans/[0-9][0-9][0-9][0-9][0-9][0-9]-*/
+
+# Claude Code subagent temp files
+tmpclaude-*

@@ -57,13 +57,21 @@
     "enabled": true,
     "overridePrefix": "quick:",
     "showDetection": true,
-    "supportedLanguages": ["en", "vi", "zh", "ja", "ko"]
+    "supportedLanguages": ["en", "vi", "zh", "ja", "ko"],
+    "checkpoints": {
+      "enabled": true,
+      "intervalMinutes": 30,
+      "path": "plans/reports",
+      "autoSaveOnCompact": true,
+      "filenamePattern": "checkpoint-{YYMMDD}-{HHMM}-{slug}.md"
+    }
   },
-  "version": "1.1.0",
+  "version": "1.2.0",
   "workflows": {
     "bugfix": {
       "confirmFirst": false,
       "description": "Systematic debugging and fix workflow",
+      "enableCheckpoints": true,
       "excludePatterns": [
         "\\b(implement|add|create|build)\\s+new\\b",
         "\\bfeature\\b",
@@ -126,6 +134,7 @@
     "feature": {
       "confirmFirst": true,
       "description": "Full feature development workflow with planning, implementation, testing, and documentation",
+      "enableCheckpoints": true,
       "excludePatterns": [
         "\\b(fix|bug|error|broken|issue)\\b",
         "\\b(doc|document|readme)\\b",
@@ -159,6 +168,7 @@
     "investigation": {
       "confirmFirst": false,
       "description": "Codebase exploration and understanding workflow",
+      "enableCheckpoints": true,
       "excludePatterns": [
         "\\b(implement|fix|create|add)\\b",
         "\\bwhat\\s+time\\b",
@@ -212,6 +222,7 @@
     "refactor": {
       "confirmFirst": true,
       "description": "Code improvement and restructuring workflow",
+      "enableCheckpoints": true,
       "excludePatterns": [
         "\\b(bug|broken|crash|fail)\\b",
         "\\bnew\\s+feature\\b",

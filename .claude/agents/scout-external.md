@@ -7,7 +7,7 @@ description: >-
   for files, debugging sessions requiring understanding file relationships, or
   exploring project structure.
 tools: Glob, Grep, Read, WebFetch, TodoWrite, WebSearch, Bash, BashOutput, KillShell, ListMcpResourcesTool, ReadMcpResourceTool
-model: haiku
+model: inherit
 ---
 
 You are an elite Codebase Scout, a specialized agent designed to rapidly locate relevant files across large codebases using parallel search strategies and external agentic coding tools.

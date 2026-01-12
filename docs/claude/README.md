@@ -8,6 +8,7 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 
 | Document                                                   | Description                                                | When to Use                                         |
 | ---------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------- |
+| [claude-kit-setup.md](./claude-kit-setup.md)               | ACE learning system, hooks, skills, agents, workflows      | Understanding Claude Code setup in this project     |
 | [architecture.md](./architecture.md)                       | System architecture, file locations, planning protocol     | Starting new tasks, understanding project structure |
 | [troubleshooting.md](./troubleshooting.md)                 | Investigation protocol, common issues and solutions        | Debugging, when stuck or encountering errors        |
 | [backend-patterns.md](./backend-patterns.md)               | CQRS, Repository, Entity, DTO, Message Bus, Jobs           | Backend development tasks                           |
@@ -18,6 +19,14 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 | [clean-code-rules.md](./clean-code-rules.md)               | Universal coding standards                                 | Code quality, best practices                        |
 
 ## Quick Navigation
+
+### Claude Kit & Setup
+
+- **ACE Learning System**: See [claude-kit-setup.md](./claude-kit-setup.md#ace---agentic-context-engineering)
+- **Hooks Configuration**: See [claude-kit-setup.md](./claude-kit-setup.md#hooks-system)
+- **Skills Framework**: See [claude-kit-setup.md](./claude-kit-setup.md#skills-framework)
+- **Agents System**: See [claude-kit-setup.md](./claude-kit-setup.md#agents-system)
+- **Workflow Orchestration**: See [claude-kit-setup.md](./claude-kit-setup.md#workflow-orchestration)
 
 ### Backend Tasks
 

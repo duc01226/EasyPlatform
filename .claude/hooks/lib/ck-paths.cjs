@@ -30,6 +30,9 @@ const MARKERS_DIR = path.join(CK_TMP_DIR, 'markers');
 // Global calibration data (shared by design - records compact thresholds)
 const CALIBRATION_PATH = path.join(CK_TMP_DIR, 'calibration.json');
 
+// Hook metrics data (shared - tracks hook effectiveness)
+const METRICS_PATH = path.join(CK_TMP_DIR, 'hook-metrics.json');
+
 // Debug logs directory
 const DEBUG_DIR = path.join(CK_TMP_DIR, 'debug');
 
@@ -100,6 +103,7 @@ module.exports = {
 
   // Files
   CALIBRATION_PATH,
+  METRICS_PATH,
 
   // Helpers
   ensureDir,

@@ -1212,3 +1212,125 @@ RabbitMQ:    localhost:15672  (guest / guest)
 // ❌ constructor(private http: HttpClient) → ✅ Use PlatformApiService
 // ❌ Manual signals for state → ✅ Use PlatformVmStore
 ```
+
+---
+
+## File I/O Safety (Learned Patterns)
+
+These patterns were learned from ACE (Agentic Context Engineering) implementation review. Apply them when working with file-based state.
+
+### File Locking for Shared State
+
+When multiple processes/hooks may access the same file:
+
+1. **Always implement advisory file locking** - Use `.lock` file pattern
+2. **Handle stale locks** - Check if owning process is still alive
+3. **Use timeout** - Don't wait forever for lock acquisition
+4. **Wrap entire read-modify-write** - Not just the write operation
+
+```javascript
+// Pattern: Lock before load, unlock after save
+function updateState(updater) {
+  if (!acquireLock()) return null;
+  try {
+    const state = loadState();
+    const newState = updater(state);
+    saveState(newState);
+    return newState;
+  } finally {
+    releaseLock();
+  }
+}
+```
+
+### Atomic Writes for JSON Files
+
+Never write directly to final destination:
+
+1. **Write to `.tmp` file first** - Complete write before exposing
+2. **Rename to final path** - Atomic on POSIX, use backup pattern on Windows
+3. **Handle crash recovery** - Check for leftover `.tmp`/`.bak` files on startup
+
+```javascript
+// Pattern: Temp file then rename
+function atomicWriteJSON(path, data) {
+  const tmp = path + '.tmp';
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+  fs.renameSync(tmp, path); // Atomic
+}
+```
+
+### Schema Validation Before Persist
+
+Always validate data before every write:
+
+1. **Validate at creation** - Factory functions validate output
+2. **Validate before save** - Never trust "validated earlier"
+3. **Fail fast** - Reject invalid data immediately
+4. **Bound all counts** - Prevent integer overflow
+
+```javascript
+// Pattern: Validate in factory
+function createEntity(input) {
+  const entity = { ...defaults, ...input };
+  const errors = validate(entity);
+  if (errors.length) throw new Error(`Invalid: ${errors.join(', ')}`);
+  return entity;
+}
+```
+
+**Reference:** See `.claude/skills/patterns/` for full implementation details.
+
+## Manual Lessons (Self-Improvement)
+
+> These patterns were identified from self-review and debugging sessions.
+
+### Concurrency: Lock all read-modify-write operations [100%]
+
+Any function that loads shared state, modifies it, and saves must use a lock to prevent race conditions.
+
+**Pattern:**
+```javascript
+function modifySharedState(input) {
+  return withLock(() => {
+    const data = loadData();
+    // modify data
+    saveData(data);
+  });
+}
+```
+
+**Real Example:** `updateDeltaFeedback()` was missing lock, causing potential data loss when multiple hooks ran concurrently.
+
+### Verification: Always check filesystem before claiming file status [100%]
+
+Never claim "file doesn't exist" without running glob/ls first. False positives waste time and create confusion.
+
+**Protocol:**
+1. Run `glob pattern` or `ls path` to verify
+2. State findings with evidence: "Verified via glob: X files found"
+
+**Real Example:** Researcher claimed `ace-cli-helpers.cjs` doesn't exist. Verification showed file exists (193 lines).
+
+### Fix Verification: Re-read lines after every claimed fix [100%]
+
+After claiming code is fixed, always re-read the specific lines to verify the fix is actually applied.
+
+**Real Example:** Phase 1 claimed issues were "fixed" but code review showed bugs still present. Always verify.
+
+*Last updated: 2026-01-11*
+
+<!-- ACE-LEARNED-PATTERNS-START -->
+
+## ACE Learned Patterns
+
+> These patterns were learned from Claude Code execution outcomes.
+> Do not edit manually - managed by ACE sync.
+
+### High Confidence (90%+)
+
+- **When using /cook skill**: cook skill execution pattern showing reliable success → Continue using this skill pattern (100% success rate observed) [100%]
+
+*Last synced: 2026-01-11*
+
+<!-- ACE-LEARNED-PATTERNS-END -->

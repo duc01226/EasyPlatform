@@ -50,6 +50,45 @@ Before removing/changing ANY code:
    - Follow Easy.Platform framework conventions
    - Verify base class APIs before using component methods
 
+### Filesystem Verification Protocol
+
+**Before claiming any file doesn't exist:**
+
+1. Run `glob pattern` or `ls path` to verify
+2. Try multiple patterns if first fails (e.g., `ace-*.cjs`, `*-helpers.cjs`)
+3. State confidence with evidence: "Verified via glob: X files found"
+
+**Before claiming code is fixed:**
+
+1. Re-read the specific lines mentioned in fix
+2. Verify pattern matches expected fix
+3. Run any available tests
+
+> **Real Example:** A researcher claimed `ace-cli-helpers.cjs` doesn't exist. Verification with `glob .claude/hooks/lib/ace-*.cjs` showed the file exists (193 lines). Always verify before asserting.
+
+### Concurrency Verification Protocol
+
+**Detect race conditions in read-modify-write patterns:**
+
+```bash
+# Find functions that load AND save without lock
+grep -l "load.*\|save" *.cjs | xargs grep -L "withLock"
+
+# Find read-modify-write patterns
+grep -B5 -A5 "saveDeltas\|saveCandidates\|writeFileSync" *.cjs
+```
+
+**Fix Pattern:**
+```javascript
+function modifySharedState(input) {
+  return withLock(() => {
+    const data = loadData();
+    // modify data
+    saveData(data);
+  });
+}
+```
+
 ## Common Issues & Solutions
 
 | Issue                          | Solution                                                               |

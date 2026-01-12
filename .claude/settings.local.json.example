@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "_comment": "Local settings override. Copy this file to settings.local.json and customize.",
+  "_priority": "Load order: settings.local.json > settings.json > ~/.claude/settings.json",
+  "_usage": "Add developer-specific permissions without modifying shared settings.json",
+
+  "permissions": {
+    "allow": [
+      "Bash(for*)",
+      "Bash(while*)",
+      "Bash(do*)",
+      "Bash(done)",
+      "Bash(if*)",
+      "Bash(fi)"
+    ]
+  },
+
+  "_examples": {
+    "additionalBashPermissions": [
+      "Bash(python*)",
+      "Bash(pip*)",
+      "Bash(docker*)"
+    ],
+    "pluginToggles": {
+      "playwright@claude-plugins-official": true
+    },
+    "debugSettings": {
+      "alwaysThinkingEnabled": true
+    }
+  }
+}

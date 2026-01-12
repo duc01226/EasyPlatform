@@ -312,10 +312,34 @@ function buildContextOutput(config, detections, resolved) {
 }
 
 /**
+ * Clean up leftover temp files from previous subagent sessions
+ * These files (tmpclaude-xxxx-cwd) are created by Task tool but not always cleaned up
+ */
+function cleanupTempFiles() {
+  try {
+    const cwd = process.cwd();
+    const entries = fs.readdirSync(cwd, { withFileTypes: true });
+    let cleaned = 0;
+    for (const entry of entries) {
+      if (entry.isFile() && /^tmpclaude-[a-f0-9]+-cwd$/.test(entry.name)) {
+        fs.unlinkSync(path.join(cwd, entry.name));
+        cleaned++;
+      }
+    }
+    return cleaned;
+  } catch (e) {
+    return 0;
+  }
+}
+
+/**
  * Main hook execution
  */
 async function main() {
   try {
+    // Clean up temp files from previous sessions (non-blocking)
+    cleanupTempFiles();
+
     const stdin = fs.readFileSync(0, 'utf-8').trim();
     const data = stdin ? JSON.parse(stdin) : {};
     const envFile = process.env.CLAUDE_ENV_FILE;
