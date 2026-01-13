@@ -52,6 +52,9 @@ excludeAgent: ["coding-agent"]
 
 ### 5. Performance Considerations
 
+- No O(n²) nested loops - use dictionary/lookup instead
+- Project only needed properties in query (not GetAll then Select one prop)
+- Always paginate large datasets - never GetAll without paging
 - Parallel queries using tuple await pattern
 - Appropriate use of `PageBy()` for pagination
 - No N+1 query patterns

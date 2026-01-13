@@ -80,6 +80,9 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
     - **Naming Issues** (check for clarity and intent):
       - Flag: vague names (`data`, `temp`, `val`, `result`), abbreviations (`usr`, `mgr`, `cnt`)
       - Fix: Descriptive names revealing intent (`userData`, `validatedOrders`, `userCount`)
+    - **Performance Issues** (CRITICAL):
+      - Flag: O(n²) nested loops, GetAll then Select one property, GetAll without pagination
+      - Fix: Use dictionary/lookup for O(n), project in query, always use PageBy()
     - Code structure and organization
     - Logic correctness and edge cases
     - Type safety and error handling

@@ -98,10 +98,40 @@
 
 ```
 [ ] No N+1 query patterns?
-[ ] Pagination for large datasets?
+[ ] No O(n²) nested loops on large datasets?
+[ ] Pagination for large datasets (never GetAll without paging)?
+[ ] Project only needed properties in query (not GetAll then Select)?
 [ ] Parallel queries where possible?
 [ ] Proper indexing suggested?
 [ ] No unnecessary eager loading?
+```
+
+### Performance Anti-Patterns
+
+```csharp
+// ❌ BAD: O(n²) - nested loop
+foreach (var user in users)
+    foreach (var order in orders)
+        if (order.UserId == user.Id) { }
+
+// ❌ BAD: GetAll then Select one property
+var ids = repo.GetAllAsync().Select(x => x.Id).ToList();
+
+// ❌ BAD: No pagination
+var allUsers = await repo.GetAllAsync(x => x.IsActive);
+```
+
+```csharp
+// ✅ GOOD: Use dictionary for O(n)
+var ordersByUser = orders.ToLookup(o => o.UserId);
+foreach (var user in users)
+    var userOrders = ordersByUser[user.Id];
+
+// ✅ GOOD: Project in query
+var ids = await repo.GetAllAsync(q => q.Select(x => x.Id));
+
+// ✅ GOOD: Always paginate
+var users = await repo.GetAllAsync(q => q.Where(x => x.IsActive).PageBy(skip, take));
 ```
 
 ---

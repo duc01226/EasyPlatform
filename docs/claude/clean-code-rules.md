@@ -240,3 +240,76 @@ if (items.length > MAX_ITEMS_PER_PAGE) { paginate(); }
 - Don't state the obvious
 - Keep documentation close to code
 - Use `// TODO:`, `// FIXME:`, `// NOTE:` appropriately
+
+## Performance Best Practices
+
+### Avoid O(n²) Complexity
+
+```csharp
+// ❌ BAD: O(n²) nested loop
+foreach (var user in users)
+    foreach (var order in orders)
+        if (order.UserId == user.Id) { /* process */ }
+
+// ✅ GOOD: O(n) with dictionary/lookup
+var ordersByUser = orders.ToLookup(o => o.UserId);
+foreach (var user in users)
+{
+    var userOrders = ordersByUser[user.Id];
+    // process userOrders
+}
+```
+
+### Project Only Needed Properties in Query
+
+Never load entire entities into memory just to extract one property.
+
+```csharp
+// ❌ BAD: Loads all entity data, then extracts IDs
+var ids = (await repo.GetAllAsync(x => x.IsActive)).Select(x => x.Id).ToList();
+
+// ❌ BAD: Loads full entities when only name needed
+var names = (await repo.GetAllAsync()).Select(x => x.Name).ToList();
+
+// ✅ GOOD: Project in query - only fetches IDs from database
+var ids = await repo.GetAllAsync(q => q.Where(x => x.IsActive).Select(x => x.Id));
+
+// ✅ GOOD: Project multiple properties
+var userInfo = await repo.GetAllAsync(q => q.Select(x => new { x.Id, x.Name, x.Email }));
+```
+
+### Always Paginate Large Datasets
+
+```csharp
+// ❌ BAD: Loads potentially millions of records
+var allUsers = await repo.GetAllAsync(x => x.IsActive);
+
+// ❌ BAD: Count without limit consideration
+var users = await repo.GetAllAsync(x => x.Status == Status.Active);
+
+// ✅ GOOD: Always use pagination
+var users = await repo.GetAllAsync(q => q
+    .Where(x => x.IsActive)
+    .OrderBy(x => x.CreatedDate)
+    .PageBy(skip, take));
+
+// ✅ GOOD: For batch processing, use scrolling/paging pattern
+await RootServiceProvider.ExecuteInjectScopedPagingAsync(
+    totalCount / pageSize, pageSize, ProcessPage);
+```
+
+### Use Parallel Queries When Independent
+
+```csharp
+// ❌ BAD: Sequential queries
+var users = await userRepo.GetAllAsync(filter);
+var orders = await orderRepo.GetAllAsync(filter);
+var products = await productRepo.GetAllAsync(filter);
+
+// ✅ GOOD: Parallel independent queries
+var (users, orders, products) = await (
+    userRepo.GetAllAsync(filter),
+    orderRepo.GetAllAsync(filter),
+    productRepo.GetAllAsync(filter)
+);
+```
