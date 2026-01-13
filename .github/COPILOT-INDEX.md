@@ -46,9 +46,9 @@
 | Resource                                                                            | Type        | Description                           |
 | ----------------------------------------------------------------------------------- | ----------- | ------------------------------------- |
 | [bug-investigation.instructions.md](instructions/bug-investigation.instructions.md) | Instruction | Systematic bug investigation protocol |
-| [bug-diagnosis](skills/bug-diagnosis/SKILL.md)                                      | Skill       | Root cause analysis workflow          |
+| [debugging](skills/debugging/SKILL.md)                                              | Skill       | Systematic debugging with platform patterns |
 | [tasks-bug-diagnosis](skills/tasks-bug-diagnosis/SKILL.md)                          | Skill       | Task-based bug diagnosis              |
-| [bug-diagnosis.agent.md](agents/bug-diagnosis.agent.md)                             | Agent       | Autonomous bug diagnosis              |
+| [debugging.agent.md](agents/debugging.agent.md)                                     | Agent       | Autonomous debugging agent            |
 
 ### New Features
 
@@ -146,7 +146,7 @@
 | [code-review.agent.md](agents/code-review.agent.md)         | Yes          | Reviews code for patterns, security, performance |
 | [test-generator.agent.md](agents/test-generator.agent.md)   | Yes          | Generates unit and integration tests             |
 | [feature-planner.agent.md](agents/feature-planner.agent.md) | Yes          | Plans feature implementation strategy            |
-| [bug-diagnosis.agent.md](agents/bug-diagnosis.agent.md)     | Yes          | Diagnoses bugs with evidence-based analysis      |
+| [debugging.agent.md](agents/debugging.agent.md)             | Yes          | Systematic debugging with evidence-based analysis |
 
 ### Development Agents
 
@@ -199,9 +199,9 @@
 | Prompt | Description |
 | ------ | ----------- |
 | [feature-implementation.prompt.md](prompts/feature-implementation.prompt.md) | Full-stack feature implementation |
-| [bug-diagnosis.prompt.md](prompts/bug-diagnosis.prompt.md) | Root cause analysis workflow |
+| [debugging.prompt.md](prompts/debugging.prompt.md) | Systematic debugging strategies |
 | [backend-development.prompt.md](prompts/backend-development.prompt.md) | Backend development patterns |
-| [frontend-development.prompt.md](prompts/frontend-development.prompt.md) | Frontend development patterns |
+| [frontend-angular.prompt.md](prompts/frontend-angular.prompt.md) | Angular frontend development patterns |
 | [security-review.prompt.md](prompts/security-review.prompt.md) | Security vulnerability assessment |
 | [performance-optimization.prompt.md](prompts/performance-optimization.prompt.md) | Performance analysis and optimization |
 

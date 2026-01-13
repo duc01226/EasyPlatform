@@ -1279,7 +1279,7 @@ function createEntity(input) {
 }
 ```
 
-**Reference:** See `.claude/skills/patterns/` for full implementation details.
+**Reference:** See `.claude/skills/code-patterns/` for full implementation details.
 
 ## Manual Lessons (Self-Improvement)
 
