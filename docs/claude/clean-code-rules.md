@@ -97,6 +97,57 @@ return base.Validate()
 - Early return for guard clauses
 - Avoid deep nesting (max 2-3 levels)
 
+## No Magic Numbers Rule
+
+Magic numbers are unexplained numeric or string literals in code that lack semantic meaning. They make code harder to understand, maintain, and refactor.
+
+### Bad Examples
+
+```csharp
+// ❌ Magic numbers - what do these values mean?
+if (status == 3) { /* ... */ }
+var timeout = 30000;
+if (retryCount > 5) { /* ... */ }
+```
+
+```typescript
+// ❌ Magic numbers - unclear intent
+if (response.code === 401) { handleUnauthorized(); }
+const delay = 1000;
+if (items.length > 50) { paginate(); }
+```
+
+### Good Examples
+
+```csharp
+// ✅ Named constants explain intent
+private const int StatusApproved = 3;
+private const int DefaultTimeoutMs = 30000;
+private const int MaxRetryCount = 5;
+
+if (status == StatusApproved) { /* ... */ }
+var timeout = DefaultTimeoutMs;
+if (retryCount > MaxRetryCount) { /* ... */ }
+```
+
+```typescript
+// ✅ Constants or enums with clear names
+const HTTP_UNAUTHORIZED = 401;
+const ANIMATION_DELAY_MS = 1000;
+const MAX_ITEMS_PER_PAGE = 50;
+
+if (response.code === HTTP_UNAUTHORIZED) { handleUnauthorized(); }
+const delay = ANIMATION_DELAY_MS;
+if (items.length > MAX_ITEMS_PER_PAGE) { paginate(); }
+```
+
+### Exceptions
+
+- Array indices (0, 1) in obvious contexts
+- Math operations (multiply by 2, divide by 100 for percentage)
+- Simple loops with clear intent
+- Test data where the value itself is tested
+
 ## Comments
 
 - Explain **why**, not **what**

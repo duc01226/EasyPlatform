@@ -106,6 +106,18 @@
 
 ---
 
+## Code Quality
+
+```
+[ ] No magic numbers - use named constants?
+[ ] No hardcoded strings for config values?
+[ ] Clear, descriptive variable names?
+[ ] Consistent abstraction levels?
+[ ] Single responsibility per method?
+```
+
+---
+
 ## Anti-Patterns to Flag
 
 | Pattern                     | Instead Do                        |
@@ -115,6 +127,8 @@
 | Side effects in handler     | Use entity event handlers         |
 | Manual state management     | Use PlatformVmStore               |
 | DTO mapping in handler      | Let DTO own mapping               |
+| Magic numbers (e.g., `if (status == 3)`) | Use named constants or enums |
+| Hardcoded config values     | Use constants or configuration    |
 
 ---
 

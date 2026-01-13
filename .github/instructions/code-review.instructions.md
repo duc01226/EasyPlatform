@@ -37,6 +37,7 @@ excludeAgent: ["coding-agent"]
 - Single Responsibility Principle
 - Meaningful, descriptive names
 - No code duplication
+- No magic numbers - use named constants instead of unexplained literals
 - Proper error handling
 - Clear step-by-step flow with spacing
 
@@ -85,6 +86,7 @@ excludeAgent: ["coding-agent"]
 - Manual DTO-to-entity mapping in handlers
 - Generic `IPlatformRootRepository<>` instead of service-specific
 - Catching exceptions in handlers
+- Magic numbers (e.g., `if (status == 3)` instead of named constants)
 
 **Frontend:**
 
@@ -92,3 +94,4 @@ excludeAgent: ["coding-agent"]
 - Manual state management instead of PlatformVmStore
 - Missing `untilDestroyed()` on subscriptions
 - Assuming base class methods without verification
+- Magic numbers and hardcoded config values

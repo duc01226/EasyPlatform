@@ -74,6 +74,9 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
 
 2. **Systematic Review**: Work through each concern area methodically:
 
+    - **Magic Numbers** (check for unexplained literals):
+      - Flag: `if (status == 3)`, `timeout = 30000`, `retry > 5`
+      - Fix: Use named constants (`StatusApproved`, `DEFAULT_TIMEOUT_MS`, `MAX_RETRY_COUNT`)
     - Code structure and organization
     - Logic correctness and edge cases
     - Type safety and error handling

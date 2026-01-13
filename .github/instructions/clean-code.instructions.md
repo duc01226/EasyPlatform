@@ -9,6 +9,7 @@ applyTo: '**'
 - Do not repeat code logic or patterns. Reuse code.
 - Follow SOLID principles and Clean Architecture patterns
 - Method Design: Single Responsibility; Consistent abstraction level: Don't mix high-level and low-level operations; Dont mix infrastructure or technical logic into application, domain layer like QueryHandler/CommandHandler.
+- No Magic Numbers: Never use unexplained numeric or string literals. Use named constants (e.g., `MAX_RETRY_COUNT = 5` not `if (retry > 5)`). Exceptions: array indices, basic math operations, obvious test data.
 - Use meaningful, descriptive names that explain intent
 - Classes/Interfaces: PascalCase (UserService, IRepository)
 - Methods/Functions: PascalCase (C#), camelCase (TypeScript) (GetUserById, getUserById)
