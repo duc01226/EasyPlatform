@@ -61,16 +61,21 @@ Use `quick:` prefix to bypass enforcement (not recommended):
 
 ### Rule Files (docs/claude/)
 
-| File                                                                     | Purpose                                          |
-| ------------------------------------------------------------------------ | ------------------------------------------------ |
-| [architecture.md](docs/claude/architecture.md)                           | System architecture & planning protocol          |
-| [troubleshooting.md](docs/claude/troubleshooting.md)                     | Investigation protocol & common issues           |
-| [backend-patterns.md](docs/claude/backend-patterns.md)                   | All 13 backend patterns (CQRS, Repository, etc.) |
-| [frontend-patterns.md](docs/claude/frontend-patterns.md)                 | Angular/platform-core patterns                   |
-| [authorization-patterns.md](docs/claude/authorization-patterns.md)       | Security and migration patterns                  |
-| [decision-trees.md](docs/claude/decision-trees.md)                       | Quick decision guides and templates              |
-| [advanced-patterns.md](docs/claude/advanced-patterns.md)                 | Advanced techniques and anti-patterns            |
-| [clean-code-rules.md](docs/claude/clean-code-rules.md)                   | Universal coding standards                       |
+| File                                                                         | Purpose                                          |
+| ---------------------------------------------------------------------------- | ------------------------------------------------ |
+| [README.md](docs/claude/README.md)                                           | Documentation index & navigation guide           |
+| [claude-kit-setup.md](docs/claude/claude-kit-setup.md)                       | Claude Kit (ACE, hooks, skills, agents, workflows) |
+| [architecture.md](docs/claude/architecture.md)                               | System architecture & planning protocol          |
+| [troubleshooting.md](docs/claude/troubleshooting.md)                         | Investigation protocol & common issues           |
+| [backend-patterns.md](docs/claude/backend-patterns.md)                       | Backend patterns (CQRS, Repository, etc.)        |
+| [backend-csharp-complete-guide.md](docs/claude/backend-csharp-complete-guide.md) | Comprehensive C# backend reference           |
+| [frontend-patterns.md](docs/claude/frontend-patterns.md)                     | Angular/platform-core patterns                   |
+| [frontend-typescript-complete-guide.md](docs/claude/frontend-typescript-complete-guide.md) | Comprehensive Angular/TS frontend reference |
+| [scss-styling-guide.md](docs/claude/scss-styling-guide.md)                   | SCSS/CSS styling rules, BEM methodology          |
+| [authorization-patterns.md](docs/claude/authorization-patterns.md)           | Security and migration patterns                  |
+| [decision-trees.md](docs/claude/decision-trees.md)                           | Quick decision guides and templates              |
+| [advanced-patterns.md](docs/claude/advanced-patterns.md)                     | Advanced techniques and anti-patterns            |
+| [clean-code-rules.md](docs/claude/clean-code-rules.md)                       | Universal coding standards                       |
 
 ### Other Documentation
 
