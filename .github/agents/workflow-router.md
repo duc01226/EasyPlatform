@@ -35,10 +35,10 @@ Key workflows (from workflows.json):
 
 | Workflow | Triggers | Sequence |
 |----------|----------|----------|
-| **feature** | implement, add, create, build | `/plan` → `/cook` → `/test` → `/code-review` → `/docs-update` → `/watzup` |
-| **bugfix** | bug, fix, error, broken, crash | `/scout` → `/investigate` → `/debug` → `/plan` → `/fix` → `/code-review` → `/test` |
+| **feature** | implement, add, create, build | `/plan` → `/plan-review` → `/cook` → `/code-simplifier` → `/code-review` → `/test` → `/docs-update` → `/watzup` |
+| **bugfix** | bug, fix, error, broken, crash | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan-review` → `/fix` → `/code-simplifier` → `/code-review` → `/test` |
 | **documentation** | docs, document, readme | `/scout` → `/investigate` → `/docs-update` → `/watzup` |
-| **refactor** | refactor, improve, clean up | `/plan` → `/code` → `/test` → `/code-review` |
+| **refactor** | refactor, improve, clean up | `/plan` → `/plan-review` → `/code` → `/code-simplifier` → `/code-review` → `/test` |
 | **review** | review, check, audit code, PR | `/code-review` → `/watzup` |
 | **investigation** | how does, where is, explain | `/scout` → `/investigate` |
 
@@ -48,6 +48,7 @@ Each workflow step maps to a prompt file in `.github/prompts/`:
 
 ```
 /plan        → plan.prompt.md
+/plan-review → plan-review.prompt.md
 /cook        → cook.prompt.md
 /code        → code.prompt.md
 /test        → test.prompt.md
@@ -118,12 +119,12 @@ This agent is automatically referenced by:
 ### Feature Request
 **Input:** "Add a dark mode toggle to the settings page"
 **Output:** Feature Implementation workflow (100% confidence)
-**Sequence:** /plan → /cook → /test → /code-review → /docs-update → /watzup
+**Sequence:** /plan → /plan-review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
 
 ### Bug Report
 **Input:** "The login button is not working"
 **Output:** Bug Fix workflow (100% confidence)
-**Sequence:** /debug → /plan → /fix → /test
+**Sequence:** /scout → /investigate → /debug → /plan → /plan-review → /fix → /code-simplifier → /code-review → /test
 
 ### Investigation
 **Input:** "How does the authentication flow work?"

@@ -23,10 +23,10 @@ User prompt → Keyword analysis → Intent classification → Workflow activati
 
 | Intent | Trigger Keywords | Workflow Sequence |
 |--------|-----------------|-------------------|
-| **Feature** | implement, add, create, build, develop, new feature | /plan → /cook → /code-simplifier → /review → /test → /docs/update → /watzup |
-| **Bug Fix** | bug, fix, error, broken, issue, crash, not working | /scout → /investigate → /debug → /plan → /fix → /review → /test |
+| **Feature** | implement, add, create, build, develop, new feature | /plan → /plan:review → /cook → /code-simplifier → /review → /test → /docs/update → /watzup |
+| **Bug Fix** | bug, fix, error, broken, issue, crash, not working | /scout → /investigate → /debug → /plan → /plan:review → /fix → /code-simplifier → /review → /test |
 | **Documentation** | docs, document, readme, update docs | /scout → /investigate → /docs-update → /watzup |
-| **Refactoring** | refactor, restructure, clean up, improve code | /plan → /code → /review → /test |
+| **Refactoring** | refactor, restructure, clean up, improve code | /plan → /plan:review → /code → /code-simplifier → /review → /test |
 | **Code Review** | review, check, audit code, PR review | /code-review → /watzup |
 | **Investigation** | how does, where is, explain, understand, find | /scout → /investigate |
 
@@ -37,10 +37,11 @@ Stored in `.claude/.workflow-state.json`:
 ```json
 {
   "active_workflow": "feature",
-  "current_step": 2,
-  "total_steps": 7,
+  "current_step": 3,
+  "total_steps": 8,
   "steps": [
     { "skill": "/plan", "status": "completed" },
+    { "skill": "/plan:review", "status": "completed" },
     { "skill": "/cook", "status": "in_progress" },
     { "skill": "/code-simplifier", "status": "pending" },
     { "skill": "/review/codebase", "status": "pending" },
@@ -60,7 +61,7 @@ When workflow is detected:
 ## Active Workflow
 
 **Workflow:** Feature Implementation
-**Progress:** Step 2/7
+**Progress:** Step 3/8
 **Current Step:** `/cook`
 **Remaining:** /cook → /code-simplifier → /review/codebase → /test → /docs/update → /watzup
 
@@ -100,7 +101,7 @@ Workflow definitions in `.claude/workflows.json`:
   "feature": {
     "name": "Feature Implementation",
     "triggers": ["implement", "add", "create", "build"],
-    "steps": ["/plan", "/cook", "/code-simplifier", "/review/codebase", "/test", "/docs/update", "/watzup"]
+    "steps": ["/plan", "/plan:review", "/cook", "/code-simplifier", "/review/codebase", "/test", "/docs/update", "/watzup"]
   }
 }
 ```

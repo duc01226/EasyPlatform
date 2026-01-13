@@ -483,10 +483,10 @@ Before responding to any task request, analyze the user's prompt to detect inten
 
 | Intent                     | Trigger Keywords                                    | Workflow Sequence                                                                                           |
 | -------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Feature Implementation** | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/review/codebase` → `/test` → `/docs-update` → `/watzup` |
-| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working  | `/scout` → `/investigate` → `/debug` → `/plan` → `/fix` → `/review/codebase` → `/test` |
+| **Feature Implementation** | implement, add, create, build, develop, new feature | `/plan` → `/plan:review` → `/cook` → `/code-simplifier` → `/review/codebase` → `/test` → `/docs-update` → `/watzup` |
+| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working  | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan:review` → `/fix` → `/code-simplifier` → `/review/codebase` → `/test` |
 | **Documentation**          | docs, document, readme, update docs                 | `/scout` → `/investigate` → `/docs-update` → `/watzup`                                                      |
-| **Refactoring**            | refactor, restructure, clean up, improve code       | `/plan` → `/code` → `/review/codebase` → `/test`                    |
+| **Refactoring**            | refactor, restructure, clean up, improve code       | `/plan` → `/plan:review` → `/code` → `/code-simplifier` → `/review/codebase` → `/test`                    |
 | **Code Review**            | review, check, audit code, PR review                | `/code-review` → `/watzup`                                                                                  |
 | **Investigation**          | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                                                                   |
 
@@ -501,7 +501,9 @@ Before responding to any task request, analyze the user's prompt to detect inten
    - [ ] Execute /investigate - Build knowledge graph
    - [ ] Execute /debug - Root cause analysis
    - [ ] Execute /plan - Create fix plan
+   - [ ] Execute /plan:review - Self-review plan
    - [ ] Execute /fix - Implement fix
+   - [ ] Execute /code-simplifier - Simplify code
    - [ ] Execute /code-review - Review changes
    - [ ] Execute /test - Verify fix
    ```
@@ -519,7 +521,7 @@ Before responding to any task request, analyze the user's prompt to detect inten
 
 **Response:**
 
-> Detected: **Feature Implementation**. Following workflow: `/plan` → `/cook` → `/review/codebase` → `/test` → `/docs-update` → `/watzup`
+> Detected: **Feature Implementation**. Following workflow: `/plan` → `/plan:review` → `/cook` → `/code-simplifier` → `/review/codebase` → `/test` → `/docs-update` → `/watzup`
 >
 > Proceed with this workflow? (yes/no/quick)
 

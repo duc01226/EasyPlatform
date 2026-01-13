@@ -28,9 +28,9 @@
 ## Workflow Detection
 
 ```
-Feature → /plan → /cook → /review → /test → /docs → /watzup
-Bug Fix → /scout → /investigate → /debug → /plan → /fix → /review → /test
-Refactor → /plan → /code → /simplify → /review → /test
+Feature → /plan → /plan:review → /cook → /simplify → /review → /test → /docs → /watzup
+Bug Fix → /scout → /investigate → /debug → /plan → /plan:review → /fix → /simplify → /review → /test
+Refactor → /plan → /plan:review → /code → /simplify → /review → /test
 Docs → /scout → /investigate → /docs-update → /watzup
 ```
 

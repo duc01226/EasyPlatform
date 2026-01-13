@@ -485,7 +485,7 @@ orleans.codegen.cs
 # PROJECT-SPECIFIC
 # =============================================================================
 temp/
-other-project-settings-compare-claude/
+.claude-other-project-settings-compare/
 
 # Auto-generated plans (date-prefixed: YYMMDD-HHMM-slug)
 plans/reports/

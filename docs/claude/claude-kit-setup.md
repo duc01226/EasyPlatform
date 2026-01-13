@@ -621,7 +621,7 @@ The system uses **hooks** (JavaScript scripts), **configuration files** (JSON), 
 │                                   ┌───────────────────────▼────────────────┐│
 │                                   │     Inject Instructions to LLM         ││
 │                                   │  "Detected: Feature Implementation"   ││
-│                                   │  "Following: /plan → /cook → /test"   ││
+│                                   │  "Following: /plan → /plan:review..."││
 │                                   └───────────────────────┬────────────────┘│
 │                                                           │                  │
 │  ┌───────────────────────────────────────────────────────▼─────────────────┐│
@@ -656,7 +656,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
         "\\bnew\\s+(feature|functionality|capability)\\b"
       ],
       "excludePatterns": ["\\b(fix|bug|error|broken|issue)\\b"],
-      "sequence": ["plan", "cook", "code-review", "test", "docs-update", "watzup"],
+      "sequence": ["plan", "plan-review", "cook", "code-simplifier", "code-review", "test", "docs-update", "watzup"],
       "confirmFirst": true,
       "priority": 10
     },
@@ -664,7 +664,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
       "name": "Bug Fix",
       "triggerPatterns": ["\\b(bug|fix|broken|issue|crash|fail|exception)\\b"],
       "excludePatterns": ["\\b(implement|add|create|build)\\s+new\\b"],
-      "sequence": ["debug", "plan", "fix", "code-review", "test"],
+      "sequence": ["scout", "investigate", "debug", "plan", "plan-review", "fix", "code-simplifier", "code-review", "test"],
       "confirmFirst": false,
       "priority": 20
     }
@@ -683,12 +683,12 @@ Defines all workflow types, their trigger patterns, and step sequences:
 
 | Workflow      | Priority | Sequence | Use Case |
 |---------------|----------|----------|----------|
-| Feature       | 10       | /plan → /cook → /review → /test → /docs-update → /watzup | New functionality |
-| Bugfix        | 20       | /debug → /plan → /fix → /review → /test | Error fixes |
-| Refactor      | 25       | /plan → /code → /review → /test | Code improvement |
+| Feature       | 10       | /plan → /plan:review → /cook → /simplify → /review → /test → /docs → /watzup | New functionality |
+| Bugfix        | 20       | /scout → /investigate → /debug → /plan → /plan:review → /fix → /simplify → /review → /test | Error fixes |
+| Refactor      | 25       | /plan → /plan:review → /code → /simplify → /review → /test | Code improvement |
 | Documentation | 30       | /scout → /investigate → /docs-update → /watzup | Doc updates |
 | Review        | 35       | /code-review → /watzup | Code review |
-| Testing       | 40       | /test → /watzup | Test creation |
+| Testing       | 40       | /test | Test creation |
 | Investigation | 50       | /scout → /investigate | Codebase exploration |
 
 *Lower priority number = higher preference when multiple workflows match*
@@ -780,7 +780,7 @@ For long-running workflows, the system includes **state persistence** to prevent
 {
   "workflowId": "bugfix",
   "workflowName": "Bug Fix",
-  "sequence": ["debug", "plan", "fix", "test"],
+  "sequence": ["scout", "investigate", "debug", "plan", "plan-review", "fix", "code-simplifier", "code-review", "test"],
   "currentStep": 0,
   "completedSteps": [],
   "startTime": "2026-01-07T15:23:34.000Z",
@@ -897,7 +897,7 @@ Add a dark mode toggle to the settings page
 ## Workflow Detected
 
 **Intent:** Feature Implementation (100% confidence)
-**Workflow:** /plan → /cook → /test → /code-review → /docs-update → /watzup
+**Workflow:** /plan → /plan:review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
 
 ### Instructions (MUST FOLLOW)
 1. Announce detected workflow to user
@@ -909,12 +909,13 @@ Add a dark mode toggle to the settings page
 **Phase 3: LLM Response**
 ```
 > Detected: **Feature Implementation** workflow.
-> I will follow: /plan → /cook → /test → /code-review → /docs-update → /watzup
+> I will follow: /plan → /plan:review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
 
 [Creates todo list:]
 - [ ] Execute /plan - Create implementation plan
+- [ ] Execute /plan:review - Self-review plan
 - [ ] Execute /cook - Implement feature
-- [ ] Execute /test - Run tests
+- [ ] Execute /code-simplifier - Simplify code
 ...
 
 Proceed with this workflow? (yes/no/quick)
@@ -925,11 +926,13 @@ Proceed with this workflow? (yes/no/quick)
 User: "yes"
 
 Step 1: Claude calls Skill("plan") → Creates plan → ✓
-Step 2: Claude calls Skill("cook") → Implements feature → ✓
-Step 3: Claude calls Skill("code-review") → Reviews changes → ✓
-Step 4: Claude calls Skill("test") → Runs tests → ✓
-Step 5: Claude calls Skill("docs-update") → Updates docs → ✓
-Step 6: Claude calls Skill("watzup") → Summarizes → ✓
+Step 2: Claude calls Skill("plan:review") → Self-reviews plan → ✓
+Step 3: Claude calls Skill("cook") → Implements feature → ✓
+Step 4: Claude calls Skill("code-simplifier") → Simplifies code → ✓
+Step 5: Claude calls Skill("code-review") → Reviews changes → ✓
+Step 6: Claude calls Skill("test") → Runs tests → ✓
+Step 7: Claude calls Skill("docs-update") → Updates docs → ✓
+Step 8: Claude calls Skill("watzup") → Summarizes → ✓
 ```
 
 ### Troubleshooting
@@ -1420,7 +1423,7 @@ User submits: "Add a dark mode toggle to the settings page"
 │    createState({                                                             │
 │      workflowId: "feature",                                                  │
 │      workflowName: "Feature Implementation",                                 │
-│      sequence: ["plan", "cook", "test", "code-review"],                     │
+│      sequence: ["plan", "plan-review", "cook", "code-simplifier", "code-review", "test"],                     │
 │      originalPrompt: "Add a dark mode toggle..."                            │
 │    })                                                                        │
 │    → Saves to .claude/memory/.workflow-state.json                           │
@@ -1428,7 +1431,7 @@ User submits: "Add a dark mode toggle to the settings page"
 │ 6. Generate instructions output:                                             │
 │    "## Workflow Detected                                                     │
 │    **Intent:** Feature Implementation (100% confidence)                      │
-│    **Workflow:** /plan → /cook → /test → /code-review                       │
+│    **Workflow:** /plan → /plan:review → /cook → /simplify...                │
 │                                                                              │
 │    ### Instructions (MUST FOLLOW)                                            │
 │    1. ANNOUNCE: Tell the user...                                             │
@@ -1633,11 +1636,11 @@ Skill(/cook) completes successfully
 │ 2. Check if current skill matches expected step:                            │
 │    state.sequence[state.currentStep] === 'cook' ✓                           │
 │ 3. Mark step complete:                                                       │
-│    state.currentStep++ → 1 (next: 'test')                                   │
+│    state.currentStep++ → 3 (next: 'code-simplifier')                        │
 │    state.completedSteps.push('cook')                                        │
 │ 4. Save updated state                                                        │
 │ 5. Output next step reminder:                                                │
-│    "Step completed: /cook. Next: /test (2/4)"                               │
+│    "Step completed: /cook. Next: /code-simplifier (4/8)"                    │
 └─────────────────────────────────────────────────────────────────────────────┘
     │
     ▼
@@ -1848,12 +1851,12 @@ PHASE 1: DETECTION & ROUTING
 │   Input: "Add a dark mode toggle..."                                         │
 │   Pattern match: "add" → triggers: ["\\b(implement|add|create)\\b"]         │
 │   Detected: Feature Implementation (100% confidence)                         │
-│   Workflow: plan → cook → test → code-review                                │
+│   Workflow: plan → plan-review → cook → code-simplifier → code-review → test│
 │                                                                              │
 │ Output:                                                                      │
 │   "## Workflow Detected                                                      │
 │    **Intent:** Feature Implementation                                        │
-│    **Workflow:** /plan → /cook → /test → /code-review"                      │
+│    **Workflow:** /plan → /plan:review → /cook → /simplify → /review → /test"│
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -1873,8 +1876,8 @@ PHASE 2: PLANNING (/plan)
 │   → Appended to events-stream.jsonl                                          │
 │                                                                              │
 │ workflow-step-tracker.cjs:                                                   │
-│   Step completed: plan (1/4)                                                 │
-│   Next step: cook                                                            │
+│   Step completed: plan (1/6)                                                 │
+│   Next step: plan-review                                                     │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -1923,8 +1926,8 @@ PHASE 3: IMPLEMENTATION (/cook)
 │   → delta_001.confidence recalculated: 0.84 → 0.85                          │
 │                                                                              │
 │ workflow-step-tracker.cjs:                                                   │
-│   Step completed: cook (2/4)                                                 │
-│   Next step: test                                                            │
+│   Step completed: cook (3/6)                                                 │
+│   Next step: code-simplifier                                                 │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -1938,8 +1941,8 @@ PHASE 4: TESTING (/test)
 │   Event: { skill: "test", outcome: "success", exit_code: 0 }                │
 │                                                                              │
 │ workflow-step-tracker.cjs:                                                   │
-│   Step completed: test (3/4)                                                 │
-│   Next step: code-review                                                     │
+│   Step completed: test (6/6)                                                 │
+│   Workflow complete!                                                         │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -1950,10 +1953,9 @@ PHASE 5: CODE REVIEW (/code-review)
 
 ┌─ PostToolUse (Skill: code-review complete) ─────────────────────────────────┐
 │ workflow-step-tracker.cjs:                                                   │
-│   Step completed: code-review (4/4)                                         │
-│   Workflow complete!                                                         │
-│   Output: "## Workflow Complete                                              │
-│            All steps in Feature Implementation completed successfully!"      │
+│   Step completed: code-review (5/6)                                         │
+│   Next step: test                                                            │
+│   Output: "Step completed: /code-review. Next: /test (6/6)"                 │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ═══════════════════════════════════════════════════════════════════════════════
