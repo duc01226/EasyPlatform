@@ -74,6 +74,20 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
 
 2. **Two-Phase Report-Driven Review** (CRITICAL):
 
+    **MUST generate TodoWrite tasks for BOTH phases:**
+    ```
+    Phase 1 todos:
+    - [ ] Create review report file
+    - [ ] Review [file1] - document in report
+    - [ ] Review [file2] - document in report
+    - [ ] ... (one todo per changed file)
+
+    Phase 2 todos:
+    - [ ] Read accumulated report for big picture
+    - [ ] Assess architecture coherence
+    - [ ] Generate final recommendations
+    ```
+
     **ALWAYS create a report file FIRST** using naming pattern from `## Naming` section.
 
     **Phase 1: File-by-File Review (Build Report)**

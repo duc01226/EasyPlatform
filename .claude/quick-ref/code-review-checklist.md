@@ -4,17 +4,22 @@
 
 ## Two-Phase Report-Driven Review
 
+**MUST generate TodoWrite tasks for BOTH phases before starting!**
+
 ### Phase 1: File-by-File Review (Build Report)
 
 ```
+[ ] Generated todos for Phase 1 (one per file)?
 [ ] Created report file first?
 [ ] For each file documented: Change Summary, Purpose, Issues, Suggestions?
 [ ] Reviewed code quality, patterns, performance, security per file?
+[ ] Marked each file todo as completed after review?
 ```
 
 ### Phase 2: Holistic Review (Review the Report)
 
 ```
+[ ] Generated todos for Phase 2?
 [ ] Read accumulated report to see big picture?
 [ ] Technical solution makes sense as a whole?
 [ ] New files/methods in correct responsibility layers?
@@ -23,6 +28,7 @@
 [ ] Frontend patterns correct (components, stores, services)?
 [ ] Feature split correctly between backend/frontend?
 [ ] Generated final recommendations by severity?
+[ ] Marked Phase 2 todos as completed?
 ```
 
 ---

@@ -8,6 +8,10 @@ excludeAgent: ["coding-agent"]
 
 ## Two-Phase Report-Driven Review (CRITICAL)
 
+**MUST generate TodoWrite tasks for BOTH phases before starting!**
+- Phase 1: One todo per file to review + create report
+- Phase 2: Todos for big picture review and final recommendations
+
 **ALWAYS create a report file FIRST.** Update it as you review each file.
 
 **Phase 1: File-by-File Review (Build Report)**
