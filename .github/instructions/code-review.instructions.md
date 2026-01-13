@@ -6,17 +6,23 @@ excludeAgent: ["coding-agent"]
 
 # Code Review Instructions
 
-## Two-Level Review Approach (CRITICAL)
+## Two-Phase Report-Driven Review (CRITICAL)
 
-**Level 1: File-by-File Review** - Review each changed file individually for code quality, patterns, performance, security, naming.
+**ALWAYS create a report file FIRST.** Update it as you review each file.
 
-**Level 2: Holistic Architecture Review** - Review ALL changes as a whole:
-- Generate summary of what ALL files changed and why
-- Evaluate technical solution as complete picture
+**Phase 1: File-by-File Review (Build Report)**
+For each file, document in report: Change Summary, Purpose, Issues Found, Suggestions.
+Review code quality, patterns, performance, security, naming per file.
+
+**Phase 2: Holistic Review (Review the Report)**
+After all files reviewed, READ the accumulated report to:
+- See big picture of all changes
+- Evaluate technical solution completeness
 - Check responsibility placement (new files/methods in right layer?)
 - Detect code duplication across files
 - Assess architecture coherence (Clean Architecture, CQRS, proper separation)
 - Verify backend-frontend feature split is correct
+- Generate final recommendations prioritized by severity
 
 ## Review Focus Areas
 

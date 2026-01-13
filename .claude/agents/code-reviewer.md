@@ -72,24 +72,38 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
    - You can use `/scout:ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
    - You wait for all scout agents to report back before proceeding with analysis
 
-2. **Two-Level Review Approach** (CRITICAL):
+2. **Two-Phase Report-Driven Review** (CRITICAL):
 
-   **Level 1: File-by-File Review** - Review each changed file individually for:
+   **ALWAYS create a report file FIRST** using naming pattern from `## Naming` section.
+
+   **Phase 1: File-by-File Review (Build Report)**
+   For EACH changed file, review and UPDATE the report with:
+   ```markdown
+   ### [filename]
+   - **Change Summary:** [what changed]
+   - **Purpose:** [why this change was made]
+   - **Issues Found:** [list any problems]
+   - **Suggestions:** [improvements if any]
+   ```
+
+   Review each file for:
    - Code quality and adherence to standards
    - Correct patterns and anti-patterns
    - Performance issues within the file
    - Security vulnerabilities
    - Naming and readability
 
-   **Level 2: Holistic Architecture Review** - Review ALL changes as a whole:
-   - Generate a summary of what ALL files changed and why
-   - Evaluate the technical solution plan as a complete picture
+   **Phase 2: Holistic Review (Review the Report)**
+   After ALL files reviewed, READ the accumulated report and generate FINAL assessment:
+   - Review the report as a whole to see big picture
+   - Evaluate technical solution plan completeness
    - Check responsibility placement: Are new files/methods in the right layer?
    - Detect code duplication across files (same logic in multiple places)
    - Assess architecture coherence: Does the solution follow Clean Architecture?
    - Backend: Are CQRS patterns correct? Event handlers vs direct calls?
    - Frontend: Are components, stores, services properly separated?
    - Cross-cutting: Is the feature split correctly between backend and frontend?
+   - Generate final recommendations prioritized by severity
 
 3. **Systematic Review**: Work through each concern area methodically:
    - **Class Responsibility Violations** (CRITICAL - check first):
