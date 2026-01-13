@@ -3,7 +3,7 @@
  *
  * Tests for bug fixes implemented in January 2026:
  * 1. Workflow intent change detection - workflow-router.cjs
- * 2. tmpclaude cleanup in .claude subdirectories - session-init.cjs
+ * 2. tmpclaude cleanup in .claude subdirectories - session-init.cjs & session-end.cjs
  * 3. Prettier skip patterns for .claude directories - post-edit-prettier.cjs
  * 4. [Workflow] prefix in workflow-generated todos - workflow-router.cjs
  */
@@ -15,6 +15,7 @@ const {
   getHookPath,
   createUserPromptInput,
   createSessionStartInput,
+  createSessionEndInput,
   createPostToolUseInput
 } = require('../lib/hook-runner.cjs');
 const {
@@ -36,6 +37,7 @@ const {
 const WORKFLOW_ROUTER = getHookPath('workflow-router.cjs');
 const SESSION_INIT = getHookPath('session-init.cjs');
 const POST_EDIT_PRETTIER = getHookPath('post-edit-prettier.cjs');
+const SESSION_END = getHookPath('session-end.cjs');
 
 // ============================================================================
 // BUG FIX 1: Workflow Intent Change Detection
@@ -436,6 +438,100 @@ const tmpclaudeCleanupTests = [
 ];
 
 // ============================================================================
+
+// ============================================================================
+// BUG FIX 2b: tmpclaude Cleanup on Session End
+// ============================================================================
+// Issue: tmpclaude files created during session weren't cleaned until NEXT session.
+// Fix: Added cleanupTempFiles() call to session-end.cjs (not just session-init).
+
+const tmpclaudeSessionEndTests = [
+  {
+    name: '[tmpclaude-session-end] cleans tmpclaude files on exit',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        // Create tmpclaude file at project root
+        const tmpFile = path.join(tmpDir, 'tmpclaude-aabb1122-cwd');
+        fs.writeFileSync(tmpFile, '/some/path');
+
+        assertTrue(fs.existsSync(tmpFile), 'tmpclaude file should exist before session-end');
+
+        // Run session-end hook
+        const input = createSessionEndInput('exit');
+        await runHook(SESSION_END, input, { cwd: tmpDir });
+
+        assertTrue(!fs.existsSync(tmpFile), 'tmpclaude file should be cleaned on session exit');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[tmpclaude-session-end] cleans tmpclaude files on clear',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const tmpFile = path.join(tmpDir, 'tmpclaude-ccdd3344-cwd');
+        fs.writeFileSync(tmpFile, '/some/path');
+
+        assertTrue(fs.existsSync(tmpFile), 'tmpclaude file should exist before session clear');
+
+        const input = createSessionEndInput('clear');
+        await runHook(SESSION_END, input, { cwd: tmpDir });
+
+        assertTrue(!fs.existsSync(tmpFile), 'tmpclaude file should be cleaned on session clear');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[tmpclaude-session-end] cleans from .claude subdirectories',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        // Create tmpclaude files in various .claude subdirs
+        const skillsDir = path.join(tmpDir, '.claude', 'skills');
+        const hooksDir = path.join(tmpDir, '.claude', 'hooks');
+        fs.mkdirSync(skillsDir, { recursive: true });
+        fs.mkdirSync(hooksDir, { recursive: true });
+
+        const tmpFile1 = path.join(skillsDir, 'tmpclaude-eeff5566-cwd');
+        const tmpFile2 = path.join(hooksDir, 'tmpclaude-aabb7788-cwd');
+        fs.writeFileSync(tmpFile1, '/path1');
+        fs.writeFileSync(tmpFile2, '/path2');
+
+        assertTrue(fs.existsSync(tmpFile1), 'skills tmpclaude should exist');
+        assertTrue(fs.existsSync(tmpFile2), 'hooks tmpclaude should exist');
+
+        const input = createSessionEndInput('exit');
+        await runHook(SESSION_END, input, { cwd: tmpDir });
+
+        assertTrue(!fs.existsSync(tmpFile1), 'skills tmpclaude should be cleaned on session-end');
+        assertTrue(!fs.existsSync(tmpFile2), 'hooks tmpclaude should be cleaned on session-end');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[tmpclaude-session-end] handles missing temp-cleanup module gracefully',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        // Session-end should not crash even without temp files
+        const input = createSessionEndInput('exit');
+        const result = await runHook(SESSION_END, input, { cwd: tmpDir });
+
+        assertAllowed(result.code, 'session-end should complete without errors');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  }
+];
+
 // BUG FIX 3: Prettier Skip Patterns for .claude Directories
 // ============================================================================
 // Issue: post-edit-prettier.cjs was formatting files in .claude/hooks/ and
@@ -867,6 +963,7 @@ module.exports = {
   tests: [
     ...workflowIntentChangeTests,
     ...tmpclaudeCleanupTests,
+    ...tmpclaudeSessionEndTests,
     ...prettierSkipPatternTests,
     ...workflowPrefixTests,
     ...edgeCaseTests

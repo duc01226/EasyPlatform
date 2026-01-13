@@ -467,6 +467,7 @@ orleans.codegen.cs
 # Learned knowledge & session state (user-specific, not shared)
 .claude/memory/
 .claude/patterns/
+.claude/hooks/plans/reports/
 .claude/.edit-state.json
 .claude/.workflow-state.json
 .claude/.todo-state.json

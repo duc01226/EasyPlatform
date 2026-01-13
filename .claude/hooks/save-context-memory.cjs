@@ -16,7 +16,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 const {
   loadConfig,
   resolveNamingPattern,
@@ -26,20 +25,7 @@ const {
 } = require('./lib/ck-config-utils.cjs');
 const { ensureDir } = require('./lib/ck-paths.cjs');
 const { exportTodosForCheckpoint } = require('./lib/todo-state.cjs');
-
-/**
- * Get current git branch safely
- */
-function getGitBranch() {
-  try {
-    return execSync('git branch --show-current', {
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe']
-    }).trim();
-  } catch (e) {
-    return null;
-  }
-}
+const { getGitBranch } = require('./lib/ck-git.cjs');
 
 /**
  * Format timestamp for filename

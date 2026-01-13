@@ -10,35 +10,33 @@
  * State File: .claude/.todo-state.json
  */
 
-const fs = require('fs');
 const path = require('path');
+const { createStateManager } = require('./state-manager.cjs');
 
 // State file location (alongside workflow state)
 const STATE_FILE = path.join(process.cwd(), '.claude', '.todo-state.json');
+
+// Default state
+const DEFAULT_STATE = {
+  hasTodos: false,
+  lastUpdated: null,
+  taskCount: 0,
+  pendingCount: 0,
+  completedCount: 0,
+  inProgressCount: 0,
+  lastTodos: [],
+  bypassCount: 0
+};
+
+// Create state manager instance
+const manager = createStateManager(STATE_FILE, DEFAULT_STATE, { mergeOnSet: true });
 
 /**
  * Load current todo state
  * @returns {Object} Todo state object
  */
 function getTodoState() {
-  try {
-    if (fs.existsSync(STATE_FILE)) {
-      const content = fs.readFileSync(STATE_FILE, 'utf-8');
-      return JSON.parse(content);
-    }
-  } catch (e) {
-    // Corrupted state, return default
-  }
-  return {
-    hasTodos: false,
-    lastUpdated: null,
-    taskCount: 0,
-    pendingCount: 0,
-    completedCount: 0,
-    inProgressCount: 0,
-    lastTodos: [],
-    bypassCount: 0
-  };
+  return manager.get();
 }
 
 /**
@@ -46,40 +44,14 @@ function getTodoState() {
  * @param {Object} state - Partial state to merge
  */
 function setTodoState(state) {
-  try {
-    // Ensure directory exists
-    const dir = path.dirname(STATE_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    const current = getTodoState();
-    const updated = {
-      ...current,
-      ...state,
-      lastUpdated: new Date().toISOString()
-    };
-
-    fs.writeFileSync(STATE_FILE, JSON.stringify(updated, null, 2), 'utf-8');
-  } catch (e) {
-    // Silent fail - don't block operations
-    if (process.env.CK_DEBUG) {
-      console.error(`[todo-state] Save error: ${e.message}`);
-    }
-  }
+  manager.set(state);
 }
 
 /**
  * Clear todo state (on session end/clear)
  */
 function clearTodoState() {
-  try {
-    if (fs.existsSync(STATE_FILE)) {
-      fs.unlinkSync(STATE_FILE);
-    }
-  } catch (e) {
-    // Ignore cleanup errors
-  }
+  manager.clear();
 }
 
 /**

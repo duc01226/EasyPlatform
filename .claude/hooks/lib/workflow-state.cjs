@@ -12,44 +12,26 @@
  * - Graceful error handling
  */
 
-const fs = require('fs');
 const path = require('path');
+const { createStateManager } = require('./state-manager.cjs');
 
 // State file location
 const STATE_FILE = path.join(process.cwd(), '.claude', '.workflow-state.json');
 const DEFAULT_TTL_HOURS = 24;
+
+// Create state manager instance with TTL and replace mode
+const manager = createStateManager(STATE_FILE, null, {
+  ttlHours: DEFAULT_TTL_HOURS,
+  mergeOnSet: false,  // Replace mode for workflow state
+  autoTimestamp: false  // We manage timestamps manually
+});
 
 /**
  * Load current workflow state
  * @returns {Object|null} Current state or null if none/expired
  */
 function loadState() {
-  try {
-    if (!fs.existsSync(STATE_FILE)) {
-      return null;
-    }
-
-    const content = fs.readFileSync(STATE_FILE, 'utf-8');
-    const state = JSON.parse(content);
-
-    // Check TTL expiration
-    const ttlHours = state.ttlHours || DEFAULT_TTL_HOURS;
-    const startTime = new Date(state.startTime);
-    const now = new Date();
-    const hoursElapsed = (now - startTime) / (1000 * 60 * 60);
-
-    if (hoursElapsed > ttlHours) {
-      // Expired, clean up
-      clearState();
-      return null;
-    }
-
-    return state;
-  } catch (e) {
-    // Corrupted state, clean up
-    clearState();
-    return null;
-  }
+  return manager.get();
 }
 
 /**
@@ -57,30 +39,14 @@ function loadState() {
  * @param {Object} state - State object to save
  */
 function saveState(state) {
-  try {
-    // Ensure directory exists
-    const dir = path.dirname(STATE_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2), 'utf-8');
-  } catch (e) {
-    console.error(`<!-- Workflow state save error: ${e.message} -->`);
-  }
+  manager.set(state);
 }
 
 /**
  * Clear workflow state
  */
 function clearState() {
-  try {
-    if (fs.existsSync(STATE_FILE)) {
-      fs.unlinkSync(STATE_FILE);
-    }
-  } catch (e) {
-    // Ignore cleanup errors
-  }
+  manager.clear();
 }
 
 /**

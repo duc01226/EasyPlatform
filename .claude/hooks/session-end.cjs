@@ -13,6 +13,7 @@ const fs = require('fs');
 const { deleteMarker } = require('./lib/context-tracker.cjs');
 const { clearState: clearWorkflowState } = require('./lib/workflow-state.cjs');
 const { clearEditState } = require('./lib/edit-state.cjs');
+const { cleanupTempFiles } = require('./lib/temp-cleanup.cjs');
 
 async function main() {
   try {
@@ -20,6 +21,10 @@ async function main() {
     const data = stdin ? JSON.parse(stdin) : {};
     const reason = data.reason || 'unknown';
     const sessionId = data.session_id || null;
+
+    // Always clean up temp files on session end
+    // These files (tmpclaude-xxxx-cwd) are created by Task tool during the session
+    cleanupTempFiles();
 
     // Delete marker on /clear to reset context baseline
     // SessionEnd fires with OLD session_id before new session starts

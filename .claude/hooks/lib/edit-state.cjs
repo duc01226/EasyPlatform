@@ -9,34 +9,32 @@
  * Reset: On TodoWrite call or session clear
  */
 
-const fs = require('fs');
 const path = require('path');
+const { createStateManager } = require('./state-manager.cjs');
 
 const STATE_FILE = path.join(process.cwd(), '.claude', '.edit-state.json');
 
 // Threshold for warning (edits without TodoWrite)
 const EDIT_THRESHOLD = 3;
 
+// Default state
+const DEFAULT_STATE = {
+  editCount: 0,
+  writeCount: 0,
+  editedFiles: [],
+  lastReset: null,
+  warningShown: false
+};
+
+// Create state manager instance
+const manager = createStateManager(STATE_FILE, DEFAULT_STATE, { mergeOnSet: true });
+
 /**
  * Load current edit state
  * @returns {Object} Edit state object
  */
 function getEditState() {
-  try {
-    if (fs.existsSync(STATE_FILE)) {
-      const content = fs.readFileSync(STATE_FILE, 'utf-8');
-      return JSON.parse(content);
-    }
-  } catch (e) {
-    // Corrupted state, return default
-  }
-  return {
-    editCount: 0,
-    writeCount: 0,
-    editedFiles: [],
-    lastReset: null,
-    warningShown: false
-  };
+  return manager.get();
 }
 
 /**
@@ -44,26 +42,7 @@ function getEditState() {
  * @param {Object} state - Partial state to merge
  */
 function setEditState(state) {
-  try {
-    const dir = path.dirname(STATE_FILE);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    const current = getEditState();
-    const updated = {
-      ...current,
-      ...state,
-      lastUpdated: new Date().toISOString()
-    };
-
-    fs.writeFileSync(STATE_FILE, JSON.stringify(updated, null, 2), 'utf-8');
-  } catch (e) {
-    // Silent fail
-    if (process.env.CK_DEBUG) {
-      console.error(`[edit-state] Save error: ${e.message}`);
-    }
-  }
+  manager.set(state);
 }
 
 /**
@@ -149,13 +128,7 @@ function resetEditState() {
  * Clear edit state file (on session end)
  */
 function clearEditState() {
-  try {
-    if (fs.existsSync(STATE_FILE)) {
-      fs.unlinkSync(STATE_FILE);
-    }
-  } catch (e) {
-    // Ignore cleanup errors
-  }
+  manager.clear();
 }
 
 module.exports = {
