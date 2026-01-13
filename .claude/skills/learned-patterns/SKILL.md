@@ -218,7 +218,7 @@ tags: [validation, cqrs, backend]
 | Command | Purpose |
 |---------|---------|
 | `/learn` | Explicitly teach a new pattern |
-| `/patterns` | View static code patterns documentation |
+| `/code-patterns` | View static code patterns documentation |
 
 ## Troubleshooting
 

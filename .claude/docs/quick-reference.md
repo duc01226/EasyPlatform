@@ -127,7 +127,7 @@ Read              # All reads
 
 | Category | Examples |
 |----------|----------|
-| Development | `backend-development`, `frontend-development` |
+| Development | `backend-development`, `frontend-angular-*` |
 | Architecture | `api-design`, `arch-security-review` |
 | AI | `ai-multimodal`, `mcp-builder` |
 | Testing | `debugging`, `code-review` |

@@ -1,6 +1,6 @@
 ---
-name: patterns
-description: Code patterns and best practices learned from real implementation mistakes. Covers file I/O safety (locking, atomic writes), data persistence patterns, and validation strategies. Use when implementing file-based state management, shared resource access, or data validation layers.
+name: code-patterns
+description: Code implementation patterns and best practices learned from real mistakes. Covers file I/O safety (locking, atomic writes), data persistence, and validation. Use for file-based state, shared resources, concurrent access. NOT for auto-learning patterns (see learned-patterns skill).
 version: 1.0.0
 languages: all
 ---

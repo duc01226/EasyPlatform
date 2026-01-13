@@ -13,7 +13,6 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 | Skill | Description |
 |-------|-------------|
 | `backend-development` | Backend systems (Node.js, Python, Go, Rust), APIs, databases |
-| `frontend-development` | React/TypeScript, Angular, component patterns |
 | `frontend-angular-component` | Angular 19 component creation with platform patterns |
 | `frontend-angular-form` | Angular reactive forms with validation |
 | `frontend-angular-store` | PlatformVmStore state management |
@@ -47,8 +46,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 
 | Skill | Description |
 |-------|-------------|
-| `debugging` | Systematic debugging framework |
-| `bug-diagnosis` | Root cause analysis for bugs |
+| `debugging` | Systematic debugging framework (includes EasyPlatform-specific patterns) |
 | `code-review` | Comprehensive code review |
 | `code-simplifier` | Simplify code for clarity |
 | `test-generation` | Generate unit and integration tests |
@@ -88,8 +86,8 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 | Skill | Description |
 |-------|-------------|
 | `frontend-design` | Production-grade frontend interfaces |
-| `ui-styling` | CSS/SCSS styling patterns |
-| `ui-ux-pro-max` | Advanced UI/UX design |
+| `shadcn-tailwind` | React shadcn/ui + Tailwind components (not for Angular) |
+| `ui-ux-pro-max` | Design intelligence (styles, palettes, fonts - tech-agnostic) |
 | `design` (command) | Design system context |
 
 ### Authentication & Security

@@ -521,7 +521,7 @@ tools: available tools
 |-------------------|-----------------------------------------------------|
 | AI/ML             | ai-artist, ai-multimodal, ai-dev-tools-sync        |
 | Backend           | backend-development, api-design, databases         |
-| Frontend          | frontend-development, frontend-design, ui-ux       |
+| Frontend          | frontend-design, shadcn-tailwind, ui-ux-pro-max    |
 | Architecture      | arch-cross-service, arch-performance, arch-security|
 | DevOps            | devops, chrome-devtools, media-processing          |
 | Quality           | code-review, debugging, testing                    |

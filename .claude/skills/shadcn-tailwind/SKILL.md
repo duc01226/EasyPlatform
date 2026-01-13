@@ -1,13 +1,13 @@
 ---
-name: ui-styling
-description: Create beautiful, accessible user interfaces with shadcn/ui components (built on Radix UI + Tailwind), Tailwind CSS utility-first styling, and canvas-based visual designs. Use when building user interfaces, implementing design systems, creating responsive layouts, adding accessible components (dialogs, dropdowns, forms, tables), customizing themes and colors, implementing dark mode, generating visual designs and posters, or establishing consistent styling patterns across applications.
+name: shadcn-tailwind
+description: React component library skill for shadcn/ui + Tailwind CSS. Use for React/Next.js/Vite projects needing accessible UI components (dialogs, forms, tables, navigation), Radix UI primitives, Tailwind utility styling, theming, and dark mode. NOT for Angular projects - see frontend-angular-* skills. Triggers on "shadcn", "radix ui", "react components", "tailwind components". For design decisions (styles, palettes, fonts), use ui-ux-pro-max instead.
 license: MIT
 version: 1.0.0
 ---
 
-# UI Styling Skill
+# shadcn/ui + Tailwind CSS Skill
 
-Comprehensive skill for creating beautiful, accessible user interfaces combining shadcn/ui components, Tailwind CSS utility styling, and canvas-based visual design systems.
+React component library skill combining shadcn/ui components, Radix UI primitives, and Tailwind CSS utility styling.
 
 ## Reference
 
