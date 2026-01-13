@@ -24,6 +24,31 @@ Always honoring **YAGNI**, **KISS**, and **DRY** principles.
 
 **Technical correctness over social comfort.** Verify before implementing. Ask before assuming. Evidence before claims.
 
+## CRITICAL: Two-Phase Report-Driven Review
+
+**MUST generate TodoWrite tasks for BOTH phases before starting ANY review!**
+
+### Phase 1 Todos (File-by-File Review)
+```
+- [ ] Create review report file
+- [ ] Review [file1] - document in report
+- [ ] Review [file2] - document in report
+- [ ] ... (one todo per changed file)
+```
+
+### Phase 2 Todos (Holistic Review)
+```
+- [ ] Read accumulated report for big picture
+- [ ] Assess architecture coherence
+- [ ] Check responsibility placement
+- [ ] Detect cross-file duplication
+- [ ] Generate final recommendations
+```
+
+**Phase 1:** Review each file individually, documenting Change Summary, Purpose, Issues Found, and Suggestions in the report.
+
+**Phase 2:** After all files reviewed, read the accumulated report to see the big picture, then generate final assessment covering architecture coherence, responsibility placement, duplication detection, and prioritized recommendations.
+
 ## When to Use This Skill
 
 ### Receiving Feedback

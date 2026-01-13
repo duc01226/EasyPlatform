@@ -6,7 +6,30 @@ description: "Comprehensive codebase analysis and improvement recommendations"
 
 ## Overview
 
-Comprehensive scan and analysis of the codebase to identify patterns, issues, and improvement opportunities. Follows systematic review methodology.
+Comprehensive scan and analysis of the codebase to identify patterns, issues, and improvement opportunities. Follows systematic two-phase report-driven methodology.
+
+## CRITICAL: Two-Phase Report-Driven Review
+
+**MUST generate TodoWrite tasks for BOTH phases before starting!**
+
+### Phase 1 Todos (File-by-File Review)
+```
+- [ ] Create review report file
+- [ ] Review [file1] - document in report
+- [ ] Review [file2] - document in report
+- [ ] ... (one todo per file/module to review)
+```
+
+### Phase 2 Todos (Holistic Review)
+```
+- [ ] Read accumulated report for big picture
+- [ ] Assess architecture coherence across all changes
+- [ ] Check responsibility placement (new code in correct layers?)
+- [ ] Detect code duplication across files
+- [ ] Generate final recommendations by severity
+```
+
+**ALWAYS create a report file FIRST.** Update it as you review each file/module.
 
 ## Core Principles
 
@@ -21,7 +44,7 @@ Apply software engineering best practices:
 
 ## Workflow
 
-### Phase 1: Research & Discovery
+### Pre-Phase: Research & Discovery
 
 1. **Understand context**
    - Project purpose and domain
@@ -38,7 +61,16 @@ Apply software engineering best practices:
    - Framework usage
    - Naming conventions
 
-### Phase 2: Code Analysis
+### Phase 1: File-by-File Review (Build Report)
+
+**For EACH file/module, review and UPDATE the report with:**
+```markdown
+### [filename/module]
+- **Change Summary:** [what exists/changed]
+- **Purpose:** [why this code exists]
+- **Issues Found:** [list any problems]
+- **Suggestions:** [improvements if any]
+```
 
 Review each layer systematically:
 
@@ -67,7 +99,20 @@ Review each layer systematically:
 | **Templates** | BEM naming, accessibility |
 | **Performance** | Change detection, lazy loading |
 
-### Phase 3: Issue Categorization
+### Phase 2: Holistic Review (Review the Report)
+
+After ALL files reviewed, READ the accumulated report and generate FINAL assessment:
+- Review the report as a whole to see big picture
+- Evaluate technical solution/codebase completeness
+- Check responsibility placement: Are files/methods in the right layer?
+- Detect code duplication across files (same logic in multiple places)
+- Assess architecture coherence: Does the solution follow Clean Architecture?
+- Backend: Are CQRS patterns correct? Event handlers vs direct calls?
+- Frontend: Are components, stores, services properly separated?
+- Cross-cutting: Is the feature split correctly between backend and frontend?
+- Generate final recommendations prioritized by severity
+
+### Issue Categorization
 
 Classify findings by severity:
 
@@ -78,7 +123,7 @@ Classify findings by severity:
 | **Medium** | Code smell, minor issues | Plan fix |
 | **Low** | Style, minor improvements | Consider |
 
-### Phase 4: Pattern Review
+### Pattern Review
 
 Check for anti-patterns:
 
@@ -102,7 +147,7 @@ Check for anti-patterns:
 | Raw Component | Extend base classes |
 | Missing BEM classes | All elements have BEM |
 
-### Phase 5: Security Review
+### Security Review
 
 | Check | Look For |
 |-------|----------|
@@ -112,7 +157,7 @@ Check for anti-patterns:
 | **Secrets** | No hardcoded credentials |
 | **Dependencies** | Known vulnerabilities |
 
-### Phase 6: Report Generation
+### Report Generation
 
 Create comprehensive report:
 

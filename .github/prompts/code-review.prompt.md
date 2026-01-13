@@ -11,6 +11,49 @@ Perform a comprehensive code review for the following:
 **Files/PR to Review:** ${input:target}
 **Review Focus:** ${input:focus:All,Architecture,Performance,Security,Patterns,Testing}
 
+## CRITICAL: Two-Phase Report-Driven Review
+
+**MUST generate TodoWrite tasks for BOTH phases before starting!**
+
+### Phase 1 Todos (File-by-File Review)
+```
+- [ ] Create review report file
+- [ ] Review [file1] - document in report
+- [ ] Review [file2] - document in report
+- [ ] ... (one todo per changed file)
+```
+
+### Phase 2 Todos (Holistic Review)
+```
+- [ ] Read accumulated report for big picture
+- [ ] Assess architecture coherence
+- [ ] Check responsibility placement
+- [ ] Detect cross-file duplication
+- [ ] Generate final recommendations
+```
+
+**ALWAYS create a report file FIRST.** Update it as you review each file.
+
+### Phase 1: File-by-File Review (Build Report)
+
+For EACH file, document in report:
+- **Change Summary:** what changed
+- **Purpose:** why this change was made
+- **Issues Found:** list any problems
+- **Suggestions:** improvements if any
+
+### Phase 2: Holistic Review (Review the Report)
+
+After ALL files reviewed, READ the accumulated report to:
+- See big picture of all changes
+- Evaluate technical solution completeness
+- Check responsibility placement (new code in right layer?)
+- Detect code duplication across files
+- Assess architecture coherence
+- Generate final recommendations by severity
+
+---
+
 ## Review Checklist
 
 ### Architecture & Patterns
