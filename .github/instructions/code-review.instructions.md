@@ -6,6 +6,18 @@ excludeAgent: ["coding-agent"]
 
 # Code Review Instructions
 
+## Two-Level Review Approach (CRITICAL)
+
+**Level 1: File-by-File Review** - Review each changed file individually for code quality, patterns, performance, security, naming.
+
+**Level 2: Holistic Architecture Review** - Review ALL changes as a whole:
+- Generate summary of what ALL files changed and why
+- Evaluate technical solution as complete picture
+- Check responsibility placement (new files/methods in right layer?)
+- Detect code duplication across files
+- Assess architecture coherence (Clean Architecture, CQRS, proper separation)
+- Verify backend-frontend feature split is correct
+
 ## Review Focus Areas
 
 ### 1. Architecture Compliance

@@ -2,6 +2,25 @@
 
 > One-page reference for consistent code reviews
 
+## Two-Level Review Approach
+
+### Level 1: File-by-File Review
+Review each file individually for code quality, patterns, performance, security.
+
+### Level 2: Holistic Architecture Review
+
+```
+[ ] Generated summary of ALL changes?
+[ ] Technical solution makes sense as a whole?
+[ ] New files/methods in correct responsibility layers?
+[ ] No duplicated logic across multiple files?
+[ ] Backend patterns correct (CQRS, events, repos)?
+[ ] Frontend patterns correct (components, stores, services)?
+[ ] Feature split correctly between backend/frontend?
+```
+
+---
+
 ## Architecture Compliance
 
 ```

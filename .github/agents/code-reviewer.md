@@ -72,7 +72,26 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
     - You can use `/scout:ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
     - You wait for all scout agents to report back before proceeding with analysis
 
-2. **Systematic Review**: Work through each concern area methodically:
+2. **Two-Level Review Approach** (CRITICAL):
+
+    **Level 1: File-by-File Review** - Review each changed file individually for:
+    - Code quality and adherence to standards
+    - Correct patterns and anti-patterns
+    - Performance issues within the file
+    - Security vulnerabilities
+    - Naming and readability
+
+    **Level 2: Holistic Architecture Review** - Review ALL changes as a whole:
+    - Generate a summary of what ALL files changed and why
+    - Evaluate the technical solution plan as a complete picture
+    - Check responsibility placement: Are new files/methods in the right layer?
+    - Detect code duplication across files (same logic in multiple places)
+    - Assess architecture coherence: Does the solution follow Clean Architecture?
+    - Backend: Are CQRS patterns correct? Event handlers vs direct calls?
+    - Frontend: Are components, stores, services properly separated?
+    - Cross-cutting: Is the feature split correctly between backend and frontend?
+
+3. **Systematic Review**: Work through each concern area methodically:
 
     - **Magic Numbers** (check for unexplained literals):
       - Flag: `if (status == 3)`, `timeout = 30000`, `retry > 5`
@@ -123,6 +142,22 @@ Structure your review as a comprehensive report with:
 ### Overall Assessment
 
 [Brief overview of code quality and main findings]
+
+### Holistic Architecture Review
+
+**Changes Summary:** [What the total changes accomplish as a technical solution]
+
+| Aspect | Assessment | Issues Found |
+|--------|------------|--------------|
+| Responsibility Placement | ✅/⚠️/❌ | [Are new files/methods in correct layers?] |
+| Code Duplication | ✅/⚠️/❌ | [Same logic duplicated across files?] |
+| Architecture Coherence | ✅/⚠️/❌ | [Follows Clean Architecture?] |
+| Backend Patterns | ✅/⚠️/❌ | [CQRS, events, repositories correct?] |
+| Frontend Patterns | ✅/⚠️/❌ | [Components, stores, services separated?] |
+| Backend-Frontend Split | ✅/⚠️/❌ | [Feature correctly distributed?] |
+
+**Architecture Improvements Needed:**
+- [List any architectural issues that need fixing]
 
 ### Critical Issues
 
