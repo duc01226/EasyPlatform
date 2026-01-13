@@ -111,10 +111,32 @@
 ```
 [ ] No magic numbers - use named constants?
 [ ] No hardcoded strings for config values?
-[ ] Clear, descriptive variable names?
 [ ] Consistent abstraction levels?
 [ ] Single responsibility per method?
 ```
+
+---
+
+## Naming Best Practices
+
+```
+[ ] Names reveal intent? (what, not how)
+[ ] Booleans use is/has/can/should prefix?
+[ ] Collections use plural form?
+[ ] Methods describe action (verb + noun)?
+[ ] No abbreviations except common ones (Id, Url, Api)?
+[ ] Consistent naming across codebase?
+```
+
+### Convention Quick Reference
+
+| Type | C# | TypeScript |
+|------|----|----|
+| Class/Interface | `UserService`, `IRepository` | `UserService`, `IRepository` |
+| Method | `GetUserById` | `getUserById` |
+| Variable | `userName` | `userName` |
+| Constant | `MaxRetryCount` | `MAX_RETRY_COUNT` |
+| Boolean | `isActive`, `hasPermission` | `isActive`, `hasPermission` |
 
 ---
 
@@ -129,6 +151,8 @@
 | DTO mapping in handler      | Let DTO own mapping               |
 | Magic numbers (e.g., `if (status == 3)`) | Use named constants or enums |
 | Hardcoded config values     | Use constants or configuration    |
+| Vague names (`data`, `temp`, `val`) | Descriptive names (`userData`, `cachedValue`) |
+| Abbreviations (`usr`, `mgr`, `cnt`) | Full words (`user`, `manager`, `count`) |
 
 ---
 

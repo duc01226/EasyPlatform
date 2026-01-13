@@ -35,7 +35,9 @@ excludeAgent: ["coding-agent"]
 ### 3. Code Quality
 
 - Single Responsibility Principle
-- Meaningful, descriptive names
+- Meaningful, descriptive names that reveal intent (WHAT not HOW)
+- No vague names (`data`, `temp`, `result`) - use descriptive names (`userData`, `validatedOrders`)
+- No abbreviations except common ones (Id, Url, Api)
 - No code duplication
 - No magic numbers - use named constants instead of unexplained literals
 - Proper error handling

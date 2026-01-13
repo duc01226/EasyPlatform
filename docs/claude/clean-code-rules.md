@@ -15,9 +15,95 @@
 | Classes/Interfaces | PascalCase                      | `UserService`, `IRepository` |
 | Methods/Functions  | PascalCase (C#), camelCase (TS) | `GetUserById`, `getUserById` |
 | Variables/Fields   | camelCase                       | `userName`, `isActive`       |
-| Constants          | UPPER_SNAKE_CASE                | `MAX_RETRY_COUNT`            |
+| Constants          | UPPER_SNAKE_CASE (TS), PascalCase (C#) | `MAX_RETRY_COUNT`, `MaxRetryCount` |
 | Booleans           | is, has, can, should prefix     | `isVisible`, `hasPermission` |
 | Collections        | Plural                          | `users`, `orders`, `items`   |
+
+## Naming Best Practices
+
+### Core Principles
+
+- **Names reveal intent** - Name describes WHAT, not HOW
+- **Clear over clever** - Prefer `getUserById` over `fetchUsr`
+- **Consistent** - Same concept = same name across codebase
+- **Searchable** - Avoid single-letter names except loop indices
+
+### Naming Anti-Patterns
+
+```csharp
+// ❌ BAD: Vague, unclear purpose
+var data = GetData();
+var temp = Process(data);
+var result = Finalize(temp);
+
+// ✅ GOOD: Intent is clear
+var userOrders = GetOrdersByUserId(userId);
+var validatedOrders = ValidateOrderStatus(userOrders);
+var processedOrders = ApplyDiscounts(validatedOrders);
+```
+
+```typescript
+// ❌ BAD: Abbreviations obscure meaning
+const usr = getUsr();
+const mgr = getMgr(usr.deptId);
+const cnt = items.length;
+
+// ✅ GOOD: Full words are readable
+const user = getUser();
+const manager = getManager(user.departmentId);
+const itemCount = items.length;
+```
+
+### Method Naming
+
+| Pattern | Purpose | Example |
+|---------|---------|---------|
+| `Get*` | Retrieve data | `GetUserById`, `GetActiveOrders` |
+| `Find*` | Search (may return null) | `FindByEmail`, `FindMatchingItems` |
+| `Create*` / `Build*` | Construct new object | `CreateOrder`, `BuildQuery` |
+| `Update*` / `Save*` | Modify existing | `UpdateProfile`, `SaveChanges` |
+| `Delete*` / `Remove*` | Remove data | `DeleteUser`, `RemoveItem` |
+| `Validate*` | Check validity | `ValidateEmail`, `ValidateOrder` |
+| `Is*` / `Has*` / `Can*` | Boolean check | `IsActive`, `HasPermission`, `CanEdit` |
+| `To*` | Convert/transform | `ToString`, `ToDto`, `ToEntity` |
+
+### Class/Interface Naming
+
+```csharp
+// Services - noun + "Service"
+public class UserService { }
+public class OrderProcessingService { }
+
+// Repositories - entity + "Repository"
+public interface IUserRepository { }
+public class OrderRepository { }
+
+// Handlers - action + "Handler"
+public class SaveUserCommandHandler { }
+public class UserCreatedEventHandler { }
+
+// DTOs - entity + context + "Dto"
+public class UserDto { }
+public class UserListItemDto { }
+public class CreateUserRequestDto { }
+```
+
+### Variable Naming Context
+
+```typescript
+// Include context when scope is large
+// ❌ BAD in large scope
+const name = user.name;
+const date = order.createdDate;
+
+// ✅ GOOD: Context included
+const userName = user.name;
+const orderCreatedDate = order.createdDate;
+
+// OK in small, obvious scope (lambdas, short methods)
+users.filter(u => u.isActive);
+orders.map(o => o.total);
+```
 
 ## Code Organization
 

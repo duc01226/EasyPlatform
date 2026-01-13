@@ -81,6 +81,9 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
    - **Magic Numbers** (check for unexplained literals):
      - Flag: `if (status == 3)`, `timeout = 30000`, `retry > 5`
      - Fix: Use named constants (`StatusApproved`, `DEFAULT_TIMEOUT_MS`, `MAX_RETRY_COUNT`)
+   - **Naming Issues** (check for clarity and intent):
+     - Flag: vague names (`data`, `temp`, `val`, `result`), abbreviations (`usr`, `mgr`, `cnt`)
+     - Fix: Descriptive names revealing intent (`userData`, `validatedOrders`, `userCount`)
    - Code structure and organization
    - Logic correctness and edge cases
    - Type safety and error handling

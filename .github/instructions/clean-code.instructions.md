@@ -10,12 +10,14 @@ applyTo: '**'
 - Follow SOLID principles and Clean Architecture patterns
 - Method Design: Single Responsibility; Consistent abstraction level: Don't mix high-level and low-level operations; Dont mix infrastructure or technical logic into application, domain layer like QueryHandler/CommandHandler.
 - No Magic Numbers: Never use unexplained numeric or string literals. Use named constants (e.g., `MAX_RETRY_COUNT = 5` not `if (retry > 5)`). Exceptions: array indices, basic math operations, obvious test data.
+- **Naming Best Practices:** Names reveal intent (WHAT not HOW); clear over clever (`getUserById` not `fetchUsr`); consistent across codebase; searchable (no single-letter except loop indices); no vague names (`data`, `temp`, `val`); no abbreviations (`usr`, `mgr`) except common ones (Id, Url, Api)
 - Use meaningful, descriptive names that explain intent
 - Classes/Interfaces: PascalCase (UserService, IRepository)
 - Methods/Functions: PascalCase (C#), camelCase (TypeScript) (GetUserById, getUserById)
 - Variables/Fields: camelCase (userName, isActive)
-- Constants: UPPER_SNAKE_CASE (MAX_RETRY_COUNT)
+- Constants: UPPER_SNAKE_CASE (TS), PascalCase (C#) (MAX_RETRY_COUNT, MaxRetryCount)
 - Boolean variables: Use is, has, can, should prefixes (isVisible, hasPermission)
+- Method naming: Get* (retrieve), Find* (search), Create*/Build* (construct), Update*/Save* (modify), Delete*/Remove* (remove), Validate* (check), Is*/Has*/Can* (boolean), To* (convert)
 - Code Organization: Group related functionality together; Separate concerns (business logic, data access, presentation); Use meaningful file/folder structure; Keep dependencies flowing inward (Dependency Inversion)
 - Code Flow (Step-by-Step Pattern): Clear step-by-step flow with spacing; Group parallel operations (no dependencies) together; Follow Input → Process → Output pattern; Use early validation and guard clauses;
 - Responsibility Placement: Business logic belongs to domain entities. Use static expressions for queries in entities. Instance validation methods in entities. DTO creation belongs to DTO classes.
