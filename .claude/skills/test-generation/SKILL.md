@@ -50,7 +50,7 @@ Every 10 operations:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN TEST ANALYSIS
 
-Build a structured knowledge model in `ai_task_analysis_notes/[feature-name].ai_task_analysis_notes.md`.
+Build a structured knowledge model in `.ai/workspace/analysis/[feature-name].md`.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 

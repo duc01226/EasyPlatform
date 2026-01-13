@@ -74,7 +74,7 @@ Every 10 operations:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN KNOWLEDGE MODEL CONSTRUCTION
 
-Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai-task-files/[semantic-name-of-task].feature-analysis.md` with systematic external memory management.
+Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[semantic-name-of-task].feature-analysis.md` with systematic external memory management.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 
@@ -95,7 +95,7 @@ Create the analysis file with the following structure:
 [What needs to be understood: specific feature, workflow, integration, etc.]
 
 **Source Code Structure:**
-[Copy complete Source Code Structure from ai-prompt-context.md]
+[Copy complete Source Code Structure from .ai/prompts/context.md]
 ```
 ```````
 

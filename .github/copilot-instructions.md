@@ -105,7 +105,7 @@ The `/scout` → `/investigate` workflow now supports **structured knowledge mod
 - Structured output with suggested starting points
 
 **Investigate Phase Features:**
-- External memory at `ai_task_analysis_notes/[feature]-investigation.ai_task_analysis_notes_temp.md`
+- External memory at `.ai/workspace/analysis/[feature]-investigation.md`
 - Knowledge Graph with detailed file analysis schema (15+ fields per file)
 - Batch processing with TodoWrite (groups of 10 files)
 - Progress tracking (Phase, Items Processed, Total Items)

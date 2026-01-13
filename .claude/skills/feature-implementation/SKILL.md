@@ -74,11 +74,11 @@ Emergency:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN KNOWLEDGE MODEL CONSTRUCTION
 
-Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[some-sort-semantic-name-of-this-task].ai_task_analysis_notes_temp.md` with systematic external memory management.
+Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[some-sort-semantic-name-of-this-task].md` with systematic external memory management.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is the full original prompt in a markdown box, like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box).
+First, **initialize** the analysis file with a `## Metadata` heading and under it is the full original prompt in a markdown box, like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box).
 
 You **MUST** also create the following top-level headings:
 
@@ -170,7 +170,7 @@ Write comprehensive `overallAnalysis:` summary showing:
 
 ## PHASE 2: PLAN GENERATION
 
-You MUST ensure all files are analyzed. Then read the ENTIRE Markdown analysis notes file. Then Generate a detailed implementation plan under a `## Plan` heading. Your plan **MUST** follow coding convention and patterns in `ai-prompt-context.md`, must ultrathink and think step-by-step todo list to make code changes, for each step must read `ai-prompt-context.md` to follow code convention and patterns.
+You MUST ensure all files are analyzed. Then read the ENTIRE Markdown analysis notes file. Then Generate a detailed implementation plan under a `## Plan` heading. Your plan **MUST** follow coding convention and patterns in `.ai/prompts/context.md`, must ultrathink and think step-by-step todo list to make code changes, for each step must read `.ai/prompts/context.md` to follow code convention and patterns.
 
 ### PHASE 2.1: VERIFY AND REFACTOR
 
@@ -323,7 +323,7 @@ effectSimple(() => api.call().pipe(tapResponse(...)))
 ## See Also
 
 - `.github/AI-DEBUGGING-PROTOCOL.md` - Debugging protocol
-- `ai-prompt-context.md` - Platform patterns and context
+- `.ai/prompts/context.md` - Platform patterns and context
 - `CLAUDE.md` - Codebase instructions
 - `feature-investigation` skill - For exploring existing features (READ-ONLY)
 - `tasks-feature-implementation` skill - Autonomous variant

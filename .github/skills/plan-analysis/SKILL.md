@@ -40,7 +40,7 @@ Every 10 operations:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN IMPLEMENTATION PLAN ANALYSIS
 
-Build a structured knowledge model in `ai_task_analysis_notes/[plan-name].ai_task_analysis_notes_temp.md`.
+Build a structured knowledge model in `.ai/workspace/analysis/[plan-name].md`.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 

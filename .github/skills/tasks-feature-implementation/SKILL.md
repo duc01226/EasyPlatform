@@ -70,7 +70,7 @@ Emergency:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN KNOWLEDGE MODEL CONSTRUCTION
 
-Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[semantic-name].ai_task_analysis_notes_temp.md` with systematic external memory management.
+Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[semantic-name].md` with systematic external memory management.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 
@@ -80,7 +80,7 @@ Your sole objective is to build a structured knowledge model in a Markdown analy
    [Full original prompt here]
    ```
 
-2. **Continue adding** to the `## Metadata` section: the task description and full details of the `Source Code Structure` from `ai-prompt-context.md`. Use 6 backticks for this nested markdown:
+2. **Continue adding** to the `## Metadata` section: the task description and full details of the `Source Code Structure` from `.ai/prompts/context.md`. Use 6 backticks for this nested markdown:
 
    ```markdown
    ## Task Description
@@ -89,7 +89,7 @@ Your sole objective is to build a structured knowledge model in a Markdown analy
 
    ## Source Code Structure
 
-   [Full details from ai-prompt-context.md]
+   [Full details from .ai/prompts/context.md]
    ```
 
 3. **Create all required headings**:

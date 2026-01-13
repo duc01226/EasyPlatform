@@ -9,7 +9,7 @@ Expert full-stack .NET/Angular developer investigating existing features in Easy
 
 **KEY PRINCIPLE**: This is a **READ-ONLY exploration skill** - no code changes. Focus on understanding and explaining.
 
-**IMPORTANT**: Always use external memory at `ai_task_analysis_notes/[feature-name]-investigation.ai_task_analysis_notes_temp.md` for structured analysis.
+**IMPORTANT**: Always use external memory at `.ai/workspace/analysis/[feature-name]-investigation.md` for structured analysis.
 
 ## Core Protocols
 
@@ -111,4 +111,4 @@ If ANY unchecked, DO MORE INVESTIGATION.
 
 - `.github/instructions/backend-dotnet.instructions.md` - Backend patterns
 - `.github/instructions/frontend-angular.instructions.md` - Frontend patterns
-- `ai-prompt-context.md` - Platform patterns and context
+- `.ai/prompts/context.md` - Platform patterns and context

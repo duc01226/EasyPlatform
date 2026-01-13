@@ -69,7 +69,7 @@ Before removing/changing ANY code:
 
 ### PHASE 1: Discovery & Analysis
 
-Build a structured knowledge model in `ai_task_analysis_notes/[bug-name].ai_task_analysis_notes_temp.md`:
+Build a structured knowledge model in `.ai/workspace/analysis/[bug-name].md`:
 
 1. **Initialize** with Metadata, Progress, File List, Knowledge Graph headings
 2. **Discovery searches**:
@@ -332,5 +332,5 @@ effectSimple(() => api.call().pipe(tapResponse(...)))
 ## See Also
 
 - `.github/AI-DEBUGGING-PROTOCOL.md` - Comprehensive debugging protocol
-- `ai-prompt-context.md` - Platform patterns and context
+- `.ai/prompts/context.md` - Platform patterns and context
 - `CLAUDE.md` - Codebase instructions

@@ -53,7 +53,7 @@ All feature documentation MUST follow this section order:
 
 ## Phase 1: Feature Analysis
 
-Build knowledge model in `ai_task_analysis_notes/[feature-name].ai_task_analysis_notes_temp.md`.
+Build knowledge model in `.ai/workspace/analysis/[feature-name].md`.
 
 ### Discovery Areas
 

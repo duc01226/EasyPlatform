@@ -69,7 +69,7 @@ Emergency:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN FEATURE INVESTIGATION
 
-Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[feature-name]-investigation.ai_task_analysis_notes_temp.md` with systematic external memory management.
+Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[feature-name]-investigation.md` with systematic external memory management.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 
@@ -79,7 +79,7 @@ Your sole objective is to build a structured knowledge model in a Markdown analy
    [Full original prompt/question here]
    ```
 
-2. **Continue adding** to the `## Metadata` section: the investigation question and full details of the `Source Code Structure` from `ai-prompt-context.md`. Use 6 backticks for this nested markdown:
+2. **Continue adding** to the `## Metadata` section: the investigation question and full details of the `Source Code Structure` from `.ai/prompts/context.md`. Use 6 backticks for this nested markdown:
 
    ```markdown
    ## Investigation Question
@@ -88,7 +88,7 @@ Your sole objective is to build a structured knowledge model in a Markdown analy
 
    ## Source Code Structure
 
-   [Full details from ai-prompt-context.md]
+   [Full details from .ai/prompts/context.md]
    ```
 
 3. **Create all required headings**:

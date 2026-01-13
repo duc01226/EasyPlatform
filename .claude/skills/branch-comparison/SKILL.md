@@ -40,7 +40,7 @@ Every 10 operations:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN BRANCH ANALYSIS
 
-Build a structured knowledge model in `ai_task_analysis_notes/[comparison-name].ai_task_analysis_notes_temp.md`.
+Build a structured knowledge model in `.ai/workspace/analysis/[comparison-name].md`.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 

@@ -48,7 +48,7 @@ This is a **READ-ONLY exploration** - no code changes. Focus on understanding an
 
 ### Step 1: Initialize Analysis File
 
-Create external memory at `ai_task_analysis_notes/[feature-name]-investigation.ai_task_analysis_notes_temp.md`:
+Create external memory at `.ai/workspace/analysis/[feature-name]-investigation.md`:
 
 ```markdown
 ## Metadata
@@ -56,7 +56,7 @@ Create external memory at `ai_task_analysis_notes/[feature-name]-investigation.a
 ```markdown
 **Original Prompt:** [Investigation question]
 **Task Description:** [What we're investigating]
-**Source Code Structure:** See ai-prompt-context.md
+**Source Code Structure:** See .ai/prompts/context.md
 ```
 
 ## Progress

@@ -70,7 +70,7 @@ Emergency:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN BUG ANALYSIS
 
-Build a structured knowledge model in `ai_task_analysis_notes/[bug-name].ai_task_analysis_notes_temp.md`.
+Build a structured knowledge model in `.ai/workspace/analysis/[bug-name].md`.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 
@@ -80,7 +80,7 @@ Build a structured knowledge model in `ai_task_analysis_notes/[bug-name].ai_task
    [Full original prompt/error here]
    ```
 
-2. **Continue adding** to the `## Metadata` section: the bug description and full details of the `Source Code Structure` from `ai-prompt-context.md`. Use 6 backticks for this nested markdown:
+2. **Continue adding** to the `## Metadata` section: the bug description and full details of the `Source Code Structure` from `.ai/prompts/context.md`. Use 6 backticks for this nested markdown:
 
    ```markdown
    ## Bug Description
@@ -89,7 +89,7 @@ Build a structured knowledge model in `ai_task_analysis_notes/[bug-name].ai_task
 
    ## Source Code Structure
 
-   [Full details from ai-prompt-context.md]
+   [Full details from .ai/prompts/context.md]
    ```
 
 3. **Create all required headings**:

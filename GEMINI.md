@@ -180,7 +180,7 @@ If confidence < 90% → REQUEST USER CONFIRMATION
 ### Step 3: Platform Pattern Recognition
 
 ```
-1. Check ai-common-prompt.md for [Solution Planning] guidance
+1. Check .ai/prompts/common.md for [Solution Planning] guidance
 2. Use established platform patterns over custom solutions
 3. Follow Easy.Platform framework conventions
 4. Verify base class APIs before using component methods
@@ -195,7 +195,7 @@ If confidence < 90% → REQUEST USER CONFIRMATION
 📖 docs/architecture-overview.md # System architecture & diagrams
 📖 CLEAN-CODE-RULES.md           # Coding standards & anti-patterns
 📖 .github/AI-DEBUGGING-PROTOCOL.md  # 🚨 MANDATORY debugging protocol for AI agents
-📖 ai-common-prompt.md           # AI agent prompt library & development patterns
+📖 .ai/prompts/common.md           # AI agent prompt library & development patterns
 ```
 
 ### 🏗️ Backend Architecture

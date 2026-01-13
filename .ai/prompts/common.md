@@ -42,11 +42,11 @@ Emergency: **Context Drift** → Re-read **## Metadata** section | **Assumption 
 
 ---
 
-#### **PHASE 1: EXTERNAL MEMORY-DRIVEN KNOWLEDGE MODEL CONSTRUCTION.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[some-sort-semantic-name-of-this-task].ai_task_analysis_notes_temp.md` with systematic external memory management
+#### **PHASE 1: EXTERNAL MEMORY-DRIVEN KNOWLEDGE MODEL CONSTRUCTION.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[some-sort-semantic-name-of-this-task].md` with systematic external memory management
 
 #### **PHASE 1A: INITIALIZATION AND DISCOVERY**
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
+First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
 
 - **Phase**: 1
 - **Items Processed**: 0
@@ -97,7 +97,7 @@ Write comprehensive `overallAnalysis:` summary showing:
 - All business logic work flow: From front-end to back-end. (Example: Front-end Component => Controller Api Service => Command/Query => EventHandler => Others (Send email, producer bus message); From background job => event handler => others);
 - Integration points and dependencies
 
-#### **PHASE 2: PLAN GENERATION.** You MUST ensure all files are analyzed. Then read the ENTIRE Markdown analysis notes file. Then Generate a detailed implementation plan under a `## Plan` heading. Your plan **MUST** follow coding convention and patterns in `ai-prompt-context.md`, must ultrathink and think step-by-step todo list to make code changes, for each step must read `ai-prompt-context.md` to follow code convention and patterns
+#### **PHASE 2: PLAN GENERATION.** You MUST ensure all files are analyzed. Then read the ENTIRE Markdown analysis notes file. Then Generate a detailed implementation plan under a `## Plan` heading. Your plan **MUST** follow coding convention and patterns in `.ai/prompts/context.md`, must ultrathink and think step-by-step todo list to make code changes, for each step must read `.ai/prompts/context.md` to follow code convention and patterns
 
 #### **PHASE 2.1: VERIFY AND REFACTOR** First, verify and ensure your implementation plan that code patterns, solution must follow code patterns and example in these files: `.github\copilot-instructions.md`, `.github\instructions\frontend-angular.instructions.md`, `.github\instructions\backend-dotnet.instructions.md`. Then verify and ensure your implementation plan satisfy clean code rules in `.github\instructions\clean-code.instructions.md`
 
@@ -163,11 +163,11 @@ Emergency: **Context Drift** → Re-read **## Metadata** section | **Assumption 
 
 ---
 
-#### **PHASE 1: EXTERNAL MEMORY-DRIVEN BUG ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[some-sort-semantic-name-of-this-task].ai_task_analysis_notes_temp.md` with systematic external memory management
+#### **PHASE 1: EXTERNAL MEMORY-DRIVEN BUG ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[some-sort-semantic-name-of-this-task].md` with systematic external memory management
 
 #### **PHASE 1A: INITIALIZATION AND DISCOVERY**
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
+First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
 
 - **Phase**: 1
 - **Items Processed**: 0
@@ -304,11 +304,11 @@ Emergency: **Context Drift** → Re-read **## Metadata** section | **Assumption 
 
 ---
 
-#### **PHASE 1: EXTERNAL MEMORY-DRIVEN REFACTORING ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[some-sort-semantic-name-of-this-task].ai_task_analysis_notes_temp.md` with systematic external memory management
+#### **PHASE 1: EXTERNAL MEMORY-DRIVEN REFACTORING ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[some-sort-semantic-name-of-this-task].md` with systematic external memory management
 
 #### **PHASE 1A: INITIALIZATION AND DISCOVERY**
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
+First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
 
 - **Phase**: 1
 - **Items Processed**: 0
@@ -371,7 +371,7 @@ Write comprehensive `overallAnalysis:` summary showing:
 - All business logic work flow: From front-end to back-end. (Example: Front-end Component => Controller Api Service => Command/Query => EventHandler => Others (Send email, producer bus message); From background job => event handler => others);
 - Integration points and dependencies
 
-#### **PHASE 2: REFACTORING PLAN GENERATION.** You MUST ensure all files are analyzed. Then read the ENTIRE Markdown analysis notes file. Then Generate a detailed refactoring plan under a `## Refactoring Plan` heading focusing on minimizing impact, improving pattern consistency, and adhering to SOLID principles. Your plan **MUST** follow coding convention and patterns in `ai-prompt-context.md`, must ultrathink and think step-by-step todo list to make code changes, for each step must read `ai-prompt-context.md` to follow code convention and patterns
+#### **PHASE 2: REFACTORING PLAN GENERATION.** You MUST ensure all files are analyzed. Then read the ENTIRE Markdown analysis notes file. Then Generate a detailed refactoring plan under a `## Refactoring Plan` heading focusing on minimizing impact, improving pattern consistency, and adhering to SOLID principles. Your plan **MUST** follow coding convention and patterns in `.ai/prompts/context.md`, must ultrathink and think step-by-step todo list to make code changes, for each step must read `.ai/prompts/context.md` to follow code convention and patterns
 
 #### **PHASE 3: APPROVAL GATE.** Present the refactoring plan with impact analysis and risk mitigation for explicit approval. **DO NOT** proceed without it
 
@@ -434,11 +434,11 @@ Emergency: **Context Drift** → Re-read **## Metadata** section | **Assumption 
 
 ---
 
-#### **PHASE 1: EXTERNAL MEMORY-DRIVEN TEST ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[some-sort-semantic-name-of-this-task].ai_task_analysis_notes.md` with systematic external memory management
+#### **PHASE 1: EXTERNAL MEMORY-DRIVEN TEST ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[some-sort-semantic-name-of-this-task].md` with systematic external memory management
 
 #### **PHASE 1A: INITIALIZATION AND DISCOVERY**
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
+First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
 
 - **Phase**: 1
 - **Items Processed**: 0
@@ -712,11 +712,11 @@ Emergency: **Context Drift** → Re-read **## Metadata** section | **Assumption 
 
 ---
 
-#### **PHASE 1: EXTERNAL MEMORY-DRIVEN DOCUMENTATION ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[some-sort-semantic-name-of-this-task].ai_task_analysis_notes_temp.md` with systematic external memory management
+#### **PHASE 1: EXTERNAL MEMORY-DRIVEN DOCUMENTATION ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[some-sort-semantic-name-of-this-task].md` with systematic external memory management
 
 #### **PHASE 1A: INITIALIZATION AND DISCOVERY**
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
+First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
 
 - **Phase**: 1
 - **Items Processed**: 0
@@ -840,11 +840,11 @@ Emergency: **Context Drift** → Re-read **## Metadata** section | **Assumption 
 
 ---
 
-#### **PHASE 1: EXTERNAL MEMORY-DRIVEN README ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[some-sort-semantic-name-of-this-task].ai_task_analysis_notes_temp.md` with systematic external memory management
+#### **PHASE 1: EXTERNAL MEMORY-DRIVEN README ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[some-sort-semantic-name-of-this-task].md` with systematic external memory management
 
 #### **PHASE 1A: INITIALIZATION AND DISCOVERY**
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
+First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
 
 - **Phase**: 1
 - **Items Processed**: 0
@@ -970,11 +970,11 @@ Emergency: **Context Drift** → Re-read **## Metadata** section | **Assumption 
 
 ---
 
-#### **PHASE 1: EXTERNAL MEMORY-DRIVEN BRANCH ANALYSIS MODEL CONSTRUCTION.** Your sole objective is to build a structured knowledge model in a **Markdown** analysis file at `ai_task_analysis_notes/[some-sort-semantic-name-of-this-task].ai_task_analysis_notes_temp.md` with systematic external memory management
+#### **PHASE 1: EXTERNAL MEMORY-DRIVEN BRANCH ANALYSIS MODEL CONSTRUCTION.** Your sole objective is to build a structured knowledge model in a **Markdown** analysis file at `.ai/workspace/analysis/[some-sort-semantic-name-of-this-task].md` with systematic external memory management
 
 #### **PHASE 1A: INITIALIZATION AND DISCOVERY**
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
+First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
 
 - **Phase:** 1
 - **Items Processed:** 0
@@ -1106,7 +1106,7 @@ Emergency: **Context Drift** → Re-read **## Metadata** section | **Missing Res
 
 ---
 
-#### **PHASE 1: PACKAGE INVENTORY & CURRENT STATE ANALYSIS.** Build a comprehensive package inventory in a Markdown analysis file at `ai_task_analysis_notes/frontend-package-upgrade-analysis.md`
+#### **PHASE 1: PACKAGE INVENTORY & CURRENT STATE ANALYSIS.** Build a comprehensive package inventory in a Markdown analysis file at `.ai/workspace/analysis/frontend-package-upgrade-analysis.md`
 
 #### **PHASE 1A: INITIALIZATION AND PACKAGE DISCOVERY**
 
@@ -1468,11 +1468,11 @@ Emergency: **Context Drift** → Re-read **## Metadata** section | **Assumption 
 
 ---
 
-#### **PHASE 1: EXTERNAL MEMORY-DRIVEN IMPLEMENTATION PLAN ANALYSIS.** Your sole objective is to build a structured knowledge model in a **Markdown** analysis file at `ai_task_analysis_notes/[some-sort-semantic-name-of-this-task].ai_task_analysis_notes_temp.md` with systematic external memory management
+#### **PHASE 1: EXTERNAL MEMORY-DRIVEN IMPLEMENTATION PLAN ANALYSIS.** Your sole objective is to build a structured knowledge model in a **Markdown** analysis file at `.ai/workspace/analysis/[some-sort-semantic-name-of-this-task].md` with systematic external memory management
 
 #### **PHASE 1A: INITIALIZATION AND DISCOVERY**
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
+First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box , like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). the task description, and the full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`. Populate the `## Progress` section with:
 
 - **Phase:** 1
 - **Items Processed:** 0
@@ -1750,11 +1750,11 @@ Emergency: **Context Drift** → Re-read **## Metadata** section | **Assumption 
 
 ---
 
-#### **PHASE 1: EXTERNAL MEMORY-DRIVEN FEATURE ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[feature-name].ai_task_analysis_notes_temp.md` with systematic external memory management
+#### **PHASE 1: EXTERNAL MEMORY-DRIVEN FEATURE ANALYSIS.** Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[feature-name].md` with systematic external memory management
 
 #### **PHASE 1A: INITIALIZATION AND DISCOVERY**
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box, like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `ai-prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`, `## Feature Summary`. Populate the `## Progress` section with:
+First, **initialize** the analysis file with a `## Metadata` heading and under it is my full original prompt in a markdown box, like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `.ai/prompts/context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box). You **MUST** also create the following top-level headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`, `## Feature Summary`. Populate the `## Progress` section with:
 
 - **Phase**: 1A
 - **Items Processed**: 0

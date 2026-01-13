@@ -7,7 +7,7 @@ Investigate and explain how an existing feature or logic works using structured 
 ## Variables
 
 - **FEATURE**: $ARGUMENTS (the feature/logic to investigate)
-- **ANALYSIS_FILE**: `ai_task_analysis_notes/$ARGUMENTS-investigation.ai_task_analysis_notes_temp.md`
+- **ANALYSIS_FILE**: `.ai/workspace/analysis/$ARGUMENTS-investigation.md`
 
 ---
 
@@ -42,7 +42,7 @@ Investigate and explain how an existing feature or logic works using structured 
 
 ### Step 1: Initialize Analysis File
 
-Create the analysis file at `ai_task_analysis_notes/[feature-name]-investigation.ai_task_analysis_notes_temp.md` with these required sections:
+Create the analysis file at `.ai/workspace/analysis/[feature-name]-investigation.md` with these required sections:
 
 ```markdown
 ## Metadata
@@ -50,7 +50,7 @@ Create the analysis file at `ai_task_analysis_notes/[feature-name]-investigation
 ```markdown
 **Original Prompt:** [User's investigation question]
 **Task Description:** [What we're investigating]
-**Source Code Structure:** See ai-prompt-context.md
+**Source Code Structure:** See .ai/prompts/context.md
 ```
 
 ## Progress

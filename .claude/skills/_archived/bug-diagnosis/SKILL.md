@@ -74,13 +74,13 @@ Emergency:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN BUG ANALYSIS
 
-Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[some-sort-semantic-name-of-this-task].ai_task_analysis_notes_temp.md` with systematic external memory management.
+Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[some-sort-semantic-name-of-this-task].md` with systematic external memory management.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 
 1. **Initialize** the analysis file with:
     - `## Metadata` heading with original prompt in markdown box (use 5-6 backticks for proper nesting)
-    - Task description and `Source Code Structure` from `ai-prompt-context.md`
+    - Task description and `Source Code Structure` from `.ai/prompts/context.md`
     - Create headings: `## Progress`, `## Errors`, `## Assumption Validations`, `## Performance Metrics`, `## Memory Management`, `## Processed Files`, `## File List`, `## Knowledge Graph`
 
 2. **Populate `## Progress`** with:
@@ -412,5 +412,5 @@ Before removing/changing ANY code:
 ## See Also
 
 - `.github/AI-DEBUGGING-PROTOCOL.md` - Comprehensive debugging protocol
-- `ai-prompt-context.md` - Platform patterns and context
+- `.ai/prompts/context.md` - Platform patterns and context
 - `CLEAN-CODE-RULES.md` - Coding standards

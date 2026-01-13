@@ -166,7 +166,7 @@ grep -r "\[Route.*{feature}\]" --include="*.cs"
 ### Create External Memory File
 
 ```markdown
-# File: ai_task_analysis_notes/{feature-name}-implementation.md
+# File: .ai/workspace/analysis/{feature-name}-implementation.md
 
 ## Feature: {Feature Name}
 
@@ -390,5 +390,5 @@ export class FeatureListComponent extends AppBaseVmStoreComponent<FeatureState, 
 - `feature-investigation` skill - READ-ONLY exploration (no code changes)
 - `tasks-bug-diagnosis` skill - Autonomous debugging workflow
 - `.github/AI-DEBUGGING-PROTOCOL.md` - Debugging protocol
-- `ai-prompt-context.md` - Platform patterns and context
+- `.ai/prompts/context.md` - Platform patterns and context
 - `CLAUDE.md` - Codebase instructions

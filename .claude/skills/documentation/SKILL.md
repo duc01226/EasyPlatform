@@ -49,7 +49,7 @@ Every 10 operations:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN DOCUMENTATION ANALYSIS
 
-Build a structured knowledge model in `ai_task_analysis_notes/[task-name].ai_task_analysis_notes_temp.md`.
+Build a structured knowledge model in `.ai/workspace/analysis/[task-name].md`.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 

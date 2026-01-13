@@ -75,7 +75,7 @@ Emergency:
 
 ## PHASE 1: EXTERNAL MEMORY-DRIVEN FEATURE INVESTIGATION
 
-Your sole objective is to build a structured knowledge model in a Markdown analysis file at `ai_task_analysis_notes/[feature-name]-investigation.ai_task_analysis_notes_temp.md` with systematic external memory management.
+Your sole objective is to build a structured knowledge model in a Markdown analysis file at `.ai/workspace/analysis/[feature-name]-investigation.md` with systematic external memory management.
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 
@@ -364,5 +364,5 @@ I can explain further:
 - `feature-implementation` skill - For implementing new features (code changes)
 - `bug-diagnosis` skill - For debugging and fixing issues
 - `tasks-feature-implementation` skill - Autonomous feature implementation variant
-- `ai-prompt-context.md` - Platform patterns and context
+- `.ai/prompts/context.md` - Platform patterns and context
 - `CLAUDE.md` - Codebase instructions

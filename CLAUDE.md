@@ -84,7 +84,7 @@ Use `quick:` prefix to bypass enforcement (not recommended):
 | [README.md](README.md)                                               | Platform overview & quick start |
 | [Architecture Overview](docs/architecture-overview.md)               | System architecture & diagrams  |
 | [.github/AI-DEBUGGING-PROTOCOL.md](.github/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging protocol    |
-| [ai-common-prompt.md](ai-common-prompt.md)                           | AI agent prompt library         |
+| [.ai/prompts/common.md](.ai/prompts/common.md)                           | AI agent prompt library         |
 | [.claude/hooks/tests/](.claude/hooks/tests/)                         | Claude hooks test infrastructure |
 
 > **Claude Hooks Development:** Before adding new test cases or test scripts for Claude hooks, check existing tests in `.claude/hooks/tests/` folder. Use the existing test utilities (`test-utils.cjs`, `hook-runner.cjs`) and follow established patterns in `suites/` directory.

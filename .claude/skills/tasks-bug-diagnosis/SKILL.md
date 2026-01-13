@@ -56,7 +56,7 @@ Every 10 operations:
 
 ## Phase 1: Bug Report Analysis
 
-Create analysis document in `ai_task_analysis_notes/[bug-name].ai_task_analysis_notes_temp.md`:
+Create analysis document in `.ai/workspace/analysis/[bug-name].md`:
 
 ```markdown
 ## Bug Report Analysis
@@ -390,4 +390,4 @@ grep -r "observerLoadingErrorState\|tapResponse\|untilDestroyed" --include="*.ts
 
 - `.github/AI-DEBUGGING-PROTOCOL.md` - Comprehensive debugging protocol
 - `bug-diagnosis` skill - Interactive debugging with user feedback
-- `ai-prompt-context.md` - Platform patterns and context
+- `.ai/prompts/context.md` - Platform patterns and context

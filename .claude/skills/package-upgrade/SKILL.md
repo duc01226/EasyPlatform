@@ -41,7 +41,7 @@ Every 10 packages researched:
 
 ## PHASE 1: PACKAGE INVENTORY & CURRENT STATE ANALYSIS
 
-Build package inventory in `ai_task_analysis_notes/frontend-package-upgrade-analysis.md`.
+Build package inventory in `.ai/workspace/analysis/frontend-package-upgrade-analysis.md`.
 
 ### PHASE 1A: INITIALIZATION AND PACKAGE DISCOVERY
 

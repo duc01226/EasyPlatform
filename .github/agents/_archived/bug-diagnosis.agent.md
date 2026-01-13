@@ -52,9 +52,9 @@ Every 10 operations:
 
 ### Phase 1: External Memory-Driven Bug Analysis
 
-Build a structured knowledge model in `ai_task_analysis_notes/[bug-name].ai_task_analysis_notes_temp.md`:
+Build a structured knowledge model in `.ai/workspace/analysis/[bug-name].md`:
 
-1. **Initialize** with `## Metadata` containing full error/prompt (5 backticks) and Source Code Structure from `ai-prompt-context.md` (6 backticks)
+1. **Initialize** with `## Metadata` containing full error/prompt (5 backticks) and Source Code Structure from `.ai/prompts/context.md` (6 backticks)
 2. **Create headings**: `## Progress`, `## Errors`, `## File List`, `## Knowledge Graph`, `## Error Boundaries`, `## Interaction Map`, `## Platform Error Patterns`
 3. **Discovery searches**: Extract error keywords, search for related entities, commands, queries, handlers, controllers
 4. **Save ALL file paths** to `## File List`

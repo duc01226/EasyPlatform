@@ -52,7 +52,7 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 ## Related Documentation
 
 - **Root CLAUDE.md**: Essential rules and quick decision trees
-- **ai-prompt-context.md**: Solution planning guidance
+- **.ai/prompts/context.md**: Solution planning guidance
 - **../architecture-overview.md**: System architecture & diagrams
 - **.github/AI-DEBUGGING-PROTOCOL.md**: Debugging protocol
 

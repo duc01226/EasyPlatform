@@ -2,7 +2,7 @@
 
 Fix a GitHub issue following the systematic debugging workflow based on the `bug-diagnosis` skill.
 
-**IMPORTANT**: Always use external memory at `ai_task_analysis_notes/issue-[number].ai_task_analysis_notes_temp.md` for structured analysis.
+**IMPORTANT**: Always use external memory at `.ai/workspace/analysis/issue-[number].md` for structured analysis.
 
 ## IMPORTANT: Anti-Hallucination Protocols
 
@@ -29,7 +29,7 @@ Before any operation:
     - Assignees and reviewers
     - Stack traces or error messages
 
-3. **Create analysis notes** at `ai_task_analysis_notes/issue-[number].ai_task_analysis_notes_temp.md`
+3. **Create analysis notes** at `.ai/workspace/analysis/issue-[number].md`
 
 ---
 

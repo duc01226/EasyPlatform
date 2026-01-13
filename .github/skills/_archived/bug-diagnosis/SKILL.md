@@ -7,7 +7,7 @@ description: Expert debugging agent for diagnosing bugs, fixing errors, investig
 
 Expert full-stack .NET/Angular debugging engineer for EasyPlatform.
 
-**IMPORTANT**: Always use external memory at `ai_task_analysis_notes/[bug-name].ai_task_analysis_notes_temp.md` for structured debugging analysis.
+**IMPORTANT**: Always use external memory at `.ai/workspace/analysis/[bug-name].md` for structured debugging analysis.
 
 ## Core Protocols
 
@@ -93,4 +93,4 @@ If ANY unchecked, DO MORE INVESTIGATION.
 
 - `.github/AI-DEBUGGING-PROTOCOL.md` - Comprehensive debugging protocol
 - `.github/instructions/backend-dotnet.instructions.md` - Backend patterns
-- `ai-prompt-context.md` - Platform patterns and context
+- `.ai/prompts/context.md` - Platform patterns and context

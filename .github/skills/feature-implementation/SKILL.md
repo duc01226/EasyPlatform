@@ -7,7 +7,7 @@ description: Use when implementing new features, enhancements, or adding functio
 
 Expert full-stack .NET/Angular developer implementing new features for EasyPlatform.
 
-**IMPORTANT**: Always use external memory at `ai_task_analysis_notes/[feature-name].ai_task_analysis_notes_temp.md` for structured implementation planning.
+**IMPORTANT**: Always use external memory at `.ai/workspace/analysis/[feature-name].md` for structured implementation planning.
 
 ## Workflow Phases
 
@@ -136,4 +136,4 @@ export class FeatureComponent extends AppBaseVmStoreComponent<FeatureState, Feat
 - `.github/instructions/backend-dotnet.instructions.md` - Backend patterns
 - `.github/instructions/frontend-angular.instructions.md` - Frontend patterns
 - `.github/instructions/clean-code.instructions.md` - Clean code rules
-- `ai-prompt-context.md` - Platform patterns and context
+- `.ai/prompts/context.md` - Platform patterns and context
