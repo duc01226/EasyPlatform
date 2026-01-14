@@ -36,6 +36,10 @@ EasyPlatform is a comprehensive enterprise platform framework built with microse
 
 **Architecture Rules:** 12. Search for existing implementations before creating new code 13. Place logic in LOWEST layer (Entity > Service > Component) to enable reuse 14. Plan before implementing non-trivial tasks 15. Follow Clean Architecture layers: Domain → Application → Infrastructure → Presentation
 
+**Verification Protocol (MANDATORY):** 16. NEVER claim completion without evidence - run commands and read output first 17. ALWAYS verify filesystem before claiming file status - use grep_search or file_search 18. ALWAYS re-read modified lines after edits to confirm changes applied 19. Run tests after implementation to verify functionality 20. Check for errors using get_errors tool after file modifications
+
+**Context Gathering Rules (MANDATORY):** 21. ALWAYS search for existing patterns before implementing (semantic_search or grep_search) 22. READ at least 3 similar implementations to understand established patterns 23. For complex tasks, gather context in parallel batches (read multiple files simultaneously) 24. Use Scout → Investigate workflow for unfamiliar features before making changes 25. Never assume - verify assumptions with file reads or searches
+
 ## Automatic Workflow Detection (CRITICAL - MUST FOLLOW)
 
 > **This is NOT optional.** Before responding to ANY development task, you MUST detect intent and follow the appropriate workflow. This ensures consistent, high-quality development across the team.
@@ -48,70 +52,73 @@ For detailed routing logic, see the **`workflow-router`** agent in `.github/agen
 
 ### Quick Reference - Workflow Detection
 
-| Intent | Trigger Keywords | Workflow Sequence |
-|--------|------------------|-------------------|
-| **Feature** | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/code-review` → `/test` → `/docs-update` → `/watzup` |
-| **Bug Fix** | bug, fix, error, broken, crash, not working, debug | `/scout` → `/investigate` → `/debug` → `/plan` → `/fix` → `/code-review` → `/test` |
-| **Documentation** | docs, document, readme, update docs | `/scout` → `/investigate` → `/docs-update` → `/watzup` |
-| **Refactoring** | refactor, improve, clean up, restructure | `/plan` → `/code` → `/code-review` → `/test` |
-| **Code Review** | review, check, audit code, PR review | `/code-review` → `/watzup` |
-| **Investigation** | how does, where is, explain, understand, find | `/scout` → `/investigate` |
+| Intent            | Trigger Keywords                                    | Workflow Sequence                                                                  |
+| ----------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| **Feature**       | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/code-review` → `/test` → `/docs-update` → `/watzup`          |
+| **Bug Fix**       | bug, fix, error, broken, crash, not working, debug  | `/scout` → `/investigate` → `/debug` → `/plan` → `/fix` → `/code-review` → `/test` |
+| **Documentation** | docs, document, readme, update docs                 | `/scout` → `/investigate` → `/docs-update` → `/watzup`                             |
+| **Refactoring**   | refactor, improve, clean up, restructure            | `/plan` → `/code` → `/code-review` → `/test`                                       |
+| **Code Review**   | review, check, audit code, PR review                | `/code-review` → `/watzup`                                                         |
+| **Investigation** | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                                          |
 
 ### Prompt File Mapping
 
 Each workflow step executes a prompt file from `.github/prompts/`:
 
-| Step | File | Purpose |
-|------|------|---------|
-| `/plan` | `plan.prompt.md` | Create implementation plan |
-| `/cook` | `cook.prompt.md` | Implement feature |
-| `/code` | `code.prompt.md` | Execute existing plan |
-| `/test` | `test.prompt.md` | Run tests |
-| `/fix` | `fix.prompt.md` | Apply fixes |
-| `/debug` | `debug.prompt.md` | Investigate issues |
-| `/code-review` | `code-review.prompt.md` | Review code quality |
-| `/docs-update` | `docs-update.prompt.md` | Update documentation |
-| `/watzup` | `watzup.prompt.md` | Summarize changes |
-| `/scout` | `scout.prompt.md` | Priority-categorized file discovery |
+| Step           | File                    | Purpose                                 |
+| -------------- | ----------------------- | --------------------------------------- |
+| `/plan`        | `plan.prompt.md`        | Create implementation plan              |
+| `/cook`        | `cook.prompt.md`        | Implement feature                       |
+| `/code`        | `code.prompt.md`        | Execute existing plan                   |
+| `/test`        | `test.prompt.md`        | Run tests                               |
+| `/fix`         | `fix.prompt.md`         | Apply fixes                             |
+| `/debug`       | `debug.prompt.md`       | Investigate issues                      |
+| `/code-review` | `code-review.prompt.md` | Review code quality                     |
+| `/docs-update` | `docs-update.prompt.md` | Update documentation                    |
+| `/watzup`      | `watzup.prompt.md`      | Summarize changes                       |
+| `/scout`       | `scout.prompt.md`       | Priority-categorized file discovery     |
 | `/investigate` | `investigate.prompt.md` | Knowledge graph construction + analysis |
 
 ### General Developer Prompts
 
 Additional standalone prompts for common development tasks:
 
-| Prompt | File | Purpose |
-|--------|------|---------|
+| Prompt              | File                         | Purpose                                                 |
+| ------------------- | ---------------------------- | ------------------------------------------------------- |
 | `/git-commit-smart` | `git-commit-smart.prompt.md` | Smart conventional commits with auto-generated messages |
-| `/git-cherry-pick` | `git-cherry-pick.prompt.md` | Cherry-pick commits with conflict resolution |
-| `/git-worktree` | `git-worktree.prompt.md` | Git worktree management for parallel development |
-| `/checkpoint` | `checkpoint.prompt.md` | Save memory checkpoint to preserve analysis |
-| `/build` | `build.prompt.md` | Build backend/frontend projects |
-| `/lint` | `lint.prompt.md` | Run linters and fix issues |
-| `/fix-types` | `fix-types.prompt.md` | Fix TypeScript type errors |
-| `/content-enhance` | `content-enhance.prompt.md` | Analyze and enhance UI copy quality |
-| `/content-cro` | `content-cro.prompt.md` | Conversion rate optimization for CTAs |
-| `/journal` | `journal.prompt.md` | Development journal entries |
-| `/context-compact` | `context-compact.prompt.md` | Context compression for long sessions |
-| `/kanban` | `kanban.prompt.md` | View and manage plans dashboard |
+| `/git-cherry-pick`  | `git-cherry-pick.prompt.md`  | Cherry-pick commits with conflict resolution            |
+| `/git-worktree`     | `git-worktree.prompt.md`     | Git worktree management for parallel development        |
+| `/checkpoint`       | `checkpoint.prompt.md`       | Save memory checkpoint to preserve analysis             |
+| `/build`            | `build.prompt.md`            | Build backend/frontend projects                         |
+| `/lint`             | `lint.prompt.md`             | Run linters and fix issues                              |
+| `/fix-types`        | `fix-types.prompt.md`        | Fix TypeScript type errors                              |
+| `/content-enhance`  | `content-enhance.prompt.md`  | Analyze and enhance UI copy quality                     |
+| `/content-cro`      | `content-cro.prompt.md`      | Conversion rate optimization for CTAs                   |
+| `/journal`          | `journal.prompt.md`          | Development journal entries                             |
+| `/context-compact`  | `context-compact.prompt.md`  | Context compression for long sessions                   |
+| `/kanban`           | `kanban.prompt.md`           | View and manage plans dashboard                         |
 
 ### Investigation Workflow (Enhanced)
 
 The `/scout` → `/investigate` workflow now supports **structured knowledge model construction**:
 
 **Scout Phase Features:**
-- Priority-based file categorization (HIGH/MEDIUM/LOW)
-- Numbered file lists for easy reference
-- Cross-service message bus analysis (Consumer → Producer tracing)
-- Structured output with suggested starting points
+
+-   Priority-based file categorization (HIGH/MEDIUM/LOW)
+-   Numbered file lists for easy reference
+-   Cross-service message bus analysis (Consumer → Producer tracing)
+-   Structured output with suggested starting points
 
 **Investigate Phase Features:**
-- External memory at `.ai/workspace/analysis/[feature]-investigation.md`
-- Knowledge Graph with detailed file analysis schema (15+ fields per file)
-- Batch processing with TodoWrite (groups of 10 files)
-- Progress tracking (Phase, Items Processed, Total Items)
-- Anti-hallucination checklist before claims
+
+-   External memory at `.ai/workspace/analysis/[feature]-investigation.md`
+-   Knowledge Graph with detailed file analysis schema (15+ fields per file)
+-   Batch processing with TodoWrite (groups of 10 files)
+-   Progress tracking (Phase, Items Processed, Total Items)
+-   Anti-hallucination checklist before claims
 
 **File Analysis Schema Fields:**
+
 ```
 filePath, type, architecturalPattern, content, symbols, dependencies,
 businessContext, referenceFiles, relevanceScore, evidenceLevel,
@@ -132,42 +139,67 @@ You MUST follow these steps for EVERY development request:
 
 1. **DETECT** - Analyze user prompt against workflow patterns
 2. **ANNOUNCE** - State the detected workflow: `"Detected: **{Workflow}** workflow. Following: {sequence}"`
-3. **CREATE TODO LIST (MANDATORY)** - Use todo tracking to create tasks for each workflow step:
-   ```
-   Example for Bug Fix workflow:
-   - [ ] Execute /scout - Find relevant files
-   - [ ] Execute /investigate - Build knowledge graph
-   - [ ] Execute /debug - Root cause analysis
-   - [ ] Execute /plan - Create fix plan
-   - [ ] Execute /fix - Implement fix
-   - [ ] Execute /code-review - Review changes
-   - [ ] Execute /test - Verify fix
-   ```
+3. **CREATE TODO LIST (MANDATORY)** - Use manage_todo_list tool to create tasks for each workflow step:
+    ```
+    Example for Bug Fix workflow:
+    - [ ] Execute /scout - Find relevant files
+    - [ ] Execute /investigate - Build knowledge graph
+    - [ ] Execute /debug - Root cause analysis
+    - [ ] Execute /plan - Create fix plan
+    - [ ] Execute /fix - Implement fix
+    - [ ] Execute /code-review - Review changes
+    - [ ] Execute /test - Verify fix
+    ```
 4. **CONFIRM** - For features/refactors, ask: `"Proceed with this workflow? (yes/no/quick)"`
-5. **EXECUTE** - Follow each step in sequence, marking todos as completed after each step
+5. **EXECUTE** - Follow each step in sequence with these requirements:
+    - Mark task as "in-progress" BEFORE starting
+    - Execute the step with evidence gathering
+    - Verify completion with concrete evidence (test output, file reads, error checks)
+    - Mark task as "completed" ONLY after verification
+    - NEVER batch todo completions - mark each immediately after verification
+
+### Evidence-Based Completion Checklist
+
+Before claiming ANY task complete, verify ALL of these:
+
+-   [ ] **Files Modified**: Re-read specific lines to confirm changes applied
+-   [ ] **Commands Run**: Captured and analyzed command output
+-   [ ] **Tests Passed**: Ran relevant tests and verified success
+-   [ ] **No Errors**: Checked get_errors tool shows no new issues
+-   [ ] **Filesystem Verified**: Used file_search/grep_search to confirm file existence/content
+-   [ ] **Pattern Followed**: Compared implementation against existing similar code
+
+**Anti-Hallucination Protocol:**
+
+-   NEVER say "file doesn't exist" without running file_search or grep_search first
+-   NEVER claim "tests pass" without showing test output
+-   NEVER claim "no errors" without running get_errors tool
+-   NEVER claim "changes applied" without re-reading the modified lines
+-   ALWAYS provide evidence (file path, line numbers, test output) when claiming completion
 
 ### Override Methods
 
-| Method | Example | Effect |
-|--------|---------|--------|
-| `quick:` prefix | `quick: add a button` | Skip workflow, direct handling |
-| Explicit command | `/plan implement dark mode` | Bypass detection, run command |
-| Say "quick" | When asked "Proceed?" | Abort workflow, handle directly |
+| Method           | Example                     | Effect                          |
+| ---------------- | --------------------------- | ------------------------------- |
+| `quick:` prefix  | `quick: add a button`       | Skip workflow, direct handling  |
+| Explicit command | `/plan implement dark mode` | Bypass detection, run command   |
+| Say "quick"      | When asked "Proceed?"       | Abort workflow, handle directly |
 
 ### Path-Based Skill Activation (MANDATORY)
 
 Before creating/modifying files in these paths, ALWAYS invoke the corresponding skill first:
 
-| Path Pattern | Skill | Pre-Read |
-|--------------|-------|----------|
-| `docs/business-features/**` | `/business-feature-docs` | `docs/templates/detailed-feature-docs-template.md` |
-| `docs/features/**` | `/feature-docs` | Existing sibling docs in same folder |
-| `src/**/*Command*.cs` | `/easyplatform-backend` | CQRS patterns |
-| `src/**/*.component.ts` | `/frontend-angular-component` | Base component patterns |
+| Path Pattern                | Skill                         | Pre-Read                                           |
+| --------------------------- | ----------------------------- | -------------------------------------------------- |
+| `docs/business-features/**` | `/business-feature-docs`      | `docs/templates/detailed-feature-docs-template.md` |
+| `docs/features/**`          | `/feature-docs`               | Existing sibling docs in same folder               |
+| `src/**/*Command*.cs`       | `/easyplatform-backend`       | CQRS patterns                                      |
+| `src/**/*.component.ts`     | `/frontend-angular-component` | Base component patterns                            |
 
 ### Business Feature Documentation (26 Sections Required)
 
 When creating/updating files in `docs/business-features/**`:
+
 1. **MUST** run `/business-feature-docs` skill first
 2. **MUST** read template: `docs/templates/detailed-feature-docs-template.md`
 3. **MUST** reference: `docs/features/README.ExampleFeature1.md`
@@ -179,29 +211,33 @@ When creating/updating files in `docs/business-features/**`:
 
 The workspace has two complementary tools for changelog management:
 
-| Tool | Purpose | When to Use | Command | Output |
-|------|---------|-------------|---------|--------|
+| Tool                 | Purpose                     | When to Use                     | Command                                                      | Output                      |
+| -------------------- | --------------------------- | ------------------------------- | ------------------------------------------------------------ | --------------------------- |
 | **changelog-update** | Manual CHANGELOG.md updates | During development (PR/feature) | GitHub Copilot Chat: "@workspace use changelog-update skill" | `CHANGELOG.md` [Unreleased] |
-| **release-notes** | Automated release notes | Release time (v1.x.x) | GitHub Copilot Chat: "@workspace use release-notes skill" | `docs/release-notes/*.md` |
+| **release-notes**    | Automated release notes     | Release time (v1.x.x)           | GitHub Copilot Chat: "@workspace use release-notes skill"    | `docs/release-notes/*.md`   |
 
 **Use changelog-update When:**
-- During development: Document feature/fix for users before PR/merge
-- PR preparation: Add business-focused entry to CHANGELOG.md
-- Manual documentation: When commits don't capture full business impact
+
+-   During development: Document feature/fix for users before PR/merge
+-   PR preparation: Add business-focused entry to CHANGELOG.md
+-   Manual documentation: When commits don't capture full business impact
 
 **Use release-notes When:**
-- At release time: Creating official release documentation
-- Automated release: Generating technical changelog from conventional commits
+
+-   At release time: Creating official release documentation
+-   Automated release: Generating technical changelog from conventional commits
 
 **Templates:**
-- Changelog template: `docs/templates/changelog-entry-template.md`
-- Keep a Changelog format: `.claude/skills/changelog-update/references/keep-a-changelog-format.md`
+
+-   Changelog template: `docs/templates/changelog-entry-template.md`
+-   Keep a Changelog format: `.claude/skills/changelog-update/references/keep-a-changelog-format.md`
 
 ### Example Interaction
 
 **User:** "Add a dark mode toggle to the settings page"
 
 **Copilot Response:**
+
 ```
 Detected: **Feature Implementation** workflow. Following: /plan → /cook → /test → /code-review → /docs-update → /watzup
 
@@ -210,7 +246,100 @@ Proceed with this workflow? (yes/no/quick)
 
 **User:** "yes"
 
-**Copilot:** *Reads and executes `.github/prompts/plan.prompt.md` first, then `cook.prompt.md`, then `test.prompt.md`, etc.*
+**Copilot:** _Reads and executes `.github/prompts/plan.prompt.md` first, then `cook.prompt.md`, then `test.prompt.md`, etc._
+
+## Context Gathering Strategy (MANDATORY)
+
+> **Research-Backed Pattern**: Studies show 85% first-attempt success when context is gathered systematically vs 40% with direct implementation.
+
+### Before ANY Implementation
+
+**Step 1: Search for Existing Patterns** (2-3 minutes)
+
+```typescript
+// Use semantic_search to find similar implementations
+1. Search for feature/pattern keywords: "user authentication", "payment processing"
+2. Read top 3-5 results to understand established patterns
+3. Note common approaches, naming conventions, architectural decisions
+```
+
+**Step 2: Identify Files to Modify** (1-2 minutes)
+
+```typescript
+// Use grep_search or file_search to locate relevant files
+1. Search for class/function/variable names related to task
+2. Use path patterns: "**/*Command*.cs", "**/*.component.ts"
+3. Create list of files to read/modify with priority (HIGH/MEDIUM/LOW)
+```
+
+**Step 3: Read Context in Parallel** (3-5 minutes)
+
+```typescript
+// Read multiple related files simultaneously
+1. Batch read_file calls for independent files (entity + DTO + command)
+2. Read entire methods/classes, not just snippets
+3. Understand data flow: Entity → Command → Handler → Event Handler
+```
+
+**Step 4: Verify Understanding** (1 minute)
+
+```typescript
+// Confirm patterns before implementation
+1. List discovered patterns in brief summary
+2. Identify which layer logic belongs (Entity > Service > Component)
+3. Note any platform abstractions to reuse
+```
+
+### When to Use Scout → Investigate Workflow
+
+Use this for **complex or unfamiliar features** requiring deep analysis:
+
+**Triggers**:
+
+-   User asks "how does [feature] work?"
+-   Refactoring code you haven't seen before
+-   Cross-service integration (message bus, multiple microservices)
+-   Performance optimization (need to understand data flow)
+-   Bug fix in unfamiliar codebase area
+
+**Benefits**:
+
+-   External memory preserves analysis (`.ai/workspace/analysis/`)
+-   Knowledge graph with 15+ fields per file
+-   Evidence-based findings (line numbers, code snippets)
+-   Prevents hallucination with verification checklist
+
+**Process**:
+
+1. Scout finds relevant files (priority-categorized)
+2. Investigate builds knowledge graph with detailed analysis
+3. Analysis saved to external memory for reference
+4. Proceed to Plan/Fix/Refactor with full context
+
+### Parallel Context Gathering Example
+
+```typescript
+// ✅ CORRECT: Read related files in parallel
+await Promise.all([
+    read_file('Employee.cs', 1, 200),
+    read_file('EmployeeDto.cs', 1, 100),
+    read_file('SaveEmployeeCommand.cs', 1, 150),
+    read_file('EmployeeRepository.cs', 1, 100)
+]);
+
+// ❌ WRONG: Sequential reads waste time
+await read_file('Employee.cs', 1, 200);
+await read_file('EmployeeDto.cs', 1, 100); // Should be parallel
+await read_file('SaveEmployeeCommand.cs', 1, 150);
+```
+
+### Context Gathering Anti-Patterns
+
+❌ **Skip Research** - Implement without checking existing patterns → Code duplication
+❌ **Assume Structure** - Guess file locations without searching → Wrong assumptions
+❌ **Partial Reading** - Read only snippets, miss critical context → Incomplete understanding
+❌ **Sequential Reads** - Read files one-by-one when independent → Wastes time
+❌ **No Verification** - Proceed without confirming understanding → Wrong approach
 
 ## Architecture Overview
 
@@ -245,16 +374,16 @@ docs/design-system/        # Frontend design system documentation
 
 **Universal Skills (`.github/skills/`):**
 
-| Skill | Purpose |
-|-------|---------|
-| `debugging` | Systematic 4-phase debugging framework with root cause tracing |
-| `frontend-design` | Production-grade UI with design extraction from screenshots |
-| `backend-development` | Node.js/Python/Go/Rust APIs, OWASP security, testing |
-| `devops` | Cloudflare Workers, Docker, GCP deployment |
-| `databases` | MongoDB and PostgreSQL unified guide |
-| `mcp-builder` | Build MCP servers for LLM integrations |
-| `context-optimization` | Token management and context compression |
-| `media-processing` | FFmpeg, ImageMagick, background removal |
+| Skill                  | Purpose                                                        |
+| ---------------------- | -------------------------------------------------------------- |
+| `debugging`            | Systematic 4-phase debugging framework with root cause tracing |
+| `frontend-design`      | Production-grade UI with design extraction from screenshots    |
+| `backend-development`  | Node.js/Python/Go/Rust APIs, OWASP security, testing           |
+| `devops`               | Cloudflare Workers, Docker, GCP deployment                     |
+| `databases`            | MongoDB and PostgreSQL unified guide                           |
+| `mcp-builder`          | Build MCP servers for LLM integrations                         |
+| `context-optimization` | Token management and context compression                       |
+| `media-processing`     | FFmpeg, ImageMagick, background removal                        |
 
 ## Memory Bank (Persistent Context)
 
@@ -304,33 +433,140 @@ Example: When you ask me to "add a CQRS command to save employee data", I:
 
 See `.github/instructions/` for path-specific detailed patterns:
 
-| Topic                 | Instruction File                        | Applies To             |
-| --------------------- | --------------------------------------- | ---------------------- |
-| .NET Backend          | `backend-dotnet.instructions.md`        | `src/PlatformExampleApp/**/*.cs` |
-| Angular Frontend      | `frontend-angular.instructions.md`      | `src/PlatformExampleAppWeb/**/*.ts`    |
-| CQRS Patterns         | `cqrs-patterns.instructions.md`         | Commands/Queries       |
-| Validation            | `validation.instructions.md`            | All validation logic   |
-| Entity Development    | `entity-development.instructions.md`    | Domain entities        |
-| Entity Events         | `entity-events.instructions.md`         | Side effects           |
-| Repository            | `repository.instructions.md`            | Data access            |
-| Message Bus           | `message-bus.instructions.md`           | Cross-service sync     |
-| Background Jobs       | `background-jobs.instructions.md`       | Scheduled tasks        |
-| Migrations            | `migrations.instructions.md`            | Data/schema migrations |
-| Performance           | `performance.instructions.md`           | Optimization           |
-| Security              | `security.instructions.md`              | Auth, permissions      |
-| Testing               | `testing.instructions.md`               | Test patterns          |
-| Clean Code            | `clean-code.instructions.md`            | All code               |
-| Bug Investigation     | `bug-investigation.instructions.md`     | Debugging              |
-| Feature Investigation | `feature-investigation.instructions.md` | Code exploration       |
+| Topic                 | Instruction File                        | Applies To                          |
+| --------------------- | --------------------------------------- | ----------------------------------- |
+| .NET Backend          | `backend-dotnet.instructions.md`        | `src/PlatformExampleApp/**/*.cs`    |
+| Angular Frontend      | `frontend-angular.instructions.md`      | `src/PlatformExampleAppWeb/**/*.ts` |
+| CQRS Patterns         | `cqrs-patterns.instructions.md`         | Commands/Queries                    |
+| Validation            | `validation.instructions.md`            | All validation logic                |
+| Entity Development    | `entity-development.instructions.md`    | Domain entities                     |
+| Entity Events         | `entity-events.instructions.md`         | Side effects                        |
+| Repository            | `repository.instructions.md`            | Data access                         |
+| Message Bus           | `message-bus.instructions.md`           | Cross-service sync                  |
+| Background Jobs       | `background-jobs.instructions.md`       | Scheduled tasks                     |
+| Migrations            | `migrations.instructions.md`            | Data/schema migrations              |
+| Performance           | `performance.instructions.md`           | Optimization                        |
+| Security              | `security.instructions.md`              | Auth, permissions                   |
+| Testing               | `testing.instructions.md`               | Test patterns                       |
+| Clean Code            | `clean-code.instructions.md`            | All code                            |
+| Bug Investigation     | `bug-investigation.instructions.md`     | Debugging                           |
+| Feature Investigation | `feature-investigation.instructions.md` | Code exploration                    |
 
 ## Frontend Design System
 
 **Read design system docs before UI work:**
 
-| Application         | Location                                         |
-| ------------------- | ------------------------------------------------ |
-| WebV2 Apps          | `docs/design-system/`                            |
-| TextSnippetClient   | `src/PlatformExampleAppWeb/apps/playground-text-snippet/docs/design-system/` |
+| Application       | Location                                                                     |
+| ----------------- | ---------------------------------------------------------------------------- |
+| WebV2 Apps        | `docs/design-system/`                                                        |
+| TextSnippetClient | `src/PlatformExampleAppWeb/apps/playground-text-snippet/docs/design-system/` |
+
+## Task Decomposition Best Practices
+
+> **Research Finding**: Breaking complex tasks into 5-10 small todos increases completion rate by 67% and reduces context loss in long sessions.
+
+### When to Create Todo Lists
+
+**ALWAYS create todos for**:
+
+-   Features requiring changes in 3+ files
+-   Bug fixes needing investigation → plan → fix → test
+-   Refactoring affecting multiple layers
+-   Any task estimated >15 minutes
+-   Multi-step workflows (feature, bugfix, documentation)
+
+**SKIP todos for**:
+
+-   Single-file edits <5 lines
+-   Simple questions/explanations
+-   Reading files for information
+
+### Todo Granularity Guidelines
+
+**✅ Good Todo Size** (actionable, verifiable):
+
+```
+- [ ] Read Employee entity to understand validation rules
+- [ ] Create SaveEmployeeCommand in UseCaseCommands/Employee/
+- [ ] Implement command handler with repository call
+- [ ] Add EmployeeCreatedEvent handler for notification
+- [ ] Write unit tests for SaveEmployeeCommand validation
+- [ ] Run tests and verify all pass
+```
+
+**❌ Too Vague** (not actionable):
+
+```
+- [ ] Implement employee feature
+- [ ] Fix bugs
+- [ ] Update documentation
+```
+
+**❌ Too Granular** (micro-management):
+
+```
+- [ ] Open Employee.cs
+- [ ] Add using statement
+- [ ] Type public class
+- [ ] Add property Name
+```
+
+### Todo State Management
+
+**Use manage_todo_list tool with proper state transitions**:
+
+1. **Planning Phase**: Create all todos with status="not-started"
+2. **Execution Phase**:
+    - Mark ONE todo as "in-progress" before starting
+    - Complete the work
+    - Mark as "completed" immediately after verification
+    - Move to next todo
+3. **Never batch completions** - mark each done individually
+
+### Todo Template for Common Tasks
+
+**Feature Implementation**:
+
+```markdown
+-   [ ] Scout - Find similar implementations (semantic_search)
+-   [ ] Investigate - Read related files in parallel
+-   [ ] Plan - Design approach with file-level changes
+-   [ ] Implement Entity - Domain layer changes
+-   [ ] Implement Command - Application layer CQRS
+-   [ ] Implement DTO - Mapping logic
+-   [ ] Implement Event Handler - Side effects
+-   [ ] Implement API - Controller endpoint
+-   [ ] Implement Frontend - Component + service
+-   [ ] Write Tests - Unit + integration
+-   [ ] Run Tests - Verify all pass
+-   [ ] Code Review - Check against patterns
+-   [ ] Update Docs - README or feature docs
+```
+
+**Bug Fix**:
+
+```markdown
+-   [ ] Scout - Find files related to bug
+-   [ ] Investigate - Build knowledge graph
+-   [ ] Debug - Root cause analysis with evidence
+-   [ ] Plan - Design fix approach
+-   [ ] Implement Fix - Apply changes
+-   [ ] Verify Fix - Reproduce bug scenario
+-   [ ] Run Tests - Ensure no regressions
+-   [ ] Code Review - Check for side effects
+```
+
+**Refactoring**:
+
+```markdown
+-   [ ] Scout - Find all usages of code to refactor
+-   [ ] Plan - Design new structure
+-   [ ] Identify Breaking Changes - List affected code
+-   [ ] Refactor Core - Make structural changes
+-   [ ] Update Usages - Fix all references
+-   [ ] Run Tests - Verify behavior unchanged
+-   [ ] Performance Check - Compare before/after
+```
 
 ## Quick Decision Trees
 
@@ -473,10 +709,10 @@ public static Expression<Func<Entity, object?>>[] DefaultFullTextSearchColumns()
 
 **Two collection patterns supported:**
 
-| Pattern | Use Case | Attribute |
-|---------|----------|-----------|
-| **FK List** | Parent has `List<Id>` | `ForeignKeyProperty` + `Cardinality = Collection` |
-| **Reverse Navigation** | Child has FK to parent | `ReverseForeignKeyProperty` |
+| Pattern                | Use Case               | Attribute                                         |
+| ---------------------- | ---------------------- | ------------------------------------------------- |
+| **FK List**            | Parent has `List<Id>`  | `ForeignKeyProperty` + `Cardinality = Collection` |
+| **Reverse Navigation** | Child has FK to parent | `ReverseForeignKeyProperty`                       |
 
 ```csharp
 // Entity definition with both patterns
@@ -1274,15 +1510,15 @@ When multiple processes/hooks may access the same file:
 ```javascript
 // Pattern: Lock before load, unlock after save
 function updateState(updater) {
-  if (!acquireLock()) return null;
-  try {
-    const state = loadState();
-    const newState = updater(state);
-    saveState(newState);
-    return newState;
-  } finally {
-    releaseLock();
-  }
+    if (!acquireLock()) return null;
+    try {
+        const state = loadState();
+        const newState = updater(state);
+        saveState(newState);
+        return newState;
+    } finally {
+        releaseLock();
+    }
 }
 ```
 
@@ -1297,9 +1533,9 @@ Never write directly to final destination:
 ```javascript
 // Pattern: Temp file then rename
 function atomicWriteJSON(path, data) {
-  const tmp = path + '.tmp';
-  fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
-  fs.renameSync(tmp, path); // Atomic
+    const tmp = path + '.tmp';
+    fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
+    fs.renameSync(tmp, path); // Atomic
 }
 ```
 
@@ -1315,10 +1551,10 @@ Always validate data before every write:
 ```javascript
 // Pattern: Validate in factory
 function createEntity(input) {
-  const entity = { ...defaults, ...input };
-  const errors = validate(entity);
-  if (errors.length) throw new Error(`Invalid: ${errors.join(', ')}`);
-  return entity;
+    const entity = { ...defaults, ...input };
+    const errors = validate(entity);
+    if (errors.length) throw new Error(`Invalid: ${errors.join(', ')}`);
+    return entity;
 }
 ```
 
@@ -1333,13 +1569,14 @@ function createEntity(input) {
 Any function that loads shared state, modifies it, and saves must use a lock to prevent race conditions.
 
 **Pattern:**
+
 ```javascript
 function modifySharedState(input) {
-  return withLock(() => {
-    const data = loadData();
-    // modify data
-    saveData(data);
-  });
+    return withLock(() => {
+        const data = loadData();
+        // modify data
+        saveData(data);
+    });
 }
 ```
 
@@ -1350,6 +1587,7 @@ function modifySharedState(input) {
 Never claim "file doesn't exist" without running glob/ls first. False positives waste time and create confusion.
 
 **Protocol:**
+
 1. Run `glob pattern` or `ls path` to verify
 2. State findings with evidence: "Verified via glob: X files found"
 
@@ -1361,7 +1599,7 @@ After claiming code is fixed, always re-read the specific lines to verify the fi
 
 **Real Example:** Phase 1 claimed issues were "fixed" but code review showed bugs still present. Always verify.
 
-*Last updated: 2026-01-11*
+_Last updated: 2026-01-11_
 
 <!-- ACE-LEARNED-PATTERNS-START -->
 
@@ -1372,8 +1610,8 @@ After claiming code is fixed, always re-read the specific lines to verify the fi
 
 ### High Confidence (90%+)
 
-- **When using /cook skill**: cook skill execution pattern showing reliable success → Continue using this skill pattern (100% success rate observed) [100%]
+-   **When using /cook skill**: cook skill execution pattern showing reliable success → Continue using this skill pattern (100% success rate observed) [100%]
 
-*Last synced: 2026-01-11*
+_Last synced: 2026-01-11_
 
 <!-- ACE-LEARNED-PATTERNS-END -->

@@ -1,58 +1,124 @@
 ---
 agent: agent
-description: Self-review implementation plan for validity, correctness, and best practices before coding begins
+description: Auto-review plan for validity, correctness, and best practices before implementation. Use after /plan to validate before coding.
 ---
 
-# Plan Review
+# Plan Self-Review
 
-Critically review the implementation plan to ensure quality before coding begins.
+Perform automatic self-review of an implementation plan to ensure it's valid, correct, follows best practices, and identify anything needing fixes before proceeding.
 
 ## Task
 
 $input
 
-## Review Checklist
+## Key Distinction
 
-1. **Structure** - Plan has proper frontmatter, phases numbered and linked?
-2. **Logic** - Dependencies mapped, risk assessment present?
-3. **Patterns** - Uses platform patterns, files in correct locations?
-4. **Completeness** - Success criteria defined, edge cases covered?
-5. **Best Practices** - Follows YAGNI/KISS/DRY, no over-engineering?
+This is **AI self-review** (automatic analysis), NOT user interview. For user validation with questions, use `/plan:validate` instead.
 
-## Review Process
+## Plan Resolution
 
-1. Read plan.md and all phase files in the plan directory
-2. Evaluate each checklist item
-3. Identify issues with specific fixes
-4. Output approval or list revision requirements
+1. If task input provides path -> Use that path
+2. Else check workspace for recent plan files in `./plans/`
+3. If no plan found -> Error: "No plan to review. Run /plan first."
 
-## Output Format
+## Review Workflow
 
-**Approved:**
+### Step 1: Read Plan Files
+
+Read the plan directory:
+
+-   `plan.md` - Overview, phases list, frontmatter
+-   `phase-*.md` - All phase files
+-   Extract: requirements, implementation steps, file listings, risks
+
+### Step 2: Evaluate Against Checklist
+
+#### Validity (Required - all must pass)
+
+-   [ ] Has executive summary (clear 1-2 sentence description)
+-   [ ] Has defined requirements section
+-   [ ] Has implementation steps (actionable tasks)
+-   [ ] Has files to create/modify listing
+
+#### Correctness (Required - all must pass)
+
+-   [ ] Steps are specific and actionable (not vague)
+-   [ ] File paths follow project patterns
+-   [ ] No conflicting or duplicate steps
+-   [ ] Dependencies between steps are clear
+
+#### Best Practices (Required - all must pass)
+
+-   [ ] YAGNI: No unnecessary features or over-engineering
+-   [ ] KISS: Simplest viable solution chosen
+-   [ ] DRY: No planned duplication of logic
+-   [ ] Architecture: Follows project patterns from `docs/claude/`
+
+#### Completeness (Recommended - ≥50% should pass)
+
+-   [ ] Risk assessment present with mitigations
+-   [ ] Testing strategy defined
+-   [ ] Success criteria per phase
+-   [ ] Security considerations addressed
+
+### Step 3: Score and Classify
+
+| Status   | Criteria                            | Action                            |
+| -------- | ----------------------------------- | --------------------------------- |
+| **PASS** | All Required pass, ≥50% Recommended | Proceed to implementation         |
+| **WARN** | All Required pass, <50% Recommended | Proceed with caution, note gaps   |
+| **FAIL** | Any Required check fails            | STOP - must fix before proceeding |
+
+### Step 4: Output Result
+
+```markdown
+## Plan Review Result
+
+**Status:** PASS | WARN | FAIL
+**Reviewed:** {plan-path}
+**Date:** {current-date}
+
+### Summary
+
+{1-2 sentence summary of plan quality}
+
+### Checks Passed ({X}/{Y})
+
+#### Required ({X}/{Y})
+
+-   ✅ Check 1
+-   ✅ Check 2
+-   ❌ Check 3 (if failed)
+
+#### Recommended ({X}/{Y})
+
+-   ✅ Check 1
+-   ⚠️ Check 2 (missing)
+
+### Issues Found
+
+-   ❌ FAIL: {critical issue requiring fix}
+-   ⚠️ WARN: {minor issue, can proceed}
+
+### Recommendations
+
+1. {specific fix 1}
+2. {specific fix 2}
+
+### Verdict
+
+{PROCEED | REVISE_FIRST | BLOCKED}
 ```
-✅ Plan Review: APPROVED
-- Structure: Valid
-- Logic: Sound
-- Patterns: Compliant
-- Completeness: Adequate
 
-Proceeding to implementation...
-```
+## Next Steps
 
-**Needs Revision:**
-```
-⚠️ Plan Review: NEEDS REVISION
+-   **If PASS**: Announce "Plan review complete. Proceeding with next workflow step."
+-   **If WARN**: Announce "Plan review complete with warnings. Proceeding - consider addressing gaps."
+-   **If FAIL**: List specific issues. Do NOT proceed. Ask user to fix or regenerate plan.
 
-Issues:
-1. [Issue] → [Fix]
-2. [Issue] → [Fix]
+## Important Notes
 
-Update plan before proceeding.
-```
-
-## Guidelines
-
-- Focus on major issues impacting implementation
-- Provide actionable fix suggestions
-- Approve quickly if plan is solid
-- Don't nitpick minor formatting
+-   Be constructive, not pedantic - focus on issues that would cause implementation problems
+-   WARN is acceptable for missing optional sections
+-   FAIL only for genuinely missing required content
+-   If plan is simple and valid, quick review is fine
