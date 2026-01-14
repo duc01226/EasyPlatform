@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
 using Easy.Platform.Common.Exceptions.Extensions;
@@ -133,16 +134,21 @@ public static class PlatformNavigationLoader
 
         if (!ctx.ShouldLoad(entity, meta.MaxDepth)) return;
 
-        if (meta.ForeignKeyProperty.GetValue(entity) is not IEnumerable<TKey> fkValues || !fkValues.Any())
+        var fkValues = meta.ForeignKeyProperty.GetValue(entity) is IEnumerable<TKey> enumValues ? enumValues.ToList() : [];
+
+        if (!fkValues.Any())
         {
             meta.NavigationProperty.SetValue(entity, new List<TNav>());
             return;
         }
 
-        var repo = resolver.Resolve<TNav, TKey>();
-        var related = await repo.GetByIdsAsync(fkValues.ToList(), ct);
+        // Preserve original FK order: fetch → dict → reorder by FK list
+        var orderedResult = await resolver.Resolve<TNav, TKey>()
+            .GetByIdsAsync(fkValues, ct)
+            .Then(items => items.ToDictionary(e => e.Id))
+            .Then(dict => fkValues.Where(dict.ContainsKey).Select(id => dict[id]).ToList());
 
-        meta.NavigationProperty.SetValue(entity, related); // Always overwrite
+        meta.NavigationProperty.SetValue(entity, orderedResult);
     }
 
     private static NavigationMetadata GetMetadata<TEntity>(LambdaExpression selector)

@@ -1,6 +1,14 @@
 /* Platform Loading Error Indicator Component Styles (WebV2) */
 /* Modern Signal-based loading and error indicator with Material Design styling */
 
+platform-loading-error-indicator {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    align-self: stretch;
+    position: relative;
+}
+
 .platform-loading-error-indicator {
     display: flex;
     flex-direction: column;
