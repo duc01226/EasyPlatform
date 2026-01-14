@@ -10,6 +10,7 @@ using Easy.Platform.MongoDB.Helpers;
 using Easy.Platform.MongoDB.Mapping;
 using Easy.Platform.MongoDB.Migration;
 using Easy.Platform.MongoDB.Serializer.Abstract;
+using Easy.Platform.MongoDB.Serializer.Providers;
 using Easy.Platform.MongoDB.Services;
 using Easy.Platform.Persistence;
 using Easy.Platform.Persistence.DataMigration;
@@ -38,6 +39,14 @@ public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContex
         IConfiguration configuration) : base(serviceProvider, configuration)
     {
     }
+
+    /// <summary>
+    /// Gets a value indicating whether hybrid enum serialization is supported by this implementation.
+    /// </summary>
+    /// <remarks>Hybrid enum serialization allows enums to be serialized using both their numeric and string
+    /// representations, improving compatibility across different consumers. Override this property in derived classes
+    /// to enable hybrid serialization if supported.</remarks>
+    public virtual bool SupportHybridEnumSerialization => false;
 
     public override Action<TracerProviderBuilder> AdditionalTracingSetup =>
         builder => builder.AddSource(typeof(DiagnosticsActivityEventSubscriber).Assembly.GetName().Name!);
@@ -139,6 +148,9 @@ public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContex
                     PlatformMongoDbPersistenceModuleCache.RegisteredSerializerTypes.Add(serializerHandleValueType);
                 }
             });
+
+        if (SupportHybridEnumSerialization)
+            BsonSerializer.RegisterSerializationProvider(new PlatformHybridEnumSerializationProvider());
     }
 
     protected override void RegisterInboxEventBusMessageRepository(IServiceCollection serviceCollection)
