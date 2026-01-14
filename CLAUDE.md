@@ -451,6 +451,69 @@ employees = signal([]);
 
 ---
 
+## Changelog & Release Notes
+
+### When to Use changelog-update vs release-notes
+
+The workspace has two complementary tools for changelog management:
+
+| Aspect | changelog-update (Manual) | release-notes (Automated) |
+|--------|--------------------------|---------------------------|
+| **Purpose** | Manual CHANGELOG.md updates | Automated release notes |
+| **Input** | Manual file review | Conventional commits |
+| **Output** | `CHANGELOG.md` [Unreleased] | `docs/release-notes/*.md` |
+| **Audience** | Business + Technical | Technical (commit-based) |
+| **When** | During development (PR/feature) | Release time (v1.x.x) |
+| **Automation** | Semi-manual with temp notes | Fully automated |
+| **Invocation** | `/changelog-update` | `/release-notes` |
+
+### Use changelog-update When
+
+- **During development**: Document feature/fix for users before PR/merge
+- **PR preparation**: Add business-focused entry to CHANGELOG.md
+- **Manual documentation**: When commits don't capture full business impact
+- **User-facing changes**: Need to explain business value, not just technical changes
+
+**Command**: `/changelog-update`
+
+**Output**: Updates `CHANGELOG.md` [Unreleased] section with business descriptions
+
+### Use release-notes When
+
+- **At release time**: Creating official release documentation
+- **Automated release**: Generating technical changelog from conventional commits
+- **Version announcements**: Publishing versioned release notes
+- **Commit-based tracking**: Auto-categorizing feat, fix, perf, docs changes
+
+**Command**: `/release-notes v1.0.0 HEAD --version v1.1.0`
+
+**Output**: Creates `docs/release-notes/YYMMDD-v1.1.0.md` with commit-based entries
+
+### Complementary Usage Pattern
+
+```
+Development Phase:
+├─ Work on feature/fix
+├─ Commit with conventional commits (feat:, fix:, etc.)
+└─ Before PR: Use /changelog-update → Updates CHANGELOG.md [Unreleased]
+                                       (manual, business-focused)
+
+Release Phase:
+├─ Use /release-notes → Generates docs/release-notes/v1.x.x.md
+│                       (automated, commit-based, technical)
+├─ Move CHANGELOG.md [Unreleased] → Versioned section
+└─ Both documents coexist: CHANGELOG.md (business) + release-notes/*.md (technical)
+```
+
+### Templates & References
+
+- Changelog template: [`docs/templates/changelog-entry-template.md`](docs/templates/changelog-entry-template.md)
+- Keep a Changelog format: [`.claude/skills/changelog-update/references/keep-a-changelog-format.md`](.claude/skills/changelog-update/references/keep-a-changelog-format.md)
+- Changelog skill: [`.claude/skills/changelog-update/SKILL.md`](.claude/skills/changelog-update/SKILL.md)
+- Release notes skill: [`.claude/skills/release-notes/SKILL.md`](.claude/skills/release-notes/SKILL.md)
+
+---
+
 ## AI Agent Guidelines
 
 ### Success Factors

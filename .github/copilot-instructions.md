@@ -175,6 +175,28 @@ When creating/updating files in `docs/business-features/**`:
 5. **MUST** include Quick Navigation table with Audience column
 6. **MUST** use TC-{MOD}-XXX format for test cases with GIVEN/WHEN/THEN
 
+### Changelog & Release Notes (IMPORTANT)
+
+The workspace has two complementary tools for changelog management:
+
+| Tool | Purpose | When to Use | Command | Output |
+|------|---------|-------------|---------|--------|
+| **changelog-update** | Manual CHANGELOG.md updates | During development (PR/feature) | GitHub Copilot Chat: "@workspace use changelog-update skill" | `CHANGELOG.md` [Unreleased] |
+| **release-notes** | Automated release notes | Release time (v1.x.x) | GitHub Copilot Chat: "@workspace use release-notes skill" | `docs/release-notes/*.md` |
+
+**Use changelog-update When:**
+- During development: Document feature/fix for users before PR/merge
+- PR preparation: Add business-focused entry to CHANGELOG.md
+- Manual documentation: When commits don't capture full business impact
+
+**Use release-notes When:**
+- At release time: Creating official release documentation
+- Automated release: Generating technical changelog from conventional commits
+
+**Templates:**
+- Changelog template: `docs/templates/changelog-entry-template.md`
+- Keep a Changelog format: `.claude/skills/changelog-update/references/keep-a-changelog-format.md`
+
 ### Example Interaction
 
 **User:** "Add a dark mode toggle to the settings page"
