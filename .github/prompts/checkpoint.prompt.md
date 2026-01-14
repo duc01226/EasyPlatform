@@ -1,103 +1,156 @@
----
-description: "Save memory checkpoint to preserve analysis context"
----
+# Save Memory Checkpoint
 
-# Memory Checkpoint
+Save current analysis, findings, and progress to an external memory file to prevent context loss during long-running tasks.
 
-Save current analysis, findings, and progress to prevent context loss during long-running tasks.
+## Usage
 
-## When to Use
-
-- Working on complex multi-step tasks
-- Before expected context limits
+Use this command when:
+- Working on complex multi-step tasks (investigation, planning, implementation)
+- Before expected context compaction
 - At key milestones during feature development
 - After completing significant analysis phases
 
-## Checkpoint Location
+## Checkpoint File Location
 
-Files saved to: `plans/reports/checkpoint-{YYMMDD-HHMM}-{slug}.md`
+Files are saved to: `plans/reports/checkpoint-{timestamp}-{slug}.md`
 
-## Workflow
+## Instructions
 
-### Step 1: Gather Context
+**Create a checkpoint file with the following structure:**
+
+### Step 1: Determine Checkpoint Location
+
+```bash
+# Get current date for filename
+date +%y%m%d-%H%M
+```
+
+### Step 2: Gather Context
 
 Collect and document:
-- Current task and objective
-- Key findings and discoveries
-- Files analyzed and modified
-- Progress (completed vs remaining)
-- Important decisions and rationale
-- Next steps
 
-### Step 2: Create Checkpoint File
+1. **Current Task** - What are you working on?
+2. **Key Findings** - What have you discovered?
+3. **Files Analyzed** - Which files have been read/modified?
+4. **Progress Summary** - What's completed vs remaining?
+5. **Important Context** - Critical information to preserve
+6. **Next Steps** - What should be done next?
+7. **Open Questions** - Unresolved issues
+
+### Step 3: Write Checkpoint File
+
+Create a markdown file at `plans/reports/checkpoint-YYMMDD-HHMM-{task-slug}.md` with:
 
 ```markdown
 # Memory Checkpoint: [Task Description]
 
+> Checkpoint created to preserve analysis context during [task type].
+
 ## Session Info
+
 - **Created:** [timestamp]
 - **Task:** [description]
 - **Branch:** [git branch]
 - **Phase:** [current phase]
 
 ## Current Task Summary
+
 [Brief description of what you're working on]
 
 ## Key Findings
+
+### Analysis Results
 - [Finding 1]
 - [Finding 2]
+- [Finding N]
+
+### Patterns Discovered
+- [Pattern 1]
+- [Pattern 2]
+
+### Dependencies Identified
+- [Dependency 1]
+- [Dependency 2]
 
 ## Files Context
 
 ### Analyzed Files
 | File | Purpose | Relevance |
 |------|---------|-----------|
-| path/to/file | [purpose] | High/Medium/Low |
+| path/to/file.cs | [purpose] | High/Medium/Low |
 
 ### Modified Files
-- `path/to/file` - [change description]
+- `path/to/modified.ts` - [change description]
+
+### Pending Files
+- `path/to/pending.cs` - [why pending]
 
 ## Progress Summary
 
 ### Completed
-- [x] [Item 1]
+- [x] [Completed item 1]
+- [x] [Completed item 2]
 
 ### In Progress
 - [ ] [Current item]
 
 ### Remaining
-- [ ] [Item 1]
+- [ ] [Remaining item 1]
+- [ ] [Remaining item 2]
 
 ## Important Context
 
-### Decisions Made
-- [Decision] - [rationale]
+### Critical Information
+[Information that must not be lost]
 
-### Assumptions
+### Assumptions Made
 - [Assumption 1]
+- [Assumption 2]
+
+### Decisions Made
+- [Decision 1] - [rationale]
+- [Decision 2] - [rationale]
 
 ## Next Steps
-1. [Immediate action]
+
+1. [Immediate next action]
 2. [Following action]
+3. [Subsequent action]
 
 ## Open Questions
+
 - [ ] [Question 1]
+- [ ] [Question 2]
 
 ## Recovery Instructions
-To resume after context reset:
+
+To resume this task after context reset:
 1. Read this checkpoint file
-2. Review [specific files]
+2. Review [specific files] for context
 3. Continue from [specific point]
+
+---
+
+*Checkpoint saved by Claude Code at [timestamp]*
+```
+
+### Step 4: Update Todo List
+
+Update your todo list to reflect checkpoint was created:
+```
+- [x] Create memory checkpoint at [timestamp]
 ```
 
 ## Best Practices
 
-- Save checkpoints frequently (every 30-60 min)
-- Be specific with file paths and line numbers
-- Document WHY decisions were made
-- Include recovery steps for easy resumption
+1. **Save checkpoints frequently** - Every 30-60 minutes during complex tasks
+2. **Be specific** - Include file paths, line numbers, exact findings
+3. **Document decisions** - Record why choices were made
+4. **Link related files** - Reference other analysis documents
+5. **Include recovery steps** - Make resumption easy
 
-## Related
+## Related Commands
 
-- `/compact` - Compress conversation context
+- `/context` - Load project context
+- `/compact` - Manually trigger context compaction
 - `/watzup` - Generate progress summary

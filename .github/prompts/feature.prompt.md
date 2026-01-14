@@ -1,95 +1,62 @@
----
-agent: 'agent'
-description: 'Implement a new feature following EasyPlatform development workflow'
-tools: ['read', 'edit', 'search', 'execute']
----
+# Implement Feature: $ARGUMENTS
 
-# Implement New Feature
+Implement a new feature following EasyPlatform development workflow.
 
-Implement a new feature following the EasyPlatform development workflow.
+## Phase 1: Understanding
 
-## Feature
-${input:feature}
+1. **Parse feature requirements** from: $ARGUMENTS
+2. **Identify affected services:**
+   - TextSnippet (Example)
+   - TextSnippet (Example)
+   - TextSnippet (Example)
+   - TextSnippet (Example)
 
-## Workflow
-
-### Phase 1: Understanding
-
-1. **Parse Requirements**
-   - Extract functional requirements
-   - Identify non-functional requirements (performance, security)
-   - Note constraints and dependencies
-
-2. **Search Existing Patterns**
-   - Look for similar features in codebase
+3. **Search for similar implementations:**
+   - Find existing patterns in the codebase
    - Identify reusable components
-   - Check platform patterns in `docs/claude/`
 
-### Phase 2: Design
+## Phase 2: Design
 
-1. **Backend Design**
-   - Entity structure (Domain layer)
-   - Commands/Queries (Application layer)
-   - Repository extensions if needed
-   - Event handlers for side effects
+1. **Plan the implementation:**
+   - Backend: Domain entities, Commands/Queries, Event handlers
+   - Frontend: Components, Stores, API services
+   - Database: Migrations if needed
 
-2. **Frontend Design**
-   - Component hierarchy
-   - State management approach
-   - API service methods
-   - Form validation
+2. **Identify file locations:**
+   ```
+   Backend:
+   - src/PlatformExampleApp/{Service}/{Service}.Domain/Entities/
+   - src/PlatformExampleApp/{Service}/{Service}.Application/UseCaseCommands/
+   - src/PlatformExampleApp/{Service}/{Service}.Application/UseCaseQueries/
+   - src/PlatformExampleApp/{Service}/{Service}.Application/UseCaseEvents/
 
-### Phase 3: Implementation
+   Frontend (WebV2):
+   - src/PlatformExampleAppWeb/apps/{app}/src/app/features/
+   - src/PlatformExampleAppWeb/libs/apps-domains/src/{domain}/
+   ```
 
-**Backend First:**
-1. Create/update Entity in `Domain/Entities/`
-2. Create Command in `UseCaseCommands/{Feature}/`
-3. Create Query in `UseCaseQueries/{Feature}/`
-4. Add event handlers in `UseCaseEvents/` if needed
-5. Create DTOs with mapping logic
-6. Add controller endpoints
+## Phase 3: Create Implementation Plan
 
-**Frontend Next:**
-1. Create API service methods
-2. Create store/state management
-3. Create components (list, detail, form)
-4. Add routing
-5. Create unit tests
+Present a detailed plan with:
+- List of files to create/modify
+- Order of implementation
+- Dependencies between components
+- Test strategy
 
-### Phase 4: Testing
+## Phase 4: Wait for Approval
 
-1. **Backend Tests**
-   - Command handler tests
-   - Query handler tests
-   - Validation tests
+**CRITICAL:** Wait for explicit user approval before writing any code.
 
-2. **Frontend Tests**
-   - Component tests
-   - Service tests
-   - Store tests
+## Phase 5: Implementation
 
-### Phase 5: Review & Finalize
+After approval:
+1. Create entities/DTOs
+2. Create Commands/Queries with handlers
+3. Create event handlers for side effects
+4. Create frontend components
+5. Add tests
 
-1. **Code Review Checklist**
-   - [ ] Follows architecture layers
-   - [ ] Uses platform patterns
-   - [ ] Has proper validation
-   - [ ] No security issues
-   - [ ] Tests are comprehensive
-
-2. **Documentation**
-   - Update API documentation if needed
-   - Add inline comments for complex logic
-
-## Files to Create/Modify Template
-
-| Layer | File Pattern | Purpose |
-|-------|--------------|---------|
-| Entity | `Domain/Entities/{Feature}.cs` | Business entity |
-| Command | `UseCaseCommands/{Feature}/Save{Feature}Command.cs` | Create/Update |
-| Query | `UseCaseQueries/{Feature}/Get{Feature}ListQuery.cs` | List retrieval |
-| DTO | `Dtos/{Feature}Dto.cs` | Data transfer |
-| API | `libs/apps-domains/src/lib/{feature}/{feature}-api.service.ts` | Frontend API |
-| Component | `libs/apps-domains/src/lib/{feature}/{feature}-list.component.ts` | UI |
-
-**IMPORTANT**: Wait for user approval at each major phase before proceeding.
+Use appropriate skills:
+- `backend-cqrs-command` for commands
+- `backend-cqrs-query` for queries
+- `frontend-angular-component` for UI

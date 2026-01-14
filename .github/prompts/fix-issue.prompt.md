@@ -1,105 +1,164 @@
----
-agent: 'agent'
-description: 'Fix a GitHub issue following systematic debugging workflow'
-tools: ['read', 'edit', 'search', 'execute']
----
+# Fix GitHub Issue: $ARGUMENTS
 
-# Fix GitHub Issue
+Fix a GitHub issue following the systematic debugging workflow based on the `bug-diagnosis` skill.
 
-Fix a GitHub issue following the systematic debugging workflow.
+**IMPORTANT**: Always use external memory at `.ai/workspace/analysis/issue-[number].md` for structured analysis.
 
-## Issue Number
-${input:issue}
+## IMPORTANT: Anti-Hallucination Protocols
 
-## Anti-Hallucination Protocol
+Before any operation:
 
-Before any operation, ask yourself:
 1. "What assumptions am I making about this issue?"
 2. "Have I verified this with actual code evidence?"
 3. "Could I be wrong about the root cause?"
 
-## Workflow
+---
 
-### Phase 1: Fetch Issue Details
+## Phase 1: Fetch Issue Details
 
-```bash
-gh issue view {issue_number}
-```
+1. **Get issue information:**
 
-Extract:
-- Issue title and description
-- Labels (bug, feature, enhancement)
-- Related PRs or issues
-- Stack traces or error messages
+    ```bash
+    gh issue view $ARGUMENTS
+    ```
 
-### Phase 2: Understand the Issue
+2. **Extract key information:**
+    - Issue title and description
+    - Labels (bug, feature, enhancement)
+    - Related PRs or issues
+    - Assignees and reviewers
+    - Stack traces or error messages
 
-1. What is the expected behavior?
-2. What is the actual behavior?
-3. Are there reproduction steps?
-4. Is there a stack trace or error message?
+3. **Create analysis notes** at `.ai/workspace/analysis/issue-[number].md`
 
-### Phase 3: Evidence Gathering
+---
 
-**Multi-pattern search:**
-- Static imports and usages
-- String literals (runtime/config references)
-- Dynamic invocations (reflection, attributes)
+## Phase 2: Understand the Issue
 
-**Trace dependency chains:**
-- Who calls this code?
-- Who depends on this code?
-- Cross-service message flows
+1. **Analyze the issue:**
+    - What is the expected behavior?
+    - What is the actual behavior?
+    - Are there reproduction steps?
+    - Is there a stack trace or error message?
 
-**Read actual implementations** (not just interfaces)
+2. **Search codebase for relevant code:**
+    - Use grep for error messages and keywords
+    - Search patterns: `.*EventHandler.*{Entity}`, `.*Consumer.*{Entity}`, etc.
+    - Find related entities/components
+    - Map the affected code paths
 
-### Phase 4: Root Cause Analysis
+---
+
+## Phase 3: Evidence Gathering
+
+1. **Multi-pattern search:**
+    - Static imports and usages
+    - String literals (runtime/config references)
+    - Dynamic invocations (reflection, attributes)
+
+2. **Trace dependency chains:**
+    - Who calls this code?
+    - Who depends on this code?
+    - Cross-service message flows
+
+3. **Read actual implementations** (not just interfaces)
+
+4. **Document evidence** with file:line references
+
+---
+
+## Phase 4: Root Cause Analysis
 
 Analyze across dimensions:
-- **Technical:** Code defects, architectural issues
-- **Business Logic:** Rule violations, validation failures
-- **Data:** Corruption, integrity violations, race conditions
-- **Integration:** API contract violations, cross-service failures
-- **Environmental:** Configuration issues, deployment problems
 
-### Phase 5: Propose Fix
+1. **Technical**: Code defects, architectural issues
+2. **Business Logic**: Rule violations, validation failures
+3. **Data**: Corruption, integrity violations, race conditions
+4. **Integration**: API contract violations, cross-service failures
+5. **Environmental**: Configuration issues, deployment problems
 
-Present analysis with:
+Document:
+
+- Potential root causes ranked by probability
+- Evidence with file:line references
+- Confidence level (High 90%+, Medium 70-89%, Low <70%)
+
+---
+
+## Phase 5: Propose Fix
+
+1. **Design the fix:**
+    - Minimal changes principle
+    - Follow platform patterns from documentation
+    - Consider edge cases
+
+2. **Risk assessment:**
+    - Impact level (Low/Medium/High)
+    - Regression risk
+    - Affected components
+
+3. **Test plan:**
+    - Unit tests to add
+    - Manual testing steps
+    - Regression considerations
+
+4. **Rollback plan:**
+    - How to revert if fix causes issues
+
+---
+
+## Phase 6: Wait for Approval
+
+**CRITICAL:** Present your analysis and proposed fix in this format:
 
 ```markdown
 ## Issue Analysis Complete - Approval Required
 
 ### Issue
-#{number} - {title}
+
+#[number] - [title]
 
 ### Root Cause Summary
-{Primary root cause with evidence at file:line}
+
+[Primary root cause with evidence at file:line]
 
 ### Proposed Fix
-{Fix description with specific files and changes}
+
+[Fix description with specific files and changes]
 
 ### Risk Assessment
-- **Risk Level:** Low/Medium/High
-- **Regression Risk:** {assessment}
 
-### Confidence Level: {X}%
+- **Risk Level**: [Low/Medium/High]
+- **Regression Risk**: [assessment]
+
+### Confidence Level: [X%]
 
 ### Files to Modify:
-1. `path/to/file.cs:line` - {change description}
+
+1. `path/to/file.cs:line` - [change description]
 
 **Awaiting approval to proceed with implementation.**
 ```
 
-### Phase 6: Implement Fix (after approval)
+**DO NOT** make any code changes without explicit user approval.
 
-1. Make code changes following platform patterns
+---
+
+## Phase 7: Implement Fix
+
+After approval:
+
+1. Make the code changes following platform patterns
 2. Add/update tests
 3. Verify fix works
-4. Create PR with issue reference
+4. Create PR with issue reference using `gh pr create`
 
-## Verification Checklist
+---
+
+## Quick Verification Checklist
 
 Before proposing any change:
+
 - [ ] Searched static imports?
 - [ ] Searched string literals?
 - [ ] Checked dynamic invocations?
@@ -112,4 +171,7 @@ Before proposing any change:
 **If ANY unchecked → DO MORE INVESTIGATION**
 **If confidence < 90% → REQUEST USER CONFIRMATION**
 
-**IMPORTANT**: Do NOT make code changes without explicit user approval.
+---
+
+Use the `bug-diagnosis` skill for the complete debugging protocol.
+See `.github/AI-DEBUGGING-PROTOCOL.md` for comprehensive guidelines.

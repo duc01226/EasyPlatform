@@ -1,92 +1,47 @@
 ---
-description: "Run linters and fix issues for backend or frontend"
+description: Run linters and fix issues for backend or frontend
+allowed-tools: Bash, Read, Edit, Glob, TodoWrite
 ---
 
-# Lint Code
+Run linting: $ARGUMENTS
 
-Run linters and optionally auto-fix issues.
+## Instructions
 
-## Usage
+1. **Parse arguments**:
+   - `backend` or `be` → Run .NET analyzers
+   - `frontend` or `fe` → Run ESLint/Prettier
+   - `fix` → Auto-fix issues where possible
+   - No argument → Run both, report only
 
-- `lint backend` or `lint be` → .NET analyzers
-- `lint frontend` or `lint fe` → ESLint/Prettier
-- `lint fix` → Auto-fix where possible
-- `lint` → Run both, report only
+2. **For Backend (.NET)**:
 
-## Backend (.NET)
+   ```bash
+   dotnet build EasyPlatform.sln /p:TreatWarningsAsErrors=false
+   ```
 
-### Check
+   - Check for analyzer warnings (CA*, IDE*, etc.)
+   - Report code style violations
 
-```bash
-dotnet build EasyPlatform.sln /p:TreatWarningsAsErrors=false
-```
+3. **For Frontend (Angular/Nx)**:
 
-### Analyzer Codes
+   ```bash
+   cd src/PlatformExampleAppWeb
+   nx lint playground-text-snippet
+   nx lint platform-core
+   ```
 
-| Prefix | Category |
-|--------|----------|
-| CA* | Code Analysis (Microsoft) |
-| IDE* | Code Style |
-| CS* | Compiler warnings |
-| SA* | StyleCop |
+   With auto-fix:
 
-### Common Issues
+   ```bash
+   nx lint playground-text-snippet --fix
+   npx prettier --write "apps/**/*.{ts,html,scss}" "libs/**/*.{ts,html,scss}"
+   ```
 
-| Code | Issue | Fix |
-|------|-------|-----|
-| CA1062 | Null check needed | Add null validation |
-| IDE0059 | Unused assignment | Remove or use variable |
-| CA2007 | ConfigureAwait | Add `.ConfigureAwait(false)` |
+4. **Report format**:
+   - Group issues by severity (error, warning, info)
+   - Show file paths and line numbers
+   - Suggest fixes for common issues
 
-## Frontend (Angular/Nx)
-
-### Check
-
-```bash
-cd src/PlatformExampleAppWeb
-nx lint playground-text-snippet
-nx lint platform-core
-```
-
-### Auto-Fix
-
-```bash
-nx lint playground-text-snippet --fix
-npx prettier --write "apps/**/*.{ts,html,scss}" "libs/**/*.{ts,html,scss}"
-```
-
-### Common Issues
-
-| Rule | Issue | Fix |
-|------|-------|-----|
-| @typescript-eslint/no-unused-vars | Unused variable | Remove or use |
-| @angular-eslint/no-empty-lifecycle | Empty ngOnInit | Remove or implement |
-| prettier/prettier | Formatting | Run prettier --write |
-
-## Report Format
-
-```
-## Lint Results
-
-### Errors (must fix)
-- [file:line] CA1062: Validate parameter 'x'
-
-### Warnings (should fix)
-- [file:line] IDE0059: Unnecessary assignment
-
-### Info (optional)
-- [file:line] Style suggestion
-```
-
-## Auto-Fix Behavior
-
-When `fix` specified:
-1. Apply safe auto-fixes
-2. Report what was fixed
-3. List remaining issues needing manual attention
-
-## Important
-
-- Always review auto-fixed changes
-- Some fixes may change behavior
-- Run tests after fixing
+5. **Auto-fix behavior**:
+   - If `fix` argument provided, apply safe auto-fixes
+   - Report what was fixed vs what needs manual attention

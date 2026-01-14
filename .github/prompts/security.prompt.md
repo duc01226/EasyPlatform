@@ -1,19 +1,21 @@
----
-agent: 'agent'
-description: 'Perform security review following OWASP guidelines'
-tools: ['read', 'search']
----
+# Security Review: $ARGUMENTS
 
-# Security Review
+Perform security review on: $ARGUMENTS
 
-Perform security review on the specified target.
+## Phase 1: Scope Identification
 
-## Target
-${input:target}
+1. **Parse target** from: $ARGUMENTS
+2. **Identify components:**
+    - API endpoints (Controllers)
+    - Command/Query handlers
+    - Frontend forms and inputs
+    - Data handling and storage
+    - External integrations
 
-## Security Checklist
+## Phase 2: Security Checklist
 
 ### Input Validation
+
 - [ ] All user inputs validated in Commands/Queries `Validate()` method
 - [ ] XSS protection - no raw HTML rendering of user content
 - [ ] SQL/NoSQL injection prevention (parameterized via EF Core/MongoDB driver)
@@ -21,13 +23,19 @@ ${input:target}
 - [ ] URL validation for redirects (prevent open redirect)
 
 ### Authorization
+
 - [ ] `[PlatformAuthorize]` attribute on sensitive endpoints
 - [ ] Entity-level access checks (company ownership, user permissions)
-- [ ] Role-based permissions verified in handlers
+- [ ] Role-based permissions verified in handlers:
+    ```csharp
+    RequestContext.HasRole(PlatformRoles.Admin)
+    RequestContext.HasRequestAdminRoleInCompany()
+    ```
 - [ ] Multi-tenancy boundaries respected (CompanyId filtering)
 - [ ] Resource ownership validation before modification
 
 ### Sensitive Data Protection
+
 - [ ] No secrets in logs or error messages
 - [ ] PII properly encrypted at rest
 - [ ] Sensitive fields excluded from DTOs/responses
@@ -35,6 +43,7 @@ ${input:target}
 - [ ] No credentials in source code or config files
 
 ### API Security
+
 - [ ] CORS properly configured (not `*` in production)
 - [ ] Rate limiting on public endpoints
 - [ ] Request size limits configured
@@ -42,56 +51,69 @@ ${input:target}
 - [ ] HTTPS enforced
 
 ### Frontend Security
+
 - [ ] No sensitive data in localStorage (use sessionStorage or memory)
-- [ ] XSS-safe rendering (no `innerHTML` with user data)
+- [ ] XSS-safe rendering (no `innerHTML` with user data, use `[textContent]`)
 - [ ] CSRF tokens for state-changing operations
-- [ ] Proper error messages (no stack traces exposed)
+- [ ] Proper error messages (no stack traces exposed to users)
 - [ ] Secure cookie flags (HttpOnly, Secure, SameSite)
 
 ### Authentication
+
 - [ ] Strong password requirements enforced
 - [ ] Account lockout after failed attempts
 - [ ] Session timeout configured
 - [ ] Secure token storage and transmission
+- [ ] Password reset flow secure (time-limited tokens)
 
-## Common Vulnerability Patterns
+## Phase 3: Common Vulnerability Patterns
 
-### Backend Anti-Patterns
+### Look for these anti-patterns:
+
 ```csharp
-// Missing authorization
+// ❌ Missing authorization
 [HttpPost]
 public async Task<IActionResult> DeleteUser(string userId) // No [PlatformAuthorize]
 
-// Missing ownership check
+// ❌ Missing ownership check
 await repository.DeleteAsync(request.Id); // Should verify ownership first
 
-// Logging sensitive data
+// ❌ Logging sensitive data
 logger.LogInformation($"User {email} logged in with password {password}");
+
+// ❌ SQL injection (rare with EF but check raw queries)
+context.Database.ExecuteSqlRaw($"SELECT * FROM Users WHERE Id = '{id}'");
 ```
 
-### Frontend Anti-Patterns
 ```typescript
-// XSS vulnerability
+// ❌ XSS vulnerability
 element.innerHTML = userInput; // Use textContent instead
 
-// Sensitive data in localStorage
+// ❌ Sensitive data in localStorage
 localStorage.setItem('authToken', token); // Use memory or secure storage
 ```
 
-## Report Format
+## Phase 4: Report
 
-For each finding:
-- **Severity:** Critical / High / Medium / Low / Informational
-- **Location:** file:line reference
-- **Issue:** Description of the vulnerability
-- **Fix:** Recommended remediation with code example
-- **OWASP Reference:** If applicable
+Present findings with:
 
-### Severity Guidelines
+- **Severity rating:** Critical / High / Medium / Low / Informational
+- **Affected code locations** with file:line references
+- **Recommended fixes** with code examples
+- **OWASP reference** if applicable
+
+### Severity Guidelines:
+
 - **Critical:** Direct data breach, authentication bypass, RCE
 - **High:** Privilege escalation, sensitive data exposure
 - **Medium:** Missing security controls, information disclosure
 - **Low:** Security best practice violations
 - **Informational:** Suggestions for defense-in-depth
 
-**IMPORTANT**: Present findings only - wait for approval before implementing fixes.
+## Phase 5: Wait for Approval
+
+**CRITICAL:** Present your security findings. Wait for explicit user approval before implementing fixes.
+
+---
+
+Use `arch-security-review` skill for comprehensive analysis.

@@ -1,109 +1,101 @@
 ---
-description: "View and manage plans with kanban dashboard"
+description: AI agent orchestration board (Coming Soon)
+arguments:
+  - name: dir
+    description: Plans directory (default: ./plans)
+    required: false
 ---
 
-# Kanban Dashboard
-
-Visual dashboard for plans and task management.
+Plans dashboard with progress tracking and timeline visualization.
 
 ## Usage
 
-- `kanban` - View dashboard for `./plans` directory
-- `kanban plans/` - View specific directory
-- `kanban --stop` - Stop running server
+- `/kanban` - View dashboard for ./plans directory
+- `/kanban plans/` - View dashboard for specific directory
+- `/kanban --stop` - Stop running server
 
 ## Features
 
 - Plan cards with progress bars
 - Phase status breakdown (completed, in-progress, pending)
-- Timeline visualization
-- Activity tracking
+- Timeline/Gantt visualization
+- Activity heatmap
 - Issue and branch links
 
-## Workflow
+## Execution
 
-### View Plans
+**IMPORTANT:** Run server as Claude Code background task using `run_in_background: true` with the Bash tool. This makes the server visible in `/tasks` and manageable via `KillShell`.
 
-1. Run kanban command
-2. Server starts on local port
-3. Open URL in browser
-4. View plan cards with progress
+Check if this script is located in the current workspace or in `$HOME/.claude/skills/plans-kanban` directory:
+- If in current workspace: `$SKILL_DIR_PATH` = `./.claude/skills/plans-kanban/`
+- If in home directory: `$SKILL_DIR_PATH` = `$HOME/.claude/skills/plans-kanban/`
 
-### Plan Card Shows
+### Stop Server
 
-- Title and description
-- Priority (P0-P4)
-- Effort estimate
-- Phase completion (x/y)
-- Status indicators
+If `--stop` flag is provided:
 
-### Phase Status
-
-| Status | Indicator |
-|--------|-----------|
-| Completed | ✅ Green |
-| In Progress | 🔄 Yellow |
-| Pending | ⏳ Gray |
-| Blocked | 🚫 Red |
-
-## Plan Structure
-
-Dashboard reads from plan files:
-
-```
-plans/
-├── 260110-feature-auth/
-│   ├── plan.md            # Overview
-│   ├── phase-01-setup.md  # Phase 1
-│   ├── phase-02-impl.md   # Phase 2
-│   └── phase-03-test.md   # Phase 3
-└── 260109-bug-fix/
-    └── plan.md
+```bash
+node $SKILL_DIR_PATH/scripts/server.cjs --stop
 ```
 
-### Plan Frontmatter
+### Start Server
 
-```yaml
----
-title: "Feature Authentication"
-description: "Add OAuth2 authentication"
-status: in_progress
-priority: P1
-effort: 8h
-branch: feature/auth
-tags: [auth, security]
-created: 2026-01-10
----
+Otherwise, run the kanban server as CC background task with `--foreground` flag (keeps process alive for CC task management):
+
+```bash
+# Determine plans directory
+INPUT_DIR="{{dir}}"
+PLANS_DIR="${INPUT_DIR:-./plans}"
+
+# Start kanban dashboard
+node $SKILL_DIR_PATH/scripts/server.cjs \
+  --dir "$PLANS_DIR" \
+  --host 0.0.0.0 \
+  --open \
+  --foreground
 ```
 
-## Dashboard Views
+**Critical:** When calling the Bash tool:
+- Set `run_in_background: true` to run as CC background task
+- Set `timeout: 300000` (5 minutes) to prevent premature termination
+- Parse JSON output and report URL to user
 
-### Kanban Board
-
-```
-| Pending | In Progress | Review | Done |
-|---------|-------------|--------|------|
-| Plan A  | Plan B      | Plan C | Plan D |
-```
-
-### Timeline View
-
-```
-Jan 8  ----[Plan A]----
-Jan 9  --------[Plan B]----
-Jan 10 ----[Plan C]----------
+Example Bash tool call:
+```json
+{
+  "command": "node .claude/skills/plans-kanban/scripts/server.cjs --dir \"./plans\" --host 0.0.0.0 --open --foreground",
+  "run_in_background": true,
+  "timeout": 300000,
+  "description": "Start kanban server in background"
+}
 ```
 
-## Actions
+After starting, parse the JSON output (e.g., `{"success":true,"url":"http://localhost:3500/kanban?dir=...","networkUrl":"http://192.168.1.x:3500/kanban?dir=..."}`) and report:
+- Local URL for browser access
+- Network URL for remote device access (if available)
+- Inform user that server is now running as CC background task (visible in `/tasks`)
 
-From dashboard:
-- Click plan card → View details
-- Click phase → Jump to phase file
-- Click branch → Open in git
-- Click issue → Open in GitHub
+**CRITICAL:** MUST display the FULL URL including path and query string. NEVER truncate to just `host:port`. The full URL is required for direct access.
 
-## Important
+## Future Plans
 
-- Keep plan files updated for accurate dashboard
-- Use consistent frontmatter format
-- Server runs locally (not exposed externally)
+The `/kanban` command will evolve into **VibeKanban-inspired** AI agent orchestration:
+
+### Phase 1 (Current - MVP)
+- ✅ Task board with progress tracking
+- ✅ Visual representation of plans/tasks
+- ✅ Click to view plan details
+
+### Phase 2 (Worktree Integration)
+- Create tasks → spawn git worktrees
+- Assign agents to tasks
+- Track agent progress per worktree
+
+### Phase 3 (Full Orchestration)
+- Parallel agent execution monitoring
+- Code diff/review interface
+- PR creation workflow
+- Agent output streaming
+- Conflict detection
+
+Track progress: https://github.com/claudekit/claudekit-engineer/issues/189

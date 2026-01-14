@@ -1,9 +1,4 @@
----
-agent: agent
-description: Investigate and explain how existing features or code logic works using structured knowledge model construction. READ-ONLY exploration with no code changes.
----
-
-# Investigate Feature: $input
+# Investigate Feature: $ARGUMENTS
 
 Investigate and explain how an existing feature or logic works using structured knowledge model construction.
 
@@ -11,34 +6,31 @@ Investigate and explain how an existing feature or logic works using structured 
 
 ## Variables
 
--   **FEATURE**: $input (the feature/logic to investigate)
--   **ANALYSIS_FILE**: `.ai/workspace/analysis/$input-investigation.md`
+- **FEATURE**: $ARGUMENTS (the feature/logic to investigate)
+- **ANALYSIS_FILE**: `.ai/workspace/analysis/$ARGUMENTS-investigation.md`
 
 ---
 
 ## INPUT: Scout Output Integration
 
-**If preceded by `@workspace /scout`:**
+**If preceded by `/scout`:**
 
 1. **Use the numbered file list** from Scout results as your analysis targets
 2. **Prioritize in this order:**
-    - HIGH PRIORITY files (Domain Entities, Commands, Queries, Event Handlers, Controllers, Jobs, Consumers)
-    - Suggested Starting Points (if provided)
-    - MEDIUM PRIORITY files (Services, Helpers, Components)
+   - HIGH PRIORITY files (Domain Entities, Commands, Queries, Event Handlers, Controllers, Jobs, Consumers)
+   - Suggested Starting Points (if provided)
+   - MEDIUM PRIORITY files (Services, Helpers, Components)
 3. **Skip redundant discovery** - Scout already searched the codebase
 4. **Reference files by Scout's numbers** in your analysis (e.g., "File #3 from Scout")
 
 **Scout Output Format Reference:**
-
 ```markdown
 ### HIGH PRIORITY (Analyze First)
-
-| #   | File             | Purpose            |
-| --- | ---------------- | ------------------ |
-| 1   | `path/Entity.cs` | Core domain entity |
+| # | File | Purpose |
+|---|------|---------|
+| 1 | `path/Entity.cs` | Core domain entity |
 
 ### Suggested Starting Points
-
 1. **[Most relevant file]** - [Why]
 ```
 
@@ -52,7 +44,7 @@ Investigate and explain how an existing feature or logic works using structured 
 
 Create the analysis file at `.ai/workspace/analysis/[feature-name]-investigation.md` with these required sections:
 
-````markdown
+```markdown
 ## Metadata
 
 ```markdown
@@ -60,15 +52,14 @@ Create the analysis file at `.ai/workspace/analysis/[feature-name]-investigation
 **Task Description:** [What we're investigating]
 **Source Code Structure:** See .ai/prompts/context.md
 ```
-````
 
 ## Progress
 
--   **Phase**: 1A
--   **Items Processed**: 0
--   **Total Items**: 0
--   **Current Operation**: "initialization"
--   **Current Focus**: "[feature summary]"
+- **Phase**: 1A
+- **Items Processed**: 0
+- **Total Items**: 0
+- **Current Operation**: "initialization"
+- **Current Focus**: "[feature summary]"
 
 ## Errors
 
@@ -76,9 +67,9 @@ Create the analysis file at `.ai/workspace/analysis/[feature-name]-investigation
 
 ## Assumption Validations
 
-| Assumption | Status                    | Evidence |
-| ---------- | ------------------------- | -------- |
-| ...        | Pending/Validated/Invalid | ...      |
+| Assumption | Status | Evidence |
+|------------|--------|----------|
+| ... | Pending/Validated/Invalid | ... |
 
 ## File List
 
@@ -87,7 +78,6 @@ Create the analysis file at `.ai/workspace/analysis/[feature-name]-investigation
 ## Knowledge Graph
 
 [Detailed analysis of each file]
-
 ```
 
 ### Step 2: Semantic Discovery
@@ -96,25 +86,21 @@ Search for related code using multiple patterns:
 
 **Primary Patterns:**
 ```
-
-_Command_{Feature}* # CQRS Commands
-*Query*{Feature}* # CQRS Queries
-*{Feature}*EventHandler* # Entity Event Handlers
-*{Feature}_Consumer_ # Message Bus Consumers
-*{Feature}*BackgroundJob* # Background Jobs
-*{Feature}_Controller_ # API Controllers
-
+*Command*{Feature}*           # CQRS Commands
+*Query*{Feature}*             # CQRS Queries
+*{Feature}*EventHandler*      # Entity Event Handlers
+*{Feature}*Consumer*          # Message Bus Consumers
+*{Feature}*BackgroundJob*     # Background Jobs
+*{Feature}*Controller*        # API Controllers
 ```
 
 **Secondary Patterns:**
 ```
-
-._EventHandler._{Feature}|{Feature}.*EventHandler
+.*EventHandler.*{Feature}|{Feature}.*EventHandler
 .*BackgroundJob.*{Feature}|{Feature}.*BackgroundJob
-._Consumer._{Feature}|{Feature}.*Consumer
+.*Consumer.*{Feature}|{Feature}.*Consumer
 .*Service.*{Feature}|{Feature}.*Service
-._Helper._{Feature}|{Feature}.\*Helper
-
+.*Helper.*{Feature}|{Feature}.*Helper
 ```
 
 **File Types:** `**/*.{cs,ts,html}`
@@ -145,23 +131,21 @@ Save ALL file paths as numbered list under `## File List` in analysis file.
 Count total files, split into batches of 10. Use TodoWrite to create tasks:
 
 ```
-
--   [ ] Analyze batch 1 (files 1-10)
--   [ ] Analyze batch 2 (files 11-20)
-        ...
-
-````
+- [ ] Analyze batch 1 (files 1-10)
+- [ ] Analyze batch 2 (files 11-20)
+...
+```
 
 ### Step 2: File Analysis Schema
 
-For each file in `## Knowledge Graph`:
+For each file, add to `## Knowledge Graph` with this structure:
 
 ```markdown
 ### [#] [FileName]
 
 - **filePath**: Full path to file
 - **type**: Entity | Command | Query | EventHandler | Consumer | Controller | Job | Component | Service
-- **architecturalPattern**: CQRS | Repository | EventSourcing | MessageBus
+- **architecturalPattern**: CQRS | Repository | EventSourcing | MessageBus | etc.
 - **content**: Summary of purpose and logic
 - **symbols**: Key classes, interfaces, methods
 - **dependencies**: Imported modules / using statements
@@ -170,7 +154,7 @@ For each file in `## Knowledge Graph`:
 - **relevanceScore**: 1-10 (10 = most relevant)
 - **evidenceLevel**: verified | inferred
 - **uncertainties**: Aspects you're unsure about
-- **platformAbstractions**: Base classes used (PlatformCqrsCommand, etc.)
+- **platformAbstractions**: Base classes used (PlatformCqrsCommand, PlatformEntity, etc.)
 - **serviceContext**: Which microservice owns this
 - **dependencyInjection**: DI registrations
 - **genericTypeParameters**: Generic type relationships
@@ -178,18 +162,18 @@ For each file in `## Knowledge Graph`:
 #### Targeted Analysis
 
 **For Backend:**
-- authorizationPolicies, commands, queries
+- authorizationPolicies, commands, queries, domainEntities
 - repositoryPatterns, businessRuleImplementations
 
-**For Consumers (CRITICAL):**
+**For Consumers:**
 - messageBusMessage: The `*BusMessage` type consumed
-- messageBusProducers: Files that SEND this message (grep ALL services)
-- crossServiceIntegration: Service communication flow
+- messageBusProducers: Files that SEND this message (grep across ALL services)
+- crossServiceIntegration: How services communicate
 
 **For Frontend:**
 - componentHierarchy, routeConfig, stateManagementStores
 - dataBindingPatterns, validationStrategies
-````
+```
 
 ### Step 3: Cross-Service Analysis (CRITICAL for Consumers)
 
@@ -207,11 +191,10 @@ When analyzing `*Consumer.cs` files extending `PlatformApplicationMessageBusCons
 ### Step 1: Entry Points
 
 Identify how the feature is triggered:
-
--   API Endpoint → Controller → Command/Query Handler
--   UI Action → Component → API Service → Backend
--   Scheduled Job → BackgroundJob → Handler
--   Message → Consumer → Handler
+- API Endpoint → Controller → Command/Query Handler
+- UI Action → Component → API Service → Backend
+- Scheduled Job → BackgroundJob → Handler
+- Message → Consumer → Handler
 
 ### Step 2: Trace Execution Path
 
@@ -221,19 +204,19 @@ Document in analysis file:
 ## Data Flow
 
 [Request] → [Controller] → [Handler] → [Repository] → [Response]
-↓
-[Event Handler] → [Side Effects]
-↓
-[Message Bus] → [Consumer in Other Service]
+                              ↓
+                       [Event Handler] → [Side Effects]
+                              ↓
+                       [Message Bus] → [Consumer in Other Service]
 ```
 
 ### Step 3: Side Effects Mapping
 
--   Entity events raised
--   Messages published to bus
--   External service calls
--   Database operations
--   Notifications triggered
+- Entity events raised
+- Messages published to bus
+- External service calls
+- Database operations
+- Notifications triggered
 
 ---
 
@@ -249,28 +232,24 @@ Document in analysis file:
 ## How It Works
 
 ### 1. [Entry Point]
-
 [Explanation with `file:line` reference]
 
 ### 2. [Core Processing]
-
 [Explanation with `file:line` reference]
 
 ### 3. [Side Effects]
-
 [Explanation with `file:line` reference]
 
 ## Key Files
 
-| File               | Type    | Purpose   | Relevance |
-| ------------------ | ------- | --------- | --------- |
-| `path/file.cs:123` | Command | [Purpose] | 10/10     |
+| File | Type | Purpose | Relevance |
+|------|------|---------|-----------|
+| `path/file.cs:123` | Command | [Purpose] | 10/10 |
 
 ## Data Flow Diagram
+
 ```
-
 [Visual text diagram of the flow]
-
 ```
 
 ## Platform Patterns Used
@@ -307,12 +286,12 @@ Before ANY claim, verify:
 
 ### Verification Checklist
 
--   [ ] Found actual code evidence for each claim?
--   [ ] Traced the full code path?
--   [ ] Checked cross-service message flows?
--   [ ] Documented ALL findings with `file:line`?
--   [ ] Answered the original question?
--   [ ] Listed unresolved questions?
+- [ ] Found actual code evidence for each claim?
+- [ ] Traced the full code path?
+- [ ] Checked cross-service message flows?
+- [ ] Documented ALL findings with `file:line`?
+- [ ] Answered the original question?
+- [ ] Listed unresolved questions?
 
 **If ANY unchecked → DO MORE INVESTIGATION**
 
@@ -323,23 +302,23 @@ Before ANY claim, verify:
 Update `## Progress` section after each batch:
 
 ```markdown
--   **Phase**: 1B
--   **Items Processed**: 20
--   **Total Items**: 35
--   **Current Operation**: "analyzing batch 3"
--   **Current Focus**: "Event Handlers"
+- **Phase**: 1B
+- **Items Processed**: 20
+- **Total Items**: 35
+- **Current Operation**: "analyzing batch 3"
+- **Current Focus**: "Event Handlers"
 ```
 
 ---
 
 ## Quick Reference
 
-| Looking for...        | Search in...                           |
-| --------------------- | -------------------------------------- |
-| Entity CRUD           | `UseCaseCommands/`, `UseCaseQueries/`  |
-| Business logic        | `Domain/Entities/`, `*Service.cs`      |
-| Side effects          | `UseCaseEvents/`, `*EventHandler.cs`   |
-| Cross-service         | `*Consumer.cs`, `*BusMessage.cs`       |
-| API endpoints         | `Controllers/`, `*Controller.cs`       |
-| Frontend              | `libs/apps-domains/`, `*.component.ts` |
-| Background processing | `*BackgroundJob*.cs`, `*Job.cs`        |
+| Looking for... | Search in... |
+|----------------|--------------|
+| Entity CRUD | `UseCaseCommands/`, `UseCaseQueries/` |
+| Business logic | `Domain/Entities/`, `*Service.cs` |
+| Side effects | `UseCaseEvents/`, `*EventHandler.cs` |
+| Cross-service | `*Consumer.cs`, `*BusMessage.cs` |
+| API endpoints | `Controllers/`, `*Controller.cs` |
+| Frontend | `libs/apps-domains/`, `*.component.ts` |
+| Background processing | `*BackgroundJob*.cs`, `*Job.cs` |

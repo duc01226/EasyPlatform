@@ -1,27 +1,25 @@
 ---
-agent: agent
-description: Quickly locate relevant files across the codebase with priority-based categorization and cross-service analysis. Fast, token-efficient file search.
+description: ⚡⚡ Scout codebase with priority-based file discovery and structured output
+argument-hint: [user-prompt] [scale]
 ---
 
-# Scout Codebase
+## Purpose
 
-Search the codebase for files needed to complete the task with **priority-based categorization**.
+Search the codebase for files needed to complete the task using fast, token-efficient parallel agents with **priority-based categorization**.
 
-## Search Request
+## Variables
 
-$input
-
-## Core Mission
-
-Rapidly locate relevant files across the large EasyPlatform codebase using efficient search strategies, then present results in a **numbered, priority-categorized format**.
+- **USER_PROMPT**: $1
+- **SCALE**: $2 (defaults to 3)
+- **REPORT_OUTPUT_DIR**: Use `Report:` from `## Naming` section
 
 ---
 
-## PHASE 1: ANALYZE REQUEST
+## PHASE 1: ANALYZE AND PLAN
 
-### Step 1: Parse Search Intent
+### Step 1: Parse Search Request
 
-Extract from search request:
+Extract from USER_PROMPT:
 - **Keywords**: Entity names, feature names, patterns
 - **Intent**: CRUD, investigation, debugging, implementation
 - **Scope**: Backend, Frontend, Cross-service, Full-stack
@@ -45,19 +43,26 @@ Extract from search request:
 **/*{keyword}*EventHandler.cs
 **/*{keyword}*Consumer.cs
 
-# Controllers & Jobs
+# Controllers
 **/Controllers/**/*{keyword}*.cs
+**/{Entity}Controller.cs
+
+# Background Jobs
 **/*{keyword}*BackgroundJob*.cs
+**/*{keyword}*Job.cs
 ```
 
 **MEDIUM PRIORITY:**
 ```
-# Services, Helpers, DTOs
+# Services & Helpers
 **/*{keyword}*Service.cs
 **/*{keyword}*Helper.cs
-**/*{keyword}*Dto.cs
 
-# Frontend
+# DTOs & Shared
+**/*{keyword}*Dto.cs
+**/Shared/**/*{keyword}*.cs
+
+# Frontend Components
 **/*{keyword}*.component.ts
 **/*{keyword}*.store.ts
 **/*{keyword}*-api.service.ts
@@ -68,45 +73,64 @@ Extract from search request:
 # Tests & Config
 **/*{keyword}*.spec.ts
 **/*{keyword}*Test*.cs
+**/appsettings*.json
 ```
 
 ---
 
-## PHASE 2: EXECUTE SEARCH
+## PHASE 2: PARALLEL EXECUTION
 
-### Directory Prioritization
+### Step 1: Divide Work
 
-| Priority | Directories |
-|----------|-------------|
-| HIGH | `Domain/Entities/`, `UseCaseCommands/`, `UseCaseQueries/`, `UseCaseEvents/`, `Controllers/` |
-| MEDIUM | `*Service.cs`, `*Helper.cs`, `libs/apps-domains/`, `*.component.ts` |
-| LOW | `*Test*.cs`, `*.spec.ts`, `appsettings*.json` |
+Split directories intelligently for SCALE agents:
 
-### Search Execution
+| Agent | Focus Area | Directories |
+|-------|------------|-------------|
+| 1 | Backend Core | `src/PlatformExampleApp/*/Domain/`, `*/Application/UseCaseCommands/`, `*/Application/UseCaseQueries/` |
+| 2 | Backend Events/Jobs | `*/Application/UseCaseEvents/`, `*BackgroundJob*`, `*Consumer*`, `Controllers/` |
+| 3 | Frontend | `src/PlatformExampleAppWeb/`, `libs/apps-domains/`, `libs/platform-core/` |
 
-1. **Glob** for file names matching patterns
-2. **Grep** for content matching keywords
-3. **Read** key files to understand purpose (if needed)
+### Step 2: Launch Agents
 
-### Cross-Service Analysis (CRITICAL)
+Spawn SCALE number of `Explore` subagents in **parallel** using Task tool:
 
-For `*Consumer.cs` files found:
-1. Identify `*BusMessage` type consumed
-2. Grep ALL services for files that **publish** this message
-3. Document producer → consumer relationships
+```
+For each agent:
+- Assign specific directories from division above
+- Include HIGH PRIORITY patterns for assigned area
+- Set 3-minute timeout
+- Request file paths only (no content)
+```
+
+**Agent Prompt Template:**
+```
+Search [directories] for files related to "[USER_PROMPT]".
+Patterns: [relevant patterns for this agent's focus]
+Return ONLY file paths, categorized by type.
+Timeout: 3 minutes. Be fast and focused.
+```
 
 ---
 
-## PHASE 3: OUTPUT FORMAT
+## PHASE 3: SYNTHESIZE RESULTS
+
+### Step 1: Collect and Deduplicate
+
+- Gather results from all agents that complete within timeout
+- Skip timed-out agents (note coverage gaps)
+- Remove duplicate file paths
+
+### Step 2: Categorize by Priority
+
+Organize files into structured output:
 
 ```markdown
-## Scout Results: [Search Query]
+## Scout Results: [USER_PROMPT]
 
 ### Summary
 - **Total Files Found**: X
-- **HIGH Priority**: X files
-- **MEDIUM Priority**: X files
-- **Coverage**: [areas searched]
+- **Agents Completed**: X/SCALE
+- **Coverage Gaps**: [list any timed-out agent areas]
 
 ---
 
@@ -120,32 +144,32 @@ For `*Consumer.cs` files found:
 #### Commands & Handlers
 | # | File | Purpose |
 |---|------|---------|
-| 2 | `path/SaveEntityCommand.cs` | Create/Update logic |
+| 1 | `path/SaveEntityCommand.cs` | Create/Update logic |
 
 #### Queries
 | # | File | Purpose |
 |---|------|---------|
-| 3 | `path/GetEntityListQuery.cs` | List retrieval |
+| 1 | `path/GetEntityListQuery.cs` | List retrieval |
 
 #### Event Handlers
 | # | File | Purpose |
 |---|------|---------|
-| 4 | `path/EntityEventHandler.cs` | Side effect handling |
+| 1 | `path/EntityEventHandler.cs` | Side effect handling |
 
 #### Consumers (Cross-Service)
-| # | File | Message Type | Producer Service |
-|---|------|--------------|------------------|
-| 5 | `path/EntityConsumer.cs` | `EntityBusMessage` | [source service] |
+| # | File | Message Type | Source Service |
+|---|------|--------------|----------------|
+| 1 | `path/EntityConsumer.cs` | `EntityBusMessage` | [grep for producer] |
 
 #### Controllers
 | # | File | Purpose |
 |---|------|---------|
-| 6 | `path/EntityController.cs` | API endpoints |
+| 1 | `path/EntityController.cs` | API endpoints |
 
 #### Background Jobs
 | # | File | Purpose |
 |---|------|---------|
-| 7 | `path/EntityJob.cs` | Scheduled processing |
+| 1 | `path/EntityBackgroundJob.cs` | Scheduled processing |
 
 ---
 
@@ -154,31 +178,40 @@ For `*Consumer.cs` files found:
 #### Services & Helpers
 | # | File | Purpose |
 |---|------|---------|
-| 8 | `path/EntityService.cs` | Business logic |
+| 1 | `path/EntityService.cs` | Business logic |
 
 #### Frontend Components
 | # | File | Purpose |
 |---|------|---------|
-| 9 | `path/entity-list.component.ts` | UI component |
+| 1 | `path/entity-list.component.ts` | UI component |
 
 #### API Services
 | # | File | Purpose |
 |---|------|---------|
-| 10 | `path/entity-api.service.ts` | HTTP client |
+| 1 | `path/entity-api.service.ts` | HTTP client |
+
+---
+
+### LOW PRIORITY
+
+#### Tests & Config
+| # | File | Purpose |
+|---|------|---------|
+| 1 | `path/EntityTest.cs` | Unit tests |
 
 ---
 
 ### Suggested Starting Points
 
-1. **[File #X]** - [Why start here]
-2. **[File #Y]** - [Why]
-3. **[File #Z]** - [Why]
+1. **[Most relevant file]** - [Why start here]
+2. **[Second most relevant]** - [Why]
+3. **[Third most relevant]** - [Why]
 
-### Cross-Service Integration
+### Cross-Service Integration (if applicable)
 
-| Source Service | Message | Target Service | Consumer |
-|----------------|---------|----------------|----------|
-| ServiceA | `EntityBusMessage` | ServiceB | `EntityConsumer.cs` |
+| Source Service | Message | Target Service | Consumer File |
+|----------------|---------|----------------|---------------|
+| ... | ... | ... | ... |
 
 ### Unresolved Questions
 
@@ -189,9 +222,9 @@ For `*Consumer.cs` files found:
 
 ## OUTPUT: Handoff to Investigate
 
-**When followed by `@workspace /investigate`:**
+**When followed by `/investigate`:**
 
-Your numbered file list becomes the analysis target. The Investigate prompt will:
+Your numbered file list becomes the analysis target. The Investigate command will:
 1. **Use your HIGH PRIORITY files** as primary analysis targets
 2. **Reference your file numbers** (e.g., "File #3 from Scout")
 3. **Skip redundant discovery** - trusts your search results
@@ -205,24 +238,17 @@ Your numbered file list becomes the analysis target. The Investigate prompt will
 
 ---
 
-## EasyPlatform Key Directories
+## PHASE 4: CONSUMER CROSS-SERVICE ANALYSIS
 
-### Backend
-| Directory | Contains |
-|-----------|----------|
-| `src/PlatformExampleApp/*/Domain/Entities/` | Domain entities |
-| `src/PlatformExampleApp/*/Application/UseCaseCommands/` | CQRS commands |
-| `src/PlatformExampleApp/*/Application/UseCaseQueries/` | CQRS queries |
-| `src/PlatformExampleApp/*/Application/UseCaseEvents/` | Entity event handlers |
-| `src/PlatformExampleApp/*/Api/Controllers/` | API controllers |
-| `src/Platform/Easy.Platform/` | Framework core |
+**CRITICAL**: For any `*Consumer.cs` files found:
 
-### Frontend
-| Directory | Contains |
-|-----------|----------|
-| `src/PlatformExampleAppWeb/apps/` | Angular applications |
-| `src/PlatformExampleAppWeb/libs/platform-core/` | Frontend framework |
-| `src/PlatformExampleAppWeb/libs/apps-domains/` | Business domain (APIs, models) |
+1. Identify the `*BusMessage` type being consumed
+2. Run additional grep across ALL services:
+   ```
+   grep -r "BusMessage" --include="*.cs" src/
+   ```
+3. Find files that **produce/publish** the message
+4. Document in Cross-Service Integration table
 
 ---
 
@@ -230,24 +256,28 @@ Your numbered file list becomes the analysis target. The Investigate prompt will
 
 | Metric | Target |
 |--------|--------|
-| Speed | < 3 minutes |
+| Speed | < 5 minutes total |
+| Coverage | All relevant directories searched |
 | Accuracy | Only directly relevant files |
-| Coverage | All HIGH priority directories |
-| Structure | Numbered, categorized output |
+| Structure | Organized by priority category |
 | Actionable | Clear starting points |
 
 ---
 
-## Common Searches Quick Reference
+## Error Handling
 
-| Looking for... | Search in... |
-|----------------|--------------|
-| Entity CRUD | `UseCaseCommands/`, `UseCaseQueries/` |
-| Business logic | `Domain/Entities/`, `*Service.cs` |
-| Side effects | `UseCaseEvents/`, `*EventHandler.cs` |
-| Cross-service | `*Consumer.cs`, `*BusMessage.cs` |
-| API endpoints | `Controllers/`, `*Controller.cs` |
-| Frontend feature | `libs/apps-domains/`, `apps/` |
-| Shared code | `libs/platform-core/`, `*.Shared/` |
-| Platform patterns | `src/Platform/`, `libs/platform-core/` |
-| Background processing | `*BackgroundJob*.cs`, `*Job.cs` |
+| Scenario | Action |
+|----------|--------|
+| Agent timeout | Skip, note gap, continue |
+| All agents timeout | Manual fallback with Glob/Grep |
+| Sparse results | Expand patterns, try synonyms |
+| Overwhelming results | Filter to HIGH PRIORITY only |
+
+---
+
+## Output Standards
+
+- **IMPORTANT:** Sacrifice grammar for concision
+- **IMPORTANT:** List unresolved questions at end
+- **IMPORTANT:** Number all files for easy reference
+- Use `file:line` format where possible
