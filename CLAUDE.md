@@ -515,6 +515,23 @@ Before responding to any task request, analyze the user's prompt to detect inten
 - **Skip detection:** Prefix message with `quick:` (e.g., `quick: add a button`)
 - **Explicit command:** Start with `/` (e.g., `/fix the login bug`)
 
+### Path-Based Skill Activation (MANDATORY)
+
+Before creating/modifying files in these paths, ALWAYS invoke the corresponding skill first:
+
+| Path Pattern | Skill | Pre-Read |
+|--------------|-------|----------|
+| `docs/business-features/**` | `/business-feature-docs` | `docs/templates/detailed-feature-docs-template.md` |
+| `docs/features/**` | `/feature-docs` | Existing sibling docs in same folder |
+| `src/**/*Command*.cs` | `/easyplatform-backend` | CQRS patterns in this file |
+| `src/**/*.component.ts` | `/frontend-angular-component` | Base component patterns |
+| `src/**/*.store.ts` | `/frontend-angular-store` | Store patterns |
+
+**Business Feature Documentation Requirements:**
+- All 26 sections required (see `business-feature-docs` skill)
+- Quick Navigation table with Audience column
+- Test cases in TC-{MOD}-XXX format with GIVEN/WHEN/THEN
+
 ### Example
 
 **User:** "Add a dark mode toggle to the settings page"

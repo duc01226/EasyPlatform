@@ -32,6 +32,24 @@
 - Use try catch error handling & cover security standards
 - Use `code-reviewer` agent to review code after every implementation
 
+## Documentation Workflow (MANDATORY)
+
+### Business Feature Documentation
+When creating/updating files in `docs/business-features/**`:
+1. **MUST** run `/business-feature-docs` skill first
+2. **MUST** read template: `docs/templates/detailed-feature-docs-template.md`
+3. **MUST** reference: `docs/features/README.ExampleFeature1.md`
+4. **MUST** include all 26 sections in correct order
+5. **MUST** include Quick Navigation table with Audience column
+6. **MUST** use TC-{MOD}-XXX format for test cases with GIVEN/WHEN/THEN
+
+### General Documentation
+When creating/updating files in `docs/**`:
+1. Check for existing templates in `docs/templates/`
+2. Check for sibling docs in same folder as reference
+3. Use `/feature-docs` skill for single-file feature docs
+4. Use `/documentation` skill for general docs
+
 ## Pre-commit/Push Rules
 - Run linting before commit
 - Run tests before push (DO NOT ignore failed tests just to pass the build or github actions)

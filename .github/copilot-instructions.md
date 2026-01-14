@@ -154,6 +154,27 @@ You MUST follow these steps for EVERY development request:
 | Explicit command | `/plan implement dark mode` | Bypass detection, run command |
 | Say "quick" | When asked "Proceed?" | Abort workflow, handle directly |
 
+### Path-Based Skill Activation (MANDATORY)
+
+Before creating/modifying files in these paths, ALWAYS invoke the corresponding skill first:
+
+| Path Pattern | Skill | Pre-Read |
+|--------------|-------|----------|
+| `docs/business-features/**` | `/business-feature-docs` | `docs/templates/detailed-feature-docs-template.md` |
+| `docs/features/**` | `/feature-docs` | Existing sibling docs in same folder |
+| `src/**/*Command*.cs` | `/easyplatform-backend` | CQRS patterns |
+| `src/**/*.component.ts` | `/frontend-angular-component` | Base component patterns |
+
+### Business Feature Documentation (26 Sections Required)
+
+When creating/updating files in `docs/business-features/**`:
+1. **MUST** run `/business-feature-docs` skill first
+2. **MUST** read template: `docs/templates/detailed-feature-docs-template.md`
+3. **MUST** reference: `docs/features/README.ExampleFeature1.md`
+4. **MUST** include all 26 sections in correct order
+5. **MUST** include Quick Navigation table with Audience column
+6. **MUST** use TC-{MOD}-XXX format for test cases with GIVEN/WHEN/THEN
+
 ### Example Interaction
 
 **User:** "Add a dark mode toggle to the settings page"
