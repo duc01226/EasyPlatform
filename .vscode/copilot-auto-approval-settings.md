@@ -144,14 +144,62 @@ These settings **disable ALL permission checks** for Copilot agents and tools. T
 
 **Impact**: Uses PowerShell for consistent command execution.
 
+## Workspace Boundary Enforcement (Enabled 2026-01-15)
+
+### Overview
+
+Workspace boundary restrictions prevent Copilot from modifying files outside the project root.
+
+### Settings Changed
+
+| Setting | Previous | Current | Impact |
+|---------|----------|---------|--------|
+| `chat.tools.terminal.blockDetectedFileWrites` | `"never"` | `"outsideWorkspace"` | Terminal file writes outside workspace require approval |
+| `chat.tools.edits.autoApprove` | `{"**/*": true}` | Directory whitelist | Only whitelisted directories auto-approve |
+
+### Whitelisted Directories
+
+- `src/**` - Application source code
+- `docs/**` - Documentation
+- `plans/**` - Planning files
+- `.github/**` - GitHub configuration
+- `.vscode/**` - VS Code configuration
+- `.claude/**` - Claude configuration
+- `.ai/**` - AI configuration
+- `scripts/**` - Build scripts
+- `vscode-easyplatform-hooks/**` - VS Code extension
+- `*.md`, `*.json`, `*.yml`, `*.yaml`, `*.cjs`, `*.mjs` - Root config files
+
+### Troubleshooting Blocked Operations
+
+If a legitimate operation is blocked:
+
+1. **Check the path** - Is it within workspace root?
+2. **Check directory whitelist** - Is the directory listed above?
+3. **Manual approval** - VS Code will prompt; click "Allow" if legitimate
+4. **Add to whitelist** - If frequently needed, add pattern to settings.json
+
+### Adding New Directories
+
+To whitelist a new directory, add to `chat.tools.edits.autoApprove`:
+
+```json
+"chat.tools.edits.autoApprove": {
+    "existing/**": true,
+    "new-directory/**": true
+}
+```
+
+---
+
 ## Quick Reference: What Each Setting Does
 
 | Setting                                       | Bypasses                | Risk Level |
 | --------------------------------------------- | ----------------------- | ---------- |
 | `chat.tools.global.autoApprove`               | ALL tools               | 🔴 CRITICAL |
-| `chat.tools.edits.autoApprove`                | File edits              | 🟠 HIGH     |
+| `chat.tools.edits.autoApprove`                | File edits (whitelisted)| 🟡 MEDIUM   |
 | `chat.tools.terminal.enableAutoApprove`       | Terminal commands       | 🟠 HIGH     |
-| `chat.tools.terminal.blockDetectedFileWrites` | File write detection    | 🟠 HIGH     |
+| `chat.tools.terminal.blockDetectedFileWrites` | Outside workspace only  | 🟢 LOW      |
 | `chat.tools.urls.autoApprove`                 | Web requests            | 🟡 MEDIUM   |
 | `chat.editing.confirmEditRequestRemoval`      | Edit undo confirmations | 🟢 LOW      |
 | `chat.notifyWindowOnConfirmation`             | OS notifications        | 🟢 LOW      |
@@ -170,7 +218,9 @@ These settings **disable ALL permission checks** for Copilot agents and tools. T
 Check these settings are present:
 
 - `chat.tools.terminal.ignoreDefaultAutoApproveRules: true`
-- `chat.tools.terminal.blockDetectedFileWrites: "never"`
+- `chat.tools.terminal.blockDetectedFileWrites: "outsideWorkspace"` (blocks only outside workspace)
+
+**Note**: If you need to allow ALL file writes (not recommended), change to `"never"`.
 
 ### Organization-Managed Settings
 
@@ -207,6 +257,10 @@ Contact your VS Code admin to override:
 
 ## Version History
 
+- **2026-01-15**: Added workspace boundary enforcement
+  - Changed `blockDetectedFileWrites` to `"outsideWorkspace"`
+  - Changed `edits.autoApprove` from `**/*` to directory whitelist
+  - Added workspace boundary documentation section
 - **2026-01-15**: Initial documentation based on VS Code 1.108
 - Settings verified against latest documentation
 - Added organization-managed settings notes

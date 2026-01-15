@@ -21,6 +21,7 @@
     "hooks": {
         "Notification": [
             {
+                "matcher": "idle_prompt",
                 "hooks": [
                     {
                         "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs",
@@ -143,6 +144,15 @@
                     }
                 ],
                 "matcher": "Bash|Glob|Grep|Read|Edit|Write"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/project-boundary.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash"
             },
             {
                 "hooks": [

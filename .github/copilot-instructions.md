@@ -687,6 +687,44 @@ See `.github/instructions/` for path-specific detailed patterns:
 -   Complex queries: Create `RepositoryExtensions` with static expressions
 -   Fallback: `IPlatformQueryableRootRepository<TEntity, TKey>`
 
+## Workspace File Access Boundaries (CRITICAL)
+
+**Workspace Root**: All file operations MUST stay within the project workspace root.
+
+### Allowed Operations
+
+-   Read/write files within workspace root
+-   Create new files in project directories: `src/`, `docs/`, `plans/`, `scripts/`
+-   Modify configuration: `.vscode/`, `.github/`, `.claude/`, `.ai/`
+-   Edit root-level config files: `*.md`, `*.json`, `*.yml`, `*.yaml`
+
+### Prohibited Operations (NEVER DO)
+
+-   Modify files outside workspace root
+-   Access parent directories (`../`)
+-   Modify sibling repositories or projects
+-   Write to system directories
+-   Access user home directory files (except through workspace)
+
+### Verification Protocol
+
+Before any file operation:
+
+1. Verify path is within workspace root
+2. Reject paths containing `..` traversal
+3. Confirm path is within allowed directories
+4. If uncertain, ask user for confirmation
+
+### Response to Out-of-Scope Requests
+
+If asked to modify files outside workspace:
+
+1. Refuse the operation
+2. Explain the workspace boundary restriction
+3. Suggest alternative approaches within workspace
+
+---
+
 ## Critical Anti-Patterns
 
 **Backend:**

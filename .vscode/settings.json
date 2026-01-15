@@ -29,7 +29,21 @@
     "chat.mcp.access": "all",
     "chat.notifyWindowOnConfirmation": false,
     "chat.tools.edits.autoApprove": {
-        "**/*": true
+        "*.cjs": true,
+        "*.json": true,
+        "*.md": true,
+        "*.mjs": true,
+        "*.yaml": true,
+        "*.yml": true,
+        ".ai/**": true,
+        ".claude/**": true,
+        ".github/**": true,
+        ".vscode/**": true,
+        "docs/**": true,
+        "plans/**": true,
+        "scripts/**": true,
+        "src/**": true,
+        "vscode-easyplatform-hooks/**": true
     },
     "chat.tools.eligibleForAutoApproval": {
         "add_observations": true,
@@ -145,6 +159,7 @@
     "chat.tools.global.autoApprove": true,
     "chat.tools.terminal.autoApprove": {
         "*": true,
+        ".\\deploy-and-install.cmd": true,
         "/^chmod/": true,
         "/^chown/": true,
         "/^curl/": true,
@@ -159,23 +174,19 @@
         "/^rmdir/": true,
         "/^wget/": true,
         "cd": true,
+        "Get-ChildItem": true,
+        "git add": true,
         "mkdir": true,
         "New-Item": true,
         "Out-Null": true,
+        "Out-String": true,
         "Select-Object": true,
         "Select-String": true,
         "Test-Path": true,
-        "Write-Host": true,
-        "Out-String": true,
-        ".\\deploy-and-install.cmd": true,
-        "/^cmd /c \"cd /d d:\\\\GitSources\\\\EasyPlatform\\\\vscode-easyplatform-hooks && deploy-and-install\\.cmd\"$/": {
-            "approve": true,
-            "matchCommandLine": true
-        },
-        "Get-ChildItem": true
+        "Write-Host": true
     },
     "chat.tools.terminal.autoReplyToPrompts": true,
-    "chat.tools.terminal.blockDetectedFileWrites": "never",
+    "chat.tools.terminal.blockDetectedFileWrites": "outsideWorkspace",
     "chat.tools.terminal.enableAutoApprove": true,
     "chat.tools.terminal.ignoreDefaultAutoApproveRules": true,
     "chat.tools.urls.autoApprove": {
