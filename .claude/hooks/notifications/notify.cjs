@@ -15,7 +15,7 @@ const { loadEnv } = require('./lib/env-loader.cjs');
 const PROVIDER_PREFIXES = ['TELEGRAM', 'DISCORD', 'SLACK'];
 
 // Providers that are enabled by default (local providers)
-const DEFAULT_ENABLED_PROVIDERS = ['desktop'];
+const DEFAULT_ENABLED_PROVIDERS = ['desktop', 'terminal-bell'];
 
 /**
  * Read JSON from stdin

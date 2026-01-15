@@ -2,6 +2,48 @@
 
 > **Enterprise Platform Framework** - .NET 9 Microservices + Angular 19 Micro Frontends
 
+## CRITICAL: Always Plan Before Implement
+
+Before implementing ANY non-trivial task, you MUST:
+
+1. **Enter Plan Mode First** - Use workflow detection automatically
+2. **Investigate & Analyze** - Explore codebase, understand context
+3. **Create Implementation Plan** - Write detailed plan with specific files and approach
+4. **Get User Approval** - Wait for confirmation before any code changes
+5. **Only Then Implement** - Execute the approved plan
+
+**Exceptions:** Single-line fixes, user says "just do it", pure research with no changes.
+
+## CRITICAL: Todo Enforcement (Runtime Enforced)
+
+Implementation skills are **blocked** unless you have active todos. This is enforced by hooks.
+
+### Allowed Without Todos (Research/Planning)
+
+-   `/scout`, `/scout:ext`, `/investigate`, `/research`, `/explore`
+-   `/plan`, `/plan:fast`, `/plan:hard`, `/plan:validate`
+-   `/watzup`, `/checkpoint`, `/kanban`
+
+### Blocked Without Todos (Implementation)
+
+-   `/cook`, `/fix`, `/code`, `/feature`, `/implement`
+-   `/test`, `/debug`, `/code-review`, `/commit`
+-   All other skills not listed above
+
+### Bypass
+
+Use `quick:` prefix to bypass enforcement (not recommended):
+
+```
+/cook quick: add a button
+```
+
+### Context Preservation
+
+-   Todos automatically saved to checkpoints during context compaction
+-   Todos auto-restored on session resume (if checkpoint < 24h old)
+-   Subagents inherit parent todo state for context continuity
+
 ## Project Overview
 
 EasyPlatform is a comprehensive enterprise platform framework built with microservices architecture, Clean Architecture, CQRS, and event-driven design.
@@ -350,6 +392,59 @@ src/PlatformExampleAppWeb/ # Angular 19 apps (playground-text-snippet)
 docs/design-system/        # Frontend design system documentation
 ```
 
+## Project Structure
+
+### Backend
+
+```
+src/Platform/                    # Easy.Platform framework
+├── Easy.Platform/               # Core (CQRS, validation, repositories)
+├── Easy.Platform.AspNetCore/    # ASP.NET Core integration
+├── Easy.Platform.MongoDB/       # MongoDB patterns
+├── Easy.Platform.RabbitMQ/      # Message bus
+└── Easy.Platform.*/             # Other modules
+
+src/PlatformExampleApp/          # Example microservice
+├── *.Api/                       # Web API layer
+├── *.Application/               # CQRS handlers, jobs, events
+├── *.Domain/                    # Entities, domain events
+├── *.Persistence*/              # Database implementations
+└── *.Shared/                    # Cross-service utilities
+```
+
+### Frontend
+
+```
+src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
+├── apps/
+│   └── playground-text-snippet/ # Example app
+└── libs/
+    ├── platform-core/           # Base classes, utilities
+    ├── apps-domains/            # Business domain code
+    ├── share-styles/            # SCSS themes
+    └── share-assets/            # Static assets
+```
+
+## Documentation Index
+
+### Rule Files (docs/claude/)
+
+| File                                                                                          | Purpose                                            |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| [README.md](../docs/claude/README.md)                                                         | Documentation index & navigation guide             |
+| [claude-kit-setup.md](../docs/claude/claude-kit-setup.md)                                     | Claude Kit (ACE, hooks, skills, agents, workflows) |
+| [architecture.md](../docs/claude/architecture.md)                                             | System architecture & planning protocol            |
+| [troubleshooting.md](../docs/claude/troubleshooting.md)                                       | Investigation protocol & common issues             |
+| [backend-patterns.md](../docs/claude/backend-patterns.md)                                     | Backend patterns (CQRS, Repository, etc.)          |
+| [backend-csharp-complete-guide.md](../docs/claude/backend-csharp-complete-guide.md)           | Comprehensive C# backend reference                 |
+| [frontend-patterns.md](../docs/claude/frontend-patterns.md)                                   | Angular/platform-core patterns                     |
+| [frontend-typescript-complete-guide.md](../docs/claude/frontend-typescript-complete-guide.md) | Comprehensive Angular/TS frontend reference        |
+| [scss-styling-guide.md](../docs/claude/scss-styling-guide.md)                                 | SCSS/CSS styling rules, BEM methodology            |
+| [authorization-patterns.md](../docs/claude/authorization-patterns.md)                         | Security and migration patterns                    |
+| [decision-trees.md](../docs/claude/decision-trees.md)                                         | Quick decision guides and templates                |
+| [advanced-patterns.md](../docs/claude/advanced-patterns.md)                                   | Advanced techniques and anti-patterns              |
+| [clean-code-rules.md](../docs/claude/clean-code-rules.md)                                     | Universal coding standards                         |
+
 ## Essential Documentation
 
 | Document                           | Purpose                          |
@@ -667,6 +762,44 @@ nx test apps-domains
 2. Search existing implementations in codebase
 3. Check instruction files in `.github/instructions/`
 4. Review design system documentation
+
+---
+
+## Cross-Platform Shell Commands (CRITICAL)
+
+**Always use portable shell commands** - This codebase runs on Windows with Git Bash, where Windows commands fail.
+
+### Command Translation Table
+
+| Windows          | Portable              | Notes                                         |
+| ---------------- | --------------------- | --------------------------------------------- |
+| `> nul`          | `> /dev/null`         | **CRITICAL: Creates "nul" file in Git Bash!** |
+| `2>nul`          | `2>/dev/null`         | Suppress stderr                               |
+| `dir /b /s path` | `find "path" -type f` | Recursive file list                           |
+| `dir /b path`    | `ls -1 "path"`        | Simple list                                   |
+| `dir path`       | `ls -la "path"`       | Detailed list                                 |
+| `type file`      | `cat file`            | Read file                                     |
+| `copy src dst`   | `cp src dst`          | Copy file                                     |
+| `move src dst`   | `mv src dst`          | Move file                                     |
+| `del file`       | `rm file`             | Delete file                                   |
+| `md path`        | `mkdir -p "path"`     | Create directory                              |
+| `rd /s path`     | `rm -rf path`         | Remove directory                              |
+| `cls`            | `clear`               | Clear screen                                  |
+
+### Path Format
+
+```bash
+# ❌ WRONG - Backslashes fail in Git Bash
+dir /b /s D:\GitSources\Project\.claude\patterns
+
+# ✅ CORRECT - Forward slashes work everywhere
+find "D:/GitSources/Project/.claude/patterns" -type f
+ls -la "D:/GitSources/Project/.claude/patterns"
+```
+
+### Why This Matters
+
+Git Bash interprets `dir /b` as: "run `dir` (Unix alias for `ls`) with `/b` as a file path argument" - hence the error `dir: cannot access '/b': No such file or directory`.
 
 ---
 
@@ -1023,6 +1156,27 @@ internal sealed class EnsureIndexesMigration : PlatformMongoMigrationExecutor<Se
         await dbContext.EnsureOutboxBusMessageCollectionIndexesAsync(true);
         // Or custom index creation
         // await dbContext.GetCollection<Entity>().Indexes.CreateOneAsync(...);
+    }
+}
+```
+
+### Multi-Database Support
+
+```csharp
+// Entity Framework Core (SQL Server/PostgreSQL)
+public class MyEfCorePersistenceModule : PlatformEfCorePersistenceModule<MyDbContext>
+{
+    protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceProvider sp)
+        => options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
+}
+
+// MongoDB
+public class MyMongoPersistenceModule : PlatformMongoDbPersistenceModule<MyDbContext>
+{
+    protected override void ConfigureMongoOptions(PlatformMongoOptions<MyDbContext> options)
+    {
+        options.ConnectionString = Configuration.GetSection("MongoDB:ConnectionString").Value;
+        options.Database = Configuration.GetSection("MongoDB:Database").Value;
     }
 }
 ```
