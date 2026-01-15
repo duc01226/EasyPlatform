@@ -267,6 +267,38 @@ const routerExecutionTests = [
       const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000 });
       assertEqual(result.code, 0, 'Should handle unknown event');
     }
+  },
+  {
+    name: '[notification] router skips permission_prompt notifications (command approval)',
+    fn: async () => {
+      const input = {
+        hook_event_name: 'Notification',
+        notification_type: 'permission_prompt',
+        cwd: '/test',
+        session_id: 'test123',
+        message: 'Claude needs permission to use Bash'
+      };
+      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000 });
+      assertEqual(result.code, 0, 'Should exit cleanly');
+      assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
+      assertContains(result.stderr, 'permission_prompt', 'Should mention permission_prompt in skip message');
+    }
+  },
+  {
+    name: '[notification] router allows idle_prompt notifications',
+    fn: async () => {
+      const input = {
+        hook_event_name: 'Notification',
+        notification_type: 'idle_prompt',
+        cwd: '/test',
+        session_id: 'test123',
+        message: 'Claude is waiting for input'
+      };
+      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000 });
+      assertEqual(result.code, 0, 'Should exit cleanly');
+      // idle_prompt should NOT be skipped - notifications should be sent
+      assertFalse(result.stderr.includes('Skipped'), 'idle_prompt should not be skipped');
+    }
   }
 ];
 

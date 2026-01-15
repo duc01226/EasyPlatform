@@ -86,6 +86,10 @@ function loadProvider(providerName) {
   return null;
 }
 
+// Notification types that should be SKIPPED (no notification sent)
+// permission_prompt = command approval dialogs (too noisy, user already sees them)
+const SKIP_NOTIFICATION_TYPES = ['permission_prompt'];
+
 /**
  * Main notification router
  */
@@ -93,6 +97,15 @@ async function main() {
   try {
     // Read input from stdin
     const input = await readStdin();
+
+    // Skip notification types that shouldn't trigger alerts
+    // This filters out command approval prompts (permission_prompt) which are already
+    // visible to the user in the terminal - no need to duplicate with notifications
+    const notificationType = input.notification_type;
+    if (notificationType && SKIP_NOTIFICATION_TYPES.includes(notificationType)) {
+      console.error(`[notify] Skipped: notification_type=${notificationType}`);
+      process.exit(0);
+    }
 
     // Load environment with cascade
     const cwd = input.cwd || process.cwd();
