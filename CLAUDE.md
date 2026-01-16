@@ -54,6 +54,29 @@ Use `quick:` prefix to bypass enforcement (not recommended):
 - Todos automatically saved to checkpoints during context compaction
 - Todos auto-restored on session resume (if checkpoint < 24h old)
 - Subagents inherit parent todo state for context continuity
+- **External Memory Swap**: Large tool outputs (>threshold) externalized to disk for post-compaction recovery
+
+### External Memory Swap
+
+Large tool outputs are automatically externalized to disk files with semantic summaries. After context compaction, exact content can be recovered without re-executing tools.
+
+| Tool | Threshold | Summary Type |
+|------|-----------|--------------|
+| Read | 8KB | Code signatures (class/function/interface) |
+| Grep | 4KB | Match count + preview |
+| Glob | 2KB | File count + extensions |
+| Bash | 6KB | Truncated output |
+
+**How it works:**
+1. PostToolUse hook detects large outputs
+2. Content saved to `{temp}/ck/swap/{sessionId}/`
+3. Markdown pointer injected with summary
+4. On session resume: inventory table shows recoverable content
+5. Use `Read: {path}` to retrieve exact content
+
+> **Note:** Does NOT reduce active session tokens - value is post-compaction recovery only.
+
+See: [claude-kit-setup.md#external-memory-swap-system](docs/claude/claude-kit-setup.md#external-memory-swap-system)
 
 ---
 
@@ -64,7 +87,7 @@ Use `quick:` prefix to bypass enforcement (not recommended):
 | File                                                                         | Purpose                                          |
 | ---------------------------------------------------------------------------- | ------------------------------------------------ |
 | [README.md](docs/claude/README.md)                                           | Documentation index & navigation guide           |
-| [claude-kit-setup.md](docs/claude/claude-kit-setup.md)                       | Claude Kit (ACE, hooks, skills, agents, workflows) |
+| [claude-kit-setup.md](docs/claude/claude-kit-setup.md)                       | Claude Kit (ACE, hooks, skills, agents, workflows, swap) |
 | [architecture.md](docs/claude/architecture.md)                               | System architecture & planning protocol          |
 | [troubleshooting.md](docs/claude/troubleshooting.md)                         | Investigation protocol & common issues           |
 | [backend-patterns.md](docs/claude/backend-patterns.md)                       | Backend patterns (CQRS, Repository, etc.)        |
