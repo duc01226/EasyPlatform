@@ -41,6 +41,9 @@ The `.claude/` directory contains a sophisticated Claude Code Kit that transform
 │   ├── session-init.cjs   # Session initialization
 │   ├── workflow-router.cjs # Intent detection
 │   ├── todo-enforcement.cjs # Task tracking
+│   ├── tool-output-swap.cjs # External memory swap hook
+│   ├── config/            # Hook configurations
+│   │   └── swap-config.json # Swap thresholds and limits
 │   ├── notifications/     # Multi-provider notification system
 │   │   ├── notify.cjs     # Main router
 │   │   ├── lib/
@@ -54,7 +57,8 @@ The `.claude/` directory contains a sophisticated Claude Code Kit that transform
 │       ├── ace-constants.cjs
 │       ├── ace-playbook-state.cjs
 │       ├── ace-lesson-schema.cjs
-│       └── ace-outcome-classifier.cjs
+│       ├── ace-outcome-classifier.cjs
+│       └── swap-engine.cjs  # External memory swap engine
 ├── skills/                 # 70+ capability modules
 │   ├── SKILL.md files     # Individual skill definitions
 │   └── references/        # Skill reference documentation
@@ -308,10 +312,10 @@ Provides thread-safe operations:
 | SessionStart | 3 | session-init, session-resume, ace-session-inject |
 | UserPromptSubmit | 2 | workflow-router, dev-rules-reminder |
 | PreToolUse | 7 | todo-enforcement, scout-block, privacy-block, 4× context hooks |
-| PostToolUse | 5 | todo-tracker, prettier, workflow-step, ace-event, ace-feedback |
+| PostToolUse | 6 | todo-tracker, prettier, workflow-step, ace-event, ace-feedback, tool-output-swap |
 | PreCompact | 4 | write-marker, save-memory, ace-reflector, ace-curator |
 | Notification | 1 | notify.cjs (Discord/Slack/Telegram) |
-| **Total** | **22** | Across 6 hook types |
+| **Total** | **23** | Across 6 hook types |
 
 ### Hook Types
 
@@ -1000,6 +1004,164 @@ confidence = (helpful_count + human_feedback_count * HUMAN_WEIGHT) /
 4. **Degradation**: Failed executions increase not_helpful_count
 5. **Pruning**: Deltas older than 90 days or <20% success rate → archived
 6. **Overflow**: If >50 active, lowest confidence → archived
+
+---
+
+## External Memory Swap System
+
+### Overview
+
+The External Memory Swap system externalizes large tool outputs to disk files with semantic summaries for **post-compaction recovery** without re-executing tools. This enables Claude to recover exact content after context compaction.
+
+### Critical Constraint
+
+> **PostToolUse hooks CANNOT transform tool output.** They can only observe and inject additional content. The original output still enters context during the active session.
+
+### Value Proposition
+
+| What It Does | What It Does NOT Do |
+|--------------|---------------------|
+| ✅ Post-compaction exact recovery | ❌ Reduce active session tokens |
+| ✅ Semantic summaries for quick reference | ❌ Transform tool output |
+| ✅ Session-isolated storage | ❌ Work as virtual memory |
+| ✅ Tool-specific threshold tuning | ❌ Provide token savings during session |
+
+### Architecture
+
+```
+Tool Execution (Read/Grep/Glob/Bash)
+         │
+         ▼
+┌─────────────────────┐
+│  PostToolUse Hook   │
+│  tool-output-swap   │
+└─────────┬───────────┘
+          │
+          ▼
+┌─────────────────────┐     size < threshold
+│  shouldExternalize  │─────────────────────► No action
+└─────────┬───────────┘
+          │ size >= threshold
+          ▼
+┌─────────────────────┐
+│    externalize()    │──► Write swap files + inject pointer
+└─────────────────────┘
+
+... After Context Compaction ...
+
+┌─────────────────────┐
+│  SessionStart Hook  │
+│ post-compact-recovery│
+└─────────┬───────────┘
+          │
+          ▼
+Inject swap inventory table → LLM can Read exact content
+```
+
+### Components
+
+| File | Location | Purpose |
+|------|----------|---------|
+| `swap-engine.cjs` | `.claude/hooks/lib/` | Core externalization logic |
+| `tool-output-swap.cjs` | `.claude/hooks/` | PostToolUse hook entry |
+| `swap-config.json` | `.claude/hooks/config/` | Thresholds and limits |
+
+### Configuration
+
+```json
+{
+  "enabled": true,
+  "thresholds": {
+    "default": 4096,
+    "Read": 8192,
+    "Grep": 4096,
+    "Bash": 6144,
+    "Glob": 2048
+  },
+  "retention": {
+    "defaultHours": 24,
+    "accessedHours": 48,
+    "neverAccessedHours": 6
+  },
+  "limits": {
+    "maxEntriesPerSession": 100,
+    "maxTotalBytes": 52428800,
+    "maxSingleFile": 5242880
+  }
+}
+```
+
+### Storage Structure
+
+```
+{os.tmpdir()}/ck/swap/{sessionId}/
+├── index.jsonl          # Session manifest (JSONL format - atomic appends)
+├── {uuid}.content       # Raw content (exact)
+└── {uuid}.meta.json     # Metadata + summary
+```
+
+**Note:** Uses `os.tmpdir()` for cross-platform support (Windows: `%TEMP%`, Unix: `/tmp`)
+
+### Key Functions
+
+#### shouldExternalize(toolName, toolResult, toolInput)
+- Checks if swap is enabled
+- Prevents recursion (skips swap file reads)
+- Compares byte size against tool-specific thresholds
+- Returns true if output should be externalized
+
+#### externalize(sessionId, toolName, toolInput, toolResult)
+- Validates disk space limits
+- Generates UUID for swap entry
+- Writes content file and metadata
+- Appends to JSONL index (atomic)
+- Returns pointer info or null on failure
+
+#### extractSummary(content, toolName)
+- Tool-specific summarization:
+  - **Read**: Extracts class/function/interface signatures
+  - **Grep**: Shows match count and preview
+  - **Glob**: Shows file count and extension types
+  - **Default**: Truncates content
+
+#### buildPointer(entry)
+- Creates markdown reference with:
+  - Swap ID, tool, input
+  - Size metrics (chars, estimated tokens)
+  - Summary and key patterns
+  - Retrieval command
+
+### Integration Points
+
+#### PostToolUse Hook (tool-output-swap.cjs)
+- Triggered for: Read, Grep, Glob, Bash
+- Calls shouldExternalize() → externalize() → buildPointer()
+- Outputs markdown pointer to stdout
+
+#### SessionStart Hook (session-resume.cjs)
+- Loads swap entries for current session
+- Injects inventory table with retrieval paths
+- Escapes markdown pipes in summaries
+
+#### SessionEnd Hook (session-end.cjs)
+- On "clear": Deletes entire session swap directory
+- On "compact": Runs retention cleanup + orphan removal
+
+### Cleanup Behavior
+
+| Trigger | Action |
+|---------|--------|
+| `/clear` | Delete all swap files for session |
+| Context compact | Remove expired files (>24h default) |
+| Session end | Cleanup orphan files |
+
+### Safety Features
+
+1. **Fail-open**: All errors exit 0 (never blocks Claude)
+2. **Recursion prevention**: Skips reads from swap directory
+3. **Session isolation**: Files scoped by session ID
+4. **Atomic writes**: JSONL append-only index
+5. **Disk limits**: maxTotalBytes, maxEntriesPerSession
 
 ---
 

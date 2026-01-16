@@ -36,6 +36,9 @@ const METRICS_PATH = path.join(CK_TMP_DIR, 'hook-metrics.json');
 // Debug logs directory
 const DEBUG_DIR = path.join(CK_TMP_DIR, 'debug');
 
+// Swap files directory (for externalized large tool outputs)
+const SWAP_DIR = path.join(CK_TMP_DIR, 'swap');
+
 /**
  * Ensure directory exists
  * @param {string} dirPath - Directory path to create
@@ -95,11 +98,42 @@ function cleanAll() {
   }
 }
 
+/**
+ * Sanitize session ID to prevent path injection
+ * Only allows alphanumeric characters and dashes
+ * @param {string} sessionId - Raw session ID
+ * @returns {string} Sanitized session ID
+ */
+function sanitizeSessionId(sessionId) {
+  return (sessionId || 'default').replace(/[^a-zA-Z0-9-]/g, '_');
+}
+
+/**
+ * Get swap directory for a session
+ * @param {string} sessionId - Session ID
+ * @returns {string} Full path to session swap directory
+ */
+function getSwapDir(sessionId) {
+  return path.join(SWAP_DIR, sanitizeSessionId(sessionId));
+}
+
+/**
+ * Ensure swap directory exists for a session
+ * @param {string} sessionId - Session ID
+ * @returns {string} Full path to session swap directory
+ */
+function ensureSwapDir(sessionId) {
+  const dir = getSwapDir(sessionId);
+  ensureDir(dir);
+  return dir;
+}
+
 module.exports = {
   // Directories
   CK_TMP_DIR,
   MARKERS_DIR,
   DEBUG_DIR,
+  SWAP_DIR,
 
   // Files
   CALIBRATION_PATH,
@@ -110,5 +144,10 @@ module.exports = {
   getMarkerPath,
   getDebugLogPath,
   initDirs,
-  cleanAll
+  cleanAll,
+
+  // Swap helpers
+  sanitizeSessionId,
+  getSwapDir,
+  ensureSwapDir
 };

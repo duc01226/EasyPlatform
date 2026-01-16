@@ -1,12 +1,6 @@
 #!/usr/bin/env node
 /**
- * SessionEnd Hook - Cleanup on session end
- *
- * Fires: When session ends (clear, compact, user exit)
- * Purpose: Delete compact marker files and workflow state to reset context baseline on /clear
- *
- * Exit Codes:
- *   0 - Success (non-blocking)
+ * SessionEnd Hook - Cleanup on session end (clear, compact, exit)
  */
 
 const fs = require('fs');
@@ -14,6 +8,41 @@ const { deleteMarker } = require('./lib/context-tracker.cjs');
 const { clearState: clearWorkflowState } = require('./lib/workflow-state.cjs');
 const { clearEditState } = require('./lib/edit-state.cjs');
 const { cleanupTempFiles } = require('./lib/temp-cleanup.cjs');
+
+let _swapEngine = null;
+function getSwapEngine() {
+  if (_swapEngine) return _swapEngine;
+
+  try {
+    _swapEngine = require('./lib/swap-engine.cjs');
+  } catch (e) {
+    if (process.env.CK_DEBUG) console.error(`[session-end] Failed to load swap-engine: ${e.message}`);
+    return null;
+  }
+  return _swapEngine;
+}
+
+function cleanupSwapFiles(reason, sessionId) {
+  const engine = getSwapEngine();
+  if (!engine) return;
+
+  try {
+    const config = engine.loadConfig();
+    if (!config.enabled) return;
+
+    if (reason === 'clear') {
+      engine.deleteSessionSwap(sessionId);
+      return;
+    }
+
+    if (reason === 'compact') {
+      engine.cleanupSwapFiles(sessionId, config.retention?.defaultHours || 24);
+      engine.cleanupOrphans(sessionId);
+    }
+  } catch (e) {
+    if (process.env.CK_DEBUG) console.error(`[session-end] Swap cleanup error: ${e.message}`);
+  }
+}
 
 async function main() {
   try {
@@ -25,6 +54,11 @@ async function main() {
     // Always clean up temp files on session end
     // These files (tmpclaude-xxxx-cwd) are created by Task tool during the session
     cleanupTempFiles();
+
+    // Clean up swap files based on trigger type
+    if (sessionId) {
+      cleanupSwapFiles(reason, sessionId);
+    }
 
     // Delete marker on /clear to reset context baseline
     // SessionEnd fires with OLD session_id before new session starts

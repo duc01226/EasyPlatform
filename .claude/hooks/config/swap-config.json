@@ -1,0 +1,24 @@
+{
+  "enabled": true,
+  "thresholds": {
+    "default": 4096,
+    "Read": 8192,
+    "Grep": 4096,
+    "Bash": 6144,
+    "Glob": 2048
+  },
+  "retention": {
+    "defaultHours": 24,
+    "accessedHours": 48,
+    "neverAccessedHours": 6
+  },
+  "limits": {
+    "maxEntriesPerSession": 100,
+    "maxTotalBytes": 52428800,
+    "maxSingleFile": 5242880
+  },
+  "summary": {
+    "maxLength": 500,
+    "keyPatternsCount": 10
+  }
+}

@@ -1,39 +1,26 @@
 #!/usr/bin/env node
 /**
- * Session Resume Hook (SessionStart)
- *
- * Auto-restores todo state from the most recent checkpoint on session start.
- * This enables seamless task continuity across compactions.
- *
- * Triggered by: SessionStart event (resume, startup after compact)
- *
- * Behavior:
- * - Finds latest memory-checkpoint-*.md file
- * - Extracts todo list from "### Active Todos" section
- * - Restores to .todo-state.json (NOT TodoWrite - just state file)
- * - Outputs reminder to user about recovered context
- *
- * Exit Codes:
- *   0 - Success (non-blocking)
+ * Session Resume Hook - Auto-restores todo state from checkpoints and injects swap inventory.
  */
 
 const fs = require('fs');
 const path = require('path');
-const {
-  loadConfig,
-  resolvePlanPath,
-  getReportsPath
-} = require('./lib/ck-config-utils.cjs');
-const {
-  getTodoState,
-  restoreTodosFromCheckpoint
-} = require('./lib/todo-state.cjs');
+const { loadConfig, resolvePlanPath, getReportsPath } = require('./lib/ck-config-utils.cjs');
+const { getTodoState, restoreTodosFromCheckpoint } = require('./lib/todo-state.cjs');
 
-/**
- * Find the most recent checkpoint file
- * @param {string} reportsPath - Path to reports directory
- * @returns {string|null} Path to latest checkpoint or null
- */
+let _swapEngine = null;
+function getSwapEngine() {
+  if (_swapEngine) return _swapEngine;
+
+  try {
+    _swapEngine = require('./lib/swap-engine.cjs');
+  } catch (e) {
+    if (process.env.CK_DEBUG) console.error(`[session-resume] Failed to load swap-engine: ${e.message}`);
+    return null;
+  }
+  return _swapEngine;
+}
+
 function findLatestCheckpoint(reportsPath) {
   try {
     if (!fs.existsSync(reportsPath)) return null;
@@ -49,79 +36,83 @@ function findLatestCheckpoint(reportsPath) {
   }
 }
 
-/**
- * Parse checkpoint age
- * @param {string} filename - Checkpoint filename
- * @returns {number} Hours since checkpoint was created
- */
 function getCheckpointAgeHours(filename) {
-  try {
-    // Format: memory-checkpoint-YYYYMMDD-HHMMSS.md
-    const match = filename.match(/memory-checkpoint-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})\.md$/);
-    if (!match) return -1;
+  const match = filename.match(/memory-checkpoint-(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})(\d{2})\.md$/);
+  if (!match) return -1;
 
-    const [, year, month, day, hour, min, sec] = match;
-    const checkpointDate = new Date(year, month - 1, day, hour, min, sec);
-    const now = new Date();
-    return (now - checkpointDate) / (1000 * 60 * 60);
-  } catch (e) {
-    return -1;
-  }
+  const [, year, month, day, hour, min, sec] = match;
+  const checkpointDate = new Date(year, month - 1, day, hour, min, sec);
+  return (Date.now() - checkpointDate.getTime()) / (1000 * 60 * 60);
 }
 
-/**
- * Extract todos from checkpoint content
- * @param {string} content - Checkpoint file content
- * @returns {Object|null} Extracted todo data or null
- */
 function extractTodosFromCheckpoint(content) {
-  try {
-    // Extract "### Active Todos" section
-    const todosMatch = content.match(/### Active Todos\n\n([\s\S]*?)(?=\n\n#|\n\n---|\n*$)/);
-    if (!todosMatch) return null;
+  const todosMatch = content.match(/### Active Todos\n\n([\s\S]*?)(?=\n\n#|\n\n---|\n*$)/);
+  if (!todosMatch) return null;
 
-    const todoLines = todosMatch[1].split('\n').filter(l => l.trim());
-    if (todoLines.length === 0) return null;
-
-    // Parse todo format: "1. [x] Task content" or "1. [ ] Task content" or "1. [~] Task content"
-    const todos = todoLines.map(line => {
+  const statusMap = { 'x': 'completed', '~': 'in_progress', ' ': 'pending' };
+  const todos = todosMatch[1].split('\n')
+    .filter(l => l.trim())
+    .flatMap(line => {
       const match = line.match(/^\d+\.\s+\[([ x~])\]\s+(.+)$/);
-      if (!match) return null;
+      return match ? [{ content: match[2].trim(), status: statusMap[match[1]] }] : [];
+    });
 
-      return {
-        content: match[2].trim(),
-        status: match[1] === 'x' ? 'completed' :
-                match[1] === '~' ? 'in_progress' : 'pending'
-      };
-    }).filter(Boolean);
+  if (todos.length === 0) return null;
 
-    if (todos.length === 0) return null;
+  const countByStatus = (status) => todos.filter(t => t.status === status).length;
+  const metaMatch = content.match(/## Todo List State[\s\S]*?- \*\*Last Updated:\*\* ([^\n]+)/);
 
-    // Calculate counts
-    const pending = todos.filter(t => t.status === 'pending').length;
-    const completed = todos.filter(t => t.status === 'completed').length;
-    const inProgress = todos.filter(t => t.status === 'in_progress').length;
+  return {
+    todos,
+    taskCount: todos.length,
+    pendingCount: countByStatus('pending'),
+    completedCount: countByStatus('completed'),
+    inProgressCount: countByStatus('in_progress'),
+    timestamp: metaMatch ? metaMatch[1].trim() : null
+  };
+}
 
-    // Extract metadata from "## Todo List State" section if present
-    const metaMatch = content.match(/## Todo List State[\s\S]*?- \*\*Last Updated:\*\* ([^\n]+)/);
-    const timestamp = metaMatch ? metaMatch[1].trim() : null;
+function buildSwapInventory(sessionId) {
+  const engine = getSwapEngine();
+  if (!engine) return null;
 
-    return {
-      todos,
-      taskCount: todos.length,
-      pendingCount: pending,
-      completedCount: completed,
-      inProgressCount: inProgress,
-      timestamp
-    };
+  try {
+    const swapEntries = engine.getSwapEntries(sessionId);
+    if (swapEntries.length === 0) return null;
+
+    const rows = swapEntries.slice(0, 10).map(entry => {
+      const shortSummary = entry.summary.slice(0, 40).replace(/\|/g, '\\|') + (entry.summary.length > 40 ? '...' : '');
+      const sizeKB = Math.max(1, Math.round(entry.charCount / 1024));
+      return `| \`${entry.id}\` | ${entry.tool} | ${shortSummary} | ${sizeKB}KB | \`Read: ${entry.retrievePath}\` |`;
+    });
+
+    if (swapEntries.length > 10) {
+      rows.push(`| ... | ... | +${swapEntries.length - 10} more entries | ... | ... |`);
+    }
+
+    return [
+      '### Externalized Content (Recoverable)',
+      '',
+      'The following large tool outputs were externalized during this session:',
+      '',
+      '| ID | Tool | Summary | Size | Retrieve |',
+      '|----|------|---------|------|----------|',
+      ...rows,
+      '',
+      '> Use Read tool with the retrieve path to get exact content when needed.'
+    ].join('\n');
   } catch (e) {
+    if (process.env.CK_DEBUG) console.error(`[session-resume] Swap inventory error: ${e.message}`);
     return null;
   }
 }
 
-/**
- * Main execution
- */
+function outputSwapInventory(sessionId, withHeader = false) {
+  const inventory = buildSwapInventory(sessionId);
+  if (!inventory) return;
+  console.log(withHeader ? `## Session Resume\n\n${inventory}` : inventory);
+}
+
 async function main() {
   try {
     const stdin = fs.readFileSync(0, 'utf-8').trim();
@@ -129,77 +120,52 @@ async function main() {
 
     const payload = JSON.parse(stdin);
     const trigger = payload.trigger || payload.reason || 'unknown';
+    if (trigger === 'clear') process.exit(0);
 
-    // Only restore on resume/startup after compact, not on clear
-    if (trigger === 'clear') {
-      process.exit(0);
-    }
+    const sessionId = payload.session_id || process.env.CK_SESSION_ID || 'default';
 
-    // Check if we already have todo state (don't overwrite)
     const currentState = getTodoState();
     if (currentState.hasTodos && currentState.taskCount > 0) {
-      // Already have todos, don't overwrite
+      outputSwapInventory(sessionId);
       process.exit(0);
     }
 
-    // Load config to find reports path
     const config = loadConfig({ includeProject: false, includeAssertions: false });
     const resolved = resolvePlanPath(null, config);
     const reportsPath = path.resolve(process.cwd(), getReportsPath(resolved.path, resolved.resolvedBy, config.plan, config.paths));
 
-    // Find latest checkpoint
     const latestCheckpoint = findLatestCheckpoint(reportsPath);
     if (!latestCheckpoint) {
+      outputSwapInventory(sessionId, true);
       process.exit(0);
     }
 
-    // Check checkpoint age
     const ageHours = getCheckpointAgeHours(path.basename(latestCheckpoint));
     if (ageHours > 24) {
-      // Checkpoint too old, warn but don't restore
-      console.log(`## Stale Checkpoint Found`);
-      console.log('');
-      console.log(`Checkpoint \`${path.basename(latestCheckpoint)}\` is ${Math.round(ageHours)} hours old.`);
-      console.log('');
+      console.log(`## Stale Checkpoint Found\n`);
+      console.log(`Checkpoint \`${path.basename(latestCheckpoint)}\` is ${Math.round(ageHours)} hours old.\n`);
       console.log('To restore manually, read the checkpoint file and recreate todos with TodoWrite.');
       process.exit(0);
     }
 
-    // Read and parse checkpoint
-    const content = fs.readFileSync(latestCheckpoint, 'utf-8');
-    const todoData = extractTodosFromCheckpoint(content);
-
-    if (!todoData || todoData.todos.length === 0) {
+    const todoData = extractTodosFromCheckpoint(fs.readFileSync(latestCheckpoint, 'utf-8'));
+    if (!todoData || todoData.todos.length === 0 || !restoreTodosFromCheckpoint(todoData)) {
       process.exit(0);
     }
 
-    // Restore todo state
-    const restored = restoreTodosFromCheckpoint(todoData);
-    if (!restored) {
-      process.exit(0);
-    }
+    const statusMap = { completed: '[x]', in_progress: '[~]', pending: '[ ]' };
+    const todoList = todoData.todos.map((t, i) => `${i + 1}. ${statusMap[t.status]} ${t.content}`).join('\n');
 
-    // Output context for LLM
-    console.log(`## Previous Session Context Restored`);
-    console.log('');
+    console.log(`## Previous Session Context Restored\n`);
     console.log(`Recovered from: \`${path.basename(latestCheckpoint)}\``);
-    console.log(`Tasks: ${todoData.taskCount} total (${todoData.pendingCount} pending, ${todoData.inProgressCount} in-progress)`);
-    console.log('');
-    console.log('### Recovered Todos');
-    todoData.todos.forEach((t, i) => {
-      const status = t.status === 'completed' ? '[x]' :
-                     t.status === 'in_progress' ? '[~]' : '[ ]';
-      console.log(`${i + 1}. ${status} ${t.content}`);
-    });
-    console.log('');
+    console.log(`Tasks: ${todoData.taskCount} total (${todoData.pendingCount} pending, ${todoData.inProgressCount} in-progress)\n`);
+    console.log(`### Recovered Todos\n${todoList}\n`);
     console.log('**Note:** Todo state restored. Use TodoWrite to update the actual todo list if continuing previous work.');
 
+    outputSwapInventory(sessionId);
     process.exit(0);
   } catch (error) {
-    // Fail-open: don't block session start
-    if (process.env.CK_DEBUG) {
-      console.error(`[session-resume] Error: ${error.message}`);
-    }
+    if (process.env.CK_DEBUG) console.error(`[session-resume] Error: ${error.message}`);
     process.exit(0);
   }
 }

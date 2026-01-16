@@ -79,6 +79,15 @@
                     }
                 ],
                 "matcher": "Skill"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/tool-output-swap.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Read|Grep|Glob|Bash"
             }
         ],
         "PreCompact": [
