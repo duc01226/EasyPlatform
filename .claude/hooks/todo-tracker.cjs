@@ -11,15 +11,45 @@
  *   0 - Success (non-blocking)
  */
 
-const fs = require('fs');
 const { setTodoState } = require('./lib/todo-state.cjs');
 
-try {
-  // Read stdin
-  const stdin = fs.readFileSync(0, 'utf-8').trim();
-  if (!stdin) process.exit(0);
+/**
+ * Read stdin asynchronously with timeout to prevent hanging
+ * @returns {Promise<Object|null>} Parsed JSON payload or null
+ */
+async function readStdin() {
+  return new Promise((resolve) => {
+    let data = '';
 
-  const payload = JSON.parse(stdin);
+    // Handle no stdin (TTY mode)
+    if (process.stdin.isTTY) {
+      resolve(null);
+      return;
+    }
+
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', chunk => { data += chunk; });
+    process.stdin.on('end', () => {
+      if (!data.trim()) {
+        resolve(null);
+        return;
+      }
+      try {
+        resolve(JSON.parse(data));
+      } catch {
+        resolve(null);
+      }
+    });
+    process.stdin.on('error', () => resolve(null));
+
+    // Timeout after 500ms to prevent hanging
+    setTimeout(() => resolve(null), 500);
+  });
+}
+
+async function main() {
+  const payload = await readStdin();
+  if (!payload) process.exit(0);
 
   // Only process TodoWrite tool
   if (payload.tool_name !== 'TodoWrite') {
@@ -55,10 +85,12 @@ try {
   }
 
   process.exit(0);
-} catch (error) {
+}
+
+main().then(() => process.exit(0)).catch((error) => {
   // Fail-open: don't block on errors
   if (process.env.CK_DEBUG) {
     console.error(`[todo-tracker] Error: ${error.message}`);
   }
   process.exit(0);
-}
+});

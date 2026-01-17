@@ -21,7 +21,16 @@
     "hooks": {
         "Notification": [
             {
-                "matcher": "idle_prompt",
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs",
+                        "type": "command"
+                    }
+                ]
+            }
+        ],
+        "Stop": [
+            {
                 "hooks": [
                     {
                         "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs",

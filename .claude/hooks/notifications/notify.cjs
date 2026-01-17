@@ -10,6 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 const { loadEnv } = require('./lib/env-loader.cjs');
+const { checkThrottle } = require('./lib/notification-throttle.cjs');
 
 // Provider prefixes to check for enablement (remote providers)
 const PROVIDER_PREFIXES = ['TELEGRAM', 'DISCORD', 'SLACK'];
@@ -86,9 +87,39 @@ function loadProvider(providerName) {
   return null;
 }
 
-// Notification types that should be SKIPPED (no notification sent)
-// permission_prompt = command approval dialogs (too noisy, user already sees them)
-const SKIP_NOTIFICATION_TYPES = ['permission_prompt'];
+// WHITELIST: Only these events trigger notifications
+// - Stop: Claude completed task (dialog)
+// - idle_prompt: Claude waiting for user input (dialog)
+// Everything else is blocked to prevent notification spam
+const ALLOWED_EVENTS = ['Stop', 'idle_prompt'];
+
+// Events that bypass subagent filter (always notify even from subagent)
+const ALWAYS_NOTIFY_EVENTS = ['Stop'];
+
+/**
+ * Check if this event is allowed to trigger notifications
+ * WHITELIST approach: only Stop and idle_prompt are allowed
+ * @param {Object} input - Hook input
+ * @returns {boolean} True if allowed
+ */
+function isAllowedEvent(input) {
+  const hookType = input.hook_event_name;
+  const notificationType = input.notification_type;
+
+  // Check if either hook_event_name or notification_type is in whitelist
+  return ALLOWED_EVENTS.includes(hookType) || ALLOWED_EVENTS.includes(notificationType);
+}
+
+/**
+ * Check if running in subagent context
+ * Subagents should not trigger user-facing notifications (except Stop)
+ * @param {Object} input - Hook input
+ * @returns {boolean} True if subagent context
+ */
+function isSubagentContext(input) {
+  // Check agent_type in input payload (only reliable method - no env vars set by subagent-init.cjs)
+  return !!input.agent_type;
+}
 
 /**
  * Main notification router
@@ -97,13 +128,28 @@ async function main() {
   try {
     // Read input from stdin
     const input = await readStdin();
-
-    // Skip notification types that shouldn't trigger alerts
-    // This filters out command approval prompts (permission_prompt) which are already
-    // visible to the user in the terminal - no need to duplicate with notifications
+    const hookType = input.hook_event_name;
     const notificationType = input.notification_type;
-    if (notificationType && SKIP_NOTIFICATION_TYPES.includes(notificationType)) {
-      console.error(`[notify] Skipped: notification_type=${notificationType}`);
+
+    // 1. WHITELIST CHECK: Only allow Stop and idle_prompt events
+    // Everything else is blocked to prevent notification spam
+    if (!isAllowedEvent(input)) {
+      console.error(`[notify] Skipped: not in whitelist (${hookType || notificationType || 'unknown'})`);
+      process.exit(0);
+    }
+
+    // 2. Subagent context filtering (skip non-critical notifications)
+    if (isSubagentContext(input)) {
+      if (!ALWAYS_NOTIFY_EVENTS.includes(hookType)) {
+        console.error(`[notify] Skipped: subagent context (${hookType || notificationType})`);
+        process.exit(0);
+      }
+    }
+
+    // 3. Event-type throttling (prevent spam even in parent session)
+    const eventKey = notificationType || hookType;
+    if (checkThrottle(eventKey, input.session_id)) {
+      console.error(`[notify] Throttled: ${eventKey} (cooldown active)`);
       process.exit(0);
     }
 

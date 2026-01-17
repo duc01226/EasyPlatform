@@ -29,7 +29,9 @@ function ensureMemoryDir() {
 
 /**
  * Read stdin synchronously (hooks receive JSON payload via stdin)
+ * WARNING: This can block forever if stdin doesn't close. Prefer readStdinAsync().
  * @returns {string} stdin content or empty string if error
+ * @deprecated Use readStdinAsync() for non-blocking reads with timeout
  */
 function readStdinSync() {
   try {
@@ -37,6 +39,31 @@ function readStdinSync() {
   } catch (e) {
     return '';
   }
+}
+
+/**
+ * Read stdin asynchronously with timeout (non-blocking)
+ * @param {number} timeoutMs - Timeout in milliseconds (default: 500ms)
+ * @returns {Promise<string>} stdin content or empty string if timeout/error
+ */
+async function readStdinAsync(timeoutMs = 500) {
+  return new Promise((resolve) => {
+    let data = '';
+
+    // Handle no stdin (TTY mode)
+    if (process.stdin.isTTY) {
+      resolve('');
+      return;
+    }
+
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', chunk => { data += chunk; });
+    process.stdin.on('end', () => resolve(data.trim()));
+    process.stdin.on('error', () => resolve(''));
+
+    // Timeout - hooks should receive input immediately
+    setTimeout(() => resolve(data.trim()), timeoutMs);
+  });
 }
 
 /**
@@ -128,10 +155,15 @@ function runHook(handler, options = {}) {
 }
 
 /**
- * Run hook with async handler support
+ * Run hook with async handler support (non-blocking stdin)
+ *
+ * Uses async stdin reading with timeout to prevent hanging.
  *
  * @param {Function} handler - Async hook handler function
- * @param {Object} options - Configuration options (same as runHook)
+ * @param {Object} options - Configuration options
+ * @param {string} options.name - Hook name for logging
+ * @param {boolean} options.exitOnEmpty - Exit if stdin is empty (default: true)
+ * @param {number} options.stdinTimeoutMs - Stdin read timeout (default: 500ms)
  * @returns {Promise<void>}
  *
  * @example
@@ -140,10 +172,10 @@ function runHook(handler, options = {}) {
  * }, { name: 'ace-async-hook' });
  */
 async function runHookAsync(handler, options = {}) {
-  const { name = 'unknown-hook', exitOnEmpty = true } = options;
+  const { name = 'unknown-hook', exitOnEmpty = true, stdinTimeoutMs = 500 } = options;
 
   try {
-    const stdin = readStdinSync();
+    const stdin = await readStdinAsync(stdinTimeoutMs);
 
     if (!stdin) {
       if (exitOnEmpty) process.exit(0);
@@ -185,6 +217,7 @@ module.exports = {
   MEMORY_DIR,
   ensureMemoryDir,
   readStdinSync,
+  readStdinAsync,
   parseStdinJson,
   logError,
   runHook,

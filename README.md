@@ -59,6 +59,9 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
 | [Frontend Quickref](docs/frontend-quickref.md) | Frontend decision tree and key patterns |
 | [Learning Paths](docs/learning-paths.md) | Developer onboarding by role |
 | [CLAUDE.md](CLAUDE.md) | Complete code patterns, AI agent instructions |
+| **[Business Features](docs/BUSINESS-FEATURES.md)** | **Module documentation, features, APIs** |
+
+> **Business Documentation:** For detailed business module documentation (requirements, workflows, APIs, test specs), see [`docs/business-features/`](docs/business-features/) with [`docs/BUSINESS-FEATURES.md`](docs/BUSINESS-FEATURES.md) as the master index.
 
 ---
 

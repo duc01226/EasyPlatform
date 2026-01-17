@@ -17,13 +17,46 @@
  *   0 - Success (non-blocking)
  */
 
-const fs = require('fs');
 const {
   recordEdit,
   recordWrite,
   resetEditState
 } = require('./lib/edit-state.cjs');
 const { getTodoState } = require('./lib/todo-state.cjs');
+
+/**
+ * Read stdin asynchronously with timeout to prevent hanging
+ * @returns {Promise<Object|null>} Parsed JSON payload or null
+ */
+async function readStdin() {
+  return new Promise((resolve) => {
+    let data = '';
+
+    // Handle no stdin (TTY mode)
+    if (process.stdin.isTTY) {
+      resolve(null);
+      return;
+    }
+
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', chunk => { data += chunk; });
+    process.stdin.on('end', () => {
+      if (!data.trim()) {
+        resolve(null);
+        return;
+      }
+      try {
+        resolve(JSON.parse(data));
+      } catch {
+        resolve(null);
+      }
+    });
+    process.stdin.on('error', () => resolve(null));
+
+    // Timeout after 500ms to prevent hanging
+    setTimeout(() => resolve(null), 500);
+  });
+}
 
 /**
  * Output soft warning to LLM context
@@ -68,11 +101,10 @@ function shouldShowWarning() {
   return !(todoState.hasTodos && todoState.taskCount > 0);
 }
 
-try {
-  const stdin = fs.readFileSync(0, 'utf-8').trim();
-  if (!stdin) process.exit(0);
+async function main() {
+  const payload = await readStdin();
+  if (!payload) process.exit(0);
 
-  const payload = JSON.parse(stdin);
   const toolName = payload.tool_name;
   const toolInput = payload.tool_input || {};
 
@@ -123,11 +155,12 @@ try {
 
   // Other tools: ignore
   process.exit(0);
+}
 
-} catch (error) {
+main().then(() => process.exit(0)).catch((error) => {
   // Fail-open: don't block operations
   if (process.env.CK_DEBUG) {
     console.error(`[edit-count-tracker] Error: ${error.message}`);
   }
   process.exit(0);
-}
+});

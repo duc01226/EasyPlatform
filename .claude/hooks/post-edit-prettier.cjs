@@ -20,6 +20,40 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
+/**
+ * Read stdin asynchronously with timeout to prevent hanging
+ * @returns {Promise<Object|null>} Parsed JSON payload or null
+ */
+async function readStdin() {
+  return new Promise((resolve) => {
+    let data = '';
+
+    // Handle no stdin (TTY mode)
+    if (process.stdin.isTTY) {
+      resolve(null);
+      return;
+    }
+
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', chunk => { data += chunk; });
+    process.stdin.on('end', () => {
+      if (!data.trim()) {
+        resolve(null);
+        return;
+      }
+      try {
+        resolve(JSON.parse(data));
+      } catch {
+        resolve(null);
+      }
+    });
+    process.stdin.on('error', () => resolve(null));
+
+    // Timeout after 500ms to prevent hanging
+    setTimeout(() => resolve(null), 500);
+  });
+}
+
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════
@@ -178,10 +212,8 @@ function extractFilePath(payload) {
 
 async function main() {
   try {
-    const stdin = fs.readFileSync(0, 'utf-8').trim();
-    if (!stdin) process.exit(0);
-
-    const payload = JSON.parse(stdin);
+    const payload = await readStdin();
+    if (!payload) process.exit(0);
 
     // Only process Edit and Write tools
     const toolName = payload.tool_name;
@@ -234,4 +266,4 @@ async function main() {
   }
 }
 
-main();
+main().then(() => process.exit(0)).catch(() => process.exit(0));

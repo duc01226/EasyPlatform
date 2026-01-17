@@ -10,13 +10,44 @@ const fs = require('fs');
 
 const SUPPORTED_TOOLS = ['Read', 'Grep', 'Glob', 'Bash'];
 
-function main() {
-  let payload;
-  try {
-    const stdin = fs.readFileSync(0, 'utf-8').trim();
-    if (!stdin) return;
-    payload = JSON.parse(stdin);
-  } catch {
+/**
+ * Read JSON from stdin with timeout (non-blocking)
+ * @returns {Promise<Object>} Parsed JSON input
+ */
+async function readStdin() {
+  return new Promise((resolve) => {
+    let data = '';
+
+    // Handle no stdin (TTY mode)
+    if (process.stdin.isTTY) {
+      resolve({});
+      return;
+    }
+
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', chunk => { data += chunk; });
+    process.stdin.on('end', () => {
+      if (!data.trim()) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(data));
+      } catch {
+        resolve({});
+      }
+    });
+    process.stdin.on('error', () => resolve({}));
+
+    // Timeout after 500ms - hooks should receive input immediately
+    setTimeout(() => resolve({}), 500);
+  });
+}
+
+async function main() {
+  const payload = await readStdin();
+  if (!payload || Object.keys(payload).length === 0) {
+    process.exit(0);
     return;
   }
 
@@ -42,5 +73,4 @@ function main() {
   }
 }
 
-main();
-process.exit(0);
+main().then(() => process.exit(0)).catch(() => process.exit(0));

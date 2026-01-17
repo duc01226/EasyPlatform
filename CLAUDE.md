@@ -1,8 +1,4 @@
----
-applyTo: '**'
----
-
-# EasyPlatform - Claude Code Instructions
+# EasyPlatform - Code Instructions
 
 > **.NET 9 + Angular 19 Development Platform Framework**
 
@@ -45,6 +41,7 @@ Implementation skills are **blocked** unless you have active todos. This is enfo
 ### Bypass
 
 Use `quick:` prefix to bypass enforcement (not recommended):
+
 ```
 /cook quick: add a button
 ```
@@ -60,14 +57,15 @@ Use `quick:` prefix to bypass enforcement (not recommended):
 
 Large tool outputs are automatically externalized to disk files with semantic summaries. After context compaction, exact content can be recovered without re-executing tools.
 
-| Tool | Threshold | Summary Type |
-|------|-----------|--------------|
-| Read | 8KB | Code signatures (class/function/interface) |
-| Grep | 4KB | Match count + preview |
-| Glob | 2KB | File count + extensions |
-| Bash | 6KB | Truncated output |
+| Tool | Threshold | Summary Type                               |
+| ---- | --------- | ------------------------------------------ |
+| Read | 8KB       | Code signatures (class/function/interface) |
+| Grep | 4KB       | Match count + preview                      |
+| Glob | 2KB       | File count + extensions                    |
+| Bash | 6KB       | Truncated output                           |
 
 **How it works:**
+
 1. PostToolUse hook detects large outputs
 2. Content saved to `{temp}/ck/swap/{sessionId}/`
 3. Markdown pointer injected with summary
@@ -84,31 +82,34 @@ See: [claude-kit-setup.md#external-memory-swap-system](docs/claude/claude-kit-se
 
 ### Rule Files (docs/claude/)
 
-| File                                                                         | Purpose                                          |
-| ---------------------------------------------------------------------------- | ------------------------------------------------ |
-| [README.md](docs/claude/README.md)                                           | Documentation index & navigation guide           |
-| [claude-kit-setup.md](docs/claude/claude-kit-setup.md)                       | Claude Kit (ACE, hooks, skills, agents, workflows, swap) |
-| [architecture.md](docs/claude/architecture.md)                               | System architecture & planning protocol          |
-| [troubleshooting.md](docs/claude/troubleshooting.md)                         | Investigation protocol & common issues           |
-| [backend-patterns.md](docs/claude/backend-patterns.md)                       | Backend patterns (CQRS, Repository, etc.)        |
-| [backend-csharp-complete-guide.md](docs/claude/backend-csharp-complete-guide.md) | Comprehensive C# backend reference           |
-| [frontend-patterns.md](docs/claude/frontend-patterns.md)                     | Angular/platform-core patterns                   |
-| [frontend-typescript-complete-guide.md](docs/claude/frontend-typescript-complete-guide.md) | Comprehensive Angular/TS frontend reference |
-| [scss-styling-guide.md](docs/claude/scss-styling-guide.md)                   | SCSS/CSS styling rules, BEM methodology          |
-| [authorization-patterns.md](docs/claude/authorization-patterns.md)           | Security and migration patterns                  |
-| [decision-trees.md](docs/claude/decision-trees.md)                           | Quick decision guides and templates              |
-| [advanced-patterns.md](docs/claude/advanced-patterns.md)                     | Advanced techniques and anti-patterns            |
-| [clean-code-rules.md](docs/claude/clean-code-rules.md)                       | Universal coding standards                       |
+| File                                                                                       | Purpose                                                  |
+| ------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
+| [README.md](docs/claude/README.md)                                                         | Documentation index & navigation guide                   |
+| [claude-kit-setup.md](docs/claude/claude-kit-setup.md)                                     | Claude Kit (ACE, hooks, skills, agents, workflows, swap) |
+| [architecture.md](docs/claude/architecture.md)                                             | System architecture & planning protocol                  |
+| [troubleshooting.md](docs/claude/troubleshooting.md)                                       | Investigation protocol & common issues                   |
+| [backend-patterns.md](docs/claude/backend-patterns.md)                                     | Backend patterns (CQRS, Repository, etc.)                |
+| [backend-csharp-complete-guide.md](docs/claude/backend-csharp-complete-guide.md)           | Comprehensive C# backend reference                       |
+| [frontend-patterns.md](docs/claude/frontend-patterns.md)                                   | Angular/platform-core patterns                           |
+| [frontend-typescript-complete-guide.md](docs/claude/frontend-typescript-complete-guide.md) | Comprehensive Angular/TS frontend reference              |
+| [scss-styling-guide.md](docs/claude/scss-styling-guide.md)                                 | SCSS/CSS styling rules, BEM methodology                  |
+| [authorization-patterns.md](docs/claude/authorization-patterns.md)                         | Security and migration patterns                          |
+| [decision-trees.md](docs/claude/decision-trees.md)                                         | Quick decision guides and templates                      |
+| [advanced-patterns.md](docs/claude/advanced-patterns.md)                                   | Advanced techniques and anti-patterns                    |
+| [clean-code-rules.md](docs/claude/clean-code-rules.md)                                     | Universal coding standards                               |
 
 ### Other Documentation
 
-| File                                                                 | Purpose                         |
-| -------------------------------------------------------------------- | ------------------------------- |
-| [README.md](README.md)                                               | Platform overview & quick start |
-| [Architecture Overview](docs/architecture-overview.md)               | System architecture & diagrams  |
-| [.github/AI-DEBUGGING-PROTOCOL.md](.github/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging protocol    |
-| [.ai/prompts/common.md](.ai/prompts/common.md)                           | AI agent prompt library         |
+| File                                                                 | Purpose                          |
+| -------------------------------------------------------------------- | -------------------------------- |
+| [README.md](README.md)                                               | Platform overview & quick start  |
+| [Architecture Overview](docs/architecture-overview.md)               | System architecture & diagrams   |
+| **[Business Features](docs/BUSINESS-FEATURES.md)**                   | **Module docs, features, APIs**  |
+| [.github/AI-DEBUGGING-PROTOCOL.md](.github/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging protocol     |
+| [.ai/prompts/common.md](.ai/prompts/common.md)                       | AI agent prompt library          |
 | [.claude/hooks/tests/](.claude/hooks/tests/)                         | Claude hooks test infrastructure |
+
+> **Business Documentation:** Detailed business module documentation (requirements, workflows, APIs, test specs) is in [`docs/business-features/`](docs/business-features/). Use [`docs/BUSINESS-FEATURES.md`](docs/BUSINESS-FEATURES.md) as the master index.
 
 > **Claude Hooks Development:** Before adding new test cases or test scripts for Claude hooks, check existing tests in `.claude/hooks/tests/` folder. Use the existing test utilities (`test-utils.cjs`, `hook-runner.cjs`) and follow established patterns in `suites/` directory.
 
@@ -381,20 +382,20 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
 
 ### Command Translation Table
 
-| Windows | Portable | Notes |
-|---------|----------|-------|
-| `> nul` | `> /dev/null` | **CRITICAL: Creates "nul" file in Git Bash!** |
-| `2>nul` | `2>/dev/null` | Suppress stderr |
-| `dir /b /s path` | `find "path" -type f` | Recursive file list |
-| `dir /b path` | `ls -1 "path"` | Simple list |
-| `dir path` | `ls -la "path"` | Detailed list |
-| `type file` | `cat file` | Read file |
-| `copy src dst` | `cp src dst` | Copy file |
-| `move src dst` | `mv src dst` | Move file |
-| `del file` | `rm file` | Delete file |
-| `md path` | `mkdir -p "path"` | Create directory |
-| `rd /s path` | `rm -rf path` | Remove directory |
-| `cls` | `clear` | Clear screen |
+| Windows          | Portable              | Notes                                         |
+| ---------------- | --------------------- | --------------------------------------------- |
+| `> nul`          | `> /dev/null`         | **CRITICAL: Creates "nul" file in Git Bash!** |
+| `2>nul`          | `2>/dev/null`         | Suppress stderr                               |
+| `dir /b /s path` | `find "path" -type f` | Recursive file list                           |
+| `dir /b path`    | `ls -1 "path"`        | Simple list                                   |
+| `dir path`       | `ls -la "path"`       | Detailed list                                 |
+| `type file`      | `cat file`            | Read file                                     |
+| `copy src dst`   | `cp src dst`          | Copy file                                     |
+| `move src dst`   | `mv src dst`          | Move file                                     |
+| `del file`       | `rm file`             | Delete file                                   |
+| `md path`        | `mkdir -p "path"`     | Create directory                              |
+| `rd /s path`     | `rm -rf path`         | Remove directory                              |
+| `cls`            | `clear`               | Clear screen                                  |
 
 ### Path Format
 
@@ -480,15 +481,15 @@ employees = signal([]);
 
 The workspace has two complementary tools for changelog management:
 
-| Aspect | changelog-update (Manual) | release-notes (Automated) |
-|--------|--------------------------|---------------------------|
-| **Purpose** | Manual CHANGELOG.md updates | Automated release notes |
-| **Input** | Manual file review | Conventional commits |
-| **Output** | `CHANGELOG.md` [Unreleased] | `docs/release-notes/*.md` |
-| **Audience** | Business + Technical | Technical (commit-based) |
-| **When** | During development (PR/feature) | Release time (v1.x.x) |
-| **Automation** | Semi-manual with temp notes | Fully automated |
-| **Invocation** | `/changelog-update` | `/release-notes` |
+| Aspect         | changelog-update (Manual)       | release-notes (Automated) |
+| -------------- | ------------------------------- | ------------------------- |
+| **Purpose**    | Manual CHANGELOG.md updates     | Automated release notes   |
+| **Input**      | Manual file review              | Conventional commits      |
+| **Output**     | `CHANGELOG.md` [Unreleased]     | `docs/release-notes/*.md` |
+| **Audience**   | Business + Technical            | Technical (commit-based)  |
+| **When**       | During development (PR/feature) | Release time (v1.x.x)     |
+| **Automation** | Semi-manual with temp notes     | Fully automated           |
+| **Invocation** | `/changelog-update`             | `/release-notes`          |
 
 ### Use changelog-update When
 
@@ -567,20 +568,21 @@ Before responding to any task request, analyze the user's prompt to detect inten
 
 ### Intent Detection Rules
 
-| Intent                     | Trigger Keywords                                    | Workflow Sequence                                                                                           |
-| -------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Feature Implementation** | implement, add, create, build, develop, new feature | `/plan` → `/plan:review` → `/cook` → `/code-simplifier` → `/review/codebase` → `/test` → `/docs-update` → `/watzup` |
+| Intent                     | Trigger Keywords                                    | Workflow Sequence                                                                                                            |
+| -------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **Feature Implementation** | implement, add, create, build, develop, new feature | `/plan` → `/plan:review` → `/cook` → `/code-simplifier` → `/review/codebase` → `/test` → `/docs-update` → `/watzup`          |
 | **Bug Fix**                | bug, fix, error, broken, issue, crash, not working  | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan:review` → `/fix` → `/code-simplifier` → `/review/codebase` → `/test` |
-| **Documentation**          | docs, document, readme, update docs                 | `/scout` → `/investigate` → `/docs-update` → `/watzup`                                                      |
-| **Refactoring**            | refactor, restructure, clean up, improve code       | `/plan` → `/plan:review` → `/code` → `/code-simplifier` → `/review/codebase` → `/test`                    |
-| **Code Review**            | review, check, audit code, PR review                | `/code-review` → `/watzup`                                                                                  |
-| **Investigation**          | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                                                                   |
+| **Documentation**          | docs, document, readme, update docs                 | `/scout` → `/investigate` → `/docs-update` → `/watzup`                                                                       |
+| **Refactoring**            | refactor, restructure, clean up, improve code       | `/plan` → `/plan:review` → `/code` → `/code-simplifier` → `/review/codebase` → `/test`                                       |
+| **Code Review**            | review, check, audit code, PR review                | `/code-review` → `/watzup`                                                                                                   |
+| **Investigation**          | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                                                                                    |
 
 ### Workflow Execution Protocol
 
 1. **DETECT:** Analyze user prompt for intent keywords
 2. **ANNOUNCE:** Tell user: `"Detected: [Intent]. Following workflow: [sequence]"`
 3. **CREATE TODO LIST (MANDATORY):** Use TodoWrite to create tasks for each workflow step:
+
    ```
    Example for Bug Fix workflow:
    - [ ] Execute /scout - Find relevant files
@@ -593,6 +595,7 @@ Before responding to any task request, analyze the user's prompt to detect inten
    - [ ] Execute /code-review - Review changes
    - [ ] Execute /test - Verify fix
    ```
+
 4. **CONFIRM (for features/refactors):** Ask: `"Proceed with this workflow? (yes/no/quick)"`
 5. **EXECUTE:** Follow each step in sequence, marking todos as completed after each step
 
@@ -605,15 +608,16 @@ Before responding to any task request, analyze the user's prompt to detect inten
 
 Before creating/modifying files in these paths, ALWAYS invoke the corresponding skill first:
 
-| Path Pattern | Skill | Pre-Read |
-|--------------|-------|----------|
-| `docs/business-features/**` | `/business-feature-docs` | `docs/templates/detailed-feature-docs-template.md` |
-| `docs/features/**` | `/feature-docs` | Existing sibling docs in same folder |
-| `src/**/*Command*.cs` | `/easyplatform-backend` | CQRS patterns in this file |
-| `src/**/*.component.ts` | `/frontend-angular-component` | Base component patterns |
-| `src/**/*.store.ts` | `/frontend-angular-store` | Store patterns |
+| Path Pattern                | Skill                         | Pre-Read                                           |
+| --------------------------- | ----------------------------- | -------------------------------------------------- |
+| `docs/business-features/**` | `/business-feature-docs`      | `docs/templates/detailed-feature-docs-template.md` |
+| `docs/features/**`          | `/feature-docs`               | Existing sibling docs in same folder               |
+| `src/**/*Command*.cs`       | `/easyplatform-backend`       | CQRS patterns in this file                         |
+| `src/**/*.component.ts`     | `/frontend-angular-component` | Base component patterns                            |
+| `src/**/*.store.ts`         | `/frontend-angular-store`     | Store patterns                                     |
 
 **Business Feature Documentation Requirements:**
+
 - All 26 sections required (see `business-feature-docs` skill)
 - Quick Navigation table with Audience column
 - Test cases in TC-{MOD}-XXX format with GIVEN/WHEN/THEN

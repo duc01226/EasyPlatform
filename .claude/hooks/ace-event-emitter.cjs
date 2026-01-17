@@ -39,20 +39,34 @@ const EVENTS_FILE = path.join(MEMORY_DIR, 'events-stream.jsonl');
 const EVENTS_ARCHIVE_DIR = path.join(MEMORY_DIR, 'events-archive');
 
 /**
- * Read stdin synchronously with size limit (PostToolUse provides JSON payload)
- * @returns {string} stdin content (empty if exceeds MAX_STDIN_BYTES)
+ * Read stdin asynchronously with timeout to prevent hanging
+ * @returns {Promise<string>} stdin content (empty if exceeds MAX_STDIN_BYTES or timeout)
  */
-function readStdinSync() {
-  try {
-    const content = fs.readFileSync(0, 'utf-8');
-    // Prevent OOM from unbounded stdin
-    if (content.length > MAX_STDIN_BYTES) {
-      return '';
+async function readStdinAsync() {
+  return new Promise((resolve) => {
+    let data = '';
+
+    // Handle no stdin (TTY mode)
+    if (process.stdin.isTTY) {
+      resolve('');
+      return;
     }
-    return content.trim();
-  } catch (e) {
-    return '';
-  }
+
+    process.stdin.setEncoding('utf8');
+    process.stdin.on('data', chunk => {
+      data += chunk;
+      // Prevent OOM from unbounded stdin
+      if (data.length > MAX_STDIN_BYTES) {
+        resolve('');
+        return;
+      }
+    });
+    process.stdin.on('end', () => resolve(data.trim()));
+    process.stdin.on('error', () => resolve(''));
+
+    // Timeout after 500ms to prevent hanging
+    setTimeout(() => resolve(data.trim()), 500);
+  });
 }
 
 /**
@@ -282,9 +296,9 @@ function appendEvent(event) {
 /**
  * Main execution
  */
-function main() {
+async function main() {
   try {
-    const stdin = readStdinSync();
+    const stdin = await readStdinAsync();
     if (!stdin) {
       process.exit(0);
     }
@@ -330,4 +344,4 @@ function main() {
   }
 }
 
-main();
+main().then(() => process.exit(0)).catch(() => process.exit(0));

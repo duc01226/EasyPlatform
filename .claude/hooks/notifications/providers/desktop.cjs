@@ -20,6 +20,7 @@ const TITLES = {
   Stop: 'Claude Code Complete',
   SubagentStop: 'Subagent Complete',
   AskUserPrompt: 'Claude Needs Input',
+  idle_prompt: 'Claude Waiting for Input',
   default: 'Claude Code',
 };
 
@@ -28,6 +29,7 @@ const MESSAGES = {
   Stop: 'Session completed successfully',
   SubagentStop: 'Specialized agent finished',
   AskUserPrompt: 'Waiting for your input',
+  idle_prompt: 'Claude is waiting for your input',
   default: 'Event triggered',
 };
 
@@ -49,17 +51,18 @@ function getProjectName(cwd) {
  * @returns {{title: string, message: string}}
  */
 function getNotificationContent(input) {
-  const hookType = input.hook_event_name || 'default';
+  // Check both hook_event_name and notification_type (idle_prompt uses notification_type)
+  const eventType = input.notification_type || input.hook_event_name || 'default';
   const projectName = getProjectName(input.cwd);
 
   // Add project prefix to title
   const prefix = projectName ? `[${projectName}] ` : '';
-  const title = prefix + (TITLES[hookType] || TITLES.default);
+  const title = prefix + (TITLES[eventType] || TITLES.default);
 
-  let message = MESSAGES[hookType] || MESSAGES.default;
+  let message = MESSAGES[eventType] || MESSAGES.default;
 
   // Add agent type for SubagentStop
-  if (hookType === 'SubagentStop' && input.agent_type) {
+  if (eventType === 'SubagentStop' && input.agent_type) {
     message = `${input.agent_type} agent finished its task`;
   }
 
@@ -192,7 +195,7 @@ module.exports = {
 
   /**
    * Send notification to desktop
-   * For Stop/AskUserPrompt events: shows blocking dialog (user must click OK)
+   * For Stop/idle_prompt events: shows blocking dialog (user must click OK)
    * For other events: shows toast notification
    * @param {Object} input - Hook input (snake_case fields)
    * @param {Object} env - Environment variables
@@ -201,9 +204,10 @@ module.exports = {
   send: async (input, env) => {
     const { title, message } = getNotificationContent(input);
     const hookType = input.hook_event_name || 'default';
+    const notificationType = input.notification_type;
 
-    // Stop/AskUserPrompt: show blocking dialog so user won't miss it
-    const showDialog = hookType === 'Stop' || hookType === 'AskUserPrompt';
+    // Stop/idle_prompt: show blocking dialog so user won't miss it
+    const showDialog = hookType === 'Stop' || notificationType === 'idle_prompt';
 
     return sendNotification(title, message, showDialog);
   },

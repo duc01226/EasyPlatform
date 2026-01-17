@@ -220,11 +220,14 @@ const providerEnablementTests = [
 // Router Execution Tests
 // ============================================================================
 
+// Test environment: disable desktop notifications to prevent blocking dialogs during tests
+const testEnv = { ...process.env, ENABLE_DESKTOP_NOTIFICATIONS: 'false' };
+
 const routerExecutionTests = [
   {
     name: '[notification] router exits with code 0 on empty input',
     fn: async () => {
-      const result = await runHook(NOTIFY_SCRIPT, undefined, { timeout: 5000 });
+      const result = await runHook(NOTIFY_SCRIPT, undefined, { timeout: 5000, env: testEnv });
       assertEqual(result.code, 0, 'Should exit cleanly on empty input');
     }
   },
@@ -232,7 +235,7 @@ const routerExecutionTests = [
     name: '[notification] router exits with code 0 on valid JSON without providers',
     fn: async () => {
       const input = { hook_event_name: 'Stop', cwd: '/test', session_id: 'test123' };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000 });
+      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
       assertEqual(result.code, 0, 'Should exit cleanly on valid JSON');
     }
   },
@@ -240,36 +243,45 @@ const routerExecutionTests = [
     name: '[notification] router handles Stop event without error',
     fn: async () => {
       const input = { hook_event_name: 'Stop', cwd: '/test/project', session_id: 'abc123def456' };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000 });
+      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
       assertEqual(result.code, 0, 'Should handle Stop event');
     }
   },
   {
-    name: '[notification] router handles SubagentStop event',
+    name: '[notification] router skips SubagentStop event (not in whitelist)',
     fn: async () => {
+      // WHITELIST: Only Stop and idle_prompt are allowed - SubagentStop is blocked
       const input = { hook_event_name: 'SubagentStop', cwd: '/test', session_id: 'test', agent_type: 'scout' };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000 });
-      assertEqual(result.code, 0, 'Should handle SubagentStop event');
+      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
+      assertEqual(result.code, 0, 'Should exit cleanly');
+      assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
+      assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist');
     }
   },
   {
-    name: '[notification] router handles AskUserPrompt event',
+    name: '[notification] router skips AskUserPrompt event (not in whitelist)',
     fn: async () => {
+      // WHITELIST: Only Stop and idle_prompt are allowed - AskUserPrompt is blocked
       const input = { hook_event_name: 'AskUserPrompt', cwd: '/test', session_id: 'test123' };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000 });
-      assertEqual(result.code, 0, 'Should handle AskUserPrompt event');
+      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
+      assertEqual(result.code, 0, 'Should exit cleanly');
+      assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
+      assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist');
     }
   },
   {
-    name: '[notification] router handles unknown event gracefully',
+    name: '[notification] router skips unknown event (not in whitelist)',
     fn: async () => {
+      // WHITELIST: Only Stop and idle_prompt are allowed - UnknownEvent is blocked
       const input = { hook_event_name: 'UnknownEvent', cwd: '/test', session_id: 'test' };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000 });
-      assertEqual(result.code, 0, 'Should handle unknown event');
+      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
+      assertEqual(result.code, 0, 'Should exit cleanly');
+      assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
+      assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist');
     }
   },
   {
-    name: '[notification] router skips permission_prompt notifications (command approval)',
+    name: '[notification] router skips permission_prompt notifications (not in whitelist)',
     fn: async () => {
       const input = {
         hook_event_name: 'Notification',
@@ -278,10 +290,11 @@ const routerExecutionTests = [
         session_id: 'test123',
         message: 'Claude needs permission to use Bash'
       };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000 });
+      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
       assertEqual(result.code, 0, 'Should exit cleanly');
       assertContains(result.stderr, 'Skipped', 'Should log that notification was skipped');
-      assertContains(result.stderr, 'permission_prompt', 'Should mention permission_prompt in skip message');
+      // WHITELIST approach: only Stop and idle_prompt are allowed
+      assertContains(result.stderr, 'not in whitelist', 'Should mention not in whitelist in skip message');
     }
   },
   {
@@ -291,13 +304,15 @@ const routerExecutionTests = [
         hook_event_name: 'Notification',
         notification_type: 'idle_prompt',
         cwd: '/test',
-        session_id: 'test123',
+        session_id: 'idle-test-' + Date.now(),  // Unique session to avoid throttle
         message: 'Claude is waiting for input'
       };
-      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000 });
+      const result = await runHook(NOTIFY_SCRIPT, input, { timeout: 5000, env: testEnv });
       assertEqual(result.code, 0, 'Should exit cleanly');
-      // idle_prompt should NOT be skipped - notifications should be sent
-      assertFalse(result.stderr.includes('Skipped'), 'idle_prompt should not be skipped');
+      // idle_prompt should NOT be skipped - notifications should be sent (but throttled after first)
+      // Check that it didn't get blocked by subagent or command approval filters
+      assertFalse(result.stderr.includes('subagent context'), 'idle_prompt should not be blocked as subagent');
+      assertFalse(result.stderr.includes('command approval'), 'idle_prompt should not be blocked as command approval');
     }
   }
 ];
@@ -376,70 +391,71 @@ const eventConfigTests = [
 
 const desktopBehaviorTests = [
   {
-    name: '[notification] desktop provider has showDialogWindows function',
+    name: '[notification] desktop provider has notifyWindows function',
     fn: () => {
       const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      assertContains(content, 'function showDialogWindows', 'Should have showDialogWindows function');
+      assertContains(content, 'function notifyWindows', 'Should have notifyWindows function');
     }
   },
   {
-    name: '[notification] desktop provider has showDialogMacOS function',
+    name: '[notification] desktop provider has notifyMacOS function',
     fn: () => {
       const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      assertContains(content, 'function showDialogMacOS', 'Should have showDialogMacOS function');
+      assertContains(content, 'function notifyMacOS', 'Should have notifyMacOS function');
     }
   },
   {
-    name: '[notification] desktop provider has showDialogLinux function',
+    name: '[notification] desktop provider has notifyLinux function',
     fn: () => {
       const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      assertContains(content, 'function showDialogLinux', 'Should have showDialogLinux function');
+      assertContains(content, 'function notifyLinux', 'Should have notifyLinux function');
     }
   },
   {
-    name: '[notification] desktop provider has showPlatformDialog function',
+    name: '[notification] desktop provider has sendNotification function',
     fn: () => {
       const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      assertContains(content, 'function showPlatformDialog', 'Should have showPlatformDialog function');
+      assertContains(content, 'function sendNotification', 'Should have sendNotification function');
     }
   },
   {
     name: '[notification] desktop Stop event triggers dialog',
     fn: () => {
       const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      // Check that Stop event uses showPlatformDialog
+      // Check that Stop event triggers showDialog=true
       assertContains(content, "hookType === 'Stop'", 'Should check for Stop event');
-      assertContains(content, 'showPlatformDialog', 'Should use showPlatformDialog for dialog events');
+      assertContains(content, 'showDialog', 'Should have showDialog flag for dialog events');
     }
   },
   {
-    name: '[notification] desktop AskUserPrompt event triggers dialog',
+    name: '[notification] desktop idle_prompt event triggers dialog',
     fn: () => {
       const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      // Check that AskUserPrompt event uses showPlatformDialog
-      assertContains(content, "hookType === 'AskUserPrompt'", 'Should check for AskUserPrompt event');
+      // Check that idle_prompt event triggers dialog (AskUserPrompt is blocked at router level)
+      assertContains(content, "notificationType === 'idle_prompt'", 'Should check for idle_prompt notification type');
     }
   },
   {
     name: '[notification] desktop SubagentStop event triggers toast (not dialog)',
     fn: () => {
       const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      // The dialog condition should only include Stop and AskUserPrompt, not SubagentStop
-      // Check that the dialog condition line doesn't contain SubagentStop
-      const dialogConditionMatch = content.match(/if\s*\(hookType\s*===\s*'Stop'[^)]+\)/);
-      assertTrue(dialogConditionMatch !== null, 'Should have dialog condition for Stop');
+      // The showDialog condition should only include Stop and AskUserPrompt, not SubagentStop
+      // Check that the dialog condition doesn't include SubagentStop
+      const dialogConditionMatch = content.match(/showDialog\s*=\s*hookType\s*===\s*'Stop'[^;]+/);
+      assertTrue(dialogConditionMatch !== null, 'Should have showDialog condition for Stop');
       assertFalse(
         dialogConditionMatch[0].includes('SubagentStop'),
-        'SubagentStop should not be in dialog condition'
+        'SubagentStop should not be in showDialog condition'
       );
     }
   },
   {
-    name: '[notification] desktop Windows dialog uses PowerShell MessageBox',
+    name: '[notification] desktop Windows uses PowerShell script',
     fn: () => {
       const content = fs.readFileSync(DESKTOP_PROVIDER, 'utf8');
-      assertContains(content, 'System.Windows.Forms.MessageBox', 'Should use Windows.Forms MessageBox');
-      assertContains(content, '-WindowStyle', 'Should hide PowerShell window');
+      // Windows uses external PowerShell script for notifications
+      assertContains(content, 'notify-windows.ps1', 'Should reference Windows PowerShell script');
+      assertContains(content, '-WindowStyle Hidden', 'Should hide PowerShell window');
     }
   },
   {

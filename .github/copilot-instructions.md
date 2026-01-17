@@ -451,8 +451,11 @@ src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
 | ---------------------------------- | -------------------------------- |
 | `README.md`                        | Platform overview & quick start  |
 | `docs/architecture-overview.md`    | System architecture & diagrams   |
+| **`docs/BUSINESS-FEATURES.md`**    | **Business modules master index**|
 | `CLEAN-CODE-RULES.md`              | Coding standards & anti-patterns |
 | `.github/AI-DEBUGGING-PROTOCOL.md` | Debugging protocol for AI agents |
+
+> **Business Documentation:** For detailed business module documentation (requirements, workflows, APIs, test specs), navigate to `docs/business-features/` directory. Use `docs/BUSINESS-FEATURES.md` as the master index listing all modules.
 
 ## How This Documentation Works
 
