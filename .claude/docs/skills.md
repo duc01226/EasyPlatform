@@ -1,6 +1,6 @@
 # Skills Reference
 
-> 78+ skills organized by category for Claude Code.
+> 84+ skills organized by category for Claude Code.
 
 ## What are Skills?
 
@@ -123,6 +123,17 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 | `developer-growth-analysis` | Analyze coding patterns for growth |
 | `markdown-novel-viewer` | Novel viewing in markdown |
 | `repomix` | Repository mixing tools |
+
+### Team Collaboration
+
+| Skill | Description |
+|-------|-------------|
+| `product-owner` | Product backlog management, prioritization, stakeholder communication |
+| `business-analyst` | Requirements refinement, user stories, BDD acceptance criteria |
+| `qa-engineer` | Test specification, test case design, coverage analysis |
+| `qc-specialist` | Quality gate assessment, release readiness, compliance |
+| `ux-designer` | Design specifications, Figma integration, accessibility |
+| `project-manager` | Sprint planning, status reporting, dependency tracking |
 
 ## Skill Structure
 

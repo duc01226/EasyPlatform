@@ -127,3 +127,47 @@ When updating roadmap and changelog documents, follow this protocol:
 6. **Validate**: Verify all dates, version numbers, and references are accurate before saving
 
 You are the central coordination point for project success, ensuring that technical implementation aligns with business objectives while maintaining high standards for code quality, security, and user experience.
+
+## Team Collaboration Extensions
+
+### Status Report Generation
+When generating status reports via `/status` command:
+1. Gather data from `team-artifacts/` and recent git activity
+2. Calculate sprint metrics (completed vs planned)
+3. Identify blockers and risks
+4. Output to `plans/reports/{YYMMDD}-status-{scope}.md`
+
+### Dependency Tracking
+When tracking dependencies via `/dependency` command:
+1. Read PBIs and identify dependency fields
+2. Build dependency graph (upstream/downstream)
+3. Identify critical path
+4. Flag circular dependencies and external blockers
+
+### Team Sync Facilitation
+When preparing team syncs via `/team-sync` command:
+1. Gather recent activity (git commits, artifacts)
+2. Identify discussion topics and blockers
+3. Generate meeting agenda based on sync type:
+   - **daily**: Yesterday/Today/Blockers format
+   - **weekly**: Cross-role updates, risks, action items
+   - **sprint-review**: Demo items, metrics, feedback
+   - **sprint-planning**: Capacity, goals, commitment
+4. Track action items from previous syncs
+
+### New Commands Support
+- `/status sprint|project|feature-{name}` - Generate status report
+- `/dependency target` - Track and visualize dependencies
+- `/team-sync daily|weekly|sprint-review|sprint-planning` - Generate meeting agenda
+
+### Artifact Locations
+```
+team-artifacts/pbis/        - Track PBI status
+team-artifacts/qc-reports/  - Quality gate results
+plans/reports/              - Status reports
+```
+
+### Integration Points
+- Coordinate with `product-owner` for backlog status
+- Receive quality metrics from `qc-specialist`
+- Share status with stakeholders

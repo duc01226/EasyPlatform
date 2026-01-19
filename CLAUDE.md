@@ -97,6 +97,7 @@ See: [claude-kit-setup.md#external-memory-swap-system](docs/claude/claude-kit-se
 | [decision-trees.md](docs/claude/decision-trees.md)                                         | Quick decision guides and templates                      |
 | [advanced-patterns.md](docs/claude/advanced-patterns.md)                                   | Advanced techniques and anti-patterns                    |
 | [clean-code-rules.md](docs/claude/clean-code-rules.md)                                     | Universal coding standards                               |
+| [team-collaboration-guide.md](docs/claude/team-collaboration-guide.md)                     | Team roles, commands, design workflows                   |
 
 ### Other Documentation
 
@@ -373,6 +374,39 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
     ]
 }
 ```
+
+---
+
+## MCP Server Configuration
+
+This project uses Model Context Protocol (MCP) servers for enhanced AI capabilities.
+
+| File | Purpose |
+|------|---------|
+| `.mcp.json` | Server configuration (project root) |
+| `.mcp.README.md` | Setup documentation |
+| `.env.local` | API keys (gitignored) |
+
+### Configured Servers
+
+| Server | Purpose |
+|--------|---------|
+| context7 | Up-to-date library documentation retrieval |
+| figma | Design extraction for PBI-driven development |
+| github | GitHub API integration (repos, PRs, issues) |
+| memory | Knowledge graph for persistent memory |
+| sequential-thinking | Step-by-step problem solving |
+
+### Required API Keys
+
+Store in `.env.local`:
+
+```bash
+FIGMA_API_KEY=your_figma_personal_access_token
+GITHUB_TOKEN=your_github_personal_access_token
+```
+
+See [.mcp.README.md](.mcp.README.md) for detailed setup instructions.
 
 ---
 

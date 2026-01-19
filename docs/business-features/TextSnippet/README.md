@@ -1,3 +1,30 @@
+---
+# Module Discovery Metadata (Required for /idea, /refine auto-context)
+# AI agents parse this frontmatter to match user keywords to modules
+module: TextSnippet
+aliases: [text-snippet, textsnippet, txt]
+keywords:
+  - snippet
+  - text
+  - search
+  - category
+  - full-text
+  - note
+  - clipboard
+features:
+  - task
+  - todo
+  - checklist
+  - item
+entities:
+  - TextSnippetEntity
+  - TextSnippetCategory
+  - TaskItemEntity
+domain_path: src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain
+api_prefix: /api/TextSnippet
+status: active
+---
+
 # TextSnippet Feature Documentation
 
 **Module**: PlatformExampleApp

@@ -1,6 +1,6 @@
 # Hooks System Documentation
 
-> 25 hooks organized into 6 subsystems for Claude Code customization.
+> 27 hooks organized into 6 subsystems for Claude Code customization.
 
 ## Overview
 
@@ -101,6 +101,7 @@ Session Start
 | Hook | Matcher | Purpose |
 |------|---------|---------|
 | `subagent-init.cjs` | `*` | Inherit parent state to subagents |
+| `role-context-injector.cjs` | `*` | Inject role context for team agents |
 
 ### UserPromptSubmit Hooks
 
@@ -123,6 +124,7 @@ Session Start
 | `backend-csharp-context.cjs` | `Edit\|Write\|MultiEdit` | Inject C# patterns for .cs files |
 | `frontend-typescript-context.cjs` | `Edit\|Write\|MultiEdit` | Inject TS patterns for frontend |
 | `scss-styling-context.cjs` | `Edit\|Write\|MultiEdit` | Inject SCSS patterns |
+| `artifact-path-resolver.cjs` | `Write` | Resolve team artifact paths to absolute |
 
 ### PostToolUse Hooks
 

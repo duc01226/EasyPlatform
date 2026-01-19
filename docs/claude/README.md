@@ -17,6 +17,7 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 | [decision-trees.md](./decision-trees.md)                   | Quick decision guides and templates                        | Choosing implementation approach                    |
 | [advanced-patterns.md](./advanced-patterns.md)             | Advanced fluent helpers, expression composition, utilities | Complex implementations                             |
 | [clean-code-rules.md](./clean-code-rules.md)               | Universal coding standards                                 | Code quality, best practices                        |
+| [team-collaboration-guide.md](./team-collaboration-guide.md) | Team roles, commands, workflows, artifact management       | Team collaboration, PBI/design workflows            |
 
 ## Quick Navigation
 
@@ -48,6 +49,12 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 - **Service boundaries**: See [architecture.md](./architecture.md#microservices)
 - **File locations**: See [architecture.md](./architecture.md#file-locations)
 - **Frontend structure**: See [architecture.md](./architecture.md#frontend-architecture)
+
+### MCP & External Tools
+
+- **MCP Configuration**: See [.mcp.README.md](../../.mcp.README.md)
+- **Figma Integration**: See [.claude/docs/figma-setup.md](../../.claude/docs/figma-setup.md)
+- **Team Collaboration**: See [team-collaboration-guide.md](./team-collaboration-guide.md)
 
 ## Related Documentation
 

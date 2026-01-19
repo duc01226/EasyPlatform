@@ -1,6 +1,6 @@
 # Agents Reference
 
-> 18 specialized agents for delegating complex tasks.
+> 22+ specialized agents for delegating complex tasks.
 
 ## What are Agents?
 
@@ -55,6 +55,15 @@ Agents are specialized subagents that Claude spawns via the `Task` tool to handl
 | `copywriter` | Marketing copy | Landing pages, email campaigns, social media, product descriptions |
 | `git-manager` | Git operations | Staging, committing, pushing with conventional commits |
 | `mcp-manager` | MCP server management | Discover tools, analyze relevance, execute MCP capabilities |
+
+### Team Collaboration
+
+| Agent | Description | When to Use |
+|-------|-------------|-------------|
+| `business-analyst` | Requirements refinement, user stories | Converting ideas to PBIs, writing BDD acceptance criteria |
+| `product-owner` | Product backlog, prioritization | Managing backlog, stakeholder requirements, RICE scoring |
+| `qa-engineer` | Test specification, test design | Creating test specs from PBIs, designing test cases |
+| `qc-specialist` | Quality assessment, release gates | Quality gate checks, release readiness validation |
 
 ## Agent Invocation
 

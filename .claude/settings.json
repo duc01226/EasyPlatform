@@ -192,6 +192,24 @@
                     }
                 ],
                 "matcher": "Edit|Write|MultiEdit"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/role-context-injector.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Read|Write"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/artifact-path-resolver.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Write"
             }
         ],
         "SessionEnd": [

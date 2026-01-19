@@ -1,3 +1,21 @@
+---
+# Module Discovery Metadata (Required for /idea, /refine auto-context)
+# AI agents parse this frontmatter to match user keywords to modules
+# See: docs/business-features/TextSnippet/README.md for real example
+module: {ModuleName}              # Primary module identifier (e.g., TextSnippet)
+aliases: []                       # Alternative names: [shortname, abbreviation]
+keywords:                         # Domain terms users might say when creating ideas
+  - {keyword1}
+  - {keyword2}
+features:                         # Sub-feature keywords (e.g., "task" in TextSnippet)
+  - {feature1}
+entities:                         # Domain entity class names for inspection
+  - {Entity1}
+domain_path: src/{App}/{App}.{Module}.Domain  # Path for entity inspection
+api_prefix: /api/{Controller}     # API route prefix
+status: active                    # active | deprecated | draft
+---
+
 <!-- Template: v2.1 | 26 Sections | ~1000 lines -->
 <!-- Stakeholders: PO, BA, Dev, Architect, QA, QC, DevOps -->
 <!-- AI Companion: Always generate README.{FeatureName}.ai.md alongside this doc -->

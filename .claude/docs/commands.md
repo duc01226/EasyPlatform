@@ -1,6 +1,6 @@
 # Commands Reference
 
-> 37+ slash commands for Claude Code.
+> 49+ slash commands for Claude Code.
 
 ## What are Commands?
 
@@ -99,6 +99,23 @@ Commands are direct actions invoked with `/command-name`. Unlike skills (which p
 |---------|-------|-------------|
 | `/bootstrap` | `/bootstrap` | Project setup |
 | `/integrate` | `/integrate <system>` | Integrate external system |
+
+### Team Collaboration
+
+| Command | Usage | Description |
+|---------|-------|-------------|
+| `/idea` | `/idea <description>` | Capture product idea |
+| `/refine` | `/refine <idea-id>` | Refine idea into PBI |
+| `/story` | `/story <pbi-id>` | Create user stories from PBI |
+| `/prioritize` | `/prioritize [ideas]` | Prioritize ideas using RICE/MoSCoW |
+| `/test-spec` | `/test-spec <pbi-id>` | Create test specification |
+| `/test-cases` | `/test-cases <spec-id>` | Generate detailed test cases |
+| `/design-spec` | `/design-spec <source>` | Create design spec from PBI or Figma |
+| `/quality-gate` | `/quality-gate <target>` | QC quality assessment |
+| `/status` | `/status [scope]` | Project status report |
+| `/dependency` | `/dependency <target>` | Dependency analysis |
+| `/team-sync` | `/team-sync` | Cross-team synchronization |
+| `/figma-extract` | `/figma-extract <url>` | Extract design specs from Figma |
 
 ## Command Structure
 

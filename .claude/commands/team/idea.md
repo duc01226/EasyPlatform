@@ -1,0 +1,142 @@
+---
+name: idea
+description: Capture a new idea as a structured artifact for future refinement
+allowed-tools: Read, Write, Grep, Glob, TodoWrite
+arguments:
+  - name: title
+    description: Brief title for the idea (optional, will prompt if not provided)
+    required: false
+---
+
+# Capture New Idea
+
+Create a structured idea artifact for backlog consideration with business context awareness.
+
+## Pre-Workflow
+
+### Activate Skills
+
+- Activate `product-owner` skill for idea capture best practices
+
+## Workflow
+
+### 0. Detect Module (Dynamic Discovery)
+
+Dynamic module discovery from YAML frontmatter:
+
+1. **Glob**: Find all module documentation
+   ```
+   docs/business-features/*/README.md
+   ```
+
+2. **Parse Frontmatter**: For each README, extract YAML between `---` markers
+   - Extract: `module`, `keywords`, `aliases`, `features`, `domain_path`
+
+3. **Match Keywords**: Compare user input (title/problem) against:
+   - `aliases` (exact match - highest priority)
+   - `keywords` (partial match)
+   - `features` (partial match for sub-features)
+   - Score = count of matching terms
+
+4. **Select Module**:
+   - If single match: Confirm "Is this related to {Module}?"
+   - If multiple matches: Show matches with scores, ask user to select
+   - If no match: List all discovered modules, ask selection or "new" for new module
+
+**Note**: Modules are self-describing via frontmatter. New modules auto-discovered when following template.
+
+### 1. Load Business Context
+
+- Read: `docs/business-features/{Module}/INDEX.md` (feature table)
+- Read: `docs/business-features/{Module}/README.md` (Overview + Business Requirements sections only, ~2000 token budget)
+- Note: "Loaded context from {Module} business documentation"
+- If module docs missing: Note absence and continue without context
+
+### 1.5. Show Existing Features
+
+- Display feature table from INDEX.md
+- Ask: "Does this idea relate to or extend any existing feature?"
+- Note related FR-XX IDs if applicable
+
+### 2. Inspect Related Entities
+
+Use `domain_path` from module frontmatter for targeted entity search:
+
+1. **Get Domain Path**:
+   - If module matched: Use frontmatter `domain_path` (e.g., `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain`)
+   - If no module: Skip entity inspection or use broad search
+
+2. **Entity Search**:
+   ```
+   {domain_path}/Entities/*.cs
+   ```
+
+3. **Extract**: Entity class names (classes extending `RootEntity<`), key properties, relationships
+4. **Show**: "Related entities found: {EntityName} with properties: [{list}]"
+5. **If no match**: "No existing entities match - this may be a new domain concept"
+
+### 3. Gather Information
+
+- If no title provided, ask: "What's the idea in one sentence?"
+- Ask: "What problem does this solve?"
+- Ask: "Who benefits from this?"
+- Ask: "Any initial scope thoughts?"
+
+### 4. Generate Artifact
+
+- Create idea file using template from `team-artifacts/templates/idea-template.md`
+- Generate ID: `IDEA-{YYMMDD}-{NNN}` (sequential)
+- Set status: `draft`
+- Add frontmatter:
+  - `related_module: "{Module or N/A}"`
+  - `related_entities: [{list of entity names}]`
+  - `related_features: [{FR-XX IDs if applicable}]`
+
+### 5. Save Artifact
+
+- Path: `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md`
+- Role: Infer from context or ask
+- Add to Related section: Link to `docs/business-features/{Module}/`
+
+### 6. Suggest Next Step
+
+- Output: "Idea captured! To refine into a PBI, run: `/refine {filename}`"
+
+## Output Format
+
+Use template from `team-artifacts/templates/idea-template.md`
+
+Add these fields to frontmatter:
+```yaml
+related_module: "{Module name or N/A}"
+related_entities: []
+related_features: []
+```
+
+Add to Related section:
+```markdown
+## Related
+- **Module Docs**: [docs/business-features/{Module}/](docs/business-features/{Module}/)
+- **Related Features**: {FR-XX IDs from INDEX.md}
+- **Related Entities**: {Entity names from codebase}
+```
+
+## Module Discovery
+
+Modules are discovered dynamically from `docs/business-features/*/README.md` frontmatter.
+
+See `docs/templates/detailed-feature-docs-template.md` for frontmatter schema.
+
+## Example
+
+```bash
+/idea "Advanced search filters for snippets"
+```
+
+Workflow:
+1. Detects "snippet" + "search" → TextSnippet module
+2. Loads TextSnippet INDEX.md, README.md
+3. Shows existing Search Snippets feature (FR-TS-003)
+4. Finds TextSnippetEntity with SnippetText, FullText, Tags properties
+5. Gathers user input
+6. Creates: `team-artifacts/ideas/260119-po-idea-advanced-search-filters.md`

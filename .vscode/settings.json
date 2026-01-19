@@ -277,5 +277,8 @@
         "**/node_modules": true
     },
     "sort-json.settings.isCaseSensitive": false,
-    "sort-json.settings.sortMode": "Objects Only"
+    "sort-json.settings.sortMode": "Objects Only",
+    "claudeCode.allowDangerouslySkipPermissions": true,
+    "claudeCode.initialPermissionMode": "bypassPermissions",
+    "claudeCode.preferredLocation": "sidebar"
 }

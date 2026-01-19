@@ -20,11 +20,12 @@ quick: add a button
 | Document | Description | Path |
 |----------|-------------|------|
 | **[Quick Reference](quick-reference.md)** | One-page cheat sheet | `docs/quick-reference.md` |
-| [Hooks System](hooks/README.md) | 25 hooks, event lifecycle, registration | `docs/hooks/` |
-| [Skills Reference](skills.md) | 78+ skills organized by category | `docs/skills.md` |
-| [Commands Reference](commands.md) | 37+ slash commands with usage | `docs/commands.md` |
-| [Agents Reference](agents.md) | 18 specialized agent types | `docs/agents.md` |
+| [Hooks System](hooks/README.md) | 27 hooks, event lifecycle, registration | `docs/hooks/` |
+| [Skills Reference](skills.md) | 84+ skills organized by category | `docs/skills.md` |
+| [Commands Reference](commands.md) | 49+ slash commands with usage | `docs/commands.md` |
+| [Agents Reference](agents.md) | 22+ specialized agent types | `docs/agents.md` |
 | [Configuration](configuration.md) | All config files and schemas | `docs/configuration.md` |
+| [Figma Setup](figma-setup.md) | Figma integration for design extraction | `docs/figma-setup.md` |
 
 ### Hooks Subsystem Documentation
 
@@ -65,7 +66,7 @@ quick: add a button
 | Event | Trigger | Hooks (Count) |
 |-------|---------|---------------|
 | **SessionStart** | `startup\|resume\|clear\|compact` | session-init, session-resume, ace-session-inject, pattern-injector (4) |
-| **SubagentStart** | `*` | subagent-init (1) |
+| **SubagentStart** | `*` | subagent-init, role-context-injector (2) |
 | **UserPromptSubmit** | Always | workflow-router, dev-rules-reminder, pattern-learner (3) |
 | **PreToolUse** | Tool-specific matchers | pattern-injector, todo-enforcement, scout-block, privacy-block, context injectors (8+) |
 | **PostToolUse** | Tool-specific matchers | todo-tracker, edit-count-tracker, post-edit-prettier, ace-event-emitter, workflow-step-tracker, ace-feedback-tracker (6) |
@@ -191,9 +192,9 @@ Blocks unsafe or out-of-scope operations.
 .claude/docs/
 ├── README.md              # This file - main navigation
 ├── quick-reference.md     # One-page cheat sheet
-├── skills.md              # Skills catalog (78+)
-├── commands.md            # Commands catalog (37+)
-├── agents.md              # Agents reference (18)
+├── skills.md              # Skills catalog (84+)
+├── commands.md            # Commands catalog (49+)
+├── agents.md              # Agents reference (22+)
 ├── configuration.md       # Config file schemas
 └── hooks/
     ├── README.md          # Hooks overview

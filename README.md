@@ -65,6 +65,37 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
 
 ---
 
+## AI-Assisted Team Collaboration
+
+This project includes a complete team collaboration system for AI agents, supporting agile workflows from idea capture to release.
+
+### Team Roles & Commands
+
+| Role | Commands | Purpose |
+|------|----------|---------|
+| **Product Owner** | `/idea`, `/prioritize` | Capture ideas, backlog prioritization |
+| **Business Analyst** | `/refine`, `/story` | PBI refinement, user story creation |
+| **QA Engineer** | `/test-spec`, `/test-cases` | Test specification, test case generation |
+| **UX Designer** | `/design-spec`, `/figma-extract` | UI specs, Figma design extraction |
+| **QC Specialist** | `/quality-gate` | Pre-dev/QA/release quality gates |
+| **Project Manager** | `/status`, `/dependency`, `/team-sync` | Status reports, dependency mapping, meetings |
+
+### Artifact Management
+
+```
+team-artifacts/
+├── ideas/           # Raw ideas (IDEA-YYMMDD-NNN)
+├── pbis/            # Product Backlog Items (PBI-YYMMDD-NNN)
+├── test-specs/      # Test specifications (TS-MOD-NNN)
+├── design-specs/    # UI/UX specifications
+├── qc-reports/      # Quality gate reports
+└── templates/       # Artifact templates
+```
+
+> **Full guide:** [Team Collaboration Guide](docs/claude/team-collaboration-guide.md)
+
+---
+
 ## Architecture Overview
 
 ```mermaid

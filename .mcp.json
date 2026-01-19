@@ -5,6 +5,11 @@
             "command": "cmd",
             "description": "Context7 for up-to-date library documentation"
         },
+        "figma": {
+            "args": ["/c", "npx", "-y", "dotenv-cli", "-e", ".env.local", "--", "npx", "-y", "@anthropic/mcp-server-figma", "--stdio"],
+            "command": "cmd",
+            "description": "Figma design extraction for PBI-driven development"
+        },
         "github": {
             "args": ["/c", "npx", "-y", "dotenv-cli", "-e", ".env.local", "--", "npx", "-y", "@modelcontextprotocol/server-github"],
             "command": "cmd"
