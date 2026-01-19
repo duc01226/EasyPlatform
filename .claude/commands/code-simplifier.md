@@ -1,3 +1,8 @@
+---
+description: ⚡ Simplify code for clarity and maintainability
+argument-hint: [files]
+---
+
 Simplify and refine code for clarity, consistency, and maintainability.
 
 ## Scope

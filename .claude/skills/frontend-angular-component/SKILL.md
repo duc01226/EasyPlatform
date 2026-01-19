@@ -1,5 +1,5 @@
 ---
-name: angular-component
+name: frontend-angular-component
 description: Use when creating or modifying Angular components in WebV2 (Angular 19) with proper base class inheritance, state management, and platform patterns.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---

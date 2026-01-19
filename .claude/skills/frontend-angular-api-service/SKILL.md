@@ -1,5 +1,5 @@
 ---
-name: angular-api-service
+name: frontend-angular-api-service
 description: Use when creating API services for backend communication with proper patterns for caching, error handling, and type safety.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---

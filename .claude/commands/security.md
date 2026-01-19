@@ -1,3 +1,8 @@
+---
+description: ⚡⚡ Perform security review
+argument-hint: [target]
+---
+
 # Security Review: $ARGUMENTS
 
 Perform security review on: $ARGUMENTS

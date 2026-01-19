@@ -1,3 +1,8 @@
+---
+name: release-notes
+description: Generate professional release notes from git commits between two refs with automated categorization. Use when creating release notes from git history.
+---
+
 # Release Notes Generation Skill
 
 Generate professional release notes from git commits between two refs with automated categorization.

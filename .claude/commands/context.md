@@ -1,3 +1,7 @@
+---
+description: Load current project development context
+---
+
 # Load Project Context
 
 Load current development context to help with subsequent tasks.

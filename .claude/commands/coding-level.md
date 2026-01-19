@@ -1,3 +1,8 @@
+---
+description: Set coding experience level for tailored explanations
+argument-hint: [0-5]
+---
+
 Set your coding experience level for tailored explanations and output format.
 
 ## Usage

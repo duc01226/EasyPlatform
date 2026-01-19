@@ -1,3 +1,8 @@
+---
+description: ⚡ Generate release notes for a feature
+argument-hint: [options]
+---
+
 # Generate Release Notes: $ARGUMENTS
 
 Generate or update release notes for a feature or PR.

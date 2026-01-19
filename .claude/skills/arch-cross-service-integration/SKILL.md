@@ -1,5 +1,5 @@
 ---
-name: cross-service-integration
+name: arch-cross-service-integration
 description: Use when designing or implementing cross-service communication, data synchronization, or service boundary patterns.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---

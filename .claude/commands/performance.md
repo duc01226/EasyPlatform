@@ -1,3 +1,8 @@
+---
+description: ⚡⚡ Analyze and optimize performance
+argument-hint: [target]
+---
+
 # Analyze Performance: $ARGUMENTS
 
 Analyze and optimize performance for: $ARGUMENTS

@@ -1,3 +1,8 @@
+---
+description: ⚡⚡ Create data or schema migration
+argument-hint: [migration-description]
+---
+
 # Create Migration: $ARGUMENTS
 
 Create a data or schema migration following EasyPlatform patterns.

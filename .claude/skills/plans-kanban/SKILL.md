@@ -1,3 +1,8 @@
+---
+name: plans-kanban
+description: Plans dashboard server with progress tracking and timeline visualization. Use when viewing plan directories with progress tracking, Gantt charts, and phase status.
+---
+
 # plans-kanban
 
 Plans dashboard server with progress tracking and timeline visualization.

@@ -1,3 +1,7 @@
+---
+description: Save memory checkpoint to preserve analysis context
+---
+
 # Save Memory Checkpoint
 
 Save current analysis, findings, and progress to an external memory file to prevent context loss during long-running tasks.

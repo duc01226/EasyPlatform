@@ -1,5 +1,5 @@
 ---
-name: security-review
+name: arch-security-review
 description: Use when reviewing code for security vulnerabilities, implementing authorization, or ensuring data protection.
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---

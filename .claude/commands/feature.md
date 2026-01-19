@@ -1,3 +1,8 @@
+---
+description: ⚡⚡ Implement a new feature following EasyPlatform workflow
+argument-hint: [feature-description]
+---
+
 # Implement Feature: $ARGUMENTS
 
 Implement a new feature following EasyPlatform development workflow.

@@ -1,3 +1,7 @@
+---
+description: Compress conversation context to optimize tokens
+---
+
 # Compact Context
 
 Proactively compress the current conversation context to optimize token usage.

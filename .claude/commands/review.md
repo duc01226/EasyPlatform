@@ -1,3 +1,8 @@
+---
+description: ⚡⚡ Perform comprehensive code review
+argument-hint: [target]
+---
+
 # Code Review: $ARGUMENTS
 
 Perform a comprehensive code review following BravoSUITE standards.

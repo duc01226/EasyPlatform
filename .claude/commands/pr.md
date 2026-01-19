@@ -1,3 +1,8 @@
+---
+description: ⚡ Create a pull request with standard format
+argument-hint: [options]
+---
+
 # Create Pull Request: $ARGUMENTS
 
 Create a pull request with the standard EasyPlatform format.

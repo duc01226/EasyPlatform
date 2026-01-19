@@ -1,3 +1,8 @@
+---
+description: ⚡⚡ Fix a GitHub issue with systematic debugging
+argument-hint: [issue-number]
+---
+
 # Fix GitHub Issue: $ARGUMENTS
 
 Fix a GitHub issue following the systematic debugging workflow based on the `bug-diagnosis` skill.
