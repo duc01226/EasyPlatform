@@ -5,7 +5,7 @@ argument-hint: [issue-number]
 
 # Fix GitHub Issue: $ARGUMENTS
 
-Fix a GitHub issue following the systematic debugging workflow based on the `bug-diagnosis` skill.
+Fix a GitHub issue following the systematic debugging workflow based on the `debugging` skill.
 
 **IMPORTANT**: Always use external memory at `.ai/workspace/analysis/issue-[number].md` for structured analysis.
 
@@ -178,5 +178,5 @@ Before proposing any change:
 
 ---
 
-Use the `bug-diagnosis` skill for the complete debugging protocol.
+Use the `debugging` skill for the complete debugging protocol. For autonomous mode, use `debugging --autonomous`.
 See `.github/AI-DEBUGGING-PROTOCOL.md` for comprehensive guidelines.

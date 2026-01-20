@@ -5,7 +5,7 @@ allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
 infer: true
 ---
 
-> **Skill Variant:** Use this skill for **investigating and understanding** existing features or logic. This is a READ-ONLY exploration skill - no code changes. For implementing new features, use `feature-implementation`. For debugging, use `bug-diagnosis`.
+> **Skill Variant:** Use this skill for **investigating and understanding** existing features or logic. This is a READ-ONLY exploration skill - no code changes. For implementing new features, use `feature-implementation`. For debugging, use `debugging`.
 
 # Feature Investigation & Logic Exploration
 
@@ -362,7 +362,7 @@ I can explain further:
 ## See Also
 
 - `feature-implementation` skill - For implementing new features (code changes)
-- `bug-diagnosis` skill - For debugging and fixing issues
+- `debugging` skill - For debugging and fixing issues (use `--autonomous` for structured workflow)
 - `tasks-feature-implementation` skill - Autonomous feature implementation variant
 - `.ai/prompts/context.md` - Platform patterns and context
 - `CLAUDE.md` - Codebase instructions

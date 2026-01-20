@@ -12,12 +12,13 @@ Test prompts to verify skills activate correctly. Each section contains prompts 
 
 ## Interactive Skills (infer: true)
 
-### bug-diagnosis
+### debugging
 
 Direct invocation:
 
 ```
-/bug-diagnosis
+/debugging
+/debugging --autonomous   # For structured headless debugging
 ```
 
 Inference test prompts:
@@ -36,6 +37,7 @@ Expected behavior:
 - Follows anti-hallucination protocols
 - Documents evidence before making claims
 - Presents fix proposal before implementing
+- (Autonomous mode: 5-phase workflow with approval gates)
 
 ---
 

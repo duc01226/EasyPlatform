@@ -388,7 +388,7 @@ export class FeatureListComponent extends AppBaseVmStoreComponent<FeatureState, 
 
 - `feature-implementation` skill - Interactive variant with user feedback
 - `feature-investigation` skill - READ-ONLY exploration (no code changes)
-- `tasks-bug-diagnosis` skill - Autonomous debugging workflow
+- `debugging --autonomous` - Autonomous debugging workflow
 - `.github/AI-DEBUGGING-PROTOCOL.md` - Debugging protocol
 - `.ai/prompts/context.md` - Platform patterns and context
 - `CLAUDE.md` - Codebase instructions

@@ -1,7 +1,12 @@
 ---
 name: debugging
-description: Systematic debugging framework ensuring root cause investigation before fixes. Includes four-phase debugging process, backward call stack tracing, multi-layer validation, and verification protocols. Use when encountering bugs, test failures, unexpected behavior, performance issues, or before claiming work complete. Prevents random fixes, masks over symptoms, and false completion claims.
-version: 3.0.0
+description: >-
+  Systematic debugging framework for root cause investigation before fixes.
+  Use for bugs, test failures, unexpected behavior, performance issues.
+  Use `--autonomous` flag for structured headless debugging with approval gates.
+  Triggers: debug, bug, error, fix, diagnose, root cause, stack trace, investigate issue.
+  NOT for: code review (use code-review), simplification (use code-simplifier).
+version: 4.0.0
 languages: all
 ---
 
@@ -20,6 +25,38 @@ Random fixes waste time and create new bugs. Find the root cause, fix at source,
 **Always use for:** Test failures, bugs, unexpected behavior, performance issues, build failures, integration problems, before claiming work complete
 
 **Especially when:** Under time pressure, "quick fix" seems obvious, tried multiple fixes, don't fully understand issue, about to claim success
+
+## Mode Selection
+
+| Mode | Flag | Use When | Workflow |
+|------|------|----------|----------|
+| **Interactive** | (default) | User available for feedback, exploratory debugging | Real-time collaboration, iterative investigation |
+| **Autonomous** | `--autonomous` | Batch debugging, CI/CD, comprehensive analysis needed | 5-phase structured workflow with approval gates |
+
+### Interactive Mode (Default)
+
+Standard debugging with user engagement. Use the techniques below with real-time feedback.
+
+### Autonomous Mode (`--autonomous`)
+
+Structured headless debugging workflow with approval gates. Creates artifacts in `.ai/workspace/analysis/`.
+
+**Invocation:** `/debugging --autonomous` or `/debug --autonomous`
+
+**Workflow:**
+1. **Phase 1:** Bug Report Analysis → Document in `.ai/workspace/analysis/[bug-name].md`
+2. **Phase 2:** Evidence Gathering → Multi-pattern search, dependency tracing
+3. **Phase 3:** Root Cause Analysis → Ranked causes with confidence levels
+4. **Phase 4:** Solution Proposal → Code changes, risk assessment, testing strategy
+5. **Phase 5:** Approval Gate → Present analysis for user approval before implementing
+
+**Key Features:**
+- Anti-hallucination protocols (assumption validation, evidence chains)
+- Confidence level tracking (High ≥90%, Medium 70-89%, Low <70%)
+- Structured evidence documentation
+- Explicit approval required before implementation
+
+**Full workflow details:** See `references/autonomous-workflow.md`
 
 ## The Four Techniques
 
@@ -95,3 +132,19 @@ Stop and follow process if thinking:
 - "Tests pass, we're done"
 
 **All mean:** Return to systematic process.
+
+## Related
+
+- **Follow-up:** `code-simplifier` - Simplify code after debugging
+- **Review:** `code-review` - Review fixes before committing
+- **Testing:** `test-generation` - Generate tests for the fix
+- **Upstream:** `investigation` - General codebase investigation
+
+## Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 4.0.0 | 2026-01-20 | Merged tasks-bug-diagnosis, added autonomous mode with --autonomous flag |
+| 3.0.0 | 2025-12-01 | Added EasyPlatform-specific debugging, verification protocols |
+| 2.0.0 | 2025-10-15 | Added defense-in-depth, root cause tracing |
+| 1.0.0 | 2025-08-01 | Initial release with systematic debugging |

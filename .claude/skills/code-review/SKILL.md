@@ -166,3 +166,9 @@ Using "should"/"probably"/"seems to", expressing satisfaction before verificatio
 3. Evidence before claims - Verification gates always
 
 Verify. Question. Then implement. Evidence. Then claim.
+
+## Related
+
+- **Debugging:** `debugging` - Root cause investigation before fixes
+- **Testing:** `test-generation` - Create tests for bug fixes
+- **Simplification:** `code-simplifier` - Simplify code after review

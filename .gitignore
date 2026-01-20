@@ -494,3 +494,4 @@ plans/[0-9][0-9][0-9][0-9][0-9][0-9]-*/
 # Claude Code subagent temp files
 tmpclaude-*
 .ai/workspace/
+.claude/temp-reports/
