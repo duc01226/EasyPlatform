@@ -33,6 +33,7 @@
         "anthropic.claude-code",
         "adamerose.markdown-wysiwyg",
         "ms-vscode.azure-repos",
-        "ms-vscode.live-server"
+        "ms-vscode.live-server",
+        "mathematic.vscode-pdf"
     ]
 }
