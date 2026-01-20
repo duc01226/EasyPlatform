@@ -43,9 +43,9 @@ Create detailed, executable test cases from specifications.
 ### Module Codes
 | Module | Code |
 |--------|------|
-| bravoTALENTS | TAL |
-| bravoGROWTH | GRO |
-| bravoSURVEYS | SUR |
+| TextSnippet | TXT |
+| ExampleApp | EXP |
+| Accounts | ACC |
 | Common | COM |
 
 ### Evidence Requirements

@@ -171,7 +171,7 @@ DashboardComponent extends AppBaseComponent
 
 ## Platform Component API Reference
 
-**Location**: `src/PlatformExampleAppWeb/libs/platform-core/src/lib/components/abstracts/`
+**Location**: `src/Frontend/libs/platform-core/src/lib/components/abstracts/`
 
 ### PlatformComponent - Foundation
 
@@ -321,7 +321,7 @@ export class EmployeeApiService extends PlatformApiService {
 
 ## Working Examples Reference
 
-**Location**: `src/PlatformExampleAppWeb/apps/playground-text-snippet/`
+**Location**: `src/Frontend/apps/playground-text-snippet/`
 
 | Example          | File                                            | Use Case                     |
 | ---------------- | ----------------------------------------------- | ---------------------------- |
@@ -351,7 +351,7 @@ protected initialFormConfig = () => ({
 
 ## Platform-Core Library Reference
 
-**Location**: `src/PlatformExampleAppWeb/libs/platform-core/`
+**Location**: `src/Frontend/libs/platform-core/`
 
 ### Foundation Classes
 

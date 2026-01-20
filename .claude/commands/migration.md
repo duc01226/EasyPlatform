@@ -16,7 +16,7 @@ Create a data or schema migration following EasyPlatform patterns.
     - MongoDB migration (PlatformMongoMigrationExecutor) - for MongoDB changes
 
 3. **Search for existing patterns:**
-    - `src/PlatformExampleApp/*/Persistence/Migrations/` for schema migrations
+    - `src/Backend/*/Persistence/Migrations/` for schema migrations
     - Search for `PlatformDataMigrationExecutor` implementations
 
 ## Phase 2: Design Migration
@@ -35,7 +35,7 @@ Follow naming convention: `YYYYMMDDHHMMSS_MigrationName`
 **For EF Core Schema Migration:**
 
 ```bash
-dotnet ef migrations add MigrationName --project src/PlatformExampleApp/{Service}/{Service}.Persistence
+dotnet ef migrations add MigrationName --project src/Backend/Service}.Persistence
 ```
 
 **For Data Migration (SQL Server/PostgreSQL):**

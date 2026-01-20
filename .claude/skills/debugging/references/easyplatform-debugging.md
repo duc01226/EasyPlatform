@@ -6,62 +6,62 @@ Platform-specific debugging patterns for the Easy.Platform .NET 9 + Angular 19 m
 
 ### Backend (.NET/C#)
 
-| Error Type | Source | Investigation |
-|------------|--------|---------------|
-| `PlatformValidationResult.Invalid()` | Validation layer | Check `.And()` chain, find failing condition |
-| `PlatformException` | Business logic | Read exception message, trace to handler |
-| `EnsureFound()` failures | Repository calls | Verify entity exists, check query predicates |
-| `EnsureValidAsync()` failures | Entity validation | Check entity's `ValidateAsync()` method |
+| Error Type                           | Source            | Investigation                                |
+| ------------------------------------ | ----------------- | -------------------------------------------- |
+| `PlatformValidationResult.Invalid()` | Validation layer  | Check `.And()` chain, find failing condition |
+| `PlatformException`                  | Business logic    | Read exception message, trace to handler     |
+| `EnsureFound()` failures             | Repository calls  | Verify entity exists, check query predicates |
+| `EnsureValidAsync()` failures        | Entity validation | Check entity's `ValidateAsync()` method      |
 
 ### Frontend (Angular)
 
-| Error Type | Source | Investigation |
-|------------|--------|---------------|
-| `observerLoadingErrorState` | API calls | Check network tab, verify endpoint |
-| Signal update errors | Store state | Verify store initialization order |
-| Form validation | Reactive forms | Check `initialFormConfig` validators |
-| Missing `untilDestroyed()` | Subscriptions | Memory leak - add cleanup operator |
+| Error Type                  | Source         | Investigation                        |
+| --------------------------- | -------------- | ------------------------------------ |
+| `observerLoadingErrorState` | API calls      | Check network tab, verify endpoint   |
+| Signal update errors        | Store state    | Verify store initialization order    |
+| Form validation             | Reactive forms | Check `initialFormConfig` validators |
+| Missing `untilDestroyed()`  | Subscriptions  | Memory leak - add cleanup operator   |
 
 ## Common Bug Categories
 
 ### Backend
 
 1. **Validation Failures**
-   - Missing `.And()` in validation chain
-   - Async validation not awaited
-   - Wrong entity expression filter
+    - Missing `.And()` in validation chain
+    - Async validation not awaited
+    - Wrong entity expression filter
 
 2. **Repository Issues**
-   - Using wrong repository type
-   - Missing `loadRelatedEntities` parameter
-   - N+1 query patterns
+    - Using wrong repository type
+    - Missing `loadRelatedEntities` parameter
+    - N+1 query patterns
 
 3. **Event Handler Problems**
-   - Handler not registered
-   - `HandleWhen` returning false
-   - Missing `await` in async handler
+    - Handler not registered
+    - `HandleWhen` returning false
+    - Missing `await` in async handler
 
 4. **Message Bus**
-   - Consumer not receiving messages
-   - Serialization issues with message payload
-   - Missing `TryWaitUntilAsync` for dependencies
+    - Consumer not receiving messages
+    - Serialization issues with message payload
+    - Missing `TryWaitUntilAsync` for dependencies
 
 ### Frontend
 
 1. **Component Lifecycle**
-   - Missing `super.ngOnInit()` call
-   - Store not provided in component
-   - Missing `untilDestroyed()` cleanup
+    - Missing `super.ngOnInit()` call
+    - Store not provided in component
+    - Missing `untilDestroyed()` cleanup
 
 2. **State Management**
-   - Stale VM state after navigation
-   - Race conditions in `effectSimple`
-   - Missing `observerLoadingErrorState` key
+    - Stale VM state after navigation
+    - Race conditions in `effectSimple`
+    - Missing `observerLoadingErrorState` key
 
 3. **Form Issues**
-   - `initialFormConfig` not returning controls
-   - Async validators not checking `isViewMode`
-   - Missing `dependentValidations`
+    - `initialFormConfig` not returning controls
+    - Async validators not checking `isViewMode`
+    - Missing `dependentValidations`
 
 ## Investigation Workflow
 
@@ -82,12 +82,14 @@ Error location?
 ### Step 2: Platform-Specific Checks
 
 **Backend checklist:**
+
 - [ ] Is the correct repository type used? (`IPlatformQueryableRootRepository`)
 - [ ] Is validation using `PlatformValidationResult` fluent API?
 - [ ] Are side effects in entity event handlers (not command handlers)?
 - [ ] Is message bus used for cross-service communication?
 
 **Frontend checklist:**
+
 - [ ] Does component extend correct base class?
 - [ ] Is store provided in component decorator?
 - [ ] Are subscriptions cleaned up with `untilDestroyed()`?
@@ -96,20 +98,22 @@ Error location?
 ### Step 3: Find Working Example
 
 Search codebase for similar working patterns:
+
 ```bash
 # Find similar command handlers
-grep -r "PlatformCqrsCommandApplicationHandler" src/PlatformExampleApp/
+grep -r "PlatformCqrsCommandApplicationHandler" src/Backend/
 
 # Find similar entity events
-grep -r "PlatformCqrsEntityEventApplicationHandler" src/PlatformExampleApp/
+grep -r "PlatformCqrsEntityEventApplicationHandler" src/Backend/
 
 # Find similar Angular components
-grep -r "AppBaseVmStoreComponent" src/PlatformExampleAppWeb/
+grep -r "AppBaseVmStoreComponent" src/Frontend/
 ```
 
 ### Step 4: Compare Differences
 
 Common differences causing bugs:
+
 - Missing `await` keyword
 - Wrong parameter order
 - Missing base class method call
@@ -123,13 +127,13 @@ Common differences causing bugs:
 dotnet build EasyPlatform.sln
 
 # Backend tests
-dotnet test src/PlatformExampleApp/PlatformExampleApp.TextSnippet.UnitTests/
+dotnet test src/Backend/PlatformExampleApp.TextSnippet.UnitTests/
 
 # Frontend build
-cd src/PlatformExampleAppWeb && nx build playground-text-snippet
+cd src/Frontend && nx build playground-text-snippet
 
 # Frontend tests
-cd src/PlatformExampleAppWeb && nx test platform-core
+cd src/Frontend && nx test platform-core
 ```
 
 ## Related Documentation

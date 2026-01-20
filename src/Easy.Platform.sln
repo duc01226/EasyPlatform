@@ -43,35 +43,35 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "1_ApiJwtAuthenticationExamp
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PlatformExampleApp", "PlatformExampleApp", "{E2CCF9F9-4223-4BF8-BADD-DD55EB5D3902}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.Ids", "PlatformExampleApp\PlatformExampleApp.Ids\PlatformExampleApp.Ids.csproj", "{AA1D7CEE-AF2A-45A1-8BEB-1733E8BE1F3B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.Ids", "Backend\PlatformExampleApp.Ids\PlatformExampleApp.Ids.csproj", "{AA1D7CEE-AF2A-45A1-8BEB-1733E8BE1F3B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.Shared", "PlatformExampleApp\PlatformExampleApp.Shared\PlatformExampleApp.Shared.csproj", "{00AFA800-B0B1-426F-9344-9DC1DF9F40AF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.Shared", "Backend\PlatformExampleApp.Shared\PlatformExampleApp.Shared.csproj", "{00AFA800-B0B1-426F-9344-9DC1DF9F40AF}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Api", "PlatformExampleApp\PlatformExampleApp.TextSnippet.Api\PlatformExampleApp.TextSnippet.Api.csproj", "{9399E2AC-B383-4AB7-9DBE-9675E618100D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Api", "Backend\PlatformExampleApp.TextSnippet.Api\PlatformExampleApp.TextSnippet.Api.csproj", "{9399E2AC-B383-4AB7-9DBE-9675E618100D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Application", "PlatformExampleApp\PlatformExampleApp.TextSnippet.Application\PlatformExampleApp.TextSnippet.Application.csproj", "{F95E64B2-7C51-4CFE-A3E6-6A91021FDD45}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Application", "Backend\PlatformExampleApp.TextSnippet.Application\PlatformExampleApp.TextSnippet.Application.csproj", "{F95E64B2-7C51-4CFE-A3E6-6A91021FDD45}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Domain", "PlatformExampleApp\PlatformExampleApp.TextSnippet.Domain\PlatformExampleApp.TextSnippet.Domain.csproj", "{F3072D66-031B-4FDD-938B-8F39C45BA911}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Domain", "Backend\PlatformExampleApp.TextSnippet.Domain\PlatformExampleApp.TextSnippet.Domain.csproj", "{F3072D66-031B-4FDD-938B-8F39C45BA911}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Infrastructure", "PlatformExampleApp\PlatformExampleApp.TextSnippet.Infrastructure\PlatformExampleApp.TextSnippet.Infrastructure.csproj", "{0AA40ABA-582A-4F6F-9952-5E0AA6912559}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Infrastructure", "Backend\PlatformExampleApp.TextSnippet.Infrastructure\PlatformExampleApp.TextSnippet.Infrastructure.csproj", "{0AA40ABA-582A-4F6F-9952-5E0AA6912559}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Persistence", "PlatformExampleApp\PlatformExampleApp.TextSnippet.Persistence\PlatformExampleApp.TextSnippet.Persistence.csproj", "{F65E84DE-1579-42BC-953E-63F65E3AD97C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Persistence", "Backend\PlatformExampleApp.TextSnippet.Persistence\PlatformExampleApp.TextSnippet.Persistence.csproj", "{F65E84DE-1579-42BC-953E-63F65E3AD97C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Persistence.Mongo", "PlatformExampleApp\PlatformExampleApp.TextSnippet.Persistence.Mongo\PlatformExampleApp.TextSnippet.Persistence.Mongo.csproj", "{31A1230F-FAC9-4F2A-A361-12DECA3B2895}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Persistence.Mongo", "Backend\PlatformExampleApp.TextSnippet.Persistence.Mongo\PlatformExampleApp.TextSnippet.Persistence.Mongo.csproj", "{31A1230F-FAC9-4F2A-A361-12DECA3B2895}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo", "PlatformExampleApp\PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo\PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.csproj", "{F8E4B58E-7FF5-48E5-93A4-D12357638744}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo", "Backend\PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo\PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.csproj", "{F8E4B58E-7FF5-48E5-93A4-D12357638744}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Persistence.PostgreSql", "PlatformExampleApp\PlatformExampleApp.TextSnippet.Persistence.PostgreSql\PlatformExampleApp.TextSnippet.Persistence.PostgreSql.csproj", "{D2EADB91-36D7-423C-BB17-1CCF75624C55}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.TextSnippet.Persistence.PostgreSql", "Backend\PlatformExampleApp.TextSnippet.Persistence.PostgreSql\PlatformExampleApp.TextSnippet.Persistence.PostgreSql.csproj", "{D2EADB91-36D7-423C-BB17-1CCF75624C55}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.Test", "PlatformExampleApp\PlatformExampleApp.Test\PlatformExampleApp.Test.csproj", "{667658C5-0C0F-42E7-A0C9-89C4619A5874}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.Test", "Backend\PlatformExampleApp.Test\PlatformExampleApp.Test.csproj", "{667658C5-0C0F-42E7-A0C9-89C4619A5874}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Easy.Platform.AutomationTest", "Platform\Easy.Platform.AutomationTest\Easy.Platform.AutomationTest.csproj", "{AAF17F6A-440A-4831-8F82-6A3E44DB2828}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Easy.Platform.AzureFileStorage", "Platform\Easy.Platform.AzureFileStorage\Easy.Platform.AzureFileStorage.csproj", "{0D2E06AE-F418-431D-805D-809EEF180E6E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.Test.Shared", "PlatformExampleApp\PlatformExampleApp.Test.Shared\PlatformExampleApp.Test.Shared.csproj", "{9DBBE4A0-37E3-4BA5-9EBF-CEDD8505B01A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.Test.Shared", "Backend\PlatformExampleApp.Test.Shared\PlatformExampleApp.Test.Shared.csproj", "{9DBBE4A0-37E3-4BA5-9EBF-CEDD8505B01A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.Benchmark", "PlatformExampleApp\PlatformExampleApp.Benchmark\PlatformExampleApp.Benchmark.csproj", "{04D3404D-FC73-4E59-B9FE-173CE9769FB1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PlatformExampleApp.Benchmark", "Backend\PlatformExampleApp.Benchmark\PlatformExampleApp.Benchmark.csproj", "{04D3404D-FC73-4E59-B9FE-173CE9769FB1}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Easy.Platform.Benchmark", "Platform\Easy.Platform.Benchmark\Easy.Platform.Benchmark.csproj", "{C2A888E2-ECBC-4AA4-8E86-0BC1259C1C7C}"
 EndProject

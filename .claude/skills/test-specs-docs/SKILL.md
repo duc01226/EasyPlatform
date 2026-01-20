@@ -36,49 +36,50 @@ TC-[MODULE]-[FEATURE]-[NUM]
 ```
 
 **Examples:**
+
 - `TC-TXT-SNP-001` = TextSnippet > Snippet > Test 001
 - `TC-TXT-TAG-001` = TextSnippet > Tag > Test 001
 - `TC-ACC-AUTH-001` = Accounts > Authentication > Test 001
 
 ### Module Codes
 
-| Code | Module | Folder |
-|------|--------|--------|
-| TAL | TextSnippet | `TextSnippet` |
-| GRO | TextSnippet | `TextSnippet` |
-| SUR | TextSnippet | `TextSnippet` |
-| INS | TextSnippet | `TextSnippet` |
-| ACC | Accounts | `Accounts` |
-| NOT | NotificationMessage | `SupportingServices` |
-| PAR | ParserApi | `SupportingServices` |
-| PER | PermissionProvider | `SupportingServices` |
-| EXA | ExampleApp | `SupportingServices` |
+| Code | Module              | Folder               |
+| ---- | ------------------- | -------------------- |
+| TAL  | TextSnippet         | `TextSnippet`        |
+| GRO  | TextSnippet         | `TextSnippet`        |
+| SUR  | TextSnippet         | `TextSnippet`        |
+| INS  | TextSnippet         | `TextSnippet`        |
+| ACC  | Accounts            | `Accounts`           |
+| NOT  | NotificationMessage | `SupportingServices` |
+| PAR  | ParserApi           | `SupportingServices` |
+| PER  | PermissionProvider  | `SupportingServices` |
+| EXA  | ExampleApp          | `SupportingServices` |
 
 ### Feature Codes (Common)
 
-| Feature | Code | Example |
-|---------|------|---------|
-| Goal | GOL | TC-TXT-GOL-001 |
-| CheckIn | CHK | TC-TXT-CHK-001 |
-| Review | REV | TC-TXT-REV-001 |
-| Kudos | KUD | TC-TXT-KUD-001 |
-| Snippet | SNP | TC-TXT-SNP-001 |
-| Job | JOB | TC-TXT-JOB-001 |
-| Interview | INT | TC-TXT-INT-001 |
-| Survey | SUR | TC-TXT-SUR-001 |
+| Feature        | Code | Example         |
+| -------------- | ---- | --------------- |
+| Goal           | GOL  | TC-TXT-GOL-001  |
+| CheckIn        | CHK  | TC-TXT-CHK-001  |
+| Review         | REV  | TC-TXT-REV-001  |
+| Kudos          | KUD  | TC-TXT-KUD-001  |
+| Snippet        | SNP  | TC-TXT-SNP-001  |
+| Job            | JOB  | TC-TXT-JOB-001  |
+| Interview      | INT  | TC-TXT-INT-001  |
+| Survey         | SUR  | TC-TXT-SUR-001  |
 | Authentication | AUTH | TC-ACC-AUTH-001 |
-| User | USR | TC-ACC-USR-001 |
+| User           | USR  | TC-ACC-USR-001  |
 
 ---
 
 ## Priority Classification
 
-| Priority | Level | Description | Examples |
-|----------|-------|-------------|----------|
-| **P0** | Critical | Security, authentication, data integrity, financial | Login, password security, data isolation |
-| **P1** | High | Core business workflows | Create snippet, submit form, update record |
-| **P2** | Medium | Secondary features | Filters, sorting, notifications, reporting |
-| **P3** | Low | UI enhancements, non-essential | Color themes, tooltips, preferences |
+| Priority | Level    | Description                                         | Examples                                   |
+| -------- | -------- | --------------------------------------------------- | ------------------------------------------ |
+| **P0**   | Critical | Security, authentication, data integrity, financial | Login, password security, data isolation   |
+| **P1**   | High     | Core business workflows                             | Create snippet, submit form, update record |
+| **P2**   | Medium   | Secondary features                                  | Filters, sorting, notifications, reporting |
+| **P3**   | Low      | UI enhancements, non-essential                      | Color themes, tooltips, preferences        |
 
 ### Priority Guidelines
 
@@ -94,6 +95,7 @@ TC-[MODULE]-[FEATURE]-[NUM]
 ### Step 1.1: Identify Target Module
 
 Determine module from:
+
 1. User specifies module/feature
 2. Feature domain implies module
 3. Search codebase for related code
@@ -101,6 +103,7 @@ Determine module from:
 ### Step 1.2: Read Existing Test Specs
 
 Before creating new specs:
+
 ```
 1. Read docs/test-specs/README.md (format reference)
 2. Read docs/test-specs/{Module}/README.md (if exists)
@@ -111,6 +114,7 @@ Before creating new specs:
 ### Step 1.3: Code Evidence Gathering
 
 For each test case, gather evidence from:
+
 - **Validation logic**: Command `Validate()` methods
 - **Business rules**: Entity methods, domain services
 - **Authorization**: Controller `[PlatformAuthorize]` attributes
@@ -124,7 +128,7 @@ For each test case, gather evidence from:
 
 Reference: `docs/test-specs/TextSnippet/README.md`
 
-```markdown
+````markdown
 # {Module} - Comprehensive Test Specifications
 
 **Module**: {Module} ([Description])
@@ -137,7 +141,7 @@ Reference: `docs/test-specs/TextSnippet/README.md`
 
 1. [Feature 1 Test Specs](#1-feature-1-test-specs)
 2. [Feature 2 Test Specs](#2-feature-2-test-specs)
-...
+   ...
 
 ---
 
@@ -150,11 +154,13 @@ Reference: `docs/test-specs/TextSnippet/README.md`
 **Priority**: P0-Critical | P1-High | P2-Medium | P3-Low
 
 **Preconditions**:
+
 - User has `{Policy}` authorization
 - Company has active {Feature} subscription
 - [Other setup requirements]
 
 **Test Steps** (Given-When-Then):
+
 ```gherkin
 Given [initial context/state]
   And [additional context if needed]
@@ -163,22 +169,26 @@ When [action performed]
 Then [expected outcome]
   And [additional verification]
 ```
+````
 
 **Acceptance Criteria**:
+
 - ✅ [Expected success behavior]
 - ✅ [Another success case]
 - ❌ [Expected failure behavior]
 - ❌ [Another failure case]
 
 **Test Data**:
+
 ```json
 {
-  "field": "value",
-  "required": true
+    "field": "value",
+    "required": true
 }
 ```
 
 **Edge Cases**:
+
 - ❌ [Boundary condition 1] → [Expected error]
 - ❌ [Boundary condition 2] → [Expected error]
 - ✅ [Edge case that should succeed] → Success
@@ -186,8 +196,8 @@ Then [expected outcome]
 **Evidence**:
 
 - **Controller**: `{Module}.Service/Controllers/{Controller}.cs:L{lines}`
-  - Authorization: `{Policies}`
-  - Endpoint: `{Method} /api/{path}`
+    - Authorization: `{Policies}`
+    - Endpoint: `{Method} /api/{path}`
 
 - **Command Handler**: `{Module}.Application/UseCaseCommands/{Feature}/{Command}.cs:L{lines}`
 
@@ -198,16 +208,17 @@ Then [expected outcome]
 // {File}:L{lines}
 [actual code snippet]
 ```
+
 </details>
 
 **Related Files**:
 
-| Layer | Type | File Path |
-|-------|------|-----------|
-| Backend | Controller | `src/PlatformExampleApp/{Module}/{Module}.Service/Controllers/{Controller}.cs` |
-| Backend | Command | `src/PlatformExampleApp/{Module}/{Module}.Application/UseCaseCommands/{Feature}/{Command}.cs` |
-| Backend | Entity | `src/PlatformExampleApp/{Module}/{Module}.Domain/Entities/{Entity}.cs` |
-| Frontend | Component | `src/PlatformExampleAppWeb/apps/playground-text-snippet/src/app/{feature}/{component}.ts` |
+| Layer    | Type       | File Path                                                                          |
+| -------- | ---------- | ---------------------------------------------------------------------------------- |
+| Backend  | Controller | `src/Backend/{Module}/{Module}.Service/Controllers/{Controller}.cs`                |
+| Backend  | Command    | `src/Backend/{Module}/{Module}.Application/UseCaseCommands/{Feature}/{Command}.cs` |
+| Backend  | Entity     | `src/Backend/{Module}/{Module}.Domain/Entities/{Entity}.cs`                        |
+| Frontend | Component  | `src/Frontend/apps/playground-text-snippet/src/app/{feature}/{component}.ts`       |
 
 ---
 
@@ -231,7 +242,8 @@ See [INTEGRATION-TESTS.md](../INTEGRATION-TESTS.md) for cross-module scenarios.
 ---
 
 **Last Updated**: {Date}
-```
+
+````
 
 ---
 
@@ -257,12 +269,13 @@ Then goal is created with status "Draft"
 Given user is logged in
 When user creates a goal
 Then it works
-```
+````
 
 ### Acceptance Criteria Format
 
 ```markdown
 **Acceptance Criteria**:
+
 - ✅ Form validates all required fields (Title, GoalType, TargetDate)
 - ✅ Backend creates Goal entity in database
 - ✅ Goal assigned to current employee as owner
@@ -275,6 +288,7 @@ Then it works
 ### Evidence Requirements
 
 Every test case MUST include:
+
 1. **Controller reference**: File path + line numbers + authorization policies
 2. **Handler/Command reference**: File path + line numbers for business logic
 3. **Code snippet**: Actual code in `<details>` block for key validation/logic
@@ -293,10 +307,10 @@ Add new test cases to appropriate priority section:
 ```markdown
 ### P0 - Critical
 
-| ID | Module | Feature | Test Name |
-|----|--------|---------|-----------|
-| TC-TXT-GOL-001 | TextSnippet | Goal | Create SMART Goal Successfully |
-| TC-{NEW-ID} | {Module} | {Feature} | {Test Name} |
+| ID             | Module      | Feature   | Test Name                      |
+| -------------- | ----------- | --------- | ------------------------------ |
+| TC-TXT-GOL-001 | TextSnippet | Goal      | Create SMART Goal Successfully |
+| TC-{NEW-ID}    | {Module}    | {Feature} | {Test Name}                    |
 ```
 
 ### Update Module Section in README.md
@@ -312,17 +326,20 @@ Ensure master test-specs README.md links to module:
 ## Anti-Hallucination Protocols
 
 ### EVIDENCE_CHAIN_VALIDATION
+
 - Every test case MUST reference actual source code
 - Read validation logic before writing acceptance criteria
 - Verify authorization policies from controller attributes
 - Never assume behavior without code evidence
 
 ### LINE_NUMBER_ACCURACY
+
 - Always verify line numbers are current
 - Use Grep to find exact locations
 - Include code snippets for complex logic
 
 ### TEST_ID_UNIQUENESS
+
 - Read PRIORITY-INDEX.md before assigning new IDs
 - Continue numbering sequence within feature
 - Never duplicate existing TC-XXX-XXX-NNN IDs
@@ -348,18 +365,20 @@ Ensure master test-specs README.md links to module:
 
 ## Example: Complete Test Case
 
-```markdown
+````markdown
 #### TC-TXT-KUD-001: Send Kudos to Colleague Successfully
 
 **Priority**: P1-High
 
 **Preconditions**:
+
 - User has `EmployeePolicy` authorization
 - Company has Kudos feature enabled
 - User has remaining quota for current period
 - Recipient is an active employee in same company
 
 **Test Steps** (Given-When-Then):
+
 ```gherkin
 Given user is authenticated with EmployeePolicy role
   And company has Kudos feature enabled
@@ -375,8 +394,10 @@ Then kudos transaction is created
   And kudos appears in company feed
   And confirmation message displayed to sender
 ```
+````
 
 **Acceptance Criteria**:
+
 - ✅ Kudos transaction created with sender, receiver, type, message
 - ✅ Sender quota decremented (SendQuotaRemaining - 1)
 - ✅ Receiver notification sent via NotificationMessage service
@@ -387,16 +408,18 @@ Then kudos transaction is created
 - ❌ Sending to different company returns "Recipient not in your company"
 
 **Test Data**:
+
 ```json
 {
-  "recipientEmployeeId": "emp-12345",
-  "kudosType": "Teamwork",
-  "message": "Great collaboration on Project X!",
-  "isAnonymous": false
+    "recipientEmployeeId": "emp-12345",
+    "kudosType": "Teamwork",
+    "message": "Great collaboration on Project X!",
+    "isAnonymous": false
 }
 ```
 
 **Edge Cases**:
+
 - ❌ Empty message → Validation error
 - ❌ Message > 500 chars → Validation error
 - ✅ Message with special characters → Success
@@ -405,8 +428,8 @@ Then kudos transaction is created
 **Evidence**:
 
 - **Controller**: `Growth.Service/Controllers/KudosController.cs:L25-28`
-  - Authorization: `EmployeePolicy`, `KudosPolicy`
-  - Endpoint: `POST /api/Kudos/send`
+    - Authorization: `EmployeePolicy`, `KudosPolicy`
+    - Endpoint: `POST /api/Kudos/send`
 
 - **Command Handler**: `Growth.Application/UseCaseCommands/Kudos/SendKudosCommand.cs:L45-89`
 
@@ -423,14 +446,18 @@ return await requestSelfValidation
         "No kudos remaining this period"
     );
 ```
+
 </details>
 
 **Related Files**:
 
-| Layer | Type | File Path |
-|-------|------|-----------|
-| Backend | Controller | `src/PlatformExampleApp/TextSnippet/Growth.Service/Controllers/KudosController.cs` |
-| Backend | Command | `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseCommands/Kudos/SendKudosCommand.cs` |
-| Backend | Entity | `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/Kudos/KudosTransaction.cs` |
-| Frontend | Component | `src/PlatformExampleAppWeb/apps/playground-text-snippet/src/app/kudos/send-kudos/send-kudos.component.ts` |
+| Layer    | Type       | File Path                                                                                    |
+| -------- | ---------- | -------------------------------------------------------------------------------------------- |
+| Backend  | Controller | `src/Backend/TextSnippet/Growth.Service/Controllers/KudosController.cs`                      |
+| Backend  | Command    | `src/Backend/TextSnippet/Growth.Application/UseCaseCommands/Kudos/SendKudosCommand.cs`       |
+| Backend  | Entity     | `src/Backend/TextSnippet/Growth.Domain/Entities/Kudos/KudosTransaction.cs`                   |
+| Frontend | Component  | `src/Frontend/apps/playground-text-snippet/src/app/kudos/send-kudos/send-kudos.component.ts` |
+
+```
+
 ```

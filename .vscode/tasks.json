@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj",
+                "${workspaceFolder}/src/Backend/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -19,7 +19,7 @@
             "type": "process",
             "args": [
                 "publish",
-                "${workspaceFolder}/src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj",
+                "${workspaceFolder}/src/Backend/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj",
                 "/property:GenerateFullPaths=true",
                 "/consoleloggerparameters:NoSummary"
             ],
@@ -29,12 +29,7 @@
             "label": "watch",
             "command": "dotnet",
             "type": "process",
-            "args": [
-                "watch",
-                "run",
-                "--project",
-                "${workspaceFolder}/src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj"
-            ],
+            "args": ["watch", "run", "--project", "${workspaceFolder}/src/Backend/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj"],
             "problemMatcher": "$msCompile"
         }
     ]

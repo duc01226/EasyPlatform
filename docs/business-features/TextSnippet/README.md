@@ -4,23 +4,23 @@
 module: TextSnippet
 aliases: [text-snippet, textsnippet, txt]
 keywords:
-  - snippet
-  - text
-  - search
-  - category
-  - full-text
-  - note
-  - clipboard
+    - snippet
+    - text
+    - search
+    - category
+    - full-text
+    - note
+    - clipboard
 features:
-  - task
-  - todo
-  - checklist
-  - item
+    - task
+    - todo
+    - checklist
+    - item
 entities:
-  - TextSnippetEntity
-  - TextSnippetCategory
-  - TaskItemEntity
-domain_path: src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain
+    - TextSnippetEntity
+    - TextSnippetCategory
+    - TaskItemEntity
+domain_path: src/Backend/PlatformExampleApp.TextSnippet.Domain
 api_prefix: /api/TextSnippet
 status: active
 ---
@@ -82,40 +82,40 @@ TextSnippet is a comprehensive text snippet management module within the EasyPla
 
 #### FR-TS-01: Create/Update Snippets
 
-| Aspect          | Details                                                     |
-| --------------- | ----------------------------------------------------------- |
-| **Description** | Users can create and update text snippets with categories   |
-| **Scope**       | All authenticated users                                     |
-| **Validation**  | SnippetText required, Category optional                     |
-| **Evidence**    | `SaveSnippetTextCommand.cs`                                 |
+| Aspect          | Details                                                   |
+| --------------- | --------------------------------------------------------- |
+| **Description** | Users can create and update text snippets with categories |
+| **Scope**       | All authenticated users                                   |
+| **Validation**  | SnippetText required, Category optional                   |
+| **Evidence**    | `SaveSnippetTextCommand.cs`                               |
 
 #### FR-TS-02: Search Snippets
 
-| Aspect          | Details                                                     |
-| --------------- | ----------------------------------------------------------- |
-| **Description** | Full-text search across snippets with pagination            |
-| **Output**      | Paginated results with relevance scoring                    |
-| **Evidence**    | `SearchSnippetTextQuery.cs`                                 |
+| Aspect          | Details                                          |
+| --------------- | ------------------------------------------------ |
+| **Description** | Full-text search across snippets with pagination |
+| **Output**      | Paginated results with relevance scoring         |
+| **Evidence**    | `SearchSnippetTextQuery.cs`                      |
 
 ### Task Management
 
 #### FR-TS-03: Task CRUD
 
-| Aspect          | Details                                                     |
-| --------------- | ----------------------------------------------------------- |
-| **Description** | Simple task management with title, description, status      |
-| **Scope**       | All authenticated users                                     |
-| **Evidence**    | `TaskItemController.cs`                                     |
+| Aspect          | Details                                                |
+| --------------- | ------------------------------------------------------ |
+| **Description** | Simple task management with title, description, status |
+| **Scope**       | All authenticated users                                |
+| **Evidence**    | `TaskItemController.cs`                                |
 
 ---
 
 ## Design Reference
 
-| Information       | Details                                                     |
-| ----------------- | ----------------------------------------------------------- |
-| **Figma Link**    | _(Example app - no formal designs)_                         |
-| **Screenshots**   | _(To be added)_                                             |
-| **UI Components** | Forms, Lists, Tables, Search inputs                         |
+| Information       | Details                             |
+| ----------------- | ----------------------------------- |
+| **Figma Link**    | _(Example app - no formal designs)_ |
+| **Screenshots**   | _(To be added)_                     |
+| **UI Components** | Forms, Lists, Tables, Search inputs |
 
 ### Key UI Patterns
 
@@ -150,20 +150,20 @@ TextSnippet is a comprehensive text snippet management module within the EasyPla
 
 ### Service Responsibilities
 
-| Service | Responsibility |
-|---------|---------------|
-| TextSnippet.Domain | Business entities, validation rules |
-| TextSnippet.Application | CQRS commands/queries, handlers |
-| TextSnippet.Api | REST API controllers |
-| TextSnippet.Persistence | Database context, migrations |
+| Service                 | Responsibility                      |
+| ----------------------- | ----------------------------------- |
+| TextSnippet.Domain      | Business entities, validation rules |
+| TextSnippet.Application | CQRS commands/queries, handlers     |
+| TextSnippet.Api         | REST API controllers                |
+| TextSnippet.Persistence | Database context, migrations        |
 
 ### Design Patterns
 
-| Pattern | Usage | Evidence |
-|---------|-------|----------|
-| CQRS | Commands/Queries separation | `UseCaseCommands/`, `UseCaseQueries/` |
-| Repository | Data access abstraction | `IPlatformQueryableRootRepository<T>` |
-| Entity Events | Side effects handling | `MessageBus/Producers/` |
+| Pattern       | Usage                       | Evidence                              |
+| ------------- | --------------------------- | ------------------------------------- |
+| CQRS          | Commands/Queries separation | `UseCaseCommands/`, `UseCaseQueries/` |
+| Repository    | Data access abstraction     | `IPlatformQueryableRootRepository<T>` |
+| Entity Events | Side effects handling       | `MessageBus/Producers/`               |
 
 ---
 
@@ -193,25 +193,25 @@ TextSnippet is a comprehensive text snippet management module within the EasyPla
 
 ### TextSnippetEntity
 
-**Location**: `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/Entities/TextSnippetEntity.cs`
+**Location**: `src/Backend/PlatformExampleApp.TextSnippet.Domain/Entities/TextSnippetEntity.cs`
 
-| Property | Type | Description |
-|----------|------|-------------|
-| Id | string | Unique identifier (ULID) |
-| SnippetText | string | Short snippet text |
-| FullText | string | Full text content |
-| CategoryId | string? | Optional category reference |
+| Property    | Type    | Description                 |
+| ----------- | ------- | --------------------------- |
+| Id          | string  | Unique identifier (ULID)    |
+| SnippetText | string  | Short snippet text          |
+| FullText    | string  | Full text content           |
+| CategoryId  | string? | Optional category reference |
 
 ### TaskItemEntity
 
-**Location**: `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/Entities/TaskItemEntity.cs`
+**Location**: `src/Backend/PlatformExampleApp.TextSnippet.Domain/Entities/TaskItemEntity.cs`
 
-| Property | Type | Description |
-|----------|------|-------------|
-| Id | string | Unique identifier |
-| Title | string | Task title |
-| Description | string | Task description |
-| IsCompleted | bool | Completion status |
+| Property    | Type   | Description       |
+| ----------- | ------ | ----------------- |
+| Id          | string | Unique identifier |
+| Title       | string | Task title        |
+| Description | string | Task description  |
+| IsCompleted | bool   | Completion status |
 
 ---
 
@@ -233,6 +233,7 @@ TextSnippet is a comprehensive text snippet management module within the EasyPla
 ```
 
 **Steps**:
+
 1. **Trigger**: User submits snippet form
 2. **Validation**: Handler validates SnippetText required
 3. **Processing**: CreateOrUpdate via repository
@@ -240,17 +241,20 @@ TextSnippet is a comprehensive text snippet management module within the EasyPla
 5. **Result**: SaveSnippetTextCommandResult returned
 
 **Key Files**:
+
 - `SaveSnippetTextCommand.cs` - Command handler
 - `TextSnippetEntityEventBusMessageProducer.cs` - Event producer
 
 ### Workflow 2: Search Snippets
 
 **Steps**:
+
 1. **Trigger**: User enters search term
 2. **Processing**: Full-text search query
 3. **Result**: Paginated SearchSnippetTextQueryResult
 
 **Key Files**:
+
 - `SearchSnippetTextQuery.cs` - Query handler
 
 ---
@@ -259,12 +263,12 @@ TextSnippet is a comprehensive text snippet management module within the EasyPla
 
 ### Endpoints Summary
 
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/TextSnippet/SaveSnippetText` | Create/update snippet | Bearer |
-| GET | `/api/TextSnippet/GetSnippetTextDetail` | Get snippet by ID | Bearer |
-| POST | `/api/TextSnippet/SearchSnippetTexts` | Search snippets | Bearer |
-| POST | `/api/TextSnippet/SaveSnippetCategory` | Save category | Bearer |
+| Method | Endpoint                                | Description           | Auth   |
+| ------ | --------------------------------------- | --------------------- | ------ |
+| POST   | `/api/TextSnippet/SaveSnippetText`      | Create/update snippet | Bearer |
+| GET    | `/api/TextSnippet/GetSnippetTextDetail` | Get snippet by ID     | Bearer |
+| POST   | `/api/TextSnippet/SearchSnippetTexts`   | Search snippets       | Bearer |
+| POST   | `/api/TextSnippet/SaveSnippetCategory`  | Save category         | Bearer |
 
 ### Request/Response Examples
 
@@ -288,11 +292,11 @@ PlaygroundTextSnippetApp (Container)
 
 ### Key Components
 
-| Component | Type | Purpose | Path |
-|-----------|------|---------|------|
-| SnippetListComponent | Container | List with search | `apps/playground-text-snippet/` |
-| SnippetDetailComponent | Form | Create/edit form | `apps/playground-text-snippet/` |
-| TaskListComponent | Presentational | Task display | `apps/playground-text-snippet/` |
+| Component              | Type           | Purpose          | Path                            |
+| ---------------------- | -------------- | ---------------- | ------------------------------- |
+| SnippetListComponent   | Container      | List with search | `apps/playground-text-snippet/` |
+| SnippetDetailComponent | Form           | Create/edit form | `apps/playground-text-snippet/` |
+| TaskListComponent      | Presentational | Task display     | `apps/playground-text-snippet/` |
 
 ---
 
@@ -300,23 +304,23 @@ PlaygroundTextSnippetApp (Container)
 
 ### TextSnippetController
 
-**Location**: `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/Controllers/TextSnippetController.cs`
+**Location**: `src/Backend/PlatformExampleApp.TextSnippet.Api/Controllers/TextSnippetController.cs`
 
-| Action | Method | Route | Command/Query |
-|--------|--------|-------|---------------|
-| SaveSnippetText | POST | `/SaveSnippetText` | SaveSnippetTextCommand |
-| GetSnippetTextDetail | GET | `/GetSnippetTextDetail` | GetSnippetTextDetailQuery |
-| SearchSnippetTexts | POST | `/SearchSnippetTexts` | SearchSnippetTextQuery |
-| SaveSnippetCategory | POST | `/SaveSnippetCategory` | SaveSnippetCategoryCommand |
+| Action               | Method | Route                   | Command/Query              |
+| -------------------- | ------ | ----------------------- | -------------------------- |
+| SaveSnippetText      | POST   | `/SaveSnippetText`      | SaveSnippetTextCommand     |
+| GetSnippetTextDetail | GET    | `/GetSnippetTextDetail` | GetSnippetTextDetailQuery  |
+| SearchSnippetTexts   | POST   | `/SearchSnippetTexts`   | SearchSnippetTextQuery     |
+| SaveSnippetCategory  | POST   | `/SaveSnippetCategory`  | SaveSnippetCategoryCommand |
 
 ### TaskItemController
 
-**Location**: `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/Controllers/TaskItemController.cs`
+**Location**: `src/Backend/PlatformExampleApp.TextSnippet.Api/Controllers/TaskItemController.cs`
 
-| Action | Method | Route | Command/Query |
-|--------|--------|-------|---------------|
-| GetAll | GET | `/` | GetTaskItemsQuery |
-| Save | POST | `/` | SaveTaskItemCommand |
+| Action | Method | Route   | Command/Query         |
+| ------ | ------ | ------- | --------------------- |
+| GetAll | GET    | `/`     | GetTaskItemsQuery     |
+| Save   | POST   | `/`     | SaveTaskItemCommand   |
 | Delete | DELETE | `/{id}` | DeleteTaskItemCommand |
 
 ---
@@ -325,9 +329,9 @@ PlaygroundTextSnippetApp (Container)
 
 ### Message Bus Events
 
-| Event | Producer | Consumer | Purpose |
-|-------|----------|----------|---------|
-| TextSnippetEntityEventBusMessage | TextSnippet.Service | (Demo consumer) | Snippet sync |
+| Event                                 | Producer            | Consumer        | Purpose        |
+| ------------------------------------- | ------------------- | --------------- | -------------- |
+| TextSnippetEntityEventBusMessage      | TextSnippet.Service | (Demo consumer) | Snippet sync   |
 | SaveTextSnippetCommandEventBusMessage | TextSnippet.Service | (Demo consumer) | Command events |
 
 ### Event Flow
@@ -353,14 +357,15 @@ TextSnippet.Service                     Demo Consumer
 
 ### Role Permissions
 
-| Role | View | Create | Edit | Delete |
-|------|:----:|:------:|:----:|:------:|
-| Authenticated | ✅ | ✅ | ✅ | ✅ |
-| Anonymous | ❌ | ❌ | ❌ | ❌ |
+| Role          | View  | Create | Edit  | Delete |
+| ------------- | :---: | :----: | :---: | :----: |
+| Authenticated |   ✅   |   ✅    |   ✅   |   ✅    |
+| Anonymous     |   ❌   |   ❌    |   ❌   |   ❌    |
 
 ### Permission Checks
 
 **Backend Authorization**:
+
 ```csharp
 // Evidence: TextSnippetController.cs
 [PlatformAuthorize]
@@ -373,18 +378,19 @@ public class TextSnippetController : PlatformBaseController
 
 ### Test Summary
 
-| Category               | P0 | P1 | P2 | Total |
-| ---------------------- |:--:|:--:|:--:|:-----:|
-| Snippet CRUD           | 2  | 2  | 1  | 5     |
-| Search                 | 1  | 1  | 0  | 2     |
-| Task CRUD              | 1  | 1  | 0  | 2     |
-| **Total**              | **4** | **4** | **1** | **9** |
+| Category     |  P0   |  P1   |  P2   | Total |
+| ------------ | :---: | :---: | :---: | :---: |
+| Snippet CRUD |   2   |   2   |   1   |   5   |
+| Search       |   1   |   1   |   0   |   2   |
+| Task CRUD    |   1   |   1   |   0   |   2   |
+| **Total**    | **4** | **4** | **1** | **9** |
 
 ### Snippet CRUD Test Specs
 
 #### TC-TS-001: Create Snippet Successfully [P0]
 
 **Acceptance Criteria**:
+
 - ✅ Authenticated user can create snippet
 - ✅ SnippetText is saved correctly
 - ✅ Category association works
@@ -398,6 +404,7 @@ public class TextSnippetController : PlatformBaseController
 #### TC-TS-002: Search Snippets [P0]
 
 **Acceptance Criteria**:
+
 - ✅ Full-text search returns matching results
 - ✅ Pagination works correctly
 
@@ -420,11 +427,13 @@ See [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) for common issues and solutions.
 **Symptoms**: Service fails to start, connection timeout errors
 
 **Causes**:
+
 1. Database server not running
 2. Connection string incorrect
 3. Firewall blocking port
 
 **Resolution**:
+
 - Verify Docker containers are running
 - Check appsettings.json connection strings
 - Test network connectivity
@@ -453,10 +462,10 @@ SELECT * FROM TextSnippets WHERE CategoryId = 'category-id';
 
 ## Version History
 
-| Version | Date       | Changes                                        |
-| ------- | ---------- | ---------------------------------------------- |
-| 2.0.0   | 2026-01-08 | Template compliance: expanded to 15 sections   |
-| 1.0.0   | 2025-01-01 | Initial documentation                          |
+| Version | Date       | Changes                                      |
+| ------- | ---------- | -------------------------------------------- |
+| 2.0.0   | 2026-01-08 | Template compliance: expanded to 15 sections |
+| 1.0.0   | 2025-01-01 | Initial documentation                        |
 
 ---
 

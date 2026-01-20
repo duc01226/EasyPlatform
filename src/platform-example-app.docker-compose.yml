@@ -1,152 +1,152 @@
 services:
-  sql-data:
-    image: ${REGISTRY:-duc01226}/easy-platform-example-app-fts-sql-data:${PLATFORM:-linux}-${TAG:-latest}
-    build:
-      context: .
-      dockerfile: fts-sqldata.Dockerfile
+    sql-data:
+        image: ${REGISTRY:-duc01226}/easy-platform-example-app-fts-sql-data:${PLATFORM:-linux}-${TAG:-latest}
+        build:
+            context: .
+            dockerfile: fts-sqldata.Dockerfile
 
-  mongo-data:
-    image: mongo:7
+    mongo-data:
+        image: mongo:7
 
-  rabbitmq:
-    image: rabbitmq:3.12.4-management
+    rabbitmq:
+        image: rabbitmq:3.12.4-management
 
-  redis-cache:
-    image: redis:6.2.5
+    redis-cache:
+        image: redis:6.2.5
 
-  postgres-sql:
-    image: postgres:16
+    postgres-sql:
+        image: postgres:16
 
-  pyroscope-agent.monitoring:
-    image: grafana/pyroscope
-    ports:
-      - '4040:4040'
+    pyroscope-agent.monitoring:
+        image: grafana/pyroscope
+        ports:
+            - '4040:4040'
 
-  text-snippet-api:
-    image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-api:${PLATFORM:-linux}-${TAG:-latest}
-    build:
-      context: .
-      dockerfile: PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/Dockerfile
-    depends_on:
-      - sql-data
-      - mongo-data
-      - postgres-sql
-      - rabbitmq
-      - redis-cache
+    text-snippet-api:
+        image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-api:${PLATFORM:-linux}-${TAG:-latest}
+        build:
+            context: .
+            dockerfile: Backend/PlatformExampleApp.TextSnippet.Api/Dockerfile
+        depends_on:
+            - sql-data
+            - mongo-data
+            - postgres-sql
+            - rabbitmq
+            - redis-cache
 
-  text-snippet-webspa:
-    image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-webspa:${PLATFORM:-linux}-${TAG:-latest}
-    build:
-      context: PlatformExampleAppWeb
-      args:
-        configuration: 'production'
-      dockerfile: apps/playground-text-snippet/Dockerfile
+    text-snippet-webspa:
+        image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-webspa:${PLATFORM:-linux}-${TAG:-latest}
+        build:
+            context: Frontend
+            args:
+                configuration: 'production'
+            dockerfile: apps/playground-text-snippet/Dockerfile
 
-  chrome1:
-    image: selenium/node-chrome:111.0
-  chrome2:
-    image: selenium/node-chrome:111.0
+    chrome1:
+        image: selenium/node-chrome:111.0
+    chrome2:
+        image: selenium/node-chrome:111.0
 
-  edge:
-    image: selenium/node-edge:111.0
+    edge:
+        image: selenium/node-edge:111.0
 
-  firefox:
-    image: selenium/node-firefox:111.0
+    firefox:
+        image: selenium/node-firefox:111.0
 
-  selenium-hub:
-    image: selenium/hub:4.8.3
+    selenium-hub:
+        image: selenium/hub:4.8.3
 
-  text-snippet-automation-test:
-    image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-automation-test:${PLATFORM:-linux}-${TAG:-latest}
-    build:
-      context: .
-      dockerfile: PlatformExampleApp/PlatformExampleApp.Test/Dockerfile
-    depends_on:
-      text-snippet-api:
-        condition: service_healthy
-      text-snippet-webspa:
-        condition: service_started
-      selenium-hub:
-        condition: service_started
-      chrome1:
-        condition: service_started
-      chrome2:
-        condition: service_started
-      firefox:
-        condition: service_started
-      edge:
-        condition: service_started
+    text-snippet-automation-test:
+        image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-automation-test:${PLATFORM:-linux}-${TAG:-latest}
+        build:
+            context: .
+            dockerfile: Backend/PlatformExampleApp.Test/Dockerfile
+        depends_on:
+            text-snippet-api:
+                condition: service_healthy
+            text-snippet-webspa:
+                condition: service_started
+            selenium-hub:
+                condition: service_started
+            chrome1:
+                condition: service_started
+            chrome2:
+                condition: service_started
+            firefox:
+                condition: service_started
+            edge:
+                condition: service_started
 
-  text-snippet-automation-test-bdd-chrome:
-    image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-automation-test-bdd:${PLATFORM:-linux}-${TAG:-latest}
-    build:
-      context: .
-      dockerfile: PlatformExampleApp/PlatformExampleApp.Test.BDD/Dockerfile
-    environment:
-      - AutomationTestSettings__WebDriverType=${AutomationTestSettings__WebDriverType:-Chrome}
-    depends_on:
-      text-snippet-api:
-        condition: service_healthy
-      text-snippet-webspa:
-        condition: service_started
-      selenium-hub:
-        condition: service_started
-      chrome1:
-        condition: service_started
-      chrome2:
-        condition: service_started
-      firefox:
-        condition: service_started
-      edge:
-        condition: service_started
+    text-snippet-automation-test-bdd-chrome:
+        image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-automation-test-bdd:${PLATFORM:-linux}-${TAG:-latest}
+        build:
+            context: .
+            dockerfile: Backend/PlatformExampleApp.Test.BDD/Dockerfile
+        environment:
+            - AutomationTestSettings__WebDriverType=${AutomationTestSettings__WebDriverType:-Chrome}
+        depends_on:
+            text-snippet-api:
+                condition: service_healthy
+            text-snippet-webspa:
+                condition: service_started
+            selenium-hub:
+                condition: service_started
+            chrome1:
+                condition: service_started
+            chrome2:
+                condition: service_started
+            firefox:
+                condition: service_started
+            edge:
+                condition: service_started
 
-  text-snippet-automation-test-bdd-edge:
-    image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-automation-test-bdd:${PLATFORM:-linux}-${TAG:-latest}
-    build:
-      context: .
-      dockerfile: PlatformExampleApp/PlatformExampleApp.Test.BDD/Dockerfile
-    environment:
-      - AutomationTestSettings__WebDriverType=${AutomationTestSettings__WebDriverType:-edge}
-    depends_on:
-      text-snippet-api:
-        condition: service_healthy
-      text-snippet-webspa:
-        condition: service_started
-      selenium-hub:
-        condition: service_started
-      chrome1:
-        condition: service_started
-      chrome2:
-        condition: service_started
-      firefox:
-        condition: service_started
-      edge:
-        condition: service_started
+    text-snippet-automation-test-bdd-edge:
+        image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-automation-test-bdd:${PLATFORM:-linux}-${TAG:-latest}
+        build:
+            context: .
+            dockerfile: Backend/PlatformExampleApp.Test.BDD/Dockerfile
+        environment:
+            - AutomationTestSettings__WebDriverType=${AutomationTestSettings__WebDriverType:-edge}
+        depends_on:
+            text-snippet-api:
+                condition: service_healthy
+            text-snippet-webspa:
+                condition: service_started
+            selenium-hub:
+                condition: service_started
+            chrome1:
+                condition: service_started
+            chrome2:
+                condition: service_started
+            firefox:
+                condition: service_started
+            edge:
+                condition: service_started
 
-  text-snippet-automation-test-bdd-firefox:
-    image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-automation-test-bdd:${PLATFORM:-linux}-${TAG:-latest}
-    build:
-      context: .
-      dockerfile: PlatformExampleApp/PlatformExampleApp.Test.BDD/Dockerfile
-    environment:
-      - AutomationTestSettings__WebDriverType=${AutomationTestSettings__WebDriverType:-Firefox}
-    depends_on:
-      text-snippet-api:
-        condition: service_healthy
-      text-snippet-webspa:
-        condition: service_started
-      selenium-hub:
-        condition: service_started
-      chrome1:
-        condition: service_started
-      chrome2:
-        condition: service_started
-      firefox:
-        condition: service_started
-      edge:
-        condition: service_started
+    text-snippet-automation-test-bdd-firefox:
+        image: ${REGISTRY:-duc01226}/easy-platform-example-app-text-snippet-automation-test-bdd:${PLATFORM:-linux}-${TAG:-latest}
+        build:
+            context: .
+            dockerfile: Backend/PlatformExampleApp.Test.BDD/Dockerfile
+        environment:
+            - AutomationTestSettings__WebDriverType=${AutomationTestSettings__WebDriverType:-Firefox}
+        depends_on:
+            text-snippet-api:
+                condition: service_healthy
+            text-snippet-webspa:
+                condition: service_started
+            selenium-hub:
+                condition: service_started
+            chrome1:
+                condition: service_started
+            chrome2:
+                condition: service_started
+            firefox:
+                condition: service_started
+            edge:
+                condition: service_started
 
 networks:
-  default:
-    name: platform-example-app-network
-    external: true
+    default:
+        name: platform-example-app-network
+        external: true

@@ -115,10 +115,8 @@ When user runs `/test-cases {test-spec-file}`:
 ### Module Codes
 | Module | Code |
 |--------|------|
-| bravoTALENTS | TAL |
-| bravoGROWTH | GRO |
-| bravoSURVEYS | SUR |
-| bravoINSIGHTS | INS |
+| TextSnippet | TXT |
+| ExampleApp | EXP |
 | Accounts | ACC |
 | Common | COM |
 
@@ -127,8 +125,8 @@ When user runs `/test-cases {test-spec-file}`:
 TC-{MOD}-{NNN}
 
 Examples:
-TC-TAL-001  # bravoTALENTS test case 1
-TC-GRO-015  # bravoGROWTH test case 15
+TC-TXT-001  # TextSnippet test case 1
+TC-EXP-015  # ExampleApp test case 15
 TC-ACC-101  # Accounts integration test
 TC-COM-201  # Common edge case
 ```

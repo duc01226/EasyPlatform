@@ -661,7 +661,7 @@ export class {E}Component extends AppBaseVmStoreComponent<{E}State, {E}Store> { 
 
 ```bash
 dotnet build EasyPlatform.sln
-dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
-cd src/PlatformExampleAppWeb && npm install && nx serve playground-text-snippet
+dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
+cd src/Frontend && npm install && nx serve playground-text-snippet
 docker-compose -f src/platform-example-app.docker-compose.yml up -d
 ```

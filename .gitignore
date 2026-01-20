@@ -426,7 +426,7 @@ __pycache__/
 # NX WORKSPACE
 # =============================================================================
 **/.nx/**
-src/PlatformExampleAppWeb/e2e/playwright-report/
+src/Frontend/e2e/playwright-report/
 
 # =============================================================================
 # ARCHIVE / COMPRESSED

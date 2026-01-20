@@ -37,7 +37,7 @@
 | **ITViec Provider** | `ScanMailBoxModule/Providers/ITViec/ITViecApiProvider.cs` |
 | **Sync Service** | `ScanMailBoxModule/Services/JobBoardApplicationSyncService.cs` |
 | **Email Parsers** | `ScanMailBoxModule/Services/Scan{Provider}MailboxService.cs` |
-| **Frontend** | `apps/bravo-setting/src/app/routes/job-board/*.component.ts` |
+| **Frontend** | `apps/playground-setting/src/app/routes/job-board/*.component.ts` |
 
 ---
 

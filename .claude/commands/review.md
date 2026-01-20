@@ -5,7 +5,7 @@ argument-hint: [target]
 
 # Code Review: $ARGUMENTS
 
-Perform a comprehensive code review following BravoSUITE standards.
+Perform a comprehensive code review following EasyPlatform standards.
 
 ## Review Scope
 

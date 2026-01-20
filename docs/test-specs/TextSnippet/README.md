@@ -6,13 +6,13 @@
 
 ## Test Summary
 
-| Feature | P0 | P1 | P2 | P3 | Total |
-|---------|----|----|----|----|-------|
-| Snippet CRUD | 0 | 4 | 2 | 1 | 7 |
-| Search | 0 | 2 | 2 | 0 | 4 |
-| Categories | 0 | 2 | 1 | 0 | 3 |
-| Tasks | 0 | 3 | 1 | 0 | 4 |
-| **Total** | 0 | 11 | 6 | 1 | 18 |
+| Feature      | P0  | P1  | P2  | P3  | Total |
+| ------------ | --- | --- | --- | --- | ----- |
+| Snippet CRUD | 0   | 4   | 2   | 1   | 7     |
+| Search       | 0   | 2   | 2   | 0   | 4     |
+| Categories   | 0   | 2   | 1   | 0   | 3     |
+| Tasks        | 0   | 3   | 1   | 0   | 4     |
+| **Total**    | 0   | 11  | 6   | 1   | 18    |
 
 ---
 
@@ -23,10 +23,12 @@
 **Priority**: P1-High
 
 **Preconditions**:
+
 - User is authenticated
 - At least one category exists
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
   And I am on the snippet creation page
@@ -39,21 +41,24 @@ Then the snippet should be saved successfully
 ```
 
 **Acceptance Criteria**:
+
 - ✅ Snippet is persisted to database
 - ✅ Entity event is published to message bus
 - ✅ Audit log entry is created
 - ❌ Empty snippet text should show validation error
 
 **Code Evidence**:
-- Command: `src/PlatformExampleApp/...Application/UseCaseCommands/SaveSnippetTextCommand.cs`
-- Frontend: `src/PlatformExampleAppWeb/.../app-text-snippet-detail.component.ts`
+
+- Command: `src/Backend/...Application/UseCaseCommands/SaveSnippetTextCommand.cs`
+- Frontend: `src/Frontend/.../app-text-snippet-detail.component.ts`
 
 **Test Data**:
+
 ```json
 {
-  "snippetText": "Hello World",
-  "fullText": "This is a sample snippet",
-  "categoryId": "cat-general-001"
+    "snippetText": "Hello World",
+    "fullText": "This is a sample snippet",
+    "categoryId": "cat-general-001"
 }
 ```
 
@@ -64,9 +69,11 @@ Then the snippet should be saved successfully
 **Priority**: P1-High
 
 **Preconditions**:
+
 - User is authenticated
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
   And I am on the snippet creation page
@@ -77,6 +84,7 @@ Then I should see validation error "Snippet text is required"
 ```
 
 **Acceptance Criteria**:
+
 - ✅ Validation error message displayed
 - ✅ Form remains open for correction
 - ❌ No database record created
@@ -88,10 +96,12 @@ Then I should see validation error "Snippet text is required"
 **Priority**: P1-High
 
 **Preconditions**:
+
 - User is authenticated
 - Snippet with ID "snp-001" exists
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
   And a snippet "snp-001" exists with text "Original"
@@ -103,6 +113,7 @@ Then the snippet should be updated successfully
 ```
 
 **Acceptance Criteria**:
+
 - ✅ LastUpdatedDate is updated
 - ✅ Entity event published with Updated action
 
@@ -113,10 +124,12 @@ Then the snippet should be updated successfully
 **Priority**: P1-High
 
 **Preconditions**:
+
 - User is authenticated
 - Snippet with ID "snp-001" exists
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
   And a snippet "snp-001" exists
@@ -127,6 +140,7 @@ Then the snippet should be deleted
 ```
 
 **Acceptance Criteria**:
+
 - ✅ Snippet removed from database
 - ✅ Entity event published with Deleted action
 
@@ -139,10 +153,12 @@ Then the snippet should be deleted
 **Priority**: P1-High
 
 **Preconditions**:
+
 - User is authenticated
 - Multiple snippets exist with various text
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
   And snippets exist with text containing "Hello"
@@ -153,6 +169,7 @@ Then I should see only snippets containing "Hello"
 ```
 
 **Acceptance Criteria**:
+
 - ✅ Full-text search matches partial text
 - ✅ Results are case-insensitive
 - ✅ Pagination controls work correctly
@@ -164,9 +181,11 @@ Then I should see only snippets containing "Hello"
 **Priority**: P2-Medium
 
 **Preconditions**:
+
 - User is authenticated
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
 When I search for "xyznonexistent123"
@@ -183,6 +202,7 @@ Then I should see "No results found" message
 **Priority**: P1-High
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
 When I create a new category "Work"
@@ -197,6 +217,7 @@ Then the category should be saved
 **Priority**: P1-High
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
   And snippets exist in "Work" and "Personal" categories
@@ -213,6 +234,7 @@ Then I should see only "Work" category snippets
 **Priority**: P1-High
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
   And 10 tasks exist
@@ -228,6 +250,7 @@ Then I should see all 10 tasks
 **Priority**: P1-High
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
 When I create a task with title "New Task"
@@ -242,6 +265,7 @@ Then the task should be saved
 **Priority**: P1-High
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
   And a task exists with status "Pending"
@@ -259,6 +283,7 @@ Then the task status should change to "Completed"
 **Priority**: P2-Medium
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
 When I enter snippet text with 10000 characters
@@ -273,6 +298,7 @@ Then the snippet should save successfully
 **Priority**: P2-Medium
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
 When I enter snippet text with special characters "<script>alert('xss')</script>"

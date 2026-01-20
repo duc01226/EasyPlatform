@@ -43,7 +43,7 @@ tests/
 ### Frontend Tests
 
 ```
-src/PlatformExampleAppWeb/apps/{app}/src/app/
+src/Frontend/apps/{app}/src/app/
 └── features/
     └── {feature}/
         ├── {feature}.component.spec.ts

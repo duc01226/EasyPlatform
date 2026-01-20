@@ -51,12 +51,12 @@ Write for both technical and non-technical readers:
 Group related changes by module/feature:
 
 ```markdown
-### bravoTALENTS: Hiring Pipeline
+### TextSnippet: Content Management
 
 #### Added
-- Drag-and-drop pipeline builder
-- Stage templates for quick setup
-- Pipeline duplication
+- Rich text editor with markdown
+- Category organization
+- Full-text search
 ```
 
 ### Linking
@@ -75,21 +75,21 @@ Reference PRs, issues, or docs when helpful:
 ```markdown
 ## [Unreleased]
 
-### bravoTALENTS: Hiring Process Management
+### TextSnippet: Content Management System
 
-**Feature**: Customizable hiring process/pipeline management for recruitment workflows.
+**Feature**: Rich text snippet management with advanced categorization and search.
 
 #### Added
-- Drag-and-drop pipeline stage builder with default templates
-- Stage categories (Sourced, Applied, Interviewing, Offered, Hired, Rejected)
-- Pipeline duplication for quick setup
-- Multi-language stage names (EN/VI)
-- Visual stage ordering with drag handles
-- Pipeline archiving and restoration
+- Rich text editor with markdown support and syntax highlighting
+- Hierarchical category system with nested tags
+- Full-text search across all snippets with filters
+- Multi-language content support (EN/VI)
+- Snippet versioning and history tracking
+- Import/export functionality
 
 #### Changed
-- Updated candidate view to show current pipeline stage
-- Improved stage transition tracking with timestamp logs
+- Improved snippet preview with real-time rendering
+- Enhanced category navigation with breadcrumbs
 ```
 
 ### Bad Example - Too Technical

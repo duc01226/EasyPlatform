@@ -37,8 +37,12 @@ AppBaseComponent                // + Auth, roles, company context
 ```typescript
 @Component({ providers: [MyStore] })
 export class MyComponent extends AppBaseVmStoreComponent<MyState, MyStore> {
-    constructor(store: MyStore) { super(store); }
-    ngOnInit() { this.store.load(); }
+    constructor(store: MyStore) {
+        super(store);
+    }
+    ngOnInit() {
+        this.store.load();
+    }
 }
 ```
 
@@ -47,9 +51,15 @@ export class MyComponent extends AppBaseVmStoreComponent<MyState, MyStore> {
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class EntityApiService extends PlatformApiService {
-    protected get apiUrl() { return environment.apiUrl + '/api/Entity'; }
-    getAll(q?: Query): Observable<Entity[]> { return this.get('', q); }
-    save(cmd: SaveCmd): Observable<Result> { return this.post('', cmd); }
+    protected get apiUrl() {
+        return environment.apiUrl + '/api/Entity';
+    }
+    getAll(q?: Query): Observable<Entity[]> {
+        return this.get('', q);
+    }
+    save(cmd: SaveCmd): Observable<Result> {
+        return this.post('', cmd);
+    }
 }
 ```
 
@@ -62,7 +72,11 @@ export class FormComponent extends AppBaseFormComponent<FormVm> {
             email: new FormControl(this.currentVm().email, [Validators.required])
         }
     });
-    submit() { if (this.validateForm()) { /* save */ } }
+    submit() {
+        if (this.validateForm()) {
+            /* save */
+        }
+    }
 }
 ```
 
@@ -70,11 +84,13 @@ export class FormComponent extends AppBaseFormComponent<FormVm> {
 
 ```typescript
 // ALWAYS use untilDestroyed()
-this.data$.pipe(
-    this.observerLoadingErrorState('load'),
-    this.tapResponse(d => this.data = d),
-    this.untilDestroyed()
-).subscribe();
+this.data$
+    .pipe(
+        this.observerLoadingErrorState('load'),
+        this.tapResponse(d => (this.data = d)),
+        this.untilDestroyed()
+    )
+    .subscribe();
 ```
 
 ### 5. BEM CSS Naming (MANDATORY)
@@ -92,7 +108,7 @@ this.data$.pipe(
 ## Common Commands
 
 ```bash
-cd src/PlatformExampleAppWeb
+cd src/Frontend
 npm install
 nx serve playground-text-snippet
 nx build playground-text-snippet

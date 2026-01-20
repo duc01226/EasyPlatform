@@ -59,23 +59,23 @@ COPY --from=platform-build /root/.nuget/packages /root/.nuget/packages
 COPY --from=platform-build /src .
 
 # Copy the main service .csproj files and restore
-COPY ["PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj", "PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/"]
-COPY ["PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/PlatformExampleApp.TextSnippet.Application.csproj", "PlatformExampleApp/PlatformExampleApp.TextSnippet.Application/"]
-COPY ["PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/PlatformExampleApp.TextSnippet.Domain.csproj", "PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain/"]
-COPY ["PlatformExampleApp/PlatformExampleApp.TextSnippet.Infrastructure/PlatformExampleApp.TextSnippet.Infrastructure.csproj", "PlatformExampleApp/PlatformExampleApp.TextSnippet.Infrastructure/"]
-COPY ["PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence/PlatformExampleApp.TextSnippet.Persistence.csproj", "PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence/"]
-COPY ["PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.Mongo/PlatformExampleApp.TextSnippet.Persistence.Mongo.csproj", "PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.Mongo/"]
-COPY ["PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.csproj", "PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo/"]
-COPY ["PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.PostgreSql/PlatformExampleApp.TextSnippet.Persistence.PostgreSql.csproj", "PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence.PostgreSql/"]
-COPY ["PlatformExampleApp/PlatformExampleApp.Shared/PlatformExampleApp.Shared.csproj", "PlatformExampleApp/PlatformExampleApp.Shared/"]
+COPY ["Backend/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj", "Backend/PlatformExampleApp.TextSnippet.Api/"]
+COPY ["Backend/PlatformExampleApp.TextSnippet.Application/PlatformExampleApp.TextSnippet.Application.csproj", "Backend/PlaBackend/tSnippet.Application/"]
+COPY ["Backend/PlatformExampleApp.TextSnippet.Domain/PlatformExampleApp.TextSnippet.Domain.csproj", "Backend/PlaBackend/tSnippet.Domain/"]
+COPY ["Backend/PlatformExampleApp.TextSnippet.Infrastructure/PlatformExampleApp.TextSnippet.Infrastructure.csproj", "Backend/PlaBackend/tSnippet.Infrastructure/"]
+COPY ["Backend/PlatformExampleApp.TextSnippet.Persistence/PlatformExampleApp.TextSnippet.Persistence.csproj", "Backend/PlaBackend/tSnippet.Persistence/"]
+COPY ["Backend/PlatformExampleApp.TextSnippet.Persistence.Mongo/PlatformExampleApp.TextSnippet.Persistence.Mongo.csproj", "Backend/PlaBackend/tSnippet.Persistence.Mongo/"]
+COPY ["Backend/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo/PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo.csproj", "Backend/PlaBackend/tSnippet.Persistence.MultiDbDemo.Mongo/"]
+COPY ["Backend/PlatformExampleApp.TextSnippet.Persistence.PostgreSql/PlatformExampleApp.TextSnippet.Persistence.PostgreSql.csproj", "Backend/PlaBackend/tSnippet.Persistence.PostgreSql/"]
+COPY ["Backend/PlatformExampleApp.Shared/PlatformExampleApp.Shared.csproj", "Backend/PlaBackend/red/"]
 
-RUN dotnet restore "PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj"
+RUN dotnet restore "Backend/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj"
 
 # Copy the rest of the service code
-COPY PlatformExampleApp PlatformExampleApp/
+COPY PlatformExampleApp Backend/
 # Publish the main service, using the pre-built artifacts
 ARG Configuration=Release
-RUN dotnet publish "PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj" -c ${Configuration} -o /app --no-restore
+RUN dotnet publish "Backend/PlatformExampleApp.TextSnippet.Api/PlatformExampleApp.TextSnippet.Api.csproj" -c ${Configuration} -o /app --no-restore
 
 # Final stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final

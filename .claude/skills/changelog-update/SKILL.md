@@ -130,15 +130,15 @@ Delete temp notes file: `.ai/workspace/changelog-notes-*.md`
 
 ### Good Entry
 ```markdown
-### bravoTALENTS: Hiring Process Management
+### TextSnippet: Content Management
 
-**Feature**: Customizable hiring process/pipeline management for recruitment workflows.
+**Feature**: Rich text snippet management with categorization and search capabilities.
 
 #### Added
-- Drag-and-drop pipeline stage builder with default templates
-- Stage categories (Sourced, Applied, Interviewing, Offered, Hired, Rejected)
-- Pipeline duplication for quick setup
-- Multi-language stage names (EN/VI)
+- Rich text editor with markdown support
+- Category-based organization with tags
+- Full-text search across snippets
+- Multi-language content support (EN/VI)
 ```
 
 ### Bad Entry (Too Technical)

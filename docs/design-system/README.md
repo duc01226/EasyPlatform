@@ -4,11 +4,12 @@ Quick reference for AI agents to select the correct design system file based on 
 
 ## Summary - Quick File Selection
 
-| File Path Contains | Read This Guide |
-|--------------------|-----------------|
-| `src/PlatformExampleAppWeb/` | [WebV2DesignSystem.md](./WebV2DesignSystem.md) |
+| File Path Contains | Read This Guide                                |
+| ------------------ | ---------------------------------------------- |
+| `src/Frontend/`    | [WebV2DesignSystem.md](./WebV2DesignSystem.md) |
 
 **Quick Detection:**
+
 - `@use 'shared-mixin'` → Angular 19 Example App
 - Angular 19 standalone components with signals
 
@@ -25,37 +26,38 @@ Quick reference for AI agents to select the correct design system file based on 
 
 ## File Selection Matrix
 
-| Working On | Design System File | Path Pattern |
-|------------|-------------------|--------------|
-| **PlatformExampleAppWeb** | [WebV2DesignSystem.md](./WebV2DesignSystem.md) | `src/PlatformExampleAppWeb/apps/*`, `src/PlatformExampleAppWeb/libs/*` |
+| Working On   | Design System File                             | Path Pattern                                 |
+| ------------ | ---------------------------------------------- | -------------------------------------------- |
+| **Frontend** | [WebV2DesignSystem.md](./WebV2DesignSystem.md) | `src/Frontend/apps/*`, `src/Frontend/libs/*` |
 
 ## Decision Tree
 
 ```
 Which app are you modifying?
 |
-+-> src/PlatformExampleAppWeb/* (playground-text-snippet, libs)
++-> src/Frontend/* (playground-text-snippet, libs)
     +-> READ: WebV2DesignSystem.md
 ```
 
 ## App-to-File Mapping
 
 ### WebV2DesignSystem.md
-- `src/PlatformExampleAppWeb/apps/playground-text-snippet/`
-- `src/PlatformExampleAppWeb/libs/apps-domains/`
-- `src/PlatformExampleAppWeb/libs/platform-core/`
-- `src/PlatformExampleAppWeb/libs/share-styles/`
-- `src/PlatformExampleAppWeb/libs/share-assets/`
+
+- `src/Frontend/apps/playground-text-snippet/`
+- `src/Frontend/libs/apps-domains/`
+- `src/Frontend/libs/platform-core/`
+- `src/Frontend/libs/share-styles/`
+- `src/Frontend/libs/share-assets/`
 
 **Key indicators:** Angular 19, standalone components, `@use 'shared-mixin'`, CSS variables (`--bg-pri-cl`), flex mixins
 
 ## Quick Detection Rules
 
 1. **Check import statements:**
-   - `@use 'shared-mixin'` → PlatformExampleAppWeb (Angular 19)
+    - `@use 'shared-mixin'` → Frontend (Angular 19)
 
 2. **Check class naming:**
-   - No prefix, uses `--modifier` separate class → Standard BEM pattern
+    - No prefix, uses `--modifier` separate class → Standard BEM pattern
 
 3. **Check file path:**
-   - Contains `PlatformExampleAppWeb` → WebV2DesignSystem.md
+    - Contains `Frontend` → WebV2DesignSystem.md

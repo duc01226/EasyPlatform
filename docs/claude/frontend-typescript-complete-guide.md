@@ -4,30 +4,30 @@
 
 ## Quick Reference Summary
 
-| Category | Pattern | Location |
-|----------|---------|----------|
-| Simple Component | `extends AppBaseComponent` | Feature folder |
-| Complex State | `extends AppBaseVmStoreComponent<State, Store>` | Feature folder |
-| Forms | `extends AppBaseFormComponent<FormVm>` | Feature folder |
-| State Management | `extends PlatformVmStore<Vm>` | `*.store.ts` |
-| API Service | `extends PlatformApiService` | `*-api.service.ts` |
-| Subscriptions | `.pipe(this.untilDestroyed())` | All observables |
-| Loading State | `this.observerLoadingErrorState('key')` | API calls |
-| Template Elements | BEM classes (`block__element --modifier`) | All HTML |
-| SCSS Structure | `:host { } .main-wrapper { }` | All SCSS |
-| Reusable Logic | Entity/Model layer | Place in LOWEST layer |
-| Form Validation | `initialFormConfig()` | Built-in + async validators |
-| Change Detection | `@Watch` decorator | Property change callbacks |
+| Category          | Pattern                                         | Location                    |
+| ----------------- | ----------------------------------------------- | --------------------------- |
+| Simple Component  | `extends AppBaseComponent`                      | Feature folder              |
+| Complex State     | `extends AppBaseVmStoreComponent<State, Store>` | Feature folder              |
+| Forms             | `extends AppBaseFormComponent<FormVm>`          | Feature folder              |
+| State Management  | `extends PlatformVmStore<Vm>`                   | `*.store.ts`                |
+| API Service       | `extends PlatformApiService`                    | `*-api.service.ts`          |
+| Subscriptions     | `.pipe(this.untilDestroyed())`                  | All observables             |
+| Loading State     | `this.observerLoadingErrorState('key')`         | API calls                   |
+| Template Elements | BEM classes (`block__element --modifier`)       | All HTML                    |
+| SCSS Structure    | `:host { } .main-wrapper { }`                   | All SCSS                    |
+| Reusable Logic    | Entity/Model layer                              | Place in LOWEST layer       |
+| Form Validation   | `initialFormConfig()`                           | Built-in + async validators |
+| Change Detection  | `@Watch` decorator                              | Property change callbacks   |
 
 ---
 
 ## Table of Contents
 
 1. [Code Principles](#1-code-principles)
-   - [SOLID Principles](#solid-principles)
-   - [DRY - Don't Repeat Yourself](#dry---dont-repeat-yourself)
-   - [KISS - Keep It Simple](#kiss---keep-it-simple)
-   - [YAGNI - You Aren't Gonna Need It](#yagni---you-arent-gonna-need-it)
+    - [SOLID Principles](#solid-principles)
+    - [DRY - Don't Repeat Yourself](#dry---dont-repeat-yourself)
+    - [KISS - Keep It Simple](#kiss---keep-it-simple)
+    - [YAGNI - You Aren't Gonna Need It](#yagni---you-arent-gonna-need-it)
 2. [Code Responsibility Hierarchy](#2-code-responsibility-hierarchy)
 3. [Component Hierarchy & Selection](#3-component-hierarchy--selection)
 4. [BEM HTML Template Standards](#4-bem-html-template-standards)
@@ -56,27 +56,43 @@ Each class/function should have ONE reason to change.
 ```typescript
 // ❌ WRONG: Multiple responsibilities
 export class UserComponent {
-  validateEmail(email: string): boolean { /* validation logic */ }
-  formatUserName(user: User): string { /* formatting logic */ }
-  saveUser(user: User): Observable<User> { /* API call */ }
-  calculateAge(birthDate: Date): number { /* calculation */ }
+    validateEmail(email: string): boolean {
+        /* validation logic */
+    }
+    formatUserName(user: User): string {
+        /* formatting logic */
+    }
+    saveUser(user: User): Observable<User> {
+        /* API call */
+    }
+    calculateAge(birthDate: Date): number {
+        /* calculation */
+    }
 }
 
 // ✅ CORRECT: Separated responsibilities
 export class UserValidator {
-  validateEmail(email: string): boolean { /* validation logic */ }
+    validateEmail(email: string): boolean {
+        /* validation logic */
+    }
 }
 
 export class UserFormatter {
-  formatUserName(user: User): string { /* formatting logic */ }
+    formatUserName(user: User): string {
+        /* formatting logic */
+    }
 }
 
 export class UserApiService extends PlatformApiService {
-  saveUser(user: User): Observable<User> { /* API call */ }
+    saveUser(user: User): Observable<User> {
+        /* API call */
+    }
 }
 
 export class User {
-  static calculateAge(birthDate: Date): number { /* calculation */ }
+    static calculateAge(birthDate: Date): number {
+        /* calculation */
+    }
 }
 ```
 
@@ -87,29 +103,39 @@ Open for extension, closed for modification.
 ```typescript
 // ❌ WRONG: Modifying existing code for new types
 export class NotificationService {
-  send(type: string, message: string) {
-    if (type === 'email') { /* email logic */ }
-    else if (type === 'sms') { /* sms logic */ }
-    else if (type === 'push') { /* push logic - added later */ }
-  }
+    send(type: string, message: string) {
+        if (type === 'email') {
+            /* email logic */
+        } else if (type === 'sms') {
+            /* sms logic */
+        } else if (type === 'push') {
+            /* push logic - added later */
+        }
+    }
 }
 
 // ✅ CORRECT: Extend through abstraction
 interface NotificationSender {
-  send(message: string): Observable<void>;
+    send(message: string): Observable<void>;
 }
 
 export class EmailSender implements NotificationSender {
-  send(message: string): Observable<void> { /* email logic */ }
+    send(message: string): Observable<void> {
+        /* email logic */
+    }
 }
 
 export class SmsSender implements NotificationSender {
-  send(message: string): Observable<void> { /* sms logic */ }
+    send(message: string): Observable<void> {
+        /* sms logic */
+    }
 }
 
 // New sender added without modifying existing code
 export class PushSender implements NotificationSender {
-  send(message: string): Observable<void> { /* push logic */ }
+    send(message: string): Observable<void> {
+        /* push logic */
+    }
 }
 ```
 
@@ -120,19 +146,19 @@ Derived classes must be substitutable for their base classes.
 ```typescript
 // ✅ CORRECT: Proper inheritance
 export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> {
-  // Properly extends base form behavior
-  protected initialFormConfig = () => ({
-    controls: {
-      name: new FormControl(this.currentVm().name, [Validators.required])
-    }
-  });
+    // Properly extends base form behavior
+    protected initialFormConfig = () => ({
+        controls: {
+            name: new FormControl(this.currentVm().name, [Validators.required])
+        }
+    });
 
-  // Can be used anywhere AppBaseFormComponent is expected
-  onSubmit() {
-    if (this.validateForm()) {
-      this.save();
+    // Can be used anywhere AppBaseFormComponent is expected
+    onSubmit() {
+        if (this.validateForm()) {
+            this.save();
+        }
     }
-  }
 }
 ```
 
@@ -143,28 +169,28 @@ Clients should not depend on interfaces they don't use.
 ```typescript
 // ❌ WRONG: Fat interface
 interface UserOperations {
-  getUser(id: string): Observable<User>;
-  createUser(user: User): Observable<User>;
-  updateUser(user: User): Observable<User>;
-  deleteUser(id: string): Observable<void>;
-  exportUsers(): Observable<Blob>;
-  importUsers(file: File): Observable<void>;
+    getUser(id: string): Observable<User>;
+    createUser(user: User): Observable<User>;
+    updateUser(user: User): Observable<User>;
+    deleteUser(id: string): Observable<void>;
+    exportUsers(): Observable<Blob>;
+    importUsers(file: File): Observable<void>;
 }
 
 // ✅ CORRECT: Segregated interfaces
 interface UserReader {
-  getUser(id: string): Observable<User>;
+    getUser(id: string): Observable<User>;
 }
 
 interface UserWriter {
-  createUser(user: User): Observable<User>;
-  updateUser(user: User): Observable<User>;
-  deleteUser(id: string): Observable<void>;
+    createUser(user: User): Observable<User>;
+    updateUser(user: User): Observable<User>;
+    deleteUser(id: string): Observable<void>;
 }
 
 interface UserImportExport {
-  exportUsers(): Observable<Blob>;
-  importUsers(file: File): Observable<void>;
+    exportUsers(): Observable<Blob>;
+    importUsers(file: File): Observable<void>;
 }
 ```
 
@@ -175,20 +201,22 @@ Depend on abstractions, not concretions.
 ```typescript
 // ❌ WRONG: Direct dependency on concrete class
 export class UserComponent {
-  constructor(private userService: UserService) {}
+    constructor(private userService: UserService) {}
 }
 
 // ✅ CORRECT: Depend on abstraction (Angular DI handles this)
 export class UserComponent extends AppBaseVmStoreComponent<UserVm, UserStore> {
-  constructor(store: UserStore) {
-    super(store);
-  }
+    constructor(store: UserStore) {
+        super(store);
+    }
 }
 
 // Store depends on abstract API service
 @Injectable()
 export class UserStore extends PlatformVmStore<UserVm> {
-  constructor(private api: UserApiService) { super(); }
+    constructor(private api: UserApiService) {
+        super();
+    }
 }
 ```
 
@@ -233,24 +261,20 @@ Avoid over-engineering and unnecessary complexity.
 ```typescript
 // ❌ WRONG: Over-engineered
 export class DataTransformationPipelineFactory {
-  createPipeline<T, R>(
-    transformers: Array<Transformer<any, any>>,
-    validators: Array<Validator<any>>,
-    decorators: Array<Decorator<any>>
-  ): Pipeline<T, R> {
-    // Complex pipeline creation...
-  }
+    createPipeline<T, R>(transformers: Array<Transformer<any, any>>, validators: Array<Validator<any>>, decorators: Array<Decorator<any>>): Pipeline<T, R> {
+        // Complex pipeline creation...
+    }
 }
 
 // ✅ CORRECT: Simple and direct
 export class UserMapper {
-  static toDisplayName(user: User): string {
-    return `${user.firstName} ${user.lastName}`.trim();
-  }
+    static toDisplayName(user: User): string {
+        return `${user.firstName} ${user.lastName}`.trim();
+    }
 
-  static toDto(user: User): UserDto {
-    return { id: user.id, name: this.toDisplayName(user) };
-  }
+    static toDto(user: User): UserDto {
+        return { id: user.id, name: this.toDisplayName(user) };
+    }
 }
 ```
 
@@ -261,18 +285,18 @@ Don't add functionality until needed.
 ```typescript
 // ❌ WRONG: Premature abstraction for hypothetical future
 export class AbstractBaseEntityFactory<T extends Entity> {
-  // Never used factory pattern...
+    // Never used factory pattern...
 }
 
 export class UserFactoryRegistry {
-  // Never needed registry...
+    // Never needed registry...
 }
 
 // ✅ CORRECT: Just what's needed now
 export class User {
-  static create(data: Partial<User>): User {
-    return new User(data);
-  }
+    static create(data: Partial<User>): User {
+        return new User(data);
+    }
 }
 ```
 
@@ -286,11 +310,11 @@ export class User {
 Entity/Model (Lowest)  →  Service  →  Component/Handler (Highest)
 ```
 
-| Layer | Contains |
-|-------|----------|
+| Layer            | Contains                                                                                  |
+| ---------------- | ----------------------------------------------------------------------------------------- |
 | **Entity/Model** | Business logic, display helpers, static factory methods, default values, dropdown options |
-| **Service** | API calls, command factories, data transformation |
-| **Component** | UI event handling ONLY - delegates all logic to lower layers |
+| **Service**      | API calls, command factories, data transformation                                         |
+| **Component**    | UI event handling ONLY - delegates all logic to lower layers                              |
 
 ### Examples
 
@@ -376,12 +400,12 @@ AppBaseComponent (adds auth context)
 
 ### Selection Guide
 
-| Scenario | Base Class | Example |
-|----------|------------|---------|
-| Simple display, no state | `AppBaseComponent` | Static info display |
-| Complex state management | `AppBaseVmStoreComponent` | Lists, dashboards |
-| Forms with validation | `AppBaseFormComponent` | Create/Edit forms |
-| Dialog with form | `AppBaseFormComponent` | Modal dialogs |
+| Scenario                 | Base Class                | Example             |
+| ------------------------ | ------------------------- | ------------------- |
+| Simple display, no state | `AppBaseComponent`        | Static info display |
+| Complex state management | `AppBaseVmStoreComponent` | Lists, dashboards   |
+| Forms with validation    | `AppBaseFormComponent`    | Create/Edit forms   |
+| Dialog with form         | `AppBaseFormComponent`    | Modal dialogs       |
 
 ### Decision Tree
 
@@ -412,37 +436,37 @@ This makes HTML self-documenting like OOP class hierarchy.
 ```html
 <!-- ✅ CORRECT: All elements have BEM classes -->
 <div class="user-list">
-  <div class="user-list__header">
-    <h1 class="user-list__title">Users</h1>
-    <button class="user-list__btn --primary">Add</button>
-  </div>
-  <div class="user-list__content">
-    @for (user of vm.users; track user.id) {
-      <div class="user-list__item">
-        <span class="user-list__item-name">{{ user.name }}</span>
-        <span class="user-list__item-email">{{ user.email }}</span>
-      </div>
-    }
-  </div>
-  <div class="user-list__footer">
-    <button class="user-list__btn --secondary" (click)="loadMore()">Load More</button>
-  </div>
+    <div class="user-list__header">
+        <h1 class="user-list__title">Users</h1>
+        <button class="user-list__btn --primary">Add</button>
+    </div>
+    <div class="user-list__content">
+        @for (user of vm.users; track user.id) {
+        <div class="user-list__item">
+            <span class="user-list__item-name">{{ user.name }}</span>
+            <span class="user-list__item-email">{{ user.email }}</span>
+        </div>
+        }
+    </div>
+    <div class="user-list__footer">
+        <button class="user-list__btn --secondary" (click)="loadMore()">Load More</button>
+    </div>
 </div>
 
 <!-- ❌ WRONG: Elements without BEM classes -->
 <div class="user-list">
-  <div>
-    <h1>Users</h1>
-    <button>Add</button>
-  </div>
-  <div>
-    @for (user of vm.users; track user.id) {
-      <div>
-        <span>{{ user.name }}</span>
-        <span>{{ user.email }}</span>
-      </div>
-    }
-  </div>
+    <div>
+        <h1>Users</h1>
+        <button>Add</button>
+    </div>
+    <div>
+        @for (user of vm.users; track user.id) {
+        <div>
+            <span>{{ user.name }}</span>
+            <span>{{ user.email }}</span>
+        </div>
+        }
+    </div>
 </div>
 ```
 
@@ -450,42 +474,42 @@ This makes HTML self-documenting like OOP class hierarchy.
 
 ```scss
 .user-card {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 
-  &__header {
-    padding: 1rem;
-  }
-
-  &__title {
-    font-size: 1.5rem;
-  }
-
-  &__btn {
-    padding: 0.5rem 1rem;
-
-    &.--primary {
-      background: var(--primary-color);
-      color: white;
+    &__header {
+        padding: 1rem;
     }
 
-    &.--secondary {
-      background: transparent;
-      border: 1px solid var(--primary-color);
+    &__title {
+        font-size: 1.5rem;
     }
 
-    &.--large {
-      padding: 1rem 2rem;
-    }
-  }
+    &__btn {
+        padding: 0.5rem 1rem;
 
-  &__item {
-    border-bottom: 1px solid var(--border-color);
+        &.--primary {
+            background: var(--primary-color);
+            color: white;
+        }
 
-    &.--selected {
-      background: var(--selected-bg);
+        &.--secondary {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+        }
+
+        &.--large {
+            padding: 1rem 2rem;
+        }
     }
-  }
+
+    &__item {
+        border-bottom: 1px solid var(--border-color);
+
+        &.--selected {
+            background: var(--selected-bg);
+        }
+    }
 }
 ```
 
@@ -504,27 +528,27 @@ This makes HTML self-documenting like OOP class hierarchy.
 
 ```typescript
 export abstract class PlatformComponent {
-  // State management
-  status$: WritableSignal<ComponentStateStatus>;
+    // State management
+    status$: WritableSignal<ComponentStateStatus>;
 
-  // Loading/error handling
-  observerLoadingErrorState<T>(requestKey?: string): OperatorFunction<T, T>;
-  isLoading$(requestKey?: string): Signal<boolean | null>;
-  getAllErrorMsgs$(requestKeys: string[]): Signal<string[]>;
-  loadingRequestsCount(): Signal<number>;
-  reloadingRequestsCount(): Signal<number>;
+    // Loading/error handling
+    observerLoadingErrorState<T>(requestKey?: string): OperatorFunction<T, T>;
+    isLoading$(requestKey?: string): Signal<boolean | null>;
+    getAllErrorMsgs$(requestKeys: string[]): Signal<string[]>;
+    loadingRequestsCount(): Signal<number>;
+    reloadingRequestsCount(): Signal<number>;
 
-  // Subscription management (CRITICAL!)
-  untilDestroyed<T>(): MonoTypeOperatorFunction<T>;
-  storeSubscription(key: string, subscription: Subscription): void;
-  cancelStoredSubscription(key: string): void;
+    // Subscription management (CRITICAL!)
+    untilDestroyed<T>(): MonoTypeOperatorFunction<T>;
+    storeSubscription(key: string, subscription: Subscription): void;
+    cancelStoredSubscription(key: string): void;
 
-  // Response handling
-  tapResponse<T>(nextFn?, errorFn?): OperatorFunction<T, T>;
+    // Response handling
+    tapResponse<T>(nextFn?, errorFn?): OperatorFunction<T, T>;
 
-  // Track by functions
-  trackByItem = this.ngForTrackByItemProp<User>('id');
-  trackByList = this.ngForTrackByImmutableList(this.users);
+    // Track by functions
+    trackByItem = this.ngForTrackByItemProp<User>('id');
+    trackByList = this.ngForTrackByImmutableList(this.users);
 }
 ```
 
@@ -532,32 +556,30 @@ export abstract class PlatformComponent {
 
 ```typescript
 export abstract class PlatformVmComponent<TViewModel> extends PlatformComponent {
-  vm: WritableSignal<TViewModel | undefined>;
+    vm: WritableSignal<TViewModel | undefined>;
 
-  // Get current view model (throws if undefined)
-  currentVm(): TViewModel;
+    // Get current view model (throws if undefined)
+    currentVm(): TViewModel;
 
-  // Partial update
-  updateVm(partial: Partial<TViewModel>): TViewModel;
+    // Partial update
+    updateVm(partial: Partial<TViewModel>): TViewModel;
 
-  // Must implement: Initialize or reload view model
-  protected abstract initOrReloadVm: (isReload: boolean) => Observable<TViewModel | undefined>;
+    // Must implement: Initialize or reload view model
+    protected abstract initOrReloadVm: (isReload: boolean) => Observable<TViewModel | undefined>;
 }
 ```
 
 ### PlatformVmStoreComponent
 
 ```typescript
-export abstract class PlatformVmStoreComponent<TViewModel, TStore extends PlatformVmStore<TViewModel>>
-  extends PlatformComponent {
+export abstract class PlatformVmStoreComponent<TViewModel, TStore extends PlatformVmStore<TViewModel>> extends PlatformComponent {
+    constructor(public store: TStore) {}
 
-  constructor(public store: TStore) {}
+    // View model from store
+    vm: Signal<TViewModel | undefined>;
 
-  // View model from store
-  vm: Signal<TViewModel | undefined>;
-
-  // Reload store data
-  reload(): void;
+    // Reload store data
+    reload(): void;
 }
 ```
 
@@ -565,19 +587,19 @@ export abstract class PlatformVmStoreComponent<TViewModel, TStore extends Platfo
 
 ```typescript
 export abstract class PlatformFormComponent<TViewModel> extends PlatformVmComponent<TViewModel> {
-  form: FormGroup<PlatformFormGroupControls<TViewModel>>;
-  mode: PlatformFormMode;
+    form: FormGroup<PlatformFormGroupControls<TViewModel>>;
+    mode: PlatformFormMode;
 
-  // Mode checks
-  isViewMode(): boolean;
-  isCreateMode(): boolean;
-  isUpdateMode(): boolean;
+    // Mode checks
+    isViewMode(): boolean;
+    isCreateMode(): boolean;
+    isUpdateMode(): boolean;
 
-  // Validation
-  validateForm(): boolean;
+    // Validation
+    validateForm(): boolean;
 
-  // Must implement: Form configuration
-  protected abstract initialFormConfig: () => PlatformFormConfig<TViewModel>;
+    // Must implement: Form configuration
+    protected abstract initialFormConfig: () => PlatformFormConfig<TViewModel>;
 }
 ```
 
@@ -637,50 +659,51 @@ export class EmployeeListComponent extends AppBaseVmStoreComponent<EmployeeListV
 ```typescript
 @Injectable()
 export class EmployeeStore extends PlatformVmStore<EmployeeState> {
-  // Caching configuration
-  protected get enableCaching() { return true; }
-  protected cachedStateKeyName = () => 'EmployeeStore';
-  protected vmConstructor = (data?: Partial<EmployeeState>) => new EmployeeState(data);
+    // Caching configuration
+    protected get enableCaching() {
+        return true;
+    }
+    protected cachedStateKeyName = () => 'EmployeeStore';
+    protected vmConstructor = (data?: Partial<EmployeeState>) => new EmployeeState(data);
 
-  // Initialize before VM
-  protected beforeInitVm = () => this.loadInitialData();
+    // Initialize before VM
+    protected beforeInitVm = () => this.loadInitialData();
 
-  // Effects (side effects that update state)
-  loadEmployees = this.effectSimple(
-    () => this.api.getEmployees().pipe(
-      this.observerLoadingErrorState('load'),
-      this.tapResponse(employees => this.updateState({ employees }))
-    ),
-    'loadEmployees'  // Effect key for deduplication
-  );
+    // Effects (side effects that update state)
+    loadEmployees = this.effectSimple(
+        () =>
+            this.api.getEmployees().pipe(
+                this.observerLoadingErrorState('load'),
+                this.tapResponse(employees => this.updateState({ employees }))
+            ),
+        'loadEmployees' // Effect key for deduplication
+    );
 
-  deleteEmployee = this.effect<string>(
-    (id$) => id$.pipe(
-      switchMap(id => this.api.deleteEmployee(id).pipe(
-        this.tapResponse(() => {
-          this.updateState({
-            employees: this.state().employees.filter(e => e.id !== id)
-          });
-        })
-      ))
-    )
-  );
+    deleteEmployee = this.effect<string>(id$ =>
+        id$.pipe(
+            switchMap(id =>
+                this.api.deleteEmployee(id).pipe(
+                    this.tapResponse(() => {
+                        this.updateState({
+                            employees: this.state().employees.filter(e => e.id !== id)
+                        });
+                    })
+                )
+            )
+        )
+    );
 
-  // Selectors (derived state)
-  readonly employees$ = this.select(state => state.employees);
-  readonly activeEmployees$ = this.select(state => state.employees.filter(e => e.isActive));
-  readonly employeeCount$ = this.select(state => state.employees.length);
+    // Selectors (derived state)
+    readonly employees$ = this.select(state => state.employees);
+    readonly activeEmployees$ = this.select(state => state.employees.filter(e => e.isActive));
+    readonly employeeCount$ = this.select(state => state.employees.length);
 
-  // Combined selectors
-  readonly summary$ = this.select(
-    this.employees$,
-    this.activeEmployees$,
-    (all, active) => ({ total: all.length, active: active.length })
-  );
+    // Combined selectors
+    readonly summary$ = this.select(this.employees$, this.activeEmployees$, (all, active) => ({ total: all.length, active: active.length }));
 
-  // Loading states
-  readonly loading$ = this.isLoading$('load');
-  readonly deleting$ = this.isLoading$('delete');
+    // Loading states
+    readonly loading$ = this.isLoading$('load');
+    readonly deleting$ = this.isLoading$('delete');
 }
 ```
 
@@ -688,23 +711,23 @@ export class EmployeeStore extends PlatformVmStore<EmployeeState> {
 
 ```typescript
 export class EmployeeState {
-  employees: Employee[] = [];
-  selectedId: string | null = null;
-  filters: EmployeeFilters = new EmployeeFilters();
+    employees: Employee[] = [];
+    selectedId: string | null = null;
+    filters: EmployeeFilters = new EmployeeFilters();
 
-  constructor(data?: Partial<EmployeeState>) {
-    if (data) Object.assign(this, data);
-  }
+    constructor(data?: Partial<EmployeeState>) {
+        if (data) Object.assign(this, data);
+    }
 
-  get selectedEmployee(): Employee | undefined {
-    return this.employees.find(e => e.id === this.selectedId);
-  }
+    get selectedEmployee(): Employee | undefined {
+        return this.employees.find(e => e.id === this.selectedId);
+    }
 }
 
 export class EmployeeFilters {
-  status: string[] = [];
-  department: string | null = null;
-  searchText: string = '';
+    status: string[] = [];
+    department: string | null = null;
+    searchText: string = '';
 }
 ```
 
@@ -713,41 +736,43 @@ export class EmployeeFilters {
 ```typescript
 @Injectable()
 export class OrderStore extends PlatformVmStore<OrderState> {
-  // Paged loading
-  loadOrders = this.effect<PagedQuery>(
-    (query$) => query$.pipe(
-      switchMap(query => this.api.getOrders(query).pipe(
-        this.observerLoadingErrorState('load'),
-        this.tapResponse(result => this.updateState({
-          orders: query.page === 1
-            ? result.items
-            : [...this.state().orders, ...result.items],
-          totalCount: result.totalCount,
-          currentPage: query.page
-        }))
-      ))
-    )
-  );
+    // Paged loading
+    loadOrders = this.effect<PagedQuery>(query$ =>
+        query$.pipe(
+            switchMap(query =>
+                this.api.getOrders(query).pipe(
+                    this.observerLoadingErrorState('load'),
+                    this.tapResponse(result =>
+                        this.updateState({
+                            orders: query.page === 1 ? result.items : [...this.state().orders, ...result.items],
+                            totalCount: result.totalCount,
+                            currentPage: query.page
+                        })
+                    )
+                )
+            )
+        )
+    );
 
-  // Optimistic update
-  toggleFavorite = this.effect<string>(
-    (id$) => id$.pipe(
-      tap(id => {
-        // Optimistic update
-        const orders = this.state().orders.map(o =>
-          o.id === id ? { ...o, isFavorite: !o.isFavorite } : o
-        );
-        this.updateState({ orders });
-      }),
-      switchMap(id => this.api.toggleFavorite(id).pipe(
-        catchError(err => {
-          // Revert on error
-          this.reload();
-          return throwError(() => err);
-        })
-      ))
-    )
-  );
+    // Optimistic update
+    toggleFavorite = this.effect<string>(id$ =>
+        id$.pipe(
+            tap(id => {
+                // Optimistic update
+                const orders = this.state().orders.map(o => (o.id === id ? { ...o, isFavorite: !o.isFavorite } : o));
+                this.updateState({ orders });
+            }),
+            switchMap(id =>
+                this.api.toggleFavorite(id).pipe(
+                    catchError(err => {
+                        // Revert on error
+                        this.reload();
+                        return throwError(() => err);
+                    })
+                )
+            )
+        )
+    );
 }
 ```
 
@@ -759,61 +784,57 @@ export class OrderStore extends PlatformVmStore<OrderState> {
 
 ```typescript
 @Component({
-  selector: 'app-employee-form',
-  template: `
-    <form [formGroup]="form" class="employee-form">
-      <div class="employee-form__field">
-        <label class="employee-form__label">Name</label>
-        <input formControlName="name" class="employee-form__input" />
-        @if (form.controls.name.errors?.['required']) {
-          <span class="employee-form__error">Name is required</span>
-        }
-      </div>
+    selector: 'app-employee-form',
+    template: `
+        <form [formGroup]="form" class="employee-form">
+            <div class="employee-form__field">
+                <label class="employee-form__label">Name</label>
+                <input formControlName="name" class="employee-form__input" />
+                @if (form.controls.name.errors?.['required']) {
+                    <span class="employee-form__error">Name is required</span>
+                }
+            </div>
 
-      <div class="employee-form__field">
-        <label class="employee-form__label">Email</label>
-        <input formControlName="email" class="employee-form__input" />
-      </div>
+            <div class="employee-form__field">
+                <label class="employee-form__label">Email</label>
+                <input formControlName="email" class="employee-form__input" />
+            </div>
 
-      <div class="employee-form__actions">
-        <button class="employee-form__btn --primary" (click)="onSubmit()">Save</button>
-        <button class="employee-form__btn --secondary" (click)="onCancel()">Cancel</button>
-      </div>
-    </form>
-  `
+            <div class="employee-form__actions">
+                <button class="employee-form__btn --primary" (click)="onSubmit()">Save</button>
+                <button class="employee-form__btn --secondary" (click)="onCancel()">Cancel</button>
+            </div>
+        </form>
+    `
 })
 export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> {
-  protected initialFormConfig = () => ({
-    controls: {
-      name: new FormControl(this.currentVm().name, [
-        Validators.required,
-        Validators.minLength(2)
-      ]),
-      email: new FormControl(this.currentVm().email, [
-        Validators.required,
-        Validators.email
-      ], [
-        // Async validator
-        ifAsyncValidator(
-          () => !this.isViewMode(),
-          checkEmailUniqueValidator(this.employeeApi, this.currentVm().id)
-        )
-      ])
-    },
-    // Revalidate email when name changes
-    dependentValidations: {
-      email: ['name']
-    }
-  });
+    protected initialFormConfig = () => ({
+        controls: {
+            name: new FormControl(this.currentVm().name, [Validators.required, Validators.minLength(2)]),
+            email: new FormControl(
+                this.currentVm().email,
+                [Validators.required, Validators.email],
+                [
+                    // Async validator
+                    ifAsyncValidator(() => !this.isViewMode(), checkEmailUniqueValidator(this.employeeApi, this.currentVm().id))
+                ]
+            )
+        },
+        // Revalidate email when name changes
+        dependentValidations: {
+            email: ['name']
+        }
+    });
 
-  onSubmit() {
-    if (this.validateForm()) {
-      const data = this.form.getRawValue();
-      this.employeeApi.save(data)
-        .pipe(this.untilDestroyed())
-        .subscribe(() => this.close());
+    onSubmit() {
+        if (this.validateForm()) {
+            const data = this.form.getRawValue();
+            this.employeeApi
+                .save(data)
+                .pipe(this.untilDestroyed())
+                .subscribe(() => this.close());
+        }
     }
-  }
 }
 ```
 
@@ -859,71 +880,60 @@ export class OrderFormComponent extends AppBaseFormComponent<OrderFormVm> {
 ```typescript
 // Sync validator
 export function noWhitespaceValidator(control: AbstractControl): ValidationErrors | null {
-  if (control.value && control.value.trim().length === 0) {
-    return { whitespace: true };
-  }
-  return null;
+    if (control.value && control.value.trim().length === 0) {
+        return { whitespace: true };
+    }
+    return null;
 }
 
 // Range validator
-export function startEndValidator(
-  errorKey: string,
-  startValueFn: (ctrl: AbstractControl) => any,
-  endValueFn: (ctrl: AbstractControl) => any
-): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const start = startValueFn(control);
-    const end = endValueFn(control);
-    if (start && end && start > end) {
-      return { [errorKey]: true };
-    }
-    return null;
-  };
+export function startEndValidator(errorKey: string, startValueFn: (ctrl: AbstractControl) => any, endValueFn: (ctrl: AbstractControl) => any): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+        const start = startValueFn(control);
+        const end = endValueFn(control);
+        if (start && end && start > end) {
+            return { [errorKey]: true };
+        }
+        return null;
+    };
 }
 
 // Conditional async validator
-export function ifAsyncValidator(
-  condition: (control: AbstractControl) => boolean,
-  validator: AsyncValidatorFn
-): AsyncValidatorFn {
-  return (control: AbstractControl): Observable<ValidationErrors | null> => {
-    if (!condition(control)) {
-      return of(null);
-    }
-    return validator(control);
-  };
+export function ifAsyncValidator(condition: (control: AbstractControl) => boolean, validator: AsyncValidatorFn): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+        if (!condition(control)) {
+            return of(null);
+        }
+        return validator(control);
+    };
 }
 
 // Email unique validator
-export function checkEmailUniqueValidator(
-  api: EmployeeApiService,
-  excludeId?: string
-): AsyncValidatorFn {
-  return (control: AbstractControl): Observable<ValidationErrors | null> => {
-    if (!control.value) return of(null);
+export function checkEmailUniqueValidator(api: EmployeeApiService, excludeId?: string): AsyncValidatorFn {
+    return (control: AbstractControl): Observable<ValidationErrors | null> => {
+        if (!control.value) return of(null);
 
-    return api.checkEmailUnique(control.value, excludeId).pipe(
-      map(isUnique => isUnique ? null : { emailTaken: true }),
-      catchError(() => of(null))
-    );
-  };
+        return api.checkEmailUnique(control.value, excludeId).pipe(
+            map(isUnique => (isUnique ? null : { emailTaken: true })),
+            catchError(() => of(null))
+        );
+    };
 }
 
 // Usage
-new FormControl('', [
-  Validators.required,
-  noWhitespaceValidator,
-  startEndValidator(
-    'invalidRange',
-    ctrl => ctrl.parent?.get('startDate')?.value,
-    ctrl => ctrl.value
-  )
-], [
-  ifAsyncValidator(
-    ctrl => ctrl.valid,
-    checkEmailUniqueValidator(this.api, this.currentVm().id)
-  )
-]);
+new FormControl(
+    '',
+    [
+        Validators.required,
+        noWhitespaceValidator,
+        startEndValidator(
+            'invalidRange',
+            ctrl => ctrl.parent?.get('startDate')?.value,
+            ctrl => ctrl.value
+        )
+    ],
+    [ifAsyncValidator(ctrl => ctrl.valid, checkEmailUniqueValidator(this.api, this.currentVm().id))]
+);
 ```
 
 ---
@@ -935,45 +945,45 @@ new FormControl('', [
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class EmployeeApiService extends PlatformApiService {
-  protected get apiUrl() {
-    return environment.apiUrl + '/api/Employee';
-  }
+    protected get apiUrl() {
+        return environment.apiUrl + '/api/Employee';
+    }
 
-  // GET requests
-  getEmployees(query?: EmployeeQuery): Observable<Employee[]> {
-    return this.get<Employee[]>('', query);
-  }
+    // GET requests
+    getEmployees(query?: EmployeeQuery): Observable<Employee[]> {
+        return this.get<Employee[]>('', query);
+    }
 
-  getEmployeeById(id: string): Observable<Employee> {
-    return this.get<Employee>(`/${id}`);
-  }
+    getEmployeeById(id: string): Observable<Employee> {
+        return this.get<Employee>(`/${id}`);
+    }
 
-  // POST requests
-  saveEmployee(command: SaveEmployeeCommand): Observable<SaveEmployeeResult> {
-    return this.post<SaveEmployeeResult>('', command);
-  }
+    // POST requests
+    saveEmployee(command: SaveEmployeeCommand): Observable<SaveEmployeeResult> {
+        return this.post<SaveEmployeeResult>('', command);
+    }
 
-  // Search with caching
-  searchEmployees(criteria: SearchCriteria): Observable<Employee[]> {
-    return this.post<Employee[]>('/search', criteria, { enableCache: true });
-  }
+    // Search with caching
+    searchEmployees(criteria: SearchCriteria): Observable<Employee[]> {
+        return this.post<Employee[]>('/search', criteria, { enableCache: true });
+    }
 
-  // DELETE requests
-  deleteEmployee(id: string): Observable<void> {
-    return this.delete<void>(`/${id}`);
-  }
+    // DELETE requests
+    deleteEmployee(id: string): Observable<void> {
+        return this.delete<void>(`/${id}`);
+    }
 
-  // File upload
-  uploadAvatar(id: string, file: File): Observable<string> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.post<string>(`/${id}/avatar`, formData);
-  }
+    // File upload
+    uploadAvatar(id: string, file: File): Observable<string> {
+        const formData = new FormData();
+        formData.append('file', file);
+        return this.post<string>(`/${id}/avatar`, formData);
+    }
 
-  // Async validation
-  checkEmailUnique(email: string, excludeId?: string): Observable<boolean> {
-    return this.get<boolean>('/check-email', { email, excludeId });
-  }
+    // Async validation
+    checkEmailUnique(email: string, excludeId?: string): Observable<boolean> {
+        return this.get<boolean>('/check-email', { email, excludeId });
+    }
 }
 ```
 
@@ -1021,79 +1031,70 @@ React to property changes without manual change detection.
 
 ```typescript
 export class EmployeeListComponent extends AppBaseComponent {
-  // Triggers onPagedResultChanged when value changes
-  @Watch('onPagedResultChanged')
-  pagedResult?: PagedResult<Employee>;
+    // Triggers onPagedResultChanged when value changes
+    @Watch('onPagedResultChanged')
+    pagedResult?: PagedResult<Employee>;
 
-  // Only triggers when values are different (deep comparison)
-  @WatchWhenValuesDiff('onFiltersChanged')
-  filters: EmployeeFilters = new EmployeeFilters();
+    // Only triggers when values are different (deep comparison)
+    @WatchWhenValuesDiff('onFiltersChanged')
+    filters: EmployeeFilters = new EmployeeFilters();
 
-  private onPagedResultChanged(
-    value: PagedResult<Employee>,
-    change: SimpleChange<PagedResult<Employee>>
-  ) {
-    if (!change.isFirstTimeSet) {
-      this.updatePagination();
+    private onPagedResultChanged(value: PagedResult<Employee>, change: SimpleChange<PagedResult<Employee>>) {
+        if (!change.isFirstTimeSet) {
+            this.updatePagination();
+        }
     }
-  }
 
-  private onFiltersChanged(value: EmployeeFilters) {
-    this.loadEmployees();
-  }
+    private onFiltersChanged(value: EmployeeFilters) {
+        this.loadEmployees();
+    }
 }
 ```
 
 ### Custom RxJS Operators
 
 ```typescript
-import {
-  skipDuplicates,
-  applyIf,
-  onCancel,
-  tapOnce,
-  distinctUntilObjectValuesChanged
-} from '@libs/platform-core';
+import { skipDuplicates, applyIf, onCancel, tapOnce, distinctUntilObjectValuesChanged } from '@libs/platform-core';
 
 // Skip duplicate emissions within time window
-this.search$.pipe(
-  skipDuplicates(500),  // 500ms window
-  this.untilDestroyed()
-).subscribe();
+this.search$
+    .pipe(
+        skipDuplicates(500), // 500ms window
+        this.untilDestroyed()
+    )
+    .subscribe();
 
 // Conditionally apply operator
-this.data$.pipe(
-  applyIf(this.isEnabled$, debounceTime(300)),
-  this.untilDestroyed()
-).subscribe();
+this.data$.pipe(applyIf(this.isEnabled$, debounceTime(300)), this.untilDestroyed()).subscribe();
 
 // Cleanup on cancellation
-this.longRunningTask$.pipe(
-  onCancel(() => this.cleanup()),
-  this.untilDestroyed()
-).subscribe();
+this.longRunningTask$
+    .pipe(
+        onCancel(() => this.cleanup()),
+        this.untilDestroyed()
+    )
+    .subscribe();
 
 // Execute only on first emission
-this.init$.pipe(
-  tapOnce({ next: value => this.initialize(value) }),
-  this.untilDestroyed()
-).subscribe();
+this.init$.pipe(tapOnce({ next: value => this.initialize(value) }), this.untilDestroyed()).subscribe();
 
 // Deep object comparison
-this.filters$.pipe(
-  distinctUntilObjectValuesChanged(),
-  this.untilDestroyed()
-).subscribe();
+this.filters$.pipe(distinctUntilObjectValuesChanged(), this.untilDestroyed()).subscribe();
 
 // Combined usage
-this.searchInput$.pipe(
-  skipDuplicates(300),
-  applyIf(this.autoSearch$, switchMap(term => this.search(term))),
-  tapOnce({ next: () => this.trackFirstSearch() }),
-  onCancel(() => this.cancelPendingSearch()),
-  distinctUntilObjectValuesChanged(),
-  this.untilDestroyed()
-).subscribe();
+this.searchInput$
+    .pipe(
+        skipDuplicates(300),
+        applyIf(
+            this.autoSearch$,
+            switchMap(term => this.search(term))
+        ),
+        tapOnce({ next: () => this.trackFirstSearch() }),
+        onCancel(() => this.cancelPendingSearch()),
+        distinctUntilObjectValuesChanged(),
+        this.untilDestroyed()
+    )
+    .subscribe();
 ```
 
 ---
@@ -1105,12 +1106,12 @@ this.searchInput$.pipe(
 ```typescript
 // For components
 export class MyComponent extends PlatformComponent {
-  // Inherits common functionality
+    // Inherits common functionality
 }
 
 // For directives
 export class MyDirective extends BaseDirective {
-  // Inherits common functionality
+    // Inherits common functionality
 }
 ```
 
@@ -1177,43 +1178,43 @@ const isEmpty = string_isEmpty(value);
 
 ```typescript
 import {
-  // Date utilities
-  date_addDays,
-  date_addMonths,
-  date_format,
-  date_parse,
-  date_timeDiff,
-  date_startOfDay,
-  date_endOfDay,
+    // Date utilities
+    date_addDays,
+    date_addMonths,
+    date_format,
+    date_parse,
+    date_timeDiff,
+    date_startOfDay,
+    date_endOfDay,
 
-  // List utilities
-  list_groupBy,
-  list_distinctBy,
-  list_sortBy,
-  list_chunk,
-  list_flatten,
+    // List utilities
+    list_groupBy,
+    list_distinctBy,
+    list_sortBy,
+    list_chunk,
+    list_flatten,
 
-  // String utilities
-  string_isEmpty,
-  string_isNotEmpty,
-  string_truncate,
-  string_toTitleCase,
+    // String utilities
+    string_isEmpty,
+    string_isNotEmpty,
+    string_truncate,
+    string_toTitleCase,
 
-  // Dictionary utilities
-  dictionary_map,
-  dictionary_filter,
-  dictionary_keys,
-  dictionary_values,
+    // Dictionary utilities
+    dictionary_map,
+    dictionary_filter,
+    dictionary_keys,
+    dictionary_values,
 
-  // Object utilities
-  immutableUpdate,
-  deepClone,
-  removeNullProps,
+    // Object utilities
+    immutableUpdate,
+    deepClone,
+    removeNullProps,
 
-  // Other utilities
-  guid_generate,
-  task_delay,
-  task_debounce
+    // Other utilities
+    guid_generate,
+    task_delay,
+    task_debounce
 } from '@libs/platform-core';
 
 // Date examples
@@ -1228,7 +1229,9 @@ const sorted = list_sortBy(users, u => u.name);
 const chunks = list_chunk(items, 10);
 
 // String examples
-if (string_isEmpty(value)) { /* handle empty */ }
+if (string_isEmpty(value)) {
+    /* handle empty */
+}
 const short = string_truncate(longText, 50, '...');
 
 // Object examples
@@ -1282,19 +1285,19 @@ await items.forEachAsync(item => processItem(item), { maxConcurrent: 5 });
 
 ```typescript
 export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> {
-  // Check roles
-  get canEdit(): boolean {
-    return this.hasRole(PlatformRoles.Admin, PlatformRoles.Manager);
-  }
+    // Check roles
+    get canEdit(): boolean {
+        return this.hasRole(PlatformRoles.Admin, PlatformRoles.Manager);
+    }
 
-  get canDelete(): boolean {
-    return this.hasRole(PlatformRoles.Admin) && this.isOwnCompany();
-  }
+    get canDelete(): boolean {
+        return this.hasRole(PlatformRoles.Admin) && this.isOwnCompany();
+    }
 
-  // Check company context
-  isOwnCompany(): boolean {
-    return this.currentVm().companyId === this.authContext.currentCompanyId;
-  }
+    // Check company context
+    isOwnCompany(): boolean {
+        return this.currentVm().companyId === this.authContext.currentCompanyId;
+    }
 }
 ```
 
@@ -1302,17 +1305,13 @@ export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> 
 
 ```html
 <div class="employee-actions">
-  @if (hasRole(PlatformRoles.Admin)) {
+    @if (hasRole(PlatformRoles.Admin)) {
     <button class="employee-actions__btn --danger" (click)="delete()">Delete</button>
-  }
-
-  @if (hasRole(PlatformRoles.Admin, PlatformRoles.Manager)) {
+    } @if (hasRole(PlatformRoles.Admin, PlatformRoles.Manager)) {
     <button class="employee-actions__btn --primary" (click)="edit()">Edit</button>
-  }
-
-  @if (canApprove) {
+    } @if (canApprove) {
     <button class="employee-actions__btn --success" (click)="approve()">Approve</button>
-  }
+    }
 </div>
 ```
 
@@ -1321,26 +1320,29 @@ export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> 
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class AdminGuard implements CanActivate {
-  constructor(private authService: AuthService, private router: Router) {}
+    constructor(
+        private authService: AuthService,
+        private router: Router
+    ) {}
 
-  canActivate(): Observable<boolean> {
-    return this.authService.hasRole$(PlatformRoles.Admin).pipe(
-      tap(hasRole => {
-        if (!hasRole) {
-          this.router.navigate(['/unauthorized']);
-        }
-      })
-    );
-  }
+    canActivate(): Observable<boolean> {
+        return this.authService.hasRole$(PlatformRoles.Admin).pipe(
+            tap(hasRole => {
+                if (!hasRole) {
+                    this.router.navigate(['/unauthorized']);
+                }
+            })
+        );
+    }
 }
 
 // Route configuration
 const routes: Routes = [
-  {
-    path: 'admin',
-    component: AdminComponent,
-    canActivate: [AdminGuard]
-  }
+    {
+        path: 'admin',
+        component: AdminComponent,
+        canActivate: [AdminGuard]
+    }
 ];
 ```
 
@@ -1350,16 +1352,16 @@ const routes: Routes = [
 
 ### File Naming Conventions
 
-| Type | Convention | Example |
-|------|------------|---------|
-| Components | `kebab-case.component.ts` | `employee-list.component.ts` |
-| Services | `kebab-case.service.ts` | `employee-api.service.ts` |
-| Stores | `kebab-case.store.ts` | `employee-list.store.ts` |
-| Models | `kebab-case.model.ts` | `employee.model.ts` |
+| Type       | Convention                | Example                       |
+| ---------- | ------------------------- | ----------------------------- |
+| Components | `kebab-case.component.ts` | `employee-list.component.ts`  |
+| Services   | `kebab-case.service.ts`   | `employee-api.service.ts`     |
+| Stores     | `kebab-case.store.ts`     | `employee-list.store.ts`      |
+| Models     | `kebab-case.model.ts`     | `employee.model.ts`           |
 | Interfaces | `kebab-case.interface.ts` | `employee-query.interface.ts` |
-| Pipes | `kebab-case.pipe.ts` | `localized-date.pipe.ts` |
-| Directives | `kebab-case.directive.ts` | `text-ellipsis.directive.ts` |
-| Guards | `kebab-case.guard.ts` | `admin.guard.ts` |
+| Pipes      | `kebab-case.pipe.ts`      | `localized-date.pipe.ts`      |
+| Directives | `kebab-case.directive.ts` | `text-ellipsis.directive.ts`  |
+| Guards     | `kebab-case.guard.ts`     | `admin.guard.ts`              |
 
 ### Folder Structure
 
@@ -1409,23 +1411,23 @@ feature/
 ```typescript
 // ❌ WRONG: Direct HttpClient
 export class EmployeeService {
-  constructor(private http: HttpClient) {}
+    constructor(private http: HttpClient) {}
 
-  getEmployees(): Observable<Employee[]> {
-    return this.http.get<Employee[]>('/api/employees');
-  }
+    getEmployees(): Observable<Employee[]> {
+        return this.http.get<Employee[]>('/api/employees');
+    }
 }
 
 // ✅ CORRECT: Extend PlatformApiService
 @Injectable({ providedIn: 'root' })
 export class EmployeeApiService extends PlatformApiService {
-  protected get apiUrl() {
-    return environment.apiUrl + '/api/Employee';
-  }
+    protected get apiUrl() {
+        return environment.apiUrl + '/api/Employee';
+    }
 
-  getEmployees(): Observable<Employee[]> {
-    return this.get<Employee[]>('');
-  }
+    getEmployees(): Observable<Employee[]> {
+        return this.get<Employee[]>('');
+    }
 }
 ```
 
@@ -1453,34 +1455,34 @@ this.dataService.getData()
 ```typescript
 // ❌ WRONG: Manual signals without store pattern
 export class EmployeeComponent {
-  employees = signal<Employee[]>([]);
-  loading = signal(false);
-  error = signal<string | null>(null);
+    employees = signal<Employee[]>([]);
+    loading = signal(false);
+    error = signal<string | null>(null);
 
-  loadEmployees() {
-    this.loading.set(true);
-    this.employeeService.getEmployees().subscribe({
-      next: data => {
-        this.employees.set(data);
-        this.loading.set(false);
-      },
-      error: err => {
-        this.error.set(err.message);
-        this.loading.set(false);
-      }
-    });
-  }
+    loadEmployees() {
+        this.loading.set(true);
+        this.employeeService.getEmployees().subscribe({
+            next: data => {
+                this.employees.set(data);
+                this.loading.set(false);
+            },
+            error: err => {
+                this.error.set(err.message);
+                this.loading.set(false);
+            }
+        });
+    }
 }
 
 // ✅ CORRECT: Use PlatformVmStore
 @Injectable()
 export class EmployeeStore extends PlatformVmStore<EmployeeState> {
-  loadEmployees = this.effectSimple(
-    () => this.api.getEmployees().pipe(
-      this.observerLoadingErrorState('load'),
-      this.tapResponse(employees => this.updateState({ employees }))
-    )
-  );
+    loadEmployees = this.effectSimple(() =>
+        this.api.getEmployees().pipe(
+            this.observerLoadingErrorState('load'),
+            this.tapResponse(employees => this.updateState({ employees }))
+        )
+    );
 }
 ```
 
@@ -1489,28 +1491,28 @@ export class EmployeeStore extends PlatformVmStore<EmployeeState> {
 ```typescript
 // ❌ WRONG: Business logic in component
 export class EmployeeComponent {
-  calculateBonus(employee: Employee): number {
-    const yearsOfService = this.getYearsOfService(employee.hireDate);
-    const performanceMultiplier = this.getPerformanceMultiplier(employee.rating);
-    return employee.baseSalary * 0.1 * yearsOfService * performanceMultiplier;
-  }
+    calculateBonus(employee: Employee): number {
+        const yearsOfService = this.getYearsOfService(employee.hireDate);
+        const performanceMultiplier = this.getPerformanceMultiplier(employee.rating);
+        return employee.baseSalary * 0.1 * yearsOfService * performanceMultiplier;
+    }
 }
 
 // ✅ CORRECT: Logic in model
 export class Employee {
-  static calculateBonus(employee: Employee): number {
-    const yearsOfService = Employee.getYearsOfService(employee.hireDate);
-    const performanceMultiplier = Employee.getPerformanceMultiplier(employee.rating);
-    return employee.baseSalary * 0.1 * yearsOfService * performanceMultiplier;
-  }
+    static calculateBonus(employee: Employee): number {
+        const yearsOfService = Employee.getYearsOfService(employee.hireDate);
+        const performanceMultiplier = Employee.getPerformanceMultiplier(employee.rating);
+        return employee.baseSalary * 0.1 * yearsOfService * performanceMultiplier;
+    }
 
-  private static getYearsOfService(hireDate: Date): number {
-    return date_timeDiff(hireDate, new Date(), 'years');
-  }
+    private static getYearsOfService(hireDate: Date): number {
+        return date_timeDiff(hireDate, new Date(), 'years');
+    }
 
-  private static getPerformanceMultiplier(rating: number): number {
-    return rating >= 4 ? 1.5 : rating >= 3 ? 1.0 : 0.5;
-  }
+    private static getPerformanceMultiplier(rating: number): number {
+        return rating >= 4 ? 1.5 : rating >= 3 ? 1.0 : 0.5;
+    }
 }
 ```
 
@@ -1519,22 +1521,22 @@ export class Employee {
 ```html
 <!-- ❌ WRONG: No BEM classes -->
 <div>
-  <div>
-    <h1>Title</h1>
-  </div>
-  <div>
-    <span>Content</span>
-  </div>
+    <div>
+        <h1>Title</h1>
+    </div>
+    <div>
+        <span>Content</span>
+    </div>
 </div>
 
 <!-- ✅ CORRECT: Full BEM classes -->
 <div class="employee-card">
-  <div class="employee-card__header">
-    <h1 class="employee-card__title">Title</h1>
-  </div>
-  <div class="employee-card__content">
-    <span class="employee-card__text">Content</span>
-  </div>
+    <div class="employee-card__header">
+        <h1 class="employee-card__title">Title</h1>
+    </div>
+    <div class="employee-card__content">
+        <span class="employee-card__text">Content</span>
+    </div>
 </div>
 ```
 
@@ -1543,19 +1545,20 @@ export class Employee {
 ```typescript
 // ❌ WRONG: Assuming method exists without checking
 export class MyComponent extends SomeBaseClass {
-  ngOnInit() {
-    this.someMethod();  // Does SomeBaseClass have this?
-  }
+    ngOnInit() {
+        this.someMethod(); // Does SomeBaseClass have this?
+    }
 }
 
 // ✅ CORRECT: Verify in base class documentation/source
 export class MyComponent extends AppBaseVmStoreComponent<MyState, MyStore> {
-  ngOnInit() {
-    // Verified: reload() exists in PlatformVmStoreComponent
-    this.reload();
-    // Verified: hasRole() exists in AppBaseComponent
-    if (this.hasRole(PlatformRoles.Admin)) { }
-  }
+    ngOnInit() {
+        // Verified: reload() exists in PlatformVmStoreComponent
+        this.reload();
+        // Verified: hasRole() exists in AppBaseComponent
+        if (this.hasRole(PlatformRoles.Admin)) {
+        }
+    }
 }
 ```
 
@@ -1585,95 +1588,82 @@ onSubmit() {
 
 ```typescript
 @Component({
-  selector: 'app-employee-list',
-  template: `
-    <div class="employee-list">
-      <div class="employee-list__header">
-        <h1 class="employee-list__title">Employees</h1>
-        <div class="employee-list__actions">
-          <input
-            class="employee-list__search"
-            placeholder="Search..."
-            (input)="onSearch($event)"
-          />
-          @if (hasRole(PlatformRoles.Admin)) {
-            <button class="employee-list__btn --primary" (click)="onCreate()">
-              Add Employee
-            </button>
-          }
-        </div>
-      </div>
-
-      <app-loading [target]="this" requestKey="load">
-        @if (vm(); as vm) {
-          <div class="employee-list__content">
-            @for (employee of vm.employees; track employee.id) {
-              <div class="employee-list__item" (click)="onSelect(employee)">
-                <div class="employee-list__item-avatar">
-                  <img [src]="employee.avatarUrl" [alt]="employee.name" />
+    selector: 'app-employee-list',
+    template: `
+        <div class="employee-list">
+            <div class="employee-list__header">
+                <h1 class="employee-list__title">Employees</h1>
+                <div class="employee-list__actions">
+                    <input class="employee-list__search" placeholder="Search..." (input)="onSearch($event)" />
+                    @if (hasRole(PlatformRoles.Admin)) {
+                        <button class="employee-list__btn --primary" (click)="onCreate()">Add Employee</button>
+                    }
                 </div>
-                <div class="employee-list__item-info">
-                  <span class="employee-list__item-name">{{ employee.name }}</span>
-                  <span class="employee-list__item-email">{{ employee.email }}</span>
-                </div>
-                <div class="employee-list__item-actions">
-                  <button
-                    class="employee-list__item-btn --edit"
-                    (click)="onEdit(employee); $event.stopPropagation()"
-                  >
-                    Edit
-                  </button>
-                </div>
-              </div>
-            } @empty {
-              <div class="employee-list__empty">
-                <span class="employee-list__empty-text">No employees found</span>
-              </div>
-            }
-          </div>
-
-          @if (vm.totalCount > vm.employees.length) {
-            <div class="employee-list__footer">
-              <button class="employee-list__btn --secondary" (click)="onLoadMore()">
-                Load More
-              </button>
             </div>
-          }
-        }
-      </app-loading>
-    </div>
-  `,
-  providers: [EmployeeListStore]
+
+            <app-loading [target]="this" requestKey="load">
+                @if (vm(); as vm) {
+                    <div class="employee-list__content">
+                        @for (employee of vm.employees; track employee.id) {
+                            <div class="employee-list__item" (click)="onSelect(employee)">
+                                <div class="employee-list__item-avatar">
+                                    <img [src]="employee.avatarUrl" [alt]="employee.name" />
+                                </div>
+                                <div class="employee-list__item-info">
+                                    <span class="employee-list__item-name">{{ employee.name }}</span>
+                                    <span class="employee-list__item-email">{{ employee.email }}</span>
+                                </div>
+                                <div class="employee-list__item-actions">
+                                    <button class="employee-list__item-btn --edit" (click)="onEdit(employee); $event.stopPropagation()">Edit</button>
+                                </div>
+                            </div>
+                        } @empty {
+                            <div class="employee-list__empty">
+                                <span class="employee-list__empty-text">No employees found</span>
+                            </div>
+                        }
+                    </div>
+
+                    @if (vm.totalCount > vm.employees.length) {
+                        <div class="employee-list__footer">
+                            <button class="employee-list__btn --secondary" (click)="onLoadMore()">Load More</button>
+                        </div>
+                    }
+                }
+            </app-loading>
+        </div>
+    `,
+    providers: [EmployeeListStore]
 })
 export class EmployeeListComponent extends AppBaseVmStoreComponent<EmployeeListVm, EmployeeListStore> {
-  constructor(store: EmployeeListStore) {
-    super(store);
-  }
+    constructor(store: EmployeeListStore) {
+        super(store);
+    }
 
-  ngOnInit() {
-    this.store.loadEmployees();
-  }
+    ngOnInit() {
+        this.store.loadEmployees();
+    }
 
-  onSearch(event: Event) {
-    const searchText = (event.target as HTMLInputElement).value;
-    this.store.setFilter({ searchText });
-  }
+    onSearch(event: Event) {
+        const searchText = (event.target as HTMLInputElement).value;
+        this.store.setFilter({ searchText });
+    }
 
-  onCreate() {
-    // Open create dialog
-  }
+    onCreate() {
+        // Open create dialog
+    }
 
-  onSelect(employee: Employee) {
-    this.store.select(employee.id);
-  }
+    onSelect(employee: Employee) {
+        this.store.select(employee.id);
+    }
 
-  onEdit(employee: Employee) {
-    // Open edit dialog
-  }
+    onEdit(employee: Employee) {
+        // Open edit dialog
+    }
 
-  onLoadMore() {
-    this.store.loadNextPage();
-  }
+    onLoadMore() {
+        this.store.loadNextPage();
+    }
 }
 ```
 
@@ -1681,157 +1671,127 @@ export class EmployeeListComponent extends AppBaseVmStoreComponent<EmployeeListV
 
 ```typescript
 @Component({
-  selector: 'app-employee-form',
-  template: `
-    <div class="employee-form">
-      <div class="employee-form__header">
-        <h2 class="employee-form__title">
-          {{ isCreateMode() ? 'New Employee' : 'Edit Employee' }}
-        </h2>
-      </div>
-
-      <form [formGroup]="form" class="employee-form__body">
-        <div class="employee-form__section">
-          <h3 class="employee-form__section-title">Basic Information</h3>
-
-          <div class="employee-form__field">
-            <label class="employee-form__label">Full Name *</label>
-            <input
-              formControlName="name"
-              class="employee-form__input"
-              [class.--error]="form.controls.name.invalid && form.controls.name.touched"
-            />
-            @if (form.controls.name.errors?.['required'] && form.controls.name.touched) {
-              <span class="employee-form__error">Name is required</span>
-            }
-          </div>
-
-          <div class="employee-form__field">
-            <label class="employee-form__label">Email *</label>
-            <input
-              formControlName="email"
-              type="email"
-              class="employee-form__input"
-            />
-            @if (form.controls.email.errors?.['email']) {
-              <span class="employee-form__error">Invalid email format</span>
-            }
-            @if (form.controls.email.errors?.['emailTaken']) {
-              <span class="employee-form__error">Email already exists</span>
-            }
-          </div>
-
-          <div class="employee-form__field">
-            <label class="employee-form__label">Department</label>
-            <platform-select
-              formControlName="departmentId"
-              [fetchDataFn]="departmentApi.fetchForSelect"
-              [searchable]="true"
-              placeholder="Select department"
-            />
-          </div>
-        </div>
-
-        <div class="employee-form__section">
-          <h3 class="employee-form__section-title">Employment Details</h3>
-
-          <div class="employee-form__row">
-            <div class="employee-form__field --half">
-              <label class="employee-form__label">Start Date</label>
-              <input
-                formControlName="startDate"
-                type="date"
-                class="employee-form__input"
-              />
+    selector: 'app-employee-form',
+    template: `
+        <div class="employee-form">
+            <div class="employee-form__header">
+                <h2 class="employee-form__title">
+                    {{ isCreateMode() ? 'New Employee' : 'Edit Employee' }}
+                </h2>
             </div>
 
-            <div class="employee-form__field --half">
-              <label class="employee-form__label">Status</label>
-              <platform-select
-                formControlName="status"
-                [options]="EmployeeStatus.dropdownOptions"
-              />
-            </div>
-          </div>
-        </div>
-      </form>
+            <form [formGroup]="form" class="employee-form__body">
+                <div class="employee-form__section">
+                    <h3 class="employee-form__section-title">Basic Information</h3>
 
-      <div class="employee-form__footer">
-        <button
-          class="employee-form__btn --secondary"
-          (click)="onCancel()"
-        >
-          Cancel
-        </button>
-        <button
-          class="employee-form__btn --primary"
-          (click)="onSubmit()"
-          [disabled]="form.invalid || isLoading$('save')()"
-        >
-          @if (isLoading$('save')()) {
-            <span class="employee-form__spinner"></span>
-          }
-          Save
-        </button>
-      </div>
-    </div>
-  `
+                    <div class="employee-form__field">
+                        <label class="employee-form__label">Full Name *</label>
+                        <input formControlName="name" class="employee-form__input" [class.--error]="form.controls.name.invalid && form.controls.name.touched" />
+                        @if (form.controls.name.errors?.['required'] && form.controls.name.touched) {
+                            <span class="employee-form__error">Name is required</span>
+                        }
+                    </div>
+
+                    <div class="employee-form__field">
+                        <label class="employee-form__label">Email *</label>
+                        <input formControlName="email" type="email" class="employee-form__input" />
+                        @if (form.controls.email.errors?.['email']) {
+                            <span class="employee-form__error">Invalid email format</span>
+                        }
+                        @if (form.controls.email.errors?.['emailTaken']) {
+                            <span class="employee-form__error">Email already exists</span>
+                        }
+                    </div>
+
+                    <div class="employee-form__field">
+                        <label class="employee-form__label">Department</label>
+                        <platform-select
+                            formControlName="departmentId"
+                            [fetchDataFn]="departmentApi.fetchForSelect"
+                            [searchable]="true"
+                            placeholder="Select department"
+                        />
+                    </div>
+                </div>
+
+                <div class="employee-form__section">
+                    <h3 class="employee-form__section-title">Employment Details</h3>
+
+                    <div class="employee-form__row">
+                        <div class="employee-form__field --half">
+                            <label class="employee-form__label">Start Date</label>
+                            <input formControlName="startDate" type="date" class="employee-form__input" />
+                        </div>
+
+                        <div class="employee-form__field --half">
+                            <label class="employee-form__label">Status</label>
+                            <platform-select formControlName="status" [options]="EmployeeStatus.dropdownOptions" />
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <div class="employee-form__footer">
+                <button class="employee-form__btn --secondary" (click)="onCancel()">Cancel</button>
+                <button class="employee-form__btn --primary" (click)="onSubmit()" [disabled]="form.invalid || isLoading$('save')()">
+                    @if (isLoading$('save')()) {
+                        <span class="employee-form__spinner"></span>
+                    }
+                    Save
+                </button>
+            </div>
+        </div>
+    `
 })
 export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> {
-  readonly EmployeeStatus = EmployeeStatus;
+    readonly EmployeeStatus = EmployeeStatus;
 
-  constructor(
-    private employeeApi: EmployeeApiService,
-    public departmentApi: DepartmentApiService
-  ) {
-    super();
-  }
-
-  protected initialFormConfig = () => ({
-    controls: {
-      name: new FormControl(this.currentVm().name, [
-        Validators.required,
-        Validators.minLength(2)
-      ]),
-      email: new FormControl(this.currentVm().email, [
-        Validators.required,
-        Validators.email
-      ], [
-        ifAsyncValidator(
-          () => !this.isViewMode(),
-          checkEmailUniqueValidator(this.employeeApi, this.currentVm().id)
-        )
-      ]),
-      departmentId: new FormControl(this.currentVm().departmentId),
-      startDate: new FormControl(this.currentVm().startDate),
-      status: new FormControl(this.currentVm().status, [Validators.required])
+    constructor(
+        private employeeApi: EmployeeApiService,
+        public departmentApi: DepartmentApiService
+    ) {
+        super();
     }
-  });
 
-  onSubmit() {
-    if (this.validateForm()) {
-      const command = this.buildSaveCommand();
-      this.employeeApi.save(command)
-        .pipe(
-          this.observerLoadingErrorState('save'),
-          this.tapResponse(() => this.close()),
-          this.untilDestroyed()
-        )
-        .subscribe();
+    protected initialFormConfig = () => ({
+        controls: {
+            name: new FormControl(this.currentVm().name, [Validators.required, Validators.minLength(2)]),
+            email: new FormControl(
+                this.currentVm().email,
+                [Validators.required, Validators.email],
+                [ifAsyncValidator(() => !this.isViewMode(), checkEmailUniqueValidator(this.employeeApi, this.currentVm().id))]
+            ),
+            departmentId: new FormControl(this.currentVm().departmentId),
+            startDate: new FormControl(this.currentVm().startDate),
+            status: new FormControl(this.currentVm().status, [Validators.required])
+        }
+    });
+
+    onSubmit() {
+        if (this.validateForm()) {
+            const command = this.buildSaveCommand();
+            this.employeeApi
+                .save(command)
+                .pipe(
+                    this.observerLoadingErrorState('save'),
+                    this.tapResponse(() => this.close()),
+                    this.untilDestroyed()
+                )
+                .subscribe();
+        }
     }
-  }
 
-  onCancel() {
-    this.close();
-  }
+    onCancel() {
+        this.close();
+    }
 
-  private buildSaveCommand(): SaveEmployeeCommand {
-    const formValue = this.form.getRawValue();
-    return {
-      id: this.currentVm().id,
-      ...formValue
-    };
-  }
+    private buildSaveCommand(): SaveEmployeeCommand {
+        const formValue = this.form.getRawValue();
+        return {
+            id: this.currentVm().id,
+            ...formValue
+        };
+    }
 }
 ```
 
@@ -1839,111 +1799,111 @@ export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> 
 
 ```typescript
 export class EmployeeListState {
-  employees: Employee[] = [];
-  totalCount: number = 0;
-  currentPage: number = 1;
-  pageSize: number = 20;
-  filters: EmployeeFilters = new EmployeeFilters();
-  selectedId: string | null = null;
+    employees: Employee[] = [];
+    totalCount: number = 0;
+    currentPage: number = 1;
+    pageSize: number = 20;
+    filters: EmployeeFilters = new EmployeeFilters();
+    selectedId: string | null = null;
 
-  constructor(data?: Partial<EmployeeListState>) {
-    if (data) Object.assign(this, data);
-  }
+    constructor(data?: Partial<EmployeeListState>) {
+        if (data) Object.assign(this, data);
+    }
 
-  get selectedEmployee(): Employee | undefined {
-    return this.employees.find(e => e.id === this.selectedId);
-  }
+    get selectedEmployee(): Employee | undefined {
+        return this.employees.find(e => e.id === this.selectedId);
+    }
 }
 
 @Injectable()
 export class EmployeeListStore extends PlatformVmStore<EmployeeListState> {
-  protected vmConstructor = (data?: Partial<EmployeeListState>) => new EmployeeListState(data);
+    protected vmConstructor = (data?: Partial<EmployeeListState>) => new EmployeeListState(data);
 
-  constructor(private api: EmployeeApiService) {
-    super();
-  }
+    constructor(private api: EmployeeApiService) {
+        super();
+    }
 
-  // Effects
-  loadEmployees = this.effectSimple(
-    () => {
-      const state = this.state();
-      const query: EmployeeQuery = {
-        page: 1,
-        pageSize: state.pageSize,
-        ...state.filters
-      };
+    // Effects
+    loadEmployees = this.effectSimple(() => {
+        const state = this.state();
+        const query: EmployeeQuery = {
+            page: 1,
+            pageSize: state.pageSize,
+            ...state.filters
+        };
 
-      return this.api.getEmployees(query).pipe(
-        this.observerLoadingErrorState('load'),
-        this.tapResponse(result => this.updateState({
-          employees: result.items,
-          totalCount: result.totalCount,
-          currentPage: 1
-        }))
-      );
-    },
-    'loadEmployees'
-  );
+        return this.api.getEmployees(query).pipe(
+            this.observerLoadingErrorState('load'),
+            this.tapResponse(result =>
+                this.updateState({
+                    employees: result.items,
+                    totalCount: result.totalCount,
+                    currentPage: 1
+                })
+            )
+        );
+    }, 'loadEmployees');
 
-  loadNextPage = this.effectSimple(
-    () => {
-      const state = this.state();
-      const query: EmployeeQuery = {
-        page: state.currentPage + 1,
-        pageSize: state.pageSize,
-        ...state.filters
-      };
+    loadNextPage = this.effectSimple(() => {
+        const state = this.state();
+        const query: EmployeeQuery = {
+            page: state.currentPage + 1,
+            pageSize: state.pageSize,
+            ...state.filters
+        };
 
-      return this.api.getEmployees(query).pipe(
-        this.observerLoadingErrorState('loadMore'),
-        this.tapResponse(result => this.updateState({
-          employees: [...state.employees, ...result.items],
-          currentPage: state.currentPage + 1
-        }))
-      );
-    },
-    'loadNextPage'
-  );
+        return this.api.getEmployees(query).pipe(
+            this.observerLoadingErrorState('loadMore'),
+            this.tapResponse(result =>
+                this.updateState({
+                    employees: [...state.employees, ...result.items],
+                    currentPage: state.currentPage + 1
+                })
+            )
+        );
+    }, 'loadNextPage');
 
-  deleteEmployee = this.effect<string>(
-    (id$) => id$.pipe(
-      switchMap(id => this.api.deleteEmployee(id).pipe(
-        this.observerLoadingErrorState('delete'),
-        this.tapResponse(() => {
-          this.updateState({
-            employees: this.state().employees.filter(e => e.id !== id),
-            totalCount: this.state().totalCount - 1
-          });
-        })
-      ))
-    )
-  );
+    deleteEmployee = this.effect<string>(id$ =>
+        id$.pipe(
+            switchMap(id =>
+                this.api.deleteEmployee(id).pipe(
+                    this.observerLoadingErrorState('delete'),
+                    this.tapResponse(() => {
+                        this.updateState({
+                            employees: this.state().employees.filter(e => e.id !== id),
+                            totalCount: this.state().totalCount - 1
+                        });
+                    })
+                )
+            )
+        )
+    );
 
-  // Actions
-  setFilter(filters: Partial<EmployeeFilters>) {
-    this.updateState({
-      filters: { ...this.state().filters, ...filters }
-    });
-    this.loadEmployees();
-  }
+    // Actions
+    setFilter(filters: Partial<EmployeeFilters>) {
+        this.updateState({
+            filters: { ...this.state().filters, ...filters }
+        });
+        this.loadEmployees();
+    }
 
-  select(id: string) {
-    this.updateState({ selectedId: id });
-  }
+    select(id: string) {
+        this.updateState({ selectedId: id });
+    }
 
-  clearSelection() {
-    this.updateState({ selectedId: null });
-  }
+    clearSelection() {
+        this.updateState({ selectedId: null });
+    }
 
-  // Selectors
-  readonly employees$ = this.select(state => state.employees);
-  readonly selectedEmployee$ = this.select(state => state.selectedEmployee);
-  readonly totalCount$ = this.select(state => state.totalCount);
-  readonly hasMore$ = this.select(state => state.employees.length < state.totalCount);
+    // Selectors
+    readonly employees$ = this.select(state => state.employees);
+    readonly selectedEmployee$ = this.select(state => state.selectedEmployee);
+    readonly totalCount$ = this.select(state => state.totalCount);
+    readonly hasMore$ = this.select(state => state.employees.length < state.totalCount);
 
-  readonly loading$ = this.isLoading$('load');
-  readonly loadingMore$ = this.isLoading$('loadMore');
-  readonly deleting$ = this.isLoading$('delete');
+    readonly loading$ = this.isLoading$('load');
+    readonly loadingMore$ = this.isLoading$('loadMore');
+    readonly deleting$ = this.isLoading$('delete');
 }
 ```
 
@@ -2026,7 +1986,7 @@ export class EmployeeListStore extends PlatformVmStore<EmployeeListState> {
 ## 18. Key File Locations
 
 ```
-src/PlatformExampleAppWeb/
+src/Frontend/
 ├── libs/
 │   ├── platform-core/           # Framework core (components, stores, utils)
 │   ├── apps-domains/            # Business domain (APIs, models)
@@ -2044,7 +2004,7 @@ src/PlatformExampleAppWeb/
 
 ```bash
 # Start development servers
-cd src/PlatformExampleAppWeb
+cd src/Frontend
 npm install
 nx serve playground-text-snippet
 

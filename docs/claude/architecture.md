@@ -14,9 +14,9 @@
 
 ## Example Application
 
-| Service         | Description                     | Primary Responsibility                     |
-| --------------- | ------------------------------- | ------------------------------------------ |
-| **TextSnippet** | Example/template microservice   | Demonstrates all platform patterns         |
+| Service         | Description                   | Primary Responsibility             |
+| --------------- | ----------------------------- | ---------------------------------- |
+| **TextSnippet** | Example/template microservice | Demonstrates all platform patterns |
 
 This is a **template project** with one example service. Use TextSnippet as a reference for implementing new services.
 
@@ -42,7 +42,7 @@ src/Platform/                       # Easy.Platform framework components
 ├── Easy.Platform.RabbitMQ/         # Message bus implementation
 └── Easy.Platform.*/                # Other infrastructure modules
 
-src/PlatformExampleApp/             # Example microservice implementation
+src/Backend/             # Example microservice implementation
 ├── PlatformExampleApp.TextSnippet.Api/         # Web API layer
 ├── PlatformExampleApp.TextSnippet.Application/ # CQRS handlers, jobs, events
 ├── PlatformExampleApp.TextSnippet.Domain/      # Entities, domain events
@@ -53,7 +53,7 @@ src/PlatformExampleApp/             # Example microservice implementation
 ### Frontend Architecture (Nx Workspace)
 
 ```
-src/PlatformExampleAppWeb/          # Angular 19 Nx workspace
+src/Frontend/          # Angular 19 Nx workspace
 ├── apps/                           # Applications
 │   └── playground-text-snippet/    # Example app
 └── libs/                           # Shared libraries
@@ -66,7 +66,7 @@ src/PlatformExampleAppWeb/          # Angular 19 Nx workspace
 ### Platform-Core Library
 
 ```
-src/PlatformExampleAppWeb/libs/platform-core/src/
+src/Frontend/libs/platform-core/src/
 ├── abstracts/                      # Base classes (BaseComponent, BaseDirective)
 ├── components/                     # UI components (alerts, tables, icons)
 ├── directives/                     # Custom directives (popover, ellipsis)
@@ -79,7 +79,7 @@ src/PlatformExampleAppWeb/libs/platform-core/src/
 ### Testing & Development
 
 ```
-src/PlatformExampleApp/             # Complete working example
+src/Backend/             # Complete working example
 testing/                            # Additional test specifications
 deploy/                             # Kubernetes & deployment configs
 ```
@@ -88,8 +88,8 @@ deploy/                             # Kubernetes & deployment configs
 
 **When creating or modifying frontend UI code, follow the design system:**
 
-| Application               | Design System Location | Angular Version |
-| ------------------------- | ---------------------- | --------------- |
+| Application                 | Design System Location | Angular Version |
+| --------------------------- | ---------------------- | --------------- |
 | **playground-text-snippet** | `docs/design-system/`  | Angular 19      |
 
 **Design System Contents:**
@@ -117,10 +117,10 @@ deploy/                             # Kubernetes & deployment configs
 ```bash
 # Backend
 dotnet build EasyPlatform.sln                   # Build entire solution
-dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api  # Run example service
+dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api  # Run example service
 
 # Frontend
-cd src/PlatformExampleAppWeb
+cd src/Frontend
 npm install                                     # Install dependencies
 nx serve playground-text-snippet                # Start example app
 nx build playground-text-snippet                # Build specific app

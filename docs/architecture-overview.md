@@ -58,14 +58,14 @@ graph TB
 
 ## Technology Stack
 
-| Layer | Technologies |
-|-------|--------------|
-| **Backend** | .NET 9, ASP.NET Core, CQRS |
-| **Frontend** | Angular 19, TypeScript, RxJS, PlatformVmStore |
-| **Data** | MongoDB, SQL Server, PostgreSQL |
-| **Messaging** | RabbitMQ |
-| **Caching** | Redis |
-| **Jobs** | Hangfire |
+| Layer         | Technologies                                  |
+| ------------- | --------------------------------------------- |
+| **Backend**   | .NET 9, ASP.NET Core, CQRS                    |
+| **Frontend**  | Angular 19, TypeScript, RxJS, PlatformVmStore |
+| **Data**      | MongoDB, SQL Server, PostgreSQL               |
+| **Messaging** | RabbitMQ                                      |
+| **Caching**   | Redis                                         |
+| **Jobs**      | Hangfire                                      |
 
 ## Project Structure
 
@@ -79,7 +79,7 @@ src/Platform/                    # Easy.Platform framework
 ├── Easy.Platform.RabbitMQ/      # Message bus
 └── Easy.Platform.*/             # Other modules
 
-src/PlatformExampleApp/          # Example microservice
+src/Backend/          # Example microservice
 ├── *.Api/                       # Web API layer
 ├── *.Application/               # CQRS handlers, jobs, events
 ├── *.Domain/                    # Entities, domain events
@@ -91,7 +91,7 @@ src/PlatformExampleApp/          # Example microservice
 ### Frontend
 
 ```
-src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
+src/Frontend/       # Angular 19 Nx workspace
 ├── apps/
 │   └── playground-text-snippet/ # Example app
 └── libs/
@@ -104,12 +104,12 @@ src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
 
 ## Clean Architecture Layers
 
-| Layer | Responsibility |
-|-------|----------------|
-| **Domain** | Business entities, value objects, domain services |
-| **Application** | Use cases, CQRS handlers, application services |
+| Layer              | Responsibility                                         |
+| ------------------ | ------------------------------------------------------ |
+| **Domain**         | Business entities, value objects, domain services      |
+| **Application**    | Use cases, CQRS handlers, application services         |
 | **Infrastructure** | External concerns (databases, messaging, file storage) |
-| **Presentation** | API controllers, web endpoints |
+| **Presentation**   | API controllers, web endpoints                         |
 
 ## Related Documentation
 

@@ -31,9 +31,9 @@
 | **Events** | `Growth.Application/UseCaseEvents/GoalManagement/` |
 | **Jobs** | `Growth.Application/BackgroundJobs/GoalManagement/` |
 | **Controller** | `Growth.Service/Controllers/GoalController.cs` |
-| **FE Page** | `bravo-growth/pages/goal-management/goal-management.component.ts` |
-| **FE Store** | `bravo-growth/pages/goal-management/goal-management.store.ts` |
-| **FE Form** | `bravo-growth/pages/goal-management/upsert-goal-form/upsert-goal-form.component.ts` |
+| **FE Page** | `playground-growth/pages/goal-management/goal-management.component.ts` |
+| **FE Store** | `playground-growth/pages/goal-management/goal-management.store.ts` |
+| **FE Form** | `playground-growth/pages/goal-management/upsert-goal-form/upsert-goal-form.component.ts` |
 | **API** | `growth-domain/services/goal-management.api.service.ts` |
 | **Models** | `growth-domain/models/goal.model.ts` |
 

@@ -23,7 +23,7 @@ API available at: `http://localhost:5000`
 ## Frontend Setup (Nx Workspace)
 
 ```bash
-cd src/PlatformExampleAppWeb
+cd src/Frontend
 npm install
 nx serve playground-text-snippet
 ```

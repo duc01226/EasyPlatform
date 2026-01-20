@@ -65,10 +65,8 @@ team-artifacts/pbis/stories/{YYMMDD}-us-{slug}.md
 ### Module Codes
 | Module | Code |
 |--------|------|
-| bravoTALENTS | TAL |
-| bravoGROWTH | GRO |
-| bravoSURVEYS | SUR |
-| bravoINSIGHTS | INS |
+| TextSnippet | TXT |
+| ExampleApp | EXP |
 | Accounts | ACC |
 | Common | COM |
 

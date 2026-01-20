@@ -18,10 +18,10 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 
 **Before creating any component, read the design system documentation for your target application:**
 
-| Application                       | Design System Location                           |
-| --------------------------------- | ------------------------------------------------ |
-| **WebV2 Apps**                    | `docs/design-system/`                            |
-| **TextSnippetClient**             | `src/PlatformExampleAppWeb/apps/playground-text-snippet/docs/design-system/` |
+| Application           | Design System Location                                          |
+| --------------------- | --------------------------------------------------------------- |
+| **WebV2 Apps**        | `docs/design-system/`                                           |
+| **TextSnippetClient** | `src/Frontend/apps/playground-text-snippet/docs/design-system/` |
 
 **Key docs to read:**
 
@@ -56,7 +56,7 @@ AppBaseComponent                     # + Auth, roles, company context
 ## File Location
 
 ```
-src/PlatformExampleAppWeb/apps/{app-name}/src/app/
+src/Frontend/apps/{app-name}/src/app/
 └── features/
     └── {feature}/
         ├── {feature}.component.ts

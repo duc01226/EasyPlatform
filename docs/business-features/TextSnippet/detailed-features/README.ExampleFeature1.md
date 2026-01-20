@@ -10,13 +10,13 @@
 - [Architecture](#architecture)
 - [Domain Model](#domain-model)
 - [Core Workflows](#core-workflows)
-  - [Goal Creation](#goal-creation)
-  - [Goal Editing with Permissions](#goal-editing-with-permissions)
-  - [Goal Deletion](#goal-deletion)
-  - [Goal List & Dashboard](#goal-list--dashboard)
-  - [Permissions & Visibility](#permissions--visibility)
-  - [Notifications & Reminders](#notifications--reminders)
-  - [Integrations (Performance Review, Check-In)](#integrations-performance-review-check-in)
+    - [Goal Creation](#goal-creation)
+    - [Goal Editing with Permissions](#goal-editing-with-permissions)
+    - [Goal Deletion](#goal-deletion)
+    - [Goal List & Dashboard](#goal-list--dashboard)
+    - [Permissions & Visibility](#permissions--visibility)
+    - [Notifications & Reminders](#notifications--reminders)
+    - [Integrations (Performance Review, Check-In)](#integrations-performance-review-check-in)
 - [API Reference](#api-reference)
 - [Frontend Components](#frontend-components)
 - [Backend Controllers](#backend-controllers)
@@ -68,60 +68,60 @@ The feature implements a dual-app architecture serving both **company-level goal
 
 #### FR-GOAL-01: Create Goals
 
-| Aspect          | Details                                                                 |
-| --------------- | ----------------------------------------------------------------------- |
-| **Description** | Users can create SMART goals or OKR objectives with key results         |
-| **Scope**       | HR Managers, Team Leads, Employees (based on permissions)               |
-| **Validation**  | Title required, due date must be future, measurement type required      |
-| **Evidence**    | `SaveGoalCommand.cs:1-428`                                              |
+| Aspect          | Details                                                            |
+| --------------- | ------------------------------------------------------------------ |
+| **Description** | Users can create SMART goals or OKR objectives with key results    |
+| **Scope**       | HR Managers, Team Leads, Employees (based on permissions)          |
+| **Validation**  | Title required, due date must be future, measurement type required |
+| **Evidence**    | `SaveGoalCommand.cs:1-428`                                         |
 
 #### FR-GOAL-02: Goal Visibility Control
 
-| Aspect          | Details                                                                 |
-| --------------- | ----------------------------------------------------------------------- |
-| **Description** | Goals can be configured with 6 visibility levels                        |
-| **Options**     | Public, OnlyMe, MeAndManager, SpecificPeople, ThisOrgUnit, SubOrgs      |
-| **Validation**  | SpecificPeople requires at least one viewer                             |
-| **Evidence**    | `Goal.cs:45-60`, `GetGoalVisibilityQuery.cs:1-75`                       |
+| Aspect          | Details                                                            |
+| --------------- | ------------------------------------------------------------------ |
+| **Description** | Goals can be configured with 6 visibility levels                   |
+| **Options**     | Public, OnlyMe, MeAndManager, SpecificPeople, ThisOrgUnit, SubOrgs |
+| **Validation**  | SpecificPeople requires at least one viewer                        |
+| **Evidence**    | `Goal.cs:45-60`, `GetGoalVisibilityQuery.cs:1-75`                  |
 
 #### FR-GOAL-03: Goal Progress Tracking
 
-| Aspect          | Details                                                                 |
-| --------------- | ----------------------------------------------------------------------- |
-| **Description** | Track goal progress with current/target measurements                    |
-| **Scope**       | Goal owners and approvers                                               |
-| **Output**      | Progress percentage, status auto-calculation                            |
-| **Evidence**    | `UpdateGoalCurrentValueMeasurementCommand.cs:1-72`                      |
+| Aspect          | Details                                              |
+| --------------- | ---------------------------------------------------- |
+| **Description** | Track goal progress with current/target measurements |
+| **Scope**       | Goal owners and approvers                            |
+| **Output**      | Progress percentage, status auto-calculation         |
+| **Evidence**    | `UpdateGoalCurrentValueMeasurementCommand.cs:1-72`   |
 
 ### Notifications & Reminders
 
 #### FR-GOAL-04: Automated Email Notifications
 
-| Aspect          | Details                                                                 |
-| --------------- | ----------------------------------------------------------------------- |
-| **Description** | Send emails on goal create/update/delete events                         |
-| **Access Control** | Event-driven, triggered automatically                                |
-| **Audit**       | All notifications logged                                                |
-| **Evidence**    | `SendEmailOnCUDGoalEntityEventHandler.cs:1-60`                          |
+| Aspect             | Details                                         |
+| ------------------ | ----------------------------------------------- |
+| **Description**    | Send emails on goal create/update/delete events |
+| **Access Control** | Event-driven, triggered automatically           |
+| **Audit**          | All notifications logged                        |
+| **Evidence**       | `SendEmailOnCUDGoalEntityEventHandler.cs:1-60`  |
 
 #### FR-GOAL-05: Deadline Reminders
 
-| Aspect          | Details                                                                 |
-| --------------- | ----------------------------------------------------------------------- |
-| **Description** | Daily job sends reminders 7 days before goal due date                   |
-| **Schedule**    | Cron: `0 9 * * *` (daily 9 AM)                                          |
-| **Output**      | Email notification to goal owner                                        |
-| **Evidence**    | `GoalDeadlinesSendReminderBackgroundJobExecutor.cs:1-107`               |
+| Aspect          | Details                                                   |
+| --------------- | --------------------------------------------------------- |
+| **Description** | Daily job sends reminders 7 days before goal due date     |
+| **Schedule**    | Cron: `0 9 * * *` (daily 9 AM)                            |
+| **Output**      | Email notification to goal owner                          |
+| **Evidence**    | `GoalDeadlinesSendReminderBackgroundJobExecutor.cs:1-107` |
 
 ---
 
 ## Design Reference
 
-| Information       | Details                                                                 |
-| ----------------- | ----------------------------------------------------------------------- |
-| **Figma Link**    | _(Contact design team for access)_                                      |
-| **Screenshots**   | _(To be added)_                                                         |
-| **UI Components** | Dashboard cards, DataTable, SlideIn forms, Date pickers                 |
+| Information       | Details                                                 |
+| ----------------- | ------------------------------------------------------- |
+| **Figma Link**    | _(Contact design team for access)_                      |
+| **Screenshots**   | _(To be added)_                                         |
+| **UI Components** | Dashboard cards, DataTable, SlideIn forms, Date pickers |
 
 ### Key UI Patterns
 
@@ -198,7 +198,7 @@ The feature implements a dual-app architecture serving both **company-level goal
 
 #### TextSnippet Service (Primary Owner)
 
-**Location**: `src/PlatformExampleApp/TextSnippet/`
+**Location**: `src/Backend/TextSnippet/`
 
 **Domain Layer** (`Growth.Domain/Entities/GoalManagement/`):
 
@@ -210,25 +210,25 @@ The feature implements a dual-app architecture serving both **company-level goal
 **Application Layer** (`Growth.Application/`):
 
 - **Commands**:
-  - `SaveGoalCommand.cs` (428 lines): Create/Update goal with complex validation
-  - `DeleteGoalCommand.cs` (91 lines): Delete with cascade checks
-  - `UpdateGoalCurrentValueMeasurementCommand.cs` (72 lines): Progress updates
+    - `SaveGoalCommand.cs` (428 lines): Create/Update goal with complex validation
+    - `DeleteGoalCommand.cs` (91 lines): Delete with cascade checks
+    - `UpdateGoalCurrentValueMeasurementCommand.cs` (72 lines): Progress updates
 - **Queries**:
-  - `GetGoalListQuery.cs` (156 lines): Paginated list with 10+ filters
-  - `GetGoalDetailByIdQuery.cs`: Single goal with related entities
-  - `GetGoalDashboardEmployeeQuery.cs` (84 lines): Employee dashboard data
-  - `GetGoalDashboardSummaryQuery.cs` (153 lines): Stats aggregation
-  - `ValidateCurrentEmployeeCanCreateGoal.cs` (65 lines): License validation
-  - `GetGoalVisibilityQuery.cs` (75 lines): Visibility list for dropdown
+    - `GetGoalListQuery.cs` (156 lines): Paginated list with 10+ filters
+    - `GetGoalDetailByIdQuery.cs`: Single goal with related entities
+    - `GetGoalDashboardEmployeeQuery.cs` (84 lines): Employee dashboard data
+    - `GetGoalDashboardSummaryQuery.cs` (153 lines): Stats aggregation
+    - `ValidateCurrentEmployeeCanCreateGoal.cs` (65 lines): License validation
+    - `GetGoalVisibilityQuery.cs` (75 lines): Visibility list for dropdown
 - **Event Handlers**:
-  - `SendEmailOnCUDGoalEntityEventHandler.cs` (60 lines): Email notifications
-  - `CreateHistoryLogOnGoalChangedEventHandler.cs` (37 lines): Audit trail
-  - `DeleteGoalOnDeleteEmployeeEntityEventHandler.cs` (50 lines): Cascade deletion
+    - `SendEmailOnCUDGoalEntityEventHandler.cs` (60 lines): Email notifications
+    - `CreateHistoryLogOnGoalChangedEventHandler.cs` (37 lines): Audit trail
+    - `DeleteGoalOnDeleteEmployeeEntityEventHandler.cs` (50 lines): Cascade deletion
 - **Background Jobs**:
-  - `GoalDeadlinesSendReminderBackgroundJobExecutor.cs` (107 lines): Daily reminders
+    - `GoalDeadlinesSendReminderBackgroundJobExecutor.cs` (107 lines): Daily reminders
 - **Helpers**:
-  - `GoalHelper.cs` (71 lines): License checking, business logic
-  - `GetGoalListQueryHelper.cs` (127 lines): Complex query expression builder
+    - `GoalHelper.cs` (71 lines): License checking, business logic
+    - `GetGoalListQueryHelper.cs` (127 lines): Complex query expression builder
 
 **API Layer** (`Growth.Service/Controllers/`):
 
@@ -238,7 +238,7 @@ The feature implements a dual-app architecture serving both **company-level goal
 
 #### Frontend Applications
 
-**Location**: `src/PlatformExampleAppWeb/`
+**Location**: `src/Frontend/`
 
 **Company App** (`apps/growth-for-company/src/app/routes/goals/`):
 
@@ -253,22 +253,22 @@ The feature implements a dual-app architecture serving both **company-level goal
 **Shared Domain Library** (`libs/apps-domains/src/goal/`):
 
 - **Domain Models** (3 files, 807 lines):
-  - `goal.model.ts` (789 lines): Goal, GoalPermission, GoalMeasurement, GoalStats
-  - `goal-check-in.ts` (18 lines): Check-in model
-  - `goal.enum.ts` (96 lines): 14 enums
+    - `goal.model.ts` (789 lines): Goal, GoalPermission, GoalMeasurement, GoalStats
+    - `goal-check-in.ts` (18 lines): Check-in model
+    - `goal.enum.ts` (96 lines): 14 enums
 - **API Service** (1 file, 160 lines):
-  - `goal-management-api.service.ts`: 15 methods with caching and DTO mapping
+    - `goal-management-api.service.ts`: 15 methods with caching and DTO mapping
 - **Components** (6 files, 1,868 lines):
-  - `goal-management.component.ts` (280 lines): Main container component
-  - `goal-management.store.ts` (260 lines): Reactive state management
-  - `upsert-goal-form.component.ts` (865 lines): Complex form with 23 permission checks
-  - `goal-detail-panel.component.ts` (366 lines): Slide-in side panel
-  - `goal-table.component.ts` (46 lines): Presentation component
-  - `goal-overview.component.ts` (286 lines): Dashboard component
+    - `goal-management.component.ts` (280 lines): Main container component
+    - `goal-management.store.ts` (260 lines): Reactive state management
+    - `upsert-goal-form.component.ts` (865 lines): Complex form with 23 permission checks
+    - `goal-detail-panel.component.ts` (366 lines): Slide-in side panel
+    - `goal-table.component.ts` (46 lines): Presentation component
+    - `goal-overview.component.ts` (286 lines): Dashboard component
 - **Query DTOs** (3 files, 230 lines):
-  - `get-goal-list.query.ts` (204 lines): Immutable query with fluent API
-  - `get-goal-detail-by-id.query.ts` (4 lines): Simple interface
-  - `validate-can-create-goal.query.ts` (22 lines): Validation query DTO
+    - `get-goal-list.query.ts` (204 lines): Immutable query with fluent API
+    - `get-goal-detail-by-id.query.ts` (4 lines): Simple interface
+    - `validate-can-create-goal.query.ts` (22 lines): Validation query DTO
 
 #### Supporting Services
 
@@ -280,7 +280,7 @@ The feature implements a dual-app architecture serving both **company-level goal
 | Pattern                   | Usage                            | Location                                                                                    |
 | ------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------- |
 | **CQRS**                  | Command/Query separation         | `SaveGoalCommand`, `GetGoalListQuery`                                                       |
-| **Repository**            | Data access abstraction          | `IPlatformQueryableRootRepository<Goal>`                                                               |
+| **Repository**            | Data access abstraction          | `IPlatformQueryableRootRepository<Goal>`                                                    |
 | **Event-Driven**          | Async side effects               | Platform auto-raises `PlatformCqrsEntityEvent` → Event handlers                             |
 | **Strategy**              | Permission calculation           | `GoalPermission.permissions` dictionary                                                     |
 | **Template Method**       | Common query logic               | `GetGoalListQueryHelper.BuildListGoalExpression()`                                          |
@@ -293,7 +293,7 @@ The feature implements a dual-app architecture serving both **company-level goal
 | **Connection Pool**       | (Not used in Goal feature)       | N/A                                                                                         |
 | **State Management**      | Component store pattern          | `PlatformVmStore` with reactive selectors                                                   |
 | **Permission-Based UI**   | 23 field-level permission checks | `GoalPermission.isActionAllowed(GoalActionKey)` → Form field disabling                      |
-| **Slide Panel**           | Goal detail side panel           | `bravoDialogService.openPanelDialogRef()` with `slidePanelDirection: 'right'`               |
+| **Slide Panel**           | Goal detail side panel           | `platformDialogService.openPanelDialogRef()` with `slidePanelDirection: 'right'`            |
 | **Deep Linking**          | URL parameter parsing            | `setUpStoreFromQueryParams()` → Parses `?statuses=Completed,Progressing&dueDate=2025-01-15` |
 | **FormArray**             | Dynamic KeyResults management    | Angular FormArray with drag-drop reordering                                                 |
 | **Cross-Field Validator** | Date and value comparisons       | `startEndValidator`, custom validators for StartValue vs TargetValue                        |
@@ -305,7 +305,7 @@ The feature implements a dual-app architecture serving both **company-level goal
 
 #### 1. Goal Entity
 
-**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/Goal.cs` (186 lines)
+**Location**: `src/Backend/TextSnippet/Growth.Domain/Entities/GoalManagement/Goal.cs` (186 lines)
 
 **Purpose**: Main aggregate root representing an OKR Objective, KeyResult, or SMART goal with complete lifecycle management, field tracking, and computed properties.
 
@@ -376,7 +376,7 @@ public static Expression<Func<Goal, bool>> IsOverdueExpr()
 
 #### 2. GoalEmployee Entity
 
-**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalEmployee.cs` (50 lines)
+**Location**: `src/Backend/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalEmployee.cs` (50 lines)
 
 **Purpose**: Many-to-many join entity linking employees to goals in different roles (Owner, Watcher, Approver).
 
@@ -396,27 +396,27 @@ public class GoalEmployee : Entity<GoalEmployee, string>
 
 #### 3. GoalCheckIn Entity
 
-**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalCheckIn.cs` (37 lines)
+**Location**: `src/Backend/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalCheckIn.cs` (37 lines)
 
 **Purpose**: Links goals to check-in events for progress tracking through recurring check-ins.
 
 #### 4. GoalPerformanceReviewParticipant Entity
 
-**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalPerformanceReviewParticipant.cs` (47 lines)
+**Location**: `src/Backend/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalPerformanceReviewParticipant.cs` (47 lines)
 
 **Purpose**: Links goals to performance review participants for goal-based performance evaluations.
 
 ### Enumerations
 
-**Location**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.enum.ts` (96 lines)
+**Location**: `src/Frontend/libs/apps-domains/src/goal/domain-models/goal.enum.ts` (96 lines)
 
 #### GoalTypes (3 values)
 
 ```typescript
 export enum GoalTypes {
-  Smart = "Smart", // SMART goal (Specific, Measurable, Achievable, Relevant, Time-bound)
-  Objective = "Objective", // OKR Objective (parent of KeyResults)
-  KeyResult = "KeyResult", // OKR KeyResult (child of Objective)
+    Smart = 'Smart', // SMART goal (Specific, Measurable, Achievable, Relevant, Time-bound)
+    Objective = 'Objective', // OKR Objective (parent of KeyResults)
+    KeyResult = 'KeyResult' // OKR KeyResult (child of Objective)
 }
 ```
 
@@ -424,12 +424,12 @@ export enum GoalTypes {
 
 ```typescript
 export enum GoalStatuses {
-  NotStarted = "NotStarted", // Goal not yet started
-  Progressing = "Progressing", // On track
-  Behind = "Behind", // Behind schedule
-  AtRisk = "AtRisk", // At risk of not meeting target
-  Canceled = "Canceled", // Canceled goal
-  Completed = "Completed", // Successfully completed
+    NotStarted = 'NotStarted', // Goal not yet started
+    Progressing = 'Progressing', // On track
+    Behind = 'Behind', // Behind schedule
+    AtRisk = 'AtRisk', // At risk of not meeting target
+    Canceled = 'Canceled', // Canceled goal
+    Completed = 'Completed' // Successfully completed
 }
 ```
 
@@ -437,9 +437,9 @@ export enum GoalStatuses {
 
 ```typescript
 export enum GoalTargetTypes {
-  Individual = "Individual", // Individual employee goal
-  Company = "Company", // Company-wide goal
-  Department = "Department", // Department/team goal
+    Individual = 'Individual', // Individual employee goal
+    Company = 'Company', // Company-wide goal
+    Department = 'Department' // Department/team goal
 }
 ```
 
@@ -447,12 +447,12 @@ export enum GoalTargetTypes {
 
 ```typescript
 export enum GoalVisibilityTypes {
-  Public = "Public", // Visible to all employees
-  OnlyMe = "OnlyMe", // Visible only to owner
-  MeAndManager = "MeAndManager", // Visible to owner and line manager
-  SpecificPeople = "SpecificPeople", // Visible to specific employee list
-  ThisOrgUnit = "ThisOrgUnit", // Visible to org unit members
-  ThisOrgUnitAndSubOrgs = "ThisOrgUnitAndSubOrgs", // Visible to org unit + children
+    Public = 'Public', // Visible to all employees
+    OnlyMe = 'OnlyMe', // Visible only to owner
+    MeAndManager = 'MeAndManager', // Visible to owner and line manager
+    SpecificPeople = 'SpecificPeople', // Visible to specific employee list
+    ThisOrgUnit = 'ThisOrgUnit', // Visible to org unit members
+    ThisOrgUnitAndSubOrgs = 'ThisOrgUnitAndSubOrgs' // Visible to org unit + children
 }
 ```
 
@@ -460,9 +460,9 @@ export enum GoalVisibilityTypes {
 
 ```typescript
 export enum MeasurementTypes {
-  Numeric = "Numeric", // Numeric measurement (e.g., 0 to 100)
-  Percentage = "Percentage", // Percentage (0% to 100%)
-  Currency = "Currency", // Currency amount
+    Numeric = 'Numeric', // Numeric measurement (e.g., 0 to 100)
+    Percentage = 'Percentage', // Percentage (0% to 100%)
+    Currency = 'Currency' // Currency amount
 }
 ```
 
@@ -470,9 +470,9 @@ export enum MeasurementTypes {
 
 ```typescript
 export enum GoalPriorities {
-  High = "High",
-  Medium = "Medium",
-  Low = "Low",
+    High = 'High',
+    Medium = 'Medium',
+    Low = 'Low'
 }
 ```
 
@@ -548,13 +548,10 @@ export enum GoalPriorities {
 
 ```typescript
 // Check if current user can create goals
-const canCreate = GoalPermission.isActionAllowed(
-  GoalActionKey.CanCreateGoal,
-  permissions
-);
+const canCreate = GoalPermission.isActionAllowed(GoalActionKey.CanCreateGoal, permissions);
 
 if (!canCreate) {
-  throw new Error("Insufficient permissions to create goal");
+    throw new Error('Insufficient permissions to create goal');
 }
 ```
 
@@ -610,9 +607,9 @@ public saveGoal(command: SaveGoalCommand): Observable<SaveGoalCommandResult> {
 
 **Evidence**:
 
-- Form component: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:120-250`
-- Permission model: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.model.ts:560-610`
-- API service: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/api-services/goal-management-api.service.ts:45-55`
+- Form component: `src/Frontend/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:120-250`
+- Permission model: `src/Frontend/libs/apps-domains/src/goal/domain-models/goal.model.ts:560-610`
+- API service: `src/Frontend/libs/apps-domains/src/goal/api-services/goal-management-api.service.ts:45-55`
 
 #### Backend Flow
 
@@ -707,8 +704,8 @@ protected override async Task<SaveGoalCommandResult> HandleAsync(
 
 **Evidence**:
 
-- Command handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/SaveGoalCommand.cs:65-120`
-- Validation: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/SaveGoalCommand.cs:85-145`
+- Command handler: `src/Backend/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/SaveGoalCommand.cs:65-120`
+- Validation: `src/Backend/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/SaveGoalCommand.cs:85-145`
 - Repository: Uses `IPlatformQueryableRootRepository<Goal>`
 
 **Step 4: Automatic Event Handlers** (platform triggers automatically on `CreateOrUpdateAsync`)
@@ -776,8 +773,8 @@ internal sealed class CreateHistoryLogOnGoalChangedEventHandler
 
 **Evidence**:
 
-- Email handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/SendEmailOnCUDGoalEntityEventHandler.cs:25-60`
-- History handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/CreateHistoryLogOnGoalChangedEventHandler.cs:15-37`
+- Email handler: `src/Backend/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/SendEmailOnCUDGoalEntityEventHandler.cs:25-60`
+- History handler: `src/Backend/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/CreateHistoryLogOnGoalChangedEventHandler.cs:15-37`
 
 **Complete Flow Diagram**:
 
@@ -866,32 +863,32 @@ internal sealed class CreateHistoryLogOnGoalChangedEventHandler
 
 ```typescript
 export enum GoalActionKey {
-  // Form Field Permissions
-  CanUpdateTitle = "CanUpdateTitle",
-  CanUpdateDescription = "CanUpdateDescription",
-  CanUpdateGoalType = "CanUpdateGoalType",
-  CanUpdateGoalTargetType = "CanUpdateGoalTargetType",
-  CanUpdatePriority = "CanUpdatePriority",
-  CanUpdateStatus = "CanUpdateStatus",
-  CanUpdateStartDate = "CanUpdateStartDate",
-  CanUpdateDueDate = "CanUpdateDueDate",
-  CanUpdateMeasurement = "CanUpdateMeasurement",
-  CanUpdateVisibility = "CanUpdateVisibility",
-  CanUpdateOwners = "CanUpdateOwners",
-  CanUpdateWatchers = "CanUpdateWatchers",
-  CanUpdateApprovers = "CanUpdateApprovers",
-  CanUpdateKeyResults = "CanUpdateKeyResults",
-  CanUpdateLinkedReviews = "CanUpdateLinkedReviews",
-  CanUpdateLinkedCheckIns = "CanUpdateLinkedCheckIns",
+    // Form Field Permissions
+    CanUpdateTitle = 'CanUpdateTitle',
+    CanUpdateDescription = 'CanUpdateDescription',
+    CanUpdateGoalType = 'CanUpdateGoalType',
+    CanUpdateGoalTargetType = 'CanUpdateGoalTargetType',
+    CanUpdatePriority = 'CanUpdatePriority',
+    CanUpdateStatus = 'CanUpdateStatus',
+    CanUpdateStartDate = 'CanUpdateStartDate',
+    CanUpdateDueDate = 'CanUpdateDueDate',
+    CanUpdateMeasurement = 'CanUpdateMeasurement',
+    CanUpdateVisibility = 'CanUpdateVisibility',
+    CanUpdateOwners = 'CanUpdateOwners',
+    CanUpdateWatchers = 'CanUpdateWatchers',
+    CanUpdateApprovers = 'CanUpdateApprovers',
+    CanUpdateKeyResults = 'CanUpdateKeyResults',
+    CanUpdateLinkedReviews = 'CanUpdateLinkedReviews',
+    CanUpdateLinkedCheckIns = 'CanUpdateLinkedCheckIns',
 
-  // Action Permissions
-  CanCreateGoal = "CanCreateGoal",
-  CanDeleteGoal = "CanDeleteGoal",
-  CanViewGoal = "CanViewGoal",
-  CanUpdateGoalProgress = "CanUpdateGoalProgress",
-  CanApproveGoal = "CanApproveGoal",
-  CanCommentOnGoal = "CanCommentOnGoal",
-  CanShareGoal = "CanShareGoal",
+    // Action Permissions
+    CanCreateGoal = 'CanCreateGoal',
+    CanDeleteGoal = 'CanDeleteGoal',
+    CanViewGoal = 'CanViewGoal',
+    CanUpdateGoalProgress = 'CanUpdateGoalProgress',
+    CanApproveGoal = 'CanApproveGoal',
+    CanCommentOnGoal = 'CanCommentOnGoal',
+    CanShareGoal = 'CanShareGoal'
 }
 ```
 
@@ -899,128 +896,99 @@ export enum GoalActionKey {
 
 ```typescript
 export class GoalPermission {
-  public permissions: { [key in GoalActionKey]: boolean } = {} as any;
+    public permissions: { [key in GoalActionKey]: boolean } = {} as any;
 
-  constructor(
-    private goal: Goal | null,
-    private currentEmployee: Employee,
-    private isCompanyAdmin: boolean,
-    private isLineManager: boolean
-  ) {
-    this.calculatePermissions();
-  }
-
-  private calculatePermissions(): void {
-    // Base permissions
-    const isOwner =
-      this.goal?.goalEmployees?.some(
-        (ge) =>
-          ge.employeeId === this.currentEmployee.id &&
-          ge.role === GoalEmployeeRoles.Owner
-      ) ?? false;
-
-    const isWatcher =
-      this.goal?.goalEmployees?.some(
-        (ge) =>
-          ge.employeeId === this.currentEmployee.id &&
-          ge.role === GoalEmployeeRoles.Watcher
-      ) ?? false;
-
-    const isApprover =
-      this.goal?.goalEmployees?.some(
-        (ge) =>
-          ge.employeeId === this.currentEmployee.id &&
-          ge.role === GoalEmployeeRoles.Approver
-      ) ?? false;
-
-    // Permission rules (Strategy Pattern)
-    this.permissions = {
-      // Create permission
-      CanCreateGoal: this.isCompanyAdmin || this.isLineManager || true, // All employees can create
-
-      // View permission
-      CanViewGoal: this.canViewGoal(isOwner, isWatcher, isApprover),
-
-      // Delete permission (only owner or admin)
-      CanDeleteGoal: isOwner || this.isCompanyAdmin,
-
-      // Field update permissions (owner or admin can update most fields)
-      CanUpdateTitle: isOwner || this.isCompanyAdmin,
-      CanUpdateDescription: isOwner || this.isCompanyAdmin,
-      CanUpdateGoalType: false, // Cannot change type after creation
-      CanUpdateGoalTargetType: isOwner || this.isCompanyAdmin,
-      CanUpdatePriority: isOwner || this.isCompanyAdmin,
-      CanUpdateStatus: isOwner || isApprover || this.isCompanyAdmin,
-      CanUpdateStartDate: isOwner || this.isCompanyAdmin,
-      CanUpdateDueDate: isOwner || this.isCompanyAdmin,
-      CanUpdateMeasurement: isOwner || this.isCompanyAdmin,
-      CanUpdateVisibility: isOwner || this.isCompanyAdmin,
-      CanUpdateOwners: isOwner || this.isCompanyAdmin,
-      CanUpdateWatchers: isOwner || this.isCompanyAdmin,
-      CanUpdateApprovers: isOwner || this.isCompanyAdmin,
-      CanUpdateKeyResults: isOwner || this.isCompanyAdmin,
-
-      // Progress update (owner, watcher, or admin)
-      CanUpdateGoalProgress: isOwner || isWatcher || this.isCompanyAdmin,
-
-      // Approval permission (approver or admin)
-      CanApproveGoal: isApprover || this.isCompanyAdmin,
-
-      // Comment permission (anyone who can view)
-      CanCommentOnGoal: this.canViewGoal(isOwner, isWatcher, isApprover),
-
-      // Share permission (owner or admin)
-      CanShareGoal: isOwner || this.isCompanyAdmin,
-    };
-  }
-
-  private canViewGoal(
-    isOwner: boolean,
-    isWatcher: boolean,
-    isApprover: boolean
-  ): boolean {
-    if (!this.goal) return true; // Creating new goal
-    if (isOwner || isWatcher || isApprover || this.isCompanyAdmin) return true;
-
-    // Check visibility rules
-    switch (this.goal.visibility) {
-      case GoalVisibilityTypes.Public:
-        return true;
-      case GoalVisibilityTypes.OnlyMe:
-        return false;
-      case GoalVisibilityTypes.MeAndManager:
-        return this.isLineManager;
-      case GoalVisibilityTypes.SpecificPeople:
-        return (
-          this.goal.visibilityEmployeeIds?.includes(this.currentEmployee.id) ??
-          false
-        );
-      case GoalVisibilityTypes.ThisOrgUnit:
-        return (
-          this.goal.visibilityOrgUnitIds?.includes(
-            this.currentEmployee.orgUnitId!
-          ) ?? false
-        );
-      case GoalVisibilityTypes.ThisOrgUnitAndSubOrgs:
-        return this.isInOrgUnitHierarchy(this.currentEmployee.orgUnitId!);
-      default:
-        return false;
+    constructor(
+        private goal: Goal | null,
+        private currentEmployee: Employee,
+        private isCompanyAdmin: boolean,
+        private isLineManager: boolean
+    ) {
+        this.calculatePermissions();
     }
-  }
 
-  public static isActionAllowed(
-    action: GoalActionKey,
-    permissions: GoalPermission
-  ): boolean {
-    return permissions.permissions[action] ?? false;
-  }
+    private calculatePermissions(): void {
+        // Base permissions
+        const isOwner = this.goal?.goalEmployees?.some(ge => ge.employeeId === this.currentEmployee.id && ge.role === GoalEmployeeRoles.Owner) ?? false;
+
+        const isWatcher = this.goal?.goalEmployees?.some(ge => ge.employeeId === this.currentEmployee.id && ge.role === GoalEmployeeRoles.Watcher) ?? false;
+
+        const isApprover = this.goal?.goalEmployees?.some(ge => ge.employeeId === this.currentEmployee.id && ge.role === GoalEmployeeRoles.Approver) ?? false;
+
+        // Permission rules (Strategy Pattern)
+        this.permissions = {
+            // Create permission
+            CanCreateGoal: this.isCompanyAdmin || this.isLineManager || true, // All employees can create
+
+            // View permission
+            CanViewGoal: this.canViewGoal(isOwner, isWatcher, isApprover),
+
+            // Delete permission (only owner or admin)
+            CanDeleteGoal: isOwner || this.isCompanyAdmin,
+
+            // Field update permissions (owner or admin can update most fields)
+            CanUpdateTitle: isOwner || this.isCompanyAdmin,
+            CanUpdateDescription: isOwner || this.isCompanyAdmin,
+            CanUpdateGoalType: false, // Cannot change type after creation
+            CanUpdateGoalTargetType: isOwner || this.isCompanyAdmin,
+            CanUpdatePriority: isOwner || this.isCompanyAdmin,
+            CanUpdateStatus: isOwner || isApprover || this.isCompanyAdmin,
+            CanUpdateStartDate: isOwner || this.isCompanyAdmin,
+            CanUpdateDueDate: isOwner || this.isCompanyAdmin,
+            CanUpdateMeasurement: isOwner || this.isCompanyAdmin,
+            CanUpdateVisibility: isOwner || this.isCompanyAdmin,
+            CanUpdateOwners: isOwner || this.isCompanyAdmin,
+            CanUpdateWatchers: isOwner || this.isCompanyAdmin,
+            CanUpdateApprovers: isOwner || this.isCompanyAdmin,
+            CanUpdateKeyResults: isOwner || this.isCompanyAdmin,
+
+            // Progress update (owner, watcher, or admin)
+            CanUpdateGoalProgress: isOwner || isWatcher || this.isCompanyAdmin,
+
+            // Approval permission (approver or admin)
+            CanApproveGoal: isApprover || this.isCompanyAdmin,
+
+            // Comment permission (anyone who can view)
+            CanCommentOnGoal: this.canViewGoal(isOwner, isWatcher, isApprover),
+
+            // Share permission (owner or admin)
+            CanShareGoal: isOwner || this.isCompanyAdmin
+        };
+    }
+
+    private canViewGoal(isOwner: boolean, isWatcher: boolean, isApprover: boolean): boolean {
+        if (!this.goal) return true; // Creating new goal
+        if (isOwner || isWatcher || isApprover || this.isCompanyAdmin) return true;
+
+        // Check visibility rules
+        switch (this.goal.visibility) {
+            case GoalVisibilityTypes.Public:
+                return true;
+            case GoalVisibilityTypes.OnlyMe:
+                return false;
+            case GoalVisibilityTypes.MeAndManager:
+                return this.isLineManager;
+            case GoalVisibilityTypes.SpecificPeople:
+                return this.goal.visibilityEmployeeIds?.includes(this.currentEmployee.id) ?? false;
+            case GoalVisibilityTypes.ThisOrgUnit:
+                return this.goal.visibilityOrgUnitIds?.includes(this.currentEmployee.orgUnitId!) ?? false;
+            case GoalVisibilityTypes.ThisOrgUnitAndSubOrgs:
+                return this.isInOrgUnitHierarchy(this.currentEmployee.orgUnitId!);
+            default:
+                return false;
+        }
+    }
+
+    public static isActionAllowed(action: GoalActionKey, permissions: GoalPermission): boolean {
+        return permissions.permissions[action] ?? false;
+    }
 }
 ```
 
 **Evidence**:
 
-- Permission model: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.model.ts:620-750`
-- Permission enum: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.model.ts:560-582`
+- Permission model: `src/Frontend/libs/apps-domains/src/goal/domain-models/goal.model.ts:620-750`
+- Permission enum: `src/Frontend/libs/apps-domains/src/goal/domain-models/goal.model.ts:560-582`
 
 #### Form Field Disabling
 
@@ -1054,7 +1022,7 @@ private disableControlIf(controlName: keyof GoalFormVm, condition: boolean): voi
 
 **Evidence**:
 
-- Form component: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:450-480`
+- Form component: `src/Frontend/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:450-480`
 
 ---
 
@@ -1067,7 +1035,7 @@ private disableControlIf(controlName: keyof GoalFormVm, condition: boolean): voi
 ```typescript
 // upsert-goal-form.component.ts
 public async onDeleteGoal(): Promise<void> {
-    const confirmed = await this.bravoDialogService.confirm({
+    const confirmed = await this.platformDialogService.confirm({
         title: 'Delete Goal',
         message: `Are you sure you want to delete "${this.currentVm().title}"?`,
         confirmText: 'Delete',
@@ -1134,7 +1102,7 @@ protected override async Task<DeleteGoalCommandResult> HandleAsync(
 
 **Evidence**:
 
-- Delete handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/DeleteGoalCommand.cs:45-91`
+- Delete handler: `src/Backend/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/DeleteGoalCommand.cs:45-91`
 
 #### Cascade Deletion on Employee Removal
 
@@ -1172,7 +1140,7 @@ internal sealed class DeleteGoalOnDeleteEmployeeEntityEventHandler
 
 **Evidence**:
 
-- Cascade handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/DeleteGoalOnDeleteEmployeeEntityEventHandler.cs:15-50`
+- Cascade handler: `src/Backend/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/DeleteGoalOnDeleteEmployeeEntityEventHandler.cs:15-50`
 
 ---
 
@@ -1189,19 +1157,19 @@ internal sealed class DeleteGoalOnDeleteEmployeeEntityEventHandler
 ```typescript
 @Injectable()
 export class GoalManagementVmStore extends PlatformVmStore<GoalManagementState> {
-  protected beforeInitVm = () => {
-    this.loadGoals(this.query$); // Load paged goal list
-    this.loadGoalTypeCount(this.query$); // Load view type counts
-    this.loadGoalSummaryCount(this.query$); // Load stats (total, by status)
-  };
+    protected beforeInitVm = () => {
+        this.loadGoals(this.query$); // Load paged goal list
+        this.loadGoalTypeCount(this.query$); // Load view type counts
+        this.loadGoalSummaryCount(this.query$); // Load stats (total, by status)
+    };
 
-  public override initOrReloadVm = (isReload: boolean) => {
-    return combineLatest([
-      this.loadGoals(this.currentState().pagedQuery, isReload),
-      this.loadGoalTypeCount(this.currentState().pagedQuery, isReload),
-      this.loadGoalSummaryCount(this.currentState().pagedQuery, isReload),
-    ]);
-  };
+    public override initOrReloadVm = (isReload: boolean) => {
+        return combineLatest([
+            this.loadGoals(this.currentState().pagedQuery, isReload),
+            this.loadGoalTypeCount(this.currentState().pagedQuery, isReload),
+            this.loadGoalSummaryCount(this.currentState().pagedQuery, isReload)
+        ]);
+    };
 }
 ```
 
@@ -1209,41 +1177,38 @@ export class GoalManagementVmStore extends PlatformVmStore<GoalManagementState> 
 
 ```typescript
 export class GetGoalListQuery extends PlatformCqrsPagedQuery {
-  public viewType: GoalViewType = GoalViewType.MyGoals; // MyGoals|MyDirectReports|SharedWithMe|All
-  public searchText: string | null = null;
-  public statuses: GoalStatuses[] = [];
-  public goalTypes: GoalTypes[] = [];
-  public goalTargetTypes: GoalTargetTypes[] = [];
-  public priorities: GoalPriorities[] = [];
-  public ownerEmployeeIds: string[] = [];
-  public ownerOrgUnitIds: string[] = [];
-  public goalDueStatuses: GoalDueStatus[] = []; // PastDue|UpComing
-  public dueDate: { from: Date | null; to: Date | null } | null = null;
-  public goalOrgUnitIds: string[] = [];
+    public viewType: GoalViewType = GoalViewType.MyGoals; // MyGoals|MyDirectReports|SharedWithMe|All
+    public searchText: string | null = null;
+    public statuses: GoalStatuses[] = [];
+    public goalTypes: GoalTypes[] = [];
+    public goalTargetTypes: GoalTargetTypes[] = [];
+    public priorities: GoalPriorities[] = [];
+    public ownerEmployeeIds: string[] = [];
+    public ownerOrgUnitIds: string[] = [];
+    public goalDueStatuses: GoalDueStatus[] = []; // PastDue|UpComing
+    public dueDate: { from: Date | null; to: Date | null } | null = null;
+    public goalOrgUnitIds: string[] = [];
 
-  // Fluent API for immutable updates
-  public withSearchText(searchText: string | null): GetGoalListQuery {
-    return new GetGoalListQuery({ ...this, searchText, pageIndex: 0 });
-  }
+    // Fluent API for immutable updates
+    public withSearchText(searchText: string | null): GetGoalListQuery {
+        return new GetGoalListQuery({ ...this, searchText, pageIndex: 0 });
+    }
 
-  public withStatuses(statuses: GoalStatuses[]): GetGoalListQuery {
-    return new GetGoalListQuery({ ...this, statuses, pageIndex: 0 });
-  }
+    public withStatuses(statuses: GoalStatuses[]): GetGoalListQuery {
+        return new GetGoalListQuery({ ...this, statuses, pageIndex: 0 });
+    }
 
-  public withViewType(viewType: GoalViewType): GetGoalListQuery {
-    return new GetGoalListQuery({ ...this, viewType, pageIndex: 0 });
-  }
+    public withViewType(viewType: GoalViewType): GetGoalListQuery {
+        return new GetGoalListQuery({ ...this, viewType, pageIndex: 0 });
+    }
 
-  public withDueDate(
-    dateRange: DateRange,
-    label: PeriodFilterLabel
-  ): GetGoalListQuery {
-    return new GetGoalListQuery({
-      ...this,
-      dueDate: { from: dateRange.from, to: dateRange.to },
-      pageIndex: 0,
-    });
-  }
+    public withDueDate(dateRange: DateRange, label: PeriodFilterLabel): GetGoalListQuery {
+        return new GetGoalListQuery({
+            ...this,
+            dueDate: { from: dateRange.from, to: dateRange.to },
+            pageIndex: 0
+        });
+    }
 }
 ```
 
@@ -1287,8 +1252,8 @@ public setUpStoreFromQueryParams(queryParams: {
 
 **Evidence**:
 
-- Store: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-management/goal-management.store.ts:81-246`
-- Query DTO: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/query-dtos/get-goal-list.query.ts:45-204`
+- Store: `src/Frontend/libs/apps-domains/src/goal/components/goal-management/goal-management.store.ts:81-246`
+- Query DTO: `src/Frontend/libs/apps-domains/src/goal/query-dtos/get-goal-list.query.ts:45-204`
 
 #### Backend Flow
 
@@ -1401,8 +1366,8 @@ protected override async Task<GetGoalListQueryResult> HandleAsync(
 
 **Evidence**:
 
-- Query handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseQueries/GoalManagement/GetGoalListQuery.cs:75-125`
-- Query helper: `src/PlatformExampleApp/TextSnippet/Growth.Application/Helpers/GetGoalListQueryHelper.cs:35-127`
+- Query handler: `src/Backend/TextSnippet/Growth.Application/UseCaseQueries/GoalManagement/GetGoalListQuery.cs:75-125`
+- Query helper: `src/Backend/TextSnippet/Growth.Application/Helpers/GetGoalListQueryHelper.cs:35-127`
 
 ---
 
@@ -1472,7 +1437,7 @@ internal sealed class SendEmailOnCUDGoalEntityEventHandler
 
 **Evidence**:
 
-- Email handler: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/SendEmailOnCUDGoalEntityEventHandler.cs:25-60`
+- Email handler: `src/Backend/TextSnippet/Growth.Application/UseCaseEvents/GoalManagement/SendEmailOnCUDGoalEntityEventHandler.cs:25-60`
 
 #### Deadline Reminders (Background Job)
 
@@ -1536,7 +1501,7 @@ public sealed class GoalDeadlinesSendReminderBackgroundJobExecutor
 
 **Evidence**:
 
-- Background job: `src/PlatformExampleApp/TextSnippet/Growth.Application/BackgroundJobExecutors/GoalManagement/GoalDeadlinesSendReminderBackgroundJobExecutor.cs:35-107`
+- Background job: `src/Backend/TextSnippet/Growth.Application/BackgroundJobExecutors/GoalManagement/GoalDeadlinesSendReminderBackgroundJobExecutor.cs:35-107`
 
 ---
 
@@ -1557,7 +1522,7 @@ public sealed class GoalDeadlinesSendReminderBackgroundJobExecutor
 
 **Evidence**:
 
-- Entity: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalPerformanceReviewParticipant.cs:15-47`
+- Entity: `src/Backend/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalPerformanceReviewParticipant.cs:15-47`
 
 #### Check-In Integration
 
@@ -1623,14 +1588,14 @@ internal sealed class UpdateGoalCurrentValueMeasurementCommandHandler
 
 **Evidence**:
 
-- Check-in entity: `src/PlatformExampleApp/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalCheckIn.cs:15-37`
-- Update command: `src/PlatformExampleApp/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/UpdateGoalCurrentValueMeasurementCommand.cs:25-72`
+- Check-in entity: `src/Backend/TextSnippet/Growth.Domain/Entities/GoalManagement/GoalCheckIn.cs:15-37`
+- Update command: `src/Backend/TextSnippet/Growth.Application/UseCaseCommands/GoalManagement/UpdateGoalCurrentValueMeasurementCommand.cs:25-72`
 
 ## API Reference
 
 **Base URL**: `{apiUrl}/api/Goal`
 
-**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Service/Controllers/GoalController.cs` (103 lines)
+**Location**: `src/Backend/TextSnippet/Growth.Service/Controllers/GoalController.cs` (103 lines)
 
 ### Endpoints
 
@@ -1652,7 +1617,7 @@ internal sealed class UpdateGoalCurrentValueMeasurementCommandHandler
 | POST   | `/link-check-in`              | `LinkGoalToCheckInCommand`                 | Link goal to check-in event                 |
 | DELETE | `/unlink-performance-review`  | `UnlinkGoalFromPerformanceReviewCommand`   | Unlink goal from performance review         |
 
-**Evidence**: Controller with 15 endpoints at `src/PlatformExampleApp/TextSnippet/Growth.Service/Controllers/GoalController.cs:25-103`
+**Evidence**: Controller with 15 endpoints at `src/Backend/TextSnippet/Growth.Service/Controllers/GoalController.cs:25-103`
 
 ### Request/Response Examples
 
@@ -1662,25 +1627,25 @@ internal sealed class UpdateGoalCurrentValueMeasurementCommandHandler
 
 ```json
 {
-  "data": {
-    "id": null,
-    "title": "Increase customer satisfaction score",
-    "description": "Improve NPS from 75 to 85",
-    "goalType": "Smart",
-    "goalTargetType": "Individual",
-    "measurementType": "Numeric",
-    "startValue": 75,
-    "targetValue": 85,
-    "currentValue": 75,
-    "startDate": "2025-01-01T00:00:00Z",
-    "dueDate": "2025-12-31T23:59:59Z",
-    "priority": "High",
-    "status": "NotStarted",
-    "visibility": "MeAndManager",
-    "ownerEmployeeIds": ["emp123"],
-    "watcherEmployeeIds": ["emp456"],
-    "approverEmployeeIds": []
-  }
+    "data": {
+        "id": null,
+        "title": "Increase customer satisfaction score",
+        "description": "Improve NPS from 75 to 85",
+        "goalType": "Smart",
+        "goalTargetType": "Individual",
+        "measurementType": "Numeric",
+        "startValue": 75,
+        "targetValue": 85,
+        "currentValue": 75,
+        "startDate": "2025-01-01T00:00:00Z",
+        "dueDate": "2025-12-31T23:59:59Z",
+        "priority": "High",
+        "status": "NotStarted",
+        "visibility": "MeAndManager",
+        "ownerEmployeeIds": ["emp123"],
+        "watcherEmployeeIds": ["emp456"],
+        "approverEmployeeIds": []
+    }
 }
 ```
 
@@ -1688,8 +1653,8 @@ internal sealed class UpdateGoalCurrentValueMeasurementCommandHandler
 
 ```json
 {
-  "goalId": "01JGZX5K7M9N2P3Q4R5S6T7V8W",
-  "success": true
+    "goalId": "01JGZX5K7M9N2P3Q4R5S6T7V8W",
+    "success": true
 }
 ```
 
@@ -1699,37 +1664,37 @@ internal sealed class UpdateGoalCurrentValueMeasurementCommandHandler
 
 ```json
 {
-  "data": {
-    "title": "Launch new product successfully",
-    "goalType": "Objective",
-    "goalTargetType": "Company",
-    "startDate": "2025-Q1",
-    "dueDate": "2025-Q4",
-    "priority": "High",
-    "status": "NotStarted",
-    "visibility": "Public",
-    "ownerEmployeeIds": ["emp123"],
-    "keyResults": [
-      {
-        "title": "Achieve 10,000 sign-ups",
-        "measurementType": "Numeric",
-        "startValue": 0,
-        "targetValue": 10000
-      },
-      {
-        "title": "Reach 80% customer satisfaction",
-        "measurementType": "Percentage",
-        "startValue": 0,
-        "targetValue": 80
-      },
-      {
-        "title": "Generate $500K revenue",
-        "measurementType": "Currency",
-        "startValue": 0,
-        "targetValue": 500000
-      }
-    ]
-  }
+    "data": {
+        "title": "Launch new product successfully",
+        "goalType": "Objective",
+        "goalTargetType": "Company",
+        "startDate": "2025-Q1",
+        "dueDate": "2025-Q4",
+        "priority": "High",
+        "status": "NotStarted",
+        "visibility": "Public",
+        "ownerEmployeeIds": ["emp123"],
+        "keyResults": [
+            {
+                "title": "Achieve 10,000 sign-ups",
+                "measurementType": "Numeric",
+                "startValue": 0,
+                "targetValue": 10000
+            },
+            {
+                "title": "Reach 80% customer satisfaction",
+                "measurementType": "Percentage",
+                "startValue": 0,
+                "targetValue": 80
+            },
+            {
+                "title": "Generate $500K revenue",
+                "measurementType": "Currency",
+                "startValue": 0,
+                "targetValue": 500000
+            }
+        ]
+    }
 }
 ```
 
@@ -1745,18 +1710,18 @@ GET /api/Goal?viewType=MyGoals&statuses=Progressing,AtRisk&searchText=customer&m
 
 ```json
 {
-  "items": [
-    {
-      "id": "01JGZX5K7M9N2P3Q4R5S6T7V8W",
-      "title": "Increase customer satisfaction score",
-      "status": "Progressing",
-      "progress": 60,
-      "dueDate": "2025-12-31T23:59:59Z",
-      "isOverdue": false,
-      "owners": [{ "id": "emp123", "fullName": "John Doe" }]
-    }
-  ],
-  "totalCount": 1
+    "items": [
+        {
+            "id": "01JGZX5K7M9N2P3Q4R5S6T7V8W",
+            "title": "Increase customer satisfaction score",
+            "status": "Progressing",
+            "progress": 60,
+            "dueDate": "2025-12-31T23:59:59Z",
+            "isOverdue": false,
+            "owners": [{ "id": "emp123", "fullName": "John Doe" }]
+        }
+    ],
+    "totalCount": 1
 }
 ```
 
@@ -1766,9 +1731,9 @@ GET /api/Goal?viewType=MyGoals&statuses=Progressing,AtRisk&searchText=customer&m
 
 ```json
 {
-  "goalId": "01JGZX5K7M9N2P3Q4R5S6T7V8W",
-  "newCurrentValue": 80,
-  "checkInEventId": "checkin123"
+    "goalId": "01JGZX5K7M9N2P3Q4R5S6T7V8W",
+    "newCurrentValue": 80,
+    "checkInEventId": "checkin123"
 }
 ```
 
@@ -1776,8 +1741,8 @@ GET /api/Goal?viewType=MyGoals&statuses=Progressing,AtRisk&searchText=customer&m
 
 ```json
 {
-  "success": true,
-  "progress": 66.67
+    "success": true,
+    "progress": 66.67
 }
 ```
 
@@ -1803,7 +1768,7 @@ GET /api/Goal?viewType=MyGoals&statuses=Progressing,AtRisk&searchText=customer&m
 | `pageIndex`        | `number`            | Zero-based page index                              |
 | `maxResultCount`   | `number`            | Page size (default: 20)                            |
 
-**Evidence**: Query DTO at `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/query-dtos/get-goal-list.query.ts:45-204`
+**Evidence**: Query DTO at `src/Frontend/libs/apps-domains/src/goal/query-dtos/get-goal-list.query.ts:45-204`
 
 ---
 
@@ -1815,27 +1780,27 @@ The Goal Management feature implements a **23-permission field-level access cont
 
 | Permission                  | Owner | Watcher | Approver | Admin | Public | Line Manager |
 | --------------------------- | ----- | ------- | -------- | ----- | ------ | ------------ |
-| **CanCreateGoal**           | ✅    | ✅      | ✅       | ✅    | ✅     | ✅           |
-| **CanViewGoal**             | ✅    | ✅      | ✅       | ✅    | \*     | \*           |
-| **CanDeleteGoal**           | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateTitle**          | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateDescription**    | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateGoalType**       | ❌    | ❌      | ❌       | ❌    | ❌     | ❌           |
-| **CanUpdateGoalTargetType** | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdatePriority**       | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateStatus**         | ✅    | ❌      | ✅       | ✅    | ❌     | ❌           |
-| **CanUpdateStartDate**      | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateDueDate**        | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateMeasurement**    | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateVisibility**     | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateOwners**         | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateWatchers**       | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateApprovers**      | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateKeyResults**     | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
-| **CanUpdateGoalProgress**   | ✅    | ✅      | ❌       | ✅    | ❌     | ❌           |
-| **CanApproveGoal**          | ❌    | ❌      | ✅       | ✅    | ❌     | ❌           |
-| **CanCommentOnGoal**        | ✅    | ✅      | ✅       | ✅    | \*     | \*           |
-| **CanShareGoal**            | ✅    | ❌      | ❌       | ✅    | ❌     | ❌           |
+| **CanCreateGoal**           | ✅     | ✅       | ✅        | ✅     | ✅      | ✅            |
+| **CanViewGoal**             | ✅     | ✅       | ✅        | ✅     | \*     | \*           |
+| **CanDeleteGoal**           | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateTitle**          | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateDescription**    | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateGoalType**       | ❌     | ❌       | ❌        | ❌     | ❌      | ❌            |
+| **CanUpdateGoalTargetType** | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdatePriority**       | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateStatus**         | ✅     | ❌       | ✅        | ✅     | ❌      | ❌            |
+| **CanUpdateStartDate**      | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateDueDate**        | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateMeasurement**    | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateVisibility**     | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateOwners**         | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateWatchers**       | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateApprovers**      | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateKeyResults**     | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
+| **CanUpdateGoalProgress**   | ✅     | ✅       | ❌        | ✅     | ❌      | ❌            |
+| **CanApproveGoal**          | ❌     | ❌       | ✅        | ✅     | ❌      | ❌            |
+| **CanCommentOnGoal**        | ✅     | ✅       | ✅        | ✅     | \*     | \*           |
+| **CanShareGoal**            | ✅     | ❌       | ❌        | ✅     | ❌      | ❌            |
 
 **Legend**:
 
@@ -1858,8 +1823,8 @@ The Goal Management feature implements a **23-permission field-level access cont
 
 **Evidence**:
 
-- Permission model: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.model.ts:620-750`
-- Permission enum (23 actions): `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/domain-models/goal.model.ts:560-582`
+- Permission model: `src/Frontend/libs/apps-domains/src/goal/domain-models/goal.model.ts:620-750`
+- Permission enum (23 actions): `src/Frontend/libs/apps-domains/src/goal/domain-models/goal.model.ts:560-582`
 
 **For detailed implementation**, see [Goal Editing with Permissions](#goal-editing-with-permissions) workflow.
 
@@ -1920,29 +1885,22 @@ The Goal Management feature implements a **23-permission field-level access cont
 
 #### 1. GoalManagementComponent
 
-**Location**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-management/goal-management.component.ts` (280 lines)
+**Location**: `src/Frontend/libs/apps-domains/src/goal/components/goal-management/goal-management.component.ts` (280 lines)
 
 **Purpose**: Container component for goal list page with state management, filtering, and pagination.
 
 **Key Properties**:
 
 ```typescript
-export class GoalManagementComponent extends AppBaseVmStoreComponent<
-  GoalManagementState,
-  GoalManagementVmStore
-> {
-  @Input() public forManagement: boolean = true; // true = company app, false = employee app
-  @Input() public defaultViewType?: GoalViewType; // MyGoals | MyDirectReports | SharedWithMe | All
+export class GoalManagementComponent extends AppBaseVmStoreComponent<GoalManagementState, GoalManagementVmStore> {
+    @Input() public forManagement: boolean = true; // true = company app, false = employee app
+    @Input() public defaultViewType?: GoalViewType; // MyGoals | MyDirectReports | SharedWithMe | All
 
-  // Computed from store
-  public goals: Signal<Goal[]> = computed(
-    () => this.vm()?.pagedResult?.items ?? []
-  );
-  public pageInfo: Signal<IPageInfo> = computed(() => this.vm()?.pageInfo);
-  public goalTypeCounter: Signal<Dictionary<number>> = computed(
-    () => this.vm()?.goalTypeCounter
-  );
-  public goalStats: Signal<GoalStats> = computed(() => this.vm()?.goalStats);
+    // Computed from store
+    public goals: Signal<Goal[]> = computed(() => this.vm()?.pagedResult?.items ?? []);
+    public pageInfo: Signal<IPageInfo> = computed(() => this.vm()?.pageInfo);
+    public goalTypeCounter: Signal<Dictionary<number>> = computed(() => this.vm()?.goalTypeCounter);
+    public goalStats: Signal<GoalStats> = computed(() => this.vm()?.goalStats);
 }
 ```
 
@@ -1967,11 +1925,11 @@ public openGoalDetailPanelDialog(goalId: string, parentGoalId?: string): void; /
 <app-goal-management [forManagement]="false" [defaultViewType]="GoalViewType.MyGoals" />
 ```
 
-**Evidence**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-management/goal-management.component.ts:45-280`
+**Evidence**: `src/Frontend/libs/apps-domains/src/goal/components/goal-management/goal-management.component.ts:45-280`
 
 #### 2. GoalManagementStore
 
-**Location**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-management/goal-management.store.ts` (260 lines)
+**Location**: `src/Frontend/libs/apps-domains/src/goal/components/goal-management/goal-management.store.ts` (260 lines)
 
 **Purpose**: NgRx-style reactive state management for goal list with automatic cache persistence.
 
@@ -1979,14 +1937,14 @@ public openGoalDetailPanelDialog(goalId: string, parentGoalId?: string): void; /
 
 ```typescript
 export class GoalManagementState extends PlatformVm {
-  public pageInfo: IPageInfo;
-  @WatchWhenValuesDiff("onQueryChanged") public pagedQuery: GetGoalListQuery;
-  @WatchWhenValuesDiff("onPagedResultChanged")
-  public pagedResult: PlatformPagedResultDto<Goal>;
-  public goalTypeCounter: Dictionary<number>; // Counts by view type
-  public goalStats: GoalStats; // Total, by status
-  public selectedGoalId: string | null;
-  public selectedParentGoalId: string | null;
+    public pageInfo: IPageInfo;
+    @WatchWhenValuesDiff('onQueryChanged') public pagedQuery: GetGoalListQuery;
+    @WatchWhenValuesDiff('onPagedResultChanged')
+    public pagedResult: PlatformPagedResultDto<Goal>;
+    public goalTypeCounter: Dictionary<number>; // Counts by view type
+    public goalStats: GoalStats; // Total, by status
+    public selectedGoalId: string | null;
+    public selectedParentGoalId: string | null;
 }
 ```
 
@@ -2001,11 +1959,11 @@ public setSelectedGoalId(selectedGoal: Goal | null): void;
 public setUpStoreFromQueryParams(queryParams: {...}): void; // Deep linking support
 ```
 
-**Evidence**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-management/goal-management.store.ts:22-260`
+**Evidence**: `src/Frontend/libs/apps-domains/src/goal/components/goal-management/goal-management.store.ts:22-260`
 
 #### 3. UpsertGoalFormComponent
 
-**Location**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts` (865 lines)
+**Location**: `src/Frontend/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts` (865 lines)
 
 **Purpose**: Complex reactive form for create/edit/view goal with 23 permission-based field controls.
 
@@ -2040,26 +1998,26 @@ protected initialFormConfig = (): PlatformFormConfig<GoalFormVm> => ({
 });
 ```
 
-**Evidence**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:120-865`
+**Evidence**: `src/Frontend/libs/apps-domains/src/goal/components/upsert-goal-form/upsert-goal-form.component.ts:120-865`
 
 #### 4. GoalDetailPanelComponent
 
-**Location**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-detail-panel/goal-detail-panel.component.ts` (366 lines)
+**Location**: `src/Frontend/libs/apps-domains/src/goal/components/goal-detail-panel/goal-detail-panel.component.ts` (366 lines)
 
 **Purpose**: Slide-in side panel for viewing goal details and quick progress updates.
 
 **Key Features**:
 
-- **Slide Panel**: Opens from right side via `bravoDialogService.openPanelDialogRef()`
+- **Slide Panel**: Opens from right side via `platformDialogService.openPanelDialogRef()`
 - **Quick Edit**: Update current value without full form
 - **Linked Entities**: Display linked check-ins and performance reviews
 - **Parent/Child**: Show parent Objective for KeyResults
 
-**Evidence**: `src/PlatformExampleAppWeb/libs/apps-domains/src/goal/components/goal-detail-panel/goal-detail-panel.component.ts:45-366`
+**Evidence**: `src/Frontend/libs/apps-domains/src/goal/components/goal-detail-panel/goal-detail-panel.component.ts:45-366`
 
 #### 5. GoalOverviewComponent
 
-**Location**: `src/PlatformExampleAppWeb/apps/growth-for-company/src/app/routes/goals/goal-overview.component.ts` (286 lines)
+**Location**: `src/Frontend/apps/growth-for-company/src/app/routes/goals/goal-overview.component.ts` (286 lines)
 
 **Purpose**: Dashboard component with stats cards + embedded goal management table.
 
@@ -2070,7 +2028,7 @@ protected initialFormConfig = (): PlatformFormConfig<GoalFormVm> => ({
 - **Export**: CSV/Excel export functionality
 - **Embeds**: `<app-goal-management>` component below stats
 
-**Evidence**: `src/PlatformExampleAppWeb/apps/growth-for-company/src/app/routes/goals/goal-overview.component.ts:45-286`
+**Evidence**: `src/Frontend/apps/growth-for-company/src/app/routes/goals/goal-overview.component.ts:45-286`
 
 ---
 
@@ -2078,19 +2036,19 @@ protected initialFormConfig = (): PlatformFormConfig<GoalFormVm> => ({
 
 ### GoalController
 
-**Location**: `src/PlatformExampleApp/TextSnippet/Growth.Service/Controllers/GoalController.cs`
+**Location**: `src/Backend/TextSnippet/Growth.Service/Controllers/GoalController.cs`
 
-| Action | Method | Route | Command/Query |
-|--------|--------|-------|---------------|
-| GetList | POST | `/api/Goal/GetGoalList` | GetGoalListQuery |
-| GetDetail | GET | `/api/Goal/GetGoalDetailById` | GetGoalDetailByIdQuery |
-| Save | POST | `/api/Goal/SaveGoal` | SaveGoalCommand |
-| Delete | DELETE | `/api/Goal/DeleteGoal` | DeleteGoalCommand |
-| UpdateMeasurement | POST | `/api/Goal/UpdateGoalCurrentValueMeasurement` | UpdateGoalCurrentValueMeasurementCommand |
-| GetDashboard | GET | `/api/Goal/GetGoalDashboardSummary` | GetGoalDashboardSummaryQuery |
-| GetEmployeeDashboard | GET | `/api/Goal/GetGoalDashboardEmployee` | GetGoalDashboardEmployeeQuery |
-| GetVisibility | GET | `/api/Goal/GetGoalVisibility` | GetGoalVisibilityQuery |
-| ValidateCreate | GET | `/api/Goal/ValidateCurrentEmployeeCanCreateGoal` | ValidateCurrentEmployeeCanCreateGoalQuery |
+| Action               | Method | Route                                            | Command/Query                             |
+| -------------------- | ------ | ------------------------------------------------ | ----------------------------------------- |
+| GetList              | POST   | `/api/Goal/GetGoalList`                          | GetGoalListQuery                          |
+| GetDetail            | GET    | `/api/Goal/GetGoalDetailById`                    | GetGoalDetailByIdQuery                    |
+| Save                 | POST   | `/api/Goal/SaveGoal`                             | SaveGoalCommand                           |
+| Delete               | DELETE | `/api/Goal/DeleteGoal`                           | DeleteGoalCommand                         |
+| UpdateMeasurement    | POST   | `/api/Goal/UpdateGoalCurrentValueMeasurement`    | UpdateGoalCurrentValueMeasurementCommand  |
+| GetDashboard         | GET    | `/api/Goal/GetGoalDashboardSummary`              | GetGoalDashboardSummaryQuery              |
+| GetEmployeeDashboard | GET    | `/api/Goal/GetGoalDashboardEmployee`             | GetGoalDashboardEmployeeQuery             |
+| GetVisibility        | GET    | `/api/Goal/GetGoalVisibility`                    | GetGoalVisibilityQuery                    |
+| ValidateCreate       | GET    | `/api/Goal/ValidateCurrentEmployeeCanCreateGoal` | ValidateCurrentEmployeeCanCreateGoalQuery |
 
 **Authorization**: All endpoints require `[PlatformAuthorize]` with JWT Bearer token.
 
@@ -2102,10 +2060,10 @@ protected initialFormConfig = (): PlatformFormConfig<GoalFormVm> => ({
 
 ### Message Bus Events
 
-| Event | Producer | Consumer | Purpose |
-|-------|----------|----------|---------|
-| GoalEntityEvent | Growth.Service | NotificationMessage.Service | Sync goal data for notifications |
-| EmployeeDeletedEvent | Accounts.Service | Growth.Service | Cascade delete goals when employee removed |
+| Event                | Producer         | Consumer                    | Purpose                                    |
+| -------------------- | ---------------- | --------------------------- | ------------------------------------------ |
+| GoalEntityEvent      | Growth.Service   | NotificationMessage.Service | Sync goal data for notifications           |
+| EmployeeDeletedEvent | Accounts.Service | Growth.Service              | Cascade delete goals when employee removed |
 
 ### Event Flow
 
@@ -2140,11 +2098,11 @@ Accounts.Service                         Growth.Service
 
 ### Event Handlers
 
-| Handler | Trigger | Action |
-|---------|---------|--------|
-| `SendEmailOnCUDGoalEntityEventHandler` | Goal CUD events | Sends email via NotificationMessage |
-| `DeleteGoalOnDeleteEmployeeEntityEventHandler` | Employee deleted | Deletes all goals owned by employee |
-| `CreateHistoryLogOnGoalChangedEventHandler` | Goal field changes | Creates audit log entry |
+| Handler                                        | Trigger            | Action                              |
+| ---------------------------------------------- | ------------------ | ----------------------------------- |
+| `SendEmailOnCUDGoalEntityEventHandler`         | Goal CUD events    | Sends email via NotificationMessage |
+| `DeleteGoalOnDeleteEmployeeEntityEventHandler` | Employee deleted   | Deletes all goals owned by employee |
+| `CreateHistoryLogOnGoalChangedEventHandler`    | Goal field changes | Creates audit log entry             |
 
 **Evidence**: `UseCaseEvents/GoalManagement/*.cs`
 
@@ -2170,16 +2128,16 @@ Accounts.Service                         Growth.Service
 
 ```json
 {
-  "title": "Reduce customer churn by 15%",
-  "goalType": "Smart",
-  "measurementType": "Percentage",
-  "startValue": 10,
-  "targetValue": 8.5,
-  "currentValue": 10,
-  "startDate": "2025-01-01",
-  "dueDate": "2025-12-31",
-  "visibility": "MeAndManager",
-  "ownerEmployeeIds": ["emp123"]
+    "title": "Reduce customer churn by 15%",
+    "goalType": "Smart",
+    "measurementType": "Percentage",
+    "startValue": 10,
+    "targetValue": 8.5,
+    "currentValue": 10,
+    "startDate": "2025-01-01",
+    "dueDate": "2025-12-31",
+    "visibility": "MeAndManager",
+    "ownerEmployeeIds": ["emp123"]
 }
 ```
 
@@ -2209,22 +2167,22 @@ Accounts.Service                         Growth.Service
 
 ```json
 {
-  "title": "Launch Product V2 Successfully",
-  "goalType": "Objective",
-  "keyResults": [
-    {
-      "title": "Achieve 10,000 sign-ups",
-      "measurementType": "Numeric",
-      "startValue": 0,
-      "targetValue": 10000
-    },
-    {
-      "title": "Reach 85% user satisfaction",
-      "measurementType": "Percentage",
-      "startValue": 70,
-      "targetValue": 85
-    }
-  ]
+    "title": "Launch Product V2 Successfully",
+    "goalType": "Objective",
+    "keyResults": [
+        {
+            "title": "Achieve 10,000 sign-ups",
+            "measurementType": "Numeric",
+            "startValue": 0,
+            "targetValue": 10000
+        },
+        {
+            "title": "Reach 85% user satisfaction",
+            "measurementType": "Percentage",
+            "startValue": 70,
+            "targetValue": 85
+        }
+    ]
 }
 ```
 
@@ -2252,13 +2210,13 @@ Accounts.Service                         Growth.Service
 
 **Test Scenarios**:
 
-| Visibility Type          | Owner   | Line Manager | Dept Colleague | Admin | Other |
-| ------------------------ | ------- | ------------ | -------------- | ----- | ----- |
-| Public                   | ✅ View | ✅ View      | ✅ View        | ✅    | ✅    |
-| OnlyMe                   | ✅ View | ❌ Hidden    | ❌ Hidden      | ✅    | ❌    |
-| MeAndManager             | ✅ View | ✅ View      | ❌ Hidden      | ✅    | ❌    |
-| SpecificPeople (User123) | ✅ View | ❌ Hidden    | ❌ Hidden      | ✅    | ✅\*  |
-| ThisOrgUnit              | ✅ View | ❌ Hidden    | ✅ View        | ✅    | ❌    |
+| Visibility Type          | Owner  | Line Manager | Dept Colleague | Admin | Other |
+| ------------------------ | ------ | ------------ | -------------- | ----- | ----- |
+| Public                   | ✅ View | ✅ View       | ✅ View         | ✅     | ✅     |
+| OnlyMe                   | ✅ View | ❌ Hidden     | ❌ Hidden       | ✅     | ❌     |
+| MeAndManager             | ✅ View | ✅ View       | ❌ Hidden       | ✅     | ❌     |
+| SpecificPeople (User123) | ✅ View | ❌ Hidden     | ❌ Hidden       | ✅     | ✅\*   |
+| ThisOrgUnit              | ✅ View | ❌ Hidden     | ✅ View         | ✅     | ❌     |
 
 \*Only if User123 is in SpecificPeople list
 
@@ -2511,9 +2469,9 @@ SaveGoalCommandHandler.HandleAsync()
 **Test Scenario**:
 
 1. Create 3 goals:
-   - Goal A: DueDate = Today + 3 days → ✅ Reminder sent
-   - Goal B: DueDate = Today + 10 days → ❌ No reminder (outside 7-day window)
-   - Goal C: DueDate = Yesterday → ❌ No reminder (overdue, different job handles)
+    - Goal A: DueDate = Today + 3 days → ✅ Reminder sent
+    - Goal B: DueDate = Today + 10 days → ❌ No reminder (outside 7-day window)
+    - Goal C: DueDate = Yesterday → ❌ No reminder (overdue, different job handles)
 2. Wait for cron job execution
 3. Verify emails sent only for Goal A
 
@@ -2543,10 +2501,10 @@ SaveGoalCommandHandler.HandleAsync()
 2. Clicks email link with query params
 3. Browser navigates to `/goals?goalViewType=MyGoals&statuses=Progressing&goalId=goal123`
 4. Frontend:
-   - Sets viewType filter to "MyGoals"
-   - Sets status filter to "Progressing"
-   - Loads goal list
-   - Opens goal detail panel for goal123
+    - Sets viewType filter to "MyGoals"
+    - Sets status filter to "Progressing"
+    - Loads goal list
+    - Opens goal detail panel for goal123
 5. User sees filtered list with goal detail panel open
 
 **Evidence**: `goal-management.store.ts:161-246` (setUpStoreFromQueryParams), `goal-management.component.ts:120-180` (ngOnInit query param parsing)
@@ -2632,19 +2590,17 @@ var (total, items, counts) = await (
 **Root Causes**:
 
 1. **Computed Property Not Recalculated**:
-
-   - `Progress` is a `[ComputedEntityProperty]` with empty setter
-   - Backend must recalculate on save
-   - **Fix**: Ensure `SaveGoalCommandHandler` calls `goal.RecalculateProgress()` before save
+    - `Progress` is a `[ComputedEntityProperty]` with empty setter
+    - Backend must recalculate on save
+    - **Fix**: Ensure `SaveGoalCommandHandler` calls `goal.RecalculateProgress()` before save
 
 2. **Validation Failure**:
-
-   - `CurrentValue > TargetValue` might fail validation for some MeasurementTypes
-   - **Fix**: Check `SaveGoalCommand.Validate()` logic for MeasurementType-specific rules
+    - `CurrentValue > TargetValue` might fail validation for some MeasurementTypes
+    - **Fix**: Check `SaveGoalCommand.Validate()` logic for MeasurementType-specific rules
 
 3. **Event Handler Failure**:
-   - `UpdateGoalCurrentValueMeasurementCommand` might silently fail
-   - **Fix**: Check logs for validation errors in `UpdateGoalCurrentValueMeasurementCommandHandler`
+    - `UpdateGoalCurrentValueMeasurementCommand` might silently fail
+    - **Fix**: Check logs for validation errors in `UpdateGoalCurrentValueMeasurementCommandHandler`
 
 **Debug Steps**:
 
@@ -2669,29 +2625,27 @@ Logger.LogInformation($"After save: CurrentValue={goal.CurrentValue}, Progress={
 **Root Causes**:
 
 1. **GoalEmployee Record Missing**:
-
-   - `goalEmployees` array doesn't contain Owner record for current user
-   - **Fix**: Verify `SaveGoalCommand` creates `GoalEmployee` with `Role=Owner`
+    - `goalEmployees` array doesn't contain Owner record for current user
+    - **Fix**: Verify `SaveGoalCommand` creates `GoalEmployee` with `Role=Owner`
 
 2. **Employee Context Mismatch**:
-
-   - `currentEmployee.id` doesn't match `goalEmployee.employeeId`
-   - Could be due to userId vs employeeId confusion
-   - **Fix**: Check `AppBaseComponent.currentEmployee` matches `goalEmployee.employeeId`
+    - `currentEmployee.id` doesn't match `goalEmployee.employeeId`
+    - Could be due to userId vs employeeId confusion
+    - **Fix**: Check `AppBaseComponent.currentEmployee` matches `goalEmployee.employeeId`
 
 3. **Admin Role Not Detected**:
-   - `isCompanyAdmin` computed property returns false
-   - **Fix**: Verify `hasRole(PlatformRoles.Admin)` in component
+    - `isCompanyAdmin` computed property returns false
+    - **Fix**: Verify `hasRole(PlatformRoles.Admin)` in component
 
 **Debug Steps**:
 
 ```typescript
 // Add logging in UpsertGoalFormComponent.calculatePermissions()
-console.log("Current Employee ID:", this.currentEmployee.id);
-console.log("Goal Employees:", this.goal?.goalEmployees);
-console.log("Is Owner:", isOwner);
-console.log("Is Admin:", this.isCompanyAdmin);
-console.log("Calculated Permissions:", this.permissions);
+console.log('Current Employee ID:', this.currentEmployee.id);
+console.log('Goal Employees:', this.goal?.goalEmployees);
+console.log('Is Owner:', isOwner);
+console.log('Is Admin:', this.isCompanyAdmin);
+console.log('Calculated Permissions:', this.permissions);
 ```
 
 **Evidence**: `GoalPermission.ts:150-220`, `upsert-goal-form.component.ts:620-700`
@@ -2708,19 +2662,17 @@ console.log("Calculated Permissions:", this.permissions);
 **Root Causes**:
 
 1. **Event Handler Filter**:
-
-   - `SendEmailOnCUDGoalEntityEventHandler.HandleWhen()` returns false
-   - Check if `@event.RequestContext.IsSeedingTestingData()` returns true (suppresses emails in test environments)
-   - **Fix**: Verify environment is not in seeding mode
+    - `SendEmailOnCUDGoalEntityEventHandler.HandleWhen()` returns false
+    - Check if `@event.RequestContext.IsSeedingTestingData()` returns true (suppresses emails in test environments)
+    - **Fix**: Verify environment is not in seeding mode
 
 2. **Email Template Missing**:
-
-   - Email template for goal notifications not configured
-   - **Fix**: Check `NotificationMessage` service has template for `GoalNotificationEmail`
+    - Email template for goal notifications not configured
+    - **Fix**: Check `NotificationMessage` service has template for `GoalNotificationEmail`
 
 3. **Recipient List Empty**:
-   - `goalEmployees` array is empty or all employees have opted out of notifications
-   - **Fix**: Verify `goal.GoalEmployees` contains Owner + Watchers + Approvers
+    - `goalEmployees` array is empty or all employees have opted out of notifications
+    - **Fix**: Verify `goal.GoalEmployees` contains Owner + Watchers + Approvers
 
 **Debug Steps**:
 
@@ -2745,37 +2697,30 @@ Logger.LogInformation($"Template: {templateName}");
 **Root Causes**:
 
 1. **Query Param Parsing Failure**:
-
-   - `ActivatedRoute.queryParams` not subscribed in `ngOnInit`
-   - **Fix**: Ensure `goal-management.component.ts` subscribes to `queryParams`
+    - `ActivatedRoute.queryParams` not subscribed in `ngOnInit`
+    - **Fix**: Ensure `goal-management.component.ts` subscribes to `queryParams`
 
 2. **Store Not Updated**:
-
-   - `setUpStoreFromQueryParams()` not called or returns early
-   - **Fix**: Check if `isCurrentUserLineManager` is correctly passed
+    - `setUpStoreFromQueryParams()` not called or returns early
+    - **Fix**: Check if `isCurrentUserLineManager` is correctly passed
 
 3. **Type Conversion Issue**:
-   - `statuses` query param is string but needs `GoalStatuses[]` conversion
-   - **Fix**: Verify `queryParams.statuses.split(',').map(s => s.trim() as GoalStatuses)`
+    - `statuses` query param is string but needs `GoalStatuses[]` conversion
+    - **Fix**: Verify `queryParams.statuses.split(',').map(s => s.trim() as GoalStatuses)`
 
 **Debug Steps**:
 
 ```typescript
 // Add logging in GoalManagementComponent.ngOnInit()
-this.activatedRoute.queryParams
-  .pipe(this.untilDestroyed())
-  .subscribe((params) => {
-    console.log("Query Params:", params);
+this.activatedRoute.queryParams.pipe(this.untilDestroyed()).subscribe(params => {
+    console.log('Query Params:', params);
     this.store.setUpStoreFromQueryParams({
-      goalViewType: params["goalViewType"],
-      statuses: params["statuses"],
-      // ... other params
+        goalViewType: params['goalViewType'],
+        statuses: params['statuses']
+        // ... other params
     });
-    console.log(
-      "Store Query After Setup:",
-      this.store.currentState().pagedQuery
-    );
-  });
+    console.log('Store Query After Setup:', this.store.currentState().pagedQuery);
+});
 ```
 
 **Evidence**: `goal-management.store.ts:161-246`, `goal-management.component.ts:120-180`
@@ -2792,26 +2737,24 @@ this.activatedRoute.queryParams
 **Root Causes**:
 
 1. **FormArray Value Not Extracted**:
-
-   - `currentVm().keyResults` is empty when building `SaveGoalCommand`
-   - **Fix**: Ensure `formControls('keyResults')?.value` is correctly mapped to DTO
+    - `currentVm().keyResults` is empty when building `SaveGoalCommand`
+    - **Fix**: Ensure `formControls('keyResults')?.value` is correctly mapped to DTO
 
 2. **Backend Validation Failure**:
-
-   - KeyResults fail validation (e.g., missing Title or TargetValue)
-   - **Fix**: Check `SaveGoalCommand.Validate()` for KeyResult validation rules
+    - KeyResults fail validation (e.g., missing Title or TargetValue)
+    - **Fix**: Check `SaveGoalCommand.Validate()` for KeyResult validation rules
 
 3. **Transaction Rollback**:
-   - Objective saves but KeyResults throw exception → entire transaction rolls back
-   - **Fix**: Check logs for exceptions during `repository.CreateManyAsync(keyResults)`
+    - Objective saves but KeyResults throw exception → entire transaction rolls back
+    - **Fix**: Check logs for exceptions during `repository.CreateManyAsync(keyResults)`
 
 **Debug Steps**:
 
 ```typescript
 // Add logging in UpsertGoalFormComponent.onSubmit()
-const keyResults = this.formControls("keyResults")?.value;
-console.log("KeyResults FormArray Value:", keyResults);
-console.log("Command KeyResults:", command.data.keyResults);
+const keyResults = this.formControls('keyResults')?.value;
+console.log('KeyResults FormArray Value:', keyResults);
+console.log('Command KeyResults:', command.data.keyResults);
 ```
 
 ```csharp
@@ -2839,18 +2782,16 @@ foreach (var kr in request.Data.KeyResults)
 **Root Causes**:
 
 1. **Missing Database Index**:
-
-   - MongoDB query scans entire collection
-   - **Fix**: Ensure indexes exist on: `CompanyId`, `ProductScope`, `DueDate`, `Status`, `IsDeleted`
+    - MongoDB query scans entire collection
+    - **Fix**: Ensure indexes exist on: `CompanyId`, `ProductScope`, `DueDate`, `Status`, `IsDeleted`
 
 2. **N+1 Query Problem**:
-
-   - Repository doesn't eager-load related entities
-   - **Fix**: Use `loadRelatedEntities: g => g.GoalEmployees, g => g.Parent` in query
+    - Repository doesn't eager-load related entities
+    - **Fix**: Use `loadRelatedEntities: g => g.GoalEmployees, g => g.Parent` in query
 
 3. **Full-Text Search Without Index**:
-   - Search query scans all documents
-   - **Fix**: Create MongoDB text index on `Title`, `Description`, `FullTextSearch` fields
+    - Search query scans all documents
+    - **Fix**: Create MongoDB text index on `Title`, `Description`, `FullTextSearch` fields
 
 **Optimization Steps**:
 
@@ -2886,18 +2827,16 @@ await collection.Indexes.CreateOneAsync(
 **Root Causes**:
 
 1. **Sequential Queries**:
-
-   - Stats calculated one by one instead of parallel
-   - **Fix**: Use tuple await pattern: `var (total, progressing, behind) = await (...)`
+    - Stats calculated one by one instead of parallel
+    - **Fix**: Use tuple await pattern: `var (total, progressing, behind) = await (...)`
 
 2. **Aggregation Without Index**:
-
-   - `GroupBy(g => g.Status)` scans all documents
-   - **Fix**: Create compound index on `CompanyId + Status + IsDeleted`
+    - `GroupBy(g => g.Status)` scans all documents
+    - **Fix**: Create compound index on `CompanyId + Status + IsDeleted`
 
 3. **Large Result Set**:
-   - Aggregation includes soft-deleted goals
-   - **Fix**: Add `Where(g => !g.IsDeleted)` before aggregation
+    - Aggregation includes soft-deleted goals
+    - **Fix**: Add `Where(g => !g.IsDeleted)` before aggregation
 
 **Optimization**:
 
@@ -2924,17 +2863,17 @@ var (total, statusCounts) = await (
 ### EasyPlatform Platform Documentation
 
 - **[CLAUDE.md](../../CLAUDE.md)** - Complete platform development guide
-  - Backend patterns: CQRS, Clean Architecture, Repository patterns
-  - Frontend patterns: PlatformComponent, PlatformVmStore, forms
-  - Event-driven architecture: Entity events, message bus
+    - Backend patterns: CQRS, Clean Architecture, Repository patterns
+    - Frontend patterns: PlatformComponent, PlatformVmStore, forms
+    - Event-driven architecture: Entity events, message bus
 - **[Architecture Overview](../architecture-overview.md)** - System architecture & diagrams
-  - Project structure overview
-  - Technology stack details
-  - Cross-service communication patterns
+    - Project structure overview
+    - Technology stack details
+    - Cross-service communication patterns
 - **[CLEAN-CODE-RULES.md](../../CLEAN-CODE-RULES.md)** - Coding standards and anti-patterns
-  - Code organization and flow patterns
-  - Validation method naming conventions
-  - DTO mapping responsibility rules
+    - Code organization and flow patterns
+    - Validation method naming conventions
+    - DTO mapping responsibility rules
 
 ### Design System Documentation
 
@@ -2952,17 +2891,17 @@ var (total, statusCounts) = await (
 ### Related Feature Documentation
 
 - **[Performance Review Feature](./README.PerformanceReviewFeature.md)** _(if exists)_
-  - Goal → Performance Review integration patterns
-  - GoalPerformanceReviewParticipant usage
+    - Goal → Performance Review integration patterns
+    - GoalPerformanceReviewParticipant usage
 - **[Check-In Feature](./README.CheckInFeature.md)** _(if exists)_
-  - Goal → Check-In integration patterns
-  - GoalCheckIn entity usage
+    - Goal → Check-In integration patterns
+    - GoalCheckIn entity usage
 - **[Employee Management Feature](./README.EmployeeManagementFeature.md)** _(if exists)_
-  - Employee entity relationships
-  - Line manager permissions
+    - Employee entity relationships
+    - Line manager permissions
 - **[Notification Feature](./README.NotificationFeature.md)** _(if exists)_
-  - Email template configuration
-  - Notification preferences
+    - Email template configuration
+    - Notification preferences
 
 ### API Documentation
 
@@ -2976,7 +2915,7 @@ var (total, statusCounts) = await (
 #### Backend (.NET 9)
 
 ```
-src/PlatformExampleApp/TextSnippet/
+src/Backend/TextSnippet/
 ├── Growth.Domain/Entities/GoalManagement/
 │   ├── Goal.cs                              # Main entity
 │   ├── GoalEmployee.cs                      # Many-to-many join
@@ -3004,7 +2943,7 @@ src/PlatformExampleApp/TextSnippet/
 #### Frontend (Angular 19)
 
 ```
-src/PlatformExampleAppWeb/libs/apps-domains/src/goal/
+src/Frontend/libs/apps-domains/src/goal/
 ├── domain-models/
 │   ├── goal.model.ts                        # TypeScript entity model
 │   ├── goal.enum.ts                         # Enums (6 enumerations)
@@ -3061,7 +3000,7 @@ src/PlatformExampleAppWeb/libs/apps-domains/src/goal/
 
 ### Testing Resources
 
-- **Unit Tests**: `src/PlatformExampleApp/TextSnippet/Growth.Application.Tests/`
+- **Unit Tests**: `src/Backend/TextSnippet/Growth.Application.Tests/`
 - **Integration Tests**: `src/AutomationTest/TextSnippet/`
 - **E2E Tests**: `src/AutomationTest/WebV2/goals/`
 
@@ -3076,10 +3015,10 @@ src/PlatformExampleAppWeb/libs/apps-domains/src/goal/
 
 ## Version History
 
-| Version | Date       | Changes                                                    |
-| ------- | ---------- | ---------------------------------------------------------- |
+| Version | Date       | Changes                                                                                                                                 |
+| ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | 2.0.0   | 2026-01-08 | Added Business Requirements, Design Reference, Backend Controllers, Cross-Service Integration sections; standardized to template format |
-| 1.0.0   | 2025-12-23 | Initial documentation with 36 source file analysis         |
+| 1.0.0   | 2025-12-23 | Initial documentation with 36 source file analysis                                                                                      |
 
 ---
 

@@ -7,6 +7,7 @@
 ## Overview
 
 Integration tests verify the interaction between multiple components:
+
 - Frontend ↔ Backend API
 - Command ↔ Event Handler
 - Producer ↔ Consumer (Message Bus)
@@ -23,11 +24,13 @@ Integration tests verify the interaction between multiple components:
 **Description**: Complete lifecycle of a text snippet from creation to deletion.
 
 **Modules Involved**:
+
 - TextSnippet API
 - Entity Events
 - Message Bus
 
 **Test Steps**:
+
 ```gherkin
 Given the system is running with RabbitMQ connected
   And I am an authenticated user
@@ -58,6 +61,7 @@ Then the snippet should be removed from database
 ```
 
 **Verification Points**:
+
 - [ ] Database record created/updated/deleted
 - [ ] Message bus events published
 - [ ] Consumers process events successfully
@@ -72,6 +76,7 @@ Then the snippet should be removed from database
 **Description**: Category management with associated snippets.
 
 **Test Steps**:
+
 ```gherkin
 Given I am an authenticated user
 
@@ -98,6 +103,7 @@ Then snippets should reflect the new category name
 **Description**: Manual background job scheduling and execution.
 
 **Test Steps**:
+
 ```gherkin
 Given the background job infrastructure is running
 
@@ -116,6 +122,7 @@ Then the job should be queued in Hangfire
 **Description**: Verify message bus producer-consumer flow.
 
 **Test Steps**:
+
 ```gherkin
 Given RabbitMQ is running
   And consumers are registered and listening
@@ -127,6 +134,7 @@ Then TextSnippetEntityEventBusMessageProducer should publish message
 ```
 
 **Verification Points**:
+
 - [ ] Message appears in RabbitMQ queue
 - [ ] Consumer acknowledges message
 - [ ] No dead-letter messages
@@ -140,6 +148,7 @@ Then TextSnippetEntityEventBusMessageProducer should publish message
 **Description**: Verify multi-database functionality.
 
 **Test Steps**:
+
 ```gherkin
 Given SQL Server, MongoDB, and PostgreSQL are running
 
@@ -158,6 +167,7 @@ Then data should be written to primary database
 **Target**: < 500ms for 10,000 snippets
 
 **Test Steps**:
+
 ```gherkin
 Given 10,000 snippets exist in database
 When I perform full-text search
@@ -171,6 +181,7 @@ Then results should return within 500ms
 **Target**: < 5s for 1,000 inserts
 
 **Test Steps**:
+
 ```gherkin
 When I create 1,000 snippets via bulk API
 Then all records should be saved within 5 seconds
@@ -182,11 +193,13 @@ Then all records should be saved within 5 seconds
 ## Test Environment Requirements
 
 ### Infrastructure
+
 - Docker containers running (SQL Server, MongoDB, PostgreSQL, RabbitMQ, Redis)
 - API service running on localhost:5000
 - Frontend running on localhost:4200
 
 ### Commands
+
 ```bash
 # Start infrastructure
 docker-compose -f src/platform-example-app.docker-compose.yml up -d
@@ -195,7 +208,7 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
 dotnet test --filter "Category=Integration"
 
 # Run E2E tests
-cd src/PlatformExampleAppWeb
+cd src/Frontend
 nx e2e playground-text-snippet-e2e
 ```
 

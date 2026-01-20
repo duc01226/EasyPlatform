@@ -33,22 +33,22 @@ Before removing/changing ANY code:
 ### Investigation Steps
 
 1. **Context Discovery**
-   - Extract domain concepts from requirements
-   - Do semantic search to find related entities and components
-   - Do grep search to validate patterns and find evidence
-   - List code usages to map complete ecosystems
-   - Never assume - always verify with code evidence
+    - Extract domain concepts from requirements
+    - Do semantic search to find related entities and components
+    - Do grep search to validate patterns and find evidence
+    - List code usages to map complete ecosystems
+    - Never assume - always verify with code evidence
 
 2. **Service Boundary Verification**
-   - Identify which microservice owns the domain concept
-   - Verify service responsibilities through actual code analysis
-   - Check for existing implementations before creating new ones
+    - Identify which microservice owns the domain concept
+    - Verify service responsibilities through actual code analysis
+    - Check for existing implementations before creating new ones
 
 3. **Platform Pattern Recognition**
-   - Check CLAUDE.md for pattern guidance
-   - Use established platform patterns over custom solutions
-   - Follow Easy.Platform framework conventions
-   - Verify base class APIs before using component methods
+    - Check CLAUDE.md for pattern guidance
+    - Use established platform patterns over custom solutions
+    - Follow Easy.Platform framework conventions
+    - Verify base class APIs before using component methods
 
 ### Filesystem Verification Protocol
 
@@ -79,13 +79,14 @@ grep -B5 -A5 "saveDeltas\|saveCandidates\|writeFileSync" *.cjs
 ```
 
 **Fix Pattern:**
+
 ```javascript
 function modifySharedState(input) {
-  return withLock(() => {
-    const data = loadData();
-    // modify data
-    saveData(data);
-  });
+    return withLock(() => {
+        const data = loadData();
+        // modify data
+        saveData(data);
+    });
 }
 ```
 
@@ -120,7 +121,7 @@ dotnet build EasyPlatform.sln
 
 ```bash
 # Clear cache and reinstall
-cd src/PlatformExampleAppWeb
+cd src/Frontend
 rm -rf node_modules
 npm cache clean --force
 npm install

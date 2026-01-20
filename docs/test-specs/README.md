@@ -18,28 +18,28 @@ This documentation provides systematic test specifications for QA Engineers, Tes
 
 ## Priority Classification
 
-| Priority | Level | Description | Examples |
-|----------|-------|-------------|----------|
-| **P0** | Critical | Security, authentication, data integrity | Login, password security, data isolation |
-| **P1** | High | Core business workflows | Create snippet, save data, search |
-| **P2** | Medium | Secondary features | Filters, sorting, notifications |
-| **P3** | Low | UI enhancements, non-essential | Tooltips, preferences |
+| Priority | Level    | Description                              | Examples                                 |
+| -------- | -------- | ---------------------------------------- | ---------------------------------------- |
+| **P0**   | Critical | Security, authentication, data integrity | Login, password security, data isolation |
+| **P1**   | High     | Core business workflows                  | Create snippet, save data, search        |
+| **P2**   | Medium   | Secondary features                       | Filters, sorting, notifications          |
+| **P3**   | Low      | UI enhancements, non-essential           | Tooltips, preferences                    |
 
 ---
 
 ## Quick Links
 
-| Document | Purpose |
-|----------|---------|
-| **[Priority Index](./PRIORITY-INDEX.md)** | All tests organized by priority (P0-P3) |
-| **[Integration Tests](./INTEGRATION-TESTS.md)** | Cross-module end-to-end test scenarios |
+| Document                                        | Purpose                                 |
+| ----------------------------------------------- | --------------------------------------- |
+| **[Priority Index](./PRIORITY-INDEX.md)**       | All tests organized by priority (P0-P3) |
+| **[Integration Tests](./INTEGRATION-TESTS.md)** | Cross-module end-to-end test scenarios  |
 
 ---
 
 ## Module Test Specifications
 
-| Module | Description | Test Specs | Priority Focus |
-|--------|-------------|------------|----------------|
+| Module                                     | Description               | Test Specs               | Priority Focus      |
+| ------------------------------------------ | ------------------------- | ------------------------ | ------------------- |
 | **[TextSnippet](./TextSnippet/README.md)** | Snippet & Task Management | CRUD, Search, Categories | P1: Core operations |
 
 ---
@@ -57,27 +57,29 @@ Examples:
 
 ### Module Codes
 
-| Code | Module |
-|------|--------|
-| SNP | TextSnippet |
-| TSK | TaskItem |
-| CAT | Category |
-| JOB | BackgroundJob |
-| MSG | MessageBus |
+| Code | Module        |
+| ---- | ------------- |
+| SNP  | TextSnippet   |
+| TSK  | TaskItem      |
+| CAT  | Category      |
+| JOB  | BackgroundJob |
+| MSG  | MessageBus    |
 
 ---
 
 ## Test Specification Format
 
-```markdown
+````markdown
 #### TC-[MODULE]-[FEATURE]-[NUM]: [Test Case Name]
 
 **Priority**: P0-Critical | P1-High | P2-Medium | P3-Low
 
 **Preconditions**:
+
 - [Setup requirements]
 
 **Test Steps** (Given-When-Then):
+
 ```gherkin
 Given [initial context/state]
   And [additional context if needed]
@@ -86,23 +88,28 @@ When [action performed]
 Then [expected outcome]
   And [additional verification]
 ```
+````
 
 **Acceptance Criteria**:
+
 - ✅ [Expected success behavior]
 - ❌ [Expected failure behavior]
 
 **Code Evidence**:
-- Backend: `src/PlatformExampleApp/.../Command.cs:45-80`
-- Frontend: `src/PlatformExampleAppWeb/.../component.ts:120-150`
+
+- Backend: `src/Backend/.../Command.cs:45-80`
+- Frontend: `src/Frontend/.../component.ts:120-150`
 
 **Test Data**:
+
 ```json
 {
-  "snippetText": "Sample text",
-  "categoryId": "cat-001"
+    "snippetText": "Sample text",
+    "categoryId": "cat-001"
 }
 ```
-```
+
+````
 
 ---
 
@@ -110,30 +117,32 @@ Then [expected outcome]
 
 ### Backend Unit Tests
 ```bash
-dotnet test src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Application.Tests
-```
+dotnet test src/Backend/PlatformExampleApp.TextSnippet.Application.Tests
+````
 
 ### Frontend Unit Tests
+
 ```bash
-cd src/PlatformExampleAppWeb
+cd src/Frontend
 nx test platform-core
 nx test playground-text-snippet
 ```
 
 ### Integration Tests
+
 ```bash
-dotnet test src/PlatformExampleApp/PlatformExampleApp.IntegrationTests
+dotnet test src/Backend/PlatformExampleApp.IntegrationTests
 ```
 
 ---
 
 ## Test Coverage Goals
 
-| Category | Target | Current |
-|----------|--------|---------|
-| Unit Tests | 80% | - |
-| Integration Tests | 60% | - |
-| E2E Tests | 40% | - |
+| Category          | Target | Current |
+| ----------------- | ------ | ------- |
+| Unit Tests        | 80%    | -       |
+| Integration Tests | 60%    | -       |
+| E2E Tests         | 40%    | -       |
 
 ---
 

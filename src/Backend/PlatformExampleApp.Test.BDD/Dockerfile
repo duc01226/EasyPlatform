@@ -32,11 +32,11 @@ RUN dotnet restore ./Platform/Easy.Platform.RedisCache/Easy.Platform.RedisCache.
 RUN dotnet restore ./Platform/Easy.Platform.AzureFileStorage/Easy.Platform.AzureFileStorage.csproj
 RUN dotnet restore ./Platform/Easy.Platform.AutomationTest/Easy.Platform.AutomationTest.csproj
 
-COPY PlatformExampleApp/PlatformExampleApp.Test.Shared/PlatformExampleApp.Test.Shared.csproj PlatformExampleApp/PlatformExampleApp.Test.Shared/
-COPY PlatformExampleApp/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj PlatformExampleApp/PlatformExampleApp.Test.BDD/
-RUN dotnet restore ./PlatformExampleApp/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj
+COPY Backend/PlatformExampleApp.Test.Shared/PlatformExampleApp.Test.Shared.csproj Backend/PlatformExampleApp.Test.Shared/
+COPY Backend/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj Backend/PlaBackend/t.BDD/
+RUN dotnet restore ./Backend/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj
 
 COPY Platform Platform
-COPY PlatformExampleApp/PlatformExampleApp.Test.Shared PlatformExampleApp/PlatformExampleApp.Test.Shared
-COPY PlatformExampleApp/PlatformExampleApp.Test.BDD PlatformExampleApp/PlatformExampleApp.Test.BDD
-ENTRYPOINT ["/bin/sh", "-c" , "dotnet test /app/PlatformExampleApp/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj --no-restore"]
+COPY Backend/PlatformExampleApp.Test.Shared Backend/PlaBackend/t.Shared
+COPY Backend/PlatformExampleApp.Test.BDD Backend/PlaBackend/t.BDD
+ENTRYPOINT ["/bin/sh", "-c" , "dotnet test /app/Backend/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj --no-restore"]

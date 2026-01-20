@@ -69,18 +69,16 @@ team-artifacts/test-specs/{YYMMDD}-testspec-{feature}.md
 TC-{MOD}-{NNN}
 
 Examples:
-TC-TAL-001  # bravoTALENTS functional test
-TC-GRO-101  # bravoGROWTH integration test
+TC-TXT-001  # TextSnippet functional test
+TC-EXP-101  # ExampleApp integration test
 TC-ACC-201  # Accounts edge case
 ```
 
 ### Module Codes
 | Module | Code |
 |--------|------|
-| bravoTALENTS | TAL |
-| bravoGROWTH | GRO |
-| bravoSURVEYS | SUR |
-| bravoINSIGHTS | INS |
+| TextSnippet | TXT |
+| ExampleApp | EXP |
 | Accounts | ACC |
 | Common | COM |
 

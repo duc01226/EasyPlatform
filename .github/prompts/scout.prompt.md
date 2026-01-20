@@ -20,6 +20,7 @@ Search the codebase for files needed to complete the task using fast, token-effi
 ### Step 1: Parse Search Request
 
 Extract from USER_PROMPT:
+
 - **Keywords**: Entity names, feature names, patterns
 - **Intent**: CRUD, investigation, debugging, implementation
 - **Scope**: Backend, Frontend, Cross-service, Full-stack
@@ -27,6 +28,7 @@ Extract from USER_PROMPT:
 ### Step 2: Generate Search Patterns
 
 **HIGH PRIORITY (Always Search):**
+
 ```
 # Domain Entities
 **/Domain/Entities/**/*{keyword}*.cs
@@ -53,6 +55,7 @@ Extract from USER_PROMPT:
 ```
 
 **MEDIUM PRIORITY:**
+
 ```
 # Services & Helpers
 **/*{keyword}*Service.cs
@@ -69,6 +72,7 @@ Extract from USER_PROMPT:
 ```
 
 **LOW PRIORITY:**
+
 ```
 # Tests & Config
 **/*{keyword}*.spec.ts
@@ -84,11 +88,11 @@ Extract from USER_PROMPT:
 
 Split directories intelligently for SCALE agents:
 
-| Agent | Focus Area | Directories |
-|-------|------------|-------------|
-| 1 | Backend Core | `src/PlatformExampleApp/*/Domain/`, `*/Application/UseCaseCommands/`, `*/Application/UseCaseQueries/` |
-| 2 | Backend Events/Jobs | `*/Application/UseCaseEvents/`, `*BackgroundJob*`, `*Consumer*`, `Controllers/` |
-| 3 | Frontend | `src/PlatformExampleAppWeb/`, `libs/apps-domains/`, `libs/platform-core/` |
+| Agent | Focus Area          | Directories                                                                                |
+| ----- | ------------------- | ------------------------------------------------------------------------------------------ |
+| 1     | Backend Core        | `src/Backend/*/Domain/`, `*/Application/UseCaseCommands/`, `*/Application/UseCaseQueries/` |
+| 2     | Backend Events/Jobs | `*/Application/UseCaseEvents/`, `*BackgroundJob*`, `*Consumer*`, `Controllers/`            |
+| 3     | Frontend            | `src/Frontend/`, `libs/apps-domains/`, `libs/platform-core/`                               |
 
 ### Step 2: Launch Agents
 
@@ -103,6 +107,7 @@ For each agent:
 ```
 
 **Agent Prompt Template:**
+
 ```
 Search [directories] for files related to "[USER_PROMPT]".
 Patterns: [relevant patterns for this agent's focus]
@@ -128,6 +133,7 @@ Organize files into structured output:
 ## Scout Results: [USER_PROMPT]
 
 ### Summary
+
 - **Total Files Found**: X
 - **Agents Completed**: X/SCALE
 - **Coverage Gaps**: [list any timed-out agent areas]
@@ -137,67 +143,78 @@ Organize files into structured output:
 ### HIGH PRIORITY (Analyze First)
 
 #### Domain Entities
-| # | File | Purpose |
-|---|------|---------|
-| 1 | `path/Entity.cs` | Core domain entity |
+
+| #   | File             | Purpose            |
+| --- | ---------------- | ------------------ |
+| 1   | `path/Entity.cs` | Core domain entity |
 
 #### Commands & Handlers
-| # | File | Purpose |
-|---|------|---------|
-| 1 | `path/SaveEntityCommand.cs` | Create/Update logic |
+
+| #   | File                        | Purpose             |
+| --- | --------------------------- | ------------------- |
+| 1   | `path/SaveEntityCommand.cs` | Create/Update logic |
 
 #### Queries
-| # | File | Purpose |
-|---|------|---------|
-| 1 | `path/GetEntityListQuery.cs` | List retrieval |
+
+| #   | File                         | Purpose        |
+| --- | ---------------------------- | -------------- |
+| 1   | `path/GetEntityListQuery.cs` | List retrieval |
 
 #### Event Handlers
-| # | File | Purpose |
-|---|------|---------|
-| 1 | `path/EntityEventHandler.cs` | Side effect handling |
+
+| #   | File                         | Purpose              |
+| --- | ---------------------------- | -------------------- |
+| 1   | `path/EntityEventHandler.cs` | Side effect handling |
 
 #### Consumers (Cross-Service)
-| # | File | Message Type | Source Service |
-|---|------|--------------|----------------|
-| 1 | `path/EntityConsumer.cs` | `EntityBusMessage` | [grep for producer] |
+
+| #   | File                     | Message Type       | Source Service      |
+| --- | ------------------------ | ------------------ | ------------------- |
+| 1   | `path/EntityConsumer.cs` | `EntityBusMessage` | [grep for producer] |
 
 #### Controllers
-| # | File | Purpose |
-|---|------|---------|
-| 1 | `path/EntityController.cs` | API endpoints |
+
+| #   | File                       | Purpose       |
+| --- | -------------------------- | ------------- |
+| 1   | `path/EntityController.cs` | API endpoints |
 
 #### Background Jobs
-| # | File | Purpose |
-|---|------|---------|
-| 1 | `path/EntityBackgroundJob.cs` | Scheduled processing |
+
+| #   | File                          | Purpose              |
+| --- | ----------------------------- | -------------------- |
+| 1   | `path/EntityBackgroundJob.cs` | Scheduled processing |
 
 ---
 
 ### MEDIUM PRIORITY
 
 #### Services & Helpers
-| # | File | Purpose |
-|---|------|---------|
-| 1 | `path/EntityService.cs` | Business logic |
+
+| #   | File                    | Purpose        |
+| --- | ----------------------- | -------------- |
+| 1   | `path/EntityService.cs` | Business logic |
 
 #### Frontend Components
-| # | File | Purpose |
-|---|------|---------|
-| 1 | `path/entity-list.component.ts` | UI component |
+
+| #   | File                            | Purpose      |
+| --- | ------------------------------- | ------------ |
+| 1   | `path/entity-list.component.ts` | UI component |
 
 #### API Services
-| # | File | Purpose |
-|---|------|---------|
-| 1 | `path/entity-api.service.ts` | HTTP client |
+
+| #   | File                         | Purpose     |
+| --- | ---------------------------- | ----------- |
+| 1   | `path/entity-api.service.ts` | HTTP client |
 
 ---
 
 ### LOW PRIORITY
 
 #### Tests & Config
-| # | File | Purpose |
-|---|------|---------|
-| 1 | `path/EntityTest.cs` | Unit tests |
+
+| #   | File                 | Purpose    |
+| --- | -------------------- | ---------- |
+| 1   | `path/EntityTest.cs` | Unit tests |
 
 ---
 
@@ -210,8 +227,8 @@ Organize files into structured output:
 ### Cross-Service Integration (if applicable)
 
 | Source Service | Message | Target Service | Consumer File |
-|----------------|---------|----------------|---------------|
-| ... | ... | ... | ... |
+| -------------- | ------- | -------------- | ------------- |
+| ...            | ...     | ...            | ...           |
 
 ### Unresolved Questions
 
@@ -225,12 +242,14 @@ Organize files into structured output:
 **When followed by `/investigate`:**
 
 Your numbered file list becomes the analysis target. The Investigate command will:
+
 1. **Use your HIGH PRIORITY files** as primary analysis targets
 2. **Reference your file numbers** (e.g., "File #3 from Scout")
 3. **Skip redundant discovery** - trusts your search results
 4. **Follow your Suggested Starting Points** for analysis order
 
 **Ensure your output includes:**
+
 - ✅ Numbered files in priority tables
 - ✅ Clear "Suggested Starting Points" section
 - ✅ Cross-Service Integration table (for message bus flows)
@@ -244,9 +263,9 @@ Your numbered file list becomes the analysis target. The Investigate command wil
 
 1. Identify the `*BusMessage` type being consumed
 2. Run additional grep across ALL services:
-   ```
-   grep -r "BusMessage" --include="*.cs" src/
-   ```
+    ```
+    grep -r "BusMessage" --include="*.cs" src/
+    ```
 3. Find files that **produce/publish** the message
 4. Document in Cross-Service Integration table
 
@@ -254,24 +273,24 @@ Your numbered file list becomes the analysis target. The Investigate command wil
 
 ## Quality Standards
 
-| Metric | Target |
-|--------|--------|
-| Speed | < 5 minutes total |
-| Coverage | All relevant directories searched |
-| Accuracy | Only directly relevant files |
-| Structure | Organized by priority category |
-| Actionable | Clear starting points |
+| Metric     | Target                            |
+| ---------- | --------------------------------- |
+| Speed      | < 5 minutes total                 |
+| Coverage   | All relevant directories searched |
+| Accuracy   | Only directly relevant files      |
+| Structure  | Organized by priority category    |
+| Actionable | Clear starting points             |
 
 ---
 
 ## Error Handling
 
-| Scenario | Action |
-|----------|--------|
-| Agent timeout | Skip, note gap, continue |
-| All agents timeout | Manual fallback with Glob/Grep |
-| Sparse results | Expand patterns, try synonyms |
-| Overwhelming results | Filter to HIGH PRIORITY only |
+| Scenario             | Action                         |
+| -------------------- | ------------------------------ |
+| Agent timeout        | Skip, note gap, continue       |
+| All agents timeout   | Manual fallback with Glob/Grep |
+| Sparse results       | Expand patterns, try synonyms  |
+| Overwhelming results | Filter to HIGH PRIORITY only   |
 
 ---
 

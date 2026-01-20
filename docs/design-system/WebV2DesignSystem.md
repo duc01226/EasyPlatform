@@ -5,16 +5,17 @@
 
 ## Summary
 
-| Aspect | Value |
-|--------|-------|
-| **Target Apps** | `src/PlatformExampleAppWeb/apps/*`, `src/PlatformExampleAppWeb/libs/*` |
-| **Framework** | Angular 19, Standalone Components |
-| **SCSS Import** | `@use 'shared-mixin' as *;` |
-| **BEM Pattern** | `.block__element.--modifier` (modifier as separate class) |
-| **CSS Variables** | `--bg-pri-cl`, `--text-pri-cl`, `--bd-pri-cl`, `--primary-cl` |
-| **Key Mixins** | `flex()`, `flex-col()`, `flex-row()`, `text-base()`, `text-ellipsis()` |
+| Aspect            | Value                                                                  |
+| ----------------- | ---------------------------------------------------------------------- |
+| **Target Apps**   | `src/Frontend/apps/*`, `src/Frontend/libs/*`                           |
+| **Framework**     | Angular 19, Standalone Components                                      |
+| **SCSS Import**   | `@use 'shared-mixin' as *;`                                            |
+| **BEM Pattern**   | `.block__element.--modifier` (modifier as separate class)              |
+| **CSS Variables** | `--bg-pri-cl`, `--text-pri-cl`, `--bd-pri-cl`, `--primary-cl`          |
+| **Key Mixins**    | `flex()`, `flex-col()`, `flex-row()`, `text-base()`, `text-ellipsis()` |
 
 **Quick Rules:**
+
 - ALL HTML elements MUST have BEM classes
 - Use CSS variables for colors, never hardcoded hex
 - Use rem units for spacing (0.5, 0.75, 1, 1.5rem scale)
@@ -27,7 +28,7 @@
 1. [Quick Reference Card](#1-quick-reference-card) - Essential mixins, variables, BEM formula
 2. [SCSS Foundation](#2-scss-foundation) - Layout/typography mixins, required imports
 3. [Design Tokens](#3-design-tokens) - CSS variables, spacing, colors
-4. [BEM Naming Convention](#4-bem-naming-convention) - Block__Element.--Modifier pattern
+4. [BEM Naming Convention](#4-bem-naming-convention) - Block\_\_Element.--Modifier pattern
 5. [Component HTML Templates](#5-component-html-templates) - Page, form, list, dialog templates
 6. [Common UI Patterns](#6-common-ui-patterns) - Search, filter, data table, empty state
 7. [SCSS Patterns by Component Type](#7-scss-patterns-by-component-type) - Page, section, card styling
@@ -176,13 +177,13 @@ Every component SCSS file MUST start with:
 
 **Typography Scale:**
 
-| Size      | rem      | px   | Usage           |
-|-----------|----------|------|-----------------|
-| Caption   | 0.75rem  | 12px | Labels, hints   |
-| Body      | 0.875rem | 14px | Default text    |
-| Large     | 1rem     | 16px | Sub-titles      |
-| Heading   | 1.25rem  | 20px | Section titles  |
-| Title     | 1.5rem   | 24px | Page titles     |
+| Size    | rem      | px   | Usage          |
+| ------- | -------- | ---- | -------------- |
+| Caption | 0.75rem  | 12px | Labels, hints  |
+| Body    | 0.875rem | 14px | Default text   |
+| Large   | 1rem     | 16px | Sub-titles     |
+| Heading | 1.25rem  | 20px | Section titles |
+| Title   | 1.5rem   | 24px | Page titles    |
 
 ### 2.4 Utility Mixins
 
@@ -202,59 +203,59 @@ Every component SCSS file MUST start with:
 
 **Background Colors:**
 
-| Variable                  | Value     | Usage                    |
-|---------------------------|-----------|--------------------------|
-| `--bg-pri-cl`             | `#ffffff` | Cards, panels, dialogs   |
-| `--bg-sec-cl`             | `#fcfcfc` | Secondary backgrounds    |
-| `--color-neutral-bg-bg2`  | `#f6f8fb` | Page background          |
-| `--color-neutral-bg-bg3`  | `#edf2f7` | Section background       |
-| `--bg-hover-cl`           | `#edf2f7` | Hover states             |
+| Variable                 | Value     | Usage                  |
+| ------------------------ | --------- | ---------------------- |
+| `--bg-pri-cl`            | `#ffffff` | Cards, panels, dialogs |
+| `--bg-sec-cl`            | `#fcfcfc` | Secondary backgrounds  |
+| `--color-neutral-bg-bg2` | `#f6f8fb` | Page background        |
+| `--color-neutral-bg-bg3` | `#edf2f7` | Section background     |
+| `--bg-hover-cl`          | `#edf2f7` | Hover states           |
 
 **Text Colors:**
 
-| Variable        | Value     | Usage                   |
-|-----------------|-----------|-------------------------|
-| `--text-pri-cl` | `#354047` | Primary text            |
-| `--text-sec-cl` | `#8b8e93` | Secondary/muted text    |
-| `--primary-cl`  | `#43b9de` | Links, brand accent     |
+| Variable        | Value     | Usage                |
+| --------------- | --------- | -------------------- |
+| `--text-pri-cl` | `#354047` | Primary text         |
+| `--text-sec-cl` | `#8b8e93` | Secondary/muted text |
+| `--primary-cl`  | `#43b9de` | Links, brand accent  |
 
 **Border Colors:**
 
-| Variable      | Value     | Usage               |
-|---------------|-----------|---------------------|
-| `--bd-pri-cl` | `#ececec` | Primary borders     |
-| `--bd-sec-cl` | `#c7d5e0` | Secondary borders   |
+| Variable      | Value     | Usage             |
+| ------------- | --------- | ----------------- |
+| `--bd-pri-cl` | `#ececec` | Primary borders   |
+| `--bd-sec-cl` | `#c7d5e0` | Secondary borders |
 
 **Status Colors:**
 
-| Status  | Background              | Text                    |
-|---------|-------------------------|-------------------------|
-| Success | `--color-success-bg`    | `--color-success-text`  |
-| Warning | `--color-warning-bg`    | `--color-warning-text`  |
-| Error   | `--color-error-bg`      | `--color-error-text`    |
-| Info    | `--color-info-bg`       | `--primary-cl`          |
+| Status  | Background           | Text                   |
+| ------- | -------------------- | ---------------------- |
+| Success | `--color-success-bg` | `--color-success-text` |
+| Warning | `--color-warning-bg` | `--color-warning-text` |
+| Error   | `--color-error-bg`   | `--color-error-text`   |
+| Info    | `--color-info-bg`    | `--primary-cl`         |
 
 ### 3.2 Spacing Scale
 
 Use rem values consistently:
 
-| Size | rem     | px   | Usage           |
-|------|---------|------|-----------------|
-| XS   | 0.25rem | 4px  | Tight spacing   |
-| SM   | 0.5rem  | 8px  | Small gaps      |
-| MD   | 0.75rem | 12px | Medium gaps     |
-| LG   | 1rem    | 16px | Standard gaps   |
-| XL   | 1.5rem  | 24px | Section gaps    |
-| XXL  | 2rem    | 32px | Large sections  |
+| Size | rem     | px   | Usage          |
+| ---- | ------- | ---- | -------------- |
+| XS   | 0.25rem | 4px  | Tight spacing  |
+| SM   | 0.5rem  | 8px  | Small gaps     |
+| MD   | 0.75rem | 12px | Medium gaps    |
+| LG   | 1rem    | 16px | Standard gaps  |
+| XL   | 1.5rem  | 24px | Section gaps   |
+| XXL  | 2rem    | 32px | Large sections |
 
 ### 3.3 Border Radius
 
-| Component    | Radius    |
-|--------------|-----------|
-| Inputs       | 0.25rem   |
-| Cards        | 0.5rem    |
-| Pills/Badges | 1rem+     |
-| Dialogs      | 0.5rem    |
+| Component    | Radius  |
+| ------------ | ------- |
+| Inputs       | 0.25rem |
+| Cards        | 0.5rem  |
+| Pills/Badges | 1rem+   |
+| Dialogs      | 0.5rem  |
 
 ### 3.4 Shadows
 
@@ -263,7 +264,9 @@ Use rem values consistently:
 box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.08);
 
 // Heavy shadow (modals, dropdowns)
-box-shadow: 0 32px 64px 0 rgba(0, 0, 0, 0.19), 0 2px 21px 0 rgba(0, 0, 0, 0.15);
+box-shadow:
+    0 32px 64px 0 rgba(0, 0, 0, 0.19),
+    0 2px 21px 0 rgba(0, 0, 0, 0.15);
 ```
 
 ---
@@ -282,28 +285,28 @@ Modifier: .component-name__element.--modifier (separate class with --)
 
 Block name = Component selector without prefix (kebab-case):
 
-| Selector                    | Block Name              |
-|-----------------------------|-------------------------|
-| `app-text-snippet-list`     | `text-snippet-list`     |
-| `app-employee-list`         | `employee-list`         |
-| `platform-user-card`        | `user-card`             |
+| Selector                | Block Name          |
+| ----------------------- | ------------------- |
+| `app-text-snippet-list` | `text-snippet-list` |
+| `app-employee-list`     | `employee-list`     |
+| `platform-user-card`    | `user-card`         |
 
 ### 4.3 Common Element Names
 
-| Category    | Elements                                                |
-|-------------|--------------------------------------------------------|
-| Structure   | `__header`, `__body`, `__footer`, `__content`          |
-| Container   | `__container`, `__wrapper`, `__main-container`         |
-| Content     | `__title`, `__text`, `__label`, `__description`        |
-| Interactive | `__button`, `__icon`, `__link`, `__action`             |
-| Table       | `__table`, `__row`, `__cell`, `__pagination`           |
-| Form        | `__field`, `__input`, `__select`, `__form-row`         |
-| Cards       | `__card`, `__card-header`, `__card-body`               |
+| Category    | Elements                                        |
+| ----------- | ----------------------------------------------- |
+| Structure   | `__header`, `__body`, `__footer`, `__content`   |
+| Container   | `__container`, `__wrapper`, `__main-container`  |
+| Content     | `__title`, `__text`, `__label`, `__description` |
+| Interactive | `__button`, `__icon`, `__link`, `__action`      |
+| Table       | `__table`, `__row`, `__cell`, `__pagination`    |
+| Form        | `__field`, `__input`, `__select`, `__form-row`  |
+| Cards       | `__card`, `__card-header`, `__card-body`        |
 
 ### 4.4 Common Modifier Names
 
 | Category | Modifiers                                           |
-|----------|-----------------------------------------------------|
+| -------- | --------------------------------------------------- |
 | State    | `--active`, `--disabled`, `--selected`, `--loading` |
 | Status   | `--valid`, `--invalid`, `--flagged`, `--warning`    |
 | Mode     | `--view-mode`, `--edit-mode`, `--create-mode`       |
@@ -315,9 +318,15 @@ Some blocks are used across multiple components:
 
 ```scss
 // Toolbar pattern (shared block)
-.platform-toolbar__controls      { @include flex-row(space-between, center); }
-.platform-toolbar__left-controls { @include flex-row(flex-start, center, 1rem); }
-.platform-toolbar__right-controls { @include flex-row(flex-end, center, 1rem); }
+.platform-toolbar__controls {
+    @include flex-row(space-between, center);
+}
+.platform-toolbar__left-controls {
+    @include flex-row(flex-start, center, 1rem);
+}
+.platform-toolbar__right-controls {
+    @include flex-row(flex-end, center, 1rem);
+}
 ```
 
 ---
@@ -346,41 +355,36 @@ Some blocks are used across multiple components:
 ```
 
 ```html
-<app-loading-and-error-indicator [target]="this" [skeletonLoadingType]="'table'">
-</app-loading-and-error-indicator>
+<app-loading-and-error-indicator [target]="this" [skeletonLoadingType]="'table'"> </app-loading-and-error-indicator>
 
 <div class="page-name">
     @if (vm(); as vm) {
-        <div class="page-name__main-container">
-            <!-- Toolbar Section -->
-            <div class="page-name__toolbar">
-                <div class="platform-toolbar__controls">
-                    <div class="platform-toolbar__left-controls">
-                        <app-search-input
-                            [placeholder]="'Search...'"
-                            [inputText]="vm.searchText"
-                            (inputTextChange)="onSearchChange($event)">
-                        </app-search-input>
-                        <!-- Additional filters -->
-                    </div>
-                    <div class="platform-toolbar__right-controls">
-                        <a class="page-name__back-link" [routerLink]="['../']">
-                            <mat-icon>arrow_back</mat-icon>
-                            Back to List
-                        </a>
-                    </div>
+    <div class="page-name__main-container">
+        <!-- Toolbar Section -->
+        <div class="page-name__toolbar">
+            <div class="platform-toolbar__controls">
+                <div class="platform-toolbar__left-controls">
+                    <app-search-input [placeholder]="'Search...'" [inputText]="vm.searchText" (inputTextChange)="onSearchChange($event)"> </app-search-input>
+                    <!-- Additional filters -->
+                </div>
+                <div class="platform-toolbar__right-controls">
+                    <a class="page-name__back-link" [routerLink]="['../']">
+                        <mat-icon>arrow_back</mat-icon>
+                        Back to List
+                    </a>
                 </div>
             </div>
-
-            <!-- Content Section -->
-            <div class="page-name__table-section">
-                @if (vm.items.length) {
-                    <!-- Table/Cards content -->
-                } @else {
-                    <div class="page-name__empty-state">No items found</div>
-                }
-            </div>
         </div>
+
+        <!-- Content Section -->
+        <div class="page-name__table-section">
+            @if (vm.items.length) {
+            <!-- Table/Cards content -->
+            } @else {
+            <div class="page-name__empty-state">No items found</div>
+            }
+        </div>
+    </div>
     }
 </div>
 ```
@@ -443,22 +447,22 @@ app-page-name {
     </thead>
     <tbody>
         @for (item of vm.items; track item.id) {
-            <tr class="component__row" [class.--flagged]="item.isFlagged">
-                <td>
-                    <div class="component__cell-content">
-                        <span class="component__primary-text">{{ item.name }}</span>
-                        @if (item.subtitle) {
-                            <span class="component__secondary-text">{{ item.subtitle }}</span>
-                        }
-                    </div>
-                </td>
-                <td>{{ item.value }}</td>
-                <td>
-                    <div class="component__actions">
-                        <button class="component__action-btn">Edit</button>
-                    </div>
-                </td>
-            </tr>
+        <tr class="component__row" [class.--flagged]="item.isFlagged">
+            <td>
+                <div class="component__cell-content">
+                    <span class="component__primary-text">{{ item.name }}</span>
+                    @if (item.subtitle) {
+                    <span class="component__secondary-text">{{ item.subtitle }}</span>
+                    }
+                </div>
+            </td>
+            <td>{{ item.value }}</td>
+            <td>
+                <div class="component__actions">
+                    <button class="component__action-btn">Edit</button>
+                </div>
+            </td>
+        </tr>
         }
     </tbody>
 </table>
@@ -469,7 +473,8 @@ app-page-name {
         [pageSize]="vm.pageInfo.pageSize"
         [pageIndex]="vm.pageInfo.pageIndex"
         [pageSizeOptions]="[10, 20, 50, 100]"
-        (page)="onPageChange($event)">
+        (page)="onPageChange($event)"
+    >
     </mat-paginator>
 </div>
 ```
@@ -479,7 +484,8 @@ app-page-name {
     width: 100%;
     border-collapse: collapse;
 
-    th, td {
+    th,
+    td {
         padding: 0.75rem 1rem;
         text-align: left;
         border-bottom: 1px solid var(--bd-pri-cl);
@@ -586,11 +592,7 @@ app-page-name {
     <div class="component__form-row">
         <label class="component__label">Select Field</label>
         <div class="component__field-wrapper">
-            <platform-select
-                [items]="options"
-                formControlName="selectField"
-                placeholder="Select...">
-            </platform-select>
+            <platform-select [items]="options" formControlName="selectField" placeholder="Select..."> </platform-select>
         </div>
     </div>
 </div>
@@ -700,10 +702,7 @@ app-page-name {
 ### 6.1 Loading Indicator
 
 ```html
-<app-loading-and-error-indicator
-    [target]="this"
-    [skeletonLoadingType]="'table'">
-</app-loading-and-error-indicator>
+<app-loading-and-error-indicator [target]="this" [skeletonLoadingType]="'table'"> </app-loading-and-error-indicator>
 ```
 
 ### 6.2 Empty State
@@ -726,11 +725,7 @@ app-page-name {
 Use the shared `app-search-input` component:
 
 ```html
-<app-search-input
-    [placeholder]="'Search by name or message'"
-    [inputText]="vm.searchText"
-    (inputTextChange)="onSearchChange($event)">
-</app-search-input>
+<app-search-input [placeholder]="'Search by name or message'" [inputText]="vm.searchText" (inputTextChange)="onSearchChange($event)"> </app-search-input>
 ```
 
 ### 6.4 Status Badge
@@ -755,12 +750,14 @@ Use the shared `app-search-input` component:
         color: var(--color-success-text);
     }
 
-    &.--warning, &.--flagged {
+    &.--warning,
+    &.--flagged {
         background-color: var(--color-warning-bg);
         color: var(--color-warning-text);
     }
 
-    &.--deleted, &.--error {
+    &.--deleted,
+    &.--error {
         background-color: var(--color-error-bg);
         color: var(--color-error-text);
     }
@@ -804,7 +801,7 @@ Use the shared `app-search-input` component:
 <div class="component__employee-cell">
     <span class="component__employee-name">{{ employee.name }}</span>
     @if (employee.position) {
-        <span class="component__employee-position">{{ employee.position }}</span>
+    <span class="component__employee-position">{{ employee.position }}</span>
     }
 </div>
 ```
@@ -845,11 +842,7 @@ Use the shared `app-search-input` component:
 ### 6.8 Icon with Tooltip
 
 ```html
-<mat-icon
-    class="component__flag-icon"
-    matTooltip="Potentially circular">
-    flag
-</mat-icon>
+<mat-icon class="component__flag-icon" matTooltip="Potentially circular"> flag </mat-icon>
 ```
 
 ```scss
@@ -864,12 +857,7 @@ Use the shared `app-search-input` component:
 ### 6.9 Checkbox Filter
 
 ```html
-<mat-checkbox
-    class="component__checkbox-filter"
-    [checked]="vm.filterEnabled"
-    (change)="onFilterChange($event.checked)">
-    Show only flagged
-</mat-checkbox>
+<mat-checkbox class="component__checkbox-filter" [checked]="vm.filterEnabled" (change)="onFilterChange($event.checked)"> Show only flagged </mat-checkbox>
 ```
 
 ```scss
@@ -883,12 +871,7 @@ Use the shared `app-search-input` component:
 Use the shared `upload-file` component with drag-and-drop support:
 
 ```html
-<upload-file
-    *ngIf="!isViewMode"
-    [files]="vm.attachments"
-    [maxFileSizeMB]="5"
-    [allowMultipleFileUpload]="true"
-    (fileChanges)="onFileChange($event)">
+<upload-file *ngIf="!isViewMode" [files]="vm.attachments" [maxFileSizeMB]="5" [allowMultipleFileUpload]="true" (fileChanges)="onFileChange($event)">
 </upload-file>
 ```
 
@@ -962,27 +945,17 @@ Use the shared `upload-file` component with drag-and-drop support:
 **Custom tooltip component:**
 
 ```html
-<platform-tooltip
-    [text]="'Helpful information'"
-    [iconPath]="'assets/icons/info-4.svg'"
-    [tooltipClass]="'component__tooltip'">
-</platform-tooltip>
+<platform-tooltip [text]="'Helpful information'" [iconPath]="'assets/icons/info-4.svg'" [tooltipClass]="'component__tooltip'"> </platform-tooltip>
 ```
 
 **Popover directive (for rich content):**
 
 ```html
 <!-- Simple string tooltip -->
-<span [appPopover]="'This is a tooltip'" appPopoverIsTooltip="true">
-    Hover me
-</span>
+<span [appPopover]="'This is a tooltip'" appPopoverIsTooltip="true"> Hover me </span>
 
 <!-- Template popover -->
-<button
-    [appPopover]="popoverTemplate"
-    [appPopoverPlacement]="'bottom-start'"
-    [appPopoverAutoClose]="'outside'"
-    [popoverClass]="'component__popover'">
+<button [appPopover]="popoverTemplate" [appPopoverPlacement]="'bottom-start'" [appPopoverAutoClose]="'outside'" [popoverClass]="'component__popover'">
     Click for options
 </button>
 
@@ -1022,9 +995,7 @@ Use the shared `upload-file` component with drag-and-drop support:
 <div class="component__section" [class.--collapsed]="isCollapsed">
     <div class="component__section-header" (click)="toggleCollapse()">
         <span class="component__section-title">Section Title</span>
-        <mat-icon class="component__collapse-icon">
-            {{ isCollapsed ? 'expand_more' : 'expand_less' }}
-        </mat-icon>
+        <mat-icon class="component__collapse-icon"> {{ isCollapsed ? 'expand_more' : 'expand_less' }} </mat-icon>
     </div>
     <div class="component__section-body" *ngIf="!isCollapsed">
         <!-- Collapsible content -->
@@ -1120,7 +1091,8 @@ app-page-name {
     width: 100%;
     border-collapse: collapse;
 
-    th, td {
+    th,
+    td {
         padding: 0.75rem 1rem;
         text-align: left;
         border-bottom: 1px solid var(--bd-pri-cl);
@@ -1302,20 +1274,20 @@ Before finalizing any component, verify:
 
 ```
 SCSS Variables & Mixins:
-├── src/PlatformExampleAppWeb/libs/share-styles/shared-mixin.scss          # Import this
-├── src/PlatformExampleAppWeb/libs/share-styles/mixin/layout.scss          # flex, flex-col, flex-row
-├── src/PlatformExampleAppWeb/libs/share-styles/mixin/text.scss            # text-base, text-ellipsis
-├── src/PlatformExampleAppWeb/libs/share-styles/shared-variables.scss      # CSS custom properties
-├── src/PlatformExampleAppWeb/libs/platform-core/src/styles/variables.scss # SCSS variables
-└── src/PlatformExampleAppWeb/libs/platform-core/src/styles/mixins.scss    # flex-layout, utilities
+├── src/Frontend/libs/share-styles/shared-mixin.scss          # Import this
+├── src/Frontend/libs/share-styles/mixin/layout.scss          # flex, flex-col, flex-row
+├── src/Frontend/libs/share-styles/mixin/text.scss            # text-base, text-ellipsis
+├── src/Frontend/libs/share-styles/shared-variables.scss      # CSS custom properties
+├── src/Frontend/libs/platform-core/src/styles/variables.scss # SCSS variables
+└── src/Frontend/libs/platform-core/src/styles/mixins.scss    # flex-layout, utilities
 
 Shared Components:
-├── src/PlatformExampleAppWeb/libs/apps-domains/src/_shared/components/search-input/
-├── src/PlatformExampleAppWeb/libs/platform-core/src/components/
-└── src/PlatformExampleAppWeb/libs/apps-domains/src/_shared/components/_abstracts/
+├── src/Frontend/libs/apps-domains/src/_shared/components/search-input/
+├── src/Frontend/libs/platform-core/src/components/
+└── src/Frontend/libs/apps-domains/src/_shared/components/_abstracts/
 
 Example Components:
-└── src/PlatformExampleAppWeb/apps/playground-text-snippet/src/app/routes/
+└── src/Frontend/apps/playground-text-snippet/src/app/routes/
 ```
 
 ---
@@ -1323,6 +1295,7 @@ Example Components:
 ## Summary
 
 **Required in every component SCSS:**
+
 ```scss
 @use 'shared-mixin' as *;
 ```
@@ -1344,13 +1317,15 @@ Example Components:
 Tab groups for sectioned content with consistent styling.
 
 **HTML Pattern:**
+
 ```html
 <mat-tab-group
     class="component__mat-tab-group"
     animationDuration="0ms"
     [disableRipple]="true"
     [selectedIndex]="currentTab"
-    (selectedIndexChange)="onTabChange($event)">
+    (selectedIndexChange)="onTabChange($event)"
+>
     <mat-tab>
         <ng-template mat-tab-label>
             <span class="component__tab-label">Tab 1</span>
@@ -1363,6 +1338,7 @@ Tab groups for sectioned content with consistent styling.
 ```
 
 **SCSS Pattern:**
+
 ```scss
 @use 'shared-mixin' as *;
 
@@ -1409,6 +1385,7 @@ Tab groups for sectioned content with consistent styling.
 Tree components for hierarchical data display.
 
 **HTML Pattern:**
+
 ```html
 <div class="hierarchy-select__popover">
     <div class="hierarchy-select__search">
@@ -1416,16 +1393,10 @@ Tree components for hierarchical data display.
     </div>
     <div class="hierarchy-select__mat-tree-wrapper">
         <mat-tree #tree [dataSource]="dataSource" [treeControl]="treeControl">
-            <mat-tree-node
-                *matTreeNodeDef="let node"
-                class="hierarchy-select__tree-node"
-                [class.--active]="node.isSelected"
-                (click)="onNodeSelect(node)">
+            <mat-tree-node *matTreeNodeDef="let node" class="hierarchy-select__tree-node" [class.--active]="node.isSelected" (click)="onNodeSelect(node)">
                 <span class="hierarchy-select__node-label">{{ node.name }}</span>
             </mat-tree-node>
-            <mat-tree-node
-                *matTreeNodeDef="let node; when: hasChild"
-                class="hierarchy-select__tree-node --expandable">
+            <mat-tree-node *matTreeNodeDef="let node; when: hasChild" class="hierarchy-select__tree-node --expandable">
                 <button mat-icon-button matTreeNodeToggle>
                     <mat-icon>{{ treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}</mat-icon>
                 </button>
@@ -1437,6 +1408,7 @@ Tree components for hierarchical data display.
 ```
 
 **SCSS Pattern:**
+
 ```scss
 .hierarchy-select {
     &__popover {
@@ -1484,15 +1456,13 @@ Tree components for hierarchical data display.
 Progress indicators for loading and status.
 
 **HTML Pattern:**
+
 ```html
-<mat-progress-bar
-    *ngIf="isLoading"
-    class="component__progress-bar"
-    mode="indeterminate">
-</mat-progress-bar>
+<mat-progress-bar *ngIf="isLoading" class="component__progress-bar" mode="indeterminate"> </mat-progress-bar>
 ```
 
 **SCSS Pattern:**
+
 ```scss
 @use '../variables' as *;
 
@@ -1527,6 +1497,7 @@ platform-progress-bar {
 Most commonly used pattern for displaying employee info with popover.
 
 **HTML Pattern:**
+
 ```html
 <div class="employee-profile-card {{ className }}">
     <img
@@ -1535,12 +1506,13 @@ Most commonly used pattern for displaying employee info with popover.
         [popoverPosition]="popoverPosition"
         class="employee-profile-card__avatar"
         [src]="employeeImgUrl"
-        [alt]="employeeName" />
+        [alt]="employeeName"
+    />
     <div class="employee-profile-card__basic-info">
         <div class="employee-profile-card__info-group">
             <span class="employee-profile-card__name">{{ employeeName }}</span>
             @if (subtitle) {
-                <span class="employee-profile-card__subtitle">{{ subtitle }}</span>
+            <span class="employee-profile-card__subtitle">{{ subtitle }}</span>
             }
         </div>
     </div>
@@ -1561,6 +1533,7 @@ Most commonly used pattern for displaying employee info with popover.
 ```
 
 **SCSS Pattern:**
+
 ```scss
 @use 'shared-mixin' as *;
 
@@ -1638,36 +1611,26 @@ Most commonly used pattern for displaying employee info with popover.
 Reorderable chip list using Angular CDK.
 
 **HTML Pattern:**
+
 ```html
-<mat-chip-listbox
-    cdkDropList
-    cdkDropListOrientation="vertical"
-    class="stacked-chips__mat-chip-list"
-    (cdkDropListDropped)="onDrop($event)">
+<mat-chip-listbox cdkDropList cdkDropListOrientation="vertical" class="stacked-chips__mat-chip-list" (cdkDropListDropped)="onDrop($event)">
     @for (option of options; track option.id) {
-        <div cdkDrag class="stacked-chips__item">
-            <div class="stacked-chips__drag-handle" cdkDragHandle>
-                <mat-icon>drag_indicator</mat-icon>
-            </div>
-            <mat-checkbox
-                class="stacked-chips__checkbox"
-                [checked]="option.isChecked"
-                (change)="onCheckChange(option, $event)">
-            </mat-checkbox>
-            <textarea
-                cdkTextareaAutosize
-                class="stacked-chips__option-input"
-                [(ngModel)]="option.text">
-            </textarea>
-            <button class="stacked-chips__delete-btn" (click)="onDelete(option)">
-                <mat-icon>close</mat-icon>
-            </button>
+    <div cdkDrag class="stacked-chips__item">
+        <div class="stacked-chips__drag-handle" cdkDragHandle>
+            <mat-icon>drag_indicator</mat-icon>
         </div>
+        <mat-checkbox class="stacked-chips__checkbox" [checked]="option.isChecked" (change)="onCheckChange(option, $event)"> </mat-checkbox>
+        <textarea cdkTextareaAutosize class="stacked-chips__option-input" [(ngModel)]="option.text"> </textarea>
+        <button class="stacked-chips__delete-btn" (click)="onDelete(option)">
+            <mat-icon>close</mat-icon>
+        </button>
+    </div>
     }
 </mat-chip-listbox>
 ```
 
 **SCSS Pattern:**
+
 ```scss
 @use 'shared-mixin' as *;
 
@@ -1732,6 +1695,7 @@ Reorderable chip list using Angular CDK.
 Slide-in panels for detail views or forms.
 
 **HTML Pattern:**
+
 ```html
 <div class="side-panel" [class.--open]="isOpen">
     <div class="side-panel__overlay" (click)="close()"></div>
@@ -1753,6 +1717,7 @@ Slide-in panels for detail views or forms.
 ```
 
 **SCSS Pattern:**
+
 ```scss
 @use 'shared-mixin' as *;
 
@@ -1828,3 +1793,4 @@ Slide-in panels for detail views or forms.
         @include flex-row(flex-end, center, 0.75rem);
     }
 }
+```

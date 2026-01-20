@@ -82,9 +82,9 @@ For each file in the `## File List` (following the prioritized order if applicab
 - **`genericTypeParameters`**: Generic type relationships.
 - **`messageBusAnalysis`**: **CRITICAL FOR CONSUMERS**: When analyzing any Consumer file (files ending with `Consumer.cs` that extend `PlatformApplicationMessageBusConsumer<T>`), identify the `*BusMessage` type used. Then perform a grep search across ALL services to find files that **send/publish** this message type. List all producer files and their service locations in the `messageBusProducers` field. This analysis is crucial for understanding cross-service integration.
 - **`targetedAspectAnalysis`** Populate `specificAspects:` key with deeper analysis:
-  - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
-  - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
-  - **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
+    - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
+    - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
+    - **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
 
 **MANDATORY PROGRESS TRACKING**: After processing every 10 files, you **MUST** update `Items Processed` in `## Progress`, run a `CONTEXT_ANCHOR_CHECK`, and explicitly state your progress. After each file, add its path to the `## Processed Files` list.
 
@@ -211,9 +211,9 @@ For each file in the `## File List` (following the prioritized order if applicab
 - **`genericTypeParameters`**: Generic type relationships.
 - **`messageBusAnalysis`**: **CRITICAL FOR CONSUMERS**: When analyzing any Consumer file (files ending with `Consumer.cs` that extend `PlatformApplicationMessageBusConsumer<T>`), identify the `*BusMessage` type used. Then perform a grep search across ALL services to find files that **send/publish** this message type. List all producer files and their service locations in the `messageBusProducers` field. This analysis is crucial for understanding cross-service integration.
 - **`targetedAspectAnalysis`** Populate `specificAspects:` key with deeper analysis:
-  - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
-  - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
-  - **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
+    - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
+    - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
+    - **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
 - **`errorPatterns`**: Exception handling, validation logic.
 - **`stackTraceRelevance`**: Relation to any stack traces.
 - **`debuggingComplexity`**: Difficulty to debug (1-10).
@@ -351,8 +351,8 @@ For each file in the `## File List` (following the prioritized order if applicab
 - **`dependencyInjection`**: Any DI registrations.
 - **`genericTypeParameters`**: Generic type relationships.
 - **`targetedAspectAnalysis`** Populate `specificAspects:` key with deeper analysis:
-  - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
-  - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
+    - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
+    - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
 - **`refactoringComplexity`**: Difficulty of refactoring (1-10).
 - **`dependencyImpact`**: Files affected by changes.
 - **`platformCompliance`**: Adherence to platform patterns.
@@ -474,15 +474,15 @@ For each file in the `## File List` (following the prioritized order if applicab
 - **`genericTypeParameters`**: Generic type relationships.
 - **`messageBusAnalysis`**: **CRITICAL FOR CONSUMERS**: When analyzing any Consumer file (files ending with `Consumer.cs` that extend `PlatformApplicationMessageBusConsumer<T>`), identify the `*BusMessage` type used. Then perform a grep search across ALL services to find files that **send/publish** this message type. List all producer files and their service locations in the `messageBusProducers` field. This analysis is crucial for understanding cross-service integration.
 - **`targetedAspectAnalysis`** Populate `specificAspects:` key with deeper analysis:
-  - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
-  - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
-  - **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
+    - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
+    - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
+    - **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
 - **`coverageTargets`**: Specific coverage goals.
 - **`edgeCases`**: Edge cases and boundary conditions.
 - **`businessScenarios`**: Business scenarios supported.
 - **`detailedFunctionalRequirements`**: Detailed business logic and functional requirements.
 - **`detailedTestCases`**: Detailed business logic test cases
-  - Given ... When ... Then
+    - Given ... When ... Then
 
 #### **PHASE 2: Overall Analysis**
 
@@ -759,8 +759,8 @@ For each file in the `## File List` (following the prioritized order if applicab
 - **`dependencyInjection`**: Any DI registrations.
 - **`genericTypeParameters`**: Generic type relationships.
 - **`targetedAspectAnalysis`** Populate `specificAspects:` key with deeper analysis:
-  - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
-  - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
+    - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
+    - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
 - **`documentationGaps`**: Missing or incomplete documentation.
 - **`complexityLevel`**: How difficult the component is to understand (1-10).
 - **`userFacingFeatures`**: Features needing user documentation.
@@ -888,9 +888,9 @@ For each file in the `## File List` (following the prioritized order if applicab
 - **`genericTypeParameters`**: Generic type relationships.
 - **`messageBusAnalysis`**: **CRITICAL FOR CONSUMERS**: When analyzing any Consumer file (files ending with `Consumer.cs` that extend `PlatformApplicationMessageBusConsumer<T>`), identify the `*BusMessage` type used. Then perform a grep search across ALL services to find files that **send/publish** this message type. List all producer files and their service locations in the `messageBusProducers` field. This analysis is crucial for understanding cross-service integration.
 - **`targetedAspectAnalysis`** Populate `specificAspects:` key with deeper analysis:
-  - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
-  - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
-  - **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
+    - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
+    - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
+    - **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
 - **`readmeRelevance`**: How the component should be represented in the README (1-10).
 - **`userImpact`**: How the component affects end users.
 - **`setupRequirements`**: Prerequisites for this component.
@@ -1030,8 +1030,8 @@ For each file in the `## Comprehensive File List` (prioritizing by `impactLevel`
 - **`dependencyInjection`**: Any DI registrations.
 - **`genericTypeParameters`**: Generic type relationships.
 - **`targetedAspectAnalysis`** Populate `specificAspects:` key with deeper analysis:
-  - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
-  - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
+    - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
+    - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
 
 #### **PHASE 1C: Overall Analysis**
 
@@ -1124,12 +1124,12 @@ Find all package.json files:
 
 ```bash
 # WebV2 (Nx workspace - Angular 19)
-src/PlatformExampleAppWeb/package.json
-src/PlatformExampleAppWeb/apps/*/package.json
-src/PlatformExampleAppWeb/libs/*/package.json
+src/Frontend/package.json
+src/Frontend/apps/*/package.json
+src/Frontend/libs/*/package.json
 
 # Legacy Web (Angular 8-12)
-src/PlatformExampleAppWeb/*/package.json
+src/Frontend/*/package.json
 ```
 
 For each package.json, document:
@@ -1562,9 +1562,9 @@ For each file in the `## Comprehensive File List` (prioritizing by `impactLevel`
 - **`specificationMapping`**: How this component maps to existing specification sections.
 - **`testCaseImpact`**: Existing test cases that need modification or new ones needed.
 - **`targetedAspectAnalysis`** Populate `specificAspects:` key with deeper analysis:
-  - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
-  - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
-  - **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
+    - **For Front-End items:** `componentHierarchy`, `routeConfig`, `routeGuards`, `stateManagementStores`, `dataBindingPatterns`, `validationStrategies`
+    - **For Back-End items:** `authorizationPolicies`, `commands`, `queries`, `domainEntities`, `repositoryPatterns`, `businessRuleImplementations`
+    - **For Consumer items:** `messageBusMessage`, `messageBusProducers`, `crossServiceIntegration`, `handleLogicWorkflow`
 
 #### **PHASE 1C: Specification Mapping Analysis**
 
@@ -1969,10 +1969,10 @@ Add the following sections:
 **Phase 2D-2 through 2D-N: Remaining Categories**
 
 - For EACH remaining category, create a separate sub-task:
-  - Read current README file to maintain context
-  - Read `Last Task Summary` to know what was completed
-  - Write all P0/P1/P2 test cases for THIS category
-  - Update `Last Task Summary`: "Completed test category N: [Name]. Running total: [X] P0, [Y] P1, [Z] P2 tests."
+    - Read current README file to maintain context
+    - Read `Last Task Summary` to know what was completed
+    - Write all P0/P1/P2 test cases for THIS category
+    - Update `Last Task Summary`: "Completed test category N: [Name]. Running total: [X] P0, [Y] P1, [Z] P2 tests."
 
 **Phase 2D-Final: Update Summary Table**
 
@@ -2323,10 +2323,10 @@ For each screenshot in the raw screenshots folder:
 
 2. **Document in `## Common/Shared Components Used`:**
 
-    | Component        | Selector           | Purpose        | Location      |
-    | ---------------- | ------------------ | -------------- | ------------- |
-    | PlatformButton   | `platform-button`  | Action buttons | platform-core |
-    | PlatformTable    | `platform-table`   | Data tables    | platform-core |
+    | Component      | Selector          | Purpose        | Location      |
+    | -------------- | ----------------- | -------------- | ------------- |
+    | PlatformButton | `platform-button` | Action buttons | platform-core |
+    | PlatformTable  | `platform-table`  | Data tables    | platform-core |
 
 3. **SCSS Analysis:**
     - Read main `variables.scss` and `mixins.scss` files
@@ -2388,7 +2388,7 @@ AppComponent (app.component)
 
 ```html
 <!-- Example from actual codebase -->
-<bravo-table [tableData]="items" [displayedColumns]="columns"> </bravo-table>
+<platform-table [tableData]="items" [displayedColumns]="columns"> </platform-table>
 ```
 
 ---
@@ -2678,16 +2678,16 @@ Present the complete analysis for explicit approval before finalizing:
 
 Replace these placeholders when using this prompt:
 
-| Placeholder                     | Description                                  | Example                                                   |
-| ------------------------------- | -------------------------------------------- | --------------------------------------------------------- |
-| `[source-code-app-path]`        | Path to the Angular application source code  | `src/PlatformExampleAppWeb/TextSnippetServiceClient`                              |
+| Placeholder                     | Description                                  | Example                                                         |
+| ------------------------------- | -------------------------------------------- | --------------------------------------------------------------- |
+| `[source-code-app-path]`        | Path to the Angular application source code  | `src/Frontend/TextSnippetServiceClient`                         |
 | `[raw-screenshots-folder-path]` | Path to folder containing raw UI screenshots | `docs/ui-frontend/Web/TextSnippetServiceClient/raw-screenshots` |
 
 ### Example Usage
 
 ```
 Analyze UI screenshots and generate component documentation:
-- Source Code: src/PlatformExampleAppWeb/apps/playground-text-snippet
+- Source Code: src/Frontend/apps/playground-text-snippet
 - Screenshots: docs/ui-frontend/WebV2/raw-screenshots
 ```
 

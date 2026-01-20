@@ -19,21 +19,20 @@ start "" "http://localhost:4444/ui"
 
 REM Test BDD Chrome
 set AutomationTestSettings__WebDriverType=Chrome
-dotnet test ./PlatformExampleApp/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj
-livingdoc test-assembly ./PlatformExampleApp/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/PlatformExampleApp.Test.BDD.dll -t ./PlatformExampleApp/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/TestExecution.json
+dotnet test ./Backend/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj
+livingdoc test-assembly ./Backend/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/PlatformExampleApp.Test.BDD.dll -t ./Backend/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/TestExecution.json
 start "" "./LivingDoc.html"
 
 REM Test BDD Edge
 set AutomationTestSettings__WebDriverType=Edge
-dotnet test ./PlatformExampleApp/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj
-livingdoc test-assembly ./PlatformExampleApp/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/PlatformExampleApp.Test.BDD.dll -t ./PlatformExampleApp/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/TestExecution.json
+dotnet test ./Backend/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj
+livingdoc test-assembly ./Backend/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/PlatformExampleApp.Test.BDD.dll -t ./Backend/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/TestExecution.json
 start "" "./LivingDoc.html"
 
 REM Test BDD Firefox
 set AutomationTestSettings__WebDriverType=Firefox
-dotnet test ./PlatformExampleApp/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj
-livingdoc test-assembly ./PlatformExampleApp/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/PlatformExampleApp.Test.BDD.dll -t ./PlatformExampleApp/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/TestExecution.json
+dotnet test ./Backend/PlatformExampleApp.Test.BDD/PlatformExampleApp.Test.BDD.csproj
+livingdoc test-assembly ./Backend/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/PlatformExampleApp.Test.BDD.dll -t ./Backend/PlatformExampleApp.Test.BDD/bin/Debug/net7.0/TestExecution.json
 start "" "./LivingDoc.html"
 
 pause
-

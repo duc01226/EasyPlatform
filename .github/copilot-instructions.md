@@ -20,15 +20,15 @@ Implementation skills are **blocked** unless you have active todos. This is enfo
 
 ### Allowed Without Todos (Research/Planning)
 
--   `/scout`, `/scout:ext`, `/investigate`, `/research`, `/explore`
--   `/plan`, `/plan:fast`, `/plan:hard`, `/plan:validate`
--   `/watzup`, `/checkpoint`, `/kanban`
+- `/scout`, `/scout:ext`, `/investigate`, `/research`, `/explore`
+- `/plan`, `/plan:fast`, `/plan:hard`, `/plan:validate`
+- `/watzup`, `/checkpoint`, `/kanban`
 
 ### Blocked Without Todos (Implementation)
 
--   `/cook`, `/fix`, `/code`, `/feature`, `/implement`
--   `/test`, `/debug`, `/code-review`, `/commit`
--   All other skills not listed above
+- `/cook`, `/fix`, `/code`, `/feature`, `/implement`
+- `/test`, `/debug`, `/code-review`, `/commit`
+- All other skills not listed above
 
 ### Bypass
 
@@ -40,9 +40,9 @@ Use `quick:` prefix to bypass enforcement (not recommended):
 
 ### Context Preservation
 
--   Todos automatically saved to checkpoints during context compaction
--   Todos auto-restored on session resume (if checkpoint < 24h old)
--   Subagents inherit parent todo state for context continuity
+- Todos automatically saved to checkpoints during context compaction
+- Todos auto-restored on session resume (if checkpoint < 24h old)
+- Subagents inherit parent todo state for context continuity
 
 ## Project Overview
 
@@ -50,7 +50,7 @@ EasyPlatform is a comprehensive enterprise platform framework built with microse
 
 **Example Applications:**
 
--   **TextSnippet:** Example application demonstrating platform patterns
+- **TextSnippet:** Example application demonstrating platform patterns
 
 **Supporting Services:** Accounts (Auth), NotificationMessage, ParserApi
 
@@ -146,18 +146,18 @@ The `/scout` → `/investigate` workflow now supports **structured knowledge mod
 
 **Scout Phase Features:**
 
--   Priority-based file categorization (HIGH/MEDIUM/LOW)
--   Numbered file lists for easy reference
--   Cross-service message bus analysis (Consumer → Producer tracing)
--   Structured output with suggested starting points
+- Priority-based file categorization (HIGH/MEDIUM/LOW)
+- Numbered file lists for easy reference
+- Cross-service message bus analysis (Consumer → Producer tracing)
+- Structured output with suggested starting points
 
 **Investigate Phase Features:**
 
--   External memory at `.ai/workspace/analysis/[feature]-investigation.md`
--   Knowledge Graph with detailed file analysis schema (15+ fields per file)
--   Batch processing with TodoWrite (groups of 10 files)
--   Progress tracking (Phase, Items Processed, Total Items)
--   Anti-hallucination checklist before claims
+- External memory at `.ai/workspace/analysis/[feature]-investigation.md`
+- Knowledge Graph with detailed file analysis schema (15+ fields per file)
+- Batch processing with TodoWrite (groups of 10 files)
+- Progress tracking (Phase, Items Processed, Total Items)
+- Anti-hallucination checklist before claims
 
 **File Analysis Schema Fields:**
 
@@ -204,20 +204,20 @@ You MUST follow these steps for EVERY development request:
 
 Before claiming ANY task complete, verify ALL of these:
 
--   [ ] **Files Modified**: Re-read specific lines to confirm changes applied
--   [ ] **Commands Run**: Captured and analyzed command output
--   [ ] **Tests Passed**: Ran relevant tests and verified success
--   [ ] **No Errors**: Checked get_errors tool shows no new issues
--   [ ] **Filesystem Verified**: Used file_search/grep_search to confirm file existence/content
--   [ ] **Pattern Followed**: Compared implementation against existing similar code
+- [ ] **Files Modified**: Re-read specific lines to confirm changes applied
+- [ ] **Commands Run**: Captured and analyzed command output
+- [ ] **Tests Passed**: Ran relevant tests and verified success
+- [ ] **No Errors**: Checked get_errors tool shows no new issues
+- [ ] **Filesystem Verified**: Used file_search/grep_search to confirm file existence/content
+- [ ] **Pattern Followed**: Compared implementation against existing similar code
 
 **Anti-Hallucination Protocol:**
 
--   NEVER say "file doesn't exist" without running file_search or grep_search first
--   NEVER claim "tests pass" without showing test output
--   NEVER claim "no errors" without running get_errors tool
--   NEVER claim "changes applied" without re-reading the modified lines
--   ALWAYS provide evidence (file path, line numbers, test output) when claiming completion
+- NEVER say "file doesn't exist" without running file_search or grep_search first
+- NEVER claim "tests pass" without showing test output
+- NEVER claim "no errors" without running get_errors tool
+- NEVER claim "changes applied" without re-reading the modified lines
+- ALWAYS provide evidence (file path, line numbers, test output) when claiming completion
 
 ### Override Methods
 
@@ -260,19 +260,19 @@ The workspace has two complementary tools for changelog management:
 
 **Use changelog-update When:**
 
--   During development: Document feature/fix for users before PR/merge
--   PR preparation: Add business-focused entry to CHANGELOG.md
--   Manual documentation: When commits don't capture full business impact
+- During development: Document feature/fix for users before PR/merge
+- PR preparation: Add business-focused entry to CHANGELOG.md
+- Manual documentation: When commits don't capture full business impact
 
 **Use release-notes When:**
 
--   At release time: Creating official release documentation
--   Automated release: Generating technical changelog from conventional commits
+- At release time: Creating official release documentation
+- Automated release: Generating technical changelog from conventional commits
 
 **Templates:**
 
--   Changelog template: `docs/templates/changelog-entry-template.md`
--   Keep a Changelog format: `.claude/skills/changelog-update/references/keep-a-changelog-format.md`
+- Changelog template: `docs/templates/changelog-entry-template.md`
+- Keep a Changelog format: `.claude/skills/changelog-update/references/keep-a-changelog-format.md`
 
 ### Example Interaction
 
@@ -338,18 +338,18 @@ Use this for **complex or unfamiliar features** requiring deep analysis:
 
 **Triggers**:
 
--   User asks "how does [feature] work?"
--   Refactoring code you haven't seen before
--   Cross-service integration (message bus, multiple microservices)
--   Performance optimization (need to understand data flow)
--   Bug fix in unfamiliar codebase area
+- User asks "how does [feature] work?"
+- Refactoring code you haven't seen before
+- Cross-service integration (message bus, multiple microservices)
+- Performance optimization (need to understand data flow)
+- Bug fix in unfamiliar codebase area
 
 **Benefits**:
 
--   External memory preserves analysis (`.ai/workspace/analysis/`)
--   Knowledge graph with 15+ fields per file
--   Evidence-based findings (line numbers, code snippets)
--   Prevents hallucination with verification checklist
+- External memory preserves analysis (`.ai/workspace/analysis/`)
+- Knowledge graph with 15+ fields per file
+- Evidence-based findings (line numbers, code snippets)
+- Prevents hallucination with verification checklist
 
 **Process**:
 
@@ -387,8 +387,8 @@ await read_file('SaveEmployeeCommand.cs', 1, 150);
 
 ```
 src/Platform/              # Easy.Platform framework components
-src/PlatformExampleApp/    # Example microservices (TextSnippet)
-src/PlatformExampleAppWeb/ # Angular 19 apps (playground-text-snippet)
+src/Backend/    # Example microservices (TextSnippet)
+src/Frontend/ # Angular 19 apps (playground-text-snippet)
 docs/design-system/        # Frontend design system documentation
 ```
 
@@ -404,7 +404,7 @@ src/Platform/                    # Easy.Platform framework
 ├── Easy.Platform.RabbitMQ/      # Message bus
 └── Easy.Platform.*/             # Other modules
 
-src/PlatformExampleApp/          # Example microservice
+src/Backend/          # Example microservice
 ├── *.Api/                       # Web API layer
 ├── *.Application/               # CQRS handlers, jobs, events
 ├── *.Domain/                    # Entities, domain events
@@ -415,7 +415,7 @@ src/PlatformExampleApp/          # Example microservice
 ### Frontend
 
 ```
-src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
+src/Frontend/       # Angular 19 Nx workspace
 ├── apps/
 │   └── playground-text-snippet/ # Example app
 └── libs/
@@ -447,13 +447,13 @@ src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
 
 ## Essential Documentation
 
-| Document                           | Purpose                          |
-| ---------------------------------- | -------------------------------- |
-| `README.md`                        | Platform overview & quick start  |
-| `docs/architecture-overview.md`    | System architecture & diagrams   |
-| **`docs/BUSINESS-FEATURES.md`**    | **Business modules master index**|
-| `CLEAN-CODE-RULES.md`              | Coding standards & anti-patterns |
-| `.github/AI-DEBUGGING-PROTOCOL.md` | Debugging protocol for AI agents |
+| Document                           | Purpose                           |
+| ---------------------------------- | --------------------------------- |
+| `README.md`                        | Platform overview & quick start   |
+| `docs/architecture-overview.md`    | System architecture & diagrams    |
+| **`docs/BUSINESS-FEATURES.md`**    | **Business modules master index** |
+| `CLEAN-CODE-RULES.md`              | Coding standards & anti-patterns  |
+| `.github/AI-DEBUGGING-PROTOCOL.md` | Debugging protocol for AI agents  |
 
 > **Business Documentation:** For detailed business module documentation (requirements, workflows, APIs, test specs), navigate to `docs/business-features/` directory. Use `docs/BUSINESS-FEATURES.md` as the master index listing all modules.
 
@@ -461,14 +461,14 @@ src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
 
 **Documentation Architecture:**
 
--   **This file (`copilot-instructions.md`)**: Quick reference, core principles, decision trees
--   **`.github/instructions/`**: Deep dive patterns (auto-loaded based on file paths via `applyTo`)
--   **`.github/prompts/`**: Task-specific prompts (plan, fix, scout, brainstorm, investigate)
--   **`.github/skills/`**: Universal skills (auto-activated based on context)
--   **`.github/AGENTS.md`**: 17 specialized agent roles with decision tree
--   **`docs/claude/`**: Domain-specific pattern deep dives (Memory Bank)
--   **Design system docs**: `docs/design-system/`, platform-specific UI patterns
--   **Framework docs**: `docs/architecture-overview.md`, system architecture
+- **This file (`copilot-instructions.md`)**: Quick reference, core principles, decision trees
+- **`.github/instructions/`**: Deep dive patterns (auto-loaded based on file paths via `applyTo`)
+- **`.github/prompts/`**: Task-specific prompts (plan, fix, scout, brainstorm, investigate)
+- **`.github/skills/`**: Universal skills (auto-activated based on context)
+- **`.github/AGENTS.md`**: 17 specialized agent roles with decision tree
+- **`docs/claude/`**: Domain-specific pattern deep dives (Memory Bank)
+- **Design system docs**: `docs/design-system/`, platform-specific UI patterns
+- **Framework docs**: `docs/architecture-overview.md`, system architecture
 
 **Universal Skills (`.github/skills/`):**
 
@@ -500,12 +500,12 @@ src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
 
 **When to load Memory Bank context:**
 
--   Starting complex multi-file tasks → Load architecture.md
--   Backend development → Load backend-patterns.md
--   Frontend development → Load frontend-patterns.md
--   Code review → Load advanced-patterns.md
--   Debugging → Load troubleshooting.md
--   Planning which agent to use → Load AGENTS.md
+- Starting complex multi-file tasks → Load architecture.md
+- Backend development → Load backend-patterns.md
+- Frontend development → Load frontend-patterns.md
+- Code review → Load advanced-patterns.md
+- Debugging → Load troubleshooting.md
+- Planning which agent to use → Load AGENTS.md
 
 **How AI Agents Use This:**
 
@@ -519,11 +519,11 @@ When you ask me to code/debug/analyze, I automatically:
 
 Example: When you ask me to "add a CQRS command to save employee data", I:
 
--   Read this file → See "Use CQRS pattern, microservice-specific repository"
--   Auto-load `backend-dotnet.instructions.md` (applies to `*.cs` files)
--   Auto-load `cqrs-patterns.instructions.md` (applies to `*Command*.cs`)
--   Search for existing `SaveEmployee*Command.cs` patterns
--   Implement following discovered patterns
+- Read this file → See "Use CQRS pattern, microservice-specific repository"
+- Auto-load `backend-dotnet.instructions.md` (applies to `*.cs` files)
+- Auto-load `cqrs-patterns.instructions.md` (applies to `*Command*.cs`)
+- Search for existing `SaveEmployee*Command.cs` patterns
+- Implement following discovered patterns
 
 **You don't need to tell me which files to read - the system loads them automatically based on context.**
 
@@ -531,33 +531,33 @@ Example: When you ask me to "add a CQRS command to save employee data", I:
 
 See `.github/instructions/` for path-specific detailed patterns:
 
-| Topic                 | Instruction File                        | Applies To                          |
-| --------------------- | --------------------------------------- | ----------------------------------- |
-| .NET Backend          | `backend-dotnet.instructions.md`        | `src/PlatformExampleApp/**/*.cs`    |
-| Angular Frontend      | `frontend-angular.instructions.md`      | `src/PlatformExampleAppWeb/**/*.ts` |
-| CQRS Patterns         | `cqrs-patterns.instructions.md`         | Commands/Queries                    |
-| Validation            | `validation.instructions.md`            | All validation logic                |
-| Entity Development    | `entity-development.instructions.md`    | Domain entities                     |
-| Entity Events         | `entity-events.instructions.md`         | Side effects                        |
-| Repository            | `repository.instructions.md`            | Data access                         |
-| Message Bus           | `message-bus.instructions.md`           | Cross-service sync                  |
-| Background Jobs       | `background-jobs.instructions.md`       | Scheduled tasks                     |
-| Migrations            | `migrations.instructions.md`            | Data/schema migrations              |
-| Performance           | `performance.instructions.md`           | Optimization                        |
-| Security              | `security.instructions.md`              | Auth, permissions                   |
-| Testing               | `testing.instructions.md`               | Test patterns                       |
-| Clean Code            | `clean-code.instructions.md`            | All code                            |
-| Bug Investigation     | `bug-investigation.instructions.md`     | Debugging                           |
-| Feature Investigation | `feature-investigation.instructions.md` | Code exploration                    |
+| Topic                 | Instruction File                        | Applies To             |
+| --------------------- | --------------------------------------- | ---------------------- |
+| .NET Backend          | `backend-dotnet.instructions.md`        | `src/Backend/**/*.cs`  |
+| Angular Frontend      | `frontend-angular.instructions.md`      | `src/Frontend/**/*.ts` |
+| CQRS Patterns         | `cqrs-patterns.instructions.md`         | Commands/Queries       |
+| Validation            | `validation.instructions.md`            | All validation logic   |
+| Entity Development    | `entity-development.instructions.md`    | Domain entities        |
+| Entity Events         | `entity-events.instructions.md`         | Side effects           |
+| Repository            | `repository.instructions.md`            | Data access            |
+| Message Bus           | `message-bus.instructions.md`           | Cross-service sync     |
+| Background Jobs       | `background-jobs.instructions.md`       | Scheduled tasks        |
+| Migrations            | `migrations.instructions.md`            | Data/schema migrations |
+| Performance           | `performance.instructions.md`           | Optimization           |
+| Security              | `security.instructions.md`              | Auth, permissions      |
+| Testing               | `testing.instructions.md`               | Test patterns          |
+| Clean Code            | `clean-code.instructions.md`            | All code               |
+| Bug Investigation     | `bug-investigation.instructions.md`     | Debugging              |
+| Feature Investigation | `feature-investigation.instructions.md` | Code exploration       |
 
 ## Frontend Design System
 
 **Read design system docs before UI work:**
 
-| Application       | Location                                                                     |
-| ----------------- | ---------------------------------------------------------------------------- |
-| WebV2 Apps        | `docs/design-system/`                                                        |
-| TextSnippetClient | `src/PlatformExampleAppWeb/apps/playground-text-snippet/docs/design-system/` |
+| Application       | Location                                                        |
+| ----------------- | --------------------------------------------------------------- |
+| WebV2 Apps        | `docs/design-system/`                                           |
+| TextSnippetClient | `src/Frontend/apps/playground-text-snippet/docs/design-system/` |
 
 ## Task Decomposition Best Practices
 
@@ -567,17 +567,17 @@ See `.github/instructions/` for path-specific detailed patterns:
 
 **ALWAYS create todos for**:
 
--   Features requiring changes in 3+ files
--   Bug fixes needing investigation → plan → fix → test
--   Refactoring affecting multiple layers
--   Any task estimated >15 minutes
--   Multi-step workflows (feature, bugfix, documentation)
+- Features requiring changes in 3+ files
+- Bug fixes needing investigation → plan → fix → test
+- Refactoring affecting multiple layers
+- Any task estimated >15 minutes
+- Multi-step workflows (feature, bugfix, documentation)
 
 **SKIP todos for**:
 
--   Single-file edits <5 lines
--   Simple questions/explanations
--   Reading files for information
+- Single-file edits <5 lines
+- Simple questions/explanations
+- Reading files for information
 
 ### Todo Granularity Guidelines
 
@@ -626,69 +626,69 @@ See `.github/instructions/` for path-specific detailed patterns:
 **Feature Implementation**:
 
 ```markdown
--   [ ] Scout - Find similar implementations (semantic_search)
--   [ ] Investigate - Read related files in parallel
--   [ ] Plan - Design approach with file-level changes
--   [ ] Implement Entity - Domain layer changes
--   [ ] Implement Command - Application layer CQRS
--   [ ] Implement DTO - Mapping logic
--   [ ] Implement Event Handler - Side effects
--   [ ] Implement API - Controller endpoint
--   [ ] Implement Frontend - Component + service
--   [ ] Write Tests - Unit + integration
--   [ ] Run Tests - Verify all pass
--   [ ] Code Review - Check against patterns
--   [ ] Update Docs - README or feature docs
+- [ ] Scout - Find similar implementations (semantic_search)
+- [ ] Investigate - Read related files in parallel
+- [ ] Plan - Design approach with file-level changes
+- [ ] Implement Entity - Domain layer changes
+- [ ] Implement Command - Application layer CQRS
+- [ ] Implement DTO - Mapping logic
+- [ ] Implement Event Handler - Side effects
+- [ ] Implement API - Controller endpoint
+- [ ] Implement Frontend - Component + service
+- [ ] Write Tests - Unit + integration
+- [ ] Run Tests - Verify all pass
+- [ ] Code Review - Check against patterns
+- [ ] Update Docs - README or feature docs
 ```
 
 **Bug Fix**:
 
 ```markdown
--   [ ] Scout - Find files related to bug
--   [ ] Investigate - Build knowledge graph
--   [ ] Debug - Root cause analysis with evidence
--   [ ] Plan - Design fix approach
--   [ ] Implement Fix - Apply changes
--   [ ] Verify Fix - Reproduce bug scenario
--   [ ] Run Tests - Ensure no regressions
--   [ ] Code Review - Check for side effects
+- [ ] Scout - Find files related to bug
+- [ ] Investigate - Build knowledge graph
+- [ ] Debug - Root cause analysis with evidence
+- [ ] Plan - Design fix approach
+- [ ] Implement Fix - Apply changes
+- [ ] Verify Fix - Reproduce bug scenario
+- [ ] Run Tests - Ensure no regressions
+- [ ] Code Review - Check for side effects
 ```
 
 **Refactoring**:
 
 ```markdown
--   [ ] Scout - Find all usages of code to refactor
--   [ ] Plan - Design new structure
--   [ ] Identify Breaking Changes - List affected code
--   [ ] Refactor Core - Make structural changes
--   [ ] Update Usages - Fix all references
--   [ ] Run Tests - Verify behavior unchanged
--   [ ] Performance Check - Compare before/after
+- [ ] Scout - Find all usages of code to refactor
+- [ ] Plan - Design new structure
+- [ ] Identify Breaking Changes - List affected code
+- [ ] Refactor Core - Make structural changes
+- [ ] Update Usages - Fix all references
+- [ ] Run Tests - Verify behavior unchanged
+- [ ] Performance Check - Compare before/after
 ```
 
 ## Quick Decision Trees
 
 **Backend Task:**
 
--   New API endpoint → `PlatformBaseController` + CQRS Command
--   Business logic → Command Handler in Application layer
--   Data access → Microservice-specific repository + extensions
--   Cross-service sync → Entity Event Consumer
--   Scheduled task → `PlatformApplicationBackgroundJob`
--   Migration → `PlatformDataMigrationExecutor` or EF Core
+- New API endpoint → `PlatformBaseController` + CQRS Command
+- Business logic → Command Handler in Application layer
+- Data access → Microservice-specific repository + extensions
+- Cross-service sync → Entity Event Consumer
+- Scheduled task → `PlatformApplicationBackgroundJob`
+- Migration → `PlatformDataMigrationExecutor` or EF Core
 
 **Frontend Task:**
 
--   Simple display → `AppBaseComponent`
--   Complex state → `AppBaseVmStoreComponent` + `PlatformVmStore`
--   Forms → `AppBaseFormComponent` with validation
--   API calls → Service extending `PlatformApiService`
+- Simple display → `AppBaseComponent`
+- Complex state → `AppBaseVmStoreComponent` + `PlatformVmStore`
+- Forms → `AppBaseFormComponent` with validation
+- API calls → Service extending `PlatformApiService`
 
 **Repository Selection:**
 
--   FIRST: Find `I{ServiceName}PlatformRootRepository<TEntity>`
--   Complex queries: Create `RepositoryExtensions` with static expressions
--   Fallback: `IPlatformQueryableRootRepository<TEntity, TKey>`
+- FIRST: Find `I{ServiceName}PlatformRootRepository<TEntity>`
+- Complex queries: Create `RepositoryExtensions` with static expressions
+- Fallback: `IPlatformQueryableRootRepository<TEntity, TKey>`
 
 ## Workspace File Access Boundaries (CRITICAL)
 
@@ -696,18 +696,18 @@ See `.github/instructions/` for path-specific detailed patterns:
 
 ### Allowed Operations
 
--   Read/write files within workspace root
--   Create new files in project directories: `src/`, `docs/`, `plans/`, `scripts/`
--   Modify configuration: `.vscode/`, `.github/`, `.claude/`, `.ai/`
--   Edit root-level config files: `*.md`, `*.json`, `*.yml`, `*.yaml`
+- Read/write files within workspace root
+- Create new files in project directories: `src/`, `docs/`, `plans/`, `scripts/`
+- Modify configuration: `.vscode/`, `.github/`, `.claude/`, `.ai/`
+- Edit root-level config files: `*.md`, `*.json`, `*.yml`, `*.yaml`
 
 ### Prohibited Operations (NEVER DO)
 
--   Modify files outside workspace root
--   Access parent directories (`../`)
--   Modify sibling repositories or projects
--   Write to system directories
--   Access user home directory files (except through workspace)
+- Modify files outside workspace root
+- Access parent directories (`../`)
+- Modify sibling repositories or projects
+- Write to system directories
+- Access user home directory files (except through workspace)
 
 ### Verification Protocol
 
@@ -732,18 +732,18 @@ If asked to modify files outside workspace:
 
 **Backend:**
 
--   Direct cross-service database access (use message bus)
--   Custom repository interfaces (use platform repositories + extensions)
--   Manual validation (use `PlatformValidationResult`)
--   Side effects in command handlers (use entity event handlers)
--   DTO mapping in handlers (use `PlatformDto.MapToObject()`)
+- Direct cross-service database access (use message bus)
+- Custom repository interfaces (use platform repositories + extensions)
+- Manual validation (use `PlatformValidationResult`)
+- Side effects in command handlers (use entity event handlers)
+- DTO mapping in handlers (use `PlatformDto.MapToObject()`)
 
 **Frontend:**
 
--   Direct `HttpClient` usage (use `PlatformApiService`)
--   Manual state management (use `PlatformVmStore`)
--   Assuming method names without verification (check base class APIs)
--   Skipping `untilDestroyed()` for subscriptions
+- Direct `HttpClient` usage (use `PlatformApiService`)
+- Manual state management (use `PlatformVmStore`)
+- Assuming method names without verification (check base class APIs)
+- Skipping `untilDestroyed()` for subscriptions
 
 ## Code Responsibility Hierarchy (CRITICAL)
 
@@ -771,14 +771,14 @@ readonly statusTypes = EntityConfiguration.getStatusTypeOptions(); // Single sou
 
 ## Universal Clean Code Rules
 
--   Single Responsibility: One method/class does one thing
--   Consistent abstraction level in methods
--   Reuse code, don't duplicate patterns
--   Meaningful names that explain intent
--   Group parallel operations (no dependencies) together
--   Follow Input → Process → Output pattern
--   Use early validation and guard clauses
--   90% Logic Rule: Place logic where 90% of it belongs
+- Single Responsibility: One method/class does one thing
+- Consistent abstraction level in methods
+- Reuse code, don't duplicate patterns
+- Meaningful names that explain intent
+- Group parallel operations (no dependencies) together
+- Follow Input → Process → Output pattern
+- Use early validation and guard clauses
+- 90% Logic Rule: Place logic where 90% of it belongs
 
 ## Development Commands
 
@@ -1375,9 +1375,9 @@ AppBaseComponent → AppBaseVmComponent → AppBaseFormComponent
 
 **BEM Naming Convention:**
 
--   **Block**: Component name (e.g., `user-card`)
--   **Element**: Child using `block__element` (e.g., `user-card__header`)
--   **Modifier**: Separate class with `--` prefix (e.g., `user-card__btn --primary --large`)
+- **Block**: Component name (e.g., `user-card`)
+- **Element**: Child using `block__element` (e.g., `user-card__header`)
+- **Modifier**: Separate class with `--` prefix (e.g., `user-card__btn --primary --large`)
 
 ## Component SCSS Standard
 
@@ -1412,8 +1412,8 @@ my-component {
 
 **Why both?**
 
--   **Host element**: Makes the Angular element a real layout element (not an unknown element without display)
--   **Main class**: Contains the full styling, matches the wrapper div in HTML
+- **Host element**: Makes the Angular element a real layout element (not an unknown element without display)
+- **Main class**: Contains the full styling, matches the wrapper div in HTML
 
 ### Platform Component API
 
@@ -1805,7 +1805,7 @@ _Last updated: 2026-01-11_
 
 ### High Confidence (90%+)
 
--   **When using /cook skill**: cook skill execution pattern showing reliable success → Continue using this skill pattern (100% success rate observed) [100%]
+- **When using /cook skill**: cook skill execution pattern showing reliable success → Continue using this skill pattern (100% success rate observed) [100%]
 
 _Last synced: 2026-01-11_
 

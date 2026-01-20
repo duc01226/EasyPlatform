@@ -1310,10 +1310,10 @@ JobBoardIntegrationPage (Container)
 
 | Component | Type | Purpose | Path |
 |-----------|------|---------|------|
-| ProviderListComponent | Container | Lists all job board providers | `apps/bravo-setting/src/app/routes/job-board/` |
-| ProviderConfigFormComponent | Form | Configure API credentials | `apps/bravo-setting/src/app/routes/job-board/` |
-| EmailSettingsComponent | Form | Configure IMAP settings | `apps/bravo-setting/src/app/routes/job-board/` |
-| SyncDashboardComponent | Presentational | Shows sync status and history | `apps/bravo-setting/src/app/routes/job-board/` |
+| ProviderListComponent | Container | Lists all job board providers | `apps/playground-setting/src/app/routes/job-board/` |
+| ProviderConfigFormComponent | Form | Configure API credentials | `apps/playground-setting/src/app/routes/job-board/` |
+| EmailSettingsComponent | Form | Configure IMAP settings | `apps/playground-setting/src/app/routes/job-board/` |
+| SyncDashboardComponent | Presentational | Shows sync status and history | `apps/playground-setting/src/app/routes/job-board/` |
 
 ---
 

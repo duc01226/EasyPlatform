@@ -9,12 +9,12 @@
 
 ## Quick Navigation
 
-| **I am a...**       | **Start Here**                                | **Learn More**                                |
-| ------------------- | --------------------------------------------- | --------------------------------------------- |
-| **New Developer**   | [Getting Started](docs/getting-started.md)    | [Learning Paths](docs/learning-paths.md)      |
-| **Backend Dev**     | [Backend Quickref](docs/backend-quickref.md)  | [CLAUDE.md Patterns](CLAUDE.md#backend-patterns) |
-| **Frontend Dev**    | [Frontend Quickref](docs/frontend-quickref.md)| [CLAUDE.md Patterns](CLAUDE.md#frontend-patterns)|
-| **AI Agent**        | [CLAUDE.md](CLAUDE.md)                        | [docs/claude/](docs/claude/)                  |
+| **I am a...**     | **Start Here**                                 | **Learn More**                                    |
+| ----------------- | ---------------------------------------------- | ------------------------------------------------- |
+| **New Developer** | [Getting Started](docs/getting-started.md)     | [Learning Paths](docs/learning-paths.md)          |
+| **Backend Dev**   | [Backend Quickref](docs/backend-quickref.md)   | [CLAUDE.md Patterns](CLAUDE.md#backend-patterns)  |
+| **Frontend Dev**  | [Frontend Quickref](docs/frontend-quickref.md) | [CLAUDE.md Patterns](CLAUDE.md#frontend-patterns) |
+| **AI Agent**      | [CLAUDE.md](CLAUDE.md)                         | [docs/claude/](docs/claude/)                      |
 
 ---
 
@@ -36,10 +36,10 @@ The framework is battle-tested in production enterprise applications and provide
 
 ```bash
 # Backend
-dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
+dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
 
 # Frontend
-cd src/PlatformExampleAppWeb && npm install && nx serve playground-text-snippet
+cd src/Frontend && npm install && nx serve playground-text-snippet
 
 # Infrastructure
 docker-compose -f src/platform-example-app.docker-compose.yml up -d
@@ -51,15 +51,15 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
 
 ## Documentation
 
-| Doc | Purpose |
-|-----|---------|
-| [Getting Started](docs/getting-started.md) | Prerequisites, setup, commands, troubleshooting |
-| [Architecture Overview](docs/architecture-overview.md) | System design, project structure, diagrams |
-| [Backend Quickref](docs/backend-quickref.md) | Backend decision tree and key patterns |
-| [Frontend Quickref](docs/frontend-quickref.md) | Frontend decision tree and key patterns |
-| [Learning Paths](docs/learning-paths.md) | Developer onboarding by role |
-| [CLAUDE.md](CLAUDE.md) | Complete code patterns, AI agent instructions |
-| **[Business Features](docs/BUSINESS-FEATURES.md)** | **Module documentation, features, APIs** |
+| Doc                                                    | Purpose                                         |
+| ------------------------------------------------------ | ----------------------------------------------- |
+| [Getting Started](docs/getting-started.md)             | Prerequisites, setup, commands, troubleshooting |
+| [Architecture Overview](docs/architecture-overview.md) | System design, project structure, diagrams      |
+| [Backend Quickref](docs/backend-quickref.md)           | Backend decision tree and key patterns          |
+| [Frontend Quickref](docs/frontend-quickref.md)         | Frontend decision tree and key patterns         |
+| [Learning Paths](docs/learning-paths.md)               | Developer onboarding by role                    |
+| [CLAUDE.md](CLAUDE.md)                                 | Complete code patterns, AI agent instructions   |
+| **[Business Features](docs/BUSINESS-FEATURES.md)**     | **Module documentation, features, APIs**        |
 
 > **Business Documentation:** For detailed business module documentation (requirements, workflows, APIs, test specs), see [`docs/business-features/`](docs/business-features/) with [`docs/BUSINESS-FEATURES.md`](docs/BUSINESS-FEATURES.md) as the master index.
 
@@ -71,14 +71,14 @@ This project includes a complete team collaboration system for AI agents, suppor
 
 ### Team Roles & Commands
 
-| Role | Commands | Purpose |
-|------|----------|---------|
-| **Product Owner** | `/idea`, `/prioritize` | Capture ideas, backlog prioritization |
-| **Business Analyst** | `/refine`, `/story` | PBI refinement, user story creation |
-| **QA Engineer** | `/test-spec`, `/test-cases` | Test specification, test case generation |
-| **UX Designer** | `/design-spec`, `/figma-extract` | UI specs, Figma design extraction |
-| **QC Specialist** | `/quality-gate` | Pre-dev/QA/release quality gates |
-| **Project Manager** | `/status`, `/dependency`, `/team-sync` | Status reports, dependency mapping, meetings |
+| Role                 | Commands                               | Purpose                                      |
+| -------------------- | -------------------------------------- | -------------------------------------------- |
+| **Product Owner**    | `/idea`, `/prioritize`                 | Capture ideas, backlog prioritization        |
+| **Business Analyst** | `/refine`, `/story`                    | PBI refinement, user story creation          |
+| **QA Engineer**      | `/test-spec`, `/test-cases`            | Test specification, test case generation     |
+| **UX Designer**      | `/design-spec`, `/figma-extract`       | UI specs, Figma design extraction            |
+| **QC Specialist**    | `/quality-gate`                        | Pre-dev/QA/release quality gates             |
+| **Project Manager**  | `/status`, `/dependency`, `/team-sync` | Status reports, dependency mapping, meetings |
 
 ### Artifact Management
 
@@ -137,14 +137,14 @@ graph TB
 
 ### Technology Stack
 
-| Layer | Technologies |
-|-------|--------------|
-| **Backend** | .NET 9, ASP.NET Core, CQRS |
-| **Frontend** | Angular 19, TypeScript, RxJS, PlatformVmStore |
-| **Data** | MongoDB, SQL Server, PostgreSQL |
-| **Messaging** | RabbitMQ |
-| **Caching** | Redis |
-| **Jobs** | Hangfire |
+| Layer         | Technologies                                  |
+| ------------- | --------------------------------------------- |
+| **Backend**   | .NET 9, ASP.NET Core, CQRS                    |
+| **Frontend**  | Angular 19, TypeScript, RxJS, PlatformVmStore |
+| **Data**      | MongoDB, SQL Server, PostgreSQL               |
+| **Messaging** | RabbitMQ                                      |
+| **Caching**   | Redis                                         |
+| **Jobs**      | Hangfire                                      |
 
 > **Full architecture details:** [Architecture Overview](docs/architecture-overview.md)
 
@@ -162,7 +162,7 @@ src/Platform/                    # Easy.Platform framework
 ├── Easy.Platform.RabbitMQ/      # Message bus
 └── Easy.Platform.*/             # Other modules
 
-src/PlatformExampleApp/          # Example microservice
+src/Backend/          # Example microservice
 ├── *.Api/                       # Web API layer
 ├── *.Application/               # CQRS handlers, jobs, events
 ├── *.Domain/                    # Entities, domain events
@@ -173,7 +173,7 @@ src/PlatformExampleApp/          # Example microservice
 ### Frontend
 
 ```
-src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
+src/Frontend/       # Angular 19 Nx workspace
 ├── apps/
 │   └── playground-text-snippet/ # Example app
 └── libs/
@@ -213,11 +213,11 @@ src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
 ```bash
 # Backend
 dotnet build EasyPlatform.sln
-dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
+dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
 dotnet test [Project].csproj
 
 # Frontend
-cd src/PlatformExampleAppWeb
+cd src/Frontend
 npm install
 nx serve playground-text-snippet
 nx build playground-text-snippet

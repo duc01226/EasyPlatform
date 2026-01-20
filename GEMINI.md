@@ -124,8 +124,8 @@ See: [claude-kit-setup.md#external-memory-swap-system](docs/claude/claude-kit-se
 
 ### Example Application
 
-- **Backend:** `src/PlatformExampleApp/` - TextSnippet service demonstrating all patterns
-- **Frontend:** `src/PlatformExampleAppWeb/apps/playground-text-snippet/` - Angular example
+- **Backend:** `src/Backend/` - TextSnippet service demonstrating all patterns
+- **Frontend:** `src/Frontend/apps/playground-text-snippet/` - Angular example
 
 ---
 
@@ -141,7 +141,7 @@ src/Platform/                    # Easy.Platform framework
 ├── Easy.Platform.RabbitMQ/      # Message bus
 └── Easy.Platform.*/             # Other modules
 
-src/PlatformExampleApp/          # Example microservice
+src/Backend/          # Example microservice
 ├── *.Api/                       # Web API layer
 ├── *.Application/               # CQRS handlers, jobs, events
 ├── *.Domain/                    # Entities, domain events
@@ -152,7 +152,7 @@ src/PlatformExampleApp/          # Example microservice
 ### Frontend
 
 ```
-src/PlatformExampleAppWeb/       # Angular 19 Nx workspace
+src/Frontend/       # Angular 19 Nx workspace
 ├── apps/
 │   └── playground-text-snippet/ # Example app
 └── libs/
@@ -219,11 +219,19 @@ Every UI element MUST have a BEM class, even without special styling. This makes
 
 ```scss
 .user-list {
-    &__header { /* ... */ }
-    &__title { /* ... */ }
+    &__header {
+        /* ... */
+    }
+    &__title {
+        /* ... */
+    }
     &__btn {
-        &.--primary { background: $primary-color; }
-        &.--small { padding: 0.25rem 0.5rem; }
+        &.--primary {
+            background: $primary-color;
+        }
+        &.--small {
+            padding: 0.25rem 0.5rem;
+        }
     }
 }
 ```
@@ -322,14 +330,14 @@ Before removing/changing ANY code:
 
 ```bash
 dotnet build EasyPlatform.sln
-dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
+dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
 dotnet test [Project].csproj
 ```
 
 ### Frontend
 
 ```bash
-cd src/PlatformExampleAppWeb
+cd src/Frontend
 npm install
 nx serve playground-text-snippet
 nx build playground-text-snippet
@@ -580,18 +588,18 @@ Before responding to any task request, analyze the user's prompt to detect inten
 2. **ANNOUNCE:** Tell user: `"Detected: [Intent]. Following workflow: [sequence]"`
 3. **CREATE TODO LIST (MANDATORY):** Use TodoWrite to create tasks for each workflow step:
 
-   ```
-   Example for Bug Fix workflow:
-   - [ ] Execute /scout - Find relevant files
-   - [ ] Execute /investigate - Build knowledge graph
-   - [ ] Execute /debug - Root cause analysis
-   - [ ] Execute /plan - Create fix plan
-   - [ ] Execute /plan:review - Self-review plan
-   - [ ] Execute /fix - Implement fix
-   - [ ] Execute /code-simplifier - Simplify code
-   - [ ] Execute /code-review - Review changes
-   - [ ] Execute /test - Verify fix
-   ```
+    ```
+    Example for Bug Fix workflow:
+    - [ ] Execute /scout - Find relevant files
+    - [ ] Execute /investigate - Build knowledge graph
+    - [ ] Execute /debug - Root cause analysis
+    - [ ] Execute /plan - Create fix plan
+    - [ ] Execute /plan:review - Self-review plan
+    - [ ] Execute /fix - Implement fix
+    - [ ] Execute /code-simplifier - Simplify code
+    - [ ] Execute /code-review - Review changes
+    - [ ] Execute /test - Verify fix
+    ```
 
 4. **CONFIRM (for features/refactors):** Ask: `"Proceed with this workflow? (yes/no/quick)"`
 5. **EXECUTE:** Follow each step in sequence, marking todos as completed after each step
@@ -636,12 +644,12 @@ Before creating/modifying files in these paths, ALWAYS invoke the corresponding 
 - **No code duplication** - Search and reuse existing implementations
 - **SOLID principles** - Single responsibility, dependency inversion
 - **Naming conventions:**
-  - Classes: PascalCase (`UserService`)
-  - Methods: PascalCase (C#), camelCase (TS)
-  - Variables: camelCase (`userName`)
-  - Constants: UPPER_SNAKE_CASE
-  - Booleans: `is`, `has`, `can`, `should` prefix
-  - Collections: Plural (`users`, `items`)
+    - Classes: PascalCase (`UserService`)
+    - Methods: PascalCase (C#), camelCase (TS)
+    - Variables: camelCase (`userName`)
+    - Constants: UPPER_SNAKE_CASE
+    - Booleans: `is`, `has`, `can`, `should` prefix
+    - Collections: Plural (`users`, `items`)
 - **Code flow:** Input → Process → Output with early validation
 - **90% Logic Rule:** If logic belongs 90% to class A, put it in class A
 
@@ -1372,7 +1380,7 @@ export class {E}Component extends AppBaseVmStoreComponent<{E}State, {E}Store> { 
 
 ```bash
 dotnet build EasyPlatform.sln
-dotnet run --project src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api
-cd src/PlatformExampleAppWeb && npm install && nx serve playground-text-snippet
+dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
+cd src/Frontend && npm install && nx serve playground-text-snippet
 docker-compose -f src/platform-example-app.docker-compose.yml up -d
 ```

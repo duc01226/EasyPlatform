@@ -5,7 +5,7 @@ allowed-tools: Bash, Read, Glob, Grep, TodoWrite, Write
 
 # Code Review: Uncommitted Changes
 
-Perform a comprehensive code review of all uncommitted git changes following BravoSUITE standards.
+Perform a comprehensive code review of all uncommitted git changes following EasyPlatform standards.
 
 ## Review Approach (Report-Driven Three-Phase - CRITICAL)
 

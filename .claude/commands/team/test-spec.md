@@ -59,11 +59,10 @@ Create comprehensive test specification from PBI.
 
 | Service | Code |
 |---------|------|
-| bravoTALENTS | TAL |
-| bravoGROWTH | GRO |
-| bravoSURVEYS | SUR |
-| bravoINSIGHTS | INS |
+| TextSnippet | TXT |
+| ExampleApp | EXP |
 | Accounts | ACC |
+| Common | COM |
 
 ## Example
 
