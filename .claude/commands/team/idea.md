@@ -1,7 +1,7 @@
 ---
 name: idea
 description: Capture a new idea as a structured artifact for future refinement
-allowed-tools: Read, Write, Grep, Glob, TodoWrite
+allowed-tools: Read, Write, Grep, Glob, TodoWrite, AskUserQuestion
 arguments:
   - name: title
     description: Brief title for the idea (optional, will prompt if not provided)
@@ -98,9 +98,44 @@ Use `domain_path` from module frontmatter for targeted entity search:
 - Role: Infer from context or ask
 - Add to Related section: Link to `docs/business-features/{Module}/`
 
-### 6. Suggest Next Step
+### 6. Quick Validation (MANDATORY)
 
-- Output: "Idea captured! To refine into a PBI, run: `/refine {filename}`"
+After saving, conduct brief validation interview to confirm understanding before handoff.
+
+#### Question Selection (pick 2-3 most relevant)
+
+| Category            | Question                                                           |
+| ------------------- | ------------------------------------------------------------------ |
+| **Problem Clarity** | "Is the problem statement clear? What's the root cause?"           |
+| **Value**           | "Who benefits most? What's the business impact if NOT built?"      |
+| **Scope**           | "Is this one feature or multiple? Should it be split?"             |
+| **Timing**          | "Is this urgent or can it wait? Any deadline drivers?"             |
+| **Alternatives**    | "Any existing solutions or workarounds today?"                     |
+
+#### Validation Process
+
+1. Select 2-3 questions based on idea complexity
+2. Use `AskUserQuestion` with concrete options
+3. Update idea artifact with clarifications
+4. Skip validation only for trivial/obvious ideas
+
+#### Validation Output
+
+Update the `## Quick Validation` section in the idea artifact:
+
+```markdown
+## Quick Validation
+
+**Validated:** {date}
+
+- **Problem clarity:** {Confirmed/Clarified: notes}
+- **Value confirmed:** {Yes/Needs discussion}
+- **Scope check:** {Single feature/Needs splitting}
+```
+
+### 7. Suggest Next Step
+
+- Output: "Idea captured and validated! To refine into a PBI, run: `/refine {filename}`"
 
 ## Output Format
 
@@ -140,6 +175,8 @@ Workflow:
 4. Finds TextSnippetEntity with SnippetText, FullText, Tags properties
 5. Gathers user input
 6. Creates: `team-artifacts/ideas/260119-po-idea-advanced-search-filters.md`
+7. **Validates**: Asks 2-3 quick questions about problem clarity, value, scope
+8. Updates idea with validation summary
 
 ## Task Planning Notes
 

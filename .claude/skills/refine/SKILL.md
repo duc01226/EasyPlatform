@@ -1,7 +1,7 @@
 ---
 name: refine
 description: Transform ideas into Product Backlog Items with acceptance criteria. Use when converting ideas to PBIs, adding acceptance criteria, or refining requirements. Triggers on keywords like "create pbi", "refine idea", "convert to pbi", "acceptance criteria", "make actionable".
-allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite
+allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite, AskUserQuestion
 ---
 
 # Idea Refinement to PBI
@@ -50,22 +50,41 @@ See: `team-artifacts/templates/pbi-template.md`
 
 After creating the PBI, validate with user:
 
+### INVEST Criteria Check (Flag-Only)
+
+Before validation questions, verify PBI meets INVEST criteria. Log failures but don't block:
+
+| Criterion        | Check                                      | Explanation                                             |
+| ---------------- | ------------------------------------------ | ------------------------------------------------------- |
+| **Independent**  | Can be completed without other PBIs        | Minimizes coordination overhead                         |
+| **Negotiable**   | Team has flexibility on HOW                | Details emerge during sprint, not locked upfront        |
+| **Valuable**     | Clear user/business value                  | Every PBI delivers something stakeholders care about    |
+| **Estimable**    | Team can size it                           | If too vague, split or research first                   |
+| **Small**        | Fits in 1-2 sprints                        | Enables frequent feedback and course correction         |
+| **Testable**     | Acceptance criteria exist                  | "How do we know it's done?" must be answerable          |
+
+If criteria fail, note in validation summary but proceed with questions.
+
 ### Question Categories
 
-| Category        | Example Question                                         |
-| --------------- | -------------------------------------------------------- |
-| **Assumptions** | "The PBI assumes X. Is this correct?"                    |
-| **Scope**       | "Should Y be included or deferred?"                      |
-| **Risks**       | "This depends on Z. Is that available?"                  |
-| **Acceptance**  | "Is criterion X complete or are there edge cases?"       |
-| **Entities**    | "Create new entity or extend existing X?"                |
+| Category                | Example Question                                         |
+| ----------------------- | -------------------------------------------------------- |
+| **Assumptions**         | "The PBI assumes X. Is this correct?"                    |
+| **Scope**               | "Should Y be included or deferred?"                      |
+| **Risks**               | "This depends on Z. Is that available?"                  |
+| **Acceptance**          | "Is criterion X complete or are there edge cases?"       |
+| **Entities**            | "Create new entity or extend existing X?"                |
+| **Important Decisions** | "Should we use approach A or B? (impacts architecture)"  |
+| **Brainstorm**          | "Any alternative approaches we haven't considered?"      |
 
 ### Process
 
-1. Generate 3-5 questions from assumptions, scope decisions, dependencies
-2. Use `AskUserQuestion` tool to interview
-3. Document in PBI under `## Validation Summary`
-4. Update PBI based on answers
+1. Run INVEST check, note any failures
+2. Generate 3-5 questions from assumptions, scope decisions, dependencies
+3. Use `AskUserQuestion` tool to interview
+4. Enable brainstorming by asking for alternatives
+5. Document in PBI under `## Validation Summary`
+6. Update PBI based on answers
 
 ### Validation Output Format
 
@@ -73,12 +92,23 @@ After creating the PBI, validate with user:
 ## Validation Summary
 
 **Validated:** {date}
+**INVEST Score:** {pass count}/6
+
+### INVEST Flags
+- {criterion}: {Pass/Fail - reason if fail}
 
 ### Confirmed Decisions
 - {decision}: {user choice}
 
 ### Assumptions Confirmed
 - {assumption}: Confirmed/Modified
+
+### Brainstorm Notes
+- {alternative approaches discussed}
+- {ideas for future consideration}
+
+### Important Decisions Made
+- {decision 1}: {choice} - {rationale}
 
 ### Open Items
 - [ ] {follow-up items}

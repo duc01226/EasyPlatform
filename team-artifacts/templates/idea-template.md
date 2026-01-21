@@ -33,11 +33,22 @@ related_features: []
 ## Questions / Risks
 <!-- Unknowns, dependencies, potential blockers -->
 
+## Quick Validation
+<!-- Auto-populated by /idea command after validation interview -->
+
+**Validated:** {date or "Pending"}
+
+- **Problem clarity:** {Confirmed/Clarified: notes}
+- **Value confirmed:** {Yes/Needs discussion}
+- **Scope check:** {Single feature/Needs splitting}
+
 ## Related
 <!-- Auto-populated by /idea command -->
+
 - **Module Docs**: [docs/business-features/{Module}/](docs/business-features/{Module}/)
 - **Related Features**: {FR-XX IDs from INDEX.md}
 - **Related Entities**: {Entity names from codebase}
 
 ---
+
 *To refine this idea into a PBI, run: `/refine {this-file}`*

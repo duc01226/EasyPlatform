@@ -1,7 +1,7 @@
 ---
 name: refine
 description: Refine an idea into a Product Backlog Item with acceptance criteria
-allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite
+allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite, AskUserQuestion
 arguments:
   - name: idea-file
     description: Path to idea file or IDEA-ID
@@ -102,38 +102,76 @@ After creating the PBI, conduct a validation interview to:
 3. **Check concerns**: Review potential issues, risks, or blockers
 4. **Brainstorm with user**: Discuss alternative approaches or edge cases
 
+#### INVEST Criteria Pre-Check (Flag-Only)
+
+Before asking validation questions, verify PBI meets INVEST:
+
+| Criterion        | Check                                      | Explanation                                             |
+| ---------------- | ------------------------------------------ | ------------------------------------------------------- |
+| **Independent**  | No blocking dependencies on other PBIs     | Minimizes coordination overhead                         |
+| **Negotiable**   | Implementation approach flexible           | Details emerge during sprint, not locked upfront        |
+| **Valuable**     | Business/user value articulated            | Every PBI delivers something stakeholders care about    |
+| **Estimable**    | Team can provide rough estimate            | If too vague, split or research first                   |
+| **Small**        | Completable in 1-2 sprints (or split)      | Enables frequent feedback and course correction         |
+| **Testable**     | Acceptance criteria are verifiable         | "How do we know it's done?" must be answerable          |
+
+Flag any failures in validation summary but proceed with questions.
+
+#### Keyword Detection for Question Topics
+
+Scan PBI content for these patterns to generate targeted questions:
+
+| Category         | Keywords to Detect                                                |
+| ---------------- | ----------------------------------------------------------------- |
+| **Architecture** | "approach", "pattern", "design", "structure", "database", "API"   |
+| **Assumptions**  | "assume", "expect", "should", "will", "must", "default"           |
+| **Tradeoffs**    | "tradeoff", "vs", "alternative", "option", "choice", "either/or"  |
+| **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern" |
+| **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"          |
+| **Decisions**    | "decide", "TBD", "TODO", "unclear", "needs discussion"            |
+
 #### Validation Question Categories
 
-| Category        | What to Ask                                                          |
-| --------------- | -------------------------------------------------------------------- |
-| **Assumptions** | "The PBI assumes X. Is this correct?"                                |
-| **Scope**       | "Should Y be included in this PBI or deferred to a future item?"     |
-| **Risks**       | "This depends on Z. Is that available/stable?"                       |
-| **Acceptance**  | "Is acceptance criterion X complete or are there edge cases?"        |
-| **Entities**    | "Should we create new entity or extend existing X?"                  |
-| **Integration** | "How should this integrate with {related feature}?"                  |
+| Category                | What to Ask                                                          |
+| ----------------------- | -------------------------------------------------------------------- |
+| **Assumptions**         | "The PBI assumes X. Is this correct?"                                |
+| **Scope**               | "Should Y be included in this PBI or deferred to a future item?"     |
+| **Risks**               | "This depends on Z. Is that available/stable?"                       |
+| **Acceptance**          | "Is acceptance criterion X complete or are there edge cases?"        |
+| **Entities**            | "Should we create new entity or extend existing X?"                  |
+| **Integration**         | "How should this integrate with {related feature}?"                  |
+| **Important Decisions** | "This requires deciding X. What's your preference?"                  |
+| **Brainstorm**          | "Any alternative solutions we should consider?"                      |
 
 #### Validation Process
 
-1. **Generate 3-5 questions** based on:
+1. **Run INVEST check**, note any failures
+2. **Scan PBI for keywords** to identify question topics
+3. **Generate 3-5 questions** based on:
    - Assumptions made during entity inspection
    - Decisions about scope and boundaries
    - Dependencies identified
    - Gap analysis results
    - Acceptance criteria completeness
+   - Keyword detection findings
 
-2. **Use `AskUserQuestion` tool** to interview user:
+4. **Use `AskUserQuestion` tool** to interview user:
    - Group related questions (max 4 per call)
    - Provide concrete options with recommendations
    - Include context from the refinement
+   - Ask brainstorm question for alternatives
 
-3. **Document validation results** in the PBI:
+5. **Document validation results** in the PBI:
 
    ```markdown
    ## Validation Summary
 
    **Validated:** {date}
    **Questions asked:** {count}
+   **INVEST Score:** {pass count}/6
+
+   ### INVEST Flags
+   - {criterion}: {Pass/Fail - reason if fail}
 
    ### Confirmed Decisions
    - {decision 1}: {user choice}
@@ -145,9 +183,16 @@ After creating the PBI, conduct a validation interview to:
    ### Assumptions Confirmed
    - {assumption 1}: Confirmed by {user}
    - {assumption 2}: Modified - {new understanding}
+
+   ### Brainstorm Notes
+   - {alternative approaches discussed}
+   - {ideas for future consideration}
+
+   ### Important Decisions Made
+   - {decision 1}: {choice} - {rationale}
    ```
 
-4. **Update PBI if needed** based on validation answers
+6. **Update PBI if needed** based on validation answers
 
 ### 9. Suggest Next Steps
 
