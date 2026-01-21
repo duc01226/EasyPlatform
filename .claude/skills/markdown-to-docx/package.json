@@ -1,0 +1,16 @@
+{
+  "name": "markdown-to-docx",
+  "version": "1.0.0",
+  "description": "Convert markdown to Microsoft Word (.docx) with custom styling",
+  "main": "scripts/convert.cjs",
+  "scripts": {
+    "convert": "node scripts/convert.cjs",
+    "test": "node tests/convert.test.cjs"
+  },
+  "dependencies": {
+    "markdown-docx": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

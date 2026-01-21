@@ -1,0 +1,11 @@
+{
+  "document": {
+    "title": "Custom Title"
+  },
+  "fonts": {
+    "body": {
+      "name": "Arial",
+      "size": 24
+    }
+  }
+}

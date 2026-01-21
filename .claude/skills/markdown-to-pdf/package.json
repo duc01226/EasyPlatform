@@ -1,0 +1,13 @@
+{
+  "name": "markdown-to-pdf",
+  "version": "1.0.0",
+  "description": "Convert markdown to PDF with custom styling",
+  "main": "scripts/convert.cjs",
+  "scripts": {
+    "convert": "node scripts/convert.cjs",
+    "test": "node tests/convert.test.cjs"
+  },
+  "dependencies": {
+    "md-to-pdf": "^5.2.4"
+  }
+}
