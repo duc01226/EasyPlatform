@@ -328,3 +328,8 @@ protected override async Task<SaveEmployeeCommandResult> HandleAsync(
 - [ ] Documentation is accurate and up-to-date
 - [ ] No obvious/redundant comments
 - [ ] TODO/FIXME items are actionable
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

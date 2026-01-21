@@ -29,3 +29,8 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 - Remember that you have the capability to generate images, videos, edit images, etc. with `ai-multimodal` skills. Use them to create the design and real assets.
 - Always review, analyze and double check generated assets with `ai-multimodal` skills to verify quality.
 - Maintain and update `./docs/design-guidelines.md` docs if needed.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

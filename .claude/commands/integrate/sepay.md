@@ -26,3 +26,8 @@ Plan & start implementing payment integration with [https://developer.sepay.vn/v
 - **Scout**: Use `scout` subagent to find related resources, documents, and code snippets in the current codebase.
 - **Plan**: Trigger slash command `/plan:fast <detailed-instruction-prompt>` to create an implementation plan based on the reports from `scout` subagent.
 - **Implementation**: Trigger slash command `/code <plan>` to implement the plan.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

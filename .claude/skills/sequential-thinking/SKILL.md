@@ -92,3 +92,8 @@ Load when deeper understanding needed:
 - `references/examples-architecture.md` - Architecture decision example
 - `references/advanced-techniques.md` - Spiral refinement, hypothesis testing, convergence
 - `references/advanced-strategies.md` - Uncertainty, revision cascades, meta-thinking
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

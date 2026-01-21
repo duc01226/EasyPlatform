@@ -470,3 +470,8 @@ If images don't appear in screenshots, they may be waiting for animation trigger
 - `./references/puppeteer-reference.md` - Puppeteer API patterns
 - `./references/performance-guide.md` - Core Web Vitals optimization
 - `./scripts/README.md` - Detailed script options
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

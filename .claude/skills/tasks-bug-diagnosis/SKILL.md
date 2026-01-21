@@ -52,3 +52,8 @@ The `tasks-bug-diagnosis` skill was a standalone autonomous debugging workflow. 
 |---------|------|---------|
 | 2.0.0 | 2026-01-20 | Deprecated, merged into debugging --autonomous |
 | 1.0.0 | 2025-09-01 | Initial release |
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

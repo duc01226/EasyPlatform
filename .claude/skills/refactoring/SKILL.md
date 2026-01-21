@@ -283,3 +283,8 @@ var entity = await repository.FirstOrDefaultAsync(Entity.IsActiveExpr(), ct);
 - **Mixing Refactoring with Features**: Do one or the other
 - **Breaking Public APIs**: Maintain backward compatibility
 - **Logic in Wrong Layer**: Leads to duplicated code - move to lowest appropriate layer
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

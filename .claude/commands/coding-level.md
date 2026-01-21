@@ -51,3 +51,8 @@ For finer control, you can also use `/output-style` with these styles:
 - `coding-level-3-senior`
 - `coding-level-4-lead`
 - `coding-level-5-god`
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

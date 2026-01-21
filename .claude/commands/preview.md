@@ -85,3 +85,8 @@ After starting, parse the JSON output (e.g., `{"success":true,"url":"http://loca
 - Inform user that server is now running as CC background task (visible in `/tasks`)
 
 **CRITICAL:** MUST display the FULL URL including path and query string (e.g., `http://localhost:3456/view?file=/path/to/file.md`). NEVER truncate to just `host:port` (e.g., `http://localhost:3456`). The full URL is required for direct file access.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

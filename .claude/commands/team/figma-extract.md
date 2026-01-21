@@ -111,3 +111,8 @@ Frame "Card"
 | Extraction Timeout | 30 seconds | Prevents blocking |
 | Max Colors | 20 | Focus on primary palette |
 | Max Typography | 10 | Focus on main text styles |
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

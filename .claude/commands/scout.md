@@ -300,3 +300,8 @@ Your numbered file list becomes the analysis target. The Investigate command wil
 - **IMPORTANT:** List unresolved questions at end
 - **IMPORTANT:** Number all files for easy reference
 - Use `file:line` format where possible
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

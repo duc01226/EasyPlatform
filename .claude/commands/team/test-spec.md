@@ -71,3 +71,8 @@ Create comprehensive test specification from PBI.
 ```
 
 Creates: `team-artifacts/test-specs/260119-testspec-dark-mode-toggle.md`
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -148,3 +148,8 @@ Stop and follow process if thinking:
 | 3.0.0 | 2025-12-01 | Added EasyPlatform-specific debugging, verification protocols |
 | 2.0.0 | 2025-10-15 | Added defense-in-depth, root cause tracing |
 | 1.0.0 | 2025-08-01 | Initial release with systematic debugging |
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

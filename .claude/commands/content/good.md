@@ -14,3 +14,8 @@ Write good creative & smart copy for this user request:
 - Use `/scout:ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
 - Use `planner` agent to plan the copy, make sure it can satisfy the user request.
 - Use `copywriter` agent to write the copy based on the plan, then report back to main agent.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

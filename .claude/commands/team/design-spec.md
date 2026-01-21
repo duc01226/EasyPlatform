@@ -121,3 +121,8 @@ With Section 7 auto-populated:
 - **Extracted**: 2026-01-19T16:30:00Z
 - **Status**: success
 ```
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

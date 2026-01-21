@@ -1810,3 +1810,8 @@ _Last updated: 2026-01-11_
 _Last synced: 2026-01-11_
 
 <!-- ACE-LEARNED-PATTERNS-END -->
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

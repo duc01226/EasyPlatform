@@ -72,3 +72,7 @@ When brainstorming concludes with agreement, create a detailed markdown summary 
 
 **IMPORTANT:** **DO NOT** implement anything, just brainstorm, answer questions and advise.
 
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

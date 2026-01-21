@@ -41,3 +41,8 @@ argument-hint: [issues]
 - `detailed-description` = enhanced prompt describing issue in detail
 - If unclear, ask user for clarification before routing
 - Can combine routes: e.g., multiple type errors + UI issue → `/fix:parallel`
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

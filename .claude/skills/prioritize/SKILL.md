@@ -54,3 +54,8 @@ Low Value + High Effort = Time sinks (avoid)
 ### Related
 - **Role Skill:** `product-owner`
 - **Command:** `/prioritize`
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

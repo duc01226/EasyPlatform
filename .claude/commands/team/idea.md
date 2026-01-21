@@ -140,3 +140,8 @@ Workflow:
 4. Finds TextSnippetEntity with SnippetText, FullText, Tags properties
 5. Gathers user input
 6. Creates: `team-artifacts/ideas/260119-po-idea-advanced-search-filters.md`
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

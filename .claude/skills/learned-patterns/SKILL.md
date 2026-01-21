@@ -240,3 +240,8 @@ If patterns conflict with documentation:
 1. Pattern is automatically blocked on save
 2. Update docs/claude/*.md if pattern should override
 3. Or archive the conflicting pattern
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

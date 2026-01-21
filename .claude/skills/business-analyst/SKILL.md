@@ -235,3 +235,8 @@ Before completing BA artifacts:
 - [ ] Out of scope explicitly listed
 - [ ] Story meets INVEST criteria
 - [ ] No solution-speak in requirements (only outcomes)
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

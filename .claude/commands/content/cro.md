@@ -41,3 +41,8 @@ You are an expert in conversion optimization. Analyze the content based on repor
 - If the user provides a URL, use `web_fetch` tool to fetch the content and analyze current issues.
 - Use `/scout:ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
 - Use `copywriter` agent to write the enhanced copy into the code files, then report back to main agent.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

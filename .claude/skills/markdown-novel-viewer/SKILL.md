@@ -188,3 +188,8 @@ Use `networkUrl` to access from other devices on the same network.
 **Server won't stop**: Check `/tmp/md-novel-viewer-*.pid` for stale PID files
 
 **Remote access denied**: Use `--host 0.0.0.0` to bind to all interfaces
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

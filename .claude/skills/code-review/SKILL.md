@@ -172,3 +172,8 @@ Verify. Question. Then implement. Evidence. Then claim.
 - **Debugging:** `debugging` - Root cause investigation before fixes
 - **Testing:** `test-generation` - Create tests for bug fixes
 - **Simplification:** `code-simplifier` - Simplify code after review
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

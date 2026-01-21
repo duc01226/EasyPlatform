@@ -17,3 +17,8 @@ Analyze the skills catalog and activate the skills that are needed for the task 
 5. Use `tester` agent to test the fix and make sure it works, then report back to main agent.
 6. If there are issues or failed tests, repeat from step 2.
 7. After finishing, respond back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

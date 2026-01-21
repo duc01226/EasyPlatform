@@ -230,3 +230,8 @@ python scripts/db_performance_check.py --db mongodb --threshold 100ms
 - PostgreSQL: https://www.postgresql.org/docs/
 - MongoDB University: https://learn.mongodb.com/
 - PostgreSQL Tutorial: https://www.postgresqltutorial.com/
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

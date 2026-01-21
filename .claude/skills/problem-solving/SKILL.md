@@ -94,3 +94,8 @@ Load detailed guides as needed:
 - `references/inversion-exercise.md` - Assumption flipping methodology
 - `references/scale-game.md` - Extreme testing procedures
 - `references/attribution.md` - Source and adaptation notes
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

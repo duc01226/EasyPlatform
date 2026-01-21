@@ -148,3 +148,8 @@ Verify updated specification accurately reflects all changes. Document under `##
 - **Enterprise Architecture Awareness**: Respect platform patterns, CQRS, and Clean Architecture
 - **Quality-Focused Approach**: Perform thorough code review and identify refactoring opportunities
 - **Specification Completeness**: Ensure full traceability between code, requirements, and tests
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

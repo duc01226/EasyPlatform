@@ -111,3 +111,8 @@ Never replace or summarize the script output. Always show it fully, then enhance
 - **`/plan` → `/code`**: Plan first, then execute the plan
 - **`/cook`**: Standalone - plans internally, no separate `/plan` needed
 - **NEVER** suggest `/plan` → `/cook` (cook has its own planning)
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

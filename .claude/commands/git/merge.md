@@ -38,3 +38,8 @@ git push origin {TO_BRANCH}
 - If `gh` command is not available, instruct the user to install and authorize GitHub CLI first.
 - If you need more clarifications, use `AskUserQuestion` tool to ask the user for more details.
 - Always fetch and pull latest remote state before merging to avoid stale conflicts.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

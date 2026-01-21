@@ -76,3 +76,8 @@ Verify artifact or code meets quality criteria.
 /quality-gate pre-dev team-artifacts/pbis/260119-pbi-dark-mode-toggle.md
 /quality-gate pre-release PR#123
 ```
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

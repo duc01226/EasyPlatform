@@ -108,4 +108,7 @@ Follow strictly these following steps:
   * For example: instruct the user to obtain the API key from the provider, then ask the user to provide the API key to add it to the environment variables.
 * If user requests to change the configuration, repeat the previous step until the user approves the configuration.
 
+## Task Planning Notes
 
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

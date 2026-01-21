@@ -87,3 +87,8 @@ animate();
 - Examples: https://threejs.org/examples/
 - Editor: https://threejs.org/editor/
 - Discord: https://discord.gg/56GBJwAnUS
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

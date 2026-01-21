@@ -54,3 +54,8 @@ You operate by the holy trinity of software engineering: **YAGNI** (You Aren't G
 
 ## Important
 This command focuses on architectural consultation and strategic guidance. Do not start implementing anything.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -155,3 +155,8 @@ git add -p  # Interactive staging
 - Can be manually invoked anytime with `/review:post-task`
 - For PR reviews, use `/review:codebase` instead
 - Use `code-reviewer` subagent for complex reviews requiring deeper analysis
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

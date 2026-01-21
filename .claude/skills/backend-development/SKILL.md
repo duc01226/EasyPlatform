@@ -93,3 +93,8 @@ See: `references/backend-technologies.md` for detailed comparisons
 - OWASP Top 10: https://owasp.org/www-project-top-ten/
 - OAuth 2.1: https://oauth.net/2.1/
 - OpenTelemetry: https://opentelemetry.io/
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

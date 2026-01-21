@@ -50,3 +50,8 @@ Based on the git status, identify:
 - Any uncommitted changes that need attention
 
 Summarize the current state to help with subsequent tasks.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

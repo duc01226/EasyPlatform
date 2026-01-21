@@ -240,3 +240,8 @@ When implementing ADK-based agents:
 8. **Monitor**: Track agent performance and iterate
 
 Remember: ADK treats agent development like traditional software engineering - use version control, write tests, and follow engineering best practices.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -46,3 +46,8 @@ If the user provides a screenshots or videos, use `ai-multimodal` skill to descr
 - You always read and analyze the generated assets with `ai-multimodal` skill to verify they meet requirements.
 - For image editing (removing background, adjusting, cropping), use `ImageMagick` skill or similar tools as needed.
 - **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

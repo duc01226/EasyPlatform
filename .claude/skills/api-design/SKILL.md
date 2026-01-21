@@ -198,3 +198,8 @@ public sealed class UploadCommand : PlatformCqrsCommand<UploadCommandResult>
 - **Validation in Controller**: Move to Command/Query `Validate()`
 - **Business Logic in Controller**: Keep controllers thin, logic in handlers
 - **Inconsistent Naming**: Follow `{Resource}Controller` pattern
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

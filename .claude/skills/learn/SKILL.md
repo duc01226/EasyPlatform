@@ -153,3 +153,8 @@ Patterns are stored in:
 - Detection: `pattern-learner.cjs` hook on UserPromptSubmit
 - Injection: `pattern-injector.cjs` hook on SessionStart and PreToolUse
 - Max injection: 5 patterns per context, ~400 tokens budget
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -68,3 +68,8 @@ Generate meeting agendas and action item tracking.
 ### Related
 - **Role Skill:** `project-manager`
 - **Command:** `/team-sync`
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

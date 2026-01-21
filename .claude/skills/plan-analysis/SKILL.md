@@ -189,3 +189,8 @@ Verify under `## Specification Validation`:
 - **Risk Assessment and Mitigation**: Identify risks and provide rollback strategies
 - **Bidirectional Traceability**: Maintain clear mapping between plan and spec
 - **Coverage Preservation**: Maintain existing test coverage while adding new
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

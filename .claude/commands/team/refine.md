@@ -93,7 +93,63 @@ Transform a raw idea into a structured Product Backlog Item with business docume
 - Set idea status: `approved`
 - Add link to PBI
 
-### 8. Suggest Next Steps
+### 8. Validate Refinement (MANDATORY)
+
+After creating the PBI, conduct a validation interview to:
+
+1. **Surface assumptions**: Identify implicit assumptions that need confirmation
+2. **Confirm decisions**: Validate architectural or business decisions made during refinement
+3. **Check concerns**: Review potential issues, risks, or blockers
+4. **Brainstorm with user**: Discuss alternative approaches or edge cases
+
+#### Validation Question Categories
+
+| Category        | What to Ask                                                          |
+| --------------- | -------------------------------------------------------------------- |
+| **Assumptions** | "The PBI assumes X. Is this correct?"                                |
+| **Scope**       | "Should Y be included in this PBI or deferred to a future item?"     |
+| **Risks**       | "This depends on Z. Is that available/stable?"                       |
+| **Acceptance**  | "Is acceptance criterion X complete or are there edge cases?"        |
+| **Entities**    | "Should we create new entity or extend existing X?"                  |
+| **Integration** | "How should this integrate with {related feature}?"                  |
+
+#### Validation Process
+
+1. **Generate 3-5 questions** based on:
+   - Assumptions made during entity inspection
+   - Decisions about scope and boundaries
+   - Dependencies identified
+   - Gap analysis results
+   - Acceptance criteria completeness
+
+2. **Use `AskUserQuestion` tool** to interview user:
+   - Group related questions (max 4 per call)
+   - Provide concrete options with recommendations
+   - Include context from the refinement
+
+3. **Document validation results** in the PBI:
+
+   ```markdown
+   ## Validation Summary
+
+   **Validated:** {date}
+   **Questions asked:** {count}
+
+   ### Confirmed Decisions
+   - {decision 1}: {user choice}
+   - {decision 2}: {user choice}
+
+   ### Open Items
+   - [ ] {any items needing follow-up}
+
+   ### Assumptions Confirmed
+   - {assumption 1}: Confirmed by {user}
+   - {assumption 2}: Modified - {new understanding}
+   ```
+
+4. **Update PBI if needed** based on validation answers
+
+### 9. Suggest Next Steps
 
 - "/story {pbi-file}" - Create user stories
 - "/test-spec {pbi-file}" - Create test specification
@@ -146,3 +202,10 @@ Workflow:
 6. Notes: "This extends FR-TS-003 with advanced filtering"
 7. Generates acceptance criteria referencing TC-TS-002 patterns
 8. Creates: `team-artifacts/pbis/260119-pbi-advanced-search-filters.md`
+9. **Validates with user**: Asks 3-5 questions about assumptions, scope, risks
+10. Documents validation results and updates PBI if needed
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -164,3 +164,8 @@ plans/
 **Remote access denied**: Use `--host 0.0.0.0` to bind all interfaces
 
 **PID files**: Located at `/tmp/plans-kanban-*.pid`
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

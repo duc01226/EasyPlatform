@@ -244,3 +244,8 @@ mcp__memory__search_nodes({ query: 'Session leave request' });
 - `mcp__memory__create_entities` - Save new knowledge
 - `mcp__memory__search_nodes` - Find relevant context
 - `mcp__memory__add_observations` - Update existing entities
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

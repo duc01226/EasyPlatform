@@ -347,3 +347,8 @@ Commits not following `type(scope): description` format go to "other" category. 
 
 ### Missing scope context
 Add scope mappings to `config.yaml` → `services` section for better context labels.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

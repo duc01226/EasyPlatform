@@ -50,3 +50,8 @@ Generate comprehensive test specifications from requirements.
 - **Command:** `/test-spec`
 - **Input:** `/story` output
 - **Next Step:** `/test-cases`
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -202,3 +202,8 @@ Better Auth uses client-server architecture:
 - GitHub: https://github.com/better-auth/better-auth
 - Plugins: https://www.better-auth.com/docs/plugins
 - Examples: https://www.better-auth.com/docs/examples
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

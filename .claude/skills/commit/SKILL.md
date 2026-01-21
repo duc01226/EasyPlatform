@@ -111,3 +111,8 @@ docs(readme): update installation instructions
 - **Never use** `git commit --amend` unless explicitly requested AND the commit was created in this session AND not yet pushed
 - **Never skip** hooks with `--no-verify` unless explicitly requested
 - Include attribution footer: `Generated with [Claude Code](https://claude.com/claude-code)`
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

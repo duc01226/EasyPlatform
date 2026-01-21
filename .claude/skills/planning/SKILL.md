@@ -113,3 +113,8 @@ All agents writing reports MUST:
 - Validate against existing codebase patterns
 
 **Remember:** Plan quality determines implementation success. Be comprehensive and consider all solution aspects.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

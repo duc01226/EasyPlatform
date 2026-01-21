@@ -75,3 +75,8 @@ These patterns were extracted from ACE (Agentic Context Engineering) implementat
 - Race condition in concurrent delta writes → file-io.md
 - File corruption risk on crash → data-persistence.md
 - Invalid deltas persisting → data-validation.md
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

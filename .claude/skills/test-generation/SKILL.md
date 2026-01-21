@@ -203,3 +203,8 @@ Update `## Table of Contents` with detailed sub-section links.
 - **Priority classification**: Critical (P0), High (P1), Medium (P2), Low (P3)
 - **BDD format**: Use Given/When/Then consistently
 - **Traceability**: Link test cases to requirements bidirectionally
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

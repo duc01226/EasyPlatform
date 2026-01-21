@@ -210,3 +210,8 @@ See: `references/mobile-mindset.md` for thinking patterns and decision framework
 - Pub.dev (Flutter packages): https://pub.dev/
 - Awesome React Native: https://github.com/jondot/awesome-react-native
 - Awesome Flutter: https://github.com/Solido/awesome-flutter
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

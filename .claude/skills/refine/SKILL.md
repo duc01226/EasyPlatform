@@ -22,7 +22,8 @@ Transform captured ideas into actionable Product Backlog Items.
 4. Identify dependencies and out-of-scope
 5. Create PBI artifact
 6. Save to `team-artifacts/pbis/`
-7. Suggest next: `/story {pbi-file}`
+7. **Validate refinement** (MANDATORY) - Interview user to confirm assumptions, decisions, concerns
+8. Suggest next: `/story {pbi-file}`
 
 ### Output
 - **Path:** `team-artifacts/pbis/{YYMMDD}-pbi-{slug}.md`
@@ -42,4 +43,48 @@ THEN {expected outcome}
 - **Next Step:** `/story`
 
 ## Template
+
 See: `team-artifacts/templates/pbi-template.md`
+
+## Validation Step (MANDATORY)
+
+After creating the PBI, validate with user:
+
+### Question Categories
+
+| Category        | Example Question                                         |
+| --------------- | -------------------------------------------------------- |
+| **Assumptions** | "The PBI assumes X. Is this correct?"                    |
+| **Scope**       | "Should Y be included or deferred?"                      |
+| **Risks**       | "This depends on Z. Is that available?"                  |
+| **Acceptance**  | "Is criterion X complete or are there edge cases?"       |
+| **Entities**    | "Create new entity or extend existing X?"                |
+
+### Process
+
+1. Generate 3-5 questions from assumptions, scope decisions, dependencies
+2. Use `AskUserQuestion` tool to interview
+3. Document in PBI under `## Validation Summary`
+4. Update PBI based on answers
+
+### Validation Output Format
+
+```markdown
+## Validation Summary
+
+**Validated:** {date}
+
+### Confirmed Decisions
+- {decision}: {user choice}
+
+### Assumptions Confirmed
+- {assumption}: Confirmed/Modified
+
+### Open Items
+- [ ] {follow-up items}
+```
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

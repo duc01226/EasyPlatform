@@ -116,3 +116,8 @@ When implementing payment integration:
 9. **Monitor and optimize** using platform analytics
 
 Load only the references needed for current implementation step to maintain context efficiency.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

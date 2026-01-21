@@ -317,3 +317,8 @@ python scripts/shopify_init.py
 ---
 
 **Note:** This skill covers Shopify platform as of January 2025. Refer to official documentation for latest updates.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

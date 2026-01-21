@@ -283,3 +283,8 @@ CMD ["node", "dist/server.js"]
 - [ ] Create project and enable APIs
 - [ ] Configure IAM permissions
 - [ ] Deploy and monitor resources
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

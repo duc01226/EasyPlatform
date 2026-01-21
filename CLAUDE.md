@@ -681,12 +681,12 @@ Before creating/modifying files in these paths, ALWAYS invoke the corresponding 
 - **No code duplication** - Search and reuse existing implementations
 - **SOLID principles** - Single responsibility, dependency inversion
 - **Naming conventions:**
-    - Classes: PascalCase (`UserService`)
-    - Methods: PascalCase (C#), camelCase (TS)
-    - Variables: camelCase (`userName`)
-    - Constants: UPPER_SNAKE_CASE
-    - Booleans: `is`, `has`, `can`, `should` prefix
-    - Collections: Plural (`users`, `items`)
+  - Classes: PascalCase (`UserService`)
+  - Methods: PascalCase (C#), camelCase (TS)
+  - Variables: camelCase (`userName`)
+  - Constants: UPPER_SNAKE_CASE
+  - Booleans: `is`, `has`, `can`, `should` prefix
+  - Collections: Plural (`users`, `items`)
 - **Code flow:** Input → Process → Output with early validation
 - **90% Logic Rule:** If logic belongs 90% to class A, put it in class A
 
@@ -1421,3 +1421,8 @@ dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
 cd src/Frontend && npm install && nx serve playground-text-snippet
 docker-compose -f src/platform-example-app.docker-compose.yml up -d
 ```
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

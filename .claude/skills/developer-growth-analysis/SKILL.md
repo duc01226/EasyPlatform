@@ -320,3 +320,8 @@ This skill:
 - Focuses on actionable improvements, not vague feedback
 - Provides specific time estimates based on complexity
 - Prioritizes areas that will have the most impact on your development velocity
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
