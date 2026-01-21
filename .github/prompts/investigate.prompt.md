@@ -322,3 +322,8 @@ Update `## Progress` section after each batch:
 | API endpoints | `Controllers/`, `*Controller.cs` |
 | Frontend | `libs/apps-domains/`, `*.component.ts` |
 | Background processing | `*BackgroundJob*.cs`, `*Job.cs` |
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

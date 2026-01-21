@@ -81,3 +81,8 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 - Test 3D scenes across different devices and optimize for smooth 60fps performance.
 - Maintain and update `./docs/design-guidelines.md` docs with 3D design patterns and shader libraries.
 - Document shader code, particle systems, and reusable 3D components for future reference.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

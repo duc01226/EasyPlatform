@@ -25,3 +25,8 @@ Think harder to plan & start working on these tasks follow the Orchestration Pro
 -   **Scout**: Use `scout` subagent to find related resources, documents, and code snippets in the current codebase.
 -   **Plan**: Trigger slash command `/plan__fast <detailed-instruction-prompt>` to create an implementation plan based on the reports from `scout` subagent.
 -   **Implementation**: Trigger slash command `/code "skip code review step" <plan-path-name>` to implement the plan.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

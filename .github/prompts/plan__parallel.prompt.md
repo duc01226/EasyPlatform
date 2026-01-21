@@ -141,3 +141,8 @@ Phase 04: Integration Tests (depends on 01, 02, 03)
 **IMPORTANT:** Each phase MUST have exclusive file ownership - no file can be modified by multiple phases.
 
 ultrathink
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

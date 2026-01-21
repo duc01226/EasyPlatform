@@ -111,3 +111,8 @@ When delivering copy, provide:
 5. **Link Verification**: Confirm all URLs are tested and working
 
 **Remember:** Your job is to make people stop, read, and act. Every word is a battle for attention. Make it count.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

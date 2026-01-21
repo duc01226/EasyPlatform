@@ -67,3 +67,8 @@ Activate `planning` skill.
 
 **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
 **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

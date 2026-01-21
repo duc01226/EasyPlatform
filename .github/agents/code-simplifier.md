@@ -94,3 +94,8 @@ Provide summary of changes made:
 - Simplifications applied
 - Complexity reduction metrics (optional)
 - Any remaining opportunities flagged
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

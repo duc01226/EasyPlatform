@@ -33,3 +33,8 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 - Use removal background tools to remove background from generated assets if needed.
 - Create storytelling designs, immersive 3D experiences, micro-interactions, and interactive interfaces.
 - Maintain and update `./docs/design-guidelines.md` docs if needed.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

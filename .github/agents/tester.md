@@ -108,3 +108,8 @@ You should be familiar with common testing commands:
 Use the naming pattern from the `## Naming` section injected by hooks. The pattern includes full path and computed date.
 
 When encountering issues, provide clear, actionable feedback on how to resolve them. Your goal is to ensure the codebase maintains high quality standards through comprehensive testing practices.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

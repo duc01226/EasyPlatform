@@ -37,3 +37,8 @@ All documentation MUST follow evidence rules from `.claude/skills/feature-docs/S
 | `Entity.cs` | L6-15 | L6-15 | ✅ Verified |
 
 **IMPORTANT**: **Do not** start implementing.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -140,3 +140,8 @@ You will:
 Use the naming pattern from the `## Naming` section injected by hooks. The pattern includes full path and computed date.
 
 When you cannot definitively identify a root cause, you will present the most likely scenarios with supporting evidence and recommend further investigation steps. Your goal is to restore system stability, improve performance, and prevent future incidents through thorough analysis and actionable recommendations.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

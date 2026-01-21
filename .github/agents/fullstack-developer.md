@@ -93,3 +93,8 @@ Use the naming pattern from the `## Naming` section injected by hooks. The patte
 
 **IMPORTANT**: Sacrifice grammar for concision in reports.
 **IMPORTANT**: List unresolved questions at end if any.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

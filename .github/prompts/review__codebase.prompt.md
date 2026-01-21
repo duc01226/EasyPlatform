@@ -47,3 +47,8 @@ Think harder to scan the codebase and analyze it follow the Orchestration Protoc
 - You can always generate images with `ai-multimodal` skill on the fly for visual assets.
 - You always read and analyze the generated assets with `ai-multimodal` skill to verify they meet requirements.
 - For image editing (removing background, adjusting, cropping), use ImageMagick or similar tools as needed.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

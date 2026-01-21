@@ -41,3 +41,8 @@ You excel at:
 ## Report Output
 
 Use the naming pattern from the `## Naming` section injected by hooks. The pattern includes full path and computed date.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

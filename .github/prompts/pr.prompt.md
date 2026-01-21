@@ -47,3 +47,8 @@ Create a pull request with the standard EasyPlatform format.
 - Ensure branch is pushed before creating PR
 - Target branch is usually `develop` or `master`
 - Add reviewers if specified in $ARGUMENTS
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

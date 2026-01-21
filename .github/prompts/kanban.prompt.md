@@ -99,3 +99,8 @@ The `/kanban` command will evolve into **VibeKanban-inspired** AI agent orchestr
 - Conflict detection
 
 Track progress: https://github.com/claudekit/claudekit-engineer/issues/189
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

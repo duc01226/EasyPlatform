@@ -117,3 +117,8 @@ Each entry should include:
 - Create the file immediately - don't just describe what you would write
 
 Remember: These journals are for the development team to learn from failures and difficulties. They should be honest enough to be useful, technical enough to be actionable, and emotional enough to capture the real human experience of building software.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

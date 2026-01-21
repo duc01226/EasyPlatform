@@ -392,3 +392,8 @@ Split into:
 | Cost per commit | $0.015 | $0.025 | $0.078   | 68-81% cheaper |
 
 At 100 commits/month (70% single, 30% multi): **$5.13 saved per user per month**
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

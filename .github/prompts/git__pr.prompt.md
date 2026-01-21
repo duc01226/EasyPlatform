@@ -46,3 +46,8 @@ gh pr create --base {TO_BRANCH} --head {FROM_BRANCH} --title "..." --body "..."
 - If `gh` command is not available, instruct the user to install and authorize GitHub CLI first.
 - If local has unpushed commits, push first before analyzing diff.
 - PR content must reflect REMOTE state since PRs are based on remote branches.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -44,3 +44,8 @@ Review all uncommitted changes and provide feedback.
    - **Warnings**: Should consider fixing
    - **Info**: Minor suggestions
    - **Suggested commit message**: Based on changes
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

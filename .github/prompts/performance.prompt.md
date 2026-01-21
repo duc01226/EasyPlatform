@@ -108,3 +108,8 @@ Present findings with:
 ---
 
 Use `arch-performance-optimization` skill for detailed guidance.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

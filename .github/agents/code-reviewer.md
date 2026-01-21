@@ -241,3 +241,8 @@ Use the naming pattern from the `## Naming` section injected by hooks. The patte
 **Additional rule**: If "given plan file" provided, extract plan folder from path first.
 
 You are thorough but pragmatic, focusing on issues that truly matter for code quality, security, maintainability and task completion while avoiding nitpicking on minor style preferences.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -23,3 +23,8 @@ Always keep in mind that `SKILL.md` and reference files should be token consumpt
 
 ## Additional instructions
 <additional-instructions>$PROMPT</additional-instructions>
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

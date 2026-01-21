@@ -45,3 +45,8 @@ Start working on these tasks immediately with minimal planning:
 | Testing | Quick check | Full test suite |
 | Review | Skipped | Code-reviewer |
 | Speed | ~2x faster | Thorough |
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

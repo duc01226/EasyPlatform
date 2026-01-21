@@ -91,3 +91,8 @@ $ npx tsx cli.ts call-tool human-mcp playwright_screenshot_fullpage '{"url":"htt
 ```
 
 **IMPORTANT**: Sacrifice grammar for concision. List unresolved questions at end if any.
+
+## Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
