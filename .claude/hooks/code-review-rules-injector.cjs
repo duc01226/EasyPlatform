@@ -25,73 +25,71 @@ const path = require('path');
 const { loadConfig } = require('./lib/ck-config-utils.cjs');
 
 async function main() {
-  const stdin = fs.readFileSync(0, 'utf-8').trim();
-  if (!stdin) process.exit(0);
+    const stdin = fs.readFileSync(0, 'utf-8').trim();
+    if (!stdin) process.exit(0);
 
-  let payload;
-  try {
-    payload = JSON.parse(stdin);
-  } catch {
-    process.exit(0);
-  }
+    let payload;
+    try {
+        payload = JSON.parse(stdin);
+    } catch {
+        process.exit(0);
+    }
 
-  const toolInput = payload.tool_input || {};
-  const skillName = (toolInput.skill || '').toLowerCase();
+    const toolInput = payload.tool_input || {};
+    const skillName = (toolInput.skill || '').toLowerCase();
 
-  // Early exit if no skill name
-  if (!skillName) {
-    process.exit(0);
-  }
+    // Early exit if no skill name
+    if (!skillName) {
+        process.exit(0);
+    }
 
-  // Load config
-  const config = loadConfig();
-  const reviewConfig = config.codeReview || {};
+    // Load config
+    const config = loadConfig();
+    const reviewConfig = config.codeReview || {};
 
-  // Early exit if disabled
-  if (reviewConfig.enabled === false) {
-    process.exit(0);
-  }
+    // Early exit if disabled
+    if (reviewConfig.enabled === false) {
+        process.exit(0);
+    }
 
-  // Default skills to match (exact or prefix match)
-  const targetSkills = reviewConfig.injectOnSkills || [
-    'code-review', 'review-pr', 'review-changes', 'tasks-code-review'
-  ];
+    // Default skills to match (exact or prefix match)
+    const targetSkills = reviewConfig.injectOnSkills || ['code-review', 'review-pr', 'review-changes', 'tasks-code-review', 'review:codebase'];
 
-  // Use exact or prefix matching (not substring includes)
-  const isReviewSkill = targetSkills.some(target => {
-    const t = target.toLowerCase();
-    return skillName === t || skillName.startsWith(t + '/') || skillName.startsWith(t + ':');
-  });
+    // Use exact or prefix matching (not substring includes)
+    const isReviewSkill = targetSkills.some(target => {
+        const t = target.toLowerCase();
+        return skillName === t || skillName.startsWith(t + '/') || skillName.startsWith(t + ':');
+    });
 
-  if (!isReviewSkill) {
-    process.exit(0);
-  }
+    if (!isReviewSkill) {
+        process.exit(0);
+    }
 
-  // Load rules from external file
-  const rulesPath = reviewConfig.rulesPath || 'docs/code-review-rules.md';
-  const projectDir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  const fullPath = path.resolve(projectDir, rulesPath);
+    // Load rules from external file
+    const rulesPath = reviewConfig.rulesPath || 'docs/code-review-rules.md';
+    const projectDir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+    const fullPath = path.resolve(projectDir, rulesPath);
 
-  if (!fs.existsSync(fullPath)) {
-    console.error(`[code-review-rules] Warning: Rules file not found: ${rulesPath}`);
-    process.exit(0);
-  }
+    if (!fs.existsSync(fullPath)) {
+        console.error(`[code-review-rules] Warning: Rules file not found: ${rulesPath}`);
+        process.exit(0);
+    }
 
-  const rules = fs.readFileSync(fullPath, 'utf-8');
+    const rules = fs.readFileSync(fullPath, 'utf-8');
 
-  // Output as system-reminder format (consistent with pattern-injector.cjs)
-  const injection = `## Project Code Review Rules (Auto-Injected)
+    // Output as system-reminder format (consistent with pattern-injector.cjs)
+    const injection = `## Project Code Review Rules (Auto-Injected)
 
 **Source:** \`${rulesPath}\`
 
 ${rules}`;
 
-  console.log(`\n<system-reminder>\n${injection}</system-reminder>\n`);
+    console.log(`\n<system-reminder>\n${injection}</system-reminder>\n`);
 
-  process.exit(0);
+    process.exit(0);
 }
 
 main().catch(e => {
-  console.error(`[code-review-rules] Error: ${e.message}`);
-  process.exit(0);
+    console.error(`[code-review-rules] Error: ${e.message}`);
+    process.exit(0);
 });
