@@ -244,20 +244,28 @@ function loadConfig(options = {}) {
     if (globalConfig) merged = deepMerge(merged, globalConfig);
     if (localConfig) merged = deepMerge(merged, localConfig);
 
-    const result = {
-      plan: merged.plan || DEFAULT_CONFIG.plan,
-      paths: merged.paths || DEFAULT_CONFIG.paths
-    };
+    // Start with full merged config to preserve custom sections (e.g., codeReview)
+    const result = { ...merged };
+
+    // Ensure required sections have defaults
+    result.plan = merged.plan || DEFAULT_CONFIG.plan;
+    result.paths = merged.paths || DEFAULT_CONFIG.paths;
 
     if (includeLocale) {
       result.locale = merged.locale || DEFAULT_CONFIG.locale;
+    } else {
+      delete result.locale;
     }
     result.trust = merged.trust || DEFAULT_CONFIG.trust;
     if (includeProject) {
       result.project = merged.project || DEFAULT_CONFIG.project;
+    } else {
+      delete result.project;
     }
     if (includeAssertions) {
       result.assertions = merged.assertions || [];
+    } else {
+      delete result.assertions;
     }
     result.codingLevel = merged.codingLevel ?? -1;
 

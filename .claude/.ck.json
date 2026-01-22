@@ -34,6 +34,11 @@
     "packageManager": "auto",
     "framework": "auto"
   },
+  "codeReview": {
+    "rulesPath": "docs/code-review-rules.md",
+    "injectOnSkills": ["code-review", "review-pr", "review-changes", "tasks-code-review"],
+    "enabled": true
+  },
   "assertions": [
     "This is a .NET 9 + Angular 19 enterprise monorepo (EasyPlatform) using Easy.Platform framework",
     "Backend: Use service-specific repositories (IPlatformQueryableRootRepository, IPlatformQueryableRootRepository, IPlatformQueryableRootRepository) - never generic IPlatformRootRepository",

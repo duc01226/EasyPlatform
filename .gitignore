@@ -495,3 +495,4 @@ plans/[0-9][0-9][0-9][0-9][0-9][0-9]-*/
 tmpclaude-*
 .ai/workspace/
 .claude/temp-reports/
+.claude/.compact-state.json

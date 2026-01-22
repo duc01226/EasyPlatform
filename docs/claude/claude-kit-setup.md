@@ -389,6 +389,29 @@ Provides thread-safe operations:
 - State: `.claude/.compact-state.json` via `lib/compact-state.cjs`
 - Test: `CK_DEBUG=1 echo '{"tool_name":"Read"}' | node .claude/hooks/compact-suggestion.cjs`
 
+#### code-review-rules-injector.cjs
+- Auto-injects project-specific code review rules when running review skills
+- Triggers on: `code-review`, `review-pr`, `review-changes`, `tasks-code-review` (and prefix variants)
+- Rules file: `docs/code-review-rules.md` (external, not in `.claude/`)
+- Config: `.claude/.ck.json` under `codeReview` section
+- Test: `echo '{"tool_name":"Skill","tool_input":{"skill":"code-review"}}' | node .claude/hooks/code-review-rules-injector.cjs`
+
+**Configuration (.claude/.ck.json):**
+```json
+{
+  "codeReview": {
+    "rulesPath": "docs/code-review-rules.md",
+    "injectOnSkills": ["code-review", "review-pr", "review-changes", "tasks-code-review"],
+    "enabled": true
+  }
+}
+```
+
+**To update code review rules:**
+1. Edit `docs/code-review-rules.md` directly
+2. Changes take effect immediately on next `/code-review` skill invocation
+3. No hook restart required
+
 ---
 
 ## Notification System

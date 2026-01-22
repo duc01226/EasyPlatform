@@ -28,6 +28,7 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 - **Skills Framework**: See [claude-kit-setup.md](./claude-kit-setup.md#skills-framework)
 - **Agents System**: See [claude-kit-setup.md](./claude-kit-setup.md#agents-system)
 - **Workflow Orchestration**: See [claude-kit-setup.md](./claude-kit-setup.md#workflow-orchestration)
+- **Code Review Rules**: See [../code-review-rules.md](../code-review-rules.md) - Auto-injected on `/code-review` skills
 
 ### Backend Tasks
 
@@ -59,6 +60,7 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 ## Related Documentation
 
 - **Root CLAUDE.md**: Essential rules and quick decision trees
+- **[Code Review Rules](../code-review-rules.md)**: Project-specific review checklist (auto-injected)
 - **.ai/prompts/context.md**: Solution planning guidance
 - **../architecture-overview.md**: System architecture & diagrams
 - **.github/AI-DEBUGGING-PROTOCOL.md**: Debugging protocol

@@ -106,6 +106,7 @@ See: [claude-kit-setup.md#external-memory-swap-system](docs/claude/claude-kit-se
 | [README.md](README.md)                                               | Platform overview & quick start  |
 | [Architecture Overview](docs/architecture-overview.md)               | System architecture & diagrams   |
 | **[Business Features](docs/BUSINESS-FEATURES.md)**                   | **Module docs, features, APIs**  |
+| [Code Review Rules](docs/code-review-rules.md)                       | Review checklist (auto-injected) |
 | [.github/AI-DEBUGGING-PROTOCOL.md](.github/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging protocol     |
 | [.ai/prompts/common.md](.ai/prompts/common.md)                       | AI agent prompt library          |
 | [.claude/hooks/tests/](.claude/hooks/tests/)                         | Claude hooks test infrastructure |
@@ -482,6 +483,7 @@ Git Bash interprets `dir /b` as: "run `dir` (Unix alias for `ls`) with `/b` as a
 - [ ] No secrets in code
 
 > **Coding standards:** See [clean-code-rules.md](docs/claude/clean-code-rules.md)
+> **Code review rules:** See [code-review-rules.md](docs/code-review-rules.md) - Auto-injected on `/code-review` skills
 
 ---
 
