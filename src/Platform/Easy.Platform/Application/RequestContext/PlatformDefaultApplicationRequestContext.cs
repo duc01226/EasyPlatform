@@ -24,6 +24,12 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
     protected readonly ConcurrentDictionary<string, object?> NotIgnoredRequestContextKeysRequestContextData = new();
     protected readonly IServiceProvider ServiceProvider;
 
+    /// <summary>
+    /// Isolated cache for transient in-memory values that are excluded from all serialization and enumeration operations.
+    /// Values stored here are only accessible via <see cref="GetTransientValue{T}"/> and <see cref="SetTransientValue"/>.
+    /// </summary>
+    protected readonly ConcurrentDictionary<string, object?> TransientInMemoryContextData = new();
+
     public PlatformDefaultApplicationRequestContext(
         IServiceProvider serviceProvider,
         IPlatformApplicationSettingContext applicationSettingContext,
@@ -110,6 +116,23 @@ public class PlatformDefaultApplicationRequestContext : IPlatformApplicationRequ
     public IPlatformApplicationRequestContextAccessor RequestContextAccessor()
     {
         return CreatedByRequestContextAccessor;
+    }
+
+    /// <inheritdoc />
+    public void SetTransientValue(object? value, string contextKey)
+    {
+        TransientInMemoryContextData.Upsert(contextKey, value);
+    }
+
+    /// <inheritdoc />
+    public T? GetTransientValue<T>(string contextKey)
+    {
+        ArgumentNullException.ThrowIfNull(contextKey);
+
+        if (PlatformRequestContextHelper.TryGetAndConvertValue(TransientInMemoryContextData, contextKey, out T? foundValue))
+            return foundValue;
+
+        return default;
     }
 
     public void Add(KeyValuePair<string, object> item)

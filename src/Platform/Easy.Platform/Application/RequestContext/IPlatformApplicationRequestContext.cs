@@ -631,6 +631,94 @@ public interface IPlatformApplicationRequestContext : IDictionary<string, object
     IPlatformApplicationRequestContextAccessor RequestContextAccessor();
 
     /// <summary>
+    /// Sets a transient in-memory value that is isolated from the main context and excluded from all serialization operations.
+    /// This method stores values in a separate internal cache that is only accessible via <see cref="GetTransientValue{T}"/>.
+    /// </summary>
+    /// <param name="value">The value to store. Can be any object type including null.</param>
+    /// <param name="contextKey">The unique key to associate with the value.</param>
+    /// <remarks>
+    /// <para>
+    /// <strong>Key Characteristics:</strong>
+    /// - Values are stored in a separate isolated dictionary, NOT in the main context data
+    /// - Values are NOT included in <see cref="GetAllKeys"/>, <see cref="GetAllKeyValues"/>,
+    ///   <see cref="GetAllIncludeIgnoredKeys"/>, or <see cref="GetAllIncludeIgnoredKeyValues"/>
+    /// - Values are NOT serialized to background jobs, message bus consumers, or inbox patterns
+    /// - Values exist only for the lifetime of the current request/scope in memory
+    /// - Values can only be retrieved using <see cref="GetTransientValue{T}"/>
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Use Cases:</strong>
+    /// - Storing large temporary objects that should not be serialized (e.g., survey responses, file streams)
+    /// - Caching expensive computations within a single request without polluting the serializable context
+    /// - Passing temporary data between services within the same request without cross-layer propagation
+    /// - Avoiding context bloat when storing request-scoped data that is only needed locally
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Important:</strong>
+    /// Unlike <see cref="SetValue"/>, transient values do not propagate through the context hierarchy
+    /// and are completely invisible to any context enumeration or serialization operations.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// // Store a large temporary object that should not be serialized
+    /// var surveyResponses = await LoadLargeSurveyResponses();
+    /// context.SetTransientValue(surveyResponses, "TempSurveyResponses");
+    ///
+    /// // Later in the same request, retrieve it
+    /// var responses = context.GetTransientValue&lt;SurveyResponseCollection&gt;("TempSurveyResponses");
+    ///
+    /// // This value will NOT appear in:
+    /// // - context.GetAllKeys()
+    /// // - context.GetAllKeyValues()
+    /// // - Background job context serialization
+    /// // - Message bus consumer context
+    /// </code>
+    /// </example>
+    void SetTransientValue(object? value, string contextKey);
+
+    /// <summary>
+    /// Retrieves a transient in-memory value that was previously set using <see cref="SetTransientValue"/>.
+    /// This method only accesses the isolated transient cache, not the main context data.
+    /// </summary>
+    /// <typeparam name="T">The type of value to retrieve.</typeparam>
+    /// <param name="contextKey">The key of the value to retrieve.</param>
+    /// <returns>
+    /// The value associated with the specified key cast to type T, or default(T) if the key is not found
+    /// or the value cannot be converted to the specified type.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// This method provides access to values stored via <see cref="SetTransientValue"/> only.
+    /// It does not fall back to the main context data, HTTP context, claims, or any other data source.
+    /// </para>
+    ///
+    /// <para>
+    /// <strong>Behavior:</strong>
+    /// - Returns the transient value if found and convertible to type T
+    /// - Returns default(T) if the key is not found in the transient cache
+    /// - Does NOT search in <see cref="GetValue{T}"/> data sources
+    /// - Thread-safe access to the transient cache
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// // Set a transient value earlier in the request
+    /// context.SetTransientValue(new ExpensiveComputationResult { Data = result }, "CachedComputation");
+    ///
+    /// // Retrieve it later in the same request
+    /// var cached = context.GetTransientValue&lt;ExpensiveComputationResult&gt;("CachedComputation");
+    /// if (cached != null)
+    /// {
+    ///     // Use cached result
+    /// }
+    /// </code>
+    /// </example>
+    T? GetTransientValue<T>(string contextKey);
+
+    /// <summary>
     /// Contains constant field names for keys in HTTP and JWT contexts that can be ignored.
     /// </summary>
     public static class DefaultCommonIgnoredRequestContextKeys

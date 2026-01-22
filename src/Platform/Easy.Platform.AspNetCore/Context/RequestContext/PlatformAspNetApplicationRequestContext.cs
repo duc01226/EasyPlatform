@@ -76,6 +76,13 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
     protected readonly IServiceProvider ServiceProvider;
 
     /// <summary>
+    /// Isolated cache for transient in-memory values that are excluded from all serialization and enumeration operations.
+    /// Values stored here are only accessible via <see cref="GetTransientValue{T}"/> and <see cref="SetTransientValue"/>.
+    /// These values do not appear in GetAllKeys, GetAllKeyValues, or any context serialization.
+    /// </summary>
+    protected readonly ConcurrentDictionary<string, object?> TransientInMemoryContextData = new();
+
+    /// <summary>
     /// Mapper that converts context keys to claim types for JWT token and claims-based authentication scenarios.
     /// Enables flexible mapping between application context keys and standard or custom claim types.
     /// </summary>
@@ -302,6 +309,23 @@ public class PlatformAspNetApplicationRequestContext : IPlatformApplicationReque
     public IPlatformApplicationRequestContextAccessor RequestContextAccessor()
     {
         return CreatedByRequestContextAccessor;
+    }
+
+    /// <inheritdoc />
+    public void SetTransientValue(object? value, string contextKey)
+    {
+        TransientInMemoryContextData.Upsert(contextKey, value);
+    }
+
+    /// <inheritdoc />
+    public T? GetTransientValue<T>(string contextKey)
+    {
+        ArgumentNullException.ThrowIfNull(contextKey);
+
+        if (PlatformRequestContextHelper.TryGetAndConvertValue(TransientInMemoryContextData, contextKey, out T? foundValue))
+            return foundValue;
+
+        return default;
     }
 
     /// <summary>
