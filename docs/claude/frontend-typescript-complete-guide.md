@@ -1580,6 +1580,31 @@ onSubmit() {
 }
 ```
 
+### Extending Platform* Classes Directly
+
+```typescript
+// ❌ WRONG: Extending Platform* directly bypasses app-level customization
+export class MyComponent extends PlatformComponent {}
+export class MyList extends PlatformVmStoreComponent<Vm, Store> {}
+export class MyForm extends PlatformFormComponent<FormVm> {}
+
+// ✅ CORRECT: Extend AppBase* classes for app-specific behavior
+export class MyComponent extends AppBaseComponent {}
+export class MyList extends AppBaseVmStoreComponent<Vm, Store> {}
+export class MyForm extends AppBaseFormComponent<FormVm> {}
+```
+
+**Why AppBase* classes exist:**
+
+1. **Centralized Customization** - Toast styling, analytics, error handling
+2. **Future-Proofing** - Add app-wide behavior without changing feature components
+3. **Consistency** - Enforce patterns across all components
+4. **Testing** - Mock app-wide concerns in one place
+
+**Location:** `src/Frontend/apps/{app}/src/app/shared/base/`
+
+**Rule:** Feature components MUST extend AppBase* classes, NOT Platform* directly.
+
 ---
 
 ## 15. Component Templates

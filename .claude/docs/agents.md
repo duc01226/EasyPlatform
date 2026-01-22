@@ -1,6 +1,6 @@
 # Agents Reference
 
-> 22+ specialized agents for delegating complex tasks.
+> 23 specialized agents for delegating complex tasks.
 
 ## What are Agents?
 
@@ -21,8 +21,28 @@ Agents are specialized subagents that Claude spawns via the `Task` tool to handl
 | Agent | Description | When to Use |
 |-------|-------------|-------------|
 | `planner` | Implementation planning, architecture | Planning implementation strategy, identifying critical files, trade-offs |
+| `architect` | System architecture, design decisions | Technology trade-offs, service boundaries, ADRs, integration strategy |
 | `brainstormer` | Solution brainstorming, technical debates | Evaluating architectural approaches, debating decisions before implementation |
 | `ui-ux-designer` | UI/UX design work | Interface designs, wireframes, design systems, accessibility review |
+
+#### Architect Agent Details
+
+The `architect` agent is a senior-level agent for significant architectural decisions. Uses 8 mental models:
+
+1. **Second-Order Thinking** - "And then what?"
+2. **Systems Thinking** - Component interconnections
+3. **Trade-off Analysis** - Pros/cons/risks/alternatives matrix
+4. **Risk-First Architecture** - Failure analysis, blast radius
+5. **Inversion (Working Backwards)** - Start from outcome
+6. **The 80/20 Rule (MVP Thinking)** - Value prioritization
+7. **Conway's Law Awareness** - Team/architecture alignment
+8. **Technical Debt Quadrant** - Debt classification
+
+**Outputs:** Architecture recommendations, ADRs, service boundary diagrams, integration strategies.
+
+**Model:** opus (for reasoning depth)
+
+See `.claude/agents/architect.md` for full mental models and ADR template.
 
 ### Implementation
 
@@ -216,4 +236,4 @@ Check agent invocation in session:
 
 ---
 
-*Total agents: 18 | Last updated: 2026-01-13*
+*Total agents: 23 | Last updated: 2026-01-22*

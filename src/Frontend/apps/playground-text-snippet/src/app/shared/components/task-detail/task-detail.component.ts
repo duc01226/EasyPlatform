@@ -28,10 +28,10 @@ import {
     cloneDeep,
     PlatformApiServiceErrorResponse,
     PlatformCoreModule,
-    PlatformFormComponent,
     PlatformFormConfig,
     startEndValidator
 } from '@libs/platform-core';
+import { AppBaseFormComponent } from '../../base';
 
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
@@ -105,7 +105,7 @@ interface TaskDetailFormValue {
         MatBadgeModule
     ]
 })
-export class TaskDetailComponent extends PlatformFormComponent<TaskDetailFormVm> implements OnInit {
+export class TaskDetailComponent extends AppBaseFormComponent<TaskDetailFormVm> implements OnInit {
     // Task to edit (null for create mode)
     @Input() public set task(value: TaskItemDataModel | null | undefined) {
         const newVm = value ? TaskDetailFormVm.fromTask(value) : TaskDetailFormVm.createNew();

@@ -231,12 +231,23 @@ Before claiming ANY task complete, verify ALL of these:
 
 Before creating/modifying files in these paths, ALWAYS invoke the corresponding skill first:
 
-| Path Pattern                | Skill                         | Pre-Read                                           |
-| --------------------------- | ----------------------------- | -------------------------------------------------- |
-| `docs/business-features/**` | `/business-feature-docs`      | `docs/templates/detailed-feature-docs-template.md` |
-| `docs/features/**`          | `/feature-docs`               | Existing sibling docs in same folder               |
-| `src/**/*Command*.cs`       | `/easyplatform-backend`       | CQRS patterns                                      |
-| `src/**/*.component.ts`     | `/frontend-angular-component` | Base component patterns                            |
+| Path Pattern                 | Skill                          | Pre-Read                                           |
+| ---------------------------- | ------------------------------ | -------------------------------------------------- |
+| `docs/business-features/**`  | `/business-feature-docs`       | `docs/templates/detailed-feature-docs-template.md` |
+| `docs/features/**`           | `/feature-docs`                | Existing sibling docs in same folder               |
+| `src/**/*Command*.cs`        | `/easyplatform-backend`        | CQRS patterns in this file                         |
+| `src/**/*-form.component.ts` | `/frontend-angular-form`       | Form patterns, validation rules                    |
+| `src/**/*-api.service.ts`    | `/frontend-angular-api-service`| API service patterns                               |
+| `src/**/*.component.ts`      | `/frontend-angular-component`  | Base component patterns                            |
+| `src/**/*.store.ts`          | `/frontend-angular-store`      | Store patterns                                     |
+| `src/**/*.component.scss`    | Read SCSS guide                | `docs/claude/scss-styling-guide.md`                |
+
+**Frontend Anti-Patterns to Flag (CRITICAL):**
+
+- `private destroy$ = new Subject()` with `takeUntil(this.destroy$)` - use `this.untilDestroyed()` instead
+- Direct `HttpClient` injection - extend `PlatformApiService` instead
+- `extends Platform*Component` directly - use `AppBase*Component` classes
+- Template elements without BEM classes - all elements MUST have BEM classes (`block__element --modifier`, space-separated)
 
 ### Business Feature Documentation (26 Sections Required)
 

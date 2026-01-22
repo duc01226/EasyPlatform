@@ -167,11 +167,34 @@ Using "should"/"probably"/"seems to", expressing satisfaction before verificatio
 
 Verify. Question. Then implement. Evidence. Then claim.
 
+## Frontend Compliance (Angular)
+
+When reviewing frontend TypeScript files, apply frontend-specific compliance checks:
+
+### Severity Levels
+
+| Severity | Action | Examples |
+|----------|--------|----------|
+| **CRITICAL** | MUST fix before approval | Direct Platform* extension, direct HttpClient |
+| **HIGH** | MUST fix before merge | Missing untilDestroyed(), manual destroy$ |
+| **MEDIUM** | Should fix if time permits | Missing BEM classes |
+
+### Key Checks
+
+1. **CRITICAL:** Components extend `AppBase*` classes, NOT `Platform*` directly
+2. **CRITICAL:** Services extend `PlatformApiService`, NOT direct `HttpClient`
+3. **HIGH:** Subscriptions use `.pipe(this.untilDestroyed())`, NOT manual `destroy$`
+4. **HIGH:** State uses `PlatformVmStore`, NOT manual signals
+5. **MEDIUM:** Templates have BEM classes on ALL elements (`block__element --modifier`)
+
+**Full checklist:** `references/frontend-compliance.md`
+
 ## Related
 
 - **Debugging:** `debugging` - Root cause investigation before fixes
 - **Testing:** `test-generation` - Create tests for bug fixes
 - **Simplification:** `code-simplifier` - Simplify code after review
+- **Frontend Patterns:** See `docs/claude/frontend-typescript-complete-guide.md`
 
 ## Task Planning Notes
 

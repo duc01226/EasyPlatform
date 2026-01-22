@@ -169,6 +169,38 @@ LeaveRequestFormComponent extends AppBaseFormComponent
 DashboardComponent extends AppBaseComponent
 ```
 
+### Why AppBase* Classes Exist
+
+1. **Centralized Customization** - Toast styling, analytics, error handling
+2. **Future-Proofing** - Add app-wide behavior without changing feature components
+3. **Consistency** - Enforce patterns across all components
+4. **Testing** - Mock app-wide concerns in one place
+
+**Location:** `src/Frontend/apps/{app}/src/app/shared/base/`
+
+### Component Base Class Selection
+
+| Scenario | Use | Notes |
+|----------|-----|-------|
+| Presentational, no state | `AppBaseComponent` | Static displays, simple UI |
+| Internal state, simple data | `AppBaseVmComponent` | Detail views with fetch |
+| Complex state, shared data | `AppBaseVmStoreComponent` | Lists, dashboards |
+| Forms with validation | `AppBaseFormComponent` | Create/Edit forms |
+
+### Anti-Patterns (CRITICAL)
+
+```typescript
+// ❌ WRONG: Extending Platform* directly
+export class MyComponent extends PlatformComponent {}
+export class MyList extends PlatformVmStoreComponent<Vm, Store> {}
+
+// ✅ CORRECT: Extend AppBase* classes
+export class MyComponent extends AppBaseComponent {}
+export class MyList extends AppBaseVmStoreComponent<Vm, Store> {}
+```
+
+**Rule:** Feature components MUST extend AppBase* classes, NOT Platform* directly.
+
 ## Platform Component API Reference
 
 **Location**: `src/Frontend/libs/platform-core/src/lib/components/abstracts/`

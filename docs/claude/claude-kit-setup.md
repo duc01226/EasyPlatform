@@ -312,10 +312,10 @@ Provides thread-safe operations:
 | SessionStart | 3 | session-init, session-resume, ace-session-inject |
 | UserPromptSubmit | 2 | workflow-router, dev-rules-reminder |
 | PreToolUse | 7 | todo-enforcement, scout-block, privacy-block, 4× context hooks |
-| PostToolUse | 6 | todo-tracker, prettier, workflow-step, ace-event, ace-feedback, tool-output-swap |
+| PostToolUse | 7 | todo-tracker, prettier, workflow-step, ace-event, ace-feedback, tool-output-swap, compact-suggestion |
 | PreCompact | 4 | write-marker, save-memory, ace-reflector, ace-curator |
 | Notification | 1 | notify.cjs (Discord/Slack/Telegram) |
-| **Total** | **23** | Across 6 hook types |
+| **Total** | **24** | Across 6 hook types |
 
 ### Hook Types
 
@@ -380,6 +380,14 @@ Provides thread-safe operations:
 - Allows research skills (scout, investigate, plan)
 - Bypass with "quick:" prefix
 - Ensures structured task execution
+
+#### compact-suggestion.cjs
+- Suggests `/compact` after 50 tool calls
+- Tracks heavy tools: Bash, Read, Grep, Glob, Skill, Edit, Write, MultiEdit, WebFetch, WebSearch
+- One-time suggestion per session (no spam)
+- Auto-resets when /compact detected
+- State: `.claude/.compact-state.json` via `lib/compact-state.cjs`
+- Test: `CK_DEBUG=1 echo '{"tool_name":"Read"}' | node .claude/hooks/compact-suggestion.cjs`
 
 ---
 
@@ -450,7 +458,7 @@ Provider errors trigger 5-minute cooldown to prevent spam:
 
 ### Overview
 
-18 specialized subagents with role-specific prompts, tools, and behavioral guidelines. Each agent is defined in `.claude/agents/*.md` with YAML frontmatter.
+23 specialized subagents with role-specific prompts, tools, and behavioral guidelines. Each agent is defined in `.claude/agents/*.md` with YAML frontmatter.
 
 ### Agent Definition Format
 
@@ -485,6 +493,7 @@ model: inherit                 # Model selection
 | project-manager   | Project coordination and reporting            | All tools (except Bash)            |
 | researcher        | Technical research and synthesis              | All tools                          |
 | brainstormer      | Solution exploration and architectural debate | All tools                          |
+| architect         | System architecture, trade-offs, ADRs         | All tools (opus model)             |
 | code-simplifier   | Code refinement for clarity                   | All tools                          |
 | copywriter        | Marketing and engagement copy                 | All tools                          |
 | ui-ux-designer    | Interface design and accessibility            | All tools                          |
@@ -496,6 +505,20 @@ Agents follow structured output formats:
 - **Planner**: Implementation plans with effort estimates
 - **Code-reviewer**: Severity-prioritized findings with fixes
 - **Debugger**: Root cause analysis with evidence
+- **Architect**: Trade-off matrices, ADRs with alternatives, service boundary diagrams
+
+### Architect Agent
+
+Senior architecture agent with 8 mental models for complex design decisions:
+- Second-Order Thinking, Systems Thinking, Trade-off Analysis
+- Risk-First Architecture, Inversion, 80/20 Rule
+- Conway's Law Awareness, Technical Debt Quadrant
+
+**Use for:** Technology trade-offs, service boundaries, ADR creation, integration strategy.
+
+**Model:** opus (for reasoning depth)
+
+See `.claude/agents/architect.md` for full mental models and ADR template.
 
 ---
 

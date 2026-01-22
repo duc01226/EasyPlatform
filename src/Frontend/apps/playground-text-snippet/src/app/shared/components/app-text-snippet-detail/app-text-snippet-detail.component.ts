@@ -3,7 +3,8 @@ import { ChangeDetectionStrategy, Component, OnInit, ViewEncapsulation } from '@
 import { Observable, of } from 'rxjs';
 
 import { SaveTextSnippetCommand, SearchTextSnippetQuery, TextSnippetApi } from '@libs/apps-domains/text-snippet-domain';
-import { PlatformApiServiceErrorResponse, PlatformVmComponent, cloneDeep } from '@libs/platform-core';
+import { PlatformApiServiceErrorResponse, cloneDeep } from '@libs/platform-core';
+import { AppBaseVmComponent } from '../../base';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -24,7 +25,7 @@ import { AppTextSnippetDetail } from './app-text-snippet-detail.view-model';
     encapsulation: ViewEncapsulation.None,
     imports: [CommonModule, FormsModule, ReactiveFormsModule, TranslateModule, MatInputModule, MatFormFieldModule, MatButtonModule, MatProgressSpinnerModule]
 })
-export class AppTextSnippetDetailComponent extends PlatformVmComponent<AppTextSnippetDetail> implements OnInit {
+export class AppTextSnippetDetailComponent extends AppBaseVmComponent<AppTextSnippetDetail> implements OnInit {
     public constructor(
         private appStore: AppStore,
         private snippetTextApi: TextSnippetApi

@@ -136,6 +136,7 @@ Session Start
 | `ace-event-emitter.cjs` | `Bash\|Skill` | Capture events for ACE analysis |
 | `workflow-step-tracker.cjs` | `Skill` | Track workflow progress |
 | `ace-feedback-tracker.cjs` | `Skill` | Track delta effectiveness |
+| `compact-suggestion.cjs` | `Bash\|Read\|Grep\|Glob\|Skill\|Edit\|Write\|MultiEdit\|WebFetch\|WebSearch` | Suggest /compact after 50 tool calls |
 
 ### PreCompact Hooks
 
@@ -165,6 +166,7 @@ Hooks share functionality through `lib/` modules:
 | Prefix | Purpose | Modules |
 |--------|---------|---------|
 | `ace-*` | ACE system utilities | ace-constants, ace-lesson-schema, ace-outcome-classifier, ace-playbook-state, ace-sync-copilot |
+| `compact-*` | Context management | compact-state |
 | `ar-*` | ACE reflector | ar-candidates, ar-events, ar-generation |
 | `ck-*` | Claude Kit core | ck-config, ck-config-utils, ck-git, ck-naming, ck-paths, ck-session |
 | `si-*` | Session init | si-exec, si-output, si-project, si-python |
@@ -172,6 +174,36 @@ Hooks share functionality through `lib/` modules:
 | `dr-*` | Dev rules | dr-context, dr-paths, dr-template |
 | `pattern-*` | Pattern learning | pattern-constants, pattern-detector, pattern-extractor, pattern-matcher, pattern-storage |
 | `*-state` | State management | todo-state, edit-state, workflow-state |
+
+## Context Management
+
+Proactive context window management to prevent critical limits.
+
+### compact-suggestion.cjs (PostToolUse)
+
+**Purpose:** Suggests `/compact` after ~50 heavy tool operations.
+
+**Tracked Tools:** Bash, Read, Grep, Glob, Skill, Edit, Write, MultiEdit, WebFetch, WebSearch
+
+**Behavior:**
+- Counts tracked tool calls per session
+- One-time suggestion at threshold (50 calls)
+- Auto-resets when /compact detected
+- Fail-open design (never blocks operations)
+
+**State Management:**
+- Uses `lib/compact-state.cjs` for persistent tracking
+- State file: `.claude/.compact-state.json`
+- 24h TTL, auto-reset on size overflow (50KB max)
+
+**Testing:**
+```bash
+CK_DEBUG=1 echo '{"tool_name":"Read"}' | node .claude/hooks/compact-suggestion.cjs
+```
+
+**Debug Mode:** Set `CK_DEBUG=1` for verbose logging.
+
+---
 
 ## Environment Variables
 

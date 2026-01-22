@@ -97,6 +97,15 @@
                     }
                 ],
                 "matcher": "Read|Grep|Glob|Bash"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/compact-suggestion.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Bash|Read|Grep|Glob|Skill|Edit|Write|MultiEdit|WebFetch|WebSearch"
             }
         ],
         "PreCompact": [
