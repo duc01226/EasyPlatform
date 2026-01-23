@@ -52,14 +52,31 @@ async function main() {
         process.exit(0);
     }
 
-    // Default skills to match (exact or prefix match)
-    const targetSkills = reviewConfig.injectOnSkills || ['code-review', 'review-pr', 'review-changes', 'tasks-code-review', 'review:codebase'];
+    // Default skills to match - covers all review-related skills:
+    // - code-review: main interactive review skill
+    // - tasks-code-review: autonomous comprehensive review
+    // - arch-security-review: security-focused review
+    // Also supports sub-skills via prefix matching (e.g., code-review/pr)
+    const targetSkills = reviewConfig.injectOnSkills || [
+        'code-review',
+        'tasks-code-review',
+        'arch-security-review',
+        'review-pr',
+        'review-changes',
+        'review:codebase',
+        'code-reviewer'
+    ];
 
-    // Use exact or prefix matching (not substring includes)
-    const isReviewSkill = targetSkills.some(target => {
-        const t = target.toLowerCase();
-        return skillName === t || skillName.startsWith(t + '/') || skillName.startsWith(t + ':');
-    });
+    // Match by:
+    // 1. Exact match (e.g., 'code-review')
+    // 2. Prefix match with '/' separator (e.g., 'code-review/pr', 'code-review/codebase')
+    // 3. Wildcard: Any skill ending with '-review' (intentional - catches future *-review skills
+    //    automatically without config updates, e.g., 'security-review', 'perf-review', etc.)
+    const isReviewSkill =
+        targetSkills.some(target => {
+            const t = target.toLowerCase();
+            return skillName === t || skillName.startsWith(t + '/');
+        }) || skillName.endsWith('-review');
 
     if (!isReviewSkill) {
         process.exit(0);

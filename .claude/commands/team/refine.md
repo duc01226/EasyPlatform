@@ -1,256 +1,336 @@
 ---
 name: refine
-description: Refine an idea into a Product Backlog Item with acceptance criteria
-allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite, AskUserQuestion
+description: Refine an idea into a Product Backlog Item with hypothesis validation, domain research, and acceptance criteria
+allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite, WebSearch, AskUserQuestion
 arguments:
   - name: idea-file
     description: Path to idea file or IDEA-ID
     required: true
+  - name: --research
+    description: Trigger domain/market research phase
+    required: false
+  - name: --skip-hypothesis
+    description: Skip hypothesis validation (existing validated idea)
+    required: false
 ---
 
 # Refine Idea to PBI
 
-Transform a raw idea into a structured Product Backlog Item with business documentation cross-reference.
-
-## Pre-Workflow
-
-### Activate Skills
-
-- Activate `business-analyst` skill for requirements analysis and INVEST criteria
+Transform a raw idea into a structured Product Backlog Item.
 
 ## Workflow
 
-### 1. Load Idea
-
+### Step 1: Load Idea
 - Read idea file from path or find by ID in `team-artifacts/ideas/`
 - Extract problem statement, value, users, scope
-- Extract `related_module` from idea frontmatter (if present)
+- Check for `module` field in frontmatter
 
-### 2. Load Business Context
+### Step 1.5: Domain Research (Optional)
 
-1. **If `related_module` present in idea**: Use that module
-2. **Otherwise**: Discover module from idea keywords:
-   - Glob: `docs/business-features/*/README.md`
-   - Parse frontmatter, match `keywords`/`aliases`/`features`
-   - Score and select highest match
-   - If no match: Prompt user to select from available modules
-3. **Read**: `docs/business-features/{Module}/INDEX.md`
-4. **Read**: `docs/business-features/{Module}/README.md` (Overview + Requirements sections)
-5. **Extract**: `domain_path` from frontmatter for entity inspection (Step 5)
-6. **Note**: "Loaded business context from {Module}"
+**Trigger when:** `--research` flag OR idea mentions new market/domain OR competitive landscape unclear.
 
-### 2.5. Search Business Documentation
+**Skip when:** Internal tooling, well-understood domain, time-constrained refinement.
 
-- Glob: `docs/business-features/{Module}/detailed-features/*.md`
-- Search for related features by keywords from idea title/problem
-- List similar features found with descriptions
-- Extract relevant FR-XX IDs (functional requirements)
-- Extract relevant TC-XX IDs (test cases)
-- Note gaps or overlaps with existing documentation:
-  - "This extends existing feature FR-XX"
-  - "This fills documentation gap: {description}"
-  - "This may overlap with FR-XX - verify differentiation"
+**Process:**
+1. Extract key domain terms from idea
+2. Use WebSearch for context:
+   - Market trends: `"{domain} market trends 2026"`
+   - Competitors: `"{domain} software solutions comparison"`
+   - Best practices: `"{feature-type} best practices UX"`
+3. Summarize findings (max 3 bullets)
 
-### 3. Generate Acceptance Criteria
+**Output to PBI:**
+```markdown
+## Domain Research Summary
+- **Market context:** {1-sentence finding}
+- **Competitor landscape:** {key players, gaps identified}
+- **Best practices:** {relevant pattern to adopt}
+```
 
+### Step 2: Activate Skills & Techniques
+- Activate `business-analyst` skill
+- Use INVEST criteria for story quality
+- Reference BABOK techniques as needed:
+  - **Interviews:** For unclear requirements
+  - **Document Analysis:** For existing systems
+  - **Prototyping:** For UI/UX validation
+  - See `refine` skill for technique details
+
+### Step 2.5: Problem Hypothesis Validation
+
+**Skip when:** `--skip-hypothesis` flag OR existing validated hypothesis in idea OR bug fix/tech debt.
+
+**Process:**
+1. Extract or draft problem hypothesis:
+   ```
+   We believe [target users]
+   Experience [problem]
+   Because [root cause]
+   ```
+2. Use AskUserQuestion to validate:
+   - "Is this the core problem we're solving?"
+   - "Who exactly experiences this? How often?"
+   - "What evidence do we have this problem exists?"
+3. If validated, proceed to Step 3
+4. If invalidated, return idea for clarification
+
+**Output to PBI:**
+```markdown
+## Problem Hypothesis
+**Target Users:** {persona}
+**Problem:** {validated problem statement}
+**Root Cause:** {why this exists}
+**Validation:** {how we confirmed}
+```
+
+### Step 3: Generate Acceptance Criteria
 - Create at least 3 scenarios:
   - Happy path
   - Edge case
   - Error case
 - Use GIVEN/WHEN/THEN format
-- Reference existing TC-XX patterns where applicable
 
-### 4. Identify Dependencies
+### Step 4: Load Business Feature Context (if BravoSUITE domain)
 
-1. **Entity Inspection** (using `domain_path` from Step 3):
-   - Glob: `{domain_path}/Entities/*.cs`
-   - Extract entity class names (extending `RootEntity<`), key properties
-   - If no domain_path: Use fallback `src/*App*/**/*.Domain/Entities/*.cs`
-2. **Search codebase** for related features
-3. **Include dependencies** from business docs
-4. **Note** upstream/downstream dependencies
-5. **List related entities** from idea + newly discovered entities
+Check idea frontmatter for `module` field:
 
-### 5. Create PBI
+**If module present:**
+1. Read `docs/business-features/{module}/README.md` (overview + feature list, ~2K tokens)
+2. Identify closest matching feature based on idea keywords
+3. Read corresponding feature documentation:
+   - Full feature doc: `docs/business-features/{module}/detailed-features/*.md` (3-5K tokens)
+   - Or `.ai.md` companion: `docs/business-features/{module}/detailed-features/*.ai.md` (~1K tokens)
+4. Extract context:
+   - **Business Rules:** BR-{MOD}-XXX format
+   - **Test Cases:** TC-{MOD}-XXX format with GIVEN/WHEN/THEN
+   - **Evidence patterns:** file:line format
+   - **Related entities and services**
 
+**If module not present:**
+- **Dynamic Discovery:** Run `Glob("docs/business-features/*/README.md")` to discover all modules
+- Analyze idea text for module keywords (reference: `.claude/skills/shared/module-detection-keywords.md`)
+- Prompt if ambiguous: "Is this for a BravoSUITE domain module?" + list Glob results + "None"
+- If selected, follow above process
+- If None, proceed to Step 5 (codebase search)
+
+**Multi-module support:**
+- If 2+ modules detected, load context for ALL detected modules
+- Combine business rules and test case patterns from all modules
+
+**Token Budget:** Target 8-12K tokens total (validated decision: prefer completeness):
+- Module README: 2K
+- Full feature doc sections: 3-5K per feature
+- Multi-module support: Load all detected modules (may increase total)
+
+### Step 4.5: Entity Domain Investigation
+
+**Skip if:** No module detected (non-domain idea).
+
+After loading feature context, investigate related entities in codebase.
+
+**Using .ai.md Files:**
+1. Read `.ai.md` companion file for detected feature:
+   ```
+   Glob("docs/business-features/{module}/detailed-features/*.ai.md")
+   ```
+2. Extract from `## Domain Model` section:
+   - Entity names and base classes
+   - Key properties and types
+   - Navigation relationships
+   - Computed properties
+
+**Codebase Correlation:**
+3. Use `## File Locations` section paths to verify entities exist
+4. Extract from `## Key Expressions` section:
+   - Static expression methods for queries
+   - Validation rules
+
+**Cross-Service Dependencies:**
+5. Check `## Service Boundaries` section for:
+   - Events produced/consumed
+   - Related services affected
+
+**Discrepancy Handling:** If .ai.md content differs from source code, flag for doc update but continue with documented info.
+
+**Add to PBI Context:**
+```markdown
+## Entity Investigation Results
+
+### Primary Entities
+- `{EntityName}` - {Brief description} - [Source](path)
+
+### Related Entities
+- `{RelatedEntity}` - via {Relationship}
+
+### Key Expressions
+- `{ExpressionName}(params)` - {Purpose}
+
+### Cross-Service Events
+- Produces: `{EventName}`
+- Consumes: `{EventName}` from {Service}
+
+### Discrepancies (if any)
+- {Note outdated docs for follow-up}
+```
+
+### Step 5: Identify Dependencies (Codebase Search)
+- Search codebase for related features
+- Note upstream/downstream dependencies
+- If domain context loaded, cross-reference with existing implementations
+
+### Step 5.5: Definition of Ready Check
+
+Before creating PBI, verify readiness:
+
+| Criterion | Check |
+|-----------|-------|
+| **I**ndependent | No blocking dependencies on other PBIs |
+| **N**egotiable | Details can still be refined with team |
+| **V**aluable | Clear user/business value articulated |
+| **E**stimable | Team can estimate effort |
+| **S**mall | Can complete in single sprint |
+| **T**estable | Has GIVEN/WHEN/THEN acceptance criteria |
+| **Problem Validated** | Hypothesis confirmed (Step 2.5) |
+| **Domain Context** | BR/entity context loaded (if BravoSUITE) |
+
+**If any fail:** Note in PBI as "Needs Work" with reason, or return to earlier step.
+
+### Step 6: Draft Product Backlog Item
+
+Include Business Feature Context section if domain-related:
+
+```markdown
+## Business Feature Context
+**Module:** {module}
+**Related Feature:** {feature_name}
+**Existing Business Rules:** {BR_IDs} (see docs/business-features/{module}/...)
+**Test Case Patterns:** {TC_format} with GIVEN/WHEN/THEN
+**Evidence Format:** file:line (e.g., {example})
+**Related Entities:** {entity_list}
+```
+
+This context ensures PBI aligns with existing domain patterns.
+
+### Step 7: Create PBI
 - Generate ID: `PBI-{YYMMDD}-{NNN}`
 - Link to source idea
 - Set status: `backlog`
-- Add frontmatter:
-  - `related_module: "{Module}"`
-  - `related_entities: [{from idea}]`
-  - `business_docs_link: "docs/business-features/{Module}/"`
-  - `related_features: [{FR-XX IDs from step 3.5}]`
-  - `related_test_specs: [{TC-XX IDs from step 3.5}]`
+- Include module and related_features in frontmatter (if domain)
 
-### 6. Save Artifact
+### Step 8: Save Artifact
+- Path: `team-artifacts/pbis/{YYMMDD}-ba-pbi-{slug}.md`
 
-- Path: `team-artifacts/pbis/{YYMMDD}-pbi-{slug}.md`
-- Add Business Documentation Reference section
-
-### 7. Update Idea
-
+### Step 9: Update Idea
 - Set idea status: `approved`
 - Add link to PBI
 
-### 8. Validate Refinement (MANDATORY)
+### Step 10: Suggest Next Steps
+- "/story {pbi-file}" - Create user stories
+- "/test-spec {pbi-file}" - Create test specification
+- "/design-spec {pbi-file}" - Create design specification
+- If domain: "BR/TC validation checklist included - review before sprint planning"
 
-After creating the PBI, conduct a validation interview to:
+### Step 11: Validation Interview (Final Review)
 
-1. **Surface assumptions**: Identify implicit assumptions that need confirmation
-2. **Confirm decisions**: Validate architectural or business decisions made during refinement
-3. **Check concerns**: Review potential issues, risks, or blockers
-4. **Brainstorm with user**: Discuss alternative approaches or edge cases
+**Always perform this step after refinement is complete.**
 
-#### INVEST Criteria Pre-Check (Flag-Only)
+Conduct a brief validation interview with the user to:
+1. Surface potential concerns and hidden assumptions
+2. Confirm important decisions before sprint planning
+3. Brainstorm alternatives or enhancements
 
-Before asking validation questions, verify PBI meets INVEST:
+**Validation Topics to Cover:**
 
-| Criterion        | Check                                      | Explanation                                             |
-| ---------------- | ------------------------------------------ | ------------------------------------------------------- |
-| **Independent**  | No blocking dependencies on other PBIs     | Minimizes coordination overhead                         |
-| **Negotiable**   | Implementation approach flexible           | Details emerge during sprint, not locked upfront        |
-| **Valuable**     | Business/user value articulated            | Every PBI delivers something stakeholders care about    |
-| **Estimable**    | Team can provide rough estimate            | If too vague, split or research first                   |
-| **Small**        | Completable in 1-2 sprints (or split)      | Enables frequent feedback and course correction         |
-| **Testable**     | Acceptance criteria are verifiable         | "How do we know it's done?" must be answerable          |
+| Category | Questions to Raise |
+|----------|-------------------|
+| **Assumptions** | What assumptions are we making about user behavior, data availability, or system state? |
+| **Scope** | Is the scope clear? Are there features that should be explicitly excluded? |
+| **Dependencies** | Are there external teams, services, or data sources this depends on? |
+| **Edge Cases** | What happens when... (empty data, concurrent users, network failure)? |
+| **Business Impact** | How does this affect existing workflows or reports? |
+| **Technical Risk** | Any concerns about performance, security, or migration? |
 
-Flag any failures in validation summary but proceed with questions.
+**Interview Process:**
 
-#### Keyword Detection for Question Topics
+1. Use `AskUserQuestion` tool with 3-5 questions covering:
+   - Most critical assumption that needs validation
+   - Scope boundary that might be unclear
+   - Highest-risk technical decision
+   - Stakeholder alignment question (if applicable)
 
-Scan PBI content for these patterns to generate targeted questions:
-
-| Category         | Keywords to Detect                                                |
-| ---------------- | ----------------------------------------------------------------- |
-| **Architecture** | "approach", "pattern", "design", "structure", "database", "API"   |
-| **Assumptions**  | "assume", "expect", "should", "will", "must", "default"           |
-| **Tradeoffs**    | "tradeoff", "vs", "alternative", "option", "choice", "either/or"  |
-| **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern" |
-| **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"          |
-| **Decisions**    | "decide", "TBD", "TODO", "unclear", "needs discussion"            |
-
-#### Validation Question Categories
-
-| Category                | What to Ask                                                          |
-| ----------------------- | -------------------------------------------------------------------- |
-| **Assumptions**         | "The PBI assumes X. Is this correct?"                                |
-| **Scope**               | "Should Y be included in this PBI or deferred to a future item?"     |
-| **Risks**               | "This depends on Z. Is that available/stable?"                       |
-| **Acceptance**          | "Is acceptance criterion X complete or are there edge cases?"        |
-| **Entities**            | "Should we create new entity or extend existing X?"                  |
-| **Integration**         | "How should this integrate with {related feature}?"                  |
-| **Important Decisions** | "This requires deciding X. What's your preference?"                  |
-| **Brainstorm**          | "Any alternative solutions we should consider?"                      |
-
-#### Validation Process
-
-1. **Run INVEST check**, note any failures
-2. **Scan PBI for keywords** to identify question topics
-3. **Generate 3-5 questions** based on:
-   - Assumptions made during entity inspection
-   - Decisions about scope and boundaries
-   - Dependencies identified
-   - Gap analysis results
-   - Acceptance criteria completeness
-   - Keyword detection findings
-
-4. **Use `AskUserQuestion` tool** to interview user:
-   - Group related questions (max 4 per call)
-   - Provide concrete options with recommendations
-   - Include context from the refinement
-   - Ask brainstorm question for alternatives
-
-5. **Document validation results** in the PBI:
-
+2. Document answers in PBI:
    ```markdown
    ## Validation Summary
 
    **Validated:** {date}
    **Questions asked:** {count}
-   **INVEST Score:** {pass count}/6
-
-   ### INVEST Flags
-   - {criterion}: {Pass/Fail - reason if fail}
 
    ### Confirmed Decisions
-   - {decision 1}: {user choice}
-   - {decision 2}: {user choice}
+   - {decision}: {user's choice}
 
-   ### Open Items
-   - [ ] {any items needing follow-up}
+   ### Concerns Raised
+   - {concern}: {resolution or action item}
 
-   ### Assumptions Confirmed
-   - {assumption 1}: Confirmed by {user}
-   - {assumption 2}: Modified - {new understanding}
-
-   ### Brainstorm Notes
-   - {alternative approaches discussed}
-   - {ideas for future consideration}
-
-   ### Important Decisions Made
-   - {decision 1}: {choice} - {rationale}
+   ### Action Items (if any)
+   - [ ] {follow-up needed}
    ```
 
-6. **Update PBI if needed** based on validation answers
+3. If validation reveals issues:
+   - Update acceptance criteria if needed
+   - Add clarification notes
+   - Flag for stakeholder discussion if decision is outside scope
 
-### 9. Suggest Next Steps
+**Important:** This is NOT optional. Every refinement must end with validation.
 
-- "/story {pbi-file}" - Create user stories
-- "/test-spec {pbi-file}" - Create test specification
-- "/design-spec {pbi-file}" - Create design specification
+## Business Rules Validation Checklist
 
-## Output Format
+For domain-related PBIs, include this checklist in the output:
 
-Use template from `team-artifacts/templates/pbi-template.md`
-
-Add these fields to frontmatter:
-```yaml
-related_module: "{Module name}"
-related_entities: []
-business_docs_link: "docs/business-features/{Module}/"
-related_features: []
-related_test_specs: []
-```
-
-Add this section to PBI:
 ```markdown
-## Business Documentation Reference
-<!-- Auto-populated from /refine command -->
-- **Module**: {Module name}
-- **Module Docs**: [docs/business-features/{Module}/](docs/business-features/{Module}/)
-- **Related Features**: {FR-XX IDs}
-- **Related Test Specs**: {TC-XX IDs}
-- **Gap Analysis**: {Notes from business-features search}
+## BR/TC Validation Checklist
+
+### Existing Business Rules Referenced
+- [ ] BR-{MOD}-XXX: {Rule description} - Verified applicable
+- [ ] BR-{MOD}-YYY: {Rule description} - Verified applicable
+
+### New Business Rules Introduced
+- [ ] BR-{MOD}-ZZZ: {New rule description} - Review needed
+
+### Test Case Pattern Alignment
+- [ ] TC format follows TC-{MOD}-{FEATURE}-XXX pattern
+- [ ] All ACs use GIVEN/WHEN/THEN format
+- [ ] Evidence format specified (file:line)
+
+### Conflict Check
+- [ ] No conflicts with existing BRs identified
+- [ ] Clarifications documented if needed
 ```
-
-## Business Documentation Search Strategy
-
-1. **Keyword Extraction**: Parse idea title and problem for domain keywords
-2. **Feature Matching**: Search detailed-features/*.md for similar features
-3. **Requirement Cross-Reference**: Extract FR-XX IDs that relate to this PBI
-4. **Test Coverage**: Note TC-XX IDs that might need updates or serve as templates
-5. **Gap Identification**: Identify undocumented areas the PBI addresses
 
 ## Example
 
 ```bash
-/refine team-artifacts/ideas/260119-po-idea-advanced-search-filters.md
+/refine team-artifacts/ideas/260119-po-idea-dark-mode-toggle.md
 ```
 
-Workflow:
-1. Loads idea with `related_module: TextSnippet`
-2. Activates business-analyst skill
-3. Loads TextSnippet INDEX.md and README.md
-4. Searches detailed-features/ → finds "Full-Text Search" feature
-5. Extracts FR-TS-003 (Search Snippets), TC-TS-002 (Search tests)
-6. Notes: "This extends FR-TS-003 with advanced filtering"
-7. Generates acceptance criteria referencing TC-TS-002 patterns
-8. Creates: `team-artifacts/pbis/260119-pbi-advanced-search-filters.md`
-9. **Validates with user**: Asks 3-5 questions about assumptions, scope, risks
-10. Documents validation results and updates PBI if needed
+Creates: `team-artifacts/pbis/260119-ba-pbi-dark-mode-toggle.md`
 
-## Task Planning Notes
+```bash
+/refine team-artifacts/ideas/260119-po-idea-goal-progress-notification.md
+```
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+Creates with bravoGROWTH context: `team-artifacts/pbis/260119-ba-pbi-goal-progress-notification.md`
+- Includes BR-GRO-XXX references
+- Uses TC-GRO-GOAL-XXX test case format
+- Lists related entities (Goal, Employee, Notification)
+
+## Related
+
+- **Skill:** `refine` - Detailed technique reference (BABOK, HDD)
+- **Next:** `/story`, `/test-spec`, `/design-spec`, `/prioritize`
+- **Framework:** BABOK Core 5, INVEST, Hypothesis-Driven Development
+
+---
+
+> **Task Management Protocol:**
+> - Always plan and break work into many small todo tasks
+> - Always add a final review todo task to verify work quality and identify fixes/enhancements
