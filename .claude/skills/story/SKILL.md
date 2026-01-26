@@ -10,11 +10,14 @@ infer: true
 
 Break Product Backlog Items into implementable user stories using vertical slicing and SPIDR patterns.
 
-## References
-- **Frameworks**: Read `.claude/skills/shared/team-frameworks.md` for INVEST, SPIDR, MoSCoW
-- **BDD Templates**: Read `.claude/skills/shared/bdd-gherkin-templates.md`
-- **Module Detection**: Read `.claude/skills/shared/module-detection-keywords.md`
-- **Detailed Patterns**: Read `references/story-patterns.md` for scenarios, templates, anti-patterns
+## ⚠️ MUST READ References
+
+**IMPORTANT: You MUST read these reference files for complete protocol. Do NOT skip.**
+
+- **⚠️ MUST READ** `.claude/skills/shared/team-frameworks.md` — INVEST, SPIDR, MoSCoW frameworks
+- **⚠️ MUST READ** `.claude/skills/shared/bdd-gherkin-templates.md` — BDD/Gherkin scenario templates
+- **⚠️ MUST READ** `.claude/skills/shared/module-detection-keywords.md` — module detection keywords
+- **⚠️ MUST READ** `references/story-patterns.md` — scenarios, templates, anti-patterns
 
 ## Pre-Workflow
 

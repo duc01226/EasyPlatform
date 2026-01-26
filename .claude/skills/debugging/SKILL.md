@@ -57,7 +57,7 @@ Structured headless debugging workflow with approval gates. Creates artifacts in
 - Structured evidence documentation
 - Explicit approval required before implementation
 
-**Full workflow details:** See `references/autonomous-workflow.md`
+**⚠️ MUST READ — Full workflow details:** `references/autonomous-workflow.md`
 
 ## The Four Techniques
 
@@ -71,7 +71,7 @@ Four-phase framework ensuring proper investigation:
 
 **Key rule:** Complete each phase before proceeding. No fixes without Phase 1.
 
-**Load when:** Any bug/issue requiring investigation and fix
+**⚠️ MUST READ when:** Any bug/issue requiring investigation and fix
 
 ### 2. Root Cause Tracing (`references/root-cause-tracing.md`)
 
@@ -81,7 +81,7 @@ Trace bugs backward through call stack to find original trigger.
 
 **Includes:** `scripts/find-polluter.sh` for bisecting test pollution
 
-**Load when:** Error deep in call stack, unclear where invalid data originated
+**⚠️ MUST READ when:** Error deep in call stack, unclear where invalid data originated
 
 ### 3. Defense-in-Depth (`references/defense-in-depth.md`)
 
@@ -89,7 +89,7 @@ Validate at every layer data passes through. Make bugs impossible.
 
 **Four layers:** Entry validation → Business logic → Environment guards → Debug instrumentation
 
-**Load when:** After finding root cause, need to add comprehensive validation
+**⚠️ MUST READ when:** After finding root cause, need to add comprehensive validation
 
 ### 4. Verification (`references/verification.md`)
 
@@ -99,7 +99,7 @@ Run verification commands and confirm output before claiming success.
 
 Run the command. Read the output. Then claim the result.
 
-**Load when:** About to claim work complete, fixed, or passing
+**⚠️ MUST READ when:** About to claim work complete, fixed, or passing
 
 ### 5. EasyPlatform-Specific (`references/easyplatform-debugging.md`)
 
@@ -111,7 +111,7 @@ Platform-specific debugging patterns for the Easy.Platform .NET 9 + Angular 19 m
 - Common bug categories by layer
 - Platform-specific investigation workflow
 
-**Load when:** Debugging issues in EasyPlatform codebase
+**⚠️ MUST READ when:** Debugging issues in EasyPlatform codebase
 
 ## Quick Reference
 

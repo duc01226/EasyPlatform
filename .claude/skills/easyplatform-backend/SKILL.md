@@ -85,7 +85,7 @@ internal sealed class SaveEmployeeCommandHandler :
 }
 ```
 
-**See:** [references/cqrs-patterns.md](references/cqrs-patterns.md)
+**⚠️ MUST READ:** [references/cqrs-patterns.md](references/cqrs-patterns.md) — full CQRS command patterns
 
 ---
 
@@ -121,7 +121,7 @@ internal sealed class GetEmployeeListQueryHandler :
 }
 ```
 
-**See:** [references/cqrs-patterns.md](references/cqrs-patterns.md)
+**⚠️ MUST READ:** [references/cqrs-patterns.md](references/cqrs-patterns.md) — full CQRS query patterns
 
 ---
 
@@ -150,7 +150,7 @@ public sealed class Employee : RootAuditedEntity<Employee, string, string>
 }
 ```
 
-**See:** [references/entity-patterns.md](references/entity-patterns.md)
+**⚠️ MUST READ:** [references/entity-patterns.md](references/entity-patterns.md) — full entity patterns
 
 ---
 
@@ -173,11 +173,11 @@ internal sealed class SendNotificationOnCreateEmployeeEntityEventHandler
 }
 ```
 
-**See:** [references/side-effects-patterns.md](references/side-effects-patterns.md)
+**⚠️ MUST READ:** [references/side-effects-patterns.md](references/side-effects-patterns.md) — side effects patterns
 
 ## §5-7. Migrations, Jobs, Message Bus
 
-See: [migration-patterns.md](references/migration-patterns.md) | [job-patterns.md](references/job-patterns.md) | [messaging-patterns.md](references/messaging-patterns.md)
+**⚠️ MUST READ:** [migration-patterns.md](references/migration-patterns.md) | [job-patterns.md](references/job-patterns.md) | [messaging-patterns.md](references/messaging-patterns.md)
 
 ---
 

@@ -32,9 +32,9 @@ Role: project coordination, progress tracking, dependency management, risk asses
 | Prioritize backlog | prioritize | `/prioritize` |
 | Quality gate check | quality-gate | `/quality-gate` |
 
-## Frameworks Reference
+## ⚠️ MUST READ Frameworks Reference
 
-Read `.claude/skills/shared/team-frameworks.md` for risk scoring, velocity tracking, burndown templates.
+**⚠️ MUST READ** `.claude/skills/shared/team-frameworks.md` — risk scoring, velocity tracking, burndown templates.
 
 ## PM-Specific Guidelines
 

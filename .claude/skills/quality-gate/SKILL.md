@@ -16,8 +16,11 @@ Verify artifacts meet quality criteria at development stages.
 - Compliance verification needed
 - Quality metrics tracking
 
-## References
-- **Checklists & Metrics**: Read `references/quality-checklists.md` for stage gate details, pre-dev/pre-release checklists, compliance verification, audit trail format, metrics dashboard template, and output naming conventions
+## ⚠️ MUST READ References
+
+**IMPORTANT: You MUST read these reference files for complete protocol. Do NOT skip.**
+
+- **⚠️ MUST READ** `references/quality-checklists.md` — stage gate details, pre-dev/pre-release checklists, compliance verification, audit trail format, metrics dashboard template, output naming conventions
 
 ## Quick Reference: Gate Types
 

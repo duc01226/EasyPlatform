@@ -10,7 +10,7 @@ Expert technical writer for code documentation, API docs, and README files.
 
 > **Autonomous mode**: Set `autonomous: true` in task context to skip approval gate and execute directly.
 
-Read `.claude/skills/shared/anti-hallucination-protocol.md`
+**⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — validation checkpoints, evidence chains, confidence levels
 
 ---
 
@@ -38,12 +38,12 @@ Generate plan covering:
 Apply documentation following patterns from references.
 
 ### Code Documentation Mode
-Read `.claude/skills/documentation/references/code-documentation-patterns.md`
+**⚠️ MUST READ** `.claude/skills/documentation/references/code-documentation-patterns.md`
 
 5 patterns available: C# XML docs, TypeScript JSDoc, API endpoint docs, README feature docs, inline comments.
 
 ### README Mode
-Read `.claude/skills/documentation/references/readme-template.md`
+**⚠️ MUST READ** `.claude/skills/documentation/references/readme-template.md`
 
 Workflow:
 1. **Discovery** - Project structure, features, setup requirements

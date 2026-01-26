@@ -16,8 +16,11 @@ Create comprehensive UI/UX specifications for implementation.
 - Accessibility audit needed
 - Design system additions
 
-## References
-- **Design System**: Read `references/design-system-reference.md` for component specs, accessibility audit template, design tokens, responsive breakpoints, and handoff checklist
+## ⚠️ MUST READ References
+
+**IMPORTANT: You MUST read these reference files for complete protocol. Do NOT skip.**
+
+- **⚠️ MUST READ** `references/design-system-reference.md` — component specs, accessibility audit template, design tokens, responsive breakpoints, handoff checklist
 
 ## Workflow
 

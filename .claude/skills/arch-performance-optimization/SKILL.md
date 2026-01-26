@@ -16,14 +16,14 @@ Performance Issue?
 ├── Database (slow queries, N+1, indexes, pagination)
 │   → Invoke database-optimization skill (covers all DB patterns)
 ├── Frontend (rendering, bundle size, change detection)
-│   → Read docs/claude/frontend-patterns.md
+│   → ⚠️ MUST READ docs/claude/frontend-patterns.md
 │   → Key: OnPush, trackBy, lazy loading, virtual scroll, tree-shaking
 ├── API/Endpoint (response time, payload, serialization)
-│   → Read references/performance-patterns.md (parallel queries, caching, DTOs)
+│   → ⚠️ MUST READ references/performance-patterns.md (parallel queries, caching, DTOs)
 ├── Background Jobs (throughput, batch processing)
-│   → Read references/performance-patterns.md (bounded parallelism, batch ops)
+│   → ⚠️ MUST READ references/performance-patterns.md (bounded parallelism, batch ops)
 └── Cross-Service (message bus, eventual consistency)
-    → Read references/performance-patterns.md (payload size, idempotency)
+    → ⚠️ MUST READ references/performance-patterns.md (payload size, idempotency)
 ```
 
 ## Quick Assessment Checklist
@@ -45,7 +45,7 @@ Performance Issue?
 - **Paged processing**: `PageBy(skip, take)` at database level
 
 For detailed patterns, profiling commands, and anti-patterns:
-Read: `.claude/skills/arch-performance-optimization/references/performance-patterns.md`
+**⚠️ MUST READ:** `.claude/skills/arch-performance-optimization/references/performance-patterns.md`
 
 ## Approval Gate
 

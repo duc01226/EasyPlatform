@@ -84,16 +84,17 @@ Powerful combinations:
 - **Scale + Simplification** - Extremes reveal what to eliminate
 - **Meta-pattern + Scale** - Universal patterns tested at extremes
 
-## References
+## ⚠️ MUST READ References
 
-Load detailed guides as needed:
-- `references/when-stuck.md` - Dispatch flowchart and decision tree
-- `references/simplification-cascades.md` - Cascade detection and extraction
-- `references/collision-zone-thinking.md` - Metaphor collision process
-- `references/meta-pattern-recognition.md` - Pattern abstraction techniques
-- `references/inversion-exercise.md` - Assumption flipping methodology
-- `references/scale-game.md` - Extreme testing procedures
-- `references/attribution.md` - Source and adaptation notes
+**IMPORTANT: You MUST read the relevant reference guide before applying a technique. Do NOT skip.**
+
+- **⚠️ MUST READ** `references/when-stuck.md` — Dispatch flowchart and decision tree
+- **⚠️ MUST READ** `references/simplification-cascades.md` — Cascade detection and extraction
+- **⚠️ MUST READ** `references/collision-zone-thinking.md` — Metaphor collision process
+- **⚠️ MUST READ** `references/meta-pattern-recognition.md` — Pattern abstraction techniques
+- **⚠️ MUST READ** `references/inversion-exercise.md` — Assumption flipping methodology
+- **⚠️ MUST READ** `references/scale-game.md` — Extreme testing procedures
+- **⚠️ MUST READ** `references/attribution.md` — Source and adaptation notes
 
 ## Task Planning Notes
 

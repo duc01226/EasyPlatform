@@ -30,12 +30,12 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 5. **Synthesis** - Write executive summary answering the original question. Include key files, patterns used, and text-based flow diagrams.
 6. **Present** - Deliver findings using the structured output format. Offer deeper dives on subtopics.
 
-## Pre-Investigation
+## ⚠️ MUST READ Before Investigation
 
-Read these before starting:
+**IMPORTANT: You MUST read these files before starting. Do NOT skip.**
 
-- `Read .claude/skills/shared/anti-hallucination-protocol.md` - Assumption validation, evidence chains, context anchoring
-- `Read .claude/skills/shared/knowledge-graph-template.md` - Per-file analysis structure
+- **⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — Assumption validation, evidence chains, context anchoring
+- **⚠️ MUST READ** `.claude/skills/shared/knowledge-graph-template.md` — Per-file analysis structure
 
 **If preceded by `/scout`:** Use Scout's numbered file list as analysis targets. Skip redundant discovery. Prioritize HIGH PRIORITY files first.
 
@@ -53,13 +53,13 @@ Brief inline reference:
 | Frontend | `libs/apps-domains/`, `*.component.ts` |
 | Background jobs | `*BackgroundJob*.cs`, `*Job.cs` |
 
-**Full techniques, grep patterns, dependency tracing:** `Read references/investigation-techniques.md`
+**⚠️ MUST READ — Full techniques, grep patterns, dependency tracing:** `references/investigation-techniques.md`
 
 ## Evidence Collection
 
 Autonomous mode writes analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`.
 
-**Full per-file template, knowledge graph fields, findings format:** `Read references/evidence-collection.md`
+**⚠️ MUST READ — Full per-file template, knowledge graph fields, findings format:** `references/evidence-collection.md`
 
 ## Output Format
 

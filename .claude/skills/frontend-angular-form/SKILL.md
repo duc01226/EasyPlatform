@@ -47,14 +47,14 @@ src/Frontend/apps/{app-name}/src/app/features/{feature}/
 ├── {feature}-form.component.ts|html|scss
 ```
 
-## Read Directives
+## ⚠️ MUST READ Before Implementation
 
-Before implementation, read these references in order:
+**IMPORTANT: You MUST read these files before writing any code. Do NOT skip.**
 
-1. `Read .claude/skills/shared/angular-design-system.md` - hierarchy, SCSS, platform APIs
-2. `Read .claude/skills/shared/bem-component-examples.md` - BEM form examples
-3. `Read .claude/skills/frontend-angular-form/references/form-patterns.md` - basic, async, dependent, FormArray patterns
-4. Read target app design system: `docs/design-system/03-form-patterns.md`
+1. **⚠️ MUST READ** `.claude/skills/shared/angular-design-system.md` — hierarchy, SCSS, platform APIs
+2. **⚠️ MUST READ** `.claude/skills/shared/bem-component-examples.md` — BEM form examples
+3. **⚠️ MUST READ** `.claude/skills/frontend-angular-form/references/form-patterns.md` — basic, async, dependent, FormArray patterns
+4. **⚠️ MUST READ** target app design system: `docs/design-system/03-form-patterns.md`
 
 ## Anti-Patterns
 

@@ -34,9 +34,9 @@ Role: value-driven decisions, backlog management, stakeholder communication, pro
 | Create user stories | story | `/story` |
 | Quality gate check | quality-gate | `/quality-gate` |
 
-## Frameworks Reference
+## ⚠️ MUST READ Frameworks Reference
 
-Read `.claude/skills/shared/team-frameworks.md` for RICE, MoSCoW, Value vs Effort matrix.
+**⚠️ MUST READ** `.claude/skills/shared/team-frameworks.md` — RICE, MoSCoW, Value vs Effort matrix.
 
 ## Business Documentation Paths
 

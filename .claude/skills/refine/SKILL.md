@@ -10,12 +10,15 @@ infer: true
 
 Transform captured ideas into actionable Product Backlog Items using BA best practices, Hypothesis-Driven Development, and domain research.
 
-## References
-- **Frameworks**: Read `.claude/skills/shared/team-frameworks.md` for RICE, MoSCoW, INVEST, SPIDR
-- **BDD Templates**: Read `.claude/skills/shared/bdd-gherkin-templates.md`
-- **Module Detection**: Read `.claude/skills/shared/module-detection-keywords.md`
-- **Detailed Phases**: Read `references/refinement-workflow.md` for phases 2-8
-- **Domain Integration**: Read `references/bravosuite-workflow.md` for domain context
+## ⚠️ MUST READ References
+
+**IMPORTANT: You MUST read these reference files for complete protocol. Do NOT skip.**
+
+- **⚠️ MUST READ** `.claude/skills/shared/team-frameworks.md` — RICE, MoSCoW, INVEST, SPIDR frameworks
+- **⚠️ MUST READ** `.claude/skills/shared/bdd-gherkin-templates.md` — BDD/Gherkin scenario templates
+- **⚠️ MUST READ** `.claude/skills/shared/module-detection-keywords.md` — module detection keywords
+- **⚠️ MUST READ** `references/refinement-workflow.md` — detailed phases 2-8
+- **⚠️ MUST READ** `references/bravosuite-workflow.md` — domain context integration
 
 ## When to Use
 
@@ -49,7 +52,7 @@ Transform captured ideas into actionable Product Backlog Items using BA best pra
 
 ## Phase 5: Acceptance Criteria (BDD Format)
 
-Read `.claude/skills/shared/bdd-gherkin-templates.md` for templates.
+**⚠️ MUST READ** `.claude/skills/shared/bdd-gherkin-templates.md` for templates.
 
 | Practice | Description |
 |----------|-------------|

@@ -47,13 +47,13 @@ What kind of API service?
 src/Frontend/libs/apps-domains/src/lib/{domain}/services/{feature}-api.service.ts
 ```
 
-## Read Directives
+## ⚠️ MUST READ Before Implementation
 
-Before implementation, read these references in order:
+**IMPORTANT: You MUST read these files before writing any code. Do NOT skip.**
 
-1. `Read .claude/skills/shared/angular-design-system.md` - platform-core imports
-2. `Read .claude/skills/frontend-angular-api-service/references/api-service-patterns.md` - CRUD, caching, upload, search patterns
-3. Read target app design system: `docs/design-system/07-technical-guide.md`
+1. **⚠️ MUST READ** `.claude/skills/shared/angular-design-system.md` — platform-core imports
+2. **⚠️ MUST READ** `.claude/skills/frontend-angular-api-service/references/api-service-patterns.md` — CRUD, caching, upload, search patterns
+3. **⚠️ MUST READ** target app design system: `docs/design-system/07-technical-guide.md`
 
 ## Anti-Patterns
 

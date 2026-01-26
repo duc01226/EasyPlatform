@@ -33,10 +33,10 @@ Role: requirements refinement, user stories, acceptance criteria, business proce
 | Generate test specs | test-spec | `/test-spec` |
 | Generate test cases | test-cases | `/test-cases` |
 
-## Frameworks Reference
+## ⚠️ MUST READ Frameworks Reference
 
-Read `.claude/skills/shared/team-frameworks.md` for RICE, INVEST, MoSCoW, SMART, 5 Whys.
-Read `.claude/skills/shared/bdd-gherkin-templates.md` for BDD/Gherkin scenario templates.
+**⚠️ MUST READ** `.claude/skills/shared/team-frameworks.md` — RICE, INVEST, MoSCoW, SMART, 5 Whys frameworks.
+**⚠️ MUST READ** `.claude/skills/shared/bdd-gherkin-templates.md` — BDD/Gherkin scenario templates.
 
 ## Business Documentation Paths
 

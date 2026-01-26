@@ -31,7 +31,7 @@ Advisory file locking for shared state access.
 
 **Solution:** Use `.lock` file pattern with timeout and stale lock detection.
 
-**Load when:** Implementing file-based state accessed by multiple hooks/processes
+**⚠️ MUST READ when:** Implementing file-based state accessed by multiple hooks/processes
 
 ### 2. Atomic Writes (`references/data-persistence.md`)
 
@@ -41,7 +41,7 @@ Safe file persistence that survives crashes.
 
 **Solution:** Write to `.tmp`, rename to final path (atomic on POSIX), handle Windows with backup pattern.
 
-**Load when:** Persisting any JSON/data file that must survive unexpected termination
+**⚠️ MUST READ when:** Persisting any JSON/data file that must survive unexpected termination
 
 ### 3. Schema Validation (`references/data-validation.md`)
 
@@ -51,7 +51,7 @@ Validate before every persist operation.
 
 **Solution:** Validate at creation AND before every write. Never trust "it was validated earlier."
 
-**Load when:** Creating factory functions, implementing create/update operations, building data pipelines
+**⚠️ MUST READ when:** Creating factory functions, implementing create/update operations, building data pipelines
 
 ## Quick Reference
 

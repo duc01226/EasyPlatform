@@ -9,12 +9,15 @@ version: 1.2.0
 
 Browser automation via Puppeteer scripts with persistent sessions. All scripts output JSON.
 
-## References
-- **Detailed Patterns**: Read `references/devtools-patterns.md` for ARIA, screenshots, console, custom scripts
-- **CDP Domains**: Read `references/cdp-domains.md`
-- **Puppeteer API**: Read `references/puppeteer-reference.md`
-- **Performance**: Read `references/performance-guide.md`
-- **Script Options**: Read `scripts/README.md`
+## ⚠️ MUST READ References
+
+**IMPORTANT: You MUST read these reference files for complete protocol. Do NOT skip.**
+
+- **⚠️ MUST READ** `references/devtools-patterns.md` — ARIA, screenshots, console, custom scripts
+- **⚠️ MUST READ** `references/cdp-domains.md` — CDP domain reference
+- **⚠️ MUST READ** `references/puppeteer-reference.md` — Puppeteer API reference
+- **⚠️ MUST READ** `references/performance-guide.md` — Performance analysis guide
+- **⚠️ MUST READ** `scripts/README.md` — Script options reference
 
 ## Choosing Your Approach
 

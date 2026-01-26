@@ -25,15 +25,15 @@ Expert full-stack .NET + Angular implementation skill with structured investigat
 5. **Execute** -- Implement layer-by-layer following approved plan
 6. **Verify** -- Type checks, tests, integration validation
 
-> Read `.claude/skills/feature-implementation/references/implementation-workflow.md` for detailed phase instructions.
+> **⚠️ MUST READ** `.claude/skills/feature-implementation/references/implementation-workflow.md` for detailed phase instructions.
 
-## Pre-Implementation
+## ⚠️ MUST READ Before Implementation
 
-Read these before starting:
+**IMPORTANT: You MUST read these files before starting. Do NOT skip.**
 
-- `.claude/skills/shared/anti-hallucination-protocol.md` -- validation checkpoints
-- `.claude/skills/shared/knowledge-graph-template.md` -- per-file analysis structure
-- `CLAUDE.md` -- codebase instructions and platform patterns
+- **⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — validation checkpoints
+- **⚠️ MUST READ** `.claude/skills/shared/knowledge-graph-template.md` — per-file analysis structure
+- **⚠️ MUST READ** `CLAUDE.md` — codebase instructions and platform patterns
 
 ## Implementation Order
 
@@ -88,8 +88,8 @@ Read these before starting:
 - Document under `## Success Validation` heading
 - Summarize changes in `changelog.md`
 
-> Read `.claude/skills/feature-implementation/references/validation-checklist.md` for verification items.
-> Read `.claude/skills/feature-implementation/references/ep-file-locations.md` for path reference and related skills.
+> **⚠️ MUST READ** `.claude/skills/feature-implementation/references/validation-checklist.md` for verification items.
+> **⚠️ MUST READ** `.claude/skills/feature-implementation/references/ep-file-locations.md` for path reference and related skills.
 
 ## Coding Guidelines
 

@@ -9,9 +9,12 @@ infer: true
 
 Expert code restructuring agent for EasyPlatform. Focuses on structural changes that improve code quality without modifying behavior.
 
-## References
-- **Code Smells Catalog**: Read `references/code-smells-catalog.md` for patterns, examples, BEM/SCSS standards
-- **Clean Code Rules**: Read `docs/claude/clean-code-rules.md`
+## ⚠️ MUST READ References
+
+**IMPORTANT: You MUST read these reference files before starting. Do NOT skip.**
+
+- **⚠️ MUST READ** `references/code-smells-catalog.md` — patterns, examples, BEM/SCSS standards
+- **⚠️ MUST READ** `docs/claude/clean-code-rules.md` — clean code rules
 
 ## Workflow
 

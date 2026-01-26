@@ -59,7 +59,7 @@ Trigger when:
 - External reviewer lacks full context
 - Suggestion conflicts with existing decisions
 
-**Reference:** `references/code-review-reception.md`
+**⚠️ MUST READ:** `references/code-review-reception.md`
 
 ### Requesting Review
 Trigger when:
@@ -69,7 +69,7 @@ Trigger when:
 - Stuck and need fresh perspective
 - After fixing complex bugs
 
-**Reference:** `references/requesting-code-review.md`
+**⚠️ MUST READ:** `references/requesting-code-review.md`
 
 ### Verification Gates
 Trigger when:
@@ -79,7 +79,7 @@ Trigger when:
 - Any statement suggesting success/completion
 - Expressing satisfaction with work
 
-**Reference:** `references/verification-before-completion.md`
+**⚠️ MUST READ:** `references/verification-before-completion.md`
 
 ## Quick Decision Tree
 
@@ -116,7 +116,7 @@ READ → UNDERSTAND → VERIFY → EVALUATE → RESPOND → IMPLEMENT
 - **Human partner:** Trusted - implement after understanding, no performative agreement
 - **External reviewers:** Verify technically correct, check for breakage, push back if wrong
 
-**Full protocol:** `references/code-review-reception.md`
+**⚠️ MUST READ — Full protocol:** `references/code-review-reception.md`
 
 ## Requesting Review Protocol
 
@@ -130,7 +130,7 @@ READ → UNDERSTAND → VERIFY → EVALUATE → RESPOND → IMPLEMENT
 2. Dispatch code-reviewer subagent via Task tool with: WHAT_WAS_IMPLEMENTED, PLAN_OR_REQUIREMENTS, BASE_SHA, HEAD_SHA, DESCRIPTION
 3. Act on feedback: Fix Critical immediately, Important before proceeding, note Minor for later
 
-**Full protocol:** `references/requesting-code-review.md`
+**⚠️ MUST READ — Full protocol:** `references/requesting-code-review.md`
 
 ## Verification Gates Protocol
 
@@ -151,7 +151,7 @@ Skip any step = lying, not verifying
 ### Red Flags - STOP
 Using "should"/"probably"/"seems to", expressing satisfaction before verification, committing without verification, trusting agent reports, ANY wording implying success without running verification
 
-**Full protocol:** `references/verification-before-completion.md`
+**⚠️ MUST READ — Full protocol:** `references/verification-before-completion.md`
 
 ## Integration with Workflows
 
@@ -187,7 +187,7 @@ When reviewing frontend TypeScript files, apply frontend-specific compliance che
 4. **HIGH:** State uses `PlatformVmStore`, NOT manual signals
 5. **MEDIUM:** Templates have BEM classes on ALL elements (`block__element --modifier`)
 
-**Full checklist:** `references/frontend-compliance.md`
+**⚠️ MUST READ — Full checklist:** `references/frontend-compliance.md`
 
 ## Related
 

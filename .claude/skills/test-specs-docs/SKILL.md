@@ -10,10 +10,13 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 
 Generate comprehensive test specifications with Given-When-Then format and code evidence.
 
-## References
-- **Test Templates**: Read `references/test-case-templates.md` for document structure, test case template, priority groups, and analysis methodology
-- **BDD Format**: Read `.claude/skills/shared/bdd-gherkin-templates.md`
-- **Anti-Hallucination**: Read `.claude/skills/shared/anti-hallucination-protocol.md`
+## ⚠️ MUST READ References
+
+**IMPORTANT: You MUST read these reference files for complete protocol. Do NOT skip.**
+
+- **⚠️ MUST READ** `references/test-case-templates.md` — document structure, test case template, priority groups, analysis methodology
+- **⚠️ MUST READ** `.claude/skills/shared/bdd-gherkin-templates.md` — BDD/Gherkin format templates
+- **⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — validation checkpoints, confidence levels
 
 ## Output Structure
 ```

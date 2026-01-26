@@ -10,7 +10,7 @@ Expert full-stack analyst for implementation plan analysis, impact assessment, a
 
 **IMPORTANT**: Think hard, plan step-by-step todo list first. Preserve todo list through all operations.
 
-Read `.claude/skills/shared/anti-hallucination-protocol.md` before starting analysis.
+**⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` before starting analysis — validation checkpoints, evidence chains, confidence levels.
 
 ---
 

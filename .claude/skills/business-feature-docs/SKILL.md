@@ -8,13 +8,16 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 
 Generate comprehensive business feature documentation following the **GOLD STANDARD** template.
 
-## References
-- **26-Section Template**: Read `.claude/skills/shared/business-docs-26-sections.md`
-- **BDD Templates**: Read `.claude/skills/shared/bdd-gherkin-templates.md`
-- **Anti-Hallucination**: Read `.claude/skills/shared/anti-hallucination-protocol.md`
-- **Gold Standard**: `docs/features/README.ExampleFeature1.md`
-- **Full Template**: `docs/templates/detailed-feature-docs-template.md`
-- **AI Companion Template**: `docs/templates/detailed-feature-docs-template.ai.md`
+## ⚠️ MUST READ References
+
+**IMPORTANT: You MUST read these reference files for complete protocol. Do NOT skip.**
+
+- **⚠️ MUST READ** `.claude/skills/shared/business-docs-26-sections.md` — 26-section template structure
+- **⚠️ MUST READ** `.claude/skills/shared/bdd-gherkin-templates.md` — BDD/Gherkin scenario templates
+- **⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — validation checkpoints, confidence levels
+- **⚠️ MUST READ** `docs/features/README.ExampleFeature1.md` — gold standard example
+- **⚠️ MUST READ** `docs/templates/detailed-feature-docs-template.md` — full template
+- **⚠️ MUST READ** `docs/templates/detailed-feature-docs-template.ai.md` — AI companion template
 
 ## Phase 1: Module Detection & Context Gathering
 
@@ -44,7 +47,7 @@ Gather evidence from source code:
 
 ## Phase 2: Documentation Generation
 
-Read `.claude/skills/shared/business-docs-26-sections.md` for the full 26-section structure, format templates, and quality checklist.
+**⚠️ MUST READ** `.claude/skills/shared/business-docs-26-sections.md` for the full 26-section structure, format templates, and quality checklist.
 
 Key requirements:
 - All 26 mandatory sections in correct order

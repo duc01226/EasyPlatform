@@ -8,7 +8,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 
 Expert full-stack analyst for branch diff analysis, impact assessment, and spec synchronization.
 
-Read `.claude/skills/shared/anti-hallucination-protocol.md`
+**⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — validation checkpoints, evidence chains, confidence levels
 
 ---
 
@@ -54,7 +54,7 @@ For each changed file, find: importers, dependencies, test files, API consumers,
 Update specification documents with: requirements, test specs, architecture docs, review findings.
 
 ### Spec Update Mode
-Read `.claude/skills/branch-comparison/references/spec-update-workflow.md`
+**⚠️ MUST READ** `.claude/skills/branch-comparison/references/spec-update-workflow.md`
 
 Provides:
 - **Pattern-based discovery** - grep patterns for finding spec files and cross-referencing

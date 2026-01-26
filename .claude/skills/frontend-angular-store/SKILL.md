@@ -47,14 +47,14 @@ src/Frontend/apps/{app-name}/src/app/features/{feature}/
 └── {feature}.component.ts
 ```
 
-## Read Directives
+## ⚠️ MUST READ Before Implementation
 
-Before implementation, read these references in order:
+**IMPORTANT: You MUST read these files before writing any code. Do NOT skip.**
 
-1. `Read .claude/skills/shared/angular-design-system.md` - hierarchy, platform APIs
-2. `Read .claude/skills/shared/bem-component-examples.md` - BEM template examples
-3. `Read .claude/skills/frontend-angular-store/references/store-patterns.md` - CRUD, dependent data, caching, integration
-4. Read target app design system: `docs/design-system/06-state-management.md`
+1. **⚠️ MUST READ** `.claude/skills/shared/angular-design-system.md` — hierarchy, platform APIs
+2. **⚠️ MUST READ** `.claude/skills/shared/bem-component-examples.md` — BEM template examples
+3. **⚠️ MUST READ** `.claude/skills/frontend-angular-store/references/store-patterns.md` — CRUD, dependent data, caching, integration
+4. **⚠️ MUST READ** target app design system: `docs/design-system/06-state-management.md`
 
 ## Anti-Patterns
 
