@@ -54,7 +54,7 @@ Follow `./.claude/workflows/primary-workflow.md`:
 - Parallel: "Phases 1-3 parallel, then 4" → Launch 3 agents → Wait → Launch 1 agent
 - Sequential: "Phase 1 → 2 → 3" → Main agent implements each phase
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

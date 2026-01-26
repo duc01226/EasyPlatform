@@ -29,10 +29,10 @@ Random fixes waste time and create new bugs. Find the root cause, fix at source,
 
 ## Mode Selection
 
-| Mode | Flag | Use When | Workflow |
-|------|------|----------|----------|
-| **Interactive** | (default) | User available for feedback, exploratory debugging | Real-time collaboration, iterative investigation |
-| **Autonomous** | `--autonomous` | Batch debugging, CI/CD, comprehensive analysis needed | 5-phase structured workflow with approval gates |
+| Mode            | Flag           | Use When                                              | Workflow                                         |
+| --------------- | -------------- | ----------------------------------------------------- | ------------------------------------------------ |
+| **Interactive** | (default)      | User available for feedback, exploratory debugging    | Real-time collaboration, iterative investigation |
+| **Autonomous**  | `--autonomous` | Batch debugging, CI/CD, comprehensive analysis needed | 5-phase structured workflow with approval gates  |
 
 ### Interactive Mode (Default)
 
@@ -45,6 +45,7 @@ Structured headless debugging workflow with approval gates. Creates artifacts in
 **Invocation:** `/debugging --autonomous` or `/debug --autonomous`
 
 **Workflow:**
+
 1. **Phase 1:** Bug Report Analysis → Document in `.ai/workspace/analysis/[bug-name].md`
 2. **Phase 2:** Evidence Gathering → Multi-pattern search, dependency tracing
 3. **Phase 3:** Root Cause Analysis → Ranked causes with confidence levels
@@ -52,6 +53,7 @@ Structured headless debugging workflow with approval gates. Creates artifacts in
 5. **Phase 5:** Approval Gate → Present analysis for user approval before implementing
 
 **Key Features:**
+
 - Anti-hallucination protocols (assumption validation, evidence chains)
 - Confidence level tracking (High ≥90%, Medium 70-89%, Low <70%)
 - Structured evidence documentation
@@ -64,6 +66,7 @@ Structured headless debugging workflow with approval gates. Creates artifacts in
 ### 1. Systematic Debugging (`references/systematic-debugging.md`)
 
 Four-phase framework ensuring proper investigation:
+
 - Phase 1: Root Cause Investigation (read errors, reproduce, check changes, gather evidence)
 - Phase 2: Pattern Analysis (find working examples, compare, identify differences)
 - Phase 3: Hypothesis and Testing (form theory, test minimally, verify)
@@ -106,6 +109,7 @@ Run the command. Read the output. Then claim the result.
 Platform-specific debugging patterns for the Easy.Platform .NET 9 + Angular 19 monorepo.
 
 **Covers:**
+
 - Backend error patterns (PlatformValidationResult, PlatformException, EnsureFound)
 - Frontend error patterns (observerLoadingErrorState, stores, forms)
 - Common bug categories by layer
@@ -126,6 +130,7 @@ Bug → systematic-debugging.md (Phase 1-4)
 ## Red Flags
 
 Stop and follow process if thinking:
+
 - "Quick fix for now, investigate later"
 - "Just try changing X and see if it works"
 - "It's probably X, let me fix that"
@@ -143,14 +148,14 @@ Stop and follow process if thinking:
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 4.0.0 | 2026-01-20 | Merged tasks-bug-diagnosis, added autonomous mode with --autonomous flag |
-| 3.0.0 | 2025-12-01 | Added EasyPlatform-specific debugging, verification protocols |
-| 2.0.0 | 2025-10-15 | Added defense-in-depth, root cause tracing |
-| 1.0.0 | 2025-08-01 | Initial release with systematic debugging |
+| Version | Date       | Changes                                                                  |
+| ------- | ---------- | ------------------------------------------------------------------------ |
+| 4.0.0   | 2026-01-20 | Merged tasks-bug-diagnosis, added autonomous mode with --autonomous flag |
+| 3.0.0   | 2025-12-01 | Added EasyPlatform-specific debugging, verification protocols            |
+| 2.0.0   | 2025-10-15 | Added defense-in-depth, root cause tracing                               |
+| 1.0.0   | 2025-08-01 | Initial release with systematic debugging                                |
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

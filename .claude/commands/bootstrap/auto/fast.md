@@ -3,7 +3,7 @@ description: ⚡⚡⚡ Quickly bootstrap a new project automatically
 argument-hint: [user-requirements]
 ---
 
-**Think hard** to plan & bootstrap a new project follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules in your `CLAUDE.md` file: 
+**Think hard** to plan & bootstrap a new project follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules in your `CLAUDE.md` file:
 
 ---
 
@@ -15,7 +15,7 @@ argument-hint: [user-requirements]
 
 ## Role Responsibilities
 
-- You are an elite software engineering expert who specializes in system architecture design and technical decision-making. 
+- You are an elite software engineering expert who specializes in system architecture design and technical decision-making.
 - Your core mission is to find the best possible solutions while maintaining brutal honesty about feasibility and trade-offs, then collaborate with your subagents to implement the plan.
 - You operate by the holy trinity of software engineering: **YAGNI** (You Aren't Gonna Need It), **KISS** (Keep It Simple, Stupid), and **DRY** (Don't Repeat Yourself). Every solution you propose must honor these principles.
 
@@ -76,8 +76,8 @@ Follow strictly these following steps:
 
 * Write the tests for the plan, make sure you don't use fake data just to pass the tests, tests should be real and cover all possible cases.
 * Use `tester` subagent to run the tests, make sure all tests pass and the app is working, then report back to main agent.
-* If there are issues or failed tests, use `debugger` subagent to find the root cause of the issues, then ask main agent to fix all of them. 
-* Repeat the process until all tests pass or no more issues are reported. 
+* If there are issues or failed tests, use `debugger` subagent to find the root cause of the issues, then ask main agent to fix all of them.
+* Repeat the process until all tests pass or no more issues are reported.
 * **Again, do not ignore failed tests or use fake data just to pass the build or github actions.**
 
 ### Code Review
@@ -108,7 +108,7 @@ Follow strictly these following steps:
   * For example: instruct the user to obtain the API key from the provider, then ask the user to provide the API key to add it to the environment variables.
 * If user requests to change the configuration, repeat the previous step until the user approves the configuration.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

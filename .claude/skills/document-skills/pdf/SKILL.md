@@ -275,16 +275,16 @@ with open("encrypted.pdf", "wb") as output:
 
 ## Quick Reference
 
-| Task | Best Tool | Command/Code |
-|------|-----------|--------------|
-| Merge PDFs | pypdf | `writer.add_page(page)` |
-| Split PDFs | pypdf | One page per file |
-| Extract text | pdfplumber | `page.extract_text()` |
-| Extract tables | pdfplumber | `page.extract_tables()` |
-| Create PDFs | reportlab | Canvas or Platypus |
-| Command line merge | qpdf | `qpdf --empty --pages ...` |
-| OCR scanned PDFs | pytesseract | Convert to image first |
-| Fill PDF forms | pdf-lib or pypdf (see forms.md) | See forms.md |
+| Task               | Best Tool                       | Command/Code               |
+| ------------------ | ------------------------------- | -------------------------- |
+| Merge PDFs         | pypdf                           | `writer.add_page(page)`    |
+| Split PDFs         | pypdf                           | One page per file          |
+| Extract text       | pdfplumber                      | `page.extract_text()`      |
+| Extract tables     | pdfplumber                      | `page.extract_tables()`    |
+| Create PDFs        | reportlab                       | Canvas or Platypus         |
+| Command line merge | qpdf                            | `qpdf --empty --pages ...` |
+| OCR scanned PDFs   | pytesseract                     | Convert to image first     |
+| Fill PDF forms     | pdf-lib or pypdf (see forms.md) | See forms.md               |
 
 ## Next Steps
 
@@ -293,7 +293,7 @@ with open("encrypted.pdf", "wb") as output:
 - If you need to fill out a PDF form, follow the instructions in forms.md
 - For troubleshooting guides, see reference.md
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

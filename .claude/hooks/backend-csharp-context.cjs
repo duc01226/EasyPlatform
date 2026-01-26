@@ -131,7 +131,7 @@ function buildInjection(context, filePath, service) {
         '',
         '### Required Reading',
         '',
-        `Before implementing backend changes, you MUST read:`,
+        `Before implementing backend changes, you **MUST READ**:`,
         '',
         `**\`${BACKEND_GUIDE_PATH}\`**`,
         '',

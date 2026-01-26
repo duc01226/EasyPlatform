@@ -32,13 +32,13 @@ Map and visualize dependencies between features and work items.
 7. Output to console or save to file
 
 ### Dependency Types
-| Type | Symbol | Description |
-|------|--------|-------------|
-| Blocked by | `->` | Cannot start until X completes |
-| Blocks | `<-` | X cannot start until this completes |
-| Mutual | `<->` | Bidirectional dependency |
-| Related to | `=>` | Shares code/design elements |
-| Depends on | `~>` | Needs external (API, service) |
+| Type       | Symbol | Description                         |
+| ---------- | ------ | ----------------------------------- |
+| Blocked by | `->`   | Cannot start until X completes      |
+| Blocks     | `<-`   | X cannot start until this completes |
+| Mutual     | `<->`  | Bidirectional dependency            |
+| Related to | `=>`   | Shares code/design elements         |
+| Depends on | `~>`   | Needs external (API, service)       |
 
 ### Graph Notation
 ```
@@ -90,7 +90,7 @@ Legend:
 /dependency all
 ```
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

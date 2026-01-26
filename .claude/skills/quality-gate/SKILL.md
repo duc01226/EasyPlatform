@@ -60,17 +60,17 @@ Verify artifacts meet quality criteria at development stages.
 **Date:** {date}
 
 ### Results
-| Criterion | Status | Notes |
-|-----------|--------|-------|
-| {item} | PASS/FAIL/WARN | {note} |
+| Criterion | Status         | Notes  |
+| --------- | -------------- | ------ |
+| {item}    | PASS/FAIL/WARN | {note} |
 
 ### Compliance
-| Area | Status |
-|------|--------|
-| Architecture | PASS/FAIL |
-| Security | PASS/FAIL |
+| Area          | Status    |
+| ------------- | --------- |
+| Architecture  | PASS/FAIL |
+| Security      | PASS/FAIL |
 | Accessibility | PASS/FAIL |
-| Performance | PASS/FAIL |
+| Performance   | PASS/FAIL |
 
 ### Gate Status: PASS / FAIL / CONDITIONAL
 ```
@@ -84,3 +84,9 @@ Verify artifacts meet quality criteria at development stages.
 /quality-gate pre-dev team-artifacts/pbis/260119-pbi-dark-mode-toggle.md
 /quality-gate pre-release PR#123
 ```
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

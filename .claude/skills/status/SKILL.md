@@ -42,30 +42,30 @@ Generate project/sprint status reports with metrics.
 ### Sprint: {Name} | Day {N}/{Total}
 
 #### Progress Summary
-| Metric | Planned | Actual | Status |
-|--------|---------|--------|--------|
-| Stories | X | Y | 🟢🟡🔴 |
-| Points | X | Y | |
+| Metric  | Planned | Actual | Status |
+| ------- | ------- | ------ | ------ |
+| Stories | X       | Y      | 🟢🟡🔴    |
+| Points  | X       | Y      |        |
 
 #### Completed
 | Item | Owner |
-|------|-------|
-| | |
+| ---- | ----- |
+|      |       |
 
 #### In Progress
 | Item | Status | Blocker |
-|------|--------|---------|
-| | | |
+| ---- | ------ | ------- |
+|      |        |         |
 
 #### Blockers
 | Blocker | Impact | Action |
-|---------|--------|--------|
-| | | |
+| ------- | ------ | ------ |
+|         |        |        |
 
 #### Risks
 | Risk | Probability | Impact |
-|------|-------------|--------|
-| | | |
+| ---- | ----------- | ------ |
+|      |             |        |
 ```
 
 **Status Indicators:** Use 🟢 (on track), 🟡 (at risk), 🔴 (blocked) for visual status.
@@ -77,7 +77,7 @@ Generate project/sprint status reports with metrics.
 - **Role Skill:** `project-manager`
 - **Command:** `/status`
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

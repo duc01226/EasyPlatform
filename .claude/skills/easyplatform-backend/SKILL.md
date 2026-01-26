@@ -183,17 +183,23 @@ internal sealed class SendNotificationOnCreateEmployeeEntityEventHandler
 
 ## Anti-Patterns
 
-| Don't | Do |
-|-------|-----|
-| `throw new ValidationException()` | `PlatformValidationResult` fluent API |
-| Side effects in command handler | Entity Event Handler in `UseCaseEvents/` |
-| Direct cross-service DB access | Message bus |
-| DTO mapping in handler | `PlatformEntityDto.MapToEntity()` |
-| Separate Command/Handler files | ONE file: Command + Result + Handler |
-| `protected bool HandleWhen()` | `public override async Task<bool> HandleWhen()` |
+| Don't                             | Do                                              |
+| --------------------------------- | ----------------------------------------------- |
+| `throw new ValidationException()` | `PlatformValidationResult` fluent API           |
+| Side effects in command handler   | Entity Event Handler in `UseCaseEvents/`        |
+| Direct cross-service DB access    | Message bus                                     |
+| DTO mapping in handler            | `PlatformEntityDto.MapToEntity()`               |
+| Separate Command/Handler files    | ONE file: Command + Result + Handler            |
+| `protected bool HandleWhen()`     | `public override async Task<bool> HandleWhen()` |
 
 ## Checklist
 
 - [ ] Service-specific repository, fluent validation (`.And()`, `.AndAsync()`)
 - [ ] No side effects in command handlers, DTO mapping in DTO class
 - [ ] Cross-service uses message bus, jobs have `maxConcurrent`, migrations use `dismissSendEvent: true`
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

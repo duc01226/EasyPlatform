@@ -32,10 +32,10 @@ node .claude/skills/pdf-to-markdown/scripts/convert.cjs \
 
 ## CLI Options
 
-| Option | Required | Description |
-| ------ | -------- | ----------- |
-| `--file <path>` | Yes | Input PDF file |
-| `--output <path>` | No | Output Markdown path (default: input name + .md) |
+| Option            | Required | Description                                      |
+| ----------------- | -------- | ------------------------------------------------ |
+| `--file <path>`   | Yes      | Input PDF file                                   |
+| `--output <path>` | No       | Output Markdown path (default: input name + .md) |
 
 ## Output Format (JSON)
 
@@ -90,7 +90,6 @@ node .claude/skills/pdf-to-markdown/scripts/convert.cjs \
 **Garbled text:** PDF may use embedded fonts not supported by parser
 **Memory issues:** Large PDFs may require `--max-old-space-size=4096` flag
 
-## Task Planning Notes
-
+## IMPORTANT Task Planning Notes
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

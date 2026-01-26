@@ -3,7 +3,7 @@ description: Create an immersive design
 argument-hint: [tasks]
 ---
 
-Think hard to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules: 
+Think hard to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <tasks>$ARGUMENTS</tasks>
 
 ## Required Skills (Priority Order)
@@ -34,7 +34,7 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 - Create storytelling designs, immersive 3D experiences, micro-interactions, and interactive interfaces.
 - Maintain and update `./docs/design-guidelines.md` docs if needed.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

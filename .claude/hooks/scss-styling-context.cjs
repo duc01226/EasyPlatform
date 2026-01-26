@@ -123,7 +123,7 @@ function buildInjection(context, filePath, app) {
         '',
         '### Required Reading',
         '',
-        `Before implementing SCSS/CSS changes, you MUST read:`,
+        `Before implementing SCSS/CSS changes, you **MUST READ**:`,
         '',
         `**\`${SCSS_GUIDE_PATH}\`**`,
         '',

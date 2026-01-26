@@ -101,7 +101,7 @@ cd my-worker
 wrangler deploy
 ```
 
-See: `references/cloudflare-workers-basics.md`
+**⚠️ MUST READ:** `references/cloudflare-workers-basics.md`
 
 ### Docker Container
 
@@ -122,7 +122,7 @@ docker build -t myapp .
 docker run -p 3000:3000 myapp
 ```
 
-See: `references/docker-basics.md`
+**⚠️ MUST READ:** `references/docker-basics.md`
 
 ### Google Cloud Deployment
 
@@ -138,7 +138,7 @@ gcloud run deploy my-service \
   --region us-central1
 ```
 
-See: `references/gcloud-platform.md`
+**⚠️ MUST READ:** `references/gcloud-platform.md`
 
 ## Reference Navigation
 
@@ -240,18 +240,18 @@ CMD ["node", "dist/server.js"]
 
 ## Decision Matrix
 
-| Need | Choose |
-|------|--------|
-| Sub-50ms latency globally | Cloudflare Workers |
-| Large file storage (zero egress) | Cloudflare R2 |
-| SQL database (global reads) | Cloudflare D1 |
-| Containerized workloads | Docker + Cloud Run/GKE |
-| Enterprise Kubernetes | GKE |
-| Managed relational DB | Cloud SQL |
-| Static site + API | Cloudflare Pages |
-| WebSocket/real-time | Cloudflare Durable Objects |
-| ML/AI pipelines | GCP Vertex AI |
-| Browser automation | Cloudflare Browser Rendering |
+| Need                             | Choose                       |
+| -------------------------------- | ---------------------------- |
+| Sub-50ms latency globally        | Cloudflare Workers           |
+| Large file storage (zero egress) | Cloudflare R2                |
+| SQL database (global reads)      | Cloudflare D1                |
+| Containerized workloads          | Docker + Cloud Run/GKE       |
+| Enterprise Kubernetes            | GKE                          |
+| Managed relational DB            | Cloud SQL                    |
+| Static site + API                | Cloudflare Pages             |
+| WebSocket/real-time              | Cloudflare Durable Objects   |
+| ML/AI pipelines                  | GCP Vertex AI                |
+| Browser automation               | Cloudflare Browser Rendering |
 
 ## Resources
 
@@ -284,7 +284,7 @@ CMD ["node", "dist/server.js"]
 - [ ] Configure IAM permissions
 - [ ] Deploy and monitor resources
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

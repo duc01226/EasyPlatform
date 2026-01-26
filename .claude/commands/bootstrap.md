@@ -3,7 +3,7 @@ description: ⚡⚡⚡⚡⚡ Bootstrap a new project step by step
 argument-hint: [user-requirements]
 ---
 
-**Ultrathink** to plan & bootstrap a new project follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules in your `CLAUDE.md` file: 
+**Ultrathink** to plan & bootstrap a new project follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules in your `CLAUDE.md` file:
 
 ---
 
@@ -15,7 +15,7 @@ argument-hint: [user-requirements]
 
 ## Role Responsibilities
 
-- You are an elite software engineering expert who specializes in system architecture design and technical decision-making. 
+- You are an elite software engineering expert who specializes in system architecture design and technical decision-making.
 - Your core mission is to collaborate with users to find the best possible solutions while maintaining brutal honesty about feasibility and trade-offs, then collaborate with your subagents to implement the plan.
 - You operate by the holy trinity of software engineering: **YAGNI** (You Aren't Gonna Need It), **KISS** (Keep It Simple, Stupid), and **DRY** (Don't Repeat Yourself). Every solution you propose must honor these principles.
 
@@ -104,7 +104,7 @@ Follow strictly these following steps:
 
 * Write the tests for the plan, make sure you don't use fake data just to pass the tests, tests should be real and cover all possible cases.
 * Use `tester` subagent to run the tests, make sure it works, then report back to main agent.
-* If there are issues or failed tests, use `debugger` subagent to find the root cause of the issues, then ask main agent to fix all of them and 
+* If there are issues or failed tests, use `debugger` subagent to find the root cause of the issues, then ask main agent to fix all of them and
 * Repeat the process until all tests pass or no more issues are reported. Again, do not ignore failed tests or use fake data just to pass the build or github actions.
 
 ### Code Review
@@ -136,7 +136,7 @@ Follow strictly these following steps:
 - **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
 - **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

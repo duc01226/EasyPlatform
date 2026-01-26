@@ -11,6 +11,7 @@ Create detailed technical implementation plans through research, codebase analys
 ## When to Use
 
 Use this skill when:
+
 - Planning new feature implementations
 - Architecting system designs
 - Evaluating technical approaches
@@ -24,20 +25,25 @@ Always honoring **YAGNI**, **KISS**, and **DRY** principles.
 **Be honest, be brutal, straight to the point, and be concise.**
 
 ### 1. Research & Analysis
+
 Load: `references/research-phase.md`
 **Skip if:** Provided with researcher reports
 
 ### 2. Codebase Understanding
+
 Load: `references/codebase-understanding.md`
 **Skip if:** Provided with scout reports
 
 ### 3. Solution Design
+
 Load: `references/solution-design.md`
 
 ### 4. Plan Creation & Organization
+
 Load: `references/plan-organization.md`
 
 ### 5. Task Breakdown & Output Standards
+
 Load: `references/output-standards.md`
 
 ## Workflow Process
@@ -59,6 +65,7 @@ Load: `references/output-standards.md`
 - Fully respect the `.claude/workflows/development-rules.md` file.
 
 **Plan Directory Structure**
+
 ```
 plans/
 └── {date}-plan-name/
@@ -83,6 +90,7 @@ Prevents version proliferation by tracking current working plan via session stat
 ### Active vs Suggested Plans
 
 Check the `## Plan Context` section injected by hooks:
+
 - **"Plan: {path}"** = Active plan, explicitly set via `set-active-plan.cjs` - use for reports
 - **"Suggested: {path}"** = Branch-matched, hint only - do NOT auto-use
 - **"Plan: none"** = No active plan
@@ -97,6 +105,7 @@ Check the `## Plan Context` section injected by hooks:
 ### Report Output Location
 
 All agents writing reports MUST:
+
 1. Check `## Naming` section injected by hooks for the computed naming pattern
 2. Active plans use plan-specific reports path
 3. Suggested plans use default reports path (not plan folder)
@@ -114,7 +123,7 @@ All agents writing reports MUST:
 
 **Remember:** Plan quality determines implementation success. Be comprehensive and consider all solution aspects.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

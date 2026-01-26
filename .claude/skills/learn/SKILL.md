@@ -46,12 +46,12 @@ Detected patterns: "always use X instead of Y", "prefer X over Y", "never do X"
 
 ## Pattern Categories
 
-| Category | Use For |
-|----------|---------|
-| `backend` | C#, .NET, API, Entity, Repository patterns |
+| Category   | Use For                                        |
+| ---------- | ---------------------------------------------- |
+| `backend`  | C#, .NET, API, Entity, Repository patterns     |
 | `frontend` | Angular, TypeScript, Component, Store patterns |
-| `workflow` | Development process, git, planning patterns |
-| `general` | Cross-cutting concerns |
+| `workflow` | Development process, git, planning patterns    |
+| `general`  | Cross-cutting concerns                         |
 
 ## Confidence System
 
@@ -78,3 +78,9 @@ Conflicts with `docs/claude/*.md` are blocked to prevent inconsistencies.
 ## Related
 
 For lifecycle management (list, view, archive, boost, penalize): use `/learned-patterns` skill.
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

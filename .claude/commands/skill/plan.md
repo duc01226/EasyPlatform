@@ -14,7 +14,7 @@ SKILL: $1 (default: `*`)
 PROMPT: $2 (default: empty)
 
 ## Your mission
-Propose a plan to create a new skill in `.claude/skills/${SKILL}` directory. 
+Propose a plan to create a new skill in `.claude/skills/${SKILL}` directory.
 When you finish, ask user to review your plan:
 - If the user approve: Write down a plan follow "Output Requirements", then ask user if they want to start implementing.
 - If the user reject: Revise the plan or ask more questions to clarify more about the user's request (ask one question at the time), then repeat the review process.
@@ -44,7 +44,7 @@ An output implementation plan must also follow the progressive disclosure struct
 - Each skill teaches Claude how to perform a specific development task, not what a tool does.
 - Claude Code can activate multiple skills automatically to achieve the user's request.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

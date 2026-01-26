@@ -74,3 +74,9 @@ src/Frontend/apps/{app-name}/src/app/features/{feature}/
 - [ ] State updates are immutable
 - [ ] Store provided at correct level (component vs root)
 - [ ] Caching configured if needed (`enableCaching`, `cachedStateKeyName`)
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

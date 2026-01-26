@@ -8,12 +8,14 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 # Security Review Workflow
 
 ## When to Use This Skill
+
 - Security audit of code changes
 - Implementing authentication/authorization
 - Data protection review
 - Vulnerability assessment
 
 ## Pre-Flight Checklist
+
 - [ ] Identify security-sensitive areas
 - [ ] Review OWASP Top 10 relevance
 - [ ] Check for existing security patterns
@@ -22,6 +24,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ## OWASP Top 10 Checklist
 
 ### 1. Broken Access Control
+
 ```csharp
 // :x: VULNERABLE - No authorization check
 [HttpGet("{id}")]
@@ -44,6 +47,7 @@ public async Task<Employee> Get(string id)
 ```
 
 ### 2. Cryptographic Failures
+
 ```csharp
 // :x: VULNERABLE - Storing plain text secrets
 var apiKey = config["ApiKey"];
@@ -58,6 +62,7 @@ var apiKey = config.GetValue<string>("ApiKey");  // From Azure Key Vault
 ```
 
 ### 3. Injection
+
 ```csharp
 // :x: VULNERABLE - SQL Injection
 var sql = $"SELECT * FROM Users WHERE Name = '{name}'";
@@ -72,6 +77,7 @@ await context.Database.ExecuteSqlRawAsync(
 ```
 
 ### 4. Insecure Design
+
 ```csharp
 // :x: VULNERABLE - No rate limiting
 [HttpPost("login")]
@@ -86,6 +92,7 @@ public async Task<IActionResult> Login(LoginRequest request)
 ```
 
 ### 5. Security Misconfiguration
+
 ```csharp
 // :x: VULNERABLE - Detailed errors in production
 app.UseDeveloperExceptionPage();  // Exposes stack traces
@@ -98,6 +105,7 @@ else
 ```
 
 ### 6. Vulnerable Components
+
 ```bash
 # Check for vulnerable packages
 dotnet list package --vulnerable
@@ -107,6 +115,7 @@ dotnet outdated
 ```
 
 ### 7. Authentication Failures
+
 ```csharp
 // :x: VULNERABLE - Weak password policy
 if (password.Length >= 4) { }
@@ -126,6 +135,7 @@ public class PasswordPolicy
 ```
 
 ### 8. Data Integrity Failures
+
 ```csharp
 // :x: VULNERABLE - No validation of external data
 var userData = await externalApi.GetUserAsync(id);
@@ -140,6 +150,7 @@ await SaveToDatabase(userData);
 ```
 
 ### 9. Logging Failures
+
 ```csharp
 // :x: VULNERABLE - Logging sensitive data
 Logger.LogInformation("User login: {Email} {Password}", email, password);
@@ -150,6 +161,7 @@ Logger.LogInformation("User login: {Email}", email);
 ```
 
 ### 10. SSRF (Server-Side Request Forgery)
+
 ```csharp
 // :x: VULNERABLE - User-controlled URL
 var url = request.WebhookUrl;
@@ -170,6 +182,7 @@ private bool IsAllowedUrl(string url)
 ## Authorization Patterns
 
 ### Controller Level
+
 ```csharp
 [ApiController]
 [Route("api/[controller]")]
@@ -183,6 +196,7 @@ public class EmployeeController : PlatformBaseController
 ```
 
 ### Handler Level
+
 ```csharp
 protected override async Task<PlatformValidationResult<T>> ValidateRequestAsync(
     PlatformValidationResult<T> validation, CancellationToken ct)
@@ -201,6 +215,7 @@ protected override async Task<PlatformValidationResult<T>> ValidateRequestAsync(
 ```
 
 ### Query Level
+
 ```csharp
 // Always filter by company/user context
 var employees = await repo.GetAllAsync(
@@ -211,6 +226,7 @@ var employees = await repo.GetAllAsync(
 ## Data Protection
 
 ### Sensitive Data Handling
+
 ```csharp
 public class SensitiveDataHandler
 {
@@ -235,6 +251,7 @@ public class SensitiveDataHandler
 ```
 
 ### File Upload Security
+
 ```csharp
 public async Task<IActionResult> Upload(IFormFile file)
 {
@@ -282,6 +299,7 @@ grep -r "connectionString.*password" --include="*.json"
 ## Security Review Checklist
 
 ### Authentication
+
 - [ ] Strong password policy enforced
 - [ ] Account lockout after failed attempts
 - [ ] Secure session management
@@ -289,12 +307,14 @@ grep -r "connectionString.*password" --include="*.json"
 - [ ] Refresh token rotation
 
 ### Authorization
+
 - [ ] All endpoints require authentication
 - [ ] Role-based access control implemented
 - [ ] Resource-level permissions checked
 - [ ] No privilege escalation possible
 
 ### Input Validation
+
 - [ ] All inputs validated
 - [ ] SQL injection prevented (parameterized queries)
 - [ ] XSS prevented (output encoding)
@@ -302,12 +322,14 @@ grep -r "connectionString.*password" --include="*.json"
 - [ ] URL validation for redirects
 
 ### Data Protection
+
 - [ ] Sensitive data encrypted at rest
 - [ ] HTTPS enforced
 - [ ] No sensitive data in logs
 - [ ] Proper error handling (no stack traces)
 
 ### Dependencies
+
 - [ ] No known vulnerable packages
 - [ ] Dependencies regularly updated
 - [ ] Third-party code reviewed
@@ -315,27 +337,32 @@ grep -r "connectionString.*password" --include="*.json"
 ## Anti-Patterns to AVOID
 
 :x: **Trusting client input**
+
 ```csharp
 var isAdmin = request.IsAdmin;  // User-supplied!
 ```
 
 :x: **Exposing internal errors**
+
 ```csharp
 catch (Exception ex) { return BadRequest(ex.ToString()); }
 ```
 
 :x: **Hardcoded secrets**
+
 ```csharp
 var apiKey = "sk_live_xxxxx";
 ```
 
 :x: **Insufficient logging**
+
 ```csharp
 // No audit trail for sensitive operations
 await DeleteAllUsers();
 ```
 
 ## Verification Checklist
+
 - [ ] OWASP Top 10 reviewed
 - [ ] Authentication/authorization verified
 - [ ] Input validation complete
@@ -348,7 +375,7 @@ await DeleteAllUsers();
 
 See `/security` command for structured security review workflow.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

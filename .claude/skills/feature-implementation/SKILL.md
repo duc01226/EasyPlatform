@@ -11,10 +11,10 @@ Expert full-stack .NET + Angular implementation skill with structured investigat
 
 ## Mode Selection
 
-| Mode | Flag | Behavior |
-|------|------|----------|
-| **Interactive** (default) | _(none)_ | Approval gates at plan + execution; user feedback loop |
-| **Autonomous** | `--autonomous` | Structured headless workflow; approval gate at plan only, then execute to completion |
+| Mode                      | Flag           | Behavior                                                                             |
+| ------------------------- | -------------- | ------------------------------------------------------------------------------------ |
+| **Interactive** (default) | _(none)_       | Approval gates at plan + execution; user feedback loop                               |
+| **Autonomous**            | `--autonomous` | Structured headless workflow; approval gate at plan only, then execute to completion |
 
 ## Workflow Overview
 
@@ -98,3 +98,9 @@ Expert full-stack .NET + Angular implementation skill with structured investigat
 - Cross-service: use event bus, never direct DB access
 - CQRS: Command + Result + Handler in ONE file
 - Logic in LOWEST layer: Entity > Service > Component
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

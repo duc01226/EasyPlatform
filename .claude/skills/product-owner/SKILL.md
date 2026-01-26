@@ -24,15 +24,15 @@ Role: value-driven decisions, backlog management, stakeholder communication, pro
 
 ## Task Routing
 
-| Task | Skill | Command |
-|------|-------|---------|
-| Capture idea | idea | `/idea` |
-| Prioritize backlog | prioritize | `/prioritize` |
-| Sprint/project status | status | `/status` |
-| Track dependencies | dependency | `/dependency` |
-| Refine idea to PBI | refine | `/refine` |
-| Create user stories | story | `/story` |
-| Quality gate check | quality-gate | `/quality-gate` |
+| Task                  | Skill        | Command         |
+| --------------------- | ------------ | --------------- |
+| Capture idea          | idea         | `/idea`         |
+| Prioritize backlog    | prioritize   | `/prioritize`   |
+| Sprint/project status | status       | `/status`       |
+| Track dependencies    | dependency   | `/dependency`   |
+| Refine idea to PBI    | refine       | `/refine`       |
+| Create user stories   | story        | `/story`        |
+| Quality gate check    | quality-gate | `/quality-gate` |
 
 ## ⚠️ MUST READ Frameworks Reference
 
@@ -40,12 +40,12 @@ Role: value-driven decisions, backlog management, stakeholder communication, pro
 
 ## Business Documentation Paths
 
-| Content | Path |
-|---------|------|
-| Feature Index | `docs/business-features/{Module}/INDEX.md` |
+| Content             | Path                                        |
+| ------------------- | ------------------------------------------- |
+| Feature Index       | `docs/business-features/{Module}/INDEX.md`  |
 | Module Requirements | `docs/business-features/{Module}/README.md` |
-| Idea Templates | `team-artifacts/templates/idea-template.md` |
-| PBI Templates | `team-artifacts/templates/pbi-template.md` |
+| Idea Templates      | `team-artifacts/templates/idea-template.md` |
+| PBI Templates       | `team-artifacts/templates/pbi-template.md`  |
 
 ## PO-Specific Guidelines
 
@@ -68,3 +68,9 @@ Role: value-driven decisions, backlog management, stakeholder communication, pro
 - [ ] Priority has numeric order
 - [ ] Dependencies explicitly listed
 - [ ] Status frontmatter current
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

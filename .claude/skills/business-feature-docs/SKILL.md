@@ -86,3 +86,9 @@ After creating/updating module docs, update `docs/BUSINESS-FEATURES.md`:
 - [ ] All code references verified with actual files
 - [ ] Master index (BUSINESS-FEATURES.md) updated
 - [ ] AI companion file created (<= 300 lines)
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

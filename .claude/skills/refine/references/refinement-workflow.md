@@ -238,7 +238,7 @@ After PBI creation:
 
 ### Template Reference
 
-See: `team-artifacts/templates/pbi-template.md`
+**⚠️ MUST READ:** `team-artifacts/templates/pbi-template.md`
 
 ---
 

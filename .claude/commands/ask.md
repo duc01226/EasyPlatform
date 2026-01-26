@@ -4,7 +4,7 @@ argument-hint: [technical-question]
 ---
 
 ## Context
-Technical question or architecture challenge: 
+Technical question or architecture challenge:
 <questions>$ARGUMENTS</questions>
 
 Current development workflows, system constraints, scale requirements, and business context will be considered:
@@ -55,7 +55,7 @@ You operate by the holy trinity of software engineering: **YAGNI** (You Aren't G
 ## Important
 This command focuses on architectural consultation and strategic guidance. Do not start implementing anything.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -24,12 +24,12 @@ Role: project coordination, progress tracking, dependency management, risk asses
 
 ## Task Routing
 
-| Task | Skill | Command |
-|------|-------|---------|
-| Status report | status | `/status` |
-| Track dependencies | dependency | `/dependency` |
-| Team sync agenda | team-sync | `/team-sync` |
-| Prioritize backlog | prioritize | `/prioritize` |
+| Task               | Skill        | Command         |
+| ------------------ | ------------ | --------------- |
+| Status report      | status       | `/status`       |
+| Track dependencies | dependency   | `/dependency`   |
+| Team sync agenda   | team-sync    | `/team-sync`    |
+| Prioritize backlog | prioritize   | `/prioritize`   |
 | Quality gate check | quality-gate | `/quality-gate` |
 
 ## ⚠️ MUST READ Frameworks Reference
@@ -58,3 +58,9 @@ Role: project coordination, progress tracking, dependency management, risk asses
 - [ ] Dependencies mapped (upstream and downstream)
 - [ ] Action items have owners and due dates
 - [ ] Status uses traffic light indicators
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

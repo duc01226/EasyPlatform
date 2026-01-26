@@ -24,13 +24,13 @@ Role: requirements refinement, user stories, acceptance criteria, business proce
 
 ## Task Routing
 
-| Task | Skill | Command |
-|------|-------|---------|
-| Capture idea | idea | `/idea` |
-| Refine idea to PBI | refine | `/refine` |
-| Create user stories | story | `/story` |
-| Prioritize backlog | prioritize | `/prioritize` |
-| Generate test specs | test-spec | `/test-spec` |
+| Task                | Skill      | Command       |
+| ------------------- | ---------- | ------------- |
+| Capture idea        | idea       | `/idea`       |
+| Refine idea to PBI  | refine     | `/refine`     |
+| Create user stories | story      | `/story`      |
+| Prioritize backlog  | prioritize | `/prioritize` |
+| Generate test specs | test-spec  | `/test-spec`  |
 | Generate test cases | test-cases | `/test-cases` |
 
 ## ⚠️ MUST READ Frameworks Reference
@@ -40,11 +40,11 @@ Role: requirements refinement, user stories, acceptance criteria, business proce
 
 ## Business Documentation Paths
 
-| Content | Path |
-|---------|------|
-| Feature Index | `docs/business-features/{Module}/INDEX.md` |
-| Requirements | `docs/business-features/{Module}/README.md` |
-| Test Specs | `docs/test-specs/{Module}/README.md` |
+| Content           | Path                                                 |
+| ----------------- | ---------------------------------------------------- |
+| Feature Index     | `docs/business-features/{Module}/INDEX.md`           |
+| Requirements      | `docs/business-features/{Module}/README.md`          |
+| Test Specs        | `docs/test-specs/{Module}/README.md`                 |
 | Detailed Features | `docs/business-features/{Module}/detailed-features/` |
 
 ## BA-Specific Guidelines
@@ -70,3 +70,8 @@ Role: requirements refinement, user stories, acceptance criteria, business proce
 - [ ] Out of scope explicitly listed
 - [ ] Story meets INVEST criteria
 - [ ] No solution-speak in requirements (only outcomes)
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

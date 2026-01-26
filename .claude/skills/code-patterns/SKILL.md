@@ -64,6 +64,7 @@ Factory function → data-validation.md (validate output)
 ## Prevention Checklist
 
 Before implementing file I/O:
+
 - [ ] Will multiple processes access this file?
 - [ ] What happens if write crashes mid-operation?
 - [ ] Is data validated before every write?
@@ -72,11 +73,12 @@ Before implementing file I/O:
 ## Origin
 
 These patterns were extracted from ACE (Agentic Context Engineering) implementation review:
+
 - Race condition in concurrent delta writes → file-io.md
 - File corruption risk on crash → data-persistence.md
 - Invalid deltas persisting → data-validation.md
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

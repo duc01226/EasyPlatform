@@ -21,12 +21,12 @@ Browser automation via Puppeteer scripts with persistent sessions. All scripts o
 
 ## Choosing Your Approach
 
-| Scenario | Approach |
-|----------|----------|
-| Source-available sites | Read source code first, write selectors directly |
-| Unknown layouts | Use `aria-snapshot.js` for semantic discovery |
-| Visual inspection | Take screenshots to verify rendering |
-| Debug issues | Collect console logs, analyze with session storage |
+| Scenario               | Approach                                           |
+| ---------------------- | -------------------------------------------------- |
+| Source-available sites | Read source code first, write selectors directly   |
+| Unknown layouts        | Use `aria-snapshot.js` for semantic discovery      |
+| Visual inspection      | Take screenshots to verify rendering               |
+| Debug issues           | Collect console logs, analyze with session storage |
 
 ## Quick Start
 
@@ -53,19 +53,19 @@ node navigate.js --url about:blank --close true   # Close when done
 
 All in `.claude/skills/chrome-devtools/scripts/`:
 
-| Script | Purpose |
-|--------|---------|
-| `navigate.js` | Navigate to URLs |
-| `screenshot.js` | Capture screenshots (auto-compress >5MB) |
-| `click.js` | Click elements |
-| `fill.js` | Fill form fields |
-| `evaluate.js` | Execute JS in page context |
-| `snapshot.js` | Extract interactive elements (JSON) |
+| Script             | Purpose                                      |
+| ------------------ | -------------------------------------------- |
+| `navigate.js`      | Navigate to URLs                             |
+| `screenshot.js`    | Capture screenshots (auto-compress >5MB)     |
+| `click.js`         | Click elements                               |
+| `fill.js`          | Fill form fields                             |
+| `evaluate.js`      | Execute JS in page context                   |
+| `snapshot.js`      | Extract interactive elements (JSON)          |
 | `aria-snapshot.js` | Get ARIA accessibility tree (YAML with refs) |
-| `select-ref.js` | Interact with elements by ARIA ref |
-| `console.js` | Monitor console messages/errors |
-| `network.js` | Track HTTP requests/responses |
-| `performance.js` | Measure Core Web Vitals |
+| `select-ref.js`    | Interact with elements by ARIA ref           |
+| `console.js`       | Monitor console messages/errors              |
+| `network.js`       | Track HTTP requests/responses                |
+| `performance.js`   | Measure Core Web Vitals                      |
 
 ## Script Options (All scripts)
 
@@ -97,11 +97,17 @@ node performance.js --url https://example.com | jq '.vitals'
 
 ## Troubleshooting
 
-| Error | Solution |
-|-------|----------|
-| `Cannot find package 'puppeteer'` | Run `npm install` in scripts directory |
-| `libnss3.so` missing (Linux) | Run `./install-deps.sh` |
-| Element not found | Use `snapshot.js` to find correct selector |
-| Script hangs | Use `--timeout 60000` or `--wait-until load` |
-| Screenshot >5MB | Auto-compressed; use `--max-size 3` for lower |
-| Session stale | Delete `.browser-session.json` and retry |
+| Error                             | Solution                                      |
+| --------------------------------- | --------------------------------------------- |
+| `Cannot find package 'puppeteer'` | Run `npm install` in scripts directory        |
+| `libnss3.so` missing (Linux)      | Run `./install-deps.sh`                       |
+| Element not found                 | Use `snapshot.js` to find correct selector    |
+| Script hangs                      | Use `--timeout 60000` or `--wait-until load`  |
+| Screenshot >5MB                   | Auto-compressed; use `--max-size 3` for lower |
+| Session stale                     | Delete `.browser-session.json` and retry      |
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

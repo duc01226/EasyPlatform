@@ -78,13 +78,13 @@ Generate meeting agendas and action item tracking.
 ### Sprint Progress (10 min)
 
 ### Cross-Role Updates (15 min)
-| Role | Update |
-|------|--------|
-| PO | |
-| BA | |
-| Dev | |
-| QA | |
-| Design | |
+| Role   | Update |
+| ------ | ------ |
+| PO     |        |
+| BA     |        |
+| Dev    |        |
+| QA     |        |
+| Design |        |
 
 ### Risks & Blockers (10 min)
 
@@ -97,8 +97,8 @@ Generate meeting agendas and action item tracking.
 
 ### Demo Items
 | Feature | Demo By |
-|---------|---------|
-| | |
+| ------- | ------- |
+|         |         |
 
 ### Sprint Goal: {goal}
 - Status: {achieved/partial/not}
@@ -142,7 +142,7 @@ Generate meeting agendas and action item tracking.
 - **Role Skill:** `project-manager`
 - **Command:** `/team-sync`
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

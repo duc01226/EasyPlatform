@@ -429,23 +429,23 @@ Comprehensive code review for web interface compliance with industry standards i
 
 **Flag these immediately:**
 
-| Pattern | Issue |
-|---------|-------|
-| `user-scalable=no` or `maximum-scale=1` | Disables zoom — accessibility violation |
-| `onPaste` + `preventDefault()` | Blocks paste — UX hostile |
-| `transition: all` | Performance issue — list properties |
+| Pattern                                                    | Issue                                             |
+| ---------------------------------------------------------- | ------------------------------------------------- |
+| `user-scalable=no` or `maximum-scale=1`                    | Disables zoom — accessibility violation           |
+| `onPaste` + `preventDefault()`                             | Blocks paste — UX hostile                         |
+| `transition: all`                                          | Performance issue — list properties               |
 | `outline: none` / `outline-none` without focus replacement | Removes focus indicator — accessibility violation |
-| `<div onClick>` or `<span onClick>` | Should be `<button>` or `<a>` |
-| `<img>` without `width`/`height` | Causes layout shift (CLS) |
-| `<img>` without `alt` | Missing alt text — accessibility violation |
-| Form inputs without `<label>` | Missing label — accessibility violation |
-| Icon buttons without `aria-label` | Screen reader can't identify action |
-| Hardcoded date/number formats | Should use `Intl.*` APIs |
-| `autoFocus` without clear justification | May cause issues on mobile |
-| Large arrays with `.map()` without virtualization | Performance issue for 50+ items |
-| `tabindex` > 0 | Disrupts natural tab order |
-| Color-only indicators | Fails colorblind users |
-| Placeholder as label | Label disappears on input |
+| `<div onClick>` or `<span onClick>`                        | Should be `<button>` or `<a>`                     |
+| `<img>` without `width`/`height`                           | Causes layout shift (CLS)                         |
+| `<img>` without `alt`                                      | Missing alt text — accessibility violation        |
+| Form inputs without `<label>`                              | Missing label — accessibility violation           |
+| Icon buttons without `aria-label`                          | Screen reader can't identify action               |
+| Hardcoded date/number formats                              | Should use `Intl.*` APIs                          |
+| `autoFocus` without clear justification                    | May cause issues on mobile                        |
+| Large arrays with `.map()` without virtualization          | Performance issue for 50+ items                   |
+| `tabindex` > 0                                             | Disrupts natural tab order                        |
+| Color-only indicators                                      | Fails colorblind users                            |
+| Placeholder as label                                       | Label disappears on input                         |
 
 ---
 
@@ -496,3 +496,9 @@ State issue + location. Skip explanation unless fix non-obvious. No preamble.
 
 - [SCSS Styling Guide](docs/claude/scss-styling-guide.md) - Angular/BEM patterns, platform-specific SCSS conventions
 - [Frontend Patterns](docs/claude/frontend-patterns.md) - Angular component hierarchy, state management
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

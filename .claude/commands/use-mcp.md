@@ -33,7 +33,7 @@ Execute MCP operations via **Gemini CLI** to preserve context budget.
 gemini -y -m gemini-2.5-flash -p "..."
 ```
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

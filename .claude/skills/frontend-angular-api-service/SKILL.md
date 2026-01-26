@@ -72,3 +72,9 @@ src/Frontend/libs/apps-domains/src/lib/{domain}/services/{feature}-api.service.t
 - [ ] Caching configured for stable lookup endpoints
 - [ ] File operations use `postFormData`/`getBlob`
 - [ ] `@Injectable({ providedIn: 'root' })` decorator
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

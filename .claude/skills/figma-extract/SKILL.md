@@ -22,12 +22,12 @@ Extract design specifications from Figma files using MCP integration.
 
 ## Arguments
 
-| Arg | Required | Default | Description |
-|-----|----------|---------|-------------|
-| url | Yes | - | Figma design URL |
-| output | No | markdown | markdown \| json |
-| depth | No | 5 | Hierarchy depth 1-10 |
-| timeout | No | 30 | Seconds |
+| Arg     | Required | Default  | Description          |
+| ------- | -------- | -------- | -------------------- |
+| url     | Yes      | -        | Figma design URL     |
+| output  | No       | markdown | markdown \| json     |
+| depth   | No       | 5        | Hierarchy depth 1-10 |
+| timeout | No       | 30       | Seconds              |
 
 ## Workflow
 
@@ -71,19 +71,19 @@ https://www.figma.com/design/{fileKey}/{fileName}?node-id={nodeId}
 ## Output Format (markdown)
 
 ### Colors
-| Name | Hex | Usage |
-|------|-----|-------|
+| Name    | Hex     | Usage          |
+| ------- | ------- | -------------- |
 | Primary | #3B82F6 | Buttons, links |
 
 ### Typography
-| Element | Font | Size | Weight |
-|---------|------|------|--------|
-| Heading | Inter | 24px | 600 |
+| Element | Font  | Size | Weight |
+| ------- | ----- | ---- | ------ |
+| Heading | Inter | 24px | 600    |
 
 ### Spacing
-| Element | Padding | Gap |
-|---------|---------|-----|
-| Card | 16px | 12px |
+| Element | Padding | Gap  |
+| ------- | ------- | ---- |
+| Card    | 16px    | 12px |
 
 ### Component Hierarchy
 ```
@@ -97,23 +97,23 @@ Frame "Card"
 
 ## Error Handling
 
-| Error | Message |
-|-------|---------|
-| **No MCP** | "Figma MCP not configured. See .claude/docs/figma-setup.md" |
-| **Invalid URL** | "Could not parse Figma URL. Expected: figma.com/design/{key}" |
-| **Timeout** | "Figma extraction timed out after {timeout}s. Try with specific node-id or reduce depth." |
-| **Rate limited** | "Figma API rate limit reached. Try again later." |
-| **Not found** | "Figma file not found or not accessible with current token" |
-| **Too deep** | "Component hierarchy exceeds max depth ({depth}). Results truncated." |
+| Error            | Message                                                                                   |
+| ---------------- | ----------------------------------------------------------------------------------------- |
+| **No MCP**       | "Figma MCP not configured. See .claude/docs/figma-setup.md"                               |
+| **Invalid URL**  | "Could not parse Figma URL. Expected: figma.com/design/{key}"                             |
+| **Timeout**      | "Figma extraction timed out after {timeout}s. Try with specific node-id or reduce depth." |
+| **Rate limited** | "Figma API rate limit reached. Try again later."                                          |
+| **Not found**    | "Figma file not found or not accessible with current token"                               |
+| **Too deep**     | "Component hierarchy exceeds max depth ({depth}). Results truncated."                     |
 
 ## Configuration Defaults
 
-| Setting | Value | Rationale |
-|---------|-------|-----------|
-| Max Component Depth | 5 levels | Prevents token bloat |
-| Extraction Timeout | 30 seconds | Prevents blocking |
-| Max Colors | 20 | Focus on primary palette |
-| Max Typography | 10 | Focus on main text styles |
+| Setting             | Value      | Rationale                 |
+| ------------------- | ---------- | ------------------------- |
+| Max Component Depth | 5 levels   | Prevents token bloat      |
+| Extraction Timeout  | 30 seconds | Prevents blocking         |
+| Max Colors          | 20         | Focus on primary palette  |
+| Max Typography      | 10         | Focus on main text styles |
 
 ## Example
 
@@ -126,7 +126,7 @@ Frame "Card"
 - **Used by:** `/design-spec`
 - **MCP:** Requires figma MCP tools
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

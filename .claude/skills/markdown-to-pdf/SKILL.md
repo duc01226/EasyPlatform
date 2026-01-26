@@ -37,11 +37,11 @@ node .claude/skills/markdown-to-pdf/scripts/convert.cjs \
 
 ## CLI Options
 
-| Option | Required | Description |
-| ------ | -------- | ----------- |
-| `--file <path>` | Yes | Input markdown file |
-| `--output <path>` | No | Output PDF path (default: input name + .pdf) |
-| `--style <path>` | No | Custom CSS file |
+| Option            | Required | Description                                  |
+| ----------------- | -------- | -------------------------------------------- |
+| `--file <path>`   | Yes      | Input markdown file                          |
+| `--output <path>` | No       | Output PDF path (default: input name + .pdf) |
+| `--style <path>`  | No       | Custom CSS file                              |
 
 ## Output Format (JSON)
 
@@ -81,7 +81,6 @@ code { background: #f4f4f4; padding: 2px 6px; }
 **Chromium download fails:** Set `PUPPETEER_SKIP_DOWNLOAD=1` then manually install Chrome
 **Memory issues:** Large docs may need `--max-old-space-size=4096`
 
-## Task Planning Notes
-
+## IMPORTANT Task Planning Notes
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

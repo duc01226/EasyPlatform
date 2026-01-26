@@ -15,18 +15,18 @@ Critically self-review the implementation plan to ensure quality before coding b
 
 ## Review Checklist
 
-| Category | Check |
-|----------|-------|
-| **Structure** | Has plan.md with YAML frontmatter (title, status, effort)? |
-| **Structure** | Phases numbered and linked correctly? |
-| **Logic** | Dependencies between phases mapped? |
-| **Logic** | Risk assessment present with mitigations? |
-| **Patterns** | Uses platform patterns (not custom solutions)? |
-| **Patterns** | Files in correct project locations? |
-| **Completeness** | Success criteria defined and measurable? |
-| **Completeness** | All edge cases considered? |
-| **Best Practices** | Follows YAGNI/KISS/DRY principles? |
-| **Best Practices** | No over-engineering or premature abstraction? |
+| Category           | Check                                                      |
+| ------------------ | ---------------------------------------------------------- |
+| **Structure**      | Has plan.md with YAML frontmatter (title, status, effort)? |
+| **Structure**      | Phases numbered and linked correctly?                      |
+| **Logic**          | Dependencies between phases mapped?                        |
+| **Logic**          | Risk assessment present with mitigations?                  |
+| **Patterns**       | Uses platform patterns (not custom solutions)?             |
+| **Patterns**       | Files in correct project locations?                        |
+| **Completeness**   | Success criteria defined and measurable?                   |
+| **Completeness**   | All edge cases considered?                                 |
+| **Best Practices** | Follows YAGNI/KISS/DRY principles?                         |
+| **Best Practices** | No over-engineering or premature abstraction?              |
 
 ## Review Process
 
@@ -70,7 +70,7 @@ Update plan before proceeding.
 
 ultrathink
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

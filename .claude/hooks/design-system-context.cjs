@@ -121,7 +121,7 @@ function buildInjection(app, filePath) {
         '',
         '### Required Reading',
         '',
-        `Before implementing UI changes, you MUST read the design system documentation:`,
+        `Before implementing UI changes, you **MUST READ** the design system documentation:`,
         '',
         `1. **Primary Guide:** \`${docPath}\``,
         `   - ${app.description}`,

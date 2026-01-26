@@ -46,17 +46,17 @@ When updating documentation:
 4. **Refresh line numbers** after code changes
 
 ### Evidence Verification Table (Required)
-| Entity/Component | Documented Lines | Actual Lines | Status |
-|------------------|------------------|--------------|--------|
-| `Entity.cs` | L6-15 | L6-15 | ✅ Verified |
-| `Handler.cs` | L45-60 | L52-67 | ⚠️ Stale |
+| Entity/Component | Documented Lines | Actual Lines | Status     |
+| ---------------- | ---------------- | ------------ | ---------- |
+| `Entity.cs`      | L6-15            | L6-15        | ✅ Verified |
+| `Handler.cs`     | L45-60           | L52-67       | ⚠️ Stale    |
 
 ## Important
 - Use `docs/` directory as the source of truth for documentation.
 
 **IMPORTANT**: **Do not** start implementing.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

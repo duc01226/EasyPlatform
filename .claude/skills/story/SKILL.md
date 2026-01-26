@@ -81,12 +81,18 @@ Scenario: {Title}
 
 ## Related
 
-| Type | Reference |
-|------|-----------|
-| **Role Skill** | `business-analyst` |
-| **Input** | `/refine` output (PBI) |
+| Type           | Reference                                   |
+| -------------- | ------------------------------------------- |
+| **Role Skill** | `business-analyst`                          |
+| **Input**      | `/refine` output (PBI)                      |
 | **Next Steps** | `/test-spec`, `/design-spec`, `/prioritize` |
 
 ## Triggers
 
 Activates on: story, user story, user stories, slice, slicing, split story, breakdown
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

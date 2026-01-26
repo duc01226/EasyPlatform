@@ -29,16 +29,16 @@ Transform captured ideas into actionable Product Backlog Items using BA best pra
 
 ## Workflow
 
-| Phase | Name | Key Activity | Output |
-|-------|------|--------------|--------|
-| 1 | Idea Intake | Load artifact, detect module | Context loaded |
-| 2 | Domain Research | WebSearch market/competitors | Research summary |
-| 3 | Problem Hypothesis | Validate problem exists | Confirmed hypothesis |
-| 4 | Elicitation | Apply BABOK techniques | Requirements extracted |
-| 5 | Acceptance Criteria | Write BDD scenarios (min 3) | GIVEN/WHEN/THEN |
-| 6 | Prioritization | Apply RICE/MoSCoW | Priority assigned |
-| 7 | Validation | Interview user (MANDATORY) | Assumptions confirmed |
-| 8 | PBI Generation | Create artifact | PBI file saved |
+| Phase | Name                | Key Activity                 | Output                 |
+| ----- | ------------------- | ---------------------------- | ---------------------- |
+| 1     | Idea Intake         | Load artifact, detect module | Context loaded         |
+| 2     | Domain Research     | WebSearch market/competitors | Research summary       |
+| 3     | Problem Hypothesis  | Validate problem exists      | Confirmed hypothesis   |
+| 4     | Elicitation         | Apply BABOK techniques       | Requirements extracted |
+| 5     | Acceptance Criteria | Write BDD scenarios (min 3)  | GIVEN/WHEN/THEN        |
+| 6     | Prioritization      | Apply RICE/MoSCoW            | Priority assigned      |
+| 7     | Validation          | Interview user (MANDATORY)   | Assumptions confirmed  |
+| 8     | PBI Generation      | Create artifact              | PBI file saved         |
 
 ## Phase 1: Idea Intake & Context Loading
 
@@ -54,13 +54,13 @@ Transform captured ideas into actionable Product Backlog Items using BA best pra
 
 **⚠️ MUST READ** `.claude/skills/shared/bdd-gherkin-templates.md` for templates.
 
-| Practice | Description |
-|----------|-------------|
-| Single trigger | "When" clause has ONE action |
-| 3 scenarios minimum | Happy path, edge case, error case |
-| No implementation details | Focus on behavior, not how |
-| Testable outcomes | "Then" must be verifiable |
-| Stakeholder language | No technical jargon |
+| Practice                  | Description                       |
+| ------------------------- | --------------------------------- |
+| Single trigger            | "When" clause has ONE action      |
+| 3 scenarios minimum       | Happy path, edge case, error case |
+| No implementation details | Focus on behavior, not how        |
+| Testable outcomes         | "Then" must be verifiable         |
+| Stakeholder language      | No technical jargon               |
 
 ## Output
 
@@ -69,13 +69,19 @@ Transform captured ideas into actionable Product Backlog Items using BA best pra
 
 ## Related
 
-| Type | Reference |
-|------|-----------|
-| **Role Skill** | `business-analyst` |
-| **Input** | `/idea` output |
-| **Next Step** | `/story`, `/test-spec`, `/design-spec` |
-| **Prioritization** | `/prioritize` |
+| Type               | Reference                              |
+| ------------------ | -------------------------------------- |
+| **Role Skill**     | `business-analyst`                     |
+| **Input**          | `/idea` output                         |
+| **Next Step**      | `/story`, `/test-spec`, `/design-spec` |
+| **Prioritization** | `/prioritize`                          |
 
 ## Triggers
 
 Activates on: refine, refinement, pbi, backlog item, acceptance criteria, hypothesis, validate idea
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

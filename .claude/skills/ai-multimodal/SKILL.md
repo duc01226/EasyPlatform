@@ -76,27 +76,27 @@ Use `--help` for options.
 
 Load for detailed guidance:
 
-| Topic | File | Description |
-|-------|------|-------------|
-| Music | `references/music-generation.md` | Lyria RealTime API for background music generation, style prompts, real-time control, integration with video production. |
-| Audio | `references/audio-processing.md` | Audio formats and limits, transcription (timestamps, speakers, segments), non-speech analysis, File API vs inline input, TTS models, best practices, cost and token math, and concrete meeting/podcast/interview recipes. |
-| Images | `references/vision-understanding.md` | Vision capabilities overview, supported formats and models, captioning/classification/VQA, detection and segmentation, OCR and document reading, multi-image workflows, structured JSON output, token costs, best practices, and common product/screenshot/chart/scene use cases. |
-| Image Gen | `references/image-generation.md` | Imagen 4 and Gemini image model overview, generate_images vs generate_content APIs, aspect ratios and costs, text/image/both modalities, editing and composition, style and quality control, safety settings, best practices, troubleshooting, and common marketing/concept-art/UI scenarios. |
-| Video | `references/video-analysis.md` | Video analysis capabilities and supported formats, model/context choices, local/inline/YouTube inputs, clipping and FPS control, multi-video comparison, temporal Q&A and scene detection, transcription with visual context, token and cost guidance, and optimization/best-practice patterns. |
-| Video Gen | `references/video-generation.md` | Veo model matrix, text-to-video and image-to-video quick start, multi-reference and extension flows, camera and timing control, configuration (resolution, aspect, audio, safety), prompt design patterns, performance tips, limitations, troubleshooting, and cost estimates. |
+| Topic     | File                                 | Description                                                                                                                                                                                                                                                                                     |
+| --------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Music     | `references/music-generation.md`     | Lyria RealTime API for background music generation, style prompts, real-time control, integration with video production.                                                                                                                                                                        |
+| Audio     | `references/audio-processing.md`     | Audio formats and limits, transcription (timestamps, speakers, segments), non-speech analysis, File API vs inline input, TTS models, best practices, cost and token math, and concrete meeting/podcast/interview recipes.                                                                       |
+| Images    | `references/vision-understanding.md` | Vision capabilities overview, supported formats and models, captioning/classification/VQA, detection and segmentation, OCR and document reading, multi-image workflows, structured JSON output, token costs, best practices, and common product/screenshot/chart/scene use cases.               |
+| Image Gen | `references/image-generation.md`     | Imagen 4 and Gemini image model overview, generate_images vs generate_content APIs, aspect ratios and costs, text/image/both modalities, editing and composition, style and quality control, safety settings, best practices, troubleshooting, and common marketing/concept-art/UI scenarios.   |
+| Video     | `references/video-analysis.md`       | Video analysis capabilities and supported formats, model/context choices, local/inline/YouTube inputs, clipping and FPS control, multi-video comparison, temporal Q&A and scene detection, transcription with visual context, token and cost guidance, and optimization/best-practice patterns. |
+| Video Gen | `references/video-generation.md`     | Veo model matrix, text-to-video and image-to-video quick start, multi-reference and extension flows, camera and timing control, configuration (resolution, aspect, audio, safety), prompt design patterns, performance tips, limitations, troubleshooting, and cost estimates.                  |
 
 ## Limits
 
 **Formats**: Audio (WAV/MP3/AAC, 9.5h), Images (PNG/JPEG/WEBP, 3.6k), Video (MP4/MOV, 6h), PDF (1k pages)
 **Size**: 20MB inline, 2GB File API
-**Important:** 
+**Important:**
 - If you are going to generate a transcript of the audio, and the audio length is longer than 15 minutes, the transcript often gets truncated due to output token limits in the Gemini API response. To get the full transcript, you need to split the audio into smaller chunks (max 15 minutes per chunk) and transcribe each segment for a complete transcript.
 - If you are going to generate a transcript of the video and the video length is longer than 15 minutes, use ffmpeg to extract the audio from the video, truncate the audio to 15 minutes, transcribe all audio segments, and then combine the transcripts into a single transcript.
 **Transcription Output Requirements:**
 - Format: Markdown
 - Metadata: Duration, file size, generated date, description, file name, topics covered, etc.
 - Parts: from-to (e.g., 00:00-00:15), audio chunk name, transcript, status, etc.
-- Transcript format: 
+- Transcript format:
   ```
   [HH:MM:SS -> HH:MM:SS] transcript content
   [HH:MM:SS -> HH:MM:SS] transcript content
@@ -108,7 +108,7 @@ Load for detailed guidance:
 - [API Docs](https://ai.google.dev/gemini-api/docs/)
 - [Pricing](https://ai.google.dev/pricing)
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

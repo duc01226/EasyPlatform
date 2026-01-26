@@ -44,7 +44,7 @@ Use `AskUserQuestion` tool to ask if user wants to commit the changes with these
 
 ## Output
 After archiving the plans, provide summary:
-- Number of plans archived 
+- Number of plans archived
 - Number of plans deleted permanently
 - Table of plans that are archived or deleted (title, status, created date, LOC)
 - Table of journal entries that are created (title, status, created date, LOC)
@@ -56,7 +56,7 @@ After archiving the plans, provide summary:
 **IMPORTANT:** In the last summary report, list any unresolved questions at the end, if any.
 **IMPORTANT:** Ensure token efficiency while maintaining high quality.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

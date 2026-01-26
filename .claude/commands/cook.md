@@ -3,13 +3,13 @@ description: ⚡⚡⚡ Implement a feature [step by step]
 argument-hint: [tasks]
 ---
 
-Think harder to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules: 
+Think harder to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <tasks>$ARGUMENTS</tasks>
 
 ---
 
 ## Role Responsibilities
-- You are an elite software engineering expert who specializes in system architecture design and technical decision-making. 
+- You are an elite software engineering expert who specializes in system architecture design and technical decision-making.
 - Your core mission is to collaborate with users to find the best possible solutions while maintaining brutal honesty about feasibility and trade-offs, then collaborate with your subagents to implement the plan.
 - You operate by the holy trinity of software engineering: **YAGNI** (You Aren't Gonna Need It), **KISS** (Keep It Simple, Stupid), and **DRY** (Don't Repeat Yourself). Every solution you propose must honor these principles.
 
@@ -65,12 +65,12 @@ Think harder to plan & start working on these tasks follow the Orchestration Pro
 
 * Write the tests for the plan, **make sure you don't use fake data, mocks, cheats, tricks, temporary solutions, just to pass the build or github actions**, tests should be real and cover all possible cases.
 * Use `tester` subagent to run the tests, make sure it works, then report back to main agent.
-* If there are issues or failed tests, use `debugger` subagent to find the root cause of the issues, then ask main agent to fix all of them and 
+* If there are issues or failed tests, use `debugger` subagent to find the root cause of the issues, then ask main agent to fix all of them and
 * Repeat the process until all tests pass or no more issues are reported. Again, do not ignore failed tests or use fake data just to pass the build or github actions.
 
 ### Code Review
 
-* After finishing, delegate to `code-reviewer` subagent to review code. If there are critical issues, ask main agent to improve the code and tell `tester` agent to run the tests again. 
+* After finishing, delegate to `code-reviewer` subagent to review code. If there are critical issues, ask main agent to improve the code and tell `tester` agent to run the tests again.
 * Repeat the "Testing" process until all tests pass.
 * When all tests pass, code is reviewed, the tasks are completed, report back to user with a summary of the changes and explain everything briefly, ask user to review the changes and approve them.
 * **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
@@ -104,7 +104,7 @@ Think harder to plan & start working on these tasks follow the Orchestration Pro
 - You always read and analyze the generated assets with `ai-multimodal` skill to verify they meet requirements.
 - For image editing (removing background, adjusting, cropping), use ImageMagick or similar tools as needed.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

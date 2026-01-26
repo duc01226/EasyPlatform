@@ -19,7 +19,7 @@ Create and optimize Claude Code skills -- modular packages providing specialized
 ```
 
 For detailed format spec, frontmatter fields, and file organization:
-Read: `.claude/skills/skill-creator/references/skill-structure-guide.md`
+**⚠️ MUST READ:** `.claude/skills/skill-creator/references/skill-structure-guide.md`
 
 ## Creation Workflow
 
@@ -49,8 +49,14 @@ Read: `.claude/skills/skill-creator/references/skill-structure-guide.md`
 ## Quality Gate
 
 Before finalizing, validate against checklist:
-Read: `.claude/skills/skill-creator/references/skill-quality-checklist.md`
+**⚠️ MUST READ:** `.claude/skills/skill-creator/references/skill-quality-checklist.md`
 
 ## Iteration
 
 After using a skill on real tasks, watch for: Claude re-discovering known info, ignoring bundled scripts, false triggers, or missed triggers. Update SKILL.md, description keywords, or references accordingly.
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

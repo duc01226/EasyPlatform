@@ -12,7 +12,7 @@ SKILL: $1 (default: `*`)
 PROMPT: $2 (default: empty)
 
 ## Your mission
-Optimize an existing skill in `.claude/skills/${SKILL}` directory. 
+Optimize an existing skill in `.claude/skills/${SKILL}` directory.
 Always keep in mind that `SKILL.md` and reference files should be token consumption efficient, so that **progressive disclosure** can be leveraged at best.
 `SKILL.md` is always short and concise, straight to the point, treat it as a quick reference guide.
 
@@ -24,7 +24,7 @@ Always keep in mind that `SKILL.md` and reference files should be token consumpt
 ## Additional instructions
 <additional-instructions>$PROMPT</additional-instructions>
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

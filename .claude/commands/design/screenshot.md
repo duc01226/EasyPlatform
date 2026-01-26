@@ -3,7 +3,7 @@ description: Create a design based on screenshot
 argument-hint: [screenshot]
 ---
 
-Think hard to plan & start designing follow exactly this screenshot: 
+Think hard to plan & start designing follow exactly this screenshot:
 <screenshot>$ARGUMENTS</screenshot>
 
 ## Required Skills (Priority Order)
@@ -33,7 +33,7 @@ Think hard to plan & start designing follow exactly this screenshot:
 - Create storytelling designs, immersive 3D experiences, micro-interactions, and interactive interfaces.
 - Maintain and update `./docs/design-guidelines.md` docs if needed.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

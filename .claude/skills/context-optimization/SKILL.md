@@ -83,17 +83,23 @@ Grep({ pattern: 'CreateAsync|UpdateAsync|DeleteAsync', output_mode: 'files_with_
 
 ## Anti-Patterns
 
-| Anti-Pattern | Better Approach |
-|---|---|
+| Anti-Pattern               | Better Approach                |
+| -------------------------- | ------------------------------ |
 | Reading entire large files | Use offset/limit or grep first |
-| Sequential searches | Combine with OR patterns |
-| Repeating same searches | Cache results in memory |
-| No context anchors | Write anchor every 10 ops |
-| Not using sub-agents | Isolate exploration tasks |
-| Forgetting discoveries | Save to memory entities |
+| Sequential searches        | Combine with OR patterns       |
+| Repeating same searches    | Cache results in memory        |
+| No context anchors         | Write anchor every 10 ops      |
+| Not using sub-agents       | Isolate exploration tasks      |
+| Forgetting discoveries     | Save to memory entities        |
 
 ---
 
 **Token Estimation:** 1 line ~ 10-15 tokens | 1 page ~ 500 tokens | Avg file ~ 1-3K tokens
 
 **Thresholds:** 50K: consider compression | 100K: required | 150K: critical - save & summarize
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

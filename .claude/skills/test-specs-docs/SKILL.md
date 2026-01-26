@@ -35,12 +35,12 @@ TC-[MODULE]-[FEATURE]-[NUM]
 Examples: `TC-TXT-SNP-001`, `TC-ACC-AUTH-001`
 
 ## Priority Classification
-| Priority | Level | Description |
-|----------|-------|-------------|
-| **P0** | Critical | Security, auth, data integrity |
-| **P1** | High | Core business workflows |
-| **P2** | Medium | Secondary features, filters |
-| **P3** | Low | UI enhancements, non-essential |
+| Priority | Level    | Description                    |
+| -------- | -------- | ------------------------------ |
+| **P0**   | Critical | Security, auth, data integrity |
+| **P1**   | High     | Core business workflows        |
+| **P2**   | Medium   | Secondary features, filters    |
+| **P3**   | Low      | UI enhancements, non-essential |
 
 ## Workflow
 
@@ -78,3 +78,9 @@ Every test case MUST include:
 - [ ] Edge cases documented
 - [ ] Code evidence with file paths and line numbers
 - [ ] PRIORITY-INDEX.md updated
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

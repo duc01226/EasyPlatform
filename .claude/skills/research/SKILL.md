@@ -69,3 +69,9 @@ Save reports using `Report:` path from `## Naming` section. If unavailable, ask 
 3. Conclude with specific, actionable next steps
 
 **IMPORTANT:** Sacrifice grammar for concision. List unresolved questions at end.
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -11,14 +11,14 @@ Set your coding experience level for tailored explanations and output format.
 
 ## Levels
 
-| Level | Name | Description |
-|-------|------|-------------|
-| 0 | ELI5 | Zero coding experience - analogies, no jargon, step-by-step |
-| 1 | Junior | 0-2 years - concepts explained, WHY not just HOW |
-| 2 | Mid-Level | 3-5 years - design patterns, system thinking |
-| 3 | Senior | 5-8 years - trade-offs, business context, architecture |
-| 4 | Tech Lead | 8-10 years - risk assessment, business impact, strategy |
-| 5 | God Mode | Expert - default behavior, maximum efficiency (default) |
+| Level | Name      | Description                                                 |
+| ----- | --------- | ----------------------------------------------------------- |
+| 0     | ELI5      | Zero coding experience - analogies, no jargon, step-by-step |
+| 1     | Junior    | 0-2 years - concepts explained, WHY not just HOW            |
+| 2     | Mid-Level | 3-5 years - design patterns, system thinking                |
+| 3     | Senior    | 5-8 years - trade-offs, business context, architecture      |
+| 4     | Tech Lead | 8-10 years - risk assessment, business impact, strategy     |
+| 5     | God Mode  | Expert - default behavior, maximum efficiency (default)     |
 
 ## How It Works
 
@@ -52,7 +52,7 @@ For finer control, you can also use `/output-style` with these styles:
 - `coding-level-4-lead`
 - `coding-level-5-god`
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

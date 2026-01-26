@@ -33,13 +33,13 @@ Generate comprehensive test specifications from requirements.
 8. Suggest next: `/test-cases {testspec}`
 
 ### Test Categories
-| Category | Purpose |
-|----------|---------|
-| Positive | Happy path verification |
-| Negative | Error handling, invalid inputs |
-| Boundary | Edge values, limits |
-| Integration | Component interaction |
-| Security | Auth, injection, XSS |
+| Category    | Purpose                        |
+| ----------- | ------------------------------ |
+| Positive    | Happy path verification        |
+| Negative    | Error handling, invalid inputs |
+| Boundary    | Edge values, limits            |
+| Integration | Component interaction          |
+| Security    | Auth, injection, XSS           |
 
 ### Output
 - **Path:** `team-artifacts/test-specs/{YYMMDD}-testspec-{feature}.md`
@@ -67,12 +67,12 @@ This step grounds test scenarios in actual implementation and prevents speculati
 
 ## Module Code Mapping
 
-| Service | Code |
-|---------|------|
-| TextSnippet | TXT |
-| ExampleApp | EXP |
-| Accounts | ACC |
-| Common | COM |
+| Service     | Code |
+| ----------- | ---- |
+| TextSnippet | TXT  |
+| ExampleApp  | EXP  |
+| Accounts    | ACC  |
+| Common      | COM  |
 
 ### Related
 - **Role Skill:** `qa-engineer`
@@ -88,7 +88,7 @@ This step grounds test scenarios in actual implementation and prevents speculati
 
 Creates: `team-artifacts/test-specs/260119-testspec-dark-mode-toggle.md`
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

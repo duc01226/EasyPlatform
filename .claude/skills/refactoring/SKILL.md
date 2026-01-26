@@ -47,13 +47,13 @@ Expert code restructuring agent for EasyPlatform. Focuses on structural changes 
 
 Apply the refactoring pattern from the catalog. Key platform patterns:
 
-| Pattern | When | Target |
-|---------|------|--------|
-| Extract Expression | Complex inline logic | Entity static expression |
-| Move to Extension | Reusable repo queries | `{Entity}RepositoryExtensions` |
-| Move to DTO | Mapping in handler | `PlatformEntityDto.MapToEntity()` |
-| Move to Entity | Business logic in handler | Instance method or static expr |
-| Handler to Helper | Reused cross-handler logic | Helper class with DI |
+| Pattern            | When                       | Target                            |
+| ------------------ | -------------------------- | --------------------------------- |
+| Extract Expression | Complex inline logic       | Entity static expression          |
+| Move to Extension  | Reusable repo queries      | `{Entity}RepositoryExtensions`    |
+| Move to DTO        | Mapping in handler         | `PlatformEntityDto.MapToEntity()` |
+| Move to Entity     | Business logic in handler  | Instance method or static expr    |
+| Handler to Helper  | Reused cross-handler logic | Helper class with DI              |
 
 ### Phase 4: Verify
 
@@ -70,12 +70,12 @@ Apply the refactoring pattern from the catalog. Key platform patterns:
 Entity/Model (Lowest)  ->  Service  ->  Component/Handler (Highest)
 ```
 
-| Wrong Location | Move To | Example |
-|---|---|---|
-| Component | Entity/Model | Dropdown options, display helpers |
-| Component | Service | Command building, data transformation |
-| Handler | Entity | Business rules, static expressions |
-| Handler | Repository Ext | Reusable query patterns |
+| Wrong Location | Move To        | Example                               |
+| -------------- | -------------- | ------------------------------------- |
+| Component      | Entity/Model   | Dropdown options, display helpers     |
+| Component      | Service        | Command building, data transformation |
+| Handler        | Entity         | Business rules, static expressions    |
+| Handler        | Repository Ext | Reusable query patterns               |
 
 ## Safety Checklist
 
@@ -92,3 +92,9 @@ Entity/Model (Lowest)  ->  Service  ->  Component/Handler (Highest)
 - **Mixing Refactoring with Features**: Do one or the other
 - **Breaking Public APIs**: Maintain backward compatibility
 - **Logic in Wrong Layer**: Move to lowest appropriate layer
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

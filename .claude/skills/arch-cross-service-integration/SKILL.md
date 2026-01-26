@@ -8,12 +8,14 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 # Cross-Service Integration Workflow
 
 ## When to Use This Skill
+
 - Designing service-to-service communication
 - Implementing data synchronization
 - Analyzing service boundaries
 - Troubleshooting cross-service issues
 
 ## Pre-Flight Checklist
+
 - [ ] Identify source and target services
 - [ ] Determine data ownership
 - [ ] Choose communication pattern (sync vs async)
@@ -22,6 +24,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ## Service Boundaries
 
 ### EasyPlatform Services
+
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        EasyPlatform Platform                          │
@@ -58,6 +61,7 @@ Source Service                    Target Service
 ```
 
 **Implementation**:
+
 ```csharp
 // Producer (Source: Accounts)
 internal sealed class EmployeeEntityEventBusMessageProducer
@@ -99,6 +103,7 @@ public class AccountsApiClient
 ```
 
 **Considerations**:
+
 - Add circuit breaker for resilience
 - Cache responses when possible
 - Handle service unavailability
@@ -114,17 +119,18 @@ var accountsData = await accountsDbContext.Users.ToListAsync();
 
 ## Data Ownership Matrix
 
-| Entity | Owner Service | Consumers |
-|--------|---------------|-----------|
-| User | Accounts | All services |
-| Employee | TextSnippet | TextSnippet, TextSnippet |
-| Candidate | TextSnippet | TextSnippet (on hire) |
-| Company | Accounts | All services |
-| Survey | TextSnippet | TextSnippet |
+| Entity    | Owner Service | Consumers                |
+| --------- | ------------- | ------------------------ |
+| User      | Accounts      | All services             |
+| Employee  | TextSnippet   | TextSnippet, TextSnippet |
+| Candidate | TextSnippet   | TextSnippet (on hire)    |
+| Company   | Accounts      | All services             |
+| Survey    | TextSnippet   | TextSnippet              |
 
 ## Synchronization Patterns
 
 ### Full Sync (Initial/Recovery)
+
 ```csharp
 // For initial data population or recovery
 public class FullSyncJob : PlatformApplicationBackgroundJobExecutor
@@ -146,6 +152,7 @@ public class FullSyncJob : PlatformApplicationBackgroundJobExecutor
 ```
 
 ### Incremental Sync (Event-Driven)
+
 ```csharp
 // Normal operation via message bus
 internal sealed class EmployeeSyncConsumer : PlatformApplicationMessageBusConsumer<EmployeeEventBusMessage>
@@ -163,6 +170,7 @@ internal sealed class EmployeeSyncConsumer : PlatformApplicationMessageBusConsum
 ```
 
 ### Conflict Resolution
+
 ```csharp
 // Use LastMessageSyncDate for ordering
 entity.With(e => e.LastMessageSyncDate = message.CreatedUtcDate);
@@ -177,12 +185,14 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 ## Integration Checklist
 
 ### Before Integration
+
 - [ ] Define data ownership clearly
 - [ ] Document which fields sync
 - [ ] Plan for missing dependencies
 - [ ] Define conflict resolution strategy
 
 ### Implementation
+
 - [ ] Message defined in PlatformExampleApp.Shared
 - [ ] Producer filters appropriate events
 - [ ] Consumer waits for dependencies
@@ -190,6 +200,7 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 - [ ] Soft delete handled
 
 ### Testing
+
 - [ ] Create event flows correctly
 - [ ] Update event flows correctly
 - [ ] Delete event flows correctly
@@ -200,6 +211,7 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 ## Troubleshooting
 
 ### Message Not Arriving
+
 ```bash
 # Check RabbitMQ queues
 rabbitmqctl list_queues
@@ -212,6 +224,7 @@ grep -r "AddConsumer" --include="*.cs"
 ```
 
 ### Data Mismatch
+
 ```bash
 # Compare source and target counts
 # In source service DB
@@ -222,6 +235,7 @@ SELECT COUNT(*) FROM SyncedEmployees;
 ```
 
 ### Stuck Messages
+
 ```csharp
 // Check for waiting dependencies
 Logger.LogWarning("Waiting for Company {CompanyId}", companyId);
@@ -233,12 +247,14 @@ await messageBus.PublishAsync(message.With(m => m.IsForceSync = true));
 ## Anti-Patterns to AVOID
 
 :x: **Direct database access**
+
 ```csharp
 // WRONG
 await otherServiceDbContext.Table.ToListAsync();
 ```
 
 :x: **Synchronous cross-service calls in transaction**
+
 ```csharp
 // WRONG
 using var transaction = await db.BeginTransactionAsync();
@@ -247,6 +263,7 @@ await transaction.CommitAsync();
 ```
 
 :x: **No dependency waiting**
+
 ```csharp
 // WRONG - FK violation if company not synced
 await repo.CreateAsync(employee);  // Employee.CompanyId references Company
@@ -256,6 +273,7 @@ await Util.TaskRunner.TryWaitUntilAsync(() => companyRepo.AnyAsync(...));
 ```
 
 :x: **Ignoring message order**
+
 ```csharp
 // WRONG - older message overwrites newer
 await repo.UpdateAsync(entity);
@@ -265,6 +283,7 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 ```
 
 ## Verification Checklist
+
 - [ ] Data ownership clearly defined
 - [ ] Message bus pattern used (not direct DB)
 - [ ] Dependencies waited for in consumers
@@ -273,7 +292,7 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 - [ ] Force sync mechanism available
 - [ ] Monitoring/alerting in place
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

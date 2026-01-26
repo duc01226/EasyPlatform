@@ -57,20 +57,26 @@ Use when Gemini CLI unavailable. Keeps main context clean.
 
 ## Implementation Patterns
 
-| Pattern | When | How |
-|---------|------|-----|
-| Gemini CLI Auto-Execution | Default (fastest) | `echo "task" \| gemini -y -m gemini-2.5-flash` |
-| LLM-Driven Tool Selection | Need intelligent matching | LLM reads `assets/tools.json` |
-| Multi-Server Orchestration | Cross-server coordination | Tools tagged with source server |
-| Subagent Delegation | Context efficiency | `mcp-manager` agent handles MCP ops |
+| Pattern                    | When                      | How                                            |
+| -------------------------- | ------------------------- | ---------------------------------------------- |
+| Gemini CLI Auto-Execution  | Default (fastest)         | `echo "task" \| gemini -y -m gemini-2.5-flash` |
+| LLM-Driven Tool Selection  | Need intelligent matching | LLM reads `assets/tools.json`                  |
+| Multi-Server Orchestration | Cross-server coordination | Tools tagged with source server                |
+| Subagent Delegation        | Context efficiency        | `mcp-manager` agent handles MCP ops            |
 
 ## Scripts Reference
 
-| Script | Purpose |
-|--------|---------|
-| `scripts/mcp-client.ts` | Core MCP client (config, connect, list, execute) |
-| `scripts/cli.ts` | CLI interface (`list-tools`, `list-prompts`, `list-resources`, `call-tool`) |
+| Script                  | Purpose                                                                     |
+| ----------------------- | --------------------------------------------------------------------------- |
+| `scripts/mcp-client.ts` | Core MCP client (config, connect, list, execute)                            |
+| `scripts/cli.ts`        | CLI interface (`list-tools`, `list-prompts`, `list-resources`, `call-tool`) |
 
 ## Technical Details
 
 See [references/mcp-protocol.md](references/mcp-protocol.md) for JSON-RPC protocol, message types, error codes, transports.
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

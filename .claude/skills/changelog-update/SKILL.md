@@ -160,7 +160,7 @@ Delete temp notes file: `.ai/workspace/changelog-notes-*.md`
 4. ❌ Forgetting to delete temp notes file
 5. ❌ Not using [Unreleased] section
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

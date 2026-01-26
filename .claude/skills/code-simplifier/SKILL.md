@@ -42,12 +42,12 @@ Task(subagent_type="code-simplifier:code-simplifier", prompt="Review and simplif
 
 ## Complexity Thresholds
 
-| Metric | Threshold | Action |
-|--------|-----------|--------|
-| Nesting depth | > 3 levels | Flatten with guard clauses |
-| Method length | > 20 lines | Extract focused methods |
+| Metric          | Threshold      | Action                           |
+| --------------- | -------------- | -------------------------------- |
+| Nesting depth   | > 3 levels     | Flatten with guard clauses       |
+| Method length   | > 20 lines     | Extract focused methods          |
 | Duplicated code | 2+ occurrences | Apply DRY, use platform patterns |
-| Naming clarity | Unclear intent | Make self-documenting |
+| Naming clarity  | Unclear intent | Make self-documenting            |
 
 ## EasyPlatform Patterns to Apply
 
@@ -67,13 +67,13 @@ Task(subagent_type="code-simplifier:code-simplifier", prompt="Review and simplif
 
 ## Simplification Actions
 
-| Action | Description |
-|--------|-------------|
-| Reduce nesting | Flatten deep if/else chains with guard clauses |
-| Extract methods | Break long methods into focused units |
-| Simplify conditionals | Use early returns, named booleans |
-| Remove duplication | Apply DRY, use platform patterns |
-| Improve naming | Make code self-documenting |
+| Action                | Description                                    |
+| --------------------- | ---------------------------------------------- |
+| Reduce nesting        | Flatten deep if/else chains with guard clauses |
+| Extract methods       | Break long methods into focused units          |
+| Simplify conditionals | Use early returns, named booleans              |
+| Remove duplication    | Apply DRY, use platform patterns               |
+| Improve naming        | Make code self-documenting                     |
 
 ## Workflow
 
@@ -137,7 +137,7 @@ Claude:
 5. Complexity reduced: 145 -> 128 lines
 ```
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

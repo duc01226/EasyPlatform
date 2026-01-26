@@ -46,16 +46,16 @@ Analyze staged changes and generate message following **Conventional Commits**:
 
 #### Type Detection
 
-| Change Pattern | Type |
-|----------------|------|
-| New file/feature | `feat` |
-| Bug fix, error handling | `fix` |
-| Code restructure | `refactor` |
-| Documentation only | `docs` |
-| Tests only | `test` |
-| Dependencies, config | `chore` |
-| Performance improvement | `perf` |
-| Formatting only | `style` |
+| Change Pattern          | Type       |
+| ----------------------- | ---------- |
+| New file/feature        | `feat`     |
+| Bug fix, error handling | `fix`      |
+| Code restructure        | `refactor` |
+| Documentation only      | `docs`     |
+| Tests only              | `test`     |
+| Dependencies, config    | `chore`    |
+| Performance improvement | `perf`     |
+| Formatting only         | `style`    |
 
 #### Scope Rules
 
@@ -112,7 +112,7 @@ docs(readme): update installation instructions
 - **Never skip** hooks with `--no-verify` unless explicitly requested
 - Include attribution footer: `Generated with [Claude Code](https://claude.com/claude-code)`
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

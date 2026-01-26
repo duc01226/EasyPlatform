@@ -24,13 +24,13 @@ Manage the auto-learning pattern library. View, list, archive, and adjust confid
 
 ## Script Execution
 
-| Action | Script |
-|--------|--------|
-| List | `node .claude/skills/learned-patterns/scripts/list-patterns.cjs [category] [--low\|--high]` |
-| View | `node .claude/skills/learned-patterns/scripts/view-pattern.cjs <id>` |
-| Archive | `node .claude/skills/learned-patterns/scripts/archive-pattern.cjs <id> [reason]` |
-| Boost/Penalize | `node .claude/skills/learned-patterns/scripts/adjust-confidence.cjs <id> boost\|penalize` |
-| Stats | `node .claude/skills/learned-patterns/scripts/pattern-stats.cjs` |
+| Action         | Script                                                                                      |
+| -------------- | ------------------------------------------------------------------------------------------- |
+| List           | `node .claude/skills/learned-patterns/scripts/list-patterns.cjs [category] [--low\|--high]` |
+| View           | `node .claude/skills/learned-patterns/scripts/view-pattern.cjs <id>`                        |
+| Archive        | `node .claude/skills/learned-patterns/scripts/archive-pattern.cjs <id> [reason]`            |
+| Boost/Penalize | `node .claude/skills/learned-patterns/scripts/adjust-confidence.cjs <id> boost\|penalize`   |
+| Stats          | `node .claude/skills/learned-patterns/scripts/pattern-stats.cjs`                            |
 
 ## Pattern Lifecycle
 
@@ -53,13 +53,13 @@ DECAY & PRUNING
 
 ## Confidence Thresholds
 
-| Range | Behavior |
-|-------|----------|
+| Range   | Behavior                      |
+| ------- | ----------------------------- |
 | 80-100% | Always injected when relevant |
-| 50-79% | Injected with context match |
-| 30-49% | Injected only on strong match |
-| 20-29% | Candidate for review |
-| < 20% | Auto-archived |
+| 50-79%  | Injected with context match   |
+| 30-49%  | Injected only on strong match |
+| 20-29%  | Candidate for review          |
+| < 20%   | Auto-archived                 |
 
 ## Pattern Schema
 
@@ -93,3 +93,9 @@ metadata:
 
 - `/learn` - Teach a new pattern
 - `/code-patterns` - View static code patterns documentation
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

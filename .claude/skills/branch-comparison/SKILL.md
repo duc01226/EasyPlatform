@@ -77,3 +77,9 @@ grep -r "CommandName" docs/specifications/     # Check in specs
 - **Comprehensive impact**: Analyze direct and indirect effects, including cross-service
 - **Platform-aware**: Respect CQRS, Clean Architecture, platform patterns
 - **Full traceability**: Ensure links between code, requirements, and tests
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

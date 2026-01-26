@@ -15,31 +15,31 @@ This is the **SSOT** for MCP memory operations. Other skills should reference th
 
 ## Entity Types
 
-| Entity Type | Purpose | Examples |
-|---|---|---|
-| `Pattern` | Recurring code patterns | CQRS, Validation, Repository |
-| `Decision` | Architectural/design decisions | Why we chose X over Y |
-| `BugFix` | Bug solutions for future reference | Race condition fixes |
-| `ServiceBoundary` | Service ownership | TextSnippet owns Snippets |
-| `SessionSummary` | End-of-session progress | Task progress, next steps |
-| `Dependency` | Cross-service dependencies | TextSnippet depends on Accounts |
-| `AntiPattern` | Patterns to avoid | Don't call side effects in cmd |
+| Entity Type       | Purpose                            | Examples                        |
+| ----------------- | ---------------------------------- | ------------------------------- |
+| `Pattern`         | Recurring code patterns            | CQRS, Validation, Repository    |
+| `Decision`        | Architectural/design decisions     | Why we chose X over Y           |
+| `BugFix`          | Bug solutions for future reference | Race condition fixes            |
+| `ServiceBoundary` | Service ownership                  | TextSnippet owns Snippets       |
+| `SessionSummary`  | End-of-session progress            | Task progress, next steps       |
+| `Dependency`      | Cross-service dependencies         | TextSnippet depends on Accounts |
+| `AntiPattern`     | Patterns to avoid                  | Don't call side effects in cmd  |
 
 ---
 
 ## Quick Operations
 
-| Operation | Command |
-|---|---|
-| Create entity | `mcp__memory__create_entities([...])` |
-| Create relation | `mcp__memory__create_relations([...])` |
-| Add observations | `mcp__memory__add_observations([...])` |
-| Search | `mcp__memory__search_nodes({ query })` |
-| Open by name | `mcp__memory__open_nodes({ names })` |
-| Read all | `mcp__memory__read_graph()` |
-| Delete entity | `mcp__memory__delete_entities({ entityNames })` |
-| Delete observations | `mcp__memory__delete_observations([...])` |
-| Delete relation | `mcp__memory__delete_relations([...])` |
+| Operation           | Command                                         |
+| ------------------- | ----------------------------------------------- |
+| Create entity       | `mcp__memory__create_entities([...])`           |
+| Create relation     | `mcp__memory__create_relations([...])`          |
+| Add observations    | `mcp__memory__add_observations([...])`          |
+| Search              | `mcp__memory__search_nodes({ query })`          |
+| Open by name        | `mcp__memory__open_nodes({ names })`            |
+| Read all            | `mcp__memory__read_graph()`                     |
+| Delete entity       | `mcp__memory__delete_entities({ entityNames })` |
+| Delete observations | `mcp__memory__delete_observations([...])`       |
+| Delete relation     | `mcp__memory__delete_relations([...])`          |
 
 For detailed examples and templates, see [references/memory-operations.md](references/memory-operations.md).
 
@@ -79,13 +79,13 @@ Create `SessionSummary` entity with: Task, Completed, Remaining, Key Files, Disc
 
 ## Importance Scoring
 
-| Score | Criteria |
-|---|---|
-| 10 | Critical bug fixes, security issues |
-| 8-9 | Architectural decisions, service boundaries |
-| 6-7 | Code patterns, best practices |
-| 4-5 | Session summaries, progress notes |
-| 1-3 | Temporary notes, exploration results |
+| Score | Criteria                                    |
+| ----- | ------------------------------------------- |
+| 10    | Critical bug fixes, security issues         |
+| 8-9   | Architectural decisions, service boundaries |
+| 6-7   | Code patterns, best practices               |
+| 4-5   | Session summaries, progress notes           |
+| 1-3   | Temporary notes, exploration results        |
 
 ---
 
@@ -96,3 +96,9 @@ Create `SessionSummary` entity with: Task, Completed, Remaining, Key Files, Disc
 - **Pruning**: Remove outdated patterns no longer relevant
 
 See [references/memory-operations.md](references/memory-operations.md) for operation details and templates.
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

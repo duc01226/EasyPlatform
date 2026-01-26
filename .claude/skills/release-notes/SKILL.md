@@ -37,14 +37,14 @@ node .claude/skills/release-notes/lib/parse-commits.cjs <base> <head> | \
 node .claude/skills/release-notes/lib/categorize-commits.cjs
 ```
 
-| Type | Category | User-Facing |
-|------|----------|-------------|
-| `feat` | features | Yes |
-| `fix` | fixes | Yes |
-| `perf` | improvements | Yes |
-| `docs` | docs | Yes (unless internal) |
-| `refactor` | improvements | Technical only |
-| `test`, `ci`, `build`, `chore`, `style` | internal | No |
+| Type                                    | Category     | User-Facing           |
+| --------------------------------------- | ------------ | --------------------- |
+| `feat`                                  | features     | Yes                   |
+| `fix`                                   | fixes        | Yes                   |
+| `perf`                                  | improvements | Yes                   |
+| `docs`                                  | docs         | Yes (unless internal) |
+| `refactor`                              | improvements | Technical only        |
+| `test`, `ci`, `build`, `chore`, `style` | internal     | No                    |
 
 Excluded: `chore(deps):`, `chore(config):`, `[skip changelog]`, `[ci skip]`
 
@@ -95,3 +95,9 @@ See [references/release-pipeline.md](references/release-pipeline.md) for:
 
 - **`/commit`** - Commit generated notes
 - **`/changelog-update`** - Update CHANGELOG.md with new release
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

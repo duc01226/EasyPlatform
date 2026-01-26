@@ -11,6 +11,7 @@ Synchronize Claude Code and GitHub Copilot configurations to maintain feature pa
 ## When to Use
 
 Activate this skill when:
+
 - User asks to update Claude Code or Copilot setup
 - User wants to add/modify skills, prompts, agents, or instructions
 - User wants both tools to work similarly
@@ -18,21 +19,22 @@ Activate this skill when:
 
 ## Quick Reference
 
-| Claude Code | GitHub Copilot | Location |
-|-------------|----------------|----------|
-| SKILL.md | SKILL.md | `.claude/skills/` + `.github/skills/` |
-| commands/*.md | prompts/*.prompt.md | `.claude/commands/` + `.github/prompts/` |
-| agents/*.md | agents/*.md | `.github/agents/` (shared) |
-| workflows/*.md | - | `.claude/workflows/` |
-| CLAUDE.md | copilot-instructions.md | Root + `.github/` |
-| - | instructions/*.md | `.github/instructions/` (applyTo patterns) |
-| - | chatmodes/*.chatmode.md | `.github/chatmodes/` |
+| Claude Code    | GitHub Copilot          | Location                                   |
+| -------------- | ----------------------- | ------------------------------------------ |
+| SKILL.md       | SKILL.md                | `.claude/skills/` + `.github/skills/`      |
+| commands/*.md  | prompts/*.prompt.md     | `.claude/commands/` + `.github/prompts/`   |
+| agents/*.md    | agents/*.md             | `.github/agents/` (shared)                 |
+| workflows/*.md | -                       | `.claude/workflows/`                       |
+| CLAUDE.md      | copilot-instructions.md | Root + `.github/`                          |
+| -              | instructions/*.md       | `.github/instructions/` (applyTo patterns) |
+| -              | chatmodes/*.chatmode.md | `.github/chatmodes/`                       |
 
 ## Sync Process
 
 ### Step 1: Understand Current Setup
 
 Read these files to understand current configuration:
+
 ```
 .claude/workflows/orchestration-protocol.md
 .claude/workflows/primary-workflow.md
@@ -44,6 +46,7 @@ CLAUDE.md
 ### Step 2: Research Latest Features
 
 Search web for:
+
 - "GitHub Copilot features setup 2026"
 - "GitHub Copilot custom instructions agents skills prompts"
 - "GitHub Copilot agent mode workspace context"
@@ -53,6 +56,7 @@ See [references/copilot-features.md](references/copilot-features.md) for feature
 ### Step 3: Identify Sync Opportunities
 
 Compare capabilities and identify gaps:
+
 - Skills missing in one platform
 - Inconsistent prompt/instruction behavior
 - Agent definitions that differ
@@ -60,6 +64,7 @@ Compare capabilities and identify gaps:
 ### Step 4: Implement Changes
 
 For each change:
+
 1. **Skills**: Create in both `.claude/skills/` and `.github/skills/`
 2. **Prompts**: Create in both `.claude/commands/` and `.github/prompts/`
 3. **Instructions**: Update both `CLAUDE.md` and `.github/copilot-instructions.md`
@@ -78,7 +83,7 @@ For each change:
 - [Copilot Features Catalog](references/copilot-features.md)
 - [Sync Patterns](references/sync-patterns.md)
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

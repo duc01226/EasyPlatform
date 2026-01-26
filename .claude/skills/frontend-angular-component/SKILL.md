@@ -74,3 +74,9 @@ src/Frontend/apps/{app-name}/src/app/features/{feature}/
 - [ ] Track-by on `@for` loops
 - [ ] Auth checks use `hasRole()` from base class
 - [ ] All elements have BEM classes
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

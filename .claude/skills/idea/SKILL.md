@@ -49,8 +49,8 @@ Dynamic module discovery from YAML frontmatter:
 
 ### 1. Load Business Context
 
-- Read: `docs/business-features/{Module}/INDEX.md` (feature table)
-- Read: `docs/business-features/{Module}/README.md` (Overview + Business Requirements sections only, ~2000 token budget)
+- **⚠️ MUST READ:** `docs/business-features/{Module}/INDEX.md` (feature table)
+- **⚠️ MUST READ:** `docs/business-features/{Module}/README.md` (Overview + Business Requirements sections only, ~2000 token budget)
 - Note: "Loaded context from {Module} business documentation"
 - If module docs missing: Note absence and continue without context
 
@@ -106,13 +106,13 @@ After saving, conduct brief validation interview to confirm understanding before
 
 #### Question Selection (pick 2-3 most relevant)
 
-| Category            | Question                                                           |
-| ------------------- | ------------------------------------------------------------------ |
-| **Problem Clarity** | "Is the problem statement clear? What's the root cause?"           |
-| **Value**           | "Who benefits most? What's the business impact if NOT built?"      |
-| **Scope**           | "Is this one feature or multiple? Should it be split?"             |
-| **Timing**          | "Is this urgent or can it wait? Any deadline drivers?"             |
-| **Alternatives**    | "Any existing solutions or workarounds today?"                     |
+| Category            | Question                                                      |
+| ------------------- | ------------------------------------------------------------- |
+| **Problem Clarity** | "Is the problem statement clear? What's the root cause?"      |
+| **Value**           | "Who benefits most? What's the business impact if NOT built?" |
+| **Scope**           | "Is this one feature or multiple? Should it be split?"        |
+| **Timing**          | "Is this urgent or can it wait? Any deadline drivers?"        |
+| **Alternatives**    | "Any existing solutions or workarounds today?"                |
 
 #### Validation Process
 
@@ -185,7 +185,7 @@ See `docs/templates/detailed-feature-docs-template.md` for frontmatter schema.
 - **Role Skill:** `product-owner`
 - **Next Step:** `/refine`
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

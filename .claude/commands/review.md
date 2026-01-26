@@ -132,7 +132,7 @@ Provide feedback in this format:
 
 See `code-review` skill for review process guidelines and anti-performative-agreement rules.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

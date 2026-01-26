@@ -51,12 +51,12 @@ Phase 3 (Tests)       ──┘
 
 ## Parallelization Rules
 
-| Rule | Description |
-|------|-------------|
-| **File Ownership** | Each subagent owns specific files - no overlap |
-| **Dependency Order** | Respect dependency graph |
-| **Max Concurrent** | 3 subagents max to prevent conflicts |
-| **Sync Points** | Integration checkpoints between phases |
+| Rule                 | Description                                    |
+| -------------------- | ---------------------------------------------- |
+| **File Ownership**   | Each subagent owns specific files - no overlap |
+| **Dependency Order** | Respect dependency graph                       |
+| **Max Concurrent**   | 3 subagents max to prevent conflicts           |
+| **Sync Points**      | Integration checkpoints between phases         |
 
 ## When to Use
 
@@ -82,14 +82,14 @@ Phase 3 (Tests)       ──┘
 
 ## Trade-offs
 
-| Aspect | Parallel | Sequential |
-|--------|----------|------------|
-| Speed | ~2-3x faster | Baseline |
-| Coordination | Higher complexity | Simple |
-| Conflicts | Risk of merge issues | None |
-| Context | Split across agents | Unified |
+| Aspect       | Parallel             | Sequential |
+| ------------ | -------------------- | ---------- |
+| Speed        | ~2-3x faster         | Baseline   |
+| Coordination | Higher complexity    | Simple     |
+| Conflicts    | Risk of merge issues | None       |
+| Context      | Split across agents  | Unified    |
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

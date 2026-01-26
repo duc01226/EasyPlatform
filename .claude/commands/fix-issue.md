@@ -179,9 +179,9 @@ Before proposing any change:
 ---
 
 Use the `debugging` skill for the complete debugging protocol. For autonomous mode, use `debugging --autonomous`.
-See `.github/AI-DEBUGGING-PROTOCOL.md` for comprehensive guidelines.
+**⚠️ MUST READ** `.github/AI-DEBUGGING-PROTOCOL.md` for comprehensive guidelines.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

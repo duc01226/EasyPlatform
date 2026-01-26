@@ -10,15 +10,15 @@ Process video, audio, and images using FFmpeg, ImageMagick, and RMBG CLI tools.
 
 ## Tool Selection
 
-| Task | Tool | Reason |
-|------|------|--------|
-| Video encoding/conversion | FFmpeg | Native codec support, streaming |
-| Audio extraction/conversion | FFmpeg | Direct stream manipulation |
-| Image resize/effects | ImageMagick | Optimized for still images |
-| Background removal | RMBG | AI-powered, local processing |
-| Batch images | ImageMagick | mogrify for in-place edits |
-| Video thumbnails | FFmpeg | Frame extraction built-in |
-| GIF creation | FFmpeg/ImageMagick | FFmpeg for video, ImageMagick for images |
+| Task                        | Tool               | Reason                                   |
+| --------------------------- | ------------------ | ---------------------------------------- |
+| Video encoding/conversion   | FFmpeg             | Native codec support, streaming          |
+| Audio extraction/conversion | FFmpeg             | Direct stream manipulation               |
+| Image resize/effects        | ImageMagick        | Optimized for still images               |
+| Background removal          | RMBG               | AI-powered, local processing             |
+| Batch images                | ImageMagick        | mogrify for in-place edits               |
+| Video thumbnails            | FFmpeg             | Frame extraction built-in                |
+| GIF creation                | FFmpeg/ImageMagick | FFmpeg for video, ImageMagick for images |
 
 ## Installation
 
@@ -90,7 +90,7 @@ Detailed guides in `references/`:
 - `troubleshooting.md` - Error fixes, performance tips
 - `format-compatibility.md` - Format support, codec recommendations
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

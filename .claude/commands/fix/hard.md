@@ -3,7 +3,7 @@ description: ⚡⚡⚡ Use subagents to plan and fix hard issues
 argument-hint: [issues]
 ---
 
-**Ultrathink** to plan & start fixing these issues follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules: 
+**Ultrathink** to plan & start fixing these issues follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <issues>$ARGUMENTS</issues>
 
 ## Workflow:
@@ -38,7 +38,7 @@ Analyze the skills catalog and activate other skills that are needed for the tas
 - You always read and analyze the generated assets with `ai-multimodal` skills to verify they meet requirements.
 - For image editing (removing background, adjusting, cropping), use `ImageMagick` skill or similar tools as needed.
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

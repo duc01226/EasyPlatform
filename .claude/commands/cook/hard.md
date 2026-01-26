@@ -71,15 +71,15 @@ argument-hint: [tasks]
 
 ## Quality Gates
 
-| Gate | Criteria |
-|------|----------|
-| Research | 2+ researcher reports |
-| Planning | Full plan directory |
-| Tests | All pass, no mocks |
-| Review | 0 critical/major findings |
-| Docs | Updated if needed |
+| Gate     | Criteria                  |
+| -------- | ------------------------- |
+| Research | 2+ researcher reports     |
+| Planning | Full plan directory       |
+| Tests    | All pass, no mocks        |
+| Review   | 0 critical/major findings |
+| Docs     | Updated if needed         |
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

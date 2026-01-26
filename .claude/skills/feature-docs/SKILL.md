@@ -20,34 +20,34 @@ Generate comprehensive feature documentation following the **GOLD STANDARD** tem
 
 All feature documentation MUST follow this section order:
 
-| # | Section | Stakeholder Focus |
-|---|---------|-------------------|
-| 1 | Executive Summary | PO, BA |
-| 2 | Business Value | PO, BA |
-| 3 | Business Requirements | PO, BA |
-| 4 | Business Rules | BA, Dev |
-| 5 | Process Flows | BA, Dev, Architect |
-| 6 | Design Reference | BA, UX, Dev |
-| 7 | System Design | Dev, Architect |
-| 8 | Architecture | Dev, Architect |
-| 9 | Domain Model | Dev, Architect |
-| 10 | API Reference | Dev, Architect |
-| 11 | Frontend Components | Dev |
-| 12 | Backend Controllers | Dev |
-| 13 | Cross-Service Integration | Dev, Architect |
-| 14 | Security Architecture | Dev, Architect |
-| 15 | Performance Considerations | Dev, Architect, DevOps |
-| 16 | Implementation Guide | Dev |
-| 17 | Test Specifications | QA |
-| 18 | Test Data Requirements | QA |
-| 19 | Edge Cases Catalog | QA, Dev |
-| 20 | Regression Impact | QA |
-| 21 | Troubleshooting | Dev, QA, DevOps |
-| 22 | Operational Runbook | DevOps |
-| 23 | Roadmap and Dependencies | PO, BA |
-| 24 | Related Documentation | All |
-| 25 | Glossary | PO, BA |
-| 26 | Version History | All |
+| #   | Section                    | Stakeholder Focus      |
+| --- | -------------------------- | ---------------------- |
+| 1   | Executive Summary          | PO, BA                 |
+| 2   | Business Value             | PO, BA                 |
+| 3   | Business Requirements      | PO, BA                 |
+| 4   | Business Rules             | BA, Dev                |
+| 5   | Process Flows              | BA, Dev, Architect     |
+| 6   | Design Reference           | BA, UX, Dev            |
+| 7   | System Design              | Dev, Architect         |
+| 8   | Architecture               | Dev, Architect         |
+| 9   | Domain Model               | Dev, Architect         |
+| 10  | API Reference              | Dev, Architect         |
+| 11  | Frontend Components        | Dev                    |
+| 12  | Backend Controllers        | Dev                    |
+| 13  | Cross-Service Integration  | Dev, Architect         |
+| 14  | Security Architecture      | Dev, Architect         |
+| 15  | Performance Considerations | Dev, Architect, DevOps |
+| 16  | Implementation Guide       | Dev                    |
+| 17  | Test Specifications        | QA                     |
+| 18  | Test Data Requirements     | QA                     |
+| 19  | Edge Cases Catalog         | QA, Dev                |
+| 20  | Regression Impact          | QA                     |
+| 21  | Troubleshooting            | Dev, QA, DevOps        |
+| 22  | Operational Runbook        | DevOps                 |
+| 23  | Roadmap and Dependencies   | PO, BA                 |
+| 24  | Related Documentation      | All                    |
+| 25  | Glossary                   | PO, BA                 |
+| 26  | Version History            | All                    |
 
 ---
 
@@ -75,11 +75,11 @@ Generate at `docs/business-features/{Module}/detailed-features/README.{FeatureNa
 ```markdown
 #### FR-{MOD}-01: {Requirement Title}
 
-| Aspect          | Details                                 |
-| --------------- | --------------------------------------- |
-| **Description** | {What this requirement enables}         |
-| **Scope**       | {Who can use / affected entities}       |
-| **Evidence**    | `{FilePath}:{LineRange}`                |
+| Aspect          | Details                           |
+| --------------- | --------------------------------- |
+| **Description** | {What this requirement enables}   |
+| **Scope**       | {Who can use / affected entities} |
+| **Evidence**    | `{FilePath}:{LineRange}`          |
 ```
 
 **User Stories (US-XX)**:
@@ -100,10 +100,10 @@ Generate at `docs/business-features/{Module}/detailed-features/README.{FeatureNa
 
 **Test Summary Table (MANDATORY)**:
 ```markdown
-| Category               | P0 (Critical) | P1 (High) | P2 (Medium) | P3 (Low) | Total |
-| ---------------------- | :-----------: | :-------: | :---------: | :------: | :---: |
-| {Category1}            | {N}           | {N}       | {N}         | {N}      | {N}   |
-| **Total**              | **{N}**       | **{N}**   | **{N}**     | **{N}**  | **{N}**|
+| Category    | P0 (Critical) | P1 (High) | P2 (Medium) | P3 (Low) |  Total  |
+| ----------- | :-----------: | :-------: | :---------: | :------: | :-----: |
+| {Category1} |      {N}      |    {N}    |     {N}     |   {N}    |   {N}   |
+| **Total**   |    **{N}**    |  **{N}**  |   **{N}**   | **{N}**  | **{N}** |
 ```
 
 **Test Case Format (TC-XX)**:
@@ -141,9 +141,9 @@ Generate at `docs/business-features/{Module}/detailed-features/README.{FeatureNa
 
 **Permission Matrix**:
 ```markdown
-| Role | View | Create | Edit | Delete | Special |
-|------|:----:|:------:|:----:|:------:|---------|
-| Admin | ✅ | ✅ | ✅ | ✅ | Full access |
+| Role  | View  | Create | Edit  | Delete | Special     |
+| ----- | :---: | :----: | :---: | :----: | ----------- |
+| Admin |   ✅   |   ✅    |   ✅   |   ✅    | Full access |
 ```
 
 ---
@@ -157,18 +157,18 @@ Generate AI-agent optimized companion file alongside the comprehensive documenta
 
 ### AI Companion Structure (10 Sections, ~260 lines)
 
-| Section | Content | Source from Full Doc |
-|---------|---------|---------------------|
-| Context | Purpose, entities, service | Executive Summary |
-| File Locations | Exact paths to all key files | Implementation Guide |
-| Domain Model | Properties, expressions | Domain Model |
-| API Contracts | Endpoints, request/response shapes | API Reference |
-| Business Rules | Validation, state transitions | Business Rules |
-| Patterns | Required ✅ / Anti-patterns ❌ | Architecture |
-| Integration | Events, dependencies | Cross-Service Integration |
-| Security | Authorization matrix | Security Architecture |
-| Test Scenarios | Key GIVEN/WHEN/THEN cases | Test Specifications |
-| Quick Reference | Decision tree, code snippets | Implementation Guide |
+| Section         | Content                            | Source from Full Doc      |
+| --------------- | ---------------------------------- | ------------------------- |
+| Context         | Purpose, entities, service         | Executive Summary         |
+| File Locations  | Exact paths to all key files       | Implementation Guide      |
+| Domain Model    | Properties, expressions            | Domain Model              |
+| API Contracts   | Endpoints, request/response shapes | API Reference             |
+| Business Rules  | Validation, state transitions      | Business Rules            |
+| Patterns        | Required ✅ / Anti-patterns ❌       | Architecture              |
+| Integration     | Events, dependencies               | Cross-Service Integration |
+| Security        | Authorization matrix               | Security Architecture     |
+| Test Scenarios  | Key GIVEN/WHEN/THEN cases          | Test Specifications       |
+| Quick Reference | Decision tree, code snippets       | Implementation Guide      |
 
 ### Compression Rules
 
@@ -225,11 +225,11 @@ Before writing any documentation:
 
 ### Verification Summary Table
 ```markdown
-| Category | Total Claims | Verified | Stale | Missing | Last Verified |
-|----------|-------------|----------|-------|---------|---------------|
-| Business Requirements | {N} | {N} | {N} | {N} | {Date} |
-| Test Specifications | {N} | {N} | {N} | {N} | {Date} |
-| **Total** | **{N}** | **{N}** | **{N}** | **{N}** | |
+| Category              | Total Claims | Verified | Stale   | Missing | Last Verified |
+| --------------------- | ------------ | -------- | ------- | ------- | ------------- |
+| Business Requirements | {N}          | {N}      | {N}     | {N}     | {Date}        |
+| Test Specifications   | {N}          | {N}      | {N}     | {N}     | {Date}        |
+| **Total**             | **{N}**      | **{N}**  | **{N}** | **{N}** |               |
 ```
 
 ### Status Markers
@@ -275,7 +275,7 @@ Before writing any documentation:
 - [ ] All evidence references preserved from full doc
 - [ ] Patterns section has required (✅) and anti-patterns (❌)
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

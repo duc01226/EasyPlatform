@@ -93,15 +93,15 @@ Use `/preview` for quick access:
 
 ## CLI Options
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--file <path>` | Markdown file to view | - |
-| `--dir <path>` | Directory to browse | - |
-| `--port <number>` | Server port | 3456 |
-| `--host <addr>` | Host to bind (`0.0.0.0` for remote) | localhost |
-| `--open` | Auto-open browser | false |
-| `--background` | Run in background | false |
-| `--stop` | Stop all servers | - |
+| Option            | Description                         | Default   |
+| ----------------- | ----------------------------------- | --------- |
+| `--file <path>`   | Markdown file to view               | -         |
+| `--dir <path>`    | Directory to browse                 | -         |
+| `--port <number>` | Server port                         | 3456      |
+| `--host <addr>`   | Host to bind (`0.0.0.0` for remote) | localhost |
+| `--open`          | Auto-open browser                   | false     |
+| `--background`    | Run in background                   | false     |
+| `--stop`          | Stop all servers                    | -         |
 
 ## Architecture
 
@@ -124,12 +124,12 @@ assets/
 
 ## HTTP Routes
 
-| Route | Description |
-|-------|-------------|
-| `/view?file=<path>` | Markdown file viewer |
-| `/browse?dir=<path>` | Directory browser |
-| `/assets/*` | Static assets |
-| `/file/*` | Local file serving (images) |
+| Route                | Description                 |
+| -------------------- | --------------------------- |
+| `/view?file=<path>`  | Markdown file viewer        |
+| `/browse?dir=<path>` | Directory browser           |
+| `/assets/*`          | Static assets               |
+| `/file/*`            | Local file serving (images) |
 
 ## Dependencies
 
@@ -189,7 +189,7 @@ Use `networkUrl` to access from other devices on the same network.
 
 **Remote access denied**: Use `--host 0.0.0.0` to bind to all interfaces
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

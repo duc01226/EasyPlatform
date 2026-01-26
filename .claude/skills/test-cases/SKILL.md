@@ -52,12 +52,12 @@ Create detailed, executable test cases from specifications.
 ```
 
 ### Module Codes
-| Module | Code |
-|--------|------|
-| TextSnippet | TXT |
-| ExampleApp | EXP |
-| Accounts | ACC |
-| Common | COM |
+| Module      | Code |
+| ----------- | ---- |
+| TextSnippet | TXT  |
+| ExampleApp  | EXP  |
+| Accounts    | ACC  |
+| Common      | COM  |
 
 ### Evidence Requirements
 **MANDATORY:** Every TC must have evidence.
@@ -70,7 +70,7 @@ Create detailed, executable test cases from specifications.
 - **Input:** `/test-spec` output
 - **Next Step:** `/quality-gate`
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

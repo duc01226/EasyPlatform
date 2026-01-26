@@ -38,11 +38,11 @@ node .claude/skills/docx-to-markdown/scripts/convert.cjs \
 
 ## CLI Options
 
-| Option | Required | Description |
-| ------ | -------- | ----------- |
-| `--file <path>` | Yes | Input DOCX file |
-| `--output <path>` | No | Output Markdown path (default: input name + .md) |
-| `--images <dir>` | No | Directory for extracted images (default: inline base64) |
+| Option            | Required | Description                                             |
+| ----------------- | -------- | ------------------------------------------------------- |
+| `--file <path>`   | Yes      | Input DOCX file                                         |
+| `--output <path>` | No       | Output Markdown path (default: input name + .md)        |
+| `--images <dir>`  | No       | Directory for extracted images (default: inline base64) |
 
 ## Output Format (JSON)
 
@@ -79,6 +79,7 @@ node .claude/skills/docx-to-markdown/scripts/convert.cjs \
 ## Google Docs Support
 
 Export your Google Doc as DOCX first, then convert:
+
 1. In Google Docs: File → Download → Microsoft Word (.docx)
 2. Run this converter on the downloaded file
 
@@ -88,7 +89,7 @@ Export your Google Doc as DOCX first, then convert:
 **Empty output:** Ensure DOCX contains actual text (not just images)
 **Code blocks not detected:** Use Word's built-in "Code" style
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

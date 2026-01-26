@@ -32,10 +32,10 @@ node .claude/skills/markdown-to-docx/scripts/convert.cjs \
 
 ## CLI Options
 
-| Option | Required | Description |
-| ------ | -------- | ----------- |
-| `--file <path>` | Yes | Input markdown file |
-| `--output <path>` | No | Output DOCX path (default: input name + .docx) |
+| Option            | Required | Description                                    |
+| ----------------- | -------- | ---------------------------------------------- |
+| `--file <path>`   | Yes      | Input markdown file                            |
+| `--output <path>` | No       | Output DOCX path (default: input name + .docx) |
 
 ## Output Format (JSON)
 
@@ -71,7 +71,7 @@ Uses markdown-docx default styling:
 **Dependencies not found:** Run `npm install` in skill directory
 **Image not loading:** Ensure path is correct; URL images require network access (10s timeout)
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

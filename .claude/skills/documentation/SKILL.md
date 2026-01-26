@@ -64,3 +64,9 @@ Workflow:
 - **Example-driven**: Include practical, copy-pasteable examples
 - **Keep docs close to code**: Prefer inline over separate files
 - **User-first for READMEs**: Organize for new users getting started
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

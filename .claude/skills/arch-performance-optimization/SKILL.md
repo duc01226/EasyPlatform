@@ -50,3 +50,9 @@ For detailed patterns, profiling commands, and anti-patterns:
 ## Approval Gate
 
 Present findings and optimization plan. Wait for explicit user approval before making changes -- performance optimizations can have wide-reaching side effects.
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

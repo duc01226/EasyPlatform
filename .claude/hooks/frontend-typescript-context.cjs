@@ -302,7 +302,7 @@ function buildInjection(context, filePath, app, fileType) {
         lines.push(
             '### Required Reading',
             '',
-            `Before implementing frontend TypeScript changes, you MUST read:`,
+            `Before implementing frontend TypeScript changes, you **MUST READ**:`,
             '',
             `**\`${FRONTEND_GUIDE_PATH}\`**`,
             '',

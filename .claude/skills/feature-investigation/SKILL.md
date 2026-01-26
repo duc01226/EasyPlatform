@@ -16,10 +16,10 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 
 ## Mode Selection
 
-| Mode | Use When | Workflow |
-|------|----------|----------|
-| **Interactive** | User available, exploratory question | Real-time collaboration, iterative tracing |
-| **Autonomous** | Deep analysis, complex cross-service tracing | Structured 4-phase workflow with analysis artifact |
+| Mode            | Use When                                     | Workflow                                           |
+| --------------- | -------------------------------------------- | -------------------------------------------------- |
+| **Interactive** | User available, exploratory question         | Real-time collaboration, iterative tracing         |
+| **Autonomous**  | Deep analysis, complex cross-service tracing | Structured 4-phase workflow with analysis artifact |
 
 ## Workflow
 
@@ -43,15 +43,15 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 
 Brief inline reference:
 
-| Looking for | Search in |
-|---|---|
-| Entity CRUD | `UseCaseCommands/`, `UseCaseQueries/` |
-| Business logic | `Domain/Entities/`, `*Service.cs` |
-| Side effects | `UseCaseEvents/`, `*EventHandler.cs` |
-| Cross-service | `*Consumer.cs`, `*BusMessage.cs` |
-| API endpoints | `Controllers/`, `*Controller.cs` |
-| Frontend | `libs/apps-domains/`, `*.component.ts` |
-| Background jobs | `*BackgroundJob*.cs`, `*Job.cs` |
+| Looking for     | Search in                              |
+| --------------- | -------------------------------------- |
+| Entity CRUD     | `UseCaseCommands/`, `UseCaseQueries/`  |
+| Business logic  | `Domain/Entities/`, `*Service.cs`      |
+| Side effects    | `UseCaseEvents/`, `*EventHandler.cs`   |
+| Cross-service   | `*Consumer.cs`, `*BusMessage.cs`       |
+| API endpoints   | `Controllers/`, `*Controller.cs`       |
+| Frontend        | `libs/apps-domains/`, `*.component.ts` |
+| Background jobs | `*BackgroundJob*.cs`, `*Job.cs`        |
 
 **⚠️ MUST READ — Full techniques, grep patterns, dependency tracing:** `references/investigation-techniques.md`
 
@@ -73,7 +73,7 @@ Autonomous mode writes analysis to `.ai/workspace/analysis/[feature-name]-invest
 
 ## Key Files
 | File | Purpose |
-|------|---------|
+| ---- | ------- |
 
 ## Data Flow
 [Text diagram: Entry -> Processing -> Persistence -> Side Effects]
@@ -95,3 +95,9 @@ Autonomous mode writes analysis to `.ai/workspace/analysis/[feature-name]-invest
 - `feature-implementation` - Implementing new features (code changes)
 - `debugging` - Debugging and fixing issues
 - `scout` - Quick codebase discovery (run before investigation)
+
+
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

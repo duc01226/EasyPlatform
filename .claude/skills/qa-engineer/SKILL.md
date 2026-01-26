@@ -37,14 +37,14 @@ TC: TC-AUTH-001: Successful logout
 
 ### 3. Test Types
 
-| Type | Purpose | When |
-|------|---------|------|
-| Unit | Single function | During dev |
-| Integration | Component interaction | After merge |
-| E2E | Full user flow | Before release |
-| Regression | Existing functionality | Every sprint |
-| Smoke | Critical paths | Every deploy |
-| Performance | Load/stress | Pre-release |
+| Type        | Purpose                | When           |
+| ----------- | ---------------------- | -------------- |
+| Unit        | Single function        | During dev     |
+| Integration | Component interaction  | After merge    |
+| E2E         | Full user flow         | Before release |
+| Regression  | Existing functionality | Every sprint   |
+| Smoke       | Critical paths         | Every deploy   |
+| Performance | Load/stress            | Pre-release    |
 
 ### 4. Coverage Analysis
 - Map test cases to requirements
@@ -113,12 +113,12 @@ When user runs `/test-cases {test-spec-file}`:
 ## Test ID Conventions
 
 ### Module Codes
-| Module | Code |
-|--------|------|
-| TextSnippet | TXT |
-| ExampleApp | EXP |
-| Accounts | ACC |
-| Common | COM |
+| Module      | Code |
+| ----------- | ---- |
+| TextSnippet | TXT  |
+| ExampleApp  | EXP  |
+| Accounts    | ACC  |
+| Common      | COM  |
 
 ### ID Format
 ```
@@ -203,7 +203,7 @@ Before completing QA artifacts:
 - [ ] Regression impact identified
 - [ ] Test data requirements documented
 
-## Task Planning Notes
+## IMPORTANT Task Planning Notes
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
