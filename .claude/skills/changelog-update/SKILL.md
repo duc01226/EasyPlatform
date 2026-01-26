@@ -36,8 +36,8 @@ Update CHANGELOG.md with business-focused entries by systematically reviewing fi
 ### Step 1: Gather Changes
 
 Determine change scope:
-- **PR-based**: `git diff origin/develop...HEAD --name-only`
-- **Branch-based**: `git log origin/develop..HEAD --oneline`
+- **PR-based**: `git diff origin/main...HEAD --name-only`
+- **Branch-based**: `git log origin/main..HEAD --oneline`
 - **Commit-based**: `git show {commit} --name-only`
 
 ### Step 2: Create Temp Notes File

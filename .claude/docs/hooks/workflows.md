@@ -8,10 +8,10 @@ The workflow system analyzes user prompts to detect intent (feature, bug fix, re
 
 ## Hooks
 
-| Hook | Trigger | Purpose |
-|------|---------|---------|
-| `workflow-router.cjs` | UserPromptSubmit | Detect intent, activate workflow |
-| `workflow-step-tracker.cjs` | PostToolUse (Skill) | Track workflow progress |
+| Hook                        | Trigger             | Purpose                          |
+| --------------------------- | ------------------- | -------------------------------- |
+| `workflow-router.cjs`       | UserPromptSubmit    | Detect intent, activate workflow |
+| `workflow-step-tracker.cjs` | PostToolUse (Skill) | Track workflow progress          |
 
 ## Intent Detection
 
@@ -21,14 +21,14 @@ User prompt → Keyword analysis → Intent classification → Workflow activati
 
 ### Intent Types
 
-| Intent | Trigger Keywords | Workflow Sequence |
-|--------|-----------------|-------------------|
-| **Feature** | implement, add, create, build, develop, new feature | /plan → /plan:review → /cook → /code-simplifier → /review → /test → /docs/update → /watzup |
-| **Bug Fix** | bug, fix, error, broken, issue, crash, not working | /scout → /investigate → /debug → /plan → /plan:review → /fix → /code-simplifier → /review → /test |
-| **Documentation** | docs, document, readme, update docs | /scout → /investigate → /docs-update → /watzup |
-| **Refactoring** | refactor, restructure, clean up, improve code | /plan → /plan:review → /code → /code-simplifier → /review → /test |
-| **Code Review** | review, check, audit code, PR review | /code-review → /watzup |
-| **Investigation** | how does, where is, explain, understand, find | /scout → /investigate |
+| Intent            | Trigger Keywords                                    | Workflow Sequence                                                                                 |
+| ----------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| **Feature**       | implement, add, create, build, develop, new feature | /plan → /plan:review → /cook → /code-simplifier → /review → /test → /docs/update → /watzup        |
+| **Bug Fix**       | bug, fix, error, broken, issue, crash, not working  | /scout → /investigate → /debug → /plan → /plan:review → /fix → /code-simplifier → /review → /test |
+| **Documentation** | docs, document, readme, update docs                 | /scout → /investigate → /docs-update → /watzup                                                    |
+| **Refactoring**   | refactor, restructure, clean up, improve code       | /plan → /plan:review → /code → /code-simplifier → /review → /test                                 |
+| **Code Review**   | review, check, audit code, PR review                | /code-review → /watzup                                                                            |
+| **Investigation** | how does, where is, explain, understand, find       | /scout → /investigate                                                                             |
 
 ## Workflow State
 
@@ -44,7 +44,7 @@ Stored in `.claude/.workflow-state.json`:
     { "skill": "/plan:review", "status": "completed" },
     { "skill": "/cook", "status": "in_progress" },
     { "skill": "/code-simplifier", "status": "pending" },
-    { "skill": "/review/codebase", "status": "pending" },
+    { "skill": "/review:codebase", "status": "pending" },
     { "skill": "/test", "status": "pending" },
     { "skill": "/docs/update", "status": "pending" },
     { "skill": "/watzup", "status": "pending" }
@@ -63,7 +63,7 @@ When workflow is detected:
 **Workflow:** Feature Implementation
 **Progress:** Step 3/8
 **Current Step:** `/cook`
-**Remaining:** /cook → /code-simplifier → /review/codebase → /test → /docs/update → /watzup
+**Remaining:** /cook → /code-simplifier → /review:codebase → /test → /docs/update → /watzup
 
 ### Instructions (MUST FOLLOW)
 
@@ -76,21 +76,21 @@ When workflow is detected:
 
 Users can control workflow execution:
 
-| Command | Effect |
-|---------|--------|
-| `skip` | Skip current step, move to next |
-| `abort` | Cancel active workflow |
-| `quick:` prefix | Bypass workflow detection |
+| Command         | Effect                          |
+| --------------- | ------------------------------- |
+| `skip`          | Skip current step, move to next |
+| `abort`         | Cancel active workflow          |
+| `quick:` prefix | Bypass workflow detection       |
 
 ## Lib Modules
 
-| Module | Purpose |
-|--------|---------|
-| `wr-config.cjs` | Workflow definitions |
-| `wr-control.cjs` | Workflow state management |
-| `wr-detect.cjs` | Intent detection logic |
-| `wr-output.cjs` | Output formatting |
-| `workflow-state.cjs` | State persistence |
+| Module               | Purpose                   |
+| -------------------- | ------------------------- |
+| `wr-config.cjs`      | Workflow definitions      |
+| `wr-control.cjs`     | Workflow state management |
+| `wr-detect.cjs`      | Intent detection logic    |
+| `wr-output.cjs`      | Output formatting         |
+| `workflow-state.cjs` | State persistence         |
 
 ## Configuration
 
@@ -101,7 +101,7 @@ Workflow definitions in `.claude/workflows.json`:
   "feature": {
     "name": "Feature Implementation",
     "triggers": ["implement", "add", "create", "build"],
-    "steps": ["/plan", "/plan:review", "/cook", "/code-simplifier", "/review/codebase", "/test", "/docs/update", "/watzup"]
+    "steps": ["/plan", "/plan:review", "/cook", "/code-simplifier", "/review:codebase", "/test", "/docs/update", "/watzup"]
   }
 }
 ```

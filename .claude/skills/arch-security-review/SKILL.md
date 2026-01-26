@@ -1,6 +1,7 @@
 ---
 name: arch-security-review
 description: Use when reviewing code for security vulnerabilities, implementing authorization, or ensuring data protection.
+infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
@@ -342,6 +343,10 @@ await DeleteAllUsers();
 - [ ] No hardcoded secrets
 - [ ] Logging appropriate (no PII)
 - [ ] Dependencies scanned
+
+## See Also
+
+See `/security` command for structured security review workflow.
 
 ## Task Planning Notes
 

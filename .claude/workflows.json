@@ -1,986 +1,923 @@
 {
-  "$schema": "./workflows.schema.json",
-  "commandMapping": {
-    "code": {
-      "claude": "/code",
-      "copilot": "@workspace /code"
+    "$schema": "./workflows.schema.json",
+    "commandMapping": {
+        "code": {
+            "claude": "/code",
+            "copilot": "@workspace /code"
+        },
+        "code-review": {
+            "claude": "/review:codebase",
+            "copilot": "@workspace /code-review"
+        },
+        "code-simplifier": {
+            "claude": "/code-simplifier",
+            "copilot": "@workspace /code-simplifier"
+        },
+        "cook": {
+            "claude": "/cook",
+            "copilot": "@workspace /cook"
+        },
+        "debug": {
+            "claude": "/debug",
+            "copilot": "@workspace /debug"
+        },
+        "dependency": {
+            "claude": "/dependency",
+            "copilot": "@workspace /dependency"
+        },
+        "design-spec": {
+            "claude": "/design-spec",
+            "copilot": "@workspace /design-spec"
+        },
+        "docs-update": {
+            "claude": "/docs/update",
+            "copilot": "@workspace /docs-update"
+        },
+        "fix": {
+            "claude": "/fix",
+            "copilot": "@workspace /fix"
+        },
+        "idea": {
+            "claude": "/idea",
+            "copilot": "@workspace /idea"
+        },
+        "investigate": {
+            "claude": "/investigate",
+            "copilot": "@workspace /investigate"
+        },
+        "plan": {
+            "claude": "/plan",
+            "copilot": "@workspace /plan"
+        },
+        "plan-review": {
+            "claude": "/plan:review",
+            "copilot": "@workspace /plan-review"
+        },
+        "prioritize": {
+            "claude": "/prioritize",
+            "copilot": "@workspace /prioritize"
+        },
+        "quality-gate": {
+            "claude": "/quality-gate",
+            "copilot": "@workspace /quality-gate"
+        },
+        "refine": {
+            "claude": "/refine",
+            "copilot": "@workspace /refine"
+        },
+        "scout": {
+            "claude": "/scout",
+            "copilot": "@workspace /scout"
+        },
+        "status": {
+            "claude": "/status",
+            "copilot": "@workspace /status"
+        },
+        "story": {
+            "claude": "/story",
+            "copilot": "@workspace /story"
+        },
+        "team-sync": {
+            "claude": "/team-sync",
+            "copilot": "@workspace /team-sync"
+        },
+        "test": {
+            "claude": "/test",
+            "copilot": "@workspace /test"
+        },
+        "test-cases": {
+            "claude": "/test-cases",
+            "copilot": "@workspace /test-cases"
+        },
+        "test-spec": {
+            "claude": "/test-spec",
+            "copilot": "@workspace /test-spec"
+        },
+        "watzup": {
+            "claude": "/watzup",
+            "copilot": "@workspace /watzup"
+        }
     },
-    "code-simplifier": {
-      "claude": "/code-simplifier",
-      "copilot": "@workspace /code-simplifier"
+    "description": "Workflow automation configuration for Claude Code and GitHub Copilot (multilingual)",
+    "settings": {
+        "allowOverride": true,
+        "checkpoints": {
+            "autoSaveOnCompact": true,
+            "enabled": true,
+            "filenamePattern": "checkpoint-{YYMMDD}-{HHMM}-{slug}.md",
+            "intervalMinutes": 30,
+            "path": "plans/reports"
+        },
+        "confirmHighImpact": true,
+        "enabled": true,
+        "overridePrefix": "quick:",
+        "showDetection": true,
+        "supportedLanguages": ["en", "vi", "zh", "ja", "ko"]
     },
-    "code-review": {
-      "claude": "/review/codebase",
-      "copilot": "@workspace /code-review"
-    },
-    "cook": {
-      "claude": "/cook",
-      "copilot": "@workspace /cook"
-    },
-    "debug": {
-      "claude": "/debug",
-      "copilot": "@workspace /debug"
-    },
-    "docs-update": {
-      "claude": "/docs/update",
-      "copilot": "@workspace /docs-update"
-    },
-    "fix": {
-      "claude": "/fix",
-      "copilot": "@workspace /fix"
-    },
-    "investigate": {
-      "claude": "/investigate",
-      "copilot": "@workspace /investigate"
-    },
-    "plan": {
-      "claude": "/plan",
-      "copilot": "@workspace /plan"
-    },
-    "plan-review": {
-      "claude": "/plan:review",
-      "copilot": "@workspace /plan-review"
-    },
-    "scout": {
-      "claude": "/scout",
-      "copilot": "@workspace /scout"
-    },
-    "test": {
-      "claude": "/test",
-      "copilot": "@workspace /test"
-    },
-    "watzup": {
-      "claude": "/watzup",
-      "copilot": "@workspace /watzup"
-    },
-    "idea": {
-      "claude": "/idea",
-      "copilot": "@workspace /idea"
-    },
-    "refine": {
-      "claude": "/refine",
-      "copilot": "@workspace /refine"
-    },
-    "prioritize": {
-      "claude": "/prioritize",
-      "copilot": "@workspace /prioritize"
-    },
-    "story": {
-      "claude": "/story",
-      "copilot": "@workspace /story"
-    },
-    "test-spec": {
-      "claude": "/test-spec",
-      "copilot": "@workspace /test-spec"
-    },
-    "test-cases": {
-      "claude": "/test-cases",
-      "copilot": "@workspace /test-cases"
-    },
-    "quality-gate": {
-      "claude": "/quality-gate",
-      "copilot": "@workspace /quality-gate"
-    },
-    "design-spec": {
-      "claude": "/design-spec",
-      "copilot": "@workspace /design-spec"
-    },
-    "status": {
-      "claude": "/status",
-      "copilot": "@workspace /status"
-    },
-    "dependency": {
-      "claude": "/dependency",
-      "copilot": "@workspace /dependency"
-    },
-    "team-sync": {
-      "claude": "/team-sync",
-      "copilot": "@workspace /team-sync"
+    "version": "1.4.0",
+    "workflows": {
+        "bugfix": {
+            "confirmFirst": false,
+            "description": "Systematic debugging and fix workflow",
+            "enableCheckpoints": true,
+            "excludePatterns": [
+                "\\b(implement|add|create|build)\\s+new\\b",
+                "\\bfeature\\b",
+                "\\b(improve|refactor|clean)\\b.*\\b(handling|code|logic)\\b",
+                "(thêm|tạo).*mới",
+                "tính năng",
+                "(cải thiện|nâng cao).*(code|xử lý)",
+                "(改善|提升|改进).*(代码|处理)",
+                "(改善|向上).*(コード|処理)",
+                "(개선|향상).*(코드|처리)"
+            ],
+            "name": "Bug Fix",
+            "priority": 20,
+            "sequence": ["scout", "investigate", "debug", "plan", "plan-review", "fix", "code-simplifier", "code-review", "test"],
+            "triggerPatterns": [
+                "\\b(bug|fix|broken|issue|crash|fail|exception)\\b",
+                "\\b(error|errors)\\s+(in|with|on|when|while|returned|returning)\\b",
+                "\\bnot\\s+working\\b",
+                "\\bdoesn'?t\\s+work\\b",
+                "\\b(debug|troubleshoot|diagnose)\\b",
+                "\\bregression\\b",
+                "\\breturning\\s+errors?\\b",
+                "(sửa|fix)\\s*(lỗi|bug|error)",
+                "(lỗi|bug|hỏng|crash|không hoạt động)",
+                "không\\s+(chạy|hoạt động|làm việc)",
+                "(debug|gỡ lỗi|kiểm tra lỗi)",
+                "(修复|修正|解决).*(bug|错误|问题)",
+                "(bug|错误|崩溃|异常|故障)",
+                "不(工作|运行)",
+                "(修正|直す).*(バグ|エラー|問題)",
+                "(バグ|エラー|クラッシュ|障害)",
+                "動(か|き)ない",
+                "(수정|고치다).*(버그|오류|문제)",
+                "(버그|오류|크래시|장애)",
+                "작동.*안"
+            ]
+        },
+        "dependency-only": {
+            "confirmFirst": false,
+            "description": "Analyze dependencies without full status report",
+            "enableCheckpoints": false,
+            "excludePatterns": [
+                "\\bstatus\\s+report\\b",
+                "\\bsprint\\s+status\\b",
+                "\\bnpm\\s+depend\\b",
+                "\\bpackage\\s+depend\\b",
+                "\\bpip\\s+depend\\b",
+                "\\bcargo\\s+depend\\b"
+            ],
+            "name": "Dependency Analysis Only",
+            "preActions": {
+                "activateSkill": "project-manager",
+                "injectContext": "DEPENDENCY-ONLY WORKFLOW:\n1. Analyze task/feature dependencies\n2. Identify blockers\n3. Skip full status report"
+            },
+            "priority": 47,
+            "sequence": ["dependency"],
+            "triggerPatterns": [
+                "\\bjust\\s+(the\\s+)?dependenc(y|ies)\\b",
+                "\\bdependenc(y|ies)\\s+only\\b",
+                "\\bcheck\\s+dependenc(y|ies)\\b",
+                "\\bwhat\\s+(does|do)\\s+.*\\s+depend\\s+on\\b",
+                "\\bwhat\\s+depends\\s+on\\b",
+                "\\bblockers?\\s+(for|on)\\b(?!.*status)",
+                "\\bwhat\\s+blocks\\b",
+                "\\bblocking\\s+items?\\b",
+                "(chỉ|chỉ cần)\\s+phụ thuộc",
+                "(只要|仅)\\s*依赖",
+                "依存関係だけ",
+                "의존성만"
+            ]
+        },
+        "design-spec-only": {
+            "confirmFirst": false,
+            "description": "Create design spec without code review",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\bimplement\\b", "\\bcode\\b", "\\breview\\b", "\\bfigma\\b"],
+            "name": "Design Specification Only",
+            "preActions": {
+                "activateSkill": "ux-designer",
+                "injectContext": "DESIGN-SPEC-ONLY WORKFLOW:\n1. Read requirements/PBI\n2. Create design specification\n3. Document component inventory, states, tokens\n4. Skip code review step"
+            },
+            "priority": 54,
+            "sequence": ["design-spec"],
+            "triggerPatterns": [
+                "\\b(create|generate|write)\\s+design\\s+spec(ification)?\\b",
+                "\\bdesign\\s+spec(ification)?\\s+(for|from)\\b",
+                "\\bjust\\s+(the\\s+)?design\\s+spec\\b",
+                "\\bdesign\\s+spec\\s+only\\b",
+                "\\bui\\s+spec(ification)?\\s+(for|from)\\b",
+                "\\bcomponent\\s+spec(ification)?\\b",
+                "(tạo|viết)\\s+design\\s+spec",
+                "(创建|编写)\\s*设计规范",
+                "デザインスペックだけ",
+                "디자인 사양만"
+            ]
+        },
+        "design-workflow": {
+            "confirmFirst": false,
+            "description": "Designer workflow: create design specification from requirements, hand off for review",
+            "enableCheckpoints": false,
+            "excludePatterns": [
+                "\\bimplement\\s+design\\b",
+                "\\bcode\\s+(the\\s+)?design\\b",
+                "\\bdevelop\\s+(the\\s+)?design\\b",
+                "(triển khai|code)\\s+thiết kế",
+                "(实现|编码)\\s*设计",
+                "(実装|コード)\\s*デザイン",
+                "(구현|코드)\\s*디자인"
+            ],
+            "name": "Design Workflow",
+            "preActions": {
+                "activateSkill": "ux-designer",
+                "injectContext": "DESIGN WORKFLOW:\n1. Read requirements/PBI\n2. Create design spec with component inventory\n3. Document states, tokens, accessibility\n4. Review with code-review agent",
+                "readFiles": ["docs/design-system/design-tokens.md"]
+            },
+            "priority": 28,
+            "sequence": ["design-spec", "code-review"],
+            "triggerPatterns": [
+                "\\bdesign\\s+(this|the|a)\\s*(feature|page|component|ui)\\b",
+                "\\bui\\s+spec(ification)?\\b",
+                "\\bcreate\\s+(a\\s+)?design\\s+spec\\b",
+                "\\bdesign\\s+spec\\s+for\\b",
+                "\\bmockup\\s+(for|of)\\b",
+                "\\bwireframe\\s+(for|of)\\b",
+                "\\bcomponent\\s+spec(ification)?\\b",
+                "team-artifacts[/\\\\]designs?[/\\\\][\\w-]+\\.md",
+                "design-spec[\\w-]*\\.md",
+                "\\breview\\s+(the\\s+)?design\\s+in\\b",
+                "(thiết kế|mockup|wireframe)\\s+(cho|của)",
+                "(设计|UI规范|组件规范)",
+                "(デザイン|UIスペック|コンポーネント仕様)",
+                "(디자인|UI 사양|컴포넌트 사양)"
+            ]
+        },
+        "documentation": {
+            "confirmFirst": false,
+            "description": "Documentation creation and update workflow",
+            "excludePatterns": ["\\b(implement|fix|test)\\b", "(thêm|sửa|test).*tính năng", "(实现|修复|测试)", "(実装|修正|テスト)", "(구현|수정|테스트)"],
+            "name": "Documentation Update",
+            "priority": 30,
+            "sequence": ["scout", "investigate", "docs-update", "watzup"],
+            "triggerPatterns": [
+                "\\b(doc|document|readme|documentation)\\b",
+                "\\bupdate.*\\b(doc|readme)\\b",
+                "\\bwrite.*\\b(doc|documentation)\\b",
+                "\\badd.*\\bcomment\\b",
+                "(cập nhật|viết|thêm).*(tài liệu|doc|readme)",
+                "(tài liệu|hướng dẫn|documentation)",
+                "(更新|编写|添加).*(文档|文件|readme)",
+                "(文档|文件|说明)",
+                "(更新|書く|追加).*(ドキュメント|文書|readme)",
+                "(ドキュメント|文書|説明)",
+                "(업데이트|작성|추가).*(문서|문서화|readme)",
+                "(문서|설명서)"
+            ]
+        },
+        "feature": {
+            "confirmFirst": true,
+            "description": "Full feature development workflow with planning, implementation, testing, and documentation",
+            "enableCheckpoints": true,
+            "excludePatterns": [
+                "\\b(fix|bug|error|broken|issue)\\b",
+                "\\b(doc|document|readme)\\b",
+                "\\b(test|spec)\\s+only\\b",
+                "(sửa|lỗi|bug|hỏng)",
+                "(修复|错误|bug)",
+                "(修正|バグ|エラー)",
+                "(수정|버그|오류)"
+            ],
+            "name": "Feature Implementation",
+            "priority": 10,
+            "sequence": ["plan", "plan-review", "cook", "code-simplifier", "code-review", "test", "docs-update", "watzup"],
+            "triggerPatterns": [
+                "\\b(implement|add|create|build|develop|make)\\b.*\\b(feature|functionality|capability|module|component)\\b",
+                "\\bnew\\s+(feature|functionality|capability)\\b",
+                "\\b(implement|add|create|build)\\s+(?!test|doc|comment)",
+                "\\bfeature\\s*:?\\s*\\w+",
+                "(thêm|tạo|xây dựng|phát triển|làm)\\s+(tính năng|chức năng|feature|module)",
+                "(thêm|tạo|implement)\\s+(?!test|doc)",
+                "tính năng mới",
+                "(添加|创建|开发|实现|构建).*(功能|特性|模块)",
+                "新(功能|特性)",
+                "(追加|作成|開発|実装).*(機能|フィーチャー)",
+                "(機能|フィーチャー).*(追加|作成)",
+                "新機能",
+                "(추가|생성|개발|구현).*(기능|피처)",
+                "(기능|피처).*(추가|생성|개발)",
+                "새\\s*기능"
+            ]
+        },
+        "figma-detection": {
+            "confirmFirst": false,
+            "description": "Auto-detect Figma URLs and extract design specs",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\b(implement|code|develop)\\s+(?!extract)", "\\bbuild\\s+from\\s+figma\\b", "\\bcode\\s+the\\s+figma\\b"],
+            "name": "Figma Design Extraction",
+            "preActions": {
+                "activateSkill": "ui-ux-designer",
+                "injectContext": "FIGMA DETECTION WORKFLOW:\n1. Parse Figma URL\n2. Run /figma-extract command\n3. Generate design-spec artifact"
+            },
+            "priority": 16,
+            "sequence": ["design-spec"],
+            "triggerPatterns": [
+                "figma\\.com/(design|file)/[a-zA-Z0-9]+",
+                "figma\\.com/design/[^/]+/[^?]+",
+                "\\?node-id=\\d+:\\d+",
+                "\\bextract\\b.*\\bfigma\\b",
+                "\\bfigma\\b.*\\b(design|spec|extract|colors|tokens)\\b",
+                "\\bget\\s+(design|specs?)\\s+from\\s+figma\\b",
+                "\\bpull\\s+figma\\s+(design|spec)\\b",
+                "(trích|lấy)\\s+từ\\s+figma",
+                "(提取|获取).*figma",
+                "figmaから(抽出|取得)",
+                "figma에서\\s+(추출|가져)"
+            ]
+        },
+        "figma-extract-only": {
+            "confirmFirst": false,
+            "description": "Extract design tokens from Figma without full design workflow",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\bdesign\\s+spec\\b", "\\bimplement\\b", "\\bcode\\b"],
+            "name": "Figma Extract Only",
+            "preActions": {
+                "activateSkill": "ui-ux-designer",
+                "injectContext": "FIGMA-EXTRACT-ONLY WORKFLOW:\n1. Parse Figma URL\n2. Extract design tokens (colors, typography, spacing)\n3. Output to team-artifacts/designs/"
+            },
+            "priority": 55,
+            "sequence": ["design-spec"],
+            "triggerPatterns": [
+                "\\bextract\\s+(from\\s+)?figma\\b",
+                "\\bpull\\s+figma\\s+(design|tokens?)\\b",
+                "\\bjust\\s+extract\\s+figma\\b",
+                "\\bfigma\\s+extract\\s+only\\b",
+                "\\bget\\s+figma\\s+(tokens?|colors?|styles?)\\b",
+                "\\bfigma\\s+tokens?\\b",
+                "(trích|lấy)\\s+figma",
+                "(提取|获取)\\s*figma",
+                "figma抽出だけ",
+                "figma 추출만"
+            ]
+        },
+        "idea-only": {
+            "confirmFirst": false,
+            "description": "Quick idea capture without full refinement workflow",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\brefine\\b", "\\bpbi\\b", "\\bstory\\b", "\\bprioritize\\b"],
+            "name": "Capture Idea Only",
+            "preActions": {
+                "activateSkill": "product-owner",
+                "injectContext": "IDEA-ONLY WORKFLOW:\n1. Capture raw idea with problem statement\n2. Save to team-artifacts/ideas/\n3. Skip refinement steps"
+            },
+            "priority": 48,
+            "sequence": ["idea"],
+            "triggerPatterns": [
+                "\\bcapture\\s+(this\\s+)?idea\\b",
+                "\\bquick\\s+idea\\b",
+                "\\bjust\\s+(the\\s+)?idea\\b",
+                "\\bidea\\s+only\\b",
+                "\\bnew\\s+backlog\\s+item\\b(?!.*refine)",
+                "\\bjot\\s+down\\s+(this\\s+)?idea\\b",
+                "\\bsave\\s+(this\\s+)?idea\\b",
+                "(ghi|lưu)\\s+(ý tưởng|idea)",
+                "(记录|保存)\\s*想法",
+                "アイデアだけ",
+                "아이디어만"
+            ]
+        },
+        "idea-to-pbi": {
+            "confirmFirst": true,
+            "description": "PO/BA workflow: capture idea, refine to PBI, create stories, prioritize",
+            "enableCheckpoints": true,
+            "excludePatterns": [
+                "\\b(fix|bug|error|broken)\\b",
+                "\\b(implement|code|develop)\\s+(?!idea)",
+                "(sửa|lỗi|bug)",
+                "(修复|错误)",
+                "(修正|バグ)",
+                "(수정|버그)"
+            ],
+            "name": "Idea to PBI",
+            "preActions": {
+                "activateSkill": "product-owner",
+                "injectContext": "IDEA-TO-PBI WORKFLOW:\n1. Capture idea with problem statement\n2. Refine into PBI with acceptance criteria\n3. Break into user stories (GIVEN/WHEN/THEN)\n4. Prioritize using RICE or MoSCoW"
+            },
+            "priority": 8,
+            "sequence": ["idea", "refine", "story", "prioritize"],
+            "triggerPatterns": [
+                "\\bnew\\s+idea\\b",
+                "\\bfeature\\s+request\\b",
+                "\\badd\\s+to\\s+backlog\\b",
+                "\\bcapture\\s+(this\\s+)?idea\\b",
+                "\\bproduct\\s+idea\\b",
+                "\\bbacklog\\s+item\\b",
+                "team-artifacts[/\\\\]ideas[/\\\\][\\w-]+\\.md",
+                "\\bidea\\s+(file|artifact|doc)\\b.*\\.md",
+                "\\brefine\\s+(the\\s+)?idea\\s+in\\b",
+                "\\bconvert\\s+(this\\s+)?idea\\b",
+                "(ý tưởng|tính năng)\\s+(mới|yêu cầu)",
+                "(thêm|đưa)\\s+vào\\s+backlog",
+                "(新想法|功能请求|添加到待办)",
+                "(新しいアイデア|機能リクエスト|バックログに追加)",
+                "(새 아이디어|기능 요청|백로그에 추가)"
+            ]
+        },
+        "investigation": {
+            "confirmFirst": false,
+            "description": "Codebase exploration and understanding workflow",
+            "enableCheckpoints": true,
+            "excludePatterns": [
+                "\\b(implement|fix|create|add)\\b",
+                "\\bwhat\\s+time\\b",
+                "(thêm|sửa|tạo|implement)",
+                "(添加|修复|创建|实现)",
+                "(追加|修正|作成|実装)",
+                "(추가|수정|생성|구현)",
+                "mấy giờ",
+                "几点",
+                "何時",
+                "몇 시"
+            ],
+            "name": "Code Investigation",
+            "priority": 50,
+            "sequence": ["scout", "investigate"],
+            "triggerPatterns": [
+                "\\bhow\\s+(does|do|is|are)\\b.*\\b(work|function|implemented|handle)\\b",
+                "\\bwhere\\s+(is|are|does)\\b.*\\b(code|logic|function|class|handler|handled)\\b",
+                "\\bexplain\\s+(the|how|this)\\b.*\\b(code|logic|pattern|implementation|system|feature)\\b",
+                "\\bunderstand\\s+(the|how|this)\\b",
+                "\\b(find|locate|search|explore)\\b.*\\b(code|file|function|class)\\b",
+                "\\binvestigate\\b",
+                "\\bwalk\\s*through\\b",
+                "\\bwhat\\s+(is|are|does)\\b.*\\b(this|the)\\b.*\\b(code|logic|doing)\\b",
+                "(làm sao|như thế nào|cách).*(hoạt động|chạy|xử lý)",
+                "(ở đâu|chỗ nào).*(code|mã|logic|hàm|class)",
+                "(code|mã|logic|hàm|class).*(ở đâu|chỗ nào)",
+                "(giải thích|hiểu).*(code|logic|pattern|hệ thống)",
+                "(tìm|tìm kiếm|khám phá).*(code|file|hàm|class)",
+                "(điều tra|nghiên cứu|phân tích)",
+                "(怎么|如何).*(工作|运行|处理)",
+                "(在哪|哪里).*(代码|逻辑|函数|类)",
+                "(代码|逻辑|函数|类).*(在哪|哪里)",
+                "(解释|理解).*(代码|逻辑|模式|系统)",
+                "(查找|搜索|探索).*(代码|文件|函数|类)",
+                "(调查|研究|分析)",
+                "(どう|どのように).*(動|機能|処理)",
+                "(どこ).*(コード|ロジック|関数|クラス)",
+                "(コード|ロジック|関数|クラス).*(どこ|はどこ)",
+                "(説明|理解).*(コード|ロジック|パターン|システム)",
+                "(検索|探す).*(コード|ファイル|関数|クラス)",
+                "(調査|研究|分析)",
+                "(어떻게).*(작동|동작|처리)",
+                "(어디).*(코드|로직|함수|클래스)",
+                "(코드|로직|함수|클래스).*(어디|어디에)",
+                "(설명|이해).*(코드|로직|패턴|시스템)",
+                "(찾기|검색|탐색).*(코드|파일|함수|클래스)",
+                "(조사|연구|분석)"
+            ]
+        },
+        "pbi-to-tests": {
+            "confirmFirst": false,
+            "description": "QA workflow: generate test spec from PBI, create detailed test cases, run quality gate",
+            "enableCheckpoints": true,
+            "excludePatterns": [
+                "\\brun\\s+test\\b",
+                "\\bexecute\\s+test\\b",
+                "\\btest\\s+pass(ed)?\\b",
+                "(chạy|thực thi)\\s+test",
+                "(运行|执行)\\s*测试",
+                "(テスト)\\s*(実行|走る)",
+                "(테스트)\\s*(실행|돌리다)"
+            ],
+            "name": "PBI to Tests",
+            "preActions": {
+                "activateSkill": "qa-engineer",
+                "injectContext": "PBI-TO-TESTS WORKFLOW:\n1. Read PBI acceptance criteria\n2. Generate test specification with TC-{MOD}-{NNN} IDs\n3. Create detailed test cases with evidence\n4. Run pre-QA quality gate"
+            },
+            "priority": 22,
+            "sequence": ["test-spec", "test-cases", "quality-gate"],
+            "triggerPatterns": [
+                "\\b(create|generate|write)\\s+(test|tests)\\s+(for|from)\\b",
+                "\\btest\\s+this\\s+(pbi|feature|story)\\b",
+                "\\bqa\\s+(this|for)\\b",
+                "\\btest\\s+spec(ification)?\\s+for\\b",
+                "\\btest\\s+cases?\\s+from\\b",
+                "\\bgenerate\\s+test\\s+cases\\b",
+                "team-artifacts[/\\\\]pbis[/\\\\][\\w-]+\\.md",
+                "\\bpbi\\s+(file|artifact|doc)\\b.*\\.md",
+                "\\btest\\s+(this|the)\\s+pbi\\b",
+                "\\bgenerate\\s+tests?\\s+for\\s+(this\\s+)?pbi\\b",
+                "\\bwrite\\s+test\\s+cases?\\s+for\\b",
+                "(tạo|viết)\\s+(test|kiểm thử)\\s+(cho|từ)",
+                "(创建|生成|编写)\\s*(测试|测试用例)",
+                "(テスト|テストケース)\\s*(作成|生成)",
+                "(테스트|테스트 케이스)\\s*(생성|작성)"
+            ]
+        },
+        "pm-reporting": {
+            "confirmFirst": false,
+            "description": "PM workflow: generate status report and dependency analysis",
+            "enableCheckpoints": false,
+            "excludePatterns": [
+                "\\bgit\\s+status\\b",
+                "\\bcommit\\s+status\\b",
+                "\\bpr\\s+status\\b",
+                "\\bbuild\\s+status\\b",
+                "\\bjust\\s+(the\\s+)?(status|dependenc)",
+                "\\b(status|dependenc(y|ies))\\s+only\\b",
+                "\\bquick\\s+status\\b"
+            ],
+            "name": "PM Reporting",
+            "preActions": {
+                "activateSkill": "project-manager",
+                "injectContext": "PM REPORTING WORKFLOW:\n1. Gather sprint/project data\n2. Generate status report with metrics\n3. Analyze dependencies and blockers\n4. Output to plans/reports/"
+            },
+            "priority": 45,
+            "sequence": ["status", "dependency"],
+            "triggerPatterns": [
+                "\\bstatus\\s+report\\b",
+                "\\bsprint\\s+(status|update|report)\\b",
+                "\\bproject\\s+(status|update|report)\\b",
+                "\\bweekly\\s+(status|update|report)\\b",
+                "\\bhow('s|\\s+is)\\s+(the\\s+)?(sprint|project)\\b",
+                "\\bprogress\\s+report\\b",
+                "\\bblocker\\s+analysis\\b",
+                "\\bwhat('s|\\s+is)\\s+blocking\\s+(us|the\\s+team)\\b",
+                "\\bfull\\s+(status|project)\\s+report\\b",
+                "\\bcomprehensive\\s+status\\b",
+                "(báo cáo|tình trạng|tiến độ)\\s+(sprint|dự án)",
+                "(状态|进度)\\s*(报告|更新)",
+                "(ステータス|進捗)\\s*(レポート|報告)",
+                "(상태|진행)\\s*(보고서|업데이트)"
+            ]
+        },
+        "pre-development": {
+            "confirmFirst": false,
+            "description": "Quality gate and planning before starting development",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\bwhat\\s+is\\s+pre-development\\b", "\\bexplain\\s+pre-development\\b"],
+            "name": "Pre-Development Setup",
+            "preActions": {
+                "activateSkill": "planner",
+                "injectContext": "PRE-DEVELOPMENT WORKFLOW:\n1. Run quality-gate checks (ensure clean slate)\n2. Create implementation plan\n3. Identify dependencies and blockers\n4. Output plan to plans/"
+            },
+            "priority": 15,
+            "sequence": ["quality-gate", "plan"],
+            "triggerPatterns": [
+                "\\bbefore\\s+(I|we)\\s+(start|begin)\\s+(coding|developing|implementation)\\b",
+                "\\bpre-development\\s+check\\b",
+                "\\bsetup\\s+for\\s+development\\b",
+                "\\bstart\\s+new\\s+feature\\b",
+                "\\bbegin\\s+(new\\s+)?implementation\\b",
+                "\\bprepare\\s+to\\s+(code|develop|implement)\\b",
+                "\\bkick\\s*off\\s+(new\\s+)?(feature|development)\\b",
+                "(trước khi|chuẩn bị)\\s+(code|phát triển)",
+                "(开发|编码)\\s*前\\s*(检查|准备)",
+                "開発(前|準備)",
+                "개발\\s*(전|준비)"
+            ]
+        },
+        "prioritize-only": {
+            "confirmFirst": false,
+            "description": "Order backlog items without full sprint planning",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\bsprint\\s+planning\\b", "\\bdependenc(y|ies)\\b", "\\bteam\\s+sync\\b"],
+            "name": "Prioritize Backlog Only",
+            "preActions": {
+                "activateSkill": "product-owner",
+                "injectContext": "PRIORITIZE-ONLY WORKFLOW:\n1. Read backlog items\n2. Apply RICE or MoSCoW framework\n3. Output priority ranking\n4. Skip dependency analysis"
+            },
+            "priority": 51,
+            "sequence": ["prioritize"],
+            "triggerPatterns": [
+                "\\bprioritize\\s+(the\\s+)?(backlog|items?)\\b",
+                "\\border\\s+(the\\s+)?backlog\\b",
+                "\\bjust\\s+prioritize\\b",
+                "\\bprioritize\\s+only\\b",
+                "\\b(rice|moscow)\\s+scor(e|ing)\\b",
+                "\\brank\\s+(the\\s+)?items?\\b",
+                "\\bwhat('s|\\s+is)\\s+most\\s+important\\b",
+                "(sắp xếp|ưu tiên)\\s+(backlog|hạng mục)",
+                "(排序|优先级)\\s*(待办|项目)",
+                "優先順位だけ",
+                "우선순위만"
+            ]
+        },
+        "quality-gate-only": {
+            "confirmFirst": false,
+            "description": "Run quality gate check without status report",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\bstatus\\b", "\\breport\\b", "\\brelease\\s+prep\\b"],
+            "name": "Quality Gate Only",
+            "preActions": {
+                "activateSkill": "qc-specialist",
+                "injectContext": "QUALITY-GATE-ONLY WORKFLOW:\n1. Identify gate type (pre-dev, pre-qa, pre-release)\n2. Run checklist verification\n3. Output gate status\n4. Skip status report"
+            },
+            "priority": 56,
+            "sequence": ["quality-gate"],
+            "triggerPatterns": [
+                "\\brun\\s+quality\\s+gate\\b",
+                "\\bquality\\s+gate\\s+(for|on)\\b",
+                "\\bjust\\s+(the\\s+)?quality\\s+gate\\b",
+                "\\bquality\\s+gate\\s+only\\b",
+                "\\bqa\\s+gate\\b",
+                "\\bpre-(dev|qa|release)\\s+check\\b",
+                "\\bcheck\\s+quality\\b(?!.*report)",
+                "(chạy|kiểm tra)\\s+quality\\s+gate",
+                "(运行|检查)\\s*质量门",
+                "品質ゲートだけ",
+                "품질 게이트만"
+            ]
+        },
+        "refactor": {
+            "confirmFirst": true,
+            "description": "Code improvement and restructuring workflow",
+            "enableCheckpoints": true,
+            "excludePatterns": [
+                "\\b(bug|broken|crash|fail)\\b",
+                "\\bnew\\s+feature\\b",
+                "\\bfix\\s+(the|a|this)?\\s*(bug|issue|error)\\b",
+                "(sửa|fix).*lỗi",
+                "(bug|hỏng|crash)",
+                "(修复|解决).*(bug|错误)",
+                "(bug|崩溃)",
+                "(修正|直す).*(バグ|エラー)",
+                "(バグ|クラッシュ)",
+                "(수정|고치다).*(버그|오류)",
+                "(버그|크래시)"
+            ],
+            "name": "Code Refactoring",
+            "priority": 25,
+            "sequence": ["plan", "plan-review", "code", "code-simplifier", "code-review", "test"],
+            "triggerPatterns": [
+                "\\b(refactor|restructure|reorganize|clean\\s*up)\\b",
+                "\\bimprove\\s+(the|this)?\\s*\\w*\\s*(code|handling|logic|structure|performance)\\b",
+                "\\b(extract|move|rename|split|merge)\\s+(method|function|class|component)\\b",
+                "\\btechnical\\s+debt\\b",
+                "(refactor|tái cấu trúc|cải thiện|dọn dẹp).*(code|mã)",
+                "(cải thiện|nâng cao).*(code|xử lý|logic|hiệu suất)",
+                "(重构|重组|清理|改进).*(代码|结构)",
+                "(改善|提升).*(代码|处理|逻辑|性能)",
+                "(リファクタリング|リファクター|整理|改善).*(コード|構造)",
+                "(コード|構造).*(リファクタリング|リファクター|整理|改善)",
+                "(改善|向上).*(コード|処理|ロジック|パフォーマンス)",
+                "リファクタリング",
+                "(리팩토링|리팩터|정리|개선).*(코드|구조)",
+                "(코드|구조).*(리팩토링|리팩터|정리|개선)",
+                "(개선|향상).*(코드|처리|로직|성능)",
+                "리팩토링"
+            ]
+        },
+        "refine-only": {
+            "confirmFirst": false,
+            "description": "Convert idea to PBI without story creation",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\bstory\\b", "\\bstories\\b", "\\bprioritize\\b", "\\btest\\b"],
+            "name": "Refine to PBI Only",
+            "preActions": {
+                "activateSkill": "business-analyst",
+                "injectContext": "REFINE-ONLY WORKFLOW:\n1. Read idea artifact\n2. Add acceptance criteria (GIVEN/WHEN/THEN)\n3. Save PBI to team-artifacts/pbis/\n4. Skip story creation"
+            },
+            "priority": 49,
+            "sequence": ["refine"],
+            "triggerPatterns": [
+                "\\b(create|make|write)\\s+pbi\\b",
+                "\\bpbi\\s+(for|from)\\b",
+                "\\brefine\\s+(this\\s+)?idea\\b",
+                "\\bconvert\\s+to\\s+pbi\\b",
+                "\\bjust\\s+(the\\s+)?pbi\\b",
+                "\\bpbi\\s+only\\b",
+                "\\badd\\s+acceptance\\s+criteria\\b",
+                "(tạo|viết)\\s+pbi",
+                "(创建|编写)\\s*pbi",
+                "PBIだけ",
+                "PBI만"
+            ]
+        },
+        "release-prep": {
+            "confirmFirst": true,
+            "description": "Quality gate checks and status report before release",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\bgit\\s+release\\b", "\\bnpm\\s+release\\b", "\\brelease\\s+notes\\b", "\\brelease\\s+branch\\b"],
+            "name": "Release Preparation",
+            "preActions": {
+                "activateSkill": "project-manager",
+                "injectContext": "RELEASE-PREP WORKFLOW:\n1. Run quality-gate checks (tests, lint, build)\n2. Generate status report\n3. Identify blockers before release\n4. Output checklist to plans/reports/"
+            },
+            "priority": 5,
+            "sequence": ["quality-gate", "status"],
+            "triggerPatterns": [
+                "\\b(prepare|ready)\\s+(for\\s+)?release\\b",
+                "\\brelease\\s+(prep|preparation|readiness)\\b",
+                "\\bbefore\\s+(we\\s+)?release\\b",
+                "\\bpre-release\\s+check\\b",
+                "\\brelease\\s+checklist\\b",
+                "\\bcan\\s+we\\s+release\\b",
+                "\\bready\\s+to\\s+(ship|deploy|release)\\b",
+                "\\bgo\\s+live\\s+check\\b",
+                "(chuẩn bị|sẵn sàng)\\s+(phát hành|release)",
+                "(发布|上线)\\s*(准备|检查)",
+                "リリース(準備|前チェック)",
+                "릴리스\\s*(준비|체크)"
+            ]
+        },
+        "review": {
+            "confirmFirst": false,
+            "description": "Code review and quality check workflow",
+            "excludePatterns": [],
+            "name": "Code Review",
+            "priority": 35,
+            "sequence": ["code-review", "watzup"],
+            "triggerPatterns": [
+                "\\breview\\b.*\\b(code|changes|pr|pull\\s*request|my)\\b",
+                "\\b(check|audit|analyze)\\s+(the\\s+)?(code|changes|pr|pull\\s*request)\\b",
+                "\\bcode\\s+quality\\b",
+                "\\bpr\\s+review\\b",
+                "\\breview\\s+(my|the|this)\\b",
+                "(review|xem xét|kiểm tra).*(code|mã|thay đổi|pr)",
+                "(kiểm tra|đánh giá).*(chất lượng|code)",
+                "(审查|检查|审核).*(代码|更改|pr)",
+                "(代码|质量).*审查",
+                "(レビュー|確認|チェック).*(コード|変更|pr)",
+                "(コード|品質).*(レビュー|チェック|確認)",
+                "コード.*レビュー",
+                "(리뷰|검토|확인).*(코드|변경|pr)",
+                "(코드|품질).*(리뷰|검토|확인)",
+                "코드.*리뷰"
+            ]
+        },
+        "sprint-planning": {
+            "confirmFirst": true,
+            "description": "Comprehensive sprint planning: prioritize backlog, analyze dependencies, prepare team sync",
+            "enableCheckpoints": true,
+            "excludePatterns": ["\\bsprint\\s+review\\b", "\\bsprint\\s+retro\\b", "\\bsprint\\s+status\\b", "\\bend\\s+of\\s+sprint\\b"],
+            "name": "Sprint Planning Session",
+            "preActions": {
+                "activateSkill": "project-manager",
+                "injectContext": "SPRINT-PLANNING WORKFLOW:\n1. Prioritize backlog items by value/effort\n2. Analyze dependencies between items\n3. Prepare team sync agenda\n4. Output sprint plan to team-artifacts/sprints/"
+            },
+            "priority": 17,
+            "sequence": ["prioritize", "dependency", "team-sync"],
+            "triggerPatterns": [
+                "\\bsprint\\s+planning\\b",
+                "\\bplan\\s+(the\\s+)?sprint\\b",
+                "\\bbacklog\\s+(grooming|refinement|planning)\\b",
+                "\\bstart\\s+sprint\\s+planning\\b",
+                "\\bprepare\\s+(for\\s+)?sprint\\b",
+                "\\bnew\\s+sprint\\s+planning\\b",
+                "\\bsprint\\s+kickoff\\b",
+                "\\biterations?\\s+planning\\b",
+                "(lập kế hoạch|chuẩn bị)\\s+sprint",
+                "(sprint|迭代)\\s*(规划|计划)",
+                "スプリント(計画|プランニング)",
+                "스프린트\\s*(계획|플래닝)"
+            ]
+        },
+        "status-only": {
+            "confirmFirst": false,
+            "description": "Generate project/sprint status without dependency analysis",
+            "enableCheckpoints": false,
+            "excludePatterns": [
+                "\\bdependenc(y|ies)\\b",
+                "\\bblocker\\b",
+                "\\bgit\\s+status\\b",
+                "\\bpr\\s+status\\b",
+                "\\bbuild\\s+status\\b",
+                "\\bstatus\\s+report\\b"
+            ],
+            "name": "Status Report Only",
+            "preActions": {
+                "activateSkill": "project-manager",
+                "injectContext": "STATUS-ONLY WORKFLOW:\n1. Analyze current project/sprint state\n2. Generate concise status summary\n3. Skip dependency analysis"
+            },
+            "priority": 46,
+            "sequence": ["status"],
+            "triggerPatterns": [
+                "\\bjust\\s+(the\\s+)?status\\b",
+                "\\bstatus\\s+only\\b",
+                "\\bquick\\s+status\\b",
+                "\\bwhat('s|\\s+is)\\s+(the\\s+)?(current\\s+)?status\\b(?!.*depend)",
+                "\\bhow\\s+are\\s+we\\s+doing\\b",
+                "\\bgive\\s+me\\s+(a\\s+)?status\\b",
+                "\\bstatus\\s+update\\b(?!.*report)",
+                "(chỉ|chỉ cần)\\s+tình trạng",
+                "(只要|仅)\\s*状态",
+                "ステータスだけ",
+                "상태만"
+            ]
+        },
+        "story-only": {
+            "confirmFirst": false,
+            "description": "Break PBI into user stories without prioritization",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\bprioritize\\b", "\\btest\\b", "\\bdesign\\b"],
+            "name": "Create Stories Only",
+            "preActions": {
+                "activateSkill": "business-analyst",
+                "injectContext": "STORY-ONLY WORKFLOW:\n1. Read PBI artifact\n2. Break into vertical slices\n3. Create user stories with GIVEN/WHEN/THEN\n4. Save to team-artifacts/pbis/stories/"
+            },
+            "priority": 50,
+            "sequence": ["story"],
+            "triggerPatterns": [
+                "\\b(create|write|generate)\\s+(user\\s+)?stor(y|ies)\\b",
+                "\\bbreak\\s+(into|down)\\s+stor(y|ies)\\b",
+                "\\buser\\s+stor(y|ies)\\s+(for|from)\\b",
+                "\\bjust\\s+(the\\s+)?stor(y|ies)\\b",
+                "\\bstor(y|ies)\\s+only\\b",
+                "\\bslice\\s+(this\\s+)?pbi\\b",
+                "(tạo|viết)\\s+user\\s+stor(y|ies)",
+                "(创建|编写)\\s*用户故事",
+                "ストーリーだけ",
+                "스토리만"
+            ]
+        },
+        "team-meeting": {
+            "confirmFirst": false,
+            "description": "Generate meeting agendas, track action items, facilitate cross-role coordination",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\bstatus\\s+report\\b", "\\bproject\\s+status\\b", "\\bweekly\\s+report\\b", "\\bsprint\\s+status\\b"],
+            "name": "Team Meeting Preparation",
+            "preActions": {
+                "activateSkill": "project-manager",
+                "injectContext": "TEAM-MEETING WORKFLOW:\n1. Generate meeting agenda\n2. Review previous action items\n3. Prepare cross-role updates\n4. Output to plans/reports/"
+            },
+            "priority": 42,
+            "sequence": ["team-sync"],
+            "triggerPatterns": [
+                "\\b(standup|stand-up|daily\\s+sync|daily\\s+meeting)\\b",
+                "\\bteam\\s+(sync|meeting|standup|huddle)\\b",
+                "\\b(sprint|scrum)\\s+(meeting|review|retro|retrospective)\\b",
+                "\\bmeeting\\s+agenda\\b",
+                "\\baction\\s+items?\\s+(for|from)\\b",
+                "\\bprepare\\s+(for\\s+)?(standup|meeting|sync)\\b",
+                "\\bwhat('s|\\s+is)\\s+on\\s+the\\s+agenda\\b",
+                "(họp|cuộc họp|meeting)\\s+(nhóm|team|sprint)",
+                "(standup|đứng họp|họp nhanh)",
+                "(团队|会议|站会|晨会|例会)",
+                "(チーム|ミーティング|朝会|スタンドアップ)",
+                "(팀|미팅|스탠드업|데일리)"
+            ]
+        },
+        "test-cases-only": {
+            "confirmFirst": false,
+            "description": "Generate detailed test cases from spec",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\btest\\s+spec\\b", "\\bqa\\s+spec\\b", "\\brun\\s+test\\b", "\\bexecute\\s+test\\b"],
+            "name": "Test Cases Only",
+            "preActions": {
+                "activateSkill": "qa-engineer",
+                "injectContext": "TEST-CASES-ONLY WORKFLOW:\n1. Read test specification\n2. Generate detailed test cases (TC-{MOD}-{NNN})\n3. Include steps, expected results, evidence\n4. Skip quality gate"
+            },
+            "priority": 53,
+            "sequence": ["test-cases"],
+            "triggerPatterns": [
+                "\\b(create|generate|write)\\s+test\\s+cases?\\b",
+                "\\btest\\s+cases?\\s+(for|from)\\b",
+                "\\bjust\\s+(the\\s+)?test\\s+cases?\\b",
+                "\\btest\\s+cases?\\s+only\\b",
+                "\\bdetailed\\s+test(s|\\s+cases)?\\b",
+                "\\bexpand\\s+to\\s+test\\s+cases\\b",
+                "(tạo|viết)\\s+test\\s+case",
+                "(创建|编写)\\s*测试用例",
+                "テストケースだけ",
+                "테스트 케이스만"
+            ]
+        },
+        "test-spec-only": {
+            "confirmFirst": false,
+            "description": "Generate test spec without detailed test cases",
+            "enableCheckpoints": false,
+            "excludePatterns": ["\\btest\\s+cases?\\b", "\\bdetailed\\s+tests?\\b", "\\bexecute\\s+test\\b", "\\brun\\s+test\\b"],
+            "name": "Test Specification Only",
+            "preActions": {
+                "activateSkill": "qa-engineer",
+                "injectContext": "TEST-SPEC-ONLY WORKFLOW:\n1. Read PBI/feature requirements\n2. Generate test specification\n3. Define test categories and scope\n4. Skip detailed test case generation"
+            },
+            "priority": 52,
+            "sequence": ["test-spec"],
+            "triggerPatterns": [
+                "\\b(create|generate|write)\\s+test\\s+spec(ification)?\\b",
+                "\\btest\\s+spec(ification)?\\s+(for|from)\\b",
+                "\\bjust\\s+(the\\s+)?test\\s+spec\\b",
+                "\\btest\\s+spec\\s+only\\b",
+                "\\bqa\\s+spec(ification)?\\b",
+                "\\btest\\s+strategy\\s+for\\b",
+                "(tạo|viết)\\s+test\\s+spec",
+                "(创建|编写)\\s*测试规范",
+                "テストスペックだけ",
+                "테스트 사양만"
+            ]
+        },
+        "testing": {
+            "confirmFirst": false,
+            "description": "Test creation and execution workflow",
+            "excludePatterns": [],
+            "name": "Testing",
+            "priority": 40,
+            "sequence": ["test"],
+            "triggerPatterns": ["\\b(add|write|create)\\s+(test|spec|unit\\s*test)\\b", "\\btest\\s+coverage\\b", "\\b(run|execute)\\s+test\\b"]
+        }
     }
-  },
-  "description": "Workflow automation configuration for Claude Code and GitHub Copilot (multilingual)",
-  "settings": {
-    "allowOverride": true,
-    "confirmHighImpact": true,
-    "enabled": true,
-    "overridePrefix": "quick:",
-    "showDetection": true,
-    "supportedLanguages": ["en", "vi", "zh", "ja", "ko"],
-    "checkpoints": {
-      "enabled": true,
-      "intervalMinutes": 30,
-      "path": "plans/reports",
-      "autoSaveOnCompact": true,
-      "filenamePattern": "checkpoint-{YYMMDD}-{HHMM}-{slug}.md"
-    }
-  },
-  "version": "1.4.0",
-  "workflows": {
-    "bugfix": {
-      "confirmFirst": false,
-      "description": "Systematic debugging and fix workflow",
-      "enableCheckpoints": true,
-      "excludePatterns": [
-        "\\b(implement|add|create|build)\\s+new\\b",
-        "\\bfeature\\b",
-        "\\b(improve|refactor|clean)\\b.*\\b(handling|code|logic)\\b",
-        "(thêm|tạo).*mới",
-        "tính năng",
-        "(cải thiện|nâng cao).*(code|xử lý)",
-        "(改善|提升|改进).*(代码|处理)",
-        "(改善|向上).*(コード|処理)",
-        "(개선|향상).*(코드|처리)"
-      ],
-      "name": "Bug Fix",
-      "priority": 20,
-      "sequence": ["scout", "investigate", "debug", "plan", "plan-review", "fix", "code-simplifier", "code-review", "test"],
-      "triggerPatterns": [
-        "\\b(bug|fix|broken|issue|crash|fail|exception)\\b",
-        "\\b(error|errors)\\s+(in|with|on|when|while|returned|returning)\\b",
-        "\\bnot\\s+working\\b",
-        "\\bdoesn'?t\\s+work\\b",
-        "\\b(debug|troubleshoot|diagnose)\\b",
-        "\\bregression\\b",
-        "\\breturning\\s+errors?\\b",
-        "(sửa|fix)\\s*(lỗi|bug|error)",
-        "(lỗi|bug|hỏng|crash|không hoạt động)",
-        "không\\s+(chạy|hoạt động|làm việc)",
-        "(debug|gỡ lỗi|kiểm tra lỗi)",
-        "(修复|修正|解决).*(bug|错误|问题)",
-        "(bug|错误|崩溃|异常|故障)",
-        "不(工作|运行)",
-        "(修正|直す).*(バグ|エラー|問題)",
-        "(バグ|エラー|クラッシュ|障害)",
-        "動(か|き)ない",
-        "(수정|고치다).*(버그|오류|문제)",
-        "(버그|오류|크래시|장애)",
-        "작동.*안"
-      ]
-    },
-    "documentation": {
-      "confirmFirst": false,
-      "description": "Documentation creation and update workflow",
-      "excludePatterns": ["\\b(implement|fix|test)\\b", "(thêm|sửa|test).*tính năng", "(实现|修复|测试)", "(実装|修正|テスト)", "(구현|수정|테스트)"],
-      "name": "Documentation Update",
-      "priority": 30,
-      "sequence": ["scout", "investigate", "docs-update", "watzup"],
-      "triggerPatterns": [
-        "\\b(doc|document|readme|documentation)\\b",
-        "\\bupdate.*\\b(doc|readme)\\b",
-        "\\bwrite.*\\b(doc|documentation)\\b",
-        "\\badd.*\\bcomment\\b",
-        "(cập nhật|viết|thêm).*(tài liệu|doc|readme)",
-        "(tài liệu|hướng dẫn|documentation)",
-        "(更新|编写|添加).*(文档|文件|readme)",
-        "(文档|文件|说明)",
-        "(更新|書く|追加).*(ドキュメント|文書|readme)",
-        "(ドキュメント|文書|説明)",
-        "(업데이트|작성|추가).*(문서|문서화|readme)",
-        "(문서|설명서)"
-      ]
-    },
-    "feature": {
-      "confirmFirst": true,
-      "description": "Full feature development workflow with planning, implementation, testing, and documentation",
-      "enableCheckpoints": true,
-      "excludePatterns": [
-        "\\b(fix|bug|error|broken|issue)\\b",
-        "\\b(doc|document|readme)\\b",
-        "\\b(test|spec)\\s+only\\b",
-        "(sửa|lỗi|bug|hỏng)",
-        "(修复|错误|bug)",
-        "(修正|バグ|エラー)",
-        "(수정|버그|오류)"
-      ],
-      "name": "Feature Implementation",
-      "priority": 10,
-      "sequence": ["plan", "plan-review", "cook", "code-simplifier", "code-review", "test", "docs-update", "watzup"],
-      "triggerPatterns": [
-        "\\b(implement|add|create|build|develop|make)\\b.*\\b(feature|functionality|capability|module|component)\\b",
-        "\\bnew\\s+(feature|functionality|capability)\\b",
-        "\\b(implement|add|create|build)\\s+(?!test|doc|comment)",
-        "\\bfeature\\s*:?\\s*\\w+",
-        "(thêm|tạo|xây dựng|phát triển|làm)\\s+(tính năng|chức năng|feature|module)",
-        "(thêm|tạo|implement)\\s+(?!test|doc)",
-        "tính năng mới",
-        "(添加|创建|开发|实现|构建).*(功能|特性|模块)",
-        "新(功能|特性)",
-        "(追加|作成|開発|実装).*(機能|フィーチャー)",
-        "(機能|フィーチャー).*(追加|作成)",
-        "新機能",
-        "(추가|생성|개발|구현).*(기능|피처)",
-        "(기능|피처).*(추가|생성|개발)",
-        "새\\s*기능"
-      ]
-    },
-    "investigation": {
-      "confirmFirst": false,
-      "description": "Codebase exploration and understanding workflow",
-      "enableCheckpoints": true,
-      "excludePatterns": [
-        "\\b(implement|fix|create|add)\\b",
-        "\\bwhat\\s+time\\b",
-        "(thêm|sửa|tạo|implement)",
-        "(添加|修复|创建|实现)",
-        "(追加|修正|作成|実装)",
-        "(추가|수정|생성|구현)",
-        "mấy giờ",
-        "几点",
-        "何時",
-        "몇 시"
-      ],
-      "name": "Code Investigation",
-      "priority": 50,
-      "sequence": ["scout", "investigate"],
-      "triggerPatterns": [
-        "\\bhow\\s+(does|do|is|are)\\b.*\\b(work|function|implemented|handle)\\b",
-        "\\bwhere\\s+(is|are|does)\\b.*\\b(code|logic|function|class|handler|handled)\\b",
-        "\\bexplain\\s+(the|how|this)\\b.*\\b(code|logic|pattern|implementation|system|feature)\\b",
-        "\\bunderstand\\s+(the|how|this)\\b",
-        "\\b(find|locate|search|explore)\\b.*\\b(code|file|function|class)\\b",
-        "\\binvestigate\\b",
-        "\\bwalk\\s*through\\b",
-        "\\bwhat\\s+(is|are|does)\\b.*\\b(this|the)\\b.*\\b(code|logic|doing)\\b",
-        "(làm sao|như thế nào|cách).*(hoạt động|chạy|xử lý)",
-        "(ở đâu|chỗ nào).*(code|mã|logic|hàm|class)",
-        "(code|mã|logic|hàm|class).*(ở đâu|chỗ nào)",
-        "(giải thích|hiểu).*(code|logic|pattern|hệ thống)",
-        "(tìm|tìm kiếm|khám phá).*(code|file|hàm|class)",
-        "(điều tra|nghiên cứu|phân tích)",
-        "(怎么|如何).*(工作|运行|处理)",
-        "(在哪|哪里).*(代码|逻辑|函数|类)",
-        "(代码|逻辑|函数|类).*(在哪|哪里)",
-        "(解释|理解).*(代码|逻辑|模式|系统)",
-        "(查找|搜索|探索).*(代码|文件|函数|类)",
-        "(调查|研究|分析)",
-        "(どう|どのように).*(動|機能|処理)",
-        "(どこ).*(コード|ロジック|関数|クラス)",
-        "(コード|ロジック|関数|クラス).*(どこ|はどこ)",
-        "(説明|理解).*(コード|ロジック|パターン|システム)",
-        "(検索|探す).*(コード|ファイル|関数|クラス)",
-        "(調査|研究|分析)",
-        "(어떻게).*(작동|동작|처리)",
-        "(어디).*(코드|로직|함수|클래스)",
-        "(코드|로직|함수|클래스).*(어디|어디에)",
-        "(설명|이해).*(코드|로직|패턴|시스템)",
-        "(찾기|검색|탐색).*(코드|파일|함수|클래스)",
-        "(조사|연구|분석)"
-      ]
-    },
-    "refactor": {
-      "confirmFirst": true,
-      "description": "Code improvement and restructuring workflow",
-      "enableCheckpoints": true,
-      "excludePatterns": [
-        "\\b(bug|broken|crash|fail)\\b",
-        "\\bnew\\s+feature\\b",
-        "\\bfix\\s+(the|a|this)?\\s*(bug|issue|error)\\b",
-        "(sửa|fix).*lỗi",
-        "(bug|hỏng|crash)",
-        "(修复|解决).*(bug|错误)",
-        "(bug|崩溃)",
-        "(修正|直す).*(バグ|エラー)",
-        "(バグ|クラッシュ)",
-        "(수정|고치다).*(버그|오류)",
-        "(버그|크래시)"
-      ],
-      "name": "Code Refactoring",
-      "priority": 25,
-      "sequence": ["plan", "plan-review", "code", "code-simplifier", "code-review", "test"],
-      "triggerPatterns": [
-        "\\b(refactor|restructure|reorganize|clean\\s*up)\\b",
-        "\\bimprove\\s+(the|this)?\\s*\\w*\\s*(code|handling|logic|structure|performance)\\b",
-        "\\b(extract|move|rename|split|merge)\\s+(method|function|class|component)\\b",
-        "\\btechnical\\s+debt\\b",
-        "(refactor|tái cấu trúc|cải thiện|dọn dẹp).*(code|mã)",
-        "(cải thiện|nâng cao).*(code|xử lý|logic|hiệu suất)",
-        "(重构|重组|清理|改进).*(代码|结构)",
-        "(改善|提升).*(代码|处理|逻辑|性能)",
-        "(リファクタリング|リファクター|整理|改善).*(コード|構造)",
-        "(コード|構造).*(リファクタリング|リファクター|整理|改善)",
-        "(改善|向上).*(コード|処理|ロジック|パフォーマンス)",
-        "リファクタリング",
-        "(리팩토링|리팩터|정리|개선).*(코드|구조)",
-        "(코드|구조).*(리팩토링|리팩터|정리|개선)",
-        "(개선|향상).*(코드|처리|로직|성능)",
-        "리팩토링"
-      ]
-    },
-    "review": {
-      "confirmFirst": false,
-      "description": "Code review and quality check workflow",
-      "excludePatterns": [],
-      "name": "Code Review",
-      "priority": 35,
-      "sequence": ["code-review", "watzup"],
-      "triggerPatterns": [
-        "\\breview\\b.*\\b(code|changes|pr|pull\\s*request|my)\\b",
-        "\\b(check|audit|analyze)\\s+(the\\s+)?(code|changes|pr|pull\\s*request)\\b",
-        "\\bcode\\s+quality\\b",
-        "\\bpr\\s+review\\b",
-        "\\breview\\s+(my|the|this)\\b",
-        "(review|xem xét|kiểm tra).*(code|mã|thay đổi|pr)",
-        "(kiểm tra|đánh giá).*(chất lượng|code)",
-        "(审查|检查|审核).*(代码|更改|pr)",
-        "(代码|质量).*审查",
-        "(レビュー|確認|チェック).*(コード|変更|pr)",
-        "(コード|品質).*(レビュー|チェック|確認)",
-        "コード.*レビュー",
-        "(리뷰|검토|확인).*(코드|변경|pr)",
-        "(코드|품질).*(리뷰|검토|확인)",
-        "코드.*리뷰"
-      ]
-    },
-    "testing": {
-      "confirmFirst": false,
-      "description": "Test creation and execution workflow",
-      "excludePatterns": [],
-      "name": "Testing",
-      "priority": 40,
-      "sequence": ["test"],
-      "triggerPatterns": ["\\b(add|write|create)\\s+(test|spec|unit\\s*test)\\b", "\\btest\\s+coverage\\b", "\\b(run|execute)\\s+test\\b"]
-    },
-    "idea-to-pbi": {
-      "name": "Idea to PBI",
-      "description": "PO/BA workflow: capture idea, refine to PBI, create stories, prioritize",
-      "confirmFirst": true,
-      "enableCheckpoints": true,
-      "priority": 8,
-      "sequence": ["idea", "refine", "story", "prioritize"],
-      "triggerPatterns": [
-        "\\bnew\\s+idea\\b",
-        "\\bfeature\\s+request\\b",
-        "\\badd\\s+to\\s+backlog\\b",
-        "\\bcapture\\s+(this\\s+)?idea\\b",
-        "\\bproduct\\s+idea\\b",
-        "\\bbacklog\\s+item\\b",
-        "team-artifacts[/\\\\]ideas[/\\\\][\\w-]+\\.md",
-        "\\bidea\\s+(file|artifact|doc)\\b.*\\.md",
-        "\\brefine\\s+(the\\s+)?idea\\s+in\\b",
-        "\\bconvert\\s+(this\\s+)?idea\\b",
-        "(ý tưởng|tính năng)\\s+(mới|yêu cầu)",
-        "(thêm|đưa)\\s+vào\\s+backlog",
-        "(新想法|功能请求|添加到待办)",
-        "(新しいアイデア|機能リクエスト|バックログに追加)",
-        "(새 아이디어|기능 요청|백로그에 추가)"
-      ],
-      "excludePatterns": [
-        "\\b(fix|bug|error|broken)\\b",
-        "\\b(implement|code|develop)\\s+(?!idea)",
-        "(sửa|lỗi|bug)",
-        "(修复|错误)",
-        "(修正|バグ)",
-        "(수정|버그)"
-      ],
-      "preActions": {
-        "activateSkill": "product-owner",
-        "injectContext": "IDEA-TO-PBI WORKFLOW:\n1. Capture idea with problem statement\n2. Refine into PBI with acceptance criteria\n3. Break into user stories (GIVEN/WHEN/THEN)\n4. Prioritize using RICE or MoSCoW"
-      }
-    },
-    "pbi-to-tests": {
-      "name": "PBI to Tests",
-      "description": "QA workflow: generate test spec from PBI, create detailed test cases, run quality gate",
-      "confirmFirst": false,
-      "enableCheckpoints": true,
-      "priority": 22,
-      "sequence": ["test-spec", "test-cases", "quality-gate"],
-      "triggerPatterns": [
-        "\\b(create|generate|write)\\s+(test|tests)\\s+(for|from)\\b",
-        "\\btest\\s+this\\s+(pbi|feature|story)\\b",
-        "\\bqa\\s+(this|for)\\b",
-        "\\btest\\s+spec(ification)?\\s+for\\b",
-        "\\btest\\s+cases?\\s+from\\b",
-        "\\bgenerate\\s+test\\s+cases\\b",
-        "team-artifacts[/\\\\]pbis[/\\\\][\\w-]+\\.md",
-        "\\bpbi\\s+(file|artifact|doc)\\b.*\\.md",
-        "\\btest\\s+(this|the)\\s+pbi\\b",
-        "\\bgenerate\\s+tests?\\s+for\\s+(this\\s+)?pbi\\b",
-        "\\bwrite\\s+test\\s+cases?\\s+for\\b",
-        "(tạo|viết)\\s+(test|kiểm thử)\\s+(cho|từ)",
-        "(创建|生成|编写)\\s*(测试|测试用例)",
-        "(テスト|テストケース)\\s*(作成|生成)",
-        "(테스트|테스트 케이스)\\s*(생성|작성)"
-      ],
-      "excludePatterns": [
-        "\\brun\\s+test\\b",
-        "\\bexecute\\s+test\\b",
-        "\\btest\\s+pass(ed)?\\b",
-        "(chạy|thực thi)\\s+test",
-        "(运行|执行)\\s*测试",
-        "(テスト)\\s*(実行|走る)",
-        "(테스트)\\s*(실행|돌리다)"
-      ],
-      "preActions": {
-        "activateSkill": "qa-engineer",
-        "injectContext": "PBI-TO-TESTS WORKFLOW:\n1. Read PBI acceptance criteria\n2. Generate test specification with TC-{MOD}-{NNN} IDs\n3. Create detailed test cases with evidence\n4. Run pre-QA quality gate"
-      }
-    },
-    "design-workflow": {
-      "name": "Design Workflow",
-      "description": "Designer workflow: create design specification from requirements, hand off for review",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 28,
-      "sequence": ["design-spec", "code-review"],
-      "triggerPatterns": [
-        "\\bdesign\\s+(this|the|a)\\s*(feature|page|component|ui)\\b",
-        "\\bui\\s+spec(ification)?\\b",
-        "\\bcreate\\s+(a\\s+)?design\\s+spec\\b",
-        "\\bdesign\\s+spec\\s+for\\b",
-        "\\bmockup\\s+(for|of)\\b",
-        "\\bwireframe\\s+(for|of)\\b",
-        "\\bcomponent\\s+spec(ification)?\\b",
-        "team-artifacts[/\\\\]designs?[/\\\\][\\w-]+\\.md",
-        "design-spec[\\w-]*\\.md",
-        "\\breview\\s+(the\\s+)?design\\s+in\\b",
-        "(thiết kế|mockup|wireframe)\\s+(cho|của)",
-        "(设计|UI规范|组件规范)",
-        "(デザイン|UIスペック|コンポーネント仕様)",
-        "(디자인|UI 사양|컴포넌트 사양)"
-      ],
-      "excludePatterns": [
-        "\\bimplement\\s+design\\b",
-        "\\bcode\\s+(the\\s+)?design\\b",
-        "\\bdevelop\\s+(the\\s+)?design\\b",
-        "(triển khai|code)\\s+thiết kế",
-        "(实现|编码)\\s*设计",
-        "(実装|コード)\\s*デザイン",
-        "(구현|코드)\\s*디자인"
-      ],
-      "preActions": {
-        "activateSkill": "ux-designer",
-        "readFiles": ["docs/design-system/design-tokens.md"],
-        "injectContext": "DESIGN WORKFLOW:\n1. Read requirements/PBI\n2. Create design spec with component inventory\n3. Document states, tokens, accessibility\n4. Review with code-review agent"
-      }
-    },
-    "pm-reporting": {
-      "name": "PM Reporting",
-      "description": "PM workflow: generate status report and dependency analysis",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 45,
-      "sequence": ["status", "dependency"],
-      "triggerPatterns": [
-        "\\bstatus\\s+report\\b",
-        "\\bsprint\\s+(status|update|report)\\b",
-        "\\bproject\\s+(status|update|report)\\b",
-        "\\bweekly\\s+(status|update|report)\\b",
-        "\\bhow('s|\\s+is)\\s+(the\\s+)?(sprint|project)\\b",
-        "\\bprogress\\s+report\\b",
-        "\\bblocker\\s+analysis\\b",
-        "\\bwhat('s|\\s+is)\\s+blocking\\s+(us|the\\s+team)\\b",
-        "\\bfull\\s+(status|project)\\s+report\\b",
-        "\\bcomprehensive\\s+status\\b",
-        "(báo cáo|tình trạng|tiến độ)\\s+(sprint|dự án)",
-        "(状态|进度)\\s*(报告|更新)",
-        "(ステータス|進捗)\\s*(レポート|報告)",
-        "(상태|진행)\\s*(보고서|업데이트)"
-      ],
-      "excludePatterns": [
-        "\\bgit\\s+status\\b",
-        "\\bcommit\\s+status\\b",
-        "\\bpr\\s+status\\b",
-        "\\bbuild\\s+status\\b",
-        "\\bjust\\s+(the\\s+)?(status|dependenc)",
-        "\\b(status|dependenc(y|ies))\\s+only\\b",
-        "\\bquick\\s+status\\b"
-      ],
-      "preActions": {
-        "activateSkill": "project-manager",
-        "injectContext": "PM REPORTING WORKFLOW:\n1. Gather sprint/project data\n2. Generate status report with metrics\n3. Analyze dependencies and blockers\n4. Output to plans/reports/"
-      }
-    },
-    "release-prep": {
-      "name": "Release Preparation",
-      "description": "Quality gate checks and status report before release",
-      "confirmFirst": true,
-      "enableCheckpoints": false,
-      "priority": 5,
-      "sequence": ["quality-gate", "status"],
-      "triggerPatterns": [
-        "\\b(prepare|ready)\\s+(for\\s+)?release\\b",
-        "\\brelease\\s+(prep|preparation|readiness)\\b",
-        "\\bbefore\\s+(we\\s+)?release\\b",
-        "\\bpre-release\\s+check\\b",
-        "\\brelease\\s+checklist\\b",
-        "\\bcan\\s+we\\s+release\\b",
-        "\\bready\\s+to\\s+(ship|deploy|release)\\b",
-        "\\bgo\\s+live\\s+check\\b",
-        "(chuẩn bị|sẵn sàng)\\s+(phát hành|release)",
-        "(发布|上线)\\s*(准备|检查)",
-        "リリース(準備|前チェック)",
-        "릴리스\\s*(준비|체크)"
-      ],
-      "excludePatterns": [
-        "\\bgit\\s+release\\b",
-        "\\bnpm\\s+release\\b",
-        "\\brelease\\s+notes\\b",
-        "\\brelease\\s+branch\\b"
-      ],
-      "preActions": {
-        "activateSkill": "project-manager",
-        "injectContext": "RELEASE-PREP WORKFLOW:\n1. Run quality-gate checks (tests, lint, build)\n2. Generate status report\n3. Identify blockers before release\n4. Output checklist to plans/reports/"
-      }
-    },
-    "pre-development": {
-      "name": "Pre-Development Setup",
-      "description": "Quality gate and planning before starting development",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 15,
-      "sequence": ["quality-gate", "plan"],
-      "triggerPatterns": [
-        "\\bbefore\\s+(I|we)\\s+(start|begin)\\s+(coding|developing|implementation)\\b",
-        "\\bpre-development\\s+check\\b",
-        "\\bsetup\\s+for\\s+development\\b",
-        "\\bstart\\s+new\\s+feature\\b",
-        "\\bbegin\\s+(new\\s+)?implementation\\b",
-        "\\bprepare\\s+to\\s+(code|develop|implement)\\b",
-        "\\bkick\\s*off\\s+(new\\s+)?(feature|development)\\b",
-        "(trước khi|chuẩn bị)\\s+(code|phát triển)",
-        "(开发|编码)\\s*前\\s*(检查|准备)",
-        "開発(前|準備)",
-        "개발\\s*(전|준비)"
-      ],
-      "excludePatterns": [
-        "\\bwhat\\s+is\\s+pre-development\\b",
-        "\\bexplain\\s+pre-development\\b"
-      ],
-      "preActions": {
-        "activateSkill": "planner",
-        "injectContext": "PRE-DEVELOPMENT WORKFLOW:\n1. Run quality-gate checks (ensure clean slate)\n2. Create implementation plan\n3. Identify dependencies and blockers\n4. Output plan to plans/"
-      }
-    },
-    "figma-detection": {
-      "name": "Figma Design Extraction",
-      "description": "Auto-detect Figma URLs and extract design specs",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 16,
-      "sequence": ["design-spec"],
-      "triggerPatterns": [
-        "figma\\.com/(design|file)/[a-zA-Z0-9]+",
-        "figma\\.com/design/[^/]+/[^?]+",
-        "\\?node-id=\\d+:\\d+",
-        "\\bextract\\b.*\\bfigma\\b",
-        "\\bfigma\\b.*\\b(design|spec|extract|colors|tokens)\\b",
-        "\\bget\\s+(design|specs?)\\s+from\\s+figma\\b",
-        "\\bpull\\s+figma\\s+(design|spec)\\b",
-        "(trích|lấy)\\s+từ\\s+figma",
-        "(提取|获取).*figma",
-        "figmaから(抽出|取得)",
-        "figma에서\\s+(추출|가져)"
-      ],
-      "excludePatterns": [
-        "\\b(implement|code|develop)\\s+(?!extract)",
-        "\\bbuild\\s+from\\s+figma\\b",
-        "\\bcode\\s+the\\s+figma\\b"
-      ],
-      "preActions": {
-        "activateSkill": "ui-ux-designer",
-        "injectContext": "FIGMA DETECTION WORKFLOW:\n1. Parse Figma URL\n2. Run /figma-extract command\n3. Generate design-spec artifact"
-      }
-    },
-    "sprint-planning": {
-      "name": "Sprint Planning Session",
-      "description": "Comprehensive sprint planning: prioritize backlog, analyze dependencies, prepare team sync",
-      "confirmFirst": true,
-      "enableCheckpoints": true,
-      "priority": 17,
-      "sequence": ["prioritize", "dependency", "team-sync"],
-      "triggerPatterns": [
-        "\\bsprint\\s+planning\\b",
-        "\\bplan\\s+(the\\s+)?sprint\\b",
-        "\\bbacklog\\s+(grooming|refinement|planning)\\b",
-        "\\bstart\\s+sprint\\s+planning\\b",
-        "\\bprepare\\s+(for\\s+)?sprint\\b",
-        "\\bnew\\s+sprint\\s+planning\\b",
-        "\\bsprint\\s+kickoff\\b",
-        "\\biterations?\\s+planning\\b",
-        "(lập kế hoạch|chuẩn bị)\\s+sprint",
-        "(sprint|迭代)\\s*(规划|计划)",
-        "スプリント(計画|プランニング)",
-        "스프린트\\s*(계획|플래닝)"
-      ],
-      "excludePatterns": [
-        "\\bsprint\\s+review\\b",
-        "\\bsprint\\s+retro\\b",
-        "\\bsprint\\s+status\\b",
-        "\\bend\\s+of\\s+sprint\\b"
-      ],
-      "preActions": {
-        "activateSkill": "project-manager",
-        "injectContext": "SPRINT-PLANNING WORKFLOW:\n1. Prioritize backlog items by value/effort\n2. Analyze dependencies between items\n3. Prepare team sync agenda\n4. Output sprint plan to team-artifacts/sprints/"
-      }
-    },
-    "team-meeting": {
-      "name": "Team Meeting Preparation",
-      "description": "Generate meeting agendas, track action items, facilitate cross-role coordination",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 42,
-      "sequence": ["team-sync"],
-      "triggerPatterns": [
-        "\\b(standup|stand-up|daily\\s+sync|daily\\s+meeting)\\b",
-        "\\bteam\\s+(sync|meeting|standup|huddle)\\b",
-        "\\b(sprint|scrum)\\s+(meeting|review|retro|retrospective)\\b",
-        "\\bmeeting\\s+agenda\\b",
-        "\\baction\\s+items?\\s+(for|from)\\b",
-        "\\bprepare\\s+(for\\s+)?(standup|meeting|sync)\\b",
-        "\\bwhat('s|\\s+is)\\s+on\\s+the\\s+agenda\\b",
-        "(họp|cuộc họp|meeting)\\s+(nhóm|team|sprint)",
-        "(standup|đứng họp|họp nhanh)",
-        "(团队|会议|站会|晨会|例会)",
-        "(チーム|ミーティング|朝会|スタンドアップ)",
-        "(팀|미팅|스탠드업|데일리)"
-      ],
-      "excludePatterns": [
-        "\\bstatus\\s+report\\b",
-        "\\bproject\\s+status\\b",
-        "\\bweekly\\s+report\\b",
-        "\\bsprint\\s+status\\b"
-      ],
-      "preActions": {
-        "activateSkill": "project-manager",
-        "injectContext": "TEAM-MEETING WORKFLOW:\n1. Generate meeting agenda\n2. Review previous action items\n3. Prepare cross-role updates\n4. Output to plans/reports/"
-      }
-    },
-    "status-only": {
-      "name": "Status Report Only",
-      "description": "Generate project/sprint status without dependency analysis",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 46,
-      "sequence": ["status"],
-      "triggerPatterns": [
-        "\\bjust\\s+(the\\s+)?status\\b",
-        "\\bstatus\\s+only\\b",
-        "\\bquick\\s+status\\b",
-        "\\bwhat('s|\\s+is)\\s+(the\\s+)?(current\\s+)?status\\b(?!.*depend)",
-        "\\bhow\\s+are\\s+we\\s+doing\\b",
-        "\\bgive\\s+me\\s+(a\\s+)?status\\b",
-        "\\bstatus\\s+update\\b(?!.*report)",
-        "(chỉ|chỉ cần)\\s+tình trạng",
-        "(只要|仅)\\s*状态",
-        "ステータスだけ",
-        "상태만"
-      ],
-      "excludePatterns": [
-        "\\bdependenc(y|ies)\\b",
-        "\\bblocker\\b",
-        "\\bgit\\s+status\\b",
-        "\\bpr\\s+status\\b",
-        "\\bbuild\\s+status\\b",
-        "\\bstatus\\s+report\\b"
-      ],
-      "preActions": {
-        "activateSkill": "project-manager",
-        "injectContext": "STATUS-ONLY WORKFLOW:\n1. Analyze current project/sprint state\n2. Generate concise status summary\n3. Skip dependency analysis"
-      }
-    },
-    "dependency-only": {
-      "name": "Dependency Analysis Only",
-      "description": "Analyze dependencies without full status report",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 47,
-      "sequence": ["dependency"],
-      "triggerPatterns": [
-        "\\bjust\\s+(the\\s+)?dependenc(y|ies)\\b",
-        "\\bdependenc(y|ies)\\s+only\\b",
-        "\\bcheck\\s+dependenc(y|ies)\\b",
-        "\\bwhat\\s+(does|do)\\s+.*\\s+depend\\s+on\\b",
-        "\\bwhat\\s+depends\\s+on\\b",
-        "\\bblockers?\\s+(for|on)\\b(?!.*status)",
-        "\\bwhat\\s+blocks\\b",
-        "\\bblocking\\s+items?\\b",
-        "(chỉ|chỉ cần)\\s+phụ thuộc",
-        "(只要|仅)\\s*依赖",
-        "依存関係だけ",
-        "의존성만"
-      ],
-      "excludePatterns": [
-        "\\bstatus\\s+report\\b",
-        "\\bsprint\\s+status\\b",
-        "\\bnpm\\s+depend\\b",
-        "\\bpackage\\s+depend\\b",
-        "\\bpip\\s+depend\\b",
-        "\\bcargo\\s+depend\\b"
-      ],
-      "preActions": {
-        "activateSkill": "project-manager",
-        "injectContext": "DEPENDENCY-ONLY WORKFLOW:\n1. Analyze task/feature dependencies\n2. Identify blockers\n3. Skip full status report"
-      }
-    },
-    "idea-only": {
-      "name": "Capture Idea Only",
-      "description": "Quick idea capture without full refinement workflow",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 48,
-      "sequence": ["idea"],
-      "triggerPatterns": [
-        "\\bcapture\\s+(this\\s+)?idea\\b",
-        "\\bquick\\s+idea\\b",
-        "\\bjust\\s+(the\\s+)?idea\\b",
-        "\\bidea\\s+only\\b",
-        "\\bnew\\s+backlog\\s+item\\b(?!.*refine)",
-        "\\bjot\\s+down\\s+(this\\s+)?idea\\b",
-        "\\bsave\\s+(this\\s+)?idea\\b",
-        "(ghi|lưu)\\s+(ý tưởng|idea)",
-        "(记录|保存)\\s*想法",
-        "アイデアだけ",
-        "아이디어만"
-      ],
-      "excludePatterns": [
-        "\\brefine\\b",
-        "\\bpbi\\b",
-        "\\bstory\\b",
-        "\\bprioritize\\b"
-      ],
-      "preActions": {
-        "activateSkill": "product-owner",
-        "injectContext": "IDEA-ONLY WORKFLOW:\n1. Capture raw idea with problem statement\n2. Save to team-artifacts/ideas/\n3. Skip refinement steps"
-      }
-    },
-    "refine-only": {
-      "name": "Refine to PBI Only",
-      "description": "Convert idea to PBI without story creation",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 49,
-      "sequence": ["refine"],
-      "triggerPatterns": [
-        "\\b(create|make|write)\\s+pbi\\b",
-        "\\bpbi\\s+(for|from)\\b",
-        "\\brefine\\s+(this\\s+)?idea\\b",
-        "\\bconvert\\s+to\\s+pbi\\b",
-        "\\bjust\\s+(the\\s+)?pbi\\b",
-        "\\bpbi\\s+only\\b",
-        "\\badd\\s+acceptance\\s+criteria\\b",
-        "(tạo|viết)\\s+pbi",
-        "(创建|编写)\\s*pbi",
-        "PBIだけ",
-        "PBI만"
-      ],
-      "excludePatterns": [
-        "\\bstory\\b",
-        "\\bstories\\b",
-        "\\bprioritize\\b",
-        "\\btest\\b"
-      ],
-      "preActions": {
-        "activateSkill": "business-analyst",
-        "injectContext": "REFINE-ONLY WORKFLOW:\n1. Read idea artifact\n2. Add acceptance criteria (GIVEN/WHEN/THEN)\n3. Save PBI to team-artifacts/pbis/\n4. Skip story creation"
-      }
-    },
-    "story-only": {
-      "name": "Create Stories Only",
-      "description": "Break PBI into user stories without prioritization",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 50,
-      "sequence": ["story"],
-      "triggerPatterns": [
-        "\\b(create|write|generate)\\s+(user\\s+)?stor(y|ies)\\b",
-        "\\bbreak\\s+(into|down)\\s+stor(y|ies)\\b",
-        "\\buser\\s+stor(y|ies)\\s+(for|from)\\b",
-        "\\bjust\\s+(the\\s+)?stor(y|ies)\\b",
-        "\\bstor(y|ies)\\s+only\\b",
-        "\\bslice\\s+(this\\s+)?pbi\\b",
-        "(tạo|viết)\\s+user\\s+stor(y|ies)",
-        "(创建|编写)\\s*用户故事",
-        "ストーリーだけ",
-        "스토리만"
-      ],
-      "excludePatterns": [
-        "\\bprioritize\\b",
-        "\\btest\\b",
-        "\\bdesign\\b"
-      ],
-      "preActions": {
-        "activateSkill": "business-analyst",
-        "injectContext": "STORY-ONLY WORKFLOW:\n1. Read PBI artifact\n2. Break into vertical slices\n3. Create user stories with GIVEN/WHEN/THEN\n4. Save to team-artifacts/pbis/stories/"
-      }
-    },
-    "prioritize-only": {
-      "name": "Prioritize Backlog Only",
-      "description": "Order backlog items without full sprint planning",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 51,
-      "sequence": ["prioritize"],
-      "triggerPatterns": [
-        "\\bprioritize\\s+(the\\s+)?(backlog|items?)\\b",
-        "\\border\\s+(the\\s+)?backlog\\b",
-        "\\bjust\\s+prioritize\\b",
-        "\\bprioritize\\s+only\\b",
-        "\\b(rice|moscow)\\s+scor(e|ing)\\b",
-        "\\brank\\s+(the\\s+)?items?\\b",
-        "\\bwhat('s|\\s+is)\\s+most\\s+important\\b",
-        "(sắp xếp|ưu tiên)\\s+(backlog|hạng mục)",
-        "(排序|优先级)\\s*(待办|项目)",
-        "優先順位だけ",
-        "우선순위만"
-      ],
-      "excludePatterns": [
-        "\\bsprint\\s+planning\\b",
-        "\\bdependenc(y|ies)\\b",
-        "\\bteam\\s+sync\\b"
-      ],
-      "preActions": {
-        "activateSkill": "product-owner",
-        "injectContext": "PRIORITIZE-ONLY WORKFLOW:\n1. Read backlog items\n2. Apply RICE or MoSCoW framework\n3. Output priority ranking\n4. Skip dependency analysis"
-      }
-    },
-    "test-spec-only": {
-      "name": "Test Specification Only",
-      "description": "Generate test spec without detailed test cases",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 52,
-      "sequence": ["test-spec"],
-      "triggerPatterns": [
-        "\\b(create|generate|write)\\s+test\\s+spec(ification)?\\b",
-        "\\btest\\s+spec(ification)?\\s+(for|from)\\b",
-        "\\bjust\\s+(the\\s+)?test\\s+spec\\b",
-        "\\btest\\s+spec\\s+only\\b",
-        "\\bqa\\s+spec(ification)?\\b",
-        "\\btest\\s+strategy\\s+for\\b",
-        "(tạo|viết)\\s+test\\s+spec",
-        "(创建|编写)\\s*测试规范",
-        "テストスペックだけ",
-        "테스트 사양만"
-      ],
-      "excludePatterns": [
-        "\\btest\\s+cases?\\b",
-        "\\bdetailed\\s+tests?\\b",
-        "\\bexecute\\s+test\\b",
-        "\\brun\\s+test\\b"
-      ],
-      "preActions": {
-        "activateSkill": "qa-engineer",
-        "injectContext": "TEST-SPEC-ONLY WORKFLOW:\n1. Read PBI/feature requirements\n2. Generate test specification\n3. Define test categories and scope\n4. Skip detailed test case generation"
-      }
-    },
-    "test-cases-only": {
-      "name": "Test Cases Only",
-      "description": "Generate detailed test cases from spec",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 53,
-      "sequence": ["test-cases"],
-      "triggerPatterns": [
-        "\\b(create|generate|write)\\s+test\\s+cases?\\b",
-        "\\btest\\s+cases?\\s+(for|from)\\b",
-        "\\bjust\\s+(the\\s+)?test\\s+cases?\\b",
-        "\\btest\\s+cases?\\s+only\\b",
-        "\\bdetailed\\s+test(s|\\s+cases)?\\b",
-        "\\bexpand\\s+to\\s+test\\s+cases\\b",
-        "(tạo|viết)\\s+test\\s+case",
-        "(创建|编写)\\s*测试用例",
-        "テストケースだけ",
-        "테스트 케이스만"
-      ],
-      "excludePatterns": [
-        "\\btest\\s+spec\\b",
-        "\\bqa\\s+spec\\b",
-        "\\brun\\s+test\\b",
-        "\\bexecute\\s+test\\b"
-      ],
-      "preActions": {
-        "activateSkill": "qa-engineer",
-        "injectContext": "TEST-CASES-ONLY WORKFLOW:\n1. Read test specification\n2. Generate detailed test cases (TC-{MOD}-{NNN})\n3. Include steps, expected results, evidence\n4. Skip quality gate"
-      }
-    },
-    "design-spec-only": {
-      "name": "Design Specification Only",
-      "description": "Create design spec without code review",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 54,
-      "sequence": ["design-spec"],
-      "triggerPatterns": [
-        "\\b(create|generate|write)\\s+design\\s+spec(ification)?\\b",
-        "\\bdesign\\s+spec(ification)?\\s+(for|from)\\b",
-        "\\bjust\\s+(the\\s+)?design\\s+spec\\b",
-        "\\bdesign\\s+spec\\s+only\\b",
-        "\\bui\\s+spec(ification)?\\s+(for|from)\\b",
-        "\\bcomponent\\s+spec(ification)?\\b",
-        "(tạo|viết)\\s+design\\s+spec",
-        "(创建|编写)\\s*设计规范",
-        "デザインスペックだけ",
-        "디자인 사양만"
-      ],
-      "excludePatterns": [
-        "\\bimplement\\b",
-        "\\bcode\\b",
-        "\\breview\\b",
-        "\\bfigma\\b"
-      ],
-      "preActions": {
-        "activateSkill": "ux-designer",
-        "injectContext": "DESIGN-SPEC-ONLY WORKFLOW:\n1. Read requirements/PBI\n2. Create design specification\n3. Document component inventory, states, tokens\n4. Skip code review step"
-      }
-    },
-    "figma-extract-only": {
-      "name": "Figma Extract Only",
-      "description": "Extract design tokens from Figma without full design workflow",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 55,
-      "sequence": ["design-spec"],
-      "triggerPatterns": [
-        "\\bextract\\s+(from\\s+)?figma\\b",
-        "\\bpull\\s+figma\\s+(design|tokens?)\\b",
-        "\\bjust\\s+extract\\s+figma\\b",
-        "\\bfigma\\s+extract\\s+only\\b",
-        "\\bget\\s+figma\\s+(tokens?|colors?|styles?)\\b",
-        "\\bfigma\\s+tokens?\\b",
-        "(trích|lấy)\\s+figma",
-        "(提取|获取)\\s*figma",
-        "figma抽出だけ",
-        "figma 추출만"
-      ],
-      "excludePatterns": [
-        "\\bdesign\\s+spec\\b",
-        "\\bimplement\\b",
-        "\\bcode\\b"
-      ],
-      "preActions": {
-        "activateSkill": "ui-ux-designer",
-        "injectContext": "FIGMA-EXTRACT-ONLY WORKFLOW:\n1. Parse Figma URL\n2. Extract design tokens (colors, typography, spacing)\n3. Output to team-artifacts/designs/"
-      }
-    },
-    "quality-gate-only": {
-      "name": "Quality Gate Only",
-      "description": "Run quality gate check without status report",
-      "confirmFirst": false,
-      "enableCheckpoints": false,
-      "priority": 56,
-      "sequence": ["quality-gate"],
-      "triggerPatterns": [
-        "\\brun\\s+quality\\s+gate\\b",
-        "\\bquality\\s+gate\\s+(for|on)\\b",
-        "\\bjust\\s+(the\\s+)?quality\\s+gate\\b",
-        "\\bquality\\s+gate\\s+only\\b",
-        "\\bqa\\s+gate\\b",
-        "\\bpre-(dev|qa|release)\\s+check\\b",
-        "\\bcheck\\s+quality\\b(?!.*report)",
-        "(chạy|kiểm tra)\\s+quality\\s+gate",
-        "(运行|检查)\\s*质量门",
-        "品質ゲートだけ",
-        "품질 게이트만"
-      ],
-      "excludePatterns": [
-        "\\bstatus\\b",
-        "\\breport\\b",
-        "\\brelease\\s+prep\\b"
-      ],
-      "preActions": {
-        "activateSkill": "qc-specialist",
-        "injectContext": "QUALITY-GATE-ONLY WORKFLOW:\n1. Identify gate type (pre-dev, pre-qa, pre-release)\n2. Run checklist verification\n3. Output gate status\n4. Skip status report"
-      }
-    }
-  }
 }

@@ -1,6 +1,7 @@
 ---
 name: markdown-to-docx
 description: Convert markdown files to Microsoft Word (.docx) with custom styling. Use when generating Word documents from markdown, creating editable documentation, or exporting reports for Microsoft Office.
+allowed-tools: Bash, Read
 ---
 
 # markdown-to-docx

@@ -192,9 +192,13 @@ When reviewing frontend TypeScript files, apply frontend-specific compliance che
 ## Related
 
 - **Debugging:** `debugging` - Root cause investigation before fixes
-- **Testing:** `test-generation` - Create tests for bug fixes
+- **Testing:** `test-specs-docs` - Create tests for bug fixes
 - **Simplification:** `code-simplifier` - Simplify code after review
 - **Frontend Patterns:** See `docs/claude/frontend-typescript-complete-guide.md`
+
+## See Also
+
+See `/review` command for review execution checklist.
 
 ## Task Planning Notes
 

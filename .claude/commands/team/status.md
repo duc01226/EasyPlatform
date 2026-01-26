@@ -1,82 +1,22 @@
 ---
-name: status
 description: Generate status report for sprint or project
-allowed-tools: Read, Write, Grep, Glob, Bash, TodoWrite
-arguments:
-  - name: scope
-    description: sprint | project | feature-{name}
-    required: false
-    default: sprint
+argument-hint: sprint | project | feature-{name}
 ---
+Think harder.
+Activate `status` skill.
 
-# Generate Status Report
-
-Create status report from current artifacts and activity.
-
-## Pre-Workflow
-
-### Activate Skills
-
-- Activate `project-manager` skill for status reporting and metrics analysis
+## Your mission
+<task>
+$ARGUMENTS
+</task>
 
 ## Workflow
+- **Analyze**: Read the skill's SKILL.md for detailed patterns and rules
+- **Execute**: Follow the skill's workflow steps for the given task
+- **Verify**: Ensure output meets the skill's success criteria
 
-1. **Gather Data**
-   - Read PBIs in scope
-   - Check git log for recent commits
-   - Find open issues/PRs
-   - Identify blockers
-
-2. **Calculate Metrics**
-   - Completed vs planned
-   - Velocity (if sprint)
-   - Bug count
-   - Blocker count
-
-3. **Generate Report**
-   ```markdown
-   ## Status Report - {Date}
-
-   ### Sprint: {Name} | Day {N}/{Total}
-
-   #### Progress Summary
-   | Metric | Planned | Actual | Status |
-   |--------|---------|--------|--------|
-   | Stories | X | Y | 🟢🟡🔴 |
-   | Points | X | Y | |
-
-   #### Completed
-   | Item | Owner |
-   |------|-------|
-   | | |
-
-   #### In Progress
-   | Item | Status | Blocker |
-   |------|--------|---------|
-   | | | |
-
-   #### Blockers
-   | Blocker | Impact | Action |
-   |---------|--------|--------|
-   | | | |
-
-   #### Risks
-   | Risk | Probability | Impact |
-   |------|-------------|--------|
-   | | | |
-   ```
-
-4. **Save Report**
-   - Path: `plans/reports/{YYMMDD}-status-{scope}.md`
-
-## Example
-
-```bash
-/status sprint
-/status feature-dark-mode
-```
+**IMPORTANT**: Activate additional skills as needed from `.claude/skills/*`.
 
 ## Task Planning Notes
-
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

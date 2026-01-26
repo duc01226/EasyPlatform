@@ -1,74 +1,22 @@
 ---
-name: dependency
 description: Track and visualize dependencies for feature or project
-allowed-tools: Read, Write, Grep, Glob
-arguments:
-  - name: target
-    description: PBI file, feature name, or "all"
-    required: false
-    default: all
+argument-hint: "[pbi-file|feature-name|all]"
 ---
+Think harder.
+Activate `dependency` skill.
 
-# Track Dependencies
-
-Map and visualize dependencies between features.
-
-## Pre-Workflow
-
-### Activate Skills
-
-- Activate `project-manager` skill for dependency analysis best practices
+## Your mission
+<task>
+$ARGUMENTS
+</task>
 
 ## Workflow
+- **Analyze**: Read the skill's SKILL.md for detailed patterns and rules
+- **Execute**: Follow the skill's workflow steps for the given task
+- **Verify**: Ensure output meets the skill's success criteria
 
-1. **Load PBIs**
-   - Read PBIs in scope
-   - Extract dependency fields
-
-2. **Build Dependency Graph**
-   ```
-   Feature A → Feature B (blocked by)
-   Feature A ← Feature C (blocks)
-   Feature A ↔ Feature D (mutual)
-   ```
-
-3. **Identify Risks**
-   - Circular dependencies
-   - Unresolved blockers
-   - External dependencies
-
-4. **Generate Visualization**
-   ```markdown
-   ## Dependency Map
-
-   ### {Feature}
-
-   **Upstream (We depend on):**
-   - [ ] {Dep 1} - {status}
-   - [ ] {Dep 2} - {status}
-
-   **Downstream (Depends on us):**
-   - [ ] {Dep 1} - {their deadline}
-
-   ### Critical Path
-   {A} → {B} → {C} → {D}
-
-   ### Risk Areas
-   - 🔴 {Feature X} blocking 3 items
-   - 🟡 {External API} - timeline uncertain
-   ```
-
-5. **Output Report**
-   - Console output or save to file
-
-## Example
-
-```bash
-/dependency team-artifacts/pbis/260119-pbi-dark-mode-toggle.md
-/dependency all
-```
+**IMPORTANT**: Activate additional skills as needed from `.claude/skills/*`.
 
 ## Task Planning Notes
-
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

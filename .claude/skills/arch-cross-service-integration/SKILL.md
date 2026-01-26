@@ -1,6 +1,7 @@
 ---
 name: arch-cross-service-integration
 description: Use when designing or implementing cross-service communication, data synchronization, or service boundary patterns.
+infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 

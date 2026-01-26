@@ -8,6 +8,7 @@ description: >-
   NOT for: code review (use code-review), simplification (use code-simplifier).
 version: 4.0.0
 languages: all
+infer: true
 ---
 
 # Debugging
@@ -137,8 +138,8 @@ Stop and follow process if thinking:
 
 - **Follow-up:** `code-simplifier` - Simplify code after debugging
 - **Review:** `code-review` - Review fixes before committing
-- **Testing:** `test-generation` - Generate tests for the fix
-- **Upstream:** `investigation` - General codebase investigation
+- **Testing:** `test-specs-docs` - Generate tests for the fix
+- **Upstream:** `feature-investigation` - General codebase investigation
 
 ## Version History
 

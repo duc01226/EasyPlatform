@@ -2,11 +2,18 @@
 name: status
 description: Generate status reports for sprints or projects. Use when creating status reports, checking progress, or summarizing sprint metrics. Triggers on keywords like "status report", "sprint status", "progress", "how are we doing".
 allowed-tools: Read, Write, Grep, Glob, Bash, TodoWrite
+infer: true
 ---
 
 # Status Report
 
 Generate project/sprint status reports with metrics.
+
+## Pre-Workflow
+
+### Activate Skills
+
+- Activate `project-manager` skill for status reporting and metrics analysis
 
 ## When to Use
 - Sprint status needed
@@ -34,22 +41,34 @@ Generate project/sprint status reports with metrics.
 ## Status Report - {Date}
 ### Sprint: {Name} | Day {N}/{Total}
 
-#### Progress
+#### Progress Summary
 | Metric | Planned | Actual | Status |
 |--------|---------|--------|--------|
+| Stories | X | Y | 🟢🟡🔴 |
+| Points | X | Y | |
 
 #### Completed
 | Item | Owner |
+|------|-------|
+| | |
 
 #### In Progress
 | Item | Status | Blocker |
+|------|--------|---------|
+| | | |
 
 #### Blockers
 | Blocker | Impact | Action |
+|---------|--------|--------|
+| | | |
 
 #### Risks
 | Risk | Probability | Impact |
+|------|-------------|--------|
+| | | |
 ```
+
+**Status Indicators:** Use 🟢 (on track), 🟡 (at risk), 🔴 (blocked) for visual status.
 
 ### Output
 - **Path:** `plans/reports/{YYMMDD}-status-{scope}.md`

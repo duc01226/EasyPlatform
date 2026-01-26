@@ -1,6 +1,7 @@
 ---
 name: prioritize
 description: Order backlog items using RICE, MoSCoW, or Value-Effort frameworks. Use when prioritizing backlog, ranking features, or ordering work items. Triggers on keywords like "prioritize", "RICE score", "MoSCoW", "rank backlog", "order by value".
+infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite
 ---
 
@@ -12,6 +13,12 @@ Order backlog items using data-driven prioritization frameworks.
 - Sprint planning needs ordered backlog
 - Stakeholder requests priority ranking
 - Feature roadmap ordering
+
+## Pre-Workflow
+
+### Activate Skills
+
+- Activate `product-owner` skill for prioritization frameworks (RICE, MoSCoW, Value/Effort)
 
 ## Quick Reference
 
@@ -28,10 +35,10 @@ Effort: Person-months
 ```
 
 #### MoSCoW
-- **Must Have:** Critical, non-negotiable
+- **Must Have:** Critical, non-negotiable (release blocker)
 - **Should Have:** Important, not vital
 - **Could Have:** Nice to have
-- **Won't Have:** Out of scope
+- **Won't Have:** Out of scope (not this release)
 
 #### Value vs Effort
 ```
@@ -43,17 +50,39 @@ Low Value + High Effort = Time sinks (avoid)
 
 ### Workflow
 1. Read PBIs from `team-artifacts/pbis/`
-2. Apply selected framework
-3. Output ordered list with scores
-4. Update PBI frontmatter priority
+2. Filter by scope if specified; exclude done/rejected items
+3. Apply selected framework
+4. Sort by score/classification; assign numeric priority (1 = highest)
+5. Update PBI frontmatter priority
+6. Output ordered list with scores
 
 ### Output
 - Priority field: Numeric 1-999 (not High/Med/Low)
 - Console: Ordered table with scores
 
+## Report Template
+
+```markdown
+## Backlog Priority - {Date}
+
+**Framework:** {framework}
+**Scope:** {scope}
+
+| Rank | PBI | Score | Rationale |
+|------|-----|-------|-----------|
+| 1 | {title} | {score} | {why} |
+```
+
 ### Related
 - **Role Skill:** `product-owner`
 - **Command:** `/prioritize`
+
+## Example
+
+```bash
+/prioritize rice
+/prioritize moscow scope:sprint
+```
 
 ## Task Planning Notes
 

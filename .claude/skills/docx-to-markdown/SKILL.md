@@ -1,6 +1,7 @@
 ---
 name: docx-to-markdown
 description: Convert Microsoft Word (.docx) files to Markdown. Use when importing Word documents, extracting content from DOCX for version control, or converting documentation to Markdown format.
+allowed-tools: Bash, Read, Write
 ---
 
 # docx-to-markdown

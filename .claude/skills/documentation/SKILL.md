@@ -1,141 +1,66 @@
 ---
 name: documentation
-description: Use when the user asks to enhance documentation, add code comments, create API docs, improve technical documentation, or document code. Triggers on keywords like "document", "documentation", "API docs", "comments", "JSDoc", "XML comments", "explain code".
+description: Use when the user asks to enhance documentation, add code comments, create API docs, improve README files, or document code. Triggers on keywords like "document", "documentation", "API docs", "comments", "JSDoc", "XML comments", "README", "getting started", "setup instructions".
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
 
-> **Skill Variant:** Use this skill for **interactive documentation tasks** where the user is actively engaged. For autonomous documentation generation, use `tasks-documentation` instead.
-
 # Documentation Enhancement
 
-You are to operate as an expert technical writer and software documentation specialist to enhance documentation.
+Expert technical writer for code documentation, API docs, and README files.
 
-**IMPORTANT**: Always thinks hard, plan step by step to-do list first before execute. Always remember to-do list, never compact or summary it when memory context limit reach. Always preserve and carry your to-do list through every operation.
+> **Autonomous mode**: Set `autonomous: true` in task context to skip approval gate and execute directly.
 
----
-
-## Core Anti-Hallucination Protocols
-
-### ASSUMPTION_VALIDATION_CHECKPOINT
-
-Before every major operation:
-
-1. "What assumptions am I making about [X]?"
-2. "Have I verified this with actual code evidence?"
-3. "Could I be wrong about [specific pattern/relationship]?"
-
-### EVIDENCE_CHAIN_VALIDATION
-
-Before claiming any relationship:
-
-- "I believe X calls Y because..." → show actual code
-- "This follows pattern Z because..." → cite specific examples
-
-### TOOL_EFFICIENCY_PROTOCOL
-
-- Batch multiple Grep searches into single calls with OR patterns
-- Use parallel Read operations for related files
-- Combine semantic searches with related keywords
-
-### CONTEXT_ANCHOR_SYSTEM
-
-Every 10 operations:
-
-1. Re-read the original task description
-2. Verify the current operation aligns with original goals
-3. Update the `Current Focus` in `## Progress` section
+Read `.claude/skills/shared/anti-hallucination-protocol.md`
 
 ---
 
-## PHASE 1: EXTERNAL MEMORY-DRIVEN DOCUMENTATION ANALYSIS
+## Phase 1: Investigation
 
-Build a structured knowledge model in `.ai/workspace/analysis/[task-name].md`.
+1. **Discovery** - Search for files needing documentation
+2. **Analysis** - Identify documentation gaps, missing comments, undocumented APIs
+3. **Knowledge Graph** - Build structured analysis in `.ai/workspace/analysis/[task-name].md`
 
-### PHASE 1A: INITIALIZATION AND DISCOVERY
+Track per file: `documentationGaps`, `complexityLevel`, `apiDocumentationNeeds`, `exampleRequirements`
 
-1. **Initialize** the analysis file with standard headings
-2. **Discovery searches** for all related files
+## Phase 2: Documentation Plan
 
-### DOCUMENTATION-SPECIFIC DISCOVERY
+Generate plan covering:
+- Scope (which files/APIs/components)
+- Documentation type (code comments, API docs, README, architecture)
+- Priority order (public APIs first, then complex logic, then internal)
 
-**DOCUMENTATION_COMPLETENESS_DISCOVERY**: Focus on documentation-relevant patterns:
+## Phase 3: Approval Gate
 
-1. **API Documentation Analysis**: Find API endpoints and identify missing documentation. Document under `## API Documentation`.
+**CRITICAL**: Present plan for approval. Skip if `autonomous: true`.
 
-2. **Component Documentation Analysis**: Find public classes/methods and identify complex logic needing explanation. Document under `## Component Documentation`.
+## Phase 4: Execution
 
-3. **Basic Structure Analysis**: Find key configuration files and main application flows. Document under `## Structure Documentation`.
+Apply documentation following patterns from references.
 
-### PHASE 1B: SYSTEMATIC FILE ANALYSIS FOR DOCUMENTATION
+### Code Documentation Mode
+Read `.claude/skills/documentation/references/code-documentation-patterns.md`
 
-**IMPORTANT: MUST DO WITH TODO LIST**
+5 patterns available: C# XML docs, TypeScript JSDoc, API endpoint docs, README feature docs, inline comments.
 
-For each file, document in `## Knowledge Graph`:
+### README Mode
+Read `.claude/skills/documentation/references/readme-template.md`
 
-- Standard fields plus documentation-specific:
-- `documentationGaps`: Missing or incomplete documentation
-- `complexityLevel`: How difficult to understand (1-10)
-- `userFacingFeatures`: Features needing user documentation
-- `developerNotes`: Technical details needing developer docs
-- `exampleRequirements`: Code examples or usage scenarios needed
-- `apiDocumentationNeeds`: API endpoints requiring documentation
-- `configurationOptions`: Configuration parameters needing explanation
-- `troubleshootingAreas`: Common issues requiring troubleshooting docs
+Workflow:
+1. **Discovery** - Project structure, features, setup requirements
+2. **Template** - Apply README structure (Features, Prerequisites, Installation, Configuration, Usage, Development, Testing, Troubleshooting)
+3. **Validate** - Verify all instructions are accurate and testable
 
-### PHASE 1C: OVERALL ANALYSIS
-
-Write comprehensive summary showing:
-
-- Complete end-to-end workflows discovered
-- Documentation gaps identified
-- Priority areas for documentation
-
----
-
-## PHASE 2: DOCUMENTATION PLAN GENERATION
-
-Generate detailed documentation plan under `## Documentation Plan`:
-
-- Focus on completeness
-- Ensure clarity
-- Include examples
-- Maintain consistency
-
----
-
-## PHASE 3: APPROVAL GATE
-
-**CRITICAL**: Present documentation plan for explicit approval. **DO NOT** proceed without it.
-
----
-
-## PHASE 4: DOCUMENTATION EXECUTION
-
-Once approved, execute the plan using all DOCUMENTATION_SAFEGUARDS.
-
----
-
-## SUCCESS VALIDATION
-
-Verify documentation is:
+## Phase 5: Validation
 
 - Accurate (matches actual code)
 - Complete (covers all public APIs)
-- Helpful (includes examples)
+- Helpful (includes practical examples)
+- Consistent (follows established patterns)
 
-Document under `## Documentation Validation`.
+## Guidelines
 
----
-
-## Documentation Guidelines
-
-- **Accuracy-first approach**: Verify every documented feature with actual code
-- **User-focused content**: Organize documentation based on user needs
-- **Example-driven documentation**: Include practical examples and usage scenarios
-- **Consistency maintenance**: Follow established documentation patterns
-- **No assumptions**: Always verify behavior before documenting
-
-## Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- **Accuracy-first**: Verify every documented feature with actual code
+- **Explain "why" not "what"**: Don't state the obvious
+- **Example-driven**: Include practical, copy-pasteable examples
+- **Keep docs close to code**: Prefer inline over separate files
+- **User-first for READMEs**: Organize for new users getting started

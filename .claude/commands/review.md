@@ -128,6 +128,10 @@ Provide feedback in this format:
 
 - What was done well
 
+## See Also
+
+See `code-review` skill for review process guidelines and anti-performative-agreement rules.
+
 ## Task Planning Notes
 
 - Always plan and break many small todo tasks

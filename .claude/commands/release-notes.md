@@ -148,6 +148,10 @@ Create file at: `docs/release-notes/YYMMDD-<feature-slug>.md`
 /release-notes authentication --investigate
 ```
 
+## See Also
+
+For automated commit-based release notes, use the `release-notes` skill instead.
+
 ## Task Planning Notes
 
 - Always plan and break many small todo tasks

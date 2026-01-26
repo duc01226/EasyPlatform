@@ -2,75 +2,21 @@
 description: ⚡⚡ Implement a new feature following EasyPlatform workflow
 argument-hint: [feature-description]
 ---
+Think harder.
+Activate `feature-implementation` skill.
 
-# Implement Feature: $ARGUMENTS
+## Your mission
+<task>
+$ARGUMENTS
+</task>
 
-Implement a new feature following EasyPlatform development workflow.
+## Workflow
+- **Analyze**: Read the skill's SKILL.md for detailed patterns and rules
+- **Execute**: Follow the skill's workflow steps for the given task
+- **Verify**: Ensure output meets the skill's success criteria
 
-## Phase 1: Understanding
-
-1. **Parse feature requirements** from: $ARGUMENTS
-2. **Identify affected services:**
-    - TextSnippet (Example)
-    - TextSnippet (Example)
-    - TextSnippet (Example)
-    - TextSnippet (Example)
-
-3. **Search for similar implementations:**
-    - Find existing patterns in the codebase
-    - Identify reusable components
-
-## Phase 2: Design
-
-1. **Plan the implementation:**
-    - Backend: Domain entities, Commands/Queries, Event handlers
-    - Frontend: Components, Stores, API services
-    - Database: Migrations if needed
-
-2. **Identify file locations:**
-
-    ```
-    Backend:
-    - src/Backend/{Service}/{Service}.Domain/Entities/
-    - src/Backend/{Service}/{Service}.Application/UseCaseCommands/
-    - src/Backend/{Service}/{Service}.Application/UseCaseQueries/
-    - src/Backend/{Service}/{Service}.Application/UseCaseEvents/
-
-    Frontend (WebV2):
-    - src/Frontend/apps/{app}/src/app/features/
-    - src/Frontend/libs/apps-domains/src/{domain}/
-    ```
-
-## Phase 3: Create Implementation Plan
-
-Present a detailed plan with:
-
-- List of files to create/modify
-- Order of implementation
-- Dependencies between components
-- Test strategy
-
-## Phase 4: Wait for Approval
-
-**CRITICAL:** Wait for explicit user approval before writing any code.
-
-## Phase 5: Implementation
-
-After approval:
-
-1. Create entities/DTOs
-2. Create Commands/Queries with handlers
-3. Create event handlers for side effects
-4. Create frontend components
-5. Add tests
-
-Use appropriate skills:
-
-- `backend-cqrs-command` for commands
-- `backend-cqrs-query` for queries
-- `frontend-angular-component` for UI
+**IMPORTANT**: Activate additional skills as needed from `.claude/skills/*`.
 
 ## Task Planning Notes
-
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
