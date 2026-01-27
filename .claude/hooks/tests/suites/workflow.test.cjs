@@ -3,7 +3,7 @@
  *
  * Tests for:
  * - todo-enforcement.cjs: Blocks implementation skills without todos
- * - todo-tracker.cjs: Records TodoWrite calls
+ * - todo-tracker.cjs: Records TodoWrite, TaskCreate, TaskUpdate calls
  * - workflow-router.cjs: Routes prompts based on intent detection
  * - dev-rules-reminder.cjs: Injects dev rules on prompt submit
  */
@@ -75,27 +75,32 @@ const todoEnforcementTests = [
       }
     }
   },
+  // BLOCK - Planning skills without todos (planning requires task tracking)
   {
-    name: '[todo-enforcement] allows /plan without todos',
+    name: '[todo-enforcement] blocks /plan without todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
         const input = createSkillInput('plan');
         const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should allow plan');
+        assertBlocked(result.code, 'Should block plan without todos');
+        const output = result.stdout + result.stderr;
+        assertContains(output, 'Todo List Required', 'Should show todo required message');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[todo-enforcement] allows /plan:hard without todos',
+    name: '[todo-enforcement] blocks /plan:hard without todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
         const input = createSkillInput('plan:hard');
         const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should allow plan:hard');
+        assertBlocked(result.code, 'Should block plan:hard without todos');
+        const output = result.stdout + result.stderr;
+        assertContains(output, 'Todo List Required', 'Should show todo required message');
       } finally {
         cleanupTempDir(tmpDir);
       }
@@ -236,7 +241,47 @@ const todoEnforcementTests = [
     }
   },
 
-  // ALLOW - Implementation skills WITH todos
+  // ALLOW - Planning and implementation skills WITH todos
+  {
+    name: '[todo-enforcement] allows /plan with todos',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        setupTodoState(tmpDir, {
+          hasTodos: true,
+          taskCount: 2,
+          pendingCount: 1,
+          inProgressCount: 1,
+          completedCount: 0
+        });
+        const input = createSkillInput('plan');
+        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow plan with todos');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[todo-enforcement] allows /plan:hard with todos',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        setupTodoState(tmpDir, {
+          hasTodos: true,
+          taskCount: 3,
+          pendingCount: 2,
+          inProgressCount: 1,
+          completedCount: 0
+        });
+        const input = createSkillInput('plan:hard');
+        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow plan:hard with todos');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
   {
     name: '[todo-enforcement] allows /cook with todos',
     fn: async () => {
@@ -484,6 +529,175 @@ const todoTrackerTests = [
         cleanupTempDir(tmpDir);
       }
     }
+  },
+
+  // TaskCreate tracking
+  {
+    name: '[todo-tracker] records task on TaskCreate',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createPostToolUseInput('TaskCreate', {
+          subject: 'Investigate feature X',
+          description: 'Research how feature X works',
+          activeForm: 'Investigating feature X'
+        });
+        const result = await runHook(TODO_TRACKER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+
+        const state = readStateFile(tmpDir, '.todo-state.json');
+        assertTrue(state !== null, 'State file should exist');
+        assertTrue(state.hasTodos, 'Should have todos');
+        assertEqual(state.taskCount, 1, 'Should have 1 task');
+        assertEqual(state.pendingCount, 1, 'Should have 1 pending');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[todo-tracker] increments count on multiple TaskCreate calls',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input1 = createPostToolUseInput('TaskCreate', {
+          subject: 'Task A',
+          description: 'First task'
+        });
+        await runHook(TODO_TRACKER, input1, { cwd: tmpDir });
+
+        const input2 = createPostToolUseInput('TaskCreate', {
+          subject: 'Task B',
+          description: 'Second task'
+        });
+        await runHook(TODO_TRACKER, input2, { cwd: tmpDir });
+
+        const state = readStateFile(tmpDir, '.todo-state.json');
+        assertEqual(state.taskCount, 2, 'Should have 2 tasks');
+        assertEqual(state.pendingCount, 2, 'Should have 2 pending');
+        assertEqual(state.lastTodos.length, 2, 'Should track 2 entries in lastTodos');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+
+  // TaskUpdate tracking
+  {
+    name: '[todo-tracker] updates state on TaskUpdate to completed',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        // Setup initial state with 2 pending tasks
+        setupTodoState(tmpDir, {
+          hasTodos: true,
+          taskCount: 2,
+          pendingCount: 1,
+          inProgressCount: 1,
+          completedCount: 0,
+          lastTodos: [
+            { content: 'Task A', status: 'pending' },
+            { content: 'Task B', status: 'in_progress' }
+          ]
+        });
+
+        const input = createPostToolUseInput('TaskUpdate', {
+          taskId: '1',
+          status: 'completed'
+        });
+        const result = await runHook(TODO_TRACKER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+
+        const state = readStateFile(tmpDir, '.todo-state.json');
+        assertTrue(state.hasTodos, 'Should still have todos');
+        assertEqual(state.completedCount, 1, 'Should have 1 completed');
+        assertEqual(state.inProgressCount, 0, 'Should decrement in_progress');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[todo-tracker] updates state on TaskUpdate to in_progress',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        setupTodoState(tmpDir, {
+          hasTodos: true,
+          taskCount: 2,
+          pendingCount: 2,
+          inProgressCount: 0,
+          completedCount: 0
+        });
+
+        const input = createPostToolUseInput('TaskUpdate', {
+          taskId: '1',
+          status: 'in_progress'
+        });
+        await runHook(TODO_TRACKER, input, { cwd: tmpDir });
+
+        const state = readStateFile(tmpDir, '.todo-state.json');
+        assertEqual(state.inProgressCount, 1, 'Should have 1 in_progress');
+        assertEqual(state.pendingCount, 1, 'Should decrement pending');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[todo-tracker] updates state on TaskUpdate to deleted',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        setupTodoState(tmpDir, {
+          hasTodos: true,
+          taskCount: 2,
+          pendingCount: 2,
+          inProgressCount: 0,
+          completedCount: 0
+        });
+
+        const input = createPostToolUseInput('TaskUpdate', {
+          taskId: '1',
+          status: 'deleted'
+        });
+        await runHook(TODO_TRACKER, input, { cwd: tmpDir });
+
+        const state = readStateFile(tmpDir, '.todo-state.json');
+        assertEqual(state.taskCount, 1, 'Should have 1 task after deletion');
+        assertEqual(state.pendingCount, 1, 'Should decrement pending');
+        assertTrue(state.hasTodos, 'Should still have todos');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[todo-tracker] hasTodos becomes false when last task deleted',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        setupTodoState(tmpDir, {
+          hasTodos: true,
+          taskCount: 1,
+          pendingCount: 1,
+          inProgressCount: 0,
+          completedCount: 0
+        });
+
+        const input = createPostToolUseInput('TaskUpdate', {
+          taskId: '1',
+          status: 'deleted'
+        });
+        await runHook(TODO_TRACKER, input, { cwd: tmpDir });
+
+        const state = readStateFile(tmpDir, '.todo-state.json');
+        assertEqual(state.taskCount, 0, 'Should have 0 tasks');
+        assertTrue(!state.hasTodos, 'Should not have todos');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
   }
 ];
 
@@ -571,6 +785,229 @@ const workflowRouterTests = [
         const input = createUserPromptInput('what is the status of the build?');
         const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should not block questions');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  // Verification workflow detection
+  {
+    name: '[workflow-router] detects verify intent',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createUserPromptInput('verify the payment flow works correctly');
+        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+        const output = result.stdout + result.stderr;
+        assertTrue(
+          output.toLowerCase().includes('verif') ||
+          output.toLowerCase().includes('workflow'),
+          'Should detect verification intent'
+        );
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[workflow-router] detects validate intent',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createUserPromptInput('validate that user auth handles expired tokens');
+        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+        const output = result.stdout + result.stderr;
+        assertTrue(
+          output.toLowerCase().includes('validat') ||
+          output.toLowerCase().includes('verif') ||
+          output.toLowerCase().includes('workflow'),
+          'Should detect validation intent'
+        );
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[workflow-router] detects check-that intent',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createUserPromptInput('check that the migration ran properly');
+        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+        const output = result.stdout + result.stderr;
+        assertTrue(
+          output.toLowerCase().includes('verif') ||
+          output.toLowerCase().includes('check') ||
+          output.toLowerCase().includes('workflow'),
+          'Should detect check-that intent'
+        );
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[workflow-router] detects make-sure intent',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createUserPromptInput('make sure the API returns correct status codes');
+        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+        const output = result.stdout + result.stderr;
+        assertTrue(
+          output.toLowerCase().includes('verif') ||
+          output.toLowerCase().includes('make sure') ||
+          output.toLowerCase().includes('workflow'),
+          'Should detect make-sure intent'
+        );
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[workflow-router] detects ensure intent',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createUserPromptInput('ensure that the cron job is running correctly');
+        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+        const output = result.stdout + result.stderr;
+        assertTrue(
+          output.toLowerCase().includes('verif') ||
+          output.toLowerCase().includes('ensure') ||
+          output.toLowerCase().includes('workflow'),
+          'Should detect ensure intent'
+        );
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[workflow-router] verify with feature excluded from verification',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        // "feature" is in excludePatterns for verification workflow
+        const input = createUserPromptInput('implement a new feature to verify user emails');
+        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+        const output = result.stdout + result.stderr;
+        // Should NOT detect as verification (feature exclude), should detect as feature
+        assertTrue(
+          !output.toLowerCase().includes('verification') ||
+          output.toLowerCase().includes('feature') ||
+          output.toLowerCase().includes('workflow'),
+          'Should not detect as verification when feature keyword present'
+        );
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  // Quality Audit workflow detection
+  {
+    name: '[workflow-router] detects quality audit intent',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createUserPromptInput('quality audit the auth module');
+        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+        const output = result.stdout + result.stderr;
+        assertTrue(
+          output.toLowerCase().includes('quality') ||
+          output.toLowerCase().includes('audit') ||
+          output.toLowerCase().includes('workflow'),
+          'Should detect quality audit intent'
+        );
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[workflow-router] detects best practices review as quality audit',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createUserPromptInput('review code for best practices');
+        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+        const output = result.stdout + result.stderr;
+        assertTrue(
+          output.toLowerCase().includes('quality') ||
+          output.toLowerCase().includes('audit') ||
+          output.toLowerCase().includes('workflow'),
+          'Should detect best practices as quality audit'
+        );
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[workflow-router] detects ensure quality intent',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createUserPromptInput('ensure quality of the API layer');
+        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+        const output = result.stdout + result.stderr;
+        assertTrue(
+          output.toLowerCase().includes('quality') ||
+          output.toLowerCase().includes('workflow'),
+          'Should detect ensure quality intent'
+        );
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[workflow-router] plain code review does not trigger quality audit',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createUserPromptInput('review the code changes');
+        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+        const output = result.stdout + result.stderr;
+        // Should detect as review, NOT quality-audit
+        assertTrue(
+          !output.toLowerCase().includes('quality-audit') ||
+          output.toLowerCase().includes('review') ||
+          output.toLowerCase().includes('workflow'),
+          'Plain code review should not trigger quality audit'
+        );
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[workflow-router] detects no flaws intent as quality audit',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createUserPromptInput('check there are no flaws in the service');
+        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block');
+        const output = result.stdout + result.stderr;
+        assertTrue(
+          output.toLowerCase().includes('quality') ||
+          output.toLowerCase().includes('audit') ||
+          output.toLowerCase().includes('workflow'),
+          'Should detect no flaws as quality audit'
+        );
       } finally {
         cleanupTempDir(tmpDir);
       }

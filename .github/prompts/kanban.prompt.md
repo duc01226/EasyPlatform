@@ -27,6 +27,7 @@ Plans dashboard with progress tracking and timeline visualization.
 **IMPORTANT:** Run server as Claude Code background task using `run_in_background: true` with the Bash tool. This makes the server visible in `/tasks` and manageable via `KillShell`.
 
 Check if this script is located in the current workspace or in `$HOME/.claude/skills/plans-kanban` directory:
+
 - If in current workspace: `$SKILL_DIR_PATH` = `./.claude/skills/plans-kanban/`
 - If in home directory: `$SKILL_DIR_PATH` = `$HOME/.claude/skills/plans-kanban/`
 
@@ -56,21 +57,24 @@ node $SKILL_DIR_PATH/scripts/server.cjs \
 ```
 
 **Critical:** When calling the Bash tool:
+
 - Set `run_in_background: true` to run as CC background task
 - Set `timeout: 300000` (5 minutes) to prevent premature termination
 - Parse JSON output and report URL to user
 
 Example Bash tool call:
+
 ```json
 {
-  "command": "node .claude/skills/plans-kanban/scripts/server.cjs --dir \"./plans\" --host 0.0.0.0 --open --foreground",
-  "run_in_background": true,
-  "timeout": 300000,
-  "description": "Start kanban server in background"
+    "command": "node .claude/skills/plans-kanban/scripts/server.cjs --dir \"./plans\" --host 0.0.0.0 --open --foreground",
+    "run_in_background": true,
+    "timeout": 300000,
+    "description": "Start kanban server in background"
 }
 ```
 
 After starting, parse the JSON output (e.g., `{"success":true,"url":"http://localhost:3500/kanban?dir=...","networkUrl":"http://192.168.1.x:3500/kanban?dir=..."}`) and report:
+
 - Local URL for browser access
 - Network URL for remote device access (if available)
 - Inform user that server is now running as CC background task (visible in `/tasks`)
@@ -82,16 +86,19 @@ After starting, parse the JSON output (e.g., `{"success":true,"url":"http://loca
 The `/kanban` command will evolve into **VibeKanban-inspired** AI agent orchestration:
 
 ### Phase 1 (Current - MVP)
+
 - ✅ Task board with progress tracking
 - ✅ Visual representation of plans/tasks
 - ✅ Click to view plan details
 
 ### Phase 2 (Worktree Integration)
+
 - Create tasks → spawn git worktrees
 - Assign agents to tasks
 - Track agent progress per worktree
 
 ### Phase 3 (Full Orchestration)
+
 - Parallel agent execution monitoring
 - Code diff/review interface
 - PR creation workflow
@@ -100,7 +107,7 @@ The `/kanban` command will evolve into **VibeKanban-inspired** AI agent orchestr
 
 Track progress: https://github.com/claudekit/claudekit-engineer/issues/189
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

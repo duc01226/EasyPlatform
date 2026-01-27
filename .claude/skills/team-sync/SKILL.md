@@ -45,11 +45,13 @@ Generate meeting agendas and action item tracking.
 
 ## Workflow
 1. Identify meeting type
-2. Gather relevant data (recent git activity, artifacts, PBIs, blockers)
-3. Check open blockers and pending handoffs
-4. Generate agenda template based on meeting type
-5. Populate with current data
-6. Output agenda (console or save to file)
+2. Review previous meeting action items (search `plans/reports/` for prior agendas)
+3. Gather relevant data (recent git activity, artifacts, PBIs, blockers)
+4. Check open blockers and pending handoffs
+5. Track completion status of previous action items; carry incomplete items forward
+6. Generate agenda template based on meeting type
+7. Populate with current data
+8. Save output to `plans/reports/{YYMMDD}-{meeting-type}.md`
 
 ## Detailed Templates
 

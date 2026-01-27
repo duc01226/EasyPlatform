@@ -59,8 +59,8 @@ function getDefaultConfig() {
       test: { claude: '/test' },
       fix: { claude: '/fix' },
       debug: { claude: '/debug' },
-      'code-review': { claude: '/review/codebase' },
-      'docs-update': { claude: '/docs/update' },
+      'code-review': { claude: '/review:codebase' },
+      'docs-update': { claude: '/docs:update' },
       watzup: { claude: '/watzup' }
     }
   };

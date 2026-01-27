@@ -61,7 +61,7 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 
 - **Root CLAUDE.md**: Essential rules and quick decision trees
 - **[Code Review Rules](../code-review-rules.md)**: Project-specific review checklist (auto-injected)
-- **.ai/prompts/context.md**: Solution planning guidance
+- **.ai/docs/prompt-context.md**: Solution planning guidance
 - **../architecture-overview.md**: System architecture & diagrams
 - **.github/AI-DEBUGGING-PROTOCOL.md**: Debugging protocol
 

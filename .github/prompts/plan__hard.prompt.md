@@ -7,6 +7,7 @@ Think harder.
 Activate `planning` skill.
 
 ## Your mission
+
 <task>
 $ARGUMENTS
 </task>
@@ -14,11 +15,13 @@ $ARGUMENTS
 ## Pre-Creation Check (Active vs Suggested Plan)
 
 Check the `## Plan Context` section in the injected context:
+
 - If "Plan:" shows a path → Active plan exists. Ask user: "Continue with this? [Y/n]"
 - If "Suggested:" shows a path → Branch-matched hint only. Ask if they want to activate or create new.
 - If "Plan: none" → Create new plan using naming from `## Naming` section.
 
 ## Workflow
+
 1. If creating new: Create directory using `Plan dir:` from `## Naming` section, then run `node .claude/scripts/set-active-plan.cjs {plan-dir}`
    If reusing: Use the active plan path from Plan Context.
    Make sure you pass the directory path to every subagent during the process.
@@ -48,6 +51,7 @@ After plan creation, offer validation interview to confirm decisions before impl
 ## Output Requirements
 
 **Plan Directory Structure** (use `Plan dir:` from `## Naming` section)
+
 ```
 {plan-dir}/
 ├── research/
@@ -65,26 +69,29 @@ After plan creation, offer validation interview to confirm decisions before impl
 ```
 
 **Research Output Requirements**
+
 - Ensure every research markdown report remains concise (≤150 lines) while covering all requested topics and citations.
 
 **Plan File Specification**
+
 - Every `plan.md` MUST start with YAML frontmatter:
-  ```yaml
-  ---
-  title: "{Brief title}"
-  description: "{One sentence for card preview}"
-  status: pending
-  priority: P2
-  effort: {sum of phases, e.g., 4h}
-  branch: {current git branch}
-  tags: [relevant, tags]
-  created: {YYYY-MM-DD}
-  ---
-  ```
+    ```yaml
+    ---
+    title: '{Brief title}'
+    description: '{One sentence for card preview}'
+    status: pending
+    priority: P2
+    effort: { sum of phases, e.g., 4h }
+    branch: { current git branch }
+    tags: [relevant, tags]
+    created: { YYYY-MM-DD }
+    ---
+    ```
 - Save the overview access point at `{plan-dir}/plan.md`. Keep it generic, under 80 lines, and list each implementation phase with status and progress plus links to phase files.
 - For each phase, create `{plan-dir}/phase-XX-phase-name-here.md` containing the following sections in order: Context links (reference parent plan, dependencies, docs), Overview (date, description, priority, implementation status, review status), Key Insights, Requirements, Architecture, Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps.
 
 ## Important Notes
+
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 **IMPORTANT:** Ensure token efficiency while maintaining high quality.
 **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
@@ -93,7 +100,7 @@ After plan creation, offer validation interview to confirm decisions before impl
 
 ultrathink
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

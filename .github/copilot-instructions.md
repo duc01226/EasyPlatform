@@ -1,86 +1,115 @@
-# EasyPlatform Development Guidelines
+# EasyPlatform Development Guidelines (GitHub Copilot)
 
-> **Enterprise Platform Framework** - .NET 9 Microservices + Angular 19 Micro Frontends
+> **.NET 9 + Angular 19 Development Platform Framework**
 
-## CRITICAL: Always Plan Before Implement
+---
 
-Before implementing ANY non-trivial task, you MUST:
+## MUST READ: Authoritative Source
 
-1. **Enter Plan Mode First** - Use workflow detection automatically
-2. **Investigate & Analyze** - Explore codebase, understand context
-3. **Create Implementation Plan** - Write detailed plan with specific files and approach
-4. **Get User Approval** - Wait for confirmation before any code changes
-5. **Only Then Implement** - Execute the approved plan
+**[`CLAUDE.md`](../CLAUDE.md)** (project root) is the **single source of truth** for all EasyPlatform development guidelines. You **MUST READ** it before any implementation work.
 
-**Exceptions:** Single-line fixes, user says "just do it", pure research with no changes.
+It contains:
 
-## CRITICAL: Todo Enforcement (Runtime Enforced)
+- Architecture overview & project structure
+- Backend/Frontend principles & anti-patterns
+- Code responsibility hierarchy (Entity > Service > Component)
+- BEM naming conventions (MANDATORY for all UI elements)
+- Decision trees (backend/frontend task routing)
+- Development commands & database connections
+- Cross-platform shell commands (Git Bash compatibility)
+- Clean code rules & code quality checklist
+- Changelog & release notes workflow
+- Code patterns quick reference table
 
-Implementation skills are **blocked** unless you have active todos. This is enforced by hooks.
+**For full code examples (auto-injected when editing source files):**
 
-### Allowed Without Todos (Research/Planning)
+- `.ai/docs/backend-code-patterns.md` — 16 backend C# patterns with full code blocks
+- `.ai/docs/frontend-code-patterns.md` — 6 frontend TypeScript patterns with full code blocks
 
-- `/scout`, `/scout:ext`, `/investigate`, `/research`, `/explore`
-- `/plan`, `/plan:fast`, `/plan:hard`, `/plan:validate`
-- `/watzup`, `/checkpoint`, `/kanban`
+**This file contains Copilot-specific additions only** — workflow configuration, prompt mapping, verification protocols, context strategies, and workspace boundaries.
 
-### Blocked Without Todos (Implementation)
+---
 
-- `/cook`, `/fix`, `/code`, `/feature`, `/implement`
-- `/test`, `/debug`, `/code-review`, `/commit`
-- All other skills not listed above
+## Copilot Documentation Architecture
 
-### Bypass
+| Layer                     | Purpose                                                     |
+| ------------------------- | ----------------------------------------------------------- |
+| **`CLAUDE.md`** (root)    | Core principles, decision trees, architecture, patterns     |
+| **`.github/prompts/`**    | Task-specific prompts (plan, fix, scout, investigate, etc.) |
+| **`.claude/skills/`**     | Universal skills (auto-activated based on context)          |
+| **`docs/claude/`**        | Domain-specific pattern deep dives (Memory Bank)            |
+| **`docs/design-system/`** | Frontend design system documentation                        |
 
-Use `quick:` prefix to bypass enforcement (not recommended):
-
-```
-/cook quick: add a button
-```
-
-### Context Preservation
-
-- Todos automatically saved to checkpoints during context compaction
-- Todos auto-restored on session resume (if checkpoint < 24h old)
-- Subagents inherit parent todo state for context continuity
-
-## Project Overview
-
-EasyPlatform is a comprehensive enterprise platform framework built with microservices architecture, Clean Architecture, CQRS, and event-driven design.
-
-**Example Applications:**
-
-- **TextSnippet:** Example application demonstrating platform patterns
-
-**Supporting Services:** Accounts (Auth), NotificationMessage, ParserApi
-
-## Tech Stack
-
-| Layer         | Technology                                                          |
-| ------------- | ------------------------------------------------------------------- |
-| **Backend**   | .NET 9, Clean Architecture, CQRS, MongoDB/SQL Server/PostgreSQL     |
-| **Frontend**  | Angular 19 (WebV2), Angular 12 (Web), Nx workspace, micro frontends |
-| **Framework** | Easy.Platform (custom infrastructure)                               |
-| **Messaging** | RabbitMQ message bus for cross-service communication                |
+---
 
 ## Core Principles (MANDATORY)
 
 **Backend Rules:**
 
-1. Use microservice-specific repositories (`IPlatformQueryableRootRepository`, `IPlatformQueryableRootRepository`, `IPlatformQueryableRootRepository`) - never generic `IPlatformRootRepository`
+1. Use platform repositories (`IPlatformQueryableRootRepository<TEntity, TKey>`) with static expression extensions
 2. Use `PlatformValidationResult` fluent API (`.And()`, `.AndAsync()`) - never `throw ValidationException`
 3. Side effects (notifications, emails, external APIs) go in Entity Event Handlers (`UseCaseEvents/`) - never in command handlers
 4. DTOs own mapping via `PlatformEntityDto<TEntity, TKey>.MapToEntity()` or `PlatformDto<T>.MapToObject()` - never map in handlers
 5. Command + Result + Handler in ONE file under `UseCaseCommands/{Feature}/`
 6. Cross-service communication via RabbitMQ message bus only - never direct database access
 
-**Frontend Rules:** 7. Extend `AppBaseComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent` - never raw `Component` 8. Use `PlatformVmStore` for state management - never manual signals 9. Extend `PlatformApiService` for HTTP calls - never direct `HttpClient` 10. Always use `.pipe(this.untilDestroyed())` for subscriptions - never manual unsubscribe 11. All template elements MUST have BEM classes (`block__element --modifier`)
+**Frontend Rules:**
 
-**Architecture Rules:** 12. Search for existing implementations before creating new code 13. Place logic in LOWEST layer (Entity > Service > Component) to enable reuse 14. Plan before implementing non-trivial tasks 15. Follow Clean Architecture layers: Domain → Application → Infrastructure → Presentation
+7. Extend `AppBaseComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent` - never raw `Component`
+8. Use `PlatformVmStore` for state management - never manual signals
+9. Extend `PlatformApiService` for HTTP calls - never direct `HttpClient`
+10. Always use `.pipe(this.untilDestroyed())` for subscriptions - never manual unsubscribe
+11. All template elements MUST have BEM classes (`block__element --modifier`)
+12. Use `effectSimple()` for API calls - auto-handles loading/error state
 
-**Verification Protocol (MANDATORY):** 16. NEVER claim completion without evidence - run commands and read output first 17. ALWAYS verify filesystem before claiming file status - use grep_search or file_search 18. ALWAYS re-read modified lines after edits to confirm changes applied 19. Run tests after implementation to verify functionality 20. Check for errors using get_errors tool after file modifications
+**Architecture Rules:**
 
-**Context Gathering Rules (MANDATORY):** 21. ALWAYS search for existing patterns before implementing (semantic_search or grep_search) 22. READ at least 3 similar implementations to understand established patterns 23. For complex tasks, gather context in parallel batches (read multiple files simultaneously) 24. Use Scout → Investigate workflow for unfamiliar features before making changes 25. Never assume - verify assumptions with file reads or searches
+13. Search for existing implementations before creating new code
+14. Place logic in LOWEST layer (Entity > Service > Component) to enable reuse
+15. Plan before implementing non-trivial tasks
+16. Follow Clean Architecture layers: Domain > Application > Persistence > Api
+
+---
+
+## Prompt File Mapping
+
+Each workflow step executes a prompt file from `.github/prompts/`:
+
+### Workflow Prompts
+
+| Step               | File                        | Purpose                    |
+| ------------------ | --------------------------- | -------------------------- |
+| `/plan`            | `plan.prompt.md`            | Create implementation plan |
+| `/plan__review`    | `plan__review.prompt.md`    | Auto-review plan validity  |
+| `/cook`            | `cook.prompt.md`            | Implement feature          |
+| `/code`            | `code.prompt.md`            | Execute existing plan      |
+| `/code-simplifier` | `code-simplifier.prompt.md` | Simplify and clean code    |
+| `/test`            | `test.prompt.md`            | Run tests                  |
+| `/fix`             | `fix.prompt.md`             | Apply fixes                |
+| `/debug`           | `debug.prompt.md`           | Investigate issues         |
+| `/review`          | `review.prompt.md`          | Review code quality        |
+| `/docs__update`    | `docs__update.prompt.md`    | Update documentation       |
+| `/watzup`          | `watzup.prompt.md`          | Summarize changes          |
+| `/scout`           | `scout.prompt.md`           | Explore codebase           |
+| `/investigate`     | `investigate.prompt.md`     | Deep dive analysis         |
+
+### General Developer Prompts
+
+| Prompt              | File                         | Purpose                                                 |
+| ------------------- | ---------------------------- | ------------------------------------------------------- |
+| `/git__cm`          | `git__cm.prompt.md`          | Smart conventional commits with auto-generated messages |
+| `/git__cp`          | `git__cp.prompt.md`          | Commit and push                                         |
+| `/checkpoint`       | `checkpoint.prompt.md`       | Save memory checkpoint to preserve analysis             |
+| `/build`            | `build.prompt.md`            | Build backend/frontend projects                         |
+| `/lint`             | `lint.prompt.md`             | Run linters and fix issues                              |
+| `/fix__types`       | `fix__types.prompt.md`       | Fix TypeScript type errors                              |
+| `/content__enhance` | `content__enhance.prompt.md` | Analyze and enhance UI copy quality                     |
+| `/content__cro`     | `content__cro.prompt.md`     | Conversion rate optimization for CTAs                   |
+| `/journal`          | `journal.prompt.md`          | Development journal entries                             |
+| `/compact`          | `compact.prompt.md`          | Context compression for long sessions                   |
+| `/kanban`           | `kanban.prompt.md`           | View and manage plans dashboard                         |
+
+---
 
 ## Automatic Workflow Detection (CRITICAL - MUST FOLLOW)
 
@@ -90,90 +119,16 @@ EasyPlatform is a comprehensive enterprise platform framework built with microse
 
 Full workflow patterns are defined in **`.claude/workflows.json`** - the single source of truth for both Claude and Copilot. Supports multilingual triggers (EN, VI, ZH, JA, KO).
 
-For detailed routing logic, see the **`workflow-router`** agent in `.github/agents/workflow-router.md`.
-
 ### Quick Reference - Workflow Detection
 
-| Intent            | Trigger Keywords                                    | Workflow Sequence                                                                  |
-| ----------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------- |
-| **Feature**       | implement, add, create, build, develop, new feature | `/plan` → `/cook` → `/code-review` → `/test` → `/docs-update` → `/watzup`          |
-| **Bug Fix**       | bug, fix, error, broken, crash, not working, debug  | `/scout` → `/investigate` → `/debug` → `/plan` → `/fix` → `/code-review` → `/test` |
-| **Documentation** | docs, document, readme, update docs                 | `/scout` → `/investigate` → `/docs-update` → `/watzup`                             |
-| **Refactoring**   | refactor, improve, clean up, restructure            | `/plan` → `/code` → `/code-review` → `/test`                                       |
-| **Code Review**   | review, check, audit code, PR review                | `/code-review` → `/watzup`                                                         |
-| **Investigation** | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                                          |
-
-### Prompt File Mapping
-
-Each workflow step executes a prompt file from `.github/prompts/`:
-
-| Step           | File                    | Purpose                                 |
-| -------------- | ----------------------- | --------------------------------------- |
-| `/plan`        | `plan.prompt.md`        | Create implementation plan              |
-| `/cook`        | `cook.prompt.md`        | Implement feature                       |
-| `/code`        | `code.prompt.md`        | Execute existing plan                   |
-| `/test`        | `test.prompt.md`        | Run tests                               |
-| `/fix`         | `fix.prompt.md`         | Apply fixes                             |
-| `/debug`       | `debug.prompt.md`       | Investigate issues                      |
-| `/code-review` | `code-review.prompt.md` | Review code quality                     |
-| `/docs-update` | `docs-update.prompt.md` | Update documentation                    |
-| `/watzup`      | `watzup.prompt.md`      | Summarize changes                       |
-| `/scout`       | `scout.prompt.md`       | Priority-categorized file discovery     |
-| `/investigate` | `investigate.prompt.md` | Knowledge graph construction + analysis |
-
-### General Developer Prompts
-
-Additional standalone prompts for common development tasks:
-
-| Prompt              | File                         | Purpose                                                 |
-| ------------------- | ---------------------------- | ------------------------------------------------------- |
-| `/git-commit-smart` | `git-commit-smart.prompt.md` | Smart conventional commits with auto-generated messages |
-| `/git-cherry-pick`  | `git-cherry-pick.prompt.md`  | Cherry-pick commits with conflict resolution            |
-| `/git-worktree`     | `git-worktree.prompt.md`     | Git worktree management for parallel development        |
-| `/checkpoint`       | `checkpoint.prompt.md`       | Save memory checkpoint to preserve analysis             |
-| `/build`            | `build.prompt.md`            | Build backend/frontend projects                         |
-| `/lint`             | `lint.prompt.md`             | Run linters and fix issues                              |
-| `/fix-types`        | `fix-types.prompt.md`        | Fix TypeScript type errors                              |
-| `/content-enhance`  | `content-enhance.prompt.md`  | Analyze and enhance UI copy quality                     |
-| `/content-cro`      | `content-cro.prompt.md`      | Conversion rate optimization for CTAs                   |
-| `/journal`          | `journal.prompt.md`          | Development journal entries                             |
-| `/context-compact`  | `context-compact.prompt.md`  | Context compression for long sessions                   |
-| `/kanban`           | `kanban.prompt.md`           | View and manage plans dashboard                         |
-
-### Investigation Workflow (Enhanced)
-
-The `/scout` → `/investigate` workflow now supports **structured knowledge model construction**:
-
-**Scout Phase Features:**
-
-- Priority-based file categorization (HIGH/MEDIUM/LOW)
-- Numbered file lists for easy reference
-- Cross-service message bus analysis (Consumer → Producer tracing)
-- Structured output with suggested starting points
-
-**Investigate Phase Features:**
-
-- External memory at `.ai/workspace/analysis/[feature]-investigation.md`
-- Knowledge Graph with detailed file analysis schema (15+ fields per file)
-- Batch processing with TodoWrite (groups of 10 files)
-- Progress tracking (Phase, Items Processed, Total Items)
-- Anti-hallucination checklist before claims
-
-**File Analysis Schema Fields:**
-
-```
-filePath, type, architecturalPattern, content, symbols, dependencies,
-businessContext, referenceFiles, relevanceScore, evidenceLevel,
-uncertainties, platformAbstractions, serviceContext, dependencyInjection,
-genericTypeParameters, messageBusAnalysis (for Consumers)
-```
-
-**Priority Categories:**
-| Priority | File Types |
-|----------|------------|
-| HIGH | Domain Entities, Commands, Queries, Event Handlers, Controllers, Jobs, Consumers, Components |
-| MEDIUM | Services, Helpers, DTOs, Repositories |
-| LOW | Tests, Config |
+| Intent            | Trigger Keywords                                    | Workflow Sequence                                                                                                        |
+| ----------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **Feature**       | implement, add, create, build, develop, new feature | `/plan` → `/plan-review` → `/cook` → `/code-simplifier` → `/code-review` → `/test` → `/docs-update` → `/watzup`          |
+| **Bug Fix**       | bug, fix, error, broken, crash, not working, debug  | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan-review` → `/fix` → `/code-simplifier` → `/code-review` → `/test` |
+| **Documentation** | docs, document, readme, update docs                 | `/scout` → `/investigate` → `/docs-update` → `/watzup`                                                                   |
+| **Refactoring**   | refactor, improve, clean up, restructure            | `/plan` → `/plan-review` → `/code` → `/code-simplifier` → `/code-review` → `/test`                                       |
+| **Code Review**   | review, check, audit code, PR review                | `/code-review` → `/watzup`                                                                                               |
+| **Investigation** | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                                                                                |
 
 ### Workflow Execution Protocol (MANDATORY STEPS)
 
@@ -181,320 +136,188 @@ You MUST follow these steps for EVERY development request:
 
 1. **DETECT** - Analyze user prompt against workflow patterns
 2. **ANNOUNCE** - State the detected workflow: `"Detected: **{Workflow}** workflow. Following: {sequence}"`
-3. **CREATE TODO LIST (MANDATORY)** - Use manage_todo_list tool to create tasks for each workflow step:
-    ```
-    Example for Bug Fix workflow:
-    - [ ] Execute /scout - Find relevant files
-    - [ ] Execute /investigate - Build knowledge graph
-    - [ ] Execute /debug - Root cause analysis
-    - [ ] Execute /plan - Create fix plan
-    - [ ] Execute /fix - Implement fix
-    - [ ] Execute /code-review - Review changes
-    - [ ] Execute /test - Verify fix
-    ```
+3. **CREATE TODO LIST FIRST (MANDATORY)** - Create todo items for ALL workflow steps BEFORE starting
 4. **CONFIRM** - For features/refactors, ask: `"Proceed with this workflow? (yes/no/quick)"`
-5. **EXECUTE** - Follow each step in sequence with these requirements:
-    - Mark task as "in-progress" BEFORE starting
-    - Execute the step with evidence gathering
-    - Verify completion with concrete evidence (test output, file reads, error checks)
-    - Mark task as "completed" ONLY after verification
-    - NEVER batch todo completions - mark each immediately after verification
+5. **EXECUTE** - Follow each step with evidence:
+    - Mark "in-progress" before starting each step
+    - Gather evidence during execution (file reads, command outputs)
+    - Verify with concrete proof before marking complete
+    - Mark "completed" only after verification (NEVER batch completions)
+    - Check remaining steps after EVERY command execution
 
-### Evidence-Based Completion Checklist
+### Workflow Continuity Rule (CRITICAL)
 
-Before claiming ANY task complete, verify ALL of these:
+**Problem:** Long-running workflows can lose context after executing individual steps, causing the AI to forget remaining workflow steps.
 
-- [ ] **Files Modified**: Re-read specific lines to confirm changes applied
-- [ ] **Commands Run**: Captured and analyzed command output
-- [ ] **Tests Passed**: Ran relevant tests and verified success
-- [ ] **No Errors**: Checked get_errors tool shows no new issues
-- [ ] **Filesystem Verified**: Used file_search/grep_search to confirm file existence/content
-- [ ] **Pattern Followed**: Compared implementation against existing similar code
+**Solution:** Track workflow state persistently using a structured approach.
 
-**Anti-Hallucination Protocol:**
+**Mandatory Steps:**
 
-- NEVER say "file doesn't exist" without running file_search or grep_search first
-- NEVER claim "tests pass" without showing test output
-- NEVER claim "no errors" without running get_errors tool
-- NEVER claim "changes applied" without re-reading the modified lines
-- ALWAYS provide evidence (file path, line numbers, test output) when claiming completion
+1. **IMMEDIATELY after detecting a workflow**, announce and track ALL workflow steps
+2. **Before each step**: Clearly state which step you're starting
+3. **After each step**: Mark it as completed and identify next step
+4. **After EVERY command execution**: Check remaining steps
+5. **Continue until**: ALL workflow steps are completed
+
+**Rules:**
+
+- NEVER abandon a detected workflow - complete ALL steps or explicitly ask user to skip
+- NEVER end a turn without checking if workflow steps remain
+- At the start of each response, if in a workflow, state: "Continuing workflow: Step X of Y - {step name}"
+- If context seems lost, review the workflow sequence and identify current position
+
+**Recovery Pattern:**
+
+```
+## Workflow Status
+- [x] /plan - Completed
+- [x] /cook - Completed
+- [ ] /test - IN PROGRESS
+- [ ] /code-review - Pending
+- [ ] /docs-update - Pending
+```
 
 ### Override Methods
 
-| Method           | Example                     | Effect                          |
-| ---------------- | --------------------------- | ------------------------------- |
-| `quick:` prefix  | `quick: add a button`       | Skip workflow, direct handling  |
-| Explicit command | `/plan implement dark mode` | Bypass detection, run command   |
-| Say "quick"      | When asked "Proceed?"       | Abort workflow, handle directly |
+| Method           | Example                     | Effect                                    |
+| ---------------- | --------------------------- | ----------------------------------------- |
+| `quick:` prefix  | `quick: add a button`       | Skip user confirmation, start immediately |
+| Explicit command | `/plan implement dark mode` | Bypass detection, run specific command    |
+| Say "quick"      | When asked "Proceed?"       | Abort workflow, handle directly           |
 
-### Path-Based Skill Activation (MANDATORY)
+**Note:** `quick:` prefix skips the "Proceed with workflow?" confirmation BUT still follows the complete workflow sequence.
 
-Before creating/modifying files in these paths, ALWAYS invoke the corresponding skill first:
+---
 
-| Path Pattern                 | Skill                          | Pre-Read                                           |
-| ---------------------------- | ------------------------------ | -------------------------------------------------- |
-| `docs/business-features/**`  | `/business-feature-docs`       | `docs/templates/detailed-feature-docs-template.md` |
-| `docs/features/**`           | `/feature-docs`                | Existing sibling docs in same folder               |
-| `src/**/*Command*.cs`        | `/easyplatform-backend`        | CQRS patterns in this file                         |
-| `src/**/*-form.component.ts` | `/frontend-angular-form`       | Form patterns, validation rules                    |
-| `src/**/*-api.service.ts`    | `/frontend-angular-api-service`| API service patterns                               |
-| `src/**/*.component.ts`      | `/frontend-angular-component`  | Base component patterns                            |
-| `src/**/*.store.ts`          | `/frontend-angular-store`      | Store patterns                                     |
-| `src/**/*.component.scss`    | Read SCSS guide                | `docs/claude/scss-styling-guide.md`                |
+## Verification Protocol (Research-Backed)
 
-**Frontend Anti-Patterns to Flag (CRITICAL):**
+### Evidence-Based Completion Checklist
 
-- `private destroy$ = new Subject()` with `takeUntil(this.destroy$)` - use `this.untilDestroyed()` instead
-- Direct `HttpClient` injection - extend `PlatformApiService` instead
-- `extends Platform*Component` directly - use `AppBase*Component` classes
-- Template elements without BEM classes - all elements MUST have BEM classes (`block__element --modifier`, space-separated)
+Before claiming ANY task complete, you MUST verify:
 
-### Business Feature Documentation (26 Sections Required)
+- [ ] **Files Modified** - Re-read specific lines that were changed (never trust memory)
+- [ ] **Commands Run** - Captured actual output (build, test, lint commands)
+- [ ] **Tests Passed** - Verified test success with concrete output
+- [ ] **No Errors** - Checked get_errors tool for compilation/lint errors
+- [ ] **Filesystem Verified** - Used file_search/grep_search to confirm file existence/changes
+- [ ] **Pattern Followed** - Compared implementation with existing similar code
 
-When creating/updating files in `docs/business-features/**`:
+**Research Impact:** 85% first-attempt success vs 40% without verification | 87% reduction in hallucination incidents
 
-1. **MUST** run `/business-feature-docs` skill first
-2. **MUST** read template: `docs/templates/detailed-feature-docs-template.md`
-3. **MUST** reference: `docs/features/README.ExampleFeature1.md`
-4. **MUST** include all 26 sections in correct order
-5. **MUST** include Quick Navigation table with Audience column
-6. **MUST** use TC-{MOD}-XXX format for test cases with GIVEN/WHEN/THEN
+### Anti-Hallucination Protocol
 
-### Changelog & Release Notes (IMPORTANT)
+**NEVER:**
 
-The workspace has two complementary tools for changelog management:
+- Say "file doesn't exist" without running file_search/grep_search first
+- Claim "tests pass" without actual test execution output
+- Claim "changes applied" without re-reading the modified lines
+- Assume file location - always search first
+- Trust memory over tools - always verify with read_file
 
-| Tool                 | Purpose                     | When to Use                     | Command                                                      | Output                      |
-| -------------------- | --------------------------- | ------------------------------- | ------------------------------------------------------------ | --------------------------- |
-| **changelog-update** | Manual CHANGELOG.md updates | During development (PR/feature) | GitHub Copilot Chat: "@workspace use changelog-update skill" | `CHANGELOG.md` [Unreleased] |
-| **release-notes**    | Automated release notes     | Release time (v1.x.x)           | GitHub Copilot Chat: "@workspace use release-notes skill"    | `docs/release-notes/*.md`   |
+**ALWAYS:**
 
-**Use changelog-update When:**
+- Provide evidence: file paths with line numbers, command output, test results
+- Re-read files after modification to confirm changes
+- Use tools to verify claims (file_search, grep_search, read_file, get_errors)
+- State "Let me verify..." before making claims about filesystem/code state
 
-- During development: Document feature/fix for users before PR/merge
-- PR preparation: Add business-focused entry to CHANGELOG.md
-- Manual documentation: When commits don't capture full business impact
+---
 
-**Use release-notes When:**
+## Context Gathering Strategy (Research-Backed)
 
-- At release time: Creating official release documentation
-- Automated release: Generating technical changelog from conventional commits
+### 4-Step Systematic Approach
 
-**Templates:**
-
-- Changelog template: `docs/templates/changelog-entry-template.md`
-- Keep a Changelog format: `.claude/skills/changelog-update/references/keep-a-changelog-format.md`
-
-### Example Interaction
-
-**User:** "Add a dark mode toggle to the settings page"
-
-**Copilot Response:**
+**Step 1: Search for Patterns**
 
 ```
-Detected: **Feature Implementation** workflow. Following: /plan → /cook → /test → /code-review → /docs-update → /watzup
-
-Proceed with this workflow? (yes/no/quick)
+- Use semantic_search for conceptual/feature-based search
+- Use grep_search for exact string/class name matching
+- Use file_search for filename patterns
 ```
 
-**User:** "yes"
-
-**Copilot:** _Reads and executes `.github/prompts/plan.prompt.md` first, then `cook.prompt.md`, then `test.prompt.md`, etc._
-
-## Context Gathering Strategy (MANDATORY)
-
-> **Research-Backed Pattern**: Studies show 85% first-attempt success when context is gathered systematically vs 40% with direct implementation.
-
-### Before ANY Implementation
-
-**Step 1: Search for Existing Patterns** (2-3 minutes)
-
-```typescript
-// Use semantic_search to find similar implementations
-1. Search for feature/pattern keywords: "user authentication", "payment processing"
-2. Read top 3-5 results to understand established patterns
-3. Note common approaches, naming conventions, architectural decisions
-```
-
-**Step 2: Identify Files to Modify** (1-2 minutes)
-
-```typescript
-// Use grep_search or file_search to locate relevant files
-1. Search for class/function/variable names related to task
-2. Use path patterns: "**/*Command*.cs", "**/*.component.ts"
-3. Create list of files to read/modify with priority (HIGH/MEDIUM/LOW)
-```
-
-**Step 3: Read Context in Parallel** (3-5 minutes)
-
-```typescript
-// Read multiple related files simultaneously
-1. Batch read_file calls for independent files (entity + DTO + command)
-2. Read entire methods/classes, not just snippets
-3. Understand data flow: Entity → Command → Handler → Event Handler
-```
-
-**Step 4: Verify Understanding** (1 minute)
-
-```typescript
-// Confirm patterns before implementation
-1. List discovered patterns in brief summary
-2. Identify which layer logic belongs (Entity > Service > Component)
-3. Note any platform abstractions to reuse
-```
-
-### When to Use Scout → Investigate Workflow
-
-Use this for **complex or unfamiliar features** requiring deep analysis:
-
-**Triggers**:
-
-- User asks "how does [feature] work?"
-- Refactoring code you haven't seen before
-- Cross-service integration (message bus, multiple microservices)
-- Performance optimization (need to understand data flow)
-- Bug fix in unfamiliar codebase area
-
-**Benefits**:
-
-- External memory preserves analysis (`.ai/workspace/analysis/`)
-- Knowledge graph with 15+ fields per file
-- Evidence-based findings (line numbers, code snippets)
-- Prevents hallucination with verification checklist
-
-**Process**:
-
-1. Scout finds relevant files (priority-categorized)
-2. Investigate builds knowledge graph with detailed analysis
-3. Analysis saved to external memory for reference
-4. Proceed to Plan/Fix/Refactor with full context
-
-### Parallel Context Gathering Example
-
-```typescript
-// ✅ CORRECT: Read related files in parallel
-await Promise.all([
-    read_file('Employee.cs', 1, 200),
-    read_file('EmployeeDto.cs', 1, 100),
-    read_file('SaveEmployeeCommand.cs', 1, 150),
-    read_file('EmployeeRepository.cs', 1, 100)
-]);
-
-// ❌ WRONG: Sequential reads waste time
-await read_file('Employee.cs', 1, 200);
-await read_file('EmployeeDto.cs', 1, 100); // Should be parallel
-await read_file('SaveEmployeeCommand.cs', 1, 150);
-```
-
-### Context Gathering Anti-Patterns
-
-❌ **Skip Research** - Implement without checking existing patterns → Code duplication
-❌ **Assume Structure** - Guess file locations without searching → Wrong assumptions
-❌ **Partial Reading** - Read only snippets, miss critical context → Incomplete understanding
-❌ **Sequential Reads** - Read files one-by-one when independent → Wastes time
-❌ **No Verification** - Proceed without confirming understanding → Wrong approach
-
-## Architecture Overview
+**Step 2: Identify Files to Modify**
 
 ```
-src/Platform/              # Easy.Platform framework components
-src/Backend/    # Example microservices (TextSnippet)
-src/Frontend/ # Angular 19 apps (playground-text-snippet)
-docs/design-system/        # Frontend design system documentation
+- List all relevant files with line number ranges
+- Categorize by layer (Domain, Application, Persistence, Api)
+- Identify dependencies and integration points
 ```
 
-## Project Structure
-
-### Backend
+**Step 3: Read Context in Parallel**
 
 ```
-src/Platform/                    # Easy.Platform framework
-├── Easy.Platform/               # Core (CQRS, validation, repositories)
-├── Easy.Platform.AspNetCore/    # ASP.NET Core integration
-├── Easy.Platform.MongoDB/       # MongoDB patterns
-├── Easy.Platform.RabbitMQ/      # Message bus
-└── Easy.Platform.*/             # Other modules
+# EFFICIENT: Parallel reads when files are independent
+read_file(CommandA.cs, 1, 100)
+read_file(CommandB.cs, 1, 100)
+read_file(CommandC.cs, 1, 100)
 
-src/Backend/          # Example microservice
-├── *.Api/                       # Web API layer
-├── *.Application/               # CQRS handlers, jobs, events
-├── *.Domain/                    # Entities, domain events
-├── *.Persistence*/              # Database implementations
-└── *.Shared/                    # Cross-service utilities
+# INEFFICIENT: Sequential reads when could be parallel
+read CommandA → analyze → read CommandB → analyze → read CommandC
 ```
 
-### Frontend
+**Step 4: Verify Understanding Before Implementation**
 
 ```
-src/Frontend/       # Angular 19 Nx workspace
-├── apps/
-│   └── playground-text-snippet/ # Example app
-└── libs/
-    ├── platform-core/           # Base classes, utilities
-    ├── apps-domains/            # Business domain code
-    ├── share-styles/            # SCSS themes
-    └── share-assets/            # Static assets
+- Confirm pattern consistency across discovered examples
+- Identify which pattern to follow (newest, most common, or specified)
+- Document assumptions before coding
 ```
 
-## Documentation Index
+**When to Use Scout -> Investigate Workflow:**
 
-### Rule Files (docs/claude/)
+- Unfamiliar feature domain (never worked on this module)
+- Complex refactoring (cross-service, breaking changes)
+- Bug investigation (need to trace execution flow)
+- Cross-cutting concerns (affects multiple services)
 
-| File                                                                                          | Purpose                                            |
-| --------------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| [README.md](../docs/claude/README.md)                                                         | Documentation index & navigation guide             |
-| [claude-kit-setup.md](../docs/claude/claude-kit-setup.md)                                     | Claude Kit (ACE, hooks, skills, agents, workflows) |
-| [architecture.md](../docs/claude/architecture.md)                                             | System architecture & planning protocol            |
-| [troubleshooting.md](../docs/claude/troubleshooting.md)                                       | Investigation protocol & common issues             |
-| [backend-patterns.md](../docs/claude/backend-patterns.md)                                     | Backend patterns (CQRS, Repository, etc.)          |
-| [backend-csharp-complete-guide.md](../docs/claude/backend-csharp-complete-guide.md)           | Comprehensive C# backend reference                 |
-| [frontend-patterns.md](../docs/claude/frontend-patterns.md)                                   | Angular/platform-core patterns                     |
-| [frontend-typescript-complete-guide.md](../docs/claude/frontend-typescript-complete-guide.md) | Comprehensive Angular/TS frontend reference        |
-| [scss-styling-guide.md](../docs/claude/scss-styling-guide.md)                                 | SCSS/CSS styling rules, BEM methodology            |
-| [authorization-patterns.md](../docs/claude/authorization-patterns.md)                         | Security and migration patterns                    |
-| [decision-trees.md](../docs/claude/decision-trees.md)                                         | Quick decision guides and templates                |
-| [advanced-patterns.md](../docs/claude/advanced-patterns.md)                                   | Advanced techniques and anti-patterns              |
-| [clean-code-rules.md](../docs/claude/clean-code-rules.md)                                     | Universal coding standards                         |
+**Research Impact:** 85% success with systematic context gathering vs 40% with direct implementation
 
-## Essential Documentation
+---
 
-| Document                           | Purpose                           |
-| ---------------------------------- | --------------------------------- |
-| `README.md`                        | Platform overview & quick start   |
-| `docs/architecture-overview.md`    | System architecture & diagrams    |
-| **`docs/BUSINESS-FEATURES.md`**    | **Business modules master index** |
-| `CLEAN-CODE-RULES.md`              | Coding standards & anti-patterns  |
-| `.github/AI-DEBUGGING-PROTOCOL.md` | Debugging protocol for AI agents  |
+## Automatic Skill Activation (MANDATORY)
 
-> **Business Documentation:** For detailed business module documentation (requirements, workflows, APIs, test specs), navigate to `docs/business-features/` directory. Use `docs/BUSINESS-FEATURES.md` as the master index listing all modules.
+When working in specific areas, these skills MUST be automatically activated BEFORE any file creation or modification:
 
-## How This Documentation Works
+### Path-Based Skill Activation
 
-**Documentation Architecture:**
+| Path Pattern                          | Skill                          | Pre-Read Files                      |
+| ------------------------------------- | ------------------------------ | ----------------------------------- |
+| `docs/business-features/**`           | `business-feature-docs`        | Template + Reference                |
+| `src/Backend/**/*Command*.cs`         | `easyplatform-backend`         | CQRS patterns reference             |
+| `src/Frontend/**/*.component.ts`      | `frontend-angular-component`   | Component base class                |
+| `src/Frontend/**/*.store.ts`          | `frontend-angular-store`       | Store patterns                      |
+| `src/Frontend/**/*-form.component.ts` | `frontend-angular-form`        | Form patterns                       |
+| `src/Frontend/**/*-api.service.ts`    | `frontend-angular-api-service` | API service patterns                |
+| `src/Frontend/**/*.component.scss`    | Read SCSS guide                | `docs/claude/scss-styling-guide.md` |
+| `docs/design-system/**`               | `ui-ux-designer`               | Design tokens file                  |
 
-- **This file (`copilot-instructions.md`)**: Quick reference, core principles, decision trees
-- **`.github/instructions/`**: Deep dive patterns (auto-loaded based on file paths via `applyTo`)
-- **`.github/prompts/`**: Task-specific prompts (plan, fix, scout, brainstorm, investigate)
-- **`.github/skills/`**: Universal skills (auto-activated based on context)
-- **`.github/AGENTS.md`**: 17 specialized agent roles with decision tree
-- **`docs/claude/`**: Domain-specific pattern deep dives (Memory Bank)
-- **Design system docs**: `docs/design-system/`, platform-specific UI patterns
-- **Framework docs**: `docs/architecture-overview.md`, system architecture
+### Activation Protocol
 
-**Universal Skills (`.github/skills/`):**
+Before creating or modifying files matching these patterns, you MUST:
 
-| Skill                  | Purpose                                                        |
-| ---------------------- | -------------------------------------------------------------- |
-| `debugging`            | Systematic 4-phase debugging framework with root cause tracing |
-| `frontend-design`      | Production-grade UI with design extraction from screenshots    |
-| `backend-development`  | Node.js/Python/Go/Rust APIs, OWASP security, testing           |
-| `devops`               | Cloudflare Workers, Docker, GCP deployment                     |
-| `databases`            | MongoDB and PostgreSQL unified guide                           |
-| `mcp-builder`          | Build MCP servers for LLM integrations                         |
-| `context-optimization` | Token management and context compression                       |
-| `media-processing`     | FFmpeg, ImageMagick, background removal                        |
+1. **Activate the skill** - Reference the appropriate skill documentation
+2. **Read reference files** - Template + existing example in same folder
+3. **Follow skill workflow** - Apply all skill-specific rules
 
-## Memory Bank (Persistent Context)
+---
+
+## Investigation Workflow (Enhanced)
+
+The `/scout` -> `/investigate` workflow supports **structured knowledge model construction**:
+
+**Scout Phase:** Priority-based file categorization (HIGH/MEDIUM/LOW), cross-service message bus analysis, structured output with suggested starting points.
+
+**Investigate Phase:** External memory at `.ai/workspace/analysis/[feature]-investigation.md`, knowledge graph with 15+ fields per file, progress tracking with todo management.
+
+| Priority | File Types                                                                                   |
+| -------- | -------------------------------------------------------------------------------------------- |
+| HIGH     | Domain Entities, Commands, Queries, Event Handlers, Controllers, Jobs, Consumers, Components |
+| MEDIUM   | Services, Helpers, DTOs, Repositories                                                        |
+| LOW      | Tests, Config                                                                                |
+
+---
+
+## Memory Bank (Copilot @workspace References)
 
 **Use @workspace to reference these key files for deep domain knowledge:**
 
@@ -506,69 +329,17 @@ src/Frontend/       # Angular 19 Nx workspace
 | Advanced fluent helpers & utilities           | `@workspace docs/claude/advanced-patterns.md` |
 | What NOT to do                                | `@workspace docs/claude/advanced-patterns.md` |
 | Debugging & troubleshooting                   | `@workspace docs/claude/troubleshooting.md`   |
-| Agent roles & when to use them                | `@workspace .github/AGENTS.md`                |
 | System architecture                           | `@workspace docs/architecture-overview.md`    |
 
 **When to load Memory Bank context:**
 
-- Starting complex multi-file tasks → Load architecture.md
-- Backend development → Load backend-patterns.md
-- Frontend development → Load frontend-patterns.md
-- Code review → Load advanced-patterns.md
-- Debugging → Load troubleshooting.md
-- Planning which agent to use → Load AGENTS.md
+- Starting complex multi-file tasks -> Load architecture.md
+- Backend development -> Load backend-patterns.md
+- Frontend development -> Load frontend-patterns.md
+- Code review -> Load advanced-patterns.md
+- Debugging -> Load troubleshooting.md
 
-**How AI Agents Use This:**
-
-When you ask me to code/debug/analyze, I automatically:
-
-1. **Always load** this file for core principles and decision trees
-2. **Auto-load** relevant instruction files from `.github/instructions/` based on file paths being modified
-3. **Invoke skills** from `.claude/skills/` for complex tasks (debugging, feature planning, testing)
-4. **Read design docs** when working on UI components
-5. **Search codebase** for existing patterns before implementing
-
-Example: When you ask me to "add a CQRS command to save employee data", I:
-
-- Read this file → See "Use CQRS pattern, microservice-specific repository"
-- Auto-load `backend-dotnet.instructions.md` (applies to `*.cs` files)
-- Auto-load `cqrs-patterns.instructions.md` (applies to `*Command*.cs`)
-- Search for existing `SaveEmployee*Command.cs` patterns
-- Implement following discovered patterns
-
-**You don't need to tell me which files to read - the system loads them automatically based on context.**
-
-## Detailed Pattern Instructions
-
-See `.github/instructions/` for path-specific detailed patterns:
-
-| Topic                 | Instruction File                        | Applies To             |
-| --------------------- | --------------------------------------- | ---------------------- |
-| .NET Backend          | `backend-dotnet.instructions.md`        | `src/Backend/**/*.cs`  |
-| Angular Frontend      | `frontend-angular.instructions.md`      | `src/Frontend/**/*.ts` |
-| CQRS Patterns         | `cqrs-patterns.instructions.md`         | Commands/Queries       |
-| Validation            | `validation.instructions.md`            | All validation logic   |
-| Entity Development    | `entity-development.instructions.md`    | Domain entities        |
-| Entity Events         | `entity-events.instructions.md`         | Side effects           |
-| Repository            | `repository.instructions.md`            | Data access            |
-| Message Bus           | `message-bus.instructions.md`           | Cross-service sync     |
-| Background Jobs       | `background-jobs.instructions.md`       | Scheduled tasks        |
-| Migrations            | `migrations.instructions.md`            | Data/schema migrations |
-| Performance           | `performance.instructions.md`           | Optimization           |
-| Security              | `security.instructions.md`              | Auth, permissions      |
-| Testing               | `testing.instructions.md`               | Test patterns          |
-| Clean Code            | `clean-code.instructions.md`            | All code               |
-| Bug Investigation     | `bug-investigation.instructions.md`     | Debugging              |
-| Feature Investigation | `feature-investigation.instructions.md` | Code exploration       |
-
-## Frontend Design System
-
-**Read design system docs before UI work:**
-
-| Application       | Location                                                        |
-| ----------------- | --------------------------------------------------------------- |
-| WebV2 Apps        | `docs/design-system/`                                           |
-| TextSnippetClient | `src/Frontend/apps/playground-text-snippet/docs/design-system/` |
+---
 
 ## Task Decomposition Best Practices
 
@@ -579,9 +350,8 @@ See `.github/instructions/` for path-specific detailed patterns:
 **ALWAYS create todos for**:
 
 - Features requiring changes in 3+ files
-- Bug fixes needing investigation → plan → fix → test
+- Bug fixes needing investigation -> plan -> fix -> test
 - Refactoring affecting multiple layers
-- Any task estimated >15 minutes
 - Multi-step workflows (feature, bugfix, documentation)
 
 **SKIP todos for**:
@@ -592,49 +362,28 @@ See `.github/instructions/` for path-specific detailed patterns:
 
 ### Todo Granularity Guidelines
 
-**✅ Good Todo Size** (actionable, verifiable):
+**Good Todo Size** (actionable, verifiable):
 
 ```
-- [ ] Read Employee entity to understand validation rules
-- [ ] Create SaveEmployeeCommand in UseCaseCommands/Employee/
+- [ ] Read TextSnippet entity to understand validation rules
+- [ ] Create SaveTextSnippetCommand in UseCaseCommands/TextSnippet/
 - [ ] Implement command handler with repository call
-- [ ] Add EmployeeCreatedEvent handler for notification
-- [ ] Write unit tests for SaveEmployeeCommand validation
+- [ ] Add TextSnippetCreatedEvent handler for notification
+- [ ] Write unit tests for SaveTextSnippetCommand validation
 - [ ] Run tests and verify all pass
 ```
 
-**❌ Too Vague** (not actionable):
+**Too Vague** (not actionable):
 
 ```
-- [ ] Implement employee feature
+- [ ] Implement feature
 - [ ] Fix bugs
 - [ ] Update documentation
 ```
 
-**❌ Too Granular** (micro-management):
+### Todo Templates for Common Tasks
 
-```
-- [ ] Open Employee.cs
-- [ ] Add using statement
-- [ ] Type public class
-- [ ] Add property Name
-```
-
-### Todo State Management
-
-**Use manage_todo_list tool with proper state transitions**:
-
-1. **Planning Phase**: Create all todos with status="not-started"
-2. **Execution Phase**:
-    - Mark ONE todo as "in-progress" before starting
-    - Complete the work
-    - Mark as "completed" immediately after verification
-    - Move to next todo
-3. **Never batch completions** - mark each done individually
-
-### Todo Template for Common Tasks
-
-**Feature Implementation**:
+**Feature Implementation:**
 
 ```markdown
 - [ ] Scout - Find similar implementations (semantic_search)
@@ -652,7 +401,7 @@ See `.github/instructions/` for path-specific detailed patterns:
 - [ ] Update Docs - README or feature docs
 ```
 
-**Bug Fix**:
+**Bug Fix:**
 
 ```markdown
 - [ ] Scout - Find files related to bug
@@ -665,7 +414,7 @@ See `.github/instructions/` for path-specific detailed patterns:
 - [ ] Code Review - Check for side effects
 ```
 
-**Refactoring**:
+**Refactoring:**
 
 ```markdown
 - [ ] Scout - Find all usages of code to refactor
@@ -677,1135 +426,178 @@ See `.github/instructions/` for path-specific detailed patterns:
 - [ ] Performance Check - Compare before/after
 ```
 
-## Quick Decision Trees
+### Todo State Management
 
-**Backend Task:**
+Use `manage_todo_list` with proper state transitions:
 
-- New API endpoint → `PlatformBaseController` + CQRS Command
-- Business logic → Command Handler in Application layer
-- Data access → Microservice-specific repository + extensions
-- Cross-service sync → Entity Event Consumer
-- Scheduled task → `PlatformApplicationBackgroundJob`
-- Migration → `PlatformDataMigrationExecutor` or EF Core
-
-**Frontend Task:**
-
-- Simple display → `AppBaseComponent`
-- Complex state → `AppBaseVmStoreComponent` + `PlatformVmStore`
-- Forms → `AppBaseFormComponent` with validation
-- API calls → Service extending `PlatformApiService`
-
-**Repository Selection:**
-
-- FIRST: Find `I{ServiceName}PlatformRootRepository<TEntity>`
-- Complex queries: Create `RepositoryExtensions` with static expressions
-- Fallback: `IPlatformQueryableRootRepository<TEntity, TKey>`
-
-## Workspace File Access Boundaries (CRITICAL)
-
-**Workspace Root**: All file operations MUST stay within the project workspace root.
-
-### Allowed Operations
-
-- Read/write files within workspace root
-- Create new files in project directories: `src/`, `docs/`, `plans/`, `scripts/`
-- Modify configuration: `.vscode/`, `.github/`, `.claude/`, `.ai/`
-- Edit root-level config files: `*.md`, `*.json`, `*.yml`, `*.yaml`
-
-### Prohibited Operations (NEVER DO)
-
-- Modify files outside workspace root
-- Access parent directories (`../`)
-- Modify sibling repositories or projects
-- Write to system directories
-- Access user home directory files (except through workspace)
-
-### Verification Protocol
-
-Before any file operation:
-
-1. Verify path is within workspace root
-2. Reject paths containing `..` traversal
-3. Confirm path is within allowed directories
-4. If uncertain, ask user for confirmation
-
-### Response to Out-of-Scope Requests
-
-If asked to modify files outside workspace:
-
-1. Refuse the operation
-2. Explain the workspace boundary restriction
-3. Suggest alternative approaches within workspace
+1. **Planning Phase**: Create all todos with status="not-started"
+2. **Execution Phase**:
+    - Mark ONE todo as "in-progress" before starting
+    - Complete the work
+    - Mark as "completed" immediately after verification
+    - Move to next todo
+3. **Never batch completions** - mark each done individually
 
 ---
 
-## Critical Anti-Patterns
+## External Memory Management (CRITICAL for Long Tasks)
 
-**Backend:**
+For long-running tasks (investigation, planning, implementation, debugging), you MUST save progress to external files to prevent context loss during session compaction.
 
-- Direct cross-service database access (use message bus)
-- Custom repository interfaces (use platform repositories + extensions)
-- Manual validation (use `PlatformValidationResult`)
-- Side effects in command handlers (use entity event handlers)
-- DTO mapping in handlers (use `PlatformDto.MapToObject()`)
+### When to Create Checkpoints
 
-**Frontend:**
+| Trigger                    | Action                                      |
+| -------------------------- | ------------------------------------------- |
+| Starting complex task      | Create initial checkpoint with task context |
+| Completing major phase     | Create detailed checkpoint                  |
+| Before expected compaction | Save current analysis state                 |
+| Task completion            | Final checkpoint with summary               |
 
-- Direct `HttpClient` usage (use `PlatformApiService`)
-- Manual state management (use `PlatformVmStore`)
-- Assuming method names without verification (check base class APIs)
-- Skipping `untilDestroyed()` for subscriptions
+### Checkpoint File Location
 
-## Code Responsibility Hierarchy (CRITICAL)
+Save to: `plans/reports/checkpoint-{YYMMDD}-{HHMM}-{slug}.md`
 
-**Place logic in the LOWEST appropriate layer to enable reuse and prevent duplication:**
+### Required Checkpoint Structure
 
-```
-Entity/Model (Lowest)  →  Service  →  Component (Highest)
-```
+```markdown
+# Memory Checkpoint: {Task Description}
 
-| Layer            | Responsibility                                                                                              |
-| ---------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Entity/Model** | Business logic, display helpers, static factory methods, default values, dropdown options, validation rules |
-| **Service**      | API calls, command factories, data transformation                                                           |
-| **Component**    | UI event handling ONLY - delegates all logic to lower layers                                                |
+> Created: {timestamp}
+> Task Type: {investigation|planning|bugfix|feature|docs}
+> Phase: {current phase}
 
-**Anti-Pattern**: Logic in component that should be in model → leads to duplicated code across components.
+## Task Context
 
-```typescript
-// ❌ WRONG: Logic in component
-readonly statusTypes = [{ value: 1, label: 'Active' }, { value: 2, label: 'Inactive' }]; // Duplicated
+{What you're working on and why}
 
-// ✅ CORRECT: Logic in entity/model
-readonly statusTypes = EntityConfiguration.getStatusTypeOptions(); // Single source of truth
-```
+## Key Findings
 
-## Universal Clean Code Rules
+{Critical discoveries - include file paths and line numbers}
 
-- Single Responsibility: One method/class does one thing
-- Consistent abstraction level in methods
-- Reuse code, don't duplicate patterns
-- Meaningful names that explain intent
-- Group parallel operations (no dependencies) together
-- Follow Input → Process → Output pattern
-- Use early validation and guard clauses
-- 90% Logic Rule: Place logic where 90% of it belongs
+## Files Analyzed
 
-## Development Commands
+| File              | Purpose     | Status   |
+| ----------------- | ----------- | -------- |
+| path/file.cs:line | description | done/wip |
 
-```bash
-# Backend
-dotnet build EasyPlatform.sln
-dotnet run --project [ServiceName].Service
+## Progress
 
-# Frontend (WebV2)
-nx serve playground-text-snippet
-nx build playground-text-snippet
-nx test apps-domains
+- [x] Completed items
+- [ ] In-progress items
+- [ ] Remaining items
 
-# Infrastructure
-.\DevStarts\"COMMON Infrastructure Dev-start.cmd"
-.\DevStarts\"COMMON Accounts Api Dev-start.cmd"
+## Important Context
+
+{Decisions, assumptions, rationale that must be preserved}
+
+## Next Steps
+
+1. {Immediate next action}
+2. {Following action}
+
+## Recovery Instructions
+
+{Exact steps to resume: which file to read, which line to continue from}
 ```
 
-## Getting Help
+### Recovery Protocol
 
-1. Study Platform Example: `src/PlatformExampleApp`
-2. Search existing implementations in codebase
-3. Check instruction files in `.github/instructions/`
-4. Review design system documentation
+When resuming after context reset:
+
+1. Search for checkpoints: `plans/reports/checkpoint-*.md`
+2. Read the most recent checkpoint
+3. Load referenced analysis files
+4. Review Progress section
+5. Continue from documented Next Steps
+
+### Related Files
+
+- `.claude/commands/checkpoint.md` - Manual checkpoint command
+- `.claude/skills/memory-management/SKILL.md` - Full memory management skill
 
 ---
 
-## Cross-Platform Shell Commands (CRITICAL)
+## Workspace Boundary Rules (CRITICAL - SECURITY)
 
-**Always use portable shell commands** - This codebase runs on Windows with Git Bash, where Windows commands fail.
+> **All file operations MUST remain within the workspace root.** This prevents accidental modifications to system files, other projects, or sensitive locations.
 
-### Command Translation Table
+**Absolute Rules:**
 
-| Windows          | Portable              | Notes                                         |
-| ---------------- | --------------------- | --------------------------------------------- |
-| `> nul`          | `> /dev/null`         | **CRITICAL: Creates "nul" file in Git Bash!** |
-| `2>nul`          | `2>/dev/null`         | Suppress stderr                               |
-| `dir /b /s path` | `find "path" -type f` | Recursive file list                           |
-| `dir /b path`    | `ls -1 "path"`        | Simple list                                   |
-| `dir path`       | `ls -la "path"`       | Detailed list                                 |
-| `type file`      | `cat file`            | Read file                                     |
-| `copy src dst`   | `cp src dst`          | Copy file                                     |
-| `move src dst`   | `mv src dst`          | Move file                                     |
-| `del file`       | `rm file`             | Delete file                                   |
-| `md path`        | `mkdir -p "path"`     | Create directory                              |
-| `rd /s path`     | `rm -rf path`         | Remove directory                              |
-| `cls`            | `clear`               | Clear screen                                  |
+1. **NEVER** create, edit, or delete files outside the current VS Code workspace
+2. **NEVER** use `../` paths that escape the workspace root
+3. **NEVER** write to system directories (`/etc`, `/usr`, `C:\Windows`, `C:\Program Files`)
+4. **NEVER** modify files in sibling project directories
 
-### Path Format
+**Before ANY File Operation:**
 
-```bash
-# ❌ WRONG - Backslashes fail in Git Bash
-dir /b /s D:\GitSources\Project\.claude\patterns
+1. Verify the target path is within the workspace boundaries
+2. If path contains `..` segments, mentally resolve to absolute path first
+3. If resolved path would be outside workspace, **STOP** and inform user
+4. When uncertain about workspace root, ask user for clarification
 
-# ✅ CORRECT - Forward slashes work everywhere
-find "D:/GitSources/Project/.claude/patterns" -type f
-ls -la "D:/GitSources/Project/.claude/patterns"
-```
+**Allowed:** `src/`, `docs/`, `plans/`, `scripts/`, `.vscode/`, `.github/`, `.claude/`, `.ai/`, root configs
 
-### Why This Matters
-
-Git Bash interprets `dir /b` as: "run `dir` (Unix alias for `ls`) with `/b` as a file path argument" - hence the error `dir: cannot access '/b': No such file or directory`.
+**Prohibited:** Outside workspace root, parent directories (`../`), sibling repos, system directories
 
 ---
 
-# EasyPlatform - Code Pattern Reference
-
-## Backend (C#)
-
-### Entity & Domain
-
-```csharp
-// Entity types
-public class Employee : RootEntity<Employee, string> { }
-public class AuditedEmployee : RootAuditedEntity<AuditedEmployee, string, string> { }
-
-// Field tracking
-[TrackFieldUpdatedDomainEvent]
-public string Name { get; set; } = "";
-
-// Computed property (MUST have empty set)
-[ComputedEntityProperty]
-public string FullName { get => $"{FirstName} {LastName}".Trim(); set { } }
-
-// Navigation Property (for non-EF Core repositories like MongoDB)
-public string DepartmentId { get; set; } = "";
-[PlatformNavigationProperty(nameof(DepartmentId))]  // Auto BsonIgnore for MongoDB, manual JsonIgnore if needed
-public Department? Department { get; set; }
-
-// Static expressions
-public static Expression<Func<Entity, bool>> UniqueExpr(string companyId, string code)
-    => e => e.CompanyId == companyId && e.Code == code;
-
-public static Expression<Func<Entity, bool>> CompositeExpr(string companyId, bool includeInactive = false)
-    => OfCompanyExpr(companyId).AndAlsoIf(!includeInactive, () => e => e.IsActive);
-
-public static Expression<Func<Entity, object?>>[] DefaultFullTextSearchColumns()
-    => [e => e.Name, e => e.Code, e => e.Email];
-```
-
-### Navigation Property Loading
-
-**Two collection patterns supported:**
-
-| Pattern                | Use Case               | Attribute                                         |
-| ---------------------- | ---------------------- | ------------------------------------------------- |
-| **FK List**            | Parent has `List<Id>`  | `ForeignKeyProperty` + `Cardinality = Collection` |
-| **Reverse Navigation** | Child has FK to parent | `ReverseForeignKeyProperty`                       |
-
-```csharp
-// Entity definition with both patterns
-public class Category : RootEntity<Category, string>
-{
-    public string? ParentCategoryId { get; set; }
-
-    // Forward navigation (parent → child)
-    [PlatformNavigationProperty(nameof(ParentCategoryId))]
-    public Category? ParentCategory { get; set; }
-
-    // Reverse navigation (parent ← children)
-    [PlatformNavigationProperty(ReverseForeignKeyProperty = nameof(ParentCategoryId))]
-    public List<Category>? ChildCategories { get; set; }
-}
-
-// For non-EF Core repositories (e.g., MongoDB) - use PlatformNavigationProperty
-// Single entity - forward navigation
-var employee = await repository.GetByIdAsync(id, ct);
-await employee.LoadNavigationAsync(e => e.Department, ct);
-
-// Single entity - reverse navigation
-var category = await repository.GetByIdAsync(id, ct, loadRelatedEntities: c => c.ChildCategories!);
-
-// Reverse navigation with .Where() filter - load only matching children
-var category = await repository.GetByIdAsync(id, ct,
-    loadRelatedEntities: c => c.ChildCategories!.Where(child => child.IsActive));
-
-// Batch loading - single DB call with IN clause for N+1 prevention
-var categories = await repository.GetByIdsAsync(ids, ct,
-    loadRelatedEntities: c => c.ChildCategories!.Where(child => child.IsActive));
-
-// For EF Core repositories - use loadRelatedEntities parameter instead
-await repository.GetByIdAsync(id, ct, loadRelatedEntities: p => p.Department, p => p.Company);
-```
-
-### Repository
-
-```csharp
-// Service-specific repositories (ALWAYS prefer these)
-IPlatformQueryableRootRepository<Employee>  // TextSnippet
-IPlatformQueryableRootRepository<Employee>             // TextSnippet
-IPlatformQueryableRootRepository<Survey>      // TextSnippet
-
-// CRUD operations
-await repository.CreateAsync(entity, ct);
-await repository.UpdateAsync(entity, ct);
-await repository.CreateOrUpdateAsync(entity, ct);
-await repository.DeleteAsync(id, ct);
-await repository.UpdateManyAsync(entities, dismissSendEvent: false, checkDiff: true, ct);
-
-// Query operations
-await repository.GetByIdAsync(id, ct, loadRelatedEntities: p => p.Employee, p => p.Company);
-await repository.FirstOrDefaultAsync(expr, ct);
-await repository.GetAllAsync(expr, ct);
-await repository.GetByIdsAsync(ids, ct);
-await repository.CountAsync(expr, ct);
-await repository.AnyAsync(expr, ct);
-
-// Query builder
-var queryBuilder = repository.GetQueryBuilder((uow, q) => q.Where(...).OrderBy(...));
-
-// Extension pattern
-public static async Task<Employee> GetByEmailAsync(
-    this IPlatformQueryableRootRepository<Employee> repo, string email, CancellationToken ct = default)
-    => await repo.FirstOrDefaultAsync(Employee.ByEmailExpr(email), ct).EnsureFound();
-
-// Projection
-await repo.FirstOrDefaultAsync(q => q.Where(expr).Select(e => e.Id), ct);
-```
-
-### Validation
-
-```csharp
-// Sync validation
-public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
-    => base.Validate()
-        .And(_ => Name.IsNotNullOrEmpty(), "Name required")
-        .And(_ => FromDate <= ToDate, "Invalid range");
-
-// Async validation
-protected override async Task<PlatformValidationResult<TCommand>> ValidateRequestAsync(
-    PlatformValidationResult<TCommand> validation, CancellationToken ct)
-    => await validation
-        .AndAsync(r => repo.GetByIdsAsync(r.Ids, ct).ThenValidateFoundAllAsync(r.Ids, ids => $"Not found: {ids}"))
-        .AndNotAsync(r => repo.AnyAsync(e => e.IsExternal && r.Ids.Contains(e.Id), ct), "External not allowed");
-
-// Chained with Of<>
-return this.Validate(p => p.Id.IsNotNullOrEmpty(), "Id required")
-    .And(p => p.Status != Status.Deleted, "Cannot be deleted")
-    .Of<IPlatformCqrsRequest>();
-
-// Ensure pattern
-await repo.GetByIdAsync(id, ct).EnsureFound($"Not found: {id}").Then(x => x.Validate().EnsureValid());
-```
-
-### CQRS Command (all in one file)
-
-```csharp
-public sealed class SaveEntityCommand : PlatformCqrsCommand<SaveEntityCommandResult>
-{
-    public string Id { get; set; } = "";
-    public string Name { get; set; } = "";
-
-    public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
-        => base.Validate().And(_ => Name.IsNotNullOrEmpty(), "Name required");
-}
-
-public sealed class SaveEntityCommandResult : PlatformCqrsCommandResult
-{
-    public EntityDto Entity { get; set; } = null!;
-}
-
-internal sealed class SaveEntityCommandHandler :
-    PlatformCqrsCommandApplicationHandler<SaveEntityCommand, SaveEntityCommandResult>
-{
-    protected override async Task<SaveEntityCommandResult> HandleAsync(SaveEntityCommand req, CancellationToken ct)
-    {
-        var entity = req.Id.IsNullOrEmpty()
-            ? req.MapToNewEntity().With(e => e.CreatedBy = RequestContext.UserId())
-            : await repository.GetByIdAsync(req.Id, ct).Then(e => req.UpdateEntity(e));
-
-        await entity.ValidateAsync(repository, ct).EnsureValidAsync();
-        await repository.CreateOrUpdateAsync(entity, ct);
-        return new SaveEntityCommandResult { Entity = new EntityDto(entity) };
-    }
-}
-```
-
-### CQRS Query
-
-```csharp
-public sealed class GetEntityListQuery : PlatformCqrsPagedQuery<GetEntityListQueryResult, EntityDto>
-{
-    public List<Status> Statuses { get; set; } = [];
-    public string? SearchText { get; set; }
-}
-
-internal sealed class GetEntityListQueryHandler :
-    PlatformCqrsQueryApplicationHandler<GetEntityListQuery, GetEntityListQueryResult>
-{
-    protected override async Task<GetEntityListQueryResult> HandleAsync(GetEntityListQuery req, CancellationToken ct)
-    {
-        var qb = repository.GetQueryBuilder((uow, q) => q
-            .Where(e => e.CompanyId == RequestContext.CurrentCompanyId())
-            .WhereIf(req.Statuses.Any(), e => req.Statuses.Contains(e.Status))
-            .PipeIf(req.SearchText.IsNotNullOrEmpty(), q => searchService.Search(q, req.SearchText, Entity.SearchColumns())));
-
-        var (total, items) = await (
-            repository.CountAsync((uow, q) => qb(uow, q), ct),
-            repository.GetAllAsync((uow, q) => qb(uow, q).OrderByDescending(e => e.CreatedDate).PageBy(req.SkipCount, req.MaxResultCount), ct)
-        );
-        return new GetEntityListQueryResult(items, total, req);
-    }
-}
-```
-
-### Entity DTO
-
-```csharp
-public class EmployeeDto : PlatformEntityDto<Employee, string>
-{
-    public EmployeeDto() { }
-    public EmployeeDto(Employee e, User? u) : base(e) { FullName = e.FullName ?? u?.FullName ?? ""; }
-
-    public string? Id { get; set; }
-    public string FullName { get; set; } = "";
-    public OrganizationDto? Company { get; set; }
-
-    public EmployeeDto WithCompany(OrganizationalUnit c) { Company = new OrganizationDto(c); return this; }
-
-    protected override object? GetSubmittedId() => Id;
-    protected override string GenerateNewId() => Ulid.NewUlid().ToString();
-    protected override Employee MapToEntity(Employee e, MapToEntityModes mode) { e.FullName = FullName; return e; }
-}
-
-// Value object DTO
-public sealed class ConfigDto : PlatformDto<ConfigValue>
-{
-    public string ClientId { get; set; } = "";
-    public override ConfigValue MapToObject() => new() { ClientId = ClientId };
-}
-```
-
-### Entity Event Handler (side effects)
-
-```csharp
-// Location: UseCaseEvents/[Feature]/[Action]On[Event][Entity]EntityEventHandler.cs
-internal sealed class SendNotificationOnCreateEntityEventHandler
-    : PlatformCqrsEntityEventApplicationHandler<Entity>
-{
-    public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @event)
-        => @event.CrudAction == PlatformCqrsEntityEventCrudAction.Created;
-
-    protected override async Task HandleAsync(PlatformCqrsEntityEvent<Entity> @event, CancellationToken ct)
-        => await notificationService.SendAsync(@event.EntityData);
-}
-```
-
-### Cross-Service Communication
-
-```csharp
-// Entity Event Bus Producer (auto-publishes on entity changes)
-public class EmployeeEntityEventBusMessageProducer :
-    PlatformCqrsEntityEventBusMessageProducer<EmployeeEntityEventBusMessage, Employee, string> { }
-```
-
-### Message Bus Consumer
-
-```csharp
-internal sealed class UpsertEntityConsumer : PlatformApplicationMessageBusConsumer<EntityEventBusMessage>
-{
-    public override async Task<bool> HandleWhen(EntityEventBusMessage msg, string routingKey) => true;
-
-    public override async Task HandleLogicAsync(EntityEventBusMessage msg, string routingKey)
-    {
-        var (companyMissing, _) = await (
-            Util.TaskRunner.TryWaitUntilAsync(() => companyRepo.AnyAsync(c => c.Id == msg.Payload.EntityData.CompanyId), maxWaitSeconds: 300).Then(p => !p),
-            Util.TaskRunner.TryWaitUntilAsync(() => userRepo.AnyAsync(u => u.Id == msg.Payload.EntityData.UserId), maxWaitSeconds: 300).Then(p => !p)
-        );
-        if (companyMissing) return;
-
-        var existing = await repository.FirstOrDefaultAsync(e => e.Id == msg.Payload.EntityData.Id);
-        if (existing == null)
-            await repository.CreateAsync(msg.Payload.EntityData.ToEntity().With(e => e.LastMessageSyncDate = msg.CreatedUtcDate));
-        else if (existing.LastMessageSyncDate <= msg.CreatedUtcDate)
-            await repository.UpdateAsync(msg.Payload.EntityData.UpdateEntity(existing).With(e => e.LastMessageSyncDate = msg.CreatedUtcDate));
-    }
-}
-```
-
-### Background Jobs
-
-```csharp
-// Paged job
-[PlatformRecurringJob("0 3 * * *")]
-public sealed class SimpleJob : PlatformApplicationPagedBackgroundJobExecutor
-{
-    protected override int PageSize => 50;
-    protected override async Task ProcessPagedAsync(int? skip, int? take, object? param, IServiceProvider sp, IPlatformUnitOfWorkManager uow)
-        => await repository.GetAllAsync(q => QueryBuilder(q).PageBy(skip, take)).Then(items => items.ParallelAsync(ProcessItem));
-    protected override async Task<int> MaxItemsCount(PlatformApplicationPagedBackgroundJobParam<object?> param)
-        => await repository.CountAsync(q => QueryBuilder(q));
-}
-
-// Batch scrolling job
-[PlatformRecurringJob("0 0 * * *")]
-public sealed class BatchJob : PlatformApplicationBatchScrollingBackgroundJobExecutor<Entity, string>
-{
-    protected override int BatchKeyPageSize => 50;
-    protected override int BatchPageSize => 25;
-    protected override IQueryable<Entity> EntitiesQueryBuilder(IQueryable<Entity> q, object? param, string? batchKey = null)
-        => q.Where(BaseFilter()).WhereIf(batchKey != null, e => e.CompanyId == batchKey);
-    protected override IQueryable<string> EntitiesBatchKeyQueryBuilder(IQueryable<Entity> q, object? param, string? batchKey = null)
-        => EntitiesQueryBuilder(q, param, batchKey).Select(e => e.CompanyId).Distinct();
-    protected override async Task ProcessEntitiesAsync(List<Entity> entities, string batchKey, object? param, IServiceProvider sp)
-        => await entities.ParallelAsync(e => ProcessEntity(e), maxConcurrent: 1);
-}
-
-// Cron examples
-[PlatformRecurringJob("0 0 * * *")]              // Daily midnight
-[PlatformRecurringJob("*/5 * * * *")]            // Every 5 min
-[PlatformRecurringJob("5 0 * * *", executeOnStartUp: true)]  // Daily + startup
-```
-
-### Data Migration
-
-```csharp
-// EF Core migration
-public partial class AddEmployeeFields : Migration
-{
-    protected override void Up(MigrationBuilder mb) { mb.AddColumn<string>("Department", "Employees"); }
-}
-// Commands: dotnet ef migrations add Name | dotnet ef database update
-
-// MongoDB/Platform migration (SQL Server/PostgreSQL)
-public class MigrateData : PlatformDataMigrationExecutor<DbContext>
-{
-    public override string Name => "20251022000000_MigrateData";
-    public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 22);
-    public override bool AllowRunInBackgroundThread => true;
-
-    public override async Task Execute(DbContext dbContext)
-    {
-        await RootServiceProvider.ExecuteInjectScopedPagingAsync(
-            maxItemCount: await repository.CountAsync(q => q.Where(FilterExpr())),
-            pageSize: 200,
-            async (skip, take, repo, uow) => {
-                using var unit = uow.Begin();
-                var items = await repo.GetAllAsync(q => q.OrderBy(e => e.Id).Skip(skip).Take(take));
-                await repo.UpdateManyAsync(items, dismissSendEvent: true, checkDiff: false);
-                await unit.CompleteAsync();
-                return items;
-            });
-    }
-}
-
-// MongoDB migration (for MongoDB databases)
-internal sealed class EnsureIndexesMigration : PlatformMongoMigrationExecutor<ServiceDbContext>
-{
-    public override string Name => "20250130000000_EnsureIndexes";
-    public override DateTime? OnlyForDbInitBeforeDate => new(2025, 01, 30);
-    public override DateTime? ExpirationDate => new(2026, 01, 01); // Optional: auto-delete after date
-
-    public override async Task Execute(ServiceDbContext dbContext)
-    {
-        await dbContext.EnsureInboxBusMessageCollectionIndexesAsync(true);
-        await dbContext.EnsureOutboxBusMessageCollectionIndexesAsync(true);
-        // Or custom index creation
-        // await dbContext.GetCollection<Entity>().Indexes.CreateOneAsync(...);
-    }
-}
-```
-
-### Multi-Database Support
-
-```csharp
-// Entity Framework Core (SQL Server/PostgreSQL)
-public class MyEfCorePersistenceModule : PlatformEfCorePersistenceModule<MyDbContext>
-{
-    protected override Action<DbContextOptionsBuilder> DbContextOptionsBuilderActionProvider(IServiceProvider sp)
-        => options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection"));
-}
-
-// MongoDB
-public class MyMongoPersistenceModule : PlatformMongoDbPersistenceModule<MyDbContext>
-{
-    protected override void ConfigureMongoOptions(PlatformMongoOptions<MyDbContext> options)
-    {
-        options.ConnectionString = Configuration.GetSection("MongoDB:ConnectionString").Value;
-        options.Database = Configuration.GetSection("MongoDB:Database").Value;
-    }
-}
-```
-
-### Fluent Helpers
-
-```csharp
-// Mutation & transformation
-await repo.GetByIdAsync(id).With(e => e.Name = newName).WithIf(cond, e => e.Status = Active);
-await repo.GetByIdAsync(id).Then(e => e.Process()).ThenAsync(e => e.ValidateAsync(svc, ct));
-await repo.GetByIdAsync(id).EnsureFound($"Not found: {id}");
-await repo.GetByIdsAsync(ids, ct).EnsureFoundAllBy(x => x.Id, ids);
-
-// Expression composition
-Entity.OfCompanyExpr(companyId).AndAlso(StatusExpr(statuses)).AndAlsoIf(deptIds.Any(), () => DeptExpr(deptIds));
-
-// Parallel operations
-var (entity, files) = await (repo.CreateOrUpdateAsync(entity, ct), files.ParallelAsync(f => fileService.UploadAsync(f, ct)));
-var ids = await repo.GetByIdsAsync(ids, ct).ThenSelect(e => e.Id);
-await items.ParallelAsync(item => ProcessAsync(item, ct), maxConcurrent: 10);
-
-// Conditional actions
-await repo.GetByIdAsync(id).PipeActionIf(cond, e => e.Update()).PipeActionAsyncIf(() => svc.Any(), e => e.Sync());
-
-// Task extensions
-task.WaitResult();
-await target.WaitUntilGetValidResultAsync(t => repo.GetByIdAsync(t.Id), r => r != null, maxWaitSeconds: 30);
-```
-
-### Authorization & Controller
-
-```csharp
-[ApiController]
-[Route("api/[controller]")]
-public class EmployeeController : PlatformBaseController
-{
-    [PlatformAuthorize(PlatformRoles.Admin, PlatformRoles.Manager)]
-    [HttpPost]
-    public async Task<IActionResult> Save([FromBody] SaveCommand cmd) => Ok(await Cqrs.SendAsync(cmd));
-}
-
-// Entity-level filter
-public static Expression<Func<Employee, bool>> UserCanAccessExpr(string userId, string companyId)
-    => e => e.UserId == userId || (e.CompanyId == companyId && e.IsPublic);
-```
-
-### Helper vs Util
-
-```csharp
-// Helper (with dependencies)
-public class EmployeeHelper : IPlatformHelper
-{
-    private readonly IPlatformApplicationRequestContext requestContext;
-    public EmployeeHelper(IPlatformApplicationRequestContextAccessor accessor) { requestContext = accessor.Current; }
-    public async Task<Employee> GetOrCreateAsync(string userId, string companyId, CancellationToken ct)
-        => await repo.FirstOrDefaultAsync(Employee.UniqueExpr(userId, companyId), ct) ?? await CreateAsync(userId, companyId, ct);
-}
-
-// Util (pure functions)
-public static class EmployeeUtil
-{
-    public static string GetFullName(Employee e) => $"{e.FirstName} {e.LastName}".Trim();
-    public static bool IsActive(Employee e) => e.Status == Active && !e.TerminationDate.HasValue;
-}
-```
-
-### Request Context
-
-```csharp
-RequestContext.CurrentCompanyId() / .UserId() / .ProductScope()
-await RequestContext.CurrentEmployee()
-RequestContext.HasRequestAdminRoleInCompany()
-```
-
-### List Extensions
-
-```csharp
-.IsNullOrEmpty() / .IsNotNullOrEmpty()
-.RemoveWhere(predicate, out removedItems)
-.UpsertBy(keySelector, items, updateFn)
-.ReplaceBy(keySelector, newItems, updateFn)
-.SelectList(selector)  // Select().ToList()
-.ThenSelect(selector)  // For Task<List<T>>
-.ForEachAsync(action, maxConcurrent)
-.AddDistinct(item, keySelector)
-```
-
-### Advanced Patterns
-
-```csharp
-// Object deep comparison (change detection)
-if (propertyInfo.GetValue(entity).IsValuesDifferent(propertyInfo.GetValue(existingEntity)))
-    entity.AddFieldUpdatedEvent(propertyInfo, oldValue, newValue);
-
-// Domain Service (Strategy pattern)
-public static class PermissionService {
-    private static readonly Dictionary<string, IRoleBasedPermissionCheckHandler> RoleHandlers = ...;
-    public static Expression<Func<Employee, bool>> GetCanManageEmployeesExpr(IList<string> roles)
-        => roles.Aggregate(e => false, (expr, role) => expr.OrElse(RoleHandlers[role].GetExpr()));
-}
-
-// Background Job Coordination (Master schedules child jobs)
-await companies.ParallelAsync(async companyId =>
-    await DateRangeBuilder.BuildDateRange(start, end).ParallelAsync(date =>
-        BackgroundJobScheduler.Schedule<ChildJob, Param>(Clock.UtcNow, new Param { CompanyId = companyId, Date = date })));
-```
+## Frontend Design System
+
+| Application       | Location                                                        |
+| ----------------- | --------------------------------------------------------------- |
+| WebV2 Apps        | `docs/design-system/`                                           |
+| TextSnippetClient | `src/Frontend/apps/playground-text-snippet/docs/design-system/` |
 
 ---
 
-## Frontend (TypeScript)
+## Debugging Protocol
 
-### Component Hierarchy
+When debugging or analyzing code removal, follow [AI-DEBUGGING-PROTOCOL.md](.github/AI-DEBUGGING-PROTOCOL.md):
 
-```typescript
-PlatformComponent → PlatformVmComponent → PlatformFormComponent
-                  → PlatformVmStoreComponent
+- Never assume based on first glance
+- Verify with multiple search patterns
+- Check both static AND dynamic code usage
+- Read actual implementations, not just interfaces
+- Declare confidence level (<90% = ask user)
 
-AppBaseComponent → AppBaseVmComponent → AppBaseFormComponent
-                 → AppBaseVmStoreComponent
-```
+### Quick Verification Checklist
 
-## Component HTML Template Standard (BEM Classes)
+Before removing/changing ANY code:
 
-**All UI elements in component templates MUST have BEM classes, even without styling needs.** This makes HTML self-documenting like OOP class hierarchy.
-
-```html
-<!-- ✅ CORRECT: All elements have BEM classes for structure clarity -->
-<div class="user-card">
-    <div class="user-card__header">
-        <img class="user-card__avatar" [src]="user.avatar" />
-        <span class="user-card__name">{{ user.name }}</span>
-    </div>
-    <div class="user-card__body">
-        <p class="user-card__description">{{ user.bio }}</p>
-        <div class="user-card__actions">
-            <button class="user-card__btn --primary">Edit</button>
-        </div>
-    </div>
-</div>
-
-<!-- ❌ WRONG: Elements without classes - harder to understand structure -->
-<div class="user-card">
-    <div>
-        <img [src]="user.avatar" />
-        <span>{{ user.name }}</span>
-    </div>
-    <div>
-        <p>{{ user.bio }}</p>
-        <div>
-            <button>Edit</button>
-        </div>
-    </div>
-</div>
-```
-
-**BEM Naming Convention:**
-
-- **Block**: Component name (e.g., `user-card`)
-- **Element**: Child using `block__element` (e.g., `user-card__header`)
-- **Modifier**: Separate class with `--` prefix (e.g., `user-card__btn --primary --large`)
-
-## Component SCSS Standard
-
-Always style both the **host element** (Angular selector) and the **main wrapper class**:
-
-```scss
-@import '~assets/scss/variables';
-
-// Host element styling - ensures Angular element is a proper block container
-my-component {
-    display: flex;
-    flex-direction: column;
-}
-
-// Main wrapper class with full styling
-.my-component {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    flex-grow: 1;
-
-    &__header {
-        // BEM child elements...
-    }
-
-    &__content {
-        flex: 1;
-        overflow-y: auto;
-    }
-}
-```
-
-**Why both?**
-
-- **Host element**: Makes the Angular element a real layout element (not an unknown element without display)
-- **Main class**: Contains the full styling, matches the wrapper div in HTML
-
-### Platform Component API
-
-```typescript
-export abstract class PlatformComponent {
-  status$: WritableSignal<ComponentStateStatus>;
-  observerLoadingErrorState<T>(requestKey?: string): OperatorFunction<T, T>;
-  isLoading$(requestKey?: string): Signal<boolean | null>;
-  untilDestroyed<T>(): MonoTypeOperatorFunction<T>;
-  tapResponse<T>(nextFn?, errorFn?): OperatorFunction<T, T>;
-}
-
-export abstract class PlatformVmComponent<TViewModel> extends PlatformComponent {
-  vm: WritableSignal<TViewModel | undefined>;
-  currentVm(): TViewModel;
-  updateVm(partial): TViewModel;
-  protected abstract initOrReloadVm: (isReload: boolean) => Observable<TViewModel | undefined>;
-}
-
-export abstract class PlatformVmStoreComponent<TViewModel, TStore> extends PlatformComponent {
-  constructor(public store: TStore) {}
-  vm: Signal<TViewModel | undefined>;
-  reload(): void;
-}
-
-export abstract class PlatformFormComponent<TViewModel> extends PlatformVmComponent<TViewModel> {
-  form: FormGroup<PlatformFormGroupControls<TViewModel>>;
-  mode: PlatformFormMode;
-  isViewMode/isCreateMode/isUpdateMode(): boolean;
-  validateForm(): boolean;
-  protected abstract initialFormConfig: () => PlatformFormConfig<TViewModel>;
-}
-```
-
-### Component Usage
-
-```typescript
-export class UserListComponent extends PlatformComponent {
-    loadUsers() {
-        this.userService
-            .getUsers()
-            .pipe(
-                this.observerLoadingErrorState('loadUsers'),
-                this.tapResponse(users => (this.users = users)),
-                this.untilDestroyed()
-            )
-            .subscribe();
-    }
-}
-
-export class UserListStore extends PlatformVmStore<UserListVm> {
-    loadUsers = this.effectSimple(() => this.api.getUsers().pipe(this.tapResponse(users => this.updateState({ users }))));
-    readonly users$ = this.select(state => state.users);
-}
-
-export class UserListComponent extends AppBaseVmStoreComponent<UserListVm, UserListStore> {
-    constructor(store: UserListStore) {
-        super(store);
-    }
-    onRefresh() {
-        this.reload();
-    }
-}
-```
-
-### Form Component
-
-```typescript
-export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> {
-  protected initialFormConfig = () => ({
-    controls: {
-      email: new FormControl(this.currentVm().email, [Validators.required, Validators.email],
-        [ifAsyncValidator(() => !this.isViewMode, checkEmailUniqueValidator(...))])
-    },
-    dependentValidations: { email: ['firstName'] }
-  });
-  onSubmit() { if (this.validateForm()) { /* process */ } }
-}
-
-// FormArray
-protected initialFormConfig = () => ({
-  controls: {
-    specs: {
-      modelItems: () => vm.specs,
-      itemControl: (spec) => new FormGroup({ name: new FormControl(spec.name, [Validators.required]) })
-    }
-  }
-});
-```
-
-### API Service
-
-```typescript
-@Injectable({ providedIn: 'root' })
-export class EmployeeApiService extends PlatformApiService {
-    protected get apiUrl() {
-        return environment.apiUrl + '/api/Employee';
-    }
-    getEmployees(query?: Query): Observable<Employee[]> {
-        return this.get<Employee[]>('', query);
-    }
-    saveEmployee(cmd: SaveCommand): Observable<Result> {
-        return this.post<Result>('', cmd);
-    }
-    search(criteria: Search): Observable<Employee[]> {
-        return this.post('/search', criteria, { enableCache: true });
-    }
-}
-```
-
-### Watch Decorator & RxJS
-
-```typescript
-export class MyComponent {
-    @Watch('onChanged') public pagedResult?: PagedResult<Item>;
-    @WatchWhenValuesDiff('search') public searchTerm: string = '';
-
-    private onChanged(value: PagedResult<Item>, change: SimpleChange<PagedResult<Item>>) {
-        if (!change.isFirstTimeSet) this.updateUI();
-    }
-}
-
-this.search$
-    .pipe(
-        skipDuplicates(500),
-        applyIf(this.isEnabled$, debounceTime(300)),
-        onCancel(() => this.cleanup()),
-        tapOnce({ next: v => this.init(v) }),
-        distinctUntilObjectValuesChanged(),
-        this.untilDestroyed()
-    )
-    .subscribe();
-```
-
-### Form Validators
-
-```typescript
-new FormControl(
-    '',
-    [
-        Validators.required,
-        noWhitespaceValidator,
-        startEndValidator(
-            'invalidRange',
-            ctrl => ctrl.parent?.get('start')?.value,
-            ctrl => ctrl.value
-        )
-    ],
-    [ifAsyncValidator(ctrl => ctrl.valid, emailUniqueValidator)]
-);
-```
-
-### Store with Caching
-
-```typescript
-@Injectable()
-export class MyStore extends PlatformVmStore<MyVm> {
-    protected get enableCaching() {
-        return true;
-    }
-    protected cachedStateKeyName = () => 'MyStore';
-    protected vmConstructor = (data?: Partial<MyVm>) => new MyVm(data);
-
-    loadData = this.effectSimple(() => this.api.getData().pipe(this.tapResponse(data => this.updateState({ data }))), 'loadData');
-    readonly data$ = this.select(state => state.data);
-    readonly loading$ = this.isLoading$('loadData');
-}
-```
-
-### PlatformCore
-
-```typescript
-export class MyComponent extends BaseComponent { }
-export class MyDirective extends BaseDirective { }
-
-<platform-select formControlName="ids" [fetchDataFn]="fetchFn" [multiple]="true" [searchable]="true" />
-<div appTextEllipsis [maxTextEllipsisLines]="2">...</div>
-{{ date | localizedDate:'shortDate' }} | {{ 'item' | pluralize:count }}
-
-PlatformArrayUtil.toDictionary(items, x => x.id);
-PlatformDateUtil.format(new Date(), 'DD/MM/YYYY');
-```
-
-### Authorization
-
-```typescript
-export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> {
-  get canEdit() { return this.hasRole(PlatformRoles.Admin, PlatformRoles.Manager) && this.isOwnCompany(); }
-}
-@if (hasRole(PlatformRoles.Admin)) { <button (click)="delete()">Delete</button> }
-canActivate(): Observable<boolean> { return this.authService.hasRole$(PlatformRoles.Admin); }
-```
-
-### Platform Directives
-
-```typescript
-<div platformSwipeToScroll>/* Horizontal scroll with drag */</div>
-<input [platformDisabledControl]="isDisabled" />
-```
-
-### Utilities
-
-```typescript
-import { date_addDays, list_groupBy, string_isEmpty, immutableUpdate, guid_generate, task_delay } from '@libs/platform-core';
-
-trackByItem = this.ngForTrackByItemProp<User>('id');
-storeSubscription('dataLoad', this.data$.subscribe(...));
-cancelStoredSubscription('dataLoad');
-```
-
----
-
-## Infrastructure
-
-### VS Code Extensions
-
-```json
-{
-    "recommendations": [
-        "angular.ng-template",
-        "esbenp.prettier-vscode",
-        "ms-dotnettools.csharp",
-        "nrwl.angular-console",
-        "dbaeumer.vscode-eslint",
-        "firsttris.vscode-jest-runner",
-        "sonarsource.sonarlint-vscode",
-        "eamodio.gitlens",
-        "streetsidesoftware.code-spell-checker"
-    ]
-}
-```
-
-### Commands
-
-```bash
-# Backend
-dotnet build EasyPlatform.sln
-dotnet run --project [ServiceName].Service
-
-# Frontend
-npm run dev-start:growth    # Port 4206
-npm run dev-start:employee  # Port 4205
-nx build playground-text-snippet
-nx test apps-domains
-```
-
-### Database Connections
-
-```
-SQL Server:  localhost,14330  (sa / 123456Abc)
-MongoDB:     localhost:27017  (root / rootPassXXX)
-PostgreSQL:  localhost:54320  (postgres / postgres)
-Redis:       localhost:6379
-RabbitMQ:    localhost:15672  (guest / guest)
-```
-
----
-
-## Anti-Patterns
-
-```csharp
-// ❌ Direct cross-service DB access → ✅ Use message bus
-// ❌ Custom repository interfaces → ✅ Use platform repos with extensions
-// ❌ throw new ValidationException() → ✅ Use PlatformValidationResult fluent API
-// ❌ Side effects in command handler → ✅ Use entity event handlers
-// ❌ DTO mapping in handler → ✅ Use PlatformDto.MapToObject()
-```
-
-```typescript
-// ❌ constructor(private http: HttpClient) → ✅ Use PlatformApiService
-// ❌ Manual signals for state → ✅ Use PlatformVmStore
-```
+- [ ] Searched static imports?
+- [ ] Searched string literals?
+- [ ] Checked dynamic invocations?
+- [ ] Read actual implementations?
+- [ ] Traced dependencies?
+- [ ] Declared confidence level?
 
 ---
 
 ## File I/O Safety (Learned Patterns)
 
-These patterns were learned from ACE (Agentic Context Engineering) implementation review. Apply them when working with file-based state.
-
-### File Locking for Shared State
-
-When multiple processes/hooks may access the same file:
-
-1. **Always implement advisory file locking** - Use `.lock` file pattern
-2. **Handle stale locks** - Check if owning process is still alive
-3. **Use timeout** - Don't wait forever for lock acquisition
-4. **Wrap entire read-modify-write** - Not just the write operation
-
-```javascript
-// Pattern: Lock before load, unlock after save
-function updateState(updater) {
-    if (!acquireLock()) return null;
-    try {
-        const state = loadState();
-        const newState = updater(state);
-        saveState(newState);
-        return newState;
-    } finally {
-        releaseLock();
-    }
-}
-```
-
-### Atomic Writes for JSON Files
-
-Never write directly to final destination:
-
-1. **Write to `.tmp` file first** - Complete write before exposing
-2. **Rename to final path** - Atomic on POSIX, use backup pattern on Windows
-3. **Handle crash recovery** - Check for leftover `.tmp`/`.bak` files on startup
-
-```javascript
-// Pattern: Temp file then rename
-function atomicWriteJSON(path, data) {
-    const tmp = path + '.tmp';
-    fs.writeFileSync(tmp, JSON.stringify(data, null, 2));
-    fs.renameSync(tmp, path); // Atomic
-}
-```
-
-### Schema Validation Before Persist
-
-Always validate data before every write:
-
-1. **Validate at creation** - Factory functions validate output
-2. **Validate before save** - Never trust "validated earlier"
-3. **Fail fast** - Reject invalid data immediately
-4. **Bound all counts** - Prevent integer overflow
-
-```javascript
-// Pattern: Validate in factory
-function createEntity(input) {
-    const entity = { ...defaults, ...input };
-    const errors = validate(entity);
-    if (errors.length) throw new Error(`Invalid: ${errors.join(', ')}`);
-    return entity;
-}
-```
+- **File Locking**: Use `.lock` file pattern for shared state; handle stale locks, use timeout, wrap entire read-modify-write
+- **Atomic Writes**: Write to `.tmp` first, rename to final path; handle crash recovery
+- **Schema Validation**: Validate at creation and before save; fail fast; bound all counts
 
 **Reference:** See `.claude/skills/code-patterns/` for full implementation details.
 
+---
+
+## Shell Environment (Critical for Windows)
+
+**Important:** Use Unix-compatible commands (Git Bash). Forward slashes for paths. See `CLAUDE.md` for the full command translation table.
+
+---
+
 ## Manual Lessons (Self-Improvement)
 
-> These patterns were identified from self-review and debugging sessions.
+- **Concurrency**: Lock all read-modify-write operations on shared state [100%]
+- **Verification**: Always check filesystem before claiming file status [100%]
+- **Fix Verification**: Re-read lines after every claimed fix [100%]
 
-### Concurrency: Lock all read-modify-write operations [100%]
+_Last updated: 2026-01-27_
 
-Any function that loads shared state, modifies it, and saves must use a lock to prevent race conditions.
-
-**Pattern:**
-
-```javascript
-function modifySharedState(input) {
-    return withLock(() => {
-        const data = loadData();
-        // modify data
-        saveData(data);
-    });
-}
-```
-
-**Real Example:** `updateDeltaFeedback()` was missing lock, causing potential data loss when multiple hooks ran concurrently.
-
-### Verification: Always check filesystem before claiming file status [100%]
-
-Never claim "file doesn't exist" without running glob/ls first. False positives waste time and create confusion.
-
-**Protocol:**
-
-1. Run `glob pattern` or `ls path` to verify
-2. State findings with evidence: "Verified via glob: X files found"
-
-**Real Example:** Researcher claimed `ace-cli-helpers.cjs` doesn't exist. Verification showed file exists (193 lines).
-
-### Fix Verification: Re-read lines after every claimed fix [100%]
-
-After claiming code is fixed, always re-read the specific lines to verify the fix is actually applied.
-
-**Real Example:** Phase 1 claimed issues were "fixed" but code review showed bugs still present. Always verify.
-
-_Last updated: 2026-01-11_
+---
 
 <!-- ACE-LEARNED-PATTERNS-START -->
 
@@ -1816,13 +608,35 @@ _Last updated: 2026-01-11_
 
 ### High Confidence (90%+)
 
-- **When using /cook skill**: cook skill execution pattern showing reliable success → Continue using this skill pattern (100% success rate observed) [100%]
+- **When using /cook skill**: cook skill execution pattern showing reliable success -> Continue using this skill pattern (100% success rate observed) [100%]
 
 _Last synced: 2026-01-11_
 
 <!-- ACE-LEARNED-PATTERNS-END -->
 
-## Task Planning Notes
+---
+
+## Instruction Files (File-Type-Specific Rules)
+
+Copilot instruction files in `.github/instructions/` provide **file-type-targeted rules** that are automatically loaded when editing matching files in chat/agent mode:
+
+| Instruction File                           | Applies To                             | Simulates                        |
+| ------------------------------------------ | -------------------------------------- | -------------------------------- |
+| `backend-csharp.instructions.md`           | `src/Backend/**/*.cs`, `src/Platform/**/*.cs` | Backend C# patterns & rules     |
+| `frontend-typescript.instructions.md`      | `src/Frontend/**/*.ts,tsx,html`, `libs/**/*.ts` | Frontend Angular/TS patterns    |
+| `frontend-scss.instructions.md`            | `src/Frontend/**/*.scss`, `libs/**/*.scss` | SCSS/BEM styling rules           |
+| `documentation.instructions.md`            | `docs/**/*.md`                         | Documentation standards          |
+| `code-review.instructions.md`              | `**/*` (excludes coding agent)         | Code review checklist            |
+
+Each file contains critical rules inline + references to full pattern files in `.ai/docs/` and `docs/claude/`.
+
+> **Note:** Instruction files apply to **chat and agent mode only**, not inline completions.
+
+**For full code pattern reference tables:** See `CLAUDE.md` → Code Patterns Reference section.
+
+---
+
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

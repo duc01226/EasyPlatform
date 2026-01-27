@@ -1,0 +1,278 @@
+{
+    "$id": "https://easyplatform.dev/schemas/workflows.schema.json",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
+    "definitions": {
+        "CheckpointSettings": {
+            "additionalProperties": false,
+            "description": "Configuration for automatic session checkpoint saving during long-running workflows.",
+            "properties": {
+                "autoSaveOnCompact": {
+                    "default": true,
+                    "description": "Whether to automatically save a checkpoint when context compaction occurs.",
+                    "title": "Auto-Save on Compact",
+                    "type": "boolean"
+                },
+                "enabled": {
+                    "default": true,
+                    "description": "Whether automatic checkpoint saving is enabled.",
+                    "title": "Enable Checkpoints",
+                    "type": "boolean"
+                },
+                "filenamePattern": {
+                    "description": "Template pattern for checkpoint filenames. Supports placeholders: {YYMMDD}, {HHMM}, {slug}.",
+                    "examples": ["checkpoint-{YYMMDD}-{HHMM}-{slug}.md"],
+                    "minLength": 1,
+                    "title": "Filename Pattern",
+                    "type": "string"
+                },
+                "intervalMinutes": {
+                    "default": 30,
+                    "description": "Minimum interval in minutes between automatic checkpoint saves.",
+                    "minimum": 1,
+                    "title": "Interval (Minutes)",
+                    "type": "integer"
+                },
+                "path": {
+                    "description": "Directory path (relative to project root) where checkpoint files are saved.",
+                    "examples": ["plans/reports"],
+                    "minLength": 1,
+                    "title": "Checkpoint Path",
+                    "type": "string"
+                }
+            },
+            "required": ["enabled", "autoSaveOnCompact", "intervalMinutes", "path", "filenamePattern"],
+            "title": "Checkpoint Settings",
+            "type": "object"
+        },
+        "CommandMappingEntry": {
+            "additionalProperties": false,
+            "description": "Maps a logical command key to platform-specific command invocations for Claude Code and GitHub Copilot.",
+            "properties": {
+                "claude": {
+                    "description": "Claude Code slash command (must start with /).",
+                    "examples": ["/plan", "/cook", "/fix", "/review:codebase"],
+                    "minLength": 2,
+                    "pattern": "^/",
+                    "title": "Claude Code Command",
+                    "type": "string"
+                },
+                "copilot": {
+                    "description": "GitHub Copilot slash command (must start with /).",
+                    "examples": ["/plan", "/cook", "/fix"],
+                    "minLength": 2,
+                    "pattern": "^/",
+                    "title": "Copilot Command",
+                    "type": "string"
+                }
+            },
+            "required": ["claude", "copilot"],
+            "title": "Command Mapping Entry",
+            "type": "object"
+        },
+        "PreActions": {
+            "additionalProperties": false,
+            "description": "Actions to perform before starting the workflow sequence. Used to load skills, inject context, or pre-read files.",
+            "properties": {
+                "activateSkill": {
+                    "description": "Name of the skill to activate before workflow execution (e.g., 'product-owner', 'qa-engineer').",
+                    "examples": ["product-owner", "qa-engineer", "project-manager", "ui-ux-pro-max", "planning"],
+                    "minLength": 1,
+                    "title": "Activate Skill",
+                    "type": "string"
+                },
+                "injectContext": {
+                    "description": "Context text to inject into the agent's prompt before workflow execution. Typically contains workflow-specific instructions or checklists.",
+                    "minLength": 1,
+                    "title": "Inject Context",
+                    "type": "string"
+                },
+                "readFiles": {
+                    "description": "List of file paths (relative to project root) to read before workflow execution. Used to pre-load templates, guides, or reference documents.",
+                    "items": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "title": "Read Files",
+                    "type": "array"
+                }
+            },
+            "title": "Pre-Actions",
+            "type": "object"
+        },
+        "Settings": {
+            "additionalProperties": false,
+            "description": "Global configuration for workflow detection, overrides, and checkpoint behavior.",
+            "properties": {
+                "allowOverride": {
+                    "default": true,
+                    "description": "Whether users can bypass workflow detection using the override prefix.",
+                    "title": "Allow Override",
+                    "type": "boolean"
+                },
+                "checkpoints": {
+                    "$ref": "#/definitions/CheckpointSettings"
+                },
+                "confirmHighImpact": {
+                    "default": true,
+                    "description": "Whether to prompt for user confirmation before executing workflows marked with confirmFirst: true.",
+                    "title": "Confirm High Impact",
+                    "type": "boolean"
+                },
+                "enabled": {
+                    "default": true,
+                    "description": "Master toggle to enable or disable all workflow detection and automation.",
+                    "title": "Enable Workflows",
+                    "type": "boolean"
+                },
+                "overridePrefix": {
+                    "description": "Prefix string that users type to bypass automatic workflow detection (e.g., 'quick:').",
+                    "examples": ["quick:"],
+                    "minLength": 1,
+                    "title": "Override Prefix",
+                    "type": "string"
+                },
+                "showDetection": {
+                    "default": true,
+                    "description": "Whether to display the detected intent and workflow sequence to the user before execution.",
+                    "title": "Show Detection",
+                    "type": "boolean"
+                },
+                "supportedLanguages": {
+                    "description": "ISO 639-1 language codes for multilingual trigger pattern matching.",
+                    "examples": [["en", "vi", "zh", "ja", "ko"]],
+                    "items": {
+                        "maxLength": 2,
+                        "minLength": 2,
+                        "pattern": "^[a-z]{2}$",
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "title": "Supported Languages",
+                    "type": "array",
+                    "uniqueItems": true
+                }
+            },
+            "required": ["enabled", "allowOverride", "overridePrefix", "confirmHighImpact", "showDetection", "supportedLanguages", "checkpoints"],
+            "title": "Global Settings",
+            "type": "object"
+        },
+        "WorkflowEntry": {
+            "additionalProperties": false,
+            "description": "Defines a workflow triggered by user intent patterns. Contains an ordered sequence of commands to execute, with optional pre-actions and exclusion patterns.",
+            "properties": {
+                "confirmFirst": {
+                    "description": "Whether to ask for user confirmation before starting this workflow. Recommended for high-impact workflows (feature, refactor, release).",
+                    "title": "Confirm Before Execution",
+                    "type": "boolean"
+                },
+                "description": {
+                    "description": "Detailed description of what this workflow does and when it is triggered.",
+                    "minLength": 1,
+                    "title": "Workflow Description",
+                    "type": "string"
+                },
+                "enableCheckpoints": {
+                    "description": "Whether to save periodic checkpoints during this workflow. Recommended for long-running workflows.",
+                    "title": "Enable Checkpoints",
+                    "type": "boolean"
+                },
+                "excludePatterns": {
+                    "description": "Regular expression patterns that, when matched, prevent this workflow from triggering even if triggerPatterns match. Used to avoid false positives.",
+                    "items": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "title": "Exclude Patterns",
+                    "type": "array"
+                },
+                "name": {
+                    "description": "Human-readable display name for the workflow, shown to users during detection.",
+                    "examples": ["Feature Implementation", "Bug Fix", "Code Investigation"],
+                    "minLength": 1,
+                    "title": "Workflow Name",
+                    "type": "string"
+                },
+                "preActions": {
+                    "$ref": "#/definitions/PreActions"
+                },
+                "priority": {
+                    "description": "Workflow priority for conflict resolution when multiple workflows match. Lower number = higher priority (1-100).",
+                    "maximum": 100,
+                    "minimum": 1,
+                    "title": "Priority",
+                    "type": "integer"
+                },
+                "sequence": {
+                    "description": "Ordered list of command keys (referencing commandMapping) to execute. Commands run in sequence from first to last.",
+                    "items": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "title": "Command Sequence",
+                    "type": "array"
+                },
+                "triggerPatterns": {
+                    "description": "Regular expression patterns that match user input to trigger this workflow. Patterns are tested case-insensitively. Include multilingual patterns for supported languages.",
+                    "items": {
+                        "minLength": 1,
+                        "type": "string"
+                    },
+                    "minItems": 1,
+                    "title": "Trigger Patterns",
+                    "type": "array"
+                }
+            },
+            "required": ["name", "description", "priority", "confirmFirst", "sequence", "triggerPatterns"],
+            "title": "Workflow Definition",
+            "type": "object"
+        }
+    },
+    "description": "Schema for Claude Code and GitHub Copilot workflow automation configuration. Defines intent detection, command mapping, and workflow sequences for multilingual AI agent orchestration.",
+    "properties": {
+        "$schema": {
+            "description": "Path or URL to the JSON Schema file for IDE validation and autocompletion.",
+            "title": "Schema Reference",
+            "type": "string"
+        },
+        "commandMapping": {
+            "additionalProperties": {
+                "$ref": "#/definitions/CommandMappingEntry"
+            },
+            "description": "Maps logical command keys to platform-specific command strings for Claude Code and GitHub Copilot. Each key is referenced by workflow sequences.",
+            "minProperties": 1,
+            "title": "Command Mapping",
+            "type": "object"
+        },
+        "description": {
+            "description": "Human-readable description of this workflow configuration file.",
+            "minLength": 1,
+            "title": "Configuration Description",
+            "type": "string"
+        },
+        "settings": {
+            "$ref": "#/definitions/Settings"
+        },
+        "version": {
+            "description": "Semantic version of the workflow configuration (e.g., 1.7.0).",
+            "examples": ["1.0.0", "1.7.0", "2.0.0"],
+            "pattern": "^\\d+\\.\\d+\\.\\d+$",
+            "title": "Configuration Version",
+            "type": "string"
+        },
+        "workflows": {
+            "additionalProperties": {
+                "$ref": "#/definitions/WorkflowEntry"
+            },
+            "description": "Named workflow definitions that map user intent patterns to ordered command sequences. Each workflow is triggered by regex pattern matching against user input.",
+            "minProperties": 1,
+            "title": "Workflow Definitions",
+            "type": "object"
+        }
+    },
+    "required": ["version", "description", "settings", "commandMapping", "workflows"],
+    "title": "EasyPlatform Workflow Configuration",
+    "type": "object"
+}

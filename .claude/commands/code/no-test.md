@@ -6,6 +6,10 @@ argument-hint: [plan]
 **MUST READ** `CLAUDE.md` then **THINK HARDER** to start working on the following plan follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <plan>$ARGUMENTS</plan>
 
+**⚠️ MUST READ before implementation:**
+- `.ai/docs/backend-code-patterns.md` — Backend code patterns
+- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
 ---
 
 ## Role Responsibilities
@@ -23,7 +27,7 @@ argument-hint: [plan]
 ## Step 0: Plan Detection & Phase Selection
 
 **If `$ARGUMENTS` is empty:**
-1. Find latest `plan.md` in `./plans` | `find ./plans -name "plan.md" -type f -exec stat -f "%m %N" {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-`
+1. Find latest `plan.md` in `./plans` | `ls -t ./plans/**/plan.md 2>/dev/null | head -1`
 2. Parse plan for phases and status, auto-select next incomplete (prefer IN_PROGRESS or earliest Planned)
 
 **If `$ARGUMENTS` provided:** Use that plan and detect which phase to work on (auto-detect or use argument like "phase-2").
@@ -115,7 +119,7 @@ Mark Step 4 complete in TodoWrite, mark Step 5 in_progress.
 
 3. **AUTO-COMMIT (after steps 1 and 2 completes):**
 - Run only if: Steps 1 and 2 successful + User approved + Tests passed
-- Auto-stage, commit with message [phase - plan] and push
+- Auto-stage and commit with message [phase - plan]. Do NOT push unless user explicitly requests
 
 **Validation:** Steps 1 and 2 must complete successfully. Step 3 (auto-commit) runs only if conditions met.
 

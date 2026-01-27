@@ -90,7 +90,8 @@ function detectIntent(userPrompt, config) {
   scores.sort((a, b) => b.adjustedScore - a.adjustedScore);
 
   const best = scores[0];
-  const confidence = Math.min(100, best.score * 10);
+  const totalPatterns = (best.workflow.triggerPatterns || []).length;
+  const confidence = Math.min(100, Math.round((best.matchedPatterns.length / Math.max(totalPatterns, 1)) * 100));
 
   return {
     detected: true,
@@ -111,8 +112,8 @@ function detectIntent(userPrompt, config) {
 function detectSkillInvocation(prompt, config) {
   const trimmed = prompt.trim();
 
-  // Check if prompt starts with a slash command
-  const match = trimmed.match(/^\/(\w+[-\w]*)/);
+  // Check if prompt starts with a slash command (supports colons and slashes in names)
+  const match = trimmed.match(/^\/([\w][\w:/-]*)/);
   if (!match) return null;
 
   const command = match[1].toLowerCase();

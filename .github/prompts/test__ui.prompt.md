@@ -6,9 +6,11 @@ argument-hint: [url] [options]
 Activate the chrome-devtools skill.
 
 ## Purpose
+
 Run comprehensive UI tests on a website and generate a detailed report.
 
 ## Arguments
+
 - $1: URL - The URL of the website to test
 - $2: OPTIONS - Optional test configuration (e.g., --headless, --mobile, --auth)
 
@@ -17,18 +19,23 @@ Run comprehensive UI tests on a website and generate a detailed report.
 For testing protected routes that require authentication, follow this workflow:
 
 ### Step 1: User Manual Login
+
 Instruct the user to:
+
 1. Open the target site in their browser
 2. Log in manually with their credentials
 3. Open browser DevTools (F12) → Application tab → Cookies/Storage
 
 ### Step 2: Extract Auth Credentials
+
 Ask the user to provide one of:
+
 - **Cookies**: Copy cookie values (name, value, domain)
 - **Access Token**: Copy JWT/Bearer token from localStorage or cookies
 - **Session Storage**: Copy relevant session keys
 
 ### Step 3: Inject Authentication
+
 Use the `inject-auth.js` script to inject credentials before testing:
 
 ```bash
@@ -48,6 +55,7 @@ node inject-auth.js --url https://example.com --cookies '[{"name":"session","val
 ```
 
 ### Step 4: Run Tests
+
 After auth injection, the browser session persists. Run tests normally:
 
 ```bash
@@ -60,6 +68,7 @@ node screenshot.js --url https://example.com/settings --output settings.png --cl
 ```
 
 ### Auth Script Options
+
 - `--cookies '<json>'` - Inject cookies (JSON array)
 - `--token '<token>'` - Inject Bearer token
 - `--token-key '<key>'` - localStorage key for token (default: access_token)
@@ -70,6 +79,7 @@ node screenshot.js --url https://example.com/settings --output settings.png --cl
 - `--clear true` - Clear saved auth session
 
 ## Workflow
+
 - Use `planning` skill to organize the test plan & report in the current project directory.
 - All the screenshots should be saved in the same report directory.
 - Browse $URL with the specified $OPTIONS, discover all pages, components, and endpoints.
@@ -81,7 +91,9 @@ node screenshot.js --url https://example.com/settings --output settings.png --cl
 - Use `AskUserQuestion` tool to ask if user wants to preview the report with `/preview` slash command.
 
 ## Output Requirements
+
 How to write reports:
+
 - Format: Use clear, structured Markdown with headers, lists, and code blocks where appropriate
 - Include the test results summary, key findings, and screenshot references
 - **IMPORTANT:** Ensure token efficiency while maintaining high quality.
@@ -91,7 +103,7 @@ How to write reports:
 **IMPORTANT**: **Do not** start implementing the fixes.
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

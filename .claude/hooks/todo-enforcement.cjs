@@ -2,14 +2,16 @@
 /**
  * Todo Enforcement Hook (PreToolUse)
  *
- * Blocks implementation-related skills unless TodoWrite has been used.
- * Enforces "strict: all non-research" policy from validation.
+ * Blocks skills unless TaskCreate/TodoWrite has been used.
+ * Enforces "strict: all non-research" policy.
  *
- * ALLOWED without todos (research/planning):
- *   - scout, scout:ext, investigate, plan, plan:fast, plan:hard, plan:validate
- *   - research, explore, watzup, docs-seeker, context-compact
+ * ALLOWED without todos (read-only research):
+ *   - scout, scout:ext, investigate, research, explore
+ *   - watzup, context-compact, checkpoint, kanban
+ *   - docs-seeker, git-diff, git-status, git-log, branch-comparison
  *
- * BLOCKED without todos (implementation):
+ * BLOCKED without todos (planning + implementation):
+ *   - plan, plan:fast, plan:hard, plan:validate (planning workflows)
  *   - cook, fix, code, feature, implement, refactor
  *   - code-review, test, tester, debug, build
  *   - commit, git-commit, git-manager, docs-update
@@ -25,20 +27,16 @@
 const fs = require('fs');
 const { getTodoState, recordBypass } = require('./lib/todo-state.cjs');
 
-// Skills ALLOWED without todos (research/planning only)
+// Skills ALLOWED without todos (read-only research & status only)
 const ALLOWED_SKILLS = new Set([
-  // Research & Investigation
+  // Research & Investigation (read-only)
   'scout', 'scout:ext', 'scout-ext',
   'investigate', 'investigation',
   'research', 'researcher',
   'explore', 'explorer',
   'docs-seeker',
 
-  // Planning
-  'plan', 'plan:fast', 'plan:hard', 'plan:validate',
-  'planner',
-
-  // Context & Status
+  // Context & Status (no multi-step workflow)
   'watzup', 'context-compact', 'checkpoint', 'ck',
   'kanban',
 
@@ -114,10 +112,9 @@ Use TodoWrite to create a task list, then retry /${skill}
 /${skill} quick: <your args>
 \`\`\`
 
-### Allowed without todos:
+### Allowed without todos (read-only):
 Research: /scout, /investigate, /research, /explore
-Planning: /plan, /plan:hard, /plan:validate
-Status: /watzup, /checkpoint
+Status: /watzup, /checkpoint, /kanban
 `);
 
   process.exit(2);

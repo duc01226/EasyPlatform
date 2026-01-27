@@ -26,8 +26,11 @@
     "chat.editing.confirmChatEditRequest": false,
     "chat.editing.confirmEditRequestRemoval": false,
     "chat.editing.confirmEditRequestRetry": false,
+    "chat.instructionsFilesLocations": {
+        ".github/instructions": true
+    },
     "chat.mcp.access": "all",
-    "chat.notifyWindowOnConfirmation": false,
+    "chat.notifyWindowOnConfirmation": true,
     "chat.tools.edits.autoApprove": {
         "*.cjs": true,
         "*.json": true,
@@ -42,8 +45,7 @@
         "docs/**": true,
         "plans/**": true,
         "scripts/**": true,
-        "src/**": true,
-        "vscode-easyplatform-hooks/**": true
+        "src/**": true
     },
     "chat.tools.eligibleForAutoApproval": {
         "add_observations": true,

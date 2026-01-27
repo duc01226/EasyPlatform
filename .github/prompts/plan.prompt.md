@@ -13,17 +13,17 @@ $ARGUMENTS
 
 Check the `## Plan Context` section in the injected context:
 
--   If "Plan:" shows a path → Active plan exists. Ask user: "Active plan found: {path}. Continue with this? [Y/n]"
--   If "Suggested:" shows a path → Branch-matched plan hint only. Ask user if they want to activate it or create new.
--   If "Plan: none" → Proceed to create new plan using naming pattern from `## Naming` section.
+- If "Plan:" shows a path → Active plan exists. Ask user: "Active plan found: {path}. Continue with this? [Y/n]"
+- If "Suggested:" shows a path → Branch-matched plan hint only. Ask user if they want to activate it or create new.
+- If "Plan: none" → Proceed to create new plan using naming pattern from `## Naming` section.
 
 ## Workflow
 
--   Analyze the given task and use `AskUserQuestion` tool to ask for more details if needed.
--   Decide to use `/plan__fast` or `/plan__hard` SlashCommands based on the complexity.
--   Execute SlashCommand: `/plan__fast <detailed-instructions-prompt>` or `/plan__hard <detailed-instructions-prompt>`
--   Activate `planning` skill.
--   Note: `detailed-instructions-prompt` is **an enhanced prompt** that describes the task in detail based on the provided task description.
+- Analyze the given task and use `AskUserQuestion` tool to ask for more details if needed.
+- Decide to use `/plan__fast` or `/plan__hard` SlashCommands based on the complexity.
+- Execute SlashCommand: `/plan__fast <detailed-instructions-prompt>` or `/plan__hard <detailed-instructions-prompt>`
+- Activate `planning` skill.
+- Note: `detailed-instructions-prompt` is **an enhanced prompt** that describes the task in detail based on the provided task description.
 
 ## Important Notes
 
@@ -35,7 +35,7 @@ Check the `## Plan Context` section in the injected context:
 
 ultrathink
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

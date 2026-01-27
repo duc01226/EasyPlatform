@@ -4,18 +4,18 @@
 
 ## Configuration Files Overview
 
-| File | Purpose | User Editable |
-|------|---------|---------------|
-| `settings.json` | Hook registration, permissions, plugins | Yes |
-| `.ck.json` | Project preferences, assertions, plan settings | Yes |
-| `.mcp.json` | MCP server configurations | Yes |
-| `workflows.json` | Workflow definitions and triggers | Yes |
-| `.todo-state.json` | Current todo list (runtime) | No |
-| `.workflow-state.json` | Workflow execution state (runtime) | No |
-| `.edit-state.json` | Edit count tracking (runtime) | No |
-| `metadata.json` | Kit installation tracking (auto-generated) | No |
-| `memory/deltas.json` | ACE approved playbook deltas | No |
-| `memory/delta-candidates.json` | ACE pending candidates | No |
+| File                           | Purpose                                        | User Editable |
+| ------------------------------ | ---------------------------------------------- | ------------- |
+| `settings.json`                | Hook registration, permissions, plugins        | Yes           |
+| `.ck.json`                     | Project preferences, assertions, plan settings | Yes           |
+| `.mcp.json`                    | MCP server configurations                      | Yes           |
+| `workflows.json`               | Workflow definitions and triggers              | Yes           |
+| `.todo-state.json`             | Current todo list (runtime)                    | No            |
+| `.workflow-state.json`         | Workflow execution state (runtime)             | No            |
+| `.edit-state.json`             | Edit count tracking (runtime)                  | No            |
+| `metadata.json`                | Kit installation tracking (auto-generated)     | No            |
+| `memory/deltas.json`           | ACE approved playbook deltas                   | No            |
+| `memory/delta-candidates.json` | ACE pending candidates                         | No            |
 
 ## settings.json
 
@@ -187,18 +187,18 @@ Project-specific preferences and assertions.
 
 ### Configuration Options
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `codingLevel` | 1-5 | Communication complexity (1=beginner, 5=expert) |
-| `privacyBlock` | bool | Enable privacy-block.cjs hook |
-| `plan.namingFormat` | string | Plan directory naming template |
-| `plan.dateFormat` | string | Date format for plan names |
-| `plan.validation.mode` | string | "prompt", "auto", or "off" |
-| `paths.docs` | string | Documentation directory |
-| `paths.plans` | string | Plans directory |
-| `locale.thinkingLanguage` | string | Language for internal thinking |
-| `locale.responseLanguage` | string | Language for responses |
-| `assertions` | string[] | Project rules injected into context |
+| Option                    | Type     | Description                                     |
+| ------------------------- | -------- | ----------------------------------------------- |
+| `codingLevel`             | 1-5      | Communication complexity (1=beginner, 5=expert) |
+| `privacyBlock`            | bool     | Enable privacy-block.cjs hook                   |
+| `plan.namingFormat`       | string   | Plan directory naming template                  |
+| `plan.dateFormat`         | string   | Date format for plan names                      |
+| `plan.validation.mode`    | string   | "prompt", "auto", or "off"                      |
+| `paths.docs`              | string   | Documentation directory                         |
+| `paths.plans`             | string   | Plans directory                                 |
+| `locale.thinkingLanguage` | string   | Language for internal thinking                  |
+| `locale.responseLanguage` | string   | Language for responses                          |
+| `assertions`              | string[] | Project rules injected into context             |
 
 ### Assertions
 
@@ -288,7 +288,7 @@ Define workflow automation with intent detection.
   "commandMapping": {
     "cook": {
       "claude": "/cook",
-      "copilot": "@workspace /cook"
+      "copilot": "/cook"
     }
   },
   "workflows": { ... }
@@ -321,28 +321,28 @@ Define workflow automation with intent detection.
 
 ### Workflow Options
 
-| Option | Type | Description |
-|--------|------|-------------|
-| `name` | string | Display name |
-| `description` | string | What the workflow does |
-| `priority` | number | Lower = higher priority (checked first) |
-| `confirmFirst` | bool | Ask before starting |
-| `enableCheckpoints` | bool | Save progress checkpoints |
-| `sequence` | string[] | Steps to execute in order |
-| `triggerPatterns` | regex[] | Patterns that trigger this workflow |
-| `excludePatterns` | regex[] | Patterns that prevent this workflow |
+| Option              | Type     | Description                             |
+| ------------------- | -------- | --------------------------------------- |
+| `name`              | string   | Display name                            |
+| `description`       | string   | What the workflow does                  |
+| `priority`          | number   | Lower = higher priority (checked first) |
+| `confirmFirst`      | bool     | Ask before starting                     |
+| `enableCheckpoints` | bool     | Save progress checkpoints               |
+| `sequence`          | string[] | Steps to execute in order               |
+| `triggerPatterns`   | regex[]  | Patterns that trigger this workflow     |
+| `excludePatterns`   | regex[]  | Patterns that prevent this workflow     |
 
 ### Built-in Workflows
 
-| Workflow | Priority | Sequence |
-|----------|----------|----------|
-| `feature` | 10 | plan → cook → simplify → review → test → docs → watzup |
-| `bugfix` | 20 | scout → investigate → debug → plan → fix → simplify → review → test |
-| `refactor` | 25 | plan → code → simplify → review → test |
-| `documentation` | 30 | scout → investigate → docs-update → watzup |
-| `review` | 35 | code-review → watzup |
-| `testing` | 40 | test |
-| `investigation` | 50 | scout → investigate |
+| Workflow        | Priority | Sequence                                                            |
+| --------------- | -------- | ------------------------------------------------------------------- |
+| `feature`       | 10       | plan → cook → simplify → review → test → docs → watzup              |
+| `bugfix`        | 20       | scout → investigate → debug → plan → fix → simplify → review → test |
+| `refactor`      | 25       | plan → code → simplify → review → test                              |
+| `documentation` | 30       | scout → investigate → docs-update → watzup                          |
+| `review`        | 35       | code-review → watzup                                                |
+| `testing`       | 40       | test                                                                |
+| `investigation` | 50       | scout → investigate                                                 |
 
 ---
 
@@ -445,13 +445,13 @@ Pending candidates awaiting approval.
 
 Variables available to hooks via `%VAR%` (Windows) or `$VAR` (Unix):
 
-| Variable | Description |
-|----------|-------------|
-| `CLAUDE_PROJECT_DIR` | Project root directory |
-| `CLAUDE_SESSION_ID` | Current session identifier |
+| Variable                | Description                             |
+| ----------------------- | --------------------------------------- |
+| `CLAUDE_PROJECT_DIR`    | Project root directory                  |
+| `CLAUDE_SESSION_ID`     | Current session identifier              |
 | `CLAUDE_COMPACT_REASON` | Why compact triggered ("manual"/"auto") |
-| `CLAUDE_TOOL_NAME` | Current tool being executed |
-| `CLAUDE_SUBAGENT_TYPE` | Type of subagent if applicable |
+| `CLAUDE_TOOL_NAME`      | Current tool being executed             |
+| `CLAUDE_SUBAGENT_TYPE`  | Type of subagent if applicable          |
 
 ---
 

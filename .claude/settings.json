@@ -16,7 +16,8 @@
         "typescript-lsp@claude-plugins-official": true
     },
     "env": {
-        "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1"
+        "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1",
+        "MCP_TIMEOUT": "30000"
     },
     "hooks": {
         "Notification": [
@@ -47,7 +48,7 @@
                         "type": "command"
                     }
                 ],
-                "matcher": "TodoWrite"
+                "matcher": "TodoWrite|TaskCreate|TaskUpdate"
             },
             {
                 "hooks": [
@@ -192,6 +193,10 @@
                         "type": "command"
                     },
                     {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/code-patterns-injector.cjs",
+                        "type": "command"
+                    },
+                    {
                         "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/backend-csharp-context.cjs",
                         "type": "command"
                     },
@@ -272,6 +277,15 @@
                     }
                 ],
                 "matcher": "startup|resume"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/root-deps-check.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "startup"
             }
         ],
         "SubagentStart": [

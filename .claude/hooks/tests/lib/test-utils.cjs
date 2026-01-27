@@ -71,19 +71,45 @@ function setupEditState(tmpDir, state) {
 }
 
 /**
- * Setup mock checkpoint file
+ * Setup mock checkpoint file in the format session-resume.cjs expects.
+ * Creates a markdown file named memory-checkpoint-YYYYMMDD-HHMMSS.md
+ * in {tmpDir}/plans/reports/ with ### Active Todos section.
  * @param {string} tmpDir - Temp directory path
- * @param {object} data - Checkpoint data
+ * @param {object} data - Checkpoint data ({ timestamp, todos })
  * @returns {string} Path to the checkpoint file
  */
 function setupCheckpoint(tmpDir, data) {
-  const checkpointDir = path.join(tmpDir, '.claude', 'checkpoints');
-  fs.mkdirSync(checkpointDir, { recursive: true });
-  const checkpointFile = path.join(checkpointDir, 'latest.json');
-  fs.writeFileSync(checkpointFile, JSON.stringify({
-    timestamp: new Date().toISOString(),
-    ...data
-  }, null, 2));
+  const reportsDir = path.join(tmpDir, 'plans', 'reports');
+  fs.mkdirSync(reportsDir, { recursive: true });
+
+  const ts = new Date(data.timestamp || new Date().toISOString());
+  const pad = (n) => String(n).padStart(2, '0');
+  const filename = `memory-checkpoint-${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}-${pad(ts.getHours())}${pad(ts.getMinutes())}${pad(ts.getSeconds())}.md`;
+
+  const statusMap = { completed: 'x', in_progress: '~', pending: ' ' };
+  const todos = data.todos || [];
+  const todosSection = todos
+    .map((t, i) => `${i + 1}. [${statusMap[t.status] || ' '}] ${t.content}`)
+    .join('\n');
+
+  const content = [
+    '# Memory Checkpoint',
+    '',
+    '## Todo List State',
+    '',
+    `- **Last Updated:** ${data.timestamp || new Date().toISOString()}`,
+    `- **Task Count:** ${todos.length}`,
+    '',
+    '### Active Todos',
+    '',
+    todosSection,
+    '',
+    '---',
+    ''
+  ].join('\n');
+
+  const checkpointFile = path.join(reportsDir, filename);
+  fs.writeFileSync(checkpointFile, content);
   return checkpointFile;
 }
 
@@ -396,17 +422,41 @@ function setupInjectionTracking(tmpDir, sessionId, deltaIds) {
 }
 
 /**
- * Setup mock workflow state for testing
- * @param {string} tmpDir - Temp directory path
- * @param {object} state - Workflow state object
- * @returns {string} Path to the state file
+ * Generate unique test session ID for isolation
+ * @returns {string} Unique session ID
  */
-function setupWorkflowState(tmpDir, state) {
-  const claudeDir = path.join(tmpDir, '.claude');
-  fs.mkdirSync(claudeDir, { recursive: true });
-  const stateFile = path.join(claudeDir, '.workflow-state.json');
+function generateTestSessionId() {
+  return `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/**
+ * Setup mock workflow state for testing (per-session path)
+ * Writes to /tmp/ck/workflow/{sessionId}.json (matches production path).
+ * Tests MUST pass { CLAUDE_SESSION_ID: sessionId } env to runHook.
+ * @param {string} tmpDir - Temp directory path (unused, kept for backward compat)
+ * @param {object} state - Workflow state object
+ * @param {string} [sessionId] - Optional session ID (generates unique if not provided)
+ * @returns {{ stateFile: string, sessionId: string }} Path and session ID
+ */
+function setupWorkflowState(tmpDir, state, sessionId) {
+  const sid = sessionId || generateTestSessionId();
+  const workflowDir = path.join(os.tmpdir(), 'ck', 'workflow');
+  fs.mkdirSync(workflowDir, { recursive: true });
+  const stateFile = path.join(workflowDir, `${sid}.json`);
   fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
-  return stateFile;
+  return { stateFile, sessionId: sid };
+}
+
+/**
+ * Cleanup workflow state file created by setupWorkflowState
+ * @param {string} stateFile - Path to state file
+ */
+function cleanupWorkflowState(stateFile) {
+  try {
+    if (stateFile && fs.existsSync(stateFile)) {
+      fs.unlinkSync(stateFile);
+    }
+  } catch { /* silent */ }
 }
 
 /**
@@ -536,6 +586,8 @@ module.exports = {
   readEventsStream,
   setupInjectionTracking,
   setupWorkflowState,
+  cleanupWorkflowState,
+  generateTestSessionId,
   setupWorkflowConfig,
   setupCompactMarker,
   readCalibration,

@@ -20,6 +20,7 @@ Two passes guarantee corrections don't introduce new issues.
 ## Pass 1: Initial Review
 
 ### Step 1.1: Gather Changes
+
 ```bash
 # Get unstaged changes summary
 git diff --stat
@@ -31,6 +32,7 @@ git diff
 ### Step 1.2: Review Checklist
 
 **Task Correctness:**
+
 - [ ] Changes achieve the intended task objective
 - [ ] No unrelated/unnecessary modifications
 - [ ] Edge cases handled appropriately
@@ -38,36 +40,43 @@ git diff
 
 **Code Standards (EasyPlatform):**
 
-*Backend:*
+_Backend:_
+
 - [ ] Uses platform repository (IPlatformQueryableRootRepository)
 - [ ] Uses PlatformValidationResult fluent API (.And(), .AndAsync())
 - [ ] Side effects in Entity Event Handlers, not command handlers
 - [ ] DTOs own mapping via MapToEntity()/MapToObject()
 - [ ] Command + Result + Handler in ONE file
 
-*Frontend:*
+_Frontend:_
+
 - [ ] Extends appropriate base class (AppBaseComponent, AppBaseVmStoreComponent, AppBaseFormComponent)
 - [ ] Uses PlatformVmStore for state management
 - [ ] Uses .pipe(this.untilDestroyed()) for subscriptions
 - [ ] All template elements have BEM classes
 
 **Architecture:**
+
 - [ ] Logic placed in lowest appropriate layer (Entity > Service > Component)
 - [ ] No cross-service direct database access
 - [ ] Follows existing patterns found in codebase
 
 **Security:**
+
 - [ ] No hardcoded secrets or credentials
 - [ ] Input validation at boundaries
 - [ ] Proper authorization checks
 
 ### Step 1.3: Execute Corrections
+
 If any issues found:
+
 1. Fix each issue directly
 2. Mark `PASS_1_MADE_CHANGES = true`
 3. Proceed to Pass 2
 
 If no issues found:
+
 1. Mark `PASS_1_MADE_CHANGES = false`
 2. Skip to Final Report
 
@@ -78,6 +87,7 @@ If no issues found:
 **ONLY EXECUTE IF PASS 1 MADE CHANGES**
 
 ### Step 2.1: Verify All Changes
+
 ```bash
 # Check updated changes
 git diff --stat
@@ -85,16 +95,20 @@ git diff
 ```
 
 ### Step 2.2: Full Re-Review
+
 Repeat Pass 1 checklist on ALL current changes (original + corrections).
 
 Focus areas:
+
 - [ ] Original task still correctly implemented
 - [ ] Corrections are valid and complete
 - [ ] No new issues introduced by corrections
 - [ ] Code is production-ready
 
 ### Step 2.3: Final Corrections
+
 If issues found:
+
 - Apply minimal, targeted fixes
 - Document any trade-offs made
 
@@ -103,6 +117,7 @@ If issues found:
 ## Final Report
 
 ### Summary Template
+
 ```markdown
 ## Post-Task Review Complete
 
@@ -112,17 +127,21 @@ If issues found:
 **Pass 2 Result:** [N/A / Clean / N issues fixed]
 
 ### Changes Summary
+
 - [List of files modified]
 - [Key changes made]
 
 ### Issues Found & Fixed
+
 1. [Issue]: [Fix applied]
 2. ...
 
 ### Remaining Concerns (if any)
+
 - [Concern]: [Reason not addressed / Recommended follow-up]
 
 ### Verification
+
 - [ ] Task objective achieved
 - [ ] Code follows project conventions
 - [ ] No security vulnerabilities
@@ -156,7 +175,7 @@ git add -p  # Interactive staging
 - For PR reviews, use `/review:codebase` instead
 - Use `code-reviewer` subagent for complex reviews requiring deeper analysis
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -14,6 +14,7 @@ description: ⚡⚡⚡ Analyze the codebase and update documentation
 ## Phase 2: Documentation Update (docs-manager Agent)
 
 Pass the gathered file list to `docs-manager` agent to update documentation:
+
 - `README.md`: Update README (keep it under 300 lines)
 - `docs/project-overview-pdr.md`: Update project overview and PDR (Product Development Requirements)
 - `docs/codebase-summary.md`: Update codebase summary
@@ -24,8 +25,9 @@ Pass the gathered file list to `docs-manager` agent to update documentation:
 - `docs/design-guidelines.md` [optional]: Update design guidelines
 
 ## Additional requests
+
 <additional_requests>
-  $ARGUMENTS
+$ARGUMENTS
 </additional_requests>
 
 ## [CRITICAL] Code Evidence Requirements
@@ -33,6 +35,7 @@ Pass the gathered file list to `docs-manager` agent to update documentation:
 All documentation MUST follow evidence rules from `.claude/skills/feature-docs/SKILL.md` → `[CRITICAL] MANDATORY CODE EVIDENCE RULE`
 
 ### Quick Reference
+
 - **Format**: `**Evidence**: {FilePath}:{LineNumber}`
 - **Status**: ✅ Verified / ⚠️ Stale / ❌ Missing
 - **Verification**: 3-pass verification required before completion
@@ -40,23 +43,26 @@ All documentation MUST follow evidence rules from `.claude/skills/feature-docs/S
 ### Stale Evidence Detection
 
 When updating documentation:
+
 1. **Read actual source files** at claimed line numbers
 2. **Verify evidence matches** documented behavior
 3. **Update stale references** - mark with ⚠️ if line numbers changed
 4. **Refresh line numbers** after code changes
 
 ### Evidence Verification Table (Required)
-| Entity/Component | Documented Lines | Actual Lines | Status |
-|------------------|------------------|--------------|--------|
-| `Entity.cs` | L6-15 | L6-15 | ✅ Verified |
-| `Handler.cs` | L45-60 | L52-67 | ⚠️ Stale |
+
+| Entity/Component | Documented Lines | Actual Lines | Status      |
+| ---------------- | ---------------- | ------------ | ----------- |
+| `Entity.cs`      | L6-15            | L6-15        | ✅ Verified |
+| `Handler.cs`     | L45-60           | L52-67       | ⚠️ Stale    |
 
 ## Important
+
 - Use `docs/` directory as the source of truth for documentation.
 
 **IMPORTANT**: **Do not** start implementing.
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

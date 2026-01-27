@@ -6,10 +6,12 @@ argument-hint: [issues]
 Analyze the skills catalog and activate the skills that are needed for the task during the process.
 
 ## Mission
+
 **Think hard** to analyze and fix these issues:
 <issues>$ARGUMENTS</issues>
 
 ## Workflow
+
 1. If the user provides a screenshots or videos, use `ai-multimodal` skill to describe as detailed as possible the issue, make sure developers can predict the root causes easily based on the description.
 2. Use `debugger` subagent to find the root cause of the issues and report back to main agent.
 3. Activate `debugging` skills and `problem-solving` skills to tackle the issues.
@@ -18,7 +20,7 @@ Analyze the skills catalog and activate the skills that are needed for the task 
 6. If there are issues or failed tests, repeat from step 2.
 7. After finishing, respond back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

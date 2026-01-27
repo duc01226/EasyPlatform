@@ -12,6 +12,10 @@ Activate `planning` skill.
 $ARGUMENTS
 </task>
 
+**⚠️ MUST READ for planning accuracy:**
+- `.ai/docs/backend-code-patterns.md` — Backend code patterns
+- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
 ## Workflow
 
 1. Create a directory using naming pattern from `## Naming` section in injected context.

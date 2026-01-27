@@ -27,10 +27,10 @@ Transform a raw idea into a structured Product Backlog Item with business docume
 
 1. **If `related_module` present in idea**: Use that module
 2. **Otherwise**: Discover module from idea keywords:
-   - Glob: `docs/business-features/*/README.md`
-   - Parse frontmatter, match `keywords`/`aliases`/`features`
-   - Score and select highest match
-   - If no match: Prompt user to select from available modules
+    - Glob: `docs/business-features/*/README.md`
+    - Parse frontmatter, match `keywords`/`aliases`/`features`
+    - Score and select highest match
+    - If no match: Prompt user to select from available modules
 3. **Read**: `docs/business-features/{Module}/INDEX.md`
 4. **Read**: `docs/business-features/{Module}/README.md` (Overview + Requirements sections)
 5. **Extract**: `domain_path` from frontmatter for entity inspection (Step 5)
@@ -44,25 +44,25 @@ Transform a raw idea into a structured Product Backlog Item with business docume
 - Extract relevant FR-XX IDs (functional requirements)
 - Extract relevant TC-XX IDs (test cases)
 - Note gaps or overlaps with existing documentation:
-  - "This extends existing feature FR-XX"
-  - "This fills documentation gap: {description}"
-  - "This may overlap with FR-XX - verify differentiation"
+    - "This extends existing feature FR-XX"
+    - "This fills documentation gap: {description}"
+    - "This may overlap with FR-XX - verify differentiation"
 
 ### 3. Generate Acceptance Criteria
 
 - Create at least 3 scenarios:
-  - Happy path
-  - Edge case
-  - Error case
+    - Happy path
+    - Edge case
+    - Error case
 - Use GIVEN/WHEN/THEN format
 - Reference existing TC-XX patterns where applicable
 
 ### 4. Identify Dependencies
 
 1. **Entity Inspection** (using `domain_path` from Step 3):
-   - Glob: `{domain_path}/Entities/*.cs`
-   - Extract entity class names (extending `RootEntity<`), key properties
-   - If no domain_path: Use fallback `src/*App*/**/*.Domain/Entities/*.cs`
+    - Glob: `{domain_path}/Entities/*.cs`
+    - Extract entity class names (extending `RootEntity<`), key properties
+    - If no domain_path: Use fallback `src/*App*/**/*.Domain/Entities/*.cs`
 2. **Search codebase** for related features
 3. **Include dependencies** from business docs
 4. **Note** upstream/downstream dependencies
@@ -74,11 +74,11 @@ Transform a raw idea into a structured Product Backlog Item with business docume
 - Link to source idea
 - Set status: `backlog`
 - Add frontmatter:
-  - `related_module: "{Module}"`
-  - `related_entities: [{from idea}]`
-  - `business_docs_link: "docs/business-features/{Module}/"`
-  - `related_features: [{FR-XX IDs from step 3.5}]`
-  - `related_test_specs: [{TC-XX IDs from step 3.5}]`
+    - `related_module: "{Module}"`
+    - `related_entities: [{from idea}]`
+    - `business_docs_link: "docs/business-features/{Module}/"`
+    - `related_features: [{FR-XX IDs from step 3.5}]`
+    - `related_test_specs: [{TC-XX IDs from step 3.5}]`
 
 ### 6. Save Artifact
 
@@ -103,14 +103,14 @@ After creating the PBI, conduct a validation interview to:
 
 Before asking validation questions, verify PBI meets INVEST:
 
-| Criterion        | Check                                      | Explanation                                             |
-| ---------------- | ------------------------------------------ | ------------------------------------------------------- |
-| **Independent**  | No blocking dependencies on other PBIs     | Minimizes coordination overhead                         |
-| **Negotiable**   | Implementation approach flexible           | Details emerge during sprint, not locked upfront        |
-| **Valuable**     | Business/user value articulated            | Every PBI delivers something stakeholders care about    |
-| **Estimable**    | Team can provide rough estimate            | If too vague, split or research first                   |
-| **Small**        | Completable in 1-2 sprints (or split)      | Enables frequent feedback and course correction         |
-| **Testable**     | Acceptance criteria are verifiable         | "How do we know it's done?" must be answerable          |
+| Criterion       | Check                                  | Explanation                                          |
+| --------------- | -------------------------------------- | ---------------------------------------------------- |
+| **Independent** | No blocking dependencies on other PBIs | Minimizes coordination overhead                      |
+| **Negotiable**  | Implementation approach flexible       | Details emerge during sprint, not locked upfront     |
+| **Valuable**    | Business/user value articulated        | Every PBI delivers something stakeholders care about |
+| **Estimable**   | Team can provide rough estimate        | If too vague, split or research first                |
+| **Small**       | Completable in 1-2 sprints (or split)  | Enables frequent feedback and course correction      |
+| **Testable**    | Acceptance criteria are verifiable     | "How do we know it's done?" must be answerable       |
 
 Flag any failures in validation summary but proceed with questions.
 
@@ -129,65 +129,71 @@ Scan PBI content for these patterns to generate targeted questions:
 
 #### Validation Question Categories
 
-| Category                | What to Ask                                                          |
-| ----------------------- | -------------------------------------------------------------------- |
-| **Assumptions**         | "The PBI assumes X. Is this correct?"                                |
-| **Scope**               | "Should Y be included in this PBI or deferred to a future item?"     |
-| **Risks**               | "This depends on Z. Is that available/stable?"                       |
-| **Acceptance**          | "Is acceptance criterion X complete or are there edge cases?"        |
-| **Entities**            | "Should we create new entity or extend existing X?"                  |
-| **Integration**         | "How should this integrate with {related feature}?"                  |
-| **Important Decisions** | "This requires deciding X. What's your preference?"                  |
-| **Brainstorm**          | "Any alternative solutions we should consider?"                      |
+| Category                | What to Ask                                                      |
+| ----------------------- | ---------------------------------------------------------------- |
+| **Assumptions**         | "The PBI assumes X. Is this correct?"                            |
+| **Scope**               | "Should Y be included in this PBI or deferred to a future item?" |
+| **Risks**               | "This depends on Z. Is that available/stable?"                   |
+| **Acceptance**          | "Is acceptance criterion X complete or are there edge cases?"    |
+| **Entities**            | "Should we create new entity or extend existing X?"              |
+| **Integration**         | "How should this integrate with {related feature}?"              |
+| **Important Decisions** | "This requires deciding X. What's your preference?"              |
+| **Brainstorm**          | "Any alternative solutions we should consider?"                  |
 
 #### Validation Process
 
 1. **Run INVEST check**, note any failures
 2. **Scan PBI for keywords** to identify question topics
 3. **Generate 3-5 questions** based on:
-   - Assumptions made during entity inspection
-   - Decisions about scope and boundaries
-   - Dependencies identified
-   - Gap analysis results
-   - Acceptance criteria completeness
-   - Keyword detection findings
+    - Assumptions made during entity inspection
+    - Decisions about scope and boundaries
+    - Dependencies identified
+    - Gap analysis results
+    - Acceptance criteria completeness
+    - Keyword detection findings
 
 4. **Ask user via Copilot chat**:
-   - Group related questions (max 4 per response)
-   - Provide concrete options with recommendations
-   - Include context from the refinement
-   - Ask brainstorm question for alternatives
+    - Group related questions (max 4 per response)
+    - Provide concrete options with recommendations
+    - Include context from the refinement
+    - Ask brainstorm question for alternatives
 
 5. **Document validation results** in the PBI:
 
-   ```markdown
-   ## Validation Summary
+    ```markdown
+    ## Validation Summary
 
-   **Validated:** {date}
-   **Questions asked:** {count}
-   **INVEST Score:** {pass count}/6
+    **Validated:** {date}
+    **Questions asked:** {count}
+    **INVEST Score:** {pass count}/6
 
-   ### INVEST Flags
-   - {criterion}: {Pass/Fail - reason if fail}
+    ### INVEST Flags
 
-   ### Confirmed Decisions
-   - {decision 1}: {user choice}
-   - {decision 2}: {user choice}
+    - {criterion}: {Pass/Fail - reason if fail}
 
-   ### Open Items
-   - [ ] {any items needing follow-up}
+    ### Confirmed Decisions
 
-   ### Assumptions Confirmed
-   - {assumption 1}: Confirmed by {user}
-   - {assumption 2}: Modified - {new understanding}
+    - {decision 1}: {user choice}
+    - {decision 2}: {user choice}
 
-   ### Brainstorm Notes
-   - {alternative approaches discussed}
-   - {ideas for future consideration}
+    ### Open Items
 
-   ### Important Decisions Made
-   - {decision 1}: {choice} - {rationale}
-   ```
+    - [ ] {any items needing follow-up}
+
+    ### Assumptions Confirmed
+
+    - {assumption 1}: Confirmed by {user}
+    - {assumption 2}: Modified - {new understanding}
+
+    ### Brainstorm Notes
+
+    - {alternative approaches discussed}
+    - {ideas for future consideration}
+
+    ### Important Decisions Made
+
+    - {decision 1}: {choice} - {rationale}
+    ```
 
 6. **Update PBI if needed** based on validation answers
 
@@ -202,18 +208,22 @@ Scan PBI content for these patterns to generate targeted questions:
 Use template from `team-artifacts/templates/pbi-template.md`
 
 Add these fields to frontmatter:
+
 ```yaml
-related_module: "{Module name}"
+related_module: '{Module name}'
 related_entities: []
-business_docs_link: "docs/business-features/{Module}/"
+business_docs_link: 'docs/business-features/{Module}/'
 related_features: []
 related_test_specs: []
 ```
 
 Add this section to PBI:
+
 ```markdown
 ## Business Documentation Reference
+
 <!-- Auto-populated from /team__refine prompt -->
+
 - **Module**: {Module name}
 - **Module Docs**: [docs/business-features/{Module}/](docs/business-features/{Module}/)
 - **Related Features**: {FR-XX IDs}
@@ -236,6 +246,7 @@ Add this section to PBI:
 ```
 
 Workflow:
+
 1. Loads idea with `related_module: TextSnippet`
 2. Activates business-analyst skill
 3. Loads TextSnippet INDEX.md and README.md
@@ -247,7 +258,7 @@ Workflow:
 9. **Validates with user**: Asks 3-5 questions about assumptions, scope, risks
 10. Documents validation results and updates PBI if needed
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

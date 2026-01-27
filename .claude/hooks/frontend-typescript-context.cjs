@@ -25,6 +25,8 @@ const path = require('path');
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FRONTEND_GUIDE_PATH = 'docs/claude/frontend-typescript-complete-guide.md';
+const FRONTEND_PATTERN_MARKER = '## EasyPlatform Frontend Code Patterns';
+const PATTERN_DEDUP_LINES = 300;
 
 const FRONTEND_PATTERNS = [
     {
@@ -200,6 +202,20 @@ function wasRecentlyInjected(transcriptPath) {
     }
 }
 
+/**
+ * Check if frontend code patterns were already injected by code-patterns-injector hook
+ */
+function werePatternsRecentlyInjected(transcriptPath) {
+    try {
+        if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
+        const transcript = fs.readFileSync(transcriptPath, 'utf-8');
+        const recentLines = transcript.split('\n').slice(-PATTERN_DEDUP_LINES).join('\n');
+        return recentLines.includes(FRONTEND_PATTERN_MARKER);
+    } catch (e) {
+        return false;
+    }
+}
+
 function isTypeScriptFile(filePath) {
     if (!filePath) return false;
     const ext = path.extname(filePath).toLowerCase();
@@ -269,7 +285,7 @@ function shouldInject(filePath, transcriptPath) {
     return true;
 }
 
-function buildInjection(context, filePath, app, fileType) {
+function buildInjection(context, filePath, app, fileType, patternsAlreadyInjected) {
     const fileName = path.basename(filePath);
 
     const lines = [
@@ -297,8 +313,8 @@ function buildInjection(context, filePath, app, fileType) {
         if (fileType.baseClassGuide) {
             lines.push(fileType.baseClassGuide, '');
         }
-    } else {
-        // Generic guidance for non-typed files
+    } else if (!patternsAlreadyInjected) {
+        // Generic guidance for non-typed files (skip if patterns already injected)
         lines.push(
             '### Required Reading',
             '',
@@ -391,7 +407,8 @@ async function main() {
         const fileType = detectFileType(filePath);
 
         // Output the injection
-        const injection = buildInjection(context, filePath, app, fileType);
+        const patternsAlreadyInjected = werePatternsRecentlyInjected(transcriptPath);
+        const injection = buildInjection(context, filePath, app, fileType, patternsAlreadyInjected);
         console.log(injection);
 
         process.exit(0);

@@ -29,6 +29,8 @@ const {
   createTempDir,
   cleanupTempDir,
   setupWorkflowState,
+  cleanupWorkflowState,
+  generateTestSessionId,
   createMockFile,
   fileExists
 } = require('../lib/test-utils.cjs');
@@ -51,9 +53,10 @@ const workflowIntentChangeTests = [
     name: '[workflow-intent] detects intent change from feature to bugfix',
     fn: async () => {
       const tmpDir = createTempDir();
+      let wfState;
       try {
-        // Setup: Active "feature" workflow
-        setupWorkflowState(tmpDir, {
+        // Setup: Active "feature" workflow (per-session path)
+        wfState = setupWorkflowState(tmpDir, {
           workflowId: 'feature',
           workflowName: 'Feature Implementation',
           currentStep: 1,
@@ -90,7 +93,10 @@ const workflowIntentChangeTests = [
 
         // User prompt suggesting a BUG FIX (different from active feature workflow)
         const input = createUserPromptInput('fix this bug in the login form');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        const result = await runHook(WORKFLOW_ROUTER, input, {
+          cwd: tmpDir,
+          env: { CLAUDE_SESSION_ID: wfState.sessionId }
+        });
 
         assertAllowed(result.code, 'Should not block');
         const output = result.stdout + result.stderr;
@@ -105,6 +111,7 @@ const workflowIntentChangeTests = [
           'Should detect intent change and show conflict options'
         );
       } finally {
+        if (wfState) cleanupWorkflowState(wfState.stateFile);
         cleanupTempDir(tmpDir);
       }
     }
@@ -113,9 +120,10 @@ const workflowIntentChangeTests = [
     name: '[workflow-intent] continues when intent matches active workflow',
     fn: async () => {
       const tmpDir = createTempDir();
+      let wfState;
       try {
-        // Setup: Active "bugfix" workflow
-        setupWorkflowState(tmpDir, {
+        // Setup: Active "bugfix" workflow (per-session path)
+        wfState = setupWorkflowState(tmpDir, {
           workflowId: 'bugfix',
           workflowName: 'Bug Fix',
           currentStep: 2,
@@ -145,7 +153,10 @@ const workflowIntentChangeTests = [
 
         // User prompt matching active workflow (bugfix)
         const input = createUserPromptInput('continue fixing the bug');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        const result = await runHook(WORKFLOW_ROUTER, input, {
+          cwd: tmpDir,
+          env: { CLAUDE_SESSION_ID: wfState.sessionId }
+        });
 
         assertAllowed(result.code, 'Should not block');
         const output = result.stdout + result.stderr;
@@ -153,6 +164,7 @@ const workflowIntentChangeTests = [
         // Should NOT show conflict (same intent)
         assertNotContains(output, 'Intent Change', 'Should not show intent change for same workflow');
       } finally {
+        if (wfState) cleanupWorkflowState(wfState.stateFile);
         cleanupTempDir(tmpDir);
       }
     }
@@ -162,7 +174,8 @@ const workflowIntentChangeTests = [
     fn: async () => {
       const tmpDir = createTempDir();
       try {
-        // No workflow state setup
+        // No workflow state setup — unique session ID ensures isolation
+        const testSessionId = generateTestSessionId();
 
         // Setup: workflows.json config
         const claudeDir = path.join(tmpDir, '.claude');
@@ -181,7 +194,10 @@ const workflowIntentChangeTests = [
         }));
 
         const input = createUserPromptInput('fix this bug');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        const result = await runHook(WORKFLOW_ROUTER, input, {
+          cwd: tmpDir,
+          env: { CLAUDE_SESSION_ID: testSessionId }
+        });
 
         assertAllowed(result.code, 'Should not block');
         const output = result.stdout + result.stderr;
@@ -197,9 +213,10 @@ const workflowIntentChangeTests = [
     name: '[workflow-intent] handles quick: prefix bypass',
     fn: async () => {
       const tmpDir = createTempDir();
+      let wfState;
       try {
-        // Setup: Active workflow
-        setupWorkflowState(tmpDir, {
+        // Setup: Active workflow (per-session path)
+        wfState = setupWorkflowState(tmpDir, {
           workflowId: 'feature',
           workflowName: 'Feature Implementation',
           currentStep: 1,
@@ -230,11 +247,15 @@ const workflowIntentChangeTests = [
 
         // User prompt with quick: prefix should bypass workflow detection
         const input = createUserPromptInput('quick: fix this typo');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        const result = await runHook(WORKFLOW_ROUTER, input, {
+          cwd: tmpDir,
+          env: { CLAUDE_SESSION_ID: wfState.sessionId }
+        });
 
         assertAllowed(result.code, 'Should not block');
         // Quick prefix bypasses all workflow detection
       } finally {
+        if (wfState) cleanupWorkflowState(wfState.stateFile);
         cleanupTempDir(tmpDir);
       }
     }
@@ -697,6 +718,9 @@ const workflowPrefixTests = [
     fn: async () => {
       const tmpDir = createTempDir();
       try {
+        // Unique session ID for isolation
+        const testSessionId = generateTestSessionId();
+
         // Setup: workflows.json config with a workflow
         const claudeDir = path.join(tmpDir, '.claude');
         fs.mkdirSync(claudeDir, { recursive: true });
@@ -720,7 +744,10 @@ const workflowPrefixTests = [
 
         // Trigger a feature workflow
         const input = createUserPromptInput('implement a new login feature');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        const result = await runHook(WORKFLOW_ROUTER, input, {
+          cwd: tmpDir,
+          env: { CLAUDE_SESSION_ID: testSessionId }
+        });
 
         assertAllowed(result.code, 'Should not block');
         const output = result.stdout + result.stderr;
@@ -742,6 +769,9 @@ const workflowPrefixTests = [
     fn: async () => {
       const tmpDir = createTempDir();
       try {
+        // Unique session ID for isolation
+        const testSessionId = generateTestSessionId();
+
         const claudeDir = path.join(tmpDir, '.claude');
         fs.mkdirSync(claudeDir, { recursive: true });
         fs.writeFileSync(path.join(claudeDir, 'workflows.json'), JSON.stringify({
@@ -762,7 +792,10 @@ const workflowPrefixTests = [
         }));
 
         const input = createUserPromptInput('fix this bug');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        const result = await runHook(WORKFLOW_ROUTER, input, {
+          cwd: tmpDir,
+          env: { CLAUDE_SESSION_ID: testSessionId }
+        });
 
         const output = result.stdout + result.stderr;
 
@@ -877,12 +910,13 @@ const edgeCaseTests = [
     name: '[edge-case] workflow state with expired timestamp',
     fn: async () => {
       const tmpDir = createTempDir();
+      let wfState;
       try {
         // Setup: Old workflow state (24+ hours ago)
         const oldDate = new Date();
         oldDate.setHours(oldDate.getHours() - 25);
 
-        setupWorkflowState(tmpDir, {
+        wfState = setupWorkflowState(tmpDir, {
           workflowId: 'feature',
           workflowName: 'Feature Implementation',
           currentStep: 1,
@@ -892,6 +926,7 @@ const edgeCaseTests = [
 
         // Setup: workflows.json config
         const claudeDir = path.join(tmpDir, '.claude');
+        fs.mkdirSync(claudeDir, { recursive: true });
         fs.writeFileSync(path.join(claudeDir, 'workflows.json'), JSON.stringify({
           version: '1.2.0',
           settings: { enabled: true },
@@ -907,10 +942,14 @@ const edgeCaseTests = [
 
         // New prompt with different intent - stale workflow might be ignored
         const input = createUserPromptInput('fix this bug');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
+        const result = await runHook(WORKFLOW_ROUTER, input, {
+          cwd: tmpDir,
+          env: { CLAUDE_SESSION_ID: wfState.sessionId }
+        });
 
         assertAllowed(result.code, 'Should handle stale workflow state');
       } finally {
+        if (wfState) cleanupWorkflowState(wfState.stateFile);
         cleanupTempDir(tmpDir);
       }
     }

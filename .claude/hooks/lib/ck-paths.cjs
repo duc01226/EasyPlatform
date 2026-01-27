@@ -39,6 +39,9 @@ const DEBUG_DIR = path.join(CK_TMP_DIR, 'debug');
 // Swap files directory (for externalized large tool outputs)
 const SWAP_DIR = path.join(CK_TMP_DIR, 'swap');
 
+// Workflow state directory (per-session workflow tracking)
+const WORKFLOW_DIR = path.join(CK_TMP_DIR, 'workflow');
+
 /**
  * Ensure directory exists
  * @param {string} dirPath - Directory path to create
@@ -128,12 +131,22 @@ function ensureSwapDir(sessionId) {
   return dir;
 }
 
+/**
+ * Get workflow state file path for a session
+ * @param {string} sessionId - Session ID
+ * @returns {string} Full path to workflow state file
+ */
+function getWorkflowPath(sessionId) {
+  return path.join(WORKFLOW_DIR, `${sanitizeSessionId(sessionId)}.json`);
+}
+
 module.exports = {
   // Directories
   CK_TMP_DIR,
   MARKERS_DIR,
   DEBUG_DIR,
   SWAP_DIR,
+  WORKFLOW_DIR,
 
   // Files
   CALIBRATION_PATH,
@@ -143,6 +156,7 @@ module.exports = {
   ensureDir,
   getMarkerPath,
   getDebugLogPath,
+  getWorkflowPath,
   initDirs,
   cleanAll,
 

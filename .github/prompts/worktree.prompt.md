@@ -14,6 +14,7 @@ node .claude/scripts/worktree.cjs info --json
 ```
 
 **Response fields:**
+
 - `repoType`: "monorepo" or "standalone"
 - `baseBranch`: detected base branch
 - `projects`: array of {name, path} for monorepo
@@ -23,6 +24,7 @@ node .claude/scripts/worktree.cjs info --json
 ### Step 2: Gather Info via AskUserQuestion
 
 **Detect branch prefix from user's description:**
+
 - Keywords "fix", "bug", "error", "issue" → prefix = `fix`
 - Keywords "refactor", "restructure", "rewrite" → prefix = `refactor`
 - Keywords "docs", "documentation", "readme" → prefix = `docs`
@@ -32,28 +34,34 @@ node .claude/scripts/worktree.cjs info --json
 - Everything else → prefix = `feat`
 
 **For MONOREPO:** Use AskUserQuestion if project not specified:
+
 ```javascript
 // If user said "/worktree add auth" but multiple projects exist
 AskUserQuestion({
-  questions: [{
-    header: "Project",
-    question: "Which project should the worktree be created for?",
-    options: projects.map(p => ({ label: p.name, description: p.path })),
-    multiSelect: false
-  }]
-})
+    questions: [
+        {
+            header: 'Project',
+            question: 'Which project should the worktree be created for?',
+            options: projects.map(p => ({ label: p.name, description: p.path })),
+            multiSelect: false
+        }
+    ]
+});
 ```
 
 **For env files:** Always ask which to copy:
+
 ```javascript
 AskUserQuestion({
-  questions: [{
-    header: "Env files",
-    question: "Which environment files should be copied to the worktree?",
-    options: envFiles.map(f => ({ label: f, description: "Copy to worktree" })),
-    multiSelect: true
-  }]
-})
+    questions: [
+        {
+            header: 'Env files',
+            question: 'Which environment files should be copied to the worktree?',
+            options: envFiles.map(f => ({ label: f, description: 'Copy to worktree' })),
+            multiSelect: true
+        }
+    ]
+});
 ```
 
 ### Step 3: Convert Description to Slug
@@ -65,16 +73,19 @@ AskUserQuestion({
 ### Step 4: Execute Command
 
 **Monorepo:**
+
 ```bash
 node .claude/scripts/worktree.cjs create "<PROJECT>" "<SLUG>" --prefix <TYPE> --env "<FILES>"
 ```
 
 **Standalone:**
+
 ```bash
 node .claude/scripts/worktree.cjs create "<SLUG>" --prefix <TYPE> --env "<FILES>"
 ```
 
 **Options:**
+
 - `--prefix` - Branch type: feat|fix|refactor|docs|test|chore|perf
 - `--env` - Comma-separated .env files to copy
 - `--json` - Output JSON for parsing
@@ -82,26 +93,26 @@ node .claude/scripts/worktree.cjs create "<SLUG>" --prefix <TYPE> --env "<FILES>
 
 ## Commands
 
-| Command | Usage | Description |
-|---------|-------|-------------|
-| `create` | `create [project] <feature>` | Create new worktree |
-| `remove` | `remove <name-or-path>` | Remove worktree and branch |
-| `info` | `info` | Get repo info |
-| `list` | `list` | List existing worktrees |
+| Command  | Usage                        | Description                |
+| -------- | ---------------------------- | -------------------------- |
+| `create` | `create [project] <feature>` | Create new worktree        |
+| `remove` | `remove <name-or-path>`      | Remove worktree and branch |
+| `info`   | `info`                       | Get repo info              |
+| `list`   | `list`                       | List existing worktrees    |
 
 ## Error Codes
 
-| Code | Meaning | Action |
-|------|---------|--------|
-| `MISSING_ARGS` | Missing project/feature for monorepo | Ask for both |
-| `MISSING_FEATURE` | No feature name (standalone) | Ask for feature |
-| `PROJECT_NOT_FOUND` | Project not in .gitmodules | Show available projects |
-| `MULTIPLE_PROJECTS_MATCH` | Ambiguous project name | Use AskUserQuestion |
-| `MULTIPLE_WORKTREES_MATCH` | Ambiguous worktree for remove | Use AskUserQuestion |
-| `BRANCH_CHECKED_OUT` | Branch in use elsewhere | Suggest different name |
-| `WORKTREE_EXISTS` | Path already exists | Suggest use or remove |
-| `WORKTREE_CREATE_FAILED` | Git command failed | Show git error |
-| `WORKTREE_REMOVE_FAILED` | Cannot remove worktree | Check uncommitted changes |
+| Code                       | Meaning                              | Action                    |
+| -------------------------- | ------------------------------------ | ------------------------- |
+| `MISSING_ARGS`             | Missing project/feature for monorepo | Ask for both              |
+| `MISSING_FEATURE`          | No feature name (standalone)         | Ask for feature           |
+| `PROJECT_NOT_FOUND`        | Project not in .gitmodules           | Show available projects   |
+| `MULTIPLE_PROJECTS_MATCH`  | Ambiguous project name               | Use AskUserQuestion       |
+| `MULTIPLE_WORKTREES_MATCH` | Ambiguous worktree for remove        | Use AskUserQuestion       |
+| `BRANCH_CHECKED_OUT`       | Branch in use elsewhere              | Suggest different name    |
+| `WORKTREE_EXISTS`          | Path already exists                  | Suggest use or remove     |
+| `WORKTREE_CREATE_FAILED`   | Git command failed                   | Show git error            |
+| `WORKTREE_REMOVE_FAILED`   | Cannot remove worktree               | Check uncommitted changes |
 
 ## Example Session
 
@@ -125,7 +136,7 @@ Output: Worktree created at ../worktrees/myrepo-login-validation-bug
         Branch: fix/login-validation-bug
 ```
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -6,9 +6,13 @@ argument-hint: [plan] [all-phases-yes-or-no] (default: yes)
 **MUST READ** `CLAUDE.md` then **THINK HARDER** to start working on the following plan follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <plan>$ARGUMENTS</plan>
 
+**⚠️ MUST READ before implementation:**
+- `.ai/docs/backend-code-patterns.md` — Backend code patterns
+- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
 ## Arguments
 - $PLAN: $1 (Mention specific plan or auto detected, default: latest plan)
-- $ALL_PHASES: $2 (`Yest` to finish all phases in one run or `No` to implement phase-by-phase and wait for confirmation, default is `Yes`)
+- $ALL_PHASES: $2 (`Yes` to finish all phases in one run or `No` to implement phase-by-phase and wait for confirmation, default is `Yes`)
 
 ---
 
@@ -27,7 +31,7 @@ argument-hint: [plan] [all-phases-yes-or-no] (default: yes)
 ## Step 0: Plan Detection & Phase Selection
 
 **If `$PLAN` is empty:**
-1. Find latest `plan.md` in `./plans` | `find ./plans -name "plan.md" -type f -exec stat -f "%m %N" {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-`
+1. Find latest `plan.md` in `./plans` | `ls -t ./plans/**/plan.md 2>/dev/null | head -1`
 2. Parse plan for phases and status, auto-select next incomplete (prefer IN_PROGRESS or earliest Planned)
 
 **If `$PLAN` provided:** Use that plan and detect which phase to work on (auto-detect or use argument like "phase-2").
@@ -118,7 +122,7 @@ Mark Step 4 complete in TodoWrite, mark Step 5 in_progress.
 3. **AUTO-COMMIT (after steps 1 and 2 completes):**
 - **Call** `git-manager` subagent to handle git operation.
 - Run only if: Steps 1 and 2 successful + Tests passed
-- Auto-stage, commit with message [phase - plan] and push
+- Auto-stage and commit with message [phase - plan]. Do NOT push unless user explicitly requests
 
 **Validation:** Steps 1 and 2 must complete successfully. Step 3 (auto-commit) runs only if conditions met.
 

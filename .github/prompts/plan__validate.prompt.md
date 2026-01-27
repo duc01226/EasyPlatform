@@ -17,8 +17,8 @@ Interview the user with critical questions to validate assumptions, confirm deci
 
 Check `## Plan Context` section for validation settings:
 
--   `mode` - Controls auto/prompt/off behavior
--   `questions` - Range like `3-8` (min-max)
+- `mode` - Controls auto/prompt/off behavior
+- `questions` - Range like `3-8` (min-max)
 
 These values are automatically injected from user config. Use them as constraints.
 
@@ -28,9 +28,9 @@ These values are automatically injected from user config. Use them as constraint
 
 Read the plan directory:
 
--   `plan.md` - Overview and phases list
--   `phase-*.md` - All phase files
--   Look for decision points, assumptions, risks, tradeoffs
+- `plan.md` - Overview and phases list
+- `phase-*.md` - All phase files
+- Look for decision points, assumptions, risks, tradeoffs
 
 ### Step 2: Extract Question Topics
 
@@ -50,10 +50,10 @@ For each detected topic, formulate a concrete question:
 
 **Question format rules:**
 
--   Each question must have 2-4 concrete options
--   Mark recommended option with "(Recommended)" suffix
--   Include "Other" option is automatic - don't add it
--   Questions should surface implicit decisions
+- Each question must have 2-4 concrete options
+- Mark recommended option with "(Recommended)" suffix
+- Include "Other" option is automatic - don't add it
+- Questions should surface implicit decisions
 
 **Example questions:**
 
@@ -81,9 +81,9 @@ Use `AskUserQuestion` tool to present questions.
 
 **Rules:**
 
--   Use question count from `## Plan Context` → `Validation: mode=X, questions=MIN-MAX`
--   Group related questions when possible (max 4 questions per tool call)
--   Focus on: assumptions, risks, tradeoffs, architecture
+- Use question count from `## Plan Context` → `Validation: mode=X, questions=MIN-MAX`
+- Group related questions when possible (max 4 questions per tool call)
+- Focus on: assumptions, risks, tradeoffs, architecture
 
 ### Step 5: Document Answers
 
@@ -99,13 +99,13 @@ After collecting answers, update the plan:
 
 ### Confirmed Decisions
 
--   {decision 1}: {user choice}
--   {decision 2}: {user choice}
-    1
+- {decision 1}: {user choice}
+- {decision 2}: {user choice}
+  1
 
 ### Action Items
 
--   [ ] {any changes needed based on answers}
+- [ ] {any changes needed based on answers}
 ```
 
 1. If answers require plan changes, note them but **do not modify phase files** - just document what needs updating.
@@ -114,10 +114,10 @@ After collecting answers, update the plan:
 
 After validation completes, provide summary:
 
--   Number of questions asked
--   Key decisions confirmed
--   Any items flagged for plan revision
--   Recommendation: proceed to implementation or revise plan first
+- Number of questions asked
+- Key decisions confirmed
+- Any items flagged for plan revision
+- Recommendation: proceed to implementation or revise plan first
 
 ## Importa
 
@@ -129,7 +129,7 @@ nt Notes
 
 ultrathink
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

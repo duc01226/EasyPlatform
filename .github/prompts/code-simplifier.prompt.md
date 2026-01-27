@@ -6,43 +6,45 @@ Simplify and refine code for clarity, consistency, and maintainability.
 
 ## Simplification Actions
 
-| Action | Description |
-|--------|-------------|
-| Reduce nesting | Flatten deep if/else chains with guard clauses |
-| Extract methods | Break long methods into focused units |
-| Simplify conditionals | Use early returns, named booleans |
-| Remove duplication | Apply DRY, use platform patterns |
-| Improve naming | Make code self-documenting |
+| Action                | Description                                    |
+| --------------------- | ---------------------------------------------- |
+| Reduce nesting        | Flatten deep if/else chains with guard clauses |
+| Extract methods       | Break long methods into focused units          |
+| Simplify conditionals | Use early returns, named booleans              |
+| Remove duplication    | Apply DRY, use platform patterns               |
+| Improve naming        | Make code self-documenting                     |
 
 ## Workflow
 
 1. **Identify targets**
-   - If no arguments: `git diff --name-only HEAD~1` for recent changes
-   - If arguments provided: use specified files/patterns
-   - Skip: generated code, migrations, vendor files
+    - If no arguments: `git diff --name-only HEAD~1` for recent changes
+    - If arguments provided: use specified files/patterns
+    - Skip: generated code, migrations, vendor files
 
 2. **Analyze each file**
-   - Identify complexity hotspots (nesting > 3, methods > 20 lines)
-   - Find duplicated code patterns
-   - Check naming clarity
+    - Identify complexity hotspots (nesting > 3, methods > 20 lines)
+    - Find duplicated code patterns
+    - Check naming clarity
 
 3. **Apply simplifications**
-   - One refactoring type at a time
-   - Preserve all functionality
-   - Follow platform patterns
+    - One refactoring type at a time
+    - Preserve all functionality
+    - Follow platform patterns
 
 4. **Verify**
-   - Run related tests if available
-   - Confirm no behavior changes
+    - Run related tests if available
+    - Confirm no behavior changes
 
 ## Platform Patterns to Apply
 
 ### Backend (C#)
+
 - Extract to `Entity.XxxExpr()` static expressions
 - Use fluent helpers: `.With()`, `.Then()`, `.PipeIf()`
 - Move mapping to DTO `MapToObject()` / `MapToEntity()`
 
 ### Frontend (TypeScript)
+
 - Use `PlatformVmStore` for state
 - Apply `untilDestroyed()` to subscriptions
 - Ensure BEM class naming
@@ -70,7 +72,7 @@ Claude:
 5. Complexity reduced: 145 → 128 lines
 ```
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

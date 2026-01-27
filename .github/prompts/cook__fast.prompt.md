@@ -11,23 +11,23 @@ Start working on these tasks immediately with minimal planning:
 ## Workflow
 
 1. **Quick Planning** (skip research phase)
-   - Analyze task requirements directly
-   - Create minimal todo list with `TodoWrite`
-   - NO researcher subagents, NO scout commands
+    - Analyze task requirements directly
+    - Create minimal todo list with `TodoWrite`
+    - NO researcher subagents, NO scout commands
 
 2. **Rapid Implementation**
-   - Use `/code` directly on tasks
-   - Skip multi-step planning documents
-   - Focus on working code over documentation
+    - Use `/code` directly on tasks
+    - Skip multi-step planning documents
+    - Focus on working code over documentation
 
 3. **Quick Validation**
-   - Run type-check and compile
-   - Manual spot-check over full test suite
-   - Skip code-reviewer subagent
+    - Run type-check and compile
+    - Manual spot-check over full test suite
+    - Skip code-reviewer subagent
 
 4. **Commit** (optional)
-   - Ask user if ready to commit via `AskUserQuestion`
-   - If yes, use `/git:cm`
+    - Ask user if ready to commit via `AskUserQuestion`
+    - If yes, use `/git:cm`
 
 ## When to Use
 
@@ -38,15 +38,15 @@ Start working on these tasks immediately with minimal planning:
 
 ## Trade-offs
 
-| Aspect | Fast Mode | Full Mode |
-|--------|-----------|-----------|
-| Research | Skipped | Multiple agents |
-| Planning | Minimal | Full plan docs |
-| Testing | Quick check | Full test suite |
-| Review | Skipped | Code-reviewer |
-| Speed | ~2x faster | Thorough |
+| Aspect   | Fast Mode   | Full Mode       |
+| -------- | ----------- | --------------- |
+| Research | Skipped     | Multiple agents |
+| Planning | Minimal     | Full plan docs  |
+| Testing  | Quick check | Full test suite |
+| Review   | Skipped     | Code-reviewer   |
+| Speed    | ~2x faster  | Thorough        |
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

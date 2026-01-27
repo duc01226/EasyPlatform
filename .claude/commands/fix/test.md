@@ -8,6 +8,10 @@ Analyze the skills catalog and activate the skills that are needed for the task 
 ## Reported Issues:
 <issues>$ARGUMENTS</issues>
 
+**⚠️ MUST READ before fixing:**
+- `.ai/docs/backend-code-patterns.md` — Backend code patterns
+- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
 ## Workflow:
 1. Use `tester` subagent to compile the code and fix all syntax errors if any.
 2. Use `tester` subagent to run the tests and report back to main agent.

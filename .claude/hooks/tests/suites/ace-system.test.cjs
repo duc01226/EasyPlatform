@@ -39,6 +39,8 @@ const {
   readEventsStream,
   setupInjectionTracking,
   setupWorkflowState,
+  cleanupWorkflowState,
+  generateTestSessionId,
   setupWorkflowConfig,
   setupCalibration,
   readCalibration,
@@ -882,8 +884,9 @@ const workflowStepTrackerTests = [
     name: '[workflow-step-tracker] advances workflow on skill match',
     fn: async () => {
       const tmpDir = createTempDir();
+      let wfState;
       try {
-        setupWorkflowState(tmpDir, {
+        wfState = setupWorkflowState(tmpDir, {
           active: true,
           currentWorkflow: 'feature',
           currentStep: 0,
@@ -898,11 +901,13 @@ const workflowStepTrackerTests = [
           { exit_code: 0 }
         );
         const result = await runHook(WORKFLOW_STEP_TRACKER, input, {
-          cwd: tmpDir
+          cwd: tmpDir,
+          env: { CLAUDE_SESSION_ID: wfState.sessionId }
         });
 
         assertAllowed(result.code, 'Should advance workflow');
       } finally {
+        if (wfState) cleanupWorkflowState(wfState.stateFile);
         cleanupTempDir(tmpDir);
       }
     }

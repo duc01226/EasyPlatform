@@ -20,16 +20,31 @@ const { getCurrentStepInfo } = require('./workflow-state.cjs');
 function getStepDescription(step) {
   const descriptions = {
     plan: 'Create implementation plan',
+    'plan-review': 'Review implementation plan',
     cook: 'Implement the feature',
-    code: 'Execute existing plan',
+    code: 'Implement from existing plan',
     test: 'Run tests and verify',
     fix: 'Apply fixes',
     debug: 'Investigate and diagnose',
     'code-review': 'Review code quality',
+    'code-simplifier': 'Simplify and refine code',
     'docs-update': 'Update documentation',
     watzup: 'Summarize changes',
     scout: 'Explore codebase',
-    investigate: 'Deep dive analysis'
+    investigate: 'Deep dive analysis',
+    changelog: 'Update changelog',
+    'design-spec': 'Create design specification',
+    idea: 'Capture product idea',
+    refine: 'Refine into product backlog item',
+    story: 'Break into user stories',
+    prioritize: 'Prioritize backlog items',
+    'test-spec': 'Generate test specification',
+    'test-cases': 'Create detailed test cases',
+    'quality-gate': 'Run quality gate checks',
+    status: 'Generate status report',
+    dependency: 'Analyze dependencies',
+    'review-changes': 'Review uncommitted changes',
+    'team-sync': 'Prepare team sync agenda'
   };
   return descriptions[step] || `Execute ${step}`;
 }

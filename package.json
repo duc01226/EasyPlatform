@@ -1,17 +1,11 @@
 {
-  "name": "easyplatform",
-  "version": "1.0.0",
   "private": true,
-  "description": "EasyPlatform - .NET 9 + Angular 19 Development Platform Framework",
-  "scripts": {
-    "prepare": "husky"
-  },
+  "description": "EasyPlatform root - MCP server packages for Claude Code local resolution",
   "devDependencies": {
-    "@commitlint/cli": "^19.0.0",
-    "@commitlint/config-conventional": "^19.0.0",
-    "husky": "^9.0.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "@modelcontextprotocol/server-github": "2025.4.8",
+    "@modelcontextprotocol/server-memory": "2025.11.25",
+    "@modelcontextprotocol/server-sequential-thinking": "2025.12.18",
+    "@upstash/context7-mcp": "2.1.0",
+    "dotenv-cli": "11.0.0"
   }
 }

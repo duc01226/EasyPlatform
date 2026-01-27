@@ -6,6 +6,10 @@ argument-hint: [tasks]
 **Ultrathink** to plan and implement these tasks with maximum verification:
 <tasks>$ARGUMENTS</tasks>
 
+**⚠️ MUST READ before implementation:**
+- `.ai/docs/backend-code-patterns.md` — Backend code patterns
+- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
 **Mode:** HARD - Extra research, detailed planning, mandatory reviews.
 
 ## Workflow

@@ -24,16 +24,16 @@ Before implementing ANY non-trivial task, you MUST:
 
 ## CRITICAL: Todo Enforcement (Runtime Enforced)
 
-Implementation skills are **blocked** unless you have active todos. This is enforced by hooks.
+Planning and implementation skills are **blocked** unless you have active todos. This is enforced by hooks.
 
-### Allowed Without Todos (Research/Planning)
+### Allowed Without Todos (Read-Only Research & Status)
 
 - `/scout`, `/scout:ext`, `/investigate`, `/research`, `/explore`
-- `/plan`, `/plan:fast`, `/plan:hard`, `/plan:validate`
 - `/watzup`, `/checkpoint`, `/kanban`
 
-### Blocked Without Todos (Implementation)
+### Blocked Without Todos (Planning + Implementation)
 
+- `/plan`, `/plan:fast`, `/plan:hard`, `/plan:validate`
 - `/cook`, `/fix`, `/code`, `/feature`, `/implement`
 - `/test`, `/debug`, `/code-review`, `/commit`
 - All other skills not listed above
@@ -105,7 +105,7 @@ See: [claude-kit-setup.md#external-memory-swap-system](docs/claude/claude-kit-se
 | [README.md](README.md)                                               | Platform overview & quick start  |
 | [Architecture Overview](docs/architecture-overview.md)               | System architecture & diagrams   |
 | [.github/AI-DEBUGGING-PROTOCOL.md](.github/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging protocol     |
-| [.ai/prompts/common.md](.ai/prompts/common.md)                       | AI agent prompt library          |
+| [.ai/docs/common-prompt.md](.ai/docs/common-prompt.md)                       | AI agent prompt library          |
 | [.claude/hooks/tests/](.claude/hooks/tests/)                         | Claude hooks test infrastructure |
 
 > **Claude Hooks Development:** Before adding new test cases or test scripts for Claude hooks, check existing tests in `.claude/hooks/tests/` folder. Use the existing test utilities (`test-utils.cjs`, `hook-runner.cjs`) and follow established patterns in `suites/` directory.
@@ -573,14 +573,17 @@ Before responding to any task request, analyze the user's prompt to detect inten
 
 ### Intent Detection Rules
 
-| Intent                     | Trigger Keywords                                    | Workflow Sequence                                                                                                            |
-| -------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **Feature Implementation** | implement, add, create, build, develop, new feature | `/plan` → `/plan:review` → `/cook` → `/code-simplifier` → `/review/codebase` → `/test` → `/docs-update` → `/watzup`          |
-| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working  | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan:review` → `/fix` → `/code-simplifier` → `/review/codebase` → `/test` |
-| **Documentation**          | docs, document, readme, update docs                 | `/scout` → `/investigate` → `/docs-update` → `/watzup`                                                                       |
-| **Refactoring**            | refactor, restructure, clean up, improve code       | `/plan` → `/plan:review` → `/code` → `/code-simplifier` → `/review/codebase` → `/test`                                       |
-| **Code Review**            | review, check, audit code, PR review                | `/code-review` → `/watzup`                                                                                                   |
-| **Investigation**          | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                                                                                    |
+| Intent                     | Trigger Keywords                                                             | Workflow Sequence                                                                                                                  |
+| -------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **Feature Implementation** | implement, add, create, build, develop, new feature                          | `/plan` → `/plan:review` → `/cook` → `/code-simplifier` → `/code-review` → `/test` → `/docs-update` → `/watzup`                    |
+| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working                           | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan:review` → `/fix` → `/code-simplifier` → `/code-review` → `/test`           |
+| **Verification**           | verify, validate, confirm that, check if, ensure                             | `/scout` → `/investigate` → `/test` → *[gate]* → `/plan` → `/plan:review` → `/fix` → `/code-simplifier` → `/code-review` → `/test` |
+| **Documentation**          | docs, document, readme, update docs                                          | `/scout` → `/investigate` → `/docs-update` → `/watzup`                                                                             |
+| **Refactoring**            | refactor, restructure, clean up, improve code                                | `/plan` → `/plan:review` → `/code` → `/code-simplifier` → `/code-review` → `/test`                                                 |
+| **Review Changes**         | review current/uncommitted/staged changes                                    | `/review-changes`                                                                                                                  |
+| **Code Review**            | review code, audit code, PR review, codebase review                          | `/code-review` → `/watzup`                                                                                                         |
+| **Quality Audit**          | audit quality, review skills/commands/hooks, ensure best practices, no flaws | `/code-review` → `/plan` → `/code` → `/test` → `/watzup` (with CRITICAL GATE after review)                                         |
+| **Investigation**          | how does, where is, explain, understand, find                                | `/scout` → `/investigate`                                                                                                          |
 
 ### Workflow Execution Protocol
 

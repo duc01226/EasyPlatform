@@ -9,8 +9,8 @@ Search the codebase for files needed to complete the task using fast, token-effi
 
 ## Variables
 
-- **USER_PROMPT**: $1
-- **SCALE**: $2 (defaults to 3)
+- **USER_PROMPT**: $ARGUMENTS
+- **SCALE**: 3 (default; extract from $ARGUMENTS if user provides a numeric scale value)
 - **REPORT_OUTPUT_DIR**: Use `Report:` from `## Naming` section
 
 ---

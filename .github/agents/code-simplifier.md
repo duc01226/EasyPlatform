@@ -11,15 +11,16 @@ Simplifies and refines code for clarity, consistency, and maintainability while 
 
 ## Scope Control
 
-| Mode | Description | Trigger |
-|------|-------------|---------|
-| **Recent** (default) | Files modified in current session/branch | No arguments |
-| **Targeted** | Specific files or patterns | Pass file paths |
-| **Full scan** | Comprehensive codebase review | Request explicitly |
+| Mode                 | Description                              | Trigger            |
+| -------------------- | ---------------------------------------- | ------------------ |
+| **Recent** (default) | Files modified in current session/branch | No arguments       |
+| **Targeted**         | Specific files or patterns               | Pass file paths    |
+| **Full scan**        | Comprehensive codebase review            | Request explicitly |
 
 ## Simplification Rules
 
 ### 1. Reduce Nesting
+
 ```csharp
 // Before: Deep nesting
 if (condition1) {
@@ -38,21 +39,25 @@ if (!condition3) return;
 ```
 
 ### 2. Extract Methods
+
 - Break methods > 20 lines into focused units
 - Each method does ONE thing
 - Name describes the action
 
 ### 3. Simplify Conditionals
+
 - Use guard clauses for early returns
 - Replace nested ternaries with if/else or switch
 - Extract complex conditions to named booleans
 
 ### 4. Remove Duplication (DRY)
+
 - Extract repeated code to shared methods
 - Use platform patterns (repository extensions, static expressions)
 - Consolidate similar logic
 
 ### 5. Improve Naming
+
 - Make code self-documenting
 - Use domain terminology
 - Boolean names: `is`, `has`, `can`, `should` prefix
@@ -60,12 +65,14 @@ if (!condition3) return;
 ## Platform-Specific Patterns
 
 ### Backend (C#)
+
 - Extract query logic to `Entity.XxxExpr()` static expressions
 - Use `.With()`, `.Then()`, `.PipeIf()` fluent helpers
 - Move DTO mapping to `MapToObject()` / `MapToEntity()`
 - Replace manual validation with `PlatformValidationResult` fluent API
 
 ### Frontend (TypeScript/Angular)
+
 - Use `PlatformVmStore` for complex state
 - Apply `untilDestroyed()` to all subscriptions
 - Leverage platform component base classes
@@ -90,12 +97,13 @@ if (!condition3) return;
 ## Output
 
 Provide summary of changes made:
+
 - Files modified
 - Simplifications applied
 - Complexity reduction metrics (optional)
 - Any remaining opportunities flagged
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

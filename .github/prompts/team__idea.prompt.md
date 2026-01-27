@@ -22,23 +22,24 @@ Create a structured idea artifact for backlog consideration with business contex
 Dynamic module discovery from YAML frontmatter:
 
 1. **Glob**: Find all module documentation
-   ```
-   docs/business-features/*/README.md
-   ```
+
+    ```
+    docs/business-features/*/README.md
+    ```
 
 2. **Parse Frontmatter**: For each README, extract YAML between `---` markers
-   - Extract: `module`, `keywords`, `aliases`, `features`, `domain_path`
+    - Extract: `module`, `keywords`, `aliases`, `features`, `domain_path`
 
 3. **Match Keywords**: Compare user input (title/problem) against:
-   - `aliases` (exact match - highest priority)
-   - `keywords` (partial match)
-   - `features` (partial match for sub-features)
-   - Score = count of matching terms
+    - `aliases` (exact match - highest priority)
+    - `keywords` (partial match)
+    - `features` (partial match for sub-features)
+    - Score = count of matching terms
 
 4. **Select Module**:
-   - If single match: Confirm "Is this related to {Module}?"
-   - If multiple matches: Show matches with scores, ask user to select
-   - If no match: List all discovered modules, ask selection or "new" for new module
+    - If single match: Confirm "Is this related to {Module}?"
+    - If multiple matches: Show matches with scores, ask user to select
+    - If no match: List all discovered modules, ask selection or "new" for new module
 
 **Note**: Modules are self-describing via frontmatter. New modules auto-discovered when following template.
 
@@ -60,13 +61,14 @@ Dynamic module discovery from YAML frontmatter:
 Use `domain_path` from module frontmatter for targeted entity search:
 
 1. **Get Domain Path**:
-   - If module matched: Use frontmatter `domain_path` (e.g., `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain`)
-   - If no module: Skip entity inspection or use broad search
+    - If module matched: Use frontmatter `domain_path` (e.g., `src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Domain`)
+    - If no module: Skip entity inspection or use broad search
 
 2. **Entity Search**:
-   ```
-   {domain_path}/Entities/*.cs
-   ```
+
+    ```
+    {domain_path}/Entities/*.cs
+    ```
 
 3. **Extract**: Entity class names (classes extending `RootEntity<`), key properties, relationships
 4. **Show**: "Related entities found: {EntityName} with properties: [{list}]"
@@ -85,9 +87,9 @@ Use `domain_path` from module frontmatter for targeted entity search:
 - Generate ID: `IDEA-{YYMMDD}-{NNN}` (sequential)
 - Set status: `draft`
 - Add frontmatter:
-  - `related_module: "{Module or N/A}"`
-  - `related_entities: [{list of entity names}]`
-  - `related_features: [{FR-XX IDs if applicable}]`
+    - `related_module: "{Module or N/A}"`
+    - `related_entities: [{list of entity names}]`
+    - `related_features: [{FR-XX IDs if applicable}]`
 
 ### 5. Save Artifact
 
@@ -101,13 +103,13 @@ After saving, conduct brief validation interview to confirm understanding before
 
 #### Question Selection (pick 2-3 most relevant)
 
-| Category            | Question                                                           |
-| ------------------- | ------------------------------------------------------------------ |
-| **Problem Clarity** | "Is the problem statement clear? What's the root cause?"           |
-| **Value**           | "Who benefits most? What's the business impact if NOT built?"      |
-| **Scope**           | "Is this one feature or multiple? Should it be split?"             |
-| **Timing**          | "Is this urgent or can it wait? Any deadline drivers?"             |
-| **Alternatives**    | "Any existing solutions or workarounds today?"                     |
+| Category            | Question                                                      |
+| ------------------- | ------------------------------------------------------------- |
+| **Problem Clarity** | "Is the problem statement clear? What's the root cause?"      |
+| **Value**           | "Who benefits most? What's the business impact if NOT built?" |
+| **Scope**           | "Is this one feature or multiple? Should it be split?"        |
+| **Timing**          | "Is this urgent or can it wait? Any deadline drivers?"        |
+| **Alternatives**    | "Any existing solutions or workarounds today?"                |
 
 #### Validation Process
 
@@ -139,15 +141,18 @@ Update the `## Quick Validation` section in the idea artifact:
 Use template from `team-artifacts/templates/idea-template.md`
 
 Add these fields to frontmatter:
+
 ```yaml
-related_module: "{Module name or N/A}"
+related_module: '{Module name or N/A}'
 related_entities: []
 related_features: []
 ```
 
 Add to Related section:
+
 ```markdown
 ## Related
+
 - **Module Docs**: [docs/business-features/{Module}/](docs/business-features/{Module}/)
 - **Related Features**: {FR-XX IDs from INDEX.md}
 - **Related Entities**: {Entity names from codebase}
@@ -166,6 +171,7 @@ See `docs/templates/detailed-feature-docs-template.md` for frontmatter schema.
 ```
 
 Workflow:
+
 1. Detects "snippet" + "search" → TextSnippet module
 2. Loads TextSnippet INDEX.md, README.md
 3. Shows existing Search Snippets feature (FR-TS-003)
@@ -175,7 +181,7 @@ Workflow:
 7. **Validates**: Asks 2-3 quick questions about problem clarity, value, scope
 8. Updates idea with validation summary
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

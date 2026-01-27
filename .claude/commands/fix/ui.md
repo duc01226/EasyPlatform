@@ -5,8 +5,7 @@ argument-hint: [issue]
 
 ## Required Skills (Priority Order)
 1. **`ui-ux-pro-max`** - Design intelligence database (ALWAYS ACTIVATE FIRST)
-2. **`aesthetic`** - Design principles
-3. **`frontend-design`** - Implementation patterns
+2. **`frontend-design`** - Implementation patterns
 
 Use `ui-ux-designer` subagent to read and analyze `./docs/design-guidelines.md` then fix the following issues:
 <issue>$ARGUMENTS</issue>

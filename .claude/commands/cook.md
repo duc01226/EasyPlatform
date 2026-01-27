@@ -6,6 +6,10 @@ argument-hint: [tasks]
 Think harder to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <tasks>$ARGUMENTS</tasks>
 
+**⚠️ MUST READ before implementation:**
+- `.ai/docs/backend-code-patterns.md` — Backend code patterns
+- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
 ---
 
 ## Role Responsibilities
@@ -31,7 +35,7 @@ Think harder to plan & start working on these tasks follow the Orchestration Pro
 
 ## Workflow:
 
-### Fullfill the request
+### Fulfill the request
 
 * If you have any questions, use `AskUserQuestion` tool to ask the user to clarify them.
 * Ask 1 question at a time, wait for the user to answer before moving to the next question.

@@ -292,7 +292,7 @@ await foreach (var entity in repository.AsAsyncEnumerable(expr))
 1. **Study Platform Example:** `src/PlatformExampleApp` for working patterns
 2. **Search Documentation:**
     - Use grep/semantic search tools
-    - Check `.ai/prompts/context.md` for solution planning
+    - Check `.ai/docs/prompt-context.md` for solution planning
 3. **Check Existing Implementations:**
     - Look for similar features in the codebase
     - Search for patterns in existing handlers/components

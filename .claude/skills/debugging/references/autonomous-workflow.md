@@ -384,4 +384,4 @@ grep -r "observerLoadingErrorState\|tapResponse\|untilDestroyed" --include="*.ts
 
 - `../SKILL.md` - Main debugging skill (interactive mode)
 - `.github/AI-DEBUGGING-PROTOCOL.md` - Comprehensive debugging protocol
-- `.ai/prompts/context.md` - Platform patterns and context
+- `.ai/docs/prompt-context.md` - Platform patterns and context

@@ -8,6 +8,10 @@ argument-hint: [optional-focus-area]
 Execute mandatory two-pass review protocol after completing code changes.
 Focus: $ARGUMENTS
 
+**⚠️ MUST READ before reviewing:**
+- `.ai/docs/backend-code-patterns.md` — Backend code patterns
+- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
 ---
 
 ## Protocol Overview
@@ -140,8 +144,8 @@ git diff --stat && git diff
 # Check specific file
 git diff path/to/file.ts
 
-# Discard a problematic change
-git checkout -- path/to/file.ts
+# Fix a problematic change
+# Use `/fix` workflow to apply fixes instead of manual git checkout
 
 # Stage reviewed changes
 git add -p  # Interactive staging

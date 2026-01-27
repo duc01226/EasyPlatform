@@ -13,6 +13,10 @@ Use the `planner` subagent to create 2 detailed implementation plans for this fo
  $ARGUMENTS
 </task>
 
+**⚠️ MUST READ for planning accuracy:**
+- `.ai/docs/backend-code-patterns.md` — Backend code patterns
+- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
 ## Workflow
 
 1. First: Create a directory using naming pattern from `## Naming` section in injected context.

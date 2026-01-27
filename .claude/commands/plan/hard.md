@@ -11,6 +11,10 @@ Activate `planning` skill.
 $ARGUMENTS
 </task>
 
+**⚠️ MUST READ for planning accuracy:**
+- `.ai/docs/backend-code-patterns.md` — Backend code patterns
+- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
 ## Pre-Creation Check (Active vs Suggested Plan)
 
 Check the `## Plan Context` section in the injected context:

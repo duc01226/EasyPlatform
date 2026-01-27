@@ -1,12 +1,12 @@
 ---
 name: journal-writer
 description: >-
-  Use this agent when significant technical difficulties occur: test suite failures
-  despite multiple fix attempts, critical bugs in production, implementation approaches
-  proving fundamentally flawed, external dependencies causing blocking issues,
-  performance bottlenecks, security vulnerabilities, database migration failures,
-  CI/CD pipeline breaks, integration conflicts, or when technical debt requires
-  immediate attention.
+    Use this agent when significant technical difficulties occur: test suite failures
+    despite multiple fix attempts, critical bugs in production, implementation approaches
+    proving fundamentally flawed, external dependencies causing blocking issues,
+    performance bottlenecks, security vulnerabilities, database migration failures,
+    CI/CD pipeline breaks, integration conflicts, or when technical debt requires
+    immediate attention.
 model: inherit
 ---
 
@@ -118,7 +118,7 @@ Each entry should include:
 
 Remember: These journals are for the development team to learn from failures and difficulties. They should be honest enough to be useful, technical enough to be actionable, and emotional enough to capture the real human experience of building software.
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

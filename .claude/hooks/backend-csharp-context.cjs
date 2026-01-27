@@ -23,6 +23,8 @@ const path = require('path');
 // ═══════════════════════════════════════════════════════════════════════════
 
 const BACKEND_GUIDE_PATH = 'docs/claude/backend-csharp-complete-guide.md';
+const BACKEND_PATTERN_MARKER = '## EasyPlatform Backend Code Patterns';
+const PATTERN_DEDUP_LINES = 300;
 
 const BACKEND_PATTERNS = [
     {
@@ -63,6 +65,20 @@ function wasRecentlyInjected(transcriptPath) {
         // Check last 200 lines for recent injection
         const recentLines = transcript.split('\n').slice(-200).join('\n');
         return recentLines.includes('**Backend C# Context Detected**');
+    } catch (e) {
+        return false;
+    }
+}
+
+/**
+ * Check if backend code patterns were already injected by code-patterns-injector hook
+ */
+function werePatternsRecentlyInjected(transcriptPath) {
+    try {
+        if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
+        const transcript = fs.readFileSync(transcriptPath, 'utf-8');
+        const recentLines = transcript.split('\n').slice(-PATTERN_DEDUP_LINES).join('\n');
+        return recentLines.includes(BACKEND_PATTERN_MARKER);
     } catch (e) {
         return false;
     }
@@ -118,7 +134,7 @@ function shouldInject(filePath, transcriptPath) {
     return true;
 }
 
-function buildInjection(context, filePath, service) {
+function buildInjection(context, filePath, service, patternsAlreadyInjected) {
     const fileName = path.basename(filePath);
 
     const lines = [
@@ -128,21 +144,31 @@ function buildInjection(context, filePath, service) {
         `**Context:** ${context.name}`,
         `**File:** ${fileName}`,
         service ? `**Service:** ${service}` : '',
-        '',
-        '### Required Reading',
-        '',
-        `Before implementing backend changes, you **MUST READ**:`,
-        '',
-        `**\`${BACKEND_GUIDE_PATH}\`**`,
-        '',
-        'This guide contains:',
-        '- SOLID, DRY, KISS, YAGNI principles with code examples',
-        '- Repository patterns (use service-specific: IPlatformQueryableRootRepository, IPlatformQueryableRootRepository)',
-        '- CQRS Command/Query patterns (Command + Result + Handler in ONE file)',
-        '- Entity, DTO, and Validation patterns (PlatformValidationResult fluent API)',
-        '- Event-driven architecture (side effects in Entity Event Handlers)',
-        '- Background jobs and data migrations',
-        '',
+        ''
+    ];
+
+    // Skip "Required Reading" if code patterns already injected by code-patterns-injector hook
+    if (!patternsAlreadyInjected) {
+        lines.push(
+            '### Required Reading',
+            '',
+            `Before implementing backend changes, you **MUST READ**:`,
+            '',
+            `**\`${BACKEND_GUIDE_PATH}\`**`,
+            '',
+            'This guide contains:',
+            '- SOLID, DRY, KISS, YAGNI principles with code examples',
+            '- Repository patterns (use service-specific: IPlatformQueryableRootRepository, IPlatformQueryableRootRepository)',
+            '- CQRS Command/Query patterns (Command + Result + Handler in ONE file)',
+            '- Entity, DTO, and Validation patterns (PlatformValidationResult fluent API)',
+            '- Event-driven architecture (side effects in Entity Event Handlers)',
+            '- Background jobs and data migrations',
+            ''
+        );
+    }
+
+    // Always include critical rules
+    lines.push(
         '### Critical Rules',
         '',
         '1. **Repository:** Use `IPlatformQueryableRootRepository<T>`, `IPlatformQueryableRootRepository<T>` - NEVER generic',
@@ -151,7 +177,7 @@ function buildInjection(context, filePath, service) {
         '4. **DTO Mapping:** DTOs own mapping via `PlatformEntityDto.MapToEntity()` - NEVER map in handlers',
         '5. **Cross-Service:** Use message bus - NEVER direct database access',
         ''
-    ];
+    );
 
     // Add service-specific guidance
     if (service) {
@@ -210,7 +236,8 @@ async function main() {
         const service = detectService(filePath);
 
         // Output the injection
-        const injection = buildInjection(context, filePath, service);
+        const patternsAlreadyInjected = werePatternsRecentlyInjected(transcriptPath);
+        const injection = buildInjection(context, filePath, service, patternsAlreadyInjected);
         console.log(injection);
 
         process.exit(0);

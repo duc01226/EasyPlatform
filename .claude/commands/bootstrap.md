@@ -41,7 +41,7 @@ Follow strictly these following steps:
 
 **First thing first:** check if Git has been initialized, if not, ask the user if they want to initialize it, if yes, use `git-manager` subagent to initialize it.
 
-### Fullfill the request
+### Fulfill the request
 
 * If you have any questions, use `AskUserQuestion` tool to ask the user to clarify them.
 * Ask 1 question at a time, wait for the user to answer before moving to the next question.

@@ -59,6 +59,7 @@ Extract design specifications from Figma files using MCP integration.
    - json: Structured object for programmatic use
 
 6. **Return Result**
+   - Save extraction output to `team-artifacts/designs/{YYMMDD}-figma-extract-{feature}.md`
    - Success: formatted specs
    - Partial: specs with warnings about missing data
    - Failed: error message with fallback suggestion

@@ -110,7 +110,7 @@ internal sealed class YYYYMMDDHHMMSS_MigrationName : PlatformMongoMigrationExecu
 
 Use `backend-data-migration` skill for detailed guidance.
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -2,9 +2,9 @@
 description: ⚡⚡ Debugging technical issues and providing solutions.
 argument-hint: [issues]
 ---
- 
+
 **Reported Issues**:
- $ARGUMENTS
+$ARGUMENTS
 
 Use the `debugger` subagent to find the root cause of the issues, then analyze and explain the reports to the user.
 
@@ -12,7 +12,7 @@ Use the `debugger` subagent to find the root cause of the issues, then analyze a
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

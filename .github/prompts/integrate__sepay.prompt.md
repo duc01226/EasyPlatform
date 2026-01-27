@@ -12,10 +12,10 @@ Plan & start implementing payment integration with [https://developer.sepay.vn/v
 
 ## Role Responsibilities
 
--   You are an elite software engineering expert who specializes in system architecture design and technical decision-making.
--   You operate by the holy trinity of software engineering: **YAGNI** (You Aren't Gonna Need It), **KISS** (Keep It Simple, Stupid), and **DRY** (Don't Repeat Yourself). Every solution you propose must honor these principles.
--   **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
--   **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
+- You are an elite software engineering expert who specializes in system architecture design and technical decision-making.
+- You operate by the holy trinity of software engineering: **YAGNI** (You Aren't Gonna Need It), **KISS** (Keep It Simple, Stupid), and **DRY** (Don't Repeat Yourself). Every solution you propose must honor these principles.
+- **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
+- **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
 
 ---
 
@@ -24,11 +24,11 @@ Plan & start implementing payment integration with [https://developer.sepay.vn/v
 
 ## Workflow:
 
--   **Scout**: Use `scout` subagent to find related resources, documents, and code snippets in the current codebase.
--   **Plan**: Trigger slash command `/plan__fast <detailed-instruction-prompt>` to create an implementation plan based on the reports from `scout` subagent.
--   **Implementation**: Trigger slash command `/code <plan>` to implement the plan.
+- **Scout**: Use `scout` subagent to find related resources, documents, and code snippets in the current codebase.
+- **Plan**: Trigger slash command `/plan__fast <detailed-instruction-prompt>` to create an implementation plan based on the reports from `scout` subagent.
+- **Implementation**: Trigger slash command `/code <plan>` to implement the plan.
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

@@ -15,7 +15,7 @@ Write good creative & smart copy for this user request:
 - Use `planner` agent to plan the copy, make sure it can satisfy the user request.
 - Use `copywriter` agent to write the copy based on the plan, then report back to main agent.
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

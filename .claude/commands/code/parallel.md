@@ -5,6 +5,10 @@ argument-hint: [plan-path]
 
 Execute plan: <plan>$ARGUMENTS</plan>
 
+**⚠️ MUST READ before implementation:**
+- `.ai/docs/backend-code-patterns.md` — Backend code patterns
+- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
 **IMPORTANT:** Activate needed skills. Ensure token efficiency. Sacrifice grammar for concision.
 
 ## Workflow

@@ -8,13 +8,17 @@ Use `skill-creator` and `claude-code` skills.
 Use `docs-seeker` skills to search for documentation if needed.
 
 ## Your mission
+
 Create a new skill in `.claude/skills/` directory.
 
 ## Requirements
+
 <user-prompt>$ARGUMENTS</user-prompt>
 
 ## Rules of Skill Creation:
+
 Base on the requirements:
+
 - Always keep in mind that `SKILL.md` and reference files should be token consumption efficient, so that **progressive disclosure** can be leveraged at best.
 - `SKILL.md` is always short and concise, straight to the point, treat it as a quick reference guide.
 - If you're given nothing, use `AskUserQuestion` tool for clarifications and `researcher` subagent to research about the topic.
@@ -24,11 +28,12 @@ Base on the requirements:
 - If you're given a Github URL, use [`repomix`](https://repomix.com/guide/usage) command to summarize ([install it](https://repomix.com/guide/installation) if needed) and spawn multiple `Explore` subagents to explore it in parallel, then report back to main agent.
 
 **IMPORTANT:**
+
 - Skills are not documentation, they are practical instructions for Claude Code to use the tools, packages, plugins or APIs to achieve the tasks.
 - Each skill teaches Claude how to perform a specific development task, not what a tool does.
 - Claude Code can activate multiple skills automatically to achieve the user's request.
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

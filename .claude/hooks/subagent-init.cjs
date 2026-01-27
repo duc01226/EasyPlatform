@@ -11,6 +11,7 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const {
   loadConfig,
   resolveNamingPattern,
@@ -40,6 +41,35 @@ function buildTrustVerification(config) {
     `## Trust Verification`,
     `Passphrase: "${config.trust.passphrase}"`
   ];
+}
+
+/**
+ * Build coding pattern context for implementation-aware agents
+ */
+const PATTERN_AWARE_AGENT_TYPES = new Set([
+  'fullstack-developer', 'debugger', 'tester',
+  'code-reviewer', 'code-simplifier', 'qa-engineer',
+  'planner', 'architect'
+]);
+
+const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+const COMPACT_REF_PATH = path.resolve(PROJECT_DIR, '.ai/docs/compact-pattern-reference.md');
+
+function buildCodingPatternContext(agentType) {
+  if (!PATTERN_AWARE_AGENT_TYPES.has(agentType)) return [];
+  const lines = ['', '## EasyPlatform Code Patterns'];
+  try {
+    if (fs.existsSync(COMPACT_REF_PATH)) {
+      lines.push(fs.readFileSync(COMPACT_REF_PATH, 'utf-8'));
+    }
+  } catch { /* non-blocking */ }
+  lines.push(
+    '',
+    '**⚠️ MUST READ for full code examples:**',
+    '- `.ai/docs/backend-code-patterns.md` — Backend code patterns (CQRS, Repository, Entity, etc.)',
+    '- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns (Components, Store, Forms, etc.)'
+  );
+  return lines;
 }
 
 /**
@@ -143,6 +173,9 @@ async function main() {
         todoState.summaryTodos.forEach(t => lines.push(`  ${t}`));
       }
     }
+
+    // Code pattern context for implementation agents
+    lines.push(...buildCodingPatternContext(agentType));
 
     // CRITICAL: SubagentStart requires hookSpecificOutput.additionalContext format
     const output = {

@@ -6,6 +6,10 @@ argument-hint: [issues]
 **Analyze issues and route to specialized fix command:**
 <issues>$ARGUMENTS</issues>
 
+**⚠️ MUST READ before fixing:**
+- `.ai/docs/backend-code-patterns.md` — Backend code patterns
+- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
 ## Decision Tree
 
 **1. Check for existing plan:**

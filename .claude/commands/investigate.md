@@ -11,12 +11,6 @@ Activate `feature-investigation` skill.
 $ARGUMENTS
 </task>
 
-## Workflow
-
-- **Analyze**: Read the skill's SKILL.md for detailed patterns and rules
-- **Execute**: Follow the skill's workflow steps for the given task
-- **Verify**: Ensure output meets the skill's success criteria
-
 **IMPORTANT**: Activate additional skills as needed from `.claude/skills/*`.
 
 ## IMPORTANT Task Planning Notes

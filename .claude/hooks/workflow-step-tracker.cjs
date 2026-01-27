@@ -11,9 +11,8 @@
  *   0 - Success (non-blocking)
  */
 
-const fs = require('fs');
-const path = require('path');
 const { loadState, markStepComplete, getCurrentStepInfo } = require('./lib/workflow-state.cjs');
+const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
 
 /**
  * Read stdin asynchronously with timeout to prevent hanging
@@ -51,22 +50,6 @@ async function readStdin() {
     });
 }
 
-// Load workflows config for command mapping
-function loadWorkflowConfig() {
-    const configPaths = [path.join(process.cwd(), '.claude', 'workflows.json'), path.join(require('os').homedir(), '.claude', 'workflows.json')];
-
-    for (const configPath of configPaths) {
-        if (fs.existsSync(configPath)) {
-            try {
-                return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-            } catch (e) {
-                return null;
-            }
-        }
-    }
-    return null;
-}
-
 /**
  * Map skill name to workflow step ID
  * @param {string} skillName - Name of the executed skill
@@ -80,7 +63,7 @@ function mapSkillToStepId(skillName, config) {
 
     for (const [stepId, mapping] of Object.entries(config.commandMapping)) {
         const claudeCmd = mapping.claude || `/${stepId}`;
-        // Extract skill name from command (e.g., "/plan" -> "plan", "/review:codebase" -> "review")
+        // Extract skill name from command (e.g., "/plan" -> "plan", "/review:codebase" -> "review:codebase")
         const cmdParts = claudeCmd.replace(/^\//, '').split('/');
         const cmdSkill = cmdParts[0].toLowerCase();
 

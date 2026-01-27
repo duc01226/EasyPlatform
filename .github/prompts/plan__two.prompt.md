@@ -10,7 +10,7 @@ Activate `planning` skill.
 
 Use the `planner` subagent to create 2 detailed implementation plans for this following task:
 <task>
- $ARGUMENTS
+$ARGUMENTS
 </task>
 
 ## Workflow
@@ -21,25 +21,25 @@ Use the `planner` subagent to create 2 detailed implementation plans for this fo
 3. Use multiple `researcher` agents in parallel to research for this task, each agent research for a different aspect of the task and perform max 5 researches (max 5 tool calls).
 4. Use `scout` agent to search the codebase for files needed to complete the task.
 5. Main agent gathers all research and scout report filepaths, and pass them to `planner` subagent with the detailed instructions prompt to create an implementation plan of this task.
-  **Output:** Provide at least 2 implementation approaches with clear trade-offs, and explain the pros and cons of each approach, and provide a recommended approach.
+   **Output:** Provide at least 2 implementation approaches with clear trade-offs, and explain the pros and cons of each approach, and provide a recommended approach.
 6. Main agent receives the implementation plan from `planner` subagent, and ask user to review the plan
 
 ## Plan File Specification
 
 - Every `plan.md` MUST start with YAML frontmatter:
 
-  ```yaml
-  ---
-  title: "{Brief title}"
-  description: "{One sentence for card preview}"
-  status: pending
-  priority: P2
-  effort: {sum of phases, e.g., 4h}
-  branch: {current git branch}
-  tags: [relevant, tags]
-  created: {YYYY-MM-DD}
-  ---
-  ```
+    ```yaml
+    ---
+    title: '{Brief title}'
+    description: '{One sentence for card preview}'
+    status: pending
+    priority: P2
+    effort: { sum of phases, e.g., 4h }
+    branch: { current git branch }
+    tags: [relevant, tags]
+    created: { YYYY-MM-DD }
+    ---
+    ```
 
 ## Important Notes
 
@@ -51,7 +51,7 @@ Use the `planner` subagent to create 2 detailed implementation plans for this fo
 
 ultrathink
 
-## Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
