@@ -121,73 +121,20 @@ Each workflow step executes a prompt file from `.github/prompts/`:
 
 Full workflow patterns are defined in **`.claude/workflows.json`** - the single source of truth for both Claude and Copilot. Supports multilingual triggers (EN, VI, ZH, JA, KO).
 
-### Quick Reference - Workflow Detection
+### Quick Reference - Workflow Detection (22 Workflows)
 
-| Intent            | Trigger Keywords                                    | Workflow Sequence                                                                                                        |
-| ----------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| **Feature**       | implement, add, create, build, develop, new feature | `/plan` → `/plan-review` → `/cook` → `/code-simplifier` → `/code-review` → `/test` → `/docs-update` → `/watzup`          |
-| **Bug Fix**       | bug, fix, error, broken, crash, not working, debug  | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan-review` → `/fix` → `/code-simplifier` → `/code-review` → `/test` |
-| **Documentation** | docs, document, readme, update docs                 | `/scout` → `/investigate` → `/docs-update` → `/watzup`                                                                   |
-| **Refactoring**   | refactor, improve, clean up, restructure            | `/plan` → `/plan-review` → `/code` → `/code-simplifier` → `/code-review` → `/test`                                       |
-| **Code Review**   | review, check, audit code, PR review                | `/code-review` → `/watzup`                                                                                               |
-| **Investigation** | how does, where is, explain, understand, find       | `/scout` → `/investigate`                                                                                                |
+| Category | Workflows | When to Use |
+| -------- | --------- | ----------- |
+| **Development** | `feature`, `bugfix`, `refactor`, `migration`, `batch-operation` | Implement, fix, restructure, migrate, or bulk-change code |
+| **Investigation** | `investigation`, `review`, `review-changes`, `quality-audit`, `security-audit`, `performance` | Understand code, review changes, audit quality/security/performance |
+| **Planning** | `pre-development`, `verification`, `deployment` | Prepare, verify behavior, deploy infrastructure |
+| **Documentation** | `documentation`, `business-feature-docs` | Update docs, create business feature docs |
+| **Team/Agile** | `idea-to-pbi`, `pbi-to-tests`, `sprint-planning`, `pm-reporting`, `release-prep` | Product management, QA, sprint planning, status reports |
+| **Design** | `design-workflow` | Create UI/UX design specs from requirements |
 
-### Workflow Execution Protocol (MANDATORY STEPS)
+> **Full workflow details with whenToUse/whenNotToUse:** See [Workflow Decision Guide](#workflow-decision-guide-comprehensive) at end of file.
 
-You MUST follow these steps for EVERY development request:
-
-1. **DETECT** - Analyze user prompt against workflow patterns
-2. **ANNOUNCE** - State the detected workflow: `"Detected: **{Workflow}** workflow. Following: {sequence}"`
-3. **CREATE TODO LIST FIRST (MANDATORY)** - Create todo items for ALL workflow steps BEFORE starting
-4. **CONFIRM** - For features/refactors, ask: `"Proceed with this workflow? (yes/no/quick)"`
-5. **EXECUTE** - Follow each step with evidence:
-    - Mark "in-progress" before starting each step
-    - Gather evidence during execution (file reads, command outputs)
-    - Verify with concrete proof before marking complete
-    - Mark "completed" only after verification (NEVER batch completions)
-    - Check remaining steps after EVERY command execution
-
-### Workflow Continuity Rule (CRITICAL)
-
-**Problem:** Long-running workflows can lose context after executing individual steps, causing the AI to forget remaining workflow steps.
-
-**Solution:** Track workflow state persistently using a structured approach.
-
-**Mandatory Steps:**
-
-1. **IMMEDIATELY after detecting a workflow**, announce and track ALL workflow steps
-2. **Before each step**: Clearly state which step you're starting
-3. **After each step**: Mark it as completed and identify next step
-4. **After EVERY command execution**: Check remaining steps
-5. **Continue until**: ALL workflow steps are completed
-
-**Rules:**
-
-- NEVER abandon a detected workflow - complete ALL steps or explicitly ask user to skip
-- NEVER end a turn without checking if workflow steps remain
-- At the start of each response, if in a workflow, state: "Continuing workflow: Step X of Y - {step name}"
-- If context seems lost, review the workflow sequence and identify current position
-
-**Recovery Pattern:**
-
-```
-## Workflow Status
-- [x] /plan - Completed
-- [x] /cook - Completed
-- [ ] /test - IN PROGRESS
-- [ ] /code-review - Pending
-- [ ] /docs-update - Pending
-```
-
-### Override Methods
-
-| Method           | Example                     | Effect                                    |
-| ---------------- | --------------------------- | ----------------------------------------- |
-| `quick:` prefix  | `quick: add a button`       | Skip user confirmation, start immediately |
-| Explicit command | `/plan implement dark mode` | Bypass detection, run specific command    |
-| Say "quick"      | When asked "Proceed?"       | Abort workflow, handle directly           |
-
-**Note:** `quick:` prefix skips the "Proceed with workflow?" confirmation BUT still follows the complete workflow sequence.
+> **Workflow execution protocol, continuity rules, override methods, and task planning:** See [MANDATORY: Workflow & Task Planning](#mandatory-workflow--task-planning-read-this) at end of file.
 
 ---
 
@@ -342,103 +289,6 @@ The `/scout` -> `/investigate` workflow supports **structured knowledge model co
 - Debugging -> Load troubleshooting.md
 
 ---
-
-## Task Decomposition Best Practices
-
-> **Research Finding**: Breaking complex tasks into 5-10 small todos increases completion rate by 67% and reduces context loss in long sessions.
-
-### When to Create Todo Lists
-
-**ALWAYS create todos for**:
-
-- Features requiring changes in 3+ files
-- Bug fixes needing investigation -> plan -> fix -> test
-- Refactoring affecting multiple layers
-- Multi-step workflows (feature, bugfix, documentation)
-
-**SKIP todos for**:
-
-- Single-file edits <5 lines
-- Simple questions/explanations
-- Reading files for information
-
-### Todo Granularity Guidelines
-
-**Good Todo Size** (actionable, verifiable):
-
-```
-- [ ] Read TextSnippet entity to understand validation rules
-- [ ] Create SaveTextSnippetCommand in UseCaseCommands/TextSnippet/
-- [ ] Implement command handler with repository call
-- [ ] Add TextSnippetCreatedEvent handler for notification
-- [ ] Write unit tests for SaveTextSnippetCommand validation
-- [ ] Run tests and verify all pass
-```
-
-**Too Vague** (not actionable):
-
-```
-- [ ] Implement feature
-- [ ] Fix bugs
-- [ ] Update documentation
-```
-
-### Todo Templates for Common Tasks
-
-**Feature Implementation:**
-
-```markdown
-- [ ] Scout - Find similar implementations (semantic_search)
-- [ ] Investigate - Read related files in parallel
-- [ ] Plan - Design approach with file-level changes
-- [ ] Implement Entity - Domain layer changes
-- [ ] Implement Command - Application layer CQRS
-- [ ] Implement DTO - Mapping logic
-- [ ] Implement Event Handler - Side effects
-- [ ] Implement API - Controller endpoint
-- [ ] Implement Frontend - Component + service
-- [ ] Write Tests - Unit + integration
-- [ ] Run Tests - Verify all pass
-- [ ] Code Review - Check against patterns
-- [ ] Update Docs - README or feature docs
-```
-
-**Bug Fix:**
-
-```markdown
-- [ ] Scout - Find files related to bug
-- [ ] Investigate - Build knowledge graph
-- [ ] Debug - Root cause analysis with evidence
-- [ ] Plan - Design fix approach
-- [ ] Implement Fix - Apply changes
-- [ ] Verify Fix - Reproduce bug scenario
-- [ ] Run Tests - Ensure no regressions
-- [ ] Code Review - Check for side effects
-```
-
-**Refactoring:**
-
-```markdown
-- [ ] Scout - Find all usages of code to refactor
-- [ ] Plan - Design new structure
-- [ ] Identify Breaking Changes - List affected code
-- [ ] Refactor Core - Make structural changes
-- [ ] Update Usages - Fix all references
-- [ ] Run Tests - Verify behavior unchanged
-- [ ] Performance Check - Compare before/after
-```
-
-### Todo State Management
-
-Use `manage_todo_list` with proper state transitions:
-
-1. **Planning Phase**: Create all todos with status="not-started"
-2. **Execution Phase**:
-    - Mark ONE todo as "in-progress" before starting
-    - Complete the work
-    - Mark as "completed" immediately after verification
-    - Move to next todo
-3. **Never batch completions** - mark each done individually
 
 ---
 
@@ -1291,24 +1141,129 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## Workflow Decision Guide (Comprehensive)
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+> **This section is intentionally placed at the end for maximum AI attention.** Use this table to match user prompts to the correct workflow.
+
+### All 22 Workflows - When to Use
+
+| ID | Name | When to Use | When NOT to Use | Confirm? |
+|----|------|-------------|-----------------|----------|
+| `feature` | Feature Implementation | User wants to **implement, add, create, build, develop** a new feature, functionality, module, or component | Bug fixes, documentation-only, test-only, migration, refactoring, investigation | ✅ Yes |
+| `bugfix` | Bug Fix | User reports a **bug, error, crash, broken functionality**, or asks to **fix/debug/troubleshoot**. Includes regression fixes, 'not working' reports, exception traces | New features, refactoring, documentation, investigation without fixing | No |
+| `refactor` | Code Refactoring | User wants to **refactor, restructure, reorganize, clean up** code, improve quality, extract methods, rename, split/merge components, address technical debt | Bug fixes, new features, quality audits | ✅ Yes |
+| `migration` | Database Migration | User wants to **create or run database migrations**: schema changes, data migrations, EF migrations, adding/removing/altering columns or tables | Explaining migration concepts, checking migration history/status | ✅ Yes |
+| `batch-operation` | Batch Operation | User wants to **apply changes across multiple files/directories/components** at once. Includes bulk renames, find-and-replace across codebase, operations targeting 'all' or 'every' | Single-file changes, test file creation, documentation updates | ✅ Yes |
+| `investigation` | Code Investigation | User asks **how something works, where code is located**, wants to **understand or explore** a feature, trace code paths, explain implementation | Any task requiring code changes: implementing, fixing, refactoring, creating, updating, deleting | No |
+| `review` | Code Review | User wants a **code review, PR review, code quality check**, or audit of specific code or changes | Reviewing uncommitted/staged changes, reviewing plans/designs/docs, quality audits with fixes | No |
+| `review-changes` | Review Current Changes | User wants to **review current uncommitted, staged, or recent changes** before committing. Includes pre-commit review, 'review all changes' | PR reviews, release prep, quality audits, investigating how code works | No |
+| `quality-audit` | Quality Audit | User wants a **quality audit**: review code for best practices, ensure no flaws, verify quality standards, audit-and-fix workflow | Reviewing uncommitted changes, PR review, bug fixes | ✅ Yes |
+| `security-audit` | Security Audit | User wants a **security audit**: vulnerability assessment, OWASP check, security review, penetration test analysis | Implementing new security features, fixing known security bugs | No |
+| `performance` | Performance Optimization | User wants to **analyze or optimize performance**: fix slow queries, reduce latency, improve throughput, resolve N+1 problems, address bottlenecks | Explaining performance concepts, checking performance reports/history | ✅ Yes |
+| `verification` | Verification & Validation | User wants to **verify, validate, confirm, check** that something works correctly, or ensure expected behavior. Includes 'make sure' and 'ensure that' requests | New feature implementation, code review, documentation, investigation-only, quality audits | ✅ Yes |
+| `pre-development` | Pre-Development Setup | User wants to **prepare before starting development**: quality gate checks, setup for new feature work, kick off a new feature, pre-coding preparation | Already in development, just wanting to explain pre-development concept | No |
+| `deployment` | Deployment & Infrastructure | User wants to **set up or modify deployment, infrastructure, CI/CD pipelines**, Docker configuration, or deploy to environments | Explaining deployment concepts, checking deployment status/history | ✅ Yes |
+| `documentation` | Documentation Update | User wants to **write, update, or improve general documentation**, README, or code comments | Business feature docs (use business-feature-docs), code implementation, test-only changes | No |
+| `business-feature-docs` | Business Feature Documentation | User wants to **create or update business feature documentation** using the 26-section template. Includes module docs targeting `docs/business-features/` | General documentation updates, code comments, README changes | No |
+| `idea-to-pbi` | Idea to PBI | User has a **new product idea, feature request**, or wants to **add to the backlog**. Includes refining ideas into PBIs and creating user stories | Bug fixes, code implementation, investigation | ✅ Yes |
+| `pbi-to-tests` | PBI to Tests | User wants to **create or generate test specs/cases** from a PBI, feature, or story. Includes QA test generation | Running existing tests, executing test suites | No |
+| `sprint-planning` | Sprint Planning Session | User wants to **plan a sprint**: prioritize backlog, analyze dependencies, prepare team sync, iteration planning, sprint kickoff | Sprint review, retrospective, sprint status report, end-of-sprint activities | ✅ Yes |
+| `pm-reporting` | PM Reporting | User wants a **status report, sprint update, project progress report**, blocker analysis, or comprehensive project overview | Git status, commit status, PR status, build status, quick one-line status checks | No |
+| `release-prep` | Release Preparation | User wants to **prepare for a release**: pre-release checks, release readiness, deployment checklist, go-live verification | Git release commands, npm publish, release notes generation, release branch management | ✅ Yes |
+| `design-workflow` | Design Workflow | User wants to **create a UI/UX design specification**, mockup, wireframe, or component spec from requirements | Implementing an existing design in code, coding from a spec | No |
+
+### Workflow Selection Decision Tree
+
+```
+User Prompt Analysis:
+│
+├─ Contains "bug", "error", "fix", "broken", "crash", "not working", exception trace?
+│   └─ YES → bugfix
+│
+├─ Contains "implement", "add", "create", "build", "develop", "new feature"?
+│   └─ YES → feature (confirm first)
+│
+├─ Contains "refactor", "restructure", "clean up", "improve code", "technical debt"?
+│   └─ YES → refactor (confirm first)
+│
+├─ Contains "migration", "schema change", "add column", "EF migration"?
+│   └─ YES → migration (confirm first)
+│
+├─ Contains "all files", "batch", "bulk", "find-replace across", "every instance"?
+│   └─ YES → batch-operation (confirm first)
+│
+├─ Contains "how does", "where is", "explain", "understand", "find", "trace"?
+│   └─ YES → investigation
+│
+├─ Contains "review PR", "code review", "audit code"?
+│   └─ YES → review
+│
+├─ Contains "review changes", "pre-commit", "staged changes", "uncommitted"?
+│   └─ YES → review-changes
+│
+├─ Contains "quality audit", "best practices", "ensure no flaws"?
+│   └─ YES → quality-audit (confirm first)
+│
+├─ Contains "security", "vulnerability", "OWASP", "penetration"?
+│   └─ YES → security-audit
+│
+├─ Contains "performance", "slow", "optimize", "N+1", "latency", "bottleneck"?
+│   └─ YES → performance (confirm first)
+│
+├─ Contains "verify", "validate", "make sure", "ensure", "confirm works"?
+│   └─ YES → verification (confirm first)
+│
+├─ Contains "deploy", "CI/CD", "infrastructure", "Docker", "pipeline"?
+│   └─ YES → deployment (confirm first)
+│
+├─ Contains "docs", "documentation", "README"?
+│   ├─ Target is docs/business-features/ → business-feature-docs
+│   └─ Otherwise → documentation
+│
+├─ Contains "idea", "product request", "backlog", "PBI"?
+│   └─ YES → idea-to-pbi (confirm first)
+│
+├─ Contains "test spec", "test cases", "QA", "generate tests from PBI"?
+│   └─ YES → pbi-to-tests
+│
+├─ Contains "sprint planning", "prioritize backlog", "iteration planning"?
+│   └─ YES → sprint-planning (confirm first)
+│
+├─ Contains "status report", "sprint update", "project progress"?
+│   └─ YES → pm-reporting
+│
+├─ Contains "release prep", "pre-release", "go-live", "deployment checklist"?
+│   └─ YES → release-prep (confirm first)
+│
+├─ Contains "design spec", "wireframe", "mockup", "UI/UX spec"?
+│   └─ YES → design-workflow
+│
+└─ No match → Handle directly (no workflow)
+```
+
+### Override Methods
+
+| Method | Example | Effect |
+|--------|---------|--------|
+| `quick:` prefix | `quick: add a button` | Skip confirmation, execute workflow immediately |
+| Explicit command | `/plan implement dark mode` | Bypass detection, run specific command |
+| Say "quick" | When asked "Proceed?" | Abort workflow, handle directly |
 
 ---
 
-## MANDATORY: Workflow Detection Reminder (READ THIS)
+## MANDATORY: Workflow & Task Planning (READ THIS)
 
-> **This section is intentionally placed at the end for maximum attention.** AI models attend most to the start and end of long prompts.
+> **This section is intentionally placed at the end for maximum AI attention.** AI models attend most to the start and end of long prompts.
+
+### Workflow Detection Protocol
 
 **Before writing ANY code or reading ANY file, you MUST:**
 
-1. **DETECT** — Match the user's prompt against the workflow table (Feature, Bug Fix, Documentation, Refactoring, Code Review, Investigation)
+1. **DETECT** — Match the user's prompt against the workflow table above
 2. **ANNOUNCE** — State: `"Detected: **{Workflow}** workflow. Following: {sequence}"`
-3. **CREATE TODOS** — Track ALL workflow steps as todo items
-4. **CONFIRM** (if applicable) — Ask: `"Proceed with this workflow? (yes/no/quick)"`
-5. **EXECUTE** — Follow each step sequentially
+3. **CREATE TODOS** — Track ALL workflow steps as todo items IMMEDIATELY
+4. **CONFIRM** (if marked ✅) — Ask: `"Proceed with this workflow? (yes/no/quick)"`
+5. **EXECUTE** — Follow each step sequentially, marking todos as you go
 
 **You MUST NOT:**
 
@@ -1323,3 +1278,49 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
 - User prefixes with `quick:` to bypass detection
 
 **If in doubt, activate the workflow.** It is always better to follow the workflow and let the user say "quick" than to skip it and produce inconsistent results.
+
+### Workflow Continuity Rule
+
+- NEVER abandon a detected workflow — complete ALL steps or explicitly ask user to skip
+- NEVER end a turn without checking if workflow steps remain
+- At start of each response in a workflow, state: `"Continuing workflow: Step X of Y — {step name}"`
+- If context seems lost, review the workflow sequence and identify current position
+
+---
+
+### IMPORTANT: Task Planning Rules (MUST FOLLOW)
+
+> **Breaking tasks into small todos is CRITICAL for success.** Research shows 67% higher completion rate with proper task decomposition.
+
+**When to create todos:**
+
+- Features requiring changes in 3+ files
+- Bug fixes needing investigation → plan → fix → test
+- Refactoring affecting multiple layers
+- Any multi-step workflow
+
+**Skip todos for:** Single-file edits <5 lines, simple questions, reading files for information.
+
+**Rules:**
+
+1. **Always break tasks into many small, actionable todos** — Each todo should be completable in one focused step
+2. **Always add a final review todo** — Review the work done at the end to find any fixes or enhancements needed
+3. **Mark todos complete IMMEDIATELY** — Never batch completions; mark each done as soon as verified
+4. **Only ONE todo in-progress at a time** — Focus on completing current task before starting next
+5. **Update todos after EVERY command** — Check remaining steps, identify next action
+
+**Good Todo Example:**
+```
+- [ ] Scout for existing employee validation patterns
+- [ ] Read Employee entity to understand current rules
+- [ ] Implement email uniqueness validation in SaveEmployeeCommand
+- [ ] Add unit test for duplicate email scenario
+- [ ] Run tests and verify all pass
+- [ ] Review implementation for missed edge cases
+```
+
+**Bad Todo Example:**
+```
+- [ ] Implement feature
+- [ ] Test it
+```
