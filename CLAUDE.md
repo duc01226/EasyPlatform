@@ -551,3 +551,8 @@ Workflows are automatically injected as a catalog by the `workflow-router.cjs` h
 - **Mark todos complete immediately** after finishing each one — do not batch completions
 - **Exactly ONE todo in_progress at any time** — complete current before starting next
 - **If blocked, create a new todo** describing what needs resolution — never mark blocked tasks as completed
+- **No speculation or hallucination** — always answer with proof (code evidence, file:line references, search results). If unsure, investigate first; never fabricate
+
+---
+
+> **IMPORTANT:** If the user's prompt does not match any workflows, always use the command skill `/plan <user prompt>` to create an implementation plan first.

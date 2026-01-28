@@ -1324,3 +1324,9 @@ User Prompt Analysis:
 - [ ] Implement feature
 - [ ] Test it
 ```
+
+6. **No speculation or hallucination** — always answer with proof (code evidence, file:line references, search results). If unsure, investigate first; never fabricate
+
+---
+
+> **IMPORTANT:** If the user's prompt does not match any workflows, always use the command skill `/plan <user prompt>` to create an implementation plan first.
