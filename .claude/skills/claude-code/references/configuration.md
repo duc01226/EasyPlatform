@@ -17,7 +17,7 @@ Settings are applied in order of precedence:
 `~/.claude/settings.json`:
 ```json
 {
-  "model": "claude-sonnet-4-5-20250929",
+  "model": "sonnet",
   "maxTokens": 8192,
   "temperature": 1.0,
   "thinking": {
@@ -36,7 +36,7 @@ Settings are applied in order of precedence:
 `.claude/settings.json`:
 ```json
 {
-  "model": "claude-sonnet-4-5-20250929",
+  "model": "sonnet",
   "maxTokens": 4096,
   "sandboxing": {
     "enabled": true,
@@ -54,14 +54,11 @@ Settings are applied in order of precedence:
 ### Model Configuration
 
 **model**: Claude model to use
-- `claude-sonnet-4-5-20250929` (default, latest Sonnet)
-- `claude-opus-4-20250514` (Opus for complex tasks)
-- `claude-haiku-4-20250408` (Haiku for speed)
 
-**Model aliases:**
-- `sonnet`: Latest Claude Sonnet
-- `opus`: Latest Claude Opus
-- `haiku`: Latest Claude Haiku
+**Model aliases (recommended - version-independent):**
+
+- `sonnet`: Latest Claude Sonnet (default, most tasks)
+- `opus`: Latest Claude Opus (complex tasks)
 - `opusplan`: Opus with extended thinking for planning
 
 ```json
@@ -203,9 +200,6 @@ claude
 # Use Opus for complex task
 claude --model opus "architect a microservices system"
 
-# Use Haiku for speed
-claude --model haiku "fix typo in README"
-
 # Use opusplan for planning
 claude --model opusplan "plan authentication system"
 ```
@@ -224,20 +218,15 @@ claude --model opusplan "plan authentication system"
 
 ### Model Selection Guide
 
-**Sonnet** (claude-sonnet-4-5-20250929):
+**Sonnet**:
 - Balanced performance and cost
 - Default choice for most tasks
 - Good for general development
 
-**Opus** (claude-opus-4-20250514):
+**Opus**:
 - Highest capability
 - Complex reasoning and planning
 - Use for architecture, design, complex debugging
-
-**Haiku** (claude-haiku-4-20250408):
-- Fastest, most cost-effective
-- Simple tasks (typos, formatting)
-- High-volume operations
 
 **opusplan**:
 - Opus + extended thinking

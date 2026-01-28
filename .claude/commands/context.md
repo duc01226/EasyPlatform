@@ -29,7 +29,7 @@ git diff --stat
 - `TextSnippet` - Example application service
 - `Accounts` - Authentication & authorization
 
-**Frontend Apps (WebV2):**
+**Frontend Apps:**
 - `playground-text-snippet` - Example frontend application
 
 **Key Libraries:**

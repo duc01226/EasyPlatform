@@ -2,19 +2,19 @@
 /**
  * Workflow Router - UserPromptSubmit Hook
  *
- * Automatically detects user intent from prompts and injects workflow instructions.
- * Works with workflows.json configuration for customizable workflow definitions.
+ * AI-native workflow detection via catalog injection.
+ * Injects a workflow catalog for qualifying prompts; the AI decides which
+ * workflow to follow and explicitly activates it via /workflow:start <id>.
  *
  * Features:
- * - Pattern-based intent detection
- * - Configurable workflow sequences
+ * - AI-native intent detection (no regex)
+ * - Catalog injection for qualifying prompts
+ * - Active workflow context with conflict handling
  * - Override support (prefix with "quick:" to skip)
- * - Confidence-based confirmation for high-impact workflows
- * - Persistent workflow state tracking for long-running tasks
  *
  * Sub-modules:
  *   - wr-config.cjs  - Configuration loading
- *   - wr-detect.cjs  - Intent detection
+ *   - wr-detect.cjs  - Catalog building & injection heuristics
  *   - wr-output.cjs  - Output/instructions generation
  *   - wr-control.cjs - Workflow control commands
  *
@@ -25,16 +25,14 @@
 const fs = require('fs');
 const {
   loadState,
-  createState,
   clearState,
-  buildContinuationReminder,
   detectWorkflowControl
 } = require('./lib/workflow-state.cjs');
 
 // Workflow router sub-modules
 const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
-const { detectIntent, detectSkillInvocation } = require('./lib/wr-detect.cjs');
-const { buildWorkflowInstructions, buildConflictReminder } = require('./lib/wr-output.cjs');
+const { detectSkillInvocation, shouldInjectCatalog } = require('./lib/wr-detect.cjs');
+const { buildCatalogInjection, buildActiveWorkflowContext } = require('./lib/wr-output.cjs');
 const { handleWorkflowControl } = require('./lib/wr-control.cjs');
 
 /**
@@ -68,22 +66,20 @@ async function main() {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 2: Check for active workflow and handle intent changes
+    // STEP 2: Check for active workflow
     // ─────────────────────────────────────────────────────────────────────────
     const existingState = loadState();
     if (existingState) {
-      // Check if user is invoking a skill command that matches current step
+      // 2a. User is executing current step → exit silently (Decision 8)
       const invokedSkill = detectSkillInvocation(userPrompt, config);
       const currentStep = existingState.sequence[existingState.currentStep];
 
       if (invokedSkill && invokedSkill === currentStep) {
-        // User is executing expected step - don't interrupt, just track
-        // The step completion will be handled when skill finishes
         process.exit(0);
       }
 
-      // Check for override prefix to abort active workflow
-      if (config.settings.allowOverride && config.settings.overridePrefix) {
+      // 2b. Override prefix → clear state, exit
+      if (config.settings?.allowOverride && config.settings?.overridePrefix) {
         const lowerPrompt = userPrompt.toLowerCase().trim();
         if (lowerPrompt.startsWith(config.settings.overridePrefix.toLowerCase())) {
           clearState();
@@ -91,54 +87,19 @@ async function main() {
         }
       }
 
-      // NEW: Check if user's prompt suggests a different workflow
-      const newDetection = detectIntent(userPrompt, config);
-      if (newDetection.detected && newDetection.workflowId !== existingState.workflowId) {
-        // User's intent has changed - show conflict reminder
-        const conflictReminder = buildConflictReminder(existingState, newDetection, config);
-        console.log(conflictReminder);
-        process.exit(0);
-      }
-
-      // Inject continuation reminder for active workflow
-      const reminder = buildContinuationReminder();
-      if (reminder) {
-        console.log(reminder);
-        process.exit(0);
-      }
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // STEP 3: Detect new workflow from prompt
-    // ─────────────────────────────────────────────────────────────────────────
-    const detection = detectIntent(userPrompt, config);
-
-    // Skip if no workflow detected or explicitly skipped
-    if (detection.skipped) {
-      if (config.settings.showDetection) {
-        console.log(`<!-- Workflow detection skipped: ${detection.reason} -->`);
-      }
-      process.exit(0);
-    }
-
-    if (!detection.detected) {
+      // 2c. All other prompts → inject full active workflow context (Decision 9)
+      const activeContext = buildActiveWorkflowContext(existingState, config);
+      console.log(activeContext);
       process.exit(0);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 4: Create workflow state and generate instructions
+    // STEP 3: No active workflow — inject catalog for qualifying prompts
     // ─────────────────────────────────────────────────────────────────────────
-    createState({
-      workflowId: detection.workflowId,
-      workflowName: detection.workflow.name,
-      sequence: detection.workflow.sequence,
-      originalPrompt: userPrompt,
-      commandMapping: config.commandMapping
-    });
-
-    // Generate and output instructions
-    const instructions = buildWorkflowInstructions(detection, config);
-    console.log(instructions);
+    if (shouldInjectCatalog(userPrompt, config)) {
+      const catalog = buildCatalogInjection(config);
+      console.log(catalog);
+    }
 
     process.exit(0);
   } catch (error) {

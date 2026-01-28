@@ -6,10 +6,6 @@ argument-hint: [tasks]
 Execute these tasks in parallel for maximum efficiency:
 <tasks>$ARGUMENTS</tasks>
 
-**⚠️ MUST READ before implementation:**
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
 **Mode:** PARALLEL - Multiple subagents working concurrently.
 
 ## Workflow

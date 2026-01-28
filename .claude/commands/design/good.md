@@ -26,15 +26,15 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 5. Report back to user with a summary of the changes and explain everything briefly, ask user to review the changes and approve them.
 6. If user approves the changes, update the `./docs/design-guidelines.md` docs if needed.
 
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+
 ## Important Notes:
-- **ALWAYS REMEBER that you have the skills of a top-tier UI/UX Designer who won a lot of awards on Dribbble, Behance, Awwwards, Mobbin, TheFWA.**
+- **ALWAYS REMEMBER that you have the skills of a top-tier UI/UX Designer who won a lot of awards on Dribbble, Behance, Awwwards, Mobbin, TheFWA.**
 - Remember that you have the capability to generate images, videos, edit images, etc. with `ai-multimodal` skills for image generation. Use them to create the design with real assets.
 - Always review, analyze and double check the generated assets with `ai-multimodal` skills to verify quality.
 - Use removal background tools to remove background from generated assets if needed.
 - Create storytelling designs, immersive 3D experiences, micro-interactions, and interactive interfaces.
 - Maintain and update `./docs/design-guidelines.md` docs if needed.
-
-## IMPORTANT Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

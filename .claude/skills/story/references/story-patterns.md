@@ -29,11 +29,11 @@ Glob("docs/business-features/{module}/detailed-features/*.md")
 
 | Module | Correct Term | Avoid |
 |--------|--------------|-------|
-| bravoTALENTS | Candidate | Applicant |
-| bravoTALENTS | JobApplication | Application |
-| bravoGROWTH | Goal | Objective |
-| bravoGROWTH | Employee | User, Staff |
-| bravoSURVEYS | Survey | Form, Questionnaire |
+| TextSnippet | Snippet | Note, Text |
+| TextSnippet | Category | Tag, Label |
+| TextSnippet | Collection | Group, Folder |
+| Platform.Core | Repository | DataStore, Persistence |
+| Platform.Core | Entity | Model, Record |
 
 ### Step 4: Include in Story
 

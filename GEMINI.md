@@ -10,11 +10,14 @@ This file provides essential context and navigation for AI agents working on Eas
 
 Before implementing ANY non-trivial task, you MUST:
 
-1. **Enter Plan Mode First** - Use `EnterPlanMode` tool automatically
+1. **Plan First** - Use `/plan` commands (`/plan`, `/plan:fast`, `/plan:hard`, `/plan:parallel`) to create implementation plans
 2. **Investigate & Analyze** - Explore codebase, understand context
 3. **Create Implementation Plan** - Write detailed plan with specific files and approach
-4. **Get User Approval** - Wait for confirmation before any code changes
-5. **Only Then Implement** - Execute the approved plan
+4. **Validate Plan** - Execute `/plan:validate` or `/plan:review` to check plan quality
+5. **Get User Approval** - Present plan and wait for user confirmation before any code changes
+6. **Only Then Implement** - Execute the approved plan
+
+**Do NOT use `EnterPlanMode` tool** — it enters a restricted read-only mode that blocks Write, Edit, and Task tools, preventing plan file creation and subagent usage. Use `/plan` commands instead.
 
 **Exceptions:** Single-line fixes, user says "just do it", pure research with no changes.
 

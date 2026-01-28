@@ -8,10 +8,6 @@ argument-hint: [issue]
 ## Mission
 <issue>$ARGUMENTS</issue>
 
-**⚠️ MUST READ before fixing:**
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
 ## Workflow
 1. Check if `./logs.txt` exists:
    - If missing, set up permanent log piping in project's script config (`package.json`, `Makefile`, `pyproject.toml`, etc.):

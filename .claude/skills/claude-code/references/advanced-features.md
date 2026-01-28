@@ -88,7 +88,7 @@ Reduce costs by caching repeated context.
 **API usage:**
 ```typescript
 const response = await client.messages.create({
-  model: 'claude-sonnet-4-5-20250929',
+  model: 'sonnet',
   system: [
     {
       type: 'text',
@@ -359,7 +359,6 @@ Manage large context effectively.
 Model context limits:
 - Claude Sonnet: 200k tokens
 - Claude Opus: 200k tokens
-- Claude Haiku: 200k tokens
 
 ### Context Management
 

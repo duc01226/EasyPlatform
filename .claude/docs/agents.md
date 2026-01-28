@@ -104,7 +104,7 @@ Task({
 | `description` | string | Short (3-5 word) summary |
 | `prompt` | string | Detailed task instructions |
 | `subagent_type` | string | Agent type from list above |
-| `model` | string? | Optional: "sonnet", "opus", "haiku" |
+| `model` | string? | Optional: "sonnet", "opus" |
 | `run_in_background` | bool? | Run asynchronously |
 | `resume` | string? | Agent ID to resume |
 
@@ -200,7 +200,7 @@ Example:
 name: my-custom-agent
 description: >-
   Use this agent when you need to...
-model: haiku
+model: sonnet
 ---
 
 You are a specialized agent for...

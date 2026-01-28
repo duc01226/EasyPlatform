@@ -8,7 +8,6 @@
  *
  * Pattern Matching:
  *   src/Frontend/*                    → Angular 19 apps (shared-mixin)
- *   src/Frontend/*                      → Legacy Angular apps (variables)
  *   libs/*                         → Shared libraries
  *
  * Exit Codes:
@@ -26,14 +25,9 @@ const SCSS_GUIDE_PATH = 'docs/claude/scss-styling-guide.md';
 
 const FRONTEND_PATTERNS = [
     {
-        name: 'WebV2',
-        patterns: [/src[\/\\]WebV2[\/\\]/i, /libs[\/\\]platform-core[\/\\]/i, /libs[\/\\]platform-core[\/\\]/i],
+        name: 'Frontend',
+        patterns: [/src[\/\\]Frontend[\/\\]/i, /libs[\/\\]platform-core[\/\\]/i, /libs[\/\\]platform-core[\/\\]/i],
         description: 'Angular 19 with shared-mixin SCSS system'
-    },
-    {
-        name: 'Legacy Web',
-        patterns: [/src[\/\\]Web[\/\\]/i],
-        description: 'Legacy Angular with SCSS variables'
     },
     {
         name: 'Libraries',
@@ -139,16 +133,16 @@ function buildInjection(context, filePath, app) {
         '',
         '1. **BEM Classes:** Use `block__element` with separate `--modifier` class',
         '2. **No Magic Numbers:** Use variables for colors, spacing, breakpoints',
-        "3. **Imports:** WebV2 uses `@use 'shared-mixin'`, Legacy uses `@import`",
+        "3. **Imports:** Use `@use 'shared-mixin'` for Angular 19 apps",
         '4. **Nesting:** Max 3 levels deep, avoid over-specificity',
         '5. **Component Scope:** Styles scoped to component block class',
         ''
     ];
 
     // Add context-specific guidance
-    if (context.name === 'WebV2') {
+    if (context.name === 'Frontend') {
         lines.push(
-            '### WebV2 SCSS Patterns',
+            '### Frontend SCSS Patterns',
             '',
             '```scss',
             '// Import pattern',
@@ -161,23 +155,6 @@ function buildInjection(context, filePath, app) {
             '// Flex mixins',
             '@include flex-column-container();',
             '@include flex-row-gap(8px);',
-            '```',
-            ''
-        );
-    } else if (context.name === 'Legacy Web') {
-        lines.push(
-            '### Legacy SCSS Patterns',
-            '',
-            '```scss',
-            '// Import pattern',
-            "@import '~assets/scss/variables';",
-            '',
-            '// SCSS Variables',
-            'color: $color-primary;',
-            'background: $color-gray-100;',
-            '',
-            '// Flex mixin',
-            '@include flex-column-container();',
             '```',
             ''
         );

@@ -9,7 +9,7 @@
 | --------------- | ------------------------------------------------------------------- |
 | **Methodology** | Modified BEM: `.block__element.--modifier1.--modifier2`             |
 | **Units**       | `rem` for spacing/sizing, CSS variables for colors                  |
-| **Import**      | `@use 'shared-mixin' as *;` (WebV2)                                 |
+| **Import**      | `@use 'shared-mixin' as *;` (Angular 19)                            |
 | **Philosophy**  | OOP Encapsulation - classes describe structure like class hierarchy |
 
 **Critical Rules:**

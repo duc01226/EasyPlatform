@@ -1123,12 +1123,12 @@ First, **initialize** the analysis file with:
 Find all package.json files:
 
 ```bash
-# WebV2 (Nx workspace - Angular 19)
+# Frontend (Nx workspace - Angular 19)
 src/Frontend/package.json
 src/Frontend/apps/*/package.json
 src/Frontend/libs/*/package.json
 
-# Legacy Web (Angular 8-12)
+# Frontend legacy apps
 src/Frontend/*/package.json
 ```
 
@@ -1237,7 +1237,7 @@ Generate detailed markdown report at `ai_package_upgrade_reports/[YYYY-MM-DD]-fr
 
 ### 2. Package Inventory by Project
 
-- WebV2 projects (Angular 19)
+- Frontend projects (Angular 19)
 
 - Legacy projects (Angular 8-12)
 - Master package consolidation table
@@ -1410,7 +1410,7 @@ Before marking complete, provide:
 
 ### Package Upgrade Analysis Guidelines
 
-- **Comprehensive Discovery:** Find ALL package.json files across entire codebase (WebV2 + Legacy Web)
+- **Comprehensive Discovery:** Find ALL package.json files across entire codebase (Frontend + Legacy)
 - **Web Research Accuracy:** Use official sources only (npm, GitHub repos, official docs)
 - **Breaking Changes Focus:** Prioritize identifying breaking changes requiring code changes
 - **Risk Assessment:** Evaluate complexity based on breaking changes, usage breadth, dependencies
@@ -2688,7 +2688,7 @@ Replace these placeholders when using this prompt:
 ```
 Analyze UI screenshots and generate component documentation:
 - Source Code: src/Frontend/apps/playground-text-snippet
-- Screenshots: docs/ui-frontend/WebV2/raw-screenshots
+- Screenshots: docs/ui-frontend/Frontend/raw-screenshots
 ```
 
 ---

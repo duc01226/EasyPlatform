@@ -6,23 +6,25 @@ argument-hint: [task]
 Think harder.
 Activate `planning` skill.
 
+> **CRITICAL:** Do NOT use `EnterPlanMode` tool — it blocks Write/Edit/Task tools needed for plan creation. Follow the workflow below.
+> **Planning is collaborative:** Validate plan, ask user to confirm, surface decision questions with recommendations.
+
 ## Your mission
+
 <task>
 $ARGUMENTS
 </task>
 
-**⚠️ MUST READ for planning accuracy:**
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
 ## Pre-Creation Check (Active vs Suggested Plan)
 
 Check the `## Plan Context` section in the injected context:
+
 - If "Plan:" shows a path → Active plan exists. Ask user: "Continue with this? [Y/n]"
 - If "Suggested:" shows a path → Branch-matched hint only. Ask if they want to activate or create new.
 - If "Plan: none" → Create new plan using naming from `## Naming` section.
 
 ## Workflow
+
 1. If creating new: Create directory using `Plan dir:` from `## Naming` section, then run `node .claude/scripts/set-active-plan.cjs {plan-dir}`
    If reusing: Use the active plan path from Plan Context.
    Make sure you pass the directory path to every subagent during the process.
@@ -52,6 +54,7 @@ After plan creation, offer validation interview to confirm decisions before impl
 ## Output Requirements
 
 **Plan Directory Structure** (use `Plan dir:` from `## Naming` section)
+
 ```
 {plan-dir}/
 ├── research/
@@ -69,10 +72,13 @@ After plan creation, offer validation interview to confirm decisions before impl
 ```
 
 **Research Output Requirements**
+
 - Ensure every research markdown report remains concise (≤150 lines) while covering all requested topics and citations.
 
 **Plan File Specification**
+
 - Every `plan.md` MUST start with YAML frontmatter:
+
   ```yaml
   ---
   title: "{Brief title}"
@@ -85,19 +91,18 @@ After plan creation, offer validation interview to confirm decisions before impl
   created: {YYYY-MM-DD}
   ---
   ```
+
 - Save the overview access point at `{plan-dir}/plan.md`. Keep it generic, under 80 lines, and list each implementation phase with status and progress plus links to phase files.
 - For each phase, create `{plan-dir}/phase-XX-phase-name-here.md` containing the following sections in order: Context links (reference parent plan, dependencies, docs), Overview (date, description, priority, implementation status, review status), Key Insights, Requirements, Architecture, Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps.
 
-## Important Notes
-**IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
-**IMPORTANT:** Ensure token efficiency while maintaining high quality.
-**IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
-**IMPORTANT:** In reports, list any unresolved questions at the end, if any.
-**IMPORTANT**: **Do not** start implementing.
+## MANDATORY: Plan Collaboration Protocol (READ THIS)
 
-ultrathink
-
-## IMPORTANT Task Planning Notes
-
+- **Do NOT use `EnterPlanMode` tool** — it blocks Write/Edit/Task tools needed to create plan files and launch subagents
+- **Do NOT start implementing** — plan only, wait for user approval
+- **ALWAYS validate:** After plan creation, execute `/plan:review` to validate the plan
+- **ALWAYS confirm:** Ask user to review and approve the plan using `AskUserQuestion` with a recommendation
+- **ALWAYS surface decisions:** Use `AskUserQuestion` with recommended options for key architectural/design decisions
+- **Planning = Collaboration:** The plan is shaped by user input — never treat it as a unilateral output
 - Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always add a final review todo task to review the works done at the end
+- Sacrifice grammar for concision. List unresolved questions at the end

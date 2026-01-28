@@ -6,7 +6,7 @@ Quick reference for AI agents to select the correct design system file based on 
 
 | File Path Contains | Read This Guide                                |
 | ------------------ | ---------------------------------------------- |
-| `src/Frontend/`    | [WebV2DesignSystem.md](./WebV2DesignSystem.md) |
+| `src/Frontend/`    | [FrontendDesignSystem.md](./FrontendDesignSystem.md) |
 
 **Quick Detection:**
 
@@ -28,7 +28,7 @@ Quick reference for AI agents to select the correct design system file based on 
 
 | Working On   | Design System File                             | Path Pattern                                 |
 | ------------ | ---------------------------------------------- | -------------------------------------------- |
-| **Frontend** | [WebV2DesignSystem.md](./WebV2DesignSystem.md) | `src/Frontend/apps/*`, `src/Frontend/libs/*` |
+| **Frontend** | [FrontendDesignSystem.md](./FrontendDesignSystem.md) | `src/Frontend/apps/*`, `src/Frontend/libs/*` |
 
 ## Decision Tree
 
@@ -36,12 +36,12 @@ Quick reference for AI agents to select the correct design system file based on 
 Which app are you modifying?
 |
 +-> src/Frontend/* (playground-text-snippet, libs)
-    +-> READ: WebV2DesignSystem.md
+    +-> READ: FrontendDesignSystem.md
 ```
 
 ## App-to-File Mapping
 
-### WebV2DesignSystem.md
+### FrontendDesignSystem.md
 
 - `src/Frontend/apps/playground-text-snippet/`
 - `src/Frontend/libs/apps-domains/`
@@ -60,4 +60,4 @@ Which app are you modifying?
     - No prefix, uses `--modifier` separate class → Standard BEM pattern
 
 3. **Check file path:**
-    - Contains `Frontend` → WebV2DesignSystem.md
+    - Contains `Frontend` → FrontendDesignSystem.md

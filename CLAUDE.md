@@ -10,11 +10,14 @@ This file provides essential context and navigation for AI agents working on Eas
 
 Before implementing ANY non-trivial task, you MUST:
 
-1. **Enter Plan Mode First** - Use `EnterPlanMode` tool automatically
+1. **Plan First** - Use `/plan` commands (`/plan`, `/plan:fast`, `/plan:hard`, `/plan:parallel`) to create implementation plans
 2. **Investigate & Analyze** - Explore codebase, understand context
 3. **Create Implementation Plan** - Write detailed plan with specific files and approach
-4. **Get User Approval** - Wait for confirmation before any code changes
-5. **Only Then Implement** - Execute the approved plan
+4. **Validate Plan** - Execute `/plan:validate` or `/plan:review` to check plan quality
+5. **Get User Approval** - Present plan and wait for user confirmation before any code changes
+6. **Only Then Implement** - Execute the approved plan
+
+**Do NOT use `EnterPlanMode` tool** — it enters a restricted read-only mode that blocks Write, Edit, and Task tools, preventing plan file creation and subagent usage. Use `/plan` commands instead.
 
 **Exceptions:** Single-line fixes, user says "just do it", pure research with no changes.
 
@@ -279,32 +282,40 @@ Need frontend feature?
 
 ## Automatic Workflow Detection (MUST FOLLOW)
 
-Before responding to any task request, analyze the user's prompt to detect intent and follow the appropriate workflow.
+Workflows are automatically injected as a catalog by the `workflow-router.cjs` hook. Analyze the user's prompt, select the matching workflow, and invoke `/workflow:start <id>` to activate it.
 
-### Intent Detection Rules
+### How It Works
 
-| Intent                     | Trigger Keywords                                                             | Workflow Sequence                                                                                                                  |
-| -------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| **Feature Implementation** | implement, add, create, build, develop, new feature                          | `/plan` → `/plan:review` → `/cook` → `/code-simplifier` → `/code-review` → `/test` → `/docs-update` → `/watzup`                    |
-| **Bug Fix**                | bug, fix, error, broken, issue, crash, not working                           | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan:review` → `/fix` → `/code-simplifier` → `/code-review` → `/test`           |
-| **Verification**           | verify, validate, confirm that, check if, ensure                             | `/scout` → `/investigate` → `/test` → *[gate]* → `/plan` → `/plan:review` → `/fix` → `/code-simplifier` → `/code-review` → `/test` |
-| **Documentation**          | docs, document, readme, update docs                                          | `/scout` → `/investigate` → `/docs-update` → `/watzup`                                                                             |
-| **Refactoring**            | refactor, restructure, clean up, improve code                                | `/plan` → `/plan:review` → `/code` → `/code-simplifier` → `/code-review` → `/test`                                                 |
-| **Review Changes**         | review current/uncommitted/staged changes                                    | `/review-changes`                                                                                                                  |
-| **Code Review**            | review code, audit code, PR review, codebase review                          | `/code-review` → `/watzup`                                                                                                         |
-| **Quality Audit**          | audit quality, review skills/commands/hooks, ensure best practices, no flaws | `/code-review` → `/plan` → `/code` → `/test` → `/watzup` (with CRITICAL GATE after review)                                         |
-| **Investigation**          | how does, where is, explain, understand, find                                | `/scout` → `/investigate`                                                                                                          |
+1. **Catalog Injection:** The router hook injects a compact workflow catalog into qualifying prompts (>=15 chars, not slash commands, not `quick:` prefixed)
+2. **AI Selection:** You read the catalog's `whenToUse` descriptions and select the best matching workflow
+3. **Activation:** Invoke `/workflow:start <id>` to activate the workflow — this creates tracking state and outputs the full sequence
+
+### Workflow Reference
+
+| Workflow ID | When To Use |
+| --- | --- |
+| **feature** | User wants to implement, add, create, or build a new feature or functionality |
+| **bugfix** | User reports a bug, error, crash, broken functionality, or asks to fix/debug/troubleshoot |
+| **verification** | User asks to verify, validate, confirm, or ensure something works correctly |
+| **documentation** | User wants to write, update, or improve documentation |
+| **refactor** | User wants to refactor, restructure, clean up, or improve existing code without adding features |
+| **review-changes** | User asks to review current/uncommitted/staged changes before committing |
+| **review** | User asks for code review, audit, PR review, or codebase review |
+| **quality-audit** | User asks to audit quality, ensure best practices, or review for flaws |
+| **investigation** | User asks how something works, where something is, or wants to understand code |
+
+*This table shows common workflows. The full catalog (22 workflows) is injected at runtime by `workflow-router.cjs`.*
 
 ### Workflow Execution Protocol
 
-**CRITICAL: First action after workflow detection MUST be TodoWrite. No exceptions.**
+**CRITICAL: First action after workflow activation MUST be TodoWrite. No exceptions.**
 
-1. **DETECT:** Analyze user prompt for intent keywords
-2. **CREATE TODOS FIRST (HARD BLOCKING):** Use `TodoWrite` to create todo items for ALL workflow steps BEFORE doing anything else
+1. **SELECT:** Analyze user prompt against the injected workflow catalog
+2. **ACTIVATE:** Invoke `/workflow:start <id>` — this creates state and outputs the full sequence
+3. **CREATE TODOS (HARD BLOCKING):** Use `TodoWrite` to create todo items for ALL workflow steps BEFORE doing anything else
     - This is NOT optional - it is a hard requirement
     - If you skip this step, you WILL lose track of the workflow
-3. **ANNOUNCE:** Tell user: `"Detected: [Intent]. Following workflow: [sequence]"`
-4. **CONFIRM (for features/refactors):** Ask: `"Proceed with this workflow? (yes/no/quick)"`
+4. **CONFIRM (if `confirmFirst`):** Ask: `"Proceed with this workflow? (yes/no/quick)"`
 5. **EXECUTE:** Follow each step in sequence, updating todo status as you progress
 
 **What qualifies as "simple task" (exceptions):**
@@ -334,9 +345,9 @@ Before creating/modifying files in these paths, ALWAYS invoke the corresponding 
 
 **User:** "Add a dark mode toggle to the settings page"
 
-**Response:**
+**Response:** The workflow catalog is injected. You select `feature` and invoke `/workflow:start feature`. The hook outputs the sequence, then you:
 
-> Detected: **Feature Implementation**. Following workflow: `/plan` → `/plan:review` → `/cook` → `/code-simplifier` → `/code-review` → `/test` → `/docs-update` → `/watzup`
+> Activated: **Feature Implementation** workflow. Following: `/scout` → `/plan` → `/plan:review` → `/cook` → ...
 >
 > Proceed with this workflow? (yes/no/quick)
 

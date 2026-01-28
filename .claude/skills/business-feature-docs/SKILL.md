@@ -19,6 +19,26 @@ Generate comprehensive business feature documentation following the **GOLD STAND
 - **⚠️ MUST READ** `docs/templates/detailed-feature-docs-template.md` — full template
 - **⚠️ MUST READ** `docs/templates/detailed-feature-docs-template.ai.md` — AI companion template
 
+## [CRITICAL] MANDATORY CODE EVIDENCE RULE
+
+**EVERY test case MUST have verifiable code evidence.** This is non-negotiable.
+
+### Evidence Format
+
+```markdown
+**Evidence**: `{RelativeFilePath}:{LineNumber}` or `{RelativeFilePath}:{StartLine}-{EndLine}`
+```
+
+### Valid vs Invalid Evidence
+
+| Valid                            | Invalid                              |
+| -------------------------------- | ------------------------------------ |
+| `ErrorMessage.cs:83`             | `{FilePath}:{LineRange}` (template)  |
+| `Handler.cs:42-52`               | `SomeFile.cs` (no line)             |
+| `interviews.service.ts:115-118`  | "Based on CQRS pattern" (vague)     |
+
+---
+
 ## Phase 1: Module Detection & Context Gathering
 
 ### Step 1.1: Identify Target Module

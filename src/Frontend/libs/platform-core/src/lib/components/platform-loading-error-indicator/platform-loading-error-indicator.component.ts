@@ -1,5 +1,5 @@
 /**
- * Platform Loading and Error Indicator Component (WebV2)
+ * Platform Loading and Error Indicator Component
  *
  * A standalone Angular 18 component for displaying loading and error states with signal-based reactive programming.
  * Provides Angular Material-styled error messages and loading states with modern signal architecture.
@@ -12,7 +12,7 @@
  * - Multi-request state tracking support
  * - Dismiss and reload action support
  * - Angular 18 standalone component with signals
- * - WebV2-style loading and reloading differentiation
+ * - Platform-style loading and reloading differentiation
  *
  * @example
  * **Basic usage with target component:**

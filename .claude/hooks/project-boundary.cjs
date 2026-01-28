@@ -2,8 +2,8 @@
 /**
  * project-boundary.cjs - Block file operations outside project root
  *
- * Blocks write operations (Edit, Write, MultiEdit, NotebookEdit, Bash)
- * targeting paths outside CLAUDE_PROJECT_DIR.
+ * Blocks ALL file operations (read + write) targeting paths outside
+ * CLAUDE_PROJECT_DIR, including Glob, Grep, Read, Edit, Write, MCP filesystem.
  *
  * Exit Codes: 0 = allowed, 2 = blocked
  */
@@ -12,7 +12,10 @@ const fs = require('fs');
 const path = require('path');
 const { extractFromToolInput } = require('./scout-block/path-extractor.cjs');
 
-const WRITE_TOOLS = ['Edit', 'Write', 'MultiEdit', 'NotebookEdit', 'Bash'];
+const BOUNDARY_TOOLS = [
+  'Edit', 'Write', 'MultiEdit', 'NotebookEdit', 'Bash',
+  'Glob', 'Grep', 'Read'
+];
 
 /**
  * Get normalized project root (lowercase, forward slashes)
@@ -38,6 +41,12 @@ function normalizePath(inputPath) {
   }
 
   normalized = normalized.replace(/\\/g, '/');
+
+  // Convert MSYS2/Git Bash paths (/d/...) to Windows paths (D:/...)
+  const msysMatch = normalized.match(/^\/([a-zA-Z])\//);
+  if (msysMatch) {
+    normalized = msysMatch[1].toUpperCase() + ':/' + normalized.slice(3);
+  }
 
   // Resolve to absolute
   const baseDir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
@@ -99,8 +108,8 @@ try {
   const toolInput = data.tool_input;
   const toolName = data.tool_name || 'unknown';
 
-  // Skip read-only tools
-  if (!WRITE_TOOLS.includes(toolName)) {
+  // Skip tools not in boundary-check list
+  if (!BOUNDARY_TOOLS.includes(toolName) && !toolName.startsWith('mcp__filesystem__')) {
     process.exit(0);
   }
 

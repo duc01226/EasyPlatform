@@ -49,14 +49,14 @@ After archiving the plans, provide summary:
 - Table of plans that are archived or deleted (title, status, created date, LOC)
 - Table of journal entries that are created (title, status, created date, LOC)
 
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+
 ## Important Notes
 
 **IMPORTANT:** Only ask questions about genuine decision points - don't manufacture artificial choices.
 **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
 **IMPORTANT:** In the last summary report, list any unresolved questions at the end, if any.
 **IMPORTANT:** Ensure token efficiency while maintaining high quality.
-
-## IMPORTANT Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

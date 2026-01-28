@@ -122,7 +122,7 @@ claude "refactor this function" --file utils.js --context "make it async"
 ```
 Claude Code v1.x.x
 Working directory: /path/to/project
-Model: claude-sonnet-4-5-20250929
+Model: sonnet
 
 Claude Code>
 ```

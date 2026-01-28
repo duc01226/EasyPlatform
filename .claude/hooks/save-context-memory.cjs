@@ -26,6 +26,8 @@ const {
 const { ensureDir } = require('./lib/ck-paths.cjs');
 const { exportTodosForCheckpoint } = require('./lib/todo-state.cjs');
 const { getGitBranch } = require('./lib/ck-git.cjs');
+const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
+const { loadState: loadWorkflowState } = require('./lib/workflow-state.cjs');
 
 /**
  * Format timestamp for filename
@@ -165,10 +167,47 @@ async function main() {
     const sessionId = payload.session_id || process.env.CK_SESSION_ID || 'default';
     const config = loadConfig({ includeProject: false, includeAssertions: false });
 
+    // --- Checkpoint gating (settings.checkpoints + per-workflow enableCheckpoints) ---
+    const wfConfig = loadWorkflowConfig();
+    const checkpointSettings = wfConfig?.settings?.checkpoints;
+
+    // Global gate: settings.checkpoints.enabled
+    if (checkpointSettings?.enabled === false) {
+      if (process.env.CK_DEBUG) {
+        console.error('[save-context-memory] Checkpoints disabled by settings.checkpoints.enabled');
+      }
+      process.exit(0);
+    }
+
+    // Auto-save gate: settings.checkpoints.autoSaveOnCompact
+    if (checkpointSettings?.autoSaveOnCompact === false) {
+      if (process.env.CK_DEBUG) {
+        console.error('[save-context-memory] Auto-save on compact disabled by settings.checkpoints.autoSaveOnCompact');
+      }
+      process.exit(0);
+    }
+
+    // Per-workflow gate: enableCheckpoints
+    const activeWorkflow = loadWorkflowState();
+    if (activeWorkflow?.workflowId) {
+      const workflowDef = wfConfig?.workflows?.[activeWorkflow.workflowId];
+      if (workflowDef?.enableCheckpoints === false) {
+        if (process.env.CK_DEBUG) {
+          console.error(`[save-context-memory] Checkpoints disabled for workflow: ${activeWorkflow.workflowId}`);
+        }
+        process.exit(0);
+      }
+    }
+
     // Determine output path
     const gitBranch = getGitBranch();
     const resolved = resolvePlanPath(sessionId, config);
-    const reportsPath = getReportsPath(resolved.path, resolved.resolvedBy, config.plan, config.paths);
+    let reportsPath = getReportsPath(resolved.path, resolved.resolvedBy, config.plan, config.paths);
+
+    // Fallback to settings.checkpoints.path if no plan-specific path resolved
+    if (!resolved.resolvedBy && checkpointSettings?.path) {
+      reportsPath = checkpointSettings.path;
+    }
 
     // Ensure reports directory exists
     const fullReportsPath = path.resolve(process.cwd(), reportsPath);

@@ -138,29 +138,15 @@
                     "description": "Whether to display the detected intent and workflow sequence to the user before execution.",
                     "title": "Show Detection",
                     "type": "boolean"
-                },
-                "supportedLanguages": {
-                    "description": "ISO 639-1 language codes for multilingual trigger pattern matching.",
-                    "examples": [["en", "vi", "zh", "ja", "ko"]],
-                    "items": {
-                        "maxLength": 2,
-                        "minLength": 2,
-                        "pattern": "^[a-z]{2}$",
-                        "type": "string"
-                    },
-                    "minItems": 1,
-                    "title": "Supported Languages",
-                    "type": "array",
-                    "uniqueItems": true
                 }
             },
-            "required": ["enabled", "allowOverride", "overridePrefix", "confirmHighImpact", "showDetection", "supportedLanguages", "checkpoints"],
+            "required": ["enabled", "allowOverride", "overridePrefix", "confirmHighImpact", "showDetection", "checkpoints"],
             "title": "Global Settings",
             "type": "object"
         },
         "WorkflowEntry": {
             "additionalProperties": false,
-            "description": "Defines a workflow triggered by user intent patterns. Contains an ordered sequence of commands to execute, with optional pre-actions and exclusion patterns.",
+            "description": "Defines a workflow selected by AI-native intent detection. Contains natural language descriptions for when to use/not use, an ordered sequence of commands, and optional pre-actions.",
             "properties": {
                 "confirmFirst": {
                     "description": "Whether to ask for user confirmation before starting this workflow. Recommended for high-impact workflows (feature, refactor, release).",
@@ -178,15 +164,6 @@
                     "title": "Enable Checkpoints",
                     "type": "boolean"
                 },
-                "excludePatterns": {
-                    "description": "Regular expression patterns that, when matched, prevent this workflow from triggering even if triggerPatterns match. Used to avoid false positives.",
-                    "items": {
-                        "minLength": 1,
-                        "type": "string"
-                    },
-                    "title": "Exclude Patterns",
-                    "type": "array"
-                },
                 "name": {
                     "description": "Human-readable display name for the workflow, shown to users during detection.",
                     "examples": ["Feature Implementation", "Bug Fix", "Code Investigation"],
@@ -196,13 +173,6 @@
                 },
                 "preActions": {
                     "$ref": "#/definitions/PreActions"
-                },
-                "priority": {
-                    "description": "Workflow priority for conflict resolution when multiple workflows match. Lower number = higher priority (1-100).",
-                    "maximum": 100,
-                    "minimum": 1,
-                    "title": "Priority",
-                    "type": "integer"
                 },
                 "sequence": {
                     "description": "Ordered list of command keys (referencing commandMapping) to execute. Commands run in sequence from first to last.",
@@ -214,23 +184,29 @@
                     "title": "Command Sequence",
                     "type": "array"
                 },
-                "triggerPatterns": {
-                    "description": "Regular expression patterns that match user input to trigger this workflow. Patterns are tested case-insensitively. Include multilingual patterns for supported languages.",
-                    "items": {
-                        "minLength": 1,
-                        "type": "string"
-                    },
-                    "minItems": 1,
-                    "title": "Trigger Patterns",
-                    "type": "array"
+                "whenNotToUse": {
+                    "description": "Natural language description of when NOT to select this workflow. Used for disambiguation when multiple workflows could match.",
+                    "minLength": 1,
+                    "title": "When Not To Use",
+                    "type": "string"
+                },
+                "whenToUse": {
+                    "description": "Natural language description of when the AI should select this workflow. The AI model reads this to decide which workflow matches the user's intent.",
+                    "examples": [
+                        "User reports a bug, error, crash, broken functionality, or asks to fix/debug/troubleshoot an issue.",
+                        "User wants to implement, add, create, or build a new feature or functionality."
+                    ],
+                    "minLength": 1,
+                    "title": "When To Use",
+                    "type": "string"
                 }
             },
-            "required": ["name", "description", "priority", "confirmFirst", "sequence", "triggerPatterns"],
+            "required": ["name", "description", "confirmFirst", "sequence", "whenToUse"],
             "title": "Workflow Definition",
             "type": "object"
         }
     },
-    "description": "Schema for Claude Code and GitHub Copilot workflow automation configuration. Defines intent detection, command mapping, and workflow sequences for multilingual AI agent orchestration.",
+    "description": "Schema for Claude Code and GitHub Copilot workflow automation configuration. Defines AI-native intent detection, command mapping, and workflow sequences for AI agent orchestration.",
     "properties": {
         "$schema": {
             "description": "Path or URL to the JSON Schema file for IDE validation and autocompletion.",
@@ -256,8 +232,8 @@
             "$ref": "#/definitions/Settings"
         },
         "version": {
-            "description": "Semantic version of the workflow configuration (e.g., 1.7.0).",
-            "examples": ["1.0.0", "1.7.0", "2.0.0"],
+            "description": "Semantic version of the workflow configuration (e.g., 2.0.0).",
+            "examples": ["1.0.0", "2.0.0"],
             "pattern": "^\\d+\\.\\d+\\.\\d+$",
             "title": "Configuration Version",
             "type": "string"
@@ -266,7 +242,7 @@
             "additionalProperties": {
                 "$ref": "#/definitions/WorkflowEntry"
             },
-            "description": "Named workflow definitions that map user intent patterns to ordered command sequences. Each workflow is triggered by regex pattern matching against user input.",
+            "description": "Named workflow definitions selected by AI-native intent detection. Each workflow has natural language whenToUse/whenNotToUse descriptions that the AI reads to determine which workflow matches the user's intent.",
             "minProperties": 1,
             "title": "Workflow Definitions",
             "type": "object"

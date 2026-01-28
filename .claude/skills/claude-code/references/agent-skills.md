@@ -192,7 +192,7 @@ const client = new Anthropic({
 });
 
 const response = await client.messages.create({
-  model: 'claude-sonnet-4-5-20250929',
+  model: 'sonnet',
   max_tokens: 4096,
   skills: [
     {
@@ -218,7 +218,7 @@ from anthropic import Anthropic
 client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 response = client.messages.create(
-    model="claude-sonnet-4-5-20250929",
+    model="sonnet",
     max_tokens=4096,
     skills=[
         {

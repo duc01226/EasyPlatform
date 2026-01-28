@@ -51,6 +51,23 @@ Always honoring **YAGNI**, **KISS**, and **DRY** principles.
 
 **Phase 2:** After all files reviewed, read the accumulated report to see the big picture, then generate final assessment covering architecture coherence, responsibility placement, duplication detection, and prioritized recommendations.
 
+## Clean Code Rules (MUST CHECK)
+
+1. **No Magic Numbers/Strings** - All literal values must be named constants
+2. **Type Annotations** - All functions must have explicit parameter and return types
+3. **Single Responsibility** - One reason to change per method/class
+4. **DRY** - No code duplication; extract shared logic
+5. **Naming** - Clear, specific names that reveal intent:
+   - Specific not generic: `employeeRecords` not `data`
+   - Methods: Verb+Noun: `getEmployee()`, `validateInput()`
+   - Booleans: is/has/can/should prefix: `isActive`, `hasPermission`
+   - No cryptic abbreviations: `employeeCount` not `empCnt`
+6. **Performance** - Efficient data access patterns:
+   - No O(n²): use dictionary lookup instead of nested loops
+   - Project in query: don't load all then `.Select(x.Id)`
+   - Always paginate: never get all data without `.PageBy()`
+   - Batch load: use `GetByIdsAsync()` not N+1 queries
+
 ## When to Use This Skill
 
 ### Receiving Feedback

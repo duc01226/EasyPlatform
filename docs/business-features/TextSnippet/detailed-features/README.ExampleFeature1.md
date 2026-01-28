@@ -2877,7 +2877,7 @@ var (total, statusCounts) = await (
 
 ### Design System Documentation
 
-#### WebV2 (Angular 19) - Growth Application
+#### Frontend (Angular 19) - Example Application
 
 - **[Design System Overview](../../docs/design-system/README.md)** - Complete design system guide
 - **[01-design-tokens.md](../../docs/design-system/01-design-tokens.md)** - Colors, typography, spacing
@@ -3002,7 +3002,7 @@ src/Frontend/libs/apps-domains/src/goal/
 
 - **Unit Tests**: `src/Backend/TextSnippet/Growth.Application.Tests/`
 - **Integration Tests**: `src/AutomationTest/TextSnippet/`
-- **E2E Tests**: `src/AutomationTest/WebV2/goals/`
+- **E2E Tests**: `src/AutomationTest/Frontend/`
 
 ### Support and Contribution
 

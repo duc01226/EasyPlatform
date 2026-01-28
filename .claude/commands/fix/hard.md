@@ -6,10 +6,6 @@ argument-hint: [issues]
 **Ultrathink** to plan & start fixing these issues follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <issues>$ARGUMENTS</issues>
 
-**⚠️ MUST READ before fixing:**
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
 ## Workflow:
 
 If the user provides a screenshots or videos, use `ai-multimodal` skill to describe as detailed as possible the issue, make sure developers can predict the root causes easily based on the description.

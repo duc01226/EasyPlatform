@@ -36,8 +36,8 @@ const {
 } = require('../../lib/workflow-state.cjs');
 
 const { loadWorkflowConfig } = require('../../lib/wr-config.cjs');
-const { detectIntent, detectSkillInvocation } = require('../../lib/wr-detect.cjs');
-const { buildWorkflowInstructions, buildConflictReminder } = require('../../lib/wr-output.cjs');
+const { shouldInjectCatalog, buildWorkflowCatalog, detectSkillInvocation } = require('../../lib/wr-detect.cjs');
+const { buildWorkflowInstructions, buildCatalogInjection, buildActiveWorkflowContext } = require('../../lib/wr-output.cjs');
 const { handleWorkflowControl } = require('../../lib/wr-control.cjs');
 
 function assert(section, desc, condition, details) {
@@ -207,37 +207,29 @@ assertEqual('state', 'control: random text null', detectWorkflowControl('impleme
 console.log('  [1] State Management: done\n');
 
 // ═══════════════════════════════════════════════════
-// SECTION 2: Intent Detection (wr-detect.cjs)
+// SECTION 2: Catalog & Heuristics (wr-detect.cjs)
 // ═══════════════════════════════════════════════════
-console.log('  [2] Intent Detection...');
+console.log('  [2] Catalog & Heuristics...');
 cleanup();
 
 const config = loadWorkflowConfig();
 
-// 2.1 Detects feature intent
-const featureResult = detectIntent('implement a new auth feature', config);
-assert('detect', 'feature detected', featureResult.detected);
-assertEqual('detect', 'feature workflowId', featureResult.workflowId, 'feature');
-assert('detect', 'feature has confidence', featureResult.confidence > 0);
+// 2.1 shouldInjectCatalog returns true for qualifying prompts
+assert('detect', 'qualifying prompt injects catalog', shouldInjectCatalog('implement a new auth feature', config));
 
-// 2.2 Detects bugfix intent
-const bugfixResult = detectIntent('fix the login bug', config);
-assert('detect', 'bugfix detected', bugfixResult.detected);
-assertEqual('detect', 'bugfix workflowId', bugfixResult.workflowId, 'bugfix');
+// 2.2 shouldInjectCatalog returns false for short prompts (<15 chars)
+assert('detect', 'short prompt skips catalog', !shouldInjectCatalog('hi', config));
 
-// 2.3 Override prefix skips detection
-const overrideResult = detectIntent('quick: fix this bug', config);
-assert('detect', 'override skipped', overrideResult.skipped);
-assertEqual('detect', 'override reason', overrideResult.reason, 'override_prefix');
+// 2.3 shouldInjectCatalog returns false for quick: prefix
+assert('detect', 'quick: prefix skips catalog', !shouldInjectCatalog('quick: fix this bug', config));
 
-// 2.4 Explicit command skips detection
-const cmdResult = detectIntent('/plan the feature', config);
-assert('detect', 'explicit command skipped', cmdResult.skipped);
-assertEqual('detect', 'command skip reason', cmdResult.reason, 'explicit_command');
+// 2.4 shouldInjectCatalog returns false for slash commands
+assert('detect', 'slash command skips catalog', !shouldInjectCatalog('/plan the feature', config));
 
-// 2.5 No match for random text
-const noMatch = detectIntent('hello world weather today', config);
-assert('detect', 'random text no detection', !noMatch.detected && !noMatch.skipped);
+// 2.5 buildWorkflowCatalog returns sorted catalog with workflow info
+const catalog = buildWorkflowCatalog(config);
+assert('detect', 'catalog not empty', catalog.length > 0);
+assertIncludes('detect', 'catalog contains workflow entries', catalog, '**');
 
 // 2.6 detectSkillInvocation with colon commands
 const colonSkill = detectSkillInvocation('/review:codebase', config);
@@ -252,7 +244,7 @@ assertEqual('detect', 'simple skill: /plan → plan', planSkill, 'plan');
 const planReviewSkill = detectSkillInvocation('/plan:review', config);
 assertEqual('detect', 'colon skill: plan:review → plan-review', planReviewSkill, 'plan-review');
 
-console.log('  [2] Intent Detection: done\n');
+console.log('  [2] Catalog & Heuristics: done\n');
 
 // ═══════════════════════════════════════════════════
 // SECTION 3: Output Generation (wr-output.cjs)
@@ -260,16 +252,20 @@ console.log('  [2] Intent Detection: done\n');
 console.log('  [3] Output Generation...');
 cleanup();
 
-// 3.1 buildWorkflowInstructions
-const detection = detectIntent('implement search feature', config);
-const instructions = buildWorkflowInstructions(detection, config);
-assert('output', 'instructions not empty', instructions.length > 0);
-assertIncludes('output', 'instructions contains workflow name', instructions, detection.workflow.name);
-assertIncludes('output', 'instructions contains MUST FOLLOW', instructions, 'MUST FOLLOW');
-assertIncludes('output', 'instructions contains step list', instructions, '/plan');
-assertIncludes('output', 'instructions contains todo tracking', instructions, '[Workflow]');
+// 3.1 buildWorkflowInstructions with activation object
+const featureWorkflow = config.workflows?.feature;
+assert('output', 'feature workflow exists in config', featureWorkflow !== undefined);
+if (featureWorkflow) {
+    const activation = { workflow: featureWorkflow, workflowId: 'feature' };
+    const instructions = buildWorkflowInstructions(activation, config);
+    assert('output', 'instructions not empty', instructions.length > 0);
+    assertIncludes('output', 'instructions contains workflow name', instructions, featureWorkflow.name);
+    assertIncludes('output', 'instructions contains MUST FOLLOW', instructions, 'MUST FOLLOW');
+    assertIncludes('output', 'instructions contains step list', instructions, '/plan');
+    assertIncludes('output', 'instructions contains todo tracking', instructions, '[Workflow]');
+}
 
-// 3.2 buildConflictReminder
+// 3.2 buildActiveWorkflowContext
 createState({
     workflowId: 'bugfix',
     workflowName: 'Bug Fix',
@@ -277,13 +273,18 @@ createState({
     originalPrompt: 'fix login',
     commandMapping: config.commandMapping
 });
-const newDetection = detectIntent('implement search feature', config);
-const conflict = buildConflictReminder(loadState(), newDetection, config);
-assertIncludes('output', 'conflict has intent change header', conflict, 'Intent Change');
-assertIncludes('output', 'conflict shows active workflow', conflict, 'Bug Fix');
-assertIncludes('output', 'conflict shows new intent', conflict, detection.workflow.name);
-assertIncludes('output', 'conflict has switch option', conflict, 'switch');
+const activeContext = buildActiveWorkflowContext(loadState(), config);
+assertIncludes('output', 'active context has header', activeContext, 'Active Workflow');
+assertIncludes('output', 'active context shows workflow name', activeContext, 'Bug Fix');
+assertIncludes('output', 'active context has conflict instructions', activeContext, 'New Prompt Handling');
+assertIncludes('output', 'active context has switch option', activeContext, 'Switch');
+assertIncludes('output', 'active context has catalog', activeContext, 'Available Workflows');
 cleanup();
+
+// 3.3 buildCatalogInjection
+const catalogInjection = buildCatalogInjection(config);
+assertIncludes('output', 'catalog injection has header', catalogInjection, 'Available Workflows');
+assertIncludes('output', 'catalog injection mentions /workflow:start', catalogInjection, '/workflow:start');
 
 console.log('  [3] Output Generation: done\n');
 
@@ -343,25 +344,22 @@ console.log('  [4] Control Handler: done\n');
 console.log('  [5] Router Hook (subprocess)...');
 cleanup();
 
-// 5.1 New workflow detection
+// 5.1 Qualifying prompt gets catalog injection (v2.0: no state creation)
 const routerOutput1 = runHook('workflow-router.cjs', { prompt: 'implement a new search feature' });
-assertIncludes('router', 'detects feature workflow', routerOutput1, 'Workflow Detected');
-assert('router', 'creates workflow state', loadState() !== null);
-assertEqual('router', 'state workflowId is feature', loadState()?.workflowId, 'feature');
-cleanup();
+assertIncludes('router', 'qualifying prompt gets catalog', routerOutput1, 'Available Workflows');
+assertEqual('router', 'no state created by router (v2.0)', loadState(), null);
 
-// 5.2 No detection for random text
-const routerOutput2 = runHook('workflow-router.cjs', { prompt: 'hello world weather' });
-assertEqual('router', 'no detection for random text', routerOutput2.trim(), '');
-assertEqual('router', 'no state created', loadState(), null);
+// 5.2 Short prompt gets no output (<15 chars)
+const routerOutput2 = runHook('workflow-router.cjs', { prompt: 'hi there' });
+assertEqual('router', 'short prompt: no output', routerOutput2.trim(), '');
 
-// 5.3 Override prefix skips
+// 5.3 Override prefix skips catalog
 const routerOutput3 = runHook('workflow-router.cjs', { prompt: 'quick: implement something' });
-assert('router', 'override prefix handled', !routerOutput3.includes('Workflow Detected'));
+assertEqual('router', 'override prefix: no output', routerOutput3.trim(), '');
 
-// 5.4 Explicit command skips detection
+// 5.4 Explicit command skips catalog
 const routerOutput4 = runHook('workflow-router.cjs', { prompt: '/plan the feature' });
-assert('router', 'explicit command not detected as workflow', !routerOutput4.includes('Workflow Detected'));
+assertEqual('router', 'explicit command: no output', routerOutput4.trim(), '');
 
 // 5.5 Active workflow continuation reminder
 createState({
@@ -529,19 +527,28 @@ console.log('  [6] Step Tracker Hook: done\n');
 console.log('  [7] Full Lifecycle Integration...');
 cleanup();
 
-// 7.1 Complete end-to-end: detect → create → advance → complete
-// Step 1: Router detects workflow
-const e2eOutput1 = runHook('workflow-router.cjs', { prompt: 'fix the login bug' });
-assertIncludes('e2e', 'router detects bugfix', e2eOutput1, 'Workflow Detected');
+// 7.1 Complete end-to-end: catalog → /workflow:start → advance → complete
+// Step 1: Router injects catalog for qualifying prompt
+const e2eOutput1 = runHook('workflow-router.cjs', { prompt: 'fix the login bug please' });
+assertIncludes('e2e', 'router injects catalog', e2eOutput1, 'Available Workflows');
+assertEqual('e2e', 'no state created by router (v2.0)', loadState(), null);
+
+// Step 2: AI invokes /workflow:start via step-tracker
+const e2eOutput2 = runHook('workflow-step-tracker.cjs', {
+    tool_name: 'Skill',
+    tool_input: { skill: 'workflow:start', args: 'bugfix' },
+    tool_response: 'Workflow started'
+});
+assertIncludes('e2e', 'workflow:start outputs instructions', e2eOutput2, 'Workflow Activated');
 const e2eState1 = loadState();
-assert('e2e', 'state created', e2eState1 !== null);
-assertEqual('e2e', 'bugfix workflow detected', e2eState1?.workflowId, 'bugfix');
+assert('e2e', 'state created by step-tracker', e2eState1 !== null);
+assertEqual('e2e', 'bugfix workflow activated', e2eState1?.workflowId, 'bugfix');
 
-// Step 2: User sends another prompt → gets continuation reminder
-const e2eOutput2 = runHook('workflow-router.cjs', { prompt: 'what about the sidebar' });
-assertIncludes('e2e', 'continuation reminder shown', e2eOutput2, 'Active Workflow');
+// Step 3: User sends another prompt → gets active workflow context
+const e2eOutput3 = runHook('workflow-router.cjs', { prompt: 'what about the sidebar' });
+assertIncludes('e2e', 'active workflow context shown', e2eOutput3, 'Active Workflow');
 
-// Step 3: Skills complete steps sequentially
+// Step 4: Skills complete steps sequentially
 const steps = e2eState1.sequence;
 for (let i = 0; i < steps.length; i++) {
     const stepId = steps[i];
@@ -567,14 +574,26 @@ for (let i = 0; i < steps.length; i++) {
     }
 }
 
-// 7.2 Abort mid-workflow
-runHook('workflow-router.cjs', { prompt: 'refactor the auth module' });
-assert('e2e', 'new workflow created', loadState() !== null);
+// 7.2 Abort mid-workflow (create state directly, then abort via router)
+createState({
+    workflowId: 'refactor',
+    workflowName: 'Refactoring',
+    sequence: ['plan', 'cook', 'test'],
+    originalPrompt: 'refactor auth module',
+    commandMapping: config.commandMapping
+});
+assert('e2e', 'workflow state created', loadState() !== null);
 runHook('workflow-router.cjs', { prompt: 'abort workflow' });
 assertEqual('e2e', 'abort clears mid-workflow state', loadState(), null);
 
-// 7.3 Skip steps
-runHook('workflow-router.cjs', { prompt: 'update the docs' });
+// 7.3 Skip steps (create state directly, then skip via router)
+createState({
+    workflowId: 'documentation',
+    workflowName: 'Documentation',
+    sequence: ['scout', 'investigate', 'docs-update', 'watzup'],
+    originalPrompt: 'update the docs',
+    commandMapping: config.commandMapping
+});
 const skipState1 = loadState();
 assert('e2e', 'docs workflow created', skipState1 !== null);
 runHook('workflow-router.cjs', { prompt: 'skip' });
@@ -672,6 +691,166 @@ assert('edge', 'path injection sanitized', !maliciousPath.includes('..'));
 assertIncludes('edge', 'sanitized path in workflow dir', maliciousPath, 'workflow');
 
 console.log('  [9] Edge Cases: done\n');
+
+// ═══════════════════════════════════════════════════
+// SECTION 10: Pre-Actions Output
+// ═══════════════════════════════════════════════════
+console.log('  [10] Pre-Actions Output...');
+cleanup();
+
+// 10.1 buildWorkflowInstructions includes preActions when present
+const bugfixWorkflow = config.workflows?.bugfix;
+if (bugfixWorkflow?.preActions) {
+  const paActivation = { workflow: bugfixWorkflow, workflowId: 'bugfix' };
+  const paOutput = buildWorkflowInstructions(paActivation, config);
+  assertIncludes('preActions', 'output contains Pre-Actions header', paOutput, 'Pre-Actions');
+
+  if (bugfixWorkflow.preActions.injectContext) {
+    const firstWords = bugfixWorkflow.preActions.injectContext.substring(0, 20);
+    assertIncludes('preActions', 'output contains injectContext text', paOutput, firstWords);
+  }
+
+  if (bugfixWorkflow.preActions.activateSkill) {
+    assertIncludes('preActions', 'output contains activateSkill', paOutput, bugfixWorkflow.preActions.activateSkill);
+  }
+} else {
+  // Fallback: test with synthetic activation if bugfix has no preActions
+  const syntheticActivation = {
+    workflowId: 'synthetic',
+    workflow: {
+      name: 'Synthetic',
+      sequence: ['plan'],
+      confirmFirst: false,
+      preActions: {
+        activateSkill: 'test-skill',
+        readFiles: ['test.md'],
+        injectContext: 'SYNTHETIC PROTOCOL'
+      }
+    }
+  };
+  const synOutput = buildWorkflowInstructions(syntheticActivation, config);
+  assertIncludes('preActions', 'synthetic: Pre-Actions header', synOutput, 'Pre-Actions');
+  assertIncludes('preActions', 'synthetic: activateSkill', synOutput, 'test-skill');
+  assertIncludes('preActions', 'synthetic: readFiles', synOutput, 'test.md');
+  assertIncludes('preActions', 'synthetic: injectContext', synOutput, 'SYNTHETIC PROTOCOL');
+}
+
+// 10.2 No Pre-Actions section when workflow has no preActions
+const noPreActionsActivation = {
+  workflowId: 'no-pa',
+  workflow: {
+    name: 'No PA',
+    sequence: ['plan'],
+    confirmFirst: false
+  }
+};
+const noPaOutput = buildWorkflowInstructions(noPreActionsActivation, config);
+assert('preActions', 'no Pre-Actions when missing', !noPaOutput.includes('Pre-Actions'));
+
+cleanup();
+console.log('  [10] Pre-Actions Output: done\n');
+
+// ═══════════════════════════════════════════════════
+// SECTION 11: Checkpoint Config Verification
+// ═══════════════════════════════════════════════════
+console.log('  [11] Checkpoint Config Verification...');
+cleanup();
+
+// 11.1 Verify loadWorkflowConfig returns checkpoint settings
+const wfConfigForTest = loadWorkflowConfig();
+assert('checkpoint', 'workflow config loaded', wfConfigForTest !== null);
+assert('checkpoint', 'settings exists', wfConfigForTest?.settings !== undefined);
+
+if (wfConfigForTest?.settings?.checkpoints) {
+  const cs = wfConfigForTest.settings.checkpoints;
+  assert('checkpoint', 'checkpoints.enabled is boolean', typeof cs.enabled === 'boolean');
+  assert('checkpoint', 'checkpoints.autoSaveOnCompact is boolean', typeof cs.autoSaveOnCompact === 'boolean');
+  assert('checkpoint', 'checkpoints.path is string', typeof cs.path === 'string');
+  assertEqual('checkpoint', 'checkpoints.enabled default is true', cs.enabled, true);
+  assertEqual('checkpoint', 'checkpoints.autoSaveOnCompact default is true', cs.autoSaveOnCompact, true);
+}
+
+// 11.2 Verify enableCheckpoints exists on workflows
+const wfNames = Object.keys(wfConfigForTest?.workflows || {});
+let hasEnableCheckpoints = false;
+for (const name of wfNames) {
+  if (typeof wfConfigForTest.workflows[name].enableCheckpoints === 'boolean') {
+    hasEnableCheckpoints = true;
+    break;
+  }
+}
+assert('checkpoint', 'at least one workflow has enableCheckpoints', hasEnableCheckpoints);
+
+// 11.3 Verify design-workflow has enableCheckpoints: false
+if (wfConfigForTest?.workflows?.['design-workflow']) {
+  assertEqual('checkpoint', 'design-workflow enableCheckpoints is false',
+    wfConfigForTest.workflows['design-workflow'].enableCheckpoints, false);
+}
+
+console.log('  [11] Checkpoint Config Verification: done\n');
+
+// ═══════════════════════════════════════════════════
+// SECTION 12: v1.x State Migration & Defensive Checks
+// ═══════════════════════════════════════════════════
+console.log('  [12] v1.x State Migration...');
+cleanup();
+
+// 12.1 loadState returns null for v1.x state (auto-clears stale data)
+const v1xState = {
+  workflowType: 'refactor',
+  workflowSteps: ['plan', 'code', 'test'],
+  currentStepIndex: 1,
+  completedSteps: ['plan'],
+  startedAt: '2026-01-28T03:34:33.993Z',
+  lastUpdatedAt: '2026-01-28T05:00:05.185Z'
+};
+// Write v1.x state directly to the state file (bypass createState which uses v2.0 format)
+const v1xStatePath = getStatePath();
+fs.mkdirSync(path.dirname(v1xStatePath), { recursive: true });
+fs.writeFileSync(v1xStatePath, JSON.stringify(v1xState));
+assert('v1x-migration', 'v1.x state file exists on disk', fs.existsSync(v1xStatePath));
+
+const loadedV1x = loadState();
+assertEqual('v1x-migration', 'loadState returns null for v1.x state', loadedV1x, null);
+assert('v1x-migration', 'v1.x state file auto-cleared from disk', !fs.existsSync(v1xStatePath));
+
+// 12.2 loadState returns valid v2.0 state normally
+const v2State = createState({
+  workflowId: 'feature',
+  workflowName: 'Feature',
+  sequence: ['plan', 'cook'],
+  originalPrompt: 'build a feature',
+  commandMapping: config.commandMapping
+});
+const loadedV2 = loadState();
+assert('v1x-migration', 'loadState returns v2.0 state', loadedV2 !== null);
+assertEqual('v1x-migration', 'v2.0 workflowId preserved', loadedV2?.workflowId, 'feature');
+assert('v1x-migration', 'v2.0 sequence is array', Array.isArray(loadedV2?.sequence));
+assertEqual('v1x-migration', 'v2.0 currentStep is number', typeof loadedV2?.currentStep, 'number');
+cleanup();
+
+// 12.3 Router handles stale v1.x state (injects catalog instead of crashing)
+fs.mkdirSync(path.dirname(v1xStatePath), { recursive: true });
+fs.writeFileSync(v1xStatePath, JSON.stringify(v1xState));
+const routerAfterV1x = runHook('workflow-router.cjs', { prompt: 'fix the login bug in auth module' });
+assertIncludes('v1x-migration', 'router injects catalog after v1.x state cleared', routerAfterV1x, 'Available Workflows');
+
+// 12.4 sanitizeSessionId handles non-string inputs
+const { sanitizeSessionId } = require('../../lib/ck-paths.cjs');
+assertEqual('v1x-migration', 'sanitizeSessionId with object returns default', sanitizeSessionId({}), 'default');
+assertEqual('v1x-migration', 'sanitizeSessionId with null returns default', sanitizeSessionId(null), 'default');
+assertEqual('v1x-migration', 'sanitizeSessionId with undefined returns default', sanitizeSessionId(undefined), 'default');
+assertEqual('v1x-migration', 'sanitizeSessionId with number returns default', sanitizeSessionId(123), 'default');
+assertEqual('v1x-migration', 'sanitizeSessionId with valid string works', sanitizeSessionId('session-abc-123'), 'session-abc-123');
+assertEqual('v1x-migration', 'sanitizeSessionId sanitizes special chars', sanitizeSessionId('test/path:evil'), 'test_path_evil');
+
+// 12.5 Empty object state is treated as invalid
+fs.writeFileSync(v1xStatePath, JSON.stringify({ lastUpdatedAt: new Date().toISOString() }));
+const loadedEmpty = loadState();
+assertEqual('v1x-migration', 'loadState returns null for empty-ish state', loadedEmpty, null);
+
+cleanup();
+console.log('  [12] v1.x State Migration: done\n');
 
 // ═══════════════════════════════════════════════════
 // FINAL CLEANUP & RESULTS

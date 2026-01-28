@@ -123,7 +123,7 @@ Leverage LLM evaluation for context-aware decisions.
 {
   "type": "prompt",
   "prompt": "Analyze the session transcript and determine if...",
-  "model": "claude-3-5-sonnet-20241022"
+  "model": "sonnet"
 }
 ```
 
@@ -597,7 +597,7 @@ echo "$FILE_HASH" >> "$CACHE_FILE"
           {
             "type": "prompt",
             "prompt": "Review the session and log key accomplishments.",
-            "model": "claude-3-5-sonnet-20241022"
+            "model": "sonnet"
           }
         ]
       }

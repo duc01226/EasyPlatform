@@ -6,16 +6,15 @@ argument-hint: [task]
 Think harder.
 Activate `planning` skill.
 
+> **CRITICAL:** Do NOT use `EnterPlanMode` tool — it blocks Write/Edit/Task tools needed for plan creation. Follow the workflow below.
+> **Planning is collaborative:** Validate plan, ask user to confirm, surface decision questions with recommendations.
+
 ## Your mission
 
 Use the `planner` subagent to create 2 detailed implementation plans for this following task:
 <task>
  $ARGUMENTS
 </task>
-
-**⚠️ MUST READ for planning accuracy:**
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
 
 ## Workflow
 
@@ -45,17 +44,14 @@ Use the `planner` subagent to create 2 detailed implementation plans for this fo
   ---
   ```
 
-## Important Notes
+## MANDATORY: Plan Collaboration Protocol (READ THIS)
 
-**IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
-**IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
-**IMPORTANT:** Ensure token efficiency while maintaining high quality.
-**IMPORTANT:** In reports, list any unresolved questions at the end, if any.
-**IMPORTANT**: **Do not** start implementing.
-
-ultrathink
-
-## IMPORTANT Task Planning Notes
-
+- **Do NOT use `EnterPlanMode` tool** — it blocks Write/Edit/Task tools needed to create plan files and launch subagents
+- **Do NOT start implementing** — plan only, wait for user approval
+- **ALWAYS validate:** After plan creation, execute `/plan:review` to validate the plan
+- **ALWAYS confirm:** Ask user to review and approve the plan using `AskUserQuestion` with a recommendation
+- **ALWAYS surface decisions:** Use `AskUserQuestion` with recommended options for key architectural/design decisions
+- **Planning = Collaboration:** The plan is shaped by user input — never treat it as a unilateral output
 - Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always add a final review todo task to review the works done at the end
+- Sacrifice grammar for concision. List unresolved questions at the end

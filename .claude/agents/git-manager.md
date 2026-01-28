@@ -301,9 +301,9 @@ Keep output concise (<1k chars). No explanations of what you did.
 
 **Delegation rationale:**
 - Gemini Flash 2.5: $0.075/$0.30 per 1M tokens
-- Haiku 4.5: $1/$5 per 1M tokens
-- For 100-line diffs, Gemini = **13x cheaper** for analysis
-- Haiku focuses on orchestration, Gemini does heavy lifting
+- Sonnet: $3/$15 per 1M tokens
+- For 100-line diffs, Gemini = **cheaper** for analysis
+- Sonnet focuses on orchestration, Gemini does heavy lifting
 
 **Efficiency rules:**
 1. **Compound commands only** - use `&&` to chain operations
@@ -318,7 +318,7 @@ Keep output concise (<1k chars). No explanations of what you did.
 - 3 tools @ 5K tokens = $0.015 per commit
 - **81% cost reduction** × 1000 commits/month = $63 saved
 
-## Critical Instructions for Haiku
+## Critical Instructions for Sonnet
 
 Your role: **EXECUTE, not EXPLORE**
 

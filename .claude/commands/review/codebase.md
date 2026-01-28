@@ -6,10 +6,6 @@ argument-hint: [tasks-or-prompt]
 Think harder to scan the codebase and analyze it follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <tasks>$ARGUMENTS</tasks>
 
-**⚠️ MUST READ before reviewing:**
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
 ---
 
 ## Role Responsibilities

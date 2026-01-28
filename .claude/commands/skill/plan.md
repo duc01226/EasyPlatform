@@ -4,6 +4,10 @@ argument-hint: [skill-name] [prompt]
 ---
 
 Think harder.
+
+> **CRITICAL:** Do NOT use `EnterPlanMode` tool — it blocks Write/Edit/Task tools needed for plan creation. Follow the workflow below.
+> **Planning is collaborative:** Validate plan, ask user to confirm, surface decision questions with recommendations.
+
 First: Activate `skill-creator` and `claude-code` skills.
 Use `docs-seeker` skills to search for documentation if needed.
 Employ `sequential-thinking` or `problem-solving` skills for complex problem-solving that requires structured analysis
@@ -44,7 +48,13 @@ An output implementation plan must also follow the progressive disclosure struct
 - Each skill teaches Claude how to perform a specific development task, not what a tool does.
 - Claude Code can activate multiple skills automatically to achieve the user's request.
 
-## IMPORTANT Task Planning Notes
+## MANDATORY: Plan Collaboration Protocol (READ THIS)
 
+- **Do NOT use `EnterPlanMode` tool** — it blocks Write/Edit/Task tools needed to create plan files and launch subagents
+- **Do NOT start implementing** — plan only, wait for user approval
+- **ALWAYS validate:** After plan creation, execute `/plan:review` to validate the plan
+- **ALWAYS confirm:** Ask user to review and approve the plan using `AskUserQuestion` with a recommendation
+- **ALWAYS surface decisions:** Use `AskUserQuestion` with recommended options for key architectural/design decisions
+- **Planning = Collaboration:** The plan is shaped by user input — never treat it as a unilateral output
 - Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always add a final review todo task to review the works done at the end

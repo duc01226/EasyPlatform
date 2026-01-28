@@ -30,6 +30,8 @@ const {
   setupTodoState,
   readStateFile
 } = require('../lib/test-utils.cjs');
+const { buildWorkflowInstructions, buildCatalogInjection, buildActiveWorkflowContext } = require('../../lib/wr-output.cjs');
+const { shouldInjectCatalog, buildWorkflowCatalog } = require('../../lib/wr-detect.cjs');
 
 // Hook paths
 const TODO_ENFORCEMENT = getHookPath('todo-enforcement.cjs');
@@ -706,8 +708,126 @@ const todoTrackerTests = [
 // ============================================================================
 
 const workflowRouterTests = [
+  // ── shouldInjectCatalog() unit tests ──
   {
-    name: '[workflow-router] detects bug fix intent',
+    name: '[catalog-heuristic] shouldInjectCatalog returns false for short prompts (<15 chars)',
+    fn: async () => {
+      const config = { settings: { overridePrefix: 'quick:' } };
+      assertTrue(!shouldInjectCatalog('yes', config), 'Should skip "yes"');
+      assertTrue(!shouldInjectCatalog('ok thanks', config), 'Should skip "ok thanks"');
+      assertTrue(!shouldInjectCatalog('hello world', config), 'Should skip <15 chars');
+    }
+  },
+  {
+    name: '[catalog-heuristic] shouldInjectCatalog returns false for slash commands',
+    fn: async () => {
+      const config = { settings: { overridePrefix: 'quick:' } };
+      assertTrue(!shouldInjectCatalog('/plan', config), 'Should skip /plan');
+      assertTrue(!shouldInjectCatalog('/cook auto something', config), 'Should skip /cook');
+      assertTrue(!shouldInjectCatalog('/fix:test some bug here', config), 'Should skip /fix:test');
+    }
+  },
+  {
+    name: '[catalog-heuristic] shouldInjectCatalog returns false for quick: prefix',
+    fn: async () => {
+      const config = { settings: { overridePrefix: 'quick:' } };
+      assertTrue(!shouldInjectCatalog('quick: add a button to the page', config), 'Should skip quick: prefix');
+      assertTrue(!shouldInjectCatalog('QUICK: fix this typo in the readme', config), 'Should skip case-insensitive');
+    }
+  },
+  {
+    name: '[catalog-heuristic] shouldInjectCatalog returns true for qualifying prompts',
+    fn: async () => {
+      const config = { settings: { overridePrefix: 'quick:' } };
+      assertTrue(shouldInjectCatalog('fix this bug in the login form', config), 'Should inject for bug fix prompt');
+      assertTrue(shouldInjectCatalog('implement a dark mode toggle feature', config), 'Should inject for feature prompt');
+      assertTrue(shouldInjectCatalog('refactor the authentication module', config), 'Should inject for refactor prompt');
+    }
+  },
+
+  // ── buildWorkflowCatalog() unit tests ──
+  {
+    name: '[catalog-output] buildWorkflowCatalog sorts alphabetically by ID',
+    fn: async () => {
+      const config = {
+        workflows: {
+          zebra: { name: 'Zebra', whenToUse: 'Test', sequence: ['plan'], confirmFirst: false },
+          alpha: { name: 'Alpha', whenToUse: 'Test', sequence: ['plan'], confirmFirst: false },
+          middle: { name: 'Middle', whenToUse: 'Test', sequence: ['plan'], confirmFirst: false }
+        },
+        commandMapping: { plan: { claude: '/plan' } }
+      };
+      const catalog = buildWorkflowCatalog(config);
+      const alphaIdx = catalog.indexOf('**alpha**');
+      const middleIdx = catalog.indexOf('**middle**');
+      const zebraIdx = catalog.indexOf('**zebra**');
+      assertTrue(alphaIdx < middleIdx, 'alpha should appear before middle');
+      assertTrue(middleIdx < zebraIdx, 'middle should appear before zebra');
+    }
+  },
+  {
+    name: '[catalog-output] buildWorkflowCatalog includes whenToUse and confirmFirst',
+    fn: async () => {
+      const config = {
+        workflows: {
+          feature: {
+            name: 'Feature',
+            whenToUse: 'User wants to build new functionality.',
+            sequence: ['plan', 'cook'],
+            confirmFirst: true
+          }
+        },
+        commandMapping: { plan: { claude: '/plan' }, cook: { claude: '/cook' } }
+      };
+      const catalog = buildWorkflowCatalog(config);
+      assertContains(catalog, 'User wants to build new functionality', 'Should contain whenToUse');
+      assertContains(catalog, 'confirmFirst', 'Should contain confirmFirst flag');
+    }
+  },
+  {
+    name: '[catalog-output] buildWorkflowCatalog includes whenNotToUse',
+    fn: async () => {
+      const config = {
+        workflows: {
+          bugfix: {
+            name: 'Bug Fix',
+            whenToUse: 'User reports a bug.',
+            whenNotToUse: 'User wants new features.',
+            sequence: ['fix'],
+            confirmFirst: false
+          }
+        },
+        commandMapping: { fix: { claude: '/fix' } }
+      };
+      const catalog = buildWorkflowCatalog(config);
+      assertContains(catalog, 'NOT: User wants new features', 'Should contain whenNotToUse');
+    }
+  },
+  {
+    name: '[catalog-output] buildCatalogInjection includes /workflow:start instruction',
+    fn: async () => {
+      const config = {
+        settings: { allowOverride: true, overridePrefix: 'quick:' },
+        workflows: {
+          feature: {
+            name: 'Feature',
+            whenToUse: 'Implement new stuff.',
+            sequence: ['plan'],
+            confirmFirst: false
+          }
+        },
+        commandMapping: { plan: { claude: '/plan' } }
+      };
+      const injection = buildCatalogInjection(config);
+      assertContains(injection, 'Available Workflows', 'Should have header');
+      assertContains(injection, '/workflow:start', 'Should contain /workflow:start instruction');
+      assertContains(injection, 'quick:', 'Should contain override hint');
+    }
+  },
+
+  // ── Router integration tests ──
+  {
+    name: '[workflow-router] injects catalog for qualifying prompt (no active workflow)',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -715,299 +835,66 @@ const workflowRouterTests = [
         const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should not block');
         const output = result.stdout + result.stderr;
-        assertContains(output.toLowerCase(), 'bug', 'Should detect bug keyword');
+        assertContains(output, 'Available Workflows', 'Should inject catalog');
+        assertContains(output, '/workflow:start', 'Should include activation instruction');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[workflow-router] detects feature implementation intent',
+    name: '[workflow-router] no output for short prompt (no active workflow)',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
-        const input = createUserPromptInput('implement a dark mode toggle');
+        const input = createUserPromptInput('yes');
         const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        // Check if either feature detection or workflow reference appears
-        assertTrue(
-          output.toLowerCase().includes('feature') ||
-          output.toLowerCase().includes('implement') ||
-          output.toLowerCase().includes('workflow'),
-          'Should detect feature intent'
-        );
+        const output = (result.stdout + result.stderr).trim();
+        assertNotContains(output, 'Available Workflows', 'Should NOT inject catalog for short prompt');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[workflow-router] detects documentation intent',
+    name: '[workflow-router] no output for slash command prompt',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
-        // Use "document" instead of "docs" - pattern is \b(doc|document|readme)\b
-        const input = createUserPromptInput('document the API changes');
+        const input = createUserPromptInput('/plan');
         const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        assertTrue(
-          output.toLowerCase().includes('doc') ||
-          output.toLowerCase().includes('workflow') ||
-          output === '', // May have no output if no workflow.json config
-          'Should detect doc intent or have no output'
-        );
+        const output = (result.stdout + result.stderr).trim();
+        assertNotContains(output, 'Available Workflows', 'Should NOT inject catalog for slash command');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[workflow-router] skips quick: prefix',
+    name: '[workflow-router] no output for quick: prefix',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
-        const input = createUserPromptInput('quick: add a button');
+        const input = createUserPromptInput('quick: add a button to the settings page');
         const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should not block');
-        // Quick prefix should skip workflow detection
+        const output = (result.stdout + result.stderr).trim();
+        assertNotContains(output, 'Available Workflows', 'Should NOT inject catalog for quick: prefix');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[workflow-router] handles questions gracefully',
+    name: '[workflow-router] handles empty prompt gracefully',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
-        const input = createUserPromptInput('what is the status of the build?');
+        const input = createUserPromptInput('');
         const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block questions');
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  // Verification workflow detection
-  {
-    name: '[workflow-router] detects verify intent',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createUserPromptInput('verify the payment flow works correctly');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        assertTrue(
-          output.toLowerCase().includes('verif') ||
-          output.toLowerCase().includes('workflow'),
-          'Should detect verification intent'
-        );
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[workflow-router] detects validate intent',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createUserPromptInput('validate that user auth handles expired tokens');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        assertTrue(
-          output.toLowerCase().includes('validat') ||
-          output.toLowerCase().includes('verif') ||
-          output.toLowerCase().includes('workflow'),
-          'Should detect validation intent'
-        );
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[workflow-router] detects check-that intent',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createUserPromptInput('check that the migration ran properly');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        assertTrue(
-          output.toLowerCase().includes('verif') ||
-          output.toLowerCase().includes('check') ||
-          output.toLowerCase().includes('workflow'),
-          'Should detect check-that intent'
-        );
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[workflow-router] detects make-sure intent',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createUserPromptInput('make sure the API returns correct status codes');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        assertTrue(
-          output.toLowerCase().includes('verif') ||
-          output.toLowerCase().includes('make sure') ||
-          output.toLowerCase().includes('workflow'),
-          'Should detect make-sure intent'
-        );
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[workflow-router] detects ensure intent',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createUserPromptInput('ensure that the cron job is running correctly');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        assertTrue(
-          output.toLowerCase().includes('verif') ||
-          output.toLowerCase().includes('ensure') ||
-          output.toLowerCase().includes('workflow'),
-          'Should detect ensure intent'
-        );
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[workflow-router] verify with feature excluded from verification',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        // "feature" is in excludePatterns for verification workflow
-        const input = createUserPromptInput('implement a new feature to verify user emails');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        // Should NOT detect as verification (feature exclude), should detect as feature
-        assertTrue(
-          !output.toLowerCase().includes('verification') ||
-          output.toLowerCase().includes('feature') ||
-          output.toLowerCase().includes('workflow'),
-          'Should not detect as verification when feature keyword present'
-        );
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  // Quality Audit workflow detection
-  {
-    name: '[workflow-router] detects quality audit intent',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createUserPromptInput('quality audit the auth module');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        assertTrue(
-          output.toLowerCase().includes('quality') ||
-          output.toLowerCase().includes('audit') ||
-          output.toLowerCase().includes('workflow'),
-          'Should detect quality audit intent'
-        );
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[workflow-router] detects best practices review as quality audit',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createUserPromptInput('review code for best practices');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        assertTrue(
-          output.toLowerCase().includes('quality') ||
-          output.toLowerCase().includes('audit') ||
-          output.toLowerCase().includes('workflow'),
-          'Should detect best practices as quality audit'
-        );
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[workflow-router] detects ensure quality intent',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createUserPromptInput('ensure quality of the API layer');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        assertTrue(
-          output.toLowerCase().includes('quality') ||
-          output.toLowerCase().includes('workflow'),
-          'Should detect ensure quality intent'
-        );
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[workflow-router] plain code review does not trigger quality audit',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createUserPromptInput('review the code changes');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        // Should detect as review, NOT quality-audit
-        assertTrue(
-          !output.toLowerCase().includes('quality-audit') ||
-          output.toLowerCase().includes('review') ||
-          output.toLowerCase().includes('workflow'),
-          'Plain code review should not trigger quality audit'
-        );
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[workflow-router] detects no flaws intent as quality audit',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createUserPromptInput('check there are no flaws in the service');
-        const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should not block');
-        const output = result.stdout + result.stderr;
-        assertTrue(
-          output.toLowerCase().includes('quality') ||
-          output.toLowerCase().includes('audit') ||
-          output.toLowerCase().includes('workflow'),
-          'Should detect no flaws as quality audit'
-        );
+        assertAllowed(result.code, 'Should not block empty prompt');
       } finally {
         cleanupTempDir(tmpDir);
       }
@@ -1049,6 +936,153 @@ const devRulesReminderTests = [
   }
 ];
 
+// ============================================================================
+// preActions Output Tests (wr-output.cjs)
+// ============================================================================
+
+const preActionsOutputTests = [
+  {
+    name: '[preActions] emits injectContext in workflow instructions',
+    fn: async () => {
+      const activation = {
+        workflowId: 'bugfix',
+        workflow: {
+          name: 'Bug Fix',
+          description: 'Fix bugs',
+          sequence: ['scout', 'fix'],
+          confirmFirst: false,
+          preActions: {
+            injectContext: 'BUG FIX PROTOCOL: reproduce first'
+          }
+        }
+      };
+      const config = {
+        settings: { confirmHighImpact: true },
+        commandMapping: { scout: { claude: '/scout' }, fix: { claude: '/fix' } }
+      };
+      const output = buildWorkflowInstructions(activation, config);
+      assertContains(output, 'Pre-Actions', 'Should have Pre-Actions header');
+      assertContains(output, 'BUG FIX PROTOCOL', 'Should contain injectContext text');
+    }
+  },
+  {
+    name: '[preActions] emits activateSkill instruction',
+    fn: async () => {
+      const activation = {
+        workflowId: 'test-workflow',
+        workflow: {
+          name: 'Test Workflow',
+          sequence: ['plan'],
+          confirmFirst: false,
+          preActions: {
+            activateSkill: 'my-skill',
+            injectContext: 'Some context'
+          }
+        }
+      };
+      const config = {
+        settings: { confirmHighImpact: false },
+        commandMapping: { plan: { claude: '/plan' } }
+      };
+      const output = buildWorkflowInstructions(activation, config);
+      assertContains(output, 'Activate skill', 'Should have activate skill instruction');
+      assertContains(output, 'my-skill', 'Should contain skill name');
+    }
+  },
+  {
+    name: '[preActions] emits readFiles list',
+    fn: async () => {
+      const activation = {
+        workflowId: 'docs-workflow',
+        workflow: {
+          name: 'Docs Workflow',
+          sequence: ['plan'],
+          confirmFirst: false,
+          preActions: {
+            readFiles: ['docs/template.md', 'docs/guide.md'],
+            injectContext: 'Read docs first'
+          }
+        }
+      };
+      const config = {
+        settings: { confirmHighImpact: false },
+        commandMapping: { plan: { claude: '/plan' } }
+      };
+      const output = buildWorkflowInstructions(activation, config);
+      assertContains(output, 'MUST READ', 'Should have read files instruction');
+      assertContains(output, 'docs/template.md', 'Should list first file');
+      assertContains(output, 'docs/guide.md', 'Should list second file');
+    }
+  },
+  {
+    name: '[preActions] skips section when no preActions defined',
+    fn: async () => {
+      const activation = {
+        workflowId: 'no-preactions',
+        workflow: {
+          name: 'No PreActions',
+          sequence: ['plan'],
+          confirmFirst: false
+        }
+      };
+      const config = {
+        settings: { confirmHighImpact: false },
+        commandMapping: { plan: { claude: '/plan' } }
+      };
+      const output = buildWorkflowInstructions(activation, config);
+      assertNotContains(output, 'Pre-Actions', 'Should NOT have Pre-Actions when undefined');
+    }
+  },
+  {
+    name: '[preActions] skips section when preActions is empty object',
+    fn: async () => {
+      const activation = {
+        workflowId: 'empty-preactions',
+        workflow: {
+          name: 'Empty PreActions',
+          sequence: ['plan'],
+          confirmFirst: false,
+          preActions: {}
+        }
+      };
+      const config = {
+        settings: { confirmHighImpact: false },
+        commandMapping: { plan: { claude: '/plan' } }
+      };
+      const output = buildWorkflowInstructions(activation, config);
+      assertNotContains(output, 'Pre-Actions', 'Should NOT have Pre-Actions when empty');
+    }
+  },
+  {
+    name: '[preActions] emits all three sub-properties in correct order',
+    fn: async () => {
+      const activation = {
+        workflowId: 'full-preactions',
+        workflow: {
+          name: 'Full PreActions',
+          sequence: ['plan'],
+          confirmFirst: false,
+          preActions: {
+            activateSkill: 'test-skill',
+            readFiles: ['file1.md'],
+            injectContext: 'PROTOCOL TEXT'
+          }
+        }
+      };
+      const config = {
+        settings: { confirmHighImpact: false },
+        commandMapping: { plan: { claude: '/plan' } }
+      };
+      const output = buildWorkflowInstructions(activation, config);
+      const skillIdx = output.indexOf('Activate skill');
+      const readIdx = output.indexOf('MUST READ');
+      const contextIdx = output.indexOf('PROTOCOL TEXT');
+      assertTrue(skillIdx < readIdx, 'activateSkill should appear before readFiles');
+      assertTrue(readIdx < contextIdx, 'readFiles should appear before injectContext');
+    }
+  }
+];
+
 // Export test suite
 module.exports = {
   name: 'Workflow Hooks',
@@ -1056,6 +1090,7 @@ module.exports = {
     ...todoEnforcementTests,
     ...todoTrackerTests,
     ...workflowRouterTests,
-    ...devRulesReminderTests
+    ...devRulesReminderTests,
+    ...preActionsOutputTests
   ]
 };

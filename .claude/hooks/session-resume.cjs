@@ -7,6 +7,7 @@ const fs = require('fs');
 const path = require('path');
 const { loadConfig, resolvePlanPath, getReportsPath } = require('./lib/ck-config-utils.cjs');
 const { getTodoState, restoreTodosFromCheckpoint } = require('./lib/todo-state.cjs');
+const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
 
 let _swapEngine = null;
 function getSwapEngine() {
@@ -131,8 +132,25 @@ async function main() {
     }
 
     const config = loadConfig({ includeProject: false, includeAssertions: false });
+
+    // Global checkpoint gate
+    const wfConfig = loadWorkflowConfig();
+    const checkpointSettings = wfConfig?.settings?.checkpoints;
+    if (checkpointSettings?.enabled === false) {
+      // Checkpoints disabled — still output swap inventory, skip checkpoint restore
+      outputSwapInventory(sessionId, true);
+      process.exit(0);
+    }
+
     const resolved = resolvePlanPath(null, config);
-    const reportsPath = path.resolve(process.cwd(), getReportsPath(resolved.path, resolved.resolvedBy, config.plan, config.paths));
+    let rawReportsPath = getReportsPath(resolved.path, resolved.resolvedBy, config.plan, config.paths);
+
+    // Fallback to settings.checkpoints.path if no plan-specific path resolved
+    if (!resolved.resolvedBy && checkpointSettings?.path) {
+      rawReportsPath = checkpointSettings.path;
+    }
+
+    const reportsPath = path.resolve(process.cwd(), rawReportsPath);
 
     const latestCheckpoint = findLatestCheckpoint(reportsPath);
     if (!latestCheckpoint) {

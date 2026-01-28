@@ -5,10 +5,6 @@ argument-hint: [issues]
 
 **Ultrathink parallel** to fix: <issues>$ARGUMENTS</issues>
 
-**⚠️ MUST READ before fixing:**
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
 **IMPORTANT:** Activate needed skills. Ensure token efficiency. Sacrifice grammar for concision.
 
 ## Workflow

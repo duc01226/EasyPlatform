@@ -3,6 +3,8 @@ description: Self-review plan for validity, correctness, and best practices
 argument-hint: [plan-path]
 ---
 
+> **CRITICAL:** Do NOT use `EnterPlanMode` tool — it blocks Write/Edit/Task tools. Follow the workflow below.
+
 ## Your Mission
 
 Critically self-review the implementation plan to ensure quality before coding begins.
@@ -61,16 +63,14 @@ Issues:
 Update plan before proceeding.
 ```
 
+## IMPORTANT Task Planning Notes
+
+- Always plan and break many small todo tasks
+- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+
 ## Important Notes
 
 - Focus on **major issues** that would impact implementation
 - Don't nitpick formatting or style unless it affects clarity
 - If plan is simple and solid, approve quickly
 - Always provide actionable fix suggestions for issues
-
-ultrathink
-
-## IMPORTANT Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

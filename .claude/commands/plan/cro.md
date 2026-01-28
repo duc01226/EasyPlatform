@@ -8,6 +8,9 @@ You are an expert in conversion optimization. Analyze the content based on the g
 
 Activate `planning` skill.
 
+> **CRITICAL:** Do NOT use `EnterPlanMode` tool — it blocks Write/Edit/Task tools needed for plan creation. Follow the workflow below.
+> **Planning is collaborative:** Validate plan, ask user to confirm, surface decision questions with recommendations.
+
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
 
@@ -65,10 +68,14 @@ Activate `planning` skill.
   - Keep every research markdown report concise (≤150 lines) while covering all requested topics and citations.
 - Do not start implementing the CRO plan yet, wait for the user to approve the plan first.
 
-**IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
-**IMPORTANT:** In reports, list any unresolved questions at the end, if any.
+## MANDATORY: Plan Collaboration Protocol (READ THIS)
 
-## IMPORTANT Task Planning Notes
-
+- **Do NOT use `EnterPlanMode` tool** — it blocks Write/Edit/Task tools needed to create plan files and launch subagents
+- **Do NOT start implementing** — plan only, wait for user approval
+- **ALWAYS validate:** After plan creation, execute `/plan:review` to validate the plan
+- **ALWAYS confirm:** Ask user to review and approve the plan using `AskUserQuestion` with a recommendation
+- **ALWAYS surface decisions:** Use `AskUserQuestion` with recommended options for key architectural/design decisions
+- **Planning = Collaboration:** The plan is shaped by user input — never treat it as a unilateral output
 - Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always add a final review todo task to review the works done at the end
+- Sacrifice grammar for concision. List unresolved questions at the end

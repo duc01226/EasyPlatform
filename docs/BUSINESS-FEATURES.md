@@ -42,7 +42,7 @@ EasyPlatform is a .NET 9 + Angular 19 development platform framework demonstrati
 ### Design System
 
 - [Design System Index](./design-system/README.md)
-- [Angular 19 Design System](./design-system/WebV2DesignSystem.md)
+- [Angular 19 Design System](./design-system/FrontendDesignSystem.md)
 
 ### Claude AI Patterns
 

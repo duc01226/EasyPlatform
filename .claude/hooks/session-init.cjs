@@ -30,6 +30,7 @@ const {
 } = require('./lib/ck-config-utils.cjs');
 const { writeResetMarker } = require('./lib/context-tracker.cjs');
 const { cleanupTempFiles } = require('./lib/temp-cleanup.cjs');
+const { clearState: clearWorkflowState } = require('./lib/workflow-state.cjs');
 
 // Session-init sub-modules
 const { getPythonVersion } = require('./lib/si-python.cjs');
@@ -56,6 +57,9 @@ async function main() {
     // This ensures context window percentage resets to 0% on fresh sessions
     if (source === 'clear' && sessionId) {
       writeResetMarker(sessionId, 'clear');
+      // Defense-in-depth: clear stale workflow state on /clear
+      // SessionEnd may not fire for /clear on all platforms, so clear here too
+      clearWorkflowState();
     }
 
     const detections = {

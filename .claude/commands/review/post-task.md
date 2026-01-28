@@ -8,10 +8,6 @@ argument-hint: [optional-focus-area]
 Execute mandatory two-pass review protocol after completing code changes.
 Focus: $ARGUMENTS
 
-**⚠️ MUST READ before reviewing:**
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
 ---
 
 ## Protocol Overview

@@ -3,6 +3,8 @@ description: Validate plan with critical questions interview
 argument-hint: [plan-path]
 ---
 
+> **CRITICAL:** Do NOT use `EnterPlanMode` tool — it blocks Write/Edit/Task tools. Follow the workflow below.
+
 ## Your mission
 
 Interview the user with critical questions to validate assumptions, confirm decisions, and surface potential issues in an implementation plan before coding begins.
@@ -122,14 +124,12 @@ After validation completes, provide summary:
 - Any items flagged for plan revision
 - Recommendation: proceed to implementation or revise plan first
 
-## Importa
-nt Notes
+## Important Notes
 
 **IMPORTANT:** Only ask questions about genuine decision points - don't manufacture artificial choices.
 **IMPORTANT:** If plan is simple with few decisions, it's okay to ask fewer than min questions.
 **IMPORTANT:** Prioritize questions that could change implementation significantly.
 
-ultrathink
 
 ## IMPORTANT Task Planning Notes
 

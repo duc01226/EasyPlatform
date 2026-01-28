@@ -6,13 +6,9 @@
  * frontend files. Uses file path patterns to select the appropriate guide.
  *
  * Pattern Matching:
- *   src/Frontend/*                    → WebV2DesignSystem.md
- *   src/Frontend/apps/playground-text-snippet*          → TextSnippetClientDesignSystem.md
- *   src/Frontend/apps/playground-text-snippet*          → TextSnippetClientDesignSystem.md
- *   src/Frontend/apps/playground-text-snippet*             → TextSnippetClientDesignSystem.md
- *   src/Frontend/apps/playground-text-snippet*         → TextSnippetClientDesignSystem.md
- *   src/Frontend/apps/playground-text-snippet*          → TextSnippetClientDesignSystem.md
- *   src/Frontend/apps/playground-text-snippet*          → TextSnippetClientDesignSystem.md
+ *   src/Frontend/*                    → FrontendDesignSystem.md
+ *   libs/platform-core/*             → FrontendDesignSystem.md
+ *   libs/apps-domains/*              → FrontendDesignSystem.md
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
@@ -29,21 +25,15 @@ const DESIGN_SYSTEM_DOCS_PATH = 'docs/design-system';
 
 const APP_PATTERNS = [
     {
-        name: 'WebV2',
-        patterns: [/src[\/\\]WebV2[\/\\]/i, /libs[\/\\]platform-core[\/\\]/i, /libs[\/\\]apps-domains[\/\\]/i, /libs[\/\\]platform-core[\/\\]/i],
-        docFile: 'WebV2DesignSystem.md',
+        name: 'Frontend',
+        patterns: [/src[\/\\]Frontend[\/\\]/i, /libs[\/\\]platform-core[\/\\]/i, /libs[\/\\]apps-domains[\/\\]/i, /libs[\/\\]platform-core[\/\\]/i],
+        docFile: 'FrontendDesignSystem.md',
         description: 'Angular 19 standalone components with shared-mixin SCSS'
-    },
-    {
-        name: 'TextSnippet',
-        patterns: [/src[\/\\]Web[\/\\]TextSnippet/i, /src[\/\\]Web[\/\\]TextSnippet/i, /src[\/\\]Web[\/\\]TextSnippet/i, /src[\/\\]Web[\/\\]PulseSurveys/i],
-        docFile: 'TextSnippetClientDesignSystem.md',
-        description: 'Legacy Angular with SCSS variables and sprite icons'
     },
     {
         name: 'ExampleApp',
         patterns: [/src[\/\\]Frontend[\/\\]apps[\/\\]playground-text-snippet/i],
-        docFile: 'TextSnippetClientDesignSystem.md',
+        docFile: 'FrontendDesignSystem.md',
         description: 'Example Angular application with standard styling'
     }
 ];
@@ -133,7 +123,7 @@ function buildInjection(app, filePath) {
     ];
 
     // Add app-specific quick tips
-    if (app.name === 'WebV2') {
+    if (app.name === 'Frontend') {
         lines.push(
             "- **SCSS:** Use `@use 'shared-mixin'` imports",
             '- **Colors:** Use CSS variables `--bg-pri-cl`, `--text-primary-cl`',

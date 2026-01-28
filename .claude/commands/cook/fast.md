@@ -6,10 +6,6 @@ argument-hint: [tasks]
 Start working on these tasks immediately with minimal planning:
 <tasks>$ARGUMENTS</tasks>
 
-**⚠️ MUST READ before implementation:**
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
 **Mode:** FAST - Skip research, minimal planning, trust your knowledge.
 
 ## Workflow

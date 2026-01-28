@@ -72,21 +72,19 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
    - You can use `/scout:ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
    - You wait for all scout agents to report back before proceeding with analysis
 
-2. **Two-Phase Report-Driven Review** (CRITICAL):
+2. **Report-Driven Three-Phase Review** (CRITICAL):
 
-   **MUST generate TodoWrite tasks for BOTH phases:**
+   **MANDATORY FIRST: Create Todo Tasks for All Review Phases**
+   Before starting review, you MUST call TodoWrite with:
+   ```json
+   [
+     { "content": "[Review Phase 1] Create report file", "status": "in_progress", "activeForm": "Creating review report" },
+     { "content": "[Review Phase 1] Review file-by-file and update report", "status": "pending", "activeForm": "Reviewing files" },
+     { "content": "[Review Phase 2] Re-read report for holistic assessment", "status": "pending", "activeForm": "Holistic review" },
+     { "content": "[Review Phase 3] Generate final review findings", "status": "pending", "activeForm": "Generating findings" }
+   ]
    ```
-   Phase 1 todos:
-   - [ ] Create review report file
-   - [ ] Review [file1] - document in report
-   - [ ] Review [file2] - document in report
-   - [ ] ... (one todo per changed file)
-
-   Phase 2 todos:
-   - [ ] Read accumulated report for big picture
-   - [ ] Assess architecture coherence
-   - [ ] Generate final recommendations
-   ```
+   Update todo status as you complete each phase.
 
    **ALWAYS create a report file FIRST** using naming pattern from `## Naming` section.
 
@@ -108,8 +106,7 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
    - Naming and readability
 
    **Phase 2: Holistic Review (Review the Report)**
-   After ALL files reviewed, READ the accumulated report and generate FINAL assessment:
-   - Review the report as a whole to see big picture
+   After ALL files reviewed, READ the accumulated report and assess big picture:
    - Evaluate technical solution plan completeness
    - Check responsibility placement: Are new files/methods in the right layer?
    - Detect code duplication across files (same logic in multiple places)
@@ -117,7 +114,14 @@ Use `code-review` skills to perform comprehensive code quality assessment and be
    - Backend: Are CQRS patterns correct? Event handlers vs direct calls?
    - Frontend: Are components, stores, services properly separated?
    - Cross-cutting: Is the feature split correctly between backend and frontend?
-   - Generate final recommendations prioritized by severity
+
+   **Phase 3: Generate Final Review Result**
+   Update report with final sections:
+   - Overall Assessment: Big picture summary
+   - Critical Issues: Must fix before merge
+   - High Priority: Should fix
+   - Architecture Recommendations: Improvements for whole solution
+   - Positive Observations: What was done well
 
 3. **Systematic Review**: Work through each concern area methodically:
    - **Class Responsibility Violations** (CRITICAL - check first):

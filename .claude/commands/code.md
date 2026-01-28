@@ -6,10 +6,6 @@ argument-hint: [plan]
 **MUST READ** `CLAUDE.md` then **THINK HARDER** to start working on the following plan follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <plan>$ARGUMENTS</plan>
 
-**⚠️ MUST READ before implementation:**
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
 ---
 
 ## Role Responsibilities

@@ -102,7 +102,7 @@ POST /v1/messages
 **Request:**
 ```json
 {
-  "model": "claude-sonnet-4-5-20250929",
+  "model": "sonnet",
   "max_tokens": 4096,
   "messages": [
     {
@@ -116,7 +116,7 @@ POST /v1/messages
 **With Skills:**
 ```json
 {
-  "model": "claude-sonnet-4-5-20250929",
+  "model": "sonnet",
   "max_tokens": 4096,
   "skills": [
     {
@@ -156,7 +156,7 @@ POST /v1/messages
 **Streaming response:**
 ```json
 {
-  "model": "claude-sonnet-4-5-20250929",
+  "model": "sonnet",
   "max_tokens": 4096,
   "stream": true,
   "messages": [...]
@@ -185,7 +185,7 @@ POST /v1/messages/count_tokens
 **Request:**
 ```json
 {
-  "model": "claude-sonnet-4-5-20250929",
+  "model": "sonnet",
   "messages": [
     {
       "role": "user",
@@ -279,7 +279,7 @@ GET /v1/models
 {
   "data": [
     {
-      "id": "claude-sonnet-4-5-20250929",
+      "id": "sonnet",
       "type": "model",
       "display_name": "Claude Sonnet 4.5"
     }
@@ -297,7 +297,7 @@ GET /v1/models/{model_id}
 **Response:**
 ```json
 {
-  "id": "claude-sonnet-4-5-20250929",
+  "id": "sonnet",
   "type": "model",
   "display_name": "Claude Sonnet 4.5",
   "created_at": 1699564800
@@ -377,7 +377,7 @@ const client = new Anthropic({
 });
 
 const message = await client.messages.create({
-  model: 'claude-sonnet-4-5-20250929',
+  model: 'sonnet',
   max_tokens: 1024,
   messages: [
     { role: 'user', content: 'Hello, Claude!' }
@@ -397,7 +397,7 @@ client = anthropic.Anthropic(
 )
 
 message = client.messages.create(
-    model="claude-sonnet-4-5-20250929",
+    model="sonnet",
     max_tokens=1024,
     messages=[
         {"role": "user", "content": "Hello, Claude!"}

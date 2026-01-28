@@ -4,6 +4,7 @@
  *
  * Automatically tracks skill execution and advances workflow state when
  * a workflow step skill completes execution.
+ * Also handles /workflow:start activation to create workflow state.
  *
  * Triggers on: Skill tool completion
  *
@@ -11,8 +12,10 @@
  *   0 - Success (non-blocking)
  */
 
-const { loadState, markStepComplete, getCurrentStepInfo } = require('./lib/workflow-state.cjs');
+const { loadState, createState, clearState, markStepComplete, getCurrentStepInfo } = require('./lib/workflow-state.cjs');
 const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
+const { buildWorkflowCatalog } = require('./lib/wr-detect.cjs');
+const { buildWorkflowInstructions } = require('./lib/wr-output.cjs');
 
 /**
  * Read stdin asynchronously with timeout to prevent hanging
@@ -75,6 +78,51 @@ function mapSkillToStepId(skillName, config) {
     return null;
 }
 
+/**
+ * Handle /workflow:start activation
+ * @param {Object} toolInput - Tool input with skill and args
+ * @param {Object} config - Workflow configuration
+ * @returns {boolean} true if handled (caller should exit)
+ */
+function handleWorkflowStart(toolInput, config) {
+    const workflowId = (toolInput.args || '').trim();
+
+    if (!workflowId) {
+        console.log('\n<!-- workflow:start requires a workflowId argument -->');
+        return true;
+    }
+
+    const workflow = config.workflows?.[workflowId];
+    if (!workflow) {
+        // Decision 11: Error + re-inject catalog
+        console.log(`\n## Unknown Workflow: "${workflowId}"\n`);
+        console.log('Available workflows:\n');
+        const catalog = buildWorkflowCatalog(config);
+        console.log(catalog);
+        return true;
+    }
+
+    // Decision 13: Auto-switch if active workflow exists
+    const existingState = loadState();
+    if (existingState) {
+        clearState();
+    }
+
+    // Create state for the declared workflow
+    createState({
+        workflowId,
+        workflowName: workflow.name,
+        sequence: workflow.sequence,
+        originalPrompt: '',
+        commandMapping: config.commandMapping
+    });
+
+    // Output pre-actions + workflow instructions + todo template
+    const instructions = buildWorkflowInstructions({ workflow, workflowId }, config);
+    console.log(instructions);
+    return true;
+}
+
 async function main() {
     try {
         const payload = await readStdin();
@@ -93,12 +141,18 @@ async function main() {
         const skillName = toolInput.skill || '';
         if (!skillName) process.exit(0);
 
+        const config = loadWorkflowConfig();
+        if (!config) process.exit(0);
+
+        // Handle /workflow:start activation
+        if (skillName === 'workflow:start' || skillName === 'workflow/start') {
+            handleWorkflowStart(toolInput, config);
+            process.exit(0);
+        }
+
         // Check for active workflow
         const state = loadState();
         if (!state) process.exit(0);
-
-        const config = loadWorkflowConfig();
-        if (!config) process.exit(0);
 
         // Map executed skill to step ID
         const stepId = mapSkillToStepId(skillName, config);

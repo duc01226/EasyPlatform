@@ -31,7 +31,7 @@ Implement a new feature following EasyPlatform development workflow.
     - src/Backend/{Service}/{Service}.Application/UseCaseQueries/
     - src/Backend/{Service}/{Service}.Application/UseCaseEvents/
 
-    Frontend (WebV2):
+    Frontend (Angular 19):
     - src/Frontend/apps/{app}/src/app/features/
     - src/Frontend/libs/apps-domains/src/{domain}/
     ```

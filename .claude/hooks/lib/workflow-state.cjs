@@ -104,11 +104,29 @@ function deleteStateFile(sessionId) {
 // --- Public API (signatures unchanged for callers) ---
 
 /**
+ * Validate state has v2.0 structure (sequence, currentStep).
+ * Detects stale v1.x state files that use workflowSteps/currentStepIndex.
+ * @param {Object} state - State object to validate
+ * @returns {boolean} True if valid v2.0 state
+ */
+function isValidState(state) {
+  return state
+    && Array.isArray(state.sequence)
+    && typeof state.currentStep === 'number';
+}
+
+/**
  * Load current workflow state
  * @returns {Object|null} Current state or null if none exists
  */
 function loadState() {
-  return readStateFile();
+  const state = readStateFile();
+  if (state && !isValidState(state)) {
+    // Stale v1.x state — clear and return null
+    deleteStateFile();
+    return null;
+  }
+  return state;
 }
 
 /**

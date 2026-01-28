@@ -108,7 +108,8 @@ function cleanAll() {
  * @returns {string} Sanitized session ID
  */
 function sanitizeSessionId(sessionId) {
-  return (sessionId || 'default').replace(/[^a-zA-Z0-9-]/g, '_');
+  const raw = (typeof sessionId === 'string' && sessionId) ? sessionId : 'default';
+  return raw.replace(/[^a-zA-Z0-9-]/g, '_');
 }
 
 /**

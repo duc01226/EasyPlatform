@@ -8,7 +8,6 @@
  *
  * Pattern Matching:
  *   src/Frontend/*                    → Angular 19 apps
- *   src/Frontend/*                      → Legacy Angular apps
  *   libs/platform-core/*           → Platform core library
  *   libs/platform-core/*            → Shared components library
  *   libs/apps-domains/*            → Domain library
@@ -30,14 +29,9 @@ const PATTERN_DEDUP_LINES = 300;
 
 const FRONTEND_PATTERNS = [
     {
-        name: 'WebV2 Apps',
-        patterns: [/src[\/\\]WebV2[\/\\]/i],
+        name: 'Frontend Apps',
+        patterns: [/src[\/\\]Frontend[\/\\]/i],
         description: 'Angular 19 standalone apps'
-    },
-    {
-        name: 'Legacy Web Apps',
-        patterns: [/src[\/\\]Web[\/\\]/i],
-        description: 'Legacy Angular apps'
     },
     {
         name: 'Platform Core',

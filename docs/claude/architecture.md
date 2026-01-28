@@ -137,11 +137,14 @@ dotnet test [Project].csproj                    # Run unit tests
 
 **CRITICAL:** Before implementing ANY non-trivial task (bug fixes, new features, refactoring, analysis with changes), you MUST:
 
-1. **Enter Plan Mode First** - Use `EnterPlanMode` tool automatically for non-trivial tasks
+1. **Plan First** - Use `/plan` commands (`/plan`, `/plan:fast`, `/plan:hard`, `/plan:parallel`) to create implementation plans
 2. **Investigate & Analyze** - Explore codebase, understand context, identify affected areas
 3. **Create Implementation Plan** - Write detailed plan with specific files, changes, and approach
-4. **Get User Approval** - Present plan and wait for user confirmation before any code changes
-5. **Only Then Implement** - Execute the approved plan
+4. **Validate Plan** - Execute `/plan:validate` or `/plan:review` to check plan quality
+5. **Get User Approval** - Present plan and wait for user confirmation before any code changes
+6. **Only Then Implement** - Execute the approved plan
+
+**Do NOT use `EnterPlanMode` tool** — it enters a restricted read-only mode that blocks Write, Edit, and Task tools, preventing plan file creation and subagent usage. Use `/plan` commands instead.
 
 ### Applies To
 

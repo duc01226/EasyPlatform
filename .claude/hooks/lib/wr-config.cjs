@@ -30,30 +30,29 @@ function getDefaultConfig() {
     workflows: {
       feature: {
         name: 'Feature Implementation',
-        triggerPatterns: ['\\b(implement|add|create|build)\\b'],
-        excludePatterns: ['\\b(fix|bug|error)\\b'],
+        whenToUse: 'User wants to implement, add, create, or build a new feature or functionality.',
+        whenNotToUse: 'User is fixing a bug, refactoring, or investigating.',
         sequence: ['plan', 'cook', 'test', 'code-review'],
-        confirmFirst: true,
-        priority: 10
+        confirmFirst: true
       },
       bugfix: {
         name: 'Bug Fix',
-        triggerPatterns: ['\\b(bug|fix|error|broken|issue)\\b'],
-        excludePatterns: [],
+        whenToUse: 'User reports a bug, error, crash, or broken functionality.',
+        whenNotToUse: 'User wants new features or refactoring.',
         sequence: ['scout', 'investigate', 'debug', 'plan', 'fix', 'code-review', 'test'],
-        confirmFirst: false,
-        priority: 20
+        confirmFirst: false
       },
       documentation: {
         name: 'Documentation',
-        triggerPatterns: ['\\b(doc|document|readme)\\b'],
-        excludePatterns: ['\\b(implement|fix)\\b'],
+        whenToUse: 'User wants to write, update, or improve documentation.',
+        whenNotToUse: 'User wants code changes or bug fixes.',
         sequence: ['scout', 'investigate', 'docs-update', 'watzup'],
-        confirmFirst: false,
-        priority: 30
+        confirmFirst: false
       }
     },
     commandMapping: {
+      scout: { claude: '/scout' },
+      investigate: { claude: '/investigate' },
       plan: { claude: '/plan' },
       cook: { claude: '/cook' },
       test: { claude: '/test' },

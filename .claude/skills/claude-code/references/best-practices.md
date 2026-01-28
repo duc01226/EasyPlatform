@@ -156,14 +156,9 @@ claude plugin install gh:anthropics/official-plugin
 
 Choose appropriate model for task:
 
-**Haiku** - Fast, cost-effective:
+**Sonnet** - Default for most tasks:
 ```bash
-claude --model haiku "fix typo in README"
-claude --model haiku "format code"
-```
-
-**Sonnet** - Balanced (default):
-```bash
+claude "fix typo in README"
 claude "implement user authentication"
 claude "review this PR"
 ```
@@ -181,7 +176,7 @@ Cache repeated context:
 ```typescript
 // Cache large codebase
 const response = await client.messages.create({
-  model: 'claude-sonnet-4-5-20250929',
+  model: 'sonnet',
   system: [
     {
       type: 'text',
@@ -283,7 +278,7 @@ Use project settings for consistency:
 **.claude/settings.json:**
 ```json
 {
-  "model": "claude-sonnet-4-5-20250929",
+  "model": "sonnet",
   "maxTokens": 8192,
   "outputStyle": "technical-writer",
   "thinking": {
@@ -347,13 +342,13 @@ claude analytics export --format csv > usage.csv
 
 ### Cost Optimization
 
-**Use Haiku for simple tasks:**
+**Use Sonnet for most tasks (default):**
 ```bash
-# Expensive (Sonnet)
+# Default (Sonnet)
 claude "fix typo in README"
 
-# Cheap (Haiku)
-claude --model haiku "fix typo in README"
+# Complex tasks (Opus)
+claude --model opus "architect microservices system"
 ```
 
 **Enable caching:**

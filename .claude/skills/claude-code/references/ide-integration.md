@@ -44,7 +44,7 @@ Use Claude Code with Visual Studio Code and JetBrains IDEs.
 ```json
 {
   "claude.apiKey": "${ANTHROPIC_API_KEY}",
-  "claude.model": "claude-sonnet-4-5-20250929",
+  "claude.model": "sonnet",
   "claude.maxTokens": 8192,
   "claude.autoSave": true,
   "claude.inlineChat.enabled": true,
@@ -162,7 +162,7 @@ Supported IDEs:
 **Settings → Tools → Claude Code:**
 ```
 API Key: [Your API Key]
-Model: claude-sonnet-4-5-20250929
+Model: sonnet
 Max Tokens: 8192
 Auto-complete: Enabled
 Code Review: Enabled
@@ -173,7 +173,7 @@ Code Review: Enabled
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ClaudeSettings">
-    <option name="model" value="claude-sonnet-4-5-20250929" />
+    <option name="model" value="sonnet" />
     <option name="skillsPath" value=".claude/skills" />
     <option name="autoReview" value="true" />
   </component>

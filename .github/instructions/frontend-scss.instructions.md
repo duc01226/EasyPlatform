@@ -14,7 +14,7 @@ description: "EasyPlatform SCSS/BEM styling rules, layout mixins, typography"
 3. **No hardcoded colors:** Always use CSS variables — never hex values like `#fff` or `#333`
 4. **Use flex mixins:** `@include flex-row`, `@include flex-col`, `@include flex-center` — never manual `display: flex`
 5. **Host styling:** Always style both `:host` and main wrapper class
-6. **Import:** Use `@use 'shared-mixin' as *;` (WebV2 apps)
+6. **Import:** Use `@use 'shared-mixin' as *;` (Angular 19 apps)
 7. **Units:** `rem` for spacing/sizing, CSS variables for colors
 
 ## Required SCSS Structure

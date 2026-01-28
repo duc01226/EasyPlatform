@@ -6,10 +6,6 @@ argument-hint: [tasks]
 **Ultrathink** to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <tasks>$ARGUMENTS</tasks>
 
-**⚠️ MUST READ before implementation:**
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
 **IMPORTANT:** Analyze the list of skills  at `.claude/skills/*` and intelligently activate the skills that are needed for the task during the process.
 **Ensure token efficiency while maintaining high quality.**
 

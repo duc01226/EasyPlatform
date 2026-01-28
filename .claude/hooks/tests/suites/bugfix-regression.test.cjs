@@ -6,6 +6,7 @@
  * 2. tmpclaude cleanup in .claude subdirectories - session-init.cjs & session-end.cjs
  * 3. Prettier skip patterns for .claude directories - post-edit-prettier.cjs
  * 4. [Workflow] prefix in workflow-generated todos - workflow-router.cjs
+ * 5. v1.x state migration - stale state crash prevention in workflow-state.cjs
  */
 
 const path = require('path');
@@ -34,6 +35,7 @@ const {
   createMockFile,
   fileExists
 } = require('../lib/test-utils.cjs');
+const { buildWorkflowInstructions } = require('../../lib/wr-output.cjs');
 
 // Hook paths
 const WORKFLOW_ROUTER = getHookPath('workflow-router.cjs');
@@ -50,7 +52,7 @@ const SESSION_END = getHookPath('session-end.cjs');
 
 const workflowIntentChangeTests = [
   {
-    name: '[workflow-intent] detects intent change from feature to bugfix',
+    name: '[workflow-active] injects active workflow context for non-step prompt',
     fn: async () => {
       const tmpDir = createTempDir();
       let wfState;
@@ -64,34 +66,41 @@ const workflowIntentChangeTests = [
           startedAt: new Date().toISOString()
         });
 
-        // Setup: workflows.json config
+        // Setup: v2.0 workflows.json config
         const claudeDir = path.join(tmpDir, '.claude');
         fs.mkdirSync(claudeDir, { recursive: true });
         fs.writeFileSync(path.join(claudeDir, 'workflows.json'), JSON.stringify({
-          version: '1.2.0',
-          settings: { enabled: true },
+          version: '2.0.0',
+          description: 'AI-native test config',
+          settings: { enabled: true, allowOverride: true, overridePrefix: 'quick:', confirmHighImpact: true, showDetection: true },
           commandMapping: {
-            plan: { claude: '/plan' },
-            cook: { claude: '/cook' },
-            fix: { claude: '/fix' },
-            scout: { claude: '/scout' },
-            debug: { claude: '/debug' }
+            plan: { claude: '/plan', copilot: '/plan' },
+            cook: { claude: '/cook', copilot: '/cook' },
+            fix: { claude: '/fix', copilot: '/fix' },
+            scout: { claude: '/scout', copilot: '/scout' },
+            debug: { claude: '/debug', copilot: '/debug' }
           },
           workflows: {
             feature: {
               name: 'Feature Implementation',
+              description: 'Build new features',
+              whenToUse: 'User wants to implement, add, create, or build a new feature.',
+              whenNotToUse: 'User is fixing a bug or investigating.',
               sequence: ['plan', 'cook'],
-              triggerPatterns: ['\\b(implement|add|create)\\b']
+              confirmFirst: true
             },
             bugfix: {
               name: 'Bug Fix',
+              description: 'Fix bugs',
+              whenToUse: 'User reports a bug, error, or broken functionality.',
+              whenNotToUse: 'User wants new features.',
               sequence: ['scout', 'debug', 'fix'],
-              triggerPatterns: ['\\b(bug|fix|error|broken)\\b']
+              confirmFirst: false
             }
           }
         }));
 
-        // User prompt suggesting a BUG FIX (different from active feature workflow)
+        // User prompt — different intent from active workflow
         const input = createUserPromptInput('fix this bug in the login form');
         const result = await runHook(WORKFLOW_ROUTER, input, {
           cwd: tmpDir,
@@ -101,14 +110,19 @@ const workflowIntentChangeTests = [
         assertAllowed(result.code, 'Should not block');
         const output = result.stdout + result.stderr;
 
-        // Should detect the intent conflict
+        // Should inject active workflow context (not old-style "Intent Change")
         assertTrue(
-          output.includes('Intent Change') ||
-          output.includes('conflict') ||
-          output.includes('different workflow') ||
-          output.includes('Bug Fix') ||
-          output.toLowerCase().includes('switch'),
-          'Should detect intent change and show conflict options'
+          output.includes('Active Workflow') ||
+          output.includes('Feature Implementation') ||
+          output.includes('Available Workflows'),
+          'Should inject active workflow context with catalog'
+        );
+        // Should contain conflict handling instructions
+        assertTrue(
+          output.toLowerCase().includes('switch') ||
+          output.toLowerCase().includes('continue') ||
+          output.includes('/workflow:start'),
+          'Should contain conflict handling instructions'
         );
       } finally {
         if (wfState) cleanupWorkflowState(wfState.stateFile);
@@ -117,12 +131,12 @@ const workflowIntentChangeTests = [
     }
   },
   {
-    name: '[workflow-intent] continues when intent matches active workflow',
+    name: '[workflow-active] always injects context for non-step prompts (same intent)',
     fn: async () => {
       const tmpDir = createTempDir();
       let wfState;
       try {
-        // Setup: Active "bugfix" workflow (per-session path)
+        // Setup: Active "bugfix" workflow
         wfState = setupWorkflowState(tmpDir, {
           workflowId: 'bugfix',
           workflowName: 'Bug Fix',
@@ -131,28 +145,30 @@ const workflowIntentChangeTests = [
           startedAt: new Date().toISOString()
         });
 
-        // Setup: workflows.json config
         const claudeDir = path.join(tmpDir, '.claude');
         fs.mkdirSync(claudeDir, { recursive: true });
         fs.writeFileSync(path.join(claudeDir, 'workflows.json'), JSON.stringify({
-          version: '1.2.0',
-          settings: { enabled: true },
+          version: '2.0.0',
+          description: 'AI-native test config',
+          settings: { enabled: true, allowOverride: true, overridePrefix: 'quick:', confirmHighImpact: true, showDetection: true },
           commandMapping: {
-            fix: { claude: '/fix' },
-            scout: { claude: '/scout' },
-            debug: { claude: '/debug' }
+            fix: { claude: '/fix', copilot: '/fix' },
+            scout: { claude: '/scout', copilot: '/scout' },
+            debug: { claude: '/debug', copilot: '/debug' }
           },
           workflows: {
             bugfix: {
               name: 'Bug Fix',
+              description: 'Fix bugs',
+              whenToUse: 'User reports a bug, error, or broken functionality.',
               sequence: ['scout', 'debug', 'fix'],
-              triggerPatterns: ['\\b(bug|fix|error|broken)\\b']
+              confirmFirst: false
             }
           }
         }));
 
-        // User prompt matching active workflow (bugfix)
-        const input = createUserPromptInput('continue fixing the bug');
+        // Non-step prompt (not /fix which is the current step)
+        const input = createUserPromptInput('continue fixing the bug please');
         const result = await runHook(WORKFLOW_ROUTER, input, {
           cwd: tmpDir,
           env: { CLAUDE_SESSION_ID: wfState.sessionId }
@@ -161,8 +177,14 @@ const workflowIntentChangeTests = [
         assertAllowed(result.code, 'Should not block');
         const output = result.stdout + result.stderr;
 
-        // Should NOT show conflict (same intent)
-        assertNotContains(output, 'Intent Change', 'Should not show intent change for same workflow');
+        // Should still inject active workflow context (Decision 9: always for non-step prompts)
+        assertTrue(
+          output.includes('Active Workflow') ||
+          output.includes('Bug Fix'),
+          'Should inject active workflow context even for same-intent prompts'
+        );
+        // Should NOT show old-style "Intent Change"
+        assertNotContains(output, 'Intent Change', 'Should not use old intent change format');
       } finally {
         if (wfState) cleanupWorkflowState(wfState.stateFile);
         cleanupTempDir(tmpDir);
@@ -170,30 +192,31 @@ const workflowIntentChangeTests = [
     }
   },
   {
-    name: '[workflow-intent] no conflict when no active workflow',
+    name: '[workflow-active] injects catalog when no active workflow',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
-        // No workflow state setup — unique session ID ensures isolation
         const testSessionId = generateTestSessionId();
 
-        // Setup: workflows.json config
         const claudeDir = path.join(tmpDir, '.claude');
         fs.mkdirSync(claudeDir, { recursive: true });
         fs.writeFileSync(path.join(claudeDir, 'workflows.json'), JSON.stringify({
-          version: '1.2.0',
-          settings: { enabled: true },
-          commandMapping: { fix: { claude: '/fix' } },
+          version: '2.0.0',
+          description: 'AI-native test config',
+          settings: { enabled: true, allowOverride: true, overridePrefix: 'quick:', confirmHighImpact: true, showDetection: true },
+          commandMapping: { fix: { claude: '/fix', copilot: '/fix' } },
           workflows: {
             bugfix: {
               name: 'Bug Fix',
+              description: 'Fix bugs',
+              whenToUse: 'User reports a bug.',
               sequence: ['fix'],
-              triggerPatterns: ['\\b(bug|fix)\\b']
+              confirmFirst: false
             }
           }
         }));
 
-        const input = createUserPromptInput('fix this bug');
+        const input = createUserPromptInput('fix this bug in the login');
         const result = await runHook(WORKFLOW_ROUTER, input, {
           cwd: tmpDir,
           env: { CLAUDE_SESSION_ID: testSessionId }
@@ -202,20 +225,20 @@ const workflowIntentChangeTests = [
         assertAllowed(result.code, 'Should not block');
         const output = result.stdout + result.stderr;
 
-        // Should NOT show conflict (no active workflow)
-        assertNotContains(output, 'Intent Change', 'Should not show intent change without active workflow');
+        // Should inject catalog (not active workflow context)
+        assertContains(output, 'Available Workflows', 'Should inject catalog when no active workflow');
+        assertNotContains(output, 'Active Workflow', 'Should NOT show active workflow when none exists');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[workflow-intent] handles quick: prefix bypass',
+    name: '[workflow-active] quick: prefix clears active workflow state',
     fn: async () => {
       const tmpDir = createTempDir();
       let wfState;
       try {
-        // Setup: Active workflow (per-session path)
         wfState = setupWorkflowState(tmpDir, {
           workflowId: 'feature',
           workflowName: 'Feature Implementation',
@@ -224,28 +247,24 @@ const workflowIntentChangeTests = [
           startedAt: new Date().toISOString()
         });
 
-        // Setup: workflows.json config
         const claudeDir = path.join(tmpDir, '.claude');
         fs.mkdirSync(claudeDir, { recursive: true });
         fs.writeFileSync(path.join(claudeDir, 'workflows.json'), JSON.stringify({
-          version: '1.2.0',
-          settings: { enabled: true, overridePrefix: 'quick:' },
-          commandMapping: { plan: { claude: '/plan' } },
+          version: '2.0.0',
+          description: 'AI-native test config',
+          settings: { enabled: true, allowOverride: true, overridePrefix: 'quick:', confirmHighImpact: true, showDetection: true },
+          commandMapping: { plan: { claude: '/plan', copilot: '/plan' } },
           workflows: {
             feature: {
               name: 'Feature',
+              description: 'Build features',
+              whenToUse: 'User wants to build.',
               sequence: ['plan'],
-              triggerPatterns: ['\\bimplement\\b']
-            },
-            bugfix: {
-              name: 'Bug Fix',
-              sequence: ['fix'],
-              triggerPatterns: ['\\bfix\\b']
+              confirmFirst: false
             }
           }
         }));
 
-        // User prompt with quick: prefix should bypass workflow detection
         const input = createUserPromptInput('quick: fix this typo');
         const result = await runHook(WORKFLOW_ROUTER, input, {
           cwd: tmpDir,
@@ -253,7 +272,7 @@ const workflowIntentChangeTests = [
         });
 
         assertAllowed(result.code, 'Should not block');
-        // Quick prefix bypasses all workflow detection
+        // Quick prefix should clear state and exit silently
       } finally {
         if (wfState) cleanupWorkflowState(wfState.stateFile);
         cleanupTempDir(tmpDir);
@@ -710,107 +729,188 @@ const prettierSkipPatternTests = [
 // BUG FIX 4: [Workflow] Prefix in Workflow-Generated Todos
 // ============================================================================
 // Issue: Workflow-generated todos didn't have a distinguishing prefix.
-// Fix: Added instruction to prefix workflow todos with [Workflow].
+// Fix: buildWorkflowInstructions() includes [Workflow] prefix in todo template.
+// In v2.0, instructions are output by the step-tracker on /workflow:start activation.
 
 const workflowPrefixTests = [
   {
-    name: '[workflow-prefix] instructions include [Workflow] prefix guidance',
+    name: '[workflow-prefix] instructions include [Workflow] prefix in todo template',
+    fn: async () => {
+      // Test buildWorkflowInstructions directly — this is where [Workflow] prefix lives in v2.0
+      const config = {
+        settings: { enabled: true },
+        commandMapping: {
+          plan: { claude: '/plan' },
+          cook: { claude: '/cook' },
+          test: { claude: '/test' }
+        },
+        workflows: {
+          feature: {
+            name: 'Feature Implementation',
+            sequence: ['plan', 'cook', 'test'],
+            whenToUse: 'When user wants to implement a new feature',
+            confirmFirst: false
+          }
+        }
+      };
+
+      const activation = {
+        workflow: config.workflows.feature,
+        workflowId: 'feature'
+      };
+
+      const output = buildWorkflowInstructions(activation, config);
+
+      // Check for [Workflow] prefix in todo template
+      assertTrue(
+        output.includes('[Workflow]'),
+        'Instructions should include [Workflow] prefix in todo template'
+      );
+      assertTrue(
+        output.includes('Todo Tracking') || output.toLowerCase().includes('todo'),
+        'Instructions should include todo tracking section'
+      );
+    }
+  },
+  {
+    name: '[workflow-prefix] shows [Workflow] prefixed todo for each step',
+    fn: async () => {
+      const config = {
+        settings: { enabled: true },
+        commandMapping: {
+          scout: { claude: '/scout' },
+          fix: { claude: '/fix' }
+        },
+        workflows: {
+          bugfix: {
+            name: 'Bug Fix',
+            sequence: ['scout', 'fix'],
+            whenToUse: 'When user needs to fix a bug',
+            confirmFirst: false
+          }
+        }
+      };
+
+      const activation = {
+        workflow: config.workflows.bugfix,
+        workflowId: 'bugfix'
+      };
+
+      const output = buildWorkflowInstructions(activation, config);
+
+      // Output should contain [Workflow] prefixed todo items for each step
+      assertTrue(
+        output.includes('[Workflow] /scout'),
+        'Should show [Workflow] /scout in todo template'
+      );
+      assertTrue(
+        output.includes('[Workflow] /fix'),
+        'Should show [Workflow] /fix in todo template'
+      );
+    }
+  }
+];
+
+// ============================================================================
+// BUG FIX 5: v1.x State Migration — Stale State Crash Prevention
+// ============================================================================
+// Issue: Stale v1.x workflow state files (using workflowType/workflowSteps/currentStepIndex)
+// crash the v2.0 router at line 75 when accessing existingState.sequence[existingState.currentStep].
+// Fix: loadState() validates state structure and auto-clears v1.x format.
+
+const v1xStateMigrationTests = [
+  {
+    name: '[v1x-migration] router handles v1.x stale state without crash',
     fn: async () => {
       const tmpDir = createTempDir();
+      const testSessionId = generateTestSessionId();
       try {
-        // Unique session ID for isolation
-        const testSessionId = generateTestSessionId();
+        // Write v1.x state directly to per-session state file
+        const { WORKFLOW_DIR, ensureDir } = require('../../lib/ck-paths.cjs');
+        const { sanitizeSessionId } = require('../../lib/ck-paths.cjs');
+        const stateFile = path.join(WORKFLOW_DIR, `${sanitizeSessionId(testSessionId)}.json`);
+        ensureDir(WORKFLOW_DIR);
+        fs.writeFileSync(stateFile, JSON.stringify({
+          workflowType: 'refactor',
+          workflowSteps: ['plan', 'code', 'test'],
+          currentStepIndex: 1,
+          completedSteps: ['plan'],
+          startedAt: '2026-01-28T03:34:33.993Z'
+        }));
 
-        // Setup: workflows.json config with a workflow
+        // Setup workflows.json
         const claudeDir = path.join(tmpDir, '.claude');
         fs.mkdirSync(claudeDir, { recursive: true });
         fs.writeFileSync(path.join(claudeDir, 'workflows.json'), JSON.stringify({
-          version: '1.2.0',
-          settings: { enabled: true },
-          commandMapping: {
-            plan: { claude: '/plan' },
-            cook: { claude: '/cook' },
-            test: { claude: '/test' }
-          },
+          version: '2.0.0',
+          description: 'Test config',
+          settings: { enabled: true, allowOverride: true, overridePrefix: 'quick:', confirmHighImpact: true, showDetection: true },
+          commandMapping: { fix: { claude: '/fix' } },
           workflows: {
-            feature: {
-              name: 'Feature Implementation',
-              sequence: ['plan', 'cook', 'test'],
-              triggerPatterns: ['\\b(implement|add|create)\\b'],
+            bugfix: {
+              name: 'Bug Fix',
+              description: 'Fix bugs',
+              whenToUse: 'User reports a bug.',
+              sequence: ['fix'],
               confirmFirst: false
             }
           }
         }));
 
-        // Trigger a feature workflow
-        const input = createUserPromptInput('implement a new login feature');
+        const input = createUserPromptInput('fix this bug in authentication module');
         const result = await runHook(WORKFLOW_ROUTER, input, {
           cwd: tmpDir,
           env: { CLAUDE_SESSION_ID: testSessionId }
         });
 
-        assertAllowed(result.code, 'Should not block');
+        // Should NOT crash — should inject catalog after clearing stale state
+        assertAllowed(result.code, 'Should not crash on v1.x state');
         const output = result.stdout + result.stderr;
+        assertContains(output, 'Available Workflows', 'Should inject catalog after clearing v1.x state');
+        assertNotContains(output, 'error', 'Should not contain error messages');
 
-        // Check for [Workflow] prefix instruction
-        assertTrue(
-          output.includes('[Workflow]') ||
-          output.includes('prefix') ||
-          output.toLowerCase().includes('todo'),
-          'Should include [Workflow] prefix instruction or todo guidance'
-        );
+        // Cleanup state file
+        try { fs.unlinkSync(stateFile); } catch (_) {}
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[workflow-prefix] shows example todos with [Workflow] prefix',
+    name: '[v1x-migration] loadState returns null for v1.x format state',
     fn: async () => {
-      const tmpDir = createTempDir();
+      const testSessionId = generateTestSessionId();
+      const { WORKFLOW_DIR, ensureDir, sanitizeSessionId } = require('../../lib/ck-paths.cjs');
+      const stateFile = path.join(WORKFLOW_DIR, `${sanitizeSessionId(testSessionId)}.json`);
+      const savedSessionId = process.env.CLAUDE_SESSION_ID;
       try {
-        // Unique session ID for isolation
-        const testSessionId = generateTestSessionId();
-
-        const claudeDir = path.join(tmpDir, '.claude');
-        fs.mkdirSync(claudeDir, { recursive: true });
-        fs.writeFileSync(path.join(claudeDir, 'workflows.json'), JSON.stringify({
-          version: '1.2.0',
-          settings: { enabled: true },
-          commandMapping: {
-            scout: { claude: '/scout' },
-            fix: { claude: '/fix' }
-          },
-          workflows: {
-            bugfix: {
-              name: 'Bug Fix',
-              sequence: ['scout', 'fix'],
-              triggerPatterns: ['\\b(bug|fix)\\b'],
-              confirmFirst: false
-            }
-          }
+        ensureDir(WORKFLOW_DIR);
+        fs.writeFileSync(stateFile, JSON.stringify({
+          workflowType: 'feature',
+          workflowSteps: ['plan', 'cook'],
+          currentStepIndex: 0
         }));
 
-        const input = createUserPromptInput('fix this bug');
-        const result = await runHook(WORKFLOW_ROUTER, input, {
-          cwd: tmpDir,
-          env: { CLAUDE_SESSION_ID: testSessionId }
-        });
-
-        const output = result.stdout + result.stderr;
-
-        // Output should contain example todo items with [Workflow] prefix
-        if (output.includes('Todo') || output.includes('todo')) {
-          assertTrue(
-            output.includes('[Workflow]') ||
-            output.includes('/scout') ||
-            output.includes('/fix'),
-            'Should show workflow commands in todo guidance'
-          );
-        }
+        process.env.CLAUDE_SESSION_ID = testSessionId;
+        const { loadState } = require('../../lib/workflow-state.cjs');
+        const state = loadState();
+        assertTrue(state === null, 'loadState should return null for v1.x state');
+        assertTrue(!fs.existsSync(stateFile), 'v1.x state file should be auto-deleted');
       } finally {
-        cleanupTempDir(tmpDir);
+        process.env.CLAUDE_SESSION_ID = savedSessionId;
+        try { fs.unlinkSync(stateFile); } catch (_) {}
       }
+    }
+  },
+  {
+    name: '[v1x-migration] sanitizeSessionId rejects non-string inputs',
+    fn: async () => {
+      const { sanitizeSessionId } = require('../../lib/ck-paths.cjs');
+      assertEqual(sanitizeSessionId({}), 'default', 'Object should become default');
+      assertEqual(sanitizeSessionId(null), 'default', 'null should become default');
+      assertEqual(sanitizeSessionId(123), 'default', 'Number should become default');
+      assertEqual(sanitizeSessionId(undefined), 'default', 'undefined should become default');
+      assertEqual(sanitizeSessionId('valid-session-123'), 'valid-session-123', 'Valid string preserved');
     }
   }
 ];
@@ -928,14 +1028,15 @@ const edgeCaseTests = [
         const claudeDir = path.join(tmpDir, '.claude');
         fs.mkdirSync(claudeDir, { recursive: true });
         fs.writeFileSync(path.join(claudeDir, 'workflows.json'), JSON.stringify({
-          version: '1.2.0',
+          version: '2.0.0',
           settings: { enabled: true },
           commandMapping: { fix: { claude: '/fix' } },
           workflows: {
             bugfix: {
               name: 'Bug Fix',
               sequence: ['fix'],
-              triggerPatterns: ['\\bfix\\b']
+              whenToUse: 'When user needs to fix a bug or error',
+              confirmFirst: false
             }
           }
         }));
@@ -1005,6 +1106,7 @@ module.exports = {
     ...tmpclaudeSessionEndTests,
     ...prettierSkipPatternTests,
     ...workflowPrefixTests,
+    ...v1xStateMigrationTests,
     ...edgeCaseTests
   ]
 };

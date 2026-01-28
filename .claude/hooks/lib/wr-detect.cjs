@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
- * Workflow Router - Intent Detection
+ * Workflow Router - Catalog & Detection
  *
- * Pattern-based intent detection for workflow matching.
+ * AI-native workflow catalog generation and injection heuristics.
  * Part of workflow-router.cjs modularization.
  *
  * @module wr-detect
@@ -11,96 +11,53 @@
 'use strict';
 
 /**
- * Detect workflow intent from user prompt
- * @param {string} userPrompt - User's input prompt
- * @param {Object} config - Workflow configuration
- * @returns {Object} Detection result with workflow info or skipped/detected flags
+ * Build compact workflow catalog for AI prompt injection.
+ * Sorted alphabetically by workflow ID.
+ * Medium detail: 2 lines per workflow (name+whenToUse, whenNotToUse+sequence).
+ * Includes confirmFirst flag.
+ *
+ * @param {Object} config - Workflow config
+ * @returns {string} Markdown catalog (~45 lines for 20 workflows)
  */
-function detectIntent(userPrompt, config) {
-  const { workflows, settings } = config;
+function buildWorkflowCatalog(config) {
+  const { workflows, commandMapping } = config;
+  const sorted = Object.entries(workflows || {}).sort(([a], [b]) => a.localeCompare(b));
 
-  // Check for override prefix
-  if (settings.allowOverride && settings.overridePrefix) {
-    const lowerPrompt = userPrompt.toLowerCase().trim();
-    if (lowerPrompt.startsWith(settings.overridePrefix.toLowerCase())) {
-      return { skipped: true, reason: 'override_prefix' };
+  const lines = [];
+  for (const [id, wf] of sorted) {
+    const seq = wf.sequence || [];
+    const seqPreview = seq.slice(0, 3).map(step => {
+      const cmd = (commandMapping || {})[step];
+      return cmd?.claude || `/${step}`;
+    }).join(' → ');
+    const seqSuffix = seq.length > 3 ? ` → ... (${seq.length} steps)` : '';
+    const confirm = wf.confirmFirst ? ' | confirmFirst' : '';
+
+    lines.push(`**${id}** — ${wf.name} | ${wf.whenToUse}${confirm} | ${seqPreview}${seqSuffix}`);
+    if (wf.whenNotToUse) {
+      lines.push(`  ↳ NOT: ${wf.whenNotToUse}`);
     }
   }
 
-  // Check for explicit command invocation (skip detection)
-  if (/^\/\w+/.test(userPrompt.trim())) {
-    return { skipped: true, reason: 'explicit_command' };
-  }
+  return lines.join('\n');
+}
 
-  // Score each workflow
-  const scores = [];
-
-  for (const [workflowId, workflow] of Object.entries(workflows)) {
-    let score = 0;
-    let matchedPatterns = [];
-    let excludeMatched = false;
-
-    // Check exclude patterns first
-    if (workflow.excludePatterns && workflow.excludePatterns.length > 0) {
-      for (const pattern of workflow.excludePatterns) {
-        try {
-          if (new RegExp(pattern, 'i').test(userPrompt)) {
-            excludeMatched = true;
-            break;
-          }
-        } catch (e) {
-          // Invalid regex, skip
-        }
-      }
-    }
-
-    if (excludeMatched) continue;
-
-    // Check trigger patterns
-    if (workflow.triggerPatterns && workflow.triggerPatterns.length > 0) {
-      for (const pattern of workflow.triggerPatterns) {
-        try {
-          const regex = new RegExp(pattern, 'i');
-          if (regex.test(userPrompt)) {
-            score += 10;
-            matchedPatterns.push(pattern);
-          }
-        } catch (e) {
-          // Invalid regex, skip
-        }
-      }
-    }
-
-    if (score > 0) {
-      scores.push({
-        workflowId,
-        workflow,
-        score,
-        matchedPatterns,
-        adjustedScore: score - (workflow.priority || 50) // Lower priority number = higher preference
-      });
-    }
-  }
-
-  if (scores.length === 0) {
-    return { detected: false };
-  }
-
-  // Sort by adjusted score (highest first)
-  scores.sort((a, b) => b.adjustedScore - a.adjustedScore);
-
-  const best = scores[0];
-  const totalPatterns = (best.workflow.triggerPatterns || []).length;
-  const confidence = Math.min(100, Math.round((best.matchedPatterns.length / Math.max(totalPatterns, 1)) * 100));
-
-  return {
-    detected: true,
-    workflowId: best.workflowId,
-    workflow: best.workflow,
-    confidence,
-    matchedPatterns: best.matchedPatterns,
-    alternatives: scores.slice(1, 3).map(s => s.workflowId)
-  };
+/**
+ * Heuristic: should we inject the workflow catalog for a new prompt?
+ * Skip for: explicit slash commands, override prefix, very short prompts (<15 chars)
+ *
+ * @param {string} userPrompt
+ * @param {Object} config
+ * @returns {boolean}
+ */
+function shouldInjectCatalog(userPrompt, config) {
+  const trimmed = userPrompt.trim();
+  if (/^\/\w+/.test(trimmed)) return false;
+  if (config.settings?.overridePrefix &&
+      trimmed.toLowerCase().startsWith(config.settings.overridePrefix.toLowerCase()))
+    return false;
+  if (trimmed.length < 15) return false;
+  return true;
 }
 
 /**
@@ -130,6 +87,7 @@ function detectSkillInvocation(prompt, config) {
 }
 
 module.exports = {
-  detectIntent,
+  buildWorkflowCatalog,
+  shouldInjectCatalog,
   detectSkillInvocation
 };
