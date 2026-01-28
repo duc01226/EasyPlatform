@@ -120,6 +120,7 @@ function resetEditState() {
     writeCount: 0,
     editedFiles: [],
     warningShown: false,
+    strongWarningShown: false,
     lastReset: new Date().toISOString()
   });
 }

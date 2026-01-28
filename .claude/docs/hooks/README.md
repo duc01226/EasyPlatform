@@ -117,7 +117,7 @@ Session Start
 |------|---------|---------|
 | `pattern-injector.cjs` | `*` | Inject patterns for current context |
 | `todo-enforcement.cjs` | `Skill` | Block implementation skills without todos |
-| `cross-platform-bash.cjs` | `Bash` | Warn about Windows-specific commands |
+| `cross-platform-bash.cjs` | `Bash` | Block Windows CMD commands, warn on ambiguous patterns |
 | `scout-block.cjs` | `Bash\|Glob\|Grep\|Read\|Edit\|Write` | Block implementation during scout |
 | `privacy-block.cjs` | `Bash\|Glob\|Grep\|Read\|Edit\|Write` | Block access to sensitive files |
 | `design-system-context.cjs` | `Edit\|Write\|MultiEdit` | Inject design system context |
@@ -125,18 +125,20 @@ Session Start
 | `frontend-typescript-context.cjs` | `Edit\|Write\|MultiEdit` | Inject TS patterns for frontend |
 | `scss-styling-context.cjs` | `Edit\|Write\|MultiEdit` | Inject SCSS patterns |
 | `artifact-path-resolver.cjs` | `Write` | Resolve team artifact paths to absolute |
+| `figma-context-extractor.cjs` | `Read` | Detect Figma URLs in plans, suggest MCP extraction |
 
 ### PostToolUse Hooks
 
 | Hook | Matcher | Purpose |
 |------|---------|---------|
 | `todo-tracker.cjs` | `TodoWrite` | Persist todo state |
-| `edit-count-tracker.cjs` | `Edit\|Write\|MultiEdit\|TodoWrite` | Track multi-file operations |
+| `edit-complexity-tracker.cjs` | `Edit\|Write\|MultiEdit` | Track multi-file operations with soft/strong warnings |
+| `bash-cleanup.cjs` | `Bash` | Clean up tmpclaude temp files |
 | `post-edit-prettier.cjs` | `Edit\|Write` | Auto-format edited files |
 | `ace-event-emitter.cjs` | `Bash\|Skill` | Capture events for ACE analysis |
 | `workflow-step-tracker.cjs` | `Skill` | Track workflow progress |
 | `ace-feedback-tracker.cjs` | `Skill` | Track delta effectiveness |
-| `compact-suggestion.cjs` | `Bash\|Read\|Grep\|Glob\|Skill\|Edit\|Write\|MultiEdit\|WebFetch\|WebSearch` | Suggest /compact after 50 tool calls |
+| `compact-suggestion.cjs` | `Bash\|Read\|Grep\|Glob\|Skill\|Edit\|Write\|MultiEdit\|WebFetch\|WebSearch` | Suggest /compact after 50 calls, then recurring |
 
 ### PreCompact Hooks
 

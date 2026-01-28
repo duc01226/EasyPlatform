@@ -5,9 +5,10 @@
 
 const fs = require('fs');
 const path = require('path');
-const { loadConfig, resolvePlanPath, getReportsPath } = require('./lib/ck-config-utils.cjs');
+const { loadConfig, resolvePlanPath, getReportsPath, readSessionState } = require('./lib/ck-config-utils.cjs');
 const { getTodoState, restoreTodosFromCheckpoint } = require('./lib/todo-state.cjs');
 const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
+const { loadState: loadWorkflowState, getCurrentStepInfo } = require('./lib/workflow-state.cjs');
 
 let _swapEngine = null;
 function getSwapEngine() {
@@ -114,6 +115,116 @@ function outputSwapInventory(sessionId, withHeader = false) {
   console.log(withHeader ? `## Session Resume\n\n${inventory}` : inventory);
 }
 
+/**
+ * Build workflow recovery section if an active workflow exists
+ * @returns {string|null} Markdown section or null
+ */
+function buildWorkflowRecovery() {
+  try {
+    const workflowState = loadWorkflowState();
+    if (!workflowState || !workflowState.workflowId) return null;
+
+    const stepInfo = getCurrentStepInfo();
+    if (!stepInfo) return null;
+
+    const lines = [
+      '### Workflow Recovery',
+      '',
+      `**Workflow:** ${workflowState.workflowName || workflowState.workflowId}`,
+      `**Progress:** Step ${stepInfo.stepNumber}/${stepInfo.totalSteps}`,
+      `**Current:** \`${stepInfo.claudeCommand || stepInfo.stepId}\``,
+    ];
+
+    if (stepInfo.completedSteps && stepInfo.completedSteps.length > 0) {
+      lines.push(`**Completed:** ${stepInfo.completedSteps.map(s => `\`${s}\``).join(', ')}`);
+    }
+
+    if (stepInfo.remainingSteps && stepInfo.remainingSteps.length > 0) {
+      const remaining = stepInfo.remainingSteps.map(s => `\`${s}\``).join(' -> ');
+      lines.push(`**Remaining:** ${remaining}`);
+    }
+
+    lines.push('');
+    return lines.join('\n');
+  } catch (e) {
+    if (process.env.CK_DEBUG) console.error(`[session-resume] Workflow recovery error: ${e.message}`);
+    return null;
+  }
+}
+
+/**
+ * Build active plan section if a plan is active in session state
+ * @param {string} sessionId - Current session ID
+ * @returns {string|null} Markdown section or null
+ */
+function buildActivePlanSection(sessionId) {
+  try {
+    const sessionState = readSessionState(sessionId);
+    if (!sessionState?.activePlan) return null;
+
+    return [
+      '### Active Plan',
+      '',
+      `**Path:** \`${sessionState.activePlan}\``,
+      '',
+      '> **MUST READ** this plan to understand full task context.',
+      ''
+    ].join('\n');
+  } catch (e) {
+    if (process.env.CK_DEBUG) console.error(`[session-resume] Active plan error: ${e.message}`);
+    return null;
+  }
+}
+
+/**
+ * Build numbered recovery actions based on what was detected
+ * @param {boolean} hasWorkflow - Workflow state was found
+ * @param {Object|null} stepInfo - Current step info
+ * @param {string|null} activePlanPath - Active plan directory path
+ * @returns {string} Markdown section
+ */
+function buildRecoveryActions(hasWorkflow, stepInfo, activePlanPath) {
+  const lines = ['### Recovery Actions', ''];
+  let step = 1;
+
+  lines.push(`${step++}. **Restore todos** using TodoWrite if not already restored`);
+
+  if (hasWorkflow && stepInfo) {
+    lines.push(`${step++}. **Continue workflow** from step \`${stepInfo.claudeCommand || stepInfo.stepId}\``);
+  }
+
+  if (activePlanPath) {
+    lines.push(`${step++}. **Read plan** at \`${activePlanPath}/plan.md\` for full context`);
+  }
+
+  lines.push('');
+  return lines.join('\n');
+}
+
+/**
+ * Output workflow recovery context if applicable
+ * @param {string} sessionId - Current session ID
+ */
+function outputWorkflowRecovery(sessionId) {
+  const workflowSection = buildWorkflowRecovery();
+  const planSection = buildActivePlanSection(sessionId);
+
+  if (!workflowSection && !planSection) return;
+
+  if (workflowSection) console.log(workflowSection);
+  if (planSection) console.log(planSection);
+
+  // Build recovery actions
+  const stepInfo = workflowSection ? getCurrentStepInfo() : null;
+  let activePlanPath = null;
+  try {
+    const sessionState = readSessionState(sessionId);
+    activePlanPath = sessionState?.activePlan || null;
+  } catch { /* ignore */ }
+
+  console.log(buildRecoveryActions(!!workflowSection, stepInfo, activePlanPath));
+}
+
 async function main() {
   try {
     const stdin = fs.readFileSync(0, 'utf-8').trim();
@@ -128,6 +239,7 @@ async function main() {
     const currentState = getTodoState();
     if (currentState.hasTodos && currentState.taskCount > 0) {
       outputSwapInventory(sessionId);
+      outputWorkflowRecovery(sessionId);
       process.exit(0);
     }
 
@@ -181,6 +293,7 @@ async function main() {
     console.log('**Note:** Todo state restored. Use TodoWrite to update the actual todo list if continuing previous work.');
 
     outputSwapInventory(sessionId);
+    outputWorkflowRecovery(sessionId);
     process.exit(0);
   } catch (error) {
     if (process.env.CK_DEBUG) console.error(`[session-resume] Error: ${error.message}`);

@@ -9,7 +9,8 @@
  *
  * Behavior:
  * - Counts heavy tool operations per session
- * - After 50 tool calls: shows one-time suggestion
+ * - After 50 tool calls: shows first suggestion
+ * - Then recurring every 20 calls (70, 90) up to 3 suggestions total
  * - Resets on session start or after /compact detection
  *
  * Exit Codes:
@@ -75,12 +76,14 @@ async function readStdin() {
 /**
  * Output compact suggestion to LLM context
  * @param {number} count - Number of tool calls
+ * @param {number} suggestionNum - Which suggestion (1, 2, or 3)
  */
-function outputSuggestion(count) {
+function outputSuggestion(count, suggestionNum) {
   const progress = getProgress();
+  const ordinal = ['', '1st', '2nd', '3rd'][suggestionNum] || `${suggestionNum}th`;
 
   console.log(`
-## Context Window Checkpoint
+## Context Window Checkpoint ${suggestionNum > 1 ? `(${ordinal} Reminder)` : ''}
 
 You've made **${count} tool calls** in this session.
 
@@ -93,14 +96,14 @@ Consider running \`/compact\` to:
 
 ### Current Progress
 - Tool calls: ${progress.current}/${progress.threshold}
-- Session active since: ${new Date().toLocaleTimeString()}
+- Suggestions shown: ${progress.suggestionCount}/3
 
 ### When to compact:
 - After completing a significant task or feature
 - Before starting a new major investigation
 - When you notice the context is getting long
 
-*This is a one-time suggestion. Continue working if you're mid-task.*
+${suggestionNum >= 3 ? '*This is the final reminder for this session.*' : '*Continue working if you\'re mid-task. You\'ll see another reminder in ~20 tool calls.*'}
 `);
 }
 
@@ -155,7 +158,7 @@ async function main() {
     }
 
     if (result.shouldSuggest) {
-      outputSuggestion(result.toolCallCount);
+      outputSuggestion(result.toolCallCount, result.suggestionNumber);
     }
 
     process.exit(0);

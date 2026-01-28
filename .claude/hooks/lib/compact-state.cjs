@@ -20,11 +20,17 @@ const COMPACT_THRESHOLD = 50;
 // Maximum state file size before auto-reset (50KB safeguard)
 const MAX_STATE_SIZE_BYTES = 50 * 1024;
 
+// Recurring suggestion interval (calls)
+const RECURRING_INTERVAL = 20;
+
+// Maximum suggestions per session
+const MAX_SUGGESTIONS = 3;
+
 // Default state
 const DEFAULT_STATE = {
   sessionToolCallCount: 0,
-  suggestionShown: false,
-  suggestedAt: null,
+  suggestionCount: 0,
+  lastSuggestedAt: null,
   lastReset: null,
   sessionStartTime: null
 };
@@ -90,19 +96,33 @@ function recordToolCall() {
   }
 
   const newCount = state.sessionToolCallCount + 1;
-  const shouldSuggest = newCount >= COMPACT_THRESHOLD && !state.suggestionShown;
+  const suggestionCount = state.suggestionCount || 0;
+
+  // Recurring suggestion logic:
+  // - First suggestion at 50
+  // - Then at 70, 90 (every 20 calls)
+  // - Cap at 3 suggestions total
+  let shouldSuggest = false;
+  if (newCount >= COMPACT_THRESHOLD && suggestionCount < MAX_SUGGESTIONS) {
+    const callsSinceThreshold = newCount - COMPACT_THRESHOLD;
+    // Suggest at 50, then every 20 calls (70, 90, ...)
+    if (callsSinceThreshold === 0 || callsSinceThreshold % RECURRING_INTERVAL === 0) {
+      shouldSuggest = true;
+    }
+  }
 
   setCompactState({
     sessionToolCallCount: newCount,
     sessionStartTime: state.sessionStartTime,
-    suggestionShown: shouldSuggest ? true : state.suggestionShown,
-    suggestedAt: shouldSuggest ? new Date().toISOString() : state.suggestedAt
+    suggestionCount: shouldSuggest ? suggestionCount + 1 : suggestionCount,
+    lastSuggestedAt: shouldSuggest ? new Date().toISOString() : state.lastSuggestedAt
   });
 
   return {
     toolCallCount: newCount,
     shouldSuggest,
-    threshold: COMPACT_THRESHOLD
+    threshold: COMPACT_THRESHOLD,
+    suggestionNumber: shouldSuggest ? suggestionCount + 1 : suggestionCount
   };
 }
 
@@ -112,8 +132,8 @@ function recordToolCall() {
 function resetCompactState() {
   setCompactState({
     sessionToolCallCount: 0,
-    suggestionShown: false,
-    suggestedAt: null,
+    suggestionCount: 0,
+    lastSuggestedAt: null,
     lastReset: new Date().toISOString(),
     sessionStartTime: new Date().toISOString()
   });
@@ -136,7 +156,7 @@ function getProgress() {
     current: state.sessionToolCallCount,
     threshold: COMPACT_THRESHOLD,
     percentage: Math.min(100, Math.round((state.sessionToolCallCount / COMPACT_THRESHOLD) * 100)),
-    suggestionShown: state.suggestionShown
+    suggestionCount: state.suggestionCount || 0
   };
 }
 

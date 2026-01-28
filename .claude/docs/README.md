@@ -68,8 +68,8 @@ quick: add a button
 | **SessionStart** | `startup\|resume\|clear\|compact` | session-init, session-resume, ace-session-inject, pattern-injector (4) |
 | **SubagentStart** | `*` | subagent-init, role-context-injector (2) |
 | **UserPromptSubmit** | Always | workflow-router, dev-rules-reminder, pattern-learner (3) |
-| **PreToolUse** | Tool-specific matchers | pattern-injector, todo-enforcement, scout-block, privacy-block, context injectors (8+) |
-| **PostToolUse** | Tool-specific matchers | todo-tracker, edit-count-tracker, post-edit-prettier, ace-event-emitter, workflow-step-tracker, ace-feedback-tracker (6) |
+| **PreToolUse** | Tool-specific matchers | pattern-injector, todo-enforcement, scout-block, privacy-block, figma-context-extractor, context injectors (9+) |
+| **PostToolUse** | Tool-specific matchers | todo-tracker, edit-complexity-tracker, bash-cleanup, post-edit-prettier, ace-event-emitter, workflow-step-tracker, ace-feedback-tracker (7) |
 | **PreCompact** | `manual\|auto` | write-compact-marker, save-context-memory, ace-reflector-analysis, ace-curator-pruner (4) |
 | **SessionEnd** | `clear` | session-end (1) |
 | **Notification** | System | notify.cjs (1) |

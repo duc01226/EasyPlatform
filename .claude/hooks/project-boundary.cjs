@@ -27,6 +27,7 @@ function getProjectRoot() {
 
 /**
  * Normalize path for comparison (absolute, lowercase, forward slashes)
+ * Resolves symlinks to prevent bypass attacks
  */
 function normalizePath(inputPath) {
   if (!inputPath) return '';
@@ -53,6 +54,17 @@ function normalizePath(inputPath) {
   normalized = path.isAbsolute(normalized)
     ? path.resolve(normalized)
     : path.resolve(baseDir, normalized);
+
+  // Resolve symlinks to prevent boundary bypass (security hardening)
+  try {
+    // Only resolve if path exists - prevents errors on non-existent paths
+    if (fs.existsSync(normalized)) {
+      normalized = fs.realpathSync(normalized);
+    }
+  } catch {
+    // If symlink resolution fails, use the unresolved path
+    // This handles edge cases like broken symlinks or permission errors
+  }
 
   return normalized.toLowerCase().replace(/\\/g, '/');
 }

@@ -3,14 +3,14 @@
  * cross-platform-bash.cjs - Validates Bash commands for cross-platform compatibility
  *
  * Detects Windows-specific commands that fail in Git Bash/Unix shells:
- * - `dir /b /s` → Windows dir with flags (should use `ls -R` or `find`)
- * - Paths with backslashes → Will be stripped/escaped (should use forward slashes)
- *
- * This hook WARNS but does not block (fail-open). It provides helpful suggestions
- * for portable alternatives.
+ * - `dir /b /s` → Windows dir with flags (BLOCKED)
+ * - `type`, `copy`, `move`, `del`, etc. → Windows CMD commands (BLOCKED)
+ * - Paths with backslashes → Warning only (might be in quoted strings)
+ * - `> nul` redirection → Warning only (creates 'nul' file but might be intentional)
  *
  * Exit Codes:
- * - 0: Command allowed (with optional warning in output)
+ * - 0: Command allowed (with optional warning)
+ * - 2: Command blocked (definitive Windows CMD pattern detected)
  */
 
 const fs = require('fs');
@@ -20,6 +20,7 @@ const os = require('os');
 const WINDOWS_COMMANDS = [
   {
     // Redirection to nul (Windows null device) - CRITICAL: creates 'nul' file in Git Bash
+    // WARNING ONLY: might be intentional in test scripts
     pattern: /[12]?>\s*nul\b/i,
     message: 'Windows `nul` device redirection creates a file named "nul" in Git Bash',
     suggestion: 'Use `/dev/null` instead of `nul` for cross-platform compatibility',
@@ -28,9 +29,10 @@ const WINDOWS_COMMANDS = [
       'command 2>nul → command 2>/dev/null',
       'command >nul 2>&1 → command > /dev/null 2>&1',
     ],
+    blocking: false,
   },
   {
-    // dir with Windows flags
+    // dir with Windows flags - BLOCKING (unambiguous CMD command)
     pattern: /^dir\s+\/[a-zA-Z]/,
     message: 'Windows `dir` command with flags detected',
     suggestion: 'Use `ls -la` (list) or `find . -type f` (recursive) instead',
@@ -39,69 +41,80 @@ const WINDOWS_COMMANDS = [
       'dir /b path → ls -1 "path"',
       'dir /s path → ls -R "path"',
     ],
+    blocking: true,
   },
   {
     // dir without flags but could be ambiguous
+    // WARNING ONLY: might work in some contexts
     pattern: /^dir\s+[A-Z]:\\/i,
     message: 'Windows-style path with `dir` command',
     suggestion: 'Use forward slashes and `ls` instead',
     examples: ['dir D:\\path → ls -la "D:/path"'],
+    blocking: false,
   },
   {
-    // type command (Windows equivalent of cat)
+    // type command (Windows equivalent of cat) - BLOCKING
     pattern: /^type\s+/,
     message: 'Windows `type` command detected',
     suggestion: 'Use `cat` instead',
     examples: ['type file.txt → cat file.txt'],
+    blocking: true,
   },
   {
-    // copy command
+    // copy command - BLOCKING
     pattern: /^copy\s+/i,
     message: 'Windows `copy` command detected',
     suggestion: 'Use `cp` instead',
     examples: ['copy src dest → cp src dest'],
+    blocking: true,
   },
   {
-    // move command
+    // move command - BLOCKING
     pattern: /^move\s+/i,
     message: 'Windows `move` command detected',
     suggestion: 'Use `mv` instead',
     examples: ['move src dest → mv src dest'],
+    blocking: true,
   },
   {
-    // del/erase command
+    // del/erase command - BLOCKING
     pattern: /^(del|erase)\s+/i,
     message: 'Windows `del` command detected',
     suggestion: 'Use `rm` instead',
     examples: ['del file.txt → rm file.txt'],
+    blocking: true,
   },
   {
-    // md/mkdir with backslashes
+    // md/mkdir - BLOCKING
     pattern: /^md\s+/i,
     message: 'Windows `md` command detected',
     suggestion: 'Use `mkdir -p` instead',
     examples: ['md path\\subdir → mkdir -p "path/subdir"'],
+    blocking: true,
   },
   {
-    // rd/rmdir
+    // rd/rmdir - BLOCKING
     pattern: /^(rd|rmdir)\s+/i,
     message: 'Windows `rd` command detected',
     suggestion: 'Use `rm -r` or `rmdir` with forward slashes',
     examples: ['rd /s path → rm -rf path'],
+    blocking: true,
   },
   {
-    // cls command
+    // cls command - BLOCKING
     pattern: /^cls$/i,
     message: 'Windows `cls` command detected',
     suggestion: 'Use `clear` instead',
     examples: ['cls → clear'],
+    blocking: true,
   },
   {
-    // ren/rename
+    // ren/rename - BLOCKING
     pattern: /^(ren|rename)\s+/i,
     message: 'Windows `ren` command detected',
     suggestion: 'Use `mv` instead',
     examples: ['ren old new → mv old new'],
+    blocking: true,
   },
 ];
 
@@ -125,11 +138,13 @@ function isUnixShellOnWindows() {
 
 /**
  * Analyze a command for cross-platform issues
+ * @returns {{ issues: Array, hasBlocking: boolean }|null}
  */
 function analyzeCommand(command) {
   if (!command || typeof command !== 'string') return null;
 
   const issues = [];
+  let hasBlocking = false;
   const trimmed = command.trim();
 
   // Check for Windows-specific commands
@@ -140,11 +155,15 @@ function analyzeCommand(command) {
         message: cmd.message,
         suggestion: cmd.suggestion,
         examples: cmd.examples,
+        blocking: cmd.blocking || false,
       });
+      if (cmd.blocking) {
+        hasBlocking = true;
+      }
     }
   }
 
-  // Check for backslash paths (common cross-platform issue)
+  // Check for backslash paths (common cross-platform issue) - WARNING ONLY
   if (BACKSLASH_PATH_PATTERN.test(trimmed) && !MULTIPLE_BACKSLASHES.test(trimmed)) {
     issues.push({
       type: 'backslash_path',
@@ -154,23 +173,29 @@ function analyzeCommand(command) {
         'D:\\path\\file → "D:/path/file"',
         'C:\\Users\\name → "C:/Users/name"',
       ],
+      blocking: false,
     });
   }
 
-  return issues.length > 0 ? issues : null;
+  return issues.length > 0 ? { issues, hasBlocking } : null;
 }
 
 /**
- * Format warning message
+ * Format warning or blocking message
+ * @param {Array} issues - Detected issues
+ * @param {boolean} blocking - Whether any issue is blocking
  */
-function formatWarning(issues) {
+function formatMessage(issues, blocking) {
   const lines = [
-    '⚠️  **Cross-Platform Compatibility Warning**',
+    blocking
+      ? '🚫  **Windows CMD Command Blocked**'
+      : '⚠️  **Cross-Platform Compatibility Warning**',
     '',
   ];
 
   for (const issue of issues) {
-    lines.push(`**Issue:** ${issue.message}`);
+    const severity = issue.blocking ? '**BLOCKED**' : '*Warning*';
+    lines.push(`${severity}: ${issue.message}`);
     lines.push(`**Fix:** ${issue.suggestion}`);
     if (issue.examples && issue.examples.length > 0) {
       lines.push('**Examples:**');
@@ -182,8 +207,13 @@ function formatWarning(issues) {
   }
 
   lines.push('---');
-  lines.push('*This command may fail in Git Bash/Unix shells on Windows.*');
-  lines.push('*Use portable alternatives for cross-platform compatibility.*');
+  if (blocking) {
+    lines.push('*This Windows CMD command will FAIL in Git Bash/Unix shells.*');
+    lines.push('*Use the portable Unix alternative shown above.*');
+  } else {
+    lines.push('*This command may fail in Git Bash/Unix shells on Windows.*');
+    lines.push('*Use portable alternatives for cross-platform compatibility.*');
+  }
 
   return lines.join('\n');
 }
@@ -213,14 +243,19 @@ try {
   }
 
   // Analyze for cross-platform issues
-  const issues = analyzeCommand(command);
+  const result = analyzeCommand(command);
 
-  if (issues) {
-    // Output warning but allow command to proceed (fail-open)
-    console.log(formatWarning(issues));
+  if (result) {
+    // Output message (warning or blocking error)
+    console.log(formatMessage(result.issues, result.hasBlocking));
+
+    // Exit 2 to block if definitive CMD pattern detected
+    if (result.hasBlocking) {
+      process.exit(2);
+    }
   }
 
-  // Always allow - this is a warning hook, not a blocking hook
+  // Allow - no issues detected
   process.exit(0);
 } catch (error) {
   // Fail-open on any error

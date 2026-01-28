@@ -2,7 +2,7 @@
  * Tracking Hooks Test Suite
  *
  * Tests for:
- * - edit-count-tracker.cjs: Multi-file edit detection and warnings
+ * - edit-complexity-tracker.cjs: Multi-file edit detection and warnings
  * - pattern-learner.cjs: User correction pattern detection
  * - save-context-memory.cjs: PreCompact context preservation
  */
@@ -34,17 +34,17 @@ const {
 } = require('../lib/test-utils.cjs');
 
 // Hook paths
-const EDIT_COUNT_TRACKER = getHookPath('edit-count-tracker.cjs');
+const EDIT_COUNT_TRACKER = getHookPath('edit-complexity-tracker.cjs');
 const PATTERN_LEARNER = getHookPath('pattern-learner.cjs');
 const SAVE_CONTEXT_MEMORY = getHookPath('save-context-memory.cjs');
 
 // ============================================================================
-// edit-count-tracker.cjs Tests
+// edit-complexity-tracker.cjs Tests
 // ============================================================================
 
 const editCountTrackerTests = [
   {
-    name: '[edit-count-tracker] tracks Edit tool usage',
+    name: '[edit-complexity-tracker] tracks Edit tool usage',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -68,7 +68,7 @@ const editCountTrackerTests = [
     }
   },
   {
-    name: '[edit-count-tracker] tracks Write tool usage',
+    name: '[edit-complexity-tracker] tracks Write tool usage',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -89,7 +89,7 @@ const editCountTrackerTests = [
     }
   },
   {
-    name: '[edit-count-tracker] warns after 3+ edits without todos',
+    name: '[edit-complexity-tracker] warns after 3+ edits without todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -125,7 +125,7 @@ const editCountTrackerTests = [
     }
   },
   {
-    name: '[edit-count-tracker] resets count on TodoWrite',
+    name: '[edit-complexity-tracker] resets count on TodoWrite',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -157,7 +157,7 @@ const editCountTrackerTests = [
     }
   },
   {
-    name: '[edit-count-tracker] suppresses warning when todos exist',
+    name: '[edit-complexity-tracker] suppresses warning when todos exist',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -197,7 +197,7 @@ const editCountTrackerTests = [
     }
   },
   {
-    name: '[edit-count-tracker] ignores Read tool',
+    name: '[edit-complexity-tracker] ignores Read tool',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -220,7 +220,7 @@ const editCountTrackerTests = [
     }
   },
   {
-    name: '[edit-count-tracker] ignores Bash tool',
+    name: '[edit-complexity-tracker] ignores Bash tool',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -236,7 +236,7 @@ const editCountTrackerTests = [
     }
   },
   {
-    name: '[edit-count-tracker] handles empty input gracefully',
+    name: '[edit-complexity-tracker] handles empty input gracefully',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -248,7 +248,7 @@ const editCountTrackerTests = [
     }
   },
   {
-    name: '[edit-count-tracker] deduplicates same file edits',
+    name: '[edit-complexity-tracker] deduplicates same file edits',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -276,7 +276,7 @@ const editCountTrackerTests = [
     }
   },
   {
-    name: '[edit-count-tracker] handles MultiEdit tool',
+    name: '[edit-complexity-tracker] handles MultiEdit tool',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
