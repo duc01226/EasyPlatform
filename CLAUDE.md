@@ -6,6 +6,31 @@ This file provides essential context and navigation for AI agents working on Eas
 
 ---
 
+## FIRST ACTION DECISION (Before ANY tool call)
+
+**⛔ STOP — DO NOT CALL ANY TOOL YET ⛔**
+
+1. Is this a slash command (e.g., `/plan`, `/cook`)? → Execute it
+2. Does prompt match a workflow? → Activate workflow
+3. Is this research-only? → Proceed with investigation
+4. **OTHERWISE → MUST invoke `/plan <prompt>` FIRST**
+
+**Research-only means:** Explain, describe, list, summarize — with NO file output.
+**NOT research-only:** Analyze + update, recommend + implement, review + fix → Use `/plan`
+
+---
+
+## **IMPORTANT: Task Planning Rules (MUST FOLLOW)**
+
+- **Always break tasks into many small todo items** — granular tracking prevents missed steps
+- **Always add a final review todo task** to review all work done at the end to find any fix or enhancement needed
+- **Mark todos complete immediately** after finishing each one — do not batch completions
+- **Exactly ONE todo in_progress at any time** — complete current before starting next
+- **If blocked, create a new todo** describing what needs resolution — never mark blocked tasks as completed
+- **No speculation or hallucination** — always answer with proof (code evidence, file:line references, search results). If unsure, investigate first; never fabricate
+
+---
+
 ## CRITICAL: Always Plan Before Implement
 
 Before implementing ANY non-trivial task, you MUST:
@@ -456,62 +481,117 @@ See: [claude-kit-setup.md#external-memory-swap-system](docs/claude/claude-kit-se
 
 ## Automatic Workflow Detection (MUST FOLLOW)
 
-Workflows are automatically injected as a catalog by the `workflow-router.cjs` hook. Analyze the user's prompt, select the matching workflow, and invoke `/workflow:start <id>` to activate it.
+Workflows are automatically injected by the `workflow-router.cjs` hook. Use the **Decision Tree** below as the PRIMARY selection mechanism, then invoke `/workflow:start <id>`.
 
-### How It Works
+### Workflow Selection Decision Tree (PRIMARY)
 
-1. **Catalog Injection:** The router hook injects a compact workflow catalog into qualifying prompts (>=15 chars, not slash commands, not `quick:` prefixed)
-2. **AI Selection:** You read the catalog's `whenToUse` descriptions and select the best matching workflow
-3. **Activation:** Invoke `/workflow:start <id>` to activate the workflow — this creates tracking state and outputs the full sequence
+```text
+Analyze user prompt for these keywords (check in order):
+│
+├─ "bug" | "error" | "fix" | "broken" | "crash" | "not working" | exception trace
+│   └─ → bugfix
+│
+├─ "implement" | "add" | "create" | "build" | "develop" | "new feature"
+│   └─ → feature (confirm first)
+│
+├─ "refactor" | "restructure" | "clean up" | "extract" | "technical debt"
+│   └─ → refactor (confirm first)
+│
+├─ "migration" | "schema" | "add column" | "EF migration" | "alter table"
+│   └─ → migration (confirm first)
+│
+├─ "all files" | "batch" | "bulk" | "find-replace across" | "every instance"
+│   └─ → batch-operation (confirm first)
+│
+├─ "how does" | "where is" | "explain" | "understand" | "trace" | "explore"
+│   └─ → investigation
+│
+├─ "review PR" | "code review" | "review this code"
+│   └─ → review
+│
+├─ "review changes" | "pre-commit" | "staged" | "uncommitted" | "before commit"
+│   └─ → review-changes
+│
+├─ "quality audit" | "best practices" | "ensure no flaws" | "audit-and-fix"
+│   └─ → quality-audit (confirm first)
+│
+├─ "security" | "vulnerability" | "OWASP" | "penetration"
+│   └─ → security-audit
+│
+├─ "performance" | "slow" | "optimize" | "N+1" | "latency" | "bottleneck"
+│   └─ → performance (confirm first)
+│
+├─ "verify" | "validate" | "make sure" | "ensure" | "confirm works"
+│   └─ → verification (confirm first)
+│
+├─ "deploy" | "CI/CD" | "infrastructure" | "Docker" | "pipeline"
+│   └─ → deployment (confirm first)
+│
+├─ "docs" | "documentation" | "README"
+│   ├─ target is docs/business-features/ → business-feature-docs
+│   └─ otherwise → documentation
+│
+├─ "idea" | "product request" | "backlog" | "PBI" | "feature request"
+│   └─ → idea-to-pbi (confirm first)
+│
+├─ "test spec" | "test cases" | "QA" | "generate tests from"
+│   └─ → pbi-to-tests
+│
+├─ "sprint planning" | "prioritize backlog" | "iteration planning"
+│   └─ → sprint-planning (confirm first)
+│
+├─ "status report" | "sprint update" | "project progress"
+│   └─ → pm-reporting
+│
+├─ "release prep" | "pre-release" | "go-live" | "deployment checklist"
+│   └─ → release-prep (confirm first)
+│
+├─ "design spec" | "wireframe" | "mockup" | "UI/UX spec"
+│   └─ → design-workflow
+│
+├─ "prepare" | "setup" | "kick off" | "pre-coding" | "quality gate"
+│   └─ → pre-development
+│
+└─ No keyword match → Handle directly (no workflow)
+```
 
-### Complete Workflow Reference (All 22 Workflows)
+### Workflow Quick Reference by Category
 
-#### Implementation Workflows
+#### Implementation Workflows (confirm: Yes unless noted)
 
-| Workflow ID | Name | When To Use | When NOT To Use | Confirm? |
-| --- | --- | --- | --- | --- |
-| **feature** | Feature Implementation | User wants to implement, add, create, build, or develop a new feature, functionality, module, or component | Bug fixes, documentation-only, test-only, migration, refactoring, investigation | Yes |
-| **bugfix** | Bug Fix | User reports a bug, error, crash, broken functionality, or asks to fix/debug/troubleshoot. Includes regression fixes, 'not working' reports, exception traces | New features, refactoring, documentation, investigation without fixing | No |
-| **refactor** | Code Refactoring | User wants to refactor, restructure, reorganize, clean up code, improve code quality, extract methods, rename, split/merge components, or address technical debt | Bug fixes, new features, quality audits | Yes |
-| **migration** | Database Migration | User wants to create or run database migrations: schema changes, data migrations, EF migrations, adding/removing/altering columns or tables | Explaining migration concepts, checking migration history/status | Yes |
-| **batch-operation** | Batch Operation | User wants to apply changes across multiple files, directories, or components at once. Includes batch updates, bulk renames, find-and-replace across codebase | Single-file changes, test file creation, documentation updates | Yes |
-| **deployment** | Deployment & Infrastructure | User wants to set up or modify deployment, infrastructure, CI/CD pipelines, Docker configuration, or deploy to environments | Explaining deployment concepts, checking deployment status/history | Yes |
-| **performance** | Performance Optimization | User wants to analyze or optimize performance: fix slow queries, reduce latency, improve throughput, resolve N+1 problems, address bottlenecks | Explaining performance concepts, checking performance reports/history | Yes |
+- `feature` — implement, add, create, build, develop
+- `bugfix` — bug, error, crash, fix, debug (No confirm)
+- `refactor` — restructure, clean up, extract, rename
+- `migration` — schema, columns, EF migration
+- `batch-operation` — all files, bulk, find-replace across
+- `deployment` — CI/CD, Docker, infrastructure
+- `performance` — slow, optimize, N+1, bottleneck
 
-#### Verification & Review Workflows
+#### Review & Audit Workflows (confirm: Yes for audit workflows)
 
-| Workflow ID | Name | When To Use | When NOT To Use | Confirm? |
-| --- | --- | --- | --- | --- |
-| **verification** | Verification & Validation | User wants to verify, validate, confirm, check that something works correctly, or ensure expected behavior. Includes 'make sure' and 'ensure that' requests | New feature implementation, code review, documentation, investigation-only, quality audits | Yes |
-| **review** | Code Review | User wants a code review, PR review, code quality check, or audit of specific code or changes | Reviewing uncommitted/staged changes (use review-changes), reviewing plans/designs/docs, quality audits with fixes | No |
-| **review-changes** | Review Current Changes | User wants to review current uncommitted, staged, or recent changes before committing. Includes pre-commit review and 'review all changes' | PR reviews, release prep, quality audits, investigating how code works | No |
-| **quality-audit** | Quality Audit | User wants a quality audit: review code for best practices, ensure no flaws, verify quality standards, or audit-and-fix workflow | Reviewing uncommitted changes (use review-changes), PR review, bug fixes | Yes |
-| **security-audit** | Security Audit | User wants a security audit: vulnerability assessment, OWASP check, security review, penetration test analysis | Implementing new security features, fixing known security bugs | No |
+- `review` — PR review, code review (No confirm)
+- `review-changes` — pre-commit, staged changes (No confirm)
+- `quality-audit` — best practices, ensure no flaws
+- `security-audit` — vulnerability, OWASP (No confirm)
+- `verification` — verify, validate, make sure
 
-#### Documentation & Investigation Workflows
+#### Investigation & Documentation Workflows (No confirm)
 
-| Workflow ID | Name | When To Use | When NOT To Use | Confirm? |
-| --- | --- | --- | --- | --- |
-| **investigation** | Code Investigation | User asks how something works, where code is located, wants to understand or explore a codebase feature, trace code paths, or explain implementation details | Any task requiring code changes: implementing, fixing, refactoring, creating, updating, deleting, deploying, or writing documentation | No |
-| **documentation** | Documentation Update | User wants to write, update, or improve general documentation, README, or code comments | Business feature docs (use business-feature-docs), code implementation, test-only changes | No |
-| **business-feature-docs** | Business Feature Docs | User wants to create or update business feature documentation using the 26-section template. Includes module docs targeting docs/business-features/ | General documentation updates, code comments, README changes | No |
+- `investigation` — how does, where is, explain, trace
+- `documentation` — general docs, README, comments
+- `business-feature-docs` — 26-section template in docs/business-features/
 
-#### Design & Product Workflows
+#### Product & Planning Workflows
 
-| Workflow ID | Name | When To Use | When NOT To Use | Confirm? |
-| --- | --- | --- | --- | --- |
-| **design-workflow** | Design Workflow | User wants to create a UI/UX design specification, mockup, wireframe, or component spec from requirements | Implementing an existing design in code, coding from a spec | No |
-| **idea-to-pbi** | Idea to PBI | User has a new product idea, feature request, or wants to add to the backlog. Includes refining ideas into PBIs and creating user stories | Bug fixes, code implementation, investigation | Yes |
-| **pbi-to-tests** | PBI to Tests | User wants to create or generate test specs/cases from a PBI, feature, or story. Includes QA test generation | Running existing tests, executing test suites | No |
+- `idea-to-pbi` — new idea, feature request, backlog (confirm)
+- `pbi-to-tests` — test specs from PBI (No confirm)
+- `sprint-planning` — prioritize, iteration planning (confirm)
+- `pm-reporting` — status report, sprint update (No confirm)
+- `release-prep` — pre-release checks, go-live (confirm)
+- `design-workflow` — wireframe, mockup, UI spec (No confirm)
+- `pre-development` — prepare, setup, kick off, quality gate (No confirm)
 
-#### Planning & Management Workflows
-
-| Workflow ID | Name | When To Use | When NOT To Use | Confirm? |
-| --- | --- | --- | --- | --- |
-| **pre-development** | Pre-Development Setup | User wants to prepare before starting development: quality gate checks, setup for new feature work, kick off a new feature, pre-coding preparation | Already in development, just wanting to explain pre-development concept | No |
-| **release-prep** | Release Preparation | User wants to prepare for a release: pre-release checks, release readiness, deployment checklist, go-live verification | Git release commands, npm publish, release notes generation, release branch management | Yes |
-| **pm-reporting** | PM Reporting | User wants a status report, sprint update, project progress report, blocker analysis, or comprehensive project overview | Git status, commit status, PR status, build status, quick one-line status checks | No |
-| **sprint-planning** | Sprint Planning | User wants to plan a sprint: prioritize backlog, analyze dependencies, prepare team sync, iteration planning, or sprint kickoff | Sprint review, retrospective, sprint status report, end-of-sprint activities | Yes |
+> **Full workflow details:** See [copilot-instructions.md](.github/copilot-instructions.md#workflow-decision-guide-comprehensive)
 
 ### Workflow Execution Protocol
 
@@ -541,18 +621,3 @@ Workflows are automatically injected as a catalog by the `workflow-router.cjs` h
 
 > Activated: **Feature Implementation** workflow. Following: `/scout` → `/plan` → `/plan:review` → `/cook` → ...
 > Proceed with this workflow? (yes/no/quick)
-
----
-
-## **IMPORTANT: Task Planning Rules (MUST FOLLOW)**
-
-- **Always break tasks into many small todo items** — granular tracking prevents missed steps
-- **Always add a final review todo task** to review all work done at the end to find any fix or enhancement needed
-- **Mark todos complete immediately** after finishing each one — do not batch completions
-- **Exactly ONE todo in_progress at any time** — complete current before starting next
-- **If blocked, create a new todo** describing what needs resolution — never mark blocked tasks as completed
-- **No speculation or hallucination** — always answer with proof (code evidence, file:line references, search results). If unsure, investigate first; never fabricate
-
----
-
-> **IMPORTANT:** If the user's prompt does not match any workflows, always use the command skill `/plan <user prompt>` to create an implementation plan first.

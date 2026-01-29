@@ -30,6 +30,10 @@
         ".github/instructions": true
     },
     "chat.mcp.access": "all",
+    "chat.useAgentSkills": true,
+    "chat.useAgentsMdFile": true,
+    "chat.useNestedAgentsMdFiles": true,
+    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
     "chat.notifyWindowOnConfirmation": true,
     "chat.tools.edits.autoApprove": {
         "*.cjs": true,
@@ -194,8 +198,6 @@
     "chat.tools.urls.autoApprove": {
         "*": true
     },
-    "chat.useAgentSkills": true,
-    "chat.useNestedAgentsMdFiles": true,
     "dotnet.defaultSolution": "src\\Easy.Platform.sln",
     "editor.aiStats.enabled": true,
     "editor.codeActionsOnSave": {
@@ -235,7 +237,6 @@
     "github.copilot.chat.agent.autoFix": true,
     "github.copilot.chat.agent.thinkingTool": true,
     "github.copilot.chat.checkpoints.enabled": true,
-    "github.copilot.chat.codeGeneration.useInstructionFiles": true,
     "github.copilot.chat.codesearch.enabled": true,
     "github.copilot.chat.commitMessageGeneration.instructions": [
         {

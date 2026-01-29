@@ -4,29 +4,36 @@
 
 ---
 
-## MUST READ: Authoritative Source
+## FIRST ACTION DECISION (Before ANY tool call)
 
-**[`CLAUDE.md`](../CLAUDE.md)** (project root) is the **single source of truth** for all EasyPlatform development guidelines. You **MUST READ** it before any implementation work.
+**⛔ STOP — DO NOT CALL ANY TOOL YET ⛔**
 
-It contains:
+1. Is this a slash command (e.g., `/plan`, `/cook`)? → Execute it
+2. Does prompt match a workflow? → Activate workflow
+3. Is this research-only? → Proceed with investigation
+4. **OTHERWISE → MUST invoke `/plan <prompt>` FIRST**
 
-- Architecture overview & project structure
-- Backend/Frontend principles & anti-patterns
-- Code responsibility hierarchy (Entity > Service > Component)
-- BEM naming conventions (MANDATORY for all UI elements)
-- Decision trees (backend/frontend task routing)
-- Development commands & database connections
-- Cross-platform shell commands (Git Bash compatibility)
-- Clean code rules & code quality checklist
-- Changelog & release notes workflow
-- Code patterns quick reference table
+**Research-only means:** Explain, describe, list, summarize — with NO file output.
+**NOT research-only:** Analyze + update, recommend + implement, review + fix → Use `/plan`
 
-**For full code examples (auto-injected when editing source files):**
+---
 
-- `.ai/docs/backend-code-patterns.md` — 16 backend C# patterns with full code blocks
-- `.ai/docs/frontend-code-patterns.md` — 6 frontend TypeScript patterns with full code blocks
+### IMPORTANT: Task Planning Rules (MUST FOLLOW)
 
-**This file contains Copilot-specific additions only** — workflow configuration, prompt mapping, verification protocols, context strategies, and workspace boundaries.
+> **Breaking tasks into small todos is CRITICAL for success.**
+
+**Rules:**
+
+1. **Always break tasks into many small, actionable todos** — Each todo should be completable in one focused step
+2. **Always add a final review todo** — Review the work done at the end to find any fixes or enhancements needed
+3. **Mark todos complete IMMEDIATELY** — Never batch completions; mark each done as soon as verified
+4. **Only ONE todo in-progress at a time** — Focus on completing current task before starting next
+5. **Update todos after EVERY command** — Check remaining steps, identify next action
+6. **No speculation or hallucination** — always answer with proof (code evidence, file:line references, search results). If unsure, investigate first; never fabricate
+
+---
+
+> **IMPORTANT:** If the user's prompt does not match any workflows, always use the command skill `/plan <user prompt>` to create an implementation plan first.
 
 ---
 
@@ -66,7 +73,7 @@ It contains:
 
 13. Search for existing implementations before creating new code
 14. Place logic in LOWEST layer (Entity > Service > Component) to enable reuse
-15. Plan before implementing non-trivial tasks
+15. Plan (use /plan <user-prompt>) before implementing non-trivial tasks
 16. Follow Clean Architecture layers: Domain > Application > Persistence > Api
 
 ---
@@ -117,24 +124,121 @@ Each workflow step executes a prompt file from `.github/prompts/`:
 >
 > **"Simple task" exception is NARROW:** Only skip workflows for single-line typo fixes or when the user says "just do it" / prefixes with `quick:`. A prompt containing error details, stack traces, multi-line context, or multi-file changes is NEVER simple — always activate the matching workflow.
 
+### Workflow Selection Decision Tree (PRIMARY — Use This First)
+
+```text
+Analyze user prompt for these keywords (check in order):
+│
+├─ "bug" | "error" | "fix" | "broken" | "crash" | "not working" | exception trace
+│   └─ → bugfix
+│
+├─ "implement" | "add" | "create" | "build" | "develop" | "new feature"
+│   └─ → feature (confirm first)
+│
+├─ "refactor" | "restructure" | "clean up" | "extract" | "technical debt"
+│   └─ → refactor (confirm first)
+│
+├─ "migration" | "schema" | "add column" | "EF migration" | "alter table"
+│   └─ → migration (confirm first)
+│
+├─ "all files" | "batch" | "bulk" | "find-replace across" | "every instance"
+│   └─ → batch-operation (confirm first)
+│
+├─ "how does" | "where is" | "explain" | "understand" | "trace" | "explore"
+│   └─ → investigation
+│
+├─ "review PR" | "code review" | "review this code"
+│   └─ → review
+│
+├─ "review changes" | "pre-commit" | "staged" | "uncommitted" | "before commit"
+│   └─ → review-changes
+│
+├─ "quality audit" | "best practices" | "ensure no flaws" | "audit-and-fix"
+│   └─ → quality-audit (confirm first)
+│
+├─ "security" | "vulnerability" | "OWASP" | "penetration"
+│   └─ → security-audit
+│
+├─ "performance" | "slow" | "optimize" | "N+1" | "latency" | "bottleneck"
+│   └─ → performance (confirm first)
+│
+├─ "verify" | "validate" | "make sure" | "ensure" | "confirm works"
+│   └─ → verification (confirm first)
+│
+├─ "deploy" | "CI/CD" | "infrastructure" | "Docker" | "pipeline"
+│   └─ → deployment (confirm first)
+│
+├─ "docs" | "documentation" | "README"
+│   ├─ target is docs/business-features/ → business-feature-docs
+│   └─ otherwise → documentation
+│
+├─ "idea" | "product request" | "backlog" | "PBI" | "feature request"
+│   └─ → idea-to-pbi (confirm first)
+│
+├─ "test spec" | "test cases" | "QA" | "generate tests from"
+│   └─ → pbi-to-tests
+│
+├─ "sprint planning" | "prioritize backlog" | "iteration planning"
+│   └─ → sprint-planning (confirm first)
+│
+├─ "status report" | "sprint update" | "project progress"
+│   └─ → pm-reporting
+│
+├─ "release prep" | "pre-release" | "go-live" | "deployment checklist"
+│   └─ → release-prep (confirm first)
+│
+├─ "design spec" | "wireframe" | "mockup" | "UI/UX spec"
+│   └─ → design-workflow
+│
+├─ "prepare" | "setup" | "kick off" | "pre-coding" | "quality gate"
+│   └─ → pre-development
+│
+└─ No keyword match → Handle directly (no workflow)
+```
+
+### Workflow Quick Reference by Category
+
+#### Implementation Workflows (confirm: Yes unless noted)
+
+- `feature` — implement, add, create, build, develop
+- `bugfix` — bug, error, crash, fix, debug (No confirm)
+- `refactor` — restructure, clean up, extract, rename
+- `migration` — schema, columns, EF migration
+- `batch-operation` — all files, bulk, find-replace across
+- `deployment` — CI/CD, Docker, infrastructure
+- `performance` — slow, optimize, N+1, bottleneck
+
+#### Review & Audit Workflows (confirm: Yes for audit workflows)
+
+- `review` — PR review, code review (No confirm)
+- `review-changes` — pre-commit, staged changes (No confirm)
+- `quality-audit` — best practices, ensure no flaws
+- `security-audit` — vulnerability, OWASP (No confirm)
+- `verification` — verify, validate, make sure
+
+#### Investigation & Documentation Workflows (No confirm)
+
+- `investigation` — how does, where is, explain, trace
+- `documentation` — general docs, README, comments
+- `business-feature-docs` — 26-section template in docs/business-features/
+
+#### Product & Planning Workflows
+
+- `idea-to-pbi` — new idea, feature request, backlog (confirm)
+- `pbi-to-tests` — test specs from PBI (No confirm)
+- `sprint-planning` — prioritize, iteration planning (confirm)
+- `pm-reporting` — status report, sprint update (No confirm)
+- `release-prep` — pre-release checks, go-live (confirm)
+- `design-workflow` — wireframe, mockup, UI spec (No confirm)
+- `pre-development` — quality gate, setup for new feature (No confirm)
+
 ### Workflow Configuration
 
 Full workflow patterns are defined in **`.claude/workflows.json`** - the single source of truth for both Claude and Copilot. Supports multilingual triggers (EN, VI, ZH, JA, KO).
 
-### Quick Reference - Workflow Detection (22 Workflows)
+> **Detailed workflow reference table:** See [Workflow Decision Guide](#workflow-decision-guide-comprehensive) at end of file.
 
-| Category | Workflows | When to Use |
-| -------- | --------- | ----------- |
-| **Development** | `feature`, `bugfix`, `refactor`, `migration`, `batch-operation` | Implement, fix, restructure, migrate, or bulk-change code |
-| **Investigation** | `investigation`, `review`, `review-changes`, `quality-audit`, `security-audit`, `performance` | Understand code, review changes, audit quality/security/performance |
-| **Planning** | `pre-development`, `verification`, `deployment` | Prepare, verify behavior, deploy infrastructure |
-| **Documentation** | `documentation`, `business-feature-docs` | Update docs, create business feature docs |
-| **Team/Agile** | `idea-to-pbi`, `pbi-to-tests`, `sprint-planning`, `pm-reporting`, `release-prep` | Product management, QA, sprint planning, status reports |
-| **Design** | `design-workflow` | Create UI/UX design specs from requirements |
-
-> **Full workflow details with whenToUse/whenNotToUse:** See [Workflow Decision Guide](#workflow-decision-guide-comprehensive) at end of file.
-
-> **Workflow execution protocol, continuity rules, override methods, and task planning:** See [MANDATORY: Workflow & Task Planning](#mandatory-workflow--task-planning-read-this) at end of file.
+> **Workflow execution protocol, continuity rules, override methods:** See [MANDATORY: Workflow & Task Planning](#mandatory-workflow--task-planning-read-this) at end of file.
 
 ---
 
@@ -395,15 +499,15 @@ When resuming after context reset:
 
 ## Frontend Design System
 
-| Application       | Location                                                        |
-| ----------------- | --------------------------------------------------------------- |
-| Frontend Apps     | `docs/design-system/`                                           |
+| Application   | Location              |
+| ------------- | --------------------- |
+| Frontend Apps | `docs/design-system/` |
 
 ---
 
 ## Debugging Protocol
 
-When debugging or analyzing code removal, follow [AI-DEBUGGING-PROTOCOL.md](.github/AI-DEBUGGING-PROTOCOL.md):
+When debugging or analyzing code removal, follow [AI-DEBUGGING-PROTOCOL.md](AI-DEBUGGING-PROTOCOL.md):
 
 - Never assume based on first glance
 - Verify with multiple search patterns
@@ -471,634 +575,49 @@ _Last synced: 2026-01-11_
 
 Copilot instruction files in `.github/instructions/` provide **file-type-targeted rules** that are automatically loaded when editing matching files in chat/agent mode:
 
-| Instruction File                           | Applies To                             | Simulates                        |
-| ------------------------------------------ | -------------------------------------- | -------------------------------- |
-| `backend-csharp.instructions.md`           | `src/Backend/**/*.cs`, `src/Platform/**/*.cs` | Backend C# patterns & rules     |
-| `frontend-typescript.instructions.md`      | `src/Frontend/**/*.ts,tsx,html`, `libs/**/*.ts` | Frontend Angular/TS patterns    |
-| `frontend-scss.instructions.md`            | `src/Frontend/**/*.scss`, `libs/**/*.scss` | SCSS/BEM styling rules           |
-| `documentation.instructions.md`            | `docs/**/*.md`                         | Documentation standards          |
-| `code-review.instructions.md`              | `**/*` (excludes coding agent)         | Code review checklist            |
+| Instruction File                      | Applies To                                      | Simulates                    |
+| ------------------------------------- | ----------------------------------------------- | ---------------------------- |
+| `backend-csharp.instructions.md`      | `src/Backend/**/*.cs`, `src/Platform/**/*.cs`   | Backend C# patterns & rules  |
+| `frontend-typescript.instructions.md` | `src/Frontend/**/*.ts,tsx,html`, `libs/**/*.ts` | Frontend Angular/TS patterns |
+| `frontend-scss.instructions.md`       | `src/Frontend/**/*.scss`, `libs/**/*.scss`      | SCSS/BEM styling rules       |
+| `documentation.instructions.md`       | `docs/**/*.md`                                  | Documentation standards      |
+| `code-review.instructions.md`         | `**/*` (excludes coding agent)                  | Code review checklist        |
 
 Each file contains critical rules inline + references to full pattern files in `.ai/docs/` and `docs/claude/`.
 
 > **Note:** Instruction files apply to **chat and agent mode only**, not inline completions.
 
-**For full code pattern reference tables:** See `CLAUDE.md` → Code Patterns Reference section.
-
 ---
 
-## Code Patterns Reference
+## Code Patterns Reference (On-Demand via Skills)
 
-### Backend Patterns
+> **Code patterns are now loaded on-demand** via Agent Skills to optimize context usage.
+> Skills auto-activate based on file type being edited.
 
-#### 1. Clean Architecture
+### Skills for Code Patterns
 
-```csharp
-// Domain Layer
-public class Employee : RootEntity<Employee, string>
-{
-    [TrackFieldUpdatedDomainEvent]
-    public string Name { get; set; } = "";
-    public static Expression<Func<Employee, bool>> IsActiveExpr() => e => e.Status == Status.Active;
-}
+| Skill                       | Location                                    | Auto-Activates When                               |
+| --------------------------- | ------------------------------------------- | ------------------------------------------------- |
+| `backend-csharp-patterns`   | `.github/skills/backend-csharp-patterns/`   | Editing `*.cs` in `src/Backend/`, `src/Platform/` |
+| `frontend-angular-patterns` | `.github/skills/frontend-angular-patterns/` | Editing `*.ts` in `src/Frontend/`, `libs/`        |
+| `scss-bem-patterns`         | `.github/skills/scss-bem-patterns/`         | Editing `*.scss`, `*.css` files                   |
 
-public class AuditedEmployee : RootAuditedEntity<AuditedEmployee, string, string> { }
+### Full Pattern Files (Referenced by Skills)
 
-// Application Layer - CQRS Handler
-public class SaveEmployeeCommandHandler : PlatformCqrsCommandApplicationHandler<SaveEmployeeCommand, SaveEmployeeCommandResult>
-{
-    protected override async Task<SaveEmployeeCommandResult> HandleAsync(SaveEmployeeCommand req, CancellationToken ct)
-    {
-        var employee = await repository.GetByIdAsync(req.Id, ct);
-        employee.Name = req.Name;
-        var saved = await repository.CreateOrUpdateAsync(employee, ct);
-        return new SaveEmployeeCommandResult { Id = saved.Id };
-    }
-}
+| File                                    | Content                                      |
+| --------------------------------------- | -------------------------------------------- |
+| `.ai/docs/backend-code-patterns.md`     | 16 backend patterns with full C# examples    |
+| `.ai/docs/frontend-code-patterns.md`    | 6 frontend patterns with TypeScript examples |
+| `.ai/docs/compact-pattern-reference.md` | Quick lookup table for subagents             |
+| `docs/claude/scss-styling-guide.md`     | SCSS/BEM methodology guide                   |
 
-// Service Layer - Controller
-[ApiController, Route("api/[controller]")]
-public class EmployeeController : PlatformBaseController
-{
-    [HttpPost]
-    public async Task<IActionResult> Save([FromBody] SaveEmployeeCommand cmd) => Ok(await Cqrs.SendAsync(cmd));
-}
-```
+### Pattern Index (Quick Reference)
 
-#### 2. Repository Pattern
+**Backend (16 patterns):** Clean Architecture, Repository, Repository API, Validation, Cross-Service, Full-Text Search, CQRS Command, Query, Side Effects, Entity, DTO, Fluent Helpers, Background Jobs, Message Bus, Data Migration, Multi-Database
 
-```csharp
-IPlatformQueryableRootRepository<TEntity, TKey>  // Primary
-IPlatformRootRepository<TEntity, TKey>           // When queryable not needed
+**Frontend (6 patterns):** Component Hierarchy, Component API, State Store, API Service, Forms, Advanced
 
-// Extension pattern
-public static class EntityRepositoryExtensions
-{
-    public static async Task<Entity> GetByCodeAsync(this IPlatformQueryableRootRepository<Entity, string> repo, string code, CancellationToken ct = default)
-        => await repo.FirstOrDefaultAsync(Entity.CodeExpr(code), ct).EnsureFound();
-
-    public static async Task<List<Entity>> GetByIdsValidatedAsync(this IPlatformQueryableRootRepository<Entity, string> repo, List<string> ids, CancellationToken ct = default)
-        => await repo.GetAllAsync(p => ids.Contains(p.Id), ct).EnsureFoundAllBy(p => p.Id, ids);
-
-    public static async Task<string> GetIdByCodeAsync(this IPlatformQueryableRootRepository<Entity, string> repo, string code, CancellationToken ct = default)
-        => await repo.FirstOrDefaultAsync(q => q.Where(Entity.CodeExpr(code)).Select(p => p.Id), ct).EnsureFound();
-}
-```
-
-#### 3. Repository API
-
-```csharp
-await repository.CreateAsync(entity, ct);
-await repository.CreateManyAsync(entities, ct);
-await repository.UpdateAsync(entity, ct);
-await repository.UpdateManyAsync(entities, dismissSendEvent: false, checkDiff: true, ct);
-await repository.CreateOrUpdateAsync(entity, ct);
-await repository.CreateOrUpdateManyAsync(entities, ct);
-await repository.DeleteAsync(entityId, ct);
-await repository.DeleteManyAsync(expr => expr.Status == Status.Deleted, ct);
-await repository.GetByIdAsync(id, ct, loadRelatedEntities: p => p.Company);
-await repository.FirstOrDefaultAsync(expr, ct);
-await repository.GetAllAsync(expr, ct);
-await repository.GetByIdsAsync(ids, ct);
-var queryBuilder = repository.GetQueryBuilder((uow, q) => q.Where(...).OrderBy(...));
-await repository.CountAsync(expr, ct);
-await repository.AnyAsync(expr, ct);
-```
-
-#### 4. Validation Patterns
-
-```csharp
-// Sync validation
-public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
-    => base.Validate()
-        .And(_ => Name.IsNotNullOrEmpty(), "Name required")
-        .And(_ => Age >= 18, "Must be 18+");
-
-// Async validation
-protected override async Task<PlatformValidationResult<SaveCommand>> ValidateRequestAsync(PlatformValidationResult<SaveCommand> v, CancellationToken ct)
-    => await v
-        .AndAsync(r => repo.GetByIdsAsync(r.Ids, ct).ThenValidateFoundAllAsync(r.Ids, ids => $"Not found: {ids}"))
-        .AndNotAsync(r => repo.AnyAsync(p => r.Ids.Contains(p.Id) && p.IsExternal, ct), "Externals not allowed");
-
-// Chained with Of<>
-public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
-    => this.Validate(p => p.Id.IsNotNullOrEmpty(), "Id required")
-        .And(p => p.FromDate <= p.ToDate, "Invalid range")
-        .Of<IPlatformCqrsRequest>();
-
-// Ensure pattern
-var entity = await repo.GetByIdAsync(id, ct).EnsureFound($"Not found: {id}").Then(x => x.Validate().EnsureValid());
-```
-
-#### 5. Cross-Service Communication
-
-```csharp
-public class EmployeeEventProducer : PlatformCqrsEntityEventBusMessageProducer<EmployeeEventBusMessage, Employee, string> { }
-
-public class EmployeeEventConsumer : PlatformApplicationMessageBusConsumer<EmployeeEventBusMessage>
-{
-    protected override async Task HandleLogicAsync(EmployeeEventBusMessage msg) { /* sync logic */ }
-}
-```
-
-#### 6. Full-Text Search
-
-```csharp
-var queryBuilder = repository.GetQueryBuilder(q => q
-    .Where(t => t.IsActive)
-    .PipeIf(req.SearchText.IsNotNullOrEmpty(), q => searchService.Search(q, req.SearchText, Entity.SearchColumns(), fullTextAccurateMatch: true)));
-
-var (total, items) = await (
-    repository.CountAsync((uow, q) => queryBuilder(uow, q), ct),
-    repository.GetAllAsync((uow, q) => queryBuilder(uow, q).OrderByDescending(e => e.CreatedDate).PageBy(req.Skip, req.Take), ct)
-);
-
-// Entity search columns
-public static Expression<Func<Entity, object>>[] SearchColumns() => [e => e.Name, e => e.Code];
-```
-
-#### 7. CQRS Command Pattern (Command + Result + Handler in ONE file)
-
-```csharp
-public sealed class SaveEntityCommand : PlatformCqrsCommand<SaveEntityCommandResult>
-{
-    public string Id { get; set; } = "";
-    public string Name { get; set; } = "";
-    public override PlatformValidationResult<IPlatformCqrsRequest> Validate() => base.Validate().And(_ => Name.IsNotNullOrEmpty(), "Name required");
-}
-
-public sealed class SaveEntityCommandResult : PlatformCqrsCommandResult { public EntityDto Entity { get; set; } = null!; }
-
-internal sealed class SaveEntityCommandHandler : PlatformCqrsCommandApplicationHandler<SaveEntityCommand, SaveEntityCommandResult>
-{
-    protected override async Task<PlatformValidationResult<SaveEntityCommand>> ValidateRequestAsync(PlatformValidationResult<SaveEntityCommand> v, CancellationToken ct)
-        => await v.AndAsync(r => repo.GetByIdsAsync(r.RelatedIds, ct).ThenValidateFoundAllAsync(r.RelatedIds, ids => $"Not found: {ids}"));
-
-    protected override async Task<SaveEntityCommandResult> HandleAsync(SaveEntityCommand req, CancellationToken ct)
-    {
-        var entity = req.Id.IsNullOrEmpty()
-            ? req.MapToNewEntity().With(e => e.CreatedBy = RequestContext.UserId())
-            : await repo.GetByIdAsync(req.Id, ct).Then(e => req.UpdateEntity(e));
-        await entity.ValidateAsync(repo, ct).EnsureValidAsync();
-        var saved = await repo.CreateOrUpdateAsync(entity, ct);
-        return new SaveEntityCommandResult { Entity = new EntityDto(saved) };
-    }
-}
-```
-
-#### 8. Query Pattern
-
-```csharp
-public sealed class GetEntityListQuery : PlatformCqrsPagedQuery<GetEntityListQueryResult, EntityDto>
-{
-    public List<Status> Statuses { get; set; } = [];
-    public string? SearchText { get; set; }
-}
-
-internal sealed class GetEntityListQueryHandler : PlatformCqrsQueryApplicationHandler<GetEntityListQuery, GetEntityListQueryResult>
-{
-    protected override async Task<GetEntityListQueryResult> HandleAsync(GetEntityListQuery req, CancellationToken ct)
-    {
-        var qb = repo.GetQueryBuilder((uow, q) => q
-            .Where(e => e.CompanyId == RequestContext.CurrentCompanyId())
-            .WhereIf(req.Statuses.Any(), e => req.Statuses.Contains(e.Status))
-            .PipeIf(req.SearchText.IsNotNullOrEmpty(), q => searchService.Search(q, req.SearchText, Entity.SearchColumns())));
-
-        var (total, items) = await (
-            repo.CountAsync((uow, q) => qb(uow, q), ct),
-            repo.GetAllAsync((uow, q) => qb(uow, q).OrderByDescending(e => e.CreatedDate).PageBy(req.Skip, req.Take), ct, e => e.Related)
-        );
-        return new GetEntityListQueryResult(items, total, req);
-    }
-}
-```
-
-#### 9. Event-Driven Side Effects
-
-```csharp
-// ❌ WRONG - direct side effect
-await repo.CreateAsync(entity, ct);
-await notificationService.SendAsync(entity);
-
-// ✅ CORRECT - just save, platform auto-raises event
-await repo.CreateAsync(entity, ct);
-
-// Event handler (UseCaseEvents/[Feature]/)
-internal sealed class SendNotificationOnCreateHandler : PlatformCqrsEntityEventApplicationHandler<Entity>
-{
-    public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> e)
-        => !e.RequestContext.IsSeedingTestingData() && e.CrudAction == PlatformCqrsEntityEventCrudAction.Created;
-
-    protected override async Task HandleAsync(PlatformCqrsEntityEvent<Entity> e, CancellationToken ct)
-        => await notificationService.SendAsync(e.EntityData);
-}
-```
-
-#### 10. Entity Pattern
-
-```csharp
-[TrackFieldUpdatedDomainEvent]
-public sealed class Entity : RootEntity<Entity, string>
-{
-    [TrackFieldUpdatedDomainEvent] public string Name { get; set; } = "";
-    [JsonIgnore] public Company? Company { get; set; }
-
-    public static Expression<Func<Entity, bool>> UniqueExpr(string companyId, string code) => e => e.CompanyId == companyId && e.Code == code;
-    public static Expression<Func<Entity, bool>> FilterExpr(List<Status> s) => e => s.ToHashSet().Contains(e.Status!.Value);
-    public static Expression<Func<Entity, bool>> CompositeExpr(string companyId) => OfCompanyExpr(companyId).AndAlsoIf(true, () => e => e.IsActive);
-    public static Expression<Func<Entity, object?>>[] SearchColumns() => [e => e.Name, e => e.Code];
-
-    // Async expression with external dependency
-    public static async Task<Expression<Func<Entity, bool>>> FilterWithLicenseExprAsync(IRepository<License> licenseRepo, string companyId, CancellationToken ct = default)
-    {
-        var hasLicense = await licenseRepo.HasLicenseAsync(companyId, ct);
-        return hasLicense ? PremiumFilterExpr() : StandardFilterExpr();
-    }
-
-    [ComputedEntityProperty] public bool IsRoot { get => Id == RootId; set { } }
-    [ComputedEntityProperty] public string FullName { get => $"{First} {Last}".Trim(); set { } }
-
-    public static List<string> ValidateEntity(Entity? e) => e == null ? ["Not found"] : !e.IsActive ? ["Inactive"] : [];
-}
-```
-
-#### 11. Entity DTO Pattern
-
-```csharp
-public class EmployeeDto : PlatformEntityDto<Employee, string>
-{
-    public EmployeeDto() { }
-    public EmployeeDto(Employee e, User? u) : base(e) { Id = e.Id; Name = e.Name ?? u?.Name ?? ""; }
-
-    public string? Id { get; set; }
-    public string Name { get; set; } = "";
-    public OrgDto? Company { get; set; }
-
-    public EmployeeDto WithCompany(Org c) { Company = new OrgDto(c); return this; }
-
-    protected override object? GetSubmittedId() => Id;
-    protected override string GenerateNewId() => Ulid.NewUlid().ToString();
-    protected override Employee MapToEntity(Employee e, MapToEntityModes m) { e.Name = Name; return e; }
-}
-
-// Usage
-var dtos = employees.SelectList(e => new EmployeeDto(e, e.User).WithCompany(e.Company!));
-```
-
-#### 12. Fluent Helpers
-
-```csharp
-.With(e => e.Name = x).WithIf(cond, e => e.Status = Active)
-.Then(e => e.Process()).ThenAsync(async e => await e.ValidateAsync(ct))
-.EnsureFound("Not found").EnsureFoundAllBy(x => x.Id, ids).EnsureValidAsync()
-.AndAlso(expr).AndAlsoIf(cond, () => expr).OrElse(expr)
-.ThenSelect(e => e.Id).ParallelAsync(async i => await Process(i), maxConcurrent: 10)
-
-var (entity, files) = await (repo.CreateOrUpdateAsync(e, ct), files.ParallelAsync(f => Upload(f, ct)));
-```
-
-#### 13. Background Jobs
-
-```csharp
-[PlatformRecurringJob("0 3 * * *")]
-public sealed class PagedJob : PlatformApplicationPagedBackgroundJobExecutor
-{
-    protected override int PageSize => 50;
-    protected override async Task ProcessPagedAsync(int? skip, int? take, object? p, IServiceProvider sp, IPlatformUnitOfWorkManager uow)
-        => await repo.GetAllAsync(q => Query(q).PageBy(skip, take)).Then(items => items.ParallelAsync(Process));
-    protected override async Task<int> MaxItemsCount(PlatformApplicationPagedBackgroundJobParam<object?> p) => await repo.CountAsync(Query);
-}
-
-[PlatformRecurringJob("0 0 * * *")]
-public sealed class BatchJob : PlatformApplicationBatchScrollingBackgroundJobExecutor<Entity, string>
-{
-    protected override int BatchKeyPageSize => 50;
-    protected override int BatchPageSize => 25;
-    protected override IQueryable<Entity> EntitiesQueryBuilder(IQueryable<Entity> q, object? p, string? k) => q.WhereIf(k != null, e => e.CompanyId == k);
-    protected override IQueryable<string> EntitiesBatchKeyQueryBuilder(IQueryable<Entity> q, object? p, string? k) => EntitiesQueryBuilder(q, p, k).Select(e => e.CompanyId).Distinct();
-    protected override async Task ProcessEntitiesAsync(List<Entity> e, string k, object? p, IServiceProvider sp) => await e.ParallelAsync(Process);
-}
-
-// Scrolling pattern (data affected by processing, always queries from start)
-public override async Task ProcessAsync(Param p) => await UnitOfWorkManager.ExecuteInjectScopedScrollingPagingAsync<Entity>(
-    ExecutePaged, await repo.CountAsync(q => Query(q, p)) / PageSize, p, PageSize);
-
-// Job coordination (master schedules child jobs)
-await companies.ParallelAsync(async cId => await DateRangeBuilder.BuildDateRange(start, end).ParallelAsync(date =>
-    BackgroundJobScheduler.Schedule<ChildJob, Param>(Clock.UtcNow, new Param { CompanyId = cId, Date = date })));
-```
-
-#### 14. Message Bus Consumer
-
-```csharp
-internal sealed class EntityConsumer : PlatformApplicationMessageBusConsumer<EntityEventBusMessage>
-{
-    public override async Task<bool> HandleWhen(EntityEventBusMessage m, string r) => true;
-    public override async Task HandleLogicAsync(EntityEventBusMessage m, string r)
-    {
-        if (m.Payload.CrudAction == Created || (m.Payload.CrudAction == Updated && !m.Payload.EntityData.IsDeleted))
-        {
-            var (companyMissing, userMissing) = await (
-                Util.TaskRunner.TryWaitUntilAsync(() => companyRepo.AnyAsync(c => c.Id == m.Payload.EntityData.CompanyId), maxWaitSeconds: 300).Then(p => !p),
-                Util.TaskRunner.TryWaitUntilAsync(() => userRepo.AnyAsync(u => u.Id == m.Payload.EntityData.UserId), maxWaitSeconds: 300).Then(p => !p));
-            if (companyMissing || userMissing) return;
-
-            var existing = await repo.FirstOrDefaultAsync(e => e.Id == m.Payload.EntityData.Id);
-            if (existing == null) await repo.CreateAsync(m.Payload.EntityData.ToEntity().With(e => e.LastSyncDate = m.CreatedUtcDate));
-            else if (existing.LastSyncDate <= m.CreatedUtcDate) await repo.UpdateAsync(m.Payload.EntityData.UpdateEntity(existing).With(e => e.LastSyncDate = m.CreatedUtcDate));
-        }
-        if (m.Payload.CrudAction == Deleted) await repo.DeleteAsync(m.Payload.EntityData.Id);
-    }
-}
-```
-
-#### 15. Data Migration
-
-```csharp
-public class MigrateData : PlatformDataMigrationExecutor<DbContext>
-{
-    public override string Name => "20251022_MigrateData";
-    public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 22);
-    public override bool AllowRunInBackgroundThread => true;
-
-    public override async Task Execute(DbContext db)
-    {
-        var qb = repo.GetQueryBuilder(q => q.Where(Filter()));
-        await RootServiceProvider.ExecuteInjectScopedPagingAsync(await repo.CountAsync(q => qb(q)), 200, ExecutePage, qb);
-    }
-
-    static async Task<List<Entity>> ExecutePage(int skip, int take, Func<IQueryable<Entity>, IQueryable<Entity>> qb, IRepo<Entity> r, IPlatformUnitOfWorkManager u)
-    {
-        using var uow = u.Begin();
-        var items = await r.GetAllAsync(q => qb(q).OrderBy(e => e.Id).Skip(skip).Take(take));
-        await r.UpdateManyAsync(items, dismissSendEvent: true, checkDiff: false, ct: default);
-        await uow.CompleteAsync();
-        return items;
-    }
-}
-```
-
-### Frontend Patterns
-
-#### 1. Component Hierarchy
-
-```typescript
-PlatformComponent → PlatformVmComponent → PlatformFormComponent
-                  → PlatformVmStoreComponent
-
-AppBaseComponent → AppBaseVmComponent → AppBaseFormComponent
-                 → AppBaseVmStoreComponent
-
-FeatureComponent extends AppBaseVmStoreComponent<State, Store>
-```
-
-#### 2. Platform Component API
-
-```typescript
-// PlatformComponent
-status$: WritableSignal<'Pending'|'Loading'|'Success'|'Error'>;
-observerLoadingErrorState<T>(key?: string): OperatorFunction<T, T>;
-isLoading$(key?: string): Signal<boolean | null>;
-untilDestroyed<T>(): MonoTypeOperatorFunction<T>;
-tapResponse<T>(next?, error?, complete?): OperatorFunction<T, T>;
-
-// PlatformVmComponent
-vm: WritableSignal<T | undefined>;
-currentVm(): T;
-updateVm(partial): T;
-abstract initOrReloadVm: (isReload: boolean) => Observable<T | undefined>;
-
-// PlatformVmStoreComponent
-constructor(public store: TStore) {}
-vm: Signal<T | undefined>;
-reload(): void;
-
-// PlatformFormComponent
-form: FormGroup<PlatformFormGroupControls<T>>;
-mode: 'create'|'update'|'view';
-validateForm(): boolean;
-abstract initialFormConfig: () => PlatformFormConfig<T>;
-```
-
-#### 3. Component Usage
-
-```typescript
-// PlatformComponent
-export class ListComponent extends PlatformComponent {
-    load() {
-        this.api
-            .get()
-            .pipe(
-                this.observerLoadingErrorState('load'),
-                this.tapResponse(d => (this.data = d)),
-                this.untilDestroyed()
-            )
-            .subscribe();
-    }
-}
-
-// PlatformVmStore
-@Injectable()
-export class MyStore extends PlatformVmStore<MyVm> {
-    loadData = this.effectSimple(() => this.api.get().pipe(this.tapResponse(d => this.updateState({ data: d }))));
-    readonly data$ = this.select(s => s.data);
-}
-
-// PlatformVmStoreComponent
-export class ListComponent extends PlatformVmStoreComponent<MyVm, MyStore> {
-    constructor(store: MyStore) {
-        super(store);
-    }
-    refresh() {
-        this.reload();
-    }
-}
-
-// PlatformFormComponent
-export class FormComponent extends AppBaseFormComponent<FormVm> {
-    protected initialFormConfig = () => ({
-        controls: { email: new FormControl(this.currentVm().email, [Validators.required], [ifAsyncValidator(() => !this.isViewMode, uniqueValidator)]) },
-        dependentValidations: { email: ['name'] }
-    });
-    submit() {
-        if (this.validateForm()) {
-            /* save */
-        }
-    }
-}
-```
-
-#### 4. API Service
-
-```typescript
-@Injectable({ providedIn: 'root' })
-export class EntityApiService extends PlatformApiService {
-    protected get apiUrl() {
-        return environment.apiUrl + '/api/Entity';
-    }
-    getAll(q?: Query): Observable<Entity[]> {
-        return this.get('', q);
-    }
-    save(cmd: SaveCmd): Observable<Result> {
-        return this.post('', cmd);
-    }
-    search(c: Search): Observable<Entity[]> {
-        return this.post('/search', c, { enableCache: true });
-    }
-}
-```
-
-#### 5. FormArray
-
-```typescript
-protected initialFormConfig = () => ({
-  controls: {
-    items: { modelItems: () => vm.items, itemControl: (i, idx) => new FormGroup({ name: new FormControl(i.name, [Validators.required]) }) }
-  }
-});
-```
-
-#### 6. Advanced Frontend
-
-```typescript
-// @Watch decorator
-@Watch('onChanged') public data?: Data;
-@WatchWhenValuesDiff('search') public term = '';
-private onChanged(v: Data, c: SimpleChange<Data>) { if (!c.isFirstTimeSet) this.update(); }
-
-// RxJS operators
-this.search$.pipe(skipDuplicates(500), applyIf(this.enabled$, debounceTime(300)), tapOnce({ next: v => this.init(v) }), distinctUntilObjectValuesChanged(), this.untilDestroyed()).subscribe();
-
-// Form validators
-new FormControl('', [Validators.required, noWhitespaceValidator, startEndValidator('err', c => c.parent?.get('start')?.value, c => c.value)], [ifAsyncValidator(c => c.valid, uniqueValidator)]);
-
-// Utilities
-import { date_format, date_addDays, date_timeDiff, list_groupBy, list_distinctBy, list_sortBy, string_isEmpty, string_truncate, dictionary_map, dictionary_filter, immutableUpdate, deepClone, removeNullProps, guid_generate, task_delay, task_debounce } from '@libs/platform-core';
-
-// Module import
-import { PlatformCoreModule } from '@libs/platform-core';
-@NgModule({ imports: [PlatformCoreModule] })
-
-// Platform Directives
-<div platformSwipeToScroll>/* Horizontal scroll with drag */</div>
-<input [platformDisabledControl]="isDisabled" />
-
-// PlatformComponent APIs
-trackByItem = this.ngForTrackByItemProp<User>('id');
-trackByList = this.ngForTrackByImmutableList(this.users);
-storeSubscription('dataLoad', this.data$.subscribe(...));
-cancelStoredSubscription('dataLoad');
-isLoading$('req1'); isLoading$('req2');
-getAllErrorMsgs$(['req1', 'req2']);
-loadingRequestsCount(); reloadingRequestsCount();
-protected get devModeCheckLoadingStateElement() { return '.spinner'; }
-protected get devModeCheckErrorStateElement() { return '.error'; }
-
-// Store with caching
-@Injectable()
-export class MyStore extends PlatformVmStore<MyVm> {
-  protected get enableCaching() { return true; }
-  protected cachedStateKeyName = () => 'MyStore';
-  protected vmConstructor = (d?: Partial<MyVm>) => new MyVm(d);
-  protected beforeInitVm = () => this.loadInitialData();
-  loadData = this.effectSimple(() => this.api.get().pipe(this.observerLoadingErrorState('load'), this.tapResponse(d => this.updateState({ data: d }))));
-}
-```
-
-### Authorization
-
-```csharp
-// Controller
-[PlatformAuthorize(PlatformRoles.Admin, PlatformRoles.Manager)]
-[HttpPost] public async Task<IActionResult> Save([FromBody] Cmd c) => Ok(await Cqrs.SendAsync(c));
-
-// Handler validation
-protected override async Task<PlatformValidationResult<T>> ValidateRequestAsync(...)
-    => await v.AndNotAsync(_ => !RequestContext.HasRole(PlatformRoles.Admin), "Admin only")
-              .AndAsync(_ => repo.AnyAsync(e => e.CompanyId == RequestContext.CurrentCompanyId()), "Same company");
-
-// Entity filter
-public static Expression<Func<E, bool>> AccessExpr(string userId, string companyId) => e => e.UserId == userId || (e.CompanyId == companyId && e.IsPublic);
-```
-
-```typescript
-// Component
-get canEdit() { return this.hasRole(PlatformRoles.Admin) && this.isOwnCompany(); }
-
-// Template
-@if (hasRole(PlatformRoles.Admin)) { <button (click)="delete()">Delete</button> }
-
-// Route guard
-canActivate(): Observable<boolean> { return this.authService.hasRole$(PlatformRoles.Admin); }
-```
-
-### Migration
-
-```csharp
-// EF Core
-public partial class AddField : Migration { protected override void Up(MigrationBuilder m) { m.AddColumn<string>("Dept", "Employees"); } }
-
-// MongoDB
-public class MigrateData : PlatformMongoMigrationExecutor<ServiceDbContext>
-{
-    public override string Name => "20240115_Migrate";
-    public override async Task Execute() => await RootServiceProvider.ExecuteInjectScopedPagingAsync(await repo.CountAsync(q => q.Where(...)), 200,
-        async (skip, take, r, u) => { var items = await r.GetAllAsync(q => q.Skip(skip).Take(take)); await r.UpdateManyAsync(items, dismissSendEvent: true); return items; });
-}
-
-// Cross-DB migration (first-time setup, use events for ongoing sync)
-public class SyncData : PlatformDataMigrationExecutor<TargetDbContext>
-{
-    public override DateTime? OnlyForDbsCreatedBeforeDate => new(2024, 1, 15);
-    public override async Task Execute(TargetDbContext db) => await targetRepo.CreateManyAsync(
-        (await sourceDbContext.Entities.Where(e => e.CreatedDate < cutoffDate).ToListAsync()).Select(e => e.MapToTargetEntity()));
-}
-```
-
-### Helper vs Util
-
-```csharp
-// Helper (with dependencies)
-public class EntityHelper { private readonly IRepo<E> repo; public async Task<E> GetOrCreateAsync(string code, CancellationToken ct) => await repo.FirstOrDefaultAsync(t => t.Code == code, ct) ?? await CreateAsync(code, ct); }
-
-// Util (pure functions)
-public static class EntityUtil { public static string FullName(E e) => $"{e.First} {e.Last}".Trim(); public static bool IsActive(E e) => e.Status == Active; }
-```
-
-### Advanced Backend
-
-```csharp
-.IsNullOrEmpty() / .IsNotNullOrEmpty() / .RemoveWhere(pred, out removed) / .UpsertBy(key, items, update) / .SelectList(sel) / .ThenSelect(sel) / .ParallelAsync(fn, max) / .AddDistinct(item, key)
-
-var entity = dto.NotHasSubmitId() ? dto.MapToNewEntity().With(e => e.CreatedBy = RequestContext.UserId()) : await repo.GetByIdAsync(dto.Id, ct).Then(x => dto.UpdateToEntity(x));
-
-RequestContext.CurrentCompanyId() / .UserId() / .ProductScope() / .HasRequestAdminRoleInCompany()
-
-var (a, b, c) = await (repo1.GetAllAsync(...), repo2.GetAllAsync(...), repo3.GetAllAsync(...));
-
-public sealed class Helper : IPlatformHelper { private readonly IPlatformApplicationRequestContext ctx; public Helper(IPlatformApplicationRequestContextAccessor a) { ctx = a.Current; } }
-
-.With(e => e.Name = x).PipeActionIf(cond, e => e.Update()).PipeActionAsyncIf(async () => await svc.Any(), async e => await e.Sync())
-
-public static Expression<Func<E, bool>> ComplexExpr(int s, string c, int? m) => BaseExpr(s, c).AndAlso(e => e.User!.IsActive).AndAlsoIf(m != null, () => e => e.Start <= Clock.UtcNow.AddMonths(-m!.Value));
-
-// Domain Service Pattern (strategy for permissions)
-public static class PermissionService {
-    static readonly Dictionary<string, IRoleBasedPermissionCheckHandler> RoleHandlers = ...;
-    public static Expression<Func<E, bool>> GetCanManageExpr(IList<string> roles) => roles.Aggregate(e => false, (expr, role) => expr.OrElse(RoleHandlers[role].GetExpr()));
-}
-
-// Object Deep Comparison
-if (prop.GetValue(entity).IsValuesDifferent(prop.GetValue(existing))) entity.AddFieldUpdatedEvent(prop, oldVal, newVal);
-
-// Task Extensions
-task.WaitResult();  // NOT task.Wait() - preserves stack trace
-await target.WaitUntilGetValidResultAsync(t => repo.GetByIdAsync(t.Id), r => r != null, maxWaitSeconds: 30);
-.ThenGetWith(selector)  // Returns (T, T1)
-.ThenIfOrDefault(condition, nextTask, defaultValue)
-```
-
-### Anti-Patterns
+### Critical Anti-Patterns
 
 ```csharp
 // ❌ Direct cross-service DB access → ✅ Use message bus
@@ -1106,10 +625,6 @@ await target.WaitUntilGetValidResultAsync(t => repo.GetByIdAsync(t.Id), r => r !
 // ❌ Manual validation throw → ✅ Use PlatformValidationResult fluent API
 // ❌ Side effects in handler → ✅ Use entity event handlers
 // ❌ DTO mapping in handler → ✅ DTO owns mapping via MapToObject()/MapToEntity()
-
-// ✅ Correct DTO mapping
-public sealed class ConfigDto : PlatformDto<ConfigValue> { public override ConfigValue MapToObject() => new() { ClientId = ClientId }; }
-var config = req.Config.MapToObject().With(p => p.Secret = encrypt(p.Secret));
 ```
 
 ```typescript
@@ -1118,136 +633,117 @@ var config = req.Config.MapToObject().With(p => p.Secret = encrypt(p.Secret));
 // ❌ Missing untilDestroyed() → ✅ Always use .pipe(this.untilDestroyed())
 ```
 
-### Templates
-
-```csharp
-public sealed class Save{E}Command : PlatformCqrsCommand<Save{E}CommandResult> { public string Name { get; set; } = ""; public override PlatformValidationResult<IPlatformCqrsRequest> Validate() => base.Validate().And(_ => Name.IsNotNullOrEmpty(), "Required"); }
-internal sealed class Save{E}CommandHandler : PlatformCqrsCommandApplicationHandler<Save{E}Command, Save{E}CommandResult> { protected override async Task<Save{E}CommandResult> HandleAsync(Save{E}Command r, CancellationToken ct) { /* impl */ } }
-```
-
-```typescript
-@Component({ selector: 'app-{e}-list', template: `<app-loading [target]="this">@if (vm(); as vm) { @for (i of vm.items; track i.id) { <div>{{i.name}}</div> } }</app-loading>`, providers: [{E}Store] })
-export class {E}Component extends AppBaseVmStoreComponent<{E}State, {E}Store> { ngOnInit() { this.store.load(); } }
-```
-
-### Commands
-
-```bash
-dotnet build EasyPlatform.sln
-dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
-cd src/Frontend && npm install && nx serve playground-text-snippet
-docker-compose -f src/platform-example-app.docker-compose.yml up -d
-```
-
 ---
 
 ## Workflow Decision Guide (Comprehensive)
 
-> **This section is intentionally placed at the end for maximum AI attention.** Use this table to match user prompts to the correct workflow.
+> **This section is intentionally placed at the end for maximum AI attention.** Use the decision tree in the earlier section as PRIMARY lookup. This section provides detailed descriptions for disambiguation.
 
-### All 22 Workflows - When to Use
+### Workflow Definitions (Grouped by Category)
 
-| ID | Name | When to Use | When NOT to Use | Confirm? |
-|----|------|-------------|-----------------|----------|
-| `feature` | Feature Implementation | User wants to **implement, add, create, build, develop** a new feature, functionality, module, or component | Bug fixes, documentation-only, test-only, migration, refactoring, investigation | ✅ Yes |
-| `bugfix` | Bug Fix | User reports a **bug, error, crash, broken functionality**, or asks to **fix/debug/troubleshoot**. Includes regression fixes, 'not working' reports, exception traces | New features, refactoring, documentation, investigation without fixing | No |
-| `refactor` | Code Refactoring | User wants to **refactor, restructure, reorganize, clean up** code, improve quality, extract methods, rename, split/merge components, address technical debt | Bug fixes, new features, quality audits | ✅ Yes |
-| `migration` | Database Migration | User wants to **create or run database migrations**: schema changes, data migrations, EF migrations, adding/removing/altering columns or tables | Explaining migration concepts, checking migration history/status | ✅ Yes |
-| `batch-operation` | Batch Operation | User wants to **apply changes across multiple files/directories/components** at once. Includes bulk renames, find-and-replace across codebase, operations targeting 'all' or 'every' | Single-file changes, test file creation, documentation updates | ✅ Yes |
-| `investigation` | Code Investigation | User asks **how something works, where code is located**, wants to **understand or explore** a feature, trace code paths, explain implementation | Any task requiring code changes: implementing, fixing, refactoring, creating, updating, deleting | No |
-| `review` | Code Review | User wants a **code review, PR review, code quality check**, or audit of specific code or changes | Reviewing uncommitted/staged changes, reviewing plans/designs/docs, quality audits with fixes | No |
-| `review-changes` | Review Current Changes | User wants to **review current uncommitted, staged, or recent changes** before committing. Includes pre-commit review, 'review all changes' | PR reviews, release prep, quality audits, investigating how code works | No |
-| `quality-audit` | Quality Audit | User wants a **quality audit**: review code for best practices, ensure no flaws, verify quality standards, audit-and-fix workflow | Reviewing uncommitted changes, PR review, bug fixes | ✅ Yes |
-| `security-audit` | Security Audit | User wants a **security audit**: vulnerability assessment, OWASP check, security review, penetration test analysis | Implementing new security features, fixing known security bugs | No |
-| `performance` | Performance Optimization | User wants to **analyze or optimize performance**: fix slow queries, reduce latency, improve throughput, resolve N+1 problems, address bottlenecks | Explaining performance concepts, checking performance reports/history | ✅ Yes |
-| `verification` | Verification & Validation | User wants to **verify, validate, confirm, check** that something works correctly, or ensure expected behavior. Includes 'make sure' and 'ensure that' requests | New feature implementation, code review, documentation, investigation-only, quality audits | ✅ Yes |
-| `pre-development` | Pre-Development Setup | User wants to **prepare before starting development**: quality gate checks, setup for new feature work, kick off a new feature, pre-coding preparation | Already in development, just wanting to explain pre-development concept | No |
-| `deployment` | Deployment & Infrastructure | User wants to **set up or modify deployment, infrastructure, CI/CD pipelines**, Docker configuration, or deploy to environments | Explaining deployment concepts, checking deployment status/history | ✅ Yes |
-| `documentation` | Documentation Update | User wants to **write, update, or improve general documentation**, README, or code comments | Business feature docs (use business-feature-docs), code implementation, test-only changes | No |
-| `business-feature-docs` | Business Feature Documentation | User wants to **create or update business feature documentation** using the 26-section template. Includes module docs targeting `docs/business-features/` | General documentation updates, code comments, README changes | No |
-| `idea-to-pbi` | Idea to PBI | User has a **new product idea, feature request**, or wants to **add to the backlog**. Includes refining ideas into PBIs and creating user stories | Bug fixes, code implementation, investigation | ✅ Yes |
-| `pbi-to-tests` | PBI to Tests | User wants to **create or generate test specs/cases** from a PBI, feature, or story. Includes QA test generation | Running existing tests, executing test suites | No |
-| `sprint-planning` | Sprint Planning Session | User wants to **plan a sprint**: prioritize backlog, analyze dependencies, prepare team sync, iteration planning, sprint kickoff | Sprint review, retrospective, sprint status report, end-of-sprint activities | ✅ Yes |
-| `pm-reporting` | PM Reporting | User wants a **status report, sprint update, project progress report**, blocker analysis, or comprehensive project overview | Git status, commit status, PR status, build status, quick one-line status checks | No |
-| `release-prep` | Release Preparation | User wants to **prepare for a release**: pre-release checks, release readiness, deployment checklist, go-live verification | Git release commands, npm publish, release notes generation, release branch management | ✅ Yes |
-| `design-workflow` | Design Workflow | User wants to **create a UI/UX design specification**, mockup, wireframe, or component spec from requirements | Implementing an existing design in code, coding from a spec | No |
+#### Implementation Workflows
 
-### Workflow Selection Decision Tree
+**`feature`** — Feature Implementation (Confirm: Yes)
+- **Triggers:** implement, add, create, build, develop, new feature, functionality, module, component
+- **NOT for:** Bug fixes, documentation-only, test-only, migration, refactoring, investigation
 
-```
-User Prompt Analysis:
-│
-├─ Contains "bug", "error", "fix", "broken", "crash", "not working", exception trace?
-│   └─ YES → bugfix
-│
-├─ Contains "implement", "add", "create", "build", "develop", "new feature"?
-│   └─ YES → feature (confirm first)
-│
-├─ Contains "refactor", "restructure", "clean up", "improve code", "technical debt"?
-│   └─ YES → refactor (confirm first)
-│
-├─ Contains "migration", "schema change", "add column", "EF migration"?
-│   └─ YES → migration (confirm first)
-│
-├─ Contains "all files", "batch", "bulk", "find-replace across", "every instance"?
-│   └─ YES → batch-operation (confirm first)
-│
-├─ Contains "how does", "where is", "explain", "understand", "find", "trace"?
-│   └─ YES → investigation
-│
-├─ Contains "review PR", "code review", "audit code"?
-│   └─ YES → review
-│
-├─ Contains "review changes", "pre-commit", "staged changes", "uncommitted"?
-│   └─ YES → review-changes
-│
-├─ Contains "quality audit", "best practices", "ensure no flaws"?
-│   └─ YES → quality-audit (confirm first)
-│
-├─ Contains "security", "vulnerability", "OWASP", "penetration"?
-│   └─ YES → security-audit
-│
-├─ Contains "performance", "slow", "optimize", "N+1", "latency", "bottleneck"?
-│   └─ YES → performance (confirm first)
-│
-├─ Contains "verify", "validate", "make sure", "ensure", "confirm works"?
-│   └─ YES → verification (confirm first)
-│
-├─ Contains "deploy", "CI/CD", "infrastructure", "Docker", "pipeline"?
-│   └─ YES → deployment (confirm first)
-│
-├─ Contains "docs", "documentation", "README"?
-│   ├─ Target is docs/business-features/ → business-feature-docs
-│   └─ Otherwise → documentation
-│
-├─ Contains "idea", "product request", "backlog", "PBI"?
-│   └─ YES → idea-to-pbi (confirm first)
-│
-├─ Contains "test spec", "test cases", "QA", "generate tests from PBI"?
-│   └─ YES → pbi-to-tests
-│
-├─ Contains "sprint planning", "prioritize backlog", "iteration planning"?
-│   └─ YES → sprint-planning (confirm first)
-│
-├─ Contains "status report", "sprint update", "project progress"?
-│   └─ YES → pm-reporting
-│
-├─ Contains "release prep", "pre-release", "go-live", "deployment checklist"?
-│   └─ YES → release-prep (confirm first)
-│
-├─ Contains "design spec", "wireframe", "mockup", "UI/UX spec"?
-│   └─ YES → design-workflow
-│
-└─ No match → Handle directly (no workflow)
-```
+**`bugfix`** — Bug Fix (Confirm: No)
+- **Triggers:** bug, error, crash, broken, not working, fix, debug, troubleshoot, exception trace, regression
+- **NOT for:** New features, refactoring, documentation, investigation without fixing
+
+**`refactor`** — Code Refactoring (Confirm: Yes)
+- **Triggers:** refactor, restructure, reorganize, clean up, extract methods, rename, split/merge, technical debt
+- **NOT for:** Bug fixes, new features, quality audits
+
+**`migration`** — Database Migration (Confirm: Yes)
+- **Triggers:** database migration, schema change, EF migration, add/remove/alter column, data migration
+- **NOT for:** Explaining migration concepts, checking migration history/status
+
+**`batch-operation`** — Batch Operation (Confirm: Yes)
+- **Triggers:** all files, batch, bulk, find-replace across, every instance, multiple files/components
+- **NOT for:** Single-file changes, test file creation, documentation updates
+
+**`deployment`** — Deployment & Infrastructure (Confirm: Yes)
+- **Triggers:** deploy, CI/CD, infrastructure, Docker, pipeline, environment setup
+- **NOT for:** Explaining deployment concepts, checking deployment status/history
+
+**`performance`** — Performance Optimization (Confirm: Yes)
+- **Triggers:** performance, slow, optimize, N+1, latency, bottleneck, throughput
+- **NOT for:** Explaining performance concepts, checking performance reports/history
+
+#### Review & Audit Workflows
+
+**`review`** — Code Review (Confirm: No)
+- **Triggers:** code review, PR review, code quality check, audit specific code
+- **NOT for:** Reviewing uncommitted/staged changes, reviewing plans/designs/docs, quality audits with fixes
+
+**`review-changes`** — Review Current Changes (Confirm: No)
+- **Triggers:** review changes, pre-commit, staged changes, uncommitted, before commit
+- **NOT for:** PR reviews, release prep, quality audits, investigating how code works
+
+**`quality-audit`** — Quality Audit (Confirm: Yes)
+- **Triggers:** quality audit, best practices, ensure no flaws, verify quality standards, audit-and-fix
+- **NOT for:** Reviewing uncommitted changes (use review-changes), PR review, bug fixes
+
+**`security-audit`** — Security Audit (Confirm: No)
+- **Triggers:** security audit, vulnerability, OWASP, security review, penetration test
+- **NOT for:** Implementing new security features, fixing known security bugs
+
+**`verification`** — Verification & Validation (Confirm: Yes)
+- **Triggers:** verify, validate, confirm, check works, ensure, make sure
+- **NOT for:** New feature implementation, code review, documentation, investigation-only
+
+#### Investigation & Documentation Workflows
+
+**`investigation`** — Code Investigation (Confirm: No)
+- **Triggers:** how does, where is, explain, understand, explore, trace code paths
+- **NOT for:** Any task requiring code changes (implementing, fixing, refactoring, creating, updating)
+
+**`documentation`** — Documentation Update (Confirm: No)
+- **Triggers:** write docs, update documentation, improve README, code comments
+- **NOT for:** Business feature docs (use business-feature-docs), code implementation
+
+**`business-feature-docs`** — Business Feature Documentation (Confirm: No)
+- **Triggers:** business feature docs, 26-section template, module docs, docs/business-features/
+- **NOT for:** General documentation updates, code comments, README changes
+
+#### Product & Planning Workflows
+
+**`idea-to-pbi`** — Idea to PBI (Confirm: Yes)
+- **Triggers:** new idea, product request, feature request, add to backlog, refine into PBI
+- **NOT for:** Bug fixes, code implementation, investigation
+
+**`pbi-to-tests`** — PBI to Tests (Confirm: No)
+- **Triggers:** test spec, test cases, QA, generate tests from PBI/feature/story
+- **NOT for:** Running existing tests, executing test suites
+
+**`sprint-planning`** — Sprint Planning Session (Confirm: Yes)
+- **Triggers:** plan sprint, prioritize backlog, analyze dependencies, iteration planning, sprint kickoff
+- **NOT for:** Sprint review, retrospective, sprint status report, end-of-sprint activities
+
+**`pm-reporting`** — PM Reporting (Confirm: No)
+- **Triggers:** status report, sprint update, project progress, blocker analysis
+- **NOT for:** Git status, commit status, PR status, build status, quick one-line checks
+
+**`release-prep`** — Release Preparation (Confirm: Yes)
+- **Triggers:** release prep, pre-release checks, release readiness, deployment checklist, go-live
+- **NOT for:** Git release commands, npm publish, release notes generation
+
+**`design-workflow`** — Design Workflow (Confirm: No)
+- **Triggers:** design spec, wireframe, mockup, UI/UX spec, component spec from requirements
+- **NOT for:** Implementing an existing design in code, coding from a spec
+
+**`pre-development`** — Pre-Development Setup (Confirm: No)
+- **Triggers:** prepare before development, quality gate checks, kick off new feature, pre-coding
+- **NOT for:** Already in development, just explaining pre-development concept
 
 ### Override Methods
 
-| Method | Example | Effect |
-|--------|---------|--------|
-| `quick:` prefix | `quick: add a button` | Skip confirmation, execute workflow immediately |
-| Explicit command | `/plan implement dark mode` | Bypass detection, run specific command |
-| Say "quick" | When asked "Proceed?" | Abort workflow, handle directly |
+| Method           | Example                     | Effect                                          |
+| ---------------- | --------------------------- | ----------------------------------------------- |
+| `quick:` prefix  | `quick: add a button`       | Skip confirmation, execute workflow immediately |
+| Explicit command | `/plan implement dark mode` | Bypass detection, run specific command          |
+| Say "quick"      | When asked "Proceed?"       | Abort workflow, handle directly                 |
 
 ---
 
@@ -1285,48 +781,3 @@ User Prompt Analysis:
 - NEVER end a turn without checking if workflow steps remain
 - At start of each response in a workflow, state: `"Continuing workflow: Step X of Y — {step name}"`
 - If context seems lost, review the workflow sequence and identify current position
-
----
-
-### IMPORTANT: Task Planning Rules (MUST FOLLOW)
-
-> **Breaking tasks into small todos is CRITICAL for success.** Research shows 67% higher completion rate with proper task decomposition.
-
-**When to create todos:**
-
-- Features requiring changes in 3+ files
-- Bug fixes needing investigation → plan → fix → test
-- Refactoring affecting multiple layers
-- Any multi-step workflow
-
-**Skip todos for:** Single-file edits <5 lines, simple questions, reading files for information.
-
-**Rules:**
-
-1. **Always break tasks into many small, actionable todos** — Each todo should be completable in one focused step
-2. **Always add a final review todo** — Review the work done at the end to find any fixes or enhancements needed
-3. **Mark todos complete IMMEDIATELY** — Never batch completions; mark each done as soon as verified
-4. **Only ONE todo in-progress at a time** — Focus on completing current task before starting next
-5. **Update todos after EVERY command** — Check remaining steps, identify next action
-
-**Good Todo Example:**
-```
-- [ ] Scout for existing employee validation patterns
-- [ ] Read Employee entity to understand current rules
-- [ ] Implement email uniqueness validation in SaveEmployeeCommand
-- [ ] Add unit test for duplicate email scenario
-- [ ] Run tests and verify all pass
-- [ ] Review implementation for missed edge cases
-```
-
-**Bad Todo Example:**
-```
-- [ ] Implement feature
-- [ ] Test it
-```
-
-6. **No speculation or hallucination** — always answer with proof (code evidence, file:line references, search results). If unsure, investigate first; never fabricate
-
----
-
-> **IMPORTANT:** If the user's prompt does not match any workflows, always use the command skill `/plan <user prompt>` to create an implementation plan first.
