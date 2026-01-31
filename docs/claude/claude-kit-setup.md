@@ -864,17 +864,17 @@ The workspace enforces todo list creation before implementation work via runtime
 
 | Category | Skills |
 |----------|--------|
-| Research | `/scout`, `/investigate`, `/research`, `/explore`, `/docs-seeker` |
+| Research | `/scout`, `/investigate`, `/research`, `/docs-seeker` |
 | Planning | `/plan`, `/plan-fast`, `/plan-hard`, `/plan-validate` |
-| Status | `/watzup`, `/checkpoint`, `/kanban`, `/context-compact` |
+| Status | `/watzup`, `/checkpoint`, `/kanban`, `/compact` |
 
 **Blocked Skills (Todos Required):**
 
 | Category | Skills |
 |----------|--------|
-| Implementation | `/cook`, `/fix`, `/code`, `/feature`, `/implement`, `/refactor` |
-| Testing | `/test`, `/tester`, `/debug`, `/build` |
-| Review/Git | `/code-review`, `/commit`, `/git-commit` |
+| Implementation | `/cook`, `/fix`, `/code`, `/feature`, `/refactoring` |
+| Testing | `/test`, `/debug`, `/build` |
+| Review/Git | `/code-review`, `/commit` |
 
 ### Context Preservation System
 

@@ -63,14 +63,16 @@ function mapSkillToStepId(skillName, config) {
     if (!config?.commandMapping) return null;
 
     const normalizedSkill = skillName.toLowerCase().trim();
+    // Normalize colon-separated format (e.g., "review:codebase" → "review-codebase")
+    const hyphenSkill = normalizedSkill.replace(/:/g, '-');
 
     for (const [stepId, mapping] of Object.entries(config.commandMapping)) {
         const claudeCmd = mapping.claude || `/${stepId}`;
-        // Extract skill name from command (e.g., "/plan" -> "plan", "/review:codebase" -> "review:codebase")
+        // Extract skill name from command (e.g., "/plan" -> "plan", "/review-codebase" -> "review-codebase")
         const cmdParts = claudeCmd.replace(/^\//, '').split('/');
         const cmdSkill = cmdParts[0].toLowerCase();
 
-        if (normalizedSkill === cmdSkill || normalizedSkill === stepId.toLowerCase()) {
+        if (normalizedSkill === cmdSkill || hyphenSkill === cmdSkill || normalizedSkill === stepId.toLowerCase()) {
             return stepId;
         }
     }

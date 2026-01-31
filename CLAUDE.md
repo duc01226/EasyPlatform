@@ -495,13 +495,13 @@ Planning and implementation skills are **blocked** unless you have active todos.
 
 ### Allowed Without Todos (Read-Only Research & Status)
 
-- `/scout`, `/scout-ext`, `/investigate`, `/research`, `/explore`
+- `/scout`, `/scout-ext`, `/investigate`, `/research`
 - `/watzup`, `/checkpoint`, `/kanban`
 
 ### Blocked Without Todos (Planning + Implementation)
 
 - `/plan`, `/plan-fast`, `/plan-hard`, `/plan-validate`
-- `/cook`, `/fix`, `/code`, `/feature`, `/implement`
+- `/cook`, `/fix`, `/code`, `/feature`, `/refactoring`
 - `/test`, `/debug`, `/code-review`, `/commit`
 - All other skills not listed above
 
@@ -533,5 +533,18 @@ Large tool outputs (Read >8KB, Grep >4KB, Glob >2KB, Bash >6KB) are automaticall
 The `workflow-router.cjs` hook injects a workflow catalog into every qualifying prompt as a `system-reminder`. **Follow the injected catalog's detection steps exactly** — it contains the authoritative workflow list and activation procedure.
 
 **Key rule:** When the injected catalog says to invoke `/workflow-start <id>`, do it BEFORE any other action (no file reads, no tool calls). The catalog is the single source of truth for workflow matching.
+
+### Workflow Execution Protocol
+
+**CRITICAL: First action after workflow detection MUST be calling `/workflow-start <workflowId>` then TodoWrite. No exceptions.**
+
+1. **DETECT:** Read the workflow catalog above and match against user's prompt semantics. Use the Keywords column for guidance.
+2. **ACTIVATE:** Call `/workflow-start <workflowId>` using the ID from the first column
+3. **CREATE TODOS FIRST (HARD BLOCKING):** Use `TodoWrite` to create todo items for ALL workflow steps BEFORE doing anything else
+    - This is NOT optional - it is a hard requirement
+    - If you skip this step, you WILL lose track of the workflow
+4. **ANNOUNCE:** Tell user: `"Detected: [Intent]. Following workflow: [sequence]"`
+5. **CONFIRM (if marked Yes):** Ask: `"Proceed with this workflow? (yes/no/quick)"`
+6. **EXECUTE:** Follow each step in sequence, updating todo status as you progress
 
 > **Full workflow definitions:** See `.claude/workflows.json` | **Copilot equivalent:** [copilot-instructions.md](.github/copilot-instructions.md#workflow-decision-guide-comprehensive)

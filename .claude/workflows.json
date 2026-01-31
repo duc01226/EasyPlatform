@@ -69,6 +69,10 @@
             "claude": "/team-refine",
             "copilot": "/team/refine"
         },
+        "review": {
+            "claude": "/review",
+            "copilot": "/review"
+        },
         "review-changes": {
             "claude": "/review-changes",
             "copilot": "/review-changes"
@@ -311,7 +315,7 @@
             },
             "sequence": ["code-review", "plan", "plan-review", "code", "code-review", "test", "watzup"],
             "whenNotToUse": "Reviewing uncommitted changes (use review-changes), PR review, bug fixes.",
-            "whenToUse": "User wants a quality audit: review code for best practices, ensure no flaws, verify quality standards, audit-and-fix workflow, or review project configuration/settings quality (e.g., CI/CD config, linter settings, AI agent settings, hooks, MCP servers, tooling configuration)."
+            "whenToUse": "User wants a quality audit: review code for best practices, ensure no flaws, verify quality standards, audit-and-fix workflow, systematic review, or review project configuration/settings quality (e.g., CI/CD config, linter settings, AI agent settings, hooks quality, MCP servers, tooling configuration). Also matches: 'review X quality', 'ensure best practices', 'no enhancement needed', 'audit hooks/settings/config'."
         },
         "refactor": {
             "confirmFirst": false,

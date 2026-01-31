@@ -761,14 +761,14 @@ const workflowPrefixTests = [
 
       const output = buildWorkflowInstructions(activation, config);
 
-      // Check for [Workflow] prefix in todo template
+      // Check for todo tracking section in instructions
       assertTrue(
-        output.includes('[Workflow]'),
-        'Instructions should include [Workflow] prefix in todo template'
+        output.includes('Todo Items to Create'),
+        'Instructions should include Todo Items to Create section'
       );
       assertTrue(
-        output.includes('Todo Tracking') || output.toLowerCase().includes('todo'),
-        'Instructions should include todo tracking section'
+        output.includes('TaskCreate') || output.toLowerCase().includes('todo'),
+        'Instructions should include TaskCreate reference'
       );
     }
   },
@@ -798,14 +798,14 @@ const workflowPrefixTests = [
 
       const output = buildWorkflowInstructions(activation, config);
 
-      // Output should contain [Workflow] prefixed todo items for each step
+      // Output should contain bold-formatted todo items for each step
       assertTrue(
-        output.includes('[Workflow] /scout'),
-        'Should show [Workflow] /scout in todo template'
+        output.includes('**/scout**'),
+        'Should show /scout in todo items'
       );
       assertTrue(
-        output.includes('[Workflow] /fix'),
-        'Should show [Workflow] /fix in todo template'
+        output.includes('**/fix**'),
+        'Should show /fix in todo items'
       );
     }
   }

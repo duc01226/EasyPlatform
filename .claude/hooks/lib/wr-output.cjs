@@ -218,6 +218,8 @@ function buildWorkflowInstructions(activation, config) {
   } else {
     lines.push('### Instructions (MUST FOLLOW IN ORDER)');
     lines.push('');
+    lines.push('> **No confirmation needed** — proceed directly without asking the user.');
+    lines.push('');
     lines.push('1. **ANNOUNCE:** Tell the user:');
     lines.push(`   > "Detected: **${workflow.name}**. Following: ${sequenceDisplay}"`);
     lines.push('');

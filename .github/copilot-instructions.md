@@ -934,15 +934,18 @@ Each file contains critical rules inline + references to full pattern files in `
 
 > **This section is intentionally placed at the end for maximum AI attention.** AI models attend most to the start and end of long prompts.
 
-### Workflow Detection Protocol
+### Workflow Execution Protocol
 
-**Before writing ANY code or reading ANY file, you MUST:**
+**CRITICAL: First action after workflow detection MUST be calling `/workflow-start <workflowId>` then TodoWrite. No exceptions.**
 
-1. **DETECT** — Match the user's prompt against the workflow table above. If NO match, ask user: "(a) handle directly, (b) use `/plan` first, or (c) pick a workflow?"
-2. **ANNOUNCE** — State: `"Detected: **{Workflow}** workflow. Following: {sequence}"`
-3. **⛔ CONFIRM GATE** (if marked ✅) — Ask: `"Proceed with this workflow? (yes/no/quick)"` — STOP and WAIT. Do NOT continue until user responds.
-4. **⛔ CREATE TODOS (BLOCKING)** — Create ONE todo per workflow step. You are BLOCKED from executing any step until ALL todos exist. Example for a 5-step workflow: create 5 separate todos, one for each slash command in the sequence.
-5. **EXECUTE** — Follow each step sequentially, marking each todo in-progress then complete as you go
+1. **DETECT:** Read the workflow catalog above and match against user's prompt semantics. Use the Keywords column for guidance.
+2. **ACTIVATE:** Call `/workflow-start <workflowId>` using the ID from the first column
+3. **CREATE TODOS FIRST (HARD BLOCKING):** Use `TodoWrite` to create todo items for ALL workflow steps BEFORE doing anything else
+    - This is NOT optional - it is a hard requirement
+    - If you skip this step, you WILL lose track of the workflow
+4. **ANNOUNCE:** Tell user: `"Detected: [Intent]. Following workflow: [sequence]"`
+5. **CONFIRM (if marked Yes):** Ask: `"Proceed with this workflow? (yes/no/quick)"`
+6. **EXECUTE:** Follow each step in sequence, updating todo status as you progress
 
 **You MUST NOT:**
 

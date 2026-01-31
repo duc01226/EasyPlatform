@@ -497,3 +497,4 @@ tmpclaude-*
 .ai/workspace/
 .claude/temp-reports/
 .claude/.compact-state.json
+.claude/tmp*

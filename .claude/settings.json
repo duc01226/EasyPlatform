@@ -93,7 +93,7 @@
                         "type": "command"
                     }
                 ],
-                "matcher": "Read|Grep|Glob|Bash"
+                "matcher": "Read|Grep|Glob|Bash|WebFetch|WebSearch"
             },
             {
                 "hooks": [
@@ -194,7 +194,7 @@
                         "type": "command"
                     }
                 ],
-                "matcher": "Bash|Glob|Grep|Read|Edit|Write"
+                "matcher": "Bash|Glob|Grep|Read|Edit|Write|MultiEdit|NotebookEdit"
             },
             {
                 "hooks": [
@@ -204,15 +204,6 @@
                     }
                 ],
                 "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|Glob|Grep|Read"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/project-boundary.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "mcp__filesystem__*"
             },
             {
                 "hooks": [
@@ -359,8 +350,8 @@
             }
         ]
     },
-    "includeCoAuthoredBy": false,
     "permissions": {
+        "_note": "allow list is documentation-only (bypassPermissions mode); deny list is enforced",
         "allow": [
             "Bash(git:*)",
             "Bash(npm:*)",
@@ -400,7 +391,6 @@
             "Bash(dir:*)",
             "Bash(type:*)",
             "Edit",
-            "ExitPlanMode",
             "NotebookEdit",
             "Skill",
             "SlashCommand",
@@ -410,24 +400,28 @@
             "Read",
             "Glob",
             "Grep",
-            "Bash(npm run:*)",
-            "mcp__filesystem__list_directory",
-            "mcp__filesystem__directory_tree",
-            "mcp__filesystem__read_text_file",
-            "mcp__filesystem__read_multiple_files"
+            "Bash(npm run:*)"
         ],
-        "ask": ["Bash(git push:*)", "Bash(npm publish:*)", "Bash(docker push:*)"],
+        "ask": ["Bash(git push:*)", "Bash(npm publish:*)", "Bash(docker push:*)", "Bash(docker rm:*)", "Bash(docker rmi:*)", "Bash(docker system prune:*)", "Bash(dotnet nuget push:*)"],
         "defaultMode": "bypassPermissions",
         "deny": [
+            "EnterPlanMode",
             "Bash(rm -rf /*)",
             "Bash(rm -rf ~/*)",
             "Bash(rm -rf .)",
+            "Bash(rm -rf *)",
             "Bash(git push --force:*)",
             "Bash(git push -f:*)",
             "Bash(git reset --hard:*)",
             "Bash(git clean -fd:*)",
             "Bash(git branch -D:*)",
             "Bash(git stash drop:*)",
+            "Bash(git stash clear)",
+            "Bash(git checkout -- .)",
+            "Bash(git checkout -- *)",
+            "Bash(git checkout .)",
+            "Bash(git restore .)",
+            "Bash(git restore --staged .)",
             "Edit(**/.env*)",
             "Edit(.env*)",
             "Edit(**/secrets/**)",
@@ -438,6 +432,7 @@
             "Edit(**/dist/**)",
             "Edit(**/node_modules/**)",
             "Edit(.github/workflows/**)",
+            "Write(.github/workflows/**)",
             "Read(**/.env*)",
             "Read(.env*)",
             "Read(**/secrets/**)",
@@ -453,7 +448,31 @@
             "Write(**/obj/**)",
             "Write(**/bin/**)",
             "Write(**/dist/**)",
-            "Write(**/node_modules/**)"
+            "Write(**/node_modules/**)",
+            "Glob(**/.env*)",
+            "Glob(**/secrets/**)",
+            "Glob(**/credentials*)",
+            "Glob(~/.ssh/**)",
+            "Glob(~/.aws/**)",
+            "Glob(~/.config/gcloud/**)",
+            "Grep(**/.env*)",
+            "Grep(**/secrets/**)",
+            "Grep(**/credentials*)",
+            "Grep(~/.ssh/**)",
+            "Grep(~/.aws/**)",
+            "Grep(~/.config/gcloud/**)",
+            "Edit(~/.ssh/**)",
+            "Edit(~/.aws/**)",
+            "Edit(~/.config/gcloud/**)",
+            "Write(~/.ssh/**)",
+            "Write(~/.aws/**)",
+            "Write(~/.config/gcloud/**)",
+            "Edit(.claude/settings.json)",
+            "Write(.claude/settings.json)",
+            "Edit(.claude/hooks/**)",
+            "Write(.claude/hooks/**)",
+            "Edit(.mcp.json)",
+            "Write(.mcp.json)"
         ]
     },
     "statusLine": {

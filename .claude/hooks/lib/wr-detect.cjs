@@ -73,11 +73,15 @@ function detectSkillInvocation(prompt, config) {
   if (!match) return null;
 
   const command = match[1].toLowerCase();
+  // Normalize colon-separated format (e.g., "review:codebase" → "review-codebase")
+  const normalized = command.replace(/:/g, '-');
 
   // Map command to step ID
   for (const [stepId, mapping] of Object.entries(config.commandMapping || {})) {
     const claudeCmd = mapping.claude || `/${stepId}`;
-    if (claudeCmd.toLowerCase() === `/${command}` || claudeCmd.toLowerCase().endsWith(`/${command}`)) {
+    const cmdLower = claudeCmd.toLowerCase();
+    if (cmdLower === `/${command}` || cmdLower === `/${normalized}` ||
+        cmdLower.endsWith(`/${command}`) || cmdLower.endsWith(`/${normalized}`)) {
       return stepId;
     }
   }

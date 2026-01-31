@@ -262,7 +262,7 @@ if (featureWorkflow) {
     assertIncludes('output', 'instructions contains workflow name', instructions, featureWorkflow.name);
     assertIncludes('output', 'instructions contains MUST FOLLOW', instructions, 'MUST FOLLOW');
     assertIncludes('output', 'instructions contains step list', instructions, '/plan');
-    assertIncludes('output', 'instructions contains todo tracking', instructions, '[Workflow]');
+    assertIncludes('output', 'instructions contains todo tracking', instructions, 'Todo Items to Create');
 }
 
 // 3.2 buildActiveWorkflowContext
