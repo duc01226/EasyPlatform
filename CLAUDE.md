@@ -19,7 +19,7 @@ Detailed patterns and protocols are in `docs/claude/`.
 3. **Frontend:** Extend `AppBaseComponent`/`AppBaseVmStoreComponent`/`AppBaseFormComponent` (never raw Component), `PlatformVmStore` for state, extend `PlatformApiService` (never direct HttpClient), always `untilDestroyed()`, all elements need BEM classes
 4. **Always search existing code first** before creating anything new
 5. **Always plan before implementing** non-trivial tasks (use `/plan` commands)
-6. **Always use TodoWrite** to track tasks — planning/implementation skills are blocked without active todos
+6. **Always create todos BEFORE any action** when the prompt modifies files or involves multiple steps — all skills are blocked without active todos when a workflow is active
 7. **Detect workflow from prompt** before any tool call — match keywords to workflow table below
 8. **Evidence-based only** — verify with code evidence, never fabricate or assume
 
@@ -46,12 +46,15 @@ Detailed patterns and protocols are in `docs/claude/`.
 
 ## **IMPORTANT: Task Planning Rules (MUST FOLLOW)**
 
+- **Create todos for ANY prompt that modifies files or involves multiple steps** — if the task edits, creates, or deletes files, or requires more than one logical step, create todos FIRST before any action
+- **When a workflow is active, create exactly ONE todo per workflow step** — if the workflow has 7 steps, create 7 `TaskCreate` calls. Do NOT combine or summarize steps into fewer todos. The enforcement hook will block execution if todo count < workflow step count
 - **Always break tasks into many small todo items** — granular tracking prevents missed steps
 - **Always add a final review todo task** to review all work done at the end to find any fix or enhancement needed
 - **Mark todos complete immediately** after finishing each one — do not batch completions
 - **Exactly ONE todo in_progress at any time** — complete current before starting next
 - **If blocked, create a new todo** describing what needs resolution — never mark blocked tasks as completed
 - **No speculation or hallucination** — always answer with proof (code evidence, file:line references, search results). If unsure, investigate first; never fabricate
+- **Skip todos ONLY for:** single-line typo fixes, pure Q&A with no file changes, or `quick:` prefixed prompts
 
 ---
 
@@ -479,10 +482,9 @@ Before creating/modifying files in these paths, ALWAYS invoke the corresponding 
 | `docs/business-features/**`  | `/business-feature-docs`        | `docs/templates/detailed-feature-docs-template.md` |
 | `docs/features/**`           | `/feature-docs`                 | Existing sibling docs in same folder               |
 | `src/**/*Command*.cs`        | `/easyplatform-backend`         | CQRS patterns in this file                         |
-| `src/**/*-form.component.ts` | `/frontend-angular-form`        | Form patterns, validation rules                    |
-| `src/**/*-api.service.ts`    | `/frontend-angular-api-service` | API service patterns                               |
-| `src/**/*.component.ts`      | `/frontend-angular-component`   | Base component patterns                            |
-| `src/**/*.store.ts`          | `/frontend-angular-store`       | Store patterns                                     |
+| `src/**/*.component.ts`      | `/frontend-angular`             | Component, form, store, API service patterns       |
+| `src/**/*.store.ts`          | `/frontend-angular`             | Component, form, store, API service patterns       |
+| `src/**/*-api.service.ts`    | `/frontend-angular`             | Component, form, store, API service patterns       |
 | `src/**/*.component.scss`    | Read SCSS guide                 | `docs/claude/scss-styling-guide.md`                |
 
 ---
@@ -528,63 +530,8 @@ Large tool outputs (Read >8KB, Grep >4KB, Glob >2KB, Bash >6KB) are automaticall
 
 ## Automatic Workflow Detection (MUST FOLLOW)
 
-Workflows are injected by `workflow-router.cjs`. Match user prompt keywords against the table below, then invoke `/workflow-start <id>`.
+The `workflow-router.cjs` hook injects a workflow catalog into every qualifying prompt as a `system-reminder`. **Follow the injected catalog's detection steps exactly** — it contains the authoritative workflow list and activation procedure.
 
-### Keyword → Workflow Lookup
+**Key rule:** When the injected catalog says to invoke `/workflow-start <id>`, do it BEFORE any other action (no file reads, no tool calls). The catalog is the single source of truth for workflow matching.
 
-| If prompt contains...                                              | → Workflow ID          | Confirm? |
-| ------------------------------------------------------------------ | ---------------------- | -------- |
-| bug, error, fix, crash, broken, not working, exception trace       | `bugfix`               | No       |
-| implement, add, create, build, develop, new feature                | `feature`              | Yes      |
-| refactor, restructure, clean up, extract, technical debt           | `refactor`             | Yes      |
-| migration, schema, add column, EF migration, alter table           | `migration`            | Yes      |
-| all files, batch, bulk, find-replace across, every instance        | `batch-operation`      | Yes      |
-| how does, where is, explain, understand, trace, explore            | `investigation`        | No       |
-| review PR, code review, review this code                           | `review`               | No       |
-| review changes, pre-commit, staged, uncommitted                    | `review-changes`       | No       |
-| quality audit, best practices, ensure no flaws                     | `quality-audit`        | Yes      |
-| security, vulnerability, OWASP, penetration                        | `security-audit`       | No       |
-| performance, slow, optimize, N+1, latency, bottleneck              | `performance`          | Yes      |
-| verify, validate, make sure, ensure, confirm works                 | `verification`         | Yes      |
-| deploy, CI/CD, infrastructure, Docker, pipeline                    | `deployment`           | Yes      |
-| docs, documentation, README (→ `docs/business-features/`)         | `business-feature-docs`| No       |
-| docs, documentation, README (→ elsewhere)                          | `documentation`        | No       |
-| idea, product request, backlog, PBI, feature request               | `idea-to-pbi`          | Yes      |
-| test spec, test cases, QA, generate tests from                     | `pbi-to-tests`         | No       |
-| sprint planning, prioritize backlog, iteration planning            | `sprint-planning`      | Yes      |
-| status report, sprint update, project progress                     | `pm-reporting`         | No       |
-| release prep, pre-release, go-live, deployment checklist           | `release-prep`         | Yes      |
-| design spec, wireframe, mockup, UI/UX spec                        | `design-workflow`      | No       |
-| prepare, setup, kick off, pre-coding, quality gate                 | `pre-development`      | No       |
-| No keyword match                                                   | Handle directly        | —        |
-
-> **Full workflow details:** See [copilot-instructions.md](.github/copilot-instructions.md#workflow-decision-guide-comprehensive)
-
-### Workflow Execution Protocol
-
-**CRITICAL: First action after workflow activation MUST be TodoWrite. No exceptions.**
-
-1. **SELECT:** Analyze user prompt against the workflow table above
-2. **ACTIVATE:** Invoke `/workflow-start <id>` — this creates state and outputs the full sequence
-3. **CREATE TODOS (HARD BLOCKING):** Use `TodoWrite` to create todo items for ALL workflow steps BEFORE doing anything else
-    - This is NOT optional - it is a hard requirement
-    - If you skip this step, you WILL lose track of the workflow
-4. **CONFIRM (if `confirmFirst`):** Ask: `"Proceed with this workflow? (yes/no/quick)"`
-5. **EXECUTE:** Follow each step in sequence, updating todo status as you progress
-
-**What qualifies as "simple task" (exceptions):**
-
-- Single-line code changes (typo fix, add import, rename variable)
-- User explicitly says "just do it" or "no workflow needed"
-- Pure information questions with no code changes
-
-> Workflow continuity (TodoWrite tracking), recovery after context loss, and `quick:` override are handled automatically by `workflow-router.cjs` and `post-compact-recovery.cjs` hooks.
-
-### Example
-
-**User:** "Add a dark mode toggle to the settings page"
-
-**Response:** The workflow catalog is injected. You select `feature` and invoke `/workflow-start feature`. The hook outputs the sequence, then you:
-
-> Activated: **Feature Implementation** workflow. Following: `/scout` → `/plan` → `/plan-review` → `/cook` → ...
-> Proceed with this workflow? (yes/no/quick)
+> **Full workflow definitions:** See `.claude/workflows.json` | **Copilot equivalent:** [copilot-instructions.md](.github/copilot-instructions.md#workflow-decision-guide-comprehensive)

@@ -13,21 +13,16 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 | Skill | Description |
 |-------|-------------|
 | `backend-development` | Backend systems (Node.js, Python, Go, Rust), APIs, databases |
-| `frontend-angular-component` | Angular 19 component creation with platform patterns |
-| `frontend-angular-form` | Angular reactive forms with validation |
-| `frontend-angular-store` | PlatformVmStore state management |
-| `frontend-angular-api-service` | API service patterns with caching |
+| `frontend-angular` | Angular 19 components, forms, stores, API services |
 | `easyplatform-backend` | EasyPlatform .NET backend (CQRS, entities, migrations) |
 | `api-design` | REST API endpoints, controllers, DTOs |
-| `databases` | MongoDB, PostgreSQL queries and optimization |
+| `migration` | Create or run database migrations (EF Core, MongoDB, data) |
 
 ### Architecture
 
 | Skill | Description |
 |-------|-------------|
-| `arch-cross-service-integration` | Cross-service communication patterns |
 | `performance` | Database, API, frontend performance |
-| `arch-security-review` | Security vulnerabilities, authorization |
 | `plan` | Implementation planning and strategy |
 | `refactoring` | Code restructuring and improvement |
 

@@ -9,9 +9,7 @@ applyTo: "**/Repositories/**/*.cs,**/*Repository*.cs"
 ## Service-Specific Repositories (ALWAYS Use These)
 
 ```csharp
-ICandidatePlatformRootRepository<Employee>  // bravoTALENTS
-IGrowthRootRepository<Employee>             // bravoGROWTH
-ISurveysPlatformRootRepository<Survey>      // bravoSURVEYS
+IPlatformQueryableRootRepository<TextSnippetEntity, string>  // TextSnippet service
 ```
 
 **NEVER use generic `IPlatformRootRepository<T>` - always use the service-specific version.**

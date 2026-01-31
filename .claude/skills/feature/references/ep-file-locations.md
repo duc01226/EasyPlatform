@@ -33,9 +33,6 @@ Use these complementary skills during implementation:
 | Skill | Purpose |
 |-------|---------|
 | `easyplatform-backend` | CQRS commands/queries |
-| `frontend-angular-component` | UI components |
-| `frontend-angular-form` | Form components with validation |
-| `frontend-angular-store` | State management |
-| `frontend-angular-api-service` | API services |
+| `frontend-angular` | UI components, forms, stores, API services |
 | `investigate` | READ-ONLY exploration (no code changes) |
 | `debug` | Root cause investigation (`--autonomous` for headless) |

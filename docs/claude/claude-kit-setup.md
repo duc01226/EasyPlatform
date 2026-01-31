@@ -570,9 +570,9 @@ tools: available tools
 | Category          | Skills                                              |
 |-------------------|-----------------------------------------------------|
 | AI/ML             | ai-artist, ai-multimodal, ai-dev-tools-sync        |
-| Backend           | backend-development, api-design, databases         |
+| Backend           | backend-development, api-design, migration         |
 | Frontend          | frontend-design, shadcn-tailwind, ui-ux-pro-max    |
-| Architecture      | arch-cross-service, arch-performance, arch-security|
+| Architecture      | performance, plan, security                        |
 | DevOps            | devops, test-ui, media-processing          |
 | Quality           | code-review, debugging, testing                    |
 | Documentation     | documentation, feature-docs, business-feature-docs |

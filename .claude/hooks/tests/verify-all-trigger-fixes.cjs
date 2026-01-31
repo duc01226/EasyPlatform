@@ -12,7 +12,7 @@
  *   3. shouldInjectCatalog heuristic behavior
  *   4. Override / skip mechanisms
  *   5. Catalog output quality (alphabetical sort, descriptions)
- *   6. All workflows activatable via /workflow:start simulation
+ *   6. All workflows activatable via /workflow-start simulation
  */
 'use strict';
 
@@ -220,9 +220,9 @@ assert('settings', 'no supportedLanguages (removed in v2.0)', settings.supported
 console.log(`  [5] Settings: done\n`);
 
 // ═══════════════════════════════════════════════════
-// 6. ALL WORKFLOWS ACTIVATABLE — /workflow:start simulation
+// 6. ALL WORKFLOWS ACTIVATABLE — /workflow-start simulation
 // ═══════════════════════════════════════════════════
-console.log('  [6] All Workflows Activatable via /workflow:start...');
+console.log('  [6] All Workflows Activatable via /workflow-start...');
 
 for (const id of workflowIds) {
     const wf = workflows[id];
@@ -249,8 +249,8 @@ for (const id of workflowIds) {
         instructions.includes(wf.name), `missing "${wf.name}" in instructions`);
     assert('activate', `${id}: instructions contain MUST FOLLOW`,
         instructions.includes('MUST FOLLOW'), 'missing MUST FOLLOW in instructions');
-    assert('activate', `${id}: instructions contain [Workflow] todos`,
-        instructions.includes('[Workflow]'), 'missing [Workflow] todo template');
+    assert('activate', `${id}: instructions contain TaskCreate todos`,
+        instructions.includes('TaskCreate'), 'missing TaskCreate todo template');
 
     // Step 3: Verify state persisted (loadState roundtrip)
     const loaded = loadState();

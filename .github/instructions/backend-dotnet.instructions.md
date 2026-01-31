@@ -67,9 +67,7 @@ public static Expression<Func<Entity, bool>> CompositeExpr(string companyId, boo
 
 ```csharp
 // Service-specific repositories (ALWAYS prefer these)
-ICandidatePlatformRootRepository<Employee>  // bravoTALENTS
-IGrowthRootRepository<Employee>             // bravoGROWTH
-ISurveysPlatformRootRepository<Survey>      // bravoSURVEYS
+IPlatformQueryableRootRepository<TextSnippetEntity, string>  // TextSnippet service
 
 // CRUD
 await repository.CreateAsync(entity, ct);

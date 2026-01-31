@@ -1,7 +1,7 @@
 {
     "$schema": "./workflows.schema.json",
     "commandMapping": {
-        "changelog": {
+        "changelog-update": {
             "claude": "/changelog-update",
             "copilot": "/changelog-update"
         },
@@ -124,7 +124,7 @@
     "version": "2.0.0",
     "workflows": {
         "batch-operation": {
-            "confirmFirst": true,
+            "confirmFirst": false,
             "description": "Multi-file batch operations requiring progress tracking",
             "enableCheckpoints": true,
             "name": "Batch Operation",
@@ -133,7 +133,7 @@
             },
             "sequence": ["scout", "plan", "plan-review", "code", "code-review", "test", "watzup"],
             "whenNotToUse": "Single-file changes, test file creation, documentation updates.",
-            "whenToUse": "User wants to apply changes across multiple files, directories, or components at once. Includes batch updates, bulk renames, find-and-replace across codebase, or operations targeting 'all' or 'every' instance."
+            "whenToUse": "User wants to apply changes across multiple files, directories, or components at once. Includes batch updates, bulk renames, find-and-replace across codebase, merge/combine/consolidate multiple files or modules into one, or operations targeting 'all' or 'every' instance."
         },
         "bugfix": {
             "confirmFirst": false,
@@ -162,7 +162,7 @@
             "whenToUse": "User wants to create or update business feature documentation using the 26-section template. Includes module docs targeting docs/business-features/."
         },
         "deployment": {
-            "confirmFirst": true,
+            "confirmFirst": false,
             "description": "Deployment and CI/CD pipeline management",
             "enableCheckpoints": true,
             "name": "Deployment & Infrastructure",
@@ -201,7 +201,7 @@
             "whenToUse": "User wants to write, update, or improve general documentation, README, or code comments."
         },
         "feature": {
-            "confirmFirst": true,
+            "confirmFirst": false,
             "description": "Full feature development workflow with planning, implementation, testing, and documentation",
             "enableCheckpoints": true,
             "name": "Feature Implementation",
@@ -213,7 +213,7 @@
             "whenToUse": "User wants to implement, add, create, build, or develop a new feature, functionality, module, or component."
         },
         "idea-to-pbi": {
-            "confirmFirst": true,
+            "confirmFirst": false,
             "description": "PO/BA workflow: capture idea, refine to PBI, create stories, prioritize",
             "enableCheckpoints": true,
             "name": "Idea to PBI",
@@ -238,7 +238,7 @@
             "whenToUse": "User asks how something works, where code is located, wants to understand or explore a codebase feature, trace code paths, or explain implementation details."
         },
         "migration": {
-            "confirmFirst": true,
+            "confirmFirst": false,
             "description": "Database schema and data migration workflow",
             "enableCheckpoints": true,
             "name": "Database Migration",
@@ -263,7 +263,7 @@
             "whenToUse": "User wants to create or generate test specs/cases from a PBI, feature, or story. Includes QA test generation."
         },
         "performance": {
-            "confirmFirst": true,
+            "confirmFirst": false,
             "description": "Performance analysis and optimization workflow",
             "enableCheckpoints": true,
             "name": "Performance Optimization",
@@ -302,7 +302,7 @@
             "whenToUse": "User wants to prepare before starting development: quality gate checks, setup for new feature work, kick off a new feature, pre-coding preparation."
         },
         "quality-audit": {
-            "confirmFirst": true,
+            "confirmFirst": false,
             "description": "Quality audit workflow: review code for best practices, plan fixes, implement improvements, verify with tests",
             "enableCheckpoints": true,
             "name": "Quality Audit",
@@ -311,10 +311,10 @@
             },
             "sequence": ["code-review", "plan", "plan-review", "code", "code-review", "test", "watzup"],
             "whenNotToUse": "Reviewing uncommitted changes (use review-changes), PR review, bug fixes.",
-            "whenToUse": "User wants a quality audit: review code for best practices, ensure no flaws, verify quality standards, or audit-and-fix workflow."
+            "whenToUse": "User wants a quality audit: review code for best practices, ensure no flaws, verify quality standards, audit-and-fix workflow, or review project configuration/settings quality (e.g., CI/CD config, linter settings, AI agent settings, hooks, MCP servers, tooling configuration)."
         },
         "refactor": {
-            "confirmFirst": true,
+            "confirmFirst": false,
             "description": "Code improvement and restructuring workflow",
             "enableCheckpoints": true,
             "name": "Code Refactoring",
@@ -326,7 +326,7 @@
             "whenToUse": "User wants to refactor, restructure, reorganize, clean up code, improve code quality, extract methods, rename, split/merge components, or address technical debt."
         },
         "release-prep": {
-            "confirmFirst": true,
+            "confirmFirst": false,
             "description": "Quality gate checks and status report before release",
             "enableCheckpoints": true,
             "name": "Release Preparation",
@@ -358,8 +358,8 @@
                 "injectContext": "REVIEW CHANGES PROTOCOL:\n1. Identify all uncommitted/staged changes (git diff)\n2. Understand the scope and intent of changes\n3. Review for correctness, best practices, security, and platform compliance\n4. Report findings with severity and file:line references\n- Rules: Evidence-based review, no speculative improvements, structured output"
             },
             "sequence": ["scout", "investigate", "code-review", "watzup"],
-            "whenNotToUse": "PR reviews, release prep, quality audits, investigating how code works.",
-            "whenToUse": "User wants to review current uncommitted, staged, or recent changes before committing. Includes pre-commit review and 'review all changes'."
+            "whenNotToUse": "PR reviews, release prep, quality audits, investigating how code works. NOT for verification/validation requests (verify, ensure, make sure, confirm correctness) — use verification workflow instead.",
+            "whenToUse": "User wants to review current uncommitted, staged, or recent changes before committing. Includes pre-commit review and 'review all changes'. Intent is READ-ONLY review/feedback, not verification or ensuring correctness."
         },
         "security-audit": {
             "confirmFirst": false,
@@ -367,7 +367,6 @@
             "enableCheckpoints": true,
             "name": "Security Audit",
             "preActions": {
-                "activateSkill": "arch-security-review",
                 "injectContext": "SECURITY AUDIT WORKFLOW:\n1. Scan for OWASP Top 10 vulnerabilities\n2. Review authentication and authorization\n3. Check input validation and sanitization\n4. Report findings with severity ratings"
             },
             "sequence": ["scout", "investigate", "watzup"],
@@ -375,7 +374,7 @@
             "whenToUse": "User wants a security audit: vulnerability assessment, OWASP check, security review, penetration test analysis."
         },
         "sprint-planning": {
-            "confirmFirst": true,
+            "confirmFirst": false,
             "description": "Comprehensive sprint planning: prioritize backlog, analyze dependencies, prepare team sync",
             "enableCheckpoints": true,
             "name": "Sprint Planning Session",
@@ -388,16 +387,16 @@
             "whenToUse": "User wants to plan a sprint: prioritize backlog, analyze dependencies, prepare team sync, iteration planning, or sprint kickoff."
         },
         "verification": {
-            "confirmFirst": true,
+            "confirmFirst": false,
             "description": "Investigation-first verification: understand scope, test/validate, report findings, conditionally plan fix with approval",
             "enableCheckpoints": true,
             "name": "Verification & Validation",
             "preActions": {
                 "injectContext": "VERIFICATION PROTOCOL:\n1. Define expected behavior — what 'correct' means\n2. Reproduce the scenario under test\n3. Verify with evidence (test output, logs, code traces)\n4. If issue found: plan fix, get approval, then implement\n5. If no issue: document verification evidence\n- Guardrail: Evidence-based verification — never assume correctness without proof"
             },
-            "sequence": ["scout", "investigate", "plan", "plan-review", "fix", "code-review", "test", "watzup"],
+            "sequence": ["scout", "investigate", "test", "plan", "fix", "review", "watzup"],
             "whenNotToUse": "New feature implementation, code review, documentation, investigation-only, quality audits.",
-            "whenToUse": "User wants to verify, validate, confirm, check that something works correctly, or ensure expected behavior. Includes 'make sure' and 'ensure that' requests."
+            "whenToUse": "User wants to verify, validate, confirm, check that something works correctly, or ensure expected behavior. Includes 'make sure', 'ensure that', 'verify changes', 'ensure no flaws', and 'must work as expected' requests. Takes priority over review-changes when intent is verification/validation rather than read-only review."
         }
     }
 }

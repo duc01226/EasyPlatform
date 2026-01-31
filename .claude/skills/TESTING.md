@@ -260,53 +260,24 @@ Expected: Side effects in event handler, not command handler
 
 ## Frontend Skills
 
-### frontend-angular-component
+### frontend-angular
 
 Direct invocation:
 
 ```
-/frontend-angular-component
+/frontend-angular
 ```
 
 Test prompts:
 
 ```
 "Create an employee list component"
-"Add a dashboard widget component"
-"Build a profile card component"
-```
-
-Expected: Correct base class, proper lifecycle management
-
----
-
-### frontend-angular-form
-
-Direct invocation:
-
-```
-/frontend-angular-form
-```
-
-Test prompts:
-
-```
 "Create a leave request form with validation"
-"Add async email validation to employee form"
-"Implement FormArray for multiple phone numbers"
+"Implement a CRUD store for employees"
+"Create an API service for employee data"
 ```
 
-Expected: AppBaseFormComponent, initialFormConfig pattern
-
----
-
-### frontend-angular-store
-
-Direct invocation:
-
-```
-/frontend-angular-store
-```
+Expected: Correct base class, proper lifecycle management, BEM classes
 
 Test prompts:
 
@@ -321,26 +292,6 @@ Expected: PlatformVmStore, observerLoadingErrorState, effectSimple
 ---
 
 ## Architecture Skills
-
-### arch-cross-service-integration
-
-Direct invocation:
-
-```
-/arch-cross-service-integration
-```
-
-Test prompts:
-
-```
-"How should Growth service communicate with Accounts?"
-"Design event bus messages for employee sync"
-"Plan cross-service data consistency"
-```
-
-Expected: Message bus patterns, event-driven architecture
-
----
 
 ### performance
 
@@ -359,26 +310,6 @@ Test prompts:
 ```
 
 Expected: Profiling, caching strategies, query optimization
-
----
-
-### arch-security-review
-
-Direct invocation:
-
-```
-/arch-security-review
-```
-
-Test prompts:
-
-```
-"Review authentication flow security"
-"Check for injection vulnerabilities"
-"Audit authorization patterns in controllers"
-```
-
-Expected: OWASP considerations, authorization checks
 
 ---
 

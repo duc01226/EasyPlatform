@@ -17,15 +17,11 @@ applyTo: "**/*.cs,**/*.ts"
 6. Implementation     → Read actual code logic
 ```
 
-## BravoSUITE Service Map
+## EasyPlatform Service Map
 
 | Service | Domain | Key Entities |
 |---------|--------|-------------|
-| **bravoTALENTS** | Recruitment | Candidate, JobPost, Pipeline, Interview |
-| **bravoGROWTH** | Employee lifecycle | Employee, Goal, Kudos, Review, CheckIn, Timesheet |
-| **bravoSURVEYS** | Survey management | Survey, Question, Response, Template |
-| **bravoINSIGHTS** | Analytics | Dashboard, Report, Widget |
-| **Accounts** | Authentication | User, Role, Permission, Company |
+| **TextSnippet** | Example app | TextSnippetEntity, TextSnippetCategory |
 
 ## Search Strategy
 
@@ -67,7 +63,7 @@ src/WebV2/apps/{app}/src/app/
     pages/{feature}/              # Feature pages
     components/{feature}/         # Feature components
 
-src/WebV2/libs/bravo-domain/
+src/Frontend/libs/apps-domains/
     {domain}/                     # Shared API services, models
 ```
 

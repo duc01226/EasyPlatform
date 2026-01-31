@@ -202,14 +202,11 @@ import {
 } from '@libs/platform-core';
 ```
 
-## BravoCommon Components
+## Platform Utilities
 
 ```typescript
-<bravo-select formControlName="ids" [fetchDataFn]="fetchFn" [multiple]="true" [searchable]="true" />
-<div appTextEllipsis [maxTextEllipsisLines]="2">...</div>
-{{ date | localizedDate:'shortDate' }} | {{ 'item' | pluralize:count }}
-BravoArrayUtil.toDictionary(items, x => x.id);
-BravoDateUtil.format(new Date(), 'DD/MM/YYYY');
+// Use platform-core utilities for common operations
+import { list_groupBy, list_distinctBy, date_format, date_addDays } from '@libs/platform-core';
 ```
 
 ## Forbidden Patterns

@@ -58,6 +58,86 @@
 
 ---
 
+## Architecture Overview
+
+### System Architecture
+
+- **Backend:** .NET 9 with Clean Architecture (Domain, Application, Persistence, Service)
+- **Frontend:** Angular 19 Nx workspace with component-based architecture
+- **Platform Foundation:** Easy.Platform framework providing base infrastructure
+- **Communication:** RabbitMQ message bus for cross-service communication
+- **Data Storage:** Multi-database support (MongoDB, SQL Server, PostgreSQL)
+
+### Example Application
+
+- **Backend:** `src/Backend/` - TextSnippet service demonstrating all patterns
+- **Frontend:** `src/Frontend/apps/playground-text-snippet/` - Angular example
+
+---
+
+## Project Structure
+
+### Backend
+
+```text
+src/Platform/                    # Easy.Platform framework
+├── Easy.Platform/               # Core (CQRS, validation, repositories)
+├── Easy.Platform.AspNetCore/    # ASP.NET Core integration
+├── Easy.Platform.MongoDB/       # MongoDB patterns
+├── Easy.Platform.RabbitMQ/      # Message bus
+└── Easy.Platform.*/             # Other modules
+
+src/Backend/          # Example microservice
+├── *.Api/                       # Web API layer
+├── *.Application/               # CQRS handlers, jobs, events
+├── *.Domain/                    # Entities, domain events
+├── *.Persistence*/              # Database implementations
+└── *.Shared/                    # Cross-service utilities
+```
+
+### Frontend
+
+```text
+src/Frontend/       # Angular 19 Nx workspace
+├── apps/
+│   └── playground-text-snippet/ # Example app
+└── libs/
+    ├── platform-core/           # Base classes, utilities
+    ├── apps-domains/            # Business domain code
+    ├── share-styles/            # SCSS themes
+    └── share-assets/            # Static assets
+```
+
+---
+
+## Quick Decision Trees
+
+### Backend Task
+
+```text
+Need backend feature?
+├── API endpoint → PlatformBaseController + CQRS Command
+├── Business logic → Command Handler in Application layer
+├── Data access → Repository Extensions with static expressions
+├── Cross-service → Entity Event Consumer
+├── Scheduled task → PlatformApplicationBackgroundJob
+└── Migration → PlatformDataMigrationExecutor / EF migrations
+```
+
+### Frontend Task
+
+```text
+Need frontend feature?
+├── Simple component → Extend AppBaseComponent
+├── Complex state → AppBaseVmStoreComponent + PlatformVmStore
+├── Forms → AppBaseFormComponent with validation
+├── API calls → Service extending PlatformApiService
+├── Cross-domain → apps-domains library
+└── Reusable → platform-core library
+```
+
+---
+
 ## Copilot Documentation Architecture
 
 | Layer                     | Purpose                                                     |
@@ -214,7 +294,7 @@ Analyze user prompt for these keywords (check in order):
 ├─ "prepare" | "setup" | "kick off" | "pre-coding" | "quality gate"
 │   └─ → pre-development
 │
-└─ No keyword match → Handle directly (no workflow)
+└─ No keyword match → Ask user: "No workflow matched. Should I: (a) handle directly, (b) use `/plan` first, or (c) pick a workflow?"
 ```
 
 ### Workflow Quick Reference by Category
@@ -358,10 +438,9 @@ When working in specific areas, these skills MUST be automatically activated BEF
 | ------------------------------------- | ------------------------------ | ----------------------------------- |
 | `docs/business-features/**`           | `business-feature-docs`        | Template + Reference                |
 | `src/Backend/**/*Command*.cs`         | `easyplatform-backend`         | CQRS patterns reference             |
-| `src/Frontend/**/*.component.ts`      | `frontend-angular-component`   | Component base class                |
-| `src/Frontend/**/*.store.ts`          | `frontend-angular-store`       | Store patterns                      |
-| `src/Frontend/**/*-form.component.ts` | `frontend-angular-form`        | Form patterns                       |
-| `src/Frontend/**/*-api.service.ts`    | `frontend-angular-api-service` | API service patterns                |
+| `src/Frontend/**/*.component.ts`      | `frontend-angular`             | Component, form, store, API patterns |
+| `src/Frontend/**/*.store.ts`          | `frontend-angular`             | Component, form, store, API patterns |
+| `src/Frontend/**/*-api.service.ts`    | `frontend-angular`             | Component, form, store, API patterns |
 | `src/Frontend/**/*.component.scss`    | Read SCSS guide                | `docs/claude/scss-styling-guide.md` |
 | `docs/design-system/**`               | `ui-ux-designer`               | Design tokens file                  |
 
@@ -559,6 +638,67 @@ Before removing/changing ANY code:
 
 ---
 
+## Development Commands
+
+### Backend
+
+```bash
+dotnet build EasyPlatform.sln
+dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
+dotnet test [Project].csproj
+```
+
+### Frontend
+
+```bash
+cd src/Frontend
+npm install
+nx serve playground-text-snippet
+nx build playground-text-snippet
+nx test platform-core
+```
+
+### Infrastructure
+
+```bash
+docker-compose -f src/platform-example-app.docker-compose.yml up -d
+```
+
+### Database Connections (Dev)
+
+| Service    | Host:Port       | Credentials         |
+| ---------- | --------------- | ------------------- |
+| SQL Server | localhost,14330 | sa / 123456Abc      |
+| MongoDB    | localhost:27017 | root / rootPassXXX  |
+| PostgreSQL | localhost:54320 | postgres / postgres |
+| Redis      | localhost:6379  | -                   |
+| RabbitMQ   | localhost:15672 | guest / guest       |
+
+---
+
+## Naming Conventions
+
+| Type        | Convention                | Example                                                 |
+| ----------- | ------------------------- | ------------------------------------------------------- |
+| Classes     | PascalCase                | `UserService`, `EmployeeDto`                            |
+| Methods     | PascalCase (C#)           | `GetEmployeeAsync()`                                    |
+| Methods     | camelCase (TS)            | `getEmployee()`                                         |
+| Variables   | camelCase                 | `userName`, `employeeList`                              |
+| Constants   | UPPER_SNAKE_CASE          | `MAX_RETRY_COUNT`                                       |
+| Booleans    | Prefix with verb          | `isActive`, `hasPermission`, `canEdit`, `shouldProcess` |
+| Collections | Plural                    | `users`, `items`, `employees`                           |
+| BEM CSS     | block__element --modifier | All frontend template elements must have BEM classes    |
+
+---
+
+## Universal Clean Code Rules
+
+- **No code duplication** — Search and reuse existing implementations
+- **SOLID principles** — Single responsibility, dependency inversion
+- **90% Logic Rule** — If logic belongs 90% to class A, put it in class A
+
+---
+
 ## Shell Environment (Critical for Windows)
 
 **Important:** Use Unix-compatible commands (Git Bash). Forward slashes for paths. See `CLAUDE.md` for the full command translation table.
@@ -686,7 +826,7 @@ Each file contains critical rules inline + references to full pattern files in `
 
 **`batch-operation`** — Batch Operation (Confirm: Yes)
 
-- **Triggers:** all files, batch, bulk, find-replace across, every instance, multiple files/components
+- **Triggers:** all files, batch, bulk, find-replace across, merge/combine/consolidate all, every instance, multiple files/components
 - **NOT for:** Single-file changes, test file creation, documentation updates
 
 **`deployment`** — Deployment & Infrastructure (Confirm: Yes)
@@ -798,11 +938,11 @@ Each file contains critical rules inline + references to full pattern files in `
 
 **Before writing ANY code or reading ANY file, you MUST:**
 
-1. **DETECT** — Match the user's prompt against the workflow table above
+1. **DETECT** — Match the user's prompt against the workflow table above. If NO match, ask user: "(a) handle directly, (b) use `/plan` first, or (c) pick a workflow?"
 2. **ANNOUNCE** — State: `"Detected: **{Workflow}** workflow. Following: {sequence}"`
-3. **CREATE TODOS** — Track ALL workflow steps as todo items IMMEDIATELY
-4. **CONFIRM** (if marked ✅) — Ask: `"Proceed with this workflow? (yes/no/quick)"`
-5. **EXECUTE** — Follow each step sequentially, marking todos as you go
+3. **⛔ CONFIRM GATE** (if marked ✅) — Ask: `"Proceed with this workflow? (yes/no/quick)"` — STOP and WAIT. Do NOT continue until user responds.
+4. **⛔ CREATE TODOS (BLOCKING)** — Create ONE todo per workflow step. You are BLOCKED from executing any step until ALL todos exist. Example for a 5-step workflow: create 5 separate todos, one for each slash command in the sequence.
+5. **EXECUTE** — Follow each step sequentially, marking each todo in-progress then complete as you go
 
 **You MUST NOT:**
 

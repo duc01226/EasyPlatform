@@ -121,7 +121,7 @@ const workflowIntentChangeTests = [
         assertTrue(
           output.toLowerCase().includes('switch') ||
           output.toLowerCase().includes('continue') ||
-          output.includes('/workflow:start'),
+          output.includes('/workflow-start'),
           'Should contain conflict handling instructions'
         );
       } finally {
@@ -730,7 +730,7 @@ const prettierSkipPatternTests = [
 // ============================================================================
 // Issue: Workflow-generated todos didn't have a distinguishing prefix.
 // Fix: buildWorkflowInstructions() includes [Workflow] prefix in todo template.
-// In v2.0, instructions are output by the step-tracker on /workflow:start activation.
+// In v2.0, instructions are output by the step-tracker on /workflow-start activation.
 
 const workflowPrefixTests = [
   {

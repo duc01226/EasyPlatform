@@ -4,7 +4,7 @@
  *
  * AI-native workflow detection via catalog injection.
  * Injects a workflow catalog for qualifying prompts; the AI decides which
- * workflow to follow and explicitly activates it via /workflow:start <id>.
+ * workflow to follow and explicitly activates it via /workflow-start <id>.
  *
  * Features:
  * - AI-native intent detection (no regex)

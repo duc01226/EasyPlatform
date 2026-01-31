@@ -1,13 +1,13 @@
 ---
 name: migration
-description: "[Implementation] ⚡⚡ Create data or schema migration"
-argument-hint: [migration-description]
+description: "[Implementation] ⚡⚡ Create or run database migrations"
+argument-hint: [add <name> | update | list | rollback | migration-description]
 infer: true
 ---
 
-# Create Migration: $ARGUMENTS
+# Migration: $ARGUMENTS
 
-Create a data or schema migration following EasyPlatform patterns.
+Create or run database migrations following EasyPlatform patterns.
 
 ## Summary
 
@@ -25,6 +25,38 @@ Create a data or schema migration following EasyPlatform patterns.
 - Use paging (200-500 page size) for large datasets with `dismissSendEvent: true`
 - Migrations must be idempotent (safe to run multiple times)
 - Never create files without explicit user approval
+
+## Quick Commands (db-migrate)
+
+Parse `$ARGUMENTS` for quick operations:
+- `add <name>` → Create new EF Core migration
+- `update` → Apply pending migrations
+- `list` → List all migrations and status
+- `rollback` → Revert last migration
+- No argument or description → Create new migration (proceed to Phase 1)
+
+**Database providers:**
+- SQL Server: `PlatformExampleApp.TextSnippet.Persistence`
+- PostgreSQL: `PlatformExampleApp.TextSnippet.Persistence.PostgreSql`
+- MongoDB: Uses `PlatformMongoMigrationExecutor` (code-based, runs on startup)
+  - Location: `*.Persistence.Mongo/Migrations/`
+
+**EF Core quick commands:**
+```bash
+# Add migration
+cd src/Backend/PlatformExampleApp.TextSnippet.Persistence
+dotnet ef migrations add <MigrationName> --startup-project ../PlatformExampleApp.TextSnippet.Api
+
+# Apply migrations
+dotnet ef database update --startup-project ../PlatformExampleApp.TextSnippet.Api
+
+# List migrations
+dotnet ef migrations list --startup-project ../PlatformExampleApp.TextSnippet.Api
+```
+
+**Safety:** Warn before applying to production. Show pending changes. Recommend backup before destructive operations.
+
+---
 
 ## Phase 1: Analyze Requirements
 

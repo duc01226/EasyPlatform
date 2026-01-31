@@ -218,6 +218,32 @@ function main() {
       // Add newly promoted deltas
       deltas = [...deltas, ...promoted];
 
+      // Enrich skills with promoted deltas (graceful degradation)
+      let totalInjected = 0;
+      if (promoted.length > 0) {
+        try {
+          const injector = require('./lib/skill-fragment-injector.cjs');
+          const enrichedSkills = new Set();
+
+          for (const delta of promoted) {
+            const injResult = injector.processSkillInjection(delta);
+            totalInjected += injResult.injected;
+            injResult.skills.forEach(s => enrichedSkills.add(s));
+
+            if (injResult.errors.length > 0) {
+              logAction(`skill-injection | delta ${delta.delta_id} errors: ${injResult.errors.join(', ')}`);
+            }
+          }
+
+          if (totalInjected > 0) {
+            logAction(`skill-injection | ${totalInjected} fragments → ${enrichedSkills.size} skills`);
+          }
+        } catch (err) {
+          logAction(`skill-injection-error | ${err.message}`);
+          // Non-blocking — curator continues
+        }
+      }
+
       // Update candidates file (remove promoted)
       saveCandidates(remaining);
 
@@ -246,6 +272,7 @@ function main() {
       const actions = [];
       if (promoted.length > 0) actions.push(`+${promoted.length} promoted`);
       if (merged > 0) actions.push(`${merged} merged`);
+      if (totalInjected > 0) actions.push(`${totalInjected} skill fragments`);
       if (stalePruned.length > 0) actions.push(`-${stalePruned.length} pruned`);
       if (overflow.length > 0) actions.push(`-${overflow.length} overflow`);
 

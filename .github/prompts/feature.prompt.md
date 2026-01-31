@@ -63,7 +63,7 @@ Use appropriate skills:
 
 - `backend-cqrs-command` for commands
 - `backend-cqrs-query` for queries
-- `frontend-angular-component` for UI
+- `frontend-angular` for UI
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**
 

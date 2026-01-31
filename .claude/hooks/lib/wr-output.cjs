@@ -65,11 +65,23 @@ function buildCatalogInjection(config) {
   lines.push('');
   lines.push('## Available Workflows');
   lines.push('');
-  lines.push('**MANDATORY:** Analyze this prompt against the workflows below. If ANY workflow matches, you MUST invoke `/workflow:start <id>` BEFORE doing anything else — do NOT skip this step, do NOT read files first, do NOT jump to implementation. If `confirmFirst` is true, ask the user before activating. Only handle directly if NO workflow matches.');
+  lines.push('**MANDATORY:** Analyze this prompt against the workflows below. If ANY workflow matches, you MUST invoke `/workflow-start <id>` BEFORE doing anything else — do NOT skip this step, do NOT read files first, do NOT jump to implementation. If `confirmFirst` is true, ask the user before activating. Only handle directly if NO workflow matches.');
   lines.push('');
   lines.push('**"Simple task" exception is NARROW:** Only skip workflows for single-line typo fixes or when the user says "just do it" / prefixes with `quick:`. A prompt containing error details, stack traces, or multi-line context is NEVER simple — always activate the matching workflow.');
   lines.push('');
   lines.push(catalog);
+  lines.push('');
+
+  // Numbered detection steps (proven more effective than single paragraph)
+  lines.push('### Detection Steps');
+  lines.push('');
+  lines.push('1. **MATCH (MANDATORY):** Compare the user\'s prompt against EVERY "Use" field above. Match semantics, not exact keywords.');
+  lines.push('2. **SELECT:** Pick the single best-matching workflow, or NONE only if genuinely no entry matches.');
+  lines.push('3. **NO MATCH FALLBACK:** If genuinely NO workflow matches, ask the user: "No workflow matched. Should I: (a) handle directly, (b) use `/plan` first, or (c) pick a workflow?" — do NOT silently proceed.');
+  lines.push('4. **ACTIVATE:** Call `/workflow-start <workflowId>` — do NOT skip this step, do NOT read files first');
+  lines.push('5. **ANNOUNCE:** Tell user: "Detected: **[Workflow Name]**. Following: [sequence]"');
+  lines.push('6. **⛔ CONFIRM GATE (if `confirmFirst`):** You MUST ask "Proceed with this workflow? (yes/no/quick)" and WAIT for user response. Do NOT proceed until user confirms. This is a BLOCKING requirement.');
+  lines.push('7. **⛔ TODOWRITE (MANDATORY — BLOCKING):** You MUST create exactly ONE `TaskCreate` call per workflow step — if the workflow has 7 steps, you MUST create 7 todos. Do NOT summarize or combine steps. Do NOT create generic todos. Each todo subject = the step\'s slash command (e.g., `/scout`, `/plan`). The hook will REJECT fewer todos than workflow steps.');
   lines.push('');
 
   if (settings?.allowOverride && settings?.overridePrefix) {
@@ -117,7 +129,7 @@ function buildActiveWorkflowContext(existingState, config) {
   lines.push('');
   lines.push('If this new prompt matches the **SAME** workflow, continue with the current step.');
   lines.push('If it suggests a **DIFFERENT** intent, announce the conflict and ask the user:');
-  lines.push('- **Switch** — invoke `/workflow:start <newId>` (auto-switches, clears current)');
+  lines.push('- **Switch** — invoke `/workflow-start <newId>` (auto-switches, clears current)');
   lines.push('- **Continue** — keep executing the current workflow');
   lines.push('- **Quick** — skip workflows entirely, handle directly');
   lines.push('');
@@ -133,7 +145,7 @@ function buildActiveWorkflowContext(existingState, config) {
 }
 
 /**
- * Build workflow instructions for Claude to follow after /workflow:start activation.
+ * Build workflow instructions for Claude to follow after /workflow-start activation.
  * @param {Object} activation - Activation info with workflow and workflowId
  * @param {Object} config - Workflow configuration
  * @returns {string} Formatted instructions
@@ -187,27 +199,31 @@ function buildWorkflowInstructions(activation, config) {
     lines.push('');
   }
 
-  // Instructions
+  // Instructions — todo creation is step 2 (or 3 for confirmFirst), always before execution
   if (workflow.confirmFirst && settings?.confirmHighImpact) {
-    lines.push('### Instructions (MUST FOLLOW)');
+    lines.push('### Instructions (MUST FOLLOW IN ORDER)');
     lines.push('');
-    lines.push('1. **FIRST:** Announce the activated workflow to the user:');
-    lines.push(`   > "Activated: **${workflow.name}** workflow. I will follow: ${sequenceDisplay}"`);
+    lines.push('1. **ANNOUNCE:** Tell the user:');
+    lines.push(`   > "Detected: **${workflow.name}**. Following: ${sequenceDisplay}"`);
     lines.push('');
-    lines.push('2. **ASK:** "Proceed with this workflow? (yes/no/quick)"');
-    lines.push('   - "yes" → Execute full workflow');
+    lines.push('2. **⛔ CONFIRM GATE:** Ask "Proceed with this workflow? (yes/no/quick)" — STOP and WAIT for response.');
+    lines.push('   - "yes" → Continue to step 3');
     lines.push('   - "no" → Ask what they want instead');
     lines.push('   - "quick" → Skip workflow, handle directly');
     lines.push('');
-    lines.push('3. **THEN:** Execute each step in sequence, using the appropriate slash command');
+    lines.push('3. **⛔ CREATE TODOS:** Use `TaskCreate` to create ONE todo per workflow step (see list below). Do NOT proceed to step 4 until ALL todos exist.');
+    lines.push('');
+    lines.push('4. **EXECUTE:** Follow the workflow sequence, invoking each slash command in order.');
     lines.push('');
   } else {
-    lines.push('### Instructions (MUST FOLLOW)');
+    lines.push('### Instructions (MUST FOLLOW IN ORDER)');
     lines.push('');
     lines.push('1. **ANNOUNCE:** Tell the user:');
-    lines.push(`   > "Activated: **${workflow.name}** workflow. Following: ${sequenceDisplay}"`);
+    lines.push(`   > "Detected: **${workflow.name}**. Following: ${sequenceDisplay}"`);
     lines.push('');
-    lines.push('2. **EXECUTE:** Follow the workflow sequence, using each slash command in order');
+    lines.push('2. **⛔ CREATE TODOS:** Use `TaskCreate` to create ONE todo per workflow step (see list below). Do NOT proceed to step 3 until ALL todos exist.');
+    lines.push('');
+    lines.push('3. **EXECUTE:** Follow the workflow sequence, invoking each slash command in order.');
     lines.push('');
   }
 
@@ -221,18 +237,16 @@ function buildWorkflowInstructions(activation, config) {
   });
   lines.push('');
 
-  // Todo tracking instruction - show ALL steps
-  lines.push('### Todo Tracking (REQUIRED)');
+  // Todo list reference — the blocking instruction is in the Instructions section above
+  lines.push('### Todo Items to Create');
   lines.push('');
-  lines.push('**MUST create todos for ALL workflow steps below (one todo per step):**');
-  lines.push('```');
+  lines.push('Create one `TaskCreate` call per line:');
   workflow.sequence.forEach((step) => {
     const cmd = (commandMapping || {})[step];
     const claudeCmd = cmd?.claude || `/${step}`;
     const desc = getStepDescription(step);
-    lines.push(`- [Workflow] ${claudeCmd} - ${desc}`);
+    lines.push(`- **${claudeCmd}** — ${desc}`);
   });
-  lines.push('```');
   lines.push('');
 
   // Override hint

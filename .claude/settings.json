@@ -161,7 +161,12 @@
                     {
                         "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/todo-enforcement.cjs",
                         "type": "command"
-                    },
+                    }
+                ],
+                "matcher": "Skill|Edit|Write|MultiEdit|NotebookEdit"
+            },
+            {
+                "hooks": [
                     {
                         "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/code-review-rules-injector.cjs",
                         "type": "command"

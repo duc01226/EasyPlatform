@@ -13,11 +13,11 @@
 /**
  * Build compact workflow catalog for AI prompt injection.
  * Sorted alphabetically by workflow ID.
- * Medium detail: 2 lines per workflow (name+whenToUse, whenNotToUse+sequence).
+ * Medium detail: 2 lines per workflow (name+whenToUse, whenNotToUse+full sequence).
  * Includes confirmFirst flag.
  *
  * @param {Object} config - Workflow config
- * @returns {string} Markdown catalog (~45 lines for 20 workflows)
+ * @returns {string} Markdown catalog
  */
 function buildWorkflowCatalog(config) {
   const { workflows, commandMapping } = config;
@@ -26,14 +26,13 @@ function buildWorkflowCatalog(config) {
   const lines = [];
   for (const [id, wf] of sorted) {
     const seq = wf.sequence || [];
-    const seqPreview = seq.slice(0, 3).map(step => {
+    const seqPreview = seq.map(step => {
       const cmd = (commandMapping || {})[step];
       return cmd?.claude || `/${step}`;
     }).join(' → ');
-    const seqSuffix = seq.length > 3 ? ` → ... (${seq.length} steps)` : '';
     const confirm = wf.confirmFirst ? ' | confirmFirst' : '';
 
-    lines.push(`**${id}** — ${wf.name} | ${wf.whenToUse}${confirm} | ${seqPreview}${seqSuffix}`);
+    lines.push(`**${id}** — ${wf.name} | ${wf.whenToUse}${confirm} | ${seqPreview}`);
     if (wf.whenNotToUse) {
       lines.push(`  ↳ NOT: ${wf.whenNotToUse}`);
     }

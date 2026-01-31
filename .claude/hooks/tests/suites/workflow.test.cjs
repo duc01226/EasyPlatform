@@ -804,7 +804,7 @@ const workflowRouterTests = [
     }
   },
   {
-    name: '[catalog-output] buildCatalogInjection includes /workflow:start instruction',
+    name: '[catalog-output] buildCatalogInjection includes /workflow-start instruction',
     fn: async () => {
       const config = {
         settings: { allowOverride: true, overridePrefix: 'quick:' },
@@ -820,7 +820,7 @@ const workflowRouterTests = [
       };
       const injection = buildCatalogInjection(config);
       assertContains(injection, 'Available Workflows', 'Should have header');
-      assertContains(injection, '/workflow:start', 'Should contain /workflow:start instruction');
+      assertContains(injection, '/workflow-start', 'Should contain /workflow-start instruction');
       assertContains(injection, 'quick:', 'Should contain override hint');
     }
   },
@@ -836,7 +836,7 @@ const workflowRouterTests = [
         assertAllowed(result.code, 'Should not block');
         const output = result.stdout + result.stderr;
         assertContains(output, 'Available Workflows', 'Should inject catalog');
-        assertContains(output, '/workflow:start', 'Should include activation instruction');
+        assertContains(output, '/workflow-start', 'Should include activation instruction');
       } finally {
         cleanupTempDir(tmpDir);
       }

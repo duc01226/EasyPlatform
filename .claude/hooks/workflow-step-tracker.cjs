@@ -4,7 +4,7 @@
  *
  * Automatically tracks skill execution and advances workflow state when
  * a workflow step skill completes execution.
- * Also handles /workflow:start activation to create workflow state.
+ * Also handles /workflow-start activation to create workflow state.
  *
  * Triggers on: Skill tool completion
  *
@@ -79,7 +79,7 @@ function mapSkillToStepId(skillName, config) {
 }
 
 /**
- * Handle /workflow:start activation
+ * Handle /workflow-start activation
  * @param {Object} toolInput - Tool input with skill and args
  * @param {Object} config - Workflow configuration
  * @returns {boolean} true if handled (caller should exit)
@@ -88,7 +88,7 @@ function handleWorkflowStart(toolInput, config) {
     const workflowId = (toolInput.args || '').trim();
 
     if (!workflowId) {
-        console.log('\n<!-- workflow:start requires a workflowId argument -->');
+        console.log('\n<!-- workflow-start requires a workflowId argument -->');
         return true;
     }
 
@@ -144,8 +144,8 @@ async function main() {
         const config = loadWorkflowConfig();
         if (!config) process.exit(0);
 
-        // Handle /workflow:start activation
-        if (skillName === 'workflow:start' || skillName === 'workflow/start') {
+        // Handle /workflow-start activation
+        if (skillName === 'workflow-start' || skillName === 'workflow:start' || skillName === 'workflow/start') {
             handleWorkflowStart(toolInput, config);
             process.exit(0);
         }

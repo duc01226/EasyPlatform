@@ -81,8 +81,7 @@ Skills are invoked with `/skill-name`. Each skill is a directory under `.claude/
 | `/preview`      | `/preview`            | Preview changes         |
 | `/security`     | `/security`           | Security audit          |
 | `/performance`  | `/performance`        | Performance analysis    |
-| `/migration`    | `/migration`          | Database migration      |
-| `/db-migrate`   | `/db-migrate`         | Run DB migrations       |
+| `/migration`    | `/migration`          | Create or run DB migrations |
 | `/generate-dto` | `/generate-dto`       | Generate DTOs           |
 
 ### Skill Management

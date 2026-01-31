@@ -140,7 +140,7 @@ Present findings with:
 
 ---
 
-Use `arch-security-review` skill for comprehensive analysis.
+Use `/security` skill for comprehensive analysis.
 
 ## IMPORTANT Task Planning Notes
 

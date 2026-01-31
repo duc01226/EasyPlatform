@@ -284,7 +284,7 @@ cleanup();
 // 3.3 buildCatalogInjection
 const catalogInjection = buildCatalogInjection(config);
 assertIncludes('output', 'catalog injection has header', catalogInjection, 'Available Workflows');
-assertIncludes('output', 'catalog injection mentions /workflow:start', catalogInjection, '/workflow:start');
+assertIncludes('output', 'catalog injection mentions /workflow-start', catalogInjection, '/workflow-start');
 
 console.log('  [3] Output Generation: done\n');
 
@@ -527,19 +527,19 @@ console.log('  [6] Step Tracker Hook: done\n');
 console.log('  [7] Full Lifecycle Integration...');
 cleanup();
 
-// 7.1 Complete end-to-end: catalog → /workflow:start → advance → complete
+// 7.1 Complete end-to-end: catalog → /workflow-start → advance → complete
 // Step 1: Router injects catalog for qualifying prompt
 const e2eOutput1 = runHook('workflow-router.cjs', { prompt: 'fix the login bug please' });
 assertIncludes('e2e', 'router injects catalog', e2eOutput1, 'Available Workflows');
 assertEqual('e2e', 'no state created by router (v2.0)', loadState(), null);
 
-// Step 2: AI invokes /workflow:start via step-tracker
+// Step 2: AI invokes /workflow-start via step-tracker
 const e2eOutput2 = runHook('workflow-step-tracker.cjs', {
     tool_name: 'Skill',
-    tool_input: { skill: 'workflow:start', args: 'bugfix' },
+    tool_input: { skill: 'workflow-start', args: 'bugfix' },
     tool_response: 'Workflow started'
 });
-assertIncludes('e2e', 'workflow:start outputs instructions', e2eOutput2, 'Workflow Activated');
+assertIncludes('e2e', 'workflow-start outputs instructions', e2eOutput2, 'Workflow Activated');
 const e2eState1 = loadState();
 assert('e2e', 'state created by step-tracker', e2eState1 !== null);
 assertEqual('e2e', 'bugfix workflow activated', e2eState1?.workflowId, 'bugfix');
