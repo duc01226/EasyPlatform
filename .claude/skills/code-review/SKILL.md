@@ -1,11 +1,27 @@
 ---
 name: code-review
-description: Use when receiving code review feedback (especially if unclear or technically questionable), when completing tasks or major features requiring review before proceeding, or before making any completion/success claims. Covers three practices - receiving feedback with technical rigor over performative agreement, requesting reviews via code-reviewer subagent, and verification gates requiring evidence before any status claims. Essential for subagent-driven development, pull requests, and preventing false completion claims.
+description: "[Review & Quality] Use when receiving code review feedback (especially if unclear or technically questionable), when completing tasks or major features requiring review before proceeding, or before making any completion/success claims. Covers three practices - receiving feedback with technical rigor over performative agreement, requesting reviews via code-reviewer subagent, and verification gates requiring evidence before any status claims. Essential for subagent-driven development, pull requests, and preventing false completion claims."
 ---
 
 # Code Review
 
 Guide proper code review practices emphasizing technical rigor, evidence-based claims, and verification over performative responses.
+
+## Summary
+
+**Goal:** Guide proper code review practices emphasizing technical rigor, evidence-based claims, and verification over performative responses.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Create todos | MUST generate TodoWrite for both Phase 1 and Phase 2 |
+| 2 | Phase 1: File-by-file review | Document Change Summary, Purpose, Issues per file in report |
+| 3 | Phase 2: Holistic review | Architecture coherence, responsibility placement, duplication |
+| 4 | Final recommendations | Prioritized list of actionable improvements |
+
+**Key Principles:**
+- Technical correctness over social comfort — verify before implementing
+- Two-phase report-driven: file-level then holistic analysis
+- YAGNI, KISS, DRY — be honest, brutal, straight to the point
 
 ## Overview
 
@@ -225,7 +241,7 @@ When reviewing frontend TypeScript files, apply frontend-specific compliance che
 
 ## Related
 
-- **Debugging:** `debugging` - Root cause investigation before fixes
+- **Debugging:** `debug` - Root cause investigation before fixes
 - **Testing:** `test-specs-docs` - Create tests for bug fixes
 - **Simplification:** `code-simplifier` - Simplify code after review
 - **Frontend Patterns:** See `docs/claude/frontend-typescript-complete-guide.md`

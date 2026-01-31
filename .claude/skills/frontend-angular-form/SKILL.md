@@ -1,6 +1,6 @@
 ---
 name: frontend-angular-form
-description: Use when creating reactive forms with validation, async validators, dependent validation, and FormArrays using platform patterns.
+description: "[Frontend] Use when creating reactive forms with validation, async validators, dependent validation, and FormArrays using platform patterns."
 infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---

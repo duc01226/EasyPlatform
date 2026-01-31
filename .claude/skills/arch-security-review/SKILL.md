@@ -1,11 +1,28 @@
 ---
 name: arch-security-review
-description: Use when reviewing code for security vulnerabilities, implementing authorization, or ensuring data protection.
+description: "[Review & Quality] Use when reviewing code for security vulnerabilities, implementing authorization, or ensuring data protection."
 infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
 # Security Review Workflow
+
+## Summary
+
+**Goal:** Review code for security vulnerabilities against OWASP Top 10, verify authorization patterns, and ensure data protection.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Pre-flight checklist | Identify security-sensitive areas, check OWASP relevance |
+| 2 | OWASP Top 10 audit | Broken access control, crypto, injection, SSRF, etc. |
+| 3 | Authorization review | Verify `[PlatformAuthorize]`, resource-level access checks |
+| 4 | Data protection | Encryption, secrets management, input validation |
+| 5 | Remediation plan | Prioritized fixes with code examples |
+
+**Key Principles:**
+- Every endpoint must have explicit authorization — no unauthenticated access by default
+- Never store secrets in plain text; use secure configuration providers
+- Input validation at every boundary; parameterized queries only
 
 ## When to Use This Skill
 

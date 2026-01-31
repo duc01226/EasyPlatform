@@ -4,7 +4,7 @@ argument-hint: [task]
 ---
 
 Think harder.
-Activate `planning` skill.
+Activate `plan` skill.
 
 ## Your mission
 
@@ -17,7 +17,7 @@ $ARGUMENTS
 
 1. First: Create a directory using naming pattern from `## Naming` section in injected context.
    Make sure you pass the directory path to every subagent during the process.
-2. Follow strictly to the "Plan Creation & Organization" rules of `planning` skill.
+2. Follow strictly to the "Plan Creation & Organization" rules of `plan` skill.
 3. Use multiple `researcher` agents in parallel to research for this task, each agent research for a different aspect of the task and perform max 5 researches (max 5 tool calls).
 4. Use `scout` agent to search the codebase for files needed to complete the task.
 5. Main agent gathers all research and scout report filepaths, and pass them to `planner` subagent with the detailed instructions prompt to create an implementation plan of this task.

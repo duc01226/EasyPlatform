@@ -1,12 +1,28 @@
 ---
 name: ai-dev-tools-sync
-description: Synchronize and update Claude Code and GitHub Copilot development tool configurations to work similarly. Use when asked to update Claude Code setup, update Copilot setup, sync AI dev tools, add new skills/prompts/agents across both platforms, or ensure Claude and Copilot configurations are aligned. Covers skills, prompts, agents, instructions, workflows, and chat modes.
+description: "[Tooling & Meta] Synchronize and update Claude Code and GitHub Copilot development tool configurations to work similarly. Use when asked to update Claude Code setup, update Copilot setup, sync AI dev tools, add new skills/prompts/agents across both platforms, or ensure Claude and Copilot configurations are aligned. Covers skills, prompts, agents, instructions, workflows, and chat modes."
 infer: true
 ---
 
 # AI Dev Tools Sync
 
 Synchronize Claude Code and GitHub Copilot configurations to maintain feature parity.
+
+## Summary
+
+**Goal:** Synchronize Claude Code and GitHub Copilot configurations to maintain feature parity across both AI development tools.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Identify change scope | Skills, prompts, agents, instructions, or workflows |
+| 2 | Map equivalents | Claude SKILL.md <-> Copilot prompt.md, etc. |
+| 3 | Apply changes | Update both platforms' config files |
+| 4 | Verify parity | Ensure both tools have matching capabilities |
+
+**Key Principles:**
+- Claude skills live in `.claude/skills/`, Copilot prompts in `.github/prompts/`
+- Copilot auto-reads Claude skills — avoid duplication where possible
+- Agents are shared in `.github/agents/` for both platforms
 
 ## When to Use
 
@@ -22,7 +38,7 @@ Activate this skill when:
 | Claude Code    | GitHub Copilot          | Location                                   |
 | -------------- | ----------------------- | ------------------------------------------ |
 | SKILL.md       | SKILL.md                | `.claude/skills/` + `.github/skills/`      |
-| commands/*.md  | prompts/*.prompt.md     | `.claude/commands/` + `.github/prompts/`   |
+| skills/*/SKILL.md | prompts/*.prompt.md  | `.claude/skills/` + `.github/prompts/`   |
 | agents/*.md    | agents/*.md             | `.github/agents/` (shared)                 |
 | workflows/*.md | -                       | `.claude/workflows/`                       |
 | CLAUDE.md      | copilot-instructions.md | Root + `.github/`                          |
@@ -152,7 +168,7 @@ Both platforms support skills in `.github/skills/`. Copilot also reads `.claude/
 
 | Claude Code                  | GitHub Copilot                             |
 | ---------------------------- | ------------------------------------------ |
-| `.claude/commands/my-cmd.md` | `.github/prompts/my-cmd.prompt.md`         |
+| `.claude/skills/my-cmd.md` | `.github/prompts/my-cmd.prompt.md`         |
 | Invoked via `/my-cmd`        | Invoked via `/my-cmd` or `#prompt:my-cmd`  |
 
 **Sync Strategy**:
@@ -267,7 +283,7 @@ Compare capabilities and identify gaps:
 For each change:
 
 1. **Skills**: Create in both `.claude/skills/` and `.github/skills/`
-2. **Prompts**: Create in both `.claude/commands/` and `.github/prompts/`
+2. **Prompts**: Create in both `.claude/skills/` and `.github/prompts/`
 3. **Instructions**: Update both `CLAUDE.md` and `.github/copilot-instructions.md`
 4. **Agents**: Update `.github/agents/` (shared by both)
 

@@ -116,41 +116,41 @@ ClaudeKit is a production-ready toolkit enhancing Claude Code with multi-agent o
 
 | Command | Use Case |
 |---------|----------|
-| `/fix:fast` | Quick fixes |
-| `/fix:hard` | Complex issues |
-| `/fix:ui` | UI-specific fixes |
-| `/fix:types` | TypeScript type errors |
-| `/fix:parallel` | Multi-file parallel fixes |
-| `/fix:ci` | CI/CD pipeline fixes |
-| `/fix:test` | Test failures |
+| `/fix-fast` | Quick fixes |
+| `/fix-hard` | Complex issues |
+| `/fix-ui` | UI-specific fixes |
+| `/fix-types` | TypeScript type errors |
+| `/fix-parallel` | Multi-file parallel fixes |
+| `/fix-ci` | CI/CD pipeline fixes |
+| `/fix-test` | Test failures |
 
 ### Design Commands
 
 | Command | Output |
 |---------|--------|
-| `/design:3d` | 3D design elements |
-| `/design:fast` | Quick mockups |
-| `/design:good` | High-quality designs |
-| `/design:screenshot` | Screenshot-based design |
-| `/design:video` | Video UI concepts |
+| `/design-3d` | 3D design elements |
+| `/design-fast` | Quick mockups |
+| `/design-good` | High-quality designs |
+| `/design-screenshot` | Screenshot-based design |
+| `/design-video` | Video UI concepts |
 
 ### Git Commands
 
 | Command | Action |
 |---------|--------|
-| `/git:cm` | Commit with message |
-| `/git:cp` | Commit and push |
-| `/git:pr` | Create pull request |
-| `/git:merge` | Merge branches |
+| `/commit` | Commit with message |
+| `/git-cp` | Commit and push |
+| `/git-pr` | Create pull request |
+| `/git-merge` | Merge branches |
 
 ### Content Commands
 
 | Command | Purpose |
 |---------|---------|
-| `/content:good` | High-quality content |
-| `/content:cro` | Conversion-optimized |
-| `/content:enhance` | Content improvement |
-| `/content:fast` | Quick content generation |
+| `/content-good` | High-quality content |
+| `/content-cro` | Conversion-optimized |
+| `/content-enhance` | Content improvement |
+| `/content-fast` | Quick content generation |
 
 ### Context Management
 
@@ -307,7 +307,7 @@ cp -r claudekit/.claude /your-project/
     └── Creates test suite
         │
         ▼
-/git:cm
+/commit
     └── Commits with conventional message
 ```
 
@@ -318,7 +318,7 @@ cp -r claudekit/.claude /your-project/
     └── Systematic investigation
         │
         ▼
-/fix:hard [issue]
+/fix-hard [issue]
     └── Implements fix
         │
         ▼
@@ -338,8 +338,8 @@ Brainstorm → Plan → Cook → Test → Review → Ship
 
 | Workflow | Command Sequence |
 |----------|------------------|
-| **Feature** | `/plan` → `/cook` → `/test` → `/git:cp` |
-| **Bug Fix** | `/debug` → `/fix:hard` → `/test` |
+| **Feature** | `/plan` → `/cook` → `/test` → `/git-cp` |
+| **Bug Fix** | `/debug` → `/fix-hard` → `/test` |
 | **Refactor** | `/plan` → `/cook` → `/review` → `/test` |
 | **Documentation** | `/doc` → `/review` |
 | **Full Delivery** | `/brainstorm` → `/plan` → `/cook` → `/test` → `/ship` |

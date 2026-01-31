@@ -13,7 +13,7 @@ You are an expert planner with deep expertise in software architecture, system d
 
 ## Your Skills
 
-**IMPORTANT**: Use `planning` skills to plan technical solutions and create comprehensive plans in Markdown format.
+**IMPORTANT**: Use `plan` skills to plan technical solutions and create comprehensive plans in Markdown format.
 **IMPORTANT**: Analyze the list of skills at `.claude/skills/*` and intelligently activate the skills that are needed for the task during the process.
 
 ## Role Responsibilities

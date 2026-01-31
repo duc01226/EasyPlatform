@@ -573,7 +573,7 @@ tools: available tools
 | Backend           | backend-development, api-design, databases         |
 | Frontend          | frontend-design, shadcn-tailwind, ui-ux-pro-max    |
 | Architecture      | arch-cross-service, arch-performance, arch-security|
-| DevOps            | devops, chrome-devtools, media-processing          |
+| DevOps            | devops, test-ui, media-processing          |
 | Quality           | code-review, debugging, testing                    |
 | Documentation     | documentation, feature-docs, business-feature-docs |
 | Platform-specific | easyplatform-backend, frontend-angular-*           |
@@ -671,7 +671,7 @@ The system uses **hooks** (JavaScript scripts), **configuration files** (JSON), 
 │                                   ┌───────────────────────▼────────────────┐│
 │                                   │     Inject Instructions to LLM         ││
 │                                   │  "Detected: Feature Implementation"   ││
-│                                   │  "Following: /plan → /plan:review..."││
+│                                   │  "Following: /plan → /plan-review..."││
 │                                   └───────────────────────┬────────────────┘│
 │                                                           │                  │
 │  ┌───────────────────────────────────────────────────────▼─────────────────┐│
@@ -733,9 +733,9 @@ Defines all workflow types, their trigger patterns, and step sequences:
 
 | Workflow      | Priority | Sequence | Use Case |
 |---------------|----------|----------|----------|
-| Feature       | 10       | /plan → /plan:review → /cook → /simplify → /review → /test → /docs → /watzup | New functionality |
-| Bugfix        | 20       | /scout → /investigate → /debug → /plan → /plan:review → /fix → /simplify → /review → /test | Error fixes |
-| Refactor      | 25       | /plan → /plan:review → /code → /simplify → /review → /test | Code improvement |
+| Feature       | 10       | /plan → /plan-review → /cook → /simplify → /review → /test → /docs → /watzup | New functionality |
+| Bugfix        | 20       | /scout → /investigate → /debug → /plan → /plan-review → /fix → /simplify → /review → /test | Error fixes |
+| Refactor      | 25       | /plan → /plan-review → /code → /simplify → /review → /test | Code improvement |
 | Documentation | 30       | /scout → /investigate → /docs-update → /watzup | Doc updates |
 | Review        | 35       | /code-review → /watzup | Code review |
 | Testing       | 40       | /test | Test creation |
@@ -865,7 +865,7 @@ The workspace enforces todo list creation before implementation work via runtime
 | Category | Skills |
 |----------|--------|
 | Research | `/scout`, `/investigate`, `/research`, `/explore`, `/docs-seeker` |
-| Planning | `/plan`, `/plan:fast`, `/plan:hard`, `/plan:validate` |
+| Planning | `/plan`, `/plan-fast`, `/plan-hard`, `/plan-validate` |
 | Status | `/watzup`, `/checkpoint`, `/kanban`, `/context-compact` |
 
 **Blocked Skills (Todos Required):**
@@ -947,7 +947,7 @@ Add a dark mode toggle to the settings page
 ## Workflow Detected
 
 **Intent:** Feature Implementation (100% confidence)
-**Workflow:** /plan → /plan:review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
+**Workflow:** /plan → /plan-review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
 
 ### Instructions (MUST FOLLOW)
 1. Announce detected workflow to user
@@ -959,11 +959,11 @@ Add a dark mode toggle to the settings page
 **Phase 3: LLM Response**
 ```
 > Detected: **Feature Implementation** workflow.
-> I will follow: /plan → /plan:review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
+> I will follow: /plan → /plan-review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
 
 [Creates todo list:]
 - [ ] Execute /plan - Create implementation plan
-- [ ] Execute /plan:review - Self-review plan
+- [ ] Execute /plan-review - Self-review plan
 - [ ] Execute /cook - Implement feature
 - [ ] Execute /code-simplifier - Simplify code
 ...
@@ -976,7 +976,7 @@ Proceed with this workflow? (yes/no/quick)
 User: "yes"
 
 Step 1: Claude calls Skill("plan") → Creates plan → ✓
-Step 2: Claude calls Skill("plan:review") → Self-reviews plan → ✓
+Step 2: Claude calls Skill("plan-review") → Self-reviews plan → ✓
 Step 3: Claude calls Skill("cook") → Implements feature → ✓
 Step 4: Claude calls Skill("code-simplifier") → Simplifies code → ✓
 Step 5: Claude calls Skill("code-review") → Reviews changes → ✓
@@ -1232,17 +1232,15 @@ python .claude/scripts/resolve_env.py GEMINI_API_KEY --skill ai-multimodal
 
 ### generate_catalogs.py
 
-Generates YAML catalogs from skill and command data files.
+Generates YAML catalogs from skill data files.
 
 ```bash
 python .claude/scripts/generate_catalogs.py --skills
-python .claude/scripts/generate_catalogs.py --commands
 ```
 
 ### Other Scripts
 
 - `scan_skills.py`: Discovers and catalogs skill definitions
-- `scan_commands.py`: Catalogs available commands
 - `set-active-plan.cjs`: Plan state management
 - `worktree.cjs`: Git worktree operations
 
@@ -1639,7 +1637,7 @@ User submits: "Add a dark mode toggle to the settings page"
 │ 6. Generate instructions output:                                             │
 │    "## Workflow Detected                                                     │
 │    **Intent:** Feature Implementation (100% confidence)                      │
-│    **Workflow:** /plan → /plan:review → /cook → /simplify...                │
+│    **Workflow:** /plan → /plan-review → /cook → /simplify...                │
 │                                                                              │
 │    ### Instructions (MUST FOLLOW)                                            │
 │    1. ANNOUNCE: Tell the user...                                             │
@@ -2064,7 +2062,7 @@ PHASE 1: DETECTION & ROUTING
 │ Output:                                                                      │
 │   "## Workflow Detected                                                      │
 │    **Intent:** Feature Implementation                                        │
-│    **Workflow:** /plan → /plan:review → /cook → /simplify → /review → /test"│
+│    **Workflow:** /plan → /plan-review → /cook → /simplify → /review → /test"│
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ═══════════════════════════════════════════════════════════════════════════════

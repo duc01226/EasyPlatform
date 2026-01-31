@@ -1,6 +1,6 @@
 ---
 name: product-owner
-description: Assist Product Owners with idea capture, backlog management, prioritization frameworks, and stakeholder communication. Use when working with product ideas, backlog items, sprint planning, or prioritization decisions. Triggers on keywords like "idea", "backlog", "prioritize", "sprint planning", "user value", "stakeholder", "product vision".
+description: "[Team Roles] Assist Product Owners with idea capture, backlog management, prioritization frameworks, and stakeholder communication. Use when working with product ideas, backlog items, sprint planning, or prioritization decisions. Triggers on keywords like "idea", "backlog", "prioritize", "sprint planning", "user value", "stakeholder", "product vision"."
 infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite, WebSearch
 ---
@@ -26,13 +26,13 @@ Role: value-driven decisions, backlog management, stakeholder communication, pro
 
 | Task                  | Skill        | Command         |
 | --------------------- | ------------ | --------------- |
-| Capture idea          | idea         | `/idea`         |
-| Prioritize backlog    | prioritize   | `/prioritize`   |
-| Sprint/project status | status       | `/status`       |
-| Track dependencies    | dependency   | `/dependency`   |
-| Refine idea to PBI    | refine       | `/refine`       |
-| Create user stories   | story        | `/story`        |
-| Quality gate check    | quality-gate | `/quality-gate` |
+| Capture idea          | team-idea         | `/team-idea`         |
+| Prioritize backlog    | team-prioritize   | `/team-prioritize`   |
+| Sprint/project status | team-status       | `/team-status`       |
+| Track dependencies    | team-dependency   | `/team-dependency`   |
+| Refine idea to PBI    | team-refine       | `/team-refine`       |
+| Create user stories   | team-story        | `/team-story`        |
+| Quality gate check    | team-quality-gate | `/team-quality-gate` |
 
 ## ⚠️ MUST READ Frameworks Reference
 

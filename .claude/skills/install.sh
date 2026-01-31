@@ -420,11 +420,11 @@ install_node_deps() {
     # Install local npm packages for skills
     print_info "Installing local npm packages for skills..."
 
-    # chrome-devtools
-    if [ -d "$SCRIPT_DIR/chrome-devtools/scripts" ] && [ -f "$SCRIPT_DIR/chrome-devtools/scripts/package.json" ]; then
-        print_info "Installing chrome-devtools dependencies..."
-        (cd "$SCRIPT_DIR/chrome-devtools/scripts" && npm install --quiet)
-        print_success "chrome-devtools dependencies installed"
+    # test-ui (browser automation via Puppeteer)
+    if [ -d "$SCRIPT_DIR/test-ui/scripts" ] && [ -f "$SCRIPT_DIR/test-ui/scripts/package.json" ]; then
+        print_info "Installing test-ui dependencies..."
+        (cd "$SCRIPT_DIR/test-ui/scripts" && npm install --quiet)
+        print_success "test-ui dependencies installed"
     fi
 
     # sequential-thinking
@@ -448,11 +448,11 @@ install_node_deps() {
         print_success "markdown-novel-viewer dependencies installed"
     fi
 
-    # plans-kanban (gray-matter)
-    if [ -d "$SCRIPT_DIR/plans-kanban" ] && [ -f "$SCRIPT_DIR/plans-kanban/package.json" ]; then
-        print_info "Installing plans-kanban dependencies..."
-        (cd "$SCRIPT_DIR/plans-kanban" && npm install --quiet)
-        print_success "plans-kanban dependencies installed"
+    # kanban (gray-matter)
+    if [ -d "$SCRIPT_DIR/kanban" ] && [ -f "$SCRIPT_DIR/kanban/package.json" ]; then
+        print_info "Installing kanban dependencies..."
+        (cd "$SCRIPT_DIR/kanban" && npm install --quiet)
+        print_success "kanban dependencies installed"
     fi
 
     # Optional: Shopify CLI (ask user unless auto-confirming)

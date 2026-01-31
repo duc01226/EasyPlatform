@@ -1,12 +1,28 @@
 ---
 name: problem-solving
-description: Apply systematic problem-solving techniques for complexity spirals (simplification cascades), innovation blocks (collision-zone thinking), recurring patterns (meta-pattern recognition), assumption constraints (inversion exercise), scale uncertainty (scale game), and dispatch when stuck. Techniques derived from Microsoft Amplifier project patterns adapted for immediate application.
+description: "[Planning] Apply systematic problem-solving techniques for complexity spirals (simplification cascades), innovation blocks (collision-zone thinking), recurring patterns (meta-pattern recognition), assumption constraints (inversion exercise), scale uncertainty (scale game), and dispatch when stuck. Techniques derived from Microsoft Amplifier project patterns adapted for immediate application."
 version: 2.0.0
 ---
 
 # Problem-Solving Techniques
 
 Systematic approaches for different types of stuck-ness. Each technique targets specific problem patterns.
+
+## Summary
+
+**Goal:** Apply systematic problem-solving techniques when stuck, matching specific stuck-ness patterns to targeted approaches.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Identify stuck symptom | Complexity spiral, innovation block, recurring pattern, etc. |
+| 2 | Dispatch to technique | Use Quick Dispatch table to select correct approach |
+| 3 | Apply technique | Follow structured steps for selected technique |
+| 4 | Validate solution | Ensure solution addresses root symptom |
+
+**Key Principles:**
+- Match symptom to technique — each targets a specific problem pattern
+- 5 techniques: Simplification Cascades, Collision-Zone Thinking, Meta-Pattern Recognition, Inversion Exercise, Scale Game
+- For code bugs/test failures, use the Debugging skill instead
 
 ## When to Use
 

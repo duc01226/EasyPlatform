@@ -4,7 +4,7 @@ argument-hint: [task]
 ---
 
 Think harder.
-Activate `planning` skill.
+Activate `plan` skill.
 
 ## Your mission
 
@@ -25,7 +25,7 @@ Check the `## Plan Context` section in the injected context:
 1. If creating new: Create directory using `Plan dir:` from `## Naming` section, then run `node .claude/scripts/set-active-plan.cjs {plan-dir}`
    If reusing: Use the active plan path from Plan Context.
    Make sure you pass the directory path to every subagent during the process.
-2. Follow strictly to the "Plan Creation & Organization" rules of `planning` skill.
+2. Follow strictly to the "Plan Creation & Organization" rules of `plan` skill.
 3. Use multiple `researcher` agents (max 2 agents) in parallel to research for this task:
    Each agent research for a different aspect of the task and are allowed to perform max 5 tool calls.
 4. Analyze the codebase by reading `codebase-summary.md`, `code-standards.md`, `system-architecture.md` and `project-overview-pdr.md` file.
@@ -42,11 +42,11 @@ After plan creation, offer validation interview to confirm decisions before impl
 | Mode     | Behavior                                                                        |
 | -------- | ------------------------------------------------------------------------------- |
 | `prompt` | Ask user: "Validate this plan with a brief interview?" → Yes (Recommended) / No |
-| `auto`   | Automatically execute `/plan:validate {plan-path}`                              |
+| `auto`   | Automatically execute `/plan-validate {plan-path}`                              |
 | `off`    | Skip validation step entirely                                                   |
 
 **If mode is `prompt`:** Use `AskUserQuestion` tool with options above.
-**If user chooses validation or mode is `auto`:** Execute `/plan:validate {plan-path}` SlashCommand.
+**If user chooses validation or mode is `auto`:** Execute `/plan-validate {plan-path}` SlashCommand.
 
 ## Output Requirements
 

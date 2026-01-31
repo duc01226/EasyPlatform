@@ -27,7 +27,7 @@ Start working on these tasks immediately with minimal planning:
 
 4. **Commit** (optional)
     - Ask user if ready to commit via `AskUserQuestion`
-    - If yes, use `/git:cm`
+    - If yes, use `/commit`
 
 ## When to Use
 

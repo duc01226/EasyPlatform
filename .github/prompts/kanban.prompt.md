@@ -26,10 +26,10 @@ Plans dashboard with progress tracking and timeline visualization.
 
 **IMPORTANT:** Run server as Claude Code background task using `run_in_background: true` with the Bash tool. This makes the server visible in `/tasks` and manageable via `KillShell`.
 
-Check if this script is located in the current workspace or in `$HOME/.claude/skills/plans-kanban` directory:
+Check if this script is located in the current workspace or in `$HOME/.claude/skills/kanban` directory:
 
-- If in current workspace: `$SKILL_DIR_PATH` = `./.claude/skills/plans-kanban/`
-- If in home directory: `$SKILL_DIR_PATH` = `$HOME/.claude/skills/plans-kanban/`
+- If in current workspace: `$SKILL_DIR_PATH` = `./.claude/skills/kanban/`
+- If in home directory: `$SKILL_DIR_PATH` = `$HOME/.claude/skills/kanban/`
 
 ### Stop Server
 
@@ -66,7 +66,7 @@ Example Bash tool call:
 
 ```json
 {
-    "command": "node .claude/skills/plans-kanban/scripts/server.cjs --dir \"./plans\" --host 0.0.0.0 --open --foreground",
+    "command": "node .claude/skills/kanban/scripts/server.cjs --dir \"./plans\" --host 0.0.0.0 --open --foreground",
     "run_in_background": true,
     "timeout": 300000,
     "description": "Start kanban server in background"

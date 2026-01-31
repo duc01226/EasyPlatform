@@ -1,12 +1,28 @@
 ---
 name: databases
 version: 2.0.0
-description: Database technology selection, schema design, query optimization, and migration guidance for MongoDB, SQL Server, PostgreSQL, and Redis. Triggers on database schema, mongodb query, sql server, postgresql, redis cache, database migration, index optimization.
+description: "[DevOps & Infra] Database technology selection, schema design, query optimization, and migration guidance for MongoDB, SQL Server, PostgreSQL, and Redis. Triggers on database schema, mongodb query, sql server, postgresql, redis cache, database migration, index optimization."
 infer: true
 allowed-tools: Read, Bash, Grep, Glob
 ---
 
 # Databases
+
+## Summary
+
+**Goal:** Guide database technology selection, schema design, query optimization, and migration patterns for EasyPlatform services.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Identify service & database | MongoDB, SQL Server, PostgreSQL, or Redis based on persistence module |
+| 2 | Select task type | Schema design, query optimization, migration, or index design |
+| 3 | Execute task | Follow technology-specific patterns and platform conventions |
+| 4 | Verify | Run in test environment, check explain plans, ensure idempotent migrations |
+
+**Key Principles:**
+- Each service owns its database -- never access another service's DB directly
+- Use `easyplatform-backend` skill for C# repository code, not this skill
+- Detailed references available in `references/` for each database technology
 
 ## Purpose
 Guide database technology selection, schema design, query optimization, and migration patterns -- with EasyPlatform-specific context for service-to-database mapping.

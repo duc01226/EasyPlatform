@@ -1,13 +1,29 @@
 ---
 name: web-design-guidelines
 version: 2.0.0
-description: "Review UI code for web interface design compliance covering WCAG 2.2/3.0 accessibility, responsive design, performance, usability, and modern best practices. Use when asked to 'review my UI', 'check accessibility', 'audit design', 'review UX', 'check responsive design', or 'check my site against best practices'. Actions: review, check, audit, analyze, validate. Topics: accessibility, WCAG, ARIA, semantic HTML, focus states, forms, animation, typography, content handling, images, performance, Core Web Vitals, navigation, touch interaction, responsive design, mobile-first, dark mode, internationalization, hydration."
+description: "[Frontend] Review UI code for web interface design compliance covering WCAG 2.2/3.0 accessibility, responsive design, performance, usability, and modern best practices. Use when asked to 'review my UI', 'check accessibility', 'audit design', 'review UX', 'check responsive design', or 'check my site against best practices'. Actions: review, check, audit, analyze, validate. Topics: accessibility, WCAG, ARIA, semantic HTML, focus states, forms, animation, typography, content handling, images, performance, Core Web Vitals, navigation, touch interaction, responsive design, mobile-first, dark mode, internationalization, hydration."
 argument-hint: <file-or-pattern>
 ---
 
 # Web Interface Design Guidelines
 
 Comprehensive code review for web interface compliance with industry standards including WCAG 2.2, Core Web Vitals, and modern UX best practices.
+
+## Summary
+
+**Goal:** Review UI code for compliance with WCAG 2.2 accessibility, responsive design, performance (Core Web Vitals), and modern UX best practices.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Read specified files | Or prompt user for files/pattern |
+| 2 | Check against all rules | Accessibility, responsive, performance, usability |
+| 3 | Output findings | Terse `file:line` format, grouped by file |
+| 4 | Skip explanations | Unless fix is non-obvious |
+
+**Key Principles:**
+- Semantic HTML first — use native elements over ARIA whenever possible
+- Minimum 4.5:1 contrast ratio for normal text, 3:1 for large text
+- All interactive elements must be keyboard accessible with visible focus states
 
 ## How to Use
 

@@ -1,6 +1,6 @@
 ---
 name: easyplatform-backend
-description: Complete Easy.Platform backend development for EasyPlatform. Covers CQRS commands/queries, entities, validation, migrations, background jobs, and message bus. Use for any .NET backend task in this monorepo.
+description: "[Implementation] Complete Easy.Platform backend development for EasyPlatform. Covers CQRS commands/queries, entities, validation, migrations, background jobs, and message bus. Use for any .NET backend task in this monorepo."
 infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
@@ -8,6 +8,22 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 # Easy.Platform Backend Development
 
 Complete backend development patterns for EasyPlatform .NET 9 microservices.
+
+## Summary
+
+**Goal:** Provide complete backend development patterns for EasyPlatform .NET 9 CQRS microservices.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Identify task type | Use decision tree: Command, Query, Entity, Event, Migration, Job, Message Bus |
+| 2 | Create file in correct location | Follow `{Service}.Application/` or `{Service}.Domain/` structure |
+| 3 | Implement using platform patterns | Command+Result+Handler in ONE file, fluent validation, static expressions |
+| 4 | Verify anti-patterns avoided | No side effects in handlers, no cross-service DB, DTO owns mapping |
+
+**Key Principles:**
+- Use `PlatformValidationResult` fluent API -- never throw validation exceptions
+- Side effects go in Entity Event Handlers in `UseCaseEvents/`, never in command handlers
+- Cross-service communication via message bus only -- never direct DB access
 
 ## Quick Decision Tree
 

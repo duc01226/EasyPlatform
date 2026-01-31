@@ -1,6 +1,6 @@
 ---
 name: business-analyst
-description: Assist Business Analysts with requirements refinement, user story writing, acceptance criteria in BDD format, and gap analysis. Use when creating user stories, writing acceptance criteria, analyzing requirements, or mapping business processes. Triggers on keywords like "requirements", "user story", "acceptance criteria", "BDD", "GIVEN WHEN THEN", "gap analysis", "process flow", "business rules".
+description: "[Team Roles] Assist Business Analysts with requirements refinement, user story writing, acceptance criteria in BDD format, and gap analysis. Use when creating user stories, writing acceptance criteria, analyzing requirements, or mapping business processes. Triggers on keywords like "requirements", "user story", "acceptance criteria", "BDD", "GIVEN WHEN THEN", "gap analysis", "process flow", "business rules"."
 infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite
 ---
@@ -26,12 +26,12 @@ Role: requirements refinement, user stories, acceptance criteria, business proce
 
 | Task                | Skill      | Command       |
 | ------------------- | ---------- | ------------- |
-| Capture idea        | idea       | `/idea`       |
-| Refine idea to PBI  | refine     | `/refine`     |
-| Create user stories | story      | `/story`      |
-| Prioritize backlog  | prioritize | `/prioritize` |
-| Generate test specs | test-spec  | `/test-spec`  |
-| Generate test cases | test-cases | `/test-cases` |
+| Capture idea        | team-idea       | `/team-idea`       |
+| Refine idea to PBI  | team-refine     | `/team-refine`     |
+| Create user stories | team-story      | `/team-story`      |
+| Prioritize backlog  | team-prioritize | `/team-prioritize` |
+| Generate test specs | team-test-spec  | `/team-test-spec`  |
+| Generate test cases | team-test-cases | `/team-test-cases` |
 
 ## ⚠️ MUST READ Frameworks Reference
 

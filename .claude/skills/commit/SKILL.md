@@ -1,12 +1,29 @@
 ---
 name: commit
-description: Stage changes and create git commits with conventional commit messages. Use when asked to "commit", "stage and commit", "save changes", or after completing implementation tasks. Alias for /git/cm.
+description: "[Git & Release] Stage changes and create git commits with conventional commit messages. Use when asked to "commit", "stage and commit", "save changes", or after completing implementation tasks. Alias for /git/cm."
 allowed-tools: Bash, Read, Glob, Grep
 ---
 
 # Git Commit Skill
 
 Stage changes and create well-structured git commits following Conventional Commits format.
+
+## Summary
+
+**Goal:** Stage changes and create git commits with proper Conventional Commits messages.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Analyze changes | `git status`, `git diff`, `git log --oneline -5` |
+| 2 | Stage changes | `git add .` or specific files |
+| 3 | Generate commit message | `type(scope): subject` -- imperative mood, max 50 chars |
+| 4 | Commit | Use HEREDOC format with attribution footer |
+| 5 | Verify | `git status` and `git log -1` |
+
+**Key Principles:**
+- Never push to remote unless explicitly requested
+- Never commit secrets, credentials, or .env files
+- Never use `--amend` or `--no-verify` unless explicitly requested
 
 ## Workflow
 

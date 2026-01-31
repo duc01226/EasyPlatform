@@ -137,432 +137,6 @@
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "commands/ask.md",
-          "checksum": "46bf4850492fe2dc38ced1a8069e4885b5a1cde740ffd33fe04b14c27937df33",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/bootstrap.md",
-          "checksum": "b10d455e0fa899857356587c141d75302942c9fc1b15d8e734de7f7b4b8f9e77",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/bootstrap/auto.md",
-          "checksum": "9957bdeb442f726728fd80ad0c376a59869fb216160989f04cda027e862cd0c7",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/bootstrap/auto/fast.md",
-          "checksum": "1cc0f8cc6e0f2c029500c87cba9c1878b269d1694f6fcb1dfc2f4b1992c754a3",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/bootstrap/auto/parallel.md",
-          "checksum": "ab05afb248054f4b49c5630f25c185658654c69f20abebba119987aa4e1baff2",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/brainstorm.md",
-          "checksum": "58f628b637b1cacc850ce8a995278257963dce641080d40397d33cd781fae267",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/ck-help.md",
-          "checksum": "0e9b044644453adc497fc55198f30aa87f5d3793b7c32bd6d41b6e048a03dd68",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/code.md",
-          "checksum": "e7be76e7e4d52dae4ff3fb791a7b24e090c57dbfd8c625d02797939080c5077f",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/code/auto.md",
-          "checksum": "02c5ee634d15bc096611bc56529c67070e8ac0479fbadd23bd8615317e6c14e6",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/code/no-test.md",
-          "checksum": "c23987f8d23c0d0535f91c0ab9b2ea2f1bde5177eb57ad7a1daa97796b5639a7",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/code/parallel.md",
-          "checksum": "9f354cab51a5c02cd32a48fed42ef9ccd93342a386e233a5bd6871368c10f612",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/coding-level.md",
-          "checksum": "00a4737b72c943c1a12d9b30d43413f9ca269d0c4237aaea415db045018074b7",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/content/cro.md",
-          "checksum": "53041fe703f462f17492451dae64f7a52ab8816c26a1e5f1099392b0a061702d",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/content/enhance.md",
-          "checksum": "4b77d36646d99d6c2b19361713ba3dca9847feb0edaca3d07455ed1e1c53c395",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/content/fast.md",
-          "checksum": "843a92ddc82d81ab577380518bb0085dc0fbfee92c5cf5be19c32ac850bb8a2a",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/content/good.md",
-          "checksum": "d5d8df92b0f7245882afc8fe7365399ee44f7255f0ad9456589414a7a6aca029",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/cook.md",
-          "checksum": "1b16beb6e12ff4ab7b38a85aeccde0a8a2db3c75f93e2b022d77b72f0f8609d2",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/cook/auto.md",
-          "checksum": "e40f3376f0c86f83abc7896ab6b4cf71328ca6e04b147f423632fd03789f5fab",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/cook/auto/fast.md",
-          "checksum": "ce88376231b2a20900d9a6fc4d0f11c10b3ff88dd0c3ac10e9b4670c53cf924d",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/cook/auto/parallel.md",
-          "checksum": "7eb873f7684342585781e0f86460ba05d737a31869096dcd2f14ade29e57b514",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/debug.md",
-          "checksum": "49ae451968315d301177e8b5016426bd77778bfe60ec1511425c974e4b86bd93",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/design/3d.md",
-          "checksum": "595eadfb552b5bb6f9d0cf2fe92f1ef8e118579afad2c8431b944f66e4ab5191",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/design/describe.md",
-          "checksum": "bf55b707a0a95d0c8d494bf5c4ddfdda02f97dbe18338dd0b60514e1ff8ce6fb",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/design/fast.md",
-          "checksum": "127aff2d0eab96d5732b17c253e097c80ecf783d601ec3a28a505c008324ecfe",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/design/good.md",
-          "checksum": "9ca1c49e0852abe0c52052f5dbe35a877d8408b474642f9db24a377f58ecea00",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/design/screenshot.md",
-          "checksum": "145b25374904e3f98e7677e5fa7e28dc546ec8bebb3e940b9f2c17632fd0f030",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/design/video.md",
-          "checksum": "8b48aac7d8309ed38d8f43b93590b604bcddb8cf0f8f48c710754ffca9db103a",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/docs/init.md",
-          "checksum": "3dc01be64be0b7f3b00fafbdfd5558b6aaf0f54a98f01705c5ab7ee219e9cd32",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/docs/summarize.md",
-          "checksum": "b213b97d8312db7121fff8a29ccd92d1e6a4dfe9a4b94f2c86babc460a640d6e",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/docs/update.md",
-          "checksum": "40fa516b53569fd72e6cae954e030f743e4e2da003fd61ed443f712a444416ab",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/fix.md",
-          "checksum": "20e817df5d125690e60205a55eece2fba342d8f5242457cd9841380c174a51b7",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/fix/ci.md",
-          "checksum": "48cc9ff591f60d0495578537211856fd6f3d564f6061b8a5875ef3cff352cf68",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/fix/fast.md",
-          "checksum": "82be9899351da66ee9a4dfa9b08abede8f91cde3946f4e871777665159613eef",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/fix/hard.md",
-          "checksum": "282d56e35f24eef558953ac46f96edbf73fd1bd121f5a26cd7e9ce1f56408ca0",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/fix/logs.md",
-          "checksum": "b6d95d05559f987ccf6682e319b0091445d8c6f45544e2ddd81b24a401a89fe6",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/fix/parallel.md",
-          "checksum": "6169438e7105a75acd361d91b61000289c60659e8594333b297f175bf23d61df",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/fix/test.md",
-          "checksum": "80d558079c4212c66a5d3ad322f514bff4d2cff3d3675d871c16f4c2783a558a",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/fix/types.md",
-          "checksum": "4622688d6263d004550529a6cf5f38aae7981407cdd1ab863e01a4ca4d9db223",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/fix/ui.md",
-          "checksum": "545ae93604089697e9ef811aa07ce56a56fb84623482f42deb6edac4aab2f5cf",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/git/cm.md",
-          "checksum": "a36b7fd47659d40097442127f6750666ae35c3b6dba0a66bb1e9be9e64b69088",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/git/cp.md",
-          "checksum": "2083a4e6009d029ac790bddb3d21196d3e2a936cfd41950cad161f23c2687be3",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/git/merge.md",
-          "checksum": "5403a2e6584a7485c4e188b716498dfdd7188ad904963b486a82170ebf7ad385",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/git/pr.md",
-          "checksum": "00aa658f006a8af1f375b20ef844dce6e0468052d3e2d887db43d35429f98673",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/integrate/polar.md",
-          "checksum": "5e061707f335014fdf0412dedb95ef8864a7431a52abf8f487a23c2f2602665d",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/integrate/sepay.md",
-          "checksum": "f5d1c25c3c799d3b98b70c6ac892ab98d7d32e1c1d7b34b49778152c79684503",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/journal.md",
-          "checksum": "6b5ef99dbb01777b4bb4c87d9db41f6d436857484582f85718ce13c87721d471",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/kanban.md",
-          "checksum": "e9b13f7905c2f5fddb268c47c8b8ef4bb9f22bb9d1f738e457b050679caac147",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/plan.md",
-          "checksum": "c4f0a48ba4429580d23f5d3407d4a2c03694c9b7bb566cd2e7d9c93308b8de9e",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/plan/archive.md",
-          "checksum": "a6f14a00070b8a173e9e10d2665805ee48086cecfef607fe84c0c00e989098dd",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/plan/ci.md",
-          "checksum": "7a6863a7238ba267df07417a8a6e97b1ae76e82db38a13d0f6cdd79a2673b150",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/plan/cro.md",
-          "checksum": "c58c2042cbda2e4fd028a19cbc7d921b84887311b1b41a937341b57b176d47ba",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/plan/fast.md",
-          "checksum": "67612aefc3ef960cf273ad44426fc83a5c2c17ae1a3c3833d06505f3e8fbd27a",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/plan/hard.md",
-          "checksum": "5c4bb6c9e3301358671acec957d9a5c45855a4f777e232a8be0d0927945af091",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/plan/parallel.md",
-          "checksum": "81730740b63c643c07ff3de54509e4ea85219a51e374d25aa927f2dd3dd4c47b",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/plan/two.md",
-          "checksum": "eae91b91e8c18fd14883ab8369e5e737fde3154b93513e0fc62c820037cb2856",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/plan/validate.md",
-          "checksum": "20c049a39501a42cef92ab745243bd277bde35128ba2f8c8581abf78629caf22",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/preview.md",
-          "checksum": "a4906c91e9d84cfeb5b5fe8331770d8dc6c40ba2184545efed5359a8e9aada8b",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/review/codebase.md",
-          "checksum": "3bad3ce8a05c4bde92a0684519b973c41e9bdfb1da4a9643fe62fbdec3fa45f7",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/scout.md",
-          "checksum": "cdf50c72dc35b0617b4dafb1a9255af93981b716c0830ff7b9e9694f6b001b84",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/scout/ext.md",
-          "checksum": "27656d739b70dee09f01206eef133f9ef2527cb8f63f1b1516ea97910c4881ca",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/skill/add.md",
-          "checksum": "b976db4910ce3d58b7c3a03339b47473231fb88bc163d07222a1a588f87b8040",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/skill/create.md",
-          "checksum": "440e315a220ecc9f82ddcde3f9e0b59b4117fcc83c68a9c0ef21023491f879c5",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/skill/fix-logs.md",
-          "checksum": "44dc7fdafa559d99343807c400505967755d2bd93e79c6053226c568a27809c7",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/skill/optimize.md",
-          "checksum": "5dbd8587a355aed860563535df9d0612ff5bfa84a1e30e31958b890603e55cf1",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/skill/optimize/auto.md",
-          "checksum": "90f82042d09983400efc05eb938ab198f71661aab1e2da3b8dfe6e9e783505aa",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/skill/plan.md",
-          "checksum": "8576e9421e5a58adb2343991a287eeba61ca7d3ca026ca2dabd3b4654c9bfc28",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/test.md",
-          "checksum": "6fad49039f4cb64637458141e657daa654c418e5686cb95ba439b79482fdc419",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/test/ui.md",
-          "checksum": "e35f6170c7497bf5ba6fcc2caf7e3f6d2eeb61b9e68bfc474494c7c7626108d1",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/use-mcp.md",
-          "checksum": "cb2fa508b740a21ca3e2b759843503accbb4fa288ac4f7d85cdb27518277ff92",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/watzup.md",
-          "checksum": "ec0de1a4fdcee20df9d577a5b163f3e5e43651e3d5ab9d9b6563c3bdfb31d094",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "commands/worktree.md",
-          "checksum": "fe10cfa7fa77252fb4dccde7df7ff976a710b4f7278356ba14246d50ab8165f2",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
           "path": "hooks/dev-rules-reminder.cjs",
           "checksum": "75ed15c7ca98cde43f5e1324e4cb05eab8fb0b5d47289563870ee34271335538",
           "ownership": "user",
@@ -889,12 +463,6 @@
         {
           "path": "scripts/resolve_env.py",
           "checksum": "ac16a390b82ca77bfb0dac25189d427800f1f1b995682cb38a82d66cdc5ca6cb",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "scripts/scan_commands.py",
-          "checksum": "a141fb1933862ea8f716f934bc2c35447fd3db2c17f237e20909ed19931e9b41",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
@@ -1265,145 +833,145 @@
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/references/cdp-domains.md",
+          "path": "skills/test-ui/references/cdp-domains.md",
           "checksum": "fa81fa0fda1ae94ff2c25c924cfcb16f5a6e967b6d8412ddd372dc8a1b26f601",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/references/performance-guide.md",
+          "path": "skills/test-ui/references/performance-guide.md",
           "checksum": "e9391edae861ecd6fac3af4384a7e692def9c9cacbb8c5d4f7ff207475f977c0",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/references/puppeteer-reference.md",
+          "path": "skills/test-ui/references/puppeteer-reference.md",
           "checksum": "dcec4af083b7fe2d405a40aad2b511317c1e9deaa2bec5ca91ec9959aff1a423",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/__tests__/selector.test.js",
+          "path": "skills/test-ui/scripts/__tests__/selector.test.js",
           "checksum": "69fa6c4d04f2c8d0578325894fc06ea820e4c771d267d90969f09343e076d5e2",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/.gitignore",
+          "path": "skills/test-ui/scripts/.gitignore",
           "checksum": "4135c9bc6d5275ea5d2b998ae111ab875956332218bf8053b479a80c569412a5",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/aria-snapshot.js",
+          "path": "skills/test-ui/scripts/aria-snapshot.js",
           "checksum": "770def314a983b3362d4736a05cb3e2e0992ef8b1b4d46f46bb7d85c388de910",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/click.js",
+          "path": "skills/test-ui/scripts/click.js",
           "checksum": "927083fa56707dddada3fe0c1641e7abf00d8d18049470edf13879d98524c033",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/console.js",
+          "path": "skills/test-ui/scripts/console.js",
           "checksum": "fcea72a5e1a80cfee82d24c40999e047a9badefca0cf5b4f1dd53b5f8a8a2dd9",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/evaluate.js",
+          "path": "skills/test-ui/scripts/evaluate.js",
           "checksum": "78ab2875d5d71575dae26f87f57faa0cd3760ba09403c723cd43c0c2ad81d3d7",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/fill.js",
+          "path": "skills/test-ui/scripts/fill.js",
           "checksum": "4bb8c0947c2bfe570aa7327060284c4ba5cc480fcacf857652276d436b714444",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/inject-auth.js",
+          "path": "skills/test-ui/scripts/inject-auth.js",
           "checksum": "017dc060cf36e3de47ee78b93ca01babeeced84fdfd903962cddf6d79d416adf",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/install-deps.sh",
+          "path": "skills/test-ui/scripts/install-deps.sh",
           "checksum": "c236b59df7a234079da05bdb18c22f064955a3ccea315431fa87f8a413ecc78c",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/install.sh",
+          "path": "skills/test-ui/scripts/install.sh",
           "checksum": "bdd10bfe4195ca105704c2b4ba2f641f484e3706bb6cf57030372e5a90aa10df",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/lib/browser.js",
+          "path": "skills/test-ui/scripts/lib/browser.js",
           "checksum": "bb54d46b24ab205bb1440810754dbb3ab31712cbf95c54b3dcbca59c31f71a6b",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/lib/selector.js",
+          "path": "skills/test-ui/scripts/lib/selector.js",
           "checksum": "0c988abbec29cfb7361920c773673191a94d99c01fe1aec5a42cb48aeb6acf88",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/navigate.js",
+          "path": "skills/test-ui/scripts/navigate.js",
           "checksum": "68719c2cdcb43f736d9edc9b3d1718ca717139dca34f8fd3c6014e7e6744fe96",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/network.js",
+          "path": "skills/test-ui/scripts/network.js",
           "checksum": "11eee93df619e65a2e3d9167fe66ebc98be9e6ab73fbe165036e6cc9616799c0",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/package.json",
+          "path": "skills/test-ui/scripts/package.json",
           "checksum": "c9820cccfe82545cc91397fd97c18a4c13c4a95937d892e6f1f389012a616f0f",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/performance.js",
+          "path": "skills/test-ui/scripts/performance.js",
           "checksum": "e98ad5ad37ce0165d93a3f148894dd26252714586f05b0236ccb6d971c6cd3cc",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/README.md",
+          "path": "skills/test-ui/scripts/README.md",
           "checksum": "3cea88c23e3c6302f1c4035d24be6ec8665c290860b03343e8d065af94a2a5e7",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/screenshot.js",
+          "path": "skills/test-ui/scripts/screenshot.js",
           "checksum": "d2fe8415bdfabd7907b78330d3e928644d3c8334abed1295576877fdfd044c15",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/select-ref.js",
+          "path": "skills/test-ui/scripts/select-ref.js",
           "checksum": "bde38b95dda31e4a77a595d46e98e912daba48269e2ececc30c78e65db45edab",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/scripts/snapshot.js",
+          "path": "skills/test-ui/scripts/snapshot.js",
           "checksum": "d5ef361b6af181070c45edbb9cad6b88df1f4d0a193bdb308e2ec0aaff0a58c0",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/chrome-devtools/SKILL.md",
+          "path": "skills/test-ui/SKILL.md",
           "checksum": "fd1a6cf52a431fbcda8e8b5a3b6a738287f503023ed5622081dbb3737bcb00a5",
           "ownership": "user",
           "installedVersion": "v2.1.0"
@@ -3509,85 +3077,85 @@
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/assets/dashboard-template.html",
+          "path": "skills/kanban/assets/dashboard-template.html",
           "checksum": "b3948e08afe2689875992686e186907ae458a2cb70ca4a1c8f615ff630a1cecd",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/assets/dashboard.css",
+          "path": "skills/kanban/assets/dashboard.css",
           "checksum": "33f1806c532700e50ff73d9c6fb3b3f1beef25f39b6091ba692c4bf4b12d4b07",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/assets/dashboard.js",
+          "path": "skills/kanban/assets/dashboard.js",
           "checksum": "36d14cddc0c7de37340e75c3cc54f52a171617d6d428f2f7d9481865a1619878",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/assets/favicon.png",
+          "path": "skills/kanban/assets/favicon.png",
           "checksum": "2ea58b8c84129d6f3fc3b697c57bd26d93218b535d74b0b3fbca713808e62837",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/package.json",
+          "path": "skills/kanban/package.json",
           "checksum": "05a25bed2e7d60a52fe4fa20bc943ff566e3149ef1fba24a77590d7995e7320f",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/scripts/lib/dashboard-renderer.cjs",
+          "path": "skills/kanban/scripts/lib/dashboard-renderer.cjs",
           "checksum": "b6fa5f18245f41a925094a7b7f76cc735b691d8abb78472d038d29c6804aa66d",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/scripts/lib/http-server.cjs",
+          "path": "skills/kanban/scripts/lib/http-server.cjs",
           "checksum": "7b6cb868a79e28245bbd63d779217eb591fc7a00c24d5a8c7f3522e5e24028ea",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/scripts/lib/plan-metadata-extractor.cjs",
+          "path": "skills/kanban/scripts/lib/plan-metadata-extractor.cjs",
           "checksum": "48cc9baa77555b132d49216f712c760e6587456754577bfbb4ba5d9d60477da8",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/scripts/lib/plan-parser.cjs",
+          "path": "skills/kanban/scripts/lib/plan-parser.cjs",
           "checksum": "59fd55968b6ca2f59048cb346dae2b9fb8c6c609862439113f46beb471cc6ba4",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/scripts/lib/plan-scanner.cjs",
+          "path": "skills/kanban/scripts/lib/plan-scanner.cjs",
           "checksum": "9fb30c731ea46865234896a569060425d0abcbe014c04eeab581e879082842e3",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/scripts/lib/port-finder.cjs",
+          "path": "skills/kanban/scripts/lib/port-finder.cjs",
           "checksum": "276d366c2f7a35594e913a43671e32a823c1639b367546f354fac97c115df20f",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/scripts/lib/process-mgr.cjs",
+          "path": "skills/kanban/scripts/lib/process-mgr.cjs",
           "checksum": "5d371e1d3a2d3c665e9f92bf39be373032a48364ee1c0fd270f5dedd0f841094",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/scripts/server.cjs",
+          "path": "skills/kanban/scripts/server.cjs",
           "checksum": "9777bb6823b56ede0af4d7485dbfdbea0ee327f536de7f23465ddba38bada3e1",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/plans-kanban/SKILL.md",
+          "path": "skills/kanban/SKILL.md",
           "checksum": "5a09a1f76b8617e64157ba9fc2811c8668136a25213ec9b6e6a343c8afeedfb2",
           "ownership": "user",
           "installedVersion": "v2.1.0"
@@ -3857,38 +3425,32 @@
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/skill-creator/LICENSE.txt",
+          "path": "skills/skill-plan/LICENSE.txt",
           "checksum": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/skill-creator/scripts/init_skill.py",
+          "path": "skills/skill-plan/scripts/init_skill.py",
           "checksum": "0bba250b94caa4cb2b28b15dad26fdcf371aeda4c9797b8120e55c2e33e0c73c",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/skill-creator/scripts/package_skill.py",
+          "path": "skills/skill-plan/scripts/package_skill.py",
           "checksum": "692525dd8096aee51730ab142fb2605894a6f1a4135bcffebbf4f8ed3cf8715e",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/skill-creator/scripts/quick_validate.py",
+          "path": "skills/skill-plan/scripts/quick_validate.py",
           "checksum": "41647b79d15e7e51b944d56843e9f87a33f4c66e64ded5964d1f95bad2fe634a",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/skill-creator/SKILL.md",
+          "path": "skills/skill-plan/SKILL.md",
           "checksum": "d12765385cb7ddc5783e6d4e41b999a7d2b43b3b3955b51fdfe7f9886e283f89",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "skills/template-skill/SKILL.md",
-          "checksum": "eb685d91de039ed864fbd790cddf31684b017fd4a34ee1a55760d8d7cdbadefa",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },

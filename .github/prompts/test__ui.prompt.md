@@ -3,7 +3,7 @@ description: ⚡⚡ Run UI tests on a website & generate a detailed report.
 argument-hint: [url] [options]
 ---
 
-Activate the chrome-devtools skill.
+Activate the test-ui skill.
 
 ## Purpose
 
@@ -39,7 +39,7 @@ Ask the user to provide one of:
 Use the `inject-auth.js` script to inject credentials before testing:
 
 ```bash
-cd $SKILL_DIR  # .claude/skills/chrome-devtools/scripts
+cd $SKILL_DIR  # .claude/skills/test-ui/scripts
 
 # Option A: Inject cookies
 node inject-auth.js --url https://example.com --cookies '[{"name":"session","value":"abc123","domain":".example.com"}]'
@@ -80,7 +80,7 @@ node screenshot.js --url https://example.com/settings --output settings.png --cl
 
 ## Workflow
 
-- Use `planning` skill to organize the test plan & report in the current project directory.
+- Use `plan` skill to organize the test plan & report in the current project directory.
 - All the screenshots should be saved in the same report directory.
 - Browse $URL with the specified $OPTIONS, discover all pages, components, and endpoints.
 - Create a test plan based on the discovered structure

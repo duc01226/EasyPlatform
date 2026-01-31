@@ -5,13 +5,6 @@
   - technical-question
   power_level: 1
   category: core
-- name: /ck:bootstrap:auto:fast
-  path: bootstrap/auto/fast.md
-  description: Quickly bootstrap a new project automatically
-  argument_hint:
-  - user-requirements
-  power_level: 3
-  category: bootstrap
 - name: /ck:bootstrap:auto
   path: bootstrap/auto.md
   description: Bootstrap a new project automatically
@@ -328,12 +321,6 @@
   description: Fix the agent skill based on `logs.txt` file.
   argument_hint:
   - prompt-or-path-to-skill
-  power_level: 0
-  category: skill
-- name: /ck:skill:optimize:auto
-  path: skill/optimize/auto.md
-  description: ''
-  argument_hint: ''
   power_level: 0
   category: skill
 - name: /ck:skill:optimize

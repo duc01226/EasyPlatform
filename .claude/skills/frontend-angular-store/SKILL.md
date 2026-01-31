@@ -1,6 +1,6 @@
 ---
 name: frontend-angular-store
-description: Use when implementing state management with PlatformVmStore for complex components requiring reactive state, effects, and selectors.
+description: "[Frontend] Use when implementing state management with PlatformVmStore for complex components requiring reactive state, effects, and selectors."
 infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---

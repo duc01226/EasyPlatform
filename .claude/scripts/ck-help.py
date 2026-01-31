@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-ClaudeKit Help Command - All-in-one guide with dynamic command discovery.
-Scans .claude/commands/ directory to build catalog at runtime.
+ClaudeKit Help Command - All-in-one guide with dynamic skill discovery.
+Scans .claude/skills/ directory to build catalog at runtime.
 
 Usage:
     python ck-help.py                    # Overview with quick start
@@ -77,18 +77,18 @@ CATEGORY_GUIDES = {
     "plan": {
         "title": "Planning",
         "workflow": [
-            ("Quick plan", "`/plan:fast` \"your task\""),
-            ("Deep research", "`/plan:hard` \"complex task\""),
-            ("Validate", "`/plan:validate` (interview to confirm decisions)"),
+            ("Quick plan", "`/plan-fast` \"your task\""),
+            ("Deep research", "`/plan-hard` \"complex task\""),
+            ("Validate", "`/plan-validate` (interview to confirm decisions)"),
             ("Execute plan", "`/code` (runs the plan)"),
         ],
-        "tip": "Use /plan:validate to confirm assumptions before coding",
+        "tip": "Use /plan-validate to confirm assumptions before coding",
     },
     "cook": {
         "title": "Implementation",
         "workflow": [
             ("Quick impl", "`/cook` \"your feature\""),
-            ("Auto mode", "`/cook:auto` \"trust me bro\""),
+            ("Auto mode", "`/cook-auto` \"trust me bro\""),
             ("Test", "`/test`"),
         ],
         "tip": "Cook is standalone - it plans internally. Use /plan → /code for explicit planning",
@@ -96,7 +96,7 @@ CATEGORY_GUIDES = {
     "bootstrap": {
         "title": "Project Setup",
         "workflow": [
-            ("Quick start", "`/bootstrap:auto:fast` \"requirements\""),
+            ("Quick start", "`/bootstrap --fast` \"requirements\""),
             ("Full setup", "`/bootstrap` \"detailed requirements\""),
         ],
         "tip": "Include tech stack preferences in description",
@@ -105,65 +105,65 @@ CATEGORY_GUIDES = {
         "title": "Testing",
         "workflow": [
             ("Run tests", "`/test`"),
-            ("Fix failures", "`/fix:test`"),
+            ("Fix failures", "`/fix-test`"),
         ],
         "tip": "Run tests frequently during development",
     },
     "docs": {
         "title": "Documentation",
         "workflow": [
-            ("Initialize", "`/docs:init`"),
-            ("Update", "`/docs:update`"),
+            ("Initialize", "`/docs-init`"),
+            ("Update", "`/docs-update`"),
         ],
         "tip": "Keep docs close to code for accuracy",
     },
     "git": {
         "title": "Git Workflow",
         "workflow": [
-            ("Commit", "`/git:cm`"),
-            ("Push", "`/git:cp`"),
-            ("PR", "`/git:pr`"),
+            ("Commit", "`/commit`"),
+            ("Push", "`/git-cp`"),
+            ("PR", "`/pr`"),
         ],
         "tip": "Commit often with clear messages",
     },
     "design": {
         "title": "Design",
         "workflow": [
-            ("Quick design", "`/design:fast` \"description\""),
-            ("From screenshot", "`/design:screenshot` <path>"),
-            ("3D design", "`/design:3d` \"description\""),
+            ("Quick design", "`/design-fast` \"description\""),
+            ("From screenshot", "`/design-screenshot` <path>"),
+            ("3D design", "`/design-3d` \"description\""),
         ],
         "tip": "Reference existing designs for consistency",
     },
     "review": {
         "title": "Code Review",
         "workflow": [
-            ("Full review", "`/review:codebase`"),
+            ("Full review", "`/review-codebase`"),
         ],
         "tip": "Review before merging to main",
     },
     "content": {
         "title": "Content Creation",
         "workflow": [
-            ("Quick copy", "`/content:fast` \"requirements\""),
-            ("Quality copy", "`/content:good` \"requirements\""),
-            ("Optimize", "`/content:cro`"),
+            ("Quick copy", "`/content-fast` \"requirements\""),
+            ("Quality copy", "`/content-good` \"requirements\""),
+            ("Optimize", "`/content-cro`"),
         ],
         "tip": "Know your audience before writing",
     },
     "integrate": {
         "title": "Integration",
         "workflow": [
-            ("Polar.sh", "`/integrate:polar`"),
-            ("SePay", "`/integrate:sepay`"),
+            ("Polar.sh", "`/integrate-polar`"),
+            ("SePay", "`/integrate-sepay`"),
         ],
         "tip": "Read API docs before integrating",
     },
     "skill": {
         "title": "Skill Management",
         "workflow": [
-            ("Create", "`/skill:create`"),
-            ("Optimize", "`/skill:optimize`"),
+            ("Create", "`/skill-create`"),
+            ("Optimize", "`/skill-plan`"),
         ],
         "tip": "Skills extend agent capabilities",
     },
@@ -171,7 +171,7 @@ CATEGORY_GUIDES = {
         "title": "Codebase Exploration",
         "workflow": [
             ("Find files", "`/scout` \"what to find\""),
-            ("External tools", "`/scout:ext` \"query\""),
+            ("External tools", "`/scout-ext` \"query\""),
         ],
         "tip": "Be specific about what you're looking for",
     },
@@ -233,43 +233,46 @@ def parse_frontmatter(file_path: Path) -> dict:
     return result
 
 
-def discover_commands(commands_dir: Path, prefix: str) -> dict:
-    """Scan .claude/commands/ and build command catalog."""
+def discover_commands(skills_dir: Path, prefix: str) -> dict:
+    """Scan .claude/skills/ and build skill catalog (formerly commands)."""
     commands = {}
     categories = {}
 
-    if not commands_dir.exists():
+    if not skills_dir.exists():
         return {"commands": commands, "categories": categories}
 
-    # Scan all .md files
-    for md_file in commands_dir.rglob("*.md"):
-        # Skip non-command files
-        rel_path = md_file.relative_to(commands_dir)
-        parts = rel_path.parts
+    # Scan all SKILL.md files
+    for skill_dir in sorted(skills_dir.iterdir()):
+        if not skill_dir.is_dir():
+            continue
+        md_file = skill_dir / "SKILL.md"
+        if not md_file.exists():
+            continue
 
-        # Get command name from path
-        # e.g., fix/fast.md -> fix:fast, plan.md -> plan
-        if len(parts) == 1:
-            # Root command: plan.md -> plan
-            cmd_name = parts[0].replace('.md', '')
-            category = "core"
-        else:
-            # Nested command: fix/fast.md -> fix:fast
+        # Get skill name from directory name
+        cmd_name = skill_dir.name
+
+        # Determine category from name prefix (e.g., fix-ci -> fix, plan-hard -> plan)
+        parts = cmd_name.split('-')
+        if len(parts) > 1 and parts[0] in ['fix', 'plan', 'cook', 'code', 'design', 'content',
+                                             'docs', 'git', 'review', 'scout', 'skill', 'bootstrap',
+                                             'team', 'test', 'integrate']:
             category = parts[0]
-            cmd_name = ':'.join([p.replace('.md', '') for p in parts])
+        else:
+            category = "core"
 
         # Parse frontmatter
         fm = parse_frontmatter(md_file)
         description = fm.get('description', '')
 
-        # Skip if no description (not a real command)
+        # Skip if no description (not a real skill)
         if not description:
             continue
 
         # Clean description (remove emoji indicators)
         clean_desc = re.sub(r'^[^\w\s]+\s*', '', description).strip()
 
-        # Format command name with prefix
+        # Format skill name with prefix
         formatted_name = f"/{prefix}{cmd_name}" if prefix else f"/{cmd_name}"
 
         # Add to commands
@@ -804,21 +807,21 @@ def show_coding_level_guide() -> None:
 
 
 def main():
-    # Find .claude/commands directory
+    # Find .claude/skills directory
     script_path = Path(__file__).resolve()
     claude_dir = script_path.parent.parent  # .claude/scripts -> .claude
-    commands_dir = claude_dir / "commands"
+    skills_dir = claude_dir / "skills"
 
-    if not commands_dir.exists():
-        print("Error: .claude/commands/ directory not found.")
+    if not skills_dir.exists():
+        print("Error: .claude/skills/ directory not found.")
         sys.exit(1)
 
-    # Detect prefix and discover commands
-    prefix = detect_prefix(commands_dir)
-    data = discover_commands(commands_dir, prefix)
+    # Detect prefix and discover skills
+    prefix = detect_prefix(skills_dir)
+    data = discover_commands(skills_dir, prefix)
 
     if not data["commands"]:
-        print("No commands found in .claude/commands/")
+        print("No skills found in .claude/skills/")
         sys.exit(1)
 
     # Parse input

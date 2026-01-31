@@ -17,7 +17,7 @@ argument-hint: [tasks]
     - Edge cases and failure modes
     - Security implications
     - Performance considerations
-- Use `/scout:ext` for comprehensive codebase analysis
+- Use `/scout-ext` for comprehensive codebase analysis
 - Generate research reports (max 150 lines each)
 
 ### 2. Comprehensive Planning

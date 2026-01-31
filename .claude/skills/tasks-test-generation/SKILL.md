@@ -1,12 +1,28 @@
 ---
 name: tasks-test-generation
-description: Use when creating or enhancing unit tests, integration tests, or defining test strategies for backend and frontend code.
+description: "[Testing] Use when creating or enhancing unit tests, integration tests, or defining test strategies for backend and frontend code."
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
 > **Skill Variant:** Use this skill for **autonomous test generation** with structured templates. For interactive test writing with user feedback, use `test-generation` instead.
 
 # Test Generation Workflow
+
+## Summary
+
+**Goal:** Generate comprehensive unit and integration tests following EasyPlatform patterns for both backend (C#/xUnit) and frontend (TypeScript/Jest).
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Pre-flight checklist | Identify code to test, find existing patterns, determine test type |
+| 2 | Identify dependencies | Map mocks needed for repositories, services, context |
+| 3 | Write tests | Follow platform patterns (Command, Query, Entity, Component) |
+| 4 | Verify coverage | Ensure happy path, validation, edge cases covered |
+
+**Key Principles:**
+- Follow existing test patterns — grep for similar tests before writing new ones
+- Autonomous variant: use structured templates; for interactive, use `test-generation` instead
+- Backend tests use Mock repositories; frontend tests use TestBed with platform utilities
 
 ## When to Use This Skill
 

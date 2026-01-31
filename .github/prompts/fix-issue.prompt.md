@@ -174,7 +174,7 @@ Before proposing any change:
 ---
 
 Use the `bug-diagnosis` skill for the complete debugging protocol.
-See `.github/AI-DEBUGGING-PROTOCOL.md` for comprehensive guidelines.
+See `.ai/docs/AI-DEBUGGING-PROTOCOL.md` for comprehensive guidelines.
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**
 

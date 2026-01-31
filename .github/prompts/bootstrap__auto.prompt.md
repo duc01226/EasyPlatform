@@ -65,7 +65,7 @@ Follow strictly these following steps:
     - **IMPORTANT:** Try to predict the font name (Google Fonts) and font size in the given screenshot, don't just use **Inter** or **Poppins** fonts.
 - Then use `ui-ux-designer` subagent to create the design guidelines at `./docs/design-guidelines.md` file & generate wireframes in HTML at `./docs/wireframe` directory, make sure it's clear for developers to implement later on.
 - If there are no logo provided, use `ai-multimodal` skill to generate a logo.
-- Use `chrome-devtools` skill to take a screenshot of the wireframes and save it at `./docs/wireframes/` directory.
+- Use `test-ui` skill to take a screenshot of the wireframes and save it at `./docs/wireframes/` directory.
 - Ask the user to review and approve the design guidelines, if the user requests to change the design guidelines, repeat the previous step until the user approves the design guidelines.
 - **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
 

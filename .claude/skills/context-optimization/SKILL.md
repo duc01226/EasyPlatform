@@ -1,6 +1,6 @@
 ---
 name: context-optimization
-description: Use when managing context window usage, compressing long sessions, or optimizing token usage. Triggers on keywords like "context", "memory", "tokens", "compress", "summarize session", "context limit", "optimize context".
+description: "[Tooling & Meta] Use when managing context window usage, compressing long sessions, or optimizing token usage. Triggers on keywords like "context", "memory", "tokens", "compress", "summarize session", "context limit", "optimize context"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, TodoWrite, mcp__memory__*
 infer: true
 ---
@@ -10,6 +10,22 @@ infer: true
 Manage context window efficiently to maintain productivity in long sessions.
 
 For persistent memory operations, see the `memory-management` skill.
+
+## Summary
+
+**Goal:** Manage context window usage efficiently to maintain productivity in long sessions.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Writing | Save critical findings to persistent memory |
+| 2 | Selecting | Load relevant memories at session start |
+| 3 | Compressing | Create context anchors every 10 operations |
+| 4 | Isolating | Delegate specialized tasks to sub-agents |
+
+**Key Principles:**
+- Use `offset`/`limit` or grep before reading large files -- never read entire files unnecessarily
+- Combine search patterns with OR (`\|`) instead of sequential searches
+- Thresholds: 50K consider compression, 100K required, 150K critical
 
 ---
 

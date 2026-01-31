@@ -1,6 +1,6 @@
 ---
 name: branch-comparison
-description: Use when the user asks to compare branches, analyze git diffs, review changes, update specifications based on code changes, or sync specs with implementation. Triggers on keywords like "compare branches", "git diff", "what changed", "branch comparison", "spec update", "sync specs".
+description: "[Git & Release] Use when the user asks to compare branches, analyze git diffs, review changes, update specifications based on code changes, or sync specs with implementation. Triggers on keywords like "compare branches", "git diff", "what changed", "branch comparison", "spec update", "sync specs"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
 

@@ -107,7 +107,7 @@ Present findings with:
 
 ---
 
-Use `arch-performance-optimization` skill for detailed guidance.
+Use `performance` skill for detailed guidance.
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**
 

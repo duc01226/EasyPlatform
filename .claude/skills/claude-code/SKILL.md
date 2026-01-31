@@ -1,12 +1,28 @@
 ---
 name: claude-code
 version: 2.0.0
-description: Claude Code CLI setup, configuration, troubleshooting, and feature guidance. Triggers on claude code setup, hook not firing, MCP connection, context limit, skill creation, slash command setup.
+description: "[Tooling & Meta] Claude Code CLI setup, configuration, troubleshooting, and feature guidance. Triggers on claude code setup, hook not firing, MCP connection, context limit, skill creation, slash command setup."
 infer: false
 allowed-tools: Read, Bash, Grep, Glob
 ---
 
 # Claude Code
+
+## Summary
+
+**Goal:** Help users install, configure, troubleshoot, and extend Claude Code CLI (skills, hooks, MCP, slash commands).
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Identify problem category | Setup, Hook Issues, MCP Issues, Context, Extensibility, Configuration |
+| 2 | Execute category-specific diagnosis | Check prerequisites, configs, scripts, settings |
+| 3 | Apply fix | Step-by-step solution with verification |
+| 4 | Output report | Problem, Solution, Files Changed, Verification |
+
+**Key Principles:**
+- Load reference files on-demand per topic (10 reference docs available)
+- Never modify settings without user approval
+- For app code use `feature`/`debug` skills, not this one
 
 ## Purpose
 Help users install, configure, troubleshoot, and extend Claude Code CLI -- Anthropic's agentic coding tool with skills, hooks, MCP servers, and slash commands.
@@ -20,7 +36,7 @@ Help users install, configure, troubleshoot, and extend Claude Code CLI -- Anthr
 - Configuring settings (model, allowed tools, output style)
 
 ## When NOT to Use
-- Writing application code -- use `feature-implementation`, `debugging`, or `refactoring` skills
+- Writing application code -- use `feature`, `debug`, or `refactoring` skills
 - Creating MCP servers from scratch -- use `mcp-builder` skill
 - Managing existing MCP connections -- use `mcp-management` skill
 
@@ -68,7 +84,7 @@ Help users install, configure, troubleshoot, and extend Claude Code CLI -- Anthr
 
 ### Step 2E: Extensibility
 1. For skills: read `references/agent-skills.md` for structure
-2. For commands: create `.claude/commands/{name}.md`
+2. For commands: create `.claude/skills/{name}.md`
 3. Verify SKILL.md frontmatter has required fields (name, version, description)
 
 ### Step 2F: Configuration
@@ -112,7 +128,7 @@ Load references as needed for specific topics:
 ## Related Skills
 - `mcp-builder` -- creating new MCP servers
 - `mcp-management` -- managing MCP connections
-- `skill-creator` -- creating new agent skills
+- `skill-plan` -- creating new agent skills
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: test-specs-docs
-description: Create or update EasyPlatform test specifications in docs/test-specs/{Module}/. Covers external memory-driven analysis, 4-priority test generation, comprehensive document structure with ERD and traceability. Triggers on "test specs", "test specifications", "test cases", "test scenarios", "QA documentation", "Given-When-Then", "BDD", "TDD", "coverage".
+description: "[Testing] Create or update EasyPlatform test specifications in docs/test-specs/{Module}/. Covers external memory-driven analysis, 4-priority test generation, comprehensive document structure with ERD and traceability. Triggers on "test specs", "test specifications", "test cases", "test scenarios", "QA documentation", "Given-When-Then", "BDD", "TDD", "coverage"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
 

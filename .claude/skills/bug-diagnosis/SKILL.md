@@ -1,17 +1,34 @@
 ---
 name: bug-diagnosis
 version: 2.0.1
-description: Quick triage skill for initial bug assessment and user-reported issues. Use for bug reports, error reports, quick diagnosis, initial triage, "what's causing", "why is this failing". For systematic multi-file debugging with verification protocols, use `debugging` skill instead.
+description: "[Fix & Debug] Quick triage skill for initial bug assessment and user-reported issues. Use for bug reports, error reports, quick diagnosis, initial triage, "what's causing", "why is this failing". For systematic multi-file debugging with verification protocols, use `debug` skill instead."
 infer: true
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
 ---
 
-> **Skill Variant:** Use this skill for **quick bug triage and interactive debugging** with user feedback. For systematic autonomous debugging workflows with 4-phase protocol and verification gates, use `debugging` skill instead. For feature investigation without fixes, use `feature-investigation`.
+> **Skill Variant:** Use this skill for **quick bug triage and interactive debugging** with user feedback. For systematic autonomous debugging workflows with 4-phase protocol and verification gates, use `debug` skill instead. For feature investigation without fixes, use `investigate`.
+
+## Summary
+
+**Goal:** Quick triage and diagnosis of user-reported bugs with external memory-driven analysis and approval gate before fixing.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Initialize analysis | Create `.ai/workspace/analysis/[name].analysis.md` with structured sections |
+| 2 | Discovery & file analysis | Semantic search, batch files in groups of 10, document dependencies |
+| 3 | Root cause analysis | Rank causes across technical, business logic, data, integration dimensions |
+| 4 | Approval gate | Present findings and fix strategy -- DO NOT fix without user approval |
+| 5 | Execute fix | Minimal targeted changes following platform patterns |
+
+**Key Principles:**
+- Always use external memory file for structured analysis -- never rely on context alone
+- If confidence < 90%, request user confirmation before proceeding
+- For systematic multi-file debugging, use `debug` skill instead
 
 ## Disambiguation
 
-- For **systematic multi-file debugging** with verification protocols -> use `debugging`
-- For **feature investigation** without fixes -> use `feature-investigation`
+- For **systematic multi-file debugging** with verification protocols -> use `debug`
+- For **feature investigation** without fixes -> use `investigate`
 - This skill focuses on **quick triage** of user-reported bugs
 
 # Bug Diagnosis & Debugging
@@ -123,7 +140,7 @@ Before removing/changing ANY code:
 
 ## Related
 
-- `debugging`
+- `debug`
 - `code-review`
 
 ---

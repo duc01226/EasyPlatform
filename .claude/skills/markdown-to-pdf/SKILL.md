@@ -1,6 +1,6 @@
 ---
 name: markdown-to-pdf
-description: Convert markdown files to PDF with custom styling. Use when generating PDF documents from markdown, creating printable documentation, or exporting reports.
+description: "[Utilities] Convert markdown files to PDF with custom styling. Use when generating PDF documents from markdown, creating printable documentation, or exporting reports."
 allowed-tools: Bash, Read
 ---
 

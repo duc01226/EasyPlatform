@@ -91,7 +91,7 @@ function loadProvider(providerName) {
 // - Stop: Claude completed task (dialog)
 // - idle_prompt: Claude waiting for user input (dialog)
 // Everything else is blocked to prevent notification spam
-const ALLOWED_EVENTS = ['Stop', 'idle_prompt'];
+const ALLOWED_EVENTS = ['Stop', 'idle_prompt', 'AskUserQuestion'];
 
 // Events that bypass subagent filter (always notify even from subagent)
 const ALWAYS_NOTIFY_EVENTS = ['Stop'];
@@ -105,9 +105,10 @@ const ALWAYS_NOTIFY_EVENTS = ['Stop'];
 function isAllowedEvent(input) {
   const hookType = input.hook_event_name;
   const notificationType = input.notification_type;
+  const toolName = input.tool_name;
 
-  // Check if either hook_event_name or notification_type is in whitelist
-  return ALLOWED_EVENTS.includes(hookType) || ALLOWED_EVENTS.includes(notificationType);
+  // Check if hook_event_name, notification_type, or tool_name is in whitelist
+  return ALLOWED_EVENTS.includes(hookType) || ALLOWED_EVENTS.includes(notificationType) || ALLOWED_EVENTS.includes(toolName);
 }
 
 /**

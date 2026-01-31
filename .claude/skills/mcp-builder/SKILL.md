@@ -1,10 +1,26 @@
 ---
 name: mcp-builder
-description: Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).
+description: "[Tooling & Meta] Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK)."
 license: Complete terms in LICENSE.txt
 ---
 
 # MCP Server Development Guide
+
+## Summary
+
+**Goal:** Create high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Deep Research | Study MCP protocol docs, understand agent-centric design |
+| 2 | Planning | Design tools for workflows (not just API wrappers), optimize for limited context |
+| 3 | Implementation | Build server in Python (FastMCP) or Node/TypeScript (MCP SDK) |
+| 4 | Testing | Evaluation-driven development with realistic agent scenarios |
+
+**Key Principles:**
+- Build for workflows, not API endpoints — consolidate related operations into complete tasks
+- Optimize for limited context — return high-signal info, not data dumps
+- Error messages must be actionable and guide agents toward correct usage
 
 ## Overview
 

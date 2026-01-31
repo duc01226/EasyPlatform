@@ -33,9 +33,9 @@
 │  ┌─────┐   Email   ┌─────┐           ┌─────┐  Artifact  ┌─────┐               │
 │  │ PO  │──────────▶│ BA  │           │ PO  │───────────▶│ BA  │               │
 │  └─────┘  Lost     └─────┘           └─────┘  Tracked   └─────┘               │
-│      │   context       │                 │    /idea        │                    │
+│      │   context       │                 │    /team-idea        │                    │
 │      ▼                 ▼                 ▼    ────▶        ▼                    │
-│  Meetings, docs    Manual handoff     Auto-handoff     /refine                 │
+│  Meetings, docs    Manual handoff     Auto-handoff     /team-refine                 │
 │  scattered         no traceability    full audit       ────────▶               │
 │                                                                                  │
 ├─────────────────────────────────────────────────────────────────────────────────┤
@@ -78,7 +78,7 @@ Traditional software development suffers from:
 
 EasyPlatform's AI-assisted collaboration framework provides a **unified workspace** where every team member - from Product Owner to QC Specialist - works with Claude Code as an intelligent assistant. The AI:
 
-1. **Guides each role** with role-specific commands (`/idea`, `/refine`, `/test-spec`, etc.)
+1. **Guides each role** with role-specific commands (`/team-idea`, `/team-refine`, `/team-test-spec`, etc.)
 2. **Enforces quality** through automated checkpoints (pre-dev, pre-QA, pre-release)
 3. **Maintains traceability** with structured artifacts that link ideas → PBIs → code → tests
 4. **Learns and improves** from team patterns over time
@@ -166,22 +166,22 @@ Ongoing: Normal workflow                Rework reduced: ~30%
 │                                                                              │
 │   ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐  │
 │   │   PO    │    │   BA    │    │   Dev   │    │   QA    │    │   QC    │  │
-│   │ /idea   │───▶│ /refine │───▶│ /cook   │───▶│/test-spec│───▶│/quality │  │
-│   │/prioritize│   │ /story  │    │ /fix    │    │/test-cases│   │ -gate   │  │
+│   │ /team-idea   │───▶│ /team-refine │───▶│ /cook   │───▶│/team-test-spec│───▶│/quality │  │
+│   │/team-prioritize│   │ /team-story  │    │ /fix    │    │/team-test-cases│   │ -gate   │  │
 │   └─────────┘    └─────────┘    └─────────┘    └─────────┘    └─────────┘  │
 │         │              │              │              │              │        │
 │         ▼              ▼              ▼              ▼              ▼        │
 │   ┌─────────────────────────────────────────────────────────────────────┐   │
 │   │                     TEAM ARTIFACTS REPOSITORY                        │   │
-│   │  /ideas/  │  /pbis/  │  /test-specs/  │  /design-specs/  │  /reports/ │   │
+│   │  /team-ideas/  │  /pbis/  │  /team-test-specs/  │  /team-design-specs/  │  /reports/ │   │
 │   └─────────────────────────────────────────────────────────────────────┘   │
 │         │              │              │              │              │        │
 │         └──────────────┴──────────────┴──────────────┴──────────────┘        │
 │                                    │                                         │
 │                        ┌───────────▼───────────┐                            │
 │                        │    PROJECT MANAGER    │                            │
-│                        │ /status  /dependency  │                            │
-│                        │     /team-sync        │                            │
+│                        │ /team-status  /team-dependency  │                            │
+│                        │     /team-team-sync        │                            │
 │                        └───────────────────────┘                            │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -199,8 +199,8 @@ Ongoing: Normal workflow                Rework reduced: ~30%
          │                   │                   │                   │                  │
          ▼                   ▼                   ▼                   ▼                  ▼
     ┌─────────┐        ┌─────────┐        ┌─────────┐        ┌─────────┐        ┌─────────┐
-    │ /idea   │───────▶│ /refine │───────▶│ /plan   │───────▶│/test-spec│───────▶│/quality │
-    │         │        │ /story  │        │ /cook   │        │/test-cases│       │ -gate   │
+    │ /team-idea   │───────▶│ /team-refine │───────▶│ /plan   │───────▶│/team-test-spec│───────▶│/quality │
+    │         │        │ /team-story  │        │ /cook   │        │/team-test-cases│       │ -gate   │
     └─────────┘        └─────────┘        │ /fix    │        └─────────┘        │pre-release│
          │                   │            └─────────┘              │            └─────────┘
          ▼                   ▼                   ▼                  ▼                  ▼
@@ -210,7 +210,7 @@ Ongoing: Normal workflow                Rework reduced: ~30%
     └─────────┘        └─────────┘        └─────────┘        └─────────┘        └─────────┘
 
                         ◄────────── Project Manager Coordinates ──────────►
-                                    /status  /dependency  /team-sync
+                                    /team-status  /team-dependency  /team-team-sync
 ```
 
 ---
@@ -221,13 +221,13 @@ Ongoing: Normal workflow                Rework reduced: ~30%
 
 | Role | Primary Commands | Output Location | Handoff To |
 |------|-----------------|-----------------|------------|
-| **Product Owner** | `/idea`, `/prioritize` | `team-artifacts/ideas/` | Business Analyst |
-| **Business Analyst** | `/refine`, `/story` | `team-artifacts/pbis/` | Developer, QA |
+| **Product Owner** | `/team-idea`, `/team-prioritize` | `team-artifacts/team-ideas/` | Business Analyst |
+| **Business Analyst** | `/team-refine`, `/team-story` | `team-artifacts/pbis/` | Developer, QA |
 | **Developer** | `/plan`, `/cook`, `/fix`, `/commit` | Source code | QA Engineer |
-| **QA Engineer** | `/test-spec`, `/test-cases` | `team-artifacts/test-specs/` | QC Specialist |
-| **QC Specialist** | `/quality-gate` | `team-artifacts/quality-reports/` | Release |
-| **UX Designer** | `/design-spec` | `team-artifacts/design-specs/` | Developer |
-| **Project Manager** | `/status`, `/dependency`, `/team-sync` | `plans/reports/` | All Roles |
+| **QA Engineer** | `/team-test-spec`, `/team-test-cases` | `team-artifacts/team-test-specs/` | QC Specialist |
+| **QC Specialist** | `/team-quality-gate` | `team-artifacts/quality-reports/` | Release |
+| **UX Designer** | `/team-design-spec` | `team-artifacts/team-design-specs/` | Developer |
+| **Project Manager** | `/team-status`, `/team-dependency`, `/team-team-sync` | `plans/reports/` | All Roles |
 
 ### Role Details
 
@@ -236,8 +236,8 @@ Ongoing: Normal workflow                Rework reduced: ~30%
 
 | Responsibility | Command | When |
 |---------------|---------|------|
-| Capture feature ideas | `/idea "description"` | Customer feedback, market research |
-| Prioritize backlog | `/prioritize --framework rice` | Sprint planning, roadmap updates |
+| Capture feature ideas | `/team-idea "description"` | Customer feedback, market research |
+| Prioritize backlog | `/team-prioritize --framework rice` | Sprint planning, roadmap updates |
 | Approve releases | Review quality-gate reports | Pre-release checkpoint |
 
 #### Business Analyst
@@ -245,9 +245,9 @@ Ongoing: Normal workflow                Rework reduced: ~30%
 
 | Responsibility | Command | When |
 |---------------|---------|------|
-| Refine ideas to PBI | `/refine IDEA-XXX` | After PO captures idea |
-| Write user stories | `/story PBI-XXX` | During backlog grooming |
-| Define acceptance criteria | GIVEN/WHEN/THEN format | Every PBI/story |
+| Refine ideas to PBI | `/team-refine IDEA-XXX` | After PO captures idea |
+| Write user stories | `/team-story PBI-XXX` | During backlog grooming |
+| Define acceptance criteria | GIVEN/WHEN/THEN format | Every PBI/team-story |
 
 #### Developer
 **Purpose:** Solution builder, code craftsman, technical problem solver
@@ -265,8 +265,8 @@ Ongoing: Normal workflow                Rework reduced: ~30%
 
 | Responsibility | Command | When |
 |---------------|---------|------|
-| Create test specifications | `/test-spec PBI-XXX` | After PBI is ready |
-| Generate test cases | `/test-cases TS-XXX` | Before QA testing |
+| Create test specifications | `/team-test-spec PBI-XXX` | After PBI is ready |
+| Generate test cases | `/team-test-cases TS-XXX` | Before QA testing |
 | Document evidence | `file:line` format | During test execution |
 
 #### QC Specialist
@@ -274,18 +274,18 @@ Ongoing: Normal workflow                Rework reduced: ~30%
 
 | Responsibility | Command | When |
 |---------------|---------|------|
-| Pre-dev quality gate | `/quality-gate pre-dev` | Before development |
-| Pre-QA quality gate | `/quality-gate pre-qa` | Before QA testing |
-| Pre-release quality gate | `/quality-gate pre-release` | Before deployment |
+| Pre-dev quality gate | `/team-quality-gate pre-dev` | Before development |
+| Pre-QA quality gate | `/team-quality-gate pre-qa` | Before QA testing |
+| Pre-release quality gate | `/team-quality-gate pre-release` | Before deployment |
 
 #### Project Manager
 **Purpose:** Coordinator, risk manager, communication hub
 
 | Responsibility | Command | When |
 |---------------|---------|------|
-| Track sprint status | `/status sprint` | Daily standups |
-| Analyze dependencies | `/dependency PBI-XXX` | Planning, risk review |
-| Facilitate meetings | `/team-sync daily/retro` | Team ceremonies |
+| Track sprint status | `/team-status sprint` | Daily standups |
+| Analyze dependencies | `/team-dependency PBI-XXX` | Planning, risk review |
+| Facilitate meetings | `/team-team-sync daily/retro` | Team ceremonies |
 
 ---
 
@@ -347,10 +347,10 @@ This scenario demonstrates the full SDLC from initial idea to production release
 
 ```bash
 # PO captures the idea
-/idea "Add biometric authentication (Face ID, fingerprint) to mobile app login"
+/team-idea "Add biometric authentication (Face ID, fingerprint) to mobile app login"
 ```
 
-**Output:** `team-artifacts/ideas/260120-po-idea-biometric-auth.md`
+**Output:** `team-artifacts/team-ideas/260120-po-idea-biometric-auth.md`
 
 ```markdown
 ---
@@ -385,7 +385,7 @@ Users report login takes 15+ seconds. Current password-only flow causes friction
 
 ```bash
 # BA refines the idea into a PBI
-/refine team-artifacts/ideas/260120-po-idea-biometric-auth.md
+/team-refine team-artifacts/team-ideas/260120-po-idea-biometric-auth.md
 ```
 
 **Output:** `team-artifacts/pbis/260120-ba-pbi-biometric-auth.md`
@@ -436,7 +436,7 @@ status: ready
 
 ```bash
 # QC runs pre-dev gate
-/quality-gate pre-dev team-artifacts/pbis/260120-ba-pbi-biometric-auth.md
+/team-quality-gate pre-dev team-artifacts/pbis/260120-ba-pbi-biometric-auth.md
 ```
 
 **Output:** `team-artifacts/quality-reports/260120-qc-predev-biometric-auth.md`
@@ -485,10 +485,10 @@ Ready for development. No blockers.
 
 ```bash
 # QA creates test specification
-/test-spec team-artifacts/pbis/260120-ba-pbi-biometric-auth.md
+/team-test-spec team-artifacts/pbis/260120-ba-pbi-biometric-auth.md
 
 # Generate detailed test cases
-/test-cases team-artifacts/test-specs/260120-qa-testspec-biometric-auth.md
+/team-test-cases team-artifacts/team-test-specs/260120-qa-testspec-biometric-auth.md
 ```
 
 **Output:** Test specification with 15+ test cases covering:
@@ -500,7 +500,7 @@ Ready for development. No blockers.
 #### Day 10: Pre-QA Quality Gate (QC Specialist)
 
 ```bash
-/quality-gate pre-qa PBI-260120-001
+/team-quality-gate pre-qa PBI-260120-001
 ```
 
 **Output:**
@@ -531,7 +531,7 @@ QA executes test cases, records results with evidence:
 #### Day 13: Pre-Release Quality Gate (QC Specialist)
 
 ```bash
-/quality-gate pre-release v2.1.0
+/team-quality-gate pre-release v2.1.0
 ```
 
 **Output:**
@@ -567,7 +567,7 @@ Feature deployed to production with monitoring.
 
 ```bash
 # QA documents the bug as an idea
-/idea "BUG: Login button unresponsive on slow networks" --context "Users on 3G connections report login button does nothing after tap. Support tickets #1234, #1235. Affects ~200 users/day."
+/team-idea "BUG: Login button unresponsive on slow networks" --context "Users on 3G connections report login button does nothing after tap. Support tickets #1234, #1235. Affects ~200 users/day."
 ```
 
 #### Step 2: Workflow Triggered Automatically
@@ -620,14 +620,14 @@ Following workflow: /scout → /investigate → /debug → /plan → /plan-revie
 
 ```bash
 # QA adds regression test
-/test-cases --type regression PBI-260120-002
+/team-test-cases --type regression PBI-260120-002
 ```
 
 #### Step 6: Verify and Deploy
 
 ```bash
 # QC verifies fix
-/quality-gate pre-release PBI-260120-002
+/team-quality-gate pre-release PBI-260120-002
 
 # Commit and deploy
 /commit
@@ -648,13 +648,13 @@ Following workflow: /scout → /investigate → /debug → /plan → /plan-revie
 #### Step 1: PO Captures as Idea
 
 ```bash
-/idea "Improve product search functionality" --context "Customer complaints about search not finding products. Need to investigate specific issues."
+/team-idea "Improve product search functionality" --context "Customer complaints about search not finding products. Need to investigate specific issues."
 ```
 
 #### Step 2: BA Conducts Gap Analysis
 
 ```bash
-/refine team-artifacts/ideas/260120-po-idea-search.md --gap-analysis
+/team-refine team-artifacts/team-ideas/260120-po-idea-search.md --gap-analysis
 ```
 
 **Gap Analysis Output:**
@@ -686,7 +686,7 @@ From `docs/business-features/Search/`:
 After clarification with PO and users:
 
 ```bash
-/refine team-artifacts/ideas/260120-po-idea-search.md
+/team-refine team-artifacts/team-ideas/260120-po-idea-search.md
 ```
 
 **Refined PBI:**
@@ -725,7 +725,7 @@ priority: 700
 #### Step 4: BA Creates User Stories
 
 ```bash
-/story team-artifacts/pbis/260120-ba-pbi-search.md
+/team-story team-artifacts/pbis/260120-ba-pbi-search.md
 ```
 
 **Stories created:**
@@ -736,7 +736,7 @@ priority: 700
 #### Step 5: PO Prioritizes
 
 ```bash
-/prioritize team-artifacts/pbis/260120-ba-pbi-search.md --framework rice
+/team-prioritize team-artifacts/pbis/260120-ba-pbi-search.md --framework rice
 ```
 
 **RICE Score:** 3,200 (High priority for next sprint)
@@ -753,15 +753,15 @@ priority: 700
 
 | Command | Purpose | Example |
 |---------|---------|---------|
-| `/idea` | Capture new idea | `/idea "Add dark mode toggle"` |
-| `/prioritize` | Prioritize backlog | `/prioritize --framework rice` |
+| `/team-idea` | Capture new idea | `/team-idea "Add dark mode toggle"` |
+| `/team-prioritize` | Prioritize backlog | `/team-prioritize --framework rice` |
 
 #### Business Analyst Commands
 
 | Command | Purpose | Example |
 |---------|---------|---------|
-| `/refine` | Convert idea to PBI | `/refine IDEA-260120-001` |
-| `/story` | Create user stories | `/story PBI-260120-001` |
+| `/team-refine` | Convert idea to PBI | `/team-refine IDEA-260120-001` |
+| `/team-story` | Create user stories | `/team-story PBI-260120-001` |
 
 #### Developer Commands
 
@@ -778,27 +778,27 @@ priority: 700
 
 | Command | Purpose | Example |
 |---------|---------|---------|
-| `/test-spec` | Create test specification | `/test-spec PBI-260120-001` |
-| `/test-cases` | Generate test cases | `/test-cases TS-260120-001` |
+| `/team-test-spec` | Create test specification | `/team-test-spec PBI-260120-001` |
+| `/team-test-cases` | Generate test cases | `/team-test-cases TS-260120-001` |
 
 #### QC Specialist Commands
 
 | Command | Purpose | Example |
 |---------|---------|---------|
-| `/quality-gate pre-dev` | Pre-development gate | `/quality-gate pre-dev PBI-XXX` |
-| `/quality-gate pre-qa` | Pre-QA gate | `/quality-gate pre-qa PBI-XXX` |
-| `/quality-gate pre-release` | Pre-release gate | `/quality-gate pre-release v2.1.0` |
+| `/team-quality-gate pre-dev` | Pre-development gate | `/team-quality-gate pre-dev PBI-XXX` |
+| `/team-quality-gate pre-qa` | Pre-QA gate | `/team-quality-gate pre-qa PBI-XXX` |
+| `/team-quality-gate pre-release` | Pre-release gate | `/team-quality-gate pre-release v2.1.0` |
 
 #### Project Manager Commands
 
 | Command | Purpose | Example |
 |---------|---------|---------|
-| `/status sprint` | Sprint status report | `/status sprint` |
-| `/status project` | Project status report | `/status project` |
-| `/dependency` | Dependency analysis | `/dependency PBI-260120-001` |
-| `/team-sync daily` | Daily standup agenda | `/team-sync daily` |
-| `/team-sync sprint-planning` | Sprint planning agenda | `/team-sync sprint-planning` |
-| `/team-sync retro` | Retrospective facilitation | `/team-sync retro` |
+| `/team-status sprint` | Sprint status report | `/team-status sprint` |
+| `/team-status project` | Project status report | `/team-status project` |
+| `/team-dependency` | Dependency analysis | `/team-dependency PBI-260120-001` |
+| `/team-team-sync daily` | Daily standup agenda | `/team-team-sync daily` |
+| `/team-team-sync sprint-planning` | Sprint planning agenda | `/team-team-sync sprint-planning` |
+| `/team-team-sync retro` | Retrospective facilitation | `/team-team-sync retro` |
 
 ### Automated Workflow Triggers
 
@@ -831,12 +831,12 @@ ls team-artifacts/
 
 **Product Owner:**
 ```bash
-/idea "Test idea for training"
+/team-idea "Test idea for training"
 ```
 
 **Business Analyst:**
 ```bash
-/refine team-artifacts/ideas/[latest-idea].md
+/team-refine team-artifacts/team-ideas/[latest-idea].md
 ```
 
 **Developer:**
@@ -847,17 +847,17 @@ ls team-artifacts/
 
 **QA Engineer:**
 ```bash
-/test-spec team-artifacts/pbis/[pbi-file].md
+/team-test-spec team-artifacts/pbis/[pbi-file].md
 ```
 
 **QC Specialist:**
 ```bash
-/quality-gate pre-dev [PBI-ID]
+/team-quality-gate pre-dev [PBI-ID]
 ```
 
 **Project Manager:**
 ```bash
-/status sprint
+/team-status sprint
 ```
 
 ### Artifact Naming Convention
@@ -944,20 +944,20 @@ team-artifacts/
 │                                    └── ace-* (learning system)           │
 │                                                                          │
 │  AGENTS (22 Total)                 SKILLS (90+ Total)                    │
-│  ├── product-owner                 ├── /idea, /prioritize                │
-│  ├── business-analyst              ├── /refine, /story                   │
-│  ├── qa-engineer                   ├── /test-spec, /test-cases           │
-│  ├── qc-specialist                 ├── /quality-gate                     │
-│  ├── project-manager               ├── /status, /dependency, /team-sync  │
+│  ├── product-owner                 ├── /team-idea, /team-prioritize                │
+│  ├── business-analyst              ├── /team-refine, /team-story                   │
+│  ├── qa-engineer                   ├── /team-test-spec, /team-test-cases           │
+│  ├── qc-specialist                 ├── /team-quality-gate                     │
+│  ├── project-manager               ├── /team-status, /team-dependency, /team-team-sync  │
 │  ├── planner                       ├── /plan, /cook, /fix                │
 │  ├── debugger                      ├── /debug, /investigate              │
 │  └── tester, code-reviewer...      └── /commit, /code-review...          │
 │                                                                          │
 │  WORKFLOWS                         ARTIFACTS                             │
-│  ├── feature (8 steps)             ├── team-artifacts/ideas/             │
+│  ├── feature (8 steps)             ├── team-artifacts/team-ideas/             │
 │  ├── bugfix (9 steps)              ├── team-artifacts/pbis/              │
-│  ├── idea-to-pbi (4 steps)         ├── team-artifacts/test-specs/        │
-│  ├── pbi-to-tests (3 steps)        ├── team-artifacts/design-specs/      │
+│  ├── idea-to-pbi (4 steps)         ├── team-artifacts/team-test-specs/        │
+│  ├── pbi-to-tests (3 steps)        ├── team-artifacts/team-design-specs/      │
 │  ├── pm-reporting (2 steps)        ├── team-artifacts/quality-reports/   │
 │  └── 25+ more workflows            └── plans/reports/                    │
 │                                                                          │

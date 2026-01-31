@@ -1,6 +1,6 @@
 ---
 name: changelog-update
-description: Update CHANGELOG.md [Unreleased] section with business-focused entries via systematic file review
+description: "[Git & Release] Update CHANGELOG.md [Unreleased] section with business-focused entries via systematic file review"
 triggers:
   - changelog update
   - update changelog
@@ -11,6 +11,25 @@ activation: user-invoked
 # Changelog-Update Skill
 
 Update CHANGELOG.md with business-focused entries by systematically reviewing file changes.
+
+## Summary
+
+**Goal:** Update CHANGELOG.md [Unreleased] section with business-focused entries via systematic file review.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Gather changes | `git diff` or `git log` to identify changed files |
+| 2 | Create temp notes | `.ai/workspace/changelog-notes-*.md` for categorized review |
+| 3 | Systematic file review | Read each diff, identify business impact, categorize |
+| 4 | Holistic review | Re-read notes -- what can users now do? |
+| 5 | Generate entry | Keep a Changelog format under [Unreleased] |
+| 6 | Update CHANGELOG.md | Insert new entry under [Unreleased] section |
+| 7 | Cleanup | Delete temp notes file |
+
+**Key Principles:**
+- Business-focused language, not technical jargon (what users can do, not what classes were added)
+- For automated release notes from conventional commits, use `release-notes` skill instead
+- Always delete temp notes file after completion
 
 **Note**: For automated release notes from conventional commits, use the `release-notes` skill instead.
 

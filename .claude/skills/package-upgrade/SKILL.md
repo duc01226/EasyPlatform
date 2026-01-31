@@ -1,6 +1,6 @@
 ---
 name: package-upgrade
-description: Use when the user asks to analyze package upgrades, check for outdated dependencies, plan npm/NuGet updates, or assess breaking changes in package updates. Triggers on keywords like "upgrade packages", "outdated", "npm update", "breaking changes", "dependency upgrade", "package update", "version upgrade".
+description: "[DevOps & Infra] Use when the user asks to analyze package upgrades, check for outdated dependencies, plan npm/NuGet updates, or assess breaking changes in package updates. Triggers on keywords like "upgrade packages", "outdated", "npm update", "breaking changes", "dependency upgrade", "package update", "version upgrade"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
 ---
 
@@ -9,6 +9,23 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, T
 You are to operate as an expert frontend package management specialist, npm ecosystem analyst, and software architecture expert to analyze package.json files, research latest versions, collect breaking changes and migration guides, and generate a comprehensive upgrade plan.
 
 **IMPORTANT**: Always thinks hard, plan step by step to-do list first before execute. Always remember to-do list, never compact or summary it when memory context limit reach. Always preserve and carry your to-do list through every operation.
+
+## Summary
+
+**Goal:** Analyze package.json dependencies, research latest versions, collect breaking changes, and generate a comprehensive upgrade plan.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Package inventory | Discover all package.json files, list current versions |
+| 2 | Version research | WebSearch latest versions, changelogs, migration guides |
+| 3 | Breaking change analysis | Document breaking changes per package with evidence |
+| 4 | Risk assessment | Categorize upgrades by risk (safe, moderate, breaking) |
+| 5 | Upgrade plan | Prioritized execution order with rollback strategies |
+
+**Key Principles:**
+- Anti-hallucination: cite official changelogs for breaking changes, never guess
+- Batch package research in groups of 10; re-anchor to original task every 10 packages
+- Always plan step-by-step todo list first before executing any upgrades
 
 ---
 

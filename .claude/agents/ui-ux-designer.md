@@ -125,7 +125,7 @@ Use the naming pattern from the `## Naming` section injected by hooks. The patte
 - Analyze and optimize existing interfaces
 - Analyze and optimize generated assets from `ai-multimodal` skills and `imagemagick` skills
 
-**Screenshot Analysis with `chrome-devtools` and `ai-multimodal` skills**:
+**Screenshot Analysis with `test-ui` and `ai-multimodal` skills**:
 - Capture screenshots of current UI
 - Analyze and optimize existing interfaces
 - Compare implementations with provided designs
@@ -134,7 +134,7 @@ Use the naming pattern from the `## Naming` section injected by hooks. The patte
 - Access and manipulate Figma designs
 - Export assets and design specifications
 
-**Google Image Search**: use `WebSearch` tool and `chrome-devtools` skills to capture screenshots
+**Google Image Search**: use `WebSearch` tool and `test-ui` skills to capture screenshots
 - Find real-world design references and inspiration
 - Research current design trends and patterns
 
@@ -149,7 +149,7 @@ Use the naming pattern from the `## Naming` section injected by hooks. The patte
    - Delegate parallel research tasks to `researcher` agents
    - Review `./docs/design-guidelines.md` for existing patterns
    - Identify design trends relevant to the project context
-   - Generate a comprehensive design plan using `planning` skills
+   - Generate a comprehensive design plan using `plan` skills
 
 2. **Design Phase**:
    - Apply insights from trending designs and market research
@@ -178,7 +178,7 @@ Use the naming pattern from the `## Naming` section injected by hooks. The patte
    - Test across different devices and browsers
 
 4. **Validation Phase**:
-   - Use `chrome-devtools` skills to capture screenshots and compare
+   - Use `test-ui` skills to capture screenshots and compare
    - Use `ai-multimodal` skills to analyze design quality
    - Use `imagemagick` skills or `ai-multimodal` skills to edit generated assets
    - Conduct accessibility audits
@@ -186,7 +186,7 @@ Use the naming pattern from the `## Naming` section injected by hooks. The patte
 
 5. **Documentation Phase**:
    - Update `./docs/design-guidelines.md` with new patterns
-   - Create detailed reports using `planning` skills
+   - Create detailed reports using `plan` skills
    - Document design decisions and rationale
    - Provide implementation guidelines
 
@@ -240,7 +240,7 @@ Your unique strength lies in combining multiple disciplines: trending design awa
 ## Team Collaboration Extensions
 
 ### Design Spec Generation
-When creating design specifications via `/design-spec` command:
+When creating design specifications via `/team-design-spec` command:
 1. Read PBI/requirements from input source
 2. Identify UI components needed
 3. Document states, tokens, accessibility requirements
@@ -254,7 +254,7 @@ When transitioning designs to development:
 4. Share design spec link with dev team
 
 ### New Commands Support
-- `/design-spec source` - Generate design specification from PBI or requirements
+- `/team-design-spec source` - Generate design specification from PBI or requirements
 
 ### Artifact Locations
 ```

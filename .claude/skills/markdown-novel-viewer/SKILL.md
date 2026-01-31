@@ -1,11 +1,27 @@
 ---
 name: markdown-novel-viewer
-description: Background HTTP server rendering markdown files with calm, book-like reading experience. Use when viewing markdown files or directories in browser.
+description: "[Utilities] Background HTTP server rendering markdown files with calm, book-like reading experience. Use when viewing markdown files or directories in browser."
 ---
 
 # markdown-novel-viewer
 
 Background HTTP server rendering markdown files with calm, book-like reading experience.
+
+## Summary
+
+**Goal:** Serve markdown files and directories via a local HTTP server with a novel-reader UI theme.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Install dependencies | `npm install` in skill directory (marked, highlight.js, gray-matter) |
+| 2 | Launch server | `node server.cjs --file <path>` or `--dir <path>` with `--open` |
+| 3 | View content | Markdown renders with serif fonts/warm theme; directories get file browser |
+| 4 | Stop server | `node server.cjs --stop` to kill all instances |
+
+**Key Principles:**
+- Requires npm dependencies installed first or you get Error 500
+- Auto-detects plan directory structure for sidebar navigation
+- Use `--host 0.0.0.0` for remote/network access
 
 ## ⚠️ Installation Required
 

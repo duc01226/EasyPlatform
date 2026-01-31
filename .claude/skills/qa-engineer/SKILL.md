@@ -1,12 +1,28 @@
 ---
 name: qa-engineer
-description: Assist QA Engineers with test planning, test case generation from acceptance criteria, coverage analysis, and regression test identification. Use when creating test plans, generating test cases, analyzing test coverage, or identifying regression risks. Triggers on keywords like "test plan", "test cases", "test spec", "test coverage", "regression", "QA", "testing strategy", "edge cases".
+description: "[Team Roles] Assist QA Engineers with test planning, test case generation from acceptance criteria, coverage analysis, and regression test identification. Use when creating test plans, generating test cases, analyzing test coverage, or identifying regression risks. Triggers on keywords like "test plan", "test cases", "test spec", "test coverage", "regression", "QA", "testing strategy", "edge cases"."
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, TodoWrite
 ---
 
 # QA Engineer Assistant
 
 Help QA Engineers create comprehensive test specifications, generate test cases from acceptance criteria, and ensure adequate test coverage.
+
+## Summary
+
+**Goal:** Assist QA Engineers with test planning, test case generation from acceptance criteria, coverage analysis, and regression risk identification.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Test planning | Define scope, strategy, environments, data needs |
+| 2 | Test case generation | Convert GIVEN/WHEN/THEN acceptance criteria to test cases |
+| 3 | Coverage analysis | Map test cases to requirements, identify gaps |
+| 4 | Regression identification | Assess impact of changes on existing functionality |
+
+**Key Principles:**
+- Every test case must have evidence linking to code (`{file}:{line}`)
+- Cover all test types: unit, integration, E2E, regression, smoke, performance
+- Standard format: TC-{MOD}-{NNN} with preconditions, steps, expected results
 
 ---
 
@@ -94,14 +110,14 @@ TC: TC-AUTH-001: Successful logout
 ## Workflow Integration
 
 ### Creating Test Spec from PBI
-When user runs `/test-spec {pbi-file}`:
+When user runs `/team-test-spec {pbi-file}`:
 1. Read PBI and acceptance criteria
 2. Identify test scenarios (positive, negative, edge)
 3. Create test specification structure
 4. Save to `team-artifacts/test-specs/`
 
 ### Generating Test Cases
-When user runs `/test-cases {test-spec-file}`:
+When user runs `/team-test-cases {test-spec-file}`:
 1. Read test specification
 2. Generate detailed test cases
 3. Assign TC IDs (TC-{MOD}-{NNN})

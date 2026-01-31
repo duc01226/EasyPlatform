@@ -2,7 +2,30 @@
 
 > **.NET 9 + Angular 19 Development Platform Framework**
 
-This file provides essential context and navigation for AI agents working on EasyPlatform. Detailed patterns and protocols are in `docs/claude/`.
+Easy.Platform is a reusable framework providing CQRS, validation, repository, message bus, and background job infrastructure for building .NET microservices with Angular frontends. The `src/Backend/` TextSnippet app demonstrates all patterns end-to-end.
+
+Detailed patterns and protocols are in `docs/claude/`.
+
+---
+
+## Quick Summary (Read This First)
+
+**What this is:** A .NET 9 backend + Angular 19 frontend monorepo built on Easy.Platform framework. Backend uses Clean Architecture (Domain → Application → Persistence → Api) with CQRS. Frontend uses Nx workspace with platform base classes.
+
+**Golden rules (violations = bugs):**
+
+1. **Logic goes in the LOWEST layer:** Entity/Model > Service > Component/Handler
+2. **Backend:** Platform repositories only, `PlatformValidationResult` fluent API (never throw), side effects in Event Handlers (never handlers), DTOs own mapping, Command+Result+Handler in ONE file, cross-service via RabbitMQ only
+3. **Frontend:** Extend `AppBaseComponent`/`AppBaseVmStoreComponent`/`AppBaseFormComponent` (never raw Component), `PlatformVmStore` for state, extend `PlatformApiService` (never direct HttpClient), always `untilDestroyed()`, all elements need BEM classes
+4. **Always search existing code first** before creating anything new
+5. **Always plan before implementing** non-trivial tasks (use `/plan` commands)
+6. **Always use TodoWrite** to track tasks — planning/implementation skills are blocked without active todos
+7. **Detect workflow from prompt** before any tool call — match keywords to workflow table below
+8. **Evidence-based only** — verify with code evidence, never fabricate or assume
+
+**Key paths:** Backend `src/Backend/`, Frontend `src/Frontend/apps/playground-text-snippet/`, Platform framework `src/Platform/`, Patterns `docs/claude/`
+
+**Anti-patterns (never do):** Cross-service DB access, side effects in command handlers, DTO mapping in handlers, direct HttpClient, manual signals, missing `untilDestroyed()`, missing BEM classes
 
 ---
 
@@ -10,13 +33,14 @@ This file provides essential context and navigation for AI agents working on Eas
 
 **⛔ STOP — DO NOT CALL ANY TOOL YET ⛔**
 
-1. Is this a slash command (e.g., `/plan`, `/cook`)? → Execute it
-2. Does prompt match a workflow? → Activate workflow
-3. Is this research-only? → Proceed with investigation
-4. **OTHERWISE → MUST invoke `/plan <prompt>` FIRST**
+1. Explicit slash command? (e.g., `/plan`, `/cook`) → Execute it
+2. Prompt matches workflow? → Activate workflow + confirm if required
+3. MODIFICATION keywords present? → Use Feature/Refactor/Bugfix workflow
+   (update, add, create, implement, enhance, insert, fix, change, remove, delete)
+4. Pure research? (no modification keywords) → Investigation workflow
+5. **FALLBACK → MUST invoke `/plan <prompt>` FIRST**
 
-**Research-only means:** Explain, describe, list, summarize — with NO file output.
-**NOT research-only:** Analyze + update, recommend + implement, review + fix → Use `/plan`
+**CRITICAL: Modification > Research.** If prompt contains BOTH research AND modification intent, **modification workflow wins** (investigation is a substep of `/plan`).
 
 ---
 
@@ -35,10 +59,10 @@ This file provides essential context and navigation for AI agents working on Eas
 
 Before implementing ANY non-trivial task, you MUST:
 
-1. **Plan First** - Use `/plan` commands (`/plan`, `/plan:fast`, `/plan:hard`, `/plan:parallel`) to create implementation plans
+1. **Plan First** - Use `/plan` commands (`/plan`, `/plan-fast`, `/plan-hard`, `/plan-hard --parallel`) to create implementation plans
 2. **Investigate & Analyze** - Explore codebase, understand context
 3. **Create Implementation Plan** - Write detailed plan with specific files and approach
-4. **Validate Plan** - Execute `/plan:validate` or `/plan:review` to check plan quality
+4. **Validate Plan** - Execute `/plan-validate` or `/plan-review` to check plan quality
 5. **Get User Approval** - Present plan and wait for user confirmation before any code changes
 6. **Only Then Implement** - Execute the approved plan
 
@@ -225,10 +249,10 @@ Need backend feature?
 
 ```text
 Need frontend feature?
-├── Simple component → PlatformComponent
-├── Complex state → PlatformVmStoreComponent + Store
-├── Forms → PlatformFormComponent
-├── API calls → PlatformApiService
+├── Simple component → Extend AppBaseComponent
+├── Complex state → AppBaseVmStoreComponent + PlatformVmStore
+├── Forms → AppBaseFormComponent with validation
+├── API calls → Service extending PlatformApiService
 ├── Cross-domain → apps-domains library
 └── Reusable → platform-core library
 ```
@@ -239,40 +263,52 @@ Need frontend feature?
 
 ## Documentation Index
 
-### Rule Files (docs/claude/)
+### Quick Start (`docs/claude/`)
 
-| File                                                                                       | Purpose                                                  |
-| ------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
-| [README.md](docs/claude/README.md)                                                         | Documentation index & navigation guide                   |
-| [claude-kit-setup.md](docs/claude/claude-kit-setup.md)                                     | Claude Kit (ACE, hooks, skills, agents, workflows, swap) |
-| [architecture.md](docs/claude/architecture.md)                                             | System architecture & planning protocol                  |
-| [troubleshooting.md](docs/claude/troubleshooting.md)                                       | Investigation protocol & common issues                   |
-| [backend-patterns.md](docs/claude/backend-patterns.md)                                     | Backend patterns (CQRS, Repository, etc.)                |
-| [backend-csharp-complete-guide.md](docs/claude/backend-csharp-complete-guide.md)           | Comprehensive C# backend reference                       |
-| [frontend-patterns.md](docs/claude/frontend-patterns.md)                                   | Angular/platform-core patterns                           |
-| [frontend-typescript-complete-guide.md](docs/claude/frontend-typescript-complete-guide.md) | Comprehensive Angular/TS frontend reference              |
-| [scss-styling-guide.md](docs/claude/scss-styling-guide.md)                                 | SCSS/CSS styling rules, BEM methodology                  |
-| [authorization-patterns.md](docs/claude/authorization-patterns.md)                         | Security and migration patterns                          |
-| [decision-trees.md](docs/claude/decision-trees.md)                                         | Quick decision guides and templates                      |
-| [advanced-patterns.md](docs/claude/advanced-patterns.md)                                   | Advanced techniques and anti-patterns                    |
-| [clean-code-rules.md](docs/claude/clean-code-rules.md)                                     | Universal coding standards                               |
-| [team-collaboration-guide.md](docs/claude/team-collaboration-guide.md)                     | Team roles, commands, design workflows                   |
+| Document                                       | Purpose                                | When to Use                  |
+| ---------------------------------------------- | -------------------------------------- | ---------------------------- |
+| [README.md](docs/claude/README.md)             | **Start here** - Navigation & decision trees | First reference for any task |
+| [claude-kit-setup.md](docs/claude/claude-kit-setup.md) | Claude Kit (ACE, hooks, skills, workflows) | Hook/skill internals |
 
-### Other Documentation
+### Pattern References (`docs/claude/`)
 
-| File                                                                 | Purpose                          |
-| -------------------------------------------------------------------- | -------------------------------- |
-| [README.md](README.md)                                               | Platform overview & quick start  |
-| [Architecture Overview](docs/architecture-overview.md)               | System architecture & diagrams   |
-| **[Business Features](docs/BUSINESS-FEATURES.md)**                   | **Module docs, features, APIs**  |
-| [Code Review Rules](docs/code-review-rules.md)                       | Review checklist (auto-injected) |
-| [.github/AI-DEBUGGING-PROTOCOL.md](.github/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging protocol     |
-| [.ai/docs/common-prompt.md](.ai/docs/common-prompt.md)               | AI agent prompt library          |
-| [.claude/hooks/tests/](.claude/hooks/tests/)                         | Claude hooks test infrastructure |
+| Document                                                                                   | Purpose                             | When to Use              |
+| ------------------------------------------------------------------------------------------ | ----------------------------------- | ------------------------ |
+| [backend-patterns.md](docs/claude/backend-patterns.md)                                     | CQRS, Repository, Entity, Validation | Backend tasks           |
+| [frontend-patterns.md](docs/claude/frontend-patterns.md)                                   | Components, Forms, Stores, API       | Frontend tasks          |
+| [advanced-patterns.md](docs/claude/advanced-patterns.md)                                   | Fluent helpers, expression composition | Complex implementations |
+| [authorization-patterns.md](docs/claude/authorization-patterns.md)                         | Security and migration patterns      | Auth/migration tasks    |
+| [scss-styling-guide.md](docs/claude/scss-styling-guide.md)                                 | BEM methodology, design tokens       | Styling tasks           |
 
-> **Business Documentation:** Detailed business module documentation (requirements, workflows, APIs, test specs) is in [`docs/business-features/`](docs/business-features/). Use [`docs/BUSINESS-FEATURES.md`](docs/BUSINESS-FEATURES.md) as the master index.
+### Complete Guides (`docs/claude/`)
 
-> **Claude Hooks Development:** Before adding new test cases or test scripts for Claude hooks, check existing tests in `.claude/hooks/tests/` folder. Use the existing test utilities (`test-utils.cjs`, `hook-runner.cjs`) and follow established patterns in `suites/` directory.
+| Document                                                                                   | Purpose                                    | Size   |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------ | ------ |
+| [backend-csharp-complete-guide.md](docs/claude/backend-csharp-complete-guide.md)           | Comprehensive C# reference: SOLID, patterns | Large |
+| [frontend-typescript-complete-guide.md](docs/claude/frontend-typescript-complete-guide.md) | Complete Angular/TS guide with principles   | Large |
+
+### Architecture & Operations (`docs/claude/`)
+
+| Document                                                             | Purpose                            |
+| -------------------------------------------------------------------- | ---------------------------------- |
+| [architecture.md](docs/claude/architecture.md)                       | System architecture & planning     |
+| [troubleshooting.md](docs/claude/troubleshooting.md)                 | Investigation protocol & issues    |
+| [decision-trees.md](docs/claude/decision-trees.md)                   | Quick decision guides              |
+| [clean-code-rules.md](docs/claude/clean-code-rules.md)               | Universal coding standards         |
+| [team-collaboration-guide.md](docs/claude/team-collaboration-guide.md) | Team roles, commands, workflows  |
+
+### Project Documentation
+
+| File                                                                    | Purpose                          |
+| ----------------------------------------------------------------------- | -------------------------------- |
+| [README.md](README.md)                                                  | Platform overview & quick start  |
+| [Architecture Overview](docs/architecture-overview.md)                  | System architecture & diagrams   |
+| **[Business Features](docs/BUSINESS-FEATURES.md)**                      | **Module docs, features, APIs**  |
+| [Code Review Rules](docs/code-review-rules.md)                          | Review checklist (auto-injected) |
+| [.ai/docs/AI-DEBUGGING-PROTOCOL.md](.ai/docs/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging protocol     |
+| [.claude/hooks/tests/](.claude/hooks/tests/)                            | Claude hooks test infrastructure |
+
+> **Claude Hooks Development:** Check existing tests in `.claude/hooks/tests/` before adding new ones. Use `test-utils.cjs`, `hook-runner.cjs` and patterns in `suites/`.
 
 ---
 
@@ -361,13 +397,41 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
 
 ---
 
+## Shell Environment (Windows)
+
+Claude Code runs in Git Bash (MINGW64) on Windows. Use Unix commands, not CMD equivalents.
+
+| Windows CMD (DON'T USE) | Unix Equivalent (USE THIS) | Purpose                  |
+| ----------------------- | -------------------------- | ------------------------ |
+| `dir /b /s path`        | `find path -type f`        | Recursive file listing   |
+| `type file`             | `cat file`                 | View file content        |
+| `copy src dst`          | `cp src dst`               | Copy file                |
+| `set VAR=value`         | `export VAR=value`         | Set environment variable |
+
+**Path handling:** Use forward slashes (`D:/GitSources/EasyPlatform`) or escaped backslashes in strings.
+
+---
+
 ## Universal Clean Code Rules
 
 - **No code duplication** — Search and reuse existing implementations
 - **SOLID principles** — Single responsibility, dependency inversion
 - **90% Logic Rule** — If logic belongs 90% to class A, put it in class A
 
-> **Naming conventions & detailed rules:** See [clean-code-rules.md](docs/claude/clean-code-rules.md) | **Code review rules:** [code-review-rules.md](docs/code-review-rules.md) (auto-injected on `/code-review`)
+### Naming Conventions
+
+| Type        | Convention                | Example                                                 |
+| ----------- | ------------------------- | ------------------------------------------------------- |
+| Classes     | PascalCase                | `UserService`, `EmployeeDto`                            |
+| Methods     | PascalCase (C#)           | `GetEmployeeAsync()`                                    |
+| Methods     | camelCase (TS)            | `getEmployee()`                                         |
+| Variables   | camelCase                 | `userName`, `employeeList`                              |
+| Constants   | UPPER_SNAKE_CASE          | `MAX_RETRY_COUNT`                                       |
+| Booleans    | Prefix with verb          | `isActive`, `hasPermission`, `canEdit`, `shouldProcess` |
+| Collections | Plural                    | `users`, `items`, `employees`                           |
+| BEM CSS     | block__element --modifier | All frontend template elements must have BEM classes    |
+
+> **Detailed rules:** See [clean-code-rules.md](docs/claude/clean-code-rules.md) | **Code review rules:** [code-review-rules.md](docs/code-review-rules.md) (auto-injected on `/code-review`)
 
 ---
 
@@ -429,12 +493,12 @@ Planning and implementation skills are **blocked** unless you have active todos.
 
 ### Allowed Without Todos (Read-Only Research & Status)
 
-- `/scout`, `/scout:ext`, `/investigate`, `/research`, `/explore`
+- `/scout`, `/scout-ext`, `/investigate`, `/research`, `/explore`
 - `/watzup`, `/checkpoint`, `/kanban`
 
 ### Blocked Without Todos (Planning + Implementation)
 
-- `/plan`, `/plan:fast`, `/plan:hard`, `/plan:validate`
+- `/plan`, `/plan-fast`, `/plan-hard`, `/plan-validate`
 - `/cook`, `/fix`, `/code`, `/feature`, `/implement`
 - `/test`, `/debug`, `/code-review`, `/commit`
 - All other skills not listed above
@@ -456,140 +520,43 @@ Use `quick:` prefix to bypass enforcement (not recommended):
 
 ### External Memory Swap
 
-Large tool outputs are automatically externalized to disk files with semantic summaries. After context compaction, exact content can be recovered without re-executing tools.
+Large tool outputs (Read >8KB, Grep >4KB, Glob >2KB, Bash >6KB) are automatically externalized to `{temp}/ck/swap/{sessionId}/` with semantic summaries for post-compaction recovery. Use `Read: {path}` to retrieve content after context loss.
 
-| Tool | Threshold | Summary Type                               |
-| ---- | --------- | ------------------------------------------ |
-| Read | 8KB       | Code signatures (class/function/interface) |
-| Grep | 4KB       | Match count + preview                      |
-| Glob | 2KB       | File count + extensions                    |
-| Bash | 6KB       | Truncated output                           |
-
-**How it works:**
-
-1. PostToolUse hook detects large outputs
-2. Content saved to `{temp}/ck/swap/{sessionId}/`
-3. Markdown pointer injected with summary
-4. On session resume: inventory table shows recoverable content
-5. Use `Read: {path}` to retrieve exact content
-
-> **Note:** Does NOT reduce active session tokens - value is post-compaction recovery only.
-
-See: [claude-kit-setup.md#external-memory-swap-system](docs/claude/claude-kit-setup.md#external-memory-swap-system)
+> **Details:** See [claude-kit-setup.md#external-memory-swap-system](docs/claude/claude-kit-setup.md#external-memory-swap-system)
 
 ---
 
 ## Automatic Workflow Detection (MUST FOLLOW)
 
-Workflows are automatically injected by the `workflow-router.cjs` hook. Use the **Decision Tree** below as the PRIMARY selection mechanism, then invoke `/workflow:start <id>`.
+Workflows are injected by `workflow-router.cjs`. Match user prompt keywords against the table below, then invoke `/workflow-start <id>`.
 
-### Workflow Selection Decision Tree (PRIMARY)
+### Keyword → Workflow Lookup
 
-```text
-Analyze user prompt for these keywords (check in order):
-│
-├─ "bug" | "error" | "fix" | "broken" | "crash" | "not working" | exception trace
-│   └─ → bugfix
-│
-├─ "implement" | "add" | "create" | "build" | "develop" | "new feature"
-│   └─ → feature (confirm first)
-│
-├─ "refactor" | "restructure" | "clean up" | "extract" | "technical debt"
-│   └─ → refactor (confirm first)
-│
-├─ "migration" | "schema" | "add column" | "EF migration" | "alter table"
-│   └─ → migration (confirm first)
-│
-├─ "all files" | "batch" | "bulk" | "find-replace across" | "every instance"
-│   └─ → batch-operation (confirm first)
-│
-├─ "how does" | "where is" | "explain" | "understand" | "trace" | "explore"
-│   └─ → investigation
-│
-├─ "review PR" | "code review" | "review this code"
-│   └─ → review
-│
-├─ "review changes" | "pre-commit" | "staged" | "uncommitted" | "before commit"
-│   └─ → review-changes
-│
-├─ "quality audit" | "best practices" | "ensure no flaws" | "audit-and-fix"
-│   └─ → quality-audit (confirm first)
-│
-├─ "security" | "vulnerability" | "OWASP" | "penetration"
-│   └─ → security-audit
-│
-├─ "performance" | "slow" | "optimize" | "N+1" | "latency" | "bottleneck"
-│   └─ → performance (confirm first)
-│
-├─ "verify" | "validate" | "make sure" | "ensure" | "confirm works"
-│   └─ → verification (confirm first)
-│
-├─ "deploy" | "CI/CD" | "infrastructure" | "Docker" | "pipeline"
-│   └─ → deployment (confirm first)
-│
-├─ "docs" | "documentation" | "README"
-│   ├─ target is docs/business-features/ → business-feature-docs
-│   └─ otherwise → documentation
-│
-├─ "idea" | "product request" | "backlog" | "PBI" | "feature request"
-│   └─ → idea-to-pbi (confirm first)
-│
-├─ "test spec" | "test cases" | "QA" | "generate tests from"
-│   └─ → pbi-to-tests
-│
-├─ "sprint planning" | "prioritize backlog" | "iteration planning"
-│   └─ → sprint-planning (confirm first)
-│
-├─ "status report" | "sprint update" | "project progress"
-│   └─ → pm-reporting
-│
-├─ "release prep" | "pre-release" | "go-live" | "deployment checklist"
-│   └─ → release-prep (confirm first)
-│
-├─ "design spec" | "wireframe" | "mockup" | "UI/UX spec"
-│   └─ → design-workflow
-│
-├─ "prepare" | "setup" | "kick off" | "pre-coding" | "quality gate"
-│   └─ → pre-development
-│
-└─ No keyword match → Handle directly (no workflow)
-```
-
-### Workflow Quick Reference by Category
-
-#### Implementation Workflows (confirm: Yes unless noted)
-
-- `feature` — implement, add, create, build, develop
-- `bugfix` — bug, error, crash, fix, debug (No confirm)
-- `refactor` — restructure, clean up, extract, rename
-- `migration` — schema, columns, EF migration
-- `batch-operation` — all files, bulk, find-replace across
-- `deployment` — CI/CD, Docker, infrastructure
-- `performance` — slow, optimize, N+1, bottleneck
-
-#### Review & Audit Workflows (confirm: Yes for audit workflows)
-
-- `review` — PR review, code review (No confirm)
-- `review-changes` — pre-commit, staged changes (No confirm)
-- `quality-audit` — best practices, ensure no flaws
-- `security-audit` — vulnerability, OWASP (No confirm)
-- `verification` — verify, validate, make sure
-
-#### Investigation & Documentation Workflows (No confirm)
-
-- `investigation` — how does, where is, explain, trace
-- `documentation` — general docs, README, comments
-- `business-feature-docs` — 26-section template in docs/business-features/
-
-#### Product & Planning Workflows
-
-- `idea-to-pbi` — new idea, feature request, backlog (confirm)
-- `pbi-to-tests` — test specs from PBI (No confirm)
-- `sprint-planning` — prioritize, iteration planning (confirm)
-- `pm-reporting` — status report, sprint update (No confirm)
-- `release-prep` — pre-release checks, go-live (confirm)
-- `design-workflow` — wireframe, mockup, UI spec (No confirm)
-- `pre-development` — prepare, setup, kick off, quality gate (No confirm)
+| If prompt contains...                                              | → Workflow ID          | Confirm? |
+| ------------------------------------------------------------------ | ---------------------- | -------- |
+| bug, error, fix, crash, broken, not working, exception trace       | `bugfix`               | No       |
+| implement, add, create, build, develop, new feature                | `feature`              | Yes      |
+| refactor, restructure, clean up, extract, technical debt           | `refactor`             | Yes      |
+| migration, schema, add column, EF migration, alter table           | `migration`            | Yes      |
+| all files, batch, bulk, find-replace across, every instance        | `batch-operation`      | Yes      |
+| how does, where is, explain, understand, trace, explore            | `investigation`        | No       |
+| review PR, code review, review this code                           | `review`               | No       |
+| review changes, pre-commit, staged, uncommitted                    | `review-changes`       | No       |
+| quality audit, best practices, ensure no flaws                     | `quality-audit`        | Yes      |
+| security, vulnerability, OWASP, penetration                        | `security-audit`       | No       |
+| performance, slow, optimize, N+1, latency, bottleneck              | `performance`          | Yes      |
+| verify, validate, make sure, ensure, confirm works                 | `verification`         | Yes      |
+| deploy, CI/CD, infrastructure, Docker, pipeline                    | `deployment`           | Yes      |
+| docs, documentation, README (→ `docs/business-features/`)         | `business-feature-docs`| No       |
+| docs, documentation, README (→ elsewhere)                          | `documentation`        | No       |
+| idea, product request, backlog, PBI, feature request               | `idea-to-pbi`          | Yes      |
+| test spec, test cases, QA, generate tests from                     | `pbi-to-tests`         | No       |
+| sprint planning, prioritize backlog, iteration planning            | `sprint-planning`      | Yes      |
+| status report, sprint update, project progress                     | `pm-reporting`         | No       |
+| release prep, pre-release, go-live, deployment checklist           | `release-prep`         | Yes      |
+| design spec, wireframe, mockup, UI/UX spec                        | `design-workflow`      | No       |
+| prepare, setup, kick off, pre-coding, quality gate                 | `pre-development`      | No       |
+| No keyword match                                                   | Handle directly        | —        |
 
 > **Full workflow details:** See [copilot-instructions.md](.github/copilot-instructions.md#workflow-decision-guide-comprehensive)
 
@@ -598,7 +565,7 @@ Analyze user prompt for these keywords (check in order):
 **CRITICAL: First action after workflow activation MUST be TodoWrite. No exceptions.**
 
 1. **SELECT:** Analyze user prompt against the workflow table above
-2. **ACTIVATE:** Invoke `/workflow:start <id>` — this creates state and outputs the full sequence
+2. **ACTIVATE:** Invoke `/workflow-start <id>` — this creates state and outputs the full sequence
 3. **CREATE TODOS (HARD BLOCKING):** Use `TodoWrite` to create todo items for ALL workflow steps BEFORE doing anything else
     - This is NOT optional - it is a hard requirement
     - If you skip this step, you WILL lose track of the workflow
@@ -617,7 +584,7 @@ Analyze user prompt for these keywords (check in order):
 
 **User:** "Add a dark mode toggle to the settings page"
 
-**Response:** The workflow catalog is injected. You select `feature` and invoke `/workflow:start feature`. The hook outputs the sequence, then you:
+**Response:** The workflow catalog is injected. You select `feature` and invoke `/workflow-start feature`. The hook outputs the sequence, then you:
 
-> Activated: **Feature Implementation** workflow. Following: `/scout` → `/plan` → `/plan:review` → `/cook` → ...
+> Activated: **Feature Implementation** workflow. Following: `/scout` → `/plan` → `/plan-review` → `/cook` → ...
 > Proceed with this workflow? (yes/no/quick)

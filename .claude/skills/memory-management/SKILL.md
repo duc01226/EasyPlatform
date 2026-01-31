@@ -1,6 +1,6 @@
 ---
 name: memory-management
-description: Use when saving or retrieving important patterns, decisions, and learnings across sessions. Triggers on keywords like "remember", "save pattern", "recall", "memory", "persist", "knowledge base", "learnings".
+description: "[Tooling & Meta] Use when saving or retrieving important patterns, decisions, and learnings across sessions. Triggers on keywords like "remember", "save pattern", "recall", "memory", "persist", "knowledge base", "learnings"."
 allowed-tools: Read, Write, Edit, mcp__memory__*
 infer: true
 ---
@@ -10,6 +10,22 @@ infer: true
 Build and maintain a knowledge graph of patterns, decisions, and learnings across sessions.
 
 This is the **SSOT** for MCP memory operations. Other skills should reference this.
+
+## Summary
+
+**Goal:** Build and maintain a persistent knowledge graph of patterns, decisions, bugs, and session context using MCP memory.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Session start | Search + load relevant entities from memory |
+| 2 | During work | Save discoveries as Pattern, Decision, BugFix entities |
+| 3 | Session end | Create SessionSummary with progress snapshot |
+| 4 | Maintenance | Consolidate, cleanup (>30 days), prune (<20% confidence) |
+
+**Key Principles:**
+- This skill is the SSOT for MCP memory operations -- other skills reference this
+- Always save: undocumented patterns, complex bug solutions, architectural decisions, anti-patterns
+- Importance scoring: 10 (critical bugs/security) down to 1-3 (temporary notes)
 
 ---
 

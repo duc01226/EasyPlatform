@@ -1,6 +1,6 @@
 ---
 name: feature-docs
-description: Generate single-file feature documentation with verified test cases. Use for quick feature docs, feature README, any project (not enterprise modules). Outputs single markdown file with code evidence. Triggers on "quick feature docs", "feature readme", "single file docs", "verified documentation". For enterprise module hierarchy, use business-feature-docs instead.
+description: "[Docs] Generate single-file feature documentation with verified test cases. Use for quick feature docs, feature README, any project (not enterprise modules). Outputs single markdown file with code evidence. Triggers on "quick feature docs", "feature readme", "single file docs", "verified documentation". For enterprise module hierarchy, use business-feature-docs instead."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
 
@@ -13,6 +13,22 @@ Generate comprehensive feature documentation following the **GOLD STANDARD** tem
 
 **GOLD STANDARD Reference**: `docs/features/README.ExampleFeature1.md` (Example App)
 **Template File**: `docs/templates/detailed-feature-docs-template.md`
+
+## Summary
+
+**Goal:** Generate comprehensive single-file feature documentation with verified test cases following the mandatory 26-section GOLD STANDARD template.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Feature Analysis | Build knowledge model in `.ai/workspace/analysis/` |
+| 2 | Code Discovery | Entities, commands, queries, events, components |
+| 3 | Documentation | Write all 26 sections with code evidence |
+| 4 | Verification | Validate code references exist, test specs match implementation |
+
+**Key Principles:**
+- All 26 sections are mandatory — follow exact order from template
+- Every claim must have code evidence (`file:line` references)
+- Use `docs/features/README.ExampleFeature1.md` as gold standard reference
 
 ---
 

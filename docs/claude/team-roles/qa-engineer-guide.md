@@ -8,13 +8,13 @@
 
 ```bash
 # Create test specification from PBI
-/test-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
+/team-test-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
 
 # Generate detailed test cases
-/test-cases team-artifacts/test-specs/260119-qa-testspec-biometric-auth.md
+/team-test-cases team-artifacts/team-test-specs/260119-qa-testspec-biometric-auth.md
 ```
 
-**Output Location:** `team-artifacts/test-specs/`
+**Output Location:** `team-artifacts/team-test-specs/`
 **Naming Pattern:** `{YYMMDD}-qa-testspec-{slug}.md` or `{YYMMDD}-qa-testcases-{slug}.md`
 
 ---
@@ -26,11 +26,11 @@
 │                    TESTING WORKFLOW                          │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│   BA ──/refine──> PBI ──> [YOU] ──/test-spec──> Dev         │
+│   BA ──/refine──> PBI ──> [YOU] ──/team-test-spec──> Dev         │
 │                              │                               │
-│                              └──/test-cases──> Test Suite    │
+│                              └──/team-test-cases──> Test Suite    │
 │                                                   │          │
-│                                              QC ──/quality-gate
+│                                              QC ──/team-quality-gate
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -39,8 +39,8 @@
 
 | Task | Command | Output |
 |------|---------|--------|
-| Create test specs | `/test-spec` | `team-artifacts/test-specs/*-testspec-*.md` |
-| Generate test cases | `/test-cases` | `team-artifacts/test-specs/*-testcases-*.md` |
+| Create test specs | `/team-test-spec` | `team-artifacts/team-test-specs/*-testspec-*.md` |
+| Generate test cases | `/team-test-cases` | `team-artifacts/team-test-specs/*-testcases-*.md` |
 | Map to acceptance criteria | Manual | Coverage matrix |
 | Record evidence | Manual | `file:line` format |
 
@@ -48,7 +48,7 @@
 
 ## Commands
 
-### `/test-spec` - Generate Test Specification
+### `/team-test-spec` - Generate Test Specification
 
 **Purpose:** Create comprehensive test specification from PBI/user story acceptance criteria.
 
@@ -56,16 +56,16 @@
 
 ```bash
 # From PBI
-/test-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
+/team-test-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
 
 # From user story
-/test-spec team-artifacts/pbis/stories/260119-ba-story-face-id.md
+/team-test-spec team-artifacts/pbis/stories/260119-ba-story-face-id.md
 
 # With coverage focus
-/test-spec PBI-260119-001 --focus "security,edge-cases"
+/team-test-spec PBI-260119-001 --focus "security,edge-cases"
 
 # For regression suite
-/test-spec PBI-260119-001 --type regression
+/team-test-spec PBI-260119-001 --type regression
 ```
 
 #### What Claude Generates
@@ -125,7 +125,7 @@ Test specification for biometric authentication feature covering Face ID and fin
 
 ---
 
-### `/test-cases` - Generate Detailed Test Cases
+### `/team-test-cases` - Generate Detailed Test Cases
 
 **Purpose:** Create step-by-step test cases with expected results and evidence fields.
 
@@ -133,13 +133,13 @@ Test specification for biometric authentication feature covering Face ID and fin
 
 ```bash
 # From test spec
-/test-cases team-artifacts/test-specs/260119-qa-testspec-biometric-auth.md
+/team-test-cases team-artifacts/team-test-specs/260119-qa-testspec-biometric-auth.md
 
 # With specific types
-/test-cases TS-260119-001 --types "positive,negative,boundary"
+/team-test-cases TS-260119-001 --types "positive,negative,boundary"
 
 # For automation
-/test-cases TS-260119-001 --format automation
+/team-test-cases TS-260119-001 --format automation
 ```
 
 #### What Claude Generates
@@ -470,7 +470,7 @@ grep -rn "biometric" src/api/
 # When test spec is complete
 # QC can run quality gate
 
-/quality-gate pre-qa PBI-260119-001
+/team-quality-gate pre-qa PBI-260119-001
 
 # Include in handoff:
 # - Test spec ID
@@ -522,12 +522,12 @@ grep -rn "biometric" src/api/
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  CREATE TEST SPEC                                            │
-│  /test-spec team-artifacts/pbis/PBI-XXX.md                   │
-│  /test-spec PBI-XXX --focus "security,edge-cases"            │
+│  /team-test-spec team-artifacts/pbis/PBI-XXX.md                   │
+│  /team-test-spec PBI-XXX --focus "security,edge-cases"            │
 │                                                              │
 │  GENERATE TEST CASES                                         │
-│  /test-cases team-artifacts/test-specs/TS-XXX.md             │
-│  /test-cases TS-XXX --types "positive,negative"              │
+│  /team-test-cases team-artifacts/team-test-specs/TS-XXX.md             │
+│  /team-test-cases TS-XXX --types "positive,negative"              │
 │                                                              │
 │  TEST CASE ID FORMAT                                         │
 │  TC-{MODULE}-{NNN}                                           │
@@ -542,8 +542,8 @@ grep -rn "biometric" src/api/
 │  Security (10%) | Performance (5%)                           │
 │                                                              │
 │  OUTPUT LOCATIONS                                            │
-│  Test Specs: team-artifacts/test-specs/                      │
-│  Test Cases: team-artifacts/test-specs/                      │
+│  Test Specs: team-artifacts/team-test-specs/                      │
+│  Test Cases: team-artifacts/team-test-specs/                      │
 │                                                              │
 │  NAMING: {YYMMDD}-qa-{type}-{slug}.md                        │
 │                                                              │

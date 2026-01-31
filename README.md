@@ -73,12 +73,12 @@ This project includes a complete team collaboration system for AI agents, suppor
 
 | Role                 | Commands                               | Purpose                                      |
 | -------------------- | -------------------------------------- | -------------------------------------------- |
-| **Product Owner**    | `/idea`, `/prioritize`                 | Capture ideas, backlog prioritization        |
-| **Business Analyst** | `/refine`, `/story`                    | PBI refinement, user story creation          |
-| **QA Engineer**      | `/test-spec`, `/test-cases`            | Test specification, test case generation     |
-| **UX Designer**      | `/design-spec`, `/figma-extract`       | UI specs, Figma design extraction            |
-| **QC Specialist**    | `/quality-gate`                        | Pre-dev/QA/release quality gates             |
-| **Project Manager**  | `/status`, `/dependency`, `/team-sync` | Status reports, dependency mapping, meetings |
+| **Product Owner**    | `/team-idea`, `/team-prioritize`                         | Capture ideas, backlog prioritization        |
+| **Business Analyst** | `/team-refine`, `/team-story`                            | PBI refinement, user story creation          |
+| **QA Engineer**      | `/team-test-spec`, `/team-test-cases`                    | Test specification, test case generation     |
+| **UX Designer**      | `/team-design-spec`, `/team-figma-extract`               | UI specs, Figma design extraction            |
+| **QC Specialist**    | `/team-quality-gate`                                     | Pre-dev/QA/release quality gates             |
+| **Project Manager**  | `/team-status`, `/team-dependency`, `/team-team-sync`    | Status reports, dependency mapping, meetings |
 
 ### Artifact Management
 

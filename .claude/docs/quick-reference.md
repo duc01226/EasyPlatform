@@ -7,7 +7,7 @@
 | Command        | Description                      |
 | -------------- | -------------------------------- |
 | `/plan`        | Create implementation plan       |
-| `/plan:hard`   | Comprehensive plan with research |
+| `/plan-hard`   | Comprehensive plan with research |
 | `/cook`        | Implement current task           |
 | `/fix`         | Fix bug or issue                 |
 | `/scout`       | Find relevant files              |
@@ -28,9 +28,9 @@
 ## Workflow Detection
 
 ```
-Feature → /plan → /plan:review → /cook → /simplify → /review → /test → /docs → /watzup
-Bug Fix → /scout → /investigate → /debug → /plan → /plan:review → /fix → /simplify → /review → /test
-Refactor → /plan → /plan:review → /code → /simplify → /review → /test
+Feature → /plan → /plan-review → /cook → /simplify → /review → /test → /docs → /watzup
+Bug Fix → /scout → /investigate → /debug → /plan → /plan-review → /fix → /simplify → /review → /test
+Refactor → /plan → /plan-review → /code → /simplify → /review → /test
 Docs → /scout → /investigate → /docs-update → /watzup
 ```
 
@@ -130,7 +130,7 @@ Read              # All reads
 | Development   | `backend-development`, `frontend-angular-*` |
 | Architecture  | `api-design`, `arch-security-review`        |
 | AI            | `ai-multimodal`, `mcp-builder`              |
-| Testing       | `debugging`, `code-review`                  |
+| Testing       | `debug`, `code-review`                  |
 | DevOps        | `devops`, `database-optimization`           |
 | Documentation | `docs-seeker`, `feature-docs`               |
 
@@ -140,7 +140,7 @@ Read              # All reads
 
 ```
 1. Create todos with TodoWrite
-2. Run /plan or /plan:hard
+2. Run /plan or /plan-hard
 3. Get approval
 4. Run /cook
 ```

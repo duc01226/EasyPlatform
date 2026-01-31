@@ -1,6 +1,6 @@
 ---
 name: shadcn-tailwind
-description: React component library skill for shadcn/ui + Tailwind CSS. Use for React/Next.js/Vite projects needing accessible UI components (dialogs, forms, tables, navigation), Radix UI primitives, Tailwind utility styling, theming, and dark mode. NOT for Angular projects - see frontend-angular-* skills. Triggers on "shadcn", "radix ui", "react components", "tailwind components". For design decisions (styles, palettes, fonts), use ui-ux-pro-max instead.
+description: "[Frontend] React component library skill for shadcn/ui + Tailwind CSS. Use for React/Next.js/Vite projects needing accessible UI components (dialogs, forms, tables, navigation), Radix UI primitives, Tailwind utility styling, theming, and dark mode. NOT for Angular projects - see frontend-angular-* skills. Triggers on "shadcn", "radix ui", "react components", "tailwind components". For design decisions (styles, palettes, fonts), use ui-ux-pro-max instead."
 license: MIT
 version: 1.0.0
 ---
@@ -8,6 +8,23 @@ version: 1.0.0
 # shadcn/ui + Tailwind CSS Skill
 
 React component library skill combining shadcn/ui components, Radix UI primitives, and Tailwind CSS utility styling.
+
+## Summary
+
+**Goal:** Build accessible React UI components using shadcn/ui (Radix primitives) with Tailwind CSS utility styling and visual design.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Setup | `npx shadcn@latest init` with Tailwind |
+| 2 | Add components | CLI-based install, components live in your codebase |
+| 3 | Compose UI | Combine Radix primitives for complex patterns |
+| 4 | Style | Tailwind utilities, mobile-first responsive, dark mode |
+| 5 | Visual design | Museum-quality compositions, minimal text, maximum impact |
+
+**Key Principles:**
+- Copy-paste distribution — components owned by your codebase, not a dependency
+- NOT for Angular projects — use frontend-angular-* skills instead
+- For design decisions (palettes, fonts, styles), use ui-ux-pro-max first
 
 ## Reference
 

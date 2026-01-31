@@ -8,13 +8,13 @@
 
 ```bash
 # Capture a new idea
-/idea "Add dark mode toggle to settings"
+/team-idea "Add dark mode toggle to settings"
 
 # Prioritize backlog items
-/prioritize team-artifacts/pbis/*.md --framework rice
+/team-prioritize team-artifacts/pbis/*.md --framework rice
 ```
 
-**Output Location:** `team-artifacts/ideas/`
+**Output Location:** `team-artifacts/team-ideas/`
 **Naming Pattern:** `{YYMMDD}-po-idea-{slug}.md`
 
 ---
@@ -26,9 +26,9 @@
 │                    PRODUCT WORKFLOW                          │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│   [YOU] ──/idea──> BA ──/refine──> Dev ──> QA ──> Release   │
+│   [YOU] ──/team-idea──> BA ──/team-refine──> Dev ──> QA ──> Release   │
 │     │                                                        │
-│     └──/prioritize──> Backlog Management                     │
+│     └──/team-prioritize──> Backlog Management                     │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -37,8 +37,8 @@
 
 | Task | Command | Output |
 |------|---------|--------|
-| Capture ideas | `/idea` | `team-artifacts/ideas/*.md` |
-| Prioritize backlog | `/prioritize` | Updated priority scores |
+| Capture ideas | `/team-idea` | `team-artifacts/team-ideas/*.md` |
+| Prioritize backlog | `/team-prioritize` | Updated priority scores |
 | Review PBIs | Read | `team-artifacts/pbis/*.md` |
 | Approve for sprint | Update status | PBI status → "approved" |
 
@@ -46,7 +46,7 @@
 
 ## Commands
 
-### `/idea` - Capture Product Ideas
+### `/team-idea` - Capture Product Ideas
 
 **Purpose:** Document new feature requests, improvements, or bug reports with structured template.
 
@@ -54,13 +54,13 @@
 
 ```bash
 # Simple idea capture
-/idea "Add user profile avatars"
+/team-idea "Add user profile avatars"
 
 # With context
-/idea "Add biometric login" --context "Users complaining about slow login"
+/team-idea "Add biometric login" --context "Users complaining about slow login"
 
 # From stakeholder feedback
-/idea "Implement SSO for enterprise clients" --source "Customer feedback Q4"
+/team-idea "Implement SSO for enterprise clients" --source "Customer feedback Q4"
 ```
 
 #### What Claude Generates
@@ -106,22 +106,22 @@ created: 2026-01-19
 
 **Example 1: Feature Request from Customer Feedback**
 ```bash
-/idea "Add bulk export feature for reports" --context "Enterprise clients (Acme Corp, TechStart) requesting ability to export all monthly reports as single PDF. Currently must export one-by-one. Affects 45% of enterprise tier."
+/team-idea "Add bulk export feature for reports" --context "Enterprise clients (Acme Corp, TechStart) requesting ability to export all monthly reports as single PDF. Currently must export one-by-one. Affects 45% of enterprise tier."
 ```
 
 **Example 2: Internal Improvement**
 ```bash
-/idea "Improve dashboard loading performance" --context "Analytics show 3.2s average load time. Target: <1s. Users abandoning before dashboard loads."
+/team-idea "Improve dashboard loading performance" --context "Analytics show 3.2s average load time. Target: <1s. Users abandoning before dashboard loads."
 ```
 
 **Example 3: Bug as Idea**
 ```bash
-/idea "BUG: Password reset email not sending for Gmail users" --context "Support tickets #1234, #1238, #1241. Affecting ~200 users/day. Started after email provider migration."
+/team-idea "BUG: Password reset email not sending for Gmail users" --context "Support tickets #1234, #1238, #1241. Affecting ~200 users/day. Started after email provider migration."
 ```
 
 #### Business Context Loading
 
-When capturing ideas, the `/idea` command now automatically enriches your ideas with business context:
+When capturing ideas, the `/team-idea` command now automatically enriches your ideas with business context:
 
 1. **Detects Target Module** - Matches keywords from your idea to `docs/business-features/` modules
    - Keywords like "snippet", "text", "search" → TextSnippet module
@@ -150,7 +150,7 @@ When capturing ideas, the `/idea` command now automatically enriches your ideas 
 
 ---
 
-### `/prioritize` - Backlog Prioritization
+### `/team-prioritize` - Backlog Prioritization
 
 **Purpose:** Apply structured prioritization frameworks to rank backlog items.
 
@@ -167,16 +167,16 @@ When capturing ideas, the `/idea` command now automatically enriches your ideas 
 
 ```bash
 # RICE scoring (recommended for features)
-/prioritize team-artifacts/pbis/260119-ba-pbi-biometric-auth.md --framework rice
+/team-prioritize team-artifacts/pbis/260119-ba-pbi-biometric-auth.md --framework rice
 
 # WSJF for SAFe teams
-/prioritize team-artifacts/pbis/*.md --framework wsjf
+/team-prioritize team-artifacts/pbis/*.md --framework wsjf
 
 # MoSCoW for release planning
-/prioritize --framework moscow --release "v2.1"
+/team-prioritize --framework moscow --release "v2.1"
 
 # Batch prioritization
-/prioritize team-artifacts/pbis/*.md --framework rice --output backlog-priority.md
+/team-prioritize team-artifacts/pbis/*.md --framework rice --output backlog-priority.md
 ```
 
 #### RICE Scoring Example
@@ -206,39 +206,39 @@ Sprint: Include in next sprint
 
 ```bash
 # 1. Check new ideas needing review
-ls team-artifacts/ideas/ | grep "needs-refinement"
+ls team-artifacts/team-ideas/ | grep "needs-refinement"
 
 # 2. Review overnight submissions
-cat team-artifacts/ideas/260119-po-idea-*.md
+cat team-artifacts/team-ideas/260119-po-idea-*.md
 
 # 3. Prioritize ready PBIs
-/prioritize team-artifacts/pbis/*.md --status ready --framework rice
+/team-prioritize team-artifacts/pbis/*.md --status ready --framework rice
 ```
 
 ### Stakeholder Meeting Prep
 
 ```bash
 # Generate status for stakeholder update
-/status project
+/team-status project
 
 # Review feature progress
-/status feature-authentication
+/team-status feature-authentication
 
 # Check dependencies
-/dependency --scope active
+/team-dependency --scope active
 ```
 
 ### Sprint Planning Prep
 
 ```bash
 # Prioritize backlog for sprint
-/prioritize team-artifacts/pbis/*.md --framework rice --sprint-ready
+/team-prioritize team-artifacts/pbis/*.md --framework rice --sprint-ready
 
 # Review capacity vs prioritized items
-/team-sync sprint-planning
+/team-team-sync sprint-planning
 
 # Check blocked items
-/dependency --blocked
+/team-dependency --blocked
 ```
 
 ---
@@ -310,7 +310,7 @@ Is there a current workaround? What is it?
 
 1. **Create idea** with complete problem statement
 2. **Tag for refinement** → `status: needs-refinement`
-3. **Notify BA** → BA picks up via `/refine`
+3. **Notify BA** → BA picks up via `/team-refine`
 4. **Review PBI** → Validate acceptance criteria
 5. **Approve** → Update PBI status to "approved"
 
@@ -379,13 +379,13 @@ Is there a current workaround? What is it?
 
 ```bash
 # Weekly backlog health
-/status project --metrics backlog
+/team-status project --metrics backlog
 
 # Feature completion tracking
-/status feature-{name}
+/team-status feature-{name}
 
 # Sprint velocity
-/status sprint --metrics velocity
+/team-status sprint --metrics velocity
 ```
 
 ---
@@ -399,17 +399,17 @@ Is there a current workaround? What is it?
 # In idea file, set: status: needs-refinement
 
 # BA picks up with
-/refine team-artifacts/ideas/260119-po-idea-biometric-auth.md
+/team-refine team-artifacts/team-ideas/260119-po-idea-biometric-auth.md
 ```
 
 ### → Project Manager
 
 ```bash
 # PM can pull status
-/status sprint
+/team-status sprint
 
 # You can request dependency check
-/dependency team-artifacts/pbis/260119-ba-pbi-auth.md
+/team-dependency team-artifacts/pbis/260119-ba-pbi-auth.md
 ```
 
 ### → Development Team
@@ -419,7 +419,7 @@ Is there a current workaround? What is it?
 # Dev team comments on PBI
 
 # Check implementation status
-/status feature-biometric-auth
+/team-status feature-biometric-auth
 ```
 
 ---
@@ -428,10 +428,10 @@ Is there a current workaround? What is it?
 
 ### Idea Not Saving
 
-**Problem:** `/idea` command doesn't create file.
+**Problem:** `/team-idea` command doesn't create file.
 
 **Solution:**
-1. Check `team-artifacts/ideas/` directory exists
+1. Check `team-artifacts/team-ideas/` directory exists
 2. Verify write permissions
 3. Check for special characters in title
 
@@ -451,7 +451,7 @@ Is there a current workaround? What is it?
 **Solution:**
 1. Check BA workload with PM
 2. Add urgency notes to idea
-3. Escalate via `/team-sync daily`
+3. Escalate via `/team-team-sync daily`
 
 ---
 
@@ -463,21 +463,21 @@ Is there a current workaround? What is it?
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  CAPTURE IDEAS                                               │
-│  /idea "description"                                         │
-│  /idea "desc" --context "background"                         │
+│  /team-idea "description"                                         │
+│  /team-idea "desc" --context "background"                         │
 │                                                              │
 │  PRIORITIZE                                                  │
-│  /prioritize PBI --framework rice                            │
-│  /prioritize *.md --framework wsjf                           │
-│  /prioritize --framework moscow --release v2.1               │
+│  /team-prioritize PBI --framework rice                            │
+│  /team-prioritize *.md --framework wsjf                           │
+│  /team-prioritize --framework moscow --release v2.1               │
 │                                                              │
 │  CHECK STATUS                                                │
-│  /status sprint                                              │
-│  /status feature-{name}                                      │
-│  /dependency PBI-XXX                                         │
+│  /team-status sprint                                              │
+│  /team-status feature-{name}                                      │
+│  /team-dependency PBI-XXX                                         │
 │                                                              │
 │  OUTPUT LOCATIONS                                            │
-│  Ideas: team-artifacts/ideas/                                │
+│  Ideas: team-artifacts/team-ideas/                                │
 │  PBIs:  team-artifacts/pbis/                                 │
 │                                                              │
 │  NAMING: {YYMMDD}-po-idea-{slug}.md                          │

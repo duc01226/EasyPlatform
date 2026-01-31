@@ -4,7 +4,7 @@ argument-hint: [prompt-or-llms-or-github-url]
 ---
 
 Ultrathink.
-Use `skill-creator` and `claude-code` skills.
+Use `skill-plan` and `claude-code` skills.
 Use `docs-seeker` skills to search for documentation if needed.
 
 ## Your mission

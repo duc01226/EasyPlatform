@@ -1,14 +1,31 @@
 ---
 name: tasks-feature-implementation
 version: 1.0.1
-description: Autonomous subagent variant of feature-implementation. Use when implementing new features or enhancements requiring multi-layer changes (Domain, Application, Persistence, API, Frontend).
+description: "[Implementation] Autonomous subagent variant of feature-implementation. Use when implementing new features or enhancements requiring multi-layer changes (Domain, Application, Persistence, API, Frontend)."
 infer: false
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TodoWrite
 ---
 
-> **Skill Variant:** Use this skill for **autonomous feature implementation** with structured workflows. For interactive feature development with user feedback, use `feature-implementation` instead. For investigating existing features (READ-ONLY), use `feature-investigation`.
+> **Skill Variant:** Use this skill for **autonomous feature implementation** with structured workflows. For interactive feature development with user feedback, use `feature` instead. For investigating existing features (READ-ONLY), use `investigate`.
 
 # Feature Implementation Workflow
+
+## Summary
+
+**Goal:** Autonomously implement new features across all layers (Domain, Application, Persistence, API, Frontend) with investigation-first approach.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Discovery & analysis | Decompose requirements, investigate codebase, find similar patterns |
+| 2 | Impact analysis | Map changes per layer: Domain, Application, Persistence, API, Frontend |
+| 3 | Approval gate | Present plan to user before any implementation |
+| 4 | Implementation | Backend: Domain first, then Persistence, Application, API. Frontend: Service, Store, Components |
+| 5 | Verification | Compile, test endpoints, check authorization, error handling |
+
+**Key Principles:**
+- INVESTIGATE before implementing -- never assume, verify with code evidence
+- Implement layers in order: Domain -> Persistence -> Application -> API -> Frontend
+- Always request user approval at checkpoint gates before coding
 
 **IMPORTANT**: Always think hard, plan step by step to-do list first before execute. Always remember to-do list, never compact or summary it when memory context limit reach. Always preserve and carry your to-do list through every operation.
 
@@ -131,7 +148,7 @@ grep -r "namespace.*{ServiceName}\.Domain" --include="*.cs"
 
 ## Related
 
-- `feature-implementation`
+- `feature`
 - `tasks-code-review`
 - `tasks-test-generation`
 

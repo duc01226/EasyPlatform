@@ -1,11 +1,26 @@
 ---
 name: docs-seeker
-description: "Search technical documentation using executable scripts to detect query type, fetch from llms.txt sources (context7.com), and analyze results. Use when user needs: (1) Topic-specific documentation (features/components/concepts), (2) Library/framework documentation, (3) GitHub repository analysis, (4) Documentation discovery with automated agent distribution strategy"
+description: "[Docs] Search technical documentation using executable scripts to detect query type, fetch from llms.txt sources (context7.com), and analyze results. Use when user needs: (1) Topic-specific documentation (features/components/concepts), (2) Library/framework documentation, (3) GitHub repository analysis, (4) Documentation discovery with automated agent distribution strategy"
 version: 3.1.0
 allowed-tools: Bash, WebFetch, WebSearch
 ---
 
 # Documentation Discovery via Scripts
+
+## Summary
+
+**Goal:** Search and retrieve technical documentation using executable scripts with llms.txt standard and context7.com sources.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Detect query type | `node scripts/detect-topic.js "<query>"` -- topic-specific vs general |
+| 2 | Fetch documentation | `node scripts/fetch-docs.js "<query>"` -- auto URL construction + fallback |
+| 3 | Analyze results | `node scripts/analyze-llms-txt.js` -- categorize URLs, recommend agent distribution |
+
+**Key Principles:**
+- Scripts first -- never manually construct URLs; scripts handle fallback chains automatically
+- Zero-token overhead -- scripts run without context loading
+- Progressive disclosure -- load workflow/reference docs only when needed
 
 ## Overview
 

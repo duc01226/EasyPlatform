@@ -22,7 +22,7 @@ quick: add a button
 | **[Quick Reference](quick-reference.md)** | One-page cheat sheet | `docs/quick-reference.md` |
 | [Hooks System](hooks/README.md) | 27 hooks, event lifecycle, registration | `docs/hooks/` |
 | [Skills Reference](skills.md) | 84+ skills organized by category | `docs/skills.md` |
-| [Commands Reference](commands.md) | 49+ slash commands with usage | `docs/commands.md` |
+| [Skills Reference (Commands)](commands.md) | 150+ slash commands via skills | `docs/commands.md` |
 | [Agents Reference](agents.md) | 22+ specialized agent types | `docs/agents.md` |
 | [Configuration](configuration.md) | All config files and schemas | `docs/configuration.md` |
 | [Figma Setup](figma-setup.md) | Figma integration for design extraction | `docs/figma-setup.md` |

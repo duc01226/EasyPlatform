@@ -22,7 +22,7 @@ Check the `## Plan Context` section in the injected context:
 - Analyze the given task and use `AskUserQuestion` tool to ask for more details if needed.
 - Decide to use `/plan__fast` or `/plan__hard` SlashCommands based on the complexity.
 - Execute SlashCommand: `/plan__fast <detailed-instructions-prompt>` or `/plan__hard <detailed-instructions-prompt>`
-- Activate `planning` skill.
+- Activate `plan` skill.
 - Note: `detailed-instructions-prompt` is **an enhanced prompt** that describes the task in detail based on the provided task description.
 
 ## Important Notes

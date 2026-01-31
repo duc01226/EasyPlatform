@@ -1,6 +1,6 @@
 ---
 name: payment-integration
-description: Implement payment integrations with SePay (Vietnamese payment gateway with VietQR, bank transfers, cards) and Polar (global SaaS monetization platform with subscriptions, usage-based billing, automated benefits). Use when integrating payment processing, implementing checkout flows, managing subscriptions, handling webhooks, processing bank transfers, generating QR codes, automating benefit delivery, or building billing systems. Supports authentication (API keys, OAuth2), product management, customer portals, tax compliance (Polar as MoR), and comprehensive SDK integrations (Node.js, PHP, Python, Go, Laravel, Next.js).
+description: "[Utilities] Implement payment integrations with SePay (Vietnamese payment gateway with VietQR, bank transfers, cards) and Polar (global SaaS monetization platform with subscriptions, usage-based billing, automated benefits). Use when integrating payment processing, implementing checkout flows, managing subscriptions, handling webhooks, processing bank transfers, generating QR codes, automating benefit delivery, or building billing systems. Supports authentication (API keys, OAuth2), product management, customer portals, tax compliance (Polar as MoR), and comprehensive SDK integrations (Node.js, PHP, Python, Go, Laravel, Next.js)."
 version: 1.0.0
 license: MIT
 ---
@@ -8,6 +8,25 @@ license: MIT
 # Payment Integration
 
 Implement payment processing with SePay (Vietnamese payments) and Polar (global SaaS monetization).
+
+## Summary
+
+**Goal:** Integrate payment processing using SePay (Vietnamese market) or Polar (global SaaS) with proper webhook handling and security.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Identify platform | SePay for VND/Vietnamese banks, Polar for global SaaS/subscriptions |
+| 2 | Load references | Progressive loading -- only what's needed per step |
+| 3 | Implement auth | API keys (SePay) or OAuth2 (Polar) |
+| 4 | Set up products/pricing | Business model-specific configuration |
+| 5 | Implement checkout | Hosted, embedded, or API-driven flow |
+| 6 | Configure webhooks | With proper signature verification |
+| 7 | Test in sandbox | Thoroughly before production |
+
+**Key Principles:**
+- Load reference docs progressively to maintain context efficiency
+- Always verify webhook signatures (scripts provided for both platforms)
+- SePay rate limit: 2 calls/sec; Polar rate limit: 300 req/min
 
 ## When to Use
 

@@ -4,6 +4,27 @@
 
 ---
 
+## Quick Summary (Read This First)
+
+**What this is:** .NET 9 + Angular 19 monorepo on Easy.Platform framework. Clean Architecture backend (CQRS), Nx workspace frontend with platform base classes.
+
+**Golden rules (violations = bugs):**
+
+1. **Logic goes in the LOWEST layer:** Entity/Model > Service > Component/Handler
+2. **Backend:** Platform repos only, `PlatformValidationResult` (never throw), side effects in Event Handlers only, DTOs own mapping, Command+Result+Handler in ONE file, cross-service via RabbitMQ only
+3. **Frontend:** Extend `AppBase*Component` (never raw Component), `PlatformVmStore` for state, extend `PlatformApiService` (never HttpClient), always `untilDestroyed()`, all elements need BEM classes
+4. **Always search existing code** before creating new — reuse over reinvent
+5. **Always detect workflow** from user prompt before any tool call
+6. **Always plan** before implementing non-trivial tasks (`/plan` commands)
+7. **Always use todos** to track tasks — mark complete immediately after each step
+8. **Evidence-based only** — verify with tools, never fabricate or assume
+
+**Anti-patterns (never do):** Cross-service DB access, side effects in handlers, mapping in handlers, direct HttpClient, manual signals, missing `untilDestroyed()`, missing BEM classes
+
+**Key references:** `CLAUDE.md` for full patterns, `docs/claude/` for deep dives, `.ai/docs/` for code pattern templates
+
+---
+
 ## FIRST ACTION DECISION (Before ANY tool call)
 
 **⛔ STOP — DO NOT CALL ANY TOOL YET ⛔**
@@ -468,7 +489,7 @@ When resuming after context reset:
 
 ### Related Files
 
-- `.claude/commands/checkpoint.md` - Manual checkpoint command
+- `.claude/skills/checkpoint.md` - Manual checkpoint command
 - `.claude/skills/memory-management/SKILL.md` - Full memory management skill
 
 ---
@@ -644,96 +665,118 @@ Each file contains critical rules inline + references to full pattern files in `
 #### Implementation Workflows
 
 **`feature`** — Feature Implementation (Confirm: Yes)
+
 - **Triggers:** implement, add, create, build, develop, new feature, functionality, module, component
 - **NOT for:** Bug fixes, documentation-only, test-only, migration, refactoring, investigation
 
 **`bugfix`** — Bug Fix (Confirm: No)
+
 - **Triggers:** bug, error, crash, broken, not working, fix, debug, troubleshoot, exception trace, regression
 - **NOT for:** New features, refactoring, documentation, investigation without fixing
 
 **`refactor`** — Code Refactoring (Confirm: Yes)
+
 - **Triggers:** refactor, restructure, reorganize, clean up, extract methods, rename, split/merge, technical debt
 - **NOT for:** Bug fixes, new features, quality audits
 
 **`migration`** — Database Migration (Confirm: Yes)
+
 - **Triggers:** database migration, schema change, EF migration, add/remove/alter column, data migration
 - **NOT for:** Explaining migration concepts, checking migration history/status
 
 **`batch-operation`** — Batch Operation (Confirm: Yes)
+
 - **Triggers:** all files, batch, bulk, find-replace across, every instance, multiple files/components
 - **NOT for:** Single-file changes, test file creation, documentation updates
 
 **`deployment`** — Deployment & Infrastructure (Confirm: Yes)
+
 - **Triggers:** deploy, CI/CD, infrastructure, Docker, pipeline, environment setup
 - **NOT for:** Explaining deployment concepts, checking deployment status/history
 
 **`performance`** — Performance Optimization (Confirm: Yes)
+
 - **Triggers:** performance, slow, optimize, N+1, latency, bottleneck, throughput
 - **NOT for:** Explaining performance concepts, checking performance reports/history
 
 #### Review & Audit Workflows
 
 **`review`** — Code Review (Confirm: No)
+
 - **Triggers:** code review, PR review, code quality check, audit specific code
 - **NOT for:** Reviewing uncommitted/staged changes, reviewing plans/designs/docs, quality audits with fixes
 
 **`review-changes`** — Review Current Changes (Confirm: No)
+
 - **Triggers:** review changes, pre-commit, staged changes, uncommitted, before commit
 - **NOT for:** PR reviews, release prep, quality audits, investigating how code works
 
 **`quality-audit`** — Quality Audit (Confirm: Yes)
+
 - **Triggers:** quality audit, best practices, ensure no flaws, verify quality standards, audit-and-fix
 - **NOT for:** Reviewing uncommitted changes (use review-changes), PR review, bug fixes
 
 **`security-audit`** — Security Audit (Confirm: No)
+
 - **Triggers:** security audit, vulnerability, OWASP, security review, penetration test
 - **NOT for:** Implementing new security features, fixing known security bugs
 
 **`verification`** — Verification & Validation (Confirm: Yes)
+
 - **Triggers:** verify, validate, confirm, check works, ensure, make sure
 - **NOT for:** New feature implementation, code review, documentation, investigation-only
 
 #### Investigation & Documentation Workflows
 
 **`investigation`** — Code Investigation (Confirm: No)
+
 - **Triggers:** how does, where is, explain, understand, explore, trace code paths
 - **NOT for:** Any task requiring code changes (implementing, fixing, refactoring, creating, updating)
 
 **`documentation`** — Documentation Update (Confirm: No)
+
 - **Triggers:** write docs, update documentation, improve README, code comments
 - **NOT for:** Business feature docs (use business-feature-docs), code implementation
 
 **`business-feature-docs`** — Business Feature Documentation (Confirm: No)
+
 - **Triggers:** business feature docs, 26-section template, module docs, docs/business-features/
 - **NOT for:** General documentation updates, code comments, README changes
 
 #### Product & Planning Workflows
 
 **`idea-to-pbi`** — Idea to PBI (Confirm: Yes)
+
 - **Triggers:** new idea, product request, feature request, add to backlog, refine into PBI
 - **NOT for:** Bug fixes, code implementation, investigation
 
 **`pbi-to-tests`** — PBI to Tests (Confirm: No)
+
 - **Triggers:** test spec, test cases, QA, generate tests from PBI/feature/story
 - **NOT for:** Running existing tests, executing test suites
 
 **`sprint-planning`** — Sprint Planning Session (Confirm: Yes)
+
 - **Triggers:** plan sprint, prioritize backlog, analyze dependencies, iteration planning, sprint kickoff
 - **NOT for:** Sprint review, retrospective, sprint status report, end-of-sprint activities
 
 **`pm-reporting`** — PM Reporting (Confirm: No)
+
 - **Triggers:** status report, sprint update, project progress, blocker analysis
 - **NOT for:** Git status, commit status, PR status, build status, quick one-line checks
 
 **`release-prep`** — Release Preparation (Confirm: Yes)
+
 - **Triggers:** release prep, pre-release checks, release readiness, deployment checklist, go-live
 - **NOT for:** Git release commands, npm publish, release notes generation
 
 **`design-workflow`** — Design Workflow (Confirm: No)
+
 - **Triggers:** design spec, wireframe, mockup, UI/UX spec, component spec from requirements
 - **NOT for:** Implementing an existing design in code, coding from a spec
 
 **`pre-development`** — Pre-Development Setup (Confirm: No)
+
 - **Triggers:** prepare before development, quality gate checks, kick off new feature, pre-coding
 - **NOT for:** Already in development, just explaining pre-development concept
 

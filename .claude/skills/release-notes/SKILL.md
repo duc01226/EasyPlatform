@@ -1,12 +1,27 @@
 ---
 name: release-notes
-description: Generate professional release notes from git commits between two refs with automated categorization. Use when creating release notes from git history.
+description: "[Git & Release] Generate professional release notes from git commits between two refs with automated categorization. Use when creating release notes from git history."
 allowed-tools: Bash, Read, Write, Glob, Grep
 ---
 
 # Release Notes Generation
 
 Generate professional release notes from git commits with automated categorization.
+
+## Summary
+
+**Goal:** Generate professional release notes from git commits between two refs with automated categorization and markdown output.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Parse commits | `parse-commits.cjs <base> <head>` -- outputs JSON with type, scope, breaking |
+| 2 | Categorize | `categorize-commits.cjs` -- feat/fix/perf/docs = user-facing; test/ci/chore = internal |
+| 3 | Render markdown | `render-template.cjs --version vX.Y.Z --output path` |
+
+**Key Principles:**
+- Generated notes are **Draft** status -- require human review before publishing
+- Excludes `chore(deps):`, `chore(config):`, `[skip changelog]`, `[ci skip]`
+- Complete pipeline is three piped scripts; see references for advanced features
 
 ## Invocation
 

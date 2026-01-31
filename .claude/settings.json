@@ -112,6 +112,15 @@
                     }
                 ],
                 "matcher": "Bash|Read|Grep|Glob|Skill|Edit|Write|MultiEdit|WebFetch|WebSearch"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "AskUserQuestion"
             }
         ],
         "PreCompact": [

@@ -48,7 +48,7 @@ The Markdown body has no restrictions on it.
 
 # Additional Information
 
-For a minimal example, see the `template-skill` example.
+For creating new skills, use the `skill-plan` skill or start with a folder containing a `SKILL.md` file.
 
 # Version History
 

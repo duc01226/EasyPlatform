@@ -1,6 +1,6 @@
 ---
 name: frontend-angular-component
-description: Use when creating or modifying Angular components in Frontend (Angular 19) with proper base class inheritance, state management, and platform patterns.
+description: "[Frontend] Use when creating or modifying Angular components in Frontend (Angular 19) with proper base class inheritance, state management, and platform patterns."
 infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---

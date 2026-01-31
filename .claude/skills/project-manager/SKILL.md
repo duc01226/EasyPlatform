@@ -1,6 +1,6 @@
 ---
 name: project-manager
-description: Assist Project Managers with status reports, dependency tracking, risk management, and team sync facilitation. Provides templates for sprint status, risk registers, dependency matrices, and meeting agendas. Triggers on keywords like "status report", "sprint status", "dependency", "risk", "team sync", "meeting agenda", "blockers", "project status", "sprint progress".
+description: "[Team Roles] Assist Project Managers with status reports, dependency tracking, risk management, and team sync facilitation. Provides templates for sprint status, risk registers, dependency matrices, and meeting agendas. Triggers on keywords like "status report", "sprint status", "dependency", "risk", "team sync", "meeting agenda", "blockers", "project status", "sprint progress"."
 infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite, WebSearch
 ---
@@ -26,11 +26,11 @@ Role: project coordination, progress tracking, dependency management, risk asses
 
 | Task               | Skill        | Command         |
 | ------------------ | ------------ | --------------- |
-| Status report      | status       | `/status`       |
-| Track dependencies | dependency   | `/dependency`   |
-| Team sync agenda   | team-sync    | `/team-sync`    |
-| Prioritize backlog | prioritize   | `/prioritize`   |
-| Quality gate check | quality-gate | `/quality-gate` |
+| Status report      | team-status       | `/team-status`       |
+| Track dependencies | team-dependency   | `/team-dependency`   |
+| Team sync agenda   | team-team-sync    | `/team-team-sync`    |
+| Prioritize backlog | team-prioritize   | `/team-prioritize`   |
+| Quality gate check | team-quality-gate | `/team-quality-gate` |
 
 ## ⚠️ MUST READ Frameworks Reference
 

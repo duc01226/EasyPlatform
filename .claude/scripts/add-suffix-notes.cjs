@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
- * Add suffix notes to skills and commands
- * Usage: node add-suffix-notes.cjs [--dry-run] [--type=skills|commands|all]
+ * Add suffix notes to skills
+ * Usage: node add-suffix-notes.cjs [--dry-run]
  *
  * Appends "Task Planning Notes" section to markdown files in:
- * - .claude/commands/ (all .md files)
  * - .claude/skills/ (SKILL.md files only)
+ * Note: Commands were merged into skills (2026-01-31)
  */
 
 const fs = require('fs');
@@ -102,28 +102,6 @@ function main() {
     console.log('');
 
     const stats = { updated: 0, skipped: 0, failed: 0 };
-
-    // Process commands
-    if (type === 'all' || type === 'commands') {
-        const commandsDir = path.join(ROOT, '.claude/commands');
-        const commandFiles = findFiles(commandsDir, '*.md');
-        console.log(`\n📁 Processing ${commandFiles.length} command files...`);
-
-        for (const file of commandFiles) {
-            try {
-                const result = processFile(file, dryRun);
-                const statusKey = result.status === 'would-update' ? 'updated' : result.status;
-                stats[statusKey]++;
-
-                const rel = path.relative(ROOT, file);
-                const icon = result.status === 'skipped' ? '⏭️' : result.status === 'updated' ? '✅' : '🔍';
-                console.log(`  ${icon} ${result.status}: ${rel}`);
-            } catch (err) {
-                stats.failed++;
-                console.error(`  ❌ FAILED: ${file} - ${err.message}`);
-            }
-        }
-    }
 
     // Process skills
     if (type === 'all' || type === 'skills') {

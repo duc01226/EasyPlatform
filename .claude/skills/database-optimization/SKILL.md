@@ -1,6 +1,6 @@
 ---
 name: database-optimization
-description: Use when optimizing database queries, indexes, N+1 problems, slow queries, or analyzing query performance. Triggers on keywords like "slow query", "N+1", "index", "query optimization", "database performance", "eager loading".
+description: "[DevOps & Infra] Use when optimizing database queries, indexes, N+1 problems, slow queries, or analyzing query performance. Triggers on keywords like "slow query", "N+1", "index", "query optimization", "database performance", "eager loading"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 infer: true
 ---
@@ -8,6 +8,21 @@ infer: true
 # Database Optimization
 
 Expert database performance agent for EasyPlatform. Optimizes queries, indexes, and data access patterns for MongoDB, SQL Server, and PostgreSQL.
+
+## Summary
+
+**Goal:** Optimize database queries, indexes, and data access patterns for MongoDB, SQL Server, and PostgreSQL in EasyPlatform.
+
+- **N+1 queries** — Use eager loading (`loadRelatedEntities`) or batch load with `GetByIdsAsync`
+- **Select projections** — Fetch only needed columns, not entire entities
+- **Parallel queries** — Run independent queries with `Util.ParallelAsync()` instead of sequential awaits
+- **Indexing** — Add indexes for frequently filtered/sorted columns; use compound indexes for multi-field queries
+- **Pagination** — Always use `PlatformCqrsPagedQuery` for list endpoints
+
+**Key Principles:**
+- Profile before optimizing — identify actual bottlenecks with evidence
+- Use platform repository patterns (expressions, projections) over raw queries
+- Batch related entity loads to eliminate N+1; never query inside loops
 
 ## Common Performance Issues
 

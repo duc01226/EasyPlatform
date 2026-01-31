@@ -4,10 +4,10 @@ argument-hint: [skill-name] [prompt]
 ---
 
 Think harder.
-First: Activate `skill-creator` and `claude-code` skills.
+First: Activate `skill-plan` and `claude-code` skills.
 Use `docs-seeker` skills to search for documentation if needed.
 Employ `sequential-thinking` or `problem-solving` skills for complex problem-solving that requires structured analysis
-Finally, when creating a plan, activate `planning` skill.
+Finally, when creating a plan, activate `plan` skill.
 
 ## Arguments
 

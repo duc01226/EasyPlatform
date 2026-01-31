@@ -1,6 +1,6 @@
 ---
 name: documentation
-description: Use when the user asks to enhance documentation, add code comments, create API docs, improve README files, or document code. Triggers on keywords like "document", "documentation", "API docs", "comments", "JSDoc", "XML comments", "README", "getting started", "setup instructions".
+description: "[Docs] Use when the user asks to enhance documentation, add code comments, create API docs, improve README files, or document code. Triggers on keywords like "document", "documentation", "API docs", "comments", "JSDoc", "XML comments", "README", "getting started", "setup instructions"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
 

@@ -1,10 +1,10 @@
 ---
-applyTo: "**/*.cs,**/*.ts"
+applyTo: '**/*.cs,**/*.ts'
 ---
 
 # Bug Investigation Protocol
 
-> Auto-loads when editing code files. See `.github/AI-DEBUGGING-PROTOCOL.md` for full protocol.
+> Auto-loads when editing code files. See `.ai/docs/AI-DEBUGGING-PROTOCOL.md` for full protocol.
 
 ## Investigation Workflow
 
@@ -33,6 +33,7 @@ applyTo: "**/*.cs,**/*.ts"
 ### Confidence Declaration
 
 Before making changes, declare confidence:
+
 - **< 90% confidence** → Ask user, gather more evidence
 - **≥ 90% confidence** → Proceed with fix
 
@@ -53,34 +54,36 @@ When investigating, search with multiple patterns:
 
 ### Backend
 
-| Symptom | Common Cause | Check |
-|---------|-------------|-------|
-| Stale data after update | Missing `checkDiff: true` on `UpdateAsync` | Repository call parameters |
-| Event not firing | Missing Event Handler registration | `UseCaseEvents/` folder |
-| Cross-service data missing | Message bus consumer not waiting | `TryWaitUntilAsync` usage |
-| Out-of-order processing | Missing `LastMessageSyncDate` check | Consumer idempotency |
-| N+1 queries | Await inside loop | Use `GetByIdsAsync` batch |
-| Validation bypassed | Logic in handler, not entity | Move to `Entity.Validate()` |
+| Symptom                    | Common Cause                               | Check                       |
+| -------------------------- | ------------------------------------------ | --------------------------- |
+| Stale data after update    | Missing `checkDiff: true` on `UpdateAsync` | Repository call parameters  |
+| Event not firing           | Missing Event Handler registration         | `UseCaseEvents/` folder     |
+| Cross-service data missing | Message bus consumer not waiting           | `TryWaitUntilAsync` usage   |
+| Out-of-order processing    | Missing `LastMessageSyncDate` check        | Consumer idempotency        |
+| N+1 queries                | Await inside loop                          | Use `GetByIdsAsync` batch   |
+| Validation bypassed        | Logic in handler, not entity               | Move to `Entity.Validate()` |
 
 ### Frontend
 
-| Symptom | Common Cause | Check |
-|---------|-------------|-------|
-| Memory leak | Missing `untilDestroyed()` | Subscription cleanup |
-| Stale UI | Manual signals instead of store | Use `PlatformVmStore` |
-| Form not validating | Missing validators in config | `initialFormConfig` setup |
-| Component not updating | Missing `@Watch` decorator | Replace `ngOnChanges` |
-| API errors silent | Missing `observerLoadingErrorState` | Add error state tracking |
+| Symptom                | Common Cause                        | Check                     |
+| ---------------------- | ----------------------------------- | ------------------------- |
+| Memory leak            | Missing `untilDestroyed()`          | Subscription cleanup      |
+| Stale UI               | Manual signals instead of store     | Use `PlatformVmStore`     |
+| Form not validating    | Missing validators in config        | `initialFormConfig` setup |
+| Component not updating | Missing `@Watch` decorator          | Replace `ngOnChanges`     |
+| API errors silent      | Missing `observerLoadingErrorState` | Add error state tracking  |
 
 ## Tracing Data Flow
 
 ### Backend Flow
+
 ```
 Controller → Command → Handler → ValidateRequestAsync → HandleAsync
     → Repository → Entity Events → Message Bus
 ```
 
 ### Frontend Flow
+
 ```
 Component → Store.effect → ApiService → Backend API
     → tapResponse → updateState → Signal/Observable → Template

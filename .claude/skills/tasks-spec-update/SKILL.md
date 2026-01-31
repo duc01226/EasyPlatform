@@ -1,12 +1,28 @@
 ---
 name: tasks-spec-update
 version: 1.0.0
-description: Use when updating specifications, comparing branches, or ensuring documentation reflects current implementation.
+description: "[Testing] Use when updating specifications, comparing branches, or ensuring documentation reflects current implementation."
 infer: false
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
 # Specification Update Workflow
+
+## Summary
+
+**Goal:** Sync specification documents with current implementation by discovering changes, analyzing gaps, and updating specs.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Change discovery | Git diff between branches or pattern-based file search |
+| 2 | Gap analysis | Create comparison table: Specified vs Implemented vs Gap |
+| 3 | Specification update | Update entity props, commands, validation, side effects, API endpoints |
+| 4 | Verification | Cross-reference all commands/queries in code vs specs |
+
+**Key Principles:**
+- Always cross-reference specs with actual code (grep both `.md` and `.cs` files)
+- Document both new implementations missing from specs and spec items not yet implemented
+- Update version numbers and change logs after spec updates
 
 ## When to Use This Skill
 

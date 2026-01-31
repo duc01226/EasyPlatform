@@ -53,7 +53,7 @@ Copy `.claude/.env.example` to `.claude/.env` and fill in:
 
 **What to commit:**
 - `.claude/settings.json`
-- `.claude/commands/`
+- `.claude/skills/`
 - `.claude/skills/`
 - `.claude/hooks.json`
 - `.claude/mcp.json` (without secrets)
@@ -238,7 +238,7 @@ claude analytics cost --group-by project
 Create consistent slash commands:
 
 ```markdown
-# .claude/commands/test.md
+# .claude/skills/test.md
 Run test suite with coverage report.
 
 Options:
@@ -402,7 +402,7 @@ claude /test
 claude "review authentication implementation"
 
 # 6. Commit
-claude /git:cm
+claude /commit
 ```
 
 ### Bug Fixing
@@ -412,13 +412,13 @@ claude /git:cm
 claude /debug "login button not working"
 
 # 2. Fix
-claude /fix:fast "fix login button issue"
+claude /fix-fast "fix login button issue"
 
 # 3. Test
 claude /test
 
 # 4. Commit
-claude /git:cm
+claude /commit
 ```
 
 ### Code Review

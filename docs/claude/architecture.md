@@ -28,7 +28,7 @@ This is a **template project** with one example service. Use TextSnippet as a re
 README.md                           # Complete platform overview & quick start
 ../architecture-overview.md         # System architecture & diagrams
 CLEAN-CODE-RULES.md                 # Coding standards & anti-patterns
-.github/AI-DEBUGGING-PROTOCOL.md    # MANDATORY debugging protocol for AI agents
+.ai/docs/AI-DEBUGGING-PROTOCOL.md    # MANDATORY debugging protocol for AI agents
 .ai/docs/prompt-context.md                # Comprehensive development patterns
 ```
 
@@ -137,10 +137,10 @@ dotnet test [Project].csproj                    # Run unit tests
 
 **CRITICAL:** Before implementing ANY non-trivial task (bug fixes, new features, refactoring, analysis with changes), you MUST:
 
-1. **Plan First** - Use `/plan` commands (`/plan`, `/plan:fast`, `/plan:hard`, `/plan:parallel`) to create implementation plans
+1. **Plan First** - Use `/plan` commands (`/plan`, `/plan-fast`, `/plan-hard`, `/plan-hard --parallel`) to create implementation plans
 2. **Investigate & Analyze** - Explore codebase, understand context, identify affected areas
 3. **Create Implementation Plan** - Write detailed plan with specific files, changes, and approach
-4. **Validate Plan** - Execute `/plan:validate` or `/plan:review` to check plan quality
+4. **Validate Plan** - Execute `/plan-validate` or `/plan-review` to check plan quality
 5. **Get User Approval** - Present plan and wait for user confirmation before any code changes
 6. **Only Then Implement** - Execute the approved plan
 

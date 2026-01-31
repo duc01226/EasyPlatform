@@ -34,18 +34,18 @@ function getStepDescription(step) {
     scout: 'Explore codebase',
     investigate: 'Deep dive analysis',
     changelog: 'Update changelog',
-    'design-spec': 'Create design specification',
-    idea: 'Capture product idea',
-    refine: 'Refine into product backlog item',
-    story: 'Break into user stories',
-    prioritize: 'Prioritize backlog items',
-    'test-spec': 'Generate test specification',
-    'test-cases': 'Create detailed test cases',
-    'quality-gate': 'Run quality gate checks',
-    status: 'Generate status report',
-    dependency: 'Analyze dependencies',
+    'team-design-spec': 'Create design specification',
+    'team-idea': 'Capture product idea',
+    'team-refine': 'Refine into product backlog item',
+    'team-story': 'Break into user stories',
+    'team-prioritize': 'Prioritize backlog items',
+    'team-test-spec': 'Generate test specification',
+    'team-test-cases': 'Create detailed test cases',
+    'team-quality-gate': 'Run quality gate checks',
+    'team-status': 'Generate status report',
+    'team-dependency': 'Analyze dependencies',
     'review-changes': 'Review uncommitted changes',
-    'team-sync': 'Prepare team sync agenda'
+    'team-team-sync': 'Prepare team sync agenda'
   };
   return descriptions[step] || `Execute ${step}`;
 }

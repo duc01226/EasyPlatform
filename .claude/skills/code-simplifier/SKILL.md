@@ -1,6 +1,6 @@
 ---
 name: code-simplifier
-description: Simplifies and refines code for clarity, consistency, and maintainability while preserving all functionality. Focuses on recently modified code unless instructed otherwise.
+description: "[Review & Quality] Simplifies and refines code for clarity, consistency, and maintainability while preserving all functionality. Focuses on recently modified code unless instructed otherwise."
 allowed-tools: Read, Edit, Glob, Grep, Task
 infer: true
 ---
@@ -8,6 +8,22 @@ infer: true
 # Code Simplifier Skill
 
 Simplify and refine code for clarity, consistency, and maintainability.
+
+## Summary
+
+**Goal:** Analyze and simplify code by applying KISS, DRY, YAGNI principles while preserving all functionality.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Identify targets | Recent changes via `git diff` or specified files; skip generated/vendor |
+| 2 | Analyze complexity | Nesting >3, methods >20 lines, duplicated code, unclear naming |
+| 3 | Apply simplifications | One refactoring type at a time; follow platform patterns |
+| 4 | Verify | Run related tests, confirm no behavior changes |
+
+**Key Principles:**
+- Preserve ALL existing functionality -- simplify, never change behavior
+- Backend: extract static expressions, use fluent helpers (`.With()`, `.PipeIf()`)
+- Frontend: use `PlatformVmStore`, `untilDestroyed()`, BEM naming
 
 ## Usage
 

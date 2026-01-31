@@ -6,12 +6,12 @@
  * Enforces "strict: all non-research" policy.
  *
  * ALLOWED without todos (read-only research):
- *   - scout, scout:ext, investigate, research, explore
+ *   - scout, scout-ext, investigate, research, explore
  *   - watzup, context-compact, checkpoint, kanban
  *   - docs-seeker, git-diff, git-status, git-log, branch-comparison
  *
  * BLOCKED without todos (planning + implementation):
- *   - plan, plan:fast, plan:hard, plan:validate (planning workflows)
+ *   - plan, plan-fast, plan-hard, plan-validate (planning workflows)
  *   - cook, fix, code, feature, implement, refactor
  *   - code-review, test, tester, debug, build
  *   - commit, git-commit, git-manager, docs-update
@@ -30,7 +30,7 @@ const { getTodoState, recordBypass } = require('./lib/todo-state.cjs');
 // Skills ALLOWED without todos (read-only research & status only)
 const ALLOWED_SKILLS = new Set([
   // Research & Investigation (read-only)
-  'scout', 'scout:ext', 'scout-ext',
+  'scout', 'scout-ext',
   'investigate', 'investigation',
   'research', 'researcher',
   'explore', 'explorer',

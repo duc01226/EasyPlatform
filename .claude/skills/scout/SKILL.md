@@ -1,7 +1,7 @@
 ---
 name: scout
 version: 1.0.0
-description: Fast codebase file discovery for task-related files. Use when quickly locating relevant files across a large codebase, beginning work on features spanning multiple directories, or before making changes that might affect multiple parts. Triggers on "find files", "locate", "scout", "search codebase", "what files".
+description: "[Utilities] Fast codebase file discovery for task-related files. Use when quickly locating relevant files across a large codebase, beginning work on features spanning multiple directories, or before making changes that might affect multiple parts. Triggers on "find files", "locate", "scout", "search codebase", "what files"."
 infer: false
 allowed-tools: Glob, Grep, Read, Task, TodoWrite
 ---
@@ -11,6 +11,21 @@ allowed-tools: Glob, Grep, Read, Task, TodoWrite
 Fast codebase search to locate files needed for a task. Token-efficient, parallel execution.
 
 **KEY PRINCIPLE**: Speed over depth. Return file paths only - no content analysis.
+
+## Summary
+
+**Goal:** Quickly locate all files related to a task across the codebase using parallel search agents.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Analyze search request | Extract entity names, feature keywords, file types |
+| 2 | Execute parallel search | Spawn SCALE agents across Backend Core, Backend Infra, Frontend |
+| 3 | Synthesize results | Numbered, prioritized file list with suggested starting points |
+
+**Key Principles:**
+- Speed over depth -- return file paths only, no content analysis
+- Parallel execution across backend and frontend directories
+- NOT for deep analysis (use `investigate`), debugging (use `debug`), or implementation (use `feature`)
 
 ---
 
@@ -22,7 +37,7 @@ Fast codebase search to locate files needed for a task. Token-efficient, paralle
 - Mapping file landscape before investigation or implementation
 - Finding all files related to an entity, feature, or keyword
 
-**NOT for**: Deep code analysis (use `feature-investigation`), debugging (use `debugging`), or implementation (use `feature-implementation`).
+**NOT for**: Deep code analysis (use `investigate`), debugging (use `debug`), or implementation (use `feature`).
 
 ---
 
@@ -114,9 +129,9 @@ Combine results into a **numbered, prioritized file list**.
 
 ## See Also
 
-- `feature-investigation` skill - Deep analysis of discovered files
-- `feature-implementation` skill - Implementing features after scouting
-- `planning` skill - Creating implementation plans from scouted files
+- `investigate` skill - Deep analysis of discovered files
+- `feature` skill - Implementing features after scouting
+- `plan` skill - Creating implementation plans from scouted files
 
 ---
 

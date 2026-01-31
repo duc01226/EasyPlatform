@@ -1,11 +1,27 @@
 ---
 name: repomix
-description: Package entire code repositories into single AI-friendly files using Repomix. Capabilities include pack codebases with customizable include/exclude patterns, generate multiple output formats (XML, Markdown, plain text), preserve file structure and context, optimize for AI consumption with token counting, filter by file types and directories, add custom headers and summaries. Use when packaging codebases for AI analysis, creating repository snapshots for LLM context, analyzing third-party libraries, preparing for security audits, generating documentation context, or evaluating unfamiliar codebases.
+description: "[Tooling & Meta] Package entire code repositories into single AI-friendly files using Repomix. Capabilities include pack codebases with customizable include/exclude patterns, generate multiple output formats (XML, Markdown, plain text), preserve file structure and context, optimize for AI consumption with token counting, filter by file types and directories, add custom headers and summaries. Use when packaging codebases for AI analysis, creating repository snapshots for LLM context, analyzing third-party libraries, preparing for security audits, generating documentation context, or evaluating unfamiliar codebases."
 ---
 
 # Repomix Skill
 
 Repomix packs entire repositories into single, AI-friendly files. Perfect for feeding codebases to LLMs like Claude, ChatGPT, and Gemini.
+
+## Summary
+
+**Goal:** Package entire code repositories into single AI-friendly files using Repomix for LLM consumption.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Install Repomix | `npm install -g repomix` or `brew install repomix` |
+| 2 | Configure filters | Include/exclude patterns, file types, directories |
+| 3 | Package | `repomix --style markdown` (XML, JSON, plain text also supported) |
+| 4 | Review output | Check token count, verify security scan results |
+
+**Key Principles:**
+- Git-aware processing — respects .gitignore automatically
+- Always run security checks for sensitive information before sharing output
+- Use `--include` patterns to scope output to relevant code only
 
 ## When to Use
 

@@ -25,7 +25,7 @@ echo "=== FILE GROUPS ===" && \
 git diff --cached --name-only | awk -F'/' '{
   if ($0 ~ /\.(md|txt)$/) print "docs:"$0
   else if ($0 ~ /test|spec/) print "test:"$0
-  else if ($0 ~ /\.claude\/(skills|agents|commands|workflows)/) print "config:"$0
+  else if ($0 ~ /\.claude\/(skills|agents|workflows)/) print "config:"$0
   else if ($0 ~ /package\.json|yarn\.lock|pnpm-lock/) print "deps:"$0
   else if ($0 ~ /\.github|\.gitlab|ci\.yml/) print "ci:"$0
   else print "code:"$0
@@ -375,7 +375,7 @@ Single commit: feat(auth): implement session management
 
 **Example 4 - Config + code (should split):**
 ```
-Files: .claude/commands/new.md, src/feature.ts, package.json
+Files: .claude/skills/new.md, src/feature.ts, package.json
 Split into:
 1. chore(config): add /new command
 2. chore(deps): add new-library

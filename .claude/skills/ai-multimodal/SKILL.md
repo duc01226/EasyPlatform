@@ -1,6 +1,6 @@
 ---
 name: ai-multimodal
-description: Process and generate multimedia content using Google Gemini API for better vision capabilities. Capabilities include analyze audio files (transcription with timestamps, summarization, speech understanding, music/sound analysis up to 9.5 hours), understand images (better image analysis than Claude models, captioning, reasoning, object detection, design extraction, OCR, visual Q&A, segmentation, handle multiple images), process videos (scene detection, Q&A, temporal analysis, YouTube URLs, up to 6 hours), extract from documents (PDF tables, forms, charts, diagrams, multi-page), generate images (text-to-image with Imagen 4, editing, composition, refinement), generate videos (text-to-video with Veo 3, 8-second clips with native audio). Use when working with audio/video files, analyzing images or screenshots (instead of default vision capabilities of Claude, only fallback to Claude's vision capabilities if needed), processing PDF documents, extracting structured data from media, creating images/videos from text prompts, or implementing multimodal AI features. Supports Gemini 3/2.5, Imagen 4, and Veo 3 models with context windows up to 2M tokens.
+description: "[Tooling & Meta] Process and generate multimedia content using Google Gemini API for better vision capabilities. Capabilities include analyze audio files (transcription with timestamps, summarization, speech understanding, music/sound analysis up to 9.5 hours), understand images (better image analysis than Claude models, captioning, reasoning, object detection, design extraction, OCR, visual Q&A, segmentation, handle multiple images), process videos (scene detection, Q&A, temporal analysis, YouTube URLs, up to 6 hours), extract from documents (PDF tables, forms, charts, diagrams, multi-page), generate images (text-to-image with Imagen 4, editing, composition, refinement), generate videos (text-to-video with Veo 3, 8-second clips with native audio). Use when working with audio/video files, analyzing images or screenshots (instead of default vision capabilities of Claude, only fallback to Claude's vision capabilities if needed), processing PDF documents, extracting structured data from media, creating images/videos from text prompts, or implementing multimodal AI features. Supports Gemini 3/2.5, Imagen 4, and Veo 3 models with context windows up to 2M tokens."
 license: MIT
 allowed-tools:
   - Bash
@@ -12,6 +12,22 @@ allowed-tools:
 # AI Multimodal
 
 Process audio, images, videos, documents, and generate images/videos using Google Gemini's multimodal API.
+
+## Summary
+
+**Goal:** Process and generate multimedia content (audio, images, video, documents) using Google Gemini API.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Verify setup | `python scripts/check_setup.py`, needs `GEMINI_API_KEY` |
+| 2 | Analyze media | `python scripts/gemini_batch_process.py --files <file> --task <analyze\|transcribe\|extract>` |
+| 3 | Generate content | `--task <generate\|generate-video> --prompt "description"` |
+| 4 | Optimize media | `scripts/media_optimizer.py` for compression/resize before upload |
+
+**Key Principles:**
+- Audio >15 min must be split into chunks for complete transcription
+- 20MB inline limit, 2GB via File API; use `media_optimizer.py` for large files
+- Supports API key rotation for rate limit handling (429 errors)
 
 ## Setup
 

@@ -26,9 +26,9 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 | Skill | Description |
 |-------|-------------|
 | `arch-cross-service-integration` | Cross-service communication patterns |
-| `arch-performance-optimization` | Database, API, frontend performance |
+| `performance` | Database, API, frontend performance |
 | `arch-security-review` | Security vulnerabilities, authorization |
-| `planning` | Implementation planning and strategy |
+| `plan` | Implementation planning and strategy |
 | `refactoring` | Code restructuring and improvement |
 
 ### AI & Automation
@@ -38,7 +38,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 | `ai-multimodal` | Google Gemini for audio/video/image processing |
 | `ai-artist` | Prompt engineering for AI image/text generation |
 | `ai-dev-tools-sync` | Sync Claude Code and Copilot configurations |
-| `chrome-devtools` | Puppeteer browser automation |
+| `test-ui` | Puppeteer browser automation |
 | `mcp-builder` | Create MCP servers for external integrations |
 | `mcp-management` | Manage MCP server tools and resources |
 
@@ -46,7 +46,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 
 | Skill | Description |
 |-------|-------------|
-| `debugging` | Systematic debugging framework (includes EasyPlatform-specific patterns) |
+| `debug` | Systematic debugging framework (includes EasyPlatform-specific patterns) |
 | `code-review` | Comprehensive code review |
 | `code-simplifier` | Simplify code for clarity |
 | `test-generation` | Generate unit and integration tests |
@@ -76,7 +76,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 
 | Skill | Description |
 |-------|-------------|
-| `feature-investigation` | Understand existing feature logic |
+| `investigate` | Understand existing feature logic |
 | `research` | Technical research synthesis |
 | `branch-comparison` | Compare git branches, analyze diffs |
 | `sequential-thinking` | Structured problem-solving |
@@ -184,7 +184,7 @@ Skills auto-activate based on:
 3. Add references as needed
 4. Test with `/my-skill`
 
-See: `/skill-creator` for guided skill creation.
+See: `/skill-plan` for guided skill creation.
 
 ---
 

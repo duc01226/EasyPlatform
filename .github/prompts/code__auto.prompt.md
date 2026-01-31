@@ -146,7 +146,7 @@ If this is the last phase, generate a concise summary report.
 Use `AskUserQuestion` tool to ask these questions:
 
 - If user wants to preview the report with `/preview` slash command.
-- If user wants to archive the plan with `/plan:archive` slash command.
+- If user wants to archive the plan with `/plan-archive` slash command.
 
 ---
 

@@ -8,13 +8,13 @@
 
 ```bash
 # Run quality gate before development
-/quality-gate pre-dev team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
+/team-quality-gate pre-dev team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
 
 # Run quality gate before QA testing
-/quality-gate pre-qa PBI-260119-001
+/team-quality-gate pre-qa PBI-260119-001
 
 # Run quality gate before release
-/quality-gate pre-release v2.1.0
+/team-quality-gate pre-release v2.1.0
 ```
 
 **Output Location:** `team-artifacts/quality-reports/`
@@ -42,9 +42,9 @@
 
 | Task | Command | Output |
 |------|---------|--------|
-| Pre-dev quality gate | `/quality-gate pre-dev` | Requirements readiness report |
-| Pre-QA quality gate | `/quality-gate pre-qa` | Test readiness report |
-| Pre-release quality gate | `/quality-gate pre-release` | Release readiness report |
+| Pre-dev quality gate | `/team-quality-gate pre-dev` | Requirements readiness report |
+| Pre-QA quality gate | `/team-quality-gate pre-qa` | Test readiness report |
+| Pre-release quality gate | `/team-quality-gate pre-release` | Release readiness report |
 | Compliance verification | Manual | Audit trail documentation |
 | Metrics collection | Manual | Quality metrics dashboard |
 
@@ -52,7 +52,7 @@
 
 ## Commands
 
-### `/quality-gate` - Execute Quality Gates
+### `/team-quality-gate` - Execute Quality Gates
 
 **Purpose:** Verify that work items meet quality criteria at each workflow checkpoint.
 
@@ -68,16 +68,16 @@
 
 ```bash
 # Pre-development gate (requirements review)
-/quality-gate pre-dev team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
+/team-quality-gate pre-dev team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
 
 # Pre-QA gate (code review)
-/quality-gate pre-qa PBI-260119-001
+/team-quality-gate pre-qa PBI-260119-001
 
 # Pre-release gate (release readiness)
-/quality-gate pre-release v2.1.0 --scope "biometric-auth,dark-mode"
+/team-quality-gate pre-release v2.1.0 --scope "biometric-auth,dark-mode"
 
 # With specific checklist
-/quality-gate pre-qa PBI-260119-001 --checklist security
+/team-quality-gate pre-qa PBI-260119-001 --checklist security
 ```
 
 ---
@@ -528,7 +528,7 @@ Every quality gate must maintain an audit trail:
 **Release Readiness Report:**
 ```bash
 # Provide release summary for PO approval
-/quality-gate pre-release v2.1.0 --summary
+/team-quality-gate pre-release v2.1.0 --summary
 
 # Include:
 # - Feature completion status
@@ -674,9 +674,9 @@ Due to the security-sensitive nature of Biometric Authentication:
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  QUALITY GATES                                               │
-│  /quality-gate pre-dev PBI-XXX     Requirements review       │
-│  /quality-gate pre-qa PBI-XXX      Code/test readiness       │
-│  /quality-gate pre-release vX.Y.Z  Release readiness         │
+│  /team-quality-gate pre-dev PBI-XXX     Requirements review       │
+│  /team-quality-gate pre-qa PBI-XXX      Code/test readiness       │
+│  /team-quality-gate pre-release vX.Y.Z  Release readiness         │
 │                                                              │
 │  GATE DECISIONS                                              │
 │  PASS             - Ready to proceed                         │

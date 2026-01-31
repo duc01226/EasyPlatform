@@ -68,12 +68,12 @@ Expected behavior:
 
 ---
 
-### feature-implementation
+### feature
 
 Direct invocation:
 
 ```
-/feature-implementation
+/feature
 ```
 
 Inference test prompts:
@@ -342,12 +342,12 @@ Expected: Message bus patterns, event-driven architecture
 
 ---
 
-### arch-performance-optimization
+### performance
 
 Direct invocation:
 
 ```
-/arch-performance-optimization
+/performance
 ```
 
 Test prompts:

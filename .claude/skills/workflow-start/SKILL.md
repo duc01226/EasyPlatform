@@ -1,6 +1,6 @@
 ---
 name: workflow-start
-description: Activate a workflow from the injected catalog. Use when the workflow-router hook injects a catalog and a matching workflow is identified, or when the user explicitly requests a workflow activation (e.g., "start feature workflow", "activate bugfix workflow").
+description: "[Tooling & Meta] Activate a workflow from the injected catalog. Use when the workflow-router hook injects a catalog and a matching workflow is identified, or when the user explicitly requests a workflow activation (e.g., "start feature workflow", "activate bugfix workflow")."
 infer: true
 allowed-tools: Skill, TodoWrite, AskUserQuestion, Read, Glob, Grep
 ---
@@ -19,7 +19,7 @@ Start a workflow by ID from the workflow catalog injected by the hook system. Th
 
 1. **Validate** the workflow ID against the injected catalog
 2. **Confirm if needed** — If the workflow has a **Confirm first** marker, ask the user BEFORE activation
-3. **Activate** — Invoke `/workflow:start <workflowId>` slash command to create workflow state via the workflow-step-tracker hook
+3. **Activate** — Invoke `/workflow-start <workflowId>` slash command to create workflow state via the workflow-step-tracker hook
 4. **Create TodoWrite items** for ALL sequence steps immediately after activation
 5. **Follow the sequence** in order, marking each step `in_progress` then `completed`
 

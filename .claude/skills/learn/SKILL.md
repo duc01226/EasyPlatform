@@ -1,6 +1,6 @@
 ---
 name: learn
-description: Teach Claude a new pattern, preference, or convention explicitly. Use when you want to save a correction, preference, or coding pattern for future sessions. Triggers on keywords like "remember this", "always do", "never do", "learn this pattern", "/learn".
+description: "[Tooling & Meta] Teach Claude a new pattern, preference, or convention explicitly. Use when you want to save a correction, preference, or coding pattern for future sessions. Triggers on keywords like "remember this", "always do", "never do", "learn this pattern", "/learn"."
 allowed-tools: Read, Write, Edit, Bash
 infer: true
 ---

@@ -302,7 +302,7 @@ await foreach (var entity in repository.AsAsyncEnumerable(expr))
 
 ## Debugging Protocol
 
-When debugging issues, follow the [AI Debugging Protocol](.github/AI-DEBUGGING-PROTOCOL.md):
+When debugging issues, follow the [AI Debugging Protocol](.ai/docs/AI-DEBUGGING-PROTOCOL.md):
 
 1. **Never assume** based on first glance
 2. **Verify with multiple search patterns**

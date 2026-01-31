@@ -1,6 +1,6 @@
 ---
 name: pdf-to-markdown
-description: Convert PDF files to Markdown. Use when extracting text from PDFs, creating editable documentation from PDF reports, or converting PDF content to version-controlled markdown files.
+description: "[Utilities] Convert PDF files to Markdown. Use when extracting text from PDFs, creating editable documentation from PDF reports, or converting PDF content to version-controlled markdown files."
 allowed-tools: Bash, Read, Write
 ---
 

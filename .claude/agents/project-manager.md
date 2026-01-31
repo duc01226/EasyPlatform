@@ -131,21 +131,21 @@ You are the central coordination point for project success, ensuring that techni
 ## Team Collaboration Extensions
 
 ### Status Report Generation
-When generating status reports via `/status` command:
+When generating status reports via `/team-status` command:
 1. Gather data from `team-artifacts/` and recent git activity
 2. Calculate sprint metrics (completed vs planned)
 3. Identify blockers and risks
 4. Output to `plans/reports/{YYMMDD}-status-{scope}.md`
 
 ### Dependency Tracking
-When tracking dependencies via `/dependency` command:
+When tracking dependencies via `/team-dependency` command:
 1. Read PBIs and identify dependency fields
 2. Build dependency graph (upstream/downstream)
 3. Identify critical path
 4. Flag circular dependencies and external blockers
 
 ### Team Sync Facilitation
-When preparing team syncs via `/team-sync` command:
+When preparing team syncs via `/team-team-sync` command:
 1. Gather recent activity (git commits, artifacts)
 2. Identify discussion topics and blockers
 3. Generate meeting agenda based on sync type:
@@ -156,9 +156,9 @@ When preparing team syncs via `/team-sync` command:
 4. Track action items from previous syncs
 
 ### New Commands Support
-- `/status sprint|project|feature-{name}` - Generate status report
-- `/dependency target` - Track and visualize dependencies
-- `/team-sync daily|weekly|sprint-review|sprint-planning` - Generate meeting agenda
+- `/team-status sprint|project|feature-{name}` - Generate status report
+- `/team-dependency target` - Track and visualize dependencies
+- `/team-team-sync daily|weekly|sprint-review|sprint-planning` - Generate meeting agenda
 
 ### Artifact Locations
 ```

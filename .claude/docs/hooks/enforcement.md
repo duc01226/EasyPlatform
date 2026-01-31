@@ -27,8 +27,8 @@ Enforcement hooks prevent unsafe operations, enforce workflow rules, and ensure 
 - `/test`, `/debug`, `/code-review`, `/commit`
 
 **Allowed skills** (no todos required):
-- `/scout`, `/scout:ext`, `/investigate`, `/research`, `/explore`
-- `/plan`, `/plan:fast`, `/plan:hard`, `/plan:validate`
+- `/scout`, `/scout-ext`, `/investigate`, `/research`, `/explore`
+- `/plan`, `/plan-fast`, `/plan-hard`, `/plan-validate`
 - `/watzup`, `/checkpoint`, `/kanban`
 
 **Bypass**: Use `quick:` prefix: `quick: add a button`

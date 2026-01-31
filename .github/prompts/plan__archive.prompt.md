@@ -48,8 +48,8 @@ Start archiving the plans based on the user's choice:
 
 Use `AskUserQuestion` tool to ask if user wants to commit the changes with these options:
 
-- Stage and commit the changes (Use `/git:cm` slash command)
-- Commit and push the changes (Use `/git:cp` slash command)
+- Stage and commit the changes (Use `/commit` slash command)
+- Commit and push the changes (Use `/git-cp` slash command)
 - Nah, I'll do it later
 
 ## Output

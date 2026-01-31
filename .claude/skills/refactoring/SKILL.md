@@ -1,6 +1,6 @@
 ---
 name: refactoring
-description: Use when restructuring code without changing behavior - extract method, extract class, rename, move, inline, introduce parameter object. Triggers on keywords like "extract", "rename", "move method", "inline", "restructure", "decompose".
+description: "[Utilities] Use when restructuring code without changing behavior - extract method, extract class, rename, move, inline, introduce parameter object. Triggers on keywords like "extract", "rename", "move method", "inline", "restructure", "decompose"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 infer: true
 ---

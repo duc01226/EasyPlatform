@@ -1,12 +1,29 @@
 ---
 name: business-feature-docs
-description: Generate enterprise module documentation with 26-section structure and folder hierarchy. Use for module docs, enterprise features, detailed specs in docs/business-features/{Module}/. Includes README, INDEX, API-REFERENCE, detailed-features/. Triggers on "module docs", "enterprise feature docs", "business module", "26-section docs", "detailed feature specs". For single-file quick docs, use feature-docs instead.
+description: "[Docs] Generate enterprise module documentation with 26-section structure and folder hierarchy. Use for module docs, enterprise features, detailed specs in docs/business-features/{Module}/. Includes README, INDEX, API-REFERENCE, detailed-features/. Triggers on "module docs", "enterprise feature docs", "business module", "26-section docs", "detailed feature specs". For single-file quick docs, use feature-docs instead."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
 
 # EasyPlatform Business Feature Documentation
 
 Generate comprehensive business feature documentation following the **GOLD STANDARD** template.
+
+## Summary
+
+**Goal:** Generate 26-section enterprise module documentation with code evidence and BDD test cases.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Module detection | Identify target module, read existing docs and master index |
+| 2 | Codebase analysis | Gather evidence from entities, commands, queries, controllers, frontend |
+| 3 | Documentation generation | All 26 mandatory sections, FR-{MOD}-XX requirements, TC-{MOD}-XXX test cases |
+| 4 | AI companion generation | ~300 lines compressed version in `.ai.md` file |
+| 5 | Master index update | Update `docs/BUSINESS-FEATURES.md` |
+
+**Key Principles:**
+- Every test case MUST have verifiable code evidence (`FilePath:LineNumber`)
+- Never assume behavior without reading actual source code
+- Must read 6 reference files before starting (templates, examples, anti-hallucination protocol)
 
 ## ⚠️ MUST READ References
 

@@ -1,28 +1,30 @@
-# Commands Reference
+# Skills Reference (formerly Commands)
 
-> 49+ slash commands for Claude Code.
+> 150+ slash commands via skills for Claude Code.
 
-## What are Commands?
+## What are Skills?
 
-Commands are direct actions invoked with `/command-name`. Unlike skills (which provide context), commands execute specific workflows.
+Skills are invoked with `/skill-name`. Each skill is a directory under `.claude/skills/` containing a `SKILL.md` with frontmatter and instructions.
 
-## Commands by Category
+> **Migration Note (2026-01-31):** All commands have been merged into the skills system. Commands that were standalone have been converted to skills. Commands that delegated to skills have been deleted. All `/xxx` triggers continue to work.
+
+## Skills by Category
 
 ### Planning & Investigation
 
-| Command          | Usage                   | Description                      |
+| Skill            | Usage                   | Description                      |
 | ---------------- | ----------------------- | -------------------------------- |
 | `/plan`          | `/plan <task>`          | Create implementation plan       |
-| `/plan:fast`     | `/plan:fast <task>`     | Quick plan (less thorough)       |
-| `/plan:hard`     | `/plan:hard <task>`     | Comprehensive plan with research |
-| `/plan:validate` | `/plan:validate [path]` | Validate plan with interview     |
+| `/plan-fast`     | `/plan-fast <task>`     | Quick plan (less thorough)       |
+| `/plan-hard`     | `/plan-hard <task>`     | Comprehensive plan with research |
+| `/plan-validate` | `/plan-validate [path]` | Validate plan with interview     |
 | `/scout`         | `/scout <query>`        | Find relevant files              |
-| `/scout:ext`     | `/scout:ext <query>`    | External tools (Gemini, etc.)    |
+| `/scout-ext`     | `/scout-ext <query>`    | External tools (Gemini, etc.)    |
 | `/investigate`   | `/investigate <topic>`  | Deep investigation               |
 
 ### Implementation
 
-| Command           | Usage                    | Description                |
+| Skill             | Usage                    | Description                |
 | ----------------- | ------------------------ | -------------------------- |
 | `/cook`           | `/cook`                  | Implement current task     |
 | `/code`           | `/code <task>`           | Write code for task        |
@@ -33,36 +35,35 @@ Commands are direct actions invoked with `/command-name`. Unlike skills (which p
 
 ### Testing & Review
 
-| Command            | Usage              | Description           |
+| Skill              | Usage              | Description           |
 | ------------------ | ------------------ | --------------------- |
 | `/test`            | `/test [path]`     | Run or generate tests |
 | `/debug`           | `/debug <issue>`   | Debug problem         |
 | `/review`          | `/review [target]` | Code review           |
-| `/review:codebase` | `/review:codebase` | Full codebase review  |
+| `/review-codebase` | `/review-codebase` | Full codebase review  |
 | `/review-changes`  | `/review-changes`  | Review recent changes |
 | `/lint`            | `/lint`            | Run linting           |
 | `/build`           | `/build`           | Build project         |
 
 ### Git & Version Control
 
-| Command     | Usage                | Description              |
+| Skill       | Usage                | Description              |
 | ----------- | -------------------- | ------------------------ |
 | `/commit`   | `/commit`            | Stage and commit changes |
-| `/git/cm`   | `/git/cm`            | Alias for commit         |
 | `/pr`       | `/pr`                | Create pull request      |
 | `/worktree` | `/worktree <action>` | Git worktree management  |
 
 ### Documentation
 
-| Command          | Usage            | Description               |
+| Skill            | Usage            | Description               |
 | ---------------- | ---------------- | ------------------------- |
-| `/docs/update`   | `/docs/update`   | Update documentation      |
+| `/docs-update`   | `/docs-update`   | Update documentation      |
 | `/release-notes` | `/release-notes` | Generate release notes    |
 | `/journal`       | `/journal`       | Write development journal |
 
 ### Context & Memory
 
-| Command       | Usage         | Description                |
+| Skill         | Usage         | Description                |
 | ------------- | ------------- | -------------------------- |
 | `/checkpoint` | `/checkpoint` | Save context checkpoint    |
 | `/compact`    | `/compact`    | Trigger context compaction |
@@ -72,11 +73,11 @@ Commands are direct actions invoked with `/command-name`. Unlike skills (which p
 
 ### Utility
 
-| Command         | Usage                 | Description             |
+| Skill           | Usage                 | Description             |
 | --------------- | --------------------- | ----------------------- |
 | `/ask`          | `/ask <question>`     | Ask clarifying question |
 | `/brainstorm`   | `/brainstorm <topic>` | Brainstorm solutions    |
-| `/design`       | `/design <ui>`        | Design UI component     |
+| `/design-fast`  | `/design-fast <ui>`   | Design UI component     |
 | `/preview`      | `/preview`            | Preview changes         |
 | `/security`     | `/security`           | Security audit          |
 | `/performance`  | `/performance`        | Performance analysis    |
@@ -86,78 +87,71 @@ Commands are direct actions invoked with `/command-name`. Unlike skills (which p
 
 ### Skill Management
 
-| Command         | Usage                   | Description           |
+| Skill           | Usage                   | Description           |
 | --------------- | ----------------------- | --------------------- |
-| `/skill`        | `/skill <name>`         | Invoke specific skill |
+| `/skill-plan`   | `/skill-plan`           | Create/optimize skill |
 | `/ck-help`      | `/ck-help`              | Claude Kit help       |
 | `/coding-level` | `/coding-level <level>` | Set coding complexity |
 | `/use-mcp`      | `/use-mcp <server>`     | Use MCP server        |
 
 ### Bootstrap & Setup
 
-| Command      | Usage                 | Description               |
-| ------------ | --------------------- | ------------------------- |
-| `/bootstrap` | `/bootstrap`          | Project setup             |
-| `/integrate` | `/integrate <system>` | Integrate external system |
+| Skill              | Usage                        | Description               |
+| ------------------ | ---------------------------- | ------------------------- |
+| `/bootstrap`       | `/bootstrap`                 | Project setup             |
+| `/integrate-polar` | `/integrate-polar <system>`  | Integrate Polar.sh        |
+| `/integrate-sepay` | `/integrate-sepay <system>`  | Integrate SePay.vn        |
 
 ### Team Collaboration
 
-| Command          | Usage                    | Description                          |
+| Skill            | Usage                    | Description                          |
 | ---------------- | ------------------------ | ------------------------------------ |
-| `/idea`          | `/idea <description>`    | Capture product idea                 |
-| `/refine`        | `/refine <idea-id>`      | Refine idea into PBI                 |
-| `/story`         | `/story <pbi-id>`        | Create user stories from PBI         |
-| `/prioritize`    | `/prioritize [ideas]`    | Prioritize ideas using RICE/MoSCoW   |
-| `/test-spec`     | `/test-spec <pbi-id>`    | Create test specification            |
-| `/test-cases`    | `/test-cases <spec-id>`  | Generate detailed test cases         |
-| `/design-spec`   | `/design-spec <source>`  | Create design spec from PBI or Figma |
-| `/quality-gate`  | `/quality-gate <target>` | QC quality assessment                |
-| `/status`        | `/status [scope]`        | Project status report                |
-| `/dependency`    | `/dependency <target>`   | Dependency analysis                  |
-| `/team-sync`     | `/team-sync`             | Cross-team synchronization           |
-| `/figma-extract` | `/figma-extract <url>`   | Extract design specs from Figma      |
+| `/team-idea`          | `/team-idea <description>`    | Capture product idea                 |
+| `/team-refine`        | `/team-refine <idea-id>`      | Refine idea into PBI                 |
+| `/team-story`         | `/team-story <pbi-id>`        | Create user stories from PBI         |
+| `/team-prioritize`    | `/team-prioritize [ideas]`    | Prioritize ideas using RICE/MoSCoW   |
+| `/team-test-spec`     | `/team-test-spec <pbi-id>`    | Create test specification            |
+| `/team-test-cases`    | `/team-test-cases <spec-id>`  | Generate detailed test cases         |
+| `/team-design-spec`   | `/team-design-spec <source>`  | Create design spec from PBI or Figma |
+| `/team-quality-gate`  | `/team-quality-gate <target>` | QC quality assessment                |
+| `/team-status`        | `/team-status [scope]`        | Project status report                |
+| `/team-dependency`    | `/team-dependency <target>`   | Dependency analysis                  |
+| `/team-team-sync`     | `/team-team-sync`             | Cross-team synchronization           |
+| `/team-figma-extract` | `/team-figma-extract <url>`   | Extract design specs from Figma      |
 
-## Command Structure
+## Skill Structure
 
-Commands in `.claude/commands/`:
+Skills in `.claude/skills/`:
 
 ```
-commands/
-├── command.md         # Single-file command
-├── command/           # Directory command
-│   ├── command.md     # Main definition
-│   └── variants.md    # Sub-commands
+skills/
+├── skill-name/
+│   ├── SKILL.md        # Required - frontmatter + instructions
+│   ├── references/     # On-demand docs (<100 lines each)
+│   └── scripts/        # Executable code
 ```
 
-### Command Format
+### SKILL.md Format
 
 ```markdown
 ---
-name: command
+name: skill-name
 description: Brief description
-aliases: [alias1, alias2]
 ---
 
-# Command Name
+# Skill Name
 
-## Usage
-`/command [args]`
-
-## Description
-[What it does]
-
-## Examples
-[Examples]
+[Instructions for Claude]
 ```
 
-## Command Variants
+## Skill Variants
 
-Some commands support variants with `:`:
+Related skills use dash-separated names:
 
 - `/plan` - Default planning
-- `/plan:fast` - Quick planning
-- `/plan:hard` - Thorough planning
-- `/plan:validate` - Plan validation
+- `/plan-fast` - Quick planning
+- `/plan-hard` - Thorough planning
+- `/plan-validate` - Plan validation
 
 ## Built-in vs Custom
 
@@ -165,18 +159,18 @@ Some commands support variants with `:`:
 - `/help`, `/clear`, `/compact`, `/status`
 
 **Custom** (this project):
-- All commands in `.claude/commands/`
+- All skills in `.claude/skills/`
 
-## Creating Custom Commands
+## Creating Custom Skills
 
-1. Create `.claude/commands/my-command.md`
+1. Create `.claude/skills/my-skill/SKILL.md`
 2. Add frontmatter with name/description
-3. Write command instructions
-4. Test with `/my-command`
+3. Write skill instructions
+4. Test with `/my-skill`
 
 ## Workflow Integration
 
-Commands trigger workflow detection:
+Skills trigger workflow detection:
 
 ```
 /plan → Detected: Planning workflow
@@ -188,4 +182,4 @@ See: [Workflow System](hooks/workflows.md)
 
 ---
 
-*Total commands: 37+ | Last updated: 2026-01-13*
+*Total skills: 150+ | Last updated: 2026-01-31*

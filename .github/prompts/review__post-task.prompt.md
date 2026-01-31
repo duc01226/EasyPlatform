@@ -171,8 +171,8 @@ git add -p  # Interactive staging
 ## Integration Notes
 
 - This command is auto-triggered by workflow orchestration after `/cook`, `/fix`, `/code`
-- Can be manually invoked anytime with `/review:post-task`
-- For PR reviews, use `/review:codebase` instead
+- Can be manually invoked anytime with `/review-post-task`
+- For PR reviews, use `/review-codebase` instead
 - Use `code-reviewer` subagent for complex reviews requiring deeper analysis
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**

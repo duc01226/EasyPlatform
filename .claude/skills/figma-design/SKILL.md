@@ -1,12 +1,28 @@
 ---
 name: figma-design
 version: 1.1.0
-description: Extract design specifications from Figma designs using MCP server. Triggers on Figma URLs, design context extraction, or design-to-code workflows. Formerly also known as "figma-extract".
+description: "[Design & Content] Extract design specifications from Figma designs using MCP server. Triggers on Figma URLs, design context extraction, or design-to-code workflows. Formerly also known as "figma-extract"."
 infer: true
 allowed-tools: Read, mcp__figma__get_file, mcp__figma__get_file_nodes
 ---
 
 # Figma Design Context Extraction
+
+## Summary
+
+**Goal:** Extract design specifications (dimensions, layout, colors, typography) from Figma designs via MCP server for implementation.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Identify Figma URLs | Parse `node-id` from URL, convert hyphen to colon for API |
+| 2 | Extract node data | Use `mcp__figma__get_file_nodes` (preferred over full file) |
+| 3 | Summarize design context | Dimensions, layout, colors, typography, component structure |
+| 4 | Token budget management | Single node: 500-2K tokens; AVOID full file (50K+) |
+
+**Key Principles:**
+- Always request specific nodes, never full files unless absolutely necessary
+- Convert URL `node-id` format (hyphen) to API format (colon): `1-3` -> `1:3`
+- Extract only essential properties; summarize children
 
 ## Purpose
 

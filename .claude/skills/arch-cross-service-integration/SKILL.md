@@ -1,11 +1,28 @@
 ---
 name: arch-cross-service-integration
-description: Use when designing or implementing cross-service communication, data synchronization, or service boundary patterns.
+description: "[Implementation] Use when designing or implementing cross-service communication, data synchronization, or service boundary patterns."
 infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
 # Cross-Service Integration Workflow
+
+## Summary
+
+**Goal:** Design and implement cross-service communication, data synchronization, and service boundary patterns in EasyPlatform.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Pre-flight | Identify source/target services, determine data ownership |
+| 2 | Choose pattern | Entity Event Bus (recommended), sync API, or shared DB (avoid) |
+| 3 | Implement producer | Auto-raise entity events via `PlatformCqrsEntityEventBusMessageProducer` |
+| 4 | Implement consumer | `PlatformApplicationMessageBusConsumer` with `TryWaitUntilAsync` for deps |
+| 5 | Map transformations | DTO mapping between service boundaries |
+
+**Key Principles:**
+- Never access another service's database directly — use message bus
+- Entity Event Bus is the recommended pattern for data synchronization
+- Each service owns its data; consumers maintain local copies
 
 ## When to Use This Skill
 

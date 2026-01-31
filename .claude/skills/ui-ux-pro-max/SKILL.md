@@ -1,11 +1,27 @@
 ---
 name: ui-ux-pro-max
-description: "Design intelligence database for UI/UX decisions (tech-agnostic). Use FIRST when planning beautiful interfaces - provides style recommendations, color palettes, font pairings, UX guidelines BEFORE implementation. Searchable: 50 styles (glassmorphism, minimalism, brutalism), 21 color palettes, 50 font pairings, chart recommendations, landing page structures, accessibility patterns. Works with any stack (React, Vue, Angular, Flutter). For React component implementation, use shadcn-tailwind instead. Triggers on: beautiful UI, design system, color palette, font pairing, UX review, style guide."
+description: "[Utilities] Design intelligence database for UI/UX decisions (tech-agnostic). Use FIRST when planning beautiful interfaces - provides style recommendations, color palettes, font pairings, UX guidelines BEFORE implementation. Searchable: 50 styles (glassmorphism, minimalism, brutalism), 21 color palettes, 50 font pairings, chart recommendations, landing page structures, accessibility patterns. Works with any stack (React, Vue, Angular, Flutter). For React component implementation, use shadcn-tailwind instead. Triggers on: beautiful UI, design system, color palette, font pairing, UX review, style guide."
 ---
 
 # UI/UX Pro Max - Design Intelligence
 
 Searchable database of UI styles, color palettes, font pairings, chart types, product recommendations, UX guidelines, and stack-specific best practices.
+
+## Summary
+
+**Goal:** Provide design intelligence (styles, color palettes, font pairings, UX guidelines) as a searchable database to inform UI/UX decisions before implementation.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Analyze requirements | Extract product type, style keywords, industry, stack |
+| 2 | Search domains | Use `search.py` for product, style, color, font, UX data |
+| 3 | Compile recommendations | Style guide, palette, typography, UX patterns |
+| 4 | Deliver design brief | Tech-agnostic recommendations ready for implementation |
+
+**Key Principles:**
+- Use FIRST before implementation — design decisions before code
+- Tech-agnostic: works with React, Vue, Angular, Flutter, any stack
+- For React component implementation, use shadcn-tailwind after this skill
 
 ## Prerequisites
 

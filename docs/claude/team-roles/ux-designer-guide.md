@@ -8,13 +8,13 @@
 
 ```bash
 # Create design specification from PBI
-/design-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
+/team-design-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
 
 # Review implementation for accessibility
-/design-spec --review src/app/auth/biometric-login.component.ts
+/team-design-spec --review src/app/auth/biometric-login.component.ts
 ```
 
-**Output Location:** `team-artifacts/design-specs/`
+**Output Location:** `team-artifacts/team-design-specs/`
 **Naming Pattern:** `{YYMMDD}-ux-designspec-{slug}.md`
 
 ---
@@ -26,7 +26,7 @@
 │                    DESIGN WORKFLOW                           │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│   BA ──> PBI ──> [YOU] ──/design-spec──> Dev                │
+│   BA ──> PBI ──> [YOU] ──/team-design-spec──> Dev                │
 │                    │                       │                 │
 │                    └──────review───────────┘                 │
 │                              │                               │
@@ -39,17 +39,17 @@
 
 | Task | Command | Output |
 |------|---------|--------|
-| Create design specs | `/design-spec` | `team-artifacts/design-specs/*.md` |
+| Create design specs | `/team-design-spec` | `team-artifacts/team-design-specs/*.md` |
 | Document component states | Manual | State matrix in spec |
 | Define design tokens | Manual | Token reference table |
-| Accessibility review | `/design-spec --review` | A11y compliance report |
+| Accessibility review | `/team-design-spec --review` | A11y compliance report |
 | Responsive breakpoints | Manual | Breakpoint specifications |
 
 ---
 
 ## Commands
 
-### `/design-spec` - Generate Design Specification
+### `/team-design-spec` - Generate Design Specification
 
 **Purpose:** Create comprehensive design specifications for development handoff.
 
@@ -57,16 +57,16 @@
 
 ```bash
 # From PBI
-/design-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
+/team-design-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
 
 # For specific component
-/design-spec --component "BiometricLoginPrompt"
+/team-design-spec --component "BiometricLoginPrompt"
 
 # With accessibility focus
-/design-spec PBI-260119-001 --focus accessibility
+/team-design-spec PBI-260119-001 --focus accessibility
 
 # Review existing implementation
-/design-spec --review src/app/auth/biometric-login.component.ts
+/team-design-spec --review src/app/auth/biometric-login.component.ts
 ```
 
 #### What Claude Generates
@@ -669,9 +669,9 @@ figma_frames: ["Login Screen", "States", "Responsive"]
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  CREATE DESIGN SPEC                                          │
-│  /design-spec team-artifacts/pbis/PBI-XXX.md                 │
-│  /design-spec --component "ComponentName"                    │
-│  /design-spec --review src/app/component.ts                  │
+│  /team-design-spec team-artifacts/pbis/PBI-XXX.md                 │
+│  /team-design-spec --component "ComponentName"                    │
+│  /team-design-spec --review src/app/component.ts                  │
 │                                                              │
 │  REQUIRED SECTIONS                                           │
 │  1. Overview          5. Responsive Breakpoints              │
@@ -690,7 +690,7 @@ figma_frames: ["Login Screen", "States", "Responsive"]
 │  Keyboard: All interactive elements                          │
 │                                                              │
 │  OUTPUT LOCATIONS                                            │
-│  Design Specs: team-artifacts/design-specs/                  │
+│  Design Specs: team-artifacts/team-design-specs/                  │
 │                                                              │
 │  NAMING: {YYMMDD}-ux-designspec-{slug}.md                    │
 │                                                              │

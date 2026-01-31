@@ -418,7 +418,7 @@ Single commit: feat(auth): implement session management
 **Example 4 - Config + code (should split):**
 
 ```
-Files: .claude/commands/new.md, src/feature.ts, package.json
+Files: .claude/skills/new.md, src/feature.ts, package.json
 Split into:
 1. chore(config): add /new command
 2. chore(deps): add new-library

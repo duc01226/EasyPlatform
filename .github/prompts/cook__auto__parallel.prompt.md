@@ -12,12 +12,12 @@ argument-hint: [tasks]
 ### 1. Research (Optional)
 
 - Use max 2 `researcher` agents in parallel if tasks complex
-- Use `/scout:ext` to search codebase
+- Use `/scout-ext` to search codebase
 - Keep reports ≤150 lines
 
 ### 2. Parallel Planning
 
-- Trigger `/plan:parallel <detailed-instruction>`
+- Trigger `/plan-hard --parallel <detailed-instruction>`
 - Wait for plan with dependency graph, execution strategy, file ownership matrix
 
 ### 3. Parallel Implementation

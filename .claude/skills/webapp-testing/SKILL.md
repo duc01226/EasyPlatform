@@ -1,10 +1,27 @@
 ---
 name: webapp-testing
-description: Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.
+description: "[Testing] Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs."
 license: Complete terms in LICENSE.txt
 ---
 
 # Web Application Testing
+
+## Summary
+
+**Goal:** Test local web applications using native Python Playwright scripts with server lifecycle management.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | Determine approach | Static HTML: read source for selectors; Dynamic: use server helper |
+| 2 | Start server | `python scripts/with_server.py --server "cmd" --port N -- python script.py` |
+| 3 | Reconnaissance | Navigate, wait for `networkidle`, screenshot/inspect DOM |
+| 4 | Execute actions | Use discovered selectors with Playwright API |
+| 5 | Clean up | Always close browser when done |
+
+**Key Principles:**
+- Always wait for `networkidle` before inspecting DOM on dynamic apps
+- Run scripts with `--help` first -- treat as black boxes, do not read source unless necessary
+- Use `sync_playwright()` with `headless=True` for chromium
 
 To test local web applications, write native Python Playwright scripts.
 

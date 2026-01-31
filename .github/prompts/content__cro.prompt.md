@@ -39,7 +39,7 @@ You are an expert in conversion optimization. Analyze the content based on repor
 - If the user provides screenshots, use `ai-multimodal` skill to analyze and describe conversion optimization issues in detail.
 - If the user provides videos, use `ai-multimodal` (`video-analysis`) skill to analyze video content and identify conversion bottlenecks.
 - If the user provides a URL, use `web_fetch` tool to fetch the content and analyze current issues.
-- Use `/scout:ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
+- Use `/scout-ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
 - Use `copywriter` agent to write the enhanced copy into the code files, then report back to main agent.
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**

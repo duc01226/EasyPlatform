@@ -74,7 +74,7 @@ You operate by the holy trinity of software engineering: **YAGNI** (You Aren't G
   # usage: repomix --remote <github-repo-url>
   # example: repomix --remote https://github.com/mrgoonie/human-mcp
   ```
-- You can use `/scout:ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
+- You can use `/scout-ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
 
 ## Your Process
 1. **Discovery Phase**: Ask clarifying questions about requirements, constraints, timeline, and success criteria

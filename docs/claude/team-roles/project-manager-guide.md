@@ -8,13 +8,13 @@
 
 ```bash
 # Get sprint status
-/status sprint
+/team-status sprint
 
 # Check project dependencies
-/dependency team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
+/team-dependency team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
 
 # Prepare team sync agenda
-/team-sync daily
+/team-team-sync daily
 ```
 
 **Output Location:** `team-artifacts/reports/`
@@ -31,7 +31,7 @@
 │                                                              │
 │         ┌─────────────────────────────────┐                  │
 │         │           [YOU]                 │                  │
-│         │  /status  /dependency  /team-sync│                  │
+│         │  /team-status  /team-dependency  /team-team-sync│                  │
 │         └─────────────────────────────────┘                  │
 │                       │                                      │
 │    ┌──────────────────┼──────────────────┐                   │
@@ -47,18 +47,18 @@
 
 | Task | Command | Output |
 |------|---------|--------|
-| Sprint status | `/status sprint` | Sprint progress report |
-| Project status | `/status project` | Overall project report |
-| Dependency tracking | `/dependency` | Dependency graph/blockers |
-| Daily standups | `/team-sync daily` | Meeting agenda |
-| Sprint planning | `/team-sync sprint-planning` | Planning agenda |
-| Retrospectives | `/team-sync retro` | Retro facilitation guide |
+| Sprint status | `/team-status sprint` | Sprint progress report |
+| Project status | `/team-status project` | Overall project report |
+| Dependency tracking | `/team-dependency` | Dependency graph/blockers |
+| Daily standups | `/team-team-sync daily` | Meeting agenda |
+| Sprint planning | `/team-team-sync sprint-planning` | Planning agenda |
+| Retrospectives | `/team-team-sync retro` | Retro facilitation guide |
 
 ---
 
 ## Commands
 
-### `/status` - Generate Status Reports
+### `/team-status` - Generate Status Reports
 
 **Purpose:** Create comprehensive status reports for sprints, features, or projects.
 
@@ -66,19 +66,19 @@
 
 ```bash
 # Sprint status
-/status sprint
+/team-status sprint
 
 # Current sprint with metrics
-/status sprint --metrics
+/team-status sprint --metrics
 
 # Project overview
-/status project
+/team-status project
 
 # Feature-specific status
-/status feature-biometric-auth
+/team-status feature-biometric-auth
 
 # Release status
-/status release-v2.1.0
+/team-status release-v2.1.0
 ```
 
 #### Status Report Types
@@ -145,7 +145,7 @@ Sprint is on track with 75% completion at mid-sprint. Biometric auth feature is 
 
 ---
 
-### `/dependency` - Track Dependencies
+### `/team-dependency` - Track Dependencies
 
 **Purpose:** Identify and visualize dependencies between features, teams, and external systems.
 
@@ -153,16 +153,16 @@ Sprint is on track with 75% completion at mid-sprint. Biometric auth feature is 
 
 ```bash
 # Check dependencies for a PBI
-/dependency team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
+/team-dependency team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
 
 # Check blocked items
-/dependency --blocked
+/team-dependency --blocked
 
 # Full dependency graph
-/dependency --graph
+/team-dependency --graph
 
 # Cross-team dependencies
-/dependency --cross-team
+/team-dependency --cross-team
 ```
 
 #### What Claude Generates
@@ -221,7 +221,7 @@ Downstream Impact
 
 ---
 
-### `/team-sync` - Coordinate Team Activities
+### `/team-team-sync` - Coordinate Team Activities
 
 **Purpose:** Generate meeting agendas and facilitate team coordination activities.
 
@@ -229,19 +229,19 @@ Downstream Impact
 
 ```bash
 # Daily standup agenda
-/team-sync daily
+/team-team-sync daily
 
 # Sprint planning
-/team-sync sprint-planning
+/team-team-sync sprint-planning
 
 # Sprint retrospective
-/team-sync retro
+/team-team-sync retro
 
 # Backlog grooming
-/team-sync grooming
+/team-team-sync grooming
 
 # Custom sync
-/team-sync stakeholder-update
+/team-team-sync stakeholder-update
 ```
 
 #### Meeting Types
@@ -741,7 +741,7 @@ Dependency resolved with 1-day delay (vs 2 days without intervention).
 **Status Collection:**
 ```bash
 # Aggregate status from all artifacts
-/status sprint --from-artifacts
+/team-status sprint --from-artifacts
 
 # This scans:
 # - team-artifacts/ideas/ (new ideas count)
@@ -786,21 +786,21 @@ Dependency resolved with 1-day delay (vs 2 days without intervention).
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  STATUS REPORTS                                              │
-│  /status sprint              Current sprint progress         │
-│  /status project             Overall project status          │
-│  /status feature-{name}      Feature-specific status         │
-│  /status release-{version}   Release readiness               │
+│  /team-status sprint              Current sprint progress         │
+│  /team-status project             Overall project status          │
+│  /team-status feature-{name}      Feature-specific status         │
+│  /team-status release-{version}   Release readiness               │
 │                                                              │
 │  DEPENDENCY TRACKING                                         │
-│  /dependency PBI-XXX         Check PBI dependencies          │
-│  /dependency --blocked       List blocked items              │
-│  /dependency --graph         Full dependency graph           │
+│  /team-dependency PBI-XXX         Check PBI dependencies          │
+│  /team-dependency --blocked       List blocked items              │
+│  /team-dependency --graph         Full dependency graph           │
 │                                                              │
 │  TEAM SYNC                                                   │
-│  /team-sync daily            Standup agenda                  │
-│  /team-sync sprint-planning  Planning session                │
-│  /team-sync retro            Retrospective facilitation      │
-│  /team-sync grooming         Backlog refinement              │
+│  /team-team-sync daily            Standup agenda                  │
+│  /team-team-sync sprint-planning  Planning session                │
+│  /team-team-sync retro            Retrospective facilitation      │
+│  /team-team-sync grooming         Backlog refinement              │
 │                                                              │
 │  METRICS TO TRACK                                            │
 │  Velocity | Burndown | Blockers | Quality Score              │

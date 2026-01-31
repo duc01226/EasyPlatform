@@ -1,7 +1,7 @@
 ---
 name: test-generation
 version: 2.0.1
-description: Use when the user asks to generate test cases, create test specifications, write unit tests, create QA documentation, or analyze test coverage. Triggers on keywords like "test", "test case", "unit test", "QA", "coverage", "Given When Then", "BDD", "TDD", "spec".
+description: "[Testing] Use when the user asks to generate test cases, create test specifications, write unit tests, create QA documentation, or analyze test coverage. Triggers on keywords like "test", "test case", "unit test", "QA", "coverage", "Given When Then", "BDD", "TDD", "spec"."
 infer: true
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
@@ -9,6 +9,23 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 > **Skill Variant:** Use this skill for **interactive test writing** where the user is actively engaged and can provide feedback. For autonomous test generation, use `tasks-test-generation` instead.
 
 # Test Case Generation
+
+## Summary
+
+**Goal:** Generate comprehensive BDD test cases (Given/When/Then) with full traceability and 100% business workflow coverage.
+
+| Step | Action | Key Notes |
+|------|--------|-----------|
+| 1 | External memory analysis | Build knowledge model in `.ai/workspace/analysis/[feature].analysis.md` |
+| 2 | Overall analysis | End-to-end workflows, architectural patterns, integration points |
+| 3 | Approval gate | Present test plan -- DO NOT proceed without explicit approval |
+| 4 | Execution | Write test cases in 4 priority groups (Critical/High/Medium/Low) |
+| 5 | Review TOC | Update Table of Contents with sub-section links |
+
+**Key Principles:**
+- Evidence-based testing -- base test cases on actual code behavior, not assumptions
+- TC-XXX format with Given/When/Then, linked bidirectionally to requirements (BR-XXX)
+- Must read `anti-hallucination-protocol.md` before executing
 
 You are to operate as an expert full-stack QA engineer and SDET to analyze features and generate comprehensive test cases (Given...When...Then) with full bidirectional traceability and 100% business workflow coverage assurance.
 
@@ -102,7 +119,7 @@ Update `## Table of Contents` with detailed sub-section links.
 - `qa-engineer`
 - `test-specs-docs`
 - `tasks-test-generation`
-- `debugging`
+- `debug`
 
 ---
 

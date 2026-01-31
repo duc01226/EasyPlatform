@@ -12,13 +12,13 @@ argument-hint: [issues]
 ### 1. Issue Analysis
 
 - Use `debugger` subagent to analyze root causes
-- Use `/scout:ext` to find related files
+- Use `/scout-ext` to find related files
 - Categorize issues by scope/area (frontend, backend, auth, payments, etc.)
 - Identify dependencies between issues
 
 ### 2. Parallel Fix Planning
 
-- Trigger `/plan:parallel <detailed-fix-instructions>` for parallel-executable fix plan
+- Trigger `/plan-hard --parallel <detailed-fix-instructions>` for parallel-executable fix plan
 - Wait for plan with dependency graph, execution strategy, file ownership matrix
 - Group independent fixes for parallel execution
 - Sequential fixes for dependent issues

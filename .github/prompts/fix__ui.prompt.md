@@ -30,7 +30,7 @@ If the user provides a screenshots or videos, use `ai-multimodal` skill to descr
 
 - If the issues are not addressed, repeat the process until all issues are addressed.
 
-3. Use `chrome-devtools` skill to analyze the implemented fix and make sure it matches the design guideline.
+3. Use `test-ui` skill to analyze the implemented fix and make sure it matches the design guideline.
 4. Use `tester` agent to test the fix and compile the code to make sure it works, then report back to main agent.
 
 - If there are issues or failed tests, ask main agent to fix all of them and repeat the process until all tests pass.

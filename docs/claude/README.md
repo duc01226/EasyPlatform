@@ -6,17 +6,17 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 
 ## Documentation Structure
 
-| Document                                                   | Description                                                | When to Use                                         |
-| ---------------------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------------- |
-| [claude-kit-setup.md](./claude-kit-setup.md)               | ACE learning system, hooks, skills, agents, workflows      | Understanding Claude Code setup in this project     |
-| [architecture.md](./architecture.md)                       | System architecture, file locations, planning protocol     | Starting new tasks, understanding project structure |
-| [troubleshooting.md](./troubleshooting.md)                 | Investigation protocol, common issues and solutions        | Debugging, when stuck or encountering errors        |
-| [backend-patterns.md](./backend-patterns.md)               | CQRS, Repository, Entity, DTO, Message Bus, Jobs           | Backend development tasks                           |
-| [frontend-patterns.md](./frontend-patterns.md)             | Components, Forms, Stores, API Services, platform-core     | Frontend development tasks                          |
-| [authorization-patterns.md](./authorization-patterns.md)   | Security, authentication, and migration patterns           | Security implementations                            |
-| [decision-trees.md](./decision-trees.md)                   | Quick decision guides and templates                        | Choosing implementation approach                    |
-| [advanced-patterns.md](./advanced-patterns.md)             | Advanced fluent helpers, expression composition, utilities | Complex implementations                             |
-| [clean-code-rules.md](./clean-code-rules.md)               | Universal coding standards                                 | Code quality, best practices                        |
+| Document                                                     | Description                                                | When to Use                                         |
+| ------------------------------------------------------------ | ---------------------------------------------------------- | --------------------------------------------------- |
+| [claude-kit-setup.md](./claude-kit-setup.md)                 | ACE learning system, hooks, skills, agents, workflows      | Understanding Claude Code setup in this project     |
+| [architecture.md](./architecture.md)                         | System architecture, file locations, planning protocol     | Starting new tasks, understanding project structure |
+| [troubleshooting.md](./troubleshooting.md)                   | Investigation protocol, common issues and solutions        | Debugging, when stuck or encountering errors        |
+| [backend-patterns.md](./backend-patterns.md)                 | CQRS, Repository, Entity, DTO, Message Bus, Jobs           | Backend development tasks                           |
+| [frontend-patterns.md](./frontend-patterns.md)               | Components, Forms, Stores, API Services, platform-core     | Frontend development tasks                          |
+| [authorization-patterns.md](./authorization-patterns.md)     | Security, authentication, and migration patterns           | Security implementations                            |
+| [decision-trees.md](./decision-trees.md)                     | Quick decision guides and templates                        | Choosing implementation approach                    |
+| [advanced-patterns.md](./advanced-patterns.md)               | Advanced fluent helpers, expression composition, utilities | Complex implementations                             |
+| [clean-code-rules.md](./clean-code-rules.md)                 | Universal coding standards                                 | Code quality, best practices                        |
 | [team-collaboration-guide.md](./team-collaboration-guide.md) | Team roles, commands, workflows, artifact management       | Team collaboration, PBI/design workflows            |
 
 ## Quick Navigation
@@ -63,7 +63,7 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 - **[Code Review Rules](../code-review-rules.md)**: Project-specific review checklist (auto-injected)
 - **.ai/docs/prompt-context.md**: Solution planning guidance
 - **../architecture-overview.md**: System architecture & diagrams
-- **.github/AI-DEBUGGING-PROTOCOL.md**: Debugging protocol
+- **.ai/docs/AI-DEBUGGING-PROTOCOL.md**: Debugging protocol
 
 ## Usage Tips
 

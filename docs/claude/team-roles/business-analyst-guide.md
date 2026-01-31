@@ -8,10 +8,10 @@
 
 ```bash
 # Refine an idea into a PBI
-/refine team-artifacts/ideas/260119-po-idea-dark-mode.md
+/team-refine team-artifacts/ideas/260119-po-idea-dark-mode.md
 
 # Create user stories from PBI
-/story team-artifacts/pbis/260119-ba-pbi-dark-mode.md
+/team-story team-artifacts/pbis/260119-ba-pbi-dark-mode.md
 ```
 
 **Output Location:** `team-artifacts/pbis/`
@@ -26,9 +26,9 @@
 │                  REQUIREMENTS WORKFLOW                       │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│   PO ──/idea──> [YOU] ──/refine──> PBI ──> Dev              │
+│   PO ──/idea──> [YOU] ──/team-refine──> PBI ──> Dev              │
 │                   │                                          │
-│                   └──/story──> User Stories ──> QA          │
+│                   └──/team-story──> User Stories ──> QA          │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -37,8 +37,8 @@
 
 | Task | Command | Output |
 |------|---------|--------|
-| Refine ideas to PBIs | `/refine` | `team-artifacts/pbis/*.md` |
-| Write user stories | `/story` | `team-artifacts/pbis/stories/*.md` |
+| Refine ideas to PBIs | `/team-refine` | `team-artifacts/pbis/*.md` |
+| Write user stories | `/team-story` | `team-artifacts/pbis/stories/*.md` |
 | Define acceptance criteria | Manual | GIVEN/WHEN/THEN format |
 | Gap analysis | Research | Requirements gaps identified |
 
@@ -46,7 +46,7 @@
 
 ## Commands
 
-### `/refine` - Refine Idea to PBI
+### `/team-refine` - Refine Idea to PBI
 
 **Purpose:** Transform raw ideas into structured Product Backlog Items with acceptance criteria.
 
@@ -54,13 +54,13 @@
 
 ```bash
 # Refine from idea file
-/refine team-artifacts/ideas/260119-po-idea-biometric-auth.md
+/team-refine team-artifacts/ideas/260119-po-idea-biometric-auth.md
 
 # Refine with stakeholder context
-/refine IDEA-260119-001 --stakeholders "Mobile team, Security team"
+/team-refine IDEA-260119-001 --stakeholders "Mobile team, Security team"
 
 # Refine as bug type
-/refine --type bug team-artifacts/ideas/260119-po-idea-login-bug.md
+/team-refine --type bug team-artifacts/ideas/260119-po-idea-login-bug.md
 ```
 
 #### What Claude Generates
@@ -111,7 +111,7 @@ Brief description of the feature.
 
 ---
 
-### `/story` - Create User Stories
+### `/team-story` - Create User Stories
 
 **Purpose:** Break down PBIs into detailed user stories with scenarios.
 
@@ -119,13 +119,13 @@ Brief description of the feature.
 
 ```bash
 # Create stories from PBI
-/story team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
+/team-story team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
 
 # Create stories for specific personas
-/story PBI-260119-001 --personas "mobile-user,admin,security-officer"
+/team-story PBI-260119-001 --personas "mobile-user,admin,security-officer"
 
 # Create epic-level stories
-/story PBI-260119-001 --level epic
+/team-story PBI-260119-001 --level epic
 ```
 
 #### What Claude Generates
@@ -263,7 +263,7 @@ Every user story must meet INVEST:
 
 ```bash
 # Claude can validate INVEST criteria
-/story PBI-260119-001 --validate-invest
+/team-story PBI-260119-001 --validate-invest
 
 # Output:
 # ✓ Independent - No blocking dependencies
@@ -370,7 +370,7 @@ Products with special characters (é, ñ, ü) in names don't appear in search re
 
 ```bash
 # Compare idea to PBI for gaps
-/refine IDEA-260119-001 --gap-analysis
+/team-refine IDEA-260119-001 --gap-analysis
 
 # Output:
 ## Gap Analysis: IDEA-260119-001 → PBI-260119-001
@@ -393,7 +393,7 @@ Products with special characters (é, ñ, ü) in names don't appear in search re
 
 ### Gap Analysis with Business Documentation
 
-The `/refine` command now automatically searches `docs/business-features/{Module}/` to enhance gap analysis:
+The `/team-refine` command now automatically searches `docs/business-features/{Module}/` to enhance gap analysis:
 
 1. **Similar Features** - Searches `detailed-features/*.md` by keyword
    - Finds existing features related to the idea
@@ -428,7 +428,7 @@ The `/refine` command now automatically searches `docs/business-features/{Module
 |---------|------|
 | Feature Index | `docs/business-features/{Module}/INDEX.md` |
 | Requirements | `docs/business-features/{Module}/README.md` |
-| Test Specs | `docs/test-specs/{Module}/README.md` |
+| Test Specs | `docs/team-test-specs/{Module}/README.md` |
 | Detailed Features | `docs/business-features/{Module}/detailed-features/` |
 
 ---
@@ -461,7 +461,7 @@ The `/refine` command now automatically searches `docs/business-features/{Module
 # In PBI file, set: status: ready-for-qa
 
 # QA picks up with
-/test-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
+/team-test-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
 ```
 
 ### → To Development Team
@@ -579,13 +579,13 @@ status: {draft|ready|done}
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │  REFINE IDEAS                                                │
-│  /refine team-artifacts/ideas/IDEA-XXX.md                    │
-│  /refine IDEA-XXX --stakeholders "team1, team2"              │
-│  /refine --type bug IDEA-XXX                                 │
+│  /team-refine team-artifacts/ideas/IDEA-XXX.md                    │
+│  /team-refine IDEA-XXX --stakeholders "team1, team2"              │
+│  /team-refine --type bug IDEA-XXX                                 │
 │                                                              │
 │  CREATE STORIES                                              │
-│  /story team-artifacts/pbis/PBI-XXX.md                       │
-│  /story PBI-XXX --personas "user,admin"                      │
+│  /team-story team-artifacts/pbis/PBI-XXX.md                       │
+│  /team-story PBI-XXX --personas "user,admin"                      │
 │                                                              │
 │  ACCEPTANCE CRITERIA FORMAT                                  │
 │  GIVEN [precondition]                                        │

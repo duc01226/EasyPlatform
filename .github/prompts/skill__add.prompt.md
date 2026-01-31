@@ -4,7 +4,7 @@ argument-hint: [skill-name] [reference-or-script-prompt]
 ---
 
 Think harder.
-Use `skill-creator` and `claude-code` skills.
+Use `skill-plan` and `claude-code` skills.
 Use `docs-seeker` skills to search for documentation if needed.
 
 ## Arguments

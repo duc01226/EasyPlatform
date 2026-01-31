@@ -584,15 +584,15 @@ function Install-NodeDeps {
     # Install local npm packages for skills
     Write-Info "Installing local npm packages for skills..."
 
-    # chrome-devtools
-    $chromeDevToolsPath = Join-Path $ScriptDir "chrome-devtools\scripts"
-    $chromePackageJson = Join-Path $chromeDevToolsPath "package.json"
-    if ((Test-Path $chromeDevToolsPath) -and (Test-Path $chromePackageJson)) {
-        Write-Info "Installing chrome-devtools dependencies..."
-        Push-Location $chromeDevToolsPath
+    # test-ui (browser automation via Puppeteer)
+    $testUiPath = Join-Path $ScriptDir "test-ui\scripts"
+    $testUiPackageJson = Join-Path $testUiPath "package.json"
+    if ((Test-Path $testUiPath) -and (Test-Path $testUiPackageJson)) {
+        Write-Info "Installing test-ui dependencies..."
+        Push-Location $testUiPath
         npm install --quiet
         Pop-Location
-        Write-Success "chrome-devtools dependencies installed"
+        Write-Success "test-ui dependencies installed"
     }
 
     # sequential-thinking
@@ -628,15 +628,15 @@ function Install-NodeDeps {
         Write-Success "markdown-novel-viewer dependencies installed"
     }
 
-    # plans-kanban (gray-matter)
-    $plansKanbanPath = Join-Path $ScriptDir "plans-kanban"
-    $plansKanbanPackageJson = Join-Path $plansKanbanPath "package.json"
-    if ((Test-Path $plansKanbanPath) -and (Test-Path $plansKanbanPackageJson)) {
-        Write-Info "Installing plans-kanban dependencies..."
-        Push-Location $plansKanbanPath
+    # kanban (gray-matter)
+    $kanbanPath = Join-Path $ScriptDir "kanban"
+    $kanbanPackageJson = Join-Path $kanbanPath "package.json"
+    if ((Test-Path $kanbanPath) -and (Test-Path $kanbanPackageJson)) {
+        Write-Info "Installing kanban dependencies..."
+        Push-Location $kanbanPath
         npm install --quiet
         Pop-Location
-        Write-Success "plans-kanban dependencies installed"
+        Write-Success "kanban dependencies installed"
     }
 
     # Optional: Shopify CLI (ask user unless auto-confirming)
