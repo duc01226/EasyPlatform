@@ -671,7 +671,7 @@ The system uses **hooks** (JavaScript scripts), **configuration files** (JSON), 
 │                                   ┌───────────────────────▼────────────────┐│
 │                                   │     Inject Instructions to LLM         ││
 │                                   │  "Detected: Feature Implementation"   ││
-│                                   │  "Following: /plan → /plan-review..."││
+│                                   │  "Following: /plan → /plan-validate → /plan-review..."││
 │                                   └───────────────────────┬────────────────┘│
 │                                                           │                  │
 │  ┌───────────────────────────────────────────────────────▼─────────────────┐│
@@ -706,7 +706,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
         "\\bnew\\s+(feature|functionality|capability)\\b"
       ],
       "excludePatterns": ["\\b(fix|bug|error|broken|issue)\\b"],
-      "sequence": ["plan", "plan-review", "cook", "code-simplifier", "code-review", "test", "docs-update", "watzup"],
+      "sequence": ["plan", "plan-validate", "plan-review", "cook", "code-simplifier", "code-review", "test", "docs-update", "watzup"],
       "confirmFirst": true,
       "priority": 10
     },
@@ -714,7 +714,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
       "name": "Bug Fix",
       "triggerPatterns": ["\\b(bug|fix|broken|issue|crash|fail|exception)\\b"],
       "excludePatterns": ["\\b(implement|add|create|build)\\s+new\\b"],
-      "sequence": ["scout", "investigate", "debug", "plan", "plan-review", "fix", "code-simplifier", "code-review", "test"],
+      "sequence": ["scout", "investigate", "debug", "plan", "plan-validate", "plan-review", "fix", "code-simplifier", "code-review", "test"],
       "confirmFirst": false,
       "priority": 20
     }
@@ -733,9 +733,9 @@ Defines all workflow types, their trigger patterns, and step sequences:
 
 | Workflow      | Priority | Sequence | Use Case |
 |---------------|----------|----------|----------|
-| Feature       | 10       | /plan → /plan-review → /cook → /simplify → /review → /test → /docs → /watzup | New functionality |
-| Bugfix        | 20       | /scout → /investigate → /debug → /plan → /plan-review → /fix → /simplify → /review → /test | Error fixes |
-| Refactor      | 25       | /plan → /plan-review → /code → /simplify → /review → /test | Code improvement |
+| Feature       | 10       | /plan → /plan-validate → /plan-review → /cook → /simplify → /review → /test → /docs → /watzup | New functionality |
+| Bugfix        | 20       | /scout → /investigate → /debug → /plan → /plan-validate → /plan-review → /fix → /simplify → /review → /test | Error fixes |
+| Refactor      | 25       | /plan → /plan-validate → /plan-review → /code → /simplify → /review → /test | Code improvement |
 | Documentation | 30       | /scout → /investigate → /docs-update → /watzup | Doc updates |
 | Review        | 35       | /code-review → /watzup | Code review |
 | Testing       | 40       | /test | Test creation |
@@ -830,7 +830,7 @@ For long-running workflows, the system includes **state persistence** to prevent
 {
   "workflowId": "bugfix",
   "workflowName": "Bug Fix",
-  "sequence": ["scout", "investigate", "debug", "plan", "plan-review", "fix", "code-simplifier", "code-review", "test"],
+  "sequence": ["scout", "investigate", "debug", "plan", "plan-validate", "plan-review", "fix", "code-simplifier", "code-review", "test"],
   "currentStep": 0,
   "completedSteps": [],
   "startTime": "2026-01-07T15:23:34.000Z",
@@ -947,7 +947,7 @@ Add a dark mode toggle to the settings page
 ## Workflow Detected
 
 **Intent:** Feature Implementation (100% confidence)
-**Workflow:** /plan → /plan-review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
+**Workflow:** /plan → /plan-validate → /plan-review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
 
 ### Instructions (MUST FOLLOW)
 1. Announce detected workflow to user
@@ -959,10 +959,11 @@ Add a dark mode toggle to the settings page
 **Phase 3: LLM Response**
 ```
 > Detected: **Feature Implementation** workflow.
-> I will follow: /plan → /plan-review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
+> I will follow: /plan → /plan-validate → /plan-review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
 
 [Creates todo list:]
 - [ ] Execute /plan - Create implementation plan
+- [ ] Execute /plan-validate - Validate plan with critical questions
 - [ ] Execute /plan-review - Self-review plan
 - [ ] Execute /cook - Implement feature
 - [ ] Execute /code-simplifier - Simplify code
@@ -976,13 +977,14 @@ Proceed with this workflow? (yes/no/quick)
 User: "yes"
 
 Step 1: Claude calls Skill("plan") → Creates plan → ✓
-Step 2: Claude calls Skill("plan-review") → Self-reviews plan → ✓
-Step 3: Claude calls Skill("cook") → Implements feature → ✓
-Step 4: Claude calls Skill("code-simplifier") → Simplifies code → ✓
-Step 5: Claude calls Skill("code-review") → Reviews changes → ✓
-Step 6: Claude calls Skill("test") → Runs tests → ✓
-Step 7: Claude calls Skill("docs-update") → Updates docs → ✓
-Step 8: Claude calls Skill("watzup") → Summarizes → ✓
+Step 2: Claude calls Skill("plan-validate") → Validates plan → ✓
+Step 3: Claude calls Skill("plan-review") → Self-reviews plan → ✓
+Step 4: Claude calls Skill("cook") → Implements feature → ✓
+Step 5: Claude calls Skill("code-simplifier") → Simplifies code → ✓
+Step 6: Claude calls Skill("code-review") → Reviews changes → ✓
+Step 7: Claude calls Skill("test") → Runs tests → ✓
+Step 8: Claude calls Skill("docs-update") → Updates docs → ✓
+Step 9: Claude calls Skill("watzup") → Summarizes → ✓
 ```
 
 ### Troubleshooting
@@ -1629,7 +1631,7 @@ User submits: "Add a dark mode toggle to the settings page"
 │    createState({                                                             │
 │      workflowId: "feature",                                                  │
 │      workflowName: "Feature Implementation",                                 │
-│      sequence: ["plan", "plan-review", "cook", "code-simplifier", "code-review", "test"],                     │
+│      sequence: ["plan", "plan-validate", "plan-review", "cook", "code-simplifier", "code-review", "test"],                     │
 │      originalPrompt: "Add a dark mode toggle..."                            │
 │    })                                                                        │
 │    → Saves to .claude/memory/.workflow-state.json                           │
@@ -1637,7 +1639,7 @@ User submits: "Add a dark mode toggle to the settings page"
 │ 6. Generate instructions output:                                             │
 │    "## Workflow Detected                                                     │
 │    **Intent:** Feature Implementation (100% confidence)                      │
-│    **Workflow:** /plan → /plan-review → /cook → /simplify...                │
+│    **Workflow:** /plan → /plan-validate → /plan-review → /cook → /simplify...                │
 │                                                                              │
 │    ### Instructions (MUST FOLLOW)                                            │
 │    1. ANNOUNCE: Tell the user...                                             │
@@ -2057,12 +2059,12 @@ PHASE 1: DETECTION & ROUTING
 │   Input: "Add a dark mode toggle..."                                         │
 │   Pattern match: "add" → triggers: ["\\b(implement|add|create)\\b"]         │
 │   Detected: Feature Implementation (100% confidence)                         │
-│   Workflow: plan → plan-review → cook → code-simplifier → code-review → test│
+│   Workflow: plan → plan-validate → plan-review → cook → code-simplifier → code-review → test│
 │                                                                              │
 │ Output:                                                                      │
 │   "## Workflow Detected                                                      │
 │    **Intent:** Feature Implementation                                        │
-│    **Workflow:** /plan → /plan-review → /cook → /simplify → /review → /test"│
+│    **Workflow:** /plan → /plan-validate → /plan-review → /cook → /simplify → /review → /test"│
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -2216,7 +2218,7 @@ PHASE 1: DETECTION & SESSION INJECT
 │ workflow-router.cjs:                                                         │
 │   Pattern match: "fix", "error" → triggers: ["\\b(bug|fix|error)\\b"]       │
 │   Detected: Bug Fix (100% confidence)                                        │
-│   Workflow: scout → investigate → debug → plan → fix → test                 │
+│   Workflow: scout → investigate → debug → plan → plan-validate → plan-review → fix → test                 │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ═══════════════════════════════════════════════════════════════════════════════

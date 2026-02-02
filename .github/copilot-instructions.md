@@ -930,6 +930,66 @@ Each file contains critical rules inline + references to full pattern files in `
 
 ---
 
+## Complete Workflow Catalog (WITH SEQUENCES)
+
+> **This section documents ALL workflow sequences with the standardized `plan → plan-validate → plan-review` pattern.**
+
+### Implementation Workflows
+
+| Workflow ID         | Name                              | Sequence                                                                                                                                                | Confirm? |
+| ------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `feature`           | Feature Implementation            | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/cook` → `/code-simplifier` → `/review-codebase` → `/changelog-update` → `/test` → `/docs-update` → `/watzup` | Yes      |
+| `bugfix`            | Bug Fix                           | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan-validate` → `/plan-review` → `/fix` → `/code-simplifier` → `/review-codebase` → `/changelog-update` → `/test` → `/watzup` | No       |
+| `refactor`          | Code Refactoring                  | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/code-simplifier` → `/review-codebase` → `/test` → `/watzup`                     | Yes      |
+| `migration`         | Database Migration                | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
+| `batch-operation`   | Batch Operation                   | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/review-codebase` → `/test` → `/watzup`                                           | Yes      |
+| `deployment`        | Deployment & Infrastructure       | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
+| `performance`       | Performance Optimization          | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
+
+### Review & Audit Workflows
+
+| Workflow ID      | Name                        | Sequence                                                                                                                       | Confirm? |
+| ---------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| `review`         | Code Review                 | `/review-codebase` → `/watzup`                                                                                                 | No       |
+| `review-changes` | Review Current Changes      | `/scout` → `/investigate` → `/review-codebase` → `/watzup`                                                                     | No       |
+| `quality-audit`  | Quality Audit               | `/review-codebase` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/review-codebase` → `/test` → `/watzup`        | Yes      |
+| `security-audit` | Security Audit              | `/scout` → `/investigate` → `/watzup`                                                                                          | No       |
+| `verification`   | Verification & Validation   | `/scout` → `/investigate` → `/test` → `/plan` → `/plan-validate` → `/plan-review` → `/fix` → `/review` → `/watzup`           | Yes      |
+
+### Investigation & Documentation Workflows
+
+| Workflow ID              | Name                            | Sequence                                                                                                                              | Confirm? |
+| ------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| `investigation`          | Code Investigation              | `/scout` → `/investigate`                                                                                                             | No       |
+| `documentation`          | Documentation Update            | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/docs-update` → `/watzup`                                 | No       |
+| `business-feature-docs`  | Business Feature Documentation  | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/docs-update` → `/team-test-spec` → `/team-test-cases` → `/watzup` | No       |
+
+### Product & Planning Workflows
+
+| Workflow ID       | Name                      | Sequence                                                                           | Confirm? |
+| ----------------- | ------------------------- | ---------------------------------------------------------------------------------- | -------- |
+| `idea-to-pbi`     | Idea to PBI               | `/team-idea` → `/team-refine` → `/team-story` → `/team-prioritize` → `/watzup`    | Yes      |
+| `pbi-to-tests`    | PBI to Tests              | `/team-test-spec` → `/team-test-cases` → `/team-quality-gate` → `/watzup`         | No       |
+| `sprint-planning` | Sprint Planning Session   | `/team-prioritize` → `/team-dependency` → `/team-team-sync`                        | Yes      |
+| `pm-reporting`    | PM Reporting              | `/team-status` → `/team-dependency`                                                | No       |
+| `release-prep`    | Release Preparation       | `/review-changes` → `/test` → `/team-quality-gate` → `/team-status`                | Yes      |
+| `design-workflow` | Design Workflow           | `/team-design-spec` → `/review-codebase` → `/watzup`                               | No       |
+| `pre-development` | Pre-Development Setup     | `/team-quality-gate` → `/plan` → `/plan-validate` → `/plan-review`                | No       |
+
+### Key Observations
+
+**All planning workflows now follow the standardized pattern:**
+```
+... → /plan → /plan-validate → /plan-review → ...
+```
+
+**This ensures:**
+- Every plan is validated with critical questions before review
+- Assumptions and risks are surfaced early
+- Plan quality is verified before implementation begins
+
+---
+
 ## MANDATORY: Workflow & Task Planning (READ THIS)
 
 > **This section is intentionally placed at the end for maximum AI attention.** AI models attend most to the start and end of long prompts.
