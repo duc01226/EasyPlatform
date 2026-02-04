@@ -200,6 +200,7 @@ Each workflow step executes a prompt file from `.github/prompts/`:
 | `/watzup`          | `watzup.prompt.md`          | Summarize changes          |
 | `/scout`           | `scout.prompt.md`           | Explore codebase           |
 | `/investigate`     | `investigate.prompt.md`     | Deep dive analysis         |
+| `/investigate-removal` | `.claude/skills/investigate-removal/` | 6-phase validation for code removal |
 
 ### General Developer Prompts
 
@@ -613,7 +614,32 @@ When debugging or analyzing code removal, follow [AI-DEBUGGING-PROTOCOL.md](AI-D
 - Verify with multiple search patterns
 - Check both static AND dynamic code usage
 - Read actual implementations, not just interfaces
-- Declare confidence level (<90% = ask user)
+- Complete 6-phase validation for architectural changes
+- Declare confidence level (90%+ for HIGH risk removal)
+
+### 6-Phase Architectural Validation (MANDATORY for Code Removal)
+
+**Use when:** Considering removal of classes, registrations, methods, or architectural changes.
+
+| Phase | Action | Evidence Required |
+|-------|--------|-------------------|
+| 1. Static Analysis | Grep searches for all references | File paths + line numbers |
+| 2. Dynamic Analysis | Trace injection → usage → callers | Complete usage chain |
+| 3. Cross-Module Check | Search Platform/Backend/Frontend | Per-module usage summary |
+| 4. Test Coverage | Find affected tests | Test files that would break |
+| 5. Impact Assessment | What breaks if removed? | Dependent code paths with file:line |
+| 6. Confidence Calculation | Evidence completeness score | 90%+ for removal, 80%+ for refactor |
+
+**Confidence Requirements:**
+- **HIGH risk** (removal): 90%+ required
+- **MEDIUM risk** (refactor): 80%+ acceptable
+- **LOW risk** (rename): 70%+ acceptable
+
+**Rule:** <90% confidence for removal → Run `/investigate-removal` skill first
+
+**Workflow Safeguards:**
+- Bugfix workflow: "CHECKPOINT: If considering code removal, run /investigate-removal first"
+- Refactor workflow: "CHECKPOINT: If removing code, run /investigate-removal first"
 
 ### Quick Verification Checklist
 
@@ -624,7 +650,9 @@ Before removing/changing ANY code:
 - [ ] Checked dynamic invocations?
 - [ ] Read actual implementations?
 - [ ] Traced dependencies?
-- [ ] Declared confidence level?
+- [ ] Completed 6-phase validation?
+- [ ] Declared confidence level ≥90%?
+- [ ] OR run `/investigate-removal` skill?
 
 ---
 

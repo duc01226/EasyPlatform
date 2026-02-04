@@ -95,3 +95,105 @@ Component → Store.effect → ApiService → Backend API
 - **NEVER** assume a method is unused without checking dynamic dispatch
 - **NEVER** fix symptoms without finding root cause
 - **NEVER** apply broad changes when targeted fix suffices
+
+---
+
+## 6-Phase Architectural Validation (Code Removal)
+
+**MANDATORY when considering code removal during bug fixes. See [AI-DEBUGGING-PROTOCOL.md](.ai/docs/AI-DEBUGGING-PROTOCOL.md) for complete protocol.**
+
+**Quick Decision:**
+
+- Considering code removal? → Run `/investigate-removal` skill first
+- Already have evidence? → Declare confidence level (90%+ required for HIGH risk)
+
+### Validation Chain (Required for Removal Recommendations)
+
+```
+Phase 1: Static Analysis
+    ↓ Find ALL references (grep searches)
+Phase 2: Dynamic Analysis
+    ↓ Trace injection → usage → callers
+Phase 3: Cross-Module Check
+    ↓ Search Platform/Backend/Frontend modules
+Phase 4: Test Coverage
+    ↓ Identify affected tests
+Phase 5: Impact Assessment
+    ↓ What breaks if removed?
+Phase 6: Confidence Calculation
+    ↓ Evidence completeness score
+ONLY THEN → Recommend removal
+```
+
+### Evidence Requirements
+
+| Evidence Type      | Required       | How to Get                                               |
+| ------------------ | -------------- | -------------------------------------------------------- |
+| Static references  | ✅             | `grep -r "TargetName" --include="*.cs" --include="*.ts"` |
+| Dynamic usage      | ✅             | Read files, trace call chain with file:line              |
+| Cross-module check | ✅             | Search Platform/Backend/Frontend separately              |
+| Test coverage      | ✅ (HIGH risk) | Find tests that would break                              |
+| Impact analysis    | ✅ (HIGH risk) | List dependent code paths                                |
+| Confidence level   | ✅             | Declare percentage with evidence summary                 |
+
+### Confidence Thresholds
+
+| Risk Level            | Confidence Required | Example                                   |
+| --------------------- | ------------------- | ----------------------------------------- |
+| **HIGH** (removal)    | **90%+**            | Removing classes, registrations, methods  |
+| **MEDIUM** (refactor) | **80%+**            | Changing method signatures, restructuring |
+| **LOW** (rename)      | **70%+**            | Variable renames, formatting              |
+
+**Rule:** <90% confidence for removal → Run `/investigate-removal` or gather more evidence
+
+### Breaking Change Risk Matrix
+
+| Risk       | Criteria                                        | Required Actions                              |
+| ---------- | ----------------------------------------------- | --------------------------------------------- |
+| **HIGH**   | Remove registrations, delete classes/interfaces | Complete 6-phase validation + impact analysis |
+| **MEDIUM** | Refactor methods, change signatures             | Usage trace + test verification               |
+| **LOW**    | Rename variables, code formatting               | Code review only                              |
+
+### Workflow Safeguards
+
+When working within active workflows, checkpoints will remind you:
+
+- **Bugfix workflow:** "CHECKPOINT: If considering code removal, run /investigate-removal first"
+- **Refactor workflow:** "CHECKPOINT: If removing code, run /investigate-removal first"
+
+### EasyPlatform-Specific Searches
+
+**Backend (C#):**
+
+```bash
+# Repository patterns
+grep -r "IPlatformQueryableRootRepository<.*>" --include="*.cs"
+
+# CQRS registrations
+grep -r "AddScoped.*Handler|AddTransient.*Handler" --include="*.cs"
+
+# Entity event handlers
+grep -r "PlatformApplicationDomainEventHandler" --include="*.cs"
+```
+
+**Frontend (TypeScript):**
+
+```bash
+# Component hierarchy
+grep -r "extends.*AppBase.*Component" --include="*.ts"
+
+# Store patterns
+grep -r "PlatformVmStore" --include="*.ts"
+
+# API services
+grep -r "extends PlatformApiService" --include="*.ts"
+```
+
+### Quick Reference
+
+**Before recommending removal:**
+
+1. Complete 6-phase validation OR run `/investigate-removal`
+2. Declare confidence ≥90% with evidence
+3. Document what breaks if removed
+4. Reference file:line for all claims

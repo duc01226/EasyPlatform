@@ -123,8 +123,7 @@ Create file at: `docs/release-notes/YYMMDD-<feature-slug>.md`
 
 ## Related Documentation
 
-- [Feature Documentation](../business-features/...)
-- [API Reference](../api/...)
+- [Feature Documentation](docs/business-features/**)
 
 ## Contributors
 

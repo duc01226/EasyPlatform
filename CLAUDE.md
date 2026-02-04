@@ -308,7 +308,7 @@ Need frontend feature?
 | [Architecture Overview](docs/architecture-overview.md)                  | System architecture & diagrams   |
 | **[Business Features](docs/BUSINESS-FEATURES.md)**                      | **Module docs, features, APIs**  |
 | [Code Review Rules](docs/code-review-rules.md)                          | Review checklist (auto-injected) |
-| [.ai/docs/AI-DEBUGGING-PROTOCOL.md](.ai/docs/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging protocol     |
+| [.ai/docs/AI-DEBUGGING-PROTOCOL.md](.ai/docs/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging & investigation protocol (includes 6-phase architectural validation) |
 | [.claude/hooks/tests/](.claude/hooks/tests/)                            | Claude hooks test infrastructure |
 
 > **Claude Hooks Development:** Check existing tests in `.claude/hooks/tests/` before adding new ones. Use `test-utils.cjs`, `hook-runner.cjs` and patterns in `suites/`.

@@ -149,7 +149,7 @@
             "enableCheckpoints": true,
             "name": "Bug Fix",
             "preActions": {
-                "injectContext": "BUG FIX PROTOCOL:\n1. Reproduce the issue — identify exact trigger conditions\n2. Trace root cause through code, not symptoms\n3. Verify fix doesn't break related functionality\n4. Add regression test covering the fixed scenario\n5. Update changelog with user-facing description\n- Guardrail: Fix root cause, not symptom\n- Guardrail: Minimal change scope — avoid refactoring during bug fix"
+                "injectContext": "BUG FIX PROTOCOL:\n1. Reproduce the issue — identify exact trigger conditions\n2. Trace root cause through code, not symptoms\n3. CHECKPOINT: If considering code removal, run /investigate-removal first\n4. Verify fix doesn't break related functionality\n5. Add regression test covering the fixed scenario\n6. Update changelog with user-facing description\n- Guardrail: Fix root cause, not symptom\n- Guardrail: Minimal change scope — avoid refactoring during bug fix"
             },
             "sequence": ["scout", "investigate", "debug", "plan", "plan-validate", "plan-review", "fix", "code-simplifier", "code-review", "changelog-update", "test", "watzup"],
             "whenNotToUse": "User wants new features, refactoring, documentation, or investigation without fixing.",
@@ -327,7 +327,7 @@
             "enableCheckpoints": true,
             "name": "Code Refactoring",
             "preActions": {
-                "injectContext": "REFACTORING PROTOCOL:\n1. Define refactoring scope and expected outcomes\n2. Verify all tests pass BEFORE refactoring\n3. Apply incremental changes — one concern at a time\n4. Verify tests pass AFTER each change\n5. No behavior changes — same inputs produce same outputs\n- Guardrail: Never change behavior during refactoring\n- Guardrail: Follow platform hierarchy (Entity > Service > Component)"
+                "injectContext": "REFACTORING PROTOCOL:\n1. Define refactoring scope and expected outcomes\n2. CHECKPOINT: If removing code, run /investigate-removal first\n3. Verify all tests pass BEFORE refactoring\n4. Apply incremental changes — one concern at a time\n5. Verify tests pass AFTER each change\n6. No behavior changes — same inputs produce same outputs\n- Guardrail: Never change behavior during refactoring\n- Guardrail: Follow platform hierarchy (Entity > Service > Component)"
             },
             "sequence": ["scout", "plan", "plan-validate", "plan-review", "code", "code-simplifier", "code-review", "test", "watzup"],
             "whenNotToUse": "Bug fixes, new features, quality audits.",
