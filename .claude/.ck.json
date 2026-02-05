@@ -14,7 +14,7 @@
         "Frontend: All template elements must have BEM classes (block__element --modifier)",
         "Architecture: Search for existing implementations before creating new code",
         "Architecture: Place logic in LOWEST layer (Entity > Service > Component) to enable reuse",
-        "Architecture: Plan before implementing non-trivial tasks - use EnterPlanMode"
+        "Architecture: Plan before implementing non-trivial tasks"
     ],
     "codeReview": {
         "enabled": true,
