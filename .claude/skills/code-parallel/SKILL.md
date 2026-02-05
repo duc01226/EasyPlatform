@@ -8,8 +8,11 @@ infer: true
 Execute plan: <plan>$ARGUMENTS</plan>
 
 **⚠️ MUST READ before implementation:**
+- `.claude/skills/shared/anti-hallucination-protocol.md` — Assumption validation, evidence chains, context anchoring
 - `.ai/docs/backend-code-patterns.md` — Backend code patterns
 - `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
+**Core Rule:** Verify every assumption with actual code evidence before making changes. If confidence < 90%, investigate further or ask user.
 
 **IMPORTANT:** Activate needed skills. Ensure token efficiency. Sacrifice grammar for concision.
 

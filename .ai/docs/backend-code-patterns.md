@@ -357,26 +357,69 @@ internal sealed class EntityConsumer : PlatformApplicationMessageBusConsumer<Ent
 ### 15. Data Migration
 
 ```csharp
+// EF Core migration
+public partial class AddEmployeeFields : Migration
+{
+    protected override void Up(MigrationBuilder mb) { mb.AddColumn<string>("Department", "Employees"); }
+}
+// Commands: dotnet ef migrations add Name | dotnet ef database update
+
+// MongoDB/Platform migration (SQL Server/PostgreSQL)
 public class MigrateData : PlatformDataMigrationExecutor<DbContext>
 {
-    public override string Name => "20251022_MigrateData";
+    public override string Name => "20251022000000_MigrateData";
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 22);
     public override bool AllowRunInBackgroundThread => true;
 
-    public override async Task Execute(DbContext db)
+    public override async Task Execute(DbContext dbContext)
     {
-        var qb = repo.GetQueryBuilder(q => q.Where(Filter()));
-        await RootServiceProvider.ExecuteInjectScopedPagingAsync(await repo.CountAsync(q => qb(q)), 200, ExecutePage, qb);
+        await RootServiceProvider.ExecuteInjectScopedPagingAsync(
+            maxItemCount: await repository.CountAsync(q => q.Where(FilterExpr())),
+            pageSize: 200,
+            async (skip, take, repo, uow) => {
+                using var unit = uow.Begin();
+                var items = await repo.GetAllAsync(q => q.OrderBy(e => e.Id).Skip(skip).Take(take));
+                await repo.UpdateManyAsync(items, dismissSendEvent: true, checkDiff: false);
+                await unit.CompleteAsync();
+                return items;
+            });
     }
+}
 
-    static async Task<List<Entity>> ExecutePage(int skip, int take, Func<IQueryable<Entity>, IQueryable<Entity>> qb, IRepo<Entity> r, IPlatformUnitOfWorkManager u)
+// MongoDB migration (simple, NO DI — PlatformMongoMigrationExecutor has NO RootServiceProvider)
+public class MigrateData : PlatformMongoMigrationExecutor<SurveyPlatformMongoDbContext>
+{
+    public override string Name => "20240115_Migrate";
+    public override DateTime? OnlyForDbInitBeforeDate => new DateTime(2024, 01, 15);
+    public override async Task Execute(SurveyPlatformMongoDbContext dbContext) // ← receives dbContext
     {
-        using var uow = u.Begin();
-        var items = await r.GetAllAsync(q => qb(q).OrderBy(e => e.Id).Skip(skip).Take(take));
-        await r.UpdateManyAsync(items, dismissSendEvent: true, checkDiff: false, ct: default);
-        await uow.CompleteAsync();
-        return items;
+        await dbContext.InternalEnsureIndexesAsync(recreate: true); // index recreation
+        // OR: use dbContext.UserCollection for direct MongoDB operations
     }
+}
+
+// MongoDB migration (needs DI / cross-DB) — use PlatformDataMigrationExecutor<MongoDbContext>
+// Works because PlatformMongoDbContext implements IPlatformDbContext, MigrateDataAsync scans assembly
+public class SyncFromAccounts : PlatformDataMigrationExecutor<SurveyPlatformMongoDbContext>
+{
+    private readonly AccountsPlatformDbContext accountsDb; // ← DI works here!
+    public SyncFromAccounts(IPlatformRootServiceProvider root, AccountsPlatformDbContext accountsDb)
+        : base(root) { this.accountsDb = accountsDb; }
+    public override string Name => "20260206_SyncFromAccounts";
+    public override DateTime? OnlyForDbsCreatedBeforeDate => new(2026, 02, 06);
+    public override bool AllowRunInBackgroundThread => true;
+    public override async Task Execute(SurveyPlatformMongoDbContext dbContext) =>
+        await RootServiceProvider.ExecuteInjectScopedPagingAsync(
+            await accountsDb.GetQuery<AccountUserCompanyInfo>().EfCoreCountAsync(), 100,
+            MigratePaging); // static paging method, params: (int skip, int take, <DI-resolved>...)
+}
+
+// Cross-DB migration EF Core to EF Core (first-time setup, use events for ongoing sync)
+public class SyncData : PlatformDataMigrationExecutor<TargetDbContext>
+{
+    public override DateTime? OnlyForDbsCreatedBeforeDate => new(2024, 1, 15);
+    public override async Task Execute(TargetDbContext db) => await targetRepo.CreateManyAsync(
+        (await sourceDbContext.Entities.Where(e => e.CreatedDate < cutoffDate).ToListAsync()).Select(e => e.MapToTargetEntity()));
 }
 ```
 

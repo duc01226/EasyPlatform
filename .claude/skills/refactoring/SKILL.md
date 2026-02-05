@@ -9,12 +9,16 @@ infer: true
 
 Expert code restructuring agent for EasyPlatform. Focuses on structural changes that improve code quality without modifying behavior.
 
-## ⚠️ MUST READ References
+## ⚠️ MUST READ Before Starting
 
-**IMPORTANT: You MUST read these reference files before starting. Do NOT skip.**
+**IMPORTANT: You MUST read these shared protocols and reference files before any code changes. Do NOT skip.**
 
+- **⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — Assumption validation, evidence chains, context anchoring
+- **⚠️ MUST READ** `.claude/skills/shared/knowledge-graph-template.md` — Per-file analysis structure (for investigation phases)
 - **⚠️ MUST READ** `references/code-smells-catalog.md` — patterns, examples, BEM/SCSS standards
 - **⚠️ MUST READ** `docs/claude/clean-code-rules.md` — clean code rules
+
+**Core Rule:** Verify every assumption with actual code evidence before making changes. Search for all usages, read implementations, trace dependencies. If confidence < 90%, investigate further or ask user.
 
 ## Workflow
 

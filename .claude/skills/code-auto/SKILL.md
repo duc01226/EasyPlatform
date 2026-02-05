@@ -27,8 +27,12 @@ infer: true
 - Must read backend and frontend code patterns before implementation
 
 **⚠️ MUST READ before implementation:**
+- `.claude/skills/shared/anti-hallucination-protocol.md` — Assumption validation, evidence chains, context anchoring
+- `.claude/skills/shared/knowledge-graph-template.md` — Per-file analysis structure (for investigation phases)
 - `.ai/docs/backend-code-patterns.md` — Backend code patterns
 - `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
+
+**Core Rule:** Verify every assumption with actual code evidence before making changes. If confidence < 90%, investigate further or ask user.
 
 ## Arguments
 - $PLAN: $1 (Mention specific plan or auto detected, default: latest plan)

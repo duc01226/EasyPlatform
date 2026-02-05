@@ -8,6 +8,10 @@ infer: true
 **MUST READ** `CLAUDE.md` then **THINK HARDER** to start working on the following plan follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <plan>$ARGUMENTS</plan>
 
+## ⚠️ Anti-Hallucination Reminder
+
+**Before modifying ANY code:** Verify assumptions with actual code evidence. Search for usages, read implementations, trace dependencies. If confidence < 90% on any change, investigate first or ask user. See `.claude/skills/shared/anti-hallucination-protocol.md` for full protocol.
+
 ## Summary
 
 **Goal:** Execute an implementation plan without testing phase -- code review and user approval still required.

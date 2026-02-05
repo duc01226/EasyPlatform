@@ -5,6 +5,10 @@ argument-hint: [github-actions-url]
 infer: true
 ---
 
+## ⚠️ Anti-Hallucination Reminder
+
+**Before modifying ANY code:** Verify assumptions with actual code evidence. Search for usages, read implementations, trace dependencies. If confidence < 90% on any change, investigate first or ask user. See `.claude/skills/shared/anti-hallucination-protocol.md` for full protocol.
+
 ## Github Actions URL
 <url>$ARGUMENTS</url>
 

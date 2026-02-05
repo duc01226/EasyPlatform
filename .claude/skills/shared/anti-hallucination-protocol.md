@@ -54,6 +54,40 @@ If confidence is Low on any critical decision, do NOT proceed. Instead: read mor
 
 ---
 
+## EXTERNAL_MEMORY_PERSISTENCE
+
+Investigation and research findings MUST survive context compaction. Persist to external files.
+
+### When to Persist
+
+- **Research/investigation phase:** Write findings to a report file before starting implementation
+- **Subagent results:** When subagents return investigation/research results, persist key findings to file
+- **Knowledge graphs:** Write per-file analysis to report file before starting code changes
+
+### Report File Convention
+
+- **Path:** `plans/reports/investigation-{date}-{slug}.md`
+- **Template:** Use `.claude/skills/shared/knowledge-graph-template.md` for per-file analysis structure
+- **Sections:** `## Metadata` (original task), `## File List`, `## Knowledge Graph`, `## Findings`
+
+### Read-Back Before Implementation
+
+Before modifying ANY code file:
+
+1. Re-read the investigation report to restore context
+2. Load the relevant Knowledge Graph entry for the file being modified
+3. Verify the planned change aligns with investigation findings
+
+### Context Recovery
+
+If context is compacted or lost:
+
+1. Check `plans/reports/` for investigation reports from this session
+2. Re-read the report to restore knowledge
+3. Continue from where you left off using the persisted findings
+
+---
+
 ## Quick Reference Checklist
 
 **Before any major operation:**
@@ -64,11 +98,17 @@ If confidence is Low on any critical decision, do NOT proceed. Instead: read mor
 
 **Every 10 operations:**
 
-- [ ] CONTEXT_ANCHOR_CHECK
+- [ ] CONTEXT_ANCHOR_SYSTEM
 - [ ] Update 'Current Focus' in `## Progress`
+
+**Before implementation:**
+
+- [ ] EXTERNAL_MEMORY_PERSISTENCE — findings written to report file
+- [ ] Read-back from report file before modifying code
 
 **Emergency:**
 
 - **Context Drift** -> Re-read `## Metadata` section
+- **Context Lost** -> Re-read `plans/reports/` investigation reports
 - **Assumption Creep** -> Halt, validate with code
 - **Evidence Gap** -> Mark as "inferred"

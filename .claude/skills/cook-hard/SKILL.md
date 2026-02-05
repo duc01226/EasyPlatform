@@ -10,6 +10,15 @@ infer: true
 
 **Mode:** HARD - Extra research, detailed planning, mandatory reviews.
 
+## ⚠️ MUST READ Before Starting
+
+**IMPORTANT: You MUST read these shared protocols before any code changes. Do NOT skip.**
+
+- **⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — Assumption validation, evidence chains, context anchoring
+- **⚠️ MUST READ** `.claude/skills/shared/knowledge-graph-template.md` — Per-file analysis structure (for investigation phases)
+
+**Core Rule:** Verify every assumption with actual code evidence before making changes. Search for all usages, read implementations, trace dependencies. If confidence < 90%, investigate further or ask user.
+
 ## Workflow
 
 ### 1. Deep Research Phase

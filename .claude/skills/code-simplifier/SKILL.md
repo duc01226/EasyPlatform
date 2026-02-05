@@ -33,6 +33,10 @@ Simplify and refine code for clarity, consistency, and maintainability.
 /code-simplifier --scope=function   # Focus on function-level simplification
 ```
 
+## ⚠️ Anti-Hallucination Reminder
+
+**Before modifying ANY code:** Verify assumptions with actual code evidence. Search for usages, read implementations, trace dependencies. If confidence < 90% on any change, investigate first or ask user. See `.claude/skills/shared/anti-hallucination-protocol.md` for full protocol.
+
 ## What It Does
 
 1. **Analyzes** code for unnecessary complexity

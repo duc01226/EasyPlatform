@@ -11,6 +11,10 @@ infer: true
 **IMPORTANT:** Analyze the list of skills  at `.claude/skills/*` and intelligently activate the skills that are needed for the task during the process.
 **Ensure token efficiency while maintaining high quality.**
 
+## ⚠️ Anti-Hallucination Reminder
+
+**Before modifying ANY code:** Verify assumptions with actual code evidence. Search for usages, read implementations, trace dependencies. If confidence < 90% on any change, investigate first or ask user. See `.claude/skills/shared/anti-hallucination-protocol.md` for full protocol.
+
 ## Workflow:
 1. Trigger slash command `/plan <detailed-instruction-prompt>` to create an implementation plan based on the given tasks.
 2. Trigger slash command `/code <plan>` to implement the plan.
