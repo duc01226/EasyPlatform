@@ -157,8 +157,38 @@ public class TextSnippetDbContext : PlatformDbContext
 
 ### Entity Event Handler Not Called
 
+**Causal Reasoning Tree:**
+
+```
+Symptom: Entity event handler not firing
+├─ Event not raised by entity?
+│  ├─ Check: Does the entity method call AddDomainEvent() or use [TrackFieldUpdatedDomainEvent]?
+│  │  └─ WHY: Events must be explicitly raised; framework does NOT auto-detect state changes.
+│  │     The repository dispatches events only if they exist in the entity's DomainEvents collection.
+│  └─ Check: Is the operation going through the Platform repository (not raw DbContext)?
+│     └─ WHY: Only PlatformRepository.CreateAsync/UpdateAsync triggers event dispatch.
+│        Direct DbContext.SaveChanges() bypasses the event pipeline entirely.
+├─ Handler not registered in DI?
+│  ├─ Check: Is the handler class in UseCaseEvents/ folder with correct namespace?
+│  │  └─ WHY: The module scanner auto-registers handlers by convention. Wrong folder/namespace = not found.
+│  └─ Check: Does the handler inherit PlatformCqrsEntityEventApplicationHandler<Entity>?
+│     └─ WHY: DI registration scans for this base type. Wrong base class = silent no-op.
+├─ HandleWhen() returning false?
+│  ├─ Check: Is HandleWhen() public override async Task<bool> (NOT protected bool)?
+│  │  └─ WHY: Wrong signature creates a new method instead of overriding, so base returns false.
+│  └─ Check: Does the filter logic match the event type (Created, Updated, Deleted)?
+│     └─ WHY: HandleWhen() filters which events this handler processes. Mismatched filter = skipped.
+└─ Handler throwing silently?
+   ├─ Check: Is there a try/catch in HandleAsync() swallowing exceptions?
+   │  └─ WHY: Base handler catches exceptions to prevent message bus poisoning.
+   │     Check logs for suppressed exceptions.
+   └─ Check: Are async operations properly awaited?
+      └─ WHY: Fire-and-forget async calls lose exceptions and may complete after handler returns.
+```
+
+**Checklist (quick reference):**
+
 ```csharp
-// Checklist:
 // 1. Handler in UseCaseEvents/ folder (NOT DomainEventHandlers/)
 // 2. Correct naming: [Action]On[Event][Entity]EntityEventHandler
 // 3. Single generic parameter: PlatformCqrsEntityEventApplicationHandler<Entity>
@@ -168,8 +198,41 @@ public class TextSnippetDbContext : PlatformDbContext
 
 ### Message Bus Consumer Not Processing
 
+**Causal Reasoning Tree:**
+
+```
+Symptom: Message bus consumer not processing messages
+├─ Message never published?
+│  ├─ Check: Is the entity event bus message producer registered for this entity?
+│  │  └─ WHY: Only entities with PlatformCqrsEntityEventBusMessageProducer configured
+│  │     publish events to the bus. Missing producer = events stay local only.
+│  └─ Check: Is RabbitMQ running? (localhost:15672 management UI)
+│     └─ WHY: If broker is down, messages queue in memory and may be lost on app restart.
+│        docker ps | grep rabbit to verify container status.
+├─ Message published but consumer not receiving?
+│  ├─ Check: Does the consumer's queue binding match the routing key?
+│  │  └─ WHY: RabbitMQ routes by exchange+routing key. Mismatched binding = message
+│  │     goes to dead letter or is discarded. Check RabbitMQ management UI for bindings.
+│  └─ Check: Is the consumer registered in the DI container / module?
+│     └─ WHY: Consumer discovery is DI-based. Unregistered consumer = no subscription created.
+├─ Consumer receiving but HandleWhen() filtering out?
+│  ├─ Check: Does HandleWhen() return true for this specific message type/content?
+│  │  └─ WHY: HandleWhen() is the gatekeeper. If it returns false, HandleAsync() never runs.
+│  │     Add temporary logging in HandleWhen() to verify.
+│  └─ Check: Is LastMessageSyncDate causing race condition filtering?
+│     └─ WHY: Consumers may skip messages with timestamps older than last processed.
+│        Clock skew between services or out-of-order delivery can trigger this.
+└─ Consumer processing but failing silently?
+   ├─ Check: Is HandleAsync() throwing an unlogged exception?
+   │  └─ WHY: Base consumer catches exceptions for retry/dead-letter. Check application logs.
+   └─ Check: Is TryWaitUntilAsync() timing out on a dependency?
+      └─ WHY: Consumer may be waiting for a prerequisite that never arrives,
+         causing silent timeout and message requeue in an infinite loop.
+```
+
+**Checklist (quick reference):**
+
 ```csharp
-// Checklist:
 // 1. Consumer registered in DI
 // 2. HandleWhen() returns true for the message
 // 3. RabbitMQ is running (check localhost:15672)
@@ -181,17 +244,47 @@ public class TextSnippetDbContext : PlatformDbContext
 
 ### Component State Not Updating
 
-```typescript
-// Problem: UI not reflecting state changes
+**Causal Reasoning Tree:**
 
-// Solution 1: Ensure using signals
+```
+Symptom: UI not reflecting state changes
+├─ Store state not being updated?
+│  ├─ Check: Is updateState() being called with the new value?
+│  │  └─ WHY: PlatformVmStore is immutable-update based. Mutating state directly
+│  │     does not trigger change detection. Must use updateState().
+│  └─ Check: Is the effect/API call completing successfully?
+│     └─ WHY: If the observable errors without tapResponse, the stream dies silently.
+│        Always use observerLoadingErrorState() + tapResponse() to catch errors.
+├─ Store updated but component not receiving?
+│  ├─ Check: Is the component using vm$ signal (not reading state directly)?
+│  │  └─ WHY: Direct state reads are point-in-time snapshots. vm$ is a reactive signal
+│  │     that triggers Angular change detection on updates.
+│  └─ Check: Is the subscription piped through untilDestroyed()?
+│     └─ WHY: Missing untilDestroyed() does not prevent updates, but if a previous
+│        component instance leaked subscriptions, it may consume events meant for
+│        the current instance (especially with shared stores).
+├─ Component receiving but template not rendering?
+│  ├─ Check: Is the component using OnPush change detection?
+│  │  └─ WHY: OnPush only re-renders on @Input changes or signal updates.
+│  │     Manual state changes require cdr.detectChanges() or markForCheck().
+│  └─ Check: Is the template binding correct (e.g., vm().items vs vm.items)?
+│     └─ WHY: Signals require function call syntax in templates. Missing () = stale value.
+└─ Rendering but wrong data?
+   └─ Check: Is the select() selector returning the correct slice of state?
+      └─ WHY: Selectors with stale closures or wrong property paths return undefined/old data.
+```
+
+**Quick fixes:**
+
+```typescript
+// Fix 1: Ensure using signals
 public vm = this.store.vm$;  // Not just this.store.state
 
-// Solution 2: Check change detection
-this.cdr.detectChanges();  // Force update if needed
+// Fix 2: Force change detection if needed
+this.cdr.detectChanges();
 
-// Solution 3: Verify subscription
-.pipe(this.untilDestroyed()).subscribe();  // Ensure subscribed
+// Fix 3: Verify subscription lifecycle
+.pipe(this.untilDestroyed()).subscribe();
 ```
 
 ### Form Validation Not Working

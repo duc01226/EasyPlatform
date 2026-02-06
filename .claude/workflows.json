@@ -112,6 +112,10 @@
         "watzup": {
             "claude": "/watzup",
             "copilot": "/watzup"
+        },
+        "why-review": {
+            "claude": "/why-review",
+            "copilot": "/why-review"
         }
     },
     "description": "Workflow automation configuration for Claude Code and GitHub Copilot — AI-native intent detection (v2)",
@@ -139,7 +143,7 @@
             "preActions": {
                 "injectContext": "BATCH OPERATION PROTOCOL:\n1. List ALL target files before making changes\n2. Use checkpoints between major batches\n3. Verify each change compiles before proceeding\n4. Stop on first failure — report affected files\n- Guardrail: Never modify files outside stated scope\n- Guardrail: Always provide rollback strategy for batch changes"
             },
-            "sequence": ["scout", "plan", "plan-validate", "plan-review", "code", "code-review", "test", "watzup"],
+            "sequence": ["scout", "plan", "plan-validate", "plan-review", "code", "why-review", "code-review", "test", "watzup"],
             "whenNotToUse": "Single-file changes, test file creation, documentation updates.",
             "whenToUse": "User wants to apply changes across multiple files, directories, or components at once. Includes batch updates, bulk renames, find-and-replace across codebase, merge/combine/consolidate multiple files or modules into one, or operations targeting 'all' or 'every' instance."
         },
@@ -151,7 +155,7 @@
             "preActions": {
                 "injectContext": "BUG FIX PROTOCOL:\n1. Reproduce the issue — identify exact trigger conditions\n2. Trace root cause through code, not symptoms\n3. CHECKPOINT: If considering code removal, run /investigate-removal first\n4. Verify fix doesn't break related functionality\n5. Add regression test covering the fixed scenario\n6. Update changelog with user-facing description\n- Guardrail: Fix root cause, not symptom\n- Guardrail: Minimal change scope — avoid refactoring during bug fix"
             },
-            "sequence": ["scout", "investigate", "debug", "plan", "plan-validate", "plan-review", "fix", "code-simplifier", "code-review", "changelog-update", "test", "watzup"],
+            "sequence": ["scout", "investigate", "debug", "plan", "plan-validate", "plan-review", "fix", "why-review", "code-simplifier", "code-review", "changelog-update", "test", "watzup"],
             "whenNotToUse": "User wants new features, refactoring, documentation, or investigation without fixing.",
             "whenToUse": "User reports a bug, error, crash, broken functionality, or asks to fix/debug/troubleshoot an issue. Includes regression fixes, 'not working' reports, and exception traces."
         },
@@ -178,7 +182,7 @@
                 "activateSkill": "devops",
                 "injectContext": "DEPLOYMENT WORKFLOW:\n1. Review infrastructure requirements\n2. Plan deployment strategy\n3. Implement configuration\n4. Verify deployment"
             },
-            "sequence": ["scout", "investigate", "plan", "plan-validate", "plan-review", "code", "code-review", "test", "watzup"],
+            "sequence": ["scout", "investigate", "plan", "plan-validate", "plan-review", "code", "why-review", "code-review", "test", "watzup"],
             "whenNotToUse": "Explaining deployment concepts, checking deployment status/history.",
             "whenToUse": "User wants to set up or modify deployment, infrastructure, CI/CD pipelines, Docker configuration, or deploy to environments."
         },
@@ -216,7 +220,7 @@
             "preActions": {
                 "injectContext": "FEATURE IMPLEMENTATION PROTOCOL:\n1. Search for existing patterns before creating new code\n2. Follow platform hierarchy: Entity > Service > Component\n3. Place business logic in lowest appropriate layer\n4. Use platform base classes (PlatformComponent, PlatformApiService, PlatformVmStore)\n5. Add changelog entry for user-facing changes\n- Rules: YAGNI (no speculative features), BEM for all UI elements, untilDestroyed() for subscriptions\n- Backend: CQRS Command+Result+Handler in ONE file, DTO owns mapping, side effects in Event Handlers"
             },
-            "sequence": ["scout", "plan", "plan-validate", "plan-review", "cook", "code-simplifier", "code-review", "changelog-update", "test", "docs-update", "watzup"],
+            "sequence": ["scout", "plan", "plan-validate", "plan-review", "cook", "why-review", "code-simplifier", "code-review", "changelog-update", "test", "docs-update", "watzup"],
             "whenNotToUse": "Bug fixes, documentation-only, test-only, migration, refactoring, investigation.",
             "whenToUse": "User wants to implement, add, create, build, or develop a new feature, functionality, module, or component."
         },
@@ -253,7 +257,7 @@
             "preActions": {
                 "injectContext": "DATABASE MIGRATION PROTOCOL:\n1. Analyze current schema and identify breaking changes\n2. Plan rollback strategy before implementation\n3. Use PlatformDataMigrationExecutor for data migrations\n4. Use EF migrations for schema changes\n5. Verify migration is idempotent (safe to re-run)\n- Guardrail: Always provide rollback path\n- Guardrail: Never delete data without backup strategy"
             },
-            "sequence": ["scout", "investigate", "plan", "plan-validate", "plan-review", "code", "code-review", "test", "watzup"],
+            "sequence": ["scout", "investigate", "plan", "plan-validate", "plan-review", "code", "why-review", "code-review", "test", "watzup"],
             "whenNotToUse": "Explaining migration concepts, checking migration history/status.",
             "whenToUse": "User wants to create or run database migrations: schema changes, data migrations, EF migrations, adding/removing/altering columns or tables."
         },
@@ -279,7 +283,7 @@
                 "activateSkill": "performance",
                 "injectContext": "PERFORMANCE WORKFLOW:\n1. Profile and identify bottlenecks\n2. Analyze root causes\n3. Plan optimization strategy\n4. Validate plan assumptions\n5. Review plan completeness\n6. Implement changes\n7. Verify with benchmarks"
             },
-            "sequence": ["scout", "investigate", "plan", "plan-validate", "plan-review", "code", "code-review", "test", "watzup"],
+            "sequence": ["scout", "investigate", "plan", "plan-validate", "plan-review", "code", "why-review", "code-review", "test", "watzup"],
             "whenNotToUse": "Explaining performance concepts, checking performance reports/history.",
             "whenToUse": "User wants to analyze or optimize performance: fix slow queries, reduce latency, improve throughput, resolve N+1 problems, address bottlenecks."
         },
@@ -317,7 +321,7 @@
             "preActions": {
                 "injectContext": "QUALITY AUDIT PROTOCOL:\n1. Review code against platform patterns and best practices\n2. Identify defects with severity (Critical/Major/Minor)\n3. CRITICAL GATE: Present findings to user BEFORE implementing fixes\n4. Fix only approved items\n5. Verify each fix with tests\n- Rules: Evidence-based findings (file:line), no speculative improvements, fix what's broken not what's different"
             },
-            "sequence": ["code-review", "plan", "plan-validate", "plan-review", "code", "code-review", "test", "watzup"],
+            "sequence": ["code-review", "plan", "plan-validate", "plan-review", "code", "why-review", "code-review", "test", "watzup"],
             "whenNotToUse": "Reviewing uncommitted changes (use review-changes), PR review, bug fixes.",
             "whenToUse": "User wants a quality audit: review code for best practices, ensure no flaws, verify quality standards, audit-and-fix workflow, systematic review, or review project configuration/settings quality (e.g., CI/CD config, linter settings, AI agent settings, hooks quality, MCP servers, tooling configuration). Also matches: 'review X quality', 'ensure best practices', 'no enhancement needed', 'audit hooks/settings/config'."
         },
@@ -329,7 +333,7 @@
             "preActions": {
                 "injectContext": "REFACTORING PROTOCOL:\n1. Define refactoring scope and expected outcomes\n2. CHECKPOINT: If removing code, run /investigate-removal first\n3. Verify all tests pass BEFORE refactoring\n4. Apply incremental changes — one concern at a time\n5. Verify tests pass AFTER each change\n6. No behavior changes — same inputs produce same outputs\n- Guardrail: Never change behavior during refactoring\n- Guardrail: Follow platform hierarchy (Entity > Service > Component)"
             },
-            "sequence": ["scout", "plan", "plan-validate", "plan-review", "code", "code-simplifier", "code-review", "test", "watzup"],
+            "sequence": ["scout", "plan", "plan-validate", "plan-review", "code", "why-review", "code-simplifier", "code-review", "test", "watzup"],
             "whenNotToUse": "Bug fixes, new features, quality audits.",
             "whenToUse": "User wants to refactor, restructure, reorganize, clean up code, improve code quality, extract methods, rename, split/merge components, or address technical debt."
         },
@@ -402,7 +406,7 @@
             "preActions": {
                 "injectContext": "VERIFICATION PROTOCOL:\n1. Define expected behavior — what 'correct' means\n2. Reproduce the scenario under test\n3. Verify with evidence (test output, logs, code traces)\n4. If issue found: plan fix, validate assumptions, review plan, then implement\n5. If no issue: document verification evidence\n- Guardrail: Evidence-based verification — never assume correctness without proof"
             },
-            "sequence": ["scout", "investigate", "test", "plan", "plan-validate", "plan-review", "fix", "review", "watzup"],
+            "sequence": ["scout", "investigate", "test", "plan", "plan-validate", "plan-review", "fix", "why-review", "review", "watzup"],
             "whenNotToUse": "New feature implementation, code review, documentation, investigation-only, quality audits.",
             "whenToUse": "User wants to verify, validate, confirm, check that something works correctly, or ensure expected behavior. Includes 'make sure', 'ensure that', 'verify changes', 'ensure no flaws', and 'must work as expected' requests. Takes priority over review-changes when intent is verification/validation rather than read-only review."
         }

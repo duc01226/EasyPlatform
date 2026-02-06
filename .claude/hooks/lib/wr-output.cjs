@@ -45,7 +45,8 @@ function getStepDescription(step) {
     'team-status': 'Generate status report',
     'team-dependency': 'Analyze dependencies',
     'review-changes': 'Review uncommitted changes',
-    'team-team-sync': 'Prepare team sync agenda'
+    'team-team-sync': 'Prepare team sync agenda',
+    'why-review': 'Audit reasoning quality'
   };
   return descriptions[step] || `Execute ${step}`;
 }

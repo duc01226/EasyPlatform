@@ -15,12 +15,13 @@ Expert full-stack .NET + Angular implementation skill with structured investigat
 
 | Step | Action | Key Notes |
 |------|--------|-----------|
-| 1 | Investigate | Decompose requirements, search codebase for related patterns |
-| 2 | Knowledge graph | Build analysis in `.ai/workspace/analysis/{feature}.md` |
-| 3 | Plan | Layered implementation plan (backend bottom-up, frontend service-first) |
-| 4 | Approval gate | Present plan -- DO NOT proceed without user approval |
-| 5 | Execute | Implement layer-by-layer following approved plan |
-| 6 | Verify | Type checks, tests, integration validation |
+| 1 | Design Intent | State WHAT+WHY, risks, guiding principle in 3 sentences |
+| 2 | Investigate | Decompose requirements, search codebase for related patterns |
+| 3 | Knowledge graph | Build analysis in `.ai/workspace/analysis/{feature}.md` |
+| 4 | Plan | Layered implementation plan (backend bottom-up, frontend service-first) |
+| 5 | Approval gate | Present plan -- DO NOT proceed without user approval |
+| 6 | Execute | Implement layer-by-layer following approved plan |
+| 7 | Verify | Type checks, tests, integration validation |
 
 **Key Principles:**
 - Evidence-based: verify assumptions with grep/search before implementing
@@ -36,12 +37,13 @@ Expert full-stack .NET + Angular implementation skill with structured investigat
 
 ## Workflow Overview
 
-1. **Investigate** -- Decompose requirements, search codebase for related entities/patterns/boundaries
-2. **Knowledge Graph** -- Build structured analysis in `.ai/workspace/analysis/{feature}.md`
-3. **Plan** -- Generate layered implementation plan (Domain > Persistence > Application > API > Frontend)
-4. **Approval Gate** -- Present plan for user approval; do NOT proceed without it
-5. **Execute** -- Implement layer-by-layer following approved plan
-6. **Verify** -- Type checks, tests, integration validation
+1. **Design Intent** -- State WHAT+WHY, risks, guiding principle in 3 sentences
+2. **Investigate** -- Decompose requirements, search codebase for related entities/patterns/boundaries
+3. **Knowledge Graph** -- Build structured analysis in `.ai/workspace/analysis/{feature}.md`
+4. **Plan** -- Generate layered implementation plan (Domain > Persistence > Application > API > Frontend)
+5. **Approval Gate** -- Present plan for user approval; do NOT proceed without it
+6. **Execute** -- Implement layer-by-layer following approved plan
+7. **Verify** -- Type checks, tests, integration validation
 
 > **⚠️ MUST READ** `.claude/skills/feature/references/implementation-workflow.md` for detailed phase instructions.
 

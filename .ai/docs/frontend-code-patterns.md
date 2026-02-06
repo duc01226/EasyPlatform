@@ -9,6 +9,8 @@
 
 ### 1. Component Hierarchy
 
+*WHY: AppBase* extends Platform* to provide subscription cleanup (untilDestroyed), loading/error state management, and app-specific utilities — skipping the chain causes memory leaks and inconsistent UX across components.*
+
 ```typescript
 PlatformComponent → PlatformVmComponent → PlatformFormComponent
                   → PlatformVmStoreComponent
@@ -20,6 +22,8 @@ FeatureComponent extends AppBaseVmStoreComponent<State, Store>
 ```
 
 ### 2. Platform Component API
+
+*WHY: Centralized loading/error state (observerLoadingErrorState), auto-cleanup (untilDestroyed), and typed response handling (tapResponse) eliminate per-component boilerplate and ensure consistent behavior across the app.*
 
 ```typescript
 // PlatformComponent
@@ -48,6 +52,8 @@ abstract initialFormConfig: () => PlatformFormConfig<T>;
 ```
 
 ### 3. Component Usage
+
+*WHY: Store-backed components (PlatformVmStoreComponent) separate state logic from UI, enabling state reuse across components, caching, and testable state transitions without rendering.*
 
 ```typescript
 // PlatformComponent
@@ -97,6 +103,8 @@ export class FormComponent extends AppBaseFormComponent<FormVm> {
 
 ### 4. API Service
 
+*WHY: Extending PlatformApiService centralizes auth token injection, error handling, response caching, and base URL management — direct HttpClient usage scatters these concerns across every component.*
+
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class EntityApiService extends PlatformApiService {
@@ -117,6 +125,8 @@ export class EntityApiService extends PlatformApiService {
 
 ### 5. FormArray
 
+*WHY: PlatformFormComponent's initialFormConfig declaratively defines form structure with dependent validations — FormArray support handles dynamic item lists while keeping validation rules co-located with form definition.*
+
 ```typescript
 protected initialFormConfig = () => ({
   controls: {
@@ -126,6 +136,8 @@ protected initialFormConfig = () => ({
 ```
 
 ### 6. Advanced Frontend
+
+*WHY: Platform utilities (@Watch, skipDuplicates, distinctUntilObjectValuesChanged) solve common Angular reactivity problems (stale callbacks, excessive re-renders, deep comparison) once in the framework rather than per-component.*
 
 ```typescript
 // @Watch decorator

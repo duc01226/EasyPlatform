@@ -24,6 +24,7 @@ infer: true
 | Step | Action | Key Notes |
 |------|--------|-----------|
 | 0 | Plan detection | Auto-select latest plan or use provided argument |
+| - | Design Intent | State WHAT+WHY, risks, guiding principle before first edit |
 | 1 | Analysis & task extraction | Parse phase file, create TodoWrite tasks |
 | 2 | Implementation | Code step-by-step, compile to verify |
 | 3 | Testing | 100% pass required -- blocking gate |
@@ -70,6 +71,17 @@ Task(subagent_type="[type]", prompt="[task description]", description="[brief]")
 ## Workflow Sequence
 
 **Rules:** Follow steps 1-6 in order. Each step requires output marker starting with "✓ Step N:". Mark each complete in TodoWrite before proceeding. Do not skip steps.
+
+---
+
+## Design Intent (Before First Edit)
+
+Before writing any code, state the **Design Intent** in 3 sentences:
+1. **WHAT & WHY** — What you're changing and the architectural reason
+2. **RISKS** — What could go wrong or what assumptions you're making
+3. **PRINCIPLE** — What pattern or principle guides this approach
+
+Format: `**Design Intent:** [3 sentences]` — visible in output, reviewable by user.
 
 ---
 

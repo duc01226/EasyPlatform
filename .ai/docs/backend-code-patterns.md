@@ -9,6 +9,8 @@
 
 ### 1. Clean Architecture
 
+*WHY: Enforces dependency inversion — domain has zero external dependencies, enabling independent testing, DB engine swap, and framework upgrades without business logic changes.*
+
 ```csharp
 // Domain Layer
 public class Employee : RootEntity<Employee, string>
@@ -43,6 +45,8 @@ public class EmployeeController : PlatformBaseController
 
 ### 2. Repository Pattern
 
+*WHY: Static expression extensions on platform repo keep query logic reusable, composable, and testable — avoids scattering Where clauses across handlers and enables DB-engine-agnostic query composition.*
+
 ```csharp
 IPlatformQueryableRootRepository<TEntity, TKey>  // Primary
 IPlatformRootRepository<TEntity, TKey>           // When queryable not needed
@@ -63,6 +67,8 @@ public static class EntityRepositoryExtensions
 
 ### 3. Repository API
 
+*WHY: Unified CRUD API with built-in UoW, audit trail, and event raising — every CreateAsync/UpdateAsync automatically triggers entity events, ensuring side effects fire consistently regardless of caller.*
+
 ```csharp
 await repository.CreateAsync(entity, ct);
 await repository.CreateManyAsync(entities, ct);
@@ -82,6 +88,8 @@ await repository.AnyAsync(expr, ct);
 ```
 
 ### 4. Validation Patterns
+
+*WHY: Fluent validation collects ALL failures in one pass (vs throw-on-first), returns structured field+message pairs for UI binding, and chains sync+async checks without try/catch nesting.*
 
 ```csharp
 // Sync validation
@@ -108,6 +116,8 @@ var entity = await repo.GetByIdAsync(id, ct).EnsureFound($"Not found: {id}").The
 
 ### 5. Cross-Service Communication
 
+*WHY: Message bus decouples service deployment lifecycles — producer doesn't need consumer to be running, enables independent scaling, and prevents direct DB coupling that makes schema migrations cascade across services.*
+
 ```csharp
 public class EmployeeEventProducer : PlatformCqrsEntityEventBusMessageProducer<EmployeeEventBusMessage, Employee, string> { }
 
@@ -118,6 +128,8 @@ public class EmployeeEventConsumer : PlatformApplicationMessageBusConsumer<Emplo
 ```
 
 ### 6. Full-Text Search
+
+*WHY: searchService.Search integrates with IQueryable pipeline — applies DB-engine-specific full-text operators (SQL CONTAINS, Mongo $text) while remaining composable with other Where/OrderBy clauses.*
 
 ```csharp
 var queryBuilder = repository.GetQueryBuilder(q => q
@@ -134,6 +146,8 @@ public static Expression<Func<Entity, object>>[] SearchColumns() => [e => e.Name
 ```
 
 ### 7. CQRS Command Pattern (Command + Result + Handler in ONE file)
+
+*WHY: Co-locating Command+Result+Handler eliminates cross-file navigation, keeps request shape next to its processor, and makes feature folders self-contained.*
 
 ```csharp
 public sealed class SaveEntityCommand : PlatformCqrsCommand<SaveEntityCommandResult>
@@ -164,6 +178,8 @@ internal sealed class SaveEntityCommandHandler : PlatformCqrsCommandApplicationH
 
 ### 8. Query Pattern
 
+*WHY: Paged queries with parallel count+items avoid N+1 problems and enable the DB to optimize both queries independently. Query builder pattern keeps filter composition readable and testable.*
+
 ```csharp
 public sealed class GetEntityListQuery : PlatformCqrsPagedQuery<GetEntityListQueryResult, EntityDto>
 {
@@ -191,6 +207,8 @@ internal sealed class GetEntityListQueryHandler : PlatformCqrsQueryApplicationHa
 
 ### 9. Event-Driven Side Effects
 
+*WHY: Side effects in event handlers (not command handlers) enable independent testing, independent retry on failure, and decoupled execution — the command succeeds or fails on its own merits, side effects can't corrupt the primary operation.*
+
 ```csharp
 // ❌ WRONG - direct side effect
 await repo.CreateAsync(entity, ct);
@@ -211,6 +229,8 @@ internal sealed class SendNotificationOnCreateHandler : PlatformCqrsEntityEventA
 ```
 
 ### 10. Entity Pattern
+
+*WHY: Static expressions on entity enable reusable, composable query predicates that stay close to the domain knowledge they encode — callers combine them via AndAlso/OrElse without knowing implementation details.*
 
 ```csharp
 [TrackFieldUpdatedDomainEvent]
@@ -258,6 +278,8 @@ await repo.GetByIdAsync(id, ct, loadRelatedEntities: e => e.Children!.Where(c =>
 
 ### 11. Entity DTO Pattern
 
+*WHY: DTO owns mapping via MapToEntity() because handlers that map create coupling between transport and domain layers — when DTO shape changes, only one MapToEntity() method updates instead of every handler that touches that entity.*
+
 ```csharp
 public class EmployeeDto : PlatformEntityDto<Employee, string>
 {
@@ -281,6 +303,8 @@ var dtos = employees.SelectList(e => new EmployeeDto(e, e.User).WithCompany(e.Co
 
 ### 12. Fluent Helpers
 
+*WHY: Fluent chaining (.With/.Then/.EnsureFound) eliminates temporary variables and null-check boilerplate, making the transformation pipeline readable as a single expression with clear intent at each step.*
+
 ```csharp
 .With(e => e.Name = x).WithIf(cond, e => e.Status = Active)
 .Then(e => e.Process()).ThenAsync(async e => await e.ValidateAsync(ct))
@@ -292,6 +316,8 @@ var (entity, files) = await (repo.CreateOrUpdateAsync(e, ct), files.ParallelAsyn
 ```
 
 ### 13. Background Jobs
+
+*WHY: Paged job executors prevent OOM on large datasets by processing in bounded batches, handle failure per-page (not all-or-nothing), and provide built-in retry/logging without per-job boilerplate.*
 
 ```csharp
 // Cron expression examples:
@@ -332,6 +358,8 @@ await companies.ParallelAsync(async cId => await DateRangeBuilder.BuildDateRange
 
 ### 14. Message Bus Consumer
 
+*WHY: Consumer base class handles deserialization, dead-letter routing, and retry logic — TryWaitUntilAsync resolves eventual consistency (wait for dependency to arrive) without polling hacks in business code.*
+
 ```csharp
 internal sealed class EntityConsumer : PlatformApplicationMessageBusConsumer<EntityEventBusMessage>
 {
@@ -355,6 +383,8 @@ internal sealed class EntityConsumer : PlatformApplicationMessageBusConsumer<Ent
 ```
 
 ### 15. Data Migration
+
+*WHY: PlatformDataMigrationExecutor provides idempotent execution tracking (Name-based), conditional run (OnlyForDbsCreatedBeforeDate), and scoped DI — raw EF migrations lack cross-DB access and background thread support.*
 
 ```csharp
 // EF Core migration
@@ -425,6 +455,8 @@ public class SyncData : PlatformDataMigrationExecutor<TargetDbContext>
 
 ### 16. Multi-Database Support
 
+*WHY: Persistence modules abstract DB engine choice behind IPlatformQueryableRootRepository — business logic writes once against the interface, swapping SQL Server↔PostgreSQL↔MongoDB requires only module registration change.*
+
 ```csharp
 // Entity Framework Core (SQL Server/PostgreSQL)
 public class MyEfCorePersistenceModule : PlatformEfCorePersistenceModule<MyDbContext>
@@ -445,6 +477,10 @@ public class MyMongoPersistenceModule : PlatformMongoDbPersistenceModule<MyDbCon
 ```
 
 ### 17. Database Index Configuration
+
+*WHY: Every static expression on an entity (UniqueExpr, FilterExpr) implies a query pattern — indexing these expressions ensures the DB can serve them efficiently instead of full table scans.*
+
+> **Rule:** Every `Expr` on an entity must have a matching index.
 
 **EF Core (SQL Server/PostgreSQL):**
 

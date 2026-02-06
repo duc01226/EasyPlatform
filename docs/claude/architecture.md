@@ -102,6 +102,18 @@ deploy/                             # Kubernetes & deployment configs
 - 06-state-management.md - State management patterns
 - 07-technical-guide.md - Implementation checklist, best practices
 
+## Architectural Decision Records
+
+Key architectural decisions are documented as ADRs in `docs/adr/`:
+
+| ADR | Decision | Status |
+| --- | -------- | ------ |
+| [001-cqrs-over-crud](../adr/001-cqrs-over-crud.md) | CQRS for all operations instead of plain CRUD | Accepted |
+| [002-rabbitmq-message-bus](../adr/002-rabbitmq-message-bus.md) | RabbitMQ with at-least-once delivery for cross-service communication | Accepted |
+| [003-multi-database-support](../adr/003-multi-database-support.md) | DB-agnostic repository interface with engine-specific persistence modules | Accepted |
+| [004-event-driven-side-effects](../adr/004-event-driven-side-effects.md) | Side effects in entity event handlers, never in command handlers | Accepted |
+| [005-dto-owns-mapping](../adr/005-dto-owns-mapping.md) | DTOs own all transport-to-domain mapping | Accepted |
+
 ## Database Connections (Development)
 
 | Database   | Connection      | Credentials         |
@@ -172,3 +184,27 @@ Before starting implementation:
 - [ ] Got user approval for the plan
 
 **DO NOT** start writing code without presenting a plan first. Always investigate, plan, then implement.
+
+## Understanding Verification
+
+The `/why-review` skill audits completed code changes for reasoning quality using an Understanding Score (0-5). It runs automatically in 9 code-producing workflows, positioned after implementation (`cook`/`fix`/`code`) and before code review (or `code-simplifier` when present).
+
+### What It Checks
+
+- **WHY articulated?** Design intent or commit message explaining reasoning
+- **Alternatives considered?** Rejected approaches mentioned
+- **ADR alignment?** Changes consistent with decisions in `docs/adr/`
+
+### Scoring
+
+| Score | Meaning |
+|-------|---------|
+| 5 | Full reasoning: WHY + alternatives + ADR alignment |
+| 3 | Partial: some reasoning, some pattern-following |
+| 0 | Contradicts ADRs without justification |
+
+Score < 3 flags mechanical implementation. Soft review -- never blocks commits.
+
+### Architecture Decision Records
+
+See [Architectural Decision Records](#architectural-decision-records) above for the full ADR index. The `/why-review` skill validates changes against these records.

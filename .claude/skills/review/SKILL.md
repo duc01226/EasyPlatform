@@ -24,6 +24,7 @@ Perform a comprehensive code review following EasyPlatform standards.
 - Build report incrementally -- update after EACH file review
 - Check: architecture compliance, naming, platform patterns, security, performance
 - Logic must be in the LOWEST appropriate layer (Entity > Service > Component)
+- Holistic phase: ask "For each architectural decision, WHY this approach over alternatives? Are there trade-offs to document?"
 
 ## Review Scope
 

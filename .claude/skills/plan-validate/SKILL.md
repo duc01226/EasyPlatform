@@ -66,6 +66,7 @@ Scan plan content for:
 | **Tradeoffs**    | "tradeoff", "vs", "alternative", "option", "choice", "either/or"  |
 | **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern" |
 | **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"          |
+| **Reasoning**    | Check: Does Architecture section explain WHY, not just WHAT? Does Risk Assessment include failure modes? Is there a Design Intent or Trade-offs section? |
 
 ### Step 3: Generate Questions
 

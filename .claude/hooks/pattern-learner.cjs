@@ -14,8 +14,8 @@
  * Flow:
  *   1. Detect pattern candidate from prompt
  *   2. Check for pending confirmation response
- *   3. If new candidate: Output confirmation prompt
- *   4. If confirmation: Save pattern
+ *   3. If new candidate: Extract reasoning, output confirmation prompt
+ *   4. If confirmation: Save pattern with reason/principle
  *   5. If rejection: Discard candidate
  *
  * Exit Codes:
@@ -35,7 +35,7 @@ const {
 } = require('./lib/pattern-detector.cjs');
 
 const { appendPatternCandidate } = require('./lib/pattern-extractor.cjs');
-const { ensurePatternsDir } = require('./lib/pattern-storage.cjs');
+const { ensurePatternsDir, loadIndex, loadPattern, savePattern } = require('./lib/pattern-storage.cjs');
 const { PENDING_EXPIRY_MS } = require('./lib/pattern-constants.cjs');
 
 // C4: Limit stdin size to prevent OOM attacks
@@ -43,6 +43,86 @@ const MAX_STDIN_SIZE = 1024 * 1024; // 1MB limit
 
 // Pending candidate file for confirmation tracking
 const PENDING_FILE = path.join(process.cwd(), '.claude', 'memory', 'pattern-pending.json');
+
+/**
+ * Extract reasoning from user correction text.
+ * Scans for "because"/"since"/"so that"/"in order to" clauses.
+ * Prefers false negatives (empty) over false positives (wrong reason).
+ *
+ * @param {string} text - User prompt text
+ * @returns {{ reason: string, principle: string }} Extracted reasoning (empty if none found)
+ */
+function extractReason(text) {
+  if (!text || typeof text !== 'string') {
+    return { reason: '', principle: '' };
+  }
+
+  // Reasoning keyword patterns - capture clause after keyword until sentence end
+  const reasonPatterns = [
+    /\bbecause\s+(.+?)(?:\.\s|$)/i,
+    /\bsince\s+(.+?)(?:\.\s|$)/i,
+    /\bso\s+that\s+(.+?)(?:\.\s|$)/i,
+    /\bin\s+order\s+to\s+(.+?)(?:\.\s|$)/i,
+  ];
+
+  for (const pattern of reasonPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1] && match[1].trim().length > 3) {
+      return { reason: match[1].trim(), principle: '' };
+    }
+  }
+
+  return { reason: '', principle: '' };
+}
+
+/**
+ * Post-save enrichment: add reason/principle fields to saved pattern file.
+ * Backward compatible - only adds fields when reason is non-empty.
+ *
+ * @param {string} patternId - Pattern ID from appendPatternCandidate result
+ * @param {{ reason: string, principle: string }} reasoning - Extracted reasoning
+ */
+function enrichPatternWithReason(patternId, reasoning) {
+  if (!reasoning.reason && !reasoning.principle) return;
+  if (!patternId) return;
+
+  try {
+    const index = loadIndex();
+    const entry = index.patterns && index.patterns[patternId];
+    if (!entry || !entry.file) return;
+
+    const pattern = loadPattern(entry.file);
+    if (!pattern) return;
+
+    if (reasoning.reason) {
+      pattern.reason = reasoning.reason;
+    }
+    if (reasoning.principle) {
+      pattern.principle = reasoning.principle;
+    }
+
+    savePattern(pattern, entry.file);
+  } catch (e) {
+    if (process.env.CK_DEBUG) {
+      console.error('[Pat' + 'tern] Failed to enrich with reason: ' + e.message);
+    }
+  }
+}
+
+/**
+ * Format display output including reason when available
+ * @param {string} id - Pattern ID
+ * @param {string} action - Action taken (created/updated)
+ * @param {{ reason: string, principle: string }} reasoning - Extracted reasoning
+ * @returns {string} Formatted output
+ */
+function formatLearnedOutput(id, action, reasoning) {
+  let output = '\n[Pat' + 'tern] Learned: ' + id + ' (' + action + ')';
+  if (reasoning && reasoning.reason) {
+    output += ' -- Reason: ' + reasoning.reason;
+  }
+  return output;
+}
 
 /**
  * Load pending pattern candidate
@@ -137,7 +217,10 @@ async function main() {
         if (result.action === 'blocked') {
           console.log(`\n[Pattern] ${result.message}`);
         } else {
-          console.log(`\n[Pattern] Learned: ${result.id} (${result.action})`);
+          // Enrich saved pattern with reason from pending candidate
+          const reasoning = { reason: pending.reason || '', principle: pending.principle || '' };
+          enrichPatternWithReason(result.id, reasoning);
+          console.log(formatLearnedOutput(result.id, result.action, reasoning));
           if (process.env.CK_DEBUG) {
             console.error(`[Pattern] ${result.message}`);
           }
@@ -171,6 +254,15 @@ async function main() {
       process.exit(0);
     }
 
+    // Extract reasoning from prompt (because/since/so that/in order to)
+    const reasoning = extractReason(prompt);
+    if (reasoning.reason) {
+      candidate.reason = reasoning.reason;
+    }
+    if (reasoning.principle) {
+      candidate.principle = reasoning.principle;
+    }
+
     // For explicit teaching (/learn), save immediately without confirmation
     const explicit = checkExplicitTeaching(prompt);
     if (explicit.isExplicit) {
@@ -179,13 +271,16 @@ async function main() {
       if (result.action === 'blocked') {
         console.log(`\n[Pattern] ${result.message}`);
       } else {
-        console.log(`\n[Pattern] Learned: ${result.id} (${result.action})`);
+        // Enrich saved pattern with extracted reason
+        enrichPatternWithReason(result.id, reasoning);
+        console.log(formatLearnedOutput(result.id, result.action, reasoning));
       }
 
       process.exit(0);
     }
 
     // For implicit detection, ask for confirmation (validated decision)
+    // Reason is stored with candidate in pending JSON for use after confirmation
     savePendingCandidate(candidate);
 
     // Output confirmation prompt

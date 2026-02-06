@@ -966,13 +966,13 @@ Each file contains critical rules inline + references to full pattern files in `
 
 | Workflow ID         | Name                              | Sequence                                                                                                                                                | Confirm? |
 | ------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `feature`           | Feature Implementation            | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/cook` → `/code-simplifier` → `/review-codebase` → `/changelog-update` → `/test` → `/docs-update` → `/watzup` | Yes      |
-| `bugfix`            | Bug Fix                           | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan-validate` → `/plan-review` → `/fix` → `/code-simplifier` → `/review-codebase` → `/changelog-update` → `/test` → `/watzup` | No       |
-| `refactor`          | Code Refactoring                  | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/code-simplifier` → `/review-codebase` → `/test` → `/watzup`                     | Yes      |
-| `migration`         | Database Migration                | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
-| `batch-operation`   | Batch Operation                   | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/review-codebase` → `/test` → `/watzup`                                           | Yes      |
-| `deployment`        | Deployment & Infrastructure       | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
-| `performance`       | Performance Optimization          | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
+| `feature`           | Feature Implementation            | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/cook` → `/why-review` → `/code-simplifier` → `/review-codebase` → `/changelog-update` → `/test` → `/docs-update` → `/watzup` | Yes      |
+| `bugfix`            | Bug Fix                           | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan-validate` → `/plan-review` → `/fix` → `/why-review` → `/code-simplifier` → `/review-codebase` → `/changelog-update` → `/test` → `/watzup` | No       |
+| `refactor`          | Code Refactoring                  | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/code-simplifier` → `/review-codebase` → `/test` → `/watzup`                     | Yes      |
+| `migration`         | Database Migration                | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
+| `batch-operation`   | Batch Operation                   | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/review-codebase` → `/test` → `/watzup`                                           | Yes      |
+| `deployment`        | Deployment & Infrastructure       | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
+| `performance`       | Performance Optimization          | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
 
 ### Review & Audit Workflows
 
@@ -980,9 +980,9 @@ Each file contains critical rules inline + references to full pattern files in `
 | ---------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------- |
 | `review`         | Code Review                 | `/review-codebase` → `/watzup`                                                                                                 | No       |
 | `review-changes` | Review Current Changes      | `/scout` → `/investigate` → `/review-codebase` → `/watzup`                                                                     | No       |
-| `quality-audit`  | Quality Audit               | `/review-codebase` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/review-codebase` → `/test` → `/watzup`        | Yes      |
+| `quality-audit`  | Quality Audit               | `/review-codebase` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/review-codebase` → `/test` → `/watzup`        | Yes      |
 | `security-audit` | Security Audit              | `/scout` → `/investigate` → `/watzup`                                                                                          | No       |
-| `verification`   | Verification & Validation   | `/scout` → `/investigate` → `/test` → `/plan` → `/plan-validate` → `/plan-review` → `/fix` → `/review` → `/watzup`           | Yes      |
+| `verification`   | Verification & Validation   | `/scout` → `/investigate` → `/test` → `/plan` → `/plan-validate` → `/plan-review` → `/fix` → `/why-review` → `/review` → `/watzup`           | Yes      |
 
 ### Investigation & Documentation Workflows
 

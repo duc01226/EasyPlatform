@@ -74,6 +74,11 @@ git diff
 - [ ] No cross-service direct database access
 - [ ] Follows existing patterns found in codebase
 
+**Understanding Verification (soft prompts):**
+- Can you explain in 2 sentences why each modified file was changed?
+- What would break if this change were reverted?
+- What assumption does this change rely on?
+
 **Security:**
 - [ ] No hardcoded secrets or credentials
 - [ ] Input validation at boundaries

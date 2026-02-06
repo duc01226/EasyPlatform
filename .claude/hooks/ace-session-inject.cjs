@@ -123,7 +123,12 @@ function buildInjection(deltas, context) {
   const injectedIds = [];
 
   for (const delta of relevantDeltas) {
-    const formatted = formatDeltaForInjection(delta);
+    let formatted = formatDeltaForInjection(delta);
+    // Include reason in injection when available (richer context), capped to prevent token budget exhaustion
+    if (delta.reason) {
+      const reason = delta.reason.length > 100 ? delta.reason.slice(0, 97) + '...' : delta.reason;
+      formatted += ' -- Reason: ' + reason;
+    }
     const lineLength = formatted.length + 1; // +1 for newline
 
     if (charCount + lineLength > MAX_CHARS) {

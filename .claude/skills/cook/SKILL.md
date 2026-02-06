@@ -14,6 +14,7 @@ infer: true
 | 1 | Clarify | Ask questions 1 at a time via `AskUserQuestion` |
 | 2 | Research | Parallel researcher subagents, `/scout-ext` for file discovery |
 | 3 | Plan | Planner subagent creates phased plan in `./plans` directory |
+| - | Design Intent | State WHAT+WHY, risks, guiding principle before first edit |
 | 4 | Implement | `/code` slash command, type-check after each step |
 | 5 | Test | Real tests only -- no fakes/mocks to pass builds |
 | 6 | Code review | Fix critical issues, re-test until all pass |
@@ -61,6 +62,15 @@ Think harder to plan & start working on these tasks follow the Orchestration Pro
 ---
 
 ## Workflow:
+
+### Design Intent (Before First Edit)
+
+Before writing any code, state the **Design Intent** in 3 sentences:
+1. **WHAT & WHY** — What you're changing and the architectural reason
+2. **RISKS** — What could go wrong or what assumptions you're making
+3. **PRINCIPLE** — What pattern or principle guides this approach
+
+Format: `**Design Intent:** [3 sentences]` — visible in output, reviewable by user.
 
 ### Fulfill the request
 

@@ -118,8 +118,10 @@ function promoteQualifiedCandidates(candidates, deltas) {
     const duplicate = findDuplicate(candidate, deltas);
 
     if (duplicate) {
-      // Merge into existing delta
+      // Merge into existing delta, preserving richest reason/principle via coalescing
       const merged = mergeDeltas(duplicate, candidate);
+      merged.reason = merged.reason || candidate.reason || duplicate.reason;
+      merged.principle = merged.principle || candidate.principle || duplicate.principle;
       const idx = deltas.findIndex(d => d.delta_id === duplicate.delta_id);
       if (idx !== -1) {
         deltas[idx] = merged;
@@ -166,7 +168,15 @@ function enforceMaxLimit(deltas) {
   }
 
   // Sort by confidence descending, keep top N
-  const sorted = [...deltas].sort((a, b) => calculateConfidence(b) - calculateConfidence(a));
+  // Tiebreaker: patterns with reason/principle rank higher (richer signal)
+  const sorted = [...deltas].sort((a, b) => {
+    const confDiff = calculateConfidence(b) - calculateConfidence(a);
+    if (Math.abs(confDiff) > 0.001) return confDiff;
+    // Equal confidence: prefer pattern with reason
+    const aHasReason = (a.reason || a.principle) ? 1 : 0;
+    const bHasReason = (b.reason || b.principle) ? 1 : 0;
+    return bHasReason - aHasReason;
+  });
   const kept = sorted.slice(0, MAX_DELTAS);
   const overflow = sorted.slice(MAX_DELTAS);
 

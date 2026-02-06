@@ -15,8 +15,8 @@ Detailed patterns and protocols are in `docs/claude/`.
 **Golden rules (violations = bugs):**
 
 1. **Logic goes in the LOWEST layer:** Entity/Model > Service > Component/Handler
-2. **Backend:** Platform repositories only, `PlatformValidationResult` fluent API (never throw), side effects in Event Handlers (never handlers), DTOs own mapping, Command+Result+Handler in ONE file, cross-service via RabbitMQ only
-3. **Frontend:** Extend `AppBaseComponent`/`AppBaseVmStoreComponent`/`AppBaseFormComponent` (never raw Component), `PlatformVmStore` for state, extend `PlatformApiService` (never direct HttpClient), always `untilDestroyed()`, all elements need BEM classes
+2. **Backend:** Platform repositories only, `PlatformValidationResult` fluent API (never throw), side effects in Event Handlers (never handlers), DTOs own mapping, Command+Result+Handler in ONE file, cross-service via RabbitMQ only — *because custom implementations bypass framework audit/retry/UoW, throwing loses structured error aggregation, inline side effects create untestable coupling, and handler mapping creates transport-domain coupling*
+3. **Frontend:** Extend `AppBaseComponent`/`AppBaseVmStoreComponent`/`AppBaseFormComponent` (never raw Component), `PlatformVmStore` for state, extend `PlatformApiService` (never direct HttpClient), always `untilDestroyed()`, all elements need BEM classes — *because raw Components skip subscription cleanup and loading state management, direct HttpClient bypasses centralized auth/error handling, and missing untilDestroyed() causes memory leaks on every component destroy*
 4. **Always search existing code first** before creating anything new
 5. **Always plan before implementing** non-trivial tasks (use `/plan` commands)
 6. **Always create todos BEFORE any action** when the prompt modifies files or involves multiple steps — all skills are blocked without active todos when a workflow is active
@@ -25,7 +25,7 @@ Detailed patterns and protocols are in `docs/claude/`.
 
 **Key paths:** Backend `src/Backend/`, Frontend `src/Frontend/apps/playground-text-snippet/`, Platform framework `src/Platform/`, Patterns `docs/claude/`
 
-**Anti-patterns (never do):** Cross-service DB access, side effects in command handlers, DTO mapping in handlers, direct HttpClient, manual signals, missing `untilDestroyed()`, missing BEM classes
+**Anti-patterns (never do):** Cross-service DB access *(deployment coupling + hidden data contracts)*, side effects in command handlers *(untestable coupling + no independent retry)*, DTO mapping in handlers *(transport-domain coupling)*, direct HttpClient *(bypasses auth/error handling)*, manual signals *(loses store lifecycle management)*, missing `untilDestroyed()` *(memory leaks)*, missing BEM classes *(breaks style scoping)*
 
 ---
 
@@ -101,6 +101,7 @@ Entity/Model (Lowest)  →  Service  →  Component/Handler (Highest)
 4. **CQRS File Organization:** Command + Result + Handler in ONE file
 5. **DTO Mapping Responsibility:** DTOs own mapping via `MapToObject()` / `MapToEntity()`
 6. **Message Bus for Cross-Service:** Never direct database access
+7. **Justify Every Dependency:** Evaluate against [`docs/claude/dependency-policy.md`](docs/claude/dependency-policy.md) before adding
 
 ### Frontend Principles
 
@@ -157,6 +158,7 @@ Every UI element MUST have a BEM class, even without special styling. Block (`us
 - Always plan before implementing non-trivial changes
 - Always verify code exists before assuming removal is safe
 - Declare confidence level when uncertain (if <90%, ask user before proceeding)
+- `/why-review` runs automatically in 9 workflows after implementation (`cook`/`fix`/`code`), before code review. Audits reasoning quality with Understanding Score (0-5). Score < 3 flags mechanical changes. Soft review -- never blocks commits. See `docs/adr/` for decision records it validates against.
 
 ### Investigation Workflow
 
@@ -299,6 +301,16 @@ Need frontend feature?
 | [decision-trees.md](docs/claude/decision-trees.md)                   | Quick decision guides              |
 | [clean-code-rules.md](docs/claude/clean-code-rules.md)               | Universal coding standards         |
 | [team-collaboration-guide.md](docs/claude/team-collaboration-guide.md) | Team roles, commands, workflows  |
+
+### Architectural Decision Records (`docs/adr/`)
+
+| Document                                                          | Decision                                                |
+| ----------------------------------------------------------------- | ------------------------------------------------------- |
+| [001-cqrs-over-crud](docs/adr/001-cqrs-over-crud.md)             | CQRS for all operations instead of plain CRUD           |
+| [002-rabbitmq-message-bus](docs/adr/002-rabbitmq-message-bus.md)  | RabbitMQ for cross-service communication                |
+| [003-multi-database-support](docs/adr/003-multi-database-support.md) | DB-agnostic repository with engine-specific modules  |
+| [004-event-driven-side-effects](docs/adr/004-event-driven-side-effects.md) | Side effects in event handlers, not command handlers |
+| [005-dto-owns-mapping](docs/adr/005-dto-owns-mapping.md)         | DTOs own all transport-to-domain mapping                |
 
 ### Project Documentation
 

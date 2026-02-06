@@ -30,6 +30,7 @@ Code review requires three distinct practices:
 1. **Receiving feedback** - Technical evaluation over performative agreement
 2. **Requesting reviews** - Systematic review via code-reviewer subagent
 3. **Verification gates** - Evidence before any completion claims
+4. **Design justification** - For each architectural decision, articulate WHY this approach over alternatives. Are there trade-offs the author should document?
 
 Each practice has specific triggers and protocols detailed in reference files.
 
