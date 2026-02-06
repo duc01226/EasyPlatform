@@ -83,6 +83,11 @@ Always honoring **YAGNI**, **KISS**, and **DRY** principles.
    - Project in query: don't load all then `.Select(x.Id)`
    - Always paginate: never get all data without `.PageBy()`
    - Batch load: use `GetByIdsAsync()` not N+1 queries
+7. **Database Indexes** - Efficient query performance:
+   - Entity static expressions have matching indexes in DbContext
+   - Composite indexes for multi-field filters (`CompanyId + Status`)
+   - Text indexes for full-text search columns (`Entity.SearchColumns()`)
+   - Covering indexes for frequently selected columns (SQL Server `INCLUDE`)
 
 ## When to Use This Skill
 

@@ -35,6 +35,13 @@ Think harder to scan the codebase and analyze it follow the Orchestration Protoc
 * When all tests pass, code is reviewed, the tasks are completed, report back to user with a summary of the changes and explain everything briefly, ask user to review the changes and approve them.
 * **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
 
+### Index Verification
+
+* For each Entity with static expression methods, verify DbContext has matching indexes
+* Check composite indexes for common query patterns (CompanyId + Status, CreatedDate + Status)
+* Ensure text indexes for Entity.SearchColumns() properties
+* Verify covering indexes (SQL Server INCLUDE) for frequently selected columns
+
 ### Plan
 * Use `planner` subagent to analyze reports from `researcher` and `scout` subagents to create an improvement plan following the progressive disclosure structure:
   - Create a directory using naming pattern from `## Naming` section.

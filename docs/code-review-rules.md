@@ -143,6 +143,14 @@
 - [ ] Uses `<app-loading-and-error-indicator [target]="this">`
 - [ ] Handles empty state when no data
 
+### Performance Patterns
+
+- [ ] Uses `trackBy` for all `@for` loops (`trackByItem = this.ngForTrackByItemProp<T>('id')`)
+- [ ] Components use `ChangeDetectionStrategy.OnPush` when possible
+- [ ] Large lists (>100 items) use `CdkVirtualScrollViewport`
+- [ ] Route modules use lazy loading (`loadChildren`)
+- [ ] HTTP caching enabled for static data (`{ enableCache: true }`)
+
 ---
 
 ## SCSS/CSS Styling Rules
@@ -303,6 +311,66 @@ var (users, orders, products) = await (
 var users = await userRepo.GetAllAsync(filter);
 var orders = await orderRepo.GetAllAsync(filter);
 ```
+
+### Database Indexing
+
+```csharp
+// Entity defines query expressions
+public class Employee : RootEntity<Employee, string>
+{
+    public string CompanyId { get; set; } = "";
+    public Status Status { get; set; }
+    public DateTime CreatedDate { get; set; }
+
+    // These expressions REQUIRE matching indexes
+    public static Expression<Func<Employee, bool>> OfCompanyExpr(string companyId)
+        => e => e.CompanyId == companyId;
+    public static Expression<Func<Employee, bool>> IsActiveExpr()
+        => e => e.Status == Status.Active;
+}
+```
+
+**EF Core Index Configuration:**
+
+```csharp
+// DbContext OnModelCreating
+modelBuilder.Entity<Employee>()
+    .HasIndex(e => e.CompanyId);  // Single field
+
+modelBuilder.Entity<Employee>()
+    .HasIndex(e => new { e.CompanyId, e.Status })
+    .IncludeProperties(e => new { e.FullName, e.Email });  // Covering index
+
+modelBuilder.Entity<Employee>()
+    .HasIndex(e => e.CompanyId)
+    .HasFilter("Status = 'Active' AND IsDeleted = 0");  // Filtered index
+```
+
+**MongoDB Index Configuration:**
+
+```csharp
+// DbContext InitializeAsync
+await EmployeeCollection.Indexes.CreateManyAsync([
+    new CreateIndexModel<Employee>(
+        Builders<Employee>.IndexKeys.Ascending(e => e.CompanyId)),
+    new CreateIndexModel<Employee>(
+        Builders<Employee>.IndexKeys
+            .Ascending(e => e.CompanyId)
+            .Ascending(e => e.Status)),
+    new CreateIndexModel<Employee>(
+        Builders<Employee>.IndexKeys
+            .Text(e => e.FullName)
+            .Text(e => e.Email))
+]);
+```
+
+**Verification Checklist:**
+
+- [ ] Every `static Expression` filter property has index in DbContext
+- [ ] Composite indexes for multi-field queries (`CompanyId + Status`)
+- [ ] Text indexes for full-text search columns (`Entity.SearchColumns()`)
+- [ ] Covering indexes with `INCLUDE` for frequently selected columns (SQL Server)
+- [ ] Index created in both EF migrations AND MongoDB `InitializeAsync`
 
 ---
 

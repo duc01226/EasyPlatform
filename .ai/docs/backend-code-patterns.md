@@ -444,6 +444,89 @@ public class MyMongoPersistenceModule : PlatformMongoDbPersistenceModule<MyDbCon
 }
 ```
 
+### 17. Database Index Configuration
+
+**EF Core (SQL Server/PostgreSQL):**
+
+```csharp
+// DbContext OnModelCreating
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    // Single field index
+    modelBuilder.Entity<Employee>()
+        .HasIndex(e => e.CompanyId);
+
+    // Composite index with included columns (covering index)
+    modelBuilder.Entity<Employee>()
+        .HasIndex(e => new { e.CompanyId, e.Status, e.CreatedDate })
+        .IncludeProperties(e => new { e.FullName, e.Email });
+
+    // Filtered index for specific conditions
+    modelBuilder.Entity<Employee>()
+        .HasIndex(e => e.CompanyId)
+        .HasFilter("Status = 'Active' AND IsDeleted = 0");
+
+    // Unique index
+    modelBuilder.Entity<Employee>()
+        .HasIndex(e => new { e.CompanyId, e.EmployeeCode })
+        .IsUnique();
+}
+```
+
+**MongoDB:**
+
+```csharp
+public override async Task InitializeAsync()
+{
+    await EmployeeCollection.Indexes.DropAllAsync();
+    await EmployeeCollection.Indexes.CreateManyAsync([
+        // Single field indexes
+        new CreateIndexModel<Employee>(
+            Builders<Employee>.IndexKeys.Ascending(e => e.CompanyId)),
+        new CreateIndexModel<Employee>(
+            Builders<Employee>.IndexKeys.Ascending(e => e.Status)),
+
+        // Composite index (order matters: equality → range → sort)
+        new CreateIndexModel<Employee>(
+            Builders<Employee>.IndexKeys
+                .Ascending(e => e.CompanyId)
+                .Ascending(e => e.Status)
+                .Descending(e => e.CreatedDate)),
+
+        // Full-text search index
+        new CreateIndexModel<Employee>(
+            Builders<Employee>.IndexKeys
+                .Text(e => e.FullName)
+                .Text(e => e.Email)
+                .Text(e => e.EmployeeCode)),
+
+        // Sparse index for optional fields
+        new CreateIndexModel<Employee>(
+            Builders<Employee>.IndexKeys.Ascending(e => e.ExternalId),
+            new CreateIndexOptions { Sparse = true }),
+
+        // Unique index
+        new CreateIndexModel<Employee>(
+            Builders<Employee>.IndexKeys
+                .Ascending(e => e.CompanyId)
+                .Ascending(e => e.EmployeeCode),
+            new CreateIndexOptions { Unique = true })
+    ]);
+}
+```
+
+**Index Selection Rules:**
+
+- **Single field**: Properties in `Where()` clauses (`CompanyId`, `Status`)
+- **Composite**: Multi-field filters (`CompanyId + Status + CreatedDate`)
+  - Order: Equality → Range → Sort
+- **Text**: Columns in `Entity.SearchColumns()` for full-text search
+- **Covering**: Include frequently selected columns (SQL Server `INCLUDE`)
+- **Sparse**: Optional fields to reduce index size (MongoDB)
+- **Unique**: Enforce uniqueness constraint
+
+**Verification**: Every `Entity.XxxExpr()` static expression property → must have index in DbContext
+
 ---
 
 ## Authorization

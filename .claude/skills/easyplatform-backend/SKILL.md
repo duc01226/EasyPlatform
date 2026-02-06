@@ -1391,6 +1391,7 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 - [ ] Jobs have `maxConcurrent` parameter for parallelism
 - [ ] Migrations use `dismissSendEvent: true`, `checkDiff: false`
 - [ ] MongoDB migrations: `PlatformMongoMigrationExecutor` (simple) vs `PlatformDataMigrationExecutor<MongoDbContext>` (DI)
+- [ ] Database indexes configured for Entity static expression properties (see `.ai/docs/backend-code-patterns.md` Pattern 17)
 
 ---
 
