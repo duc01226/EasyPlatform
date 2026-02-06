@@ -112,15 +112,6 @@
                     }
                 ],
                 "matcher": "Bash|Read|Grep|Glob|Skill|Edit|Write|MultiEdit|WebFetch|WebSearch"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "AskUserQuestion"
             }
         ],
         "PreCompact": [
@@ -256,6 +247,15 @@
                     }
                 ],
                 "matcher": "Write"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "AskUserQuestion"
             }
         ],
         "SessionEnd": [
@@ -402,7 +402,15 @@
             "Grep",
             "Bash(npm run:*)"
         ],
-        "ask": ["Bash(git push:*)", "Bash(npm publish:*)", "Bash(docker push:*)", "Bash(docker rm:*)", "Bash(docker rmi:*)", "Bash(docker system prune:*)", "Bash(dotnet nuget push:*)"],
+        "ask": [
+            "Bash(git push:*)",
+            "Bash(npm publish:*)",
+            "Bash(docker push:*)",
+            "Bash(docker rm:*)",
+            "Bash(docker rmi:*)",
+            "Bash(docker system prune:*)",
+            "Bash(dotnet nuget push:*)"
+        ],
         "defaultMode": "bypassPermissions",
         "deny": [
             "EnterPlanMode",
