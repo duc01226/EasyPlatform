@@ -88,6 +88,123 @@ If context is compacted or lost:
 
 ---
 
+## EXTENDED_DISCOVERY_PATTERNS
+
+When implementing features affecting data access, queries, or business logic, search ALL related files comprehensively.
+
+### Backend Discovery (EasyPlatform Structure)
+
+**Query Handlers:**
+
+```bash
+grep -r "Query.*{Entity}" src/Backend/*/UseCaseQueries/ --include="*.cs"
+grep -r "class.*{Entity}.*Query" src/Backend/*/UseCaseQueries/ --include="*.cs"
+```
+
+**Command Handlers:**
+
+```bash
+grep -r "Command.*{Entity}" src/Backend/*/UseCaseCommands/ --include="*.cs"
+grep -r "class.*{Entity}.*Command" src/Backend/*/UseCaseCommands/ --include="*.cs"
+```
+
+**Repository Usages:**
+
+```bash
+grep -r "{Entity}Repository\\..*Async" src/Backend/*/Application/ --include="*.cs"
+grep -r "I.*{Entity}.*Repository" src/Backend/ --include="*.cs"
+```
+
+**Controller Endpoints:**
+
+```bash
+grep -r "\[Route.*{entity}" src/Backend/*/Controllers/ --include="*.cs"
+grep -r "class.*{Entity}.*Controller" src/Backend/*/Controllers/ --include="*.cs"
+```
+
+**Event Handlers:**
+
+```bash
+grep -r "EventHandler.*{Entity}|{Entity}.*EventHandler" src/Backend/*/UseCaseEvents/ --include="*.cs"
+grep -r "{Entity}.*Event" src/Backend/ --include="*.cs"
+```
+
+**Background Jobs:**
+
+```bash
+grep -r "BackgroundJob.*{Entity}|{Entity}.*BackgroundJob" src/Backend/ --include="*.cs"
+grep -r "PlatformRecurringJob" src/Backend/*/Application/ --include="*.cs"
+```
+
+**Message Bus (Cross-Service):**
+
+```bash
+grep -r "{Entity}.*BusMessage" src/Backend/ --include="*.cs"
+grep -r "Consumer.*{Entity}|{Entity}.*Consumer" src/Backend/ --include="*.cs"
+```
+
+### Frontend Discovery (Angular Nx Workspace)
+
+**API Service Calls:**
+
+```bash
+grep -r "/{endpoint-path}" src/Frontend/apps/*/src/ --include="*.ts"
+grep -r "{ApiServiceName}" src/Frontend/apps/*/src/ --include="*.service.ts"
+```
+
+**Components:**
+
+```bash
+grep -r "selector:.*{selector-name}" src/Frontend/apps/*/src/ --include="*.component.ts"
+grep -r "{ComponentName}" src/Frontend/apps/*/src/ --include="*.component.ts"
+```
+
+**Stores (State Management):**
+
+```bash
+grep -r "{Entity}.*Store" src/Frontend/apps/*/src/ --include="*.store.ts"
+grep -r "PlatformVmStore" src/Frontend/ --include="*.ts"
+```
+
+### Cross-Service Discovery
+
+**Check all Backend services:**
+
+```bash
+find src/Backend -type d -name "*.Application" | while read svc; do
+  echo "=== Checking $svc ==="
+  grep -r "{pattern}" "$svc" --include="*.cs"
+done
+```
+
+**Find all service boundaries:**
+
+```bash
+grep -r "PlatformApplicationMessageBusConsumer" src/Backend/ --include="*.cs"
+grep -r "PlatformCqrsEntityEventBusMessageProducer" src/Backend/ --include="*.cs"
+```
+
+### Usage Guidelines
+
+1. **Replace placeholders:**
+   - `{Entity}` → Entity name (e.g., `Employee`, `Leave`, `Goal`)
+   - `{entity}` → Lowercase entity (e.g., `employee`, `leave`)
+   - `{endpoint-path}` → API path (e.g., `api/employees`)
+   - `{ApiServiceName}` → Service name (e.g., `EmployeeApiService`)
+
+2. **When to use:**
+   - Before implementing features affecting data filtering/queries
+   - Before refactoring CQRS components
+   - Before modifying cross-service integrations
+   - During bug investigation involving data flow
+
+3. **Batch searches:**
+   - Combine patterns with `|` (OR): `"Query.*{Entity}|{Entity}.*Query"`
+   - Use parallel grep for related entities
+   - Document all findings in Knowledge Graph
+
+---
+
 ## Quick Reference Checklist
 
 **Before any major operation:**
