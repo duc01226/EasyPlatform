@@ -17,7 +17,7 @@ Detailed patterns and protocols are in `docs/claude/`.
 1. **Logic goes in the LOWEST layer:** Entity/Model > Service > Component/Handler
 2. **Backend:** Platform repositories only, `PlatformValidationResult` fluent API (never throw), side effects in Event Handlers (never handlers), DTOs own mapping, Command+Result+Handler in ONE file, cross-service via RabbitMQ only — *because custom implementations bypass framework audit/retry/UoW, throwing loses structured error aggregation, inline side effects create untestable coupling, and handler mapping creates transport-domain coupling*
 3. **Frontend:** Extend `AppBaseComponent`/`AppBaseVmStoreComponent`/`AppBaseFormComponent` (never raw Component), `PlatformVmStore` for state, extend `PlatformApiService` (never direct HttpClient), always `untilDestroyed()`, all elements need BEM classes — *because raw Components skip subscription cleanup and loading state management, direct HttpClient bypasses centralized auth/error handling, and missing untilDestroyed() causes memory leaks on every component destroy*
-4. **Always search existing code first** before creating anything new
+4. **🔍 CRITICAL: Always search existing code patterns FIRST** before creating anything new — use Grep/Glob to find similar implementations, read base classes, verify no duplication exists — *because creating duplicate code violates DRY, bypasses battle-tested framework features, creates maintenance burden, and misses reusable utilities that already solve the problem*
 5. **Always plan before implementing** non-trivial tasks (use `/plan` commands)
 6. **Always create todos BEFORE any action** when the prompt modifies files or involves multiple steps — all skills are blocked without active todos when a workflow is active
 7. **Detect workflow from prompt** before any tool call — match keywords to workflow table below
@@ -147,10 +147,17 @@ Every UI element MUST have a BEM class, even without special styling. Block (`us
 
 ### Success Factors
 
-1. **Evidence-Based:** Verify patterns with grep/search before implementing
-2. **Platform-First:** Use Easy.Platform patterns over custom solutions
-3. **Service Boundaries:** Verify through code analysis, never assume
-4. **Check Base Classes:** Use IntelliSense to verify available methods
+1. **🔍 Search-First Protocol (MANDATORY):** Before writing ANY code:
+   - Use Grep to find similar implementations: `pattern: <feature-name>|<entity-name>|<concept>`
+   - Use Glob to locate related files: `pattern: **/*<similar-file-pattern>*`
+   - Read base classes and platform utilities
+   - Verify no duplication exists
+   - Document search evidence (patterns used, files reviewed)
+   - **Enforcement:** `search-before-code.cjs` hook blocks Edit/Write without search evidence
+2. **Evidence-Based:** Verify patterns with grep/search before implementing
+3. **Platform-First:** Use Easy.Platform patterns over custom solutions
+4. **Service Boundaries:** Verify through code analysis, never assume
+5. **Check Base Classes:** Use IntelliSense to verify available methods
 
 ### Key Rules
 

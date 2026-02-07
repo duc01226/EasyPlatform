@@ -220,7 +220,7 @@
             "preActions": {
                 "injectContext": "FEATURE IMPLEMENTATION PROTOCOL:\n1. Search for existing patterns before creating new code\n2. Follow platform hierarchy: Entity > Service > Component\n3. Place business logic in lowest appropriate layer\n4. Use platform base classes (PlatformComponent, PlatformApiService, PlatformVmStore)\n5. Add changelog entry for user-facing changes\n- Rules: YAGNI (no speculative features), BEM for all UI elements, untilDestroyed() for subscriptions\n- Backend: CQRS Command+Result+Handler in ONE file, DTO owns mapping, side effects in Event Handlers"
             },
-            "sequence": ["scout", "plan", "plan-validate", "plan-review", "cook", "why-review", "code-simplifier", "code-review", "changelog-update", "test", "docs-update", "watzup"],
+            "sequence": ["scout", "investigate", "plan", "plan-validate", "plan-review", "cook", "why-review", "code-simplifier", "code-review", "changelog-update", "test", "docs-update", "watzup"],
             "whenNotToUse": "Bug fixes, documentation-only, test-only, migration, refactoring, investigation.",
             "whenToUse": "User wants to implement, add, create, build, or develop a new feature, functionality, module, or component."
         },
@@ -333,7 +333,7 @@
             "preActions": {
                 "injectContext": "REFACTORING PROTOCOL:\n1. Define refactoring scope and expected outcomes\n2. CHECKPOINT: If removing code, run /investigate-removal first\n3. Verify all tests pass BEFORE refactoring\n4. Apply incremental changes — one concern at a time\n5. Verify tests pass AFTER each change\n6. No behavior changes — same inputs produce same outputs\n- Guardrail: Never change behavior during refactoring\n- Guardrail: Follow platform hierarchy (Entity > Service > Component)"
             },
-            "sequence": ["scout", "plan", "plan-validate", "plan-review", "code", "why-review", "code-simplifier", "code-review", "test", "watzup"],
+            "sequence": ["scout", "investigate", "plan", "plan-validate", "plan-review", "code", "why-review", "code-simplifier", "code-review", "test", "watzup"],
             "whenNotToUse": "Bug fixes, new features, quality audits.",
             "whenToUse": "User wants to refactor, restructure, reorganize, clean up code, improve code quality, extract methods, rename, split/merge components, or address technical debt."
         },

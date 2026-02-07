@@ -151,6 +151,23 @@ this.search$.pipe(skipDuplicates(500), applyIf(this.enabled$, debounceTime(300))
 // Form validators
 new FormControl('', [Validators.required, noWhitespaceValidator, startEndValidator('err', c => c.parent?.get('start')?.value, c => c.value)], [ifAsyncValidator(c => c.valid, uniqueValidator)]);
 
+// Conditional validation (ifValidator)
+// BravoSUITE Pattern - Use this.formControls() without control parameter
+protected initialFormConfig = () => ({
+  controls: {
+    teamsTenantId: new FormControl('', [
+      ifValidator(
+        () => this.formControls('teamsIsActive').value === true,
+        () => Validators.required
+      )
+    ])
+  }
+});
+// Pattern: ifValidator(() => condition, () => validator)
+// - Condition: () => boolean - use this.formControls('fieldName') or component state
+// - Validator: () => ValidatorFn - return validator function
+// - Why: PlatformFormComponent provides formControls() method for type-safe access
+
 // Utilities
 import { date_format, date_addDays, date_timeDiff, list_groupBy, list_distinctBy, list_sortBy, string_isEmpty, string_truncate, dictionary_map, dictionary_filter, immutableUpdate, deepClone, removeNullProps, guid_generate, task_delay, task_debounce } from '@libs/platform-core';
 

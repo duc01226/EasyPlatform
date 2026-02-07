@@ -30,16 +30,6 @@
                 ]
             }
         ],
-        "Stop": [
-            {
-                "hooks": [
-                    {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs",
-                        "type": "command"
-                    }
-                ]
-            }
-        ],
         "PostToolUse": [
             {
                 "hooks": [
@@ -147,6 +137,15 @@
             }
         ],
         "PreToolUse": [
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/search-before-code.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Edit|Write|MultiEdit"
+            },
             {
                 "hooks": [
                     {
@@ -325,6 +324,16 @@
                 "matcher": "startup"
             }
         ],
+        "Stop": [
+            {
+                "hooks": [
+                    {
+                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs",
+                        "type": "command"
+                    }
+                ]
+            }
+        ],
         "SubagentStart": [
             {
                 "hooks": [
@@ -448,8 +457,6 @@
             "Edit(**/bin/**)",
             "Edit(**/dist/**)",
             "Edit(**/node_modules/**)",
-            "Edit(.github/workflows/**)",
-            "Write(.github/workflows/**)",
             "Read(**/.env*)",
             "Read(.env*)",
             "Read(**/secrets/**)",
@@ -514,10 +521,6 @@
             "Write(~/.npmrc)",
             "Write(~/.git-credentials)",
             "Write(~/.netrc)",
-            "Edit(.claude/settings.json)",
-            "Write(.claude/settings.json)",
-            "Edit(.claude/hooks/**)",
-            "Write(.claude/hooks/**)",
             "Edit(.mcp.json)",
             "Write(.mcp.json)"
         ]
