@@ -24,7 +24,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notifications/notify.cjs",
                         "type": "command"
                     }
                 ]
@@ -34,7 +34,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/todo-tracker.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/todo-tracker.cjs",
                         "type": "command"
                     }
                 ],
@@ -43,7 +43,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/edit-complexity-tracker.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/edit-complexity-tracker.cjs",
                         "type": "command"
                     }
                 ],
@@ -52,7 +52,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/post-edit-prettier.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-edit-prettier.cjs",
                         "type": "command"
                     }
                 ],
@@ -61,7 +61,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ace-event-emitter.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ace-event-emitter.cjs",
                         "type": "command"
                     }
                 ],
@@ -70,7 +70,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/workflow-step-tracker.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-step-tracker.cjs",
                         "type": "command"
                     }
                 ],
@@ -79,7 +79,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/tool-output-swap.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/tool-output-swap.cjs",
                         "type": "command"
                     }
                 ],
@@ -88,7 +88,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/bash-cleanup.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/bash-cleanup.cjs",
                         "type": "command"
                     }
                 ],
@@ -97,7 +97,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/compact-suggestion.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/compact-suggestion.cjs",
                         "type": "command"
                     }
                 ],
@@ -106,7 +106,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ownership-tracker.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ownership-tracker.cjs",
                         "type": "command"
                     }
                 ],
@@ -117,19 +117,19 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/write-compact-marker.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/write-compact-marker.cjs",
                         "type": "command"
                     },
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/save-context-memory.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/save-context-memory.cjs",
                         "type": "command"
                     },
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ace-reflector-analysis.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ace-reflector-analysis.cjs",
                         "type": "command"
                     },
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ace-curator-pruner.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ace-curator-pruner.cjs",
                         "type": "command"
                     }
                 ],
@@ -140,7 +140,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/search-before-code.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/search-before-code.cjs",
                         "type": "command"
                     }
                 ],
@@ -149,7 +149,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/pattern-injector.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pattern-injector.cjs",
                         "type": "command"
                     }
                 ],
@@ -158,7 +158,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/todo-enforcement.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/todo-enforcement.cjs",
                         "type": "command"
                     }
                 ],
@@ -167,7 +167,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/code-review-rules-injector.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/code-review-rules-injector.cjs",
                         "type": "command"
                     }
                 ],
@@ -176,7 +176,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/cross-platform-bash.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/cross-platform-bash.cjs",
                         "type": "command"
                     }
                 ],
@@ -185,11 +185,11 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/scout-block.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/scout-block.cjs",
                         "type": "command"
                     },
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/privacy-block.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/privacy-block.cjs",
                         "type": "command"
                     }
                 ],
@@ -198,7 +198,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/project-boundary.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/project-boundary.cjs",
                         "type": "command"
                     }
                 ],
@@ -207,23 +207,23 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/design-system-context.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/design-system-context.cjs",
                         "type": "command"
                     },
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/code-patterns-injector.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/code-patterns-injector.cjs",
                         "type": "command"
                     },
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/backend-csharp-context.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/backend-csharp-context.cjs",
                         "type": "command"
                     },
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/frontend-typescript-context.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/frontend-typescript-context.cjs",
                         "type": "command"
                     },
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/scss-styling-context.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/scss-styling-context.cjs",
                         "type": "command"
                     }
                 ],
@@ -232,7 +232,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/role-context-injector.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/role-context-injector.cjs",
                         "type": "command"
                     }
                 ],
@@ -241,7 +241,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/figma-context-extractor.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/figma-context-extractor.cjs",
                         "type": "command"
                     }
                 ],
@@ -250,7 +250,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/artifact-path-resolver.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/artifact-path-resolver.cjs",
                         "type": "command"
                     }
                 ],
@@ -259,7 +259,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notifications/notify.cjs",
                         "type": "command"
                     }
                 ],
@@ -270,7 +270,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/session-end.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-end.cjs",
                         "type": "command"
                     }
                 ],
@@ -281,7 +281,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/session-init.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-init.cjs",
                         "type": "command"
                     }
                 ],
@@ -290,7 +290,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/session-resume.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-resume.cjs",
                         "type": "command"
                     }
                 ],
@@ -299,7 +299,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ace-session-inject.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ace-session-inject.cjs",
                         "type": "command"
                     }
                 ],
@@ -308,7 +308,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/pattern-injector.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pattern-injector.cjs",
                         "type": "command"
                     }
                 ],
@@ -317,7 +317,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/root-deps-check.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/root-deps-check.cjs",
                         "type": "command"
                     }
                 ],
@@ -328,7 +328,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notifications/notify.cjs",
                         "type": "command"
                     }
                 ]
@@ -338,7 +338,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/subagent-init.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init.cjs",
                         "type": "command"
                     }
                 ],
@@ -349,19 +349,19 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/workflow-router.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router.cjs",
                         "type": "command"
                     },
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/dev-rules-reminder.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/dev-rules-reminder.cjs",
                         "type": "command"
                     },
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/pattern-learner.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pattern-learner.cjs",
                         "type": "command"
                     },
                     {
-                        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/ace-feedback-tracker.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ace-feedback-tracker.cjs",
                         "type": "command"
                     }
                 ]
@@ -526,7 +526,7 @@
         ]
     },
     "statusLine": {
-        "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/statusline.cjs",
+        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/statusline.cjs",
         "padding": 0,
         "type": "command"
     }
