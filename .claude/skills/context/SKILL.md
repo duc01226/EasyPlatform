@@ -1,7 +1,6 @@
 ---
 name: context
-description: "[Planning] Load current project development context"
-infer: true
+description: '[Planning] Load current project development context'
 ---
 
 # Load Project Context
@@ -28,13 +27,16 @@ git diff --stat
 ## Project Structure Reminder
 
 **Backend Services:**
+
 - `TextSnippet` - Example application service
 - `Accounts` - Authentication & authorization
 
 **Frontend Apps:**
+
 - `playground-text-snippet` - Example frontend application
 
 **Key Libraries:**
+
 - `platform-core` - Base components (PlatformComponent, stores)
 - `apps-domains` - Business domain (APIs, models, validators)
 - `platform-core` - UI components & utilities
@@ -47,6 +49,7 @@ git diff --stat
 ## Current Session Focus
 
 Based on the git status, identify:
+
 - What files are being worked on
 - What feature/fix is in progress
 - Any uncommitted changes that need attention

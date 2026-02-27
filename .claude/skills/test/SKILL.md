@@ -1,7 +1,6 @@
 ---
 name: test
-description: "[Testing] ⚡ Run tests locally and analyze the summary report."
-infer: true
+description: '[Testing] ⚡ Run tests locally and analyze the summary report.'
 ---
 
 Use the `tester` subagent to run tests locally and analyze the summary report.

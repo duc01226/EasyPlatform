@@ -1,8 +1,7 @@
 ---
 name: design-video
-description: "[Design & Content] Create a design based on video"
+description: '[Design & Content] Create a design based on video'
 argument-hint: [video]
-infer: true
 ---
 
 Think hard to plan & start designing follow exactly this video:
@@ -18,12 +17,12 @@ Think hard to plan & start designing follow exactly this video:
 ## Workflow
 
 1. Use `ai-multimodal` skills to describe super details of the video: be specific about describing every element, every interaction, every animation, every transition, every color, every font, every border, every spacing, every size, every shape, every texture, every material, every light, every shadow, every reflection, every refraction, every blur, every glow, every image, background transparency, etc.
-   - **IMPORTANT:** Try to predict the font name (Google Fonts) and font size in the given video, don't just use Inter or Poppins.
+    - **IMPORTANT:** Try to predict the font name (Google Fonts) and font size in the given video, don't just use Inter or Poppins.
 2. Use `ui-ux-designer` subagent to create a design plan following the progressive disclosure structure so the final result matches the video:
-   - Create a directory using naming pattern from `## Naming` section.
-   - Save the overview access point at `plan.md`, keep it generic, under 80 lines, and list each phase with status/progress and links.
-   - For each phase, add `phase-XX-phase-name.md` files containing sections (Context links, Overview with date/priority/statuses, Key Insights, Requirements, Architecture, Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps).
-   - Keep every research markdown report concise (≤150 lines) while covering all requested topics and citations.
+    - Create a directory using naming pattern from `## Naming` section.
+    - Save the overview access point at `plan.md`, keep it generic, under 80 lines, and list each phase with status/progress and links.
+    - For each phase, add `phase-XX-phase-name.md` files containing sections (Context links, Overview with date/priority/statuses, Key Insights, Requirements, Architecture, Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps).
+    - Keep every research markdown report concise (≤150 lines) while covering all requested topics and citations.
 3. Then implement the plan step by step.
 4. If user doesn't specify, create the design in pure HTML/CSS/JS.
 5. Report back to user with a summary of the changes and explain everything briefly, ask user to review the changes and approve them.

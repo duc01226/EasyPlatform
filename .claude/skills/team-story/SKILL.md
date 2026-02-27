@@ -1,10 +1,8 @@
 ---
 name: team-story
-version: 1.2.0
 description: "[Team] Break PBIs into user stories using vertical slicing, SPIDR splitting, and INVEST criteria. Use when creating user stories from PBIs, slicing features, or breaking down requirements. Triggers on keywords like "user story", "create stories", "slice pbi", "story breakdown", "vertical slice", "split story"."
 argument-hint: "<path-to-pbi-file-or-PBI-ID>"
 allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite
-infer: true
 ---
 
 # User Story Creation
@@ -50,7 +48,7 @@ Break Product Backlog Items into implementable user stories using vertical slici
 
 ## Story Format
 
-```markdown
+````markdown
 ## Story N: {Title}
 
 **As a** {user role}
@@ -65,6 +63,8 @@ Scenario: {Title}
   When {action}
   Then {outcome}
 ```
+````
+
 ```
 
 ## Quality Checklist
@@ -97,3 +97,4 @@ Activates on: story, user story, user stories, slice, slicing, split story, brea
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+```

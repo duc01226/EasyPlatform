@@ -23,17 +23,12 @@
  */
 
 const fs = require('fs');
-const {
-  loadState,
-  clearState,
-  detectWorkflowControl
-} = require('./lib/workflow-state.cjs');
+const { loadState } = require('./lib/workflow-state.cjs');
 
 // Workflow router sub-modules
 const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
-const { detectSkillInvocation, shouldInjectCatalog } = require('./lib/wr-detect.cjs');
+const { shouldInjectCatalog } = require('./lib/wr-detect.cjs');
 const { buildCatalogInjection, buildActiveWorkflowContext } = require('./lib/wr-output.cjs');
-const { handleWorkflowControl } = require('./lib/wr-control.cjs');
 
 /**
  * Main hook execution
@@ -54,49 +49,19 @@ async function main() {
     if (!config.settings?.enabled) process.exit(0);
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 1: Check for workflow control commands
+    // STEP 1: Skip for explicit slash commands and very short prompts
     // ─────────────────────────────────────────────────────────────────────────
-    const controlAction = detectWorkflowControl(userPrompt);
-    if (controlAction) {
-      const response = handleWorkflowControl(controlAction, config);
-      if (response) {
-        console.log(response);
-        process.exit(0);
-      }
-    }
+    if (/^\/\w+/.test(userPrompt.trim())) process.exit(0);
+    if (!shouldInjectCatalog(userPrompt, config)) process.exit(0);
 
     // ─────────────────────────────────────────────────────────────────────────
-    // STEP 2: Check for active workflow
+    // STEP 2: Always inject catalog (with active workflow context if applicable)
     // ─────────────────────────────────────────────────────────────────────────
     const existingState = loadState();
     if (existingState) {
-      // 2a. User is executing current step → exit silently (Decision 8)
-      const invokedSkill = detectSkillInvocation(userPrompt, config);
-      const currentStep = existingState.sequence[existingState.currentStep];
-
-      if (invokedSkill && invokedSkill === currentStep) {
-        process.exit(0);
-      }
-
-      // 2b. Override prefix → clear state, exit
-      if (config.settings?.allowOverride && config.settings?.overridePrefix) {
-        const lowerPrompt = userPrompt.toLowerCase().trim();
-        if (lowerPrompt.startsWith(config.settings.overridePrefix.toLowerCase())) {
-          clearState();
-          process.exit(0);
-        }
-      }
-
-      // 2c. All other prompts → inject full active workflow context (Decision 9)
       const activeContext = buildActiveWorkflowContext(existingState, config);
-      console.log(activeContext);
-      process.exit(0);
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // STEP 3: No active workflow — inject catalog for qualifying prompts
-    // ─────────────────────────────────────────────────────────────────────────
-    if (shouldInjectCatalog(userPrompt, config)) {
+      if (activeContext) console.log(activeContext);
+    } else {
       const catalog = buildCatalogInjection(config);
       console.log(catalog);
     }

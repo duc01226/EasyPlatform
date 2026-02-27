@@ -25,7 +25,7 @@ Detailed patterns and protocols are in `docs/claude/`.
 
 **Key paths:** Backend `src/Backend/`, Frontend `src/Frontend/apps/playground-text-snippet/`, Platform framework `src/Platform/`, Patterns `docs/claude/`
 
-**Anti-patterns (never do):** Cross-service DB access *(deployment coupling + hidden data contracts)*, side effects in command handlers *(untestable coupling + no independent retry)*, DTO mapping in handlers *(transport-domain coupling)*, direct HttpClient *(bypasses auth/error handling)*, manual signals *(loses store lifecycle management)*, missing `untilDestroyed()` *(memory leaks)*, missing BEM classes *(breaks style scoping)*
+**Anti-patterns (never do):** Cross-service DB access *(deployment coupling + hidden data contracts)*, side effects in command handlers *(untestable coupling + no independent retry)*, DTO mapping in handlers *(transport-domain coupling)*, direct HttpClient *(bypasses auth/error handling)*, manual signals *(loses store lifecycle management)*, missing `untilDestroyed()` *(memory leaks)*, missing BEM classes *(breaks style scoping)*, status-only test assertions *(proves nothing about domain behavior -- verify fields/flags, prefer follow-up query)*
 
 ---
 
@@ -116,6 +116,7 @@ Entity/Model (Lowest)  →  Service  →  Component/Handler (Highest)
 
 - **Backend:** No cross-service DB access, no side effects in handlers, DTO owns mapping (not handler)
 - **Frontend:** No direct HttpClient, always `untilDestroyed()`, no manual signals, all elements need BEM classes
+- **Testing:** No status-only test assertions -- verify domain fields/flags; prefer follow-up query over response-body-only
 
 > **Full catalog with examples:** See [advanced-patterns.md](docs/claude/advanced-patterns.md)
 
@@ -161,11 +162,12 @@ Every UI element MUST have a BEM class, even without special styling. Block (`us
 
 ### Key Rules
 
-- Always use TodoWrite to track tasks
+- Always use TaskCreate/TaskUpdate to track tasks
 - Always plan before implementing non-trivial changes
 - Always verify code exists before assuming removal is safe
 - Declare confidence level when uncertain (if <90%, ask user before proceeding)
 - `/why-review` runs automatically in 9 workflows after implementation (`cook`/`fix`/`code`), before code review. Audits reasoning quality with Understanding Score (0-5). Score < 3 flags mechanical changes. Soft review -- never blocks commits. See `docs/adr/` for decision records it validates against.
+- **Learning System:** Use `/learn <lesson>` or `remember this: <lesson>` to save patterns to `docs/lessons.md`. Lessons are auto-injected into every prompt and before file edits via `lessons-injector.cjs`.
 
 ### Investigation Workflow
 
@@ -195,7 +197,7 @@ Before removing/changing ANY code:
 
 ### System Architecture
 
-- **Backend:** .NET 9 with Clean Architecture (Domain, Application, Persistence, Service)
+- **Backend:** .NET 9 with Clean Architecture (Domain, Application, Infrastructure, Persistence, Api)
 - **Frontend:** Angular 19 Nx workspace with component-based architecture
 - **Platform Foundation:** Easy.Platform framework providing base infrastructure
 - **Communication:** RabbitMQ message bus for cross-service communication
@@ -224,6 +226,7 @@ src/Backend/          # Example microservice
 ├── *.Api/                       # Web API layer
 ├── *.Application/               # CQRS handlers, jobs, events
 ├── *.Domain/                    # Entities, domain events
+├── *.Infrastructure/            # External concerns (storage, external APIs)
 ├── *.Persistence*/              # Database implementations
 └── *.Shared/                    # Cross-service utilities
 ```
@@ -236,9 +239,10 @@ src/Frontend/       # Angular 19 Nx workspace
 │   └── playground-text-snippet/ # Example app
 └── libs/
     ├── platform-core/           # Base classes, utilities
+    ├── platform-components/     # Reusable UI components
     ├── apps-domains/            # Business domain code
-    ├── share-styles/            # SCSS themes
-    └── share-assets/            # Static assets
+    ├── apps-domains-components/ # Domain-specific components
+    └── apps-shared-components/  # Shared app components
 ```
 
 ---
@@ -253,7 +257,7 @@ Need backend feature?
 ├── Business logic → Command Handler in Application layer
 ├── Data access → Repository Extensions with static expressions
 ├── Cross-service → Entity Event Consumer
-├── Scheduled task → PlatformApplicationBackgroundJob
+├── Scheduled task → PlatformApplicationPagedBackgroundJobExecutor
 └── Migration → PlatformDataMigrationExecutor / EF migrations
 ```
 
@@ -280,7 +284,7 @@ Need frontend feature?
 | Document                                       | Purpose                                | When to Use                  |
 | ---------------------------------------------- | -------------------------------------- | ---------------------------- |
 | [README.md](docs/claude/README.md)             | **Start here** - Navigation & decision trees | First reference for any task |
-| [claude-kit-setup.md](docs/claude/claude-kit-setup.md) | Claude Kit (ACE, hooks, skills, workflows) | Hook/skill internals |
+| [claude-kit-setup.md](docs/claude/claude-kit-setup.md) | Claude Kit (hooks, skills, workflows) | Hook/skill internals |
 
 ### Pattern References (`docs/claude/`)
 
@@ -308,6 +312,9 @@ Need frontend feature?
 | [decision-trees.md](docs/claude/decision-trees.md)                   | Quick decision guides              |
 | [clean-code-rules.md](docs/claude/clean-code-rules.md)               | Universal coding standards         |
 | [team-collaboration-guide.md](docs/claude/team-collaboration-guide.md) | Team roles, commands, workflows  |
+| [subagent-registry.md](docs/claude/subagent-registry.md)             | Subagent capabilities & protocols  |
+| [agent-orchestration-principles.md](docs/claude/agent-orchestration-principles.md) | Multi-agent coordination patterns |
+| [dependency-policy.md](docs/claude/dependency-policy.md)             | Package evaluation rules           |
 
 ### Architectural Decision Records (`docs/adr/`)
 
@@ -324,13 +331,41 @@ Need frontend feature?
 | File                                                                    | Purpose                          |
 | ----------------------------------------------------------------------- | -------------------------------- |
 | [README.md](README.md)                                                  | Platform overview & quick start  |
+| [Getting Started](docs/getting-started.md)                              | Dev setup & prerequisites        |
 | [Architecture Overview](docs/architecture-overview.md)                  | System architecture & diagrams   |
 | **[Business Features](docs/BUSINESS-FEATURES.md)**                      | **Module docs, features, APIs**  |
+| [Backend Quick Reference](docs/backend-quickref.md)                     | Backend cheatsheet               |
+| [Frontend Quick Reference](docs/frontend-quickref.md)                   | Frontend cheatsheet              |
+| [Testing Strategy](docs/TESTING.md)                                     | Testing approach & coverage      |
+| [Test Specifications](docs/test-specs/)                                 | TC-IDs, test cases by module     |
+| [Design System](docs/design-system/FrontendDesignSystem.md)             | UI tokens, component library     |
 | [Code Review Rules](docs/code-review-rules.md)                          | Review checklist (auto-injected) |
+| [Commit Conventions](docs/contributing/commit-conventions.md)           | Conventional commit format       |
 | [.ai/docs/AI-DEBUGGING-PROTOCOL.md](.ai/docs/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging & investigation protocol (includes 6-phase architectural validation) |
 | [.claude/hooks/tests/](.claude/hooks/tests/)                            | Claude hooks test infrastructure |
 
 > **Claude Hooks Development:** Check existing tests in `.claude/hooks/tests/` before adding new ones. Use `test-utils.cjs`, `hook-runner.cjs` and patterns in `suites/`.
+
+### Prompt-Based Documentation Lookup
+
+When a user prompt matches these keywords, read the corresponding doc first:
+
+| User Prompt Contains                          | Read First                                                            |
+| --------------------------------------------- | --------------------------------------------------------------------- |
+| setup, install, prerequisites, onboarding     | `docs/getting-started.md`                                             |
+| test, coverage, TC-ID, test spec              | `docs/TESTING.md`, `docs/test-specs/`                                 |
+| design system, tokens, UI library             | `docs/design-system/FrontendDesignSystem.md`                          |
+| commit, commit message, conventional          | `docs/contributing/commit-conventions.md`                             |
+| business feature, module docs                 | `docs/BUSINESS-FEATURES.md`, `docs/business-features/`               |
+| backend pattern, CQRS, repository             | `docs/backend-quickref.md` → `docs/claude/backend-patterns.md`       |
+| frontend pattern, component, store            | `docs/frontend-quickref.md` → `docs/claude/frontend-patterns.md`     |
+| architecture, system design                   | `docs/architecture-overview.md` → `docs/claude/architecture.md`      |
+| styling, SCSS, BEM, CSS                       | `docs/claude/scss-styling-guide.md`                                   |
+| security, auth, authorization                 | `docs/claude/authorization-patterns.md`                               |
+| dependency, package, library                  | `docs/claude/dependency-policy.md`                                    |
+| debug, investigate, troubleshoot              | `docs/claude/troubleshooting.md`                                      |
+| code review, review rules                     | `docs/code-review-rules.md`                                          |
+| release notes, changelog                      | `docs/release-notes/`, `CHANGELOG.md`                                |
 
 ---
 
@@ -383,39 +418,67 @@ Need frontend feature?
 
 ## Development Commands
 
-### Backend
+### Local Development Setup
+
+**Prerequisites:** Docker Desktop running, .NET 9 SDK, Node.js + npm.
+
+**Step 1: Start infrastructure** (databases + message bus in Docker):
 
 ```bash
-dotnet build EasyPlatform.sln
-dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
-dotnet test [Project].csproj
+cd src
+docker network create platform-example-app-network
+docker-compose -f platform-example-app.docker-compose.yml -f platform-example-app.docker-compose.override.yml -p easyplatform-example up --detach sql-data mongo-data postgres-sql rabbitmq redis-cache
 ```
 
-### Frontend
+Or use the CMD script: `src/start-dev-platform-example-app.infrastructure.cmd`
+
+**Step 2: Run backend natively** (hot reload + debugging):
+
+```bash
+dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
+```
+
+**Step 3: Run frontend natively** (hot reload):
 
 ```bash
 cd src/Frontend
 npm install
-nx serve playground-text-snippet
-nx build playground-text-snippet
-nx test platform-core
+npx nx serve playground-text-snippet
 ```
 
-### Infrastructure
+**Full Docker alternative** (builds and runs everything in containers — API on :5001, SPA on :4001):
 
 ```bash
-docker-compose -f src/platform-example-app.docker-compose.yml up -d
+cd src
+start-dev-platform-example-app.cmd
 ```
+
+### Build & Test
+
+```bash
+dotnet build src/Easy.Platform.sln                               # Build all backend
+dotnet test [Project].csproj                                     # Run backend tests
+cd src/Frontend && npx nx build playground-text-snippet           # Build frontend
+cd src/Frontend && npx nx test platform-core                     # Run frontend tests
+```
+
+### Infrastructure Config
+
+- Docker compose files: `src/platform-example-app.docker-compose.yml` + `*.override.yml`
+- Docker project name: `easyplatform-example`
+- Docker network: `platform-example-app-network` (must be created before first run)
+- Default DB engine: **Postgres** (`UseDbType=Postgres` in override)
+- API env when Dockerized: `ASPNETCORE_ENVIRONMENT=Development.Docker`
 
 ### Database Connections (Dev)
 
-| Service    | Host:Port       | Credentials         |
-| ---------- | --------------- | ------------------- |
-| SQL Server | localhost,14330 | sa / 123456Abc      |
-| MongoDB    | localhost:27017 | root / rootPassXXX  |
-| PostgreSQL | localhost:54320 | postgres / postgres |
-| Redis      | localhost:6379  | -                   |
-| RabbitMQ   | localhost:15672 | guest / guest       |
+| Service    | Host:Port       | Credentials        | Notes                    |
+| ---------- | --------------- | ------------------ | ------------------------ |
+| SQL Server | localhost:14330 | sa / 123456Abc     | Port mapped from 1433    |
+| MongoDB    | localhost:27017 | root / rootPassXXX | authSource=admin         |
+| PostgreSQL | localhost:54320 | postgres / postgres| Port mapped from 5432    |
+| Redis      | localhost:6379  | —                  |                          |
+| RabbitMQ   | localhost:5672  | guest / guest      | Management UI on :15672  |
 
 ---
 
@@ -505,24 +568,33 @@ Before creating/modifying files in these paths, ALWAYS invoke the corresponding 
 | `src/**/*.store.ts`          | `/frontend-angular`             | Component, form, store, API service patterns       |
 | `src/**/*-api.service.ts`    | `/frontend-angular`             | Component, form, store, API service patterns       |
 | `src/**/*.component.scss`    | Read SCSS guide                 | `docs/claude/scss-styling-guide.md`                |
+| Screenshot + UI intent       | `/find-component` **(before /scout)** | `docs/component-index.json`                   |
 
 ---
 
-## CRITICAL: Todo Enforcement (Runtime Enforced)
+## CRITICAL: Todo Enforcement (Runtime Enforced — Force Workflow First)
 
-Planning and implementation skills are **blocked** unless you have active todos. This is enforced by hooks.
+**ALL non-meta skills are blocked** unless you have active todos. This enforces the "workflow first" pipeline: detect workflow → `/workflow-start` → `TaskCreate` → then skills.
 
-### Allowed Without Todos (Read-Only Research & Status)
+### Always Allowed (Meta Skills — No Workflow/Tasks Required)
 
-- `/scout`, `/scout-ext`, `/investigate`, `/research`
-- `/watzup`, `/checkpoint`, `/kanban`
+- `/help`, `/memory`, `/memory-management`, `/checkpoint`, `/recover`, `/context`
+- `/ck-help`, `/watzup`, `/compact`, `/kanban`, `/coding-level`
+- `/workflow-start` (always allowed — it's the entry point)
 
-### Blocked Without Todos (Planning + Implementation)
+### Blocked Without Tasks (Everything Else)
 
-- `/plan`, `/plan-fast`, `/plan-hard`, `/plan-validate`
-- `/cook`, `/fix`, `/code`, `/feature`, `/refactoring`
-- `/test`, `/debug`, `/code-review`, `/commit`
-- All other skills not listed above
+- **Research:** `/scout`, `/investigate`, `/plan`, `/research` — require tasks when workflow active
+- **Implementation:** `/cook`, `/fix`, `/code`, `/feature`, `/refactoring`
+- **Testing:** `/test`, `/debug`, `/code-review`, `/commit`
+- **File edits:** `Edit`, `Write`, `MultiEdit` on non-exempt files (enforced by `edit-enforcement.cjs`)
+
+### Enforcement Architecture
+
+| Hook | Trigger | Gates |
+|------|---------|-------|
+| `skill-enforcement.cjs` | PreToolUse:Skill | Blocks non-meta skills without tasks |
+| `edit-enforcement.cjs` | PreToolUse:Edit\|Write\|MultiEdit\|NotebookEdit | Blocks file edits without tasks |
 
 ### Bypass
 
@@ -555,11 +627,11 @@ The `workflow-router.cjs` hook injects a workflow catalog into every qualifying 
 
 ### Workflow Execution Protocol
 
-**CRITICAL: First action after workflow detection MUST be calling `/workflow-start <workflowId>` then TodoWrite. No exceptions.**
+**CRITICAL: First action after workflow detection MUST be calling `/workflow-start <workflowId>` then TaskCreate. No exceptions.**
 
 1. **DETECT:** Read the workflow catalog above and match against user's prompt semantics. Use the Keywords column for guidance.
 2. **ACTIVATE:** Call `/workflow-start <workflowId>` using the ID from the first column
-3. **CREATE TODOS FIRST (HARD BLOCKING):** Use `TodoWrite` to create todo items for ALL workflow steps BEFORE doing anything else
+3. **CREATE TODOS FIRST (HARD BLOCKING):** Use `TaskCreate` to create todo items for ALL workflow steps BEFORE doing anything else
     - This is NOT optional - it is a hard requirement
     - If you skip this step, you WILL lose track of the workflow
 4. **ANNOUNCE:** Tell user: `"Detected: [Intent]. Following workflow: [sequence]"`

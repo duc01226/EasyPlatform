@@ -307,16 +307,18 @@ public static class WebDriverExtension
     public static void SendKeys(this IWebDriver webDriver, string key)
     {
         var action = new Actions(webDriver);
+
         action.SendKeys(key).Perform();
     }
 
     public static bool CheckDownloadedFileExisted(this IWebDriver webDriver, string fileName)
     {
-        var flag = false;
         var dirPath = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";
 
         var dir = new DirectoryInfo(dirPath);
+
         var files = dir.GetFiles();
+        var flag = false;
 
         if (files.Length == 0)
         {

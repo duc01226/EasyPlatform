@@ -335,6 +335,15 @@ function cleanupLegacyStateFile() {
   }
 }
 
+/**
+ * Check if a workflow is currently active
+ * @returns {boolean} True if workflow is active
+ */
+function hasActiveWorkflow() {
+  const state = loadState();
+  return state !== null && Array.isArray(state.sequence) && state.sequence.length > 0;
+}
+
 module.exports = {
   loadState,
   saveState,
@@ -342,6 +351,7 @@ module.exports = {
   createState,
   markStepComplete,
   getCurrentStepInfo,
+  hasActiveWorkflow,
   buildContinuationReminder,
   getRecoveryContext,
   detectWorkflowControl,

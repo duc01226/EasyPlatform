@@ -1,18 +1,18 @@
 # Claude Kit Setup - Comprehensive Guide
 
-> Complete documentation for the EasyPlatform Claude Code Kit configuration, ACE learning system, hooks, skills, agents, and workflow orchestration.
+> Complete documentation for the EasyPlatform Claude Code Kit configuration, hooks, skills, agents, learning system, and workflow orchestration.
 
 ## Executive Summary
 
 The `.claude/` directory contains a sophisticated Claude Code Kit that transforms Claude from a basic code assistant into an intelligent, self-improving development partner. Key capabilities:
 
-- **ACE (Agentic Context Engineering)**: Self-learning system that captures patterns, learns from outcomes, and injects relevant knowledge into sessions
+- **Learning System**: Simple `/learn` command that appends lessons to `docs/lessons.md`, injected into sessions by `lessons-injector.cjs`
 - **18 Specialized Agents**: Role-specific subagents for scouting, planning, debugging, reviewing, etc.
-- **70+ Skills**: Domain-specific capabilities from backend development to AI prompting
+- **150+ Skills**: Domain-specific capabilities from backend development to AI prompting
 - **Workflow Orchestration**: Intent detection with multilingual support, automatic workflow routing, and auto-checkpoints
 - **Notification System**: Multi-provider alerts (Discord, Slack, Telegram) for task completion
 - **Todo Enforcement**: Ensures planned, structured task execution
-- **Memory Persistence**: Cross-session learning with delta management
+- **Memory Persistence**: Cross-session learning via `MEMORY.md` and `lessons.md`
 
 ---
 
@@ -37,10 +37,12 @@ The `.claude/` directory contains a sophisticated Claude Code Kit that transform
 │   ├── skill-template.md  # Template for new skills
 │   └── agent-template.md  # Template for new agents
 ├── hooks/                  # Event-driven processing
-│   ├── ace-*.cjs          # ACE learning system hooks
+│   ├── auto-fix-trigger.cjs # Build/test failure escalation
+│   ├── lessons-injector.cjs # Inject lessons into context
+│   ├── pattern-learner.cjs  # Detect /learn commands
 │   ├── session-init.cjs   # Session initialization
 │   ├── workflow-router.cjs # Intent detection
-│   ├── todo-enforcement.cjs # Task tracking
+│   ├── todo-enforcement.cjs # Task tracking + plan gate
 │   ├── tool-output-swap.cjs # External memory swap hook
 │   ├── config/            # Hook configurations
 │   │   └── swap-config.json # Swap thresholds and limits
@@ -54,21 +56,13 @@ The `.claude/` directory contains a sophisticated Claude Code Kit that transform
 │   │       ├── slack.cjs
 │   │       └── telegram.cjs
 │   └── lib/               # Shared utilities
-│       ├── ace-constants.cjs
-│       ├── ace-playbook-state.cjs
-│       ├── ace-lesson-schema.cjs
-│       ├── ace-outcome-classifier.cjs
-│       └── swap-engine.cjs  # External memory swap engine
+│       ├── failure-state.cjs      # Build/test failure tracking
+│       ├── lessons-writer.cjs     # Append-only lesson capture
+│       └── swap-engine.cjs        # External memory swap engine
 ├── skills/                 # 70+ capability modules
 │   ├── SKILL.md files     # Individual skill definitions
 │   └── references/        # Skill reference documentation
-├── playbooks/              # Playbook schemas
-│   └── metadata.schema.json
-├── memory/                 # Persistent learning storage
-│   ├── deltas.json        # Active learned patterns
-│   ├── delta-candidates.json
-│   ├── events-stream.jsonl
-│   └── archive/           # Historical data
+├── (lessons.md moved to docs/lessons.md)
 ├── scripts/                # Utility scripts
 │   ├── resolve_env.py     # Environment resolution
 │   ├── generate_catalogs.py
@@ -79,162 +73,33 @@ The `.claude/` directory contains a sophisticated Claude Code Kit that transform
 
 ---
 
-## ACE - Agentic Context Engineering
+## Learning System
 
-### Overview
+Simple manual learning mechanism for cross-session knowledge persistence.
 
-ACE is a self-learning system that observes skill executions, extracts patterns from outcomes, and injects learned knowledge into future sessions. It creates a feedback loop where Claude becomes more effective over time.
+### How It Works
 
-### Architecture
+1. **User teaches:** `/learn <instruction>` or "remember this/that"
+2. **Hook saves:** `pattern-learner.cjs` (UserPromptSubmit) appends to `docs/lessons.md`
+3. **Hook injects:** `lessons-injector.cjs` (UserPromptSubmit + PreToolUse:Edit|Write|MultiEdit) injects lessons.md as system-reminder
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        ACE Learning Loop                             │
-│                                                                      │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐           │
-│  │   Session    │    │    Skill     │    │   Event      │           │
-│  │    Start     │───▶│  Execution   │───▶│   Emitter    │           │
-│  └──────────────┘    └──────────────┘    └──────────────┘           │
-│         ▲                                       │                    │
-│         │                                       ▼                    │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐           │
-│  │   Session    │◀───│   Curator    │◀───│  Reflector   │           │
-│  │   Inject     │    │   Pruner     │    │   Analysis   │           │
-│  └──────────────┘    └──────────────┘    └──────────────┘           │
-│                                                                      │
-└─────────────────────────────────────────────────────────────────────┘
-```
+### Files
 
-### Components
+- `docs/lessons.md` - Append-only lesson log
+- `.claude/hooks/pattern-learner.cjs` - Detects /learn commands, writes lessons
+- `.claude/hooks/lessons-injector.cjs` - Injects lessons into context
+- `.claude/hooks/lib/lessons-writer.cjs` - `appendLesson()` utility
 
-#### 1. Event Emitter (`ace-event-emitter.cjs`)
-
-**Hook**: PostToolUse (Bash|Skill tools)
-**Output**: `.claude/memory/events-stream.jsonl`
-
-Captures execution metadata for Skill and Bash tool invocations:
-
-**Skill Events:**
-- Skill name and arguments (sanitized)
-- Outcome classification (success/failure/partial)
-- Error type classification (validation, type, syntax, notFound, permission, timeout, network, memory)
-- Severity level
-- Duration and exit code
-- Context (branch, workflow, file patterns)
-
-**Bash Events:**
-- Command summary (first word + subcommand for common tools)
-- Intent classification (git, package, dotnet, nx, docker, kubernetes, http, filesystem, shell)
-- Outcome and error classification
-- Trivial command filtering (echo, pwd, which, whoami, date, env skipped)
-
-```javascript
-// Skill event structure
-{
-  "event_id": "evt_1736712000_abc123",
-  "timestamp": "2025-01-12T12:00:00Z",
-  "tool": "Skill",
-  "skill": "cook",
-  "outcome": "success",
-  "error_type": null,
-  "severity": 0,
-  "duration_ms": 5000
-}
-
-// Bash event structure
-{
-  "event_id": "evt_1736712000_xyz789",
-  "timestamp": "2025-01-12T12:00:00Z",
-  "tool": "Bash",
-  "command": "git status",
-  "intent": "git",
-  "outcome": "success",
-  "exit_code": 0,
-  "severity": 0
-}
-```
-
-#### 2. Reflector Analysis (`ace-reflector-analysis.cjs`)
-
-**Hook**: PreCompact (manual/auto)
-**Input**: `events-stream.jsonl`
-**Output**: `delta-candidates.json`
-
-Analyzes accumulated events and extracts patterns:
-- Groups events by skill + error_type
-- Requires minimum 3 events for pattern (5 for analysis)
-- Generates problem/solution/condition descriptions
-- Calculates confidence scores
-- Filters by 80% confidence threshold
-
-```javascript
-// Delta candidate structure
-{
-  "delta_id": "ace_1736712000_xyz",
-  "problem": "cook skill encounters validation errors requiring input verification",
-  "solution": "Verify all required inputs are provided and properly formatted before skill execution",
-  "condition": "When using /cook skill",
-  "helpful_count": 10,
-  "not_helpful_count": 2,
-  "confidence": 0.83
-}
-```
-
-#### 3. Curator Pruner (`ace-curator-pruner.cjs`)
-
-**Hook**: PreCompact (chained after reflector)
-**Input**: `delta-candidates.json`
-**Output**: `deltas.json`
-
-Manages playbook quality:
-- Promotes candidates with ≥80% confidence to active playbook
-- Merges similar deltas (85% similarity threshold)
-- Prunes stale deltas (>90 days old)
-- Enforces max 50 active deltas
-- Archives overflow to `archive/` directory
-
-#### 4. Session Inject (`ace-session-inject.cjs`)
-
-**Hook**: SessionStart (SessionStart:compact/SessionStart:resume)
-**Input**: `deltas.json`
-**Output**: Injects into session context
-
-Injects learned patterns at session start:
-- Loads top deltas sorted by confidence
-- Limits to 500 tokens
-- Formats as "ACE Learned Patterns" section
-- Includes condition, problem, solution for each delta
+### Lesson Format
 
 ```markdown
-<!-- ACE Learned Patterns (3 active) -->
-**When using /cook skill**: cook skill execution pattern showing reliable success
-→ Continue using this skill pattern (100% success rate observed)
+## Behavioral Lessons
+- [2026-02-24] INIT: Always verify BEM classes on every template element after frontend edits
+- [2026-02-24] INIT: Check base class hierarchy -- extend AppBaseComponent, not PlatformComponent
+
+## Process Improvements
+(manually added during retrospectives)
 ```
-
-### Configuration Constants
-
-```javascript
-// .claude/hooks/lib/ace-constants.cjs
-module.exports = {
-  HUMAN_WEIGHT: 3.0,           // Human feedback worth 3x automated
-  SIMILARITY_THRESHOLD: 0.85,  // 85% for duplicate detection
-  CONFIDENCE_THRESHOLD: 0.80,  // 80% to promote to active
-  MAX_DELTAS: 50,              // Maximum active patterns
-  MAX_COUNT: 1000,             // Max feedback count per delta
-  MAX_SOURCE_EVENTS: 10,       // Max source event IDs to store
-  STALE_DAYS: 90,              // Days before auto-pruning
-  LOCK_TIMEOUT_MS: 5000,       // File lock timeout
-  MAX_INJECTION_TOKENS: 500    // Token budget for session inject
-};
-```
-
-### State Management (`ace-playbook-state.cjs`)
-
-Provides thread-safe operations:
-- **File Locking**: Prevents race conditions with O_EXCL atomic lock creation
-- **Atomic Writes**: Write to temp file → rename pattern for crash safety
-- **Similarity**: Jaccard token overlap for delta deduplication
-- **CRUD Operations**: loadDeltas, saveDeltas, loadCandidates, saveCandidates, archiveDeltas
 
 ---
 
@@ -251,14 +116,15 @@ Provides thread-safe operations:
 │  │ SESSION START                                                        │    │
 │  │  ├── session-init.cjs ──────────► Set CK_* env vars, detect project │    │
 │  │  ├── session-resume.cjs ────────► Restore todos after compact       │    │
-│  │  └── ace-session-inject.cjs ───► Inject learned patterns (500 tok) │    │
+│  │  └── lessons-injector.cjs ─────► Inject lessons from lessons.md    │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                      │                                       │
 │                                      ▼                                       │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │ USER PROMPT SUBMIT                                                   │    │
 │  │  ├── workflow-router.cjs ───────► Detect intent, route workflow     │    │
-│  │  └── dev-rules-reminder.cjs ───► Inject development rules           │    │
+│  │  ├── dev-rules-reminder.cjs ───► Inject development rules           │    │
+│  │  └── pattern-learner.cjs ──────► Detect /learn & implicit patterns  │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                      │                                       │
 │                                      ▼                                       │
@@ -283,8 +149,7 @@ Provides thread-safe operations:
 │  │  ├── todo-tracker.cjs ─────────► Track TodoWrite changes            │    │
 │  │  ├── post-edit-prettier.cjs ──► Auto-format edited files            │    │
 │  │  ├── workflow-step-tracker.cjs ► Track workflow progress            │    │
-│  │  ├── ace-event-emitter.cjs ───► Log skill execution to JSONL        │    │
-│  │  └── ace-feedback-tracker.cjs ► Track helpful/not-helpful signals   │    │
+│  │  └── auto-fix-trigger.cjs ───► Detect build/test failures (3-tier) │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                      │                                       │
 │                                      ▼                                       │
@@ -292,14 +157,18 @@ Provides thread-safe operations:
 │  │ PRE COMPACT (Before context compaction)                              │    │
 │  │  ├── write-compact-marker.cjs ─► Mark compaction point              │    │
 │  │  ├── save-context-memory.cjs ──► Persist todos before compact       │    │
-│  │  ├── ace-reflector-analysis.cjs► Extract patterns from events       │    │
-│  │  └── ace-curator-pruner.cjs ──► Promote/prune deltas                │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                      │                                       │
 │                                      ▼                                       │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
 │  │ NOTIFICATION (Task completion)                                       │    │
 │  │  └── notify.cjs ───────────────► Send Discord/Slack/Telegram alert  │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                      │                                       │
+│                                      ▼                                       │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │ SESSION END (Session termination)                                    │    │
+│  │  └── session-end.cjs ────────► Capture failure lessons, cleanup     │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -309,13 +178,16 @@ Provides thread-safe operations:
 
 | Hook | Count | Key Handlers |
 |------|-------|--------------|
-| SessionStart | 3 | session-init, session-resume, ace-session-inject |
-| UserPromptSubmit | 2 | workflow-router, dev-rules-reminder |
-| PreToolUse | 7 | todo-enforcement, scout-block, privacy-block, 4× context hooks |
-| PostToolUse | 7 | todo-tracker, prettier, workflow-step, ace-event, ace-feedback, tool-output-swap, compact-suggestion |
-| PreCompact | 4 | write-marker, save-memory, ace-reflector, ace-curator |
+| SessionStart | 3 | session-init, session-resume, root-deps-check |
+| UserPromptSubmit | 4 | workflow-router, dev-rules-reminder, pattern-learner, lessons-injector |
+| PreToolUse | 16 | search-before-code, lessons-injector, todo-enforcement, code-review-rules-injector, cross-platform-bash, scout-block, privacy-block, project-boundary, 5× context injectors, role-context-injector, figma-context-extractor, artifact-path-resolver, notify |
+| PostToolUse | 10 | todo-tracker, edit-complexity-tracker, post-edit-rule-check, prettier, workflow-step-tracker, tool-output-swap, bash-cleanup, compact-suggestion, ownership-tracker, auto-fix-trigger |
+| PreCompact | 2 | write-compact-marker, save-context-memory |
 | Notification | 1 | notify.cjs (Discord/Slack/Telegram) |
-| **Total** | **24** | Across 6 hook types |
+| SessionEnd | 1 | session-end.cjs (failure lessons, cleanup) |
+| Stop | 1 | notify.cjs (send alert on stop) |
+| SubagentStart | 1 | subagent-init.cjs (context inheritance) |
+| **Total** | **~40** | Across 9 hook types |
 
 ### Hook Types
 
@@ -337,22 +209,21 @@ Provides thread-safe operations:
   "hooks": {
     "SessionStart": [
       {
-        "matcher": ["SessionStart:compact", "SessionStart:resume"],
+        "matcher": "startup|resume|clear|compact",
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/ace-session-inject.cjs"
+            "command": "node .claude/hooks/session-init.cjs"
           }
         ]
       }
     ],
-    "PostToolUse": [
+    "UserPromptSubmit": [
       {
-        "matcher": "Skill",
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/ace-event-emitter.cjs"
+            "command": "node .claude/hooks/lessons-injector.cjs"
           }
         ]
       }
@@ -411,6 +282,81 @@ Provides thread-safe operations:
 1. Edit `docs/code-review-rules.md` directly
 2. Changes take effect immediately on next `/code-review` skill invocation
 3. No hook restart required
+
+#### auto-fix-trigger.cjs
+
+- **Hook**: PostToolUse (Bash)
+- Detects build/test command failures (dotnet, npm, nx, npx, yarn)
+- 3-tier escalation based on consecutive failures per category:
+  - **1st failure**: Suggestion to investigate
+  - **2nd failure**: Stronger warning to change approach + **error snippet** (last ~10 lines, truncated at 500 chars)
+  - **3rd+ failure**: Rollback review recommendation + error snippet
+- `extractErrorSummary(toolResult, maxLines=10)` extracts tail of stderr/stdout from `payload.tool_result`
+- Tracks failure state via `lib/failure-state.cjs` (per-session temp files)
+- Resets counter on successful command in same category
+- Fail-open design (always exits 0)
+
+#### post-edit-rule-check.cjs
+
+- **Hook**: PostToolUse (Edit|Write|MultiEdit)
+- Validates edited `.cs`/`.ts` files against 6 CLAUDE.md rules after each edit
+- Reads the actual file from disk post-edit for full-context validation
+- Uses positive regex + negative regex (e.g., detects `HttpClient` but suppresses if `PlatformApiService` present)
+- Session dedup via `rule-violations.json` — same rule on same file fires once per session
+- Violation metrics counter in `violation-metrics.json` for feedback loop measurement
+- Advisory only — **never blocks** (always exits 0)
+
+**Rules enforced:**
+
+| Rule ID | File | Detects | Negative Pattern |
+|---------|------|---------|-----------------|
+| `raw-httpclient` | `.ts` | Direct `HttpClient` usage | `PlatformApiService` present |
+| `missing-untilDestroyed` | `.ts` | `.subscribe()` without `untilDestroyed()` | `untilDestroyed` present |
+| `throw-validation` | `.cs` | `throw.*ValidationException` | — |
+| `side-effect-in-handler` | `.cs` | Side effects in `CommandHandler` | — |
+| `dto-mapping-in-handler` | `.cs` | `MapToEntity`/`MapToObject` in handler | — |
+| `raw-component` | `.ts` | Extends `PlatformComponent` directly | `AppBaseComponent` present |
+
+#### todo-enforcement.cjs (Plan Gate Addition)
+
+- Added plan artifact gate for implementation skills (`cook`, `fix`, `code`, `implement`, `feature`)
+- Checks if workflow has a plan step and current step is past it
+- Verifies `plans/` directory contains a plan matching today's date (YYMMDD format)
+- Advisory warning only — never blocks execution
+
+#### Self-Improvement Hooks
+
+**lessons-writer.cjs** (`lib/lessons-writer.cjs`):
+
+- `appendLesson(category, description)`: Thread-safe append to `docs/lessons.md` with date prefix
+- `captureFailureLessons(maxLessons)`: Scans recent events, writes unique failure types
+- Called from `session-end.cjs` on exit and `pattern-learner.cjs` on confirmed/taught patterns
+- **Frequency scoring**: Sidecar `docs/lessons-freq.json` tracks per-rule hit counts
+  - `recordLessonFrequency(ruleId, description)` — increment count for a rule
+  - `getTopLessons(n=10)` — return top N lessons sorted by frequency
+  - `loadFrequencyData()` / `saveFrequencyData(data)` — raw sidecar access
+- `lessons-injector.cjs` now sorts lessons by frequency (highest first) via `sortLessonsByFrequency()`
+- All sync, all fail-open
+
+**failure-state.cjs** (`lib/failure-state.cjs`):
+
+- `recordFailure(sessionId, category, commandSummary, errorSnippet)` — tracks consecutive failures per category, returns count
+- `recordSuccess(sessionId, category)` — resets counter for category
+- `getFailureSummary(sessionId)` — returns all active failures with counts and last error snippets
+- `clearFailureState(sessionId)` — clears all failure state for session
+- State file: `{os.tmpdir()}/ck/{sessionId}/failure-state.json`
+
+#### search-before-code.cjs
+
+- **Hook**: PreToolUse (Edit|Write|MultiEdit)
+- Enforces "search existing patterns first" before code modifications
+- **Dynamic threshold** by file extension:
+  - `.cs`, `.ts` → **10 lines** (strict — primary codebase languages)
+  - `.html`, `.scss`, `.tsx`, `.css`, `.sass` → **20 lines** (default)
+- Checks transcript for Grep/Glob evidence; caches via `CK_SEARCH_PERFORMED` env var
+- Exempt: `.claude/`, `plans/`, `docs/`, `.md`, `node_modules/`, `dist/`, `obj/`, `bin/`
+- Bypass: "skip search" / "no search" / "just do it" keywords, or `CK_SKIP_SEARCH_CHECK=1`
+- Exit code **1** to block (not 2)
 
 ---
 
@@ -565,19 +511,28 @@ tools: available tools
 - references/topic.md
 ```
 
-### Skill Categories
+### Skill Categories (Complete Inventory)
 
-| Category          | Skills                                              |
-|-------------------|-----------------------------------------------------|
-| AI/ML             | ai-artist, ai-multimodal, ai-dev-tools-sync        |
-| Backend           | backend-development, api-design, migration         |
-| Frontend          | frontend-design, shadcn-tailwind, ui-ux-pro-max    |
-| Architecture      | performance, plan, security                        |
-| DevOps            | devops, test-ui, media-processing          |
-| Quality           | code-review, debugging, testing                    |
-| Documentation     | documentation, feature-docs, business-feature-docs |
-| Platform-specific | easyplatform-backend, frontend-angular-*           |
-| Workflow          | commit, context-optimization, memory-management    |
+| Category | Skills | Count |
+|----------|--------|-------|
+| **Planning** | `ask`, `brainstorm`, `context`, `plan`, `plan-fast`, `plan-hard`, `plan-two`, `plan-review`, `plan-validate`, `plan-ci`, `plan-archive`, `plan-analysis`, `problem-solving`, `research`, `sequential-thinking` | 15 |
+| **Implementation** | `code`, `code-auto`, `code-no-test`, `code-parallel`, `code-patterns`, `cook`, `cook-auto`, `cook-auto-fast`, `cook-auto-parallel`, `cook-fast`, `cook-hard`, `cook-parallel`, `create-feature`, `feature`, `migration`, `generate-dto` | 16 |
+| **Fix & Debug** | `fix`, `fix-fast`, `fix-hard`, `fix-ci`, `fix-issue`, `fix-logs`, `fix-parallel`, `fix-test`, `fix-types`, `fix-ui`, `debug`, `investigate` | 12 |
+| **Review & Quality** | `review`, `review-changes`, `review-codebase`, `review-post-task`, `code-review`, `code-simplifier`, `security`, `performance`, `why-review` | 9 |
+| **Testing** | `test`, `test-ui`, `review-tests`, `update-tests`, `generate-tests`, `test-generation`, `test-specs-docs`, `webapp-testing`, `e2e-record` | 9 |
+| **Documentation** | `docs-init`, `docs-update`, `docs-summarize`, `docs-seeker`, `documentation`, `business-feature-docs`, `feature-docs` | 7 |
+| **Frontend** | `frontend-angular`, `frontend-design`, `ui-ux-pro-max`, `web-design-guidelines`, `design-describe`, `design-fast`, `design-good`, `design-screenshot`, `design-video` | 9 |
+| **Backend / Platform** | `easyplatform-backend`, `api-design`, `database-optimization`, `bug-diagnosis`, `arch-cross-service-integration`, `arch-performance-optimization`, `arch-security-review` | 7 |
+| **Git & Release** | `git-cp`, `git-pr`, `git-merge`, `git-conflict-resolve`, `pr`, `changelog-update`, `release-notes`, `branch-comparison` | 8 |
+| **DevOps & Infra** | `devops`, `build`, `lint`, `package-upgrade` | 4 |
+| **Team Collaboration** | `team-idea`, `team-refine`, `team-story`, `team-prioritize`, `team-dependency`, `team-status`, `team-team-sync`, `team-quality-gate`, `team-test-spec`, `team-test-cases`, `team-design-spec`, `team-figma-extract` | 12 |
+| **Tooling & Meta** | `ck-help`, `claude-code`, `ai-dev-tools-sync`, `checkpoint`, `compact`, `recover`, `kanban`, `watzup`, `coding-level`, `mcp-management`, `use-mcp`, `repomix`, `scout`, `scout-ext` | 14 |
+| **Learning** | `learn`, `memory-management`, `context-optimization` | 3 |
+| **Skill Management** | `skill-create`, `skill-add`, `skill-optimize`, `skill-plan`, `skill-fix-logs` | 5 |
+| **Document Conversion** | `docx-to-markdown`, `markdown-to-docx`, `markdown-to-pdf`, `pdf-to-markdown` | 4 |
+| **Subagent Tasks** | `tasks-code-review`, `tasks-documentation`, `tasks-feature-implementation`, `tasks-spec-update`, `tasks-test-generation` | 5 |
+| **Workflow** | `workflow-start`, `worktree`, `refactoring` | 3 |
+| | **Total** | **~150** |
 
 ### Skill Activation
 
@@ -690,7 +645,7 @@ Defines all workflow types, their trigger patterns, and step sequences:
 ```json
 {
   "$schema": "./workflows.schema.json",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "settings": {
     "enabled": true,
     "confirmHighImpact": true,
@@ -706,17 +661,14 @@ Defines all workflow types, their trigger patterns, and step sequences:
         "\\bnew\\s+(feature|functionality|capability)\\b"
       ],
       "excludePatterns": ["\\b(fix|bug|error|broken|issue)\\b"],
-      "sequence": ["plan", "plan-validate", "plan-review", "cook", "code-simplifier", "code-review", "test", "docs-update", "watzup"],
-      "confirmFirst": true,
-      "priority": 10
+      "sequence": ["scout", "investigate", "plan", "plan-validate", "plan-review", "cook", "why-review", "code-simplifier", "code-review", "changelog-update", "test", "docs-update", "watzup"],
+      "confirmFirst": false
     },
     "bugfix": {
       "name": "Bug Fix",
-      "triggerPatterns": ["\\b(bug|fix|broken|issue|crash|fail|exception)\\b"],
-      "excludePatterns": ["\\b(implement|add|create|build)\\s+new\\b"],
-      "sequence": ["scout", "investigate", "debug", "plan", "plan-validate", "plan-review", "fix", "code-simplifier", "code-review", "test"],
-      "confirmFirst": false,
-      "priority": 20
+      "whenToUse": "Bug, error, crash, broken functionality",
+      "sequence": ["scout", "investigate", "debug", "plan", "plan-review", "plan-validate", "why-review", "fix", "code-simplifier", "review-changes", "code-review", "changelog", "test", "watzup"],
+      "confirmFirst": false
     }
   },
   "commandMapping": {
@@ -724,22 +676,63 @@ Defines all workflow types, their trigger patterns, and step sequences:
     "cook": { "claude": "/cook" },
     "test": { "claude": "/test" },
     "fix": { "claude": "/fix" },
-    "code-review": { "claude": "/review/codebase" }
+    "code-review": { "claude": "/review-codebase" }
   }
 }
 ```
 
-### Workflow Types & Priority
+### Workflow Types — Complete Catalog (23 Workflows)
 
-| Workflow      | Priority | Sequence | Use Case |
-|---------------|----------|----------|----------|
-| Feature       | 10       | /plan → /plan-validate → /plan-review → /cook → /simplify → /review → /test → /docs → /watzup | New functionality |
-| Bugfix        | 20       | /scout → /investigate → /debug → /plan → /plan-validate → /plan-review → /fix → /simplify → /review → /test | Error fixes |
-| Refactor      | 25       | /plan → /plan-validate → /plan-review → /code → /simplify → /review → /test | Code improvement |
-| Documentation | 30       | /scout → /investigate → /docs-update → /watzup | Doc updates |
-| Review        | 35       | /code-review → /watzup | Code review |
-| Testing       | 40       | /test | Test creation |
-| Investigation | 50       | /scout → /investigate | Codebase exploration |
+All workflows are defined in `.claude/workflows.json` v2.0.0. The workflow router automatically matches user intent to the correct workflow.
+
+#### Code-Producing Workflows (9)
+
+| ID | Name | Sequence | When to Use |
+|----|------|----------|-------------|
+| `feature` | Feature Implementation | scout → investigate → plan → plan-review → plan-validate → why-review → cook → code-simplifier → review-changes → code-review → changelog → test → docs-update → watzup | New feature, functionality, module, component |
+| `bugfix` | Bug Fix | scout → investigate → debug → plan → plan-review → plan-validate → why-review → fix → code-simplifier → review-changes → code-review → changelog → test → watzup | Bug, error, crash, broken functionality |
+| `refactor` | Code Refactoring | scout → investigate → plan → plan-review → plan-validate → why-review → code → code-simplifier → review-changes → code-review → changelog → test → watzup | Restructure, clean up, technical debt |
+| `migration` | Database Migration | scout → investigate → plan → plan-review → plan-validate → code → review-changes → code-review → test → watzup | Schema changes, data migrations, EF migrations |
+| `batch-operation` | Batch Operation | plan → plan-review → plan-validate → why-review → code → code-simplifier → review-changes → test → watzup | Multi-file batch changes, bulk renames |
+| `deployment` | Deployment & Infra | scout → investigate → plan → plan-review → plan-validate → code → review-changes → code-review → test → watzup | CI/CD, Docker, deploy to environments |
+| `performance` | Performance Optimization | scout → investigate → plan → plan-review → plan-validate → code → review-changes → code-review → test → watzup | Slow queries, latency, bottlenecks |
+| `verification` | Verification & Validation | scout → investigate → test-initial → plan → plan-review → plan-validate → fix → code-simplifier → review-changes → code-review → test → watzup | Verify correctness, ensure expected behavior |
+| `e2e-testing` | E2E Testing | scout → investigate → plan → plan-review → plan-validate → code → review-changes → code-review → test → watzup | Playwright test creation, E2E coverage |
+
+#### Review & Quality Workflows (4)
+
+| ID | Name | Sequence | When to Use |
+|----|------|----------|-------------|
+| `quality-audit` | Quality Audit | code-review → plan → plan-review → plan-validate → code → review-changes → test → watzup | Review code for best practices, audit-and-fix |
+| `review` | Code Review | code-review → watzup | PR review, code quality check |
+| `review-changes` | Review Changes | review-changes | Pre-commit review of uncommitted changes |
+| `security-audit` | Security Audit | scout → investigate → watzup | Vulnerability assessment, OWASP check |
+
+#### Documentation Workflows (2)
+
+| ID | Name | Sequence | When to Use |
+|----|------|----------|-------------|
+| `documentation` | Documentation Update | scout → investigate → plan → plan-review → plan-validate → docs-update → review-changes → review-post-task → watzup | General docs, README, code comments |
+| `business-feature-docs` | Business Feature Docs | scout → investigate → plan → plan-review → plan-validate → docs-update → review-changes → review-post-task → watzup | 26-section business feature template |
+
+#### Planning & Investigation Workflows (3)
+
+| ID | Name | Sequence | When to Use |
+|----|------|----------|-------------|
+| `investigation` | Code Investigation | scout → investigate | Understand how code works (read-only) |
+| `pre-development` | Pre-Development Setup | quality-gate → plan → plan-review → plan-validate | Quality gate + plan before coding |
+| `design-workflow` | Design Workflow | design-spec → review-changes → code-review → watzup | UI/UX design specification |
+
+#### Team & PM Workflows (5)
+
+| ID | Name | Sequence | When to Use |
+|----|------|----------|-------------|
+| `idea-to-pbi` | Idea to PBI | idea → refine → story → prioritize → watzup | Product idea → PBI → user stories |
+| `pbi-to-tests` | PBI to Tests | test-spec → test-cases → quality-gate → watzup | Generate test specs from PBIs |
+| `pm-reporting` | PM Reporting | status → dependency | Sprint status report, project progress |
+| `sprint-planning` | Sprint Planning | prioritize → dependency → team-sync | Backlog prioritization, sprint kickoff |
+| `release-prep` | Release Preparation | quality-gate → status | Pre-release checks, go-live verification |
+| `full-feature-lifecycle` | Full Feature Lifecycle | idea → refine → story → design-spec → plan → plan-review → plan-validate → cook → review-changes → test-spec → quality-gate → watzup | Complete feature from idea to release |
 
 *Lower priority number = higher preference when multiple workflows match*
 
@@ -947,7 +940,7 @@ Add a dark mode toggle to the settings page
 ## Workflow Detected
 
 **Intent:** Feature Implementation (100% confidence)
-**Workflow:** /plan → /plan-validate → /plan-review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
+**Workflow:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /changelog → /test → /docs-update → /watzup
 
 ### Instructions (MUST FOLLOW)
 1. Announce detected workflow to user
@@ -959,7 +952,7 @@ Add a dark mode toggle to the settings page
 **Phase 3: LLM Response**
 ```
 > Detected: **Feature Implementation** workflow.
-> I will follow: /plan → /plan-validate → /plan-review → /cook → /code-simplifier → /code-review → /test → /docs-update → /watzup
+> I will follow: /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /changelog → /test → /docs-update → /watzup
 
 [Creates todo list:]
 - [ ] Execute /plan - Create implementation plan
@@ -1010,48 +1003,17 @@ Step 9: Claude calls Skill("watzup") → Summarizes → ✓
 
 ### Memory Files
 
-| File                    | Purpose                                |
-|-------------------------|----------------------------------------|
-| `deltas.json`           | Active learned patterns (max 50)       |
-| `delta-candidates.json` | Pending patterns awaiting promotion    |
-| `events-stream.jsonl`   | Raw skill execution events             |
-| `.ace-last-analysis`    | Timestamp of last reflector run        |
-| `archive/`              | Archived deltas by date                |
+| File                    | Location          | Purpose                                                 |
+|-------------------------|-------------------|---------------------------------------------------------|
+| `MEMORY.md`             | project root      | Project memory reference (golden rules, patterns)       |
+| `lessons.md`            | `docs/`           | Append-only lesson log (behavioral, process)            |
 
-### Delta Schema
+### Lesson Lifecycle
 
-```json
-{
-  "delta_id": "ace_1736712000_abc",
-  "problem": "skill X encounters Y errors",
-  "solution": "Recommended solution approach",
-  "condition": "When using /skill-name",
-  "helpful_count": 10,
-  "not_helpful_count": 2,
-  "human_feedback_count": 1,
-  "confidence": 0.89,
-  "created": "2025-01-12T00:00:00Z",
-  "last_helpful": "2025-01-12T12:00:00Z",
-  "source_events": ["evt_1", "evt_2"]
-}
-```
-
-### Confidence Calculation
-
-```javascript
-// Formula: (automated_helpful + human_helpful * 3) / total
-confidence = (helpful_count + human_feedback_count * HUMAN_WEIGHT) /
-             (helpful_count + human_feedback_count * HUMAN_WEIGHT + not_helpful_count)
-```
-
-### Lifecycle
-
-1. **Creation**: Reflector extracts pattern from events → candidate
-2. **Promotion**: Curator promotes candidates with ≥80% confidence → active
-3. **Reinforcement**: Successful executions increase helpful_count
-4. **Degradation**: Failed executions increase not_helpful_count
-5. **Pruning**: Deltas older than 90 days or <20% success rate → archived
-6. **Overflow**: If >50 active, lowest confidence → archived
+1. **Capture**: User invokes `/learn <instruction>` or says "remember this"
+2. **Storage**: `pattern-learner.cjs` appends to `docs/lessons.md` with date prefix
+3. **Injection**: `lessons-injector.cjs` injects all lessons into session context
+4. **Persistence**: Lessons persist across sessions (append-only, never pruned automatically)
 
 ---
 
@@ -1248,85 +1210,13 @@ python .claude/scripts/generate_catalogs.py --skills
 
 ---
 
-## Hook Metrics System
-
-### Overview
-
-Performance tracking infrastructure for monitoring hook execution effectiveness. Tracks execution counts, success/failure rates, and latency percentiles.
-
-### Components
-
-| File | Purpose |
-|------|---------|
-| `hooks/lib/ck-paths.cjs` | Centralized paths for temp files (`/tmp/ck/`) |
-| `hooks/lib/hook-metrics-tracker.cjs` | Metrics collection and storage |
-| `hooks/metrics-dashboard.cjs` | Visual CLI dashboard |
-
-### Usage
-
-```bash
-# View metrics dashboard
-node .claude/hooks/metrics-dashboard.cjs
-
-# Watch mode (refresh every 5s)
-node .claude/hooks/metrics-dashboard.cjs --watch
-
-# Export as JSON
-node .claude/hooks/metrics-dashboard.cjs --json
-
-# Reset all metrics
-node .claude/hooks/metrics-dashboard.cjs --reset
-```
-
-### Tracking from Hooks
-
-Hooks can opt into metrics tracking:
-
-```javascript
-const { trackHook } = require('./lib/hook-metrics-tracker.cjs');
-
-const start = Date.now();
-try {
-  // Hook logic here
-  trackHook('my-hook', { success: true, durationMs: Date.now() - start });
-} catch (err) {
-  trackHook('my-hook', { success: false, durationMs: Date.now() - start });
-  throw err;
-}
-```
-
-### Metrics Dashboard Output
-
-```
-  ┌──────────────────────────────┬────────┬──────────┬────────┬────────┬────────────┐
-  │ Hook Name                    │ Total  │ Success  │ p50    │ p99    │ Last Run   │
-  ├──────────────────────────────┼────────┼──────────┼────────┼────────┼────────────┤
-  │ ace-event-emitter            │  1,234 │   98.5%  │   45ms │  120ms │      2m ago│
-  │ workflow-router              │    567 │   99.2%  │   12ms │   35ms │      5m ago│
-  │ todo-enforcement             │    890 │  100.0%  │    8ms │   22ms │     10m ago│
-  └──────────────────────────────┴────────┴──────────┴────────┴────────┴────────────┘
-
-  Summary
-  ├─ Total Hooks: 12
-  ├─ Total Executions: 3,456
-  ├─ Overall Success Rate: 98.8%
-  └─ Data Updated: 2m ago
-```
-
-### Storage
-
-- **Path**: `/tmp/ck/hook-metrics.json`
-- **Durations**: Keeps last 100 per hook for percentile calculation
-- **Sessions**: Tracks per-session stats, prunes to last 50
-
-### ClaudeKit Paths (`ck-paths.cjs`)
+## ClaudeKit Paths (`ck-paths.cjs`)
 
 Centralized namespace for all temp files:
 
 ```javascript
 const CK_TMP_DIR = '/tmp/ck';          // Root directory
 const MARKERS_DIR = '/tmp/ck/markers'; // Session markers
-const METRICS_PATH = '/tmp/ck/hook-metrics.json';
 const DEBUG_DIR = '/tmp/ck/debug';
 const CALIBRATION_PATH = '/tmp/ck/calibration.json';
 ```
@@ -1429,7 +1319,7 @@ Workflow definitions with:
 ```
 1. SESSION START
    ├── session-init.cjs → Detect project, set env vars
-   ├── ace-session-inject.cjs → Load learned patterns
+   ├── lessons-injector.cjs → Inject lessons from lessons.md
    └── Output environment context + assertions
 
 2. USER PROMPT
@@ -1438,15 +1328,14 @@ Workflow definitions with:
    └── Route to appropriate skill/agent
 
 3. SKILL EXECUTION
-   ├── PreToolUse hooks → Validation
+   ├── PreToolUse hooks → Validation + context injection
    ├── Tool execution
-   ├── PostToolUse hooks → ace-event-emitter.cjs
-   └── Capture outcome to events-stream.jsonl
+   ├── PostToolUse hooks → Track workflow progress
+   └── Auto-format edited files
 
 4. CONTEXT COMPACTION
-   ├── ace-reflector-analysis.cjs → Extract patterns
-   ├── ace-curator-pruner.cjs → Promote/prune deltas
-   └── Update deltas.json
+   ├── write-compact-marker.cjs → Mark compaction point
+   └── save-context-memory.cjs → Persist todos + state
 
 5. SESSION END
    └── Cleanup, state persistence
@@ -1455,16 +1344,16 @@ Workflow definitions with:
 ### Learning Flow
 
 ```
-Skill Execution → Event Capture → Pattern Extraction → Delta Promotion → Session Injection
-       ↑                                                                        │
-       └────────────────── Improved Future Executions ◀─────────────────────────┘
+User teaches (/learn) → pattern-learner.cjs → lessons.md → lessons-injector.cjs → Session Context
+       ↑                                                                              │
+       └──────────────────── Improved Future Executions ◀─────────────────────────────┘
 ```
 
 ### Value Proposition
 
 | Component            | Benefit                                                |
 |----------------------|--------------------------------------------------------|
-| ACE Learning         | Claude improves over time, remembers what works       |
+| Learning System      | Claude retains lessons across sessions via lessons.md |
 | Specialized Agents   | Expert-level handling for specific task types         |
 | Skills Framework     | Consistent, well-documented capabilities              |
 | Workflow Orchestration | Structured, complete task execution with checkpoints |
@@ -1481,9 +1370,8 @@ Skill Execution → Event Capture → Pattern Extraction → Delta Promotion →
 
 1. **Use workflows**: Let intent detection route to appropriate sequence
 2. **Maintain todos**: Keep task list updated for visibility
-3. **Provide feedback**: Human feedback is weighted 3x
-4. **Let ACE learn**: Don't bypass learning hooks
-5. **Use agents**: Delegate complex tasks to specialized agents
+3. **Teach with /learn**: Use `/learn` to persist important patterns
+4. **Use agents**: Delegate complex tasks to specialized agents
 
 ### For Extension
 
@@ -1496,11 +1384,43 @@ Skill Execution → Event Capture → Pattern Extraction → Delta Promotion →
 
 | Issue                          | Solution                                           |
 |--------------------------------|----------------------------------------------------|
-| Patterns not injecting         | Check `deltas.json` has entries, hook is active   |
-| Events not captured            | Verify PostToolUse hook for Skill tool            |
+| Lessons not injecting          | Check `lessons.md` has entries, lessons-injector.cjs is active |
 | Workflow not detected          | Check trigger patterns in workflows.json          |
 | Todo enforcement blocking      | Use "quick:" prefix or create todo list           |
-| Deltas not promoting           | Need ≥80% confidence from ≥3 events               |
+
+---
+
+## How to Trigger Learning
+
+This project has two complementary learning mechanisms.
+
+### 1. Explicit Pattern Teaching (`/learn`)
+
+Teach Claude specific patterns, conventions, or corrections that persist across sessions.
+
+**Teach a pattern:**
+```
+/learn always use PlatformValidationResult instead of throwing exceptions
+```
+
+**Teach with wrong/right examples:**
+```
+/learn [wrong] throw new ValidationException() [right] return PlatformValidationResult.Invalid()
+```
+
+**What happens:** The `pattern-learner.cjs` hook captures your teaching and appends it to `docs/lessons.md`. The `lessons-injector.cjs` hook injects all lessons into future sessions.
+
+### 2. Claude Auto-Memory
+
+Claude's built-in auto-memory at `~/.claude/projects/<project>/memory/MEMORY.md` stores stable patterns confirmed across multiple interactions. The project-level `MEMORY.md` at the repo root is also auto-loaded.
+
+### Quick Reference: Learning Triggers
+
+| Trigger | System | Storage | Injection |
+|---------|--------|---------|-----------|
+| `/learn <pattern>` | Lessons | `docs/lessons.md` | UserPromptSubmit + PreToolUse |
+| "remember this" | Lessons | `docs/lessons.md` | Same |
+| Claude notices stable pattern | Auto-Memory | `~/.claude/projects/.../MEMORY.md` | System prompt |
 
 ---
 
@@ -1565,29 +1485,17 @@ User starts Claude session
     │
     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ ace-session-inject.cjs (fires on: startup|resume)                           │
+│ lessons-injector.cjs (fires on: UserPromptSubmit + PreToolUse:Edit|Write)   │
 │                                                                              │
-│ 1. Load deltas from .claude/memory/deltas.json                               │
+│ 1. Load lessons from docs/lessons.md                                      │
 │                                                                              │
-│ 2. Get top deltas sorted by confidence:                                      │
-│    const deltas = getTopDeltas(50);                                          │
+│ 2. Parse lesson lines (format: "- [date] Category: Description")           │
 │                                                                              │
-│ 3. Filter by current context (branch, file patterns):                       │
-│    matchesCondition(delta.condition, context)                                │
-│                                                                              │
-│ 4. Build injection within 500 token budget:                                  │
-│    "## ACE Learned Patterns                                                  │
-│    > Patterns learned from previous executions                               │
-│                                                                              │
-│    **When using /cook skill**: Continue using (95% success rate)             │
-│    → Verify all required inputs are provided                                 │
-│                                                                              │
-│    **When using /test on *.cs files**: Add null checks before access        │
-│    → Use type guards for potentially undefined values"                       │
-│                                                                              │
-│ 5. Track injection for feedback:                                            │
-│    trackInjection(['ace_001', 'ace_002'])                                    │
-│    → Writes to .ace-injection-tracking.json                                  │
+│ 3. Inject as system-reminder:                                               │
+│    "## Lessons Learned                                                       │
+│    - Always verify BEM classes on every template element                    │
+│    - Check base class hierarchy -- extend AppBaseComponent                 │
+│    - Run search-before-code before writing any new code"                    │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -1729,27 +1637,26 @@ Claude attempts: Skill(skill="cook", args="add dark mode toggle")
     │
     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ todo-enforcement.cjs (matcher: Skill)                                        │
+│ skill-enforcement.cjs (matcher: Skill)                                       │
 │                                                                              │
 │ 1. Parse stdin: { tool_name: "Skill", tool_input: { skill: "cook" } }       │
 │                                                                              │
-│ 2. Check if skill is in ALLOWED_SKILLS (research/planning):                 │
-│    ALLOWED_SKILLS = ['scout', 'investigate', 'plan', 'research', ...]       │
+│ 2. Check if skill is META_SKILLS (always allowed):                           │
+│    META_SKILLS = ['help', 'memory', 'checkpoint', 'watzup', ...]            │
 │    'cook' NOT in set → Continue validation                                   │
 │                                                                              │
-│ 3. Check for bypass marker "quick:" in args:                                 │
-│    args = "add dark mode toggle"                                             │
-│    No "quick:" prefix found → Continue validation                            │
+│ 3. Check CK_QUICK_MODE bypass:                                              │
+│    Not set → Continue validation                                             │
 │                                                                              │
-│ 4. Check todo state:                                                         │
-│    const state = getTodoState();                                             │
-│    state = { hasTodos: false, taskCount: 0, pendingCount: 0 }               │
+│ 4. Check workflow + todo state:                                              │
+│    workflowActive = true, todosExist = false                                │
 │                                                                              │
-│ 5. NO TODOS → BLOCK (exit 2)                                                 │
+│ 5. WORKFLOW + NO TODOS → BLOCK (exit 1)                                      │
 │    Output:                                                                   │
-│    "## Todo List Required                                                    │
+│    "## Workflow Task Enforcement Block                                        │
 │                                                                              │
-│    You must create a todo list before running `/cook`.                      │
+│    Skill blocked: cook                                                       │
+│    Call TaskCreate for EACH workflow step BEFORE executing any skill.        │
 │                                                                              │
 │    ### Why?                                                                  │
 │    Task tracking ensures:                                                    │
@@ -1763,12 +1670,11 @@ Claude attempts: Skill(skill="cook", args="add dark mode toggle")
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### 4. PostToolUse Hooks - Event Capture & Feedback
+#### 4. PostToolUse Hooks - Tracking & Formatting
 
-**What they do**: Capture execution outcomes and track feedback for learning.
+**What they do**: Track workflow progress and auto-format code after edits.
 
 **Why they help**:
-- **Learning**: Every execution feeds the ACE learning system
 - **Tracking**: Workflow progress is automatically monitored
 - **Formatting**: Code is auto-formatted after edits
 
@@ -1792,52 +1698,6 @@ Skill(/cook) completes successfully
     │
     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│ ace-event-emitter.cjs (matcher: Bash|Skill)                                 │
-│                                                                              │
-│ 1. Parse stdin payload:                                                      │
-│    {                                                                         │
-│      tool_name: "Skill",                                                     │
-│      tool_input: { skill: "cook", args: "add dark mode" },                  │
-│      exit_code: 0,                                                           │
-│      duration_ms: 45000                                                      │
-│    }                                                                         │
-│                                                                              │
-│ 2. Check stdin size limit (MAX_STDIN_BYTES = 1MB):                          │
-│    if (content.length > 1048576) return '' // Prevent OOM                   │
-│                                                                              │
-│ 3. Classify outcome:                                                         │
-│    classifyOutcome(payload) → 'success'                                      │
-│    (checks exit_code, error field, response content)                        │
-│                                                                              │
-│ 4. Build ACE event:                                                          │
-│    {                                                                         │
-│      event_id: "evt_1736712000_abc123",                                      │
-│      timestamp: "2026-01-12T14:30:00Z",                                      │
-│      tool: "Skill",                                                          │
-│      skill: "cook",                                                          │
-│      skill_args: "file_ref",  // Sanitized summary                          │
-│      outcome: "success",                                                     │
-│      exit_code: 0,                                                           │
-│      severity: 0,                                                            │
-│      duration_ms: 45000,                                                     │
-│      context: {                                                              │
-│        branch: "main",                                                       │
-│        workflow_step: "cook",                                                │
-│        file_pattern: "**/*.ts"                                               │
-│      }                                                                       │
-│    }                                                                         │
-│                                                                              │
-│ 5. Check event file rotation:                                                │
-│    rotateEventsIfNeeded()                                                    │
-│    if (file_size > 10MB) → archive and create new file                      │
-│                                                                              │
-│ 6. Append to events stream:                                                  │
-│    fs.appendFileSync(EVENTS_FILE, JSON.stringify(event) + '\n')             │
-│    → .claude/memory/events-stream.jsonl                                      │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
 │ workflow-step-tracker.cjs (matcher: Skill)                                  │
 │                                                                              │
 │ 1. Load workflow state from .workflow-state.json                            │
@@ -1850,48 +1710,15 @@ Skill(/cook) completes successfully
 │ 5. Output next step reminder:                                                │
 │    "Step completed: /cook. Next: /code-simplifier (4/8)"                    │
 └─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ ace-feedback-tracker.cjs (matcher: Skill)                                   │
-│                                                                              │
-│ 1. Get injected delta IDs for this session:                                 │
-│    const deltaIds = getInjectedDeltaIds()                                    │
-│    → ['ace_001', 'ace_002'] (from .ace-injection-tracking.json)             │
-│                                                                              │
-│ 2. Check if skill was successful:                                           │
-│    wasSkillSuccessful(payload) → true (exit_code=0, no error)               │
-│                                                                              │
-│ 3. Find matching deltas (skill matches condition):                          │
-│    withLock(() => {                                                          │
-│      const deltas = loadDeltas();                                            │
-│      const matching = deltaIds.filter(id => {                                │
-│        const delta = deltas.find(d => d.delta_id === id);                   │
-│        return delta?.condition?.includes('cook');                            │
-│      });                                                                     │
-│      → ['ace_001'] // This delta mentions /cook                              │
-│                                                                              │
-│      // Update helpful count for matching deltas                             │
-│      delta.helpful_count++;                                                  │
-│      delta.last_helpful = new Date().toISOString();                         │
-│      delta.confidence = recalculateConfidence(delta);                        │
-│                                                                              │
-│      saveDeltas(deltas);                                                     │
-│    });                                                                       │
-│                                                                              │
-│ 4. Log feedback:                                                             │
-│    "skill | cook | success | 1 deltas"                                       │
-└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### 5. PreCompact Hooks - Pattern Extraction & Learning
+#### 5. PreCompact Hooks - State Preservation
 
-**What they do**: Extract patterns from accumulated events and manage the learning playbook before context compaction.
+**What they do**: Save session state before context compaction.
 
 **Why they help**:
-- **Memory**: Patterns survive context resets
-- **Learning**: Good patterns are promoted, bad ones pruned
-- **Efficiency**: Only high-confidence patterns are kept
+- **Memory**: Todo and workflow state survive context resets
+- **Continuity**: Checkpoints enable session resumption
 
 **Execution Trace** (on context compaction):
 ```
@@ -1914,131 +1741,6 @@ Context window fills up → Compaction triggered
 │ 2. Save workflow state                                                       │
 │ 3. Save any accumulated context                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ ace-reflector-analysis.cjs (matcher: manual|auto)                           │
-│                                                                              │
-│ 1. Read events since last analysis:                                          │
-│    const events = readEventsSinceLastAnalysis();                             │
-│    → 47 events since last .ace-last-analysis timestamp                      │
-│                                                                              │
-│ 2. Check minimum threshold:                                                  │
-│    if (events.length < 5) exit(0) // Need 5+ events                         │
-│                                                                              │
-│ 3. Extract patterns by grouping:                                             │
-│    ┌────────────────────────────────────────────────────────────────────┐   │
-│    │ extractPatterns(events)                                             │   │
-│    │                                                                      │   │
-│    │ Groups by: `${skill}:${error_type || 'success'}`                   │   │
-│    │                                                                      │   │
-│    │ Example groups:                                                      │   │
-│    │ - "cook:success" → 15 events                                        │   │
-│    │ - "cook:validation" → 3 events                                      │   │
-│    │ - "test:success" → 8 events                                         │   │
-│    │ - "test:notFound" → 4 events                                        │   │
-│    │                                                                      │   │
-│    │ For each group with ≥3 events:                                      │   │
-│    │ - Track success_count, failure_count                                │   │
-│    │ - Track file_patterns                                               │   │
-│    │ - Generate problem/solution/condition                               │   │
-│    └────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
-│ 4. Convert patterns to delta candidates:                                     │
-│    {                                                                         │
-│      delta_id: "ace_1736712000_xyz",                                         │
-│      problem: "cook skill execution pattern showing reliable success",      │
-│      solution: "Continue using this skill pattern (83% success rate)",      │
-│      condition: "When using /cook skill",                                    │
-│      helpful_count: 15,                                                      │
-│      not_helpful_count: 3,                                                   │
-│      confidence: 0.83,                                                       │
-│      source_events: ["evt_001", "evt_002", ...]                             │
-│    }                                                                         │
-│                                                                              │
-│ 5. Filter by confidence threshold (80%):                                    │
-│    qualifiedCandidates = candidates.filter(c => c.confidence >= 0.80)       │
-│    → 2 candidates qualify                                                    │
-│                                                                              │
-│ 6. Save candidates with deduplication:                                       │
-│    saveCandidates(qualifiedCandidates)                                       │
-│    → .claude/memory/delta-candidates.json                                    │
-│                                                                              │
-│ 7. Update analysis marker:                                                   │
-│    updateMarker() → .ace-last-analysis = now                                │
-│                                                                              │
-│ 8. Output:                                                                   │
-│    "<!-- ACE Reflector: Generated 2 delta candidate(s) from 47 events -->" │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ ace-curator-pruner.cjs (matcher: manual|auto)                               │
-│                                                                              │
-│ 1. Load current state:                                                       │
-│    const candidates = loadCandidates(); // 2 new candidates                 │
-│    const deltas = loadDeltas();         // 45 active deltas                 │
-│                                                                              │
-│ 2. Use file lock for thread safety:                                          │
-│    withLock(() => {                                                          │
-│      ...all operations below...                                              │
-│    });                                                                       │
-│                                                                              │
-│ 3. STEP 1 - Promote qualified candidates:                                   │
-│    ┌────────────────────────────────────────────────────────────────────┐   │
-│    │ promoteQualifiedCandidates(candidates, deltas)                      │   │
-│    │                                                                      │   │
-│    │ For each candidate with confidence ≥ 80%:                          │   │
-│    │   - Check for duplicate in active deltas:                          │   │
-│    │     findDuplicate() uses areSimilarDeltas()                        │   │
-│    │     (85% similarity on problem + condition + solution)             │   │
-│    │                                                                      │   │
-│    │   - If duplicate found:                                             │   │
-│    │     mergeDeltas(existing, candidate)                               │   │
-│    │     → Combine helpful/not_helpful counts                           │   │
-│    │     → Recalculate confidence                                        │   │
-│    │     → Merge source_events (max 10)                                  │   │
-│    │                                                                      │   │
-│    │   - If no duplicate:                                                │   │
-│    │     Add to promoted list                                            │   │
-│    │                                                                      │   │
-│    │ Result: { promoted: [1], remaining: [], merged: 1 }                │   │
-│    └────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
-│ 4. STEP 2 - Prune stale deltas:                                             │
-│    ┌────────────────────────────────────────────────────────────────────┐   │
-│    │ pruneStaleDeltas(deltas, pruneDate)                                 │   │
-│    │                                                                      │   │
-│    │ For each delta:                                                      │   │
-│    │   - If created > 90 days ago → stale                               │   │
-│    │   - If ≥10 events AND success_rate < 20% → stale                   │   │
-│    │                                                                      │   │
-│    │ Result: { active: 44, pruned: 2 }                                   │   │
-│    └────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
-│ 5. STEP 3 - Enforce max limit (50):                                         │
-│    ┌────────────────────────────────────────────────────────────────────┐   │
-│    │ enforceMaxLimit(deltas)                                             │   │
-│    │                                                                      │   │
-│    │ If deltas.length > 50:                                              │   │
-│    │   - Sort by confidence descending                                   │   │
-│    │   - Keep top 50                                                     │   │
-│    │   - Archive overflow                                                │   │
-│    │                                                                      │   │
-│    │ Result: { kept: 45, overflow: 0 }                                   │   │
-│    └────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
-│ 6. Archive pruned deltas:                                                   │
-│    archiveDeltas(pruned)                                                    │
-│    → .claude/memory/archive/archive_2026-01-12.json                         │
-│                                                                              │
-│ 7. Save final playbook:                                                     │
-│    saveDeltas(finalDeltas)                                                   │
-│    → .claude/memory/deltas.json (45 active)                                 │
-│                                                                              │
-│ 8. Output:                                                                   │
-│    "<!-- ACE Curator: +1 promoted, 1 merged, -2 pruned. Active: 45/50 -->" │
-└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -2059,12 +1761,12 @@ PHASE 1: DETECTION & ROUTING
 │   Input: "Add a dark mode toggle..."                                         │
 │   Pattern match: "add" → triggers: ["\\b(implement|add|create)\\b"]         │
 │   Detected: Feature Implementation (100% confidence)                         │
-│   Workflow: plan → plan-validate → plan-review → cook → code-simplifier → code-review → test│
+│   Workflow: scout → investigate → plan → plan-review → plan-validate → why-review → cook → code-simplifier → review-changes → code-review → changelog → test → docs-update → watzup│
 │                                                                              │
 │ Output:                                                                      │
 │   "## Workflow Detected                                                      │
 │    **Intent:** Feature Implementation                                        │
-│    **Workflow:** /plan → /plan-validate → /plan-review → /cook → /simplify → /review → /test"│
+│    **Workflow:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /changelog → /test → /docs-update → /watzup"│
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ═══════════════════════════════════════════════════════════════════════════════
@@ -2072,17 +1774,14 @@ PHASE 2: PLANNING (/plan)
 ═══════════════════════════════════════════════════════════════════════════════
 
 ┌─ PreToolUse (Skill: plan) ──────────────────────────────────────────────────┐
-│ todo-enforcement.cjs:                                                        │
-│   'plan' IN ALLOWED_SKILLS → ALLOWED (no todos required for planning)       │
+│ skill-enforcement.cjs:                                                       │
+│   'plan' NOT in META_SKILLS → check todos                                    │
+│   todosExist = true (created by TaskCreate) → ALLOWED                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 [Claude executes /plan skill, creates implementation plan]
 
 ┌─ PostToolUse ───────────────────────────────────────────────────────────────┐
-│ ace-event-emitter.cjs:                                                       │
-│   Event: { skill: "plan", outcome: "success", duration: 12000ms }           │
-│   → Appended to events-stream.jsonl                                          │
-│                                                                              │
 │ workflow-step-tracker.cjs:                                                   │
 │   Step completed: plan (1/6)                                                 │
 │   Next step: plan-review                                                     │
@@ -2093,11 +1792,9 @@ PHASE 3: IMPLEMENTATION (/cook)
 ═══════════════════════════════════════════════════════════════════════════════
 
 ┌─ PreToolUse (Skill: cook) ──────────────────────────────────────────────────┐
-│ todo-enforcement.cjs:                                                        │
-│   'cook' NOT in ALLOWED_SKILLS                                               │
-│   Check bypass: args doesn't contain "quick:"                               │
-│   Check todos: getTodoState() = { hasTodos: true, taskCount: 3 }            │
-│   → ALLOWED (has todos)                                                      │
+│ skill-enforcement.cjs:                                                       │
+│   'cook' NOT in META_SKILLS → check todos                                    │
+│   todosExist = true (tasks created earlier) → ALLOWED                        │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 [Claude creates/uses todos, then implements dark mode]
@@ -2124,15 +1821,6 @@ PHASE 3: IMPLEMENTATION (/cook)
 [Continues editing, CSS, tests...]
 
 ┌─ PostToolUse (Skill: cook complete) ────────────────────────────────────────┐
-│ ace-event-emitter.cjs:                                                       │
-│   Event: { skill: "cook", outcome: "success", duration: 45000ms }           │
-│                                                                              │
-│ ace-feedback-tracker.cjs:                                                    │
-│   Injected deltas: ['ace_001']                                               │
-│   delta_001.condition includes 'cook' → match                               │
-│   → delta_001.helpful_count++ (was 15, now 16)                              │
-│   → delta_001.confidence recalculated: 0.84 → 0.85                          │
-│                                                                              │
 │ workflow-step-tracker.cjs:                                                   │
 │   Step completed: cook (3/6)                                                 │
 │   Next step: code-simplifier                                                 │
@@ -2145,9 +1833,6 @@ PHASE 4: TESTING (/test)
 [Similar flow: PreToolUse validation → execution → PostToolUse tracking]
 
 ┌─ PostToolUse (Skill: test complete) ────────────────────────────────────────┐
-│ ace-event-emitter.cjs:                                                       │
-│   Event: { skill: "test", outcome: "success", exit_code: 0 }                │
-│                                                                              │
 │ workflow-step-tracker.cjs:                                                   │
 │   Step completed: test (6/6)                                                 │
 │   Workflow complete!                                                         │
@@ -2171,101 +1856,55 @@ PHASE 6: CONTEXT COMPACTION (if triggered)
 ═══════════════════════════════════════════════════════════════════════════════
 
 ┌─ PreCompact ────────────────────────────────────────────────────────────────┐
+│ write-compact-marker.cjs:                                                    │
+│   Mark compaction timestamp                                                  │
+│                                                                              │
 │ save-context-memory.cjs:                                                     │
 │   Save todos, workflow state to checkpoint                                   │
-│                                                                              │
-│ ace-reflector-analysis.cjs:                                                  │
-│   47 events since last analysis                                              │
-│   Patterns extracted:                                                        │
-│   - cook:success (15 events) → candidate                                     │
-│   - test:success (8 events) → candidate                                     │
-│   2 candidates written to delta-candidates.json                              │
-│                                                                              │
-│ ace-curator-pruner.cjs:                                                      │
-│   1 candidate promoted (new pattern)                                         │
-│   1 candidate merged (existing pattern)                                      │
-│   2 stale patterns pruned                                                    │
-│   Final: 46 active deltas                                                    │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### Use Case 2: Bug Fix Workflow with Learning
+#### Use Case 2: Bug Fix Workflow
 
 ```
 USER: "Fix the login error on mobile devices"
 
 ═══════════════════════════════════════════════════════════════════════════════
-PHASE 1: DETECTION & SESSION INJECT
+PHASE 1: DETECTION & LESSON INJECTION
 ═══════════════════════════════════════════════════════════════════════════════
 
 ┌─ SessionStart (if new session) ─────────────────────────────────────────────┐
-│ ace-session-inject.cjs:                                                      │
-│   Loaded 46 active deltas                                                    │
-│   Filtered to 5 relevant for current context                                │
-│   Injected:                                                                  │
-│   "## ACE Learned Patterns                                                   │
-│                                                                              │
-│    **When debugging authentication**: Check token expiry first              │
-│    → 90% of auth bugs are expired tokens                                     │
-│                                                                              │
-│    **When using /debug skill**: Verify reproduction steps                   │
-│    → Prevents investigating phantom bugs"                                    │
-│                                                                              │
-│   Tracked: injectedDeltaIds = ['ace_017', 'ace_023']                        │
+│ lessons-injector.cjs:                                                        │
+│   Loaded lessons from docs/lessons.md                                    │
+│   Injected as system-reminder:                                              │
+│   "## Lessons Learned                                                        │
+│    - Always verify BEM classes on every template element                    │
+│    - Run search-before-code before writing any new code"                    │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌─ UserPromptSubmit ──────────────────────────────────────────────────────────┐
 │ workflow-router.cjs:                                                         │
 │   Pattern match: "fix", "error" → triggers: ["\\b(bug|fix|error)\\b"]       │
 │   Detected: Bug Fix (100% confidence)                                        │
-│   Workflow: scout → investigate → debug → plan → plan-validate → plan-review → fix → test                 │
+│   Workflow: scout → investigate → debug → plan → plan-review → plan-validate → why-review → fix → code-simplifier → review-changes → code-review → changelog → test → watzup│
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ═══════════════════════════════════════════════════════════════════════════════
 PHASE 2: INVESTIGATION (/scout, /investigate, /debug)
 ═══════════════════════════════════════════════════════════════════════════════
 
-[Scout finds relevant files - no todos required (in ALLOWED_SKILLS)]
-[Investigate analyzes patterns - no todos required]
-[Debug identifies root cause - no todos required]
+[Scout finds relevant files - requires tasks (created after workflow-start)]
+[Investigate analyzes patterns - requires tasks]
+[Debug identifies root cause - requires tasks]
 
 ═══════════════════════════════════════════════════════════════════════════════
-PHASE 3: FIX WITH INJECTED PATTERNS
+PHASE 3: FIX
 ═══════════════════════════════════════════════════════════════════════════════
 
-[Claude uses injected pattern: "Check token expiry first"]
+[Claude uses injected lessons from lessons.md]
 [Finds the bug: token validation missing on mobile user agent]
 
-┌─ PostToolUse (Skill: debug complete) ───────────────────────────────────────┐
-│ ace-feedback-tracker.cjs:                                                    │
-│   Skill: debug, outcome: success                                             │
-│   Injected delta 'ace_017' mentions 'debug' → match                         │
-│   delta_017.helpful_count++ (pattern was useful!)                           │
-│   Confidence: 0.87 → 0.88                                                    │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-═══════════════════════════════════════════════════════════════════════════════
-PHASE 4: USER NEGATIVE FEEDBACK (Learning from mistakes)
-═══════════════════════════════════════════════════════════════════════════════
-
-USER: "That's not the issue, the problem is different"
-
-┌─ UserPromptSubmit ──────────────────────────────────────────────────────────┐
-│ ace-feedback-tracker.cjs (also runs on UserPromptSubmit):                   │
-│   detectNegativeFeedback("That's not the issue...") → true                  │
-│   (Matched pattern: "not the issue", "problem is different")                │
-│                                                                              │
-│   isHumanFeedback = true, wasSuccessful = false                             │
-│   For all injected deltas in this session:                                   │
-│   → delta_017.not_helpful_count++ (human negative feedback)                 │
-│   → Confidence recalculated with human weight (3x):                         │
-│     Previous: (helpful=20 + human*3) / (20 + 3 + 3) = 0.88                  │
-│     After: (20 + 3) / (20 + 3 + 4) = 0.85                                   │
-│                                                                              │
-│   Log: "human_negative | 'That's not the issue...' | 2 deltas"              │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-[Claude continues debugging with corrected approach]
+[Claude continues debugging and applies fix]
 ```
 
 ---
@@ -2277,567 +1916,73 @@ USER: "That's not the issue, the problem is different"
 | **SessionStart** | Environment bootstrap, pattern injection | Every session starts informed |
 | **UserPromptSubmit** | Intent detection, workflow guidance | Consistent task execution |
 | **PreToolUse** | Validation, context injection | Prevents mistakes, provides guidance |
-| **PostToolUse** | Event capture, feedback tracking | Enables learning from outcomes |
-| **PreCompact** | Pattern extraction, playbook curation | Knowledge survives context resets |
+| **PostToolUse** | Workflow tracking, formatting | Progress monitoring, code quality |
+| **PreCompact** | State preservation | Todo/workflow state survives context resets |
 | **Notification** | Alert delivery | Never miss important events |
 
-**The Hook System Creates a Learning Loop**:
+**The Hook System Supports Learning**:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                                                                              │
-│   SESSION START          EXECUTION              COMPACTION                  │
-│   ┌───────────┐         ┌───────────┐          ┌───────────┐               │
-│   │ Inject    │         │ Capture   │          │ Extract   │               │
-│   │ Patterns  │────────▶│ Events    │─────────▶│ Patterns  │               │
-│   └───────────┘         └───────────┘          └───────────┘               │
-│        ▲                      │                      │                       │
-│        │                      │                      │                       │
-│        │                      ▼                      ▼                       │
-│        │              ┌───────────┐          ┌───────────┐                  │
-│        │              │ Track     │          │ Promote/  │                  │
-│        │              │ Feedback  │          │ Prune     │                  │
-│        │              └───────────┘          └───────────┘                  │
-│        │                      │                      │                       │
-│        │                      ▼                      │                       │
-│        │              ┌───────────┐                  │                       │
-│        └──────────────│ Update    │◀─────────────────┘                       │
-│                       │ Deltas    │                                          │
-│                       └───────────┘                                          │
-│                                                                              │
-│   Claude improves over time through continuous feedback and learning        │
+│   USER TEACHES            SESSION START           TOOL USE                  │
+│   ┌───────────┐          ┌───────────┐          ┌───────────┐              │
+│   │ /learn    │─────────▶│ Inject    │─────────▶│ Inject    │              │
+│   │ command   │          │ Lessons   │          │ Lessons   │              │
+│   └───────────┘          └───────────┘          └───────────┘              │
+│        │                                                                    │
+│        ▼                                                                    │
+│   ┌───────────┐                                                             │
+│   │ lessons.md│  Append-only log persists across sessions                  │
+│   └───────────┘                                                             │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ACE Technical Reference - Implementation Deep Dive
+## Learning System Technical Reference
 
-This section provides a comprehensive technical reference for the ACE (Agentic Context Engineering) system, explaining the implementation details, design decisions, and how to extend or customize the learning system.
-
-### File Structure and Data Flow
+### File Structure
 
 ```
-.claude/memory/
-├── events-stream.jsonl      # Raw event log (PostToolUse captures)
-├── delta-candidates.json    # Staging area (patterns awaiting promotion)
-├── deltas.json              # Active playbook (promoted patterns)
-├── archive/                 # Pruned/overflow deltas
-│   └── archive_2026-01-12.json
-├── .ace-last-analysis       # Timestamp marker for incremental processing
-├── .ace-injection-tracking.json  # Which deltas were injected per session
-└── deltas.lock              # File lock for concurrent access
+docs/
+├── lessons.md               # Append-only lesson log
+.claude/
+├── hooks/
+│   ├── pattern-learner.cjs  # Detects /learn commands
+│   ├── lessons-injector.cjs # Injects lessons into context
+│   └── lib/
+│       └── lessons-writer.cjs # appendLesson() utility
 ```
 
-**Data Flow Diagram:**
+**Data Flow:**
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           ACE LEARNING LOOP                                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌──────────────┐                                                           │
-│  │ PostToolUse  │ ─── Bash/Skill execution ───> events-stream.jsonl         │
-│  │ (CAPTURE)    │     exit_code, duration,      (append-only log)           │
-│  └──────────────┘     skill, error_type                                     │
-│         │                                                                   │
-│         │ PreCompact trigger (manual|auto)                                  │
-│         ↓                                                                   │
-│  ┌──────────────┐                                                           │
-│  │ Reflector    │ ─── Pattern extraction ───> delta-candidates.json         │
-│  │ (ANALYZE)    │     group by skill+error,     (staging area)              │
-│  └──────────────┘     calculate confidence                                  │
-│         │                                                                   │
-│         │ Same PreCompact trigger (chained)                                 │
-│         ↓                                                                   │
-│  ┌──────────────┐                                                           │
-│  │ Curator      │ ─── Quality control ───> deltas.json                      │
-│  │ (PROMOTE)    │     80% threshold,           (active playbook)            │
-│  └──────────────┘     dedup, prune, limit                                   │
-│         │                                                                   │
-│         │ SessionStart trigger (startup|resume)                             │
-│         ↓                                                                   │
-│  ┌──────────────┐                                                           │
-│  │ SessionInject│ ─── Context injection ───> Claude's context window        │
-│  │ (INJECT)     │     top N by confidence,     (stdout capture)             │
-│  └──────────────┘     500 token budget                                      │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+User invokes /learn → pattern-learner.cjs → appendLesson() → lessons.md
+                                                                    │
+Session starts / tool use ─────────────────────────────────────────▶│
+                                                                    │
+lessons-injector.cjs reads lessons.md → injects as system-reminder  │
 ```
 
 ---
 
-### Delta Schema - Why Structured Format Matters
+### Lesson Format
 
-The ACE system uses a structured delta format rather than simple guidelines. This provides Claude with more context about WHEN and WHY to apply learned patterns.
+Lessons are stored as simple markdown lines in `docs/lessons.md`:
 
-**Structured Delta Format:**
+**Example:**
 
-```javascript
-{
-  delta_id: "ace_01HQXYZ...",           // Unique ID for tracking
-  problem: "cook skill encounters validation errors requiring input verification",
-  solution: "Verify all required inputs are provided and properly formatted before skill execution",
-  condition: "When using /cook skill on *.cs files",
-  helpful_count: 15,                     // Automated success signals
-  not_helpful_count: 2,                  // Automated failure signals
-  human_feedback_count: 3,               // Explicit thumbs up (weighted 3x)
-  confidence: 0.87,                      // Calculated score
-  created: "2026-01-10T08:30:00Z",
-  last_helpful: "2026-01-12T09:00:00Z",
-  source_events: ["evt_001", "evt_002"]  // Traceability
-}
+```markdown
+## Behavioral Lessons
+- [2026-02-24] INIT: Always verify BEM classes on every template element
+- [2026-02-24] INIT: Check base class hierarchy -- extend AppBaseComponent
+- [2026-02-24] INIT: Run search-before-code before writing any new code
+
+## Process Improvements
+(manually added during retrospectives)
 ```
-
-**Why Structured is Better:**
-
-| Aspect | Simple Guideline | Structured Delta | Why It Matters |
-|--------|------------------|------------------|----------------|
-| **Context** | None | `condition` field | Claude knows WHEN to apply the pattern |
-| **Clarity** | Vague | Problem + Solution | Claude understands the failure mode AND fix |
-| **Debugging** | Impossible | `source_events` | You can trace WHY a delta was created |
-| **Scoring** | Binary | `confidence` | Prioritize high-value patterns |
-| **Lifecycle** | Unknown | `created`, `last_helpful` | Enable age-based pruning |
-
-**Claude's Cognitive Advantage:**
-
-Simple format - Claude gets a rule but no context:
-```
-- Always run tests before committing
-```
-Claude might apply this when you're just exploring code.
-
-Structured format - Claude gets problem/solution/condition:
-```
-- **When:** When using /commit skill
-  **Problem:** Commits fail CI because tests weren't run locally
-  **Solution:** Always run tests before committing to catch regressions
-```
-Claude knows: "This applies specifically when I'm about to commit, and the reason is CI failures."
-
----
-
-### Learning Loop - Detailed Code Flow
-
-#### Stage 1: Event Capture (PostToolUse)
-
-**File:** `ace-event-emitter.cjs`
-**Trigger:** After every Bash or Skill tool execution
-
-```javascript
-// Core capture logic
-function processBashTool(toolInput, toolResult) {
-  const command = toolInput?.command || '';
-  const exitCode = extractExitCode(toolResult);
-
-  return {
-    event_id: `evt_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-    timestamp: new Date().toISOString(),
-    tool: 'Bash',
-    skill: detectSkillFromCommand(command),  // e.g., 'npm', 'git', 'dotnet'
-    outcome: exitCode === 0 ? 'success' : 'failure',
-    error_type: exitCode !== 0 ? classifyError(toolResult) : null,
-    context: {
-      command_prefix: command.slice(0, 100),
-      exit_code: exitCode,
-      duration_ms: extractDuration(toolResult)
-    }
-  };
-}
-
-// Error taxonomy for pattern grouping
-function classifyError(output) {
-  if (/ENOENT|not found|No such file/i.test(output)) return 'notFound';
-  if (/permission denied|EACCES/i.test(output)) return 'permission';
-  if (/timeout|ETIMEDOUT/i.test(output)) return 'timeout';
-  if (/type.*error|undefined is not/i.test(output)) return 'type';
-  if (/syntax.*error|unexpected token/i.test(output)) return 'syntax';
-  if (/validation|invalid|required/i.test(output)) return 'validation';
-  return 'unknown';
-}
-
-// Append with rotation at 10MB
-function appendEvent(event) {
-  rotateEventsIfNeeded();  // Prevents disk exhaustion
-  fs.appendFileSync(EVENTS_FILE, JSON.stringify(event) + '\n');
-}
-```
-
-#### Stage 2: Pattern Extraction (PreCompact - Reflector)
-
-**File:** `ace-reflector-analysis.cjs`
-**Trigger:** PreCompact event (manual or auto context compaction)
-
-```javascript
-function extractPatterns(events) {
-  const groups = {};
-
-  for (const event of events) {
-    // Group by skill + error_type combination
-    const key = `${event.skill}:${event.error_type || 'success'}`;
-
-    if (!groups[key]) {
-      groups[key] = {
-        skill: event.skill,
-        error_type: event.error_type,
-        success_count: 0,
-        failure_count: 0,
-        events: [],
-        file_patterns: new Set()
-      };
-    }
-
-    // Track outcomes
-    if (event.outcome === 'success') groups[key].success_count++;
-    if (event.outcome === 'failure') groups[key].failure_count++;
-
-    groups[key].events.push(event.event_id);
-  }
-
-  // Only patterns with 3+ events qualify (filters noise)
-  return Object.values(groups).filter(g => g.events.length >= 3);
-}
-
-// Confidence formula with human weight
-function calculateConfidence(helpful, notHelpful, humanFeedback) {
-  const HUMAN_WEIGHT = 3;
-  const totalPositive = helpful + (humanFeedback * HUMAN_WEIGHT);
-  const totalNegative = notHelpful;
-  const total = totalPositive + totalNegative;
-  return total > 0 ? totalPositive / total : 0;
-}
-```
-
-**Why 3+ events minimum?** Single occurrences could be noise. 3+ events suggest a real pattern.
-
-#### Stage 3: Quality Control (PreCompact - Curator)
-
-**File:** `ace-curator-pruner.cjs`
-**Trigger:** PreCompact event (chained after Reflector)
-
-```javascript
-const CONFIDENCE_THRESHOLD = 0.80;  // 80% confidence required
-const MAX_DELTAS = 50;              // Playbook size limit
-const PRUNE_AGE_DAYS = 90;          // Stale pattern removal
-const MIN_SUCCESS_RATE = 0.20;      // 20% minimum success rate
-const SIMILARITY_THRESHOLD = 0.85;  // 85% for deduplication
-
-function promoteQualifiedCandidates(candidates, deltas) {
-  const promotable = candidates.filter(c =>
-    calculateConfidence(c) >= CONFIDENCE_THRESHOLD
-  );
-
-  for (const candidate of promotable) {
-    // Check for similar existing delta
-    const duplicate = findDuplicate(candidate, deltas);
-
-    if (duplicate) {
-      // Merge counts instead of creating duplicate
-      mergeDeltas(duplicate, candidate);
-    } else {
-      // Add as new delta
-      deltas.push(candidate);
-    }
-  }
-}
-
-function isStale(delta, pruneDate) {
-  // Age-based pruning
-  if (new Date(delta.created) < pruneDate) return true;
-
-  // Performance-based pruning
-  const total = delta.helpful_count + delta.not_helpful_count;
-  if (total >= 10) {
-    const successRate = delta.helpful_count / total;
-    if (successRate < MIN_SUCCESS_RATE) return true;
-  }
-  return false;
-}
-
-// Similarity using Jaccard token overlap
-function stringSimilarity(str1, str2) {
-  const tokenize = s => new Set(s.toLowerCase().split(/[\s,.:;]+/).filter(Boolean));
-  const tokens1 = tokenize(str1);
-  const tokens2 = tokenize(str2);
-
-  const intersection = [...tokens1].filter(t => tokens2.has(t)).length;
-  const union = new Set([...tokens1, ...tokens2]).size;
-
-  return union > 0 ? intersection / union : 0;
-}
-```
-
-**Quality Gates Summary:**
-
-| Gate | Threshold | Purpose |
-|------|-----------|---------|
-| Confidence | 80% | Only promote validated patterns |
-| Max deltas | 50 | Prevent context overflow |
-| Age | 90 days | Keep playbook fresh |
-| Success rate | 20% min | Remove consistently failing patterns |
-| Similarity | 85% | Prevent redundant entries |
-
-#### Stage 4: Context Injection (SessionStart)
-
-**File:** `ace-session-inject.cjs`
-**Trigger:** SessionStart (startup or resume)
-
-```javascript
-const MAX_INJECTION_TOKENS = 500;
-const CHARS_PER_TOKEN = 4;  // Conservative estimate
-const MAX_CHARS = MAX_INJECTION_TOKENS * CHARS_PER_TOKEN;  // 2000 chars
-
-function buildInjection(deltas, context) {
-  // Filter by context match
-  const relevantDeltas = deltas.filter(d =>
-    matchesCondition(d.condition, context)
-  );
-
-  // Build injection within token budget
-  let injection = '\n## ACE Learned Patterns\n\n';
-  injection += '> Patterns learned from previous executions (auto-generated).\n\n';
-
-  let charCount = injection.length;
-  const injectedIds = [];
-
-  // Add deltas until budget exhausted (already sorted by confidence)
-  for (const delta of relevantDeltas) {
-    const formatted = formatDeltaForInjection(delta);
-    const lineLength = formatted.length + 1;
-
-    if (charCount + lineLength > MAX_CHARS) break;  // Budget exceeded
-
-    injection += formatted + '\n';
-    charCount += lineLength;
-    injectedIds.push(delta.delta_id);
-  }
-
-  return { injection, injectedIds };
-}
-
-function formatDeltaForInjection(delta) {
-  return `- **When:** ${delta.condition}\n  **Problem:** ${delta.problem}\n  **Solution:** ${delta.solution}`;
-}
-```
-
-**Why Token Budget Matters:**
-- Claude's context window is finite
-- Without budget, 50 deltas × ~100 chars = 5000 chars = ~1250 tokens wasted
-- With 500 token budget, only top ~10 highest-confidence deltas inject
-- Higher confidence = more valuable = prioritized
-
----
-
-### Concurrency Safety
-
-**File:** `ace-playbook-state.cjs`
-
-```javascript
-// File locking prevents race conditions
-function acquireLock() {
-  const deadline = Date.now() + LOCK_TIMEOUT_MS;  // 5 second timeout
-
-  while (Date.now() < deadline) {
-    try {
-      // O_EXCL fails if file exists - atomic lock creation
-      fs.writeFileSync(LOCK_FILE, process.pid.toString(), { flag: 'wx' });
-      return true;
-    } catch (err) {
-      if (err.code === 'EEXIST') {
-        // Check if lock is stale (owning process dead)
-        const pid = parseInt(fs.readFileSync(LOCK_FILE, 'utf8'), 10);
-        if (!isProcessAlive(pid)) {
-          fs.unlinkSync(LOCK_FILE);  // Remove stale lock
-          continue;
-        }
-        sleepSync(LOCK_RETRY_DELAY_MS);  // Wait and retry
-      }
-    }
-  }
-  return false;  // Lock acquisition failed
-}
-
-function withLock(fn) {
-  if (!acquireLock()) throw new Error('Lock timeout');
-  try {
-    return fn();
-  } finally {
-    releaseLock();
-  }
-}
-
-// Atomic write prevents corruption on crash
-function atomicWriteJSON(filePath, data) {
-  const tmpPath = filePath + '.tmp';
-  const bakPath = filePath + '.bak';
-
-  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2));  // Write temp
-
-  if (fs.existsSync(filePath)) {
-    fs.renameSync(filePath, bakPath);  // Backup original
-  }
-
-  fs.renameSync(tmpPath, filePath);  // Atomic rename
-
-  try { fs.unlinkSync(bakPath); } catch {}  // Cleanup backup
-}
-```
-
----
-
-### Why This Design Produces Better Results
-
-**Real-World Scenarios:**
-
-| Scenario | Simple Design | Current ACE | Outcome |
-|----------|--------------|-------------|---------|
-| **Noisy pattern**: npm test fails 8/10 times due to env issue | Creates "npm test often fails" (useless) | Confidence = 20%, below 80% → NOT promoted | Noise filtered |
-| **Context overflow**: 50 deltas accumulated | All 50 inject = ~1250 tokens wasted | Budget = 500 tokens, only top ~10 inject | Context preserved |
-| **Similar patterns**: "Run tests" and "Run tests before commit" | Both added separately | 85% similarity → merged with combined counts | No redundancy |
-| **Stale pattern**: 6-month-old pattern, codebase changed | Stays forever | Pruned after 90 days | Playbook fresh |
-
----
-
-### Extending the ACE System
-
-#### Adding Custom Event Classification
-
-Edit `ace-event-emitter.cjs` to add new error types:
-
-```javascript
-function classifyError(output) {
-  // Add custom classifications
-  if (/rate.*limit|429|too many requests/i.test(output)) return 'rateLimit';
-  if (/authentication|401|unauthorized/i.test(output)) return 'auth';
-  // ... existing classifications
-}
-```
-
-#### Customizing Confidence Weights
-
-Edit `ace-constants.cjs`:
-
-```javascript
-module.exports = {
-  HUMAN_WEIGHT: 3.0,           // Increase for more human influence
-  CONFIDENCE_THRESHOLD: 0.80,  // Lower for faster promotion
-  MAX_DELTAS: 50,              // Increase for larger playbook
-  STALE_DAYS: 90,              // Decrease for faster pruning
-};
-```
-
-#### Adding Custom Pattern Generation
-
-Edit `ace-reflector-analysis.cjs` to customize problem/solution text:
-
-```javascript
-function generateSolution(pattern) {
-  // Add custom solutions for your error types
-  const solutions = {
-    rateLimit: 'Implement exponential backoff for API calls',
-    auth: 'Verify authentication tokens are valid before requests',
-    // ... existing solutions
-  };
-  return solutions[pattern.error_type] || defaultSolution(pattern);
-}
-```
-
----
-
-## Pattern Learning System
-
-### Overview
-
-The Pattern Learning system provides **explicit pattern teaching** alongside the ACE automatic learning system. While ACE learns from skill execution outcomes, the Pattern Learning system allows users to directly teach Claude patterns, preferences, and conventions.
-
-### Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    Pattern Learning System                          │
-│                                                                     │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐          │
-│  │    User      │    │   Pattern    │    │   Pattern    │          │
-│  │   /learn     │───▶│   Learner    │───▶│   Storage    │          │
-│  └──────────────┘    │    Hook      │    │    YAML      │          │
-│                      └──────────────┘    └──────────────┘          │
-│                             │                   │                   │
-│                             ▼                   ▼                   │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐          │
-│  │   Session    │◀───│   Pattern    │◀───│   Pattern    │          │
-│  │   Inject     │    │   Injector   │    │   Matcher    │          │
-│  └──────────────┘    └──────────────┘    └──────────────┘          │
-│                                                                     │
-└─────────────────────────────────────────────────────────────────────┘
-```
-
-### Components
-
-| Component | File | Purpose |
-|-----------|------|---------|
-| Pattern Learner | `pattern-learner.cjs` | Detects user corrections and explicit teachings |
-| Pattern Injector | `pattern-injector.cjs` | Injects relevant patterns at session start and tool use |
-| Pattern Matcher | `lib/pattern-matcher.cjs` | Calculates relevance scores for pattern selection |
-| Pattern Storage | `lib/pattern-storage.cjs` | YAML storage and index management |
-
-### Hook Events
-
-| Event | Hook | Purpose |
-|-------|------|---------|
-| SessionStart (startup\|resume) | pattern-injector.cjs | Inject patterns at session start |
-| PreToolUse (*) | pattern-injector.cjs | Inject context-relevant patterns |
-| UserPromptSubmit | pattern-learner.cjs | Detect corrections and teachings |
-
-### Usage
-
-**Explicit Teaching:**
-```
-/learn always use PlatformValidationResult instead of throwing exceptions
-/learn [wrong] throw new ValidationException() [right] return PlatformValidationResult.Invalid()
-```
-
-**Pattern Management:**
-```
-/learned-patterns                    # List all patterns
-/learned-patterns view <id>          # View pattern details
-/learned-patterns boost <id>         # Increase confidence
-/learned-patterns archive <id>       # Archive pattern
-```
-
-### Storage Structure
-
-```
-.claude/learned-patterns/
-├── index.yaml              # Pattern lookup index
-├── backend/                # C#/.NET patterns
-├── frontend/               # Angular/TypeScript patterns
-├── workflow/               # Development process patterns
-├── general/                # Cross-cutting patterns
-└── archive/                # Archived patterns
-```
-
-### Confidence System
-
-- **Explicit teaching** (`/learn`): Starts at 80% confidence
-- **Implicit corrections**: Starts at 40% confidence
-- **Confirmation**: +10% confidence
-- **Conflict**: -15% confidence
-- **Decay**: After 30 days unused
-- **Auto-archive**: Below 20% confidence
-
-### Dual System Architecture
-
-The Pattern Learning system operates **independently** from ACE:
-
-| System | Storage | Learning Method | Injection |
-|--------|---------|-----------------|-----------|
-| ACE | `deltas.json` | Automatic from skill outcomes | SessionStart |
-| Patterns | `learned-patterns/*.yaml` | Explicit user teaching | SessionStart + PreToolUse |
-
-Both systems coexist and complement each other:
-- **ACE** learns what works from execution outcomes
-- **Patterns** learn explicit preferences and conventions from users
 
 ---
 

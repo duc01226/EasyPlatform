@@ -1,7 +1,6 @@
 ---
 name: recover
-description: "[Tooling & Meta] Restore workflow context from checkpoint after session loss"
-infer: true
+description: '[Tooling & Meta] Restore workflow context from checkpoint after session loss'
 ---
 
 # Recover Workflow Context
@@ -11,6 +10,7 @@ Restore workflow state and todo items from checkpoint files after context compac
 ## Usage
 
 Use this command when:
+
 - Context was compacted and you've lost track of the workflow
 - Session was interrupted and needs to resume
 - Todo items need to be restored from a checkpoint
@@ -79,12 +79,12 @@ Resume from the `currentStep` identified in the metadata. Execute the remaining 
 
 ## Automatic vs Manual Recovery
 
-| Scenario                      | Recovery Type | Trigger                          |
-| ----------------------------- | ------------- | -------------------------------- |
-| Session resume after compact  | Automatic     | `session-resume.cjs` hook        |
-| New session in same directory | Manual        | This `/recover` command          |
-| Explicit user request         | Manual        | This `/recover` command          |
-| No workflow state found       | Manual        | This `/recover` command          |
+| Scenario                      | Recovery Type | Trigger                   |
+| ----------------------------- | ------------- | ------------------------- |
+| Session resume after compact  | Automatic     | `session-resume.cjs` hook |
+| New session in same directory | Manual        | This `/recover` command   |
+| Explicit user request         | Manual        | This `/recover` command   |
+| No workflow state found       | Manual        | This `/recover` command   |
 
 ## Related Commands
 
@@ -96,5 +96,6 @@ Resume from the `currentStep` identified in the metadata. Execute the remaining 
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements

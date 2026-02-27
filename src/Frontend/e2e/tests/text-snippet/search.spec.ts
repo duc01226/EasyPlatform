@@ -42,7 +42,7 @@ test.describe('@P0 @P1 @TextSnippet @Search - Search Operations', () => {
         expect(await snippetPage.searchInput.inputValue()).toBe('test search');
     });
 
-    test('@P1 TS-SNIPPET-P1-001 - Full-text search returns matching results', async ({ page, request }) => {
+    test('TC-SNP-SRC-001: Full-text search returns matching results @P1', async ({ page, request }) => {
         /**
          * @scenario Full-text search returns matching results
          * @given text snippets exist with various content
@@ -96,13 +96,13 @@ test.describe('@P0 @P1 @TextSnippet @Search - Search Operations', () => {
         // Wait for results to load
         await snippetPage.waitForLoading();
 
-        // Verify list is populated (might have items from database)
+        // Verify list is populated after clearing search
         const count = await snippetPage.getSnippetCount();
-        // List should load (may be 0 if empty database, that's okay)
-        expect(count).toBeGreaterThanOrEqual(0);
+        // After clearing search, all snippets should be visible (database has seeded data)
+        expect(count).toBeGreaterThan(0);
     });
 
-    test('@P1 TS-SEARCH-P1-003 - Search with no results shows appropriate state', async ({ page }) => {
+    test('TC-SNP-SRC-002: Search with no results shows appropriate state @P1', async ({ page }) => {
         /**
          * @scenario No results search shows empty state
          * @given the user is on the Text Snippets tab
@@ -181,16 +181,23 @@ test.describe('@P0 @P1 @TextSnippet @Search - Search Operations', () => {
          * @when the user types quickly
          * @then only one search request should be made after pause
          */
-        // Type quickly
-        await snippetPage.searchInput.type('test', { delay: 50 });
+        // Track API search requests
+        const searchRequests: string[] = [];
+        page.on('request', req => {
+            if (req.url().includes('search') || req.url().includes('Search')) {
+                searchRequests.push(req.url());
+            }
+        });
 
-        // Wait for debounce
-        await page.waitForTimeout(500);
+        // Type quickly — debounce should batch into fewer requests
+        await snippetPage.searchInput.pressSequentially('testsearch', { delay: 30 });
 
-        // Continue typing
-        await snippetPage.searchInput.type('search', { delay: 50 });
-
-        // The search should complete without errors
+        // Wait for debounce to settle and request to complete
+        await page.waitForTimeout(1000);
         await snippetPage.waitForLoading();
+
+        // Debounce should reduce ~10 keystrokes to fewer API calls
+        // Without debounce: up to 10 requests. With debounce: typically 1-3.
+        expect(searchRequests.length).toBeLessThanOrEqual(3);
     });
 });

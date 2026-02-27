@@ -7,7 +7,7 @@ Invalid data can persist and cause downstream issues:
 - Validation at read time doesn't prevent corrupt writes
 - "It was validated earlier" is never reliable
 
-**Real Example:** ACE `createDelta()` didn't validate its output. Invalid deltas with empty problem fields persisted and caused injection failures later.
+**Real Example:** A factory function didn't validate its output. Invalid objects with empty required fields persisted and caused injection failures later.
 
 ## Solution: Validate at Every Boundary
 

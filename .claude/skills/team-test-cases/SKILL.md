@@ -3,7 +3,6 @@ name: team-test-cases
 description: "[Team] Generate detailed executable test cases from specifications. Use when creating detailed test cases, expanding test specs, or generating TC-IDs. Triggers on keywords like "test cases", "generate tests", "detailed tests", "TC-", "executable tests"."
 argument-hint: "<path-to-test-spec-or-TS-ID>"
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, TodoWrite
-infer: true
 ---
 
 # Test Case Generation
@@ -17,6 +16,7 @@ Create detailed, executable test cases from specifications.
 - Activate `qa-engineer` skill for test case design and coverage analysis
 
 ## When to Use
+
 - Test spec ready for expansion
 - Need detailed test steps
 - Generating test case IDs
@@ -24,6 +24,7 @@ Create detailed, executable test cases from specifications.
 ## Quick Reference
 
 ### Workflow
+
 1. Read test specification
 2. Extract test scenarios
 3. Generate detailed test cases per scenario
@@ -34,25 +35,30 @@ Create detailed, executable test cases from specifications.
 8. Suggest next: `/team-quality-gate {testspec}`
 
 ### Test Case Format
+
 ```markdown
 #### TC-{MOD}-{NNN}: {Title}
+
 - **Priority:** P1 | P2 | P3
 - **Type:** Positive | Negative | Boundary
 - **Preconditions:** {Setup}
 - **Test Data:** {Requirements}
 
 **Steps:**
+
 1. {Action}
 2. {Action}
 3. {Verify}
 
 **Expected Result:**
+
 - {Outcome}
 
 **Evidence:** `{file}:{line}`
 ```
 
 ### Module Codes
+
 | Module      | Code |
 | ----------- | ---- |
 | TextSnippet | TXT  |
@@ -61,11 +67,14 @@ Create detailed, executable test cases from specifications.
 | Common      | COM  |
 
 ### Evidence Requirements
+
 **MANDATORY:** Every TC must have evidence.
+
 - Format: `{FilePath}:{LineNumber}`
 - Sources: ErrorMessages, validators, handlers
 
 ### Related
+
 - **Role Skill:** `qa-engineer`
 - **Command:** `/team-test-cases`
 - **Input:** `/team-test-spec` output

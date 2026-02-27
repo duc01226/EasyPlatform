@@ -2,7 +2,6 @@
 name: team-quality-gate
 description: "[Team] Run quality gate checklists for development stages. Covers 4 stage gates (Idea>PBI, PBI>Dev, Dev>QA, QA>Release), compliance verification (architecture, security, accessibility, performance), audit trails, and quality metrics. Triggers on "quality gate", "qa gate", "pre-release", "checklist", "gate check", "compliance", "quality metrics", "QC review"."
 argument-hint: "<pre-dev|pre-qa|pre-release> <artifact-path|PR#number>"
-infer: true
 allowed-tools: Read, Write, Grep, Glob, Bash, TodoWrite
 ---
 
@@ -11,6 +10,7 @@ allowed-tools: Read, Write, Grep, Glob, Bash, TodoWrite
 Verify artifacts meet quality criteria at development stages.
 
 ## When to Use
+
 - Before starting development (pre-dev)
 - Before QA handoff (pre-qa)
 - Before release (pre-release)
@@ -26,6 +26,7 @@ Verify artifacts meet quality criteria at development stages.
 ## Quick Reference: Gate Types
 
 ### Pre-Development
+
 - [ ] Problem statement clear
 - [ ] Acceptance criteria in GIVEN/WHEN/THEN
 - [ ] Out of scope defined
@@ -33,18 +34,21 @@ Verify artifacts meet quality criteria at development stages.
 - [ ] Design approved (if UI)
 
 ### Pre-QA
+
 - [ ] Code review approved
 - [ ] Unit tests >80% coverage
 - [ ] No P1 linting errors
 - [ ] Documentation updated
 
 ### Pre-Release
+
 - [ ] All test cases executed
 - [ ] No open P1/P2 bugs
 - [ ] Regression suite passed
 - [ ] PO sign-off received
 
 ## Workflow
+
 1. Identify gate type (from target arg or artifact type)
 2. Load appropriate checklist (see `.claude/skills/team-quality-gate/references/quality-checklists.md`)
 3. Verify each criterion against artifact/code
@@ -54,6 +58,7 @@ Verify artifacts meet quality criteria at development stages.
 7. Save to `team-artifacts/qc-reports/`
 
 ## Report Template
+
 ```markdown
 ## Quality Gate: {Type}
 
@@ -61,11 +66,13 @@ Verify artifacts meet quality criteria at development stages.
 **Date:** {date}
 
 ### Results
+
 | Criterion | Status         | Notes  |
 | --------- | -------------- | ------ |
 | {item}    | PASS/FAIL/WARN | {note} |
 
 ### Compliance
+
 | Area          | Status    |
 | ------------- | --------- |
 | Architecture  | PASS/FAIL |
@@ -77,15 +84,16 @@ Verify artifacts meet quality criteria at development stages.
 ```
 
 ## Output
+
 - **Path:** `team-artifacts/qc-reports/{YYMMDD}-gate-{type}-{slug}.md`
 - **Status:** PASS | FAIL | CONDITIONAL
 
 ## Example
+
 ```bash
 /team-quality-gate pre-dev team-artifacts/pbis/260119-pbi-dark-mode-toggle.md
 /team-quality-gate pre-release PR#123
 ```
-
 
 ## IMPORTANT Task Planning Notes
 

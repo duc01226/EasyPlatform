@@ -1,8 +1,6 @@
 ---
 name: sequential-thinking
 description: "[Planning] Apply structured, reflective problem-solving for complex tasks requiring multi-step analysis, revision capability, and hypothesis verification. Use for complex problem decomposition, adaptive planning, analysis needing course correction, problems with unclear scope, multi-step solutions, and hypothesis-driven work."
-version: 1.0.0
-license: MIT
 ---
 
 # Sequential Thinking

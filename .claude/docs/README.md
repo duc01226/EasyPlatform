@@ -31,9 +31,8 @@ quick: add a button
 
 | Document | Description |
 |----------|-------------|
-| [ACE System](hooks/ace/README.md) | Self-learning context engineering |
 | [Session Lifecycle](hooks/session/README.md) | State management, checkpoints |
-| [Pattern Learning](hooks/patterns/README.md) | User pattern capture and injection |
+| [Pattern Learning](hooks/patterns/README.md) | User pattern capture and lesson injection |
 | [Workflows](hooks/workflows.md) | Intent detection and routing |
 | [Dev Rules](hooks/dev-rules.md) | Context-aware development guidance |
 | [Enforcement](hooks/enforcement.md) | Safety blocks and validation |
@@ -51,11 +50,11 @@ quick: add a button
 ├─────────────────────────────────────────────────────────────────┤
 │                         Hook Subsystems                          │
 ├──────────────┬──────────────┬──────────────┬───────────────────┤
-│     ACE      │   Session    │   Patterns   │    Workflows      │
-│  (5 hooks)   │  (4 hooks)   │  (2 hooks)   │    (2 hooks)      │
+│   Session    │   Patterns   │   Workflows  │    Dev Rules      │
+│  (4 hooks)   │  (2 hooks)   │  (2 hooks)   │    (5 hooks)      │
 ├──────────────┼──────────────┼──────────────┼───────────────────┤
-│  Dev Rules   │ Enforcement  │ Notifications│                   │
-│  (4 hooks)   │  (5 hooks)   │  (1 hook)    │                   │
+│ Enforcement  │ Notifications│   Learning   │                   │
+│  (5 hooks)   │  (1 hook)    │  (2 hooks)   │                   │
 └──────────────┴──────────────┴──────────────┴───────────────────┘
 ```
 
@@ -65,12 +64,12 @@ quick: add a button
 
 | Event | Trigger | Hooks (Count) |
 |-------|---------|---------------|
-| **SessionStart** | `startup\|resume\|clear\|compact` | session-init, session-resume, ace-session-inject, pattern-injector (4) |
+| **SessionStart** | `startup\|resume\|clear\|compact` | session-init, session-resume (2) |
 | **SubagentStart** | `*` | subagent-init, role-context-injector (2) |
 | **UserPromptSubmit** | Always | workflow-router, dev-rules-reminder, pattern-learner (3) |
-| **PreToolUse** | Tool-specific matchers | pattern-injector, todo-enforcement, scout-block, privacy-block, figma-context-extractor, context injectors (9+) |
-| **PostToolUse** | Tool-specific matchers | todo-tracker, edit-complexity-tracker, bash-cleanup, post-edit-prettier, ace-event-emitter, workflow-step-tracker, ace-feedback-tracker (7) |
-| **PreCompact** | `manual\|auto` | write-compact-marker, save-context-memory, ace-reflector-analysis, ace-curator-pruner (4) |
+| **PreToolUse** | Tool-specific matchers | lessons-injector, todo-enforcement, scout-block, privacy-block, figma-context-extractor, context injectors (9+) |
+| **PostToolUse** | Tool-specific matchers | todo-tracker, edit-complexity-tracker, bash-cleanup, post-edit-prettier, workflow-step-tracker (5) |
+| **PreCompact** | `manual\|auto` | write-compact-marker, save-context-memory (2) |
 | **SessionEnd** | `clear` | session-end (1) |
 | **Notification** | System | notify.cjs (1) |
 
@@ -85,22 +84,19 @@ quick: add a button
 | `.claude/.todo-state.json` | Todo persistence across sessions |
 | `.claude/.workflow-state.json` | Workflow progress tracking |
 | `.claude/.edit-state.json` | Edit operation tracking |
-| `.claude/memory/deltas.json` | Active ACE playbook (learned patterns) |
-| `.claude/memory/delta-candidates.json` | ACE candidate patterns pending promotion |
-| `.claude/memory/events-stream.jsonl` | Event stream for ACE analysis |
-| `.claude/learned-patterns/*.yaml` | Pattern Learning storage (by category) |
+| `docs/lessons.md` | Append-only lesson log (learning system) |
 
 ---
 
 ## Subsystem Overview
 
-### 1. ACE (Agentic Context Engineering)
+### 1. Learning System
 
-Self-learning system that captures execution patterns and injects learned context.
+Simple manual learning mechanism via `/learn` command.
 
-- **Hooks**: ace-event-emitter, ace-reflector-analysis, ace-curator-pruner, ace-session-inject, ace-feedback-tracker
-- **Storage**: `memory/deltas.json`, `memory/delta-candidates.json`, `memory/events-stream.jsonl`
-- **Docs**: [hooks/ace/](hooks/ace/)
+- **Hooks**: pattern-learner, lessons-injector
+- **Storage**: `docs/lessons.md` (append-only log)
+- **Docs**: [hooks/patterns/](hooks/patterns/)
 
 ### 2. Session Lifecycle
 
@@ -110,13 +106,6 @@ Manages session state, initialization, resume, and cleanup.
 - **Storage**: `.ck.json`, `.todo-state.json`
 - **Docs**: [hooks/session/](hooks/session/)
 
-### 3. Pattern Learning
-
-Learns user patterns from prompts and injects them contextually.
-
-- **Hooks**: pattern-learner, pattern-injector
-- **Storage**: `learned-patterns/*.yaml`
-- **Docs**: [hooks/patterns/](hooks/patterns/)
 
 ### 4. Workflow System
 
@@ -153,7 +142,7 @@ Blocks unsafe or out-of-scope operations.
 ### For Customization
 
 1. Edit `.claude/settings.json` to modify hook registrations
-2. Add patterns to `.claude/learned-patterns/` for auto-injection
+2. Use `/learn` to add lessons to `docs/lessons.md` for auto-injection
 3. Create skills in `.claude/skills/skill-name/SKILL.md`
 
 ---
@@ -176,7 +165,7 @@ Blocks unsafe or out-of-scope operations.
 |---------|---------------|
 | How hooks work | [Hooks Overview](hooks/README.md) |
 | How patterns are learned | [Pattern Learning](hooks/patterns/README.md) |
-| How context is injected | [ACE System](hooks/ace/README.md) |
+| How lessons are injected | [Pattern Learning](hooks/patterns/README.md) |
 | How workflows are detected | [Workflows](hooks/workflows.md) |
 | How permissions work | [Configuration](configuration.md#permissions-section) |
 | How agents are invoked | [Agents](agents.md#agent-invocation) |
@@ -201,8 +190,6 @@ Blocks unsafe or out-of-scope operations.
     ├── workflows.md       # Workflow system
     ├── dev-rules.md       # Dev rules injection
     ├── enforcement.md     # Safety enforcement
-    ├── ace/
-    │   └── README.md      # ACE self-learning
     ├── session/
     │   └── README.md      # Session lifecycle
     └── patterns/

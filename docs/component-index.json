@@ -1,0 +1,198 @@
+{
+  "generated": "2026-02-26T01:44:47.668Z",
+  "appRoot": "src/Frontend",
+  "totalComponents": 6,
+  "components": [
+    {
+      "className": "AppComponent",
+      "selector": "platform-example-web-root",
+      "tsPath": "src/Frontend/apps/playground-text-snippet/src/app/app.component.ts",
+      "htmlPath": "src/Frontend/apps/playground-text-snippet/src/app/app.component.html",
+      "scssPath": "src/Frontend/apps/playground-text-snippet/src/app/app.component.scss",
+      "storePath": "src/Frontend/apps/playground-text-snippet/src/app/app.store.ts",
+      "bemBlock": "app",
+      "textMarkers": [
+        "SnippetText",
+        "FullText (Click on row to see detail)"
+      ],
+      "materialWidgets": [
+        "mat-error",
+        "mat-icon",
+        "mat-tab-group",
+        "mat-tab",
+        "mat-form-field",
+        "mat-label",
+        "mat-paginator",
+        "mat-spinner",
+        "matInput"
+      ],
+      "childSelectors": [
+        "platform-example-web-text-snippet-detail",
+        "app-task-list",
+        "app-task-detail",
+        "app-nav-loading-test"
+      ],
+      "parentSelectors": []
+    },
+    {
+      "className": "AppTextSnippetDetailComponent",
+      "selector": "platform-example-web-text-snippet-detail",
+      "tsPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/app-text-snippet-detail/app-text-snippet-detail.component.ts",
+      "htmlPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/app-text-snippet-detail/app-text-snippet-detail.component.html",
+      "scssPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/app-text-snippet-detail/app-text-snippet-detail.component.scss",
+      "storePath": null,
+      "bemBlock": "text-snippet-detail",
+      "textMarkers": [
+        "Reset",
+        "Snippet Text",
+        "Full Text",
+        "Snippet text here",
+        "Full text here"
+      ],
+      "materialWidgets": [
+        "mat-error",
+        "mat-form-field",
+        "mat-label",
+        "mat-spinner",
+        "matInput"
+      ],
+      "childSelectors": [],
+      "parentSelectors": [
+        "platform-example-web-root"
+      ]
+    },
+    {
+      "className": "NavLoadingTestComponent",
+      "selector": "app-nav-loading-test",
+      "tsPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/nav-loading-test/nav-loading-test.component.ts",
+      "htmlPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/nav-loading-test/nav-loading-test.component.html",
+      "scssPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/nav-loading-test/nav-loading-test.component.scss",
+      "storePath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/nav-loading-test/nav-loading-test.store.ts",
+      "bemBlock": "nav-loading-test",
+      "textMarkers": [
+        "Navigation Property Loading Test",
+        "Individual Test Results"
+      ],
+      "materialWidgets": [
+        "mat-icon",
+        "mat-spinner",
+        "mat-card",
+        "mat-card-header",
+        "mat-card-title",
+        "mat-card-subtitle",
+        "mat-card-content",
+        "mat-expansion-panel",
+        "mat-expansion-panel-header",
+        "mat-panel-title",
+        "mat-panel-description"
+      ],
+      "childSelectors": [],
+      "parentSelectors": [
+        "platform-example-web-root"
+      ]
+    },
+    {
+      "className": "TaskDetailComponent",
+      "selector": "app-task-detail",
+      "tsPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-detail/task-detail.component.ts",
+      "htmlPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-detail/task-detail.component.html",
+      "scssPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-detail/task-detail.component.scss",
+      "storePath": null,
+      "bemBlock": "task-detail",
+      "textMarkers": [
+        "Cancel",
+        "Title",
+        "Description",
+        "Status",
+        "Priority",
+        "Start Date",
+        "Due Date",
+        "Enter task title...",
+        "Enter task description...",
+        "Subtask title...",
+        "Remove subtask",
+        "This task has been deleted",
+        "Title is required",
+        "Creating New Task",
+        "Editing Task"
+      ],
+      "materialWidgets": [
+        "mat-icon",
+        "mat-error",
+        "mat-form-field",
+        "mat-label",
+        "mat-select",
+        "mat-option",
+        "mat-datepicker-toggle",
+        "mat-datepicker",
+        "mat-checkbox",
+        "mat-spinner",
+        "matInput",
+        "matTooltip"
+      ],
+      "childSelectors": [],
+      "parentSelectors": [
+        "platform-example-web-root"
+      ]
+    },
+    {
+      "className": "TaskListComponent",
+      "selector": "app-task-list",
+      "tsPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-list/task-list.component.ts",
+      "htmlPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-list/task-list.component.html",
+      "scssPath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-list/task-list.component.scss",
+      "storePath": "src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-list/task-list.store.ts",
+      "bemBlock": "task-list",
+      "textMarkers": [
+        "Status",
+        "Priority",
+        "Title",
+        "Due Date",
+        "Actions",
+        "Search tasks",
+        "Search by title or description...",
+        "Show only overdue tasks",
+        "Show tasks due within 3 days",
+        "Include deleted tasks",
+        "Refresh",
+        "Deleted",
+        "Subtasks progress",
+        "Overdue",
+        "Restore"
+      ],
+      "materialWidgets": [
+        "mat-error",
+        "mat-icon",
+        "mat-form-field",
+        "mat-label",
+        "mat-chip-listbox",
+        "mat-chip-option",
+        "mat-button-toggle-group",
+        "mat-button-toggle",
+        "mat-progress-bar",
+        "mat-paginator",
+        "mat-spinner",
+        "matInput",
+        "matSuffix",
+        "matTooltip"
+      ],
+      "childSelectors": [],
+      "parentSelectors": [
+        "platform-example-web-root"
+      ]
+    },
+    {
+      "className": "PlatformLoadingErrorIndicatorComponent",
+      "selector": "platform-loading-error-indicator",
+      "tsPath": "src/Frontend/libs/platform-core/src/lib/components/platform-loading-error-indicator/platform-loading-error-indicator.component.ts",
+      "htmlPath": "src/Frontend/libs/platform-core/src/lib/components/platform-loading-error-indicator/platform-loading-error-indicator.component.html",
+      "scssPath": "src/Frontend/libs/platform-core/src/lib/components/platform-loading-error-indicator/platform-loading-error-indicator.component.scss",
+      "storePath": null,
+      "bemBlock": "platform-loading-error-indicator",
+      "textMarkers": [],
+      "materialWidgets": [],
+      "childSelectors": [],
+      "parentSelectors": []
+    }
+  ]
+}

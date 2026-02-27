@@ -8,11 +8,12 @@
 
 | Feature      | P0  | P1  | P2  | P3  | Total |
 | ------------ | --- | --- | --- | --- | ----- |
-| Snippet CRUD | 0   | 4   | 2   | 1   | 7     |
-| Search       | 0   | 2   | 2   | 0   | 4     |
-| Categories   | 0   | 2   | 1   | 0   | 3     |
-| Tasks        | 0   | 3   | 1   | 0   | 4     |
-| **Total**    | 0   | 11  | 6   | 1   | 18    |
+| Snippet CRUD | 0   | 4   | 0   | 0   | 4     |
+| Search       | 0   | 1   | 1   | 0   | 2     |
+| Categories   | 0   | 2   | 0   | 0   | 2     |
+| Tasks        | 0   | 3   | 0   | 0   | 3     |
+| Edge Cases   | 0   | 0   | 2   | 0   | 2     |
+| **Total**    | 0   | 10  | 3   | 0   | **13**|
 
 ---
 

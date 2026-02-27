@@ -1,8 +1,7 @@
 ---
 name: cook-parallel
-description: "[Implementation] ⚡⚡⚡ Parallel implementation - multiple tasks simultaneously"
+description: '[Implementation] ⚡⚡⚡ Parallel implementation - multiple tasks simultaneously'
 argument-hint: [tasks]
-infer: true
 ---
 
 Execute these tasks in parallel for maximum efficiency:
@@ -17,13 +16,16 @@ Execute these tasks in parallel for maximum efficiency:
 ## Workflow
 
 ### 1. Task Decomposition
+
 - Analyze tasks for independence
 - Group into parallelizable work units
 - Identify dependencies between units
 - Create dependency graph
 
 ### 2. Parallel Research (if needed)
+
 Launch multiple `researcher` subagents simultaneously:
+
 ```
 Task A research ──┐
 Task B research ──┼──► Synthesis
@@ -31,12 +33,15 @@ Task C research ──┘
 ```
 
 ### 3. Parallel Planning
+
 - Use `planner` subagent with synthesized research
 - Create plan with parallel-safe phases
 - Mark file ownership boundaries (prevent conflicts)
 
 ### 4. Parallel Implementation
+
 Launch multiple `fullstack-developer` subagents:
+
 ```
 Phase 1 (Backend API) ──┐
 Phase 2 (Frontend UI) ──┼──► Integration
@@ -46,11 +51,13 @@ Phase 3 (Tests)       ──┘
 **Critical:** Each subagent must stay within file ownership boundaries.
 
 ### 5. Integration & Testing
+
 - Merge parallel outputs
 - Use `tester` subagent for integration tests
 - Use `debugger` if integration issues found
 
 ### 6. Review & Report
+
 - Use `code-reviewer` for final review
 - Consolidate all changes
 - Report to user

@@ -1,10 +1,8 @@
 ---
 name: team-refine
-version: 2.1.0
 description: "[Team] Transform ideas into Product Backlog Items using BA best practices, hypothesis validation, and domain research. Use when converting ideas to PBIs, validating problem hypotheses, adding acceptance criteria, or refining requirements. Triggers on "create pbi", "refine idea", "convert to pbi", "acceptance criteria", "make actionable", "validate hypothesis"."
 argument-hint: "<path-to-idea-file-or-IDEA-ID> [--research] [--skip-hypothesis]"
 allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite, WebSearch, AskUserQuestion
-infer: true
 ---
 
 # Idea Refinement to PBI
@@ -15,18 +13,19 @@ Transform captured ideas into actionable Product Backlog Items using BA best pra
 
 **Goal:** Transform captured ideas into actionable Product Backlog Items using BA best practices and hypothesis-driven development.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Idea Intake | Load artifact, detect module from frontmatter |
-| 2 | Domain Research | WebSearch market/competitors |
-| 3 | Problem Hypothesis | Validate problem actually exists |
-| 4 | Elicitation | Apply BABOK techniques to extract requirements |
-| 5 | Acceptance Criteria | Write min 3 BDD GIVEN/WHEN/THEN scenarios |
-| 6 | Prioritization | Apply RICE/MoSCoW scoring |
-| 7 | Validation | Interview user (MANDATORY) to confirm assumptions |
-| 8 | PBI Generation | Create PBI artifact file |
+| Step | Action              | Key Notes                                         |
+| ---- | ------------------- | ------------------------------------------------- |
+| 1    | Idea Intake         | Load artifact, detect module from frontmatter     |
+| 2    | Domain Research     | WebSearch market/competitors                      |
+| 3    | Problem Hypothesis  | Validate problem actually exists                  |
+| 4    | Elicitation         | Apply BABOK techniques to extract requirements    |
+| 5    | Acceptance Criteria | Write min 3 BDD GIVEN/WHEN/THEN scenarios         |
+| 6    | Prioritization      | Apply RICE/MoSCoW scoring                         |
+| 7    | Validation          | Interview user (MANDATORY) to confirm assumptions |
+| 8    | PBI Generation      | Create PBI artifact file                          |
 
 **Key Principles:**
+
 - MUST read shared framework files (team-frameworks.md, bdd-gherkin-templates.md) before starting
 - User validation interview is mandatory — never skip phase 7
 - Minimum 3 BDD acceptance criteria per PBI
@@ -91,13 +90,13 @@ Glob("docs/business-features/{module}/detailed-features/*.md")
 1. Read `docs/business-features/{module}/README.md` (overview + feature list, ~2K tokens)
 2. Identify closest matching feature based on idea keywords
 3. Read corresponding feature documentation:
-   - Full feature doc: `docs/business-features/{module}/detailed-features/*.md` (3-5K tokens)
-   - Or `.ai.md` companion: `docs/business-features/{module}/detailed-features/*.ai.md` (~1K tokens)
+    - Full feature doc: `docs/business-features/{module}/detailed-features/*.md` (3-5K tokens)
+    - Or `.ai.md` companion: `docs/business-features/{module}/detailed-features/*.ai.md` (~1K tokens)
 4. Extract context:
-   - **Business Rules:** BR-{MOD}-XXX format
-   - **Test Cases:** TC-{MOD}-XXX format with GIVEN/WHEN/THEN
-   - **Evidence patterns:** file:line format
-   - **Related entities and services**
+    - **Business Rules:** BR-{MOD}-XXX format
+    - **Test Cases:** TC-{MOD}-XXX format with GIVEN/WHEN/THEN
+    - **Evidence patterns:** file:line format
+    - **Related entities and services**
 
 #### Multi-Module Support
 
@@ -123,22 +122,22 @@ After loading feature context, investigate related entities in codebase.
 
 1. Read `.ai.md` companion file for detected feature:
 
-   ```text
-   Glob("docs/business-features/{module}/detailed-features/*.ai.md")
-   ```
+    ```text
+    Glob("docs/business-features/{module}/detailed-features/*.ai.md")
+    ```
 
 2. Extract from `## Domain Model` section:
-   - Entity names and base classes
-   - Key properties and types
-   - Navigation relationships
-   - Computed properties
+    - Entity names and base classes
+    - Key properties and types
+    - Navigation relationships
+    - Computed properties
 
 #### Codebase Correlation
 
 1. Use `## File Locations` section paths to verify entities exist
 2. Extract from `## Key Expressions` section:
-   - Static expression methods for queries
-   - Validation rules
+    - Static expression methods for queries
+    - Validation rules
 
 #### Cross-Service Dependencies
 
@@ -157,19 +156,24 @@ If `.ai.md` content differs from source code, flag for doc update but continue w
 ## Entity Investigation Results
 
 ### Primary Entities
+
 - `{EntityName}` - {Brief description} - [Source](path)
 
 ### Related Entities
+
 - `{RelatedEntity}` - via {Relationship}
 
 ### Key Expressions
+
 - `{ExpressionName}(params)` - {Purpose}
 
 ### Cross-Service Events
+
 - Produces: `{EventName}`
 - Consumes: `{EventName}` from {Service}
 
 ### Discrepancies (if any)
+
 - {Note outdated docs for follow-up}
 ```
 
@@ -195,12 +199,12 @@ If `.ai.md` content differs from source code, flag for doc update but continue w
 1. Extract key domain terms from idea
 2. Use WebSearch for context:
 
-   | Query Type        | Template                                   |
-   | ----------------- | ------------------------------------------ |
-   | Market trends     | `"{domain} market trends 2026"`            |
-   | Competitors       | `"{domain} software solutions comparison"` |
-   | Best practices    | `"{feature-type} best practices UX"`       |
-   | Similar solutions | `"how {competitor} handles {feature}"`     |
+    | Query Type        | Template                                   |
+    | ----------------- | ------------------------------------------ |
+    | Market trends     | `"{domain} market trends 2026"`            |
+    | Competitors       | `"{domain} software solutions comparison"` |
+    | Best practices    | `"{feature-type} best practices UX"`       |
+    | Similar solutions | `"how {competitor} handles {feature}"`     |
 
 3. Summarize findings (max 3 bullets)
 
@@ -208,6 +212,7 @@ If `.ai.md` content differs from source code, flag for doc update but continue w
 
 ```markdown
 ## Domain Research Summary
+
 - **Market context:** {1-sentence finding}
 - **Competitor landscape:** {key players, gaps identified}
 - **Best practices:** {relevant pattern to adopt}
@@ -244,9 +249,9 @@ If `.ai.md` content differs from source code, flag for doc update but continue w
 
 1. Draft hypothesis from idea content
 2. Use AskUserQuestion to validate:
-   - "Is this the core problem we're solving?"
-   - "Who exactly experiences this? How often?"
-   - "What evidence do we have this problem exists?"
+    - "Is this the core problem we're solving?"
+    - "Who exactly experiences this? How often?"
+    - "What evidence do we have this problem exists?"
 3. If validated, proceed to Phase 4
 4. If invalidated, return idea for clarification
 
@@ -357,13 +362,13 @@ Read `.claude/skills/shared/team-frameworks.md` for RICE, MoSCoW, and INVEST fra
 
 ### Effort Estimation
 
-| T-Shirt | Days  | When to Use                         |
-| ------- | ----- | ----------------------------------- |
-| XS      | 0.5-1 | Config change, simple fix           |
-| S       | 1-2   | Single component, clear scope       |
-| M       | 3-5   | Multiple components, some unknowns  |
-| L       | 5-10  | Cross-cutting, integration needed   |
-| XL      | 10+   | Epic - break down further           |
+| T-Shirt | Days  | When to Use                        |
+| ------- | ----- | ---------------------------------- |
+| XS      | 0.5-1 | Config change, simple fix          |
+| S       | 1-2   | Single component, clear scope      |
+| M       | 3-5   | Multiple components, some unknowns |
+| L       | 5-10  | Cross-cutting, integration needed  |
+| XL      | 10+   | Epic - break down further          |
 
 ---
 
@@ -373,14 +378,14 @@ After drafting PBI, validate with user.
 
 ### Question Categories
 
-| Category            | Example Question                                  |
-| ------------------- | ------------------------------------------------- |
-| **Assumptions**     | "We assume X is true. Correct?"                   |
-| **Scope**           | "Should Y be included or explicitly excluded?"    |
-| **Dependencies**    | "This requires Z. Is that available?"             |
-| **Edge Cases**      | "What happens when data is empty/null?"           |
-| **Business Impact** | "Will this affect existing reports/workflows?"    |
-| **Entities**        | "Create new entity or extend existing X?"         |
+| Category            | Example Question                               |
+| ------------------- | ---------------------------------------------- |
+| **Assumptions**     | "We assume X is true. Correct?"                |
+| **Scope**           | "Should Y be included or explicitly excluded?" |
+| **Dependencies**    | "This requires Z. Is that available?"          |
+| **Edge Cases**      | "What happens when data is empty/null?"        |
+| **Business Impact** | "Will this affect existing reports/workflows?" |
+| **Entities**        | "Create new entity or extend existing X?"      |
 
 ### Interview Process
 
@@ -397,12 +402,15 @@ After drafting PBI, validate with user.
 **Validated:** {date}
 
 ### Confirmed Decisions
+
 - {decision}: {user choice}
 
 ### Assumptions Confirmed
+
 - {assumption}: Confirmed/Modified
 
 ### Open Items
+
 - [ ] {follow-up items}
 ```
 
@@ -434,6 +442,7 @@ Include this section in the PBI output if domain-related:
 
 ```markdown
 ## Business Feature Context
+
 **Module:** {module}
 **Related Feature:** {feature_name}
 **Existing Business Rules:** {BR_IDs} (see docs/business-features/{module}/...)
@@ -457,16 +466,16 @@ After PBI creation:
 
 ## Anti-Patterns to Avoid
 
-| Anti-Pattern                   | Better Approach                           |
-| ------------------------------ | ----------------------------------------- |
-| Refining vague ideas           | Return to `/team-idea` for clarification  |
-| Skipping hypothesis validation | Always run Phase 3 for new features       |
-| Solution-first thinking        | Start with problem, not solution          |
-| Generic acceptance criteria    | Use GIVEN/WHEN/THEN with specifics        |
-| Ignoring domain context        | Load business docs if applicable          |
-| Too large PBI (XL+)            | Break into smaller items                  |
-| Missing "Out of Scope"         | Explicitly list exclusions                |
-| Assuming instead of asking     | Run validation interview                  |
+| Anti-Pattern                   | Better Approach                          |
+| ------------------------------ | ---------------------------------------- |
+| Refining vague ideas           | Return to `/team-idea` for clarification |
+| Skipping hypothesis validation | Always run Phase 3 for new features      |
+| Solution-first thinking        | Start with problem, not solution         |
+| Generic acceptance criteria    | Use GIVEN/WHEN/THEN with specifics       |
+| Ignoring domain context        | Load business docs if applicable         |
+| Too large PBI (XL+)            | Break into smaller items                 |
+| Missing "Out of Scope"         | Explicitly list exclusions               |
+| Assuming instead of asking     | Run validation interview                 |
 
 ---
 
@@ -496,18 +505,22 @@ For domain-related PBIs, include this checklist in the output:
 ## BR/TC Validation Checklist
 
 ### Existing Business Rules Referenced
+
 - [ ] BR-{MOD}-XXX: {Rule description} - Verified applicable
 - [ ] BR-{MOD}-YYY: {Rule description} - Verified applicable
 
 ### New Business Rules Introduced
+
 - [ ] BR-{MOD}-ZZZ: {New rule description} - Review needed
 
 ### Test Case Pattern Alignment
+
 - [ ] TC format follows TC-{MOD}-{FEATURE}-XXX pattern
 - [ ] All ACs use GIVEN/WHEN/THEN format
 - [ ] Evidence format specified (file:line)
 
 ### Conflict Check
+
 - [ ] No conflicts with existing BRs identified
 - [ ] Clarifications documented if needed
 ```
@@ -535,12 +548,12 @@ Creates with EasyPlatform context: `team-artifacts/pbis/260119-ba-pbi-goal-progr
 
 ## Related
 
-| Type               | Reference                                                  |
-| ------------------ | ---------------------------------------------------------- |
-| **Role Skill**     | `business-analyst`                                         |
-| **Input**          | `/team-idea` output                                        |
-| **Next Step**      | `/team-story`, `/team-test-spec`, `/team-design-spec`      |
-| **Prioritization** | `/team-prioritize`                                         |
+| Type               | Reference                                             |
+| ------------------ | ----------------------------------------------------- |
+| **Role Skill**     | `business-analyst`                                    |
+| **Input**          | `/team-idea` output                                   |
+| **Next Step**      | `/team-story`, `/team-test-spec`, `/team-design-spec` |
+| **Prioritization** | `/team-prioritize`                                    |
 
 ## Triggers
 

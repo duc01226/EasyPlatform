@@ -1,8 +1,6 @@
 ---
 name: tasks-code-review
-version: 1.0.0
-description: "[Testing] Autonomous subagent variant of code-review. Use when reviewing code changes, pull requests, or performing refactoring analysis with focus on patterns, security, and performance."
-infer: false
+description: '[Testing] Autonomous subagent variant of code-review. Use when reviewing code changes, pull requests, or performing refactoring analysis with focus on patterns, security, and performance.'
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
@@ -14,16 +12,17 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 
 **Goal:** Perform autonomous, comprehensive code reviews with structured checklists covering architecture, patterns, quality, security, and performance.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Understand context | Read changed files, identify scope and intent |
-| 2 | Architecture compliance | Clean Architecture layers, repository patterns, service boundaries |
-| 3 | Pattern adherence | CQRS, entity patterns, component hierarchy, platform base classes |
-| 4 | Code quality | SRP, DRY, naming, abstractions |
-| 5 | Security & performance | Authorization, injection, N+1, pagination, caching |
-| 6 | Generate report | Findings with severity, file references, suggested fixes |
+| Step | Action                  | Key Notes                                                          |
+| ---- | ----------------------- | ------------------------------------------------------------------ |
+| 1    | Understand context      | Read changed files, identify scope and intent                      |
+| 2    | Architecture compliance | Clean Architecture layers, repository patterns, service boundaries |
+| 3    | Pattern adherence       | CQRS, entity patterns, component hierarchy, platform base classes  |
+| 4    | Code quality            | SRP, DRY, naming, abstractions                                     |
+| 5    | Security & performance  | Authorization, injection, N+1, pagination, caching                 |
+| 6    | Generate report         | Findings with severity, file references, suggested fixes           |
 
 **Key Principles:**
+
 - Autonomous variant — for interactive reviews with user feedback, use `code-review` instead
 - Check all 5 review dimensions: architecture, patterns, quality, security, performance
 - Every finding must reference specific file and line
@@ -93,15 +92,19 @@ git log main...HEAD --oneline
 ## Files Changed
 
 ### Domain Layer
+
 - `Entity.cs` - New entity
 
 ### Application Layer
+
 - `SaveEntityCommand.cs` - New command
 
 ### Persistence Layer
+
 - `EntityConfiguration.cs` - EF configuration
 
 ### Frontend
+
 - `entity-list.component.ts` - List component
 ```
 
@@ -111,6 +114,7 @@ git log main...HEAD --oneline
 
 ```markdown
 ## Entity Review
+
 - [ ] Inherits from correct base (RootEntity/RootAuditedEntity)
 - [ ] Static expressions for queries
 - [ ] Computed properties have empty `set { }`
@@ -118,6 +122,7 @@ git log main...HEAD --oneline
 - [ ] `[TrackFieldUpdatedDomainEvent]` on tracked fields
 
 ## Command/Query Review
+
 - [ ] Command + Handler + Result in ONE file
 - [ ] Uses service-specific repository
 - [ ] Validation uses fluent API
@@ -125,12 +130,14 @@ git log main...HEAD --oneline
 - [ ] DTO mapping in DTO class, not handler
 
 ## Repository Usage Review
+
 - [ ] Uses `GetQueryBuilder` for reusable queries
 - [ ] Uses `WhereIf` for optional filters
 - [ ] Parallel tuple queries for count + data
 - [ ] Proper eager loading
 
 ## Event Handler Review
+
 - [ ] In `UseCaseEvents/` folder
 - [ ] Uses `PlatformCqrsEntityEventApplicationHandler<T>`
 - [ ] `HandleWhen` is `public override async Task<bool>`
@@ -141,6 +148,7 @@ git log main...HEAD --oneline
 
 ```markdown
 ## Component Review
+
 - [ ] Correct base class for use case
 - [ ] Store provided at component level
 - [ ] Loading/error states handled
@@ -148,18 +156,21 @@ git log main...HEAD --oneline
 - [ ] Track-by in `@for` loops
 
 ## Store Review
+
 - [ ] State interface defined
 - [ ] `vmConstructor` provides defaults
 - [ ] Effects use `observerLoadingErrorState`
 - [ ] Immutable state updates
 
 ## Form Review
+
 - [ ] `validateForm()` before submit
 - [ ] Async validators conditional
 - [ ] Dependent validations configured
 - [ ] Error messages for all rules
 
 ## API Service Review
+
 - [ ] Extends `PlatformApiService`
 - [ ] Typed responses
 - [ ] Caching where appropriate
@@ -171,16 +182,19 @@ git log main...HEAD --oneline
 ## Security Checklist
 
 ### Authorization
+
 - [ ] `[PlatformAuthorize]` on controllers
 - [ ] Role checks in handlers
 - [ ] Data filtered by company/user context
 
 ### Input Validation
+
 - [ ] All inputs validated
 - [ ] No raw SQL strings
 - [ ] File upload validation
 
 ### Sensitive Data
+
 - [ ] No secrets in code
 - [ ] Passwords hashed
 - [ ] PII handled correctly
@@ -192,16 +206,19 @@ git log main...HEAD --oneline
 ## Performance Checklist
 
 ### Database
+
 - [ ] Indexes on filtered columns
 - [ ] Eager loading for N+1 prevention
 - [ ] Paging for large datasets
 
 ### API
+
 - [ ] Response size reasonable
 - [ ] Parallel operations used
 - [ ] Caching for static data
 
 ### Frontend
+
 - [ ] Lazy loading for routes
 - [ ] Track-by for lists
 - [ ] OnPush change detection
@@ -213,25 +230,31 @@ git log main...HEAD --oneline
 # Code Review Report
 
 ## Summary
+
 - **PR/Changes**: [Description]
 - **Reviewer**: AI
 - **Date**: [Date]
 
 ## Overall Assessment
+
 [APPROVED | APPROVED WITH COMMENTS | CHANGES REQUESTED]
 
 ## Issues Found
 
 ### Critical (Must Fix)
+
 1. **[File:Line]**: [Description]
 
 ### Major (Should Fix)
+
 1. **[File:Line]**: [Description]
 
 ### Minor (Consider Fixing)
+
 1. **[File:Line]**: [Description]
 
 ## Recommendations
+
 1. [Recommendation 1]
 2. [Recommendation 2]
 ```
@@ -253,5 +276,6 @@ git log main...HEAD --oneline
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements

@@ -1,7 +1,6 @@
 ---
 name: easyplatform-backend
-description: "[Implementation] Complete Easy.Platform backend development for EasyPlatform. Covers CQRS commands/queries, entities, validation, migrations, background jobs, and message bus. Use for any .NET backend task in this monorepo."
-infer: true
+description: '[Implementation] Complete Easy.Platform backend development for EasyPlatform. Covers CQRS commands/queries, entities, validation, migrations, background jobs, and message bus. Use for any .NET backend task in this monorepo.'
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
@@ -15,17 +14,18 @@ Complete backend development patterns for EasyPlatform .NET 9 microservices. All
 
 **Coverage:** 7 major patterns, 850+ lines of inline examples, anti-patterns catalog, complete fluent API reference.
 
-| Pattern | File Location | Key Classes |
-|---------|---------------|-------------|
-| CQRS Commands | `UseCaseCommands/{Feature}/` | `PlatformCqrsCommand`, `PlatformCqrsCommandApplicationHandler` |
-| CQRS Queries | `UseCaseQueries/{Feature}/` | `PlatformCqrsPagedQuery`, `GetQueryBuilder` |
-| Entities | `{Service}.Domain/Entities/` | `RootEntity`, `RootAuditedEntity`, static expressions |
-| Event Handlers | `UseCaseEvents/{Feature}/` | `PlatformCqrsEntityEventApplicationHandler` |
-| Migrations | `DataMigrations/`, `Migrations/` | `PlatformDataMigrationExecutor`, `PlatformMongoMigrationExecutor` |
-| Background Jobs | `BackgroundJobs/` | `PlatformApplicationPagedBackgroundJobExecutor` |
-| Message Bus | `MessageBusProducers/`, `MessageBusConsumers/` | `PlatformApplicationMessageBusConsumer` |
+| Pattern         | File Location                                  | Key Classes                                                       |
+| --------------- | ---------------------------------------------- | ----------------------------------------------------------------- |
+| CQRS Commands   | `UseCaseCommands/{Feature}/`                   | `PlatformCqrsCommand`, `PlatformCqrsCommandApplicationHandler`    |
+| CQRS Queries    | `UseCaseQueries/{Feature}/`                    | `PlatformCqrsPagedQuery`, `GetQueryBuilder`                       |
+| Entities        | `{Service}.Domain/Entities/`                   | `RootEntity`, `RootAuditedEntity`, static expressions             |
+| Event Handlers  | `UseCaseEvents/{Feature}/`                     | `PlatformCqrsEntityEventApplicationHandler`                       |
+| Migrations      | `DataMigrations/`, `Migrations/`               | `PlatformDataMigrationExecutor`, `PlatformMongoMigrationExecutor` |
+| Background Jobs | `BackgroundJobs/`                              | `PlatformApplicationPagedBackgroundJobExecutor`                   |
+| Message Bus     | `MessageBusProducers/`, `MessageBusConsumers/` | `PlatformApplicationMessageBusConsumer`                           |
 
 **Critical Rules:**
+
 1. **Validation:** `PlatformValidationResult` fluent API (`.And()`, `.AndAsync()`) — NEVER throw exceptions
 2. **Side Effects:** Entity Event Handlers in `UseCaseEvents/` — NEVER in command handlers
 3. **Cross-Service:** Message bus only — NEVER direct database access
@@ -320,16 +320,16 @@ var (total, items, statusCounts) = await (
 
 ## Query Patterns Summary
 
-| Pattern | Usage | Example |
-|---------|-------|---------|
-| `GetQueryBuilder` | Reusable query | `repository.GetQueryBuilder((uow, q) => ...)` |
-| `WhereIf` | Conditional filter | `.WhereIf(ids.Any(), e => ids.Contains(e.Id))` |
-| `PipeIf` | Conditional transform | `.PipeIf(text != null, q => searchService.Search(...))` |
-| `PageBy` | Pagination | `.PageBy(skip, take)` |
-| Tuple await | Parallel queries | `var (count, items) = await (q1, q2)` |
-| Eager load | Load relations | `GetByIdAsync(id, ct, e => e.Related)` |
-| `.EnsureFound()` | Validate exists | `await repo.GetByIdAsync(id).EnsureFound()` |
-| `.ThenValidateFoundAllAsync()` | Validate all IDs | `repo.GetByIdsAsync(ids).ThenValidateFoundAllAsync(ids, ...)` |
+| Pattern                        | Usage                 | Example                                                       |
+| ------------------------------ | --------------------- | ------------------------------------------------------------- |
+| `GetQueryBuilder`              | Reusable query        | `repository.GetQueryBuilder((uow, q) => ...)`                 |
+| `WhereIf`                      | Conditional filter    | `.WhereIf(ids.Any(), e => ids.Contains(e.Id))`                |
+| `PipeIf`                       | Conditional transform | `.PipeIf(text != null, q => searchService.Search(...))`       |
+| `PageBy`                       | Pagination            | `.PageBy(skip, take)`                                         |
+| Tuple await                    | Parallel queries      | `var (count, items) = await (q1, q2)`                         |
+| Eager load                     | Load relations        | `GetByIdAsync(id, ct, e => e.Related)`                        |
+| `.EnsureFound()`               | Validate exists       | `await repo.GetByIdAsync(id).EnsureFound()`                   |
+| `.ThenValidateFoundAllAsync()` | Validate all IDs      | `repo.GetByIdsAsync(ids).ThenValidateFoundAllAsync(ids, ...)` |
 
 ---
 
@@ -481,12 +481,12 @@ public sealed class Entity : RootEntity<Entity, string>
 
 ## Expression Composition
 
-| Pattern | Usage | Example |
-|---------|-------|---------|
-| `AndAlso` | Combine with AND | `expr1.AndAlso(expr2)` |
-| `OrElse` | Combine with OR | `expr1.OrElse(expr2)` |
-| `AndAlsoIf` | Conditional AND | `.AndAlsoIf(condition, () => expr)` |
-| `OrElseIf` | Conditional OR | `.OrElseIf(condition, () => expr)` |
+| Pattern     | Usage            | Example                             |
+| ----------- | ---------------- | ----------------------------------- |
+| `AndAlso`   | Combine with AND | `expr1.AndAlso(expr2)`              |
+| `OrElse`    | Combine with OR  | `expr1.OrElse(expr2)`               |
+| `AndAlsoIf` | Conditional AND  | `.AndAlsoIf(condition, () => expr)` |
+| `OrElseIf`  | Conditional OR   | `.OrElseIf(condition, () => expr)`  |
 
 ```csharp
 // Composing multiple expressions
@@ -672,13 +672,13 @@ public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @eve
 
 ## Accessing Event Data
 
-| Property | Description |
-|----------|-------------|
-| `@event.EntityData` | The entity that triggered the event |
-| `@event.CrudAction` | Created, Updated, or Deleted |
-| `@event.RequestContext` | Request context with user/company info |
-| `@event.RequestContext.UserId()` | User who triggered the change |
-| `@event.RequestContext.CurrentCompanyId()` | Company context |
+| Property                                   | Description                            |
+| ------------------------------------------ | -------------------------------------- |
+| `@event.EntityData`                        | The entity that triggered the event    |
+| `@event.CrudAction`                        | Created, Updated, or Deleted           |
+| `@event.RequestContext`                    | Request context with user/company info |
+| `@event.RequestContext.UserId()`           | User who triggered the change          |
+| `@event.RequestContext.CurrentCompanyId()` | Company context                        |
 
 ---
 
@@ -1024,12 +1024,12 @@ await UnitOfWorkManager.ExecuteInjectScopedScrollingPagingAsync(...);
 
 ## Key Migration Options
 
-| Option | Purpose | When to Use |
-|--------|---------|-------------|
-| `OnlyForDbsCreatedBeforeDate` | Target specific DBs | Migrating existing data only |
-| `AllowRunInBackgroundThread` | Non-blocking | Large migrations that can run async |
-| `dismissSendEvent: true` | Skip entity events | Data migrations (avoid event storms) |
-| `checkDiff: false` | Skip change detection | Bulk updates (performance) |
+| Option                        | Purpose               | When to Use                          |
+| ----------------------------- | --------------------- | ------------------------------------ |
+| `OnlyForDbsCreatedBeforeDate` | Target specific DBs   | Migrating existing data only         |
+| `AllowRunInBackgroundThread`  | Non-blocking          | Large migrations that can run async  |
+| `dismissSendEvent: true`      | Skip entity events    | Data migrations (avoid event storms) |
+| `checkDiff: false`            | Skip change detection | Bulk updates (performance)           |
 
 ---
 
@@ -1178,14 +1178,14 @@ public sealed class MasterSchedulerJob : PlatformApplicationBackgroundJobExecuto
 
 ## Cron Schedule Reference
 
-| Schedule | Cron Expression | Description |
-|----------|-----------------|-------------|
-| Every 5 min | `*/5 * * * *` | Every 5 minutes |
-| Hourly | `0 * * * *` | Top of every hour |
-| Daily midnight | `0 0 * * *` | 00:00 daily |
-| Daily 3 AM | `0 3 * * *` | 03:00 daily |
-| Weekly Sunday | `0 0 * * 0` | Midnight Sunday |
-| Monthly 1st | `0 0 1 * *` | Midnight, 1st day |
+| Schedule       | Cron Expression | Description       |
+| -------------- | --------------- | ----------------- |
+| Every 5 min    | `*/5 * * * *`   | Every 5 minutes   |
+| Hourly         | `0 * * * *`     | Top of every hour |
+| Daily midnight | `0 0 * * *`     | 00:00 daily       |
+| Daily 3 AM     | `0 3 * * *`     | 03:00 daily       |
+| Weekly Sunday  | `0 0 * * 0`     | Midnight Sunday   |
+| Monthly 1st    | `0 0 1 * *`     | Midnight, 1st day |
 
 ---
 
@@ -1326,10 +1326,10 @@ internal sealed class UpsertOrDeleteEmployeeOnEmployeeEntityEventBusConsumer
 
 ## Message Naming Convention
 
-| Type | Producer Role | Pattern | Example |
-|------|---------------|---------|---------|
-| Event | Leader | `<ServiceName><Feature><Action>EventBusMessage` | `CandidateJobBoardApiSyncCompletedEventBusMessage` |
-| Request | Follower | `<ConsumerServiceName><Feature>RequestBusMessage` | `JobCreateNonexistentJobsRequestBusMessage` |
+| Type    | Producer Role | Pattern                                           | Example                                            |
+| ------- | ------------- | ------------------------------------------------- | -------------------------------------------------- |
+| Event   | Leader        | `<ServiceName><Feature><Action>EventBusMessage`   | `CandidateJobBoardApiSyncCompletedEventBusMessage` |
+| Request | Follower      | `<ConsumerServiceName><Feature>RequestBusMessage` | `JobCreateNonexistentJobsRequestBusMessage`        |
 
 **Consumer Naming:** Consumer class name = Message class name + `Consumer` suffix
 
@@ -1361,23 +1361,23 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 
 # Anti-Patterns Catalog
 
-| Don't | Do | Pattern |
-|-------|-----|---------|
-| `throw new ValidationException()` | `PlatformValidationResult` fluent API | Commands |
-| Side effects in command handler | Entity Event Handler in `UseCaseEvents/` | Side Effects |
-| Direct cross-service DB access | Message bus | Cross-Service |
-| DTO mapping in handler | `PlatformEntityDto.MapToEntity()` | DTOs |
-| Separate Command/Handler files | ONE file: Command + Result + Handler | CQRS |
-| `protected bool HandleWhen()` | `public override async Task<bool> HandleWhen()` | Events |
-| Two generic parameters in event handler | Single generic: `<Entity>` | Events |
-| Computed property without `set { }` | Add empty setter | Entities |
-| Missing `[JsonIgnore]` on navigation | Add `[JsonIgnore]` | Entities |
-| No dependency waiting in consumer | `TryWaitUntilAsync` | Message Bus |
-| No race condition handling | Check `LastMessageSyncDate` | Message Bus |
-| Only check `Deleted` action | Also check soft delete flag | Message Bus |
-| Use `PlatformMongoMigrationExecutor` with DI | Use `PlatformDataMigrationExecutor<MongoDbContext>` | Migrations |
-| Unbounded parallelism | `maxConcurrent: 5` | Jobs |
-| Wrong pagination for changing data | Use scrolling pattern | Jobs |
+| Don't                                        | Do                                                  | Pattern       |
+| -------------------------------------------- | --------------------------------------------------- | ------------- |
+| `throw new ValidationException()`            | `PlatformValidationResult` fluent API               | Commands      |
+| Side effects in command handler              | Entity Event Handler in `UseCaseEvents/`            | Side Effects  |
+| Direct cross-service DB access               | Message bus                                         | Cross-Service |
+| DTO mapping in handler                       | `PlatformEntityDto.MapToEntity()`                   | DTOs          |
+| Separate Command/Handler files               | ONE file: Command + Result + Handler                | CQRS          |
+| `protected bool HandleWhen()`                | `public override async Task<bool> HandleWhen()`     | Events        |
+| Two generic parameters in event handler      | Single generic: `<Entity>`                          | Events        |
+| Computed property without `set { }`          | Add empty setter                                    | Entities      |
+| Missing `[JsonIgnore]` on navigation         | Add `[JsonIgnore]`                                  | Entities      |
+| No dependency waiting in consumer            | `TryWaitUntilAsync`                                 | Message Bus   |
+| No race condition handling                   | Check `LastMessageSyncDate`                         | Message Bus   |
+| Only check `Deleted` action                  | Also check soft delete flag                         | Message Bus   |
+| Use `PlatformMongoMigrationExecutor` with DI | Use `PlatformDataMigrationExecutor<MongoDbContext>` | Migrations    |
+| Unbounded parallelism                        | `maxConcurrent: 5`                                  | Jobs          |
+| Wrong pagination for changing data           | Use scrolling pattern                               | Jobs          |
 
 ---
 

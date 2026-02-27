@@ -1,8 +1,7 @@
 ---
 name: plan-ci
-description: "[Planning] Analyze Github Actions logs and provide a plan to fix the issues"
+description: '[Planning] Analyze Github Actions logs and provide a plan to fix the issues'
 argument-hint: [github-actions-url]
-infer: true
 ---
 
 Activate `plan` skill.
@@ -11,24 +10,26 @@ Activate `plan` skill.
 > **Planning is collaborative:** Validate plan, ask user to confirm, surface decision questions with recommendations.
 
 ## Github Actions URL
- $ARGUMENTS
+
+$ARGUMENTS
 
 Use the `planner` subagent to read the github actions logs, analyze and find the root causes of the issues, then provide a detailed plan for implementing the fixes.
 
 **Plan File Specification:**
+
 - Every `plan.md` MUST start with YAML frontmatter:
-  ```yaml
-  ---
-  title: "{Brief title}"
-  description: "{One sentence for card preview}"
-  status: pending
-  priority: P1
-  effort: {estimated fix time}
-  branch: {current git branch}
-  tags: [ci, bugfix]
-  created: {YYYY-MM-DD}
-  ---
-  ```
+    ```yaml
+    ---
+    title: '{Brief title}'
+    description: '{One sentence for card preview}'
+    status: pending
+    priority: P1
+    effort: { estimated fix time }
+    branch: { current git branch }
+    tags: [ci, bugfix]
+    created: { YYYY-MM-DD }
+    ---
+    ```
 
 **Output:**
 Provide at least 2 implementation approaches with clear trade-offs, and explain the pros and cons of each approach, and provide a recommended approach.
@@ -41,6 +42,9 @@ Provide at least 2 implementation approaches with clear trade-offs, and explain 
 - **ALWAYS confirm:** Ask user to review and approve the plan using `AskUserQuestion` with a recommendation
 - **ALWAYS surface decisions:** Use `AskUserQuestion` with recommended options for key architectural/design decisions
 - **Planning = Collaboration:** The plan is shaped by user input — never treat it as a unilateral output
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end
+- Always plan and break work into many small todo tasks using `TaskCreate`
+- Always add a final review todo task to verify work quality
+- MANDATORY FINAL TASKS: After creating all planning todo tasks, ALWAYS add these two final tasks:
+  1. Task: "Run /plan-validate" — interview user with critical questions, validate assumptions and decisions
+  2. Task: "Run /plan-review" — auto-review plan for validity, correctness, and best practices
 - Sacrifice grammar for concision. List unresolved questions at the end

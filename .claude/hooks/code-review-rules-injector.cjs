@@ -94,7 +94,7 @@ async function main() {
 
     const rules = fs.readFileSync(fullPath, 'utf-8');
 
-    // Output as system-reminder format (consistent with pattern-injector.cjs)
+    // Output as system-reminder format
     const injection = `## Project Code Review Rules (Auto-Injected)
 
 **Source:** \`${rulesPath}\`

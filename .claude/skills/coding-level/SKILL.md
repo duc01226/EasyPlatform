@@ -1,8 +1,7 @@
 ---
 name: coding-level
-description: "[Utilities] Set coding experience level for tailored explanations"
+description: '[Utilities] Set coding experience level for tailored explanations'
 argument-hint: [0-5]
-infer: true
 ---
 
 Set your coding experience level for tailored explanations and output format.
@@ -31,6 +30,7 @@ Set your coding experience level for tailored explanations and output format.
 ## Example
 
 Set level 1 in `.claude/.ck.json`:
+
 ```json
 {
   "codingLevel": 1,
@@ -39,6 +39,7 @@ Set level 1 in `.claude/.ck.json`:
 ```
 
 Next session, Claude will automatically:
+
 - Explain concepts and techniques clearly
 - Always explain WHY, not just HOW
 - Point out common mistakes
@@ -47,6 +48,7 @@ Next session, Claude will automatically:
 ## Optional: Manual Output Styles
 
 For finer control, you can also use `/output-style` with these styles:
+
 - `coding-level-0-eli5`
 - `coding-level-1-junior`
 - `coding-level-2-mid`

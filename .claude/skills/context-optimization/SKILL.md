@@ -2,7 +2,6 @@
 name: context-optimization
 description: "[Tooling & Meta] Use when managing context window usage, compressing long sessions, or optimizing token usage. Triggers on keywords like "context", "memory", "tokens", "compress", "summarize session", "context limit", "optimize context"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, TodoWrite, mcp__memory__*
-infer: true
 ---
 
 # Context Optimization & Management
@@ -15,14 +14,15 @@ For persistent memory operations, see the `memory-management` skill.
 
 **Goal:** Manage context window usage efficiently to maintain productivity in long sessions.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Writing | Save critical findings to persistent memory |
-| 2 | Selecting | Load relevant memories at session start |
-| 3 | Compressing | Create context anchors every 10 operations |
-| 4 | Isolating | Delegate specialized tasks to sub-agents |
+| Step | Action      | Key Notes                                   |
+| ---- | ----------- | ------------------------------------------- |
+| 1    | Writing     | Save critical findings to persistent memory |
+| 2    | Selecting   | Load relevant memories at session start     |
+| 3    | Compressing | Create context anchors every 10 operations  |
+| 4    | Isolating   | Delegate specialized tasks to sub-agents    |
 
 **Key Principles:**
+
 - Use `offset`/`limit` or grep before reading large files -- never read entire files unnecessarily
 - Combine search patterns with OR (`\|`) instead of sequential searches
 - Thresholds: 50K consider compression, 100K required, 150K critical
@@ -34,6 +34,7 @@ For persistent memory operations, see the `memory-management` skill.
 ### 1. Writing (Save Important Context)
 
 Save critical findings to persistent memory via `memory-management` skill:
+
 - Discovered architectural patterns
 - Important business rules, cross-service dependencies
 - Solution decisions
@@ -41,6 +42,7 @@ Save critical findings to persistent memory via `memory-management` skill:
 ### 2. Selecting (Retrieve Relevant Context)
 
 Load relevant memories at session start:
+
 ```javascript
 mcp__memory__search_nodes({ query: 'relevant keywords' });
 mcp__memory__open_nodes({ names: ['EntityName'] });
@@ -49,6 +51,7 @@ mcp__memory__open_nodes({ names: ['EntityName'] });
 ### 3. Compressing (Summarize Long Trajectories)
 
 Create context anchors every 10 operations:
+
 ```markdown
 === CONTEXT ANCHOR [N] ===
 Task: [Original task]
@@ -69,6 +72,7 @@ Delegate specialized tasks: broad exploration, independent research, parallel in
 ## Token-Efficient Patterns
 
 ### File Reading
+
 ```javascript
 // BAD: Reading entire files
 Read({ file_path: 'large-file.cs' });
@@ -81,15 +85,18 @@ Grep({ pattern: 'class SaveEmployeeCommand', path: 'src/' });
 ```
 
 ### Search Optimization
+
 ```javascript
 // BAD: Multiple sequential searches
-Grep({ pattern: 'CreateAsync' }); Grep({ pattern: 'UpdateAsync' });
+Grep({ pattern: 'CreateAsync' });
+Grep({ pattern: 'UpdateAsync' });
 
 // GOOD: Combined pattern
 Grep({ pattern: 'CreateAsync|UpdateAsync|DeleteAsync', output_mode: 'files_with_matches' });
 ```
 
 ### Parallel Operations
+
 ```javascript
 // GOOD: Parallel reads for independent files
 [Read({ file_path: 'file1.cs' }), Read({ file_path: 'file2.cs' })];
@@ -113,7 +120,6 @@ Grep({ pattern: 'CreateAsync|UpdateAsync|DeleteAsync', output_mode: 'files_with_
 **Token Estimation:** 1 line ~ 10-15 tokens | 1 page ~ 500 tokens | Avg file ~ 1-3K tokens
 
 **Thresholds:** 50K: consider compression | 100K: required | 150K: critical - save & summarize
-
 
 ## IMPORTANT Task Planning Notes
 

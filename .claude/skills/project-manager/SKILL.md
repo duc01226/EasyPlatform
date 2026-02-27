@@ -1,7 +1,6 @@
 ---
 name: project-manager
 description: "[Team Roles] Assist Project Managers with status reports, dependency tracking, risk management, and team sync facilitation. Provides templates for sprint status, risk registers, dependency matrices, and meeting agendas. Triggers on keywords like "status report", "sprint status", "dependency", "risk", "team sync", "meeting agenda", "blockers", "project status", "sprint progress"."
-infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite, WebSearch
 ---
 
@@ -24,8 +23,8 @@ Role: project coordination, progress tracking, dependency management, risk asses
 
 ## Task Routing
 
-| Task               | Skill        | Command         |
-| ------------------ | ------------ | --------------- |
+| Task               | Skill             | Command              |
+| ------------------ | ----------------- | -------------------- |
 | Status report      | team-status       | `/team-status`       |
 | Track dependencies | team-dependency   | `/team-dependency`   |
 | Team sync agenda   | team-team-sync    | `/team-team-sync`    |
@@ -58,7 +57,6 @@ Role: project coordination, progress tracking, dependency management, risk asses
 - [ ] Dependencies mapped (upstream and downstream)
 - [ ] Action items have owners and due dates
 - [ ] Status uses traffic light indicators
-
 
 ## IMPORTANT Task Planning Notes
 

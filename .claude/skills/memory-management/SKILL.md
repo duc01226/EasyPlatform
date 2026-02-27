@@ -2,7 +2,6 @@
 name: memory-management
 description: "[Tooling & Meta] Use when saving or retrieving important patterns, decisions, and learnings across sessions. Triggers on keywords like "remember", "save pattern", "recall", "memory", "persist", "knowledge base", "learnings"."
 allowed-tools: Read, Write, Edit, mcp__memory__*
-infer: true
 ---
 
 # Memory Management & Knowledge Persistence
@@ -15,14 +14,15 @@ This is the **SSOT** for MCP memory operations. Other skills should reference th
 
 **Goal:** Build and maintain a persistent knowledge graph of patterns, decisions, bugs, and session context using MCP memory.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Session start | Search + load relevant entities from memory |
-| 2 | During work | Save discoveries as Pattern, Decision, BugFix entities |
-| 3 | Session end | Create SessionSummary with progress snapshot |
-| 4 | Maintenance | Consolidate, cleanup (>30 days), prune (<20% confidence) |
+| Step | Action        | Key Notes                                                |
+| ---- | ------------- | -------------------------------------------------------- |
+| 1    | Session start | Search + load relevant entities from memory              |
+| 2    | During work   | Save discoveries as Pattern, Decision, BugFix entities   |
+| 3    | Session end   | Create SessionSummary with progress snapshot             |
+| 4    | Maintenance   | Consolidate, cleanup (>30 days), prune (<20% confidence) |
 
 **Key Principles:**
+
 - This skill is the SSOT for MCP memory operations -- other skills reference this
 - Always save: undocumented patterns, complex bug solutions, architectural decisions, anti-patterns
 - Importance scoring: 10 (critical bugs/security) down to 1-3 (temporary notes)
@@ -64,6 +64,7 @@ For detailed examples and templates, see [references/memory-operations.md](refer
 ## When to Save
 
 ### Always Save
+
 1. Discovered patterns not in documentation
 2. Complex bug solutions
 3. Service boundary ownership
@@ -71,6 +72,7 @@ For detailed examples and templates, see [references/memory-operations.md](refer
 5. Anti-patterns encountered
 
 ### Save at Session End
+
 Create `SessionSummary` entity with: Task, Completed, Remaining, Key Files, Discoveries, Next Steps.
 
 ---
@@ -78,16 +80,19 @@ Create `SessionSummary` entity with: Task, Completed, Remaining, Key Files, Disc
 ## Session Workflow
 
 ### Session Start
+
 1. Search for related context: `search_nodes({ query: 'task keywords' })`
 2. Load relevant entities: `open_nodes({ names: [...] })`
 3. Check incomplete sessions: `search_nodes({ query: 'SessionSummary Remaining' })`
 
 ### During Work
+
 - Save discoveries as `Pattern` entities
 - Save architectural choices as `Decision` entities
 - Save bugs as `BugFix` entities
 
 ### Session End
+
 - Create `SessionSummary` with progress snapshot
 - Update existing entities with new observations
 
@@ -112,7 +117,6 @@ Create `SessionSummary` entity with: Task, Completed, Remaining, Key Files, Disc
 - **Pruning**: Remove outdated patterns no longer relevant
 
 See [references/memory-operations.md](references/memory-operations.md) for operation details and templates.
-
 
 ## IMPORTANT Task Planning Notes
 

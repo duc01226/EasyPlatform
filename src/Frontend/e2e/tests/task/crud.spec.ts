@@ -33,7 +33,7 @@ test.describe('@P0 @P1 @Task - CRUD Operations', () => {
         }
     });
 
-    test('@P0 TS-TASK-P0-002 - Create new task with required fields', async ({ page }) => {
+    test('TC-TSK-CRT-001: Create new task with required fields @P1', async ({ page }) => {
         /**
          * @scenario Create new task with required fields
          * @given the user is on the Tasks tab
@@ -189,6 +189,10 @@ test.describe('@P0 @P1 @Task - CRUD Operations', () => {
         await taskDetailPage.saveTask();
 
         await taskListPage.waitForLoading();
+
+        // Verify the status field now shows "In Progress"
+        const formValues = await taskDetailPage.getFormValues();
+        expect(formValues.status).toBe('In Progress');
     });
 
     test('@P1 TS-TASK-P1-005 - Change task priority', async ({ page }) => {
@@ -218,6 +222,10 @@ test.describe('@P0 @P1 @Task - CRUD Operations', () => {
         await taskDetailPage.saveTask();
 
         await taskListPage.waitForLoading();
+
+        // Verify the priority field now shows "Critical"
+        const formValues = await taskDetailPage.getFormValues();
+        expect(formValues.priority).toBe('Critical');
     });
 
     test('@P2 TS-TASK-P2-001 - Cancel task creation', async ({ page }) => {
@@ -231,7 +239,6 @@ test.describe('@P0 @P1 @Task - CRUD Operations', () => {
         await taskListPage.createNewTask();
 
         const testTask = createTestTask();
-        currentTestTasks.push(testTask.title);
         await taskDetailPage.titleField.fill(testTask.title);
 
         // Cancel

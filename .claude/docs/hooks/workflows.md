@@ -21,14 +21,14 @@ User prompt → Keyword analysis → Intent classification → Workflow activati
 
 ### Intent Types
 
-| Intent            | Trigger Keywords                                    | Workflow Sequence                                                                                 |
-| ----------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| **Feature**       | implement, add, create, build, develop, new feature | /plan → /plan-review → /cook → /code-simplifier → /review → /test → /docs/update → /watzup        |
-| **Bug Fix**       | bug, fix, error, broken, issue, crash, not working  | /scout → /investigate → /debug → /plan → /plan-review → /fix → /code-simplifier → /review → /test |
-| **Documentation** | docs, document, readme, update docs                 | /scout → /investigate → /docs-update → /watzup                                                    |
-| **Refactoring**   | refactor, restructure, clean up, improve code       | /plan → /plan-review → /code → /code-simplifier → /review → /test                                 |
-| **Code Review**   | review, check, audit code, PR review                | /code-review → /watzup                                                                            |
-| **Investigation** | how does, where is, explain, understand, find       | /scout → /investigate                                                                             |
+| Intent            | Trigger Keywords                                    | Workflow Sequence                                                                                                                          |
+| ----------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| **Feature**       | implement, add, create, build, develop, new feature | /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /changelog → /test → /docs-update → /watzup |
+| **Bug Fix**       | bug, fix, error, broken, issue, crash, not working  | /scout → /investigate → /debug → /plan → /plan-review → /plan-validate → /why-review → /fix → /code-simplifier → /review-changes → /code-review → /changelog → /test → /watzup |
+| **Documentation** | docs, document, readme, update docs                 | /scout → /investigate → /plan → /plan-review → /plan-validate → /docs-update → /review-changes → /review-post-task → /watzup              |
+| **Refactoring**   | refactor, restructure, clean up, improve code       | /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /code → /code-simplifier → /review-changes → /code-review → /changelog → /test → /watzup |
+| **Code Review**   | review, check, audit code, PR review                | /code-review → /watzup                                                                                                                    |
+| **Investigation** | how does, where is, explain, understand, find       | /scout → /investigate                                                                                                                     |
 
 ## Workflow State
 
@@ -44,9 +44,10 @@ Stored in `.claude/.workflow-state.json`:
     { "skill": "/plan-review", "status": "completed" },
     { "skill": "/cook", "status": "in_progress" },
     { "skill": "/code-simplifier", "status": "pending" },
-    { "skill": "/review-codebase", "status": "pending" },
+    { "skill": "/review-changes", "status": "pending" },
+    { "skill": "/code-review", "status": "pending" },
     { "skill": "/test", "status": "pending" },
-    { "skill": "/docs/update", "status": "pending" },
+    { "skill": "/docs-update", "status": "pending" },
     { "skill": "/watzup", "status": "pending" }
   ],
   "started_at": "2026-01-13T09:00:00Z"
@@ -63,7 +64,7 @@ When workflow is detected:
 **Workflow:** Feature Implementation
 **Progress:** Step 3/8
 **Current Step:** `/cook`
-**Remaining:** /cook → /code-simplifier → /review-codebase → /test → /docs/update → /watzup
+**Remaining:** /cook → /code-simplifier → /review-changes → /code-review → /test → /docs-update → /watzup
 
 ### Instructions (MUST FOLLOW)
 

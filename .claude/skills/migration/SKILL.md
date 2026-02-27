@@ -1,8 +1,7 @@
 ---
 name: migration
-description: "[Implementation] ⚡⚡ Create or run database migrations"
+description: '[Implementation] ⚡⚡ Create or run database migrations'
 argument-hint: [add <name> | update | list | rollback | migration-description]
-infer: true
 ---
 
 # Migration: $ARGUMENTS
@@ -13,15 +12,16 @@ Create or run database migrations following EasyPlatform patterns.
 
 **Goal:** Create idempotent data or schema migrations following EasyPlatform conventions (EF Core, PlatformDataMigration, MongoDB).
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Analyze requirements | Identify migration type: EF Core schema, data, or MongoDB |
-| 2 | Design migration | Plan rollback, paging for large datasets, performance |
-| 3 | Generate migration | Follow `YYYYMMDDHHMMSS_Name` naming convention |
-| 4 | Verify | Idempotent, paged, proper error handling, `OnlyForDbsCreatedBeforeDate` set |
-| 5 | Wait for approval | Present design before creating files |
+| Step | Action               | Key Notes                                                                   |
+| ---- | -------------------- | --------------------------------------------------------------------------- |
+| 1    | Analyze requirements | Identify migration type: EF Core schema, data, or MongoDB                   |
+| 2    | Design migration     | Plan rollback, paging for large datasets, performance                       |
+| 3    | Generate migration   | Follow `YYYYMMDDHHMMSS_Name` naming convention                              |
+| 4    | Verify               | Idempotent, paged, proper error handling, `OnlyForDbsCreatedBeforeDate` set |
+| 5    | Wait for approval    | Present design before creating files                                        |
 
 **Key Principles:**
+
 - Use paging (200-500 page size) for large datasets with `dismissSendEvent: true`
 - Migrations must be idempotent (safe to run multiple times)
 - Never create files without explicit user approval
@@ -29,6 +29,7 @@ Create or run database migrations following EasyPlatform patterns.
 ## Quick Commands (db-migrate)
 
 Parse `$ARGUMENTS` for quick operations:
+
 - `add <name>` → Create new EF Core migration
 - `update` → Apply pending migrations
 - `list` → List all migrations and status
@@ -36,12 +37,14 @@ Parse `$ARGUMENTS` for quick operations:
 - No argument or description → Create new migration (proceed to Phase 1)
 
 **Database providers:**
+
 - SQL Server: `PlatformExampleApp.TextSnippet.Persistence`
 - PostgreSQL: `PlatformExampleApp.TextSnippet.Persistence.PostgreSql`
 - MongoDB: Uses `PlatformMongoMigrationExecutor` (code-based, runs on startup)
-  - Location: `*.Persistence.Mongo/Migrations/`
+    - Location: `*.Persistence.Mongo/Migrations/`
 
 **EF Core quick commands:**
+
 ```bash
 # Add migration
 cd src/Backend/PlatformExampleApp.TextSnippet.Persistence

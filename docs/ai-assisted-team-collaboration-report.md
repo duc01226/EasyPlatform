@@ -295,11 +295,11 @@ Ongoing: Normal workflow                Rework reduced: ~30%
 
 | Workflow | Trigger | Sequence | Purpose |
 |----------|---------|----------|---------|
-| **Feature** | "implement", "add feature" | plan → plan-review → cook → code-simplifier → code-review → test → docs-update → watzup | Full feature development |
-| **Bug Fix** | "fix bug", "error", "crash" | scout → investigate → debug → plan → plan-review → fix → code-simplifier → code-review → test | Systematic debugging |
-| **Idea-to-PBI** | "new idea", "feature request" | idea → refine → story → prioritize | PO/BA workflow |
-| **PBI-to-Tests** | "create tests for", "test this PBI" | test-spec → test-cases → quality-gate | QA workflow |
-| **Design** | "design spec", "mockup" | design-spec → code-review | UX workflow |
+| **Feature** | "implement", "add feature" | scout → investigate → plan → plan-review → plan-validate → why-review → cook → code-simplifier → review-changes → code-review → changelog → test → docs-update → watzup | Full feature development |
+| **Bug Fix** | "fix bug", "error", "crash" | scout → investigate → debug → plan → plan-review → plan-validate → why-review → fix → code-simplifier → review-changes → code-review → changelog → test → watzup | Systematic debugging |
+| **Idea-to-PBI** | "new idea", "feature request" | idea → refine → story → prioritize → watzup | PO/BA workflow |
+| **PBI-to-Tests** | "create tests for", "test this PBI" | test-spec → test-cases → quality-gate → watzup | QA workflow |
+| **Design** | "design spec", "mockup" | design-spec → review-changes → code-review → watzup | UX workflow |
 | **PM Reporting** | "status report", "sprint status" | status → dependency | Management visibility |
 | **Sprint Planning** | "sprint planning" | prioritize → dependency → team-sync | Planning ceremony |
 | **Release Prep** | "prepare release" | quality-gate → status | Release readiness |
@@ -576,7 +576,7 @@ System detects "BUG" keyword and triggers bugfix workflow:
 
 ```
 Detected: Bug Fix
-Following workflow: /scout → /investigate → /debug → /plan → /plan-review → /fix → /code-simplifier → /code-review → /test
+Following workflow: /scout → /investigate → /debug → /plan → /plan-review → /plan-validate → /why-review → /fix → /code-simplifier → /review-changes → /code-review → /changelog → /test → /watzup
 ```
 
 #### Step 3: Investigation (Developer)
@@ -806,10 +806,10 @@ The system automatically detects intent from natural language:
 
 | You Say | System Detects | Workflow Triggered |
 |---------|---------------|-------------------|
-| "Fix the login bug" | Bug Fix | scout → investigate → debug → plan → plan-review → fix → code-simplifier → code-review → test |
-| "Add dark mode feature" | Feature | plan → cook → code-simplifier → code-review → test |
-| "New idea for notifications" | Idea-to-PBI | idea → refine → story → prioritize |
-| "Create tests for this PBI" | PBI-to-Tests | test-spec → test-cases → quality-gate |
+| "Fix the login bug" | Bug Fix | scout → investigate → debug → plan → plan-review → plan-validate → why-review → fix → code-simplifier → review-changes → code-review → changelog → test → watzup |
+| "Add dark mode feature" | Feature | scout → investigate → plan → plan-review → plan-validate → why-review → cook → code-simplifier → review-changes → code-review → changelog → test → docs-update → watzup |
+| "New idea for notifications" | Idea-to-PBI | idea → refine → story → prioritize → watzup |
+| "Create tests for this PBI" | PBI-to-Tests | test-spec → test-cases → quality-gate → watzup |
 | "Sprint status update" | PM Reporting | status → dependency |
 | "Prepare for release" | Release Prep | quality-gate → status |
 
@@ -941,7 +941,7 @@ team-artifacts/
 │  ├── workflows.json (30+ flows)    ├── workflow-router.cjs               │
 │  └── settings.local.json           ├── todo-enforcement.cjs              │
 │                                    ├── role-context-injector.cjs         │
-│                                    └── ace-* (learning system)           │
+│                                    └── pattern-learner.cjs (learning)    │
 │                                                                          │
 │  AGENTS (22 Total)                 SKILLS (90+ Total)                    │
 │  ├── product-owner                 ├── /team-idea, /team-prioritize                │
@@ -968,20 +968,19 @@ team-artifacts/
 
 | Hook Type | Purpose | Examples |
 |-----------|---------|----------|
-| **SessionStart** | Initialize context | session-init, ace-session-inject |
-| **UserPromptSubmit** | Route to workflows | workflow-router, dev-rules-reminder |
-| **PreToolUse** | Validate actions | todo-enforcement, context-injection |
-| **PostToolUse** | Process results | workflow-step, ace-event-emitter |
-| **PreCompact** | Save state | ace-reflector, memory-save |
+| **SessionStart** | Initialize context | session-init |
+| **UserPromptSubmit** | Route to workflows | workflow-router, pattern-learner, lessons-injector |
+| **PreToolUse** | Validate actions | todo-enforcement, lessons-injector, context-injection |
+| **PostToolUse** | Process results | workflow-step |
+| **PreCompact** | Save state | memory-save |
 
-### ACE Learning System
+### Learning System
 
-The system learns from usage patterns:
+The system learns from explicit user teaching via `/learn` skill:
 
-1. **Event Capture** - Records skill executions and outcomes
-2. **Pattern Extraction** - Identifies successful patterns
-3. **Playbook Curation** - Maintains library of best practices
-4. **Session Injection** - Applies learned patterns to new sessions
+1. **Explicit Capture** — `/learn <instruction>` or "remember this" triggers `pattern-learner.cjs`
+2. **Lesson Storage** — Appends to `docs/lessons.md` with date prefix
+3. **Session Injection** — `lessons-injector.cjs` injects lessons into every prompt and before file edits
 
 ---
 

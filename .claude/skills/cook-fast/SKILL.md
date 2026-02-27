@@ -1,8 +1,7 @@
 ---
 name: cook-fast
-description: "[Implementation] ⚡ Fast implementation - skip research, minimal planning"
+description: '[Implementation] ⚡ Fast implementation - skip research, minimal planning'
 argument-hint: [tasks]
-infer: true
 ---
 
 Start working on these tasks immediately with minimal planning:
@@ -17,23 +16,23 @@ Start working on these tasks immediately with minimal planning:
 ## Workflow
 
 1. **Quick Planning** (skip research phase)
-   - Analyze task requirements directly
-   - Create minimal todo list with `TodoWrite`
-   - NO researcher subagents, NO scout commands
+    - Analyze task requirements directly
+    - Create minimal todo list with `TodoWrite`
+    - NO researcher subagents, NO scout commands
 
 2. **Rapid Implementation**
-   - Use `/code` directly on tasks
-   - Skip multi-step planning documents
-   - Focus on working code over documentation
+    - Use `/code` directly on tasks
+    - Skip multi-step planning documents
+    - Focus on working code over documentation
 
 3. **Quick Validation**
-   - Run type-check and compile
-   - Manual spot-check over full test suite
-   - Skip code-reviewer subagent
+    - Run type-check and compile
+    - Manual spot-check over full test suite
+    - Skip code-reviewer subagent
 
 4. **Commit** (optional)
-   - Ask user if ready to commit via `AskUserQuestion`
-   - If yes, use `/commit`
+    - Ask user if ready to commit via `AskUserQuestion`
+    - If yes, use `/commit`
 
 ## When to Use
 

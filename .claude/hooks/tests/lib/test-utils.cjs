@@ -114,20 +114,6 @@ function setupCheckpoint(tmpDir, data) {
 }
 
 /**
- * Setup mock ACE lessons file
- * @param {string} tmpDir - Temp directory path
- * @param {Array} lessons - Array of lesson objects
- * @returns {string} Path to the lessons file
- */
-function setupAceLessons(tmpDir, lessons) {
-  const aceDir = path.join(tmpDir, '.claude', 'ace');
-  fs.mkdirSync(aceDir, { recursive: true });
-  const lessonsFile = path.join(aceDir, 'lessons.json');
-  fs.writeFileSync(lessonsFile, JSON.stringify(lessons, null, 2));
-  return lessonsFile;
-}
-
-/**
  * Setup mock patterns file
  * @param {string} tmpDir - Temp directory path
  * @param {Array} patterns - Array of pattern objects
@@ -314,113 +300,6 @@ function createTimestamp(hoursAgo = 0) {
   return date.toISOString();
 }
 
-// ============================================================================
-// ACE System Test Helpers
-// ============================================================================
-
-/**
- * Setup mock delta candidates file for ACE testing
- * @param {string} tmpDir - Temp directory path
- * @param {Array} candidates - Array of candidate objects
- * @returns {string} Path to the candidates file
- */
-function setupDeltaCandidates(tmpDir, candidates) {
-  const memoryDir = path.join(tmpDir, '.claude', 'memory');
-  fs.mkdirSync(memoryDir, { recursive: true });
-  const candidatesFile = path.join(memoryDir, 'delta-candidates.json');
-  fs.writeFileSync(candidatesFile, JSON.stringify(candidates, null, 2));
-  return candidatesFile;
-}
-
-/**
- * Setup mock deltas file for ACE testing
- * @param {string} tmpDir - Temp directory path
- * @param {Array} deltas - Array of delta objects
- * @returns {string} Path to the deltas file
- */
-function setupDeltas(tmpDir, deltas) {
-  const memoryDir = path.join(tmpDir, '.claude', 'memory');
-  fs.mkdirSync(memoryDir, { recursive: true });
-  const deltasFile = path.join(memoryDir, 'deltas.json');
-  fs.writeFileSync(deltasFile, JSON.stringify(deltas, null, 2));
-  return deltasFile;
-}
-
-/**
- * Read deltas from temp directory
- * @param {string} tmpDir - Temp directory path
- * @returns {Array|null} Parsed deltas or null
- */
-function readDeltas(tmpDir) {
-  const deltasFile = path.join(tmpDir, '.claude', 'memory', 'deltas.json');
-  if (fs.existsSync(deltasFile)) {
-    return JSON.parse(fs.readFileSync(deltasFile, 'utf8'));
-  }
-  return null;
-}
-
-/**
- * Read delta candidates from temp directory
- * @param {string} tmpDir - Temp directory path
- * @returns {Array|null} Parsed candidates or null
- */
-function readDeltaCandidates(tmpDir) {
-  const candidatesFile = path.join(tmpDir, '.claude', 'memory', 'delta-candidates.json');
-  if (fs.existsSync(candidatesFile)) {
-    return JSON.parse(fs.readFileSync(candidatesFile, 'utf8'));
-  }
-  return null;
-}
-
-/**
- * Setup mock events stream for ACE testing
- * @param {string} tmpDir - Temp directory path
- * @param {Array} events - Array of event objects
- * @returns {string} Path to the events stream file
- */
-function setupEventsStream(tmpDir, events) {
-  const memoryDir = path.join(tmpDir, '.claude', 'memory');
-  fs.mkdirSync(memoryDir, { recursive: true });
-  const eventsFile = path.join(memoryDir, 'events-stream.jsonl');
-  const content = events.map(e => JSON.stringify(e)).join('\n');
-  fs.writeFileSync(eventsFile, content + (events.length > 0 ? '\n' : ''));
-  return eventsFile;
-}
-
-/**
- * Read events stream from temp directory
- * @param {string} tmpDir - Temp directory path
- * @returns {Array} Parsed events or empty array
- */
-function readEventsStream(tmpDir) {
-  const eventsFile = path.join(tmpDir, '.claude', 'memory', 'events-stream.jsonl');
-  if (fs.existsSync(eventsFile)) {
-    const content = fs.readFileSync(eventsFile, 'utf8').trim();
-    if (!content) return [];
-    return content.split('\n').filter(Boolean).map(line => JSON.parse(line));
-  }
-  return [];
-}
-
-/**
- * Setup mock injection tracking file
- * @param {string} tmpDir - Temp directory path
- * @param {string} sessionId - Session ID
- * @param {Array} deltaIds - Array of delta IDs
- * @returns {string} Path to the tracking file
- */
-function setupInjectionTracking(tmpDir, sessionId, deltaIds) {
-  const memoryDir = path.join(tmpDir, '.claude', 'memory');
-  fs.mkdirSync(memoryDir, { recursive: true });
-  const trackingFile = path.join(memoryDir, `injection-${sessionId}.json`);
-  fs.writeFileSync(trackingFile, JSON.stringify({
-    sessionId,
-    deltaIds,
-    timestamp: new Date().toISOString()
-  }, null, 2));
-  return trackingFile;
-}
-
 /**
  * Generate unique test session ID for isolation
  * @returns {string} Unique session ID
@@ -564,7 +443,6 @@ module.exports = {
   setupTodoState,
   setupEditState,
   setupCheckpoint,
-  setupAceLessons,
   setupPatterns,
   setupCkIgnore,
   createMockFile,
@@ -577,14 +455,6 @@ module.exports = {
   getHooksDir,
   getTestsDir,
   createTimestamp,
-  // ACE System helpers
-  setupDeltaCandidates,
-  setupDeltas,
-  readDeltas,
-  readDeltaCandidates,
-  setupEventsStream,
-  readEventsStream,
-  setupInjectionTracking,
   setupWorkflowState,
   cleanupWorkflowState,
   generateTestSessionId,

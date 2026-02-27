@@ -338,11 +338,11 @@ Brainstorm → Plan → Cook → Test → Review → Ship
 
 | Workflow | Command Sequence |
 |----------|------------------|
-| **Feature** | `/plan` → `/cook` → `/test` → `/git-cp` |
-| **Bug Fix** | `/debug` → `/fix-hard` → `/test` |
-| **Refactor** | `/plan` → `/cook` → `/review` → `/test` |
-| **Documentation** | `/doc` → `/review` |
-| **Full Delivery** | `/brainstorm` → `/plan` → `/cook` → `/test` → `/ship` |
+| **Feature** | `/scout` → `/plan` → `/cook` → `/review-changes` → `/code-review` → `/test` → `/docs-update` → `/watzup` |
+| **Bug Fix** | `/scout` → `/investigate` → `/debug` → `/plan` → `/fix` → `/review-changes` → `/code-review` → `/test` → `/watzup` |
+| **Refactor** | `/scout` → `/plan` → `/code` → `/review-changes` → `/code-review` → `/test` → `/watzup` |
+| **Documentation** | `/scout` → `/plan` → `/docs-update` → `/review-changes` → `/watzup` |
+| **Full Delivery** | `/brainstorm` → `/plan` → `/cook` → `/review-changes` → `/test` → `/watzup` |
 
 ---
 

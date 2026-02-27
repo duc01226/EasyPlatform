@@ -20,6 +20,7 @@ Generate comprehensive feature documentation following the **GOLD STANDARD** tem
 
 | Step | Action | Key Notes |
 |------|--------|-----------|
+| 0 | Change Detection | Auto-detect affected modules from git diff (when no argument) |
 | 1 | Feature Analysis | Build knowledge model in `.ai/workspace/analysis/` |
 | 2 | Code Discovery | Entities, commands, queries, events, components |
 | 3 | Documentation | Write all 26 sections with code evidence |
@@ -67,7 +68,48 @@ All feature documentation MUST follow this section order:
 
 ---
 
+## Phase 0: Change Detection (Auto-Mode)
+
+**Trigger:** When invoked without a specific feature name argument (e.g., bare `/feature-docs`).
+
+> If a feature name IS provided, skip Phase 0 entirely and proceed to Phase 1.
+
+### Steps
+
+1. **Detect changes** — Run both commands, merge and deduplicate into a single file list:
+   - `git diff --name-only` (unstaged changes)
+   - `git diff --cached --name-only` (staged changes)
+
+2. **Map files to modules** — For each changed file, extract the module:
+   - `src/Backend/PlatformExampleApp.{Module}.*/**` → `{Module}` (e.g., `TextSnippet`)
+   - `src/Frontend/apps/playground-text-snippet/**` → `TextSnippet`
+   - `src/Frontend/libs/**` → skip (shared libraries, not module-specific)
+   - `src/Platform/**` → skip (framework, not feature docs)
+   - `docs/**`, `.claude/**`, `plans/**` → skip (non-source paths)
+   - Other paths → skip
+
+3. **Find existing feature docs** — For each identified module:
+   - Search `docs/business-features/{Module}/detailed-features/README.*.md`
+   - If docs exist → proceed to Phase 1 scoped to that module
+   - If no docs exist → report "No feature docs found for {Module}, skipping" and skip
+
+4. **Scope Phase 1-3** — Instead of full codebase scan:
+   - Focus discovery on the changed files and their related entities/commands/components
+   - Update only sections affected by the changes (incremental update)
+   - Preserve unchanged sections as-is — do not regenerate them
+
+### Skip Conditions
+
+Skip auto-mode entirely (report "No documentation updates needed") if:
+- No changed files detected (clean working tree)
+- All changes are in non-source paths (docs, config, tests, plans only)
+- No modules could be identified from changed file paths
+
+---
+
 ## Phase 1: Feature Analysis
+
+> **Auto-Mode:** If Phase 0 identified specific modules, scope all discovery to those modules only. Update existing docs incrementally — do not regenerate unchanged sections.
 
 Build knowledge model in `.ai/workspace/analysis/[feature-name].md`.
 

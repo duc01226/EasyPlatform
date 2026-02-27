@@ -1,7 +1,6 @@
 ---
 name: compact
-description: "[Tooling & Meta] Compress conversation context to optimize tokens"
-infer: true
+description: '[Tooling & Meta] Compress conversation context to optimize tokens'
 ---
 
 # Compact Context

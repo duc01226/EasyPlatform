@@ -25,14 +25,13 @@ test.describe('@P0 @P1 @TextSnippet - CRUD Operations', () => {
         await appPage.goToTextSnippets();
     });
 
-    test.afterEach(async ({ request }) => {
-        const apiHelper = new ApiHelpers(request);
+    test.afterEach(async () => {
         for (const snippetText of currentTestSnippets) {
             await apiHelper.cleanupTestData(snippetText);
         }
     });
 
-    test('@P0 TS-SNIPPET-P0-002 - Create new text snippet', async ({ page }) => {
+    test('TC-SNP-CRT-001: Create new text snippet @P1', async ({ page }) => {
         /**
          * @scenario Create new text snippet
          * @given the user is on the Text Snippets tab
@@ -56,7 +55,7 @@ test.describe('@P0 @P1 @TextSnippet - CRUD Operations', () => {
         expect(await snippetPage.verifySnippetInList(testSnippet.snippetText)).toBeTruthy();
     });
 
-    test('@P1 TS-SNIPPET-P1-002 - Update existing text snippet', async ({ page }) => {
+    test('TC-SNP-UPD-001: Update existing text snippet @P1', async ({ page }) => {
         /**
          * @scenario Update existing text snippet
          * @given a text snippet exists in the list
@@ -84,8 +83,10 @@ test.describe('@P0 @P1 @TextSnippet - CRUD Operations', () => {
         const updatedFullText = 'Updated content ' + Date.now();
         await snippetPage.updateSnippet({ fullText: updatedFullText });
 
-        // Verify update was successful (form returns to expected state)
+        // Verify update was successful by re-reading the field value from the UI
         await snippetPage.waitForLoading();
+        const currentFullText = await snippetPage.getFullTextValue();
+        expect(currentFullText).toBe(updatedFullText);
     });
 
     test('@P1 TS-SNIPPET-P1-003 - Reset form clears fields', async ({ page }) => {

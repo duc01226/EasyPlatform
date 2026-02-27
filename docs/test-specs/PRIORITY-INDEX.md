@@ -6,7 +6,12 @@
 
 ## P0 - Critical (Security & Data Integrity)
 
-No P0 tests defined yet for example app. In production, these would include:
+### Smoke Tests (E2E)
+
+- `app-load.spec.ts` — Application loads, tabs accessible, basic rendering
+- Task list loads correctly
+
+### Production P0 (not yet implemented for example app)
 
 - Authentication/Authorization tests
 - Data isolation between tenants
@@ -56,10 +61,10 @@ No P0 tests defined yet for example app. In production, these would include:
 
 | Module | P0 | P1 | P2 | P3 | Total |
 |--------|----|----|----|----|-------|
-| TextSnippet | 0 | 7 | 3 | 0 | 10 |
+| TextSnippet | 0 | 5 | 3 | 0 | 8 |
 | Tasks | 0 | 3 | 0 | 0 | 3 |
 | Categories | 0 | 2 | 0 | 0 | 2 |
-| **Total** | 0 | 12 | 3 | 0 | 15 |
+| **Total** | 0 | **10** | **3** | 0 | **13** |
 
 ---
 

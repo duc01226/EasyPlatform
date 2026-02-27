@@ -2,7 +2,6 @@
 name: api-design
 description: "[Implementation] Use when designing or modifying REST API endpoints, controller structure, route patterns, request/response DTOs. Triggers on keywords like "API endpoint", "REST", "controller", "route", "HTTP", "request body", "response"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
-infer: true
 ---
 
 # REST API Design
@@ -13,15 +12,16 @@ Expert API design agent for EasyPlatform following platform patterns and REST be
 
 **Goal:** Design REST API endpoints following EasyPlatform controller patterns with proper routing, DTOs, authorization, and CQRS integration.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Define routes | RESTful naming: GET list, GET by ID, POST save, DELETE |
-| 2 | Create DTOs | Request/response DTOs with validation; DTO owns mapping |
-| 3 | Wire CQRS | Controller delegates to `Cqrs.SendAsync(command/query)` |
-| 4 | Add authorization | `[PlatformAuthorize]` at controller + role-level per action |
-| 5 | Document | OpenAPI attributes, response types |
+| Step | Action            | Key Notes                                                   |
+| ---- | ----------------- | ----------------------------------------------------------- |
+| 1    | Define routes     | RESTful naming: GET list, GET by ID, POST save, DELETE      |
+| 2    | Create DTOs       | Request/response DTOs with validation; DTO owns mapping     |
+| 3    | Wire CQRS         | Controller delegates to `Cqrs.SendAsync(command/query)`     |
+| 4    | Add authorization | `[PlatformAuthorize]` at controller + role-level per action |
+| 5    | Document          | OpenAPI attributes, response types                          |
 
 **Key Principles:**
+
 - Controllers are thin — delegate all logic to CQRS commands/queries
 - Use `PlatformBaseController` as base class with `Cqrs` property
 - POST for create/update (not PUT); custom actions as `POST {id}/action`

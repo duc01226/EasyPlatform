@@ -1,8 +1,6 @@
 ---
 name: tasks-spec-update
-version: 1.0.0
-description: "[Testing] Use when updating specifications, comparing branches, or ensuring documentation reflects current implementation."
-infer: false
+description: '[Testing] Use when updating specifications, comparing branches, or ensuring documentation reflects current implementation.'
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
@@ -12,14 +10,15 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 
 **Goal:** Sync specification documents with current implementation by discovering changes, analyzing gaps, and updating specs.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Change discovery | Git diff between branches or pattern-based file search |
-| 2 | Gap analysis | Create comparison table: Specified vs Implemented vs Gap |
-| 3 | Specification update | Update entity props, commands, validation, side effects, API endpoints |
-| 4 | Verification | Cross-reference all commands/queries in code vs specs |
+| Step | Action               | Key Notes                                                              |
+| ---- | -------------------- | ---------------------------------------------------------------------- |
+| 1    | Change discovery     | Git diff between branches or pattern-based file search                 |
+| 2    | Gap analysis         | Create comparison table: Specified vs Implemented vs Gap               |
+| 3    | Specification update | Update entity props, commands, validation, side effects, API endpoints |
+| 4    | Verification         | Cross-reference all commands/queries in code vs specs                  |
 
 **Key Principles:**
+
 - Always cross-reference specs with actual code (grep both `.md` and `.cs` files)
 - Document both new implementations missing from specs and spec items not yet implemented
 - Update version numbers and change logs after spec updates
@@ -80,9 +79,11 @@ grep -r "SaveEmployee" --include="*.cs"  # In code
 | Event: OnEmployeeCreated | No        | Yes         | Not in spec            |
 
 ## New Implementations (Not in Spec)
+
 1. `BulkUpdateEmployeeCommand` - Added in PR #123
 
 ## Spec Items Not Implemented
+
 1. `EmployeeArchiveCommand` - Deferred to Phase 2
 ```
 
@@ -130,5 +131,6 @@ grep -r "Command" docs/specifications/*.md
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements

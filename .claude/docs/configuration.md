@@ -14,8 +14,7 @@
 | `.workflow-state.json`         | Workflow execution state (runtime)             | No            |
 | `.edit-state.json`             | Edit count tracking (runtime)                  | No            |
 | `metadata.json`                | Kit installation tracking (auto-generated)     | No            |
-| `memory/deltas.json`           | ACE approved playbook deltas                   | No            |
-| `memory/delta-candidates.json` | ACE pending candidates                         | No            |
+| `../docs/lessons.md`           | Append-only lesson log (moved to docs/)        | Yes           |
 
 ## settings.json
 
@@ -334,15 +333,15 @@ Define workflow automation with intent detection.
 
 ### Built-in Workflows
 
-| Workflow        | Priority | Sequence                                                            |
-| --------------- | -------- | ------------------------------------------------------------------- |
-| `feature`       | 10       | plan → cook → simplify → review → test → docs → watzup              |
-| `bugfix`        | 20       | scout → investigate → debug → plan → fix → simplify → review → test |
-| `refactor`      | 25       | plan → code → simplify → review → test                              |
-| `documentation` | 30       | scout → investigate → docs-update → watzup                          |
-| `review`        | 35       | code-review → watzup                                                |
-| `testing`       | 40       | test                                                                |
-| `investigation` | 50       | scout → investigate                                                 |
+| Workflow        | Priority | Sequence                                                                                                              |
+| --------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
+| `feature`       | 10       | scout → investigate → plan → plan-review → plan-validate → why-review → cook → code-simplifier → review-changes → code-review → changelog → test → docs-update → watzup |
+| `bugfix`        | 20       | scout → investigate → debug → plan → plan-review → plan-validate → why-review → fix → code-simplifier → review-changes → code-review → changelog → test → watzup |
+| `refactor`      | 25       | scout → investigate → plan → plan-review → plan-validate → why-review → code → code-simplifier → review-changes → code-review → changelog → test → watzup |
+| `documentation` | 30       | scout → investigate → plan → plan-review → plan-validate → docs-update → review-changes → review-post-task → watzup   |
+| `review`        | 35       | code-review → watzup                                                                                                  |
+| `testing`       | 40       | test                                                                                                                   |
+| `investigation` | 50       | scout → investigate                                                                                                    |
 
 ---
 
@@ -398,46 +397,11 @@ Track file edits for context-aware hooks.
 
 ---
 
-## Memory Files
+## Learning System
 
-ACE system data storage. See [ACE Documentation](hooks/ace/README.md).
+Lessons are stored in `docs/lessons.md` as an append-only log, managed by `pattern-learner.cjs` and injected by `lessons-injector.cjs`.
 
-### memory/deltas.json
-
-Approved playbook modifications.
-
-```json
-{
-  "deltas": [
-    {
-      "id": "delta-001",
-      "playbook_id": "pb-123",
-      "delta_type": "refinement",
-      "content": "Updated pattern for...",
-      "confidence": 0.85,
-      "approved_at": "2026-01-13T10:00:00.000Z"
-    }
-  ]
-}
-```
-
-### memory/delta-candidates.json
-
-Pending candidates awaiting approval.
-
-```json
-{
-  "candidates": [
-    {
-      "id": "cand-001",
-      "source_event": "Skill:cook",
-      "suggested_delta": "...",
-      "votes": { "helpful": 2, "unhelpful": 0 },
-      "created_at": "2026-01-13T10:00:00.000Z"
-    }
-  ]
-}
-```
+See [Pattern Learning](hooks/patterns/README.md) for details.
 
 ---
 
@@ -505,5 +469,5 @@ Add project-specific workflows by extending `workflows.json`:
 
 ---
 
-*See also: [Hooks System](hooks/README.md) | [ACE System](hooks/ace/README.md)*
+*See also: [Hooks System](hooks/README.md) | [Pattern Learning](hooks/patterns/README.md)*
 

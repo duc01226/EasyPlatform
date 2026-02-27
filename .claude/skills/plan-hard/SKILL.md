@@ -1,8 +1,7 @@
 ---
 name: plan-hard
-description: "[Planning] ⚡⚡⚡ Research, analyze, and create an implementation plan. Use --parallel for parallel-executable phases"
+description: '[Planning] ⚡⚡⚡ Research, analyze, and create an implementation plan. Use --parallel for parallel-executable phases'
 argument-hint: [task]
-infer: true
 ---
 
 Think harder.
@@ -12,15 +11,16 @@ Activate `plan` skill.
 
 **Goal:** Research, analyze codebase, and create a detailed phased implementation plan with parallel researcher subagents.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Check active plan | Reuse existing or create new using naming convention |
-| 2 | Research | Max 2 parallel researcher agents, 5 tool calls each, reports <=150 lines |
-| 3 | Analyze codebase | Read codebase-summary.md, code-standards.md, system-architecture.md |
-| 4 | Create plan | Planner subagent generates plan.md + phase-XX files |
-| 5 | User review | Ask user to approve; offer optional validation interview |
+| Step | Action            | Key Notes                                                                |
+| ---- | ----------------- | ------------------------------------------------------------------------ |
+| 1    | Check active plan | Reuse existing or create new using naming convention                     |
+| 2    | Research          | Max 2 parallel researcher agents, 5 tool calls each, reports <=150 lines |
+| 3    | Analyze codebase  | Read codebase-summary.md, code-standards.md, system-architecture.md      |
+| 4    | Create plan       | Planner subagent generates plan.md + phase-XX files                      |
+| 5    | User review       | Ask user to approve; offer optional validation interview                 |
 
 **Key Principles:**
+
 - Do NOT use `EnterPlanMode` tool -- it blocks Write/Edit/Task tools
 - Do NOT start implementing -- plan only, wait for user approval
 - Use `--parallel` flag for phases with no file overlap that can run concurrently
@@ -98,18 +98,18 @@ After plan creation, offer validation interview to confirm decisions before impl
 
 - Every `plan.md` MUST start with YAML frontmatter:
 
-  ```yaml
-  ---
-  title: "{Brief title}"
-  description: "{One sentence for card preview}"
-  status: pending
-  priority: P2
-  effort: {sum of phases, e.g., 4h}
-  branch: {current git branch}
-  tags: [relevant, tags]
-  created: {YYYY-MM-DD}
-  ---
-  ```
+    ```yaml
+    ---
+    title: '{Brief title}'
+    description: '{One sentence for card preview}'
+    status: pending
+    priority: P2
+    effort: { sum of phases, e.g., 4h }
+    branch: { current git branch }
+    tags: [relevant, tags]
+    created: { YYYY-MM-DD }
+    ---
+    ```
 
 - Save the overview access point at `{plan-dir}/plan.md`. Keep it generic, under 80 lines, and list each implementation phase with status and progress plus links to phase files.
 - For each phase, create `{plan-dir}/phase-XX-phase-name-here.md` containing the following sections in order: Context links (reference parent plan, dependencies, docs), Overview (date, description, priority, implementation status, review status), Key Insights, Requirements, Architecture, **Trade-offs & Alternatives** (What alternative approaches were considered? What are the failure modes? Under what changed requirements would you choose differently?), Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps.
@@ -126,17 +126,20 @@ When `$ARGUMENTS` contains `--parallel`, apply these additional requirements:
 4. **Include dependency matrix** - Document which phases run sequentially vs in parallel
 
 **Parallelization Strategy:**
+
 - Group frontend/backend/database into separate phases
 - Separate infrastructure setup from application logic
 - Isolate different feature domains
 - Create independent test phases per module
 
 **Additional plan.md requirements when --parallel:**
+
 - Dependency graph showing which phases can run in parallel
 - Execution strategy (e.g., "Phases 1-3 parallel, then Phase 4")
 - File ownership matrix (which phase owns which files)
 
 **Additional phase file requirements when --parallel:**
+
 - Parallelization Info section (which phases can run concurrently)
 - File Ownership section (explicit list of files this phase owns/modifies)
 - Conflict Prevention section (how this phase avoids conflicts with parallel phases)
@@ -149,6 +152,9 @@ When `$ARGUMENTS` contains `--parallel`, apply these additional requirements:
 - **ALWAYS confirm:** Ask user to review and approve the plan using `AskUserQuestion` with a recommendation
 - **ALWAYS surface decisions:** Use `AskUserQuestion` with recommended options for key architectural/design decisions
 - **Planning = Collaboration:** The plan is shaped by user input — never treat it as a unilateral output
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end
+- Always plan and break work into many small todo tasks using `TaskCreate`
+- Always add a final review todo task to verify work quality
+- MANDATORY FINAL TASKS: After creating all planning todo tasks, ALWAYS add these two final tasks:
+  1. Task: "Run /plan-validate" — interview user with critical questions, validate assumptions and decisions
+  2. Task: "Run /plan-review" — auto-review plan for validity, correctness, and best practices
 - Sacrifice grammar for concision. List unresolved questions at the end

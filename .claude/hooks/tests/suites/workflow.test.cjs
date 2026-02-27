@@ -2,7 +2,8 @@
  * Workflow Hooks Test Suite
  *
  * Tests for:
- * - todo-enforcement.cjs: Blocks implementation skills without todos
+ * - skill-enforcement.cjs: Force workflow first — blocks non-meta skills without tasks
+ * - edit-enforcement.cjs: Blocks file edits without tasks
  * - todo-tracker.cjs: Records TodoWrite, TaskCreate, TaskUpdate calls
  * - workflow-router.cjs: Routes prompts based on intent detection
  * - dev-rules-reminder.cjs: Injects dev rules on prompt submit
@@ -34,7 +35,8 @@ const { buildWorkflowInstructions, buildCatalogInjection, buildActiveWorkflowCon
 const { shouldInjectCatalog, buildWorkflowCatalog } = require('../../lib/wr-detect.cjs');
 
 // Hook paths
-const TODO_ENFORCEMENT = getHookPath('todo-enforcement.cjs');
+const SKILL_ENFORCEMENT = getHookPath('skill-enforcement.cjs');
+const EDIT_ENFORCEMENT = getHookPath('edit-enforcement.cjs');
 const TODO_TRACKER = getHookPath('todo-tracker.cjs');
 const WORKFLOW_ROUTER = getHookPath('workflow-router.cjs');
 const DEV_RULES_REMINDER = getHookPath('dev-rules-reminder.cjs');
@@ -44,208 +46,219 @@ function createSkillInput(skill, args = '') {
   return createPreToolUseInput('Skill', { skill, args });
 }
 
+// skill-enforcement uses exit(1) to block, not exit(2)
+function assertBlockedExit1(exitCode, msg = '') {
+  if (exitCode !== 1) {
+    const prefix = msg ? `${msg}: ` : '';
+    throw new Error(`${prefix}Expected exit code 1 (blocked), got ${exitCode}`);
+  }
+}
+
 // ============================================================================
-// todo-enforcement.cjs Tests
+// skill-enforcement.cjs Tests (Force Workflow First)
 // ============================================================================
 
-const todoEnforcementTests = [
-  // ALLOW - Research skills without todos
+const skillEnforcementTests = [
+  // META SKILLS - Always allowed without workflow or tasks
   {
-    name: '[todo-enforcement] allows /scout without todos',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        // No todo state = no todos
-        const input = createSkillInput('scout');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should allow scout');
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[todo-enforcement] allows /scout:ext without todos',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createSkillInput('scout:ext');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should allow scout:ext');
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  // BLOCK - Planning skills without todos (planning requires task tracking)
-  {
-    name: '[todo-enforcement] blocks /plan without todos',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createSkillInput('plan');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertBlocked(result.code, 'Should block plan without todos');
-        const output = result.stdout + result.stderr;
-        assertContains(output, 'Todo List Required', 'Should show todo required message');
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[todo-enforcement] blocks /plan:hard without todos',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createSkillInput('plan:hard');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertBlocked(result.code, 'Should block plan:hard without todos');
-        const output = result.stdout + result.stderr;
-        assertContains(output, 'Todo List Required', 'Should show todo required message');
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[todo-enforcement] allows /investigate without todos',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createSkillInput('investigate');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should allow investigate');
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[todo-enforcement] allows /watzup without todos',
+    name: '[skill-enforcement] allows /watzup without todos (meta skill)',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
         const input = createSkillInput('watzup');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should allow watzup');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow watzup (meta)');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[todo-enforcement] allows /research without todos',
+    name: '[skill-enforcement] allows /checkpoint without todos (meta skill)',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createSkillInput('checkpoint');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow checkpoint (meta)');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[skill-enforcement] allows /kanban without todos (meta skill)',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createSkillInput('kanban');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow kanban (meta)');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[skill-enforcement] allows /workflow-start always',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createSkillInput('workflow-start');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow workflow-start');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+
+  // FORCE WORKFLOW FIRST - Research skills BLOCKED without tasks
+  {
+    name: '[skill-enforcement] blocks /scout without todos (force workflow first)',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createSkillInput('scout');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertBlockedExit1(result.code, 'Should block scout without tasks');
+        assertContains(result.stdout, 'Workflow', 'Should show workflow message');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[skill-enforcement] blocks /investigate without todos (force workflow first)',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createSkillInput('investigate');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertBlockedExit1(result.code, 'Should block investigate without tasks');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[skill-enforcement] blocks /plan without todos (force workflow first)',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createSkillInput('plan');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertBlockedExit1(result.code, 'Should block plan without tasks');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[skill-enforcement] blocks /research without todos (force workflow first)',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
         const input = createSkillInput('research');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should allow research');
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[todo-enforcement] allows /explore without todos',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createSkillInput('explore');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should allow explore');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertBlockedExit1(result.code, 'Should block research without tasks');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
 
-  // BLOCK - Implementation skills without todos
+  // BLOCKED - Implementation skills without todos
   {
-    name: '[todo-enforcement] blocks /cook without todos',
+    name: '[skill-enforcement] blocks /cook without todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
         const input = createSkillInput('cook');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertBlocked(result.code, 'Should block cook');
-        const output = result.stdout + result.stderr;
-        assertContains(output, 'Todo List Required', 'Should show todo required message');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertBlockedExit1(result.code, 'Should block cook');
+        assertContains(result.stdout, 'Workflow', 'Should show workflow message');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[todo-enforcement] blocks /fix without todos',
+    name: '[skill-enforcement] blocks /fix without todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
         const input = createSkillInput('fix');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertBlocked(result.code, 'Should block fix');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertBlockedExit1(result.code, 'Should block fix');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[todo-enforcement] blocks /code without todos',
+    name: '[skill-enforcement] blocks /code without todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
         const input = createSkillInput('code');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertBlocked(result.code, 'Should block code');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertBlockedExit1(result.code, 'Should block code');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[todo-enforcement] blocks /commit without todos',
+    name: '[skill-enforcement] blocks /commit without todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
         const input = createSkillInput('commit');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertBlocked(result.code, 'Should block commit');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertBlockedExit1(result.code, 'Should block commit');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[todo-enforcement] blocks /test without todos',
+    name: '[skill-enforcement] blocks /test without todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
         const input = createSkillInput('test');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertBlocked(result.code, 'Should block test');
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[todo-enforcement] blocks /code-review without todos',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createSkillInput('code-review');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertBlocked(result.code, 'Should block code-review');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertBlockedExit1(result.code, 'Should block test');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
 
-  // ALLOW - Planning and implementation skills WITH todos
+  // ALLOWED - All skills with todos
   {
-    name: '[todo-enforcement] allows /plan with todos',
+    name: '[skill-enforcement] allows /scout with todos',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        setupTodoState(tmpDir, {
+          hasTodos: true,
+          taskCount: 2,
+          pendingCount: 1,
+          inProgressCount: 1,
+          completedCount: 0
+        });
+        const input = createSkillInput('scout');
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow scout with todos');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[skill-enforcement] allows /plan with todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -257,7 +270,7 @@ const todoEnforcementTests = [
           completedCount: 0
         });
         const input = createSkillInput('plan');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should allow plan with todos');
       } finally {
         cleanupTempDir(tmpDir);
@@ -265,27 +278,7 @@ const todoEnforcementTests = [
     }
   },
   {
-    name: '[todo-enforcement] allows /plan:hard with todos',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        setupTodoState(tmpDir, {
-          hasTodos: true,
-          taskCount: 3,
-          pendingCount: 2,
-          inProgressCount: 1,
-          completedCount: 0
-        });
-        const input = createSkillInput('plan:hard');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should allow plan:hard with todos');
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[todo-enforcement] allows /cook with todos',
+    name: '[skill-enforcement] allows /cook with todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -297,7 +290,7 @@ const todoEnforcementTests = [
           completedCount: 0
         });
         const input = createSkillInput('cook');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should allow cook with todos');
       } finally {
         cleanupTempDir(tmpDir);
@@ -305,7 +298,7 @@ const todoEnforcementTests = [
     }
   },
   {
-    name: '[todo-enforcement] allows /fix with todos',
+    name: '[skill-enforcement] allows /fix with todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -317,72 +310,40 @@ const todoEnforcementTests = [
           completedCount: 0
         });
         const input = createSkillInput('fix');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should allow fix with todos');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
+
+  // BYPASS - CK_QUICK_MODE
   {
-    name: '[todo-enforcement] warns when all todos completed',
+    name: '[skill-enforcement] bypasses with CK_QUICK_MODE=true',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
-        setupTodoState(tmpDir, {
-          hasTodos: true,
-          taskCount: 2,
-          pendingCount: 0,
-          inProgressCount: 0,
-          completedCount: 2
-        });
         const input = createSkillInput('cook');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should allow with completed todos');
-        assertContains(result.stdout, 'completed', 'Should warn about completed');
+        const result = await runHook(SKILL_ENFORCEMENT, input, {
+          cwd: tmpDir,
+          env: { CK_QUICK_MODE: 'true' }
+        });
+        assertAllowed(result.code, 'Should bypass with CK_QUICK_MODE');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
 
-  // BYPASS - quick: prefix
+  // IGNORE - Non-Skill tools (skill-enforcement only matches Skill)
   {
-    name: '[todo-enforcement] bypasses with quick: prefix',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createSkillInput('cook', 'quick: add a button');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should bypass with quick:');
-        assertContains(result.stdout, 'bypassed', 'Should mention bypassed');
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-  {
-    name: '[todo-enforcement] bypass works case-insensitive',
-    fn: async () => {
-      const tmpDir = createTempDir();
-      try {
-        const input = createSkillInput('fix', 'QUICK: fix typo');
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should bypass with QUICK:');
-      } finally {
-        cleanupTempDir(tmpDir);
-      }
-    }
-  },
-
-  // IGNORE - Non-Skill tools
-  {
-    name: '[todo-enforcement] ignores Read tool',
+    name: '[skill-enforcement] ignores Read tool',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
         const input = createPreToolUseInput('Read', { file_path: 'test.ts' });
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should ignore Read');
       } finally {
         cleanupTempDir(tmpDir);
@@ -390,26 +351,80 @@ const todoEnforcementTests = [
     }
   },
   {
-    name: '[todo-enforcement] ignores Bash tool',
+    name: '[skill-enforcement] ignores Bash tool',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
         const input = createPreToolUseInput('Bash', { command: 'ls' });
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
+        const result = await runHook(SKILL_ENFORCEMENT, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should ignore Bash');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  }
+];
+
+// ============================================================================
+// edit-enforcement.cjs Tests
+// ============================================================================
+
+const editEnforcementTests = [
+  {
+    name: '[edit-enforcement] blocks Edit on non-exempt file without todos',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createPreToolUseInput('Edit', { file_path: 'src/app/test.ts' });
+        const result = await runHook(EDIT_ENFORCEMENT, input, { cwd: tmpDir });
+        assertBlockedExit1(result.code, 'Should block Edit without todos');
+        assertContains(result.stdout, 'Task Tracking', 'Should show task tracking message');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[todo-enforcement] ignores Edit tool',
+    name: '[edit-enforcement] allows Edit on exempt file (.md) without todos',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
-        const input = createPreToolUseInput('Edit', { file_path: 'test.ts' });
-        const result = await runHook(TODO_ENFORCEMENT, input, { cwd: tmpDir });
-        assertAllowed(result.code, 'Should ignore Edit');
+        const input = createPreToolUseInput('Edit', { file_path: 'docs/readme.md' });
+        const result = await runHook(EDIT_ENFORCEMENT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow .md files');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[edit-enforcement] allows Edit on .claude/ path without todos',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createPreToolUseInput('Edit', { file_path: '.claude/hooks/test.cjs' });
+        const result = await runHook(EDIT_ENFORCEMENT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow .claude/ paths');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[edit-enforcement] allows Edit with todos',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        setupTodoState(tmpDir, {
+          hasTodos: true,
+          taskCount: 1,
+          pendingCount: 0,
+          inProgressCount: 1,
+          completedCount: 0
+        });
+        const input = createPreToolUseInput('Edit', { file_path: 'src/app/test.ts' });
+        const result = await runHook(EDIT_ENFORCEMENT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow Edit with todos');
       } finally {
         cleanupTempDir(tmpDir);
       }
@@ -719,20 +734,14 @@ const workflowRouterTests = [
     }
   },
   {
-    name: '[catalog-heuristic] shouldInjectCatalog returns false for slash commands',
+    name: '[catalog-heuristic] shouldInjectCatalog only checks length (slash/quick filtering moved to router)',
     fn: async () => {
       const config = { settings: { overridePrefix: 'quick:' } };
-      assertTrue(!shouldInjectCatalog('/plan', config), 'Should skip /plan');
-      assertTrue(!shouldInjectCatalog('/cook auto something', config), 'Should skip /cook');
-      assertTrue(!shouldInjectCatalog('/fix:test some bug here', config), 'Should skip /fix:test');
-    }
-  },
-  {
-    name: '[catalog-heuristic] shouldInjectCatalog returns false for quick: prefix',
-    fn: async () => {
-      const config = { settings: { overridePrefix: 'quick:' } };
-      assertTrue(!shouldInjectCatalog('quick: add a button to the page', config), 'Should skip quick: prefix');
-      assertTrue(!shouldInjectCatalog('QUICK: fix this typo in the readme', config), 'Should skip case-insensitive');
+      // Slash commands and quick: prefix filtering now happens in workflow-router.cjs main flow,
+      // not in shouldInjectCatalog. The function only checks prompt length >= 15.
+      assertTrue(shouldInjectCatalog('/cook auto something', config), 'Slash commands are long enough');
+      assertTrue(shouldInjectCatalog('quick: add a button to the page', config), 'Quick prefix is long enough');
+      assertTrue(!shouldInjectCatalog('/plan', config), 'Short slash command skipped by length');
     }
   },
   {
@@ -819,7 +828,7 @@ const workflowRouterTests = [
         commandMapping: { plan: { claude: '/plan' } }
       };
       const injection = buildCatalogInjection(config);
-      assertContains(injection, 'Available Workflows', 'Should have header');
+      assertContains(injection, 'Workflow Catalog', 'Should have header');
       assertContains(injection, '/workflow-start', 'Should contain /workflow-start instruction');
       assertContains(injection, 'quick:', 'Should contain override hint');
     }
@@ -835,7 +844,7 @@ const workflowRouterTests = [
         const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should not block');
         const output = result.stdout + result.stderr;
-        assertContains(output, 'Available Workflows', 'Should inject catalog');
+        assertContains(output, 'Workflow Catalog', 'Should inject catalog');
         assertContains(output, '/workflow-start', 'Should include activation instruction');
       } finally {
         cleanupTempDir(tmpDir);
@@ -851,7 +860,7 @@ const workflowRouterTests = [
         const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should not block');
         const output = (result.stdout + result.stderr).trim();
-        assertNotContains(output, 'Available Workflows', 'Should NOT inject catalog for short prompt');
+        assertNotContains(output, 'Workflow Catalog', 'Should NOT inject catalog for short prompt');
       } finally {
         cleanupTempDir(tmpDir);
       }
@@ -866,14 +875,14 @@ const workflowRouterTests = [
         const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should not block');
         const output = (result.stdout + result.stderr).trim();
-        assertNotContains(output, 'Available Workflows', 'Should NOT inject catalog for slash command');
+        assertNotContains(output, 'Workflow Catalog', 'Should NOT inject catalog for slash command');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[workflow-router] no output for quick: prefix',
+    name: '[workflow-router] quick: prefix still gets catalog (filtering now in enforcement hooks)',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
@@ -881,7 +890,8 @@ const workflowRouterTests = [
         const result = await runHook(WORKFLOW_ROUTER, input, { cwd: tmpDir });
         assertAllowed(result.code, 'Should not block');
         const output = (result.stdout + result.stderr).trim();
-        assertNotContains(output, 'Available Workflows', 'Should NOT inject catalog for quick: prefix');
+        // quick: filtering moved to enforcement hooks; router always injects for long prompts
+        assertContains(output, 'Workflow Catalog', 'Should inject catalog (quick: handled by enforcement hooks now)');
       } finally {
         cleanupTempDir(tmpDir);
       }
@@ -1087,7 +1097,8 @@ const preActionsOutputTests = [
 module.exports = {
   name: 'Workflow Hooks',
   tests: [
-    ...todoEnforcementTests,
+    ...skillEnforcementTests,
+    ...editEnforcementTests,
     ...todoTrackerTests,
     ...workflowRouterTests,
     ...devRulesReminderTests,

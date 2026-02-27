@@ -1,8 +1,7 @@
 ---
 name: plan-fast
-description: "[Planning] ⚡⚡ No research. Only analyze and create an implementation plan"
+description: '[Planning] ⚡⚡ No research. Only analyze and create an implementation plan'
 argument-hint: [task]
-infer: true
 ---
 
 Think.
@@ -55,18 +54,18 @@ Use `planner` subagent to:
 
 - Every `plan.md` MUST start with YAML frontmatter:
 
-  ```yaml
-  ---
-  title: "{Brief title}"
-  description: "{One sentence for card preview}"
-  status: pending
-  priority: P2
-  effort: {sum of phases, e.g., 4h}
-  branch: {current git branch}
-  tags: [relevant, tags]
-  created: {YYYY-MM-DD}
-  ---
-  ```
+    ```yaml
+    ---
+    title: '{Brief title}'
+    description: '{One sentence for card preview}'
+    status: pending
+    priority: P2
+    effort: { sum of phases, e.g., 4h }
+    branch: { current git branch }
+    tags: [relevant, tags]
+    created: { YYYY-MM-DD }
+    ---
+    ```
 
 - Save the overview access point at `{plan-dir}/plan.md`. Keep it generic, under 80 lines, and list each implementation phase with status and progress plus links to phase files.
 - For each phase, create `{plan-dir}/phase-XX-phase-name-here.md` containing the following sections in order: Context links (reference parent plan, dependencies, docs), Overview (date, description, priority, implementation status, review status), Key Insights, Requirements, Architecture, **Trade-offs & Alternatives** (Alternatives considered: [list]. Failure modes: [list]), Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps.
@@ -79,6 +78,9 @@ Use `planner` subagent to:
 - **ALWAYS confirm:** Ask user to review and approve the plan using `AskUserQuestion` with a recommendation
 - **ALWAYS surface decisions:** Use `AskUserQuestion` with recommended options for key architectural/design decisions
 - **Planning = Collaboration:** The plan is shaped by user input — never treat it as a unilateral output
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end
+- Always plan and break work into many small todo tasks using `TaskCreate`
+- Always add a final review todo task to verify work quality
+- MANDATORY FINAL TASKS: After creating all planning todo tasks, ALWAYS add these two final tasks:
+  1. Task: "Run /plan-validate" — interview user with critical questions, validate assumptions and decisions
+  2. Task: "Run /plan-review" — auto-review plan for validity, correctness, and best practices
 - Sacrifice grammar for concision. List unresolved questions at the end

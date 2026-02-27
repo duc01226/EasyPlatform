@@ -57,7 +57,7 @@ test.describe('@P0 @Smoke - App Load Tests', () => {
         expect(await snippetPage.isCreateMode()).toBeTruthy();
     });
 
-    test('TS-TASK-P0-001 - Tasks tab loads correctly', async ({ page }) => {
+    test('TC-TSK-LST-001: Tasks tab loads correctly @P0 @P1', async ({ page }) => {
         /**
          * @scenario Tasks tab loads and displays task list
          * @given the backend API is running

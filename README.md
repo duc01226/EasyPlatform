@@ -42,7 +42,7 @@ dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
 cd src/Frontend && npm install && nx serve playground-text-snippet
 
 # Infrastructure
-docker-compose -f src/platform-example-app.docker-compose.yml up -d
+docker-compose -f src/platform-example-app.docker-compose.yml -f src/platform-example-app.docker-compose.override.yml up -d
 ```
 
 > **Detailed setup:** [Getting Started Guide](docs/getting-started.md)
@@ -212,7 +212,7 @@ src/Frontend/       # Angular 19 Nx workspace
 
 ```bash
 # Backend
-dotnet build EasyPlatform.sln
+dotnet build src/Easy.Platform.sln
 dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
 dotnet test [Project].csproj
 
@@ -228,7 +228,7 @@ nx test platform-core
 
 ## Getting Help
 
-1. **Study Examples**: `src/PlatformExampleApp` for backend, `playground-text-snippet` for frontend
+1. **Study Examples**: `src/Backend/` for backend, `src/Frontend/apps/playground-text-snippet/` for frontend
 2. **Search Codebase**: Use grep/glob to find existing patterns
 3. **Check Documentation**: `docs/` directory for guides, `CLAUDE.md` for patterns
 4. **Read Base Classes**: Check platform-core source for available APIs
@@ -240,8 +240,8 @@ nx test platform-core
 - **Platform Version**: Easy.Platform 1.0
 - **Backend Framework**: .NET 9
 - **Frontend Framework**: Angular 19
-- **Last Updated**: January 2025
+- **Last Updated**: February 2026
 
 ---
 
-_For detailed code patterns and complete examples, see [CLAUDE.md](CLAUDE.md) and the working examples in `src/PlatformExampleApp`._
+_For detailed code patterns and complete examples, see [CLAUDE.md](CLAUDE.md) and the working examples in `src/Backend/`._

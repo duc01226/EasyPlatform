@@ -1,7 +1,6 @@
 ---
 name: kanban
-description: "[Tooling & Meta] Plans dashboard server with progress tracking and timeline visualization. Use when viewing plan directories with progress tracking, Gantt charts, and phase status."
-infer: true
+description: '[Tooling & Meta] Plans dashboard server with progress tracking and timeline visualization. Use when viewing plan directories with progress tracking, Gantt charts, and phase status.'
 ---
 
 # kanban
@@ -12,14 +11,15 @@ Plans dashboard server with progress tracking and timeline visualization.
 
 **Goal:** Serve a visual plans dashboard with progress tracking, timeline/Gantt visualization, and phase status indicators.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Install dependencies | `cd .claude/skills/kanban && npm install` (requires `gray-matter`) |
-| 2 | Start server | `node .claude/skills/kanban/scripts/server.cjs --dir ./plans --open` |
-| 3 | View dashboard | Progress per plan, Gantt timeline, activity heatmap |
-| 4 | Stop server | `node .claude/skills/kanban/scripts/server.cjs --stop` |
+| Step | Action               | Key Notes                                                            |
+| ---- | -------------------- | -------------------------------------------------------------------- |
+| 1    | Install dependencies | `cd .claude/skills/kanban && npm install` (requires `gray-matter`)   |
+| 2    | Start server         | `node .claude/skills/kanban/scripts/server.cjs --dir ./plans --open` |
+| 3    | View dashboard       | Progress per plan, Gantt timeline, activity heatmap                  |
+| 4    | Stop server          | `node .claude/skills/kanban/scripts/server.cjs --stop`               |
 
 **Key Principles:**
+
 - Requires npm install before use — without it you get Error 500
 - Reads plan markdown files with frontmatter for phase/status metadata
 - Supports background mode and remote access (--host 0.0.0.0)
@@ -152,10 +152,10 @@ When using `--host 0.0.0.0`, the server auto-detects your local network IP:
 
 ```json
 {
-  "success": true,
-  "url": "http://localhost:3500/kanban?dir=...",
-  "networkUrl": "http://192.168.2.75:3500/kanban?dir=...",
-  "port": 3500
+    "success": true,
+    "url": "http://localhost:3500/kanban?dir=...",
+    "networkUrl": "http://192.168.2.75:3500/kanban?dir=...",
+    "port": 3500
 }
 ```
 
@@ -218,10 +218,10 @@ Example Bash tool call:
 
 ```json
 {
-  "command": "node .claude/skills/kanban/scripts/server.cjs --dir \"./plans\" --host 0.0.0.0 --open --foreground",
-  "run_in_background": true,
-  "timeout": 300000,
-  "description": "Start kanban server in background"
+    "command": "node .claude/skills/kanban/scripts/server.cjs --dir \"./plans\" --host 0.0.0.0 --open --foreground",
+    "run_in_background": true,
+    "timeout": 300000,
+    "description": "Start kanban server in background"
 }
 ```
 

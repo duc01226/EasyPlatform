@@ -103,9 +103,10 @@ src/Frontend/       # Angular 19 Nx workspace
 │   └── playground-text-snippet/ # Example app
 └── libs/
     ├── platform-core/           # Base classes, utilities
+    ├── platform-components/     # Reusable UI components
     ├── apps-domains/            # Business domain code
-    ├── share-styles/            # SCSS themes
-    └── share-assets/            # Static assets
+    ├── apps-domains-components/ # Domain-specific components
+    └── apps-shared-components/  # Shared app components
 ```
 
 ---
@@ -200,13 +201,13 @@ Each workflow step executes a prompt file from `.github/prompts/`:
 | `/watzup`          | `watzup.prompt.md`          | Summarize changes          |
 | `/scout`           | `scout.prompt.md`           | Explore codebase           |
 | `/investigate`     | `investigate.prompt.md`     | Deep dive analysis         |
-| `/investigate-removal` | `.claude/skills/investigate-removal/` | 6-phase validation for code removal |
+
 
 ### General Developer Prompts
 
 | Prompt              | File                         | Purpose                                                 |
 | ------------------- | ---------------------------- | ------------------------------------------------------- |
-| `/git__cm`          | `git__cm.prompt.md`          | Smart conventional commits with auto-generated messages |
+
 | `/git__cp`          | `git__cp.prompt.md`          | Commit and push                                         |
 | `/checkpoint`       | `checkpoint.prompt.md`       | Save memory checkpoint to preserve analysis             |
 | `/build`            | `build.prompt.md`            | Build backend/frontend projects                         |
@@ -300,39 +301,40 @@ Analyze user prompt for these keywords (check in order):
 
 ### Workflow Quick Reference by Category
 
-#### Implementation Workflows (confirm: Yes unless noted)
+#### Implementation Workflows (confirm: No)
 
 - `feature` — implement, add, create, build, develop
-- `bugfix` — bug, error, crash, fix, debug (No confirm)
+- `bugfix` — bug, error, crash, fix, debug
 - `refactor` — restructure, clean up, extract, rename
 - `migration` — schema, columns, EF migration
 - `batch-operation` — all files, bulk, find-replace across
 - `deployment` — CI/CD, Docker, infrastructure
 - `performance` — slow, optimize, N+1, bottleneck
 
-#### Review & Audit Workflows (confirm: Yes for audit workflows)
+#### Review & Audit Workflows (confirm: No)
 
-- `review` — PR review, code review (No confirm)
-- `review-changes` — pre-commit, staged changes (No confirm)
+- `review` — PR review, code review
+- `review-changes` — pre-commit, staged changes
 - `quality-audit` — best practices, ensure no flaws
-- `security-audit` — vulnerability, OWASP (No confirm)
+- `security-audit` — vulnerability, OWASP
 - `verification` — verify, validate, make sure
 
-#### Investigation & Documentation Workflows (No confirm)
+#### Investigation & Documentation Workflows (confirm: No)
 
 - `investigation` — how does, where is, explain, trace
 - `documentation` — general docs, README, comments
 - `business-feature-docs` — 26-section template in docs/business-features/
 
-#### Product & Planning Workflows
+#### Product & Planning Workflows (confirm: No, except noted)
 
-- `idea-to-pbi` — new idea, feature request, backlog (confirm)
-- `pbi-to-tests` — test specs from PBI (No confirm)
-- `sprint-planning` — prioritize, iteration planning (confirm)
-- `pm-reporting` — status report, sprint update (No confirm)
-- `release-prep` — pre-release checks, go-live (confirm)
-- `design-workflow` — wireframe, mockup, UI spec (No confirm)
-- `pre-development` — quality gate, setup for new feature (No confirm)
+- `full-feature-lifecycle` — end-to-end feature delivery (confirm: Yes)
+- `idea-to-pbi` — new idea, feature request, backlog
+- `pbi-to-tests` — test specs from PBI
+- `sprint-planning` — prioritize, iteration planning
+- `pm-reporting` — status report, sprint update
+- `release-prep` — pre-release checks, go-live
+- `design-workflow` — wireframe, mockup, UI spec
+- `pre-development` — quality gate, setup for new feature
 
 ### Workflow Configuration
 
@@ -569,7 +571,7 @@ When resuming after context reset:
 
 ### Related Files
 
-- `.claude/skills/checkpoint.md` - Manual checkpoint command
+- `.claude/skills/checkpoint/SKILL.md` - Manual checkpoint command
 - `.claude/skills/memory-management/SKILL.md` - Full memory management skill
 
 ---
@@ -608,7 +610,7 @@ When resuming after context reset:
 
 ## Debugging Protocol
 
-When debugging or analyzing code removal, follow [AI-DEBUGGING-PROTOCOL.md](AI-DEBUGGING-PROTOCOL.md):
+When debugging or analyzing code removal, follow [AI-DEBUGGING-PROTOCOL.md](../.ai/docs/AI-DEBUGGING-PROTOCOL.md):
 
 - Never assume based on first glance
 - Verify with multiple search patterns
@@ -635,11 +637,11 @@ When debugging or analyzing code removal, follow [AI-DEBUGGING-PROTOCOL.md](AI-D
 - **MEDIUM risk** (refactor): 80%+ acceptable
 - **LOW risk** (rename): 70%+ acceptable
 
-**Rule:** <90% confidence for removal → Run `/investigate-removal` skill first
+**Rule:** <90% confidence for removal → Follow the 6-phase debugging protocol first
 
 **Workflow Safeguards:**
-- Bugfix workflow: "CHECKPOINT: If considering code removal, run /investigate-removal first"
-- Refactor workflow: "CHECKPOINT: If removing code, run /investigate-removal first"
+- Bugfix workflow: "CHECKPOINT: If considering code removal, follow 6-phase debugging protocol first"
+- Refactor workflow: "CHECKPOINT: If removing code, follow 6-phase debugging protocol first"
 
 ### Quick Verification Checklist
 
@@ -652,7 +654,7 @@ Before removing/changing ANY code:
 - [ ] Traced dependencies?
 - [ ] Completed 6-phase validation?
 - [ ] Declared confidence level ≥90%?
-- [ ] OR run `/investigate-removal` skill?
+- [ ] OR follow 6-phase debugging protocol?
 
 ---
 
@@ -662,7 +664,7 @@ Before removing/changing ANY code:
 - **Atomic Writes**: Write to `.tmp` first, rename to final path; handle crash recovery
 - **Schema Validation**: Validate at creation and before save; fail fast; bound all counts
 
-**Reference:** See `.claude/skills/code-patterns/` for full implementation details.
+**Reference:** See `.claude/skills/code-patterns/` for code pattern quick references.
 
 ---
 
@@ -743,21 +745,6 @@ _Last updated: 2026-01-27_
 
 ---
 
-<!-- ACE-LEARNED-PATTERNS-START -->
-
-## ACE Learned Patterns
-
-> These patterns were learned from Claude Code execution outcomes.
-> Do not edit manually - managed by ACE sync.
-
-### High Confidence (90%+)
-
-- **When using /cook skill**: cook skill execution pattern showing reliable success -> Continue using this skill pattern (100% success rate observed) [100%]
-
-_Last synced: 2026-01-11_
-
-<!-- ACE-LEARNED-PATTERNS-END -->
-
 ---
 
 ## Instruction Files (File-Type-Specific Rules)
@@ -767,9 +754,8 @@ Copilot instruction files in `.github/instructions/` provide **file-type-targete
 | Instruction File                      | Applies To                                      | Simulates                    |
 | ------------------------------------- | ----------------------------------------------- | ---------------------------- |
 | `backend-csharp.instructions.md`      | `src/Backend/**/*.cs`, `src/Platform/**/*.cs`   | Backend C# patterns & rules  |
-| `frontend-typescript.instructions.md` | `src/Frontend/**/*.ts,tsx,html`, `libs/**/*.ts` | Frontend Angular/TS patterns |
-| `frontend-scss.instructions.md`       | `src/Frontend/**/*.scss`, `libs/**/*.scss`      | SCSS/BEM styling rules       |
-| `documentation.instructions.md`       | `docs/**/*.md`                                  | Documentation standards      |
+| `frontend-angular.instructions.md`    | `src/Frontend/**/*.ts,tsx,html`, `libs/**/*.ts` | Frontend Angular/TS patterns |
+| `scss-styling.instructions.md`        | `src/Frontend/**/*.scss`, `libs/**/*.scss`      | SCSS/BEM styling rules       |
 | `code-review.instructions.md`         | `**/*` (excludes coding agent)                  | Code review checklist        |
 
 Each file contains critical rules inline + references to full pattern files in `.ai/docs/` and `docs/claude/`.
@@ -787,9 +773,8 @@ Each file contains critical rules inline + references to full pattern files in `
 
 | Skill                       | Location                                    | Auto-Activates When                               |
 | --------------------------- | ------------------------------------------- | ------------------------------------------------- |
-| `backend-csharp-patterns`   | `.github/skills/backend-csharp-patterns/`   | Editing `*.cs` in `src/Backend/`, `src/Platform/` |
-| `frontend-angular-patterns` | `.github/skills/frontend-angular-patterns/` | Editing `*.ts` in `src/Frontend/`, `libs/`        |
-| `scss-bem-patterns`         | `.github/skills/scss-bem-patterns/`         | Editing `*.scss`, `*.css` files                   |
+| `easyplatform-backend`      | `.claude/skills/easyplatform-backend/`      | Editing `*.cs` in `src/Backend/`, `src/Platform/` |
+| `frontend-angular`          | `.claude/skills/frontend-angular/`          | Editing `*.ts` in `src/Frontend/`, `libs/`        |
 
 ### Full Pattern Files (Referenced by Skills)
 
@@ -960,61 +945,62 @@ Each file contains critical rules inline + references to full pattern files in `
 
 ## Complete Workflow Catalog (WITH SEQUENCES)
 
-> **This section documents ALL workflow sequences with the standardized `plan → plan-validate → plan-review` pattern.**
+> **This section documents ALL workflow sequences with the standardized `plan → plan-review → plan-validate` pattern.**
 
 ### Implementation Workflows
 
 | Workflow ID         | Name                              | Sequence                                                                                                                                                | Confirm? |
 | ------------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `feature`           | Feature Implementation            | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/cook` → `/why-review` → `/code-simplifier` → `/review-codebase` → `/changelog-update` → `/test` → `/docs-update` → `/watzup` | Yes      |
-| `bugfix`            | Bug Fix                           | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan-validate` → `/plan-review` → `/fix` → `/why-review` → `/code-simplifier` → `/review-codebase` → `/changelog-update` → `/test` → `/watzup` | No       |
-| `refactor`          | Code Refactoring                  | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/code-simplifier` → `/review-codebase` → `/test` → `/watzup`                     | Yes      |
-| `migration`         | Database Migration                | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
-| `batch-operation`   | Batch Operation                   | `/scout` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/review-codebase` → `/test` → `/watzup`                                           | Yes      |
-| `deployment`        | Deployment & Infrastructure       | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
-| `performance`       | Performance Optimization          | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/review-codebase` → `/test` → `/watzup`                          | Yes      |
+| `feature`           | Feature Implementation            | `/scout` → `/investigate` → `/plan` → `/plan-review` → `/plan-validate` → `/why-review` → `/cook` → `/code-simplifier` → `/review-changes` → `/code-review` → `/changelog` → `/test` → `/docs-update` → `/watzup` | No       |
+| `bugfix`            | Bug Fix                           | `/scout` → `/investigate` → `/debug` → `/plan` → `/plan-review` → `/plan-validate` → `/why-review` → `/fix` → `/code-simplifier` → `/review-changes` → `/code-review` → `/changelog` → `/test` → `/docs-update` → `/watzup` | No       |
+| `refactor`          | Code Refactoring                  | `/scout` → `/investigate` → `/plan` → `/plan-review` → `/plan-validate` → `/why-review` → `/code` → `/code-simplifier` → `/review-changes` → `/code-review` → `/changelog` → `/test` → `/docs-update` → `/watzup` | No       |
+| `migration`         | Database Migration                | `/scout` → `/investigate` → `/plan` → `/plan-review` → `/plan-validate` → `/code` → `/review-changes` → `/code-review` → `/test` → `/watzup`                          | No       |
+| `batch-operation`   | Batch Operation                   | `/plan` → `/plan-review` → `/plan-validate` → `/why-review` → `/code` → `/code-simplifier` → `/review-changes` → `/test` → `/watzup`                                  | No       |
+| `deployment`        | Deployment & Infrastructure       | `/scout` → `/investigate` → `/plan` → `/plan-review` → `/plan-validate` → `/code` → `/review-changes` → `/code-review` → `/test` → `/watzup`                          | No       |
+| `performance`       | Performance Optimization          | `/scout` → `/investigate` → `/plan` → `/plan-review` → `/plan-validate` → `/code` → `/review-changes` → `/code-review` → `/test` → `/watzup`                          | No       |
 
 ### Review & Audit Workflows
 
 | Workflow ID      | Name                        | Sequence                                                                                                                       | Confirm? |
 | ---------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------- |
-| `review`         | Code Review                 | `/review-codebase` → `/watzup`                                                                                                 | No       |
-| `review-changes` | Review Current Changes      | `/scout` → `/investigate` → `/review-codebase` → `/watzup`                                                                     | No       |
-| `quality-audit`  | Quality Audit               | `/review-codebase` → `/plan` → `/plan-validate` → `/plan-review` → `/code` → `/why-review` → `/review-codebase` → `/test` → `/watzup`        | Yes      |
+| `review`         | Code Review                 | `/code-review` → `/watzup`                                                                                                     | No       |
+| `review-changes` | Review Current Changes      | `/review-changes`                                                                                                               | No       |
+| `quality-audit`  | Quality Audit               | `/code-review` → `/plan` → `/plan-review` → `/plan-validate` → `/code` → `/review-changes` → `/test` → `/watzup`              | No       |
 | `security-audit` | Security Audit              | `/scout` → `/investigate` → `/watzup`                                                                                          | No       |
-| `verification`   | Verification & Validation   | `/scout` → `/investigate` → `/test` → `/plan` → `/plan-validate` → `/plan-review` → `/fix` → `/why-review` → `/review` → `/watzup`           | Yes      |
+| `verification`   | Verification & Validation   | `/scout` → `/investigate` → `/test` → `/plan` → `/plan-review` → `/plan-validate` → `/fix` → `/code-simplifier` → `/review-changes` → `/code-review` → `/test` → `/docs-update` → `/watzup` | No       |
 
 ### Investigation & Documentation Workflows
 
 | Workflow ID              | Name                            | Sequence                                                                                                                              | Confirm? |
 | ------------------------ | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------- |
 | `investigation`          | Code Investigation              | `/scout` → `/investigate`                                                                                                             | No       |
-| `documentation`          | Documentation Update            | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/docs-update` → `/watzup`                                 | No       |
-| `business-feature-docs`  | Business Feature Documentation  | `/scout` → `/investigate` → `/plan` → `/plan-validate` → `/plan-review` → `/docs-update` → `/team-test-spec` → `/team-test-cases` → `/watzup` | No       |
+| `documentation`          | Documentation Update            | `/scout` → `/investigate` → `/plan` → `/plan-review` → `/plan-validate` → `/docs-update` → `/review-changes` → `/review-post-task` → `/watzup` | No       |
+| `business-feature-docs`  | Business Feature Documentation  | `/scout` → `/investigate` → `/plan` → `/plan-review` → `/plan-validate` → `/docs-update` → `/review-changes` → `/review-post-task` → `/watzup` | No       |
 
 ### Product & Planning Workflows
 
 | Workflow ID       | Name                      | Sequence                                                                           | Confirm? |
 | ----------------- | ------------------------- | ---------------------------------------------------------------------------------- | -------- |
-| `idea-to-pbi`     | Idea to PBI               | `/team-idea` → `/team-refine` → `/team-story` → `/team-prioritize` → `/watzup`    | Yes      |
+| `idea-to-pbi`     | Idea to PBI               | `/team-idea` → `/team-refine` → `/team-story` → `/team-prioritize` → `/watzup`    | No       |
 | `pbi-to-tests`    | PBI to Tests              | `/team-test-spec` → `/team-test-cases` → `/team-quality-gate` → `/watzup`         | No       |
-| `sprint-planning` | Sprint Planning Session   | `/team-prioritize` → `/team-dependency` → `/team-team-sync`                        | Yes      |
+| `sprint-planning` | Sprint Planning Session   | `/team-prioritize` → `/team-dependency` → `/team-team-sync`                        | No       |
 | `pm-reporting`    | PM Reporting              | `/team-status` → `/team-dependency`                                                | No       |
-| `release-prep`    | Release Preparation       | `/review-changes` → `/test` → `/team-quality-gate` → `/team-status`                | Yes      |
-| `design-workflow` | Design Workflow           | `/team-design-spec` → `/review-codebase` → `/watzup`                               | No       |
-| `pre-development` | Pre-Development Setup     | `/team-quality-gate` → `/plan` → `/plan-validate` → `/plan-review`                | No       |
+| `release-prep`    | Release Preparation       | `/quality-gate` → `/status`                                                         | No       |
+| `full-feature-lifecycle` | Full Feature Lifecycle | `/idea` → `/refine` → `/story` → `/design-spec` → `/plan` → `/plan-review` → `/plan-validate` → `/cook` → `/review-changes` → `/test-spec` → `/quality-gate` → `/docs-update` → `/watzup` | Yes |
+| `design-workflow` | Design Workflow           | `/design-spec` → `/review-changes` → `/code-review` → `/watzup`                    | No       |
+| `pre-development` | Pre-Development Setup     | `/quality-gate` → `/plan` → `/plan-review` → `/plan-validate`                      | No       |
 
 ### Key Observations
 
 **All planning workflows now follow the standardized pattern:**
 ```
-... → /plan → /plan-validate → /plan-review → ...
+... → /plan → /plan-review → /plan-validate → ...
 ```
 
 **This ensures:**
-- Every plan is validated with critical questions before review
-- Assumptions and risks are surfaced early
-- Plan quality is verified before implementation begins
+- Plan quality is self-reviewed first
+- Then validated with critical questions interview
+- Implementation begins only after both checks pass
 
 ---
 

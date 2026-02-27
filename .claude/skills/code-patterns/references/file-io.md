@@ -7,7 +7,7 @@ When multiple processes/hooks may access the same file simultaneously:
 - Concurrent writes cause data loss (last write wins)
 - No coordination leads to race conditions
 
-**Real Example:** ACE hooks (event-emitter, feedback-tracker, curator-pruner) all access `deltas.json`. Without locking, simultaneous updates corrupt delta counts.
+**Real Example:** Multiple hooks accessing the same JSON state file. Without locking, simultaneous updates corrupt data.
 
 ## Solution: Advisory File Locking
 

@@ -63,3 +63,20 @@ When creating/updating files in `docs/**`:
 - Implement features according to specifications
 - Handle edge cases and error scenarios
 - **DO NOT** create new enhanced files, update to the existing files directly.
+
+## Doc Review (MANDATORY at session wrap-up)
+
+After completing any code changes, check for stale documentation before closing the task:
+
+1. Run `git diff --name-only` to list changed files.
+2. Map changed files to relevant docs:
+   - `.claude/hooks/**` → `docs/claude/claude-kit-setup.md`, `.claude/docs/hooks/README.md`, `.claude/docs/hooks/enforcement.md`
+   - `.claude/skills/**`, `.claude/workflows.json`, `.claude/settings.json` → `docs/claude/claude-kit-setup.md`
+   - `src/Backend/**/*.cs` → `docs/business-features/` (relevant module), `docs/claude/backend-patterns.md`, `CHANGELOG.md`
+   - `src/Frontend/**/*.ts` → `docs/business-features/` (relevant module), `docs/claude/frontend-patterns.md`, `CHANGELOG.md`
+   - `src/Platform/**` → `docs/architecture-overview.md`, `CHANGELOG.md`
+   - `CLAUDE.md` structural changes → `docs/claude/README.md`
+3. For each potentially stale doc: flag it in the final review task or update it immediately.
+4. Output `No doc updates needed` if no mapping applies.
+
+**Use the `/watzup` skill** to perform this check automatically at the end of any work session.

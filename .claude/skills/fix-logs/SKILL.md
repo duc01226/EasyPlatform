@@ -1,28 +1,31 @@
 ---
 name: fix-logs
-description: "[Fix & Debug] ⚡ Analyze logs and fix issues"
+description: '[Fix & Debug] ⚡ Analyze logs and fix issues'
 argument-hint: [issue]
-infer: true
 ---
 
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 
 ## ⚠️ Anti-Hallucination Reminder
 
+**Be skeptical. Critical thinking. Everything needs traced proof.** — Never accept code at face value; verify claims against actual behavior, trace data flow end-to-end, and demand evidence (file:line references, grep results, runtime confirmation) for every finding.
+
 **Before modifying ANY code:** Verify assumptions with actual code evidence. Search for usages, read implementations, trace dependencies. If confidence < 90% on any change, investigate first or ask user. See `.claude/skills/shared/anti-hallucination-protocol.md` for full protocol.
 
 ## Mission
+
 <issue>$ARGUMENTS</issue>
 
 ## Workflow
+
 1. Check if `./logs.txt` exists:
-   - If missing, set up permanent log piping in project's script config (`package.json`, `Makefile`, `pyproject.toml`, etc.):
-     - **Bash/Unix**: append `2>&1 | tee logs.txt`
-     - **PowerShell**: append `*>&1 | Tee-Object logs.txt`
-   - Run the command to generate logs
+    - If missing, set up permanent log piping in project's script config (`package.json`, `Makefile`, `pyproject.toml`, etc.):
+        - **Bash/Unix**: append `2>&1 | tee logs.txt`
+        - **PowerShell**: append `*>&1 | Tee-Object logs.txt`
+    - Run the command to generate logs
 2. Use `debugger` subagent to analyze `./logs.txt` and find root causes:
-   - Use `Grep` with `head_limit: 30` to read only last 30 lines (avoid loading entire file)
-   - If insufficient context, increase `head_limit` as needed
+    - Use `Grep` with `head_limit: 30` to read only last 30 lines (avoid loading entire file)
+    - If insufficient context, increase `head_limit` as needed
 3. Use `scout` subagent to analyze the codebase and find the exact location of the issues, then report back to main agent.
 4. Use `planner` subagent to create an implementation plan based on the reports, then report back to main agent.
 5. Start implementing the fix based the reports and solutions.

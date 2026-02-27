@@ -8,7 +8,7 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 
 | Document                                                     | Description                                                | When to Use                                         |
 | ------------------------------------------------------------ | ---------------------------------------------------------- | --------------------------------------------------- |
-| [claude-kit-setup.md](./claude-kit-setup.md)                 | ACE learning system, hooks, skills, agents, workflows      | Understanding Claude Code setup in this project     |
+| [claude-kit-setup.md](./claude-kit-setup.md)                 | Hooks, skills, agents, workflows, learning system          | Understanding Claude Code setup in this project     |
 | [architecture.md](./architecture.md)                         | System architecture, file locations, planning protocol     | Starting new tasks, understanding project structure |
 | [troubleshooting.md](./troubleshooting.md)                   | Investigation protocol, common issues and solutions        | Debugging, when stuck or encountering errors        |
 | [backend-patterns.md](./backend-patterns.md)                 | CQRS, Repository, Entity, DTO, Message Bus, Jobs           | Backend development tasks                           |
@@ -19,12 +19,17 @@ This directory contains comprehensive documentation split from the root CLAUDE.m
 | [clean-code-rules.md](./clean-code-rules.md)                 | Universal coding standards                                 | Code quality, best practices                        |
 | [dependency-policy.md](./dependency-policy.md)               | Dependency evaluation criteria before adding packages      | Adding external packages                            |
 | [team-collaboration-guide.md](./team-collaboration-guide.md) | Team roles, commands, workflows, artifact management       | Team collaboration, PBI/design workflows            |
+| [scss-styling-guide.md](./scss-styling-guide.md)             | BEM methodology, design tokens, SCSS patterns              | Styling and CSS tasks                               |
+| [subagent-registry.md](./subagent-registry.md)               | Subagent capabilities and protocols                        | Multi-agent orchestration                           |
+| [agent-orchestration-principles.md](./agent-orchestration-principles.md) | Multi-agent coordination patterns              | Agent workflow design                               |
+| [backend-csharp-complete-guide.md](./backend-csharp-complete-guide.md) | Comprehensive C# reference with SOLID patterns   | Deep backend reference                              |
+| [frontend-typescript-complete-guide.md](./frontend-typescript-complete-guide.md) | Complete Angular/TS guide with principles | Deep frontend reference                             |
 
 ## Quick Navigation
 
 ### Claude Kit & Setup
 
-- **ACE Learning System**: See [claude-kit-setup.md](./claude-kit-setup.md#ace---agentic-context-engineering)
+- **Learning System**: See [claude-kit-setup.md](./claude-kit-setup.md#learning-system)
 - **Hooks Configuration**: See [claude-kit-setup.md](./claude-kit-setup.md#hooks-system)
 - **Skills Framework**: See [claude-kit-setup.md](./claude-kit-setup.md#skills-framework)
 - **Agents System**: See [claude-kit-setup.md](./claude-kit-setup.md#agents-system)

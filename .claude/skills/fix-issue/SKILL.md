@@ -1,8 +1,7 @@
 ---
 name: fix-issue
-description: "[Fix & Debug] ⚡⚡ Fix a GitHub issue with systematic debugging"
+description: '[Fix & Debug] ⚡⚡ Fix a GitHub issue with systematic debugging'
 argument-hint: [issue-number]
-infer: true
 ---
 
 # Fix GitHub Issue: $ARGUMENTS
@@ -13,17 +12,19 @@ Fix a GitHub issue following the systematic debugging workflow based on the `deb
 
 **Goal:** Systematically diagnose and fix a GitHub issue with evidence-based root cause analysis and user approval before implementation.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Fetch issue details | `gh issue view` -- extract title, labels, stack traces |
-| 2 | Understand the issue | Map expected vs actual behavior, reproduction steps |
-| 3 | Evidence gathering | Multi-pattern search: imports, string literals, dynamic invocations |
-| 4 | Root cause analysis | Rank causes by probability with file:line evidence |
-| 5 | Propose fix | Minimal changes, risk assessment, test plan, rollback plan |
-| 6 | Wait for approval | Present analysis -- DO NOT code without explicit user approval |
-| 7 | Implement fix | Code changes, tests, PR creation |
+| Step | Action               | Key Notes                                                           |
+| ---- | -------------------- | ------------------------------------------------------------------- |
+| 1    | Fetch issue details  | `gh issue view` -- extract title, labels, stack traces              |
+| 2    | Understand the issue | Map expected vs actual behavior, reproduction steps                 |
+| 3    | Evidence gathering   | Multi-pattern search: imports, string literals, dynamic invocations |
+| 4    | Root cause analysis  | Rank causes by probability with file:line evidence                  |
+| 5    | Propose fix          | Minimal changes, risk assessment, test plan, rollback plan          |
+| 6    | Wait for approval    | Present analysis -- DO NOT code without explicit user approval      |
+| 7    | Implement fix        | Code changes, tests, PR creation                                    |
 
 **Key Principles:**
+
+- **Be skeptical. Critical thinking. Everything needs traced proof.** — Never accept code at face value; verify claims against actual behavior, trace data flow end-to-end, and demand evidence (file:line references, grep results, runtime confirmation) for every finding
 - Always use external memory at `.ai/workspace/analysis/issue-[number].md`
 - If confidence < 90%, request user confirmation before proceeding
 - Never make code changes without explicit user approval

@@ -1,7 +1,6 @@
 ---
 name: code-patterns
-description: "[Implementation] Code implementation patterns and best practices learned from real mistakes. Covers file I/O safety (locking, atomic writes), data persistence, and validation. Use for file-based state, shared resources, concurrent access. NOT for auto-learning patterns (see learned-patterns skill)."
-version: 1.0.0
+description: "[Implementation] Code implementation patterns and best practices learned from real mistakes. Covers file I/O safety (locking, atomic writes), data persistence, and validation. Use for file-based state, shared resources, concurrent access. NOT for learning system (see learn skill)."
 languages: all
 ---
 
@@ -72,11 +71,11 @@ Before implementing file I/O:
 
 ## Origin
 
-These patterns were extracted from ACE (Agentic Context Engineering) implementation review:
+These patterns were extracted from hook infrastructure implementation review:
 
-- Race condition in concurrent delta writes → file-io.md
+- Race condition in concurrent file writes → file-io.md
 - File corruption risk on crash → data-persistence.md
-- Invalid deltas persisting → data-validation.md
+- Invalid data persisting without validation → data-validation.md
 
 ## IMPORTANT Task Planning Notes
 

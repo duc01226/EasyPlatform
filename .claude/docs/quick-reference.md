@@ -28,10 +28,10 @@
 ## Workflow Detection
 
 ```
-Feature → /plan → /plan-review → /cook → /simplify → /review → /test → /docs → /watzup
-Bug Fix → /scout → /investigate → /debug → /plan → /plan-review → /fix → /simplify → /review → /test
-Refactor → /plan → /plan-review → /code → /simplify → /review → /test
-Docs → /scout → /investigate → /docs-update → /watzup
+Feature → /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /changelog → /test → /docs-update → /watzup
+Bug Fix → /scout → /investigate → /debug → /plan → /plan-review → /plan-validate → /why-review → /fix → /code-simplifier → /review-changes → /code-review → /changelog → /test → /watzup
+Refactor → /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /code → /code-simplifier → /review-changes → /code-review → /changelog → /test → /watzup
+Docs → /scout → /investigate → /plan → /plan-review → /plan-validate → /docs-update → /review-changes → /review-post-task → /watzup
 ```
 
 ## Hook Events
@@ -67,16 +67,6 @@ Docs → /scout → /investigate → /docs-update → /watzup
 | `tester`              | Test validation         |
 | `debugger`            | Issue investigation     |
 | `git-manager`         | Git operations          |
-
-## ACE Constants
-
-| Constant               | Value |
-| ---------------------- | ----- |
-| `MAX_DELTAS`           | 50    |
-| `CONFIDENCE_THRESHOLD` | 0.80  |
-| `SIMILARITY_THRESHOLD` | 0.85  |
-| `STALE_DAYS`           | 90    |
-| `MAX_INJECTION_TOKENS` | 500   |
 
 ## Pattern Matching Weights
 
@@ -117,9 +107,7 @@ Read              # All reads
 
 | Type           | Path                                     |
 | -------------- | ---------------------------------------- |
-| Deltas         | `.claude/memory/deltas.json`             |
-| Candidates     | `.claude/memory/delta-candidates.json`   |
-| Patterns       | `.claude/memory/learned-patterns/*.yaml` |
+| Lessons        | `docs/lessons.md`                     |
 | Todo State     | `.claude/.todo-state.json`               |
 | Workflow State | `.claude/.workflow-state.json`           |
 

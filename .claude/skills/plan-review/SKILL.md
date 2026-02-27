@@ -1,8 +1,7 @@
 ---
 name: plan-review
-description: "[Planning] Self-review plan for validity, correctness, and best practices"
+description: '[Planning] Self-review plan for validity, correctness, and best practices'
 argument-hint: [plan-path]
-infer: true
 ---
 
 > **CRITICAL:** Do NOT use `EnterPlanMode` tool — it blocks Write/Edit/Task tools. Follow the workflow below.
@@ -34,7 +33,7 @@ Critically self-review the implementation plan to ensure quality before coding b
 
 ## Review Process
 
-1. **Read** plan.md and all phase-*.md files
+1. **Read** plan.md and all phase-\*.md files
 2. **Evaluate** each checklist item
 3. **Identify** issues with specific locations and fixes
 4. **Output** approval or revision requirements
@@ -42,6 +41,7 @@ Critically self-review the implementation plan to ensure quality before coding b
 ## Output Format
 
 **If Plan Passes:**
+
 ```
 ✅ Plan Review: APPROVED
 
@@ -55,6 +55,7 @@ Proceeding to implementation...
 ```
 
 **If Issues Found:**
+
 ```
 ⚠️ Plan Review: NEEDS REVISION
 
@@ -65,10 +66,10 @@ Issues:
 Update plan before proceeding.
 ```
 
-## IMPORTANT Task Planning Notes
+## IMPORTANT Task Planning Notes (MUST FOLLOW)
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always plan and break work into many small todo tasks using `TaskCreate`
+- Always add a final review todo task to verify work quality
 
 ## Important Notes
 

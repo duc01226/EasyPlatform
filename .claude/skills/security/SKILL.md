@@ -1,8 +1,7 @@
 ---
 name: security
-description: "[Review & Quality] ⚡⚡ Perform security review"
+description: '[Review & Quality] ⚡⚡ Perform security review'
 argument-hint: [target]
-infer: true
 ---
 
 # Security Review: $ARGUMENTS
@@ -13,15 +12,16 @@ Perform security review on: $ARGUMENTS
 
 **Goal:** Perform a structured security audit on a target codebase area and present findings with severity ratings.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Scope identification | Parse target, identify API endpoints, handlers, forms, integrations |
-| 2 | Security checklist | Input validation, authorization, sensitive data, API security, frontend, auth |
-| 3 | Vulnerability patterns | Scan for common anti-patterns (missing auth, injection, XSS, logging secrets) |
-| 4 | Report | Severity-rated findings with file:line refs, fixes, OWASP references |
-| 5 | Wait for approval | Present findings before implementing any fixes |
+| Step | Action                 | Key Notes                                                                     |
+| ---- | ---------------------- | ----------------------------------------------------------------------------- |
+| 1    | Scope identification   | Parse target, identify API endpoints, handlers, forms, integrations           |
+| 2    | Security checklist     | Input validation, authorization, sensitive data, API security, frontend, auth |
+| 3    | Vulnerability patterns | Scan for common anti-patterns (missing auth, injection, XSS, logging secrets) |
+| 4    | Report                 | Severity-rated findings with file:line refs, fixes, OWASP references          |
+| 5    | Wait for approval      | Present findings before implementing any fixes                                |
 
 **Key Principles:**
+
 - Every finding must have severity rating (Critical/High/Medium/Low/Informational) and code location
 - Never implement fixes without explicit user approval
 - Check both backend (C#) and frontend (TypeScript) security vectors

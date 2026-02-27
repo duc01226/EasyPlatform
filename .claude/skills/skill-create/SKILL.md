@@ -1,35 +1,50 @@
 ---
 name: skill-create
-description: "[Tooling & Meta] Create a new agent skill"
-argument-hint: [prompt-or-llms-or-github-url]
-infer: true
+description: >-
+  [Tooling & Meta] Create new Claude Code skills or scan/fix invalid skill headers.
+  Triggers on: create skill, new skill, scan skills, fix skills, validate skills,
+  invalid skill header, skill schema.
+argument-hint: [prompt-or-url-or-scan]
 ---
 
-Use `skill-plan` and `claude-code` skills.
-Use `docs-seeker` skills to search for documentation if needed.
+Create skills or validate existing ones against official Claude Code schema.
 
-## Your mission
-Create a new skill in `.claude/skills/` directory.
+## Official Schema
 
-## Requirements
+Read: `references/official-skill-schema.md`
+
+10 valid fields: `name`, `description`, `argument-hint`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `model`, `context`, `agent`, `hooks`.
+
+## Mode: Create Skill
+
+Use `skill-plan` and `claude-code` skills. Use `docs-seeker` to search documentation.
+
 <user-prompt>$ARGUMENTS</user-prompt>
 
-## Rules of Skill Creation:
-Base on the requirements:
-- Always keep in mind that `SKILL.md` and reference files should be token consumption efficient, so that **progressive disclosure** can be leveraged at best.
-- `SKILL.md` is always short and concise, straight to the point, treat it as a quick reference guide.
-- If you're given nothing, use `AskUserQuestion` tool for clarifications and `researcher` subagent to research about the topic.
-- If you're given an URL, it's documentation page, use `Explore` subagent to explore every internal link and report back to main agent, don't skip any link.
-- If you receive a lot of URLs, use multiple `Explore` subagents to explore them in parallel, then report back to main agent.
-- If you receive a lot of files, use multiple `Explore` subagents to explore them in parallel, then report back to main agent.
-- If you're given a Github URL, use [`repomix`](https://repomix.com/guide/usage) command to summarize ([install it](https://repomix.com/guide/installation) if needed) and spawn multiple `Explore` subagents to explore it in parallel, then report back to main agent.
+1. Read `references/official-skill-schema.md` for valid frontmatter fields
+2. Create `.claude/skills/<name>/SKILL.md` (<100 lines) with valid frontmatter only
+3. Put trigger keywords in `description` field (NOT in `infer` — it's invalid)
+4. Heavy content goes in `references/` (<100 lines each)
+5. Scripts in `scripts/` (Node.js/Python preferred)
 
-**IMPORTANT:**
-- Skills are not documentation, they are practical instructions for Claude Code to use the tools, packages, plugins or APIs to achieve the tasks.
-- Each skill teaches Claude how to perform a specific development task, not what a tool does.
-- Claude Code can activate multiple skills automatically to achieve the user's request.
+**Rules:**
+- Skills are practical instructions, not documentation
+- Token-efficient: progressive disclosure (SKILL.md → references/ → scripts/)
+- If given URL, use `Explore` subagent to explore all internal links
+- If given GitHub URL, use `repomix` to summarize then explore with subagents
+- If given nothing, use `AskUserQuestion` for clarifications
 
-## IMPORTANT Task Planning Notes
+## Mode: Scan & Fix Invalid Skills
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+```bash
+# Report only — show all invalid fields:
+node .claude/skills/skill-create/scripts/validate-skills.cjs
+
+# Auto-fix — remove invalid fields (version, license, infer), rename typos (tools → allowed-tools):
+node .claude/skills/skill-create/scripts/validate-skills.cjs --fix
+
+# Scan specific directory:
+node .claude/skills/skill-create/scripts/validate-skills.cjs --path .claude/skills/find-component
+```
+
+After `--fix`, manually review skills with ERROR-level issues (unknown fields that can't be auto-fixed).

@@ -1,6 +1,5 @@
 # ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
+# Build and test ASP.NET Core projects targeting .NET 9.
 # https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
 trigger:
@@ -11,7 +10,209 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
+  dotnetVersion: '9.0.x'
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
 
-steps:
-- script: cd ./src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Api/ && dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
+stages:
+- stage: Build
+  displayName: 'Build'
+  jobs:
+  - job: BuildApi
+    displayName: 'Build TextSnippet API'
+    timeoutInMinutes: 30
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Setup .NET $(dotnetVersion)'
+      inputs:
+        packageType: sdk
+        version: $(dotnetVersion)
+
+    - task: Cache@2
+      displayName: 'Cache NuGet packages'
+      inputs:
+        key: 'nuget | "$(Agent.OS)" | **/*.csproj'
+        restoreKeys: |
+          nuget | "$(Agent.OS)"
+        path: $(NUGET_PACKAGES)
+
+    - script: dotnet build src/Backend/PlatformExampleApp.TextSnippet.Api --configuration $(buildConfiguration)
+      displayName: 'dotnet build $(buildConfiguration)'
+
+- stage: IntegrationTests
+  displayName: 'Integration Tests'
+  dependsOn: Build
+  jobs:
+  - job: RunIntegrationTests
+    displayName: 'Run Integration Tests'
+    timeoutInMinutes: 30
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Setup .NET $(dotnetVersion)'
+      inputs:
+        packageType: sdk
+        version: $(dotnetVersion)
+
+    - task: Cache@2
+      displayName: 'Cache NuGet packages'
+      inputs:
+        key: 'nuget | "$(Agent.OS)" | **/*.csproj'
+        restoreKeys: |
+          nuget | "$(Agent.OS)"
+        path: $(NUGET_PACKAGES)
+
+    - script: |
+        dotnet test src/Backend/PlatformExampleApp.TextSnippet.ContractTests \
+          --configuration $(buildConfiguration) \
+          --logger "trx;LogFileName=contract-test-results.trx" \
+          --results-directory $(Build.ArtifactStagingDirectory)/test-results
+      displayName: 'Run contract tests'
+
+    - script: docker network create platform-example-app-network || true
+      displayName: 'Create docker network'
+
+    - script: |
+        docker compose \
+          -f src/platform-example-app.docker-compose.yml \
+          -f src/platform-example-app.docker-compose.override.yml \
+          -p easyplatform-example \
+          up --detach sql-data mongo-data postgres-sql rabbitmq redis-cache
+      displayName: 'Start infrastructure services'
+
+    - script: |
+        echo "Waiting for infrastructure services to be healthy..."
+        timeout 120 bash -c '
+          until docker compose \
+            -f src/platform-example-app.docker-compose.yml \
+            -f src/platform-example-app.docker-compose.override.yml \
+            -p easyplatform-example \
+            exec -T postgres-sql pg_isready -U postgres 2>/dev/null; do
+            echo "  Postgres not ready, retrying in 5s..."; sleep 5
+          done
+        '
+        echo "Infrastructure ready."
+      displayName: 'Wait for infrastructure'
+
+    - script: |
+        dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api \
+          --configuration $(buildConfiguration) \
+          -- --urls "http://localhost:5001" &
+        API_PID=$!
+        echo "Waiting for API on localhost:5001 (PID: $API_PID)..."
+        timeout 120 bash -c '
+          while ! curl -sf http://localhost:5001/health 2>/dev/null && ! curl -sf http://localhost:5001 2>/dev/null; do
+            if ! kill -0 '"$API_PID"' 2>/dev/null; then echo "API process died"; exit 1; fi
+            sleep 3
+          done
+        '
+        echo "API is ready."
+      displayName: 'Start API and wait for health'
+
+    - script: |
+        dotnet test src/Backend/PlatformExampleApp.Tests.Integration \
+          --configuration $(buildConfiguration) \
+          --logger "trx;LogFileName=integration-test-results.trx" \
+          --results-directory $(Build.ArtifactStagingDirectory)/test-results
+      displayName: 'Run integration tests'
+
+    - task: PublishTestResults@2
+      displayName: 'Publish integration test results'
+      condition: always()
+      inputs:
+        testResultsFormat: 'VSTest'
+        testResultsFiles: '$(Build.ArtifactStagingDirectory)/test-results/integration-test-results.trx'
+        testRunTitle: 'Integration Tests'
+
+    - script: bash .claude/scripts/test-coverage-check.sh
+      displayName: 'TC Coverage Check'
+      condition: always()
+
+    - script: |
+        docker compose \
+          -f src/platform-example-app.docker-compose.yml \
+          -f src/platform-example-app.docker-compose.override.yml \
+          -p easyplatform-example \
+          down --volumes
+      displayName: 'Tear down infrastructure'
+      condition: always()
+
+- stage: E2ETests
+  displayName: 'E2E Tests (Playwright)'
+  dependsOn: Build
+  jobs:
+  - job: RunE2ETests
+    displayName: 'Run Playwright E2E Tests'
+    timeoutInMinutes: 30
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Setup .NET $(dotnetVersion)'
+      inputs:
+        packageType: sdk
+        version: $(dotnetVersion)
+
+    - task: NodeTool@0
+      displayName: 'Setup Node.js 20'
+      inputs:
+        versionSpec: '20.x'
+
+    - task: Cache@2
+      displayName: 'Cache npm packages'
+      inputs:
+        key: 'npm | "$(Agent.OS)" | src/Frontend/e2e/package-lock.json'
+        restoreKeys: |
+          npm | "$(Agent.OS)"
+        path: src/Frontend/e2e/node_modules
+
+    - script: docker network create platform-example-app-network || true
+      displayName: 'Create docker network'
+
+    - script: |
+        docker compose \
+          -f src/platform-example-app.docker-compose.yml \
+          -f src/platform-example-app.docker-compose.override.yml \
+          -p easyplatform-example \
+          up --detach sql-data mongo-data postgres-sql rabbitmq redis-cache text-snippet-api text-snippet-webspa
+      displayName: 'Start all services'
+
+    - script: |
+        echo "Waiting for webspa on localhost:4001..."
+        timeout 180 bash -c 'until curl -sf http://localhost:4001 2>/dev/null; do sleep 5; done'
+        echo "Frontend is ready."
+      displayName: 'Wait for frontend'
+
+    - script: npm ci
+      workingDirectory: src/Frontend/e2e
+      displayName: 'Install E2E dependencies'
+
+    - script: npx playwright install --with-deps chromium
+      workingDirectory: src/Frontend/e2e
+      displayName: 'Install Playwright browsers'
+
+    - script: npm test
+      workingDirectory: src/Frontend/e2e
+      displayName: 'Run Playwright E2E tests'
+      env:
+        CI: true
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Upload Playwright HTML report'
+      condition: always()
+      inputs:
+        PathtoPublish: 'src/Frontend/e2e/playwright-report'
+        ArtifactName: 'playwright-report'
+
+    - task: PublishBuildArtifacts@1
+      displayName: 'Upload failure screenshots'
+      condition: failed()
+      inputs:
+        PathtoPublish: 'src/Frontend/e2e/test-results'
+        ArtifactName: 'playwright-failure-screenshots'
+
+    - script: |
+        docker compose \
+          -f src/platform-example-app.docker-compose.yml \
+          -f src/platform-example-app.docker-compose.override.yml \
+          -p easyplatform-example \
+          down --volumes
+      displayName: 'Tear down services'
+      condition: always()

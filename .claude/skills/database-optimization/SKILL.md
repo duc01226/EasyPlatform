@@ -2,7 +2,6 @@
 name: database-optimization
 description: "[DevOps & Infra] Use when optimizing database queries, indexes, N+1 problems, slow queries, or analyzing query performance. Triggers on keywords like "slow query", "N+1", "index", "query optimization", "database performance", "eager loading"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
-infer: true
 ---
 
 # Database Optimization
@@ -20,6 +19,7 @@ Expert database performance agent for EasyPlatform. Optimizes queries, indexes, 
 - **Pagination** — Always use `PlatformCqrsPagedQuery` for list endpoints
 
 **Key Principles:**
+
 - Profile before optimizing — identify actual bottlenecks with evidence
 - Use platform repository patterns (expressions, projections) over raw queries
 - Batch related entity loads to eliminate N+1; never query inside loops

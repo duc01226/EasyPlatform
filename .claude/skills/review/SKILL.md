@@ -1,8 +1,7 @@
 ---
 name: review
-description: "[Review & Quality] ⚡⚡ Perform comprehensive code review"
+description: '[Review & Quality] ⚡⚡ Perform comprehensive code review'
 argument-hint: [target]
-infer: true
 ---
 
 # Code Review: $ARGUMENTS
@@ -13,14 +12,22 @@ Perform a comprehensive code review following EasyPlatform standards.
 
 **Goal:** Comprehensive report-driven code review of a PR, file, or branch following EasyPlatform standards.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Create report file | `plans/reports/code-review-{date}-{slug}.md` |
-| 2 | File-by-file review | Read each file, update report with summary/purpose/issues |
-| 3 | Holistic review | Re-read report for architecture coherence and layer correctness |
-| 4 | Final findings | Critical issues, high priority, architecture recommendations |
+| Step | Action              | Key Notes                                                       |
+| ---- | ------------------- | --------------------------------------------------------------- |
+| 1    | Create report file  | `plans/reports/code-review-{date}-{slug}.md`                    |
+| 2    | File-by-file review | Read each file, update report with summary/purpose/issues       |
+| 3    | Holistic review     | Re-read report for architecture coherence and layer correctness |
+| 4    | Final findings      | Critical issues, high priority, architecture recommendations    |
+
+> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale documentation. Every review must verify both code correctness AND documentation accuracy.
 
 **Key Principles:**
+
+- **Be skeptical. Critical thinking. Everything needs traced proof.** — Never accept code at face value; verify claims against actual behavior, trace data flow end-to-end, and demand evidence (file:line references, grep results, runtime confirmation) for every finding
+- **Ensure code quality: no flaws, no bugs** — Verify correctness of logic, data flow, edge cases, and error handling. Flag anything that could fail at runtime
+- **Clean code and DRY** — No duplication, clear naming, single responsibility, early returns. Code should be self-documenting
+- **Follow existing conventions** — Match project patterns, naming style, file organization, and architectural decisions already established in the codebase. Grep for similar implementations before flagging deviations
+- **Docs must match code** — If changes affect behavior, APIs, or features, verify related docs are updated: feature docs (`docs/business-features/`), test specs (`docs/test-specs/`), CHANGELOG, README, architecture docs, and inline code comments. Flag any doc that describes old behavior
 - Build report incrementally -- update after EACH file review
 - Check: architecture compliance, naming, platform patterns, security, performance
 - Logic must be in the LOWEST appropriate layer (Entity > Service > Component)
@@ -39,7 +46,7 @@ Before starting, call TodoWrite with:
 - [ ] `[Review Phase 1] Review file-by-file and update report` - pending
 - [ ] `[Review Phase 2] Re-read report for holistic assessment` - pending
 - [ ] `[Review Phase 3] Generate final review findings` - pending
-Update todo status as each phase completes. This ensures review is tracked.
+      Update todo status as each phase completes. This ensures review is tracked.
 
 **Step 0: Create Report File**
 

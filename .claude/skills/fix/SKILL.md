@@ -1,9 +1,10 @@
 ---
 name: fix
-description: "[Fix & Debug] ⚡⚡ Analyze and fix issues [INTELLIGENT ROUTING]"
+description: '[Fix & Debug] ⚡⚡ Analyze and fix issues [INTELLIGENT ROUTING]'
 argument-hint: [issues]
-infer: true
 ---
+
+**Be skeptical. Critical thinking. Everything needs traced proof.** — Never accept code at face value; verify claims against actual behavior, trace data flow end-to-end, and demand evidence (file:line references, grep results, runtime confirmation) for every finding.
 
 **Analyze issues and route to specialized fix command:**
 <issues>$ARGUMENTS</issues>
@@ -11,6 +12,7 @@ infer: true
 ## Decision Tree
 
 **1. Check for existing plan:**
+
 - If markdown plan exists → `/code <path-to-plan>`
 
 **2. Route by issue type:**
@@ -40,6 +42,7 @@ infer: true
 → `/fix-fast <detailed-description>`
 
 ## Notes
+
 - `detailed-description` = enhanced prompt describing issue in detail
 - If unclear, ask user for clarification before routing
 - Can combine routes: e.g., multiple type errors + UI issue → `/fix-parallel`

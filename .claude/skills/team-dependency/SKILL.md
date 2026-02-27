@@ -2,7 +2,6 @@
 name: team-dependency
 description: "[Team] Map and visualize feature dependencies. Use when analyzing dependencies, identifying blockers, or creating dependency graphs. Triggers on keywords like "dependencies", "blockers", "what blocks", "dependency map"."
 argument-hint: "[pbi-file|feature-name|all]"
-infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite
 ---
 
@@ -11,6 +10,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite
 Map and visualize dependencies between features and work items.
 
 ## When to Use
+
 - Planning feature sequencing
 - Identifying blockers
 - Understanding critical path
@@ -24,6 +24,7 @@ Map and visualize dependencies between features and work items.
 ## Quick Reference
 
 ### Workflow
+
 1. Read target PBI/feature or all items from `team-artifacts/pbis/`
 2. Extract dependency fields
 3. Build dependency graph
@@ -33,6 +34,7 @@ Map and visualize dependencies between features and work items.
 7. Output to console or save to file
 
 ### Dependency Types
+
 | Type       | Symbol | Description                         |
 | ---------- | ------ | ----------------------------------- |
 | Blocked by | `->`   | Cannot start until X completes      |
@@ -42,6 +44,7 @@ Map and visualize dependencies between features and work items.
 | Depends on | `~>`   | Needs external (API, service)       |
 
 ### Graph Notation
+
 ```
 Feature A -> Feature B (blocked by)
 Feature A <- Feature C (blocks)
@@ -56,21 +59,26 @@ Feature A <-> Feature D (mutual)
 ### {Feature}
 
 **Upstream (We depend on):**
+
 - [ ] {Dep 1} - {status}
 - [ ] {Dep 2} - {status}
 
 **Downstream (Depends on us):**
+
 - [ ] {Dep 1} - {their deadline}
 
 ### Critical Path
+
 {A} -> {B} -> {C} -> {D}
 
 ### Risk Areas
+
 - Red: {Feature X} blocking 3 items
 - Yellow: {External API} - timeline uncertain
 ```
 
 ### Output Format
+
 ```
 A -> B -> C (critical path)
      \-> D
@@ -81,6 +89,7 @@ Legend:
 ```
 
 ### Related
+
 - **Role Skill:** `project-manager`
 - **Command:** `/team-dependency`
 

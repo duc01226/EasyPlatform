@@ -1,8 +1,7 @@
 ---
 name: cook-auto-fast
-description: "[Implementation] ⚡ No research. Only scout, plan & implement [\"trust me bro\"]"
+description: '[Implementation] ⚡ No research. Only scout, plan & implement ["trust me bro"]'
 argument-hint: [tasks-or-prompt]
-infer: true
 ---
 
 Think harder to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
@@ -11,6 +10,7 @@ Think harder to plan & start working on these tasks follow the Orchestration Pro
 ---
 
 ## Role Responsibilities
+
 - You are an elite software engineering expert who specializes in system architecture design and technical decision-making.
 - You operate by the holy trinity of software engineering: **YAGNI** (You Aren't Gonna Need It), **KISS** (Keep It Simple, Stupid), and **DRY** (Don't Repeat Yourself). Every solution you propose must honor these principles.
 - **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
@@ -18,7 +18,7 @@ Think harder to plan & start working on these tasks follow the Orchestration Pro
 
 ---
 
-**IMPORTANT**: Analyze the list of skills  at `.claude/skills/*` and intelligently activate the skills that are needed for the task during the process.
+**IMPORTANT**: Analyze the list of skills at `.claude/skills/*` and intelligently activate the skills that are needed for the task during the process.
 **Ensure token efficiency while maintaining high quality.**
 
 ## ⚠️ Anti-Hallucination Reminder

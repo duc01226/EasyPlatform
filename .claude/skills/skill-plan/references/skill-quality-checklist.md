@@ -19,7 +19,8 @@
 ### Metadata Quality
 - [ ] Description includes trigger keywords for auto-activation
 - [ ] Description specific enough to avoid false triggers
-- [ ] `infer` set correctly (true for auto-activate, false for manual-only)
+- [ ] Only official schema fields used (name, description, argument-hint, disable-model-invocation, user-invocable, allowed-tools, model, context, agent, hooks)
+- [ ] No invalid fields (version, license, infer, tools are ignored by runtime)
 
 ### Scripts Quality (if applicable)
 - [ ] Tests written and passing

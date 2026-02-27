@@ -1,7 +1,6 @@
 ---
 name: product-owner
 description: "[Team Roles] Assist Product Owners with idea capture, backlog management, prioritization frameworks, and stakeholder communication. Use when working with product ideas, backlog items, sprint planning, or prioritization decisions. Triggers on keywords like "idea", "backlog", "prioritize", "sprint planning", "user value", "stakeholder", "product vision"."
-infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite, WebSearch
 ---
 
@@ -24,8 +23,8 @@ Role: value-driven decisions, backlog management, stakeholder communication, pro
 
 ## Task Routing
 
-| Task                  | Skill        | Command         |
-| --------------------- | ------------ | --------------- |
+| Task                  | Skill             | Command              |
+| --------------------- | ----------------- | -------------------- |
 | Capture idea          | team-idea         | `/team-idea`         |
 | Prioritize backlog    | team-prioritize   | `/team-prioritize`   |
 | Sprint/project status | team-status       | `/team-status`       |
@@ -68,7 +67,6 @@ Role: value-driven decisions, backlog management, stakeholder communication, pro
 - [ ] Priority has numeric order
 - [ ] Dependencies explicitly listed
 - [ ] Status frontmatter current
-
 
 ## IMPORTANT Task Planning Notes
 

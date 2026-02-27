@@ -2,10 +2,9 @@
  * Integration Test Suite
  *
  * Tests for hook chain interactions:
- * - ACE Pipeline Chain: ace-event-emitter -> ace-reflector-analysis -> ace-curator-pruner
  * - Session Lifecycle Chain: session-init -> session-resume -> session-end
  * - Security Chain: privacy-block + scout-block (parallel check)
- * - Todo Enforcement Flow: todo-tracker -> todo-enforcement
+ * - Todo Enforcement Flow: todo-tracker -> skill-enforcement
  * - Concurrent Execution: Race condition safety
  */
 
@@ -19,8 +18,7 @@ const {
   createPreToolUseInput,
   createPostToolUseInput,
   createSessionStartInput,
-  createSessionEndInput,
-  createPreCompactInput
+  createSessionEndInput
 } = require('../lib/hook-runner.cjs');
 const {
   assertEqual,
@@ -32,88 +30,21 @@ const {
 const {
   createTempDir,
   cleanupTempDir,
-  setupEventsStream,
-  setupDeltaCandidates,
   setupCheckpoint,
   setupTodoState,
   fileExists,
-  readDeltas,
-  readDeltaCandidates,
   createTimestamp,
   createDaysAgoTimestamp
 } = require('../lib/test-utils.cjs');
 
 // Hook paths
-const ACE_EVENT_EMITTER = getHookPath('ace-event-emitter.cjs');
-const ACE_REFLECTOR = getHookPath('ace-reflector-analysis.cjs');
-const ACE_CURATOR = getHookPath('ace-curator-pruner.cjs');
 const SESSION_INIT = getHookPath('session-init.cjs');
 const SESSION_RESUME = getHookPath('session-resume.cjs');
 const SESSION_END = getHookPath('session-end.cjs');
 const PRIVACY_BLOCK = getHookPath('privacy-block.cjs');
 const SCOUT_BLOCK = getHookPath('scout-block.cjs');
 const TODO_TRACKER = getHookPath('todo-tracker.cjs');
-const TODO_ENFORCEMENT = getHookPath('todo-enforcement.cjs');
-
-// ============================================================================
-// ACE Pipeline Chain Tests
-// ============================================================================
-
-const acePipelineTests = [
-  {
-    name: '[ace-pipeline] event emitter processes skill execution',
-    fn: async () => {
-      // Test that ace-event-emitter hook completes successfully for Skill tool
-      // Note: MEMORY_DIR is hardcoded in hooks, so we verify execution only
-      const input = createPostToolUseInput('Skill', { skill: 'test-skill' }, { exit_code: 0 });
-      const result = await runHook(ACE_EVENT_EMITTER, input);
-
-      assertAllowed(result.code, 'Event emitter should complete successfully');
-      assertFalse(result.timedOut, 'Should not timeout');
-    }
-  },
-  {
-    name: '[ace-pipeline] reflector processes PreCompact event',
-    fn: async () => {
-      // Test that ace-reflector-analysis hook completes successfully on PreCompact
-      const compactInput = createPreCompactInput({ compact_type: 'manual' });
-      const result = await runHook(ACE_REFLECTOR, compactInput);
-
-      assertAllowed(result.code, 'Reflector should complete successfully');
-      assertFalse(result.timedOut, 'Should not timeout');
-    }
-  },
-  {
-    name: '[ace-pipeline] curator processes PreCompact event',
-    fn: async () => {
-      // Test that ace-curator-pruner hook completes successfully on PreCompact
-      const compactInput = createPreCompactInput({ compact_type: 'manual' });
-      const result = await runHook(ACE_CURATOR, compactInput);
-
-      assertAllowed(result.code, 'Curator should complete successfully');
-      assertFalse(result.timedOut, 'Should not timeout');
-    }
-  },
-  {
-    name: '[ace-pipeline] full pipeline sequence executes',
-    fn: async () => {
-      // Test that ACE pipeline hooks execute in sequence without blocking
-      const compactInput = createPreCompactInput({ compact_type: 'manual' });
-
-      // Run ACE pipeline sequence
-      const results = await runHookSequence(
-        [ACE_REFLECTOR, ACE_CURATOR],
-        compactInput
-      );
-
-      // Both should complete (none should block)
-      assertEqual(results.length, 2, 'Both hooks should execute');
-      for (const { result } of results) {
-        assertAllowed(result.code, 'Pipeline hooks should complete successfully');
-      }
-    }
-  }
-];
+const SKILL_ENFORCEMENT = getHookPath('skill-enforcement.cjs');
 
 // ============================================================================
 // Session Lifecycle Chain Tests
@@ -264,7 +195,7 @@ const todoFlowTests = [
 
         // Enforcement should allow skill with active todos
         const skillInput = createPreToolUseInput('Skill', { skill: 'cook' });
-        const result = await runHook(TODO_ENFORCEMENT, skillInput, { cwd: tmpDir });
+        const result = await runHook(SKILL_ENFORCEMENT, skillInput, { cwd: tmpDir });
 
         assertAllowed(result.code, 'Should allow with active todos');
       } finally {
@@ -277,11 +208,11 @@ const todoFlowTests = [
     fn: async () => {
       const tmpDir = createTempDir();
       try {
-        // No todos setup - enforcement should block
+        // No todos setup - enforcement should block (exit 1)
         const skillInput = createPreToolUseInput('Skill', { skill: 'cook' });
-        const result = await runHook(TODO_ENFORCEMENT, skillInput, { cwd: tmpDir });
+        const result = await runHook(SKILL_ENFORCEMENT, skillInput, { cwd: tmpDir });
 
-        assertBlocked(result.code, 'Should block /cook without todos');
+        assertTrue(result.code === 1, 'Should block /cook without todos (exit 1)');
       } finally {
         cleanupTempDir(tmpDir);
       }
@@ -350,7 +281,6 @@ const concurrentTests = [
 module.exports = {
   name: 'Integration Tests',
   tests: [
-    ...acePipelineTests,
     ...lifecycleChainTests,
     ...securityChainTests,
     ...todoFlowTests,

@@ -78,7 +78,10 @@ Once approved:
 - **Regression Prevention**: Existing functionality protected
 
 
-## IMPORTANT Task Planning Notes
+## IMPORTANT Task Planning Notes (MUST FOLLOW)
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always plan and break work into many small todo tasks using `TaskCreate`
+- Always add a final review todo task to verify work quality
+- MANDATORY FINAL TASKS: After creating all planning todo tasks, ALWAYS add these two final tasks:
+  1. Task: "Run /plan-validate" — interview user with critical questions, validate assumptions and decisions
+  2. Task: "Run /plan-review" — auto-review plan for validity, correctness, and best practices

@@ -2,7 +2,6 @@
 name: team-prioritize
 description: "[Team] Order backlog items using RICE, MoSCoW, or Value-Effort frameworks. Use when prioritizing backlog, ranking features, or ordering work items. Triggers on keywords like "prioritize", "RICE score", "MoSCoW", "rank backlog", "order by value"."
 argument-hint: "[rice|moscow|value-effort] [scope:all|sprint|feature-{name}]"
-infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite
 ---
 
@@ -11,6 +10,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite
 Order backlog items using data-driven prioritization frameworks.
 
 ## When to Use
+
 - Sprint planning needs ordered backlog
 - Stakeholder requests priority ranking
 - Feature roadmap ordering
@@ -26,6 +26,7 @@ Order backlog items using data-driven prioritization frameworks.
 ### Frameworks
 
 #### RICE Score
+
 ```
 Score = (Reach x Impact x Confidence) / Effort
 
@@ -36,12 +37,14 @@ Effort: Person-months
 ```
 
 #### MoSCoW
+
 - **Must Have:** Critical, non-negotiable (release blocker)
 - **Should Have:** Important, not vital
 - **Could Have:** Nice to have
 - **Won't Have:** Out of scope (not this release)
 
 #### Value vs Effort
+
 ```
 High Value + Low Effort = Quick Wins (do first)
 High Value + High Effort = Strategic (plan carefully)
@@ -50,6 +53,7 @@ Low Value + High Effort = Time sinks (avoid)
 ```
 
 ### Workflow
+
 1. Read PBIs from `team-artifacts/pbis/`
 2. Filter by scope if specified; exclude done/rejected items
 3. Apply selected framework
@@ -58,6 +62,7 @@ Low Value + High Effort = Time sinks (avoid)
 6. Output ordered list with scores
 
 ### Output
+
 - Priority field: Numeric 1-999 (not High/Med/Low)
 - Console: Ordered table with scores
 
@@ -75,6 +80,7 @@ Low Value + High Effort = Time sinks (avoid)
 ```
 
 ### Related
+
 - **Role Skill:** `product-owner`
 
 ## Example

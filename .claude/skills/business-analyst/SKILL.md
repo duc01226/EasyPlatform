@@ -1,7 +1,6 @@
 ---
 name: business-analyst
 description: "[Team Roles] Assist Business Analysts with requirements refinement, user story writing, acceptance criteria in BDD format, and gap analysis. Use when creating user stories, writing acceptance criteria, analyzing requirements, or mapping business processes. Triggers on keywords like "requirements", "user story", "acceptance criteria", "BDD", "GIVEN WHEN THEN", "gap analysis", "process flow", "business rules"."
-infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite
 ---
 
@@ -24,8 +23,8 @@ Role: requirements refinement, user stories, acceptance criteria, business proce
 
 ## Task Routing
 
-| Task                | Skill      | Command       |
-| ------------------- | ---------- | ------------- |
+| Task                | Skill           | Command            |
+| ------------------- | --------------- | ------------------ |
 | Capture idea        | team-idea       | `/team-idea`       |
 | Refine idea to PBI  | team-refine     | `/team-refine`     |
 | Create user stories | team-story      | `/team-story`      |

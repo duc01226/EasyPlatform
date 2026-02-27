@@ -1,8 +1,7 @@
 ---
 name: skill-fix-logs
-description: "[Tooling & Meta] Fix the agent skill based on `logs.txt` file."
+description: '[Tooling & Meta] Fix the agent skill based on `logs.txt` file.'
 argument-hint: [prompt-or-path-to-skill]
-infer: true
 ---
 
 Think harder.
@@ -10,13 +9,17 @@ Use `skill-plan` and `claude-code` skills.
 Use `docs-seeker` skills to search for documentation if needed.
 
 ## Your mission
+
 Fix the agent skill based on the current `logs.txt` file (in the project root directory).
 
 ## Requirements
+
 <user-prompt>$ARGUMENTS</user-prompt>
 
 ## Rules of Skill Fixing:
+
 Base on the requirements:
+
 - If you're given nothing, use `AskUserQuestion` tool for clarifications and `researcher` subagent to research about the topic.
 - If you're given an URL, it's documentation page, use `Explorer` subagent to explore every internal link and report back to main agent, don't skip any link.
 - If you receive a lot of URLs, use multiple `Explorer` subagents to explore them in parallel, then report back to main agent.

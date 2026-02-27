@@ -49,14 +49,8 @@ function buildWorkflowCatalog(config) {
  * @param {Object} config
  * @returns {boolean}
  */
-function shouldInjectCatalog(userPrompt, config) {
-  const trimmed = userPrompt.trim();
-  if (/^\/\w+/.test(trimmed)) return false;
-  if (config.settings?.overridePrefix &&
-      trimmed.toLowerCase().startsWith(config.settings.overridePrefix.toLowerCase()))
-    return false;
-  if (trimmed.length < 15) return false;
-  return true;
+function shouldInjectCatalog(userPrompt, _config) {
+  return userPrompt.trim().length >= 15;
 }
 
 /**

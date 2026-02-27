@@ -1,9 +1,7 @@
 ---
 name: investigate
-description: "[Fix & Debug] Investigate and explain how existing features or logic work. READ-ONLY exploration with no code changes."
-version: 2.0.0
+description: '[Fix & Debug] Investigate and explain how existing features or logic work. READ-ONLY exploration with no code changes.'
 allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
-infer: true
 ---
 
 # Feature Investigation
@@ -14,16 +12,18 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 
 **Goal:** READ-ONLY exploration of existing features and logic — understand how code works without making changes.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Discovery | Search codebase for related files (Entities > Commands > Events > Controllers) |
-| 2 | Knowledge Graph | Read and document purpose, symbols, dependencies per file |
-| 3 | Flow Mapping | Trace entry points through pipeline to exit points |
-| 4 | Analysis | Extract business rules, validation, authorization, error handling |
-| 5 | Synthesis | Write executive summary with key files and flow diagrams |
-| 6 | Present | Deliver findings, offer deeper dives on subtopics |
+| Step | Action          | Key Notes                                                                      |
+| ---- | --------------- | ------------------------------------------------------------------------------ |
+| 1    | Discovery       | Search codebase for related files (Entities > Commands > Events > Controllers) |
+| 2    | Knowledge Graph | Read and document purpose, symbols, dependencies per file                      |
+| 3    | Flow Mapping    | Trace entry points through pipeline to exit points                             |
+| 4    | Analysis        | Extract business rules, validation, authorization, error handling              |
+| 5    | Synthesis       | Write executive summary with key files and flow diagrams                       |
+| 6    | Present         | Deliver findings, offer deeper dives on subtopics                              |
 
 **Key Principles:**
+
+- **Be skeptical. Critical thinking. Everything needs traced proof.** — Never accept code at face value; verify claims against actual behavior, trace data flow end-to-end, and demand evidence (file:line references, grep results, runtime confirmation) for every finding
 - Strictly READ-ONLY — no code changes allowed
 - MUST read anti-hallucination-protocol.md and knowledge-graph-template.md before starting
 - Evidence-based: validate every assumption with actual code references
@@ -52,6 +52,8 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 - **⚠️ MUST READ** `.claude/skills/shared/knowledge-graph-template.md` — Per-file analysis structure
 
 **If preceded by `/scout`:** Use Scout's numbered file list as analysis targets. Skip redundant discovery. Prioritize HIGH PRIORITY files first.
+
+**If task involves UI** (fix UI, update UI, screenshot analysis): Run `/find-component` first to identify matched components and narrow investigation scope.
 
 ## Investigation Techniques
 
@@ -176,26 +178,33 @@ Autonomous mode writes analysis to `.ai/workspace/analysis/[feature-name]-invest
 
 ```markdown
 ## Metadata
+
 > Original question: [user's exact question]
 
 ## Investigation Question
+
 [Clearly stated investigation goal]
 
 ## Progress
+
 - **Phase**: 1
 - **Items Processed**: 0 / [total]
 - **Current Focus**: [original question]
 
 ## File List
+
 [All discovered files, grouped by priority]
 
 ## Knowledge Graph
+
 [Per-file analysis entries - see template below]
 
 ## Data Flow
+
 [Flow diagrams and pipeline documentation]
 
 ## Findings
+
 [Populated in Phase 2+]
 ```
 
@@ -279,20 +288,26 @@ For each file, document in `## Knowledge Graph`:
 
 ```markdown
 ## Answer
+
 [Direct answer in 1-2 paragraphs]
 
 ## How It Works
+
 ### 1. [Step] - [Explanation with `file:line` reference]
+
 ### 2. [Step] - [Explanation with `file:line` reference]
 
 ## Key Files
+
 | File | Purpose |
 | ---- | ------- |
 
 ## Data Flow
+
 [Text diagram: Entry -> Processing -> Persistence -> Side Effects]
 
 ## Want to Know More?
+
 - [Subtopic 1]
 - [Subtopic 2]
 ```

@@ -1,8 +1,6 @@
 ---
 name: test-generation
-version: 2.0.1
 description: "[Testing] Use when the user asks to generate test cases, create test specifications, write unit tests, create QA documentation, or analyze test coverage. Triggers on keywords like "test", "test case", "unit test", "QA", "coverage", "Given When Then", "BDD", "TDD", "spec"."
-infer: true
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 ---
 
@@ -14,15 +12,16 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
 
 **Goal:** Generate comprehensive BDD test cases (Given/When/Then) with full traceability and 100% business workflow coverage.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | External memory analysis | Build knowledge model in `.ai/workspace/analysis/[feature].analysis.md` |
-| 2 | Overall analysis | End-to-end workflows, architectural patterns, integration points |
-| 3 | Approval gate | Present test plan -- DO NOT proceed without explicit approval |
-| 4 | Execution | Write test cases in 4 priority groups (Critical/High/Medium/Low) |
-| 5 | Review TOC | Update Table of Contents with sub-section links |
+| Step | Action                   | Key Notes                                                               |
+| ---- | ------------------------ | ----------------------------------------------------------------------- |
+| 1    | External memory analysis | Build knowledge model in `.ai/workspace/analysis/[feature].analysis.md` |
+| 2    | Overall analysis         | End-to-end workflows, architectural patterns, integration points        |
+| 3    | Approval gate            | Present test plan -- DO NOT proceed without explicit approval           |
+| 4    | Execution                | Write test cases in 4 priority groups (Critical/High/Medium/Low)        |
+| 5    | Review TOC               | Update Table of Contents with sub-section links                         |
 
 **Key Principles:**
+
 - Evidence-based testing -- base test cases on actual code behavior, not assumptions
 - TC-XXX format with Given/When/Then, linked bidirectionally to requirements (BR-XXX)
 - Must read `anti-hallucination-protocol.md` before executing
@@ -50,6 +49,7 @@ Build a structured knowledge model in `.ai/workspace/analysis/[feature-name].ana
 **IMPORTANT: MUST DO WITH TODO LIST**
 
 For each file, document in `## Knowledge Graph`:
+
 - Standard fields plus testing-specific:
 - `coverageTargets`, `edgeCases`, `businessScenarios`
 - `detailedFunctionalRequirements`, `detailedTestCases` (Given...When...Then)
@@ -87,13 +87,16 @@ Generate test cases in **4 priority groups**: Critical, High, Medium, Low.
 **And** [additional context]
 **When** [action performed]
 **Then** the system should:
+
 - [Expected outcome 1]
 - [Expected outcome 2]
 
 **Test Data:**
+
 - [Required test data]
 
 **Edge Cases to Validate:**
+
 - [Edge case 1]
 ```
 
@@ -124,5 +127,6 @@ Update `## Table of Contents` with detailed sub-section links.
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements

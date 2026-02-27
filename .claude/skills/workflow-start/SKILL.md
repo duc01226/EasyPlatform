@@ -1,7 +1,6 @@
 ---
 name: workflow-start
 description: "[Tooling & Meta] Activate a workflow from the injected catalog. Use when the workflow-router hook injects a catalog and a matching workflow is identified, or when the user explicitly requests a workflow activation (e.g., "start feature workflow", "activate bugfix workflow")."
-infer: true
 allowed-tools: Skill, TodoWrite, AskUserQuestion, Read, Glob, Grep
 ---
 

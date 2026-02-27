@@ -112,9 +112,9 @@ const workflowIntentChangeTests = [
 
         // Should inject active workflow context (not old-style "Intent Change")
         assertTrue(
-          output.includes('Active Workflow') ||
+          output.includes('Active workflow') ||
           output.includes('Feature Implementation') ||
-          output.includes('Available Workflows'),
+          output.includes('Workflow Catalog'),
           'Should inject active workflow context with catalog'
         );
         // Should contain conflict handling instructions
@@ -226,15 +226,15 @@ const workflowIntentChangeTests = [
         const output = result.stdout + result.stderr;
 
         // Should inject catalog (not active workflow context)
-        assertContains(output, 'Available Workflows', 'Should inject catalog when no active workflow');
-        assertNotContains(output, 'Active Workflow', 'Should NOT show active workflow when none exists');
+        assertContains(output, 'Workflow Catalog', 'Should inject catalog when no active workflow');
+        assertNotContains(output, 'Active workflow:', 'Should NOT show active workflow when none exists');
       } finally {
         cleanupTempDir(tmpDir);
       }
     }
   },
   {
-    name: '[workflow-active] quick: prefix clears active workflow state',
+    name: '[workflow-active] quick: prefix still injects catalog (bypass handled by enforcement hooks)',
     fn: async () => {
       const tmpDir = createTempDir();
       let wfState;
@@ -265,14 +265,16 @@ const workflowIntentChangeTests = [
           }
         }));
 
-        const input = createUserPromptInput('quick: fix this typo');
+        const input = createUserPromptInput('quick: fix this typo in the code');
         const result = await runHook(WORKFLOW_ROUTER, input, {
           cwd: tmpDir,
           env: { CLAUDE_SESSION_ID: wfState.sessionId }
         });
 
         assertAllowed(result.code, 'Should not block');
-        // Quick prefix should clear state and exit silently
+        // Router no longer clears state on quick: — enforcement hooks handle bypass
+        const output = (result.stdout + result.stderr).trim();
+        assertContains(output, 'Active workflow', 'Should still inject active workflow context');
       } finally {
         if (wfState) cleanupWorkflowState(wfState.stateFile);
         cleanupTempDir(tmpDir);
@@ -295,7 +297,7 @@ const tmpclaudeCleanupTests = [
       const tmpDir = createTempDir();
       try {
         // Create tmpclaude file in .claude/skills subdirectory
-        const skillsDir = path.join(tmpDir, '.claude', 'skills', 'learned-patterns', 'scripts');
+        const skillsDir = path.join(tmpDir, '.claude', 'skills', 'learn', 'scripts');
         fs.mkdirSync(skillsDir, { recursive: true });
         const tmpFile = path.join(skillsDir, 'tmpclaude-abc123def-cwd');
         fs.writeFileSync(tmpFile, 'test content');
@@ -634,11 +636,11 @@ const prettierSkipPatternTests = [
     }
   },
   {
-    name: '[prettier-skip] skips nested paths in .claude/skills/learned-patterns/',
+    name: '[prettier-skip] skips nested paths in .claude/skills/learn/',
     fn: async () => {
       const tmpDir = createTempDir();
       try {
-        const nestedDir = path.join(tmpDir, '.claude', 'skills', 'learned-patterns', 'scripts');
+        const nestedDir = path.join(tmpDir, '.claude', 'skills', 'learn', 'scripts');
         fs.mkdirSync(nestedDir, { recursive: true });
         const scriptFile = path.join(nestedDir, 'pattern.ts');
         const originalContent = 'const x:number=1';
@@ -866,8 +868,9 @@ const v1xStateMigrationTests = [
         // Should NOT crash — should inject catalog after clearing stale state
         assertAllowed(result.code, 'Should not crash on v1.x state');
         const output = result.stdout + result.stderr;
-        assertContains(output, 'Available Workflows', 'Should inject catalog after clearing v1.x state');
-        assertNotContains(output, 'error', 'Should not contain error messages');
+        assertContains(output, 'Workflow Catalog', 'Should inject catalog after clearing v1.x state');
+        // Only check stderr for actual errors (stdout legitimately contains 'error' in catalog descriptions)
+        assertNotContains(result.stderr || '', 'Error:', 'Should not contain actual error messages');
 
         // Cleanup state file
         try { fs.unlinkSync(stateFile); } catch (_) {}

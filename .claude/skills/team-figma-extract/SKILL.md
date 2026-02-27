@@ -2,7 +2,6 @@
 name: team-figma-extract
 description: "[Team] Extract design specifications and tokens from Figma files via MCP. Use when pulling design from Figma, extracting colors/typography, or converting Figma to spec. Triggers on keywords like "figma extract", "figma url", "figma tokens", "pull figma", "figma design"."
 argument-hint: "<figma-url> [--output markdown|json] [--depth 1-10] [--timeout 30]"
-infer: true
 allowed-tools: Read, Write, mcp__figma__*
 ---
 
@@ -14,20 +13,22 @@ Extract design specifications from Figma files using MCP integration.
 
 **Goal:** Extract design tokens (colors, typography, spacing, components) from Figma files via MCP integration.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Parse URL | Extract file key and optional node ID from Figma URL |
-| 2 | Validate MCP | Check if Figma MCP tools are available |
-| 3 | Extract via MCP | Call Figma API with depth/timeout limits |
-| 4 | Transform response | Structure colors, typography, spacing, component hierarchy |
-| 5 | Format output | Markdown tables or JSON; save to `team-artifacts/designs/` |
+| Step | Action             | Key Notes                                                  |
+| ---- | ------------------ | ---------------------------------------------------------- |
+| 1    | Parse URL          | Extract file key and optional node ID from Figma URL       |
+| 2    | Validate MCP       | Check if Figma MCP tools are available                     |
+| 3    | Extract via MCP    | Call Figma API with depth/timeout limits                   |
+| 4    | Transform response | Structure colors, typography, spacing, component hierarchy |
+| 5    | Format output      | Markdown tables or JSON; save to `team-artifacts/designs/` |
 
 **Key Principles:**
+
 - Requires Figma MCP tools configured -- returns setup instructions if missing
 - Default limits: depth 5, timeout 30s, max 20 colors, max 10 typography styles
 - Handle rate limits and timeouts gracefully with informative error messages
 
 ## When to Use
+
 - Figma URL provided for design extraction
 - Need design tokens from Figma
 - Converting Figma to implementation spec
@@ -50,39 +51,40 @@ Extract design specifications from Figma files using MCP integration.
 ## Workflow
 
 1. **Parse URL**
-   - Extract file key from URL
-   - Extract node ID if present (`?node-id=X:Y`)
-   - Pattern: `figma.com/(design|file)/([a-zA-Z0-9]+)`
+    - Extract file key from URL
+    - Extract node ID if present (`?node-id=X:Y`)
+    - Pattern: `figma.com/(design|file)/([a-zA-Z0-9]+)`
 
 2. **Validate MCP**
-   - Check if Figma MCP tools available
-   - If not: return error with setup instructions
+    - Check if Figma MCP tools available
+    - If not: return error with setup instructions
 
 3. **Extract via MCP**
-   - Call Figma MCP with file key
-   - If node ID: filter to specific node
-   - Apply timeout (default 30s) - abort if exceeded
-   - Limit component depth (default 5 levels)
-   - Handle rate limit errors gracefully
+    - Call Figma MCP with file key
+    - If node ID: filter to specific node
+    - Apply timeout (default 30s) - abort if exceeded
+    - Limit component depth (default 5 levels)
+    - Handle rate limit errors gracefully
 
 4. **Transform Response**
    Extract and structure:
-   - **Colors**: fills, strokes -> hex/rgba table
-   - **Typography**: text nodes -> font/size/weight table
-   - **Spacing**: auto-layout -> padding/gap table
-   - **Components**: node tree -> hierarchy text
+    - **Colors**: fills, strokes -> hex/rgba table
+    - **Typography**: text nodes -> font/size/weight table
+    - **Spacing**: auto-layout -> padding/gap table
+    - **Components**: node tree -> hierarchy text
 
 5. **Format Output**
-   - markdown: Tables matching design-spec template Section 7
-   - json: Structured object for programmatic use
+    - markdown: Tables matching design-spec template Section 7
+    - json: Structured object for programmatic use
 
 6. **Return Result**
-   - Save extraction output to `team-artifacts/designs/{YYMMDD}-figma-extract-{feature}.md`
-   - Success: formatted specs
-   - Partial: specs with warnings about missing data
-   - Failed: error message with fallback suggestion
+    - Save extraction output to `team-artifacts/designs/{YYMMDD}-figma-extract-{feature}.md`
+    - Success: formatted specs
+    - Partial: specs with warnings about missing data
+    - Failed: error message with fallback suggestion
 
 ## URL Format
+
 ```
 https://www.figma.com/design/{fileKey}/{fileName}?node-id={nodeId}
 ```
@@ -90,21 +92,25 @@ https://www.figma.com/design/{fileKey}/{fileName}?node-id={nodeId}
 ## Output Format (markdown)
 
 ### Colors
+
 | Name    | Hex     | Usage          |
 | ------- | ------- | -------------- |
 | Primary | #3B82F6 | Buttons, links |
 
 ### Typography
+
 | Element | Font  | Size | Weight |
 | ------- | ----- | ---- | ------ |
 | Heading | Inter | 24px | 600    |
 
 ### Spacing
+
 | Element | Padding | Gap  |
 | ------- | ------- | ---- |
 | Card    | 16px    | 12px |
 
 ### Component Hierarchy
+
 ```
 Frame "Card"
 +-- Image "avatar"
@@ -141,6 +147,7 @@ Frame "Card"
 ```
 
 ## Related
+
 - **Role Skill:** `ux-designer`
 - **Used by:** `/team-design-spec`
 - **MCP:** Requires figma MCP tools

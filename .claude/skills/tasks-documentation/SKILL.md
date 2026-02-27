@@ -1,8 +1,6 @@
 ---
 name: tasks-documentation
-version: 1.0.0
-description: "[Docs] Autonomous subagent variant of documentation. Use when creating or updating technical documentation, API documentation, or inline code documentation."
-infer: false
+description: '[Docs] Autonomous subagent variant of documentation. Use when creating or updating technical documentation, API documentation, or inline code documentation.'
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
@@ -20,6 +18,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 - **Comment Types:** `/// <summary>` for APIs, `// TODO:` for planned work, `// HACK:` for workarounds
 
 **Key Principles:**
+
 - Explain "why" not "what" -- never state the obvious
 - Keep documentation close to code, update when code changes
 - Use this skill for autonomous generation; use `documentation` for interactive tasks
@@ -79,7 +78,7 @@ public sealed class SaveEmployeeCommand : PlatformCqrsCommand<SaveEmployeeComman
 
 ## Pattern 2: TypeScript JSDoc
 
-```typescript
+````typescript
 /**
  * Manages the feature list state and operations.
  *
@@ -101,7 +100,7 @@ export class FeatureListStore extends PlatformVmStore<FeatureListState> {
    */
   public loadItems = this.effectSimple(() => /* ... */);
 }
-```
+````
 
 ## Pattern 3: API Endpoint Documentation
 
@@ -166,5 +165,6 @@ public class EmployeeController : PlatformBaseController
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements

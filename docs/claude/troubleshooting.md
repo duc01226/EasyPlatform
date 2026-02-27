@@ -55,7 +55,7 @@ Before removing/changing ANY code:
 **Before claiming any file doesn't exist:**
 
 1. Run `glob pattern` or `ls path` to verify
-2. Try multiple patterns if first fails (e.g., `ace-*.cjs`, `*-helpers.cjs`)
+2. Try multiple patterns if first fails (e.g., `todo-*.cjs`, `*-helpers.cjs`)
 3. State confidence with evidence: "Verified via glob: X files found"
 
 **Before claiming code is fixed:**
@@ -64,7 +64,7 @@ Before removing/changing ANY code:
 2. Verify pattern matches expected fix
 3. Run any available tests
 
-> **Real Example:** A researcher claimed `ace-cli-helpers.cjs` doesn't exist. Verification with `glob .claude/hooks/lib/ace-*.cjs` showed the file exists (193 lines). Always verify before asserting.
+> **Real Example:** Always verify file existence with `glob` before asserting a file doesn't exist. Example: `glob .claude/hooks/lib/todo-*.cjs` to check for todo-related hook modules.
 
 ### Concurrency Verification Protocol
 
@@ -75,7 +75,7 @@ Before removing/changing ANY code:
 grep -l "load.*\|save" *.cjs | xargs grep -L "withLock"
 
 # Find read-modify-write patterns
-grep -B5 -A5 "saveDeltas\|saveCandidates\|writeFileSync" *.cjs
+grep -B5 -A5 "loadState\|saveState\|writeFileSync" *.cjs
 ```
 
 **Fix Pattern:**

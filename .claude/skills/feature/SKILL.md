@@ -2,7 +2,6 @@
 name: feature
 description: "[Implementation] Use when the user asks to implement a new feature, enhancement, add functionality, build something new, or create new capabilities. Triggers on keywords like "implement", "add feature", "build", "create new", "develop", "enhancement"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
-infer: true
 ---
 
 # Feature Implementation
@@ -13,17 +12,18 @@ Expert full-stack .NET + Angular implementation skill with structured investigat
 
 **Goal:** Implement new features end-to-end with structured investigation, layered execution (Domain > Persistence > Application > API > Frontend), and verification.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Design Intent | State WHAT+WHY, risks, guiding principle in 3 sentences |
-| 2 | Investigate | Decompose requirements, search codebase for related patterns |
-| 3 | Knowledge graph | Build analysis in `.ai/workspace/analysis/{feature}.md` |
-| 4 | Plan | Layered implementation plan (backend bottom-up, frontend service-first) |
-| 5 | Approval gate | Present plan -- DO NOT proceed without user approval |
-| 6 | Execute | Implement layer-by-layer following approved plan |
-| 7 | Verify | Type checks, tests, integration validation |
+| Step | Action          | Key Notes                                                               |
+| ---- | --------------- | ----------------------------------------------------------------------- |
+| 1    | Design Intent   | State WHAT+WHY, risks, guiding principle in 3 sentences                 |
+| 2    | Investigate     | Decompose requirements, search codebase for related patterns            |
+| 3    | Knowledge graph | Build analysis in `.ai/workspace/analysis/{feature}.md`                 |
+| 4    | Plan            | Layered implementation plan (backend bottom-up, frontend service-first) |
+| 5    | Approval gate   | Present plan -- DO NOT proceed without user approval                    |
+| 6    | Execute         | Implement layer-by-layer following approved plan                        |
+| 7    | Verify          | Type checks, tests, integration validation                              |
 
 **Key Principles:**
+
 - Evidence-based: verify assumptions with grep/search before implementing
 - Platform-first: use EasyPlatform patterns; CQRS Command+Result+Handler in ONE file
 - Logic in LOWEST layer: Entity > Service > Component
@@ -77,18 +77,23 @@ Expert full-stack .NET + Angular implementation skill with structured investigat
 ## Implementation Plan Complete - Approval Required
 
 ### Summary
+
 [Brief description]
 
 ### Files to Create
+
 1. `path/to/file` - [purpose]
 
 ### Files to Modify
+
 1. `path/to/file:line` - [change description]
 
 ### Implementation Order
+
 1. [Step 1] ... N. [Step N]
 
 ### Risks & Considerations
+
 - [Risk 1]
 
 **Awaiting approval to proceed with implementation.**
@@ -118,7 +123,6 @@ Expert full-stack .NET + Angular implementation skill with structured investigat
 - Cross-service: use event bus, never direct DB access
 - CQRS: Command + Result + Handler in ONE file
 - Logic in LOWEST layer: Entity > Service > Component
-
 
 ## IMPORTANT Task Planning Notes
 

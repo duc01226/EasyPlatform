@@ -7,7 +7,7 @@ Direct file writes are not atomic:
 - Power loss during write causes data loss
 - `writeFileSync()` provides no atomicity guarantees
 
-**Real Example:** ACE `deltas.json` corruption when process crashed during write, leaving truncated JSON that couldn't be parsed on next load.
+**Real Example:** JSON state file corruption when process crashed during write, leaving truncated JSON that couldn't be parsed on next load.
 
 ## Solution: Temp File + Rename Pattern
 

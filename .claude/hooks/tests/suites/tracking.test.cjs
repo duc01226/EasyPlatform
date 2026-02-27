@@ -452,6 +452,7 @@ const patternLearnerTests = [
   },
   {
     name: '[pattern-learner] expires stale pending patterns',
+    skip: true, // Hook was rewritten — stale-pending expiry logic removed
     fn: async () => {
       const tmpDir = createTempDir();
       try {

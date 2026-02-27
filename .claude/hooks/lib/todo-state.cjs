@@ -123,10 +123,20 @@ function getTodoStateForSubagent() {
   };
 }
 
+/**
+ * Check if TaskCreate has been called (convenience wrapper)
+ * @returns {boolean} True if todos exist
+ */
+function hasTodos() {
+  const state = getTodoState();
+  return state.hasTodos === true;
+}
+
 module.exports = {
   getTodoState,
   setTodoState,
   clearTodoState,
+  hasTodos,
   recordBypass,
   exportTodosForCheckpoint,
   restoreTodosFromCheckpoint,

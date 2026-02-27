@@ -1,7 +1,6 @@
 ---
 name: research
 description: "[Planning] Use when you need to research, analyze, and plan technical solutions that are scalable, secure, and maintainable."
-license: MIT
 ---
 
 # Research

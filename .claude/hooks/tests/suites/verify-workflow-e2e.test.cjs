@@ -274,16 +274,15 @@ createState({
     commandMapping: config.commandMapping
 });
 const activeContext = buildActiveWorkflowContext(loadState(), config);
-assertIncludes('output', 'active context has header', activeContext, 'Active Workflow');
+assertIncludes('output', 'active context has workflow info', activeContext, 'Active workflow');
 assertIncludes('output', 'active context shows workflow name', activeContext, 'Bug Fix');
-assertIncludes('output', 'active context has conflict instructions', activeContext, 'New Prompt Handling');
-assertIncludes('output', 'active context has switch option', activeContext, 'Switch');
-assertIncludes('output', 'active context has catalog', activeContext, 'Available Workflows');
+assertIncludes('output', 'active context has switch hint', activeContext, 'workflow-start');
+assertIncludes('output', 'active context has full catalog', activeContext, 'Workflow Catalog');
 cleanup();
 
 // 3.3 buildCatalogInjection
 const catalogInjection = buildCatalogInjection(config);
-assertIncludes('output', 'catalog injection has header', catalogInjection, 'Available Workflows');
+assertIncludes('output', 'catalog injection has header', catalogInjection, 'Workflow Catalog');
 assertIncludes('output', 'catalog injection mentions /workflow-start', catalogInjection, '/workflow-start');
 
 console.log('  [3] Output Generation: done\n');
@@ -346,7 +345,7 @@ cleanup();
 
 // 5.1 Qualifying prompt gets catalog injection (v2.0: no state creation)
 const routerOutput1 = runHook('workflow-router.cjs', { prompt: 'implement a new search feature' });
-assertIncludes('router', 'qualifying prompt gets catalog', routerOutput1, 'Available Workflows');
+assertIncludes('router', 'qualifying prompt gets catalog', routerOutput1, 'Workflow Catalog');
 assertEqual('router', 'no state created by router (v2.0)', loadState(), null);
 
 // 5.2 Short prompt gets no output (<15 chars)
@@ -530,7 +529,7 @@ cleanup();
 // 7.1 Complete end-to-end: catalog → /workflow-start → advance → complete
 // Step 1: Router injects catalog for qualifying prompt
 const e2eOutput1 = runHook('workflow-router.cjs', { prompt: 'fix the login bug please' });
-assertIncludes('e2e', 'router injects catalog', e2eOutput1, 'Available Workflows');
+assertIncludes('e2e', 'router injects catalog', e2eOutput1, 'Workflow Catalog');
 assertEqual('e2e', 'no state created by router (v2.0)', loadState(), null);
 
 // Step 2: AI invokes /workflow-start via step-tracker
@@ -833,7 +832,7 @@ cleanup();
 fs.mkdirSync(path.dirname(v1xStatePath), { recursive: true });
 fs.writeFileSync(v1xStatePath, JSON.stringify(v1xState));
 const routerAfterV1x = runHook('workflow-router.cjs', { prompt: 'fix the login bug in auth module' });
-assertIncludes('v1x-migration', 'router injects catalog after v1.x state cleared', routerAfterV1x, 'Available Workflows');
+assertIncludes('v1x-migration', 'router injects catalog after v1.x state cleared', routerAfterV1x, 'Workflow Catalog');
 
 // 12.4 sanitizeSessionId handles non-string inputs
 const { sanitizeSessionId } = require('../../lib/ck-paths.cjs');
@@ -868,4 +867,11 @@ if (failures.length > 0) {
 console.log(`  RESULT: ${passed} passed, ${failed} failed (${passed + failed} total)`);
 console.log('══════════════════════════════════════════════════');
 
-process.exit(failed > 0 ? 1 : 0);
+// Only exit when run directly (not when required by run-all-tests.cjs)
+if (require.main === module) {
+  process.exit(failed > 0 ? 1 : 0);
+}
+
+// Export empty suite so run-all-tests.cjs doesn't crash
+// (this file runs its own tests inline on require — results are printed above)
+module.exports = { name: 'Workflow E2E Verification', tests: [] };

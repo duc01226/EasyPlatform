@@ -9,17 +9,33 @@
   assets/               # Output files (templates, images, fonts)
 ```
 
-## SKILL.md Frontmatter (Required)
+## SKILL.md Frontmatter (Official Schema)
+
+Source: https://code.claude.com/docs/en/skills
+
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | No | Slash-command name. Lowercase, hyphens, max 64 chars. Default: dir name |
+| `description` | Recommended | What skill does + trigger keywords for auto-activation. Default: first paragraph |
+| `argument-hint` | No | Autocomplete hint, e.g. `[issue-number]` |
+| `disable-model-invocation` | No | `true` = user-only, Claude cannot auto-trigger. Default: `false` |
+| `user-invocable` | No | `false` = hidden from `/` menu, Claude-only. Default: `true` |
+| `allowed-tools` | No | Comma-separated tool whitelist, e.g. `Read, Grep, Glob` |
+| `model` | No | Force specific model for this skill |
+| `context` | No | `fork` to run in isolated subagent |
+| `agent` | No | Subagent type when `context: fork` (e.g. `Explore`, `Plan`) |
+| `hooks` | No | Skill-scoped lifecycle hooks |
+
+**NOT valid:** `version`, `license`, `infer`, `tools` — ignored by Claude Code runtime.
+
 ```yaml
 ---
-name: skill-name              # kebab-case, matches directory name
-description: >-               # 1-3 sentences. Include trigger keywords.
-  Use when [scenario]. Triggers on [keywords].
-  This skill should be used when...
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob  # optional
-infer: true                   # true = auto-activate on matching queries
-license: See LICENSE.txt      # optional
-version: 1.0.0                # optional
+name: skill-name
+description: >-
+  [Category] What this skill does. Triggers on: keyword1, keyword2.
+  Include trigger keywords in description for auto-activation.
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob
+argument-hint: [args]
 ---
 ```
 

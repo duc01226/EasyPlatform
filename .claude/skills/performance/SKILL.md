@@ -1,8 +1,7 @@
 ---
 name: performance
-description: "[Review & Quality] Use when analyzing and improving performance for database queries, API endpoints, frontend rendering, or cross-service communication. Triage skill that routes to database-optimization, frontend-patterns, or provides API/job/cross-service profiling guidance."
+description: '[Review & Quality] Use when analyzing and improving performance for database queries, API endpoints, frontend rendering, or cross-service communication. Triage skill that routes to database-optimization, frontend-patterns, or provides API/job/cross-service profiling guidance.'
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
-infer: true
 ---
 
 # Performance Optimization
@@ -50,7 +49,6 @@ For detailed patterns, profiling commands, and anti-patterns:
 ## Approval Gate
 
 Present findings and optimization plan. Wait for explicit user approval before making changes -- performance optimizations can have wide-reaching side effects.
-
 
 ## IMPORTANT Task Planning Notes
 

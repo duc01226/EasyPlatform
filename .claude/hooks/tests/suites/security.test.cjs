@@ -306,12 +306,13 @@ const scoutBlockTests = [
 const crossPlatformTests = [
   // WARN - Windows-specific commands (exit 0, but stdout has warning)
   {
-    name: '[cross-platform] warns on dir /b /s command',
+    name: '[cross-platform] blocks dir /b /s command',
     fn: async () => {
       const input = createPreToolUseInput('Bash', { command: 'dir /b /s path' });
       const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should not block, just warn');
-      assertContains(result.stdout, 'Cross-Platform', 'Should contain warning');
+      assertBlocked(result.code, 'Should block Windows dir with flags');
+      const output = result.stdout + (result.stderr || '');
+      assertContains(output, 'dir', 'Should mention dir command');
     }
   },
   {
@@ -324,21 +325,23 @@ const crossPlatformTests = [
     }
   },
   {
-    name: '[cross-platform] warns on type command',
+    name: '[cross-platform] blocks type command',
     fn: async () => {
       const input = createPreToolUseInput('Bash', { command: 'type file.txt' });
       const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should not block');
-      assertContains(result.stdout, 'cat', 'Should suggest cat');
+      assertBlocked(result.code, 'Should block Windows type command');
+      const output = result.stdout + (result.stderr || '');
+      assertContains(output, 'cat', 'Should suggest cat');
     }
   },
   {
-    name: '[cross-platform] warns on copy command',
+    name: '[cross-platform] blocks copy command',
     fn: async () => {
       const input = createPreToolUseInput('Bash', { command: 'copy src.txt dest.txt' });
       const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should not block');
-      assertContains(result.stdout, 'cp', 'Should suggest cp');
+      assertBlocked(result.code, 'Should block Windows copy command');
+      const output = result.stdout + (result.stderr || '');
+      assertContains(output, 'cp', 'Should suggest cp');
     }
   },
   {
@@ -351,30 +354,33 @@ const crossPlatformTests = [
     }
   },
   {
-    name: '[cross-platform] warns on cls command',
+    name: '[cross-platform] blocks cls command',
     fn: async () => {
       const input = createPreToolUseInput('Bash', { command: 'cls' });
       const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should not block');
-      assertContains(result.stdout, 'clear', 'Should suggest clear');
+      assertBlocked(result.code, 'Should block Windows cls command');
+      const output = result.stdout + (result.stderr || '');
+      assertContains(output, 'clear', 'Should suggest clear');
     }
   },
   {
-    name: '[cross-platform] warns on del command',
+    name: '[cross-platform] blocks del command',
     fn: async () => {
       const input = createPreToolUseInput('Bash', { command: 'del file.txt' });
       const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should not block');
-      assertContains(result.stdout, 'rm', 'Should suggest rm');
+      assertBlocked(result.code, 'Should block Windows del command');
+      const output = result.stdout + (result.stderr || '');
+      assertContains(output, 'rm', 'Should suggest rm');
     }
   },
   {
-    name: '[cross-platform] warns on move command',
+    name: '[cross-platform] blocks move command',
     fn: async () => {
       const input = createPreToolUseInput('Bash', { command: 'move src.txt dest.txt' });
       const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should not block');
-      assertContains(result.stdout, 'mv', 'Should suggest mv');
+      assertBlocked(result.code, 'Should block Windows move command');
+      const output = result.stdout + (result.stderr || '');
+      assertContains(output, 'mv', 'Should suggest mv');
     }
   },
   {

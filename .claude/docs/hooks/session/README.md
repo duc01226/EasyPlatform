@@ -220,4 +220,4 @@ cat .claude/settings.json | jq '.hooks.SessionStart'
 
 ---
 
-*See also: [ACE System](../ace/) for delta injection during session start*
+*See also: [Pattern Learning](../patterns/) for lesson injection during session start*

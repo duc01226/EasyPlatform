@@ -1,8 +1,6 @@
 ---
 name: figma-design
-version: 1.1.0
 description: "[Design & Content] Extract design specifications from Figma designs using MCP server. Triggers on Figma URLs, design context extraction, or design-to-code workflows. Formerly also known as "figma-extract"."
-infer: true
 allowed-tools: Read, mcp__figma__get_file, mcp__figma__get_file_nodes
 ---
 
@@ -12,14 +10,15 @@ allowed-tools: Read, mcp__figma__get_file, mcp__figma__get_file_nodes
 
 **Goal:** Extract design specifications (dimensions, layout, colors, typography) from Figma designs via MCP server for implementation.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Identify Figma URLs | Parse `node-id` from URL, convert hyphen to colon for API |
-| 2 | Extract node data | Use `mcp__figma__get_file_nodes` (preferred over full file) |
-| 3 | Summarize design context | Dimensions, layout, colors, typography, component structure |
-| 4 | Token budget management | Single node: 500-2K tokens; AVOID full file (50K+) |
+| Step | Action                   | Key Notes                                                   |
+| ---- | ------------------------ | ----------------------------------------------------------- |
+| 1    | Identify Figma URLs      | Parse `node-id` from URL, convert hyphen to colon for API   |
+| 2    | Extract node data        | Use `mcp__figma__get_file_nodes` (preferred over full file) |
+| 3    | Summarize design context | Dimensions, layout, colors, typography, component structure |
+| 4    | Token budget management  | Single node: 500-2K tokens; AVOID full file (50K+)          |
 
 **Key Principles:**
+
 - Always request specific nodes, never full files unless absolutely necessary
 - Convert URL `node-id` format (hyphen) to API format (colon): `1-3` -> `1:3`
 - Extract only essential properties; summarize children
@@ -43,11 +42,13 @@ Extract design specifications from Figma designs using the Figma MCP server. Use
 ### Step 1: Identify Figma URLs
 
 Parse document content for Figma URLs:
+
 ```
 https://figma.com/design/{file_key}/{name}?node-id={node_id}
 ```
 
 **URL Format Notes:**
+
 - `node-id` in URL uses hyphen: `1-3`
 - API expects colon format: `1:3`
 - Convert: `nodeId.replace('-', ':')`
@@ -75,6 +76,7 @@ mcp__figma__get_file file_key="{file_key}"
 ### Step 4: Token Budget Management
 
 **Budget Targets:**
+
 - Single node: 500-2,000 tokens
 - Multiple nodes: <5,000 tokens total
 - Full file: AVOID (can exceed 50K tokens)
@@ -92,10 +94,12 @@ mcp__figma__get_file file_key="{file_key}"
 **Typography:** {fontFamily} {fontWeight} {fontSize}px
 
 ### Component Structure
+
 - {child 1 name}
 - {child 2 name}
 
 ### Key Design Decisions
+
 - {extracted design pattern or decision}
 ```
 
@@ -117,5 +121,6 @@ mcp__figma__get_file file_key="{file_key}"
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements

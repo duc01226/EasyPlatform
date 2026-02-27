@@ -1,8 +1,6 @@
 ---
 name: frontend-angular
-version: 1.0.0
-description: "[Frontend] Use when creating or modifying Angular components, forms, stores, or API services in WebV2 (Angular 19) with proper base class inheritance, state management, and platform patterns."
-infer: true
+description: '[Frontend] Use when creating or modifying Angular components, forms, stores, or API services in WebV2 (Angular 19) with proper base class inheritance, state management, and platform patterns.'
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
@@ -11,12 +9,14 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 **Goal:** Create or modify Angular 19 frontend code in WebV2 -- components, forms, stores, and API services -- following platform patterns.
 
 **Workflow:**
+
 1. **Pre-Flight** -- Identify app, search similar code, determine type (component/form/store/service)
 2. **Select Pattern** -- Choose from Component, Form, Store, or API Service patterns below
 3. **Implement** -- Follow BEM template standard, SCSS host+wrapper pattern, platform base classes
 4. **Wire Up** -- Route config, module imports, API service integration
 
 **Key Rules:**
+
 - Never extend Platform* directly; always use AppBase* intermediaries
 - All HTML elements MUST have BEM classes (`block__element --modifier`)
 - Use `.pipe(this.untilDestroyed())` for all subscriptions
@@ -142,8 +142,13 @@ my-component {
     width: 100%;
     flex-grow: 1;
 
-    &__header { /* ... */ }
-    &__content { flex: 1; overflow-y: auto; }
+    &__header {
+        /* ... */
+    }
+    &__content {
+        flex: 1;
+        overflow-y: auto;
+    }
 }
 ```
 
@@ -239,7 +244,16 @@ getErrorMsg$('requestKey')();
 isStateLoading()();
 
 // Response handling
-observable.pipe(this.tapResponse(result => { /* success */ }, error => { /* error */ }));
+observable.pipe(
+    this.tapResponse(
+        result => {
+            /* success */
+        },
+        error => {
+            /* error */
+        }
+    )
+);
 
 // Track-by for @for loops
 trackByItem = this.ngForTrackByItemProp<Item>('id');
@@ -292,14 +306,22 @@ export class FeatureFormComponent extends AppBaseFormComponent<FeatureFormVm> {
 
     onSubmit(): void {
         if (!this.validateForm()) return;
-        this.featureApi.save(this.currentVm()).pipe(
-            this.observerLoadingErrorState('save'),
-            this.tapResponse(saved => this.onSuccess(saved), error => this.onError(error)),
-            this.untilDestroyed()
-        ).subscribe();
+        this.featureApi
+            .save(this.currentVm())
+            .pipe(
+                this.observerLoadingErrorState('save'),
+                this.tapResponse(
+                    saved => this.onSuccess(saved),
+                    error => this.onError(error)
+                ),
+                this.untilDestroyed()
+            )
+            .subscribe();
     }
 
-    constructor(private featureApi: FeatureApiService) { super(); }
+    constructor(private featureApi: FeatureApiService) {
+        super();
+    }
 }
 ```
 
@@ -392,8 +414,7 @@ removeSpecification(index: number): void {
         <input class="feature-form__input" id="code" formControlName="code" />
         @if (formControls('code').pending) {
         <span class="feature-form__info">Checking availability...</span>
-        }
-        @if (formControls('code').errors?.['codeExists']) {
+        } @if (formControls('code').errors?.['codeExists']) {
         <span class="feature-form__error">{{ formControls('code').errors?.['codeExists'] }}</span>
         }
     </div>
@@ -464,34 +485,40 @@ export class FeatureListStore extends PlatformVmStore<FeatureListState> {
     // Effects
     public loadItems = this.effectSimple(() => {
         const state = this.currentVm();
-        return this.featureApi.getList({
-            ...state.filters,
-            skipCount: state.pagination.pageIndex * state.pagination.pageSize,
-            maxResultCount: state.pagination.pageSize
-        }).pipe(
-            this.tapResponse(result => {
-                this.updateState({ items: result.items, pagination: { ...state.pagination, totalCount: result.totalCount } });
+        return this.featureApi
+            .getList({
+                ...state.filters,
+                skipCount: state.pagination.pageIndex * state.pagination.pageSize,
+                maxResultCount: state.pagination.pageSize
             })
-        );
+            .pipe(
+                this.tapResponse(result => {
+                    this.updateState({ items: result.items, pagination: { ...state.pagination, totalCount: result.totalCount } });
+                })
+            );
     }, 'loadItems');
 
     public saveItem = this.effectSimple(
-        (item: FeatureDto) => this.featureApi.save(item).pipe(
-            this.tapResponse(saved => {
-                this.updateState(state => ({ items: state.items.upsertBy(x => x.id, [saved]), selectedItem: saved }));
-            })
-        ), 'saveItem'
+        (item: FeatureDto) =>
+            this.featureApi.save(item).pipe(
+                this.tapResponse(saved => {
+                    this.updateState(state => ({ items: state.items.upsertBy(x => x.id, [saved]), selectedItem: saved }));
+                })
+            ),
+        'saveItem'
     );
 
     public deleteItem = this.effectSimple(
-        (id: string) => this.featureApi.delete(id).pipe(
-            this.tapResponse(() => {
-                this.updateState(state => ({
-                    items: state.items.filter(x => x.id !== id),
-                    selectedItem: state.selectedItem?.id === id ? undefined : state.selectedItem
-                }));
-            })
-        ), 'deleteItem'
+        (id: string) =>
+            this.featureApi.delete(id).pipe(
+                this.tapResponse(() => {
+                    this.updateState(state => ({
+                        items: state.items.filter(x => x.id !== id),
+                        selectedItem: state.selectedItem?.id === id ? undefined : state.selectedItem
+                    }));
+                })
+            ),
+        'deleteItem'
     );
 
     // Updaters
@@ -503,7 +530,9 @@ export class FeatureListStore extends PlatformVmStore<FeatureListState> {
         this.updateState(state => ({ pagination: { ...state.pagination, pageIndex } }));
     }
 
-    constructor(private featureApi: FeatureApiService) { super(); }
+    constructor(private featureApi: FeatureApiService) {
+        super();
+    }
 }
 ```
 
@@ -513,11 +542,12 @@ export class FeatureListStore extends PlatformVmStore<FeatureListState> {
 @Injectable()
 export class EmployeeFormStore extends PlatformVmStore<EmployeeFormState> {
     public loadFormData = this.effectSimple(
-        (employeeId?: string) => forkJoin({
-            employee: employeeId ? this.employeeApi.getById(employeeId) : of(this.createNewEmployee()),
-            departments: this.departmentApi.getActive(),
-            positions: this.positionApi.getAll()
-        }).pipe(this.tapResponse(result => this.updateState(result))),
+        (employeeId?: string) =>
+            forkJoin({
+                employee: employeeId ? this.employeeApi.getById(employeeId) : of(this.createNewEmployee()),
+                departments: this.departmentApi.getActive(),
+                positions: this.positionApi.getAll()
+            }).pipe(this.tapResponse(result => this.updateState(result))),
         'loadFormData'
     );
 }
@@ -526,11 +556,15 @@ export class EmployeeFormStore extends PlatformVmStore<EmployeeFormState> {
 ## Pattern: Store with Caching
 
 ```typescript
-@Injectable({ providedIn: 'root' })  // Singleton for caching
+@Injectable({ providedIn: 'root' }) // Singleton for caching
 export class LookupDataStore extends PlatformVmStore<LookupDataState> {
-    protected override get enableCaching() { return true; }
+    protected override get enableCaching() {
+        return true;
+    }
     protected override cachedStateKeyName = () => 'LookupDataStore';
-    protected override get cacheExpirationMs() { return 5 * 60 * 1000; }
+    protected override get cacheExpirationMs() {
+        return 5 * 60 * 1000;
+    }
 
     public loadCountries = this.effectSimple(() => {
         if (this.currentVm().countries.length > 0) return EMPTY;
@@ -595,14 +629,20 @@ export class FeatureApiService extends PlatformApiService {
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class LookupApiService extends PlatformApiService {
-    protected get apiUrl(): string { return environment.apiUrl + '/api/Lookup'; }
+    protected get apiUrl(): string {
+        return environment.apiUrl + '/api/Lookup';
+    }
 
     getCountries(): Observable<CountryDto[]> {
         return this.get<CountryDto[]>('/countries', null, { enableCache: true, cacheKey: 'countries', cacheDurationMs: 60 * 60 * 1000 });
     }
 
-    invalidateCountriesCache(): void { this.clearCache('countries'); }
-    invalidateAllCache(): void { this.clearAllCache(); }
+    invalidateCountriesCache(): void {
+        this.clearCache('countries');
+    }
+    invalidateAllCache(): void {
+        this.clearAllCache();
+    }
 }
 ```
 
@@ -611,7 +651,9 @@ export class LookupApiService extends PlatformApiService {
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class DocumentApiService extends PlatformApiService {
-    protected get apiUrl(): string { return environment.apiUrl + '/api/Document'; }
+    protected get apiUrl(): string {
+        return environment.apiUrl + '/api/Document';
+    }
 
     upload(file: File, metadata?: DocumentMetadata): Observable<DocumentDto> {
         const formData = new FormData();
@@ -645,7 +687,9 @@ export class DocumentApiService extends PlatformApiService {
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class EmployeeApiService extends PlatformApiService {
-    protected get apiUrl(): string { return environment.apiUrl + '/api/Employee'; }
+    protected get apiUrl(): string {
+        return environment.apiUrl + '/api/Employee';
+    }
 
     search(term: string): Observable<EmployeeDto[]> {
         if (!term || term.length < 2) return of([]);
@@ -653,9 +697,15 @@ export class EmployeeApiService extends PlatformApiService {
     }
 
     autocomplete(prefix: string): Observable<AutocompleteItem[]> {
-        return this.get<AutocompleteItem[]>('/autocomplete', { prefix }, {
-            enableCache: true, cacheKey: `autocomplete-${prefix}`, cacheDurationMs: 30 * 1000
-        });
+        return this.get<AutocompleteItem[]>(
+            '/autocomplete',
+            { prefix },
+            {
+                enableCache: true,
+                cacheKey: `autocomplete-${prefix}`,
+                cacheDurationMs: 30 * 1000
+            }
+        );
     }
 }
 ```
@@ -693,6 +743,7 @@ interface RequestOptions {
 # Anti-Patterns to AVOID
 
 **Wrong base class:**
+
 ```typescript
 // BAD: using PlatformComponent when auth needed
 export class MyComponent extends PlatformComponent {}
@@ -701,6 +752,7 @@ export class MyComponent extends AppBaseComponent {}
 ```
 
 **Manual subscription management:**
+
 ```typescript
 // BAD
 private sub: Subscription;
@@ -710,6 +762,7 @@ this.data$.pipe(this.untilDestroyed()).subscribe();
 ```
 
 **Direct HTTP calls:**
+
 ```typescript
 // BAD
 constructor(private http: HttpClient) { }
@@ -718,6 +771,7 @@ constructor(private featureApi: FeatureApiService) { }
 ```
 
 **Missing loading states:**
+
 ```html
 <!-- BAD -->
 <div>{{ items }}</div>
@@ -728,6 +782,7 @@ constructor(private featureApi: FeatureApiService) { }
 ```
 
 **Not using validateForm():**
+
 ```typescript
 // BAD
 onSubmit() { this.api.save(this.currentVm()); }
@@ -736,6 +791,7 @@ onSubmit() { if (!this.validateForm()) return; this.api.save(this.currentVm()); 
 ```
 
 **Async validator always runs:**
+
 ```typescript
 // BAD
 new FormControl('', [], [asyncValidator]);
@@ -744,6 +800,7 @@ new FormControl('', [], [ifAsyncValidator(ctrl => ctrl.valid, asyncValidator)]);
 ```
 
 **Mutating state directly:**
+
 ```typescript
 // BAD
 this.currentVm().items.push(newItem);
@@ -752,6 +809,7 @@ this.updateState(state => ({ items: [...state.items, newItem] }));
 ```
 
 **Missing BEM classes:**
+
 ```html
 <!-- BAD -->
 <div><label>Name</label><input formControlName="name" /></div>
@@ -764,6 +822,7 @@ this.updateState(state => ({ items: [...state.items, newItem] }));
 # Verification Checklist
 
 ## Components
+
 - [ ] Correct base class selected for use case
 - [ ] Store provided at component level (if using store)
 - [ ] Loading/error states handled with `app-loading-and-error-indicator`
@@ -773,6 +832,7 @@ this.updateState(state => ({ items: [...state.items, newItem] }));
 - [ ] API calls use service extending `PlatformApiService`
 
 ## Forms
+
 - [ ] `initialFormConfig` returns form configuration
 - [ ] `initOrReloadVm` loads data for edit mode
 - [ ] `validateForm()` called before submit
@@ -781,6 +841,7 @@ this.updateState(state => ({ items: [...state.items, newItem] }));
 - [ ] Error messages displayed for all validation rules
 
 ## Stores
+
 - [ ] State interface defines all required properties
 - [ ] `vmConstructor` provides default state
 - [ ] Effects use `effectSimple()` with request key
@@ -790,6 +851,7 @@ this.updateState(state => ({ items: [...state.items, newItem] }));
 - [ ] Store provided at correct level (component vs root)
 
 ## API Services
+
 - [ ] Extends `PlatformApiService`
 - [ ] `apiUrl` getter returns correct base URL
 - [ ] All methods have return type annotations

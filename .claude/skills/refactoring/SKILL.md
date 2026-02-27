@@ -2,7 +2,6 @@
 name: refactoring
 description: "[Utilities] Use when restructuring code without changing behavior - extract method, extract class, rename, move, inline, introduce parameter object. Triggers on keywords like "extract", "rename", "move method", "inline", "restructure", "decompose"."
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
-infer: true
 ---
 
 # Code Refactoring
@@ -39,11 +38,13 @@ Expert code restructuring agent for EasyPlatform. Focuses on structural changes 
 **Reason**: [Why this refactoring improves code]
 
 ### Changes
+
 1. [ ] Create/modify [file]
 2. [ ] Update usages in [files]
 3. [ ] Run tests
 
 ### Risks
+
 - [Potential issues]
 ```
 
@@ -96,7 +97,6 @@ Entity/Model (Lowest)  ->  Service  ->  Component/Handler (Highest)
 - **Mixing Refactoring with Features**: Do one or the other
 - **Breaking Public APIs**: Maintain backward compatibility
 - **Logic in Wrong Layer**: Move to lowest appropriate layer
-
 
 ## IMPORTANT Task Planning Notes
 

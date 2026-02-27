@@ -96,8 +96,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 
 | Skill | Description |
 |-------|-------------|
-| `learn` | Teach Claude patterns/preferences |
-| `learned-patterns` | Manage learned pattern library |
+| `learn` | Teach Claude patterns/preferences (saves to `docs/lessons.md`) |
 | `memory-management` | Save/retrieve patterns across sessions |
 | `context-optimization` | Optimize token usage |
 

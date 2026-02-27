@@ -195,8 +195,8 @@ Then all records should be saved within 5 seconds
 ### Infrastructure
 
 - Docker containers running (SQL Server, MongoDB, PostgreSQL, RabbitMQ, Redis)
-- API service running on localhost:5000
-- Frontend running on localhost:4200
+- API service running on localhost:5001
+- Frontend running on localhost:4001
 
 ### Commands
 
@@ -207,9 +207,9 @@ docker-compose -f src/platform-example-app.docker-compose.yml up -d
 # Run integration tests
 dotnet test --filter "Category=Integration"
 
-# Run E2E tests
-cd src/Frontend
-nx e2e playground-text-snippet-e2e
+# Run E2E tests (Playwright)
+cd src/Frontend/e2e
+npm test
 ```
 
 ---

@@ -334,6 +334,7 @@ public abstract class UiComponent<TComponent> : IUiComponent<TComponent>
             executeFunc: () =>
             {
                 var element = FindChildOrRootElement(childElementSelector);
+
                 element!.Submit();
                 HumanDelay();
 
@@ -357,6 +358,7 @@ public abstract class UiComponent<TComponent> : IUiComponent<TComponent>
     public void SelectOptionByText(string optionText)
     {
         var selectElement = new SelectElement(RootElement!);
+
         selectElement.SelectByText(optionText);
     }
 

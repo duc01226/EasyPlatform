@@ -1,8 +1,6 @@
 ---
 name: tasks-feature-implementation
-version: 1.0.1
-description: "[Implementation] Autonomous subagent variant of feature-implementation. Use when implementing new features or enhancements requiring multi-layer changes (Domain, Application, Persistence, API, Frontend)."
-infer: false
+description: '[Implementation] Autonomous subagent variant of feature-implementation. Use when implementing new features or enhancements requiring multi-layer changes (Domain, Application, Persistence, API, Frontend).'
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TodoWrite
 ---
 
@@ -14,15 +12,16 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TodoWrite
 
 **Goal:** Autonomously implement new features across all layers (Domain, Application, Persistence, API, Frontend) with investigation-first approach.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Discovery & analysis | Decompose requirements, investigate codebase, find similar patterns |
-| 2 | Impact analysis | Map changes per layer: Domain, Application, Persistence, API, Frontend |
-| 3 | Approval gate | Present plan to user before any implementation |
-| 4 | Implementation | Backend: Domain first, then Persistence, Application, API. Frontend: Service, Store, Components |
-| 5 | Verification | Compile, test endpoints, check authorization, error handling |
+| Step | Action               | Key Notes                                                                                       |
+| ---- | -------------------- | ----------------------------------------------------------------------------------------------- |
+| 1    | Discovery & analysis | Decompose requirements, investigate codebase, find similar patterns                             |
+| 2    | Impact analysis      | Map changes per layer: Domain, Application, Persistence, API, Frontend                          |
+| 3    | Approval gate        | Present plan to user before any implementation                                                  |
+| 4    | Implementation       | Backend: Domain first, then Persistence, Application, API. Frontend: Service, Store, Components |
+| 5    | Verification         | Compile, test endpoints, check authorization, error handling                                    |
 
 **Key Principles:**
+
 - INVESTIGATE before implementing -- never assume, verify with code evidence
 - Implement layers in order: Domain -> Persistence -> Application -> API -> Frontend
 - Always request user approval at checkpoint gates before coding
@@ -47,6 +46,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TodoWrite
 
 ```markdown
 ## Feature Analysis
+
 - **Feature Name**: [Name]
 - **Business Objective**: [What problem does this solve?]
 - **Affected Services**: [Which microservices are impacted?]
@@ -79,20 +79,24 @@ grep -r "namespace.*{ServiceName}\.Domain" --include="*.cs"
 
 ```markdown
 ### Domain Layer
+
 - [ ] New Entity: `{EntityName}.cs`
 - [ ] Entity Expressions: Static query expressions
 
 ### Application Layer
+
 - [ ] Commands: `Save{Entity}Command.cs`
 - [ ] Queries: `Get{Entity}ListQuery.cs`
 - [ ] Event Handlers: `{Action}On{Event}EntityEventHandler.cs`
 - [ ] DTOs: `{Entity}Dto.cs`
 
 ### Persistence Layer
+
 - [ ] Entity Configuration: `{Entity}EntityConfiguration.cs`
 - [ ] Migrations: Add/Update schema
 
 ### API Layer
+
 - [ ] Controller: `{Entity}Controller.cs`
 ```
 
@@ -100,13 +104,16 @@ grep -r "namespace.*{ServiceName}\.Domain" --include="*.cs"
 
 ```markdown
 ### Components
+
 - [ ] List Component: `{entity}-list.component.ts`
 - [ ] Form Component: `{entity}-form.component.ts`
 
 ### State Management
+
 - [ ] Store: `{entity}.store.ts`
 
 ### Services
+
 - [ ] API Service: `{entity}-api.service.ts`
 ```
 
@@ -155,5 +162,6 @@ grep -r "namespace.*{ServiceName}\.Domain" --include="*.cs"
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements

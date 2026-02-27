@@ -1,6 +1,6 @@
 # Hooks System Documentation
 
-> 27 hooks organized into 6 subsystems for Claude Code customization.
+> Hooks organized into 5 subsystems for Claude Code customization.
 
 ## Overview
 
@@ -78,12 +78,11 @@ Session Start
 
 | Subsystem | Hooks | Purpose | Docs |
 |-----------|-------|---------|------|
-| [ACE](ace/) | 5 | Self-learning context injection | [ace/README.md](ace/README.md) |
 | [Session](session/) | 4 | Lifecycle management | [session/README.md](session/README.md) |
-| [Patterns](patterns/) | 2 | User pattern learning | [patterns/README.md](patterns/README.md) |
+| [Patterns](patterns/) | 2 | User pattern learning + lesson injection | [patterns/README.md](patterns/README.md) |
 | [Workflows](workflows.md) | 2 | Intent routing | [workflows.md](workflows.md) |
 | [Dev Rules](dev-rules.md) | 5 | Context-aware guidance | [dev-rules.md](dev-rules.md) |
-| [Enforcement](enforcement.md) | 5 | Safety & blocking | [enforcement.md](enforcement.md) |
+| [Enforcement](enforcement.md) | 7 | Safety & blocking | [enforcement.md](enforcement.md) |
 
 ## Hook Inventory
 
@@ -93,8 +92,7 @@ Session Start
 |------|---------|---------|
 | `session-init.cjs` | `startup\|resume\|clear\|compact` | Initialize session state, detect project type |
 | `session-resume.cjs` | `startup\|resume\|compact` | Restore todos, checkpoints |
-| `ace-session-inject.cjs` | `startup\|resume` | Inject learned ACE deltas |
-| `pattern-injector.cjs` | `startup\|resume` | Inject matching patterns |
+| `lessons-injector.cjs` | `startup\|resume` | Inject lessons from `docs/lessons.md` |
 
 ### SubagentStart Hooks
 
@@ -115,9 +113,11 @@ Session Start
 
 | Hook | Matcher | Purpose |
 |------|---------|---------|
-| `pattern-injector.cjs` | `*` | Inject patterns for current context |
-| `todo-enforcement.cjs` | `Skill` | Block implementation skills without todos |
+| `lessons-injector.cjs` | `Edit\|Write\|MultiEdit` | Inject lessons before edits |
+| `skill-enforcement.cjs` | `Skill` | Force workflow first — block non-meta skills without tasks |
+| `edit-enforcement.cjs` | `Edit\|Write\|MultiEdit\|NotebookEdit` | Block file edits without tasks |
 | `cross-platform-bash.cjs` | `Bash` | Block Windows CMD commands, warn on ambiguous patterns |
+| `search-before-code.cjs` | `Edit\|Write\|MultiEdit` | Block code edits without prior Grep/Glob search (exit 1) |
 | `scout-block.cjs` | `Bash\|Glob\|Grep\|Read\|Edit\|Write` | Block implementation during scout |
 | `privacy-block.cjs` | `Bash\|Glob\|Grep\|Read\|Edit\|Write` | Block access to sensitive files |
 | `design-system-context.cjs` | `Edit\|Write\|MultiEdit` | Inject design system context |
@@ -133,11 +133,11 @@ Session Start
 |------|---------|---------|
 | `todo-tracker.cjs` | `TodoWrite` | Persist todo state |
 | `edit-complexity-tracker.cjs` | `Edit\|Write\|MultiEdit` | Track multi-file operations with soft/strong warnings |
+| `post-edit-rule-check.cjs` | `Edit\|Write\|MultiEdit` | Validate edited .cs/.ts files against 6 CLAUDE.md rules (advisory) |
+| `auto-fix-trigger.cjs` | `Bash` | Detect build/test failures with 3-tier escalation + error snippets |
 | `bash-cleanup.cjs` | `Bash` | Clean up tmpclaude temp files |
 | `post-edit-prettier.cjs` | `Edit\|Write` | Auto-format edited files |
-| `ace-event-emitter.cjs` | `Bash\|Skill` | Capture events for ACE analysis |
 | `workflow-step-tracker.cjs` | `Skill` | Track workflow progress |
-| `ace-feedback-tracker.cjs` | `Skill` | Track delta effectiveness |
 | `compact-suggestion.cjs` | `Bash\|Read\|Grep\|Glob\|Skill\|Edit\|Write\|MultiEdit\|WebFetch\|WebSearch` | Suggest /compact after 50 calls, then recurring |
 
 ### PreCompact Hooks
@@ -146,8 +146,6 @@ Session Start
 |------|---------|---------|
 | `write-compact-marker.cjs` | `manual\|auto` | Mark compaction timestamp |
 | `save-context-memory.cjs` | `manual\|auto` | Save checkpoint before compaction |
-| `ace-reflector-analysis.cjs` | `manual\|auto` | Extract delta candidates from events |
-| `ace-curator-pruner.cjs` | `manual\|auto` | Promote candidates, prune stale patterns |
 
 ### SessionEnd Hooks
 
@@ -167,15 +165,13 @@ Hooks share functionality through `lib/` modules:
 
 | Prefix | Purpose | Modules |
 |--------|---------|---------|
-| `ace-*` | ACE system utilities | ace-constants, ace-lesson-schema, ace-outcome-classifier, ace-playbook-state, ace-sync-copilot |
 | `compact-*` | Context management | compact-state |
-| `ar-*` | ACE reflector | ar-candidates, ar-events, ar-generation |
 | `ck-*` | Claude Kit core | ck-config, ck-config-utils, ck-git, ck-naming, ck-paths, ck-session |
 | `si-*` | Session init | si-exec, si-output, si-project, si-python |
 | `wr-*` | Workflow router | wr-config, wr-control, wr-detect, wr-output |
 | `dr-*` | Dev rules | dr-context, dr-paths, dr-template |
-| `pattern-*` | Pattern learning | pattern-constants, pattern-detector, pattern-extractor, pattern-matcher, pattern-storage |
-| `*-state` | State management | todo-state, edit-state, workflow-state |
+| `lessons-*` | Learning system | lessons-writer (+ frequency scoring via `docs/lessons-freq.json`) |
+| `*-state` | State management | todo-state, edit-state, workflow-state, failure-state, verification-state |
 
 ## Context Management
 

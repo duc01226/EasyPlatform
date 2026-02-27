@@ -123,6 +123,7 @@ docs(readme): update installation instructions
 ## Critical Rules
 
 - **DO NOT push** to remote unless explicitly requested
+- **Stage ALL unstaged changes** before committing — run `git add .` (or explicit file list) so nothing is left behind
 - **Review staged changes** before committing
 - **Never commit** secrets, credentials, or .env files
 - **Never use** `git commit --amend` unless explicitly requested AND the commit was created in this session AND not yet pushed

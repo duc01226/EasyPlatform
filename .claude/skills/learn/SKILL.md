@@ -1,8 +1,7 @@
 ---
 name: learn
-description: "[Tooling & Meta] Teach Claude a new pattern, preference, or convention explicitly. Use when you want to save a correction, preference, or coding pattern for future sessions. Triggers on keywords like "remember this", "always do", "never do", "learn this pattern", "/learn"."
+description: "[Tooling & Meta] Teach Claude a new pattern, preference, or convention explicitly. Use when you want to save a correction, preference, or coding pattern for future sessions. Triggers on /learn or 'remember this/that'."
 allowed-tools: Read, Write, Edit, Bash
-infer: true
 ---
 
 # Pattern Learning Skill
@@ -13,74 +12,40 @@ Explicitly teach Claude patterns, preferences, or conventions to remember across
 
 ```
 /learn always use PlatformValidationResult instead of throwing ValidationException
-/learn [wrong] var x = 1 [right] const x = 1 - always prefer const
 /learn backend: DTO mapping should be in the DTO class, not in command handlers
-```
-
-## Teaching Formats
-
-### Format 1: Natural Language
-```
-/learn always use IGrowthRootRepository instead of generic IPlatformRootRepository
-```
-Detected patterns: "always use X instead of Y", "prefer X over Y", "never do X"
-
-### Format 2: Explicit Wrong/Right
-```
-/learn [wrong] throw new ValidationException("Invalid") [right] return PlatformValidationResult.Invalid("Invalid")
-```
-
-### Format 3: Category-Specific
-```
-/learn backend: always add [ComputedEntityProperty] with empty setter
-/learn frontend: extend AppBaseComponent instead of raw Component
-/learn workflow: always use TodoWrite before multi-step tasks
+remember this: always use IGrowthRootRepository instead of generic IPlatformRootRepository
 ```
 
 ## How It Works
 
-1. **Detection**: `pattern-learner.cjs` hook detects teaching input
-2. **Extraction**: Extracts wrong/right pair, keywords, context
-3. **Storage**: Saves to `.claude/learned-patterns/{category}/{slug}.yaml`
-4. **Injection**: Future sessions auto-inject relevant patterns (max 5, ~400 tokens)
+1. **Detection**: `pattern-learner.cjs` hook detects `/learn` command or "remember this/that" in your prompt
+2. **Storage**: Appends lesson to `docs/lessons.md` (append-only log)
+3. **Injection**: `lessons-injector.cjs` hook injects lessons.md content on every prompt and before file edits
 
-## Pattern Categories
+## Trigger Patterns
 
-| Category   | Use For                                        |
-| ---------- | ---------------------------------------------- |
-| `backend`  | C#, .NET, API, Entity, Repository patterns     |
-| `frontend` | Angular, TypeScript, Component, Store patterns |
-| `workflow` | Development process, git, planning patterns    |
-| `general`  | Cross-cutting concerns                         |
-
-## Confidence System
-
-- Explicit teaching: starts at **80%**
-- Implicit corrections: starts at **40%**
-- Increases on: user confirmation, pattern followed
-- Decreases on: pattern conflicts, 30 days unused (decay)
-- Below **20%**: auto-archived
-
-Conflicts with `docs/claude/*.md` are blocked to prevent inconsistencies.
+| Pattern                 | Example                                     |
+| ----------------------- | ------------------------------------------- |
+| `/learn <text>`         | `/learn always prefer const over let`       |
+| `remember this: <text>` | `remember this: use BEM naming for all CSS` |
+| `remember that <text>`  | `remember that DTOs own mapping`            |
 
 ## Storage
 
+Lessons are stored in `docs/lessons.md` as an append-only log:
+
+```markdown
+# Lessons Learned
+
+## Behavioral Lessons
+
+- [2026-02-25] Learned: always use PlatformValidationResult instead of throwing
+- [2026-02-25] Learned: backend: DTO mapping in DTO class, not handlers
 ```
-.claude/learned-patterns/
-├── index.yaml       # Pattern lookup index
-├── backend/         # Backend patterns
-├── frontend/        # Frontend patterns
-├── workflow/        # Workflow patterns
-├── general/         # General patterns
-└── archive/         # Archived patterns
-```
 
-## Related
+## Files
 
-For lifecycle management (list, view, archive, boost, penalize): use `/learned-patterns` skill.
-
-
-## IMPORTANT Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- `docs/lessons.md` — Append-only lesson log
+- `.claude/hooks/pattern-learner.cjs` — Detects /learn commands, writes lessons
+- `.claude/hooks/lessons-injector.cjs` — Injects lessons into context
+- `.claude/hooks/lib/lessons-writer.cjs` — `appendLesson()` utility

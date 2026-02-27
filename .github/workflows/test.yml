@@ -1,0 +1,210 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  DOTNET_NOLOGO: true
+
+jobs:
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Run contract tests
+        run: |
+          dotnet test src/Backend/PlatformExampleApp.TextSnippet.ContractTests \
+            --configuration Release \
+            --logger "trx;LogFileName=contract-test-results.trx" \
+            --results-directory ${{ github.workspace }}/test-results
+
+      - name: Create docker network
+        run: docker network create platform-example-app-network || true
+
+      - name: Start infrastructure services
+        run: |
+          docker compose \
+            -f src/platform-example-app.docker-compose.yml \
+            -f src/platform-example-app.docker-compose.override.yml \
+            -p easyplatform-example \
+            up --detach sql-data mongo-data postgres-sql rabbitmq redis-cache
+
+      - name: Wait for infrastructure to be healthy
+        run: |
+          echo "Waiting for infrastructure services..."
+          timeout 120 bash -c '
+            until docker compose \
+              -f src/platform-example-app.docker-compose.yml \
+              -f src/platform-example-app.docker-compose.override.yml \
+              -p easyplatform-example \
+              exec -T postgres-sql pg_isready -U postgres 2>/dev/null; do
+              echo "  Postgres not ready, retrying in 5s..."; sleep 5
+            done
+          '
+          echo "Infrastructure ready."
+
+      - name: Start TextSnippet API
+        run: |
+          dotnet run \
+            --project src/Backend/PlatformExampleApp.TextSnippet.Api \
+            --configuration Release \
+            -- --urls "http://localhost:5001" &
+          API_PID=$!
+          echo "API_PID=$API_PID" >> "$GITHUB_ENV"
+          echo "Waiting for API on localhost:5001 (PID: $API_PID)..."
+          timeout 120 bash -c '
+            while ! curl -sf http://localhost:5001/health 2>/dev/null && ! curl -sf http://localhost:5001 2>/dev/null; do
+              if ! kill -0 '"$API_PID"' 2>/dev/null; then echo "API process died"; exit 1; fi
+              sleep 3
+            done
+          '
+          echo "API is ready."
+
+      - name: Run integration tests
+        run: |
+          dotnet test src/Backend/PlatformExampleApp.Tests.Integration \
+            --configuration Release \
+            --logger "trx;LogFileName=integration-test-results.trx" \
+            --results-directory ${{ github.workspace }}/test-results
+
+      - name: Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: test-results/integration-test-results.trx
+          retention-days: 30
+
+      - name: Upload contract test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: contract-test-results
+          path: test-results/contract-test-results.trx
+          retention-days: 30
+
+      - name: TC Coverage Check
+        if: always()
+        run: bash .claude/scripts/test-coverage-check.sh
+
+      - name: Tear down infrastructure
+        if: always()
+        run: |
+          docker compose \
+            -f src/platform-example-app.docker-compose.yml \
+            -f src/platform-example-app.docker-compose.override.yml \
+            -p easyplatform-example \
+            down --volumes
+
+  e2e-tests:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            ${{ runner.os }}-nuget-
+
+      - name: Cache npm packages
+        uses: actions/cache@v4
+        with:
+          path: src/Frontend/e2e/node_modules
+          key: ${{ runner.os }}-npm-e2e-${{ hashFiles('src/Frontend/e2e/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-e2e-
+
+      - name: Create docker network
+        run: docker network create platform-example-app-network || true
+
+      - name: Start all services (infra + API + frontend)
+        run: |
+          docker compose \
+            -f src/platform-example-app.docker-compose.yml \
+            -f src/platform-example-app.docker-compose.override.yml \
+            -p easyplatform-example \
+            up --detach sql-data mongo-data postgres-sql rabbitmq redis-cache text-snippet-api text-snippet-webspa
+
+      - name: Wait for frontend on localhost:4001
+        run: |
+          echo "Waiting for frontend on localhost:4001..."
+          timeout 180 bash -c 'until curl -sf http://localhost:4001 2>/dev/null; do sleep 5; done'
+          echo "Frontend is ready."
+
+      - name: Install E2E dependencies
+        working-directory: src/Frontend/e2e
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: src/Frontend/e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E tests
+        working-directory: src/Frontend/e2e
+        run: npm test
+        env:
+          CI: true
+
+      - name: Upload Playwright HTML report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: src/Frontend/e2e/playwright-report/
+          retention-days: 30
+
+      - name: Upload failure screenshots
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-failure-screenshots
+          path: src/Frontend/e2e/test-results/
+          retention-days: 7
+
+      - name: Tear down services
+        if: always()
+        run: |
+          docker compose \
+            -f src/platform-example-app.docker-compose.yml \
+            -f src/platform-example-app.docker-compose.override.yml \
+            -p easyplatform-example \
+            down --volumes

@@ -1,7 +1,6 @@
 ---
 name: skill-plan
 description: "[Tooling & Meta] Guide for creating effective skills, adding skill references, skill scripts or optimizing existing skills. This skill should be used when users want to create a new skill (or update an existing skill) that extends Claude's capabilities with specialized knowledge, workflows, frameworks, libraries or plugins usage, or API and tool integrations."
-license: Complete terms in LICENSE.txt
 ---
 
 # Skill Creator
@@ -56,7 +55,7 @@ Before finalizing, validate against checklist:
 After using a skill on real tasks, watch for: Claude re-discovering known info, ignoring bundled scripts, false triggers, or missed triggers. Update SKILL.md, description keywords, or references accordingly.
 
 
-## IMPORTANT Task Planning Notes
+## IMPORTANT Task Planning Notes (MUST FOLLOW)
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always plan and break work into many small todo tasks using `TaskCreate`
+- Always add a final review todo task to verify work quality

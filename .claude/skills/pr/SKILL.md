@@ -1,8 +1,7 @@
 ---
 name: pr
-description: "[Git & Release] ⚡ Create a pull request with standard format"
+description: '[Git & Release] ⚡ Create a pull request with standard format'
 argument-hint: [options]
-infer: true
 ---
 
 # Create Pull Request: $ARGUMENTS
@@ -12,42 +11,43 @@ Create a pull request with the standard EasyPlatform format.
 ## Steps
 
 1. **Check current branch status:**
-   - Run `git status` to see all changes
-   - Run `git diff` to review modifications
-   - Ensure all changes are committed
+    - Run `git status` to see all changes
+    - Run `git diff` to review modifications
+    - Ensure all changes are committed
 
 2. **Analyze commits:**
-   - Run `git log --oneline -10` to see recent commits
-   - Identify all commits to include in the PR
+    - Run `git log --oneline -10` to see recent commits
+    - Identify all commits to include in the PR
 
 3. **Create PR with standard format:**
-   ```
-   gh pr create --title "[Type] Brief description" --body "$(cat <<'EOF'
-   ## Summary
-   - Bullet points describing changes
 
-   ## Changes
-   - List of specific changes made
+    ```
+    gh pr create --title "[Type] Brief description" --body "$(cat <<'EOF'
+    ## Summary
+    - Bullet points describing changes
 
-   ## Test Plan
-   - [ ] Unit tests added/updated
-   - [ ] Manual testing completed
-   - [ ] No regressions introduced
+    ## Changes
+    - List of specific changes made
 
-   ## Related Issues
-   - Closes #issue_number (if applicable)
+    ## Test Plan
+    - [ ] Unit tests added/updated
+    - [ ] Manual testing completed
+    - [ ] No regressions introduced
 
-   Generated with Claude Code
-   EOF
-   )"
-   ```
+    ## Related Issues
+    - Closes #issue_number (if applicable)
+
+    Generated with Claude Code
+    EOF
+    )"
+    ```
 
 4. **PR Title Format:**
-   - `[Feature]` - New functionality
-   - `[Fix]` - Bug fix
-   - `[Refactor]` - Code improvement
-   - `[Docs]` - Documentation only
-   - `[Test]` - Test changes only
+    - `[Feature]` - New functionality
+    - `[Fix]` - Bug fix
+    - `[Refactor]` - Code improvement
+    - `[Docs]` - Documentation only
+    - `[Test]` - Test changes only
 
 ## Notes
 

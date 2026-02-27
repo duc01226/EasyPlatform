@@ -2,7 +2,6 @@
 name: team-test-spec
 description: "[Team] Generate test specifications from PBIs and acceptance criteria. Use when creating test specs, defining test strategy, or planning QA coverage. Triggers on keywords like "test spec", "test specification", "qa spec", "test strategy", "what to test"."
 argument-hint: "<pbi-file-path|PBI-ID>"
-infer: true
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, TodoWrite
 ---
 
@@ -11,6 +10,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, TodoWrite
 Generate comprehensive test specifications from requirements.
 
 ## When to Use
+
 - PBI ready for QA planning
 - Need test coverage strategy
 - Defining test scope
@@ -24,6 +24,7 @@ Generate comprehensive test specifications from requirements.
 ## Quick Reference
 
 ### Workflow
+
 1. Read PBI file and user stories
 2. Extract acceptance criteria and identify test scope
 3. Define test strategy (unit / integration / E2E)
@@ -34,6 +35,7 @@ Generate comprehensive test specifications from requirements.
 8. Suggest next: `/team-test-cases {testspec}`
 
 ### Test Categories
+
 | Category    | Purpose                        |
 | ----------- | ------------------------------ |
 | Positive    | Happy path verification        |
@@ -43,11 +45,13 @@ Generate comprehensive test specifications from requirements.
 | Security    | Auth, injection, XSS           |
 
 ### Output
+
 - **Path:** `team-artifacts/test-specs/{YYMMDD}-testspec-{feature}.md`
 - **ID Pattern:** `TC-{MOD}-{NNN}` (module-based, not date-based)
-  - Rationale: Test cases are tied to modules/services, enabling easier filtering and traceability
+    - Rationale: Test cases are tied to modules/services, enabling easier filtering and traceability
 
 ### Spec Structure
+
 1. Overview
 2. Test Scope
 3. Test Categories
@@ -76,6 +80,7 @@ This step grounds test scenarios in actual implementation and prevents speculati
 | Common      | COM  |
 
 ### Related
+
 - **Role Skill:** `qa-engineer`
 - **Command:** `/team-test-spec`
 - **Input:** `/team-story` output

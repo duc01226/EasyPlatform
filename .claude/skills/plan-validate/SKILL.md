@@ -1,8 +1,7 @@
 ---
 name: plan-validate
-description: "[Planning] Validate plan with critical questions interview"
+description: '[Planning] Validate plan with critical questions interview'
 argument-hint: [plan-path]
-infer: true
 ---
 
 > **CRITICAL:** Do NOT use `EnterPlanMode` tool — it blocks Write/Edit/Task tools. Follow the workflow below.
@@ -11,15 +10,16 @@ infer: true
 
 **Goal:** Validate an implementation plan by interviewing the user with critical questions to confirm assumptions and surface risks before coding.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Read plan files | `plan.md` and all `phase-*.md` -- find decision points, assumptions, risks |
-| 2 | Extract question topics | Scan for architecture, assumptions, tradeoffs, risks, scope keywords |
-| 3 | Generate questions | 2-4 concrete options per question, mark recommended option |
-| 4 | Interview user | Use AskUserQuestion with configured question count (min-max) |
-| 5 | Document answers | Add `## Validation Summary` to plan.md with confirmed decisions |
+| Step | Action                  | Key Notes                                                                  |
+| ---- | ----------------------- | -------------------------------------------------------------------------- |
+| 1    | Read plan files         | `plan.md` and all `phase-*.md` -- find decision points, assumptions, risks |
+| 2    | Extract question topics | Scan for architecture, assumptions, tradeoffs, risks, scope keywords       |
+| 3    | Generate questions      | 2-4 concrete options per question, mark recommended option                 |
+| 4    | Interview user          | Use AskUserQuestion with configured question count (min-max)               |
+| 5    | Document answers        | Add `## Validation Summary` to plan.md with confirmed decisions            |
 
 **Key Principles:**
+
 - Only ask about genuine decision points -- don't manufacture artificial choices
 - Prioritize questions that could change implementation significantly
 - Document answers but do NOT modify phase files -- just note what needs updating
@@ -38,7 +38,6 @@ Interview the user with critical questions to validate assumptions, confirm deci
 
 Check `## Plan Context` section for validation settings:
 
-
 - `mode` - Controls auto/prompt/off behavior
 - `questions` - Range like `3-8` (min-max)
 
@@ -47,7 +46,6 @@ These values are automatically injected from user config. Use them as constraint
 ## Workflow
 
 ### Step 1: Read Plan Files
-
 
 Read the plan directory:
 
@@ -59,19 +57,18 @@ Read the plan directory:
 
 Scan plan content for:
 
-| Category         | Keywords to detect                                                |
-| ---------------- | ----------------------------------------------------------------- |
-| **Architecture** | "approach", "pattern", "design", "structure", "database", "API"   |
-| **Assumptions**  | "assume", "expect", "should", "will", "must", "default"           |
-| **Tradeoffs**    | "tradeoff", "vs", "alternative", "option", "choice", "either/or"  |
-| **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern" |
-| **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"          |
+| Category         | Keywords to detect                                                                                                                                       |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Architecture** | "approach", "pattern", "design", "structure", "database", "API"                                                                                          |
+| **Assumptions**  | "assume", "expect", "should", "will", "must", "default"                                                                                                  |
+| **Tradeoffs**    | "tradeoff", "vs", "alternative", "option", "choice", "either/or"                                                                                         |
+| **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern"                                                                                        |
+| **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"                                                                                                 |
 | **Reasoning**    | Check: Does Architecture section explain WHY, not just WHAT? Does Risk Assessment include failure modes? Is there a Design Intent or Trade-offs section? |
 
 ### Step 3: Generate Questions
 
 For each detected topic, formulate a concrete question:
-
 
 **Question format rules:**
 
@@ -102,7 +99,6 @@ Options:
 
 ### Step 4: Interview User
 
-
 Use `AskUserQuestion` tool to present questions.
 
 **Rules:**
@@ -112,7 +108,6 @@ Use `AskUserQuestion` tool to present questions.
 - Focus on: assumptions, risks, tradeoffs, architecture
 
 ### Step 5: Document Answers
-
 
 After collecting answers, update the plan:
 
@@ -125,13 +120,15 @@ After collecting answers, update the plan:
 **Questions asked:** {count}
 
 ### Confirmed Decisions
+
 - {decision 1}: {user choice}
 - {decision 2}: {user choice}
-1
+  1
+
 ### Action Items
+
 - [ ] {any changes needed based on answers}
 ```
-
 
 1. If answers require plan changes, note them but **do not modify phase files** - just document what needs updating.
 
@@ -150,8 +147,7 @@ After validation completes, provide summary:
 **IMPORTANT:** If plan is simple with few decisions, it's okay to ask fewer than min questions.
 **IMPORTANT:** Prioritize questions that could change implementation significantly.
 
+## IMPORTANT Task Planning Notes (MUST FOLLOW)
 
-## IMPORTANT Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always plan and break work into many small todo tasks using `TaskCreate`
+- Always add a final review todo task to verify work quality

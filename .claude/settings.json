@@ -12,7 +12,7 @@
         "csharp-lsp@claude-plugins-official": true,
         "frontend-design@claude-plugins-official": true,
         "github@claude-plugins-official": true,
-        "playwright@claude-plugins-official": false,
+        "playwright@claude-plugins-official": true,
         "typescript-lsp@claude-plugins-official": true
     },
     "env": {
@@ -43,7 +43,7 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/edit-complexity-tracker.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-edit-rule-check.cjs",
                         "type": "command"
                     }
                 ],
@@ -57,15 +57,6 @@
                     }
                 ],
                 "matcher": "Edit|Write"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ace-event-emitter.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Bash|Skill"
             },
             {
                 "hooks": [
@@ -111,6 +102,15 @@
                     }
                 ],
                 "matcher": "Edit|Write"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/auto-fix-trigger.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Bash"
             }
         ],
         "PreCompact": [
@@ -122,14 +122,6 @@
                     },
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/save-context-memory.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ace-reflector-analysis.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ace-curator-pruner.cjs",
                         "type": "command"
                     }
                 ],
@@ -149,20 +141,29 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pattern-injector.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lessons-injector.cjs",
                         "type": "command"
                     }
                 ],
-                "matcher": "*"
+                "matcher": "Edit|Write|MultiEdit"
             },
             {
                 "hooks": [
                     {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/todo-enforcement.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/edit-enforcement.cjs",
                         "type": "command"
                     }
                 ],
-                "matcher": "Skill|Edit|Write|MultiEdit|NotebookEdit"
+                "matcher": "Edit|Write|MultiEdit|NotebookEdit"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/skill-enforcement.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Skill"
             },
             {
                 "hooks": [
@@ -299,24 +300,6 @@
             {
                 "hooks": [
                     {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ace-session-inject.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "startup|resume"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pattern-injector.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "startup|resume"
-            },
-            {
-                "hooks": [
-                    {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/root-deps-check.cjs",
                         "type": "command"
                     }
@@ -361,7 +344,7 @@
                         "type": "command"
                     },
                     {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ace-feedback-tracker.cjs",
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lessons-injector.cjs",
                         "type": "command"
                     }
                 ]

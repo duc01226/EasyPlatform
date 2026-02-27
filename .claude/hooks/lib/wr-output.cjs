@@ -20,20 +20,42 @@ const { buildWorkflowCatalog } = require('./wr-detect.cjs');
  */
 function getStepDescription(step) {
   const descriptions = {
+    // Core workflow steps
     plan: 'Create implementation plan',
     'plan-review': 'Review implementation plan',
+    'plan-validate': 'Validate plan with critical questions',
     cook: 'Implement the feature',
     code: 'Implement from existing plan',
     test: 'Run tests and verify',
+    'test-initial': 'Run initial test verification',
     fix: 'Apply fixes',
     debug: 'Investigate and diagnose',
     'code-review': 'Review code quality',
     'code-simplifier': 'Simplify and refine code',
-    'docs-update': 'Update documentation',
+    'sre-review': 'SRE production readiness review',
+    'docs-update': 'Update documentation (general + feature docs)',
     watzup: 'Summarize changes',
     scout: 'Explore codebase',
     investigate: 'Deep dive analysis',
     changelog: 'Update changelog',
+    'why-review': 'Audit reasoning quality',
+    'review-changes': 'Review uncommitted changes',
+    'review-post-task': 'Post-task review of completed work',
+    // Short step IDs (mapped to team-* skills via commandMapping)
+    'design-spec': 'Create design specification',
+    idea: 'Capture product idea',
+    refine: 'Refine into product backlog item',
+    story: 'Break into user stories',
+    prioritize: 'Prioritize backlog items',
+    'test-spec': 'Generate test specification',
+    'test-cases': 'Create detailed test cases',
+    'quality-gate': 'Run quality gate checks',
+    status: 'Generate status report',
+    dependency: 'Analyze dependencies',
+    'team-sync': 'Prepare team sync agenda',
+    acceptance: 'PO acceptance sign-off',
+    retro: 'Sprint retrospective',
+    // Legacy step IDs (backward compat)
     'team-design-spec': 'Create design specification',
     'team-idea': 'Capture product idea',
     'team-refine': 'Refine into product backlog item',
@@ -44,9 +66,7 @@ function getStepDescription(step) {
     'team-quality-gate': 'Run quality gate checks',
     'team-status': 'Generate status report',
     'team-dependency': 'Analyze dependencies',
-    'review-changes': 'Review uncommitted changes',
-    'team-team-sync': 'Prepare team sync agenda',
-    'why-review': 'Audit reasoning quality'
+    'team-team-sync': 'Prepare team sync agenda'
   };
   return descriptions[step] || `Execute ${step}`;
 }
@@ -64,29 +84,49 @@ function buildCatalogInjection(config) {
 
   const lines = [];
   lines.push('');
-  lines.push('## Available Workflows');
+  lines.push('## Workflow Catalog');
   lines.push('');
-  lines.push('**MANDATORY:** Analyze this prompt against the workflows below. If ANY workflow matches, you MUST invoke `/workflow-start <id>` BEFORE doing anything else — do NOT skip this step, do NOT read files first, do NOT jump to implementation. If `confirmFirst` is true, ask the user before activating. Only handle directly if NO workflow matches.');
-  lines.push('');
-  lines.push('**"Simple task" exception is NARROW:** Only skip workflows for single-line typo fixes or when the user says "just do it" / prefixes with `quick:`. A prompt containing error details, stack traces, or multi-line context is NEVER simple — always activate the matching workflow.');
+  lines.push('> **MANDATORY:** You MUST check every prompt against this catalog before responding.');
+  lines.push('> If a workflow matches, you MUST activate it. NEVER skip a matching workflow.');
+  lines.push('> Only proceed without a workflow if NO catalog entry matches the user\'s intent.');
   lines.push('');
   lines.push(catalog);
   lines.push('');
 
-  // Numbered detection steps (proven more effective than single paragraph)
-  lines.push('### Detection Steps');
+  lines.push('## Workflow Detection Instructions');
   lines.push('');
-  lines.push('1. **MATCH (MANDATORY):** Compare the user\'s prompt against EVERY "Use" field above. Match semantics, not exact keywords.');
-  lines.push('2. **SELECT:** Pick the single best-matching workflow, or NONE only if genuinely no entry matches.');
-  lines.push('3. **NO MATCH FALLBACK:** If genuinely NO workflow matches, ask the user: "No workflow matched. Should I: (a) handle directly, (b) use `/plan` first, or (c) pick a workflow?" — do NOT silently proceed.');
-  lines.push('4. **ACTIVATE:** Call `/workflow-start <workflowId>` — do NOT skip this step, do NOT read files first');
-  lines.push('5. **ANNOUNCE:** Tell user: "Detected: **[Workflow Name]**. Following: [sequence]"');
-  lines.push('6. **⛔ CONFIRM GATE (if `confirmFirst`):** You MUST ask "Proceed with this workflow? (yes/no/quick)" and WAIT for user response. Do NOT proceed until user confirms. This is a BLOCKING requirement.');
-  lines.push('7. **⛔ TODOWRITE (MANDATORY — BLOCKING):** You MUST create exactly ONE `TaskCreate` call per workflow step — if the workflow has 7 steps, you MUST create 7 todos. Do NOT summarize or combine steps. Do NOT create generic todos. Each todo subject = the step\'s slash command (e.g., `/scout`, `/plan`). The hook will REJECT fewer todos than workflow steps.');
+  lines.push('1. **MATCH (MANDATORY):** Compare the user\'s prompt against EVERY "Use" field. If the prompt mentions fixing, debugging, errors, bugs → **bugfix**. If it mentions implementing, adding, creating → **feature**. Match semantics, not exact keywords.');
+  lines.push('2. **SELECT:** Pick the single best-matching workflow, or NONE only if genuinely no entry matches');
+  lines.push('3. **ACTIVATE:** Call `/workflow-start <workflowId>` — do NOT skip this step, do NOT read files first');
+  lines.push('4. **ANNOUNCE:** Tell user: "Detected: **[Workflow Name]**. Following: [sequence]"');
+  lines.push('5. **CONFIRM** (if marked with confirmFirst): Ask "Proceed? (yes/no/quick)". If NOT marked, execute immediately without asking.');
+  lines.push('6. **TASKCREATE (MANDATORY):** Create `[Workflow]` items for each step BEFORE any other action');
+  lines.push('');
+  lines.push('### Simple Task Exception (NARROW)');
+  lines.push('');
+  lines.push('Skip workflows ONLY for: single-line typo fixes, user says "just do it" or "no workflow", pure questions with no code changes.');
+  lines.push('If the prompt mentions "fix", "error", "bug", "implement", "add feature", "refactor", or "review" → a workflow ALWAYS applies, even if the fix seems small.');
+  lines.push('');
+
+  lines.push('### Task Creation Enforcement (HARD BLOCKING)');
+  lines.push('');
+  lines.push('**YOU ARE BLOCKED FROM PROCEEDING until you create tasks for EVERY workflow step.**');
+  lines.push('');
+  lines.push('After selecting a workflow, your FIRST action MUST be calling `TaskCreate` once per workflow step:');
+  lines.push('```');
+  lines.push('TaskCreate: subject="[Workflow] /command - Step description", description="...", activeForm="Step description"');
+  lines.push('```');
+  lines.push('');
+  lines.push('**Rules:**');
+  lines.push('1. Create ONE `TaskCreate` per workflow step — do NOT combine steps');
+  lines.push('2. Mark each task `in_progress` (via `TaskUpdate`) before starting, `completed` after finishing');
+  lines.push('3. After EVERY step, check `TaskList` for next `pending` task');
+  lines.push('4. Continue until ALL `[Workflow]` tasks are `completed`');
+  lines.push('5. On context loss, check `TaskList` for `[Workflow]` items to recover');
   lines.push('');
 
   if (settings?.allowOverride && settings?.overridePrefix) {
-    lines.push(`*To skip workflow detection, prefix your message with "${settings.overridePrefix}"*`);
+    lines.push(`*To skip confirmation, prefix your message with "${settings.overridePrefix}"*`);
     lines.push('');
   }
 
@@ -109,38 +149,15 @@ function buildActiveWorkflowContext(existingState, config) {
   // Guard: state may have been cleared between loadState() and getCurrentStepInfo()
   if (!currentInfo) return '';
 
-  const existingSequence = (existingState.sequence || []).map(step => {
-    const cmd = (commandMapping || {})[step];
-    return cmd?.claude || `/${step}`;
-  }).join(' → ');
-
   const lines = [];
 
-  // Section 1: Active workflow status
-  lines.push('');
-  lines.push('## Active Workflow');
-  lines.push('');
-  lines.push(`**Workflow:** ${existingState.workflowName} (${existingState.workflowId || 'unknown'})`);
-  lines.push(`**Progress:** Step ${currentInfo.stepNumber}/${currentInfo.totalSteps} — current: \`${currentInfo.claudeCommand}\``);
-  lines.push(`**Sequence:** ${existingSequence}`);
+  // Active workflow summary
+  lines.push(`> **Active workflow:** ${existingState.workflowName} (step: ${currentInfo.claudeCommand})`);
+  lines.push('> To switch workflows, call `/workflow-start <newId>` (auto-switches).');
   lines.push('');
 
-  // Section 2: Conflict instructions
-  lines.push('### New Prompt Handling');
-  lines.push('');
-  lines.push('If this new prompt matches the **SAME** workflow, continue with the current step.');
-  lines.push('If it suggests a **DIFFERENT** intent, announce the conflict and ask the user:');
-  lines.push('- **Switch** — invoke `/workflow-start <newId>` (auto-switches, clears current)');
-  lines.push('- **Continue** — keep executing the current workflow');
-  lines.push('- **Quick** — skip workflows entirely, handle directly');
-  lines.push('');
-
-  // Section 3: Full catalog for AI comparison
-  const catalog = buildWorkflowCatalog(config);
-  lines.push('### Available Workflows');
-  lines.push('');
-  lines.push(catalog);
-  lines.push('');
+  // Full catalog injection (same as no-workflow path — ensures AI always sees catalog)
+  lines.push(buildCatalogInjection(config));
 
   return lines.join('\n');
 }

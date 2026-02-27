@@ -11,7 +11,7 @@
  *   - CHECK 1: File extension (.ts, .tsx, .cs, .html, .scss)
  *   - CHECK 2: Pattern keywords (PlatformVmStore, Command.*Handler, etc.)
  *   - CHECK 3: Transcript analysis (last 100 lines for Grep/Glob)
- *   - CHECK 4: Trivial change threshold (< 20 lines)
+ *   - CHECK 4: Trivial change threshold (< 10 lines for .cs/.ts, < 20 for others)
  *
  * Exit Codes:
  *   0 - Allowed (search evidence found or exempt)
@@ -22,10 +22,9 @@
  *   - Set CK_SKIP_SEARCH_CHECK=1 environment variable
  *   - Files matching EXEMPT_PATTERNS
  *
- * Cache Strategy:
- *   - On Grep/Glob: Set CK_SEARCH_PERFORMED=1 (O(1) write)
- *   - On Edit/Write: Check CK_SEARCH_PERFORMED (O(1) read)
- *   - Fallback: Check transcript if cache miss
+ * Evidence Strategy:
+ *   - On Edit/Write: Check CK_SEARCH_PERFORMED env (O(1) read, set externally)
+ *   - Fallback: Check transcript for recent Grep/Glob tool calls
  */
 
 'use strict';
@@ -83,7 +82,14 @@ const CODE_MODIFYING_TOOLS = new Set(['Edit', 'Write', 'MultiEdit']);
 const SEARCH_TOOLS = new Set(['Grep', 'Glob']);
 
 // Minimum lines changed to trigger enforcement
-const MIN_LINES_THRESHOLD = 20;
+const DEFAULT_MIN_LINES = 20;
+const STRICT_MIN_LINES = 10;
+const STRICT_EXTENSIONS = new Set(['.cs', '.ts']);
+
+function getMinLinesThreshold(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  return STRICT_EXTENSIONS.has(ext) ? STRICT_MIN_LINES : DEFAULT_MIN_LINES;
+}
 
 // Transcript lookback window
 const LOOKBACK_WINDOW = 100;
@@ -162,11 +168,9 @@ function estimateLinesChanged(toolInput) {
 function hasPromptBypass(payload) {
   const toolInput = payload.tool_input || {};
 
-  // Check for bypass keywords in various input fields
+  // Check for bypass keywords in description and prompt only
+  // (not content — Write tool file content may contain these words as legitimate text)
   const fieldsToCheck = [
-    toolInput.old_string,
-    toolInput.new_string,
-    toolInput.content,
     toolInput.description,
     payload.prompt
   ];
@@ -285,7 +289,7 @@ try {
 
   // Check if change is trivial (< MIN_LINES_THRESHOLD lines)
   const linesChanged = estimateLinesChanged(toolInput);
-  if (linesChanged < MIN_LINES_THRESHOLD) {
+  if (linesChanged < getMinLinesThreshold(filePath)) {
     process.exit(0);
   }
 
@@ -298,8 +302,6 @@ try {
   const hasSearchEvidence = hasRecentSearchEvidence(payload.transcript_path);
 
   if (hasSearchEvidence) {
-    // Cache the result for subsequent calls
-    process.env.CK_SEARCH_PERFORMED = '1';
     process.exit(0);
   }
 

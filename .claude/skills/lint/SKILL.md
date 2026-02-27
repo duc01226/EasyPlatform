@@ -1,7 +1,6 @@
 ---
 name: lint
-description: "[DevOps & Infra] Run linters and fix issues for backend or frontend"
-infer: true
+description: '[DevOps & Infra] Run linters and fix issues for backend or frontend'
 ---
 
 Run linting: $ARGUMENTS

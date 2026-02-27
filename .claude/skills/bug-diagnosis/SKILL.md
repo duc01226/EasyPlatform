@@ -1,8 +1,6 @@
 ---
 name: bug-diagnosis
-version: 2.0.1
 description: "[Fix & Debug] Quick triage skill for initial bug assessment and user-reported issues. Use for bug reports, error reports, quick diagnosis, initial triage, "what's causing", "why is this failing". For systematic multi-file debugging with verification protocols, use `debug` skill instead."
-infer: true
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
 ---
 
@@ -12,15 +10,17 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, T
 
 **Goal:** Quick triage and diagnosis of user-reported bugs with external memory-driven analysis and approval gate before fixing.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Initialize analysis | Create `.ai/workspace/analysis/[name].analysis.md` with structured sections |
-| 2 | Discovery & file analysis | Semantic search, batch files in groups of 10, document dependencies |
-| 3 | Root cause analysis | Rank causes across technical, business logic, data, integration dimensions |
-| 4 | Approval gate | Present findings and fix strategy -- DO NOT fix without user approval |
-| 5 | Execute fix | Minimal targeted changes following platform patterns |
+| Step | Action                    | Key Notes                                                                   |
+| ---- | ------------------------- | --------------------------------------------------------------------------- |
+| 1    | Initialize analysis       | Create `.ai/workspace/analysis/[name].analysis.md` with structured sections |
+| 2    | Discovery & file analysis | Semantic search, batch files in groups of 10, document dependencies         |
+| 3    | Root cause analysis       | Rank causes across technical, business logic, data, integration dimensions  |
+| 4    | Approval gate             | Present findings and fix strategy -- DO NOT fix without user approval       |
+| 5    | Execute fix               | Minimal targeted changes following platform patterns                        |
 
 **Key Principles:**
+
+- **Be skeptical. Critical thinking. Everything needs traced proof.** — Never accept code at face value; verify claims against actual behavior, trace data flow end-to-end, and demand evidence (file:line references, grep results, runtime confirmation) for every finding
 - Always use external memory file for structured analysis -- never rely on context alone
 - If confidence < 90%, request user confirmation before proceeding
 - For systematic multi-file debugging, use `debug` skill instead
@@ -91,6 +91,7 @@ Once approved: execute fix plan, make minimal targeted changes, follow platform 
 ## Platform Error Patterns Reference
 
 ### Backend Validation
+
 ```csharp
 return base.Validate()
     .And(_ => condition, "Error message")
@@ -101,15 +102,19 @@ await entity.ValidateAsync(repository, ct).EnsureValidAsync();
 ```
 
 ### Frontend Error Handling
+
 ```typescript
-this.apiService.getData().pipe(
-    this.observerLoadingErrorState('loadData'),
-    this.tapResponse(
-        data => this.updateState({ data }),
-        error => this.handleError(error)
-    ),
-    this.untilDestroyed()
-).subscribe();
+this.apiService
+    .getData()
+    .pipe(
+        this.observerLoadingErrorState('loadData'),
+        this.tapResponse(
+            data => this.updateState({ data }),
+            error => this.handleError(error)
+        ),
+        this.untilDestroyed()
+    )
+    .subscribe();
 ```
 
 ---
@@ -117,6 +122,7 @@ this.apiService.getData().pipe(
 ## Quick Verification Checklist
 
 Before removing/changing ANY code:
+
 - [ ] Searched static imports?
 - [ ] Searched string literals?
 - [ ] Checked dynamic invocations?
@@ -130,13 +136,13 @@ Before removing/changing ANY code:
 
 ## Common Bug Categories
 
-| Category | Examples |
-|----------|---------|
-| Data Issues | Missing null checks, race conditions, stale cache |
-| Validation | Missing rules, bypassed validation, async not awaited |
+| Category      | Examples                                                     |
+| ------------- | ------------------------------------------------------------ |
+| Data Issues   | Missing null checks, race conditions, stale cache            |
+| Validation    | Missing rules, bypassed validation, async not awaited        |
 | Cross-Service | Message bus failures, sync ordering, API contract mismatches |
-| Frontend | Lifecycle issues, state bugs, missing error handling |
-| Authorization | Missing role checks, wrong company context |
+| Frontend      | Lifecycle issues, state bugs, missing error handling         |
+| Authorization | Missing role checks, wrong company context                   |
 
 ## Related
 
@@ -146,5 +152,6 @@ Before removing/changing ANY code:
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements

@@ -1,8 +1,7 @@
 ---
 name: code-simplifier
-description: "[Review & Quality] Simplifies and refines code for clarity, consistency, and maintainability while preserving all functionality. Focuses on recently modified code unless instructed otherwise."
+description: '[Review & Quality] Simplifies and refines code for clarity, consistency, and maintainability while preserving all functionality. Focuses on recently modified code unless instructed otherwise.'
 allowed-tools: Read, Edit, Glob, Grep, Task
-infer: true
 ---
 
 # Code Simplifier Skill
@@ -13,14 +12,15 @@ Simplify and refine code for clarity, consistency, and maintainability.
 
 **Goal:** Analyze and simplify code by applying KISS, DRY, YAGNI principles while preserving all functionality.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Identify targets | Recent changes via `git diff` or specified files; skip generated/vendor |
-| 2 | Analyze complexity | Nesting >3, methods >20 lines, duplicated code, unclear naming |
-| 3 | Apply simplifications | One refactoring type at a time; follow platform patterns |
-| 4 | Verify | Run related tests, confirm no behavior changes |
+| Step | Action                | Key Notes                                                               |
+| ---- | --------------------- | ----------------------------------------------------------------------- |
+| 1    | Identify targets      | Recent changes via `git diff` or specified files; skip generated/vendor |
+| 2    | Analyze complexity    | Nesting >3, methods >20 lines, duplicated code, unclear naming          |
+| 3    | Apply simplifications | One refactoring type at a time; follow platform patterns                |
+| 4    | Verify                | Run related tests, confirm no behavior changes                          |
 
 **Key Principles:**
+
 - Preserve ALL existing functionality -- simplify, never change behavior
 - Backend: extract static expressions, use fluent helpers (`.With()`, `.PipeIf()`)
 - Frontend: use `PlatformVmStore`, `untilDestroyed()`, BEM naming
@@ -98,23 +98,23 @@ Task(subagent_type="code-simplifier:code-simplifier", prompt="Review and simplif
 ## Workflow
 
 1. **Identify targets**
-   - If no arguments: `git diff --name-only HEAD~1` for recent changes
-   - If arguments provided: use specified files/patterns
-   - Skip: generated code, migrations, vendor files
+    - If no arguments: `git diff --name-only HEAD~1` for recent changes
+    - If arguments provided: use specified files/patterns
+    - Skip: generated code, migrations, vendor files
 
 2. **Analyze each file**
-   - Identify complexity hotspots (nesting > 3, methods > 20 lines)
-   - Find duplicated code patterns
-   - Check naming clarity
+    - Identify complexity hotspots (nesting > 3, methods > 20 lines)
+    - Find duplicated code patterns
+    - Check naming clarity
 
 3. **Apply simplifications**
-   - One refactoring type at a time
-   - Preserve all functionality
-   - Follow platform patterns
+    - One refactoring type at a time
+    - Preserve all functionality
+    - Follow platform patterns
 
 4. **Verify**
-   - Run related tests if available
-   - Confirm no behavior changes
+    - Run related tests if available
+    - Confirm no behavior changes
 
 ## Examples
 
@@ -124,12 +124,12 @@ Task(subagent_type="code-simplifier:code-simplifier", prompt="Review and simplif
 
 ```typescript
 function getData() {
-  const result = fetchData();
-  if (result !== null && result !== undefined) {
-    return result;
-  } else {
-    return null;
-  }
+    const result = fetchData();
+    if (result !== null && result !== undefined) {
+        return result;
+    } else {
+        return null;
+    }
 }
 ```
 
@@ -137,7 +137,7 @@ function getData() {
 
 ```typescript
 function getData() {
-  return fetchData() ?? null;
+    return fetchData() ?? null;
 }
 ```
 

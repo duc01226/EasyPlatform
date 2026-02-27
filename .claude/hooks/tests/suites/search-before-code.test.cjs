@@ -1,254 +1,359 @@
-#!/usr/bin/env node
 /**
  * Test Suite for search-before-code.cjs Hook
  *
  * Tests:
  *  1. Extension validation (.ts, .tsx, .cs, .html, .scss)
- *  2. Pattern keyword detection (PlatformVmStore, Command handlers, etc.)
- *  3. Transcript analysis (last 100 lines for Grep/Glob)
- *  4. Trivial file threshold (20 lines)
- *  5. Skip override keywords
- *  6. Exempt patterns (.claude/, plans/, docs/, *.md)
- *  7. Cache behavior (CK_SEARCH_PERFORMED)
- *  8. Bypass environment variable (CK_SKIP_SEARCH_CHECK)
- *
- * Usage:
- *   node temp/search-before-code.test.cjs
+ *  2. Trivial change threshold
+ *  3. Bypass keywords
+ *  4. Exempt patterns (.claude/, plans/, docs/, *.md)
+ *  5. Environment variable bypass
+ *  6. Cache behavior (CK_SEARCH_PERFORMED)
+ *  7. Transcript analysis
  */
 
 'use strict';
 
-const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const fs = require('fs');
+const {
+  runHook,
+  getHookPath
+} = require('../lib/hook-runner.cjs');
+const {
+  assertEqual,
+  assertAllowed
+} = require('../lib/assertions.cjs');
+const {
+  createTempDir,
+  cleanupTempDir
+} = require('../lib/test-utils.cjs');
 
-// ═══════════════════════════════════════════════════════════════════════════
-// TEST UTILITIES
-// ═══════════════════════════════════════════════════════════════════════════
+const SEARCH_BEFORE_CODE = getHookPath('search-before-code.cjs');
 
-let testsPassed = 0;
-let testsFailed = 0;
-const hookPath = path.join(__dirname, 'search-before-code.cjs');
-
-function assert(condition, message) {
-  if (condition) {
-    console.log(`  ✅ ${message}`);
-    testsPassed++;
-  } else {
-    console.log(`  ❌ ${message}`);
-    testsFailed++;
-  }
+// Hook exits 1 to block (not 2 like PreToolUse hooks)
+function assertSearchBlocked(exitCode, msg) {
+  assertEqual(exitCode, 1, msg || 'Expected search-before-code to block (exit 1)');
 }
 
-function runHook(payload, env = {}) {
-  try {
-    const result = execSync(`echo '${JSON.stringify(payload)}' | node "${hookPath}"`, {
-      encoding: 'utf-8',
-      env: { ...process.env, ...env },
-      stdio: ['pipe', 'pipe', 'pipe']
-    });
-    return { exitCode: 0, output: result };
-  } catch (error) {
-    return { exitCode: error.status || 1, output: error.stdout || error.message };
-  }
+// Generate multi-line content exceeding the threshold
+function multiLine(n) {
+  return Array.from({ length: n }, (_, i) => `const line${i} = ${i};`).join('\n');
 }
 
-function createPayload(toolName, toolInput, transcriptPath = null) {
+function makeEditInput(filePath, oldStr, newStr, extra) {
   return {
-    tool_name: toolName,
-    tool_input: toolInput,
-    transcript_path: transcriptPath
+    tool_name: 'Edit',
+    tool_input: { file_path: filePath, old_string: oldStr, new_string: newStr, ...extra },
+    transcript_path: '/dev/null'
   };
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// TEST SUITES
-// ═══════════════════════════════════════════════════════════════════════════
+function makeWriteInput(filePath, content) {
+  return {
+    tool_name: 'Write',
+    tool_input: { file_path: filePath, content },
+    transcript_path: '/dev/null'
+  };
+}
 
-console.log('\n🧪 Search-Before-Code Hook Test Suite\n');
-
-// ───────────────────────────────────────────────────────────────────────────
+// ============================================================================
 // Test 1: Extension Validation
-// ───────────────────────────────────────────────────────────────────────────
+// ============================================================================
 
-console.log('📋 Test 1: Extension Validation');
+const extensionTests = [
+  {
+    name: '[search-before-code] blocks large .ts edit without search',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        // .ts threshold is 10 lines — use 15 lines to exceed
+        const input = makeEditInput('src/app.component.ts', 'old', multiLine(15));
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertSearchBlocked(result.code, 'Should block .ts without search');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[search-before-code] blocks large .cs edit without search',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        // .cs threshold is 10 lines — use 15 lines to exceed
+        const input = makeEditInput('src/Command.cs', 'old', multiLine(15));
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertSearchBlocked(result.code, 'Should block .cs without search');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[search-before-code] blocks large .html edit without search',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        // .html threshold is 20 lines — use 25 lines to exceed
+        const input = makeEditInput('src/template.html', 'old', multiLine(25));
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertSearchBlocked(result.code, 'Should block .html without search');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[search-before-code] allows .txt file (not code)',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = makeEditInput('src/notes.txt', 'a'.repeat(50), 'b'.repeat(50));
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow .txt (not code)');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  }
+];
 
-let result = runHook(createPayload('Edit', {
-  file_path: 'src/app.component.ts',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 1, '.ts file should be blocked');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'src/app.component.tsx',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 1, '.tsx file should be blocked');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'src/Command.cs',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 1, '.cs file should be blocked');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'src/template.html',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 1, '.html file should be blocked');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'src/styles.scss',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 1, '.scss file should be blocked');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'src/notes.txt',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 0, '.txt file should be allowed (not code)');
-
-// ───────────────────────────────────────────────────────────────────────────
+// ============================================================================
 // Test 2: Trivial Change Threshold
-// ───────────────────────────────────────────────────────────────────────────
+// ============================================================================
 
-console.log('\n📋 Test 2: Trivial Change Threshold');
+const thresholdTests = [
+  {
+    name: '[search-before-code] allows small edit below threshold',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = makeEditInput('src/app.component.ts', 'short', 'tiny');
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Changes below threshold should be allowed');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[search-before-code] blocks Write with >= threshold lines',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const largeContent = multiLine(25);
+        const input = makeWriteInput('src/app.component.ts', largeContent);
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertSearchBlocked(result.code, 'Write with >= threshold lines should be blocked');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  }
+];
 
-result = runHook(createPayload('Edit', {
-  file_path: 'src/app.component.ts',
-  old_string: 'short',
-  new_string: 'tiny'
-}));
-assert(result.exitCode === 0, 'Changes < 20 lines should be allowed');
-
-const largeContent = 'line\n'.repeat(25);
-result = runHook(createPayload('Write', {
-  file_path: 'src/app.component.ts',
-  content: largeContent
-}));
-assert(result.exitCode === 1, 'Changes >= 20 lines should be blocked');
-
-// ───────────────────────────────────────────────────────────────────────────
+// ============================================================================
 // Test 3: Bypass Keywords
-// ───────────────────────────────────────────────────────────────────────────
+// ============================================================================
 
-console.log('\n📋 Test 3: Bypass Keywords');
+const bypassTests = [
+  {
+    name: '[search-before-code] "skip search" keyword bypasses',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = makeEditInput('src/app.component.ts', 'old', multiLine(15),
+          { description: 'skip search: quick fix' });
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertAllowed(result.code, '"skip search" should bypass');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[search-before-code] "quick:" prefix in Write content bypasses',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = makeWriteInput('src/app.component.ts', 'quick: ' + multiLine(15));
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertAllowed(result.code, '"quick:" in Write content should bypass');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  }
+];
 
-result = runHook(createPayload('Edit', {
-  file_path: 'src/app.component.ts',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50),
-  description: 'skip search: quick fix'
-}));
-assert(result.exitCode === 0, '"skip search" should bypass');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'src/app.component.ts',
-  old_string: 'a'.repeat(50),
-  new_string: 'no search needed here'
-}));
-assert(result.exitCode === 0, '"no search" should bypass');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'src/app.component.ts',
-  old_string: 'a'.repeat(50),
-  new_string: 'just do it - fix'
-}));
-assert(result.exitCode === 0, '"just do it" should bypass');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'src/app.component.ts',
-  old_string: 'a'.repeat(50),
-  new_string: 'quick: typo'.repeat(10)
-}));
-assert(result.exitCode === 0, '"quick:" prefix should bypass');
-
-// ───────────────────────────────────────────────────────────────────────────
+// ============================================================================
 // Test 4: Exempt Patterns
-// ───────────────────────────────────────────────────────────────────────────
+// ============================================================================
 
-console.log('\n📋 Test 4: Exempt Patterns');
+const exemptTests = [
+  {
+    name: '[search-before-code] .claude/ files exempt',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = makeEditInput('.claude/hooks/test.cjs', 'a'.repeat(50), 'b'.repeat(50));
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertAllowed(result.code, '.claude/ files should be exempt');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[search-before-code] plans/ files exempt',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = makeEditInput('plans/feature.ts', 'a'.repeat(50), 'b'.repeat(50));
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'plans/ files should be exempt');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[search-before-code] .md files exempt',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = makeEditInput('src/README.md', 'a'.repeat(50), 'b'.repeat(50));
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertAllowed(result.code, '.md files should be exempt');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[search-before-code] node_modules/ files exempt',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = makeEditInput('node_modules/lib/index.ts', 'a'.repeat(50), 'b'.repeat(50));
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'node_modules/ files should be exempt');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  }
+];
 
-result = runHook(createPayload('Edit', {
-  file_path: '.claude/hooks/test.cjs',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 0, '.claude/ files exempt');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'plans/feature.ts',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 0, 'plans/ files exempt');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'docs/api.ts',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 0, 'docs/ files exempt');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'src/README.md',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 0, '.md files exempt');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'temp/test.ts',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 0, 'temp/ files exempt');
-
-result = runHook(createPayload('Edit', {
-  file_path: 'node_modules/lib/index.ts',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}));
-assert(result.exitCode === 0, 'node_modules/ files exempt');
-
-// ───────────────────────────────────────────────────────────────────────────
+// ============================================================================
 // Test 5: Environment Variable Bypass
-// ───────────────────────────────────────────────────────────────────────────
+// ============================================================================
 
-console.log('\n📋 Test 5: Environment Variable Bypass');
+const envBypassTests = [
+  {
+    name: '[search-before-code] CK_SKIP_SEARCH_CHECK=1 bypasses',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = makeEditInput('src/app.component.ts', 'old', multiLine(15));
+        const result = await runHook(SEARCH_BEFORE_CODE, input, {
+          cwd: tmpDir,
+          env: { CK_SKIP_SEARCH_CHECK: '1' }
+        });
+        assertAllowed(result.code, 'CK_SKIP_SEARCH_CHECK=1 should bypass');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[search-before-code] CK_SEARCH_PERFORMED=1 allows (cached)',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = makeEditInput('src/app.component.ts', 'old', multiLine(15));
+        const result = await runHook(SEARCH_BEFORE_CODE, input, {
+          cwd: tmpDir,
+          env: { CK_SEARCH_PERFORMED: '1' }
+        });
+        assertAllowed(result.code, 'CK_SEARCH_PERFORMED=1 should allow');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  }
+];
 
-result = runHook(createPayload('Edit', {
-  file_path: 'src/app.component.ts',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}), { CK_SKIP_SEARCH_CHECK: '1' });
-assert(result.exitCode === 0, 'CK_SKIP_SEARCH_CHECK=1 bypasses');
+// ============================================================================
+// Test 6: Transcript Analysis
+// ============================================================================
 
-// ───────────────────────────────────────────────────────────────────────────
-// Test 6: Cache Behavior
-// ───────────────────────────────────────────────────────────────────────────
+const transcriptTests = [
+  {
+    name: '[search-before-code] allows when transcript contains Grep evidence',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const transcriptFile = path.join(tmpDir, 'transcript.txt');
+        const searchEvidence = '<invoke name="Grep"><parameter name="pattern">TestPattern</parameter></invoke>';
+        fs.writeFileSync(transcriptFile, searchEvidence);
 
-console.log('\n📋 Test 6: Cache Behavior');
+        const input = {
+          tool_name: 'Edit',
+          tool_input: {
+            file_path: 'src/app.component.ts',
+            old_string: 'old',
+            new_string: multiLine(15)
+          },
+          transcript_path: transcriptFile
+        };
 
-result = runHook(createPayload('Edit', {
-  file_path: 'src/app.component.ts',
-  old_string: 'a'.repeat(50),
-  new_string: 'b'.repeat(50)
-}), { CK_SEARCH_PERFORMED: '1' });
-assert(result.exitCode === 0, 'CK_SEARCH_PERFORMED=1 allows (cached)');
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should allow when transcript has Grep evidence');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[search-before-code] blocks when transcript has no search evidence',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const transcriptFile = path.join(tmpDir, 'transcript.txt');
+        fs.writeFileSync(transcriptFile, 'Just some random content with no search tools');
 
-// ───────────────────────────────────────────────────────────────────────────
-// Test 7: Transcript Analysis
-// ───────────────────────────────────────────────────────────────────────────
+        const input = {
+          tool_name: 'Edit',
+          tool_input: {
+            file_path: 'src/app.component.ts',
+            old_string: 'old',
+            new_string: multiLine(15)
+          },
+          transcript_path: transcriptFile
+        };
 
-console.log('\n📋 Test 7: Transcript Analysis');
+        const result = await runHook(SEARCH_BEFORE_CODE, input, { cwd: tmpDir });
+        assertSearchBlocked(result.code, 'Should block when transcript has no search evidence');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  }
+];
 
-const tempTranscriptPath = path.join(__dirname, 'test-transcript.txt');
-const transcriptWithSearch = '<invoke name="Grep"><parameter name="pattern">Test
+// ============================================================================
+// Export test suite
+// ============================================================================
+
+module.exports = {
+  name: 'Search Before Code',
+  tests: [
+    ...extensionTests,
+    ...thresholdTests,
+    ...bypassTests,
+    ...exemptTests,
+    ...envBypassTests,
+    ...transcriptTests
+  ]
+};

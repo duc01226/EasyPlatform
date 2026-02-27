@@ -40,6 +40,7 @@ public abstract class BaseStartup
         // Populate ServiceCollection to ExposeServiceCollectionFactory through UseServiceProviderFactory
         // and hostBuilder.Build() => trigger CreateBuilder => expose ServiceCollection
         var factory = new ExposeServiceCollectionFactory();
+
         hostBuilder.UseServiceProviderFactory(factory);
         hostBuilder.Build();
 

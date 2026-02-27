@@ -1,7 +1,6 @@
 ---
 name: ai-dev-tools-sync
-description: "[Tooling & Meta] Synchronize and update Claude Code and GitHub Copilot development tool configurations to work similarly. Use when asked to update Claude Code setup, update Copilot setup, sync AI dev tools, add new skills/prompts/agents across both platforms, or ensure Claude and Copilot configurations are aligned. Covers skills, prompts, agents, instructions, workflows, and chat modes."
-infer: true
+description: '[Tooling & Meta] Synchronize and update Claude Code and GitHub Copilot development tool configurations to work similarly. Use when asked to update Claude Code setup, update Copilot setup, sync AI dev tools, add new skills/prompts/agents across both platforms, or ensure Claude and Copilot configurations are aligned. Covers skills, prompts, agents, instructions, workflows, and chat modes.'
 ---
 
 # AI Dev Tools Sync
@@ -12,14 +11,15 @@ Synchronize Claude Code and GitHub Copilot configurations to maintain feature pa
 
 **Goal:** Synchronize Claude Code and GitHub Copilot configurations to maintain feature parity across both AI development tools.
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Identify change scope | Skills, prompts, agents, instructions, or workflows |
-| 2 | Map equivalents | Claude SKILL.md <-> Copilot prompt.md, etc. |
-| 3 | Apply changes | Update both platforms' config files |
-| 4 | Verify parity | Ensure both tools have matching capabilities |
+| Step | Action                | Key Notes                                           |
+| ---- | --------------------- | --------------------------------------------------- |
+| 1    | Identify change scope | Skills, prompts, agents, instructions, or workflows |
+| 2    | Map equivalents       | Claude SKILL.md <-> Copilot prompt.md, etc.         |
+| 3    | Apply changes         | Update both platforms' config files                 |
+| 4    | Verify parity         | Ensure both tools have matching capabilities        |
 
 **Key Principles:**
+
 - Claude skills live in `.claude/skills/`, Copilot prompts in `.github/prompts/`
 - Copilot auto-reads Claude skills — avoid duplication where possible
 - Agents are shared in `.github/agents/` for both platforms
@@ -35,15 +35,15 @@ Activate this skill when:
 
 ## Quick Reference
 
-| Claude Code    | GitHub Copilot          | Location                                   |
-| -------------- | ----------------------- | ------------------------------------------ |
-| SKILL.md       | SKILL.md                | `.claude/skills/` + `.github/skills/`      |
-| skills/*/SKILL.md | prompts/*.prompt.md  | `.claude/skills/` + `.github/prompts/`   |
-| agents/*.md    | agents/*.md             | `.github/agents/` (shared)                 |
-| workflows/*.md | -                       | `.claude/workflows/`                       |
-| CLAUDE.md      | copilot-instructions.md | Root + `.github/`                          |
-| -              | instructions/*.md       | `.github/instructions/` (applyTo patterns) |
-| -              | chatmodes/*.chatmode.md | `.github/chatmodes/`                       |
+| Claude Code        | GitHub Copilot           | Location                                   |
+| ------------------ | ------------------------ | ------------------------------------------ |
+| SKILL.md           | SKILL.md                 | `.claude/skills/` + `.github/skills/`      |
+| skills/\*/SKILL.md | prompts/\*.prompt.md     | `.claude/skills/` + `.github/prompts/`     |
+| agents/\*.md       | agents/\*.md             | `.github/agents/` (shared)                 |
+| workflows/\*.md    | -                        | `.claude/workflows/`                       |
+| CLAUDE.md          | copilot-instructions.md  | Root + `.github/`                          |
+| -                  | instructions/\*.md       | `.github/instructions/` (applyTo patterns) |
+| -                  | chatmodes/\*.chatmode.md | `.github/chatmodes/`                       |
 
 ## GitHub Copilot Features Catalog
 
@@ -53,15 +53,15 @@ Complete catalog of GitHub Copilot customization features (as of 2026).
 
 #### Repository-Level (`.github/`)
 
-| File/Folder | Purpose | Format |
-| --- | --- | --- |
-| `copilot-instructions.md` | Global instructions for all Copilot interactions | Markdown |
+| File/Folder                      | Purpose                                             | Format          |
+| -------------------------------- | --------------------------------------------------- | --------------- |
+| `copilot-instructions.md`        | Global instructions for all Copilot interactions    | Markdown        |
 | `instructions/*.instructions.md` | Path-scoped instructions with `applyTo` frontmatter | Markdown + YAML |
-| `prompts/*.prompt.md` | Reusable prompts (slash commands) | Markdown + YAML |
-| `agents/*.md` | Agent definitions | Markdown + YAML |
-| `skills/*/SKILL.md` | Agent skills with bundled resources | Markdown + YAML |
-| `chatmodes/*.chatmode.md` | Custom chat personalities | Markdown + YAML |
-| `AGENTS.md` | Master agent routing file | Markdown |
+| `prompts/*.prompt.md`            | Reusable prompts (slash commands)                   | Markdown + YAML |
+| `agents/*.md`                    | Agent definitions                                   | Markdown + YAML |
+| `skills/*/SKILL.md`              | Agent skills with bundled resources                 | Markdown + YAML |
+| `chatmodes/*.chatmode.md`        | Custom chat personalities                           | Markdown + YAML |
+| `AGENTS.md`                      | Master agent routing file                           | Markdown        |
 
 #### Also Supported (Backward Compatibility)
 
@@ -77,6 +77,7 @@ Root instructions auto-included in every request.
 
 ```markdown
 # Project Guidelines
+
 - Use TypeScript for all new files
 - Follow BEM naming for CSS classes
 ```
@@ -87,8 +88,8 @@ Apply to specific file patterns via `applyTo`:
 
 ```yaml
 ---
-applyTo: "src/Services/**/*.cs"
-excludeAgent: ["code-review"] # Optional: exclude specific agents
+applyTo: 'src/Services/**/*.cs'
+excludeAgent: ['code-review'] # Optional: exclude specific agents
 ---
 # Backend C# Guidelines
 Use PlatformValidationResult for validation...
@@ -127,7 +128,7 @@ Custom chat personalities with tool restrictions:
 ```yaml
 ---
 name: security-reviewer
-tools: ["read", "grep", "glob"] # Restrict tools
+tools: ['read', 'grep', 'glob'] # Restrict tools
 ---
 # Security Review Mode
 Focus only on security vulnerabilities...
@@ -166,10 +167,10 @@ Both platforms support skills in `.github/skills/`. Copilot also reads `.claude/
 
 ### Prompt/Command Sync
 
-| Claude Code                  | GitHub Copilot                             |
-| ---------------------------- | ------------------------------------------ |
-| `.claude/skills/my-cmd.md` | `.github/prompts/my-cmd.prompt.md`         |
-| Invoked via `/my-cmd`        | Invoked via `/my-cmd` or `#prompt:my-cmd`  |
+| Claude Code                | GitHub Copilot                            |
+| -------------------------- | ----------------------------------------- |
+| `.claude/skills/my-cmd.md` | `.github/prompts/my-cmd.prompt.md`        |
+| Invoked via `/my-cmd`      | Invoked via `/my-cmd` or `#prompt:my-cmd` |
 
 **Sync Strategy**:
 
@@ -178,10 +179,10 @@ Both platforms support skills in `.github/skills/`. Copilot also reads `.claude/
 
 ### Instructions Sync
 
-| Claude Code         | GitHub Copilot                      |
-| ------------------- | ----------------------------------- |
-| `CLAUDE.md` (root)  | `.github/copilot-instructions.md`   |
-| Single file         | Multi-file with `applyTo` patterns  |
+| Claude Code        | GitHub Copilot                     |
+| ------------------ | ---------------------------------- |
+| `CLAUDE.md` (root) | `.github/copilot-instructions.md`  |
+| Single file        | Multi-file with `applyTo` patterns |
 
 **Sync Strategy**:
 
@@ -199,21 +200,21 @@ Both platforms read `.github/agents/*.md`.
 
 Claude has workflow orchestration. Copilot uses chat modes.
 
-| Claude Workflow          | Copilot Equivalent   |
-| ------------------------ | -------------------- |
-| Sequential agent chains  | Chat mode switching  |
-| `.claude/workflows/`     | `.github/chatmodes/` |
+| Claude Workflow         | Copilot Equivalent   |
+| ----------------------- | -------------------- |
+| Sequential agent chains | Chat mode switching  |
+| `.claude/workflows/`    | `.github/chatmodes/` |
 
 ### Decision Matrix
 
-| Feature | Location | Reason |
-| --- | --- | --- |
-| Skills | `.github/skills/` | Maximum compatibility |
-| Prompts | `.github/prompts/` | Both platforms read |
-| Agents | `.github/agents/` | Shared location |
-| Instructions | Both files | Platform-specific nuances |
-| Workflows | `.claude/workflows/` | Claude-specific |
-| Chat Modes | `.github/chatmodes/` | Copilot-specific |
+| Feature      | Location             | Reason                    |
+| ------------ | -------------------- | ------------------------- |
+| Skills       | `.github/skills/`    | Maximum compatibility     |
+| Prompts      | `.github/prompts/`   | Both platforms read       |
+| Agents       | `.github/agents/`    | Shared location           |
+| Instructions | Both files           | Platform-specific nuances |
+| Workflows    | `.claude/workflows/` | Claude-specific           |
+| Chat Modes   | `.github/chatmodes/` | Copilot-specific          |
 
 ### Common Sync Tasks
 

@@ -435,12 +435,6 @@
   path: learn\SKILL.md
 - category: other
   description: '[Tooling & Meta] Manage learned patterns - list, view, archive, boost
-    or penalize confidence. Use when you want to see what patterns Claude has learned,
-    review pattern effectiveness, or manage the pattern library.'
-  has_references: false
-  has_scripts: true
-  name: learned-patterns
-  path: learned-patterns\SKILL.md
 - category: other
   description: '[DevOps & Infra] Run linters and fix issues for backend or frontend'
   has_references: false
