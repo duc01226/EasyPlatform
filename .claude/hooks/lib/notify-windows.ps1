@@ -1,10 +1,20 @@
 # Windows notification script for Claude Code
-# Called by desktop.cjs with parameters: -Title "title" -Message "message" [-ShowDialog]
+# Called by notify-waiting.js with parameters: -Title "title" -Message "message" [-ShowDialog]
 param(
     [string]$Title = "Claude Code",
     [string]$Message = "Waiting for your input",
     [switch]$ShowDialog = $false
 )
+
+# Play system sound based on event type
+# Exclamation = needs attention, Asterisk = task complete, Question = general notification
+if ($Title -match "Needs Input|Waiting") {
+    [System.Media.SystemSounds]::Exclamation.Play()
+} elseif ($Title -match "Complete|Finished") {
+    [System.Media.SystemSounds]::Asterisk.Play()
+} else {
+    [System.Media.SystemSounds]::Question.Play()
+}
 
 # For non-dialog notifications, try BurntToast FIRST (no WinForms assembly = no focus issues)
 if (-not $ShowDialog) {

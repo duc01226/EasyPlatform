@@ -420,11 +420,11 @@ install_node_deps() {
     # Install local npm packages for skills
     print_info "Installing local npm packages for skills..."
 
-    # test-ui (browser automation via Puppeteer)
-    if [ -d "$SCRIPT_DIR/test-ui/scripts" ] && [ -f "$SCRIPT_DIR/test-ui/scripts/package.json" ]; then
-        print_info "Installing test-ui dependencies..."
-        (cd "$SCRIPT_DIR/test-ui/scripts" && npm install --quiet)
-        print_success "test-ui dependencies installed"
+    # chrome-devtools
+    if [ -d "$SCRIPT_DIR/chrome-devtools/scripts" ] && [ -f "$SCRIPT_DIR/chrome-devtools/scripts/package.json" ]; then
+        print_info "Installing chrome-devtools dependencies..."
+        (cd "$SCRIPT_DIR/chrome-devtools/scripts" && npm install --quiet)
+        print_success "chrome-devtools dependencies installed"
     fi
 
     # sequential-thinking
@@ -448,11 +448,39 @@ install_node_deps() {
         print_success "markdown-novel-viewer dependencies installed"
     fi
 
-    # kanban (gray-matter)
-    if [ -d "$SCRIPT_DIR/kanban" ] && [ -f "$SCRIPT_DIR/kanban/package.json" ]; then
-        print_info "Installing kanban dependencies..."
-        (cd "$SCRIPT_DIR/kanban" && npm install --quiet)
-        print_success "kanban dependencies installed"
+    # plans-kanban (gray-matter)
+    if [ -d "$SCRIPT_DIR/plans-kanban" ] && [ -f "$SCRIPT_DIR/plans-kanban/package.json" ]; then
+        print_info "Installing plans-kanban dependencies..."
+        (cd "$SCRIPT_DIR/plans-kanban" && npm install --quiet)
+        print_success "plans-kanban dependencies installed"
+    fi
+
+    # markdown-to-pdf (md-to-pdf, gray-matter)
+    if [ -d "$SCRIPT_DIR/markdown-to-pdf" ] && [ -f "$SCRIPT_DIR/markdown-to-pdf/package.json" ]; then
+        print_info "Installing markdown-to-pdf dependencies..."
+        (cd "$SCRIPT_DIR/markdown-to-pdf" && npm install --quiet)
+        print_success "markdown-to-pdf dependencies installed"
+    fi
+
+    # markdown-to-docx (markdown-docx, gray-matter)
+    if [ -d "$SCRIPT_DIR/markdown-to-docx" ] && [ -f "$SCRIPT_DIR/markdown-to-docx/package.json" ]; then
+        print_info "Installing markdown-to-docx dependencies..."
+        (cd "$SCRIPT_DIR/markdown-to-docx" && npm install --quiet)
+        print_success "markdown-to-docx dependencies installed"
+    fi
+
+    # docx-to-markdown (mammoth, turndown, turndown-plugin-gfm)
+    if [ -d "$SCRIPT_DIR/docx-to-markdown" ] && [ -f "$SCRIPT_DIR/docx-to-markdown/package.json" ]; then
+        print_info "Installing docx-to-markdown dependencies..."
+        (cd "$SCRIPT_DIR/docx-to-markdown" && npm install --quiet)
+        print_success "docx-to-markdown dependencies installed"
+    fi
+
+    # pdf-to-markdown (@opendocsg/pdf2md)
+    if [ -d "$SCRIPT_DIR/pdf-to-markdown" ] && [ -f "$SCRIPT_DIR/pdf-to-markdown/package.json" ]; then
+        print_info "Installing pdf-to-markdown dependencies..."
+        (cd "$SCRIPT_DIR/pdf-to-markdown" && npm install --quiet)
+        print_success "pdf-to-markdown dependencies installed"
     fi
 
     # Optional: Shopify CLI (ask user unless auto-confirming)

@@ -20,7 +20,7 @@ const { validateOutputPath, validateInputNotEmpty } = require('./utils.cjs');
 
 const ANTHROPIC_API_URL = 'api.anthropic.com';
 const ANTHROPIC_API_VERSION = '2023-06-01';
-const DEFAULT_MODEL = 'claude-sonnet-4-20250514';
+const DEFAULT_MODEL = 'sonnet';
 
 /**
  * Transform prompts for different audiences
@@ -282,7 +282,7 @@ async function main() {
     console.error('Options:');
     console.error('  --transform <type>  Transform type (default: summarize)');
     console.error('  --output <path>     Output file path');
-    console.error('  --model <model>     Claude model to use (default: claude-sonnet-4-20250514)');
+    console.error('  --model <model>     Claude model to use (default: sonnet)');
     console.error('  --no-cache          Skip cache lookup');
     process.exit(1);
   }

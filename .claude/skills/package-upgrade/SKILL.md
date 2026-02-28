@@ -1,8 +1,29 @@
 ---
 name: package-upgrade
-description: "[DevOps & Infra] Use when the user asks to analyze package upgrades, check for outdated dependencies, plan npm/NuGet updates, or assess breaking changes in package updates. Triggers on keywords like "upgrade packages", "outdated", "npm update", "breaking changes", "dependency upgrade", "package update", "version upgrade"."
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
+version: 1.0.1
+description: "[Code Quality] Use when the user asks to analyze package upgrades, check for outdated dependencies, plan npm/NuGet updates, or assess breaking changes in package updates. Triggers on keywords like "upgrade packages", "outdated", "npm update", "breaking changes", "dependency upgrade", "package update", "version upgrade"."
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+## Quick Summary
+
+**Goal:** Analyze npm package dependencies, research latest versions and breaking changes, and generate a phased upgrade plan.
+
+**Workflow:**
+
+1. **Inventory** — Discover all package.json files, catalog dependencies and usage
+2. **Web Research** — Batch-research latest versions, breaking changes, migration guides (groups of 10)
+3. **Risk Assessment** — Categorize risk (Critical/High/Medium/Low), build dependency upgrade order
+4. **Report** — Generate comprehensive upgrade report with phased migration plan
+5. **Approval Gate** — Present report for user confirmation before any action
+
+**Key Rules:**
+
+- Must read anti-hallucination protocols before executing
+- Research only from official sources (npm, GitHub, official docs)
+- Declare confidence level; if < 90%, request user verification
 
 # Frontend Package Upgrade Analysis & Planning
 
@@ -10,56 +31,7 @@ You are to operate as an expert frontend package management specialist, npm ecos
 
 **IMPORTANT**: Always thinks hard, plan step by step to-do list first before execute. Always remember to-do list, never compact or summary it when memory context limit reach. Always preserve and carry your to-do list through every operation.
 
-## Summary
-
-**Goal:** Analyze package.json dependencies, research latest versions, collect breaking changes, and generate a comprehensive upgrade plan.
-
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Package inventory | Discover all package.json files, list current versions |
-| 2 | Version research | WebSearch latest versions, changelogs, migration guides |
-| 3 | Breaking change analysis | Document breaking changes per package with evidence |
-| 4 | Risk assessment | Categorize upgrades by risk (safe, moderate, breaking) |
-| 5 | Upgrade plan | Prioritized execution order with rollback strategies |
-
-**Key Principles:**
-- Anti-hallucination: cite official changelogs for breaking changes, never guess
-- Batch package research in groups of 10; re-anchor to original task every 10 packages
-- Always plan step-by-step todo list first before executing any upgrades
-
----
-
-## Core Anti-Hallucination Protocols
-
-### ASSUMPTION_VALIDATION_CHECKPOINT
-
-Before every major operation:
-
-1. "What assumptions am I making about [X]?"
-2. "Have I verified this with actual code evidence?"
-3. "Could I be wrong about [specific pattern/relationship]?"
-
-### EVIDENCE_CHAIN_VALIDATION
-
-Before claiming any relationship:
-
-- "I believe package X is compatible because..." → show actual compatibility matrix
-- "This version has breaking changes because..." → cite official changelog
-- "Migration effort is Y hours because..." → show evidence from similar migrations
-
-### TOOL_EFFICIENCY_PROTOCOL
-
-- Batch multiple WebSearch calls for related packages
-- Use parallel Read operations for package.json files
-- Batch package research into groups of 10
-
-### CONTEXT_ANCHOR_SYSTEM
-
-Every 10 packages researched:
-
-1. Re-read the original task description
-2. Verify the current operation aligns with original goals
-3. Update the `Current Focus` in `## Progress` section
+**Prerequisites:** **⚠️ MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
 ---
 
@@ -82,9 +54,9 @@ Initialize analysis file with:
 **Find all package.json files**:
 
 ```
-src/Frontend/package.json
-src/Frontend/apps/*/package.json
-src/Frontend/libs/*/package.json
+src/PlatformExampleAppWeb/package.json
+src/PlatformExampleAppWeb/apps/*/package.json
+src/PlatformExampleAppWeb/libs/*/package.json
 ```
 
 For each package.json, document:
@@ -224,7 +196,9 @@ Before marking complete, provide:
 - **Confidence Declaration**: Declare confidence level; if < 90%, request user confirmation
 - **Batch Processing**: Research packages in batches of 10
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

@@ -4,7 +4,6 @@
  */
 
 const path = require('path');
-const os = require('os');
 const {
   normalizePath,
   isAbsolutePath,
@@ -91,8 +90,7 @@ test('empty → false', () => {
 console.log('\n=== sanitizePath tests ===\n');
 
 // sanitizePath needs projectRoot as second param
-// Use os.tmpdir() for cross-platform compatibility (Unix path fails on Windows)
-const projectRoot = path.join(os.tmpdir(), 'ck-test-project');
+const projectRoot = '/home/user/project';
 
 test('path traversal: "../../../tmp" → null (blocked)', () => {
   assertEquals(sanitizePath('../../../tmp', projectRoot), null);

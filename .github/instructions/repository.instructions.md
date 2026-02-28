@@ -1,15 +1,17 @@
 ---
-applyTo: "**/Repositories/**/*.cs,**/*Repository*.cs"
+applyTo: '**/Repositories/**/*.cs,**/*Repository*.cs'
 ---
 
 # Repository Patterns
 
-> Auto-loads when editing Repository files. See `docs/claude/backend-patterns.md` for full reference.
+> Auto-loads when editing Repository files. See `docs/backend-patterns-reference.md` for full reference.
 
 ## Service-Specific Repositories (ALWAYS Use These)
 
 ```csharp
-IPlatformQueryableRootRepository<TextSnippetEntity, string>  // TextSnippet service
+ICandidatePlatformRootRepository<Employee>  // bravoTALENTS
+IGrowthRootRepository<Employee>             // bravoGROWTH
+ISurveysPlatformRootRepository<Survey>      // bravoSURVEYS
 ```
 
 **NEVER use generic `IPlatformRootRepository<T>` - always use the service-specific version.**

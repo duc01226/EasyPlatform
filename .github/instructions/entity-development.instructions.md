@@ -1,10 +1,10 @@
 ---
-applyTo: "**/Entities/**/*.cs,**/Domain/**/*.cs"
+applyTo: '**/Entities/**/*.cs,**/Domain/**/*.cs'
 ---
 
 # Entity & Domain Development Patterns
 
-> Auto-loads when editing Entity/Domain files. See `docs/claude/backend-patterns.md` for full reference.
+> Auto-loads when editing Entity/Domain files. See `docs/backend-patterns-reference.md` for full reference.
 
 ## Entity Types
 
@@ -92,11 +92,11 @@ await repo.GetByIdAsync(id, ct).EnsureFound($"Not found: {id}").Then(x => x.Vali
 Entity/Model (Lowest)  ->  Service  ->  Component/Handler (Highest)
 ```
 
-| Layer | Contains |
-|-------|----------|
-| **Entity** | Business logic, validation, display helpers, static factory methods, dropdown options, constants |
-| **Service** | API calls, command factories, data transformation |
-| **Handler** | Orchestration ONLY - delegates logic to entity/service |
+| Layer       | Contains                                                                                         |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| **Entity**  | Business logic, validation, display helpers, static factory methods, dropdown options, constants |
+| **Service** | API calls, command factories, data transformation                                                |
+| **Handler** | Orchestration ONLY - delegates logic to entity/service                                           |
 
 ## Anti-Patterns
 

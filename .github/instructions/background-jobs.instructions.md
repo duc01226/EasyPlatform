@@ -1,10 +1,10 @@
 ---
-applyTo: "**/BackgroundJobs/**/*.cs,**/*Job*.cs"
+applyTo: '**/BackgroundJobs/**/*.cs,**/*Job*.cs'
 ---
 
 # Background Job Patterns
 
-> Auto-loads when editing BackgroundJob files. See `docs/claude/backend-patterns.md` for full reference.
+> Auto-loads when editing BackgroundJob files. See `docs/backend-patterns-reference.md` for full reference.
 
 ## Paged Job
 

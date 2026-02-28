@@ -1,13 +1,14 @@
 {
   "name": "markdown-to-docx",
   "version": "1.0.0",
-  "description": "Convert markdown to Microsoft Word (.docx) with custom styling",
+  "description": "Convert markdown files to DOCX with GFM support and math rendering",
   "main": "scripts/convert.cjs",
   "scripts": {
-    "convert": "node scripts/convert.cjs",
-    "test": "node tests/convert.test.cjs"
+    "start": "node scripts/convert.cjs",
+    "test": "node tests/run-tests.cjs"
   },
   "dependencies": {
+    "gray-matter": "^4.0.3",
     "markdown-docx": "^1.0.0"
   },
   "engines": {

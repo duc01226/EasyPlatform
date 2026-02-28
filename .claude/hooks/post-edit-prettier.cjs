@@ -20,40 +20,6 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
-/**
- * Read stdin asynchronously with timeout to prevent hanging
- * @returns {Promise<Object|null>} Parsed JSON payload or null
- */
-async function readStdin() {
-  return new Promise((resolve) => {
-    let data = '';
-
-    // Handle no stdin (TTY mode)
-    if (process.stdin.isTTY) {
-      resolve(null);
-      return;
-    }
-
-    process.stdin.setEncoding('utf8');
-    process.stdin.on('data', chunk => { data += chunk; });
-    process.stdin.on('end', () => {
-      if (!data.trim()) {
-        resolve(null);
-        return;
-      }
-      try {
-        resolve(JSON.parse(data));
-      } catch {
-        resolve(null);
-      }
-    });
-    process.stdin.on('error', () => resolve(null));
-
-    // Timeout after 500ms to prevent hanging
-    setTimeout(() => resolve(null), 500);
-  });
-}
-
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════
@@ -81,11 +47,7 @@ const SKIP_PATTERNS = [
   /\.angular\//,
   /\.cache\//,
   /\.output\//,
-  /\.vercel\//,
-  // Skip Claude hooks to prevent "file unexpectedly modified" errors
-  // These files are edited frequently and Prettier reformatting causes race conditions
-  /\.claude\/hooks\//,
-  /\.claude\/skills\//
+  /\.vercel\//
 ];
 
 const PRETTIER_CONFIG_FILES = [
@@ -212,12 +174,14 @@ function extractFilePath(payload) {
 
 async function main() {
   try {
-    const payload = await readStdin();
-    if (!payload) process.exit(0);
+    const stdin = fs.readFileSync(0, 'utf-8').trim();
+    if (!stdin) process.exit(0);
+
+    const payload = JSON.parse(stdin);
 
     // Only process Edit and Write tools
     const toolName = payload.tool_name;
-    if (!['Edit', 'Write'].includes(toolName)) {
+    if (!['Edit', 'Write', 'MultiEdit'].includes(toolName)) {
       process.exit(0);
     }
 
@@ -266,4 +230,4 @@ async function main() {
   }
 }
 
-main().then(() => process.exit(0)).catch(() => process.exit(0));
+main();

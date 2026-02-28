@@ -1,85 +1,161 @@
-# Claude Documentation Index
+# Claude Code Documentation
 
-> Detailed documentation for AI-assisted development in EasyPlatform
+> Comprehensive AI-assisted development documentation for BravoSUITE
 
-This directory contains comprehensive documentation split from the root CLAUDE.md for optimal Claude Code performance. Each file focuses on a specific domain to provide targeted guidance.
+## Quick Links
 
-## Documentation Structure
+| Goal                         | Document                                                                                                    |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **New to Claude Code?**      | [quick-start.md](./quick-start.md) - 5-minute onboarding                                                    |
+| **Need a skill?**            | [skills/README.md](./skills/README.md) - 152 skills catalog                                                 |
+| **Building a feature?**      | [skills/development-skills.md](./skills/development-skills.md)                                              |
+| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 35 hooks deep-dive                                                   |
+| **Understanding workflows?** | [CLAUDE.md workflow catalog](../../CLAUDE.md#workflow-keyword-lookup--execution-protocol) - 29 workflows    |
+| **Configuring Claude?**      | [configuration/README.md](./configuration/README.md)                                                        |
+| **Team collaboration?**      | [team-collaboration-guide.md](./team-collaboration-guide.md) - PO, BA, QA, QC, UX, PM workflows             |
+| **Full SDLC Guide?**         | [ai-driven-sdlc-team-collaboration.md](./ai-driven-sdlc-team-collaboration.md) - Complete stakeholder guide |
 
-| Document                                                     | Description                                                | When to Use                                         |
-| ------------------------------------------------------------ | ---------------------------------------------------------- | --------------------------------------------------- |
-| [claude-kit-setup.md](./claude-kit-setup.md)                 | Hooks, skills, agents, workflows, learning system          | Understanding Claude Code setup in this project     |
-| [architecture.md](./architecture.md)                         | System architecture, file locations, planning protocol     | Starting new tasks, understanding project structure |
-| [troubleshooting.md](./troubleshooting.md)                   | Investigation protocol, common issues and solutions        | Debugging, when stuck or encountering errors        |
-| [backend-patterns.md](./backend-patterns.md)                 | CQRS, Repository, Entity, DTO, Message Bus, Jobs           | Backend development tasks                           |
-| [frontend-patterns.md](./frontend-patterns.md)               | Components, Forms, Stores, API Services, platform-core     | Frontend development tasks                          |
-| [authorization-patterns.md](./authorization-patterns.md)     | Security, authentication, and migration patterns           | Security implementations                            |
-| [decision-trees.md](./decision-trees.md)                     | Quick decision guides and templates                        | Choosing implementation approach                    |
-| [advanced-patterns.md](./advanced-patterns.md)               | Advanced fluent helpers, expression composition, utilities | Complex implementations                             |
-| [clean-code-rules.md](./clean-code-rules.md)                 | Universal coding standards                                 | Code quality, best practices                        |
-| [dependency-policy.md](./dependency-policy.md)               | Dependency evaluation criteria before adding packages      | Adding external packages                            |
-| [team-collaboration-guide.md](./team-collaboration-guide.md) | Team roles, commands, workflows, artifact management       | Team collaboration, PBI/design workflows            |
-| [scss-styling-guide.md](./scss-styling-guide.md)             | BEM methodology, design tokens, SCSS patterns              | Styling and CSS tasks                               |
-| [subagent-registry.md](./subagent-registry.md)               | Subagent capabilities and protocols                        | Multi-agent orchestration                           |
-| [agent-orchestration-principles.md](./agent-orchestration-principles.md) | Multi-agent coordination patterns              | Agent workflow design                               |
-| [backend-csharp-complete-guide.md](./backend-csharp-complete-guide.md) | Comprehensive C# reference with SOLID patterns   | Deep backend reference                              |
-| [frontend-typescript-complete-guide.md](./frontend-typescript-complete-guide.md) | Complete Angular/TS guide with principles | Deep frontend reference                             |
+## Documentation Map
 
-## Quick Navigation
+```
+docs/claude/
+|-- README.md                 <- You are here (Navigation hub)
+|-- quick-start.md            5-minute onboarding guide
+|
+|-- skills/                   152 skills across 15+ domains
+|   |-- README.md             Skills overview + full catalog
+|   |-- development-skills.md Backend, frontend, databases
+|   +-- integration-skills.md DevOps, AI tools, MCP
+|
+|-- hooks/                    35 hooks, 18 lib modules
+|   |-- README.md             Hooks overview, lessons system, session lifecycle
+|   |-- architecture.md       System architecture with diagrams
+|   |-- pattern-learning.md   Pattern learning (YAML patterns + lessons)
+|   |-- external-memory-swap.md  Post-compaction recovery via swap files
+|   +-- extending-hooks.md    How to create custom hooks
+|
+|-- agents/                   Subagent configurations
+|   |-- README.md             Agents overview
+|   +-- agent-patterns.md     When/how to use each agent
+|
+|-- configuration/            All configuration files
+|   |-- README.md             Config overview
+|   |-- settings-reference.md settings.json reference
+|   +-- output-styles.md      Coding levels 0-5
+|
++-- troubleshooting.md        Consolidated troubleshooting guide
+```
 
-### Claude Kit & Setup
+## Quick Decision Trees
 
-- **Learning System**: See [claude-kit-setup.md](./claude-kit-setup.md#learning-system)
-- **Hooks Configuration**: See [claude-kit-setup.md](./claude-kit-setup.md#hooks-system)
-- **Skills Framework**: See [claude-kit-setup.md](./claude-kit-setup.md#skills-framework)
-- **Agents System**: See [claude-kit-setup.md](./claude-kit-setup.md#agents-system)
-- **Workflow Orchestration**: See [claude-kit-setup.md](./claude-kit-setup.md#workflow-orchestration)
-- **Code Review Rules**: See [../code-review-rules.md](../code-review-rules.md) - Auto-injected on `/code-review` skills
+### "I need to..."
 
-### Backend Tasks
+| Task                | Command         | Skill                   |
+| ------------------- | --------------- | ----------------------- |
+| Implement a feature | `/cook`         | `feature`               |
+| Fix a bug           | `/fix`          | `debug`                 |
+| Create a PR         | `/git/pr`       | `commit`                |
+| Understand code     | `/scout`        | `feature-investigation` |
+| Plan implementation | `/plan`         | `planning`              |
+| Run tests           | `/test`         | `test-spec`             |
+| Review code         | `/review`       | `code-review`           |
+| Debug issues        | `/debug`        | `debug`                 |
+| Create user story   | `/story`        | `business-analyst`      |
+| Prioritize backlog  | `/prioritize`   | `product-owner`         |
+| Create test cases   | `/test-spec`    | `test-spec`             |
+| Quality checkpoint  | `/quality-gate` | `qc-specialist`         |
+| Create design spec  | `/design-spec`  | `ux-designer`           |
 
-- **New API endpoint**: See [backend-patterns.md](./backend-patterns.md#cqrs-implementation-patterns)
-- **Repository queries**: See [backend-patterns.md](./backend-patterns.md#repository-pattern)
-- **Validation**: See [backend-patterns.md](./backend-patterns.md#validation-patterns)
-- **Background jobs**: See [backend-patterns.md](./backend-patterns.md#background-job-patterns)
-- **Cross-service sync**: See [backend-patterns.md](./backend-patterns.md#message-bus-patterns)
+### "I want to learn about..."
 
-### Frontend Tasks
+| Topic                                       | Start Here                                                                                |
+| ------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| How skills work                             | [skills/README.md](./skills/README.md)                                                    |
+| How skills are activated                    | [skills/README.md](./skills/README.md)                                                    |
+| How lessons system works                    | [hooks/README.md](./hooks/README.md) — `/learn` skill + lessons-injector hook             |
+| How pattern learning works                  | [hooks/pattern-learning.md](./hooks/pattern-learning.md) — YAML patterns + lessons        |
+| How hooks intercept events                  | [hooks/architecture.md](./hooks/architecture.md)                                          |
+| Hook execution order by event               | [hooks-reference.md](./hooks-reference.md) — all 9 events                                 |
+| Session lifecycle (init → compact → resume) | [hooks/README.md#session-lifecycle](./hooks/README.md#session-lifecycle)                  |
+| External Memory Swap system                 | [hooks/external-memory-swap.md](./hooks/external-memory-swap.md)                          |
+| Workflow detection and routing              | [CLAUDE.md workflow catalog](../../CLAUDE.md#workflow-keyword-lookup--execution-protocol) |
+| How to create custom hooks                  | [hooks/extending-hooks.md](./hooks/extending-hooks.md)                                    |
+| How to configure output                     | [configuration/output-styles.md](./configuration/output-styles.md)                        |
+| How team collaboration works                | [team-collaboration-guide.md](./team-collaboration-guide.md)                              |
+| How to update code review rules             | [hooks/README.md#code-review-rules](./hooks/README.md#code-review-rules)                  |
 
-- **New component**: See [frontend-patterns.md](./frontend-patterns.md#component-hierarchy)
-- **Forms with validation**: See [frontend-patterns.md](./frontend-patterns.md#platform-form-component)
-- **State management**: See [frontend-patterns.md](./frontend-patterns.md#platform-vm-store)
-- **API integration**: See [frontend-patterns.md](./frontend-patterns.md#api-service-pattern)
+## Document Sizes (for context planning)
 
-### Architecture
+| Document                            | Lines | Tokens (est.) | Load Time |
+| ----------------------------------- | ----- | ------------- | --------- |
+| quick-start.md                      | ~180  | ~500          | Fast      |
+| skills/README.md                    | ~350  | ~900          | Fast      |
+| skills/development-skills.md        | ~500  | ~1300         | Moderate  |
+| hooks/README.md                     | ~285  | ~750          | Fast      |
+| hooks/architecture.md               | ~310  | ~800          | Fast      |
+| hooks/pattern-learning.md           | ~55   | ~150          | Fast      |
+| configuration/settings-reference.md | ~390  | ~1000         | Moderate  |
+| troubleshooting.md                  | ~415  | ~1100         | Moderate  |
 
-- **Service boundaries**: See [architecture.md](./architecture.md#microservices)
-- **File locations**: See [architecture.md](./architecture.md#file-locations)
-- **Frontend structure**: See [architecture.md](./architecture.md#frontend-architecture)
+**Tip:** Load smaller docs first. Reference larger docs only when needed.
 
-### Review & Quality
+## Core Pattern References
 
-- **Understanding verification**: `/why-review` — Reasoning quality audit (0-5 score), runs after implementation in workflows
-- **Architecture Decision Records**: See [../adr/](../adr/) — 5 ADRs documenting core platform decisions
-- **Dependency evaluation**: See [dependency-policy.md](./dependency-policy.md) — Before adding external packages
+| Document                                                            | When to Use                                                 |
+| ------------------------------------------------------------------- | ----------------------------------------------------------- |
+| [architecture.md](./architecture.md)                                | Understanding project structure                             |
+| [backend-patterns-reference.md](./backend-patterns-reference.md)    | Backend development tasks (project-specific companion doc)  |
+| [frontend-patterns-reference.md](./frontend-patterns-reference.md)  | Frontend development tasks (project-specific companion doc) |
+| [project-structure-reference.md](../project-structure-reference.md) | Service list, directory tree, ports, module codes           |
+| [integration-test-reference.md](../integration-test-reference.md)   | Test fixtures, patterns, module abbreviations               |
+| [feature-docs-reference.md](../feature-docs-reference.md)           | Feature doc templates, app/service mapping                  |
+| [anti-patterns.md](./anti-patterns.md)                              | Code review, avoiding mistakes                              |
+| [advanced-patterns.md](./advanced-patterns.md)                      | Complex implementations                                     |
+| [skill-naming-conventions.md](./skill-naming-conventions.md)        | Skill naming rules and prefix guide                         |
+| [model-selection-guide.md](./model-selection-guide.md)              | When to use Opus or Sonnet                                  |
+| [hooks-reference.md](./hooks-reference.md)                          | Hook lifecycle, dependencies, state files                   |
+| [configuration-guide.md](./configuration-guide.md)                  | Settings schema, permissions, hooks config                  |
 
-### MCP & External Tools
+## Complete Guides (Large Reference Docs)
 
-- **MCP Configuration**: See [.mcp.README.md](../../.mcp.README.md)
-- **Figma Integration**: See [.claude/docs/figma-setup.md](../../.claude/docs/figma-setup.md)
-- **Team Collaboration**: See [team-collaboration-guide.md](./team-collaboration-guide.md)
+| Document                                                                         | Size  | Use Case                  |
+| -------------------------------------------------------------------------------- | ----- | ------------------------- |
+| [backend-csharp-complete-guide.md](./backend-csharp-complete-guide.md)           | ~76KB | Full C# reference         |
+| [frontend-typescript-complete-guide.md](./frontend-typescript-complete-guide.md) | ~57KB | Complete Angular/TS guide |
+| [scss-styling-guide.md](./scss-styling-guide.md)                                 | ~30KB | BEM, design tokens        |
 
 ## Related Documentation
 
-- **Root CLAUDE.md**: Essential rules and quick decision trees
-- **[Code Review Rules](../code-review-rules.md)**: Project-specific review checklist (auto-injected)
-- **.ai/docs/prompt-context.md**: Solution planning guidance
-- **../architecture-overview.md**: System architecture & diagrams
-- **.ai/docs/AI-DEBUGGING-PROTOCOL.md**: Debugging protocol
+| Location                                                                     | Content                               |
+| ---------------------------------------------------------------------------- | ------------------------------------- |
+| [CLAUDE.md](../../CLAUDE.md)                                                 | Root instructions (always read first) |
+| [EasyPlatform.README.md](../../EasyPlatform.README.md)                       | Framework deep dive                   |
+| [.ai/docs/AI-DEBUGGING-PROTOCOL.md](../../.ai/docs/AI-DEBUGGING-PROTOCOL.md) | Debugging protocol                    |
+| [docs/design-system/](../design-system/)                                     | Frontend design system                |
+| [docs/business-features/](../business-features/)                             | Business feature docs                 |
 
-## Usage Tips
+## How to Use This Documentation
 
-1. **Start with root CLAUDE.md** for mandatory rules and quick decisions
-2. **Navigate to specific docs** based on task type
-3. **Check advanced-patterns.md** for anti-patterns before implementing solutions
-4. **Reference troubleshooting.md** when stuck
+1. **Start with [CLAUDE.md](../../CLAUDE.md)** - Essential rules and quick decisions
+2. **New to Claude Code?** - Follow [quick-start.md](./quick-start.md)
+3. **Find the right skill** - Browse [skills/README.md](./skills/README.md)
+4. **Activate skills** - Check [skills/README.md](./skills/README.md) for triggers
+5. **Understand internals** - Dive into [hooks/](./hooks/) for deep knowledge
+6. **Troubleshoot issues** - See [troubleshooting.md](./troubleshooting.md)
+
+## Statistics
+
+| Category            | Count |
+| ------------------- | ----- |
+| Skills              | 152   |
+| Hooks               | 35    |
+| Lib Modules         | 18    |
+| Hook Events         | 9     |
+| Agents              | 22    |
+| Workflows           | 29    |
+| Tests               | 257   |
+| Documentation Files | 32    |
+
+---
+
+*Last updated: 2026-02-28 | Source: `.claude/` directory analysis*

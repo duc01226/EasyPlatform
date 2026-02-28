@@ -3,55 +3,13 @@
     "$schema": "http://json-schema.org/draft-07/schema#",
     "additionalProperties": false,
     "definitions": {
-        "CheckpointSettings": {
-            "additionalProperties": false,
-            "description": "Configuration for automatic session checkpoint saving during long-running workflows.",
-            "properties": {
-                "autoSaveOnCompact": {
-                    "default": true,
-                    "description": "Whether to automatically save a checkpoint when context compaction occurs.",
-                    "title": "Auto-Save on Compact",
-                    "type": "boolean"
-                },
-                "enabled": {
-                    "default": true,
-                    "description": "Whether automatic checkpoint saving is enabled.",
-                    "title": "Enable Checkpoints",
-                    "type": "boolean"
-                },
-                "filenamePattern": {
-                    "description": "Template pattern for checkpoint filenames. Supports placeholders: {YYMMDD}, {HHMM}, {slug}.",
-                    "examples": ["checkpoint-{YYMMDD}-{HHMM}-{slug}.md"],
-                    "minLength": 1,
-                    "title": "Filename Pattern",
-                    "type": "string"
-                },
-                "intervalMinutes": {
-                    "default": 30,
-                    "description": "Minimum interval in minutes between automatic checkpoint saves.",
-                    "minimum": 1,
-                    "title": "Interval (Minutes)",
-                    "type": "integer"
-                },
-                "path": {
-                    "description": "Directory path (relative to project root) where checkpoint files are saved.",
-                    "examples": ["plans/reports"],
-                    "minLength": 1,
-                    "title": "Checkpoint Path",
-                    "type": "string"
-                }
-            },
-            "required": ["enabled", "autoSaveOnCompact", "intervalMinutes", "path", "filenamePattern"],
-            "title": "Checkpoint Settings",
-            "type": "object"
-        },
         "CommandMappingEntry": {
             "additionalProperties": false,
             "description": "Maps a logical command key to platform-specific command invocations for Claude Code and GitHub Copilot.",
             "properties": {
                 "claude": {
                     "description": "Claude Code slash command (must start with /).",
-                    "examples": ["/plan", "/cook", "/fix", "/review:codebase"],
+                    "examples": ["/plan", "/cook", "/fix", "/code-review"],
                     "minLength": 2,
                     "pattern": "^/",
                     "title": "Claude Code Command",
@@ -75,8 +33,8 @@
             "description": "Actions to perform before starting the workflow sequence. Used to load skills, inject context, or pre-read files.",
             "properties": {
                 "activateSkill": {
-                    "description": "Name of the skill to activate before workflow execution (e.g., 'product-owner', 'qa-engineer').",
-                    "examples": ["product-owner", "qa-engineer", "project-manager", "ui-ux-pro-max", "planning"],
+                    "description": "Name of the skill to activate before workflow execution (e.g., 'product-owner', 'test-spec').",
+                    "examples": ["product-owner", "test-spec", "project-manager", "ui-ux-pro-max", "planning"],
                     "minLength": 1,
                     "title": "Activate Skill",
                     "type": "string"
@@ -103,16 +61,13 @@
         },
         "Settings": {
             "additionalProperties": false,
-            "description": "Global configuration for workflow detection, overrides, and checkpoint behavior.",
+            "description": "Global configuration for workflow detection and overrides.",
             "properties": {
                 "allowOverride": {
                     "default": true,
                     "description": "Whether users can bypass workflow detection using the override prefix.",
                     "title": "Allow Override",
                     "type": "boolean"
-                },
-                "checkpoints": {
-                    "$ref": "#/definitions/CheckpointSettings"
                 },
                 "confirmHighImpact": {
                     "default": true,
@@ -140,7 +95,7 @@
                     "type": "boolean"
                 }
             },
-            "required": ["enabled", "allowOverride", "overridePrefix", "confirmHighImpact", "showDetection", "checkpoints"],
+            "required": ["enabled", "allowOverride", "overridePrefix", "confirmHighImpact", "showDetection"],
             "title": "Global Settings",
             "type": "object"
         },
@@ -158,11 +113,6 @@
                     "minLength": 1,
                     "title": "Workflow Description",
                     "type": "string"
-                },
-                "enableCheckpoints": {
-                    "description": "Whether to save periodic checkpoints during this workflow. Recommended for long-running workflows.",
-                    "title": "Enable Checkpoints",
-                    "type": "boolean"
                 },
                 "name": {
                     "description": "Human-readable display name for the workflow, shown to users during detection.",
@@ -249,6 +199,6 @@
         }
     },
     "required": ["version", "description", "settings", "commandMapping", "workflows"],
-    "title": "EasyPlatform Workflow Configuration",
+    "title": "BravoSUITE Workflow Configuration",
     "type": "object"
 }

@@ -54,7 +54,6 @@ Copy `.claude/.env.example` to `.claude/.env` and fill in:
 **What to commit:**
 - `.claude/settings.json`
 - `.claude/skills/`
-- `.claude/skills/`
 - `.claude/hooks.json`
 - `.claude/mcp.json` (without secrets)
 - `.claude/.env.example`
@@ -156,14 +155,14 @@ claude plugin install gh:anthropics/official-plugin
 
 Choose appropriate model for task:
 
-**Sonnet** - Default for most tasks:
+**Sonnet** - Balanced (default for all tasks):
 ```bash
 claude "fix typo in README"
 claude "implement user authentication"
 claude "review this PR"
 ```
 
-**Opus** - Complex tasks:
+**Opus** - Complex reasoning and architecture:
 ```bash
 claude --model opus "architect microservices system"
 claude --model opus "optimize algorithm performance"
@@ -238,7 +237,7 @@ claude analytics cost --group-by project
 Create consistent slash commands:
 
 ```markdown
-# .claude/skills/test.md
+# .claude/skills/test/SKILL.md
 Run test suite with coverage report.
 
 Options:
@@ -342,7 +341,7 @@ claude analytics export --format csv > usage.csv
 
 ### Cost Optimization
 
-**Use Sonnet for most tasks (default):**
+**Use Sonnet as the default for all tasks:**
 ```bash
 # Default (Sonnet)
 claude "fix typo in README"
@@ -402,7 +401,7 @@ claude /test
 claude "review authentication implementation"
 
 # 6. Commit
-claude /commit
+claude /git-cp
 ```
 
 ### Bug Fixing
@@ -418,7 +417,7 @@ claude /fix-fast "fix login button issue"
 claude /test
 
 # 4. Commit
-claude /commit
+claude /git-cp
 ```
 
 ### Code Review

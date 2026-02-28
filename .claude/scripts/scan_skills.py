@@ -4,9 +4,18 @@ Scan .claude/skills directory and extract skill metadata.
 """
 
 import re
+import sys
+import io
 from pathlib import Path
 from typing import Dict, List
 import yaml
+
+# Windows UTF-8 compatibility
+if sys.platform == 'win32':
+    if hasattr(sys.stdout, 'buffer'):
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    if hasattr(sys.stderr, 'buffer'):
+        sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 def extract_frontmatter(content: str) -> Dict:
     """Extract YAML frontmatter from markdown content."""
@@ -53,7 +62,7 @@ def scan_skills(base_path: Path) -> List[Dict]:
         skill_name = skill_dir.name
 
         # Skip template
-        if skill_name in ('template-skill', 'common', 'shared'):
+        if skill_name == 'template-skill':
             continue
 
         # Handle nested skills (like document-skills/*)
@@ -62,7 +71,7 @@ def scan_skills(base_path: Path) -> List[Dict]:
             skill_name = f"{parent_name}/{skill_name}"
 
         try:
-            content = skill_file.read_text()
+            content = skill_file.read_text(encoding='utf-8')
             frontmatter = extract_frontmatter(content)
 
             description = frontmatter.get('description', '')
@@ -112,11 +121,11 @@ def categorize_skill(name: str, description: str, content: str) -> str:
         return 'database'
 
     # Development Tools
-    if any(x in lower_name for x in ['mcp', 'skill-plan', 'claude-code', 'repomix', 'docs-seeker']):
+    if any(x in lower_name for x in ['mcp', 'skill-creator', 'claude-code', 'repomix', 'docs-seeker']):
         return 'dev-tools'
 
     # Multimedia
-    if any(x in lower_name for x in ['media', 'test-ui', 'document-skills']):
+    if any(x in lower_name for x in ['media', 'chrome-devtools', 'document-skills']):
         return 'multimedia'
 
     # Frameworks
@@ -173,14 +182,14 @@ def main():
     for category, skills_list in sorted(categories.items()):
         print(f"\n{category_names.get(category, category.upper())}:")
         for skill in skills_list:
-            scripts = '[S]' if skill['has_scripts'] else '   '
-            refs = '[R]' if skill['has_references'] else '   '
+            scripts = '📦' if skill['has_scripts'] else '  '
+            refs = '📚' if skill['has_references'] else '  '
             print(f"  {scripts}{refs} {skill['name']:30} {skill['description'][:80]}")
 
     # Output YAML for processing (generate_catalogs.py reads YAML)
     output_path = Path('.claude/scripts/skills_data.yaml')
-    output_path.write_text(yaml.dump(skills, allow_unicode=True, default_flow_style=False))
-    print(f"\nSaved metadata to {output_path}")
+    output_path.write_text(yaml.dump(skills, allow_unicode=True, default_flow_style=False), encoding='utf-8')
+    print(f"\n✓ Saved metadata to {output_path}")
 
 if __name__ == '__main__':
     main()

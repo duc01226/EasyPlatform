@@ -1,195 +1,106 @@
 ---
 name: review-changes
-description: '[Review & Quality] Review all uncommitted changes before commit'
+description: '[Code Quality] Review all uncommitted changes before commit'
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** before executing:
+
+- `.claude/skills/shared/understand-code-first-protocol.md`
+- `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+
+> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
+
+## Quick Summary
+
+**Goal:** Comprehensive code review of all uncommitted changes following project standards.
+
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+>
+> - `project-structure-reference.md` — service list, directory tree, conventions
+>
+> If file not found, search for: project documentation, coding standards, architecture docs.
+
+**Workflow:**
+
+1. **Phase 0: Collect** — Run git status/diff, create report file
+2. **Phase 1: File Review** — Review each changed file, update report incrementally
+3. **Phase 2: Holistic** — Re-read report for big-picture architecture and responsibility checks
+4. **Phase 3: Finalize** — Generate critical issues, recommendations, and suggested commit message
+
+**Key Rules:**
+
+- Report-driven: always write findings to `plans/reports/code-review-{date}-{slug}.md`
+- Check logic placement (lowest layer: Entity > Service > Component)
+- Must create todo tasks for all 4 phases before starting
+- Be skeptical — every claim needs `file:line` proof
+- Verify convention by grepping 3+ existing examples before flagging violations
+- Actively check for DRY violations, YAGNI/KISS over-engineering, and correctness bugs
+- Cross-reference changed files against related docs — flag stale feature docs, test specs, READMEs
 
 # Code Review: Uncommitted Changes
 
-Perform a comprehensive code review of all uncommitted git changes following EasyPlatform standards.
+Perform a comprehensive code review of all uncommitted changes following project standards.
 
-## Summary
+## Review Scope
 
-**Goal:** Review all uncommitted changes via a report-driven four-phase process before commit.
+Target: All uncommitted changes (staged and unstaged) in the current working directory.
 
-| Phase | Action                          | Key Notes                                                              |
-| ----- | ------------------------------- | ---------------------------------------------------------------------- |
-| 0     | Collect changes & create report | `git status`, `git diff HEAD`, create `plans/reports/code-review-*.md` |
-| 1     | File-by-file review             | Read each diff, update report with summary/purpose/issues              |
-| 2     | Holistic review                 | Re-read accumulated report for architecture coherence                  |
-| 3     | Finalize findings               | Critical issues, recommendations, suggestions, commit message          |
+## Review Mindset (NON-NEGOTIABLE)
 
-> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale documentation. Every review must verify both code correctness AND documentation accuracy.
+**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
 
-**Key Principles:**
+- Do NOT accept code correctness at face value — verify by reading actual implementations
+- Every finding must include `file:line` evidence (grep results, read confirmations)
+- If you cannot prove a claim with a code trace, do NOT include it in the report
+- Question assumptions: "Does this actually work?" → trace the call path to confirm
+- Challenge completeness: "Is this all?" → grep for related usages across services
+- Verify side effects: "What else does this change break?" → check consumers and dependents
+- No "looks fine" without proof — state what you verified and how
 
-- **Be skeptical. Critical thinking. Everything needs traced proof.** — Never accept code at face value; verify claims against actual behavior, trace data flow end-to-end, and demand evidence (file:line references, grep results, runtime confirmation) for every finding
-- **Ensure code quality: no flaws, no bugs** — Verify correctness of logic, data flow, edge cases, and error handling. Flag anything that could fail at runtime
-- **Clean code and DRY** — No duplication, clear naming, single responsibility, early returns. Code should be self-documenting
-- **Follow existing conventions** — Match project patterns, naming style, file organization, and architectural decisions already established in the codebase. Grep for similar implementations before flagging deviations
-- **Docs must match code** — If changes affect behavior, APIs, or features, verify related docs are updated: feature docs (`docs/business-features/`), test specs (`docs/test-specs/`), CHANGELOG, README, architecture docs, and inline code comments. Flag any doc that describes old behavior
-- Build report incrementally — update after EACH file, not at the end
-- Check logic placement in lowest layer (Entity > Service > Component)
-- Always suggest conventional commit message based on changes
+## Core Principles (ENFORCE ALL)
 
-## Review Approach (Report-Driven Four-Phase - CRITICAL)
+**YAGNI** — Flag code that solves problems that don't exist yet (unused parameters, speculative interfaces, premature abstractions)
+**KISS** — Flag unnecessarily complex solutions. Ask: "Is there a simpler way that meets the same requirement?"
+**DRY** — Actively grep for similar/duplicate code across the codebase before accepting new code. If 3+ similar patterns exist, flag for extraction.
+**Clean Code** — Readable > clever. Names reveal intent. Functions do one thing. No deep nesting.
+**Follow Convention** — Before flagging ANY pattern violation, grep for 3+ existing examples in the codebase. The codebase convention wins over textbook rules.
+**No Flaws/No Bugs** — Trace logic paths. Verify edge cases (null, empty, boundary values). Check error handling covers failure modes.
+**Proof Required** — Every claim backed by `file:line` evidence or grep results. Speculation is forbidden.
+**Doc Staleness** — Cross-reference changed files against related docs (feature docs, test specs, READMEs). Flag any doc that is stale or missing updates to reflect current code changes.
+
+## Review Approach (Report-Driven Two-Phase - CRITICAL)
 
 **⛔ MANDATORY FIRST: Create Todo Tasks for Review Phases**
-Before starting, call TodoWrite with:
+Before starting, call TaskCreate with:
 
-- [ ] `[Review Phase 0] Get git changes and create report file` - in_progress
+- [ ] `[Review Phase 0] Get changes and create report file` - in_progress
 - [ ] `[Review Phase 1] Review file-by-file and update report` - pending
 - [ ] `[Review Phase 2] Re-read report for holistic assessment` - pending
 - [ ] `[Review Phase 3] Generate final review findings` - pending
+      Update todo status as each phase completes. This ensures review is tracked.
 
-Update todo status as each phase completes. This ensures review is tracked.
+**Phase 0: Get Changes and Create Report File**
 
----
-
-## Phase 0: Get Changes & Create Report
-
-### 0.1 Get Change Summary
-
-```bash
-# See all changed files
-git status
-
-# See actual changes (staged and unstaged)
-git diff HEAD
-```
-
-### 0.2 Create Report File
-
+- [ ] Run `git status` to see all changed files
+- [ ] Run `git diff` to see actual changes (staged and unstaged)
 - [ ] Create `plans/reports/code-review-{date}-{slug}.md`
-- [ ] Initialize with Scope (list of changed files), Change Type (feature/bugfix/refactor)
+- [ ] Initialize with Scope, Files to Review sections
 
----
-
-## Phase 1: File-by-File Review (Build Report Incrementally)
-
-For EACH changed file, read the diff and **immediately update report** with:
+**Phase 1: File-by-File Review (Build Report Incrementally)**
+For EACH changed file, read and **immediately update report** with:
 
 - [ ] File path and change type (added/modified/deleted)
-- [ ] Change Summary: what was modified/added/deleted
-- [ ] Purpose: why this change exists (infer from context)
-- [ ] Issues Found: naming, typing, responsibility, patterns
+- [ ] Change Summary: what was modified/added
+- [ ] Purpose: why this change exists
+- [ ] **Convention check:** Grep for 3+ similar patterns in codebase — does new code follow existing convention?
+- [ ] **Correctness check:** Trace logic paths — does the code handle null, empty, boundary values, error cases?
+- [ ] **DRY check:** Grep for similar/duplicate code — does this logic already exist elsewhere?
+- [ ] Issues Found: naming, typing, responsibility, patterns, bugs, over-engineering
 - [ ] Continue to next file, repeat
 
-### Review Checklist Per File
-
-#### Architecture Compliance
-
-- [ ] Follows Clean Architecture layers (Domain, Application, Persistence, Service)
-- [ ] Uses correct repository pattern (I{Service}RootRepository<T>)
-- [ ] CQRS pattern: Command/Query + Handler + Result in ONE file
-- [ ] No cross-service direct database access
-
-#### Code Quality
-
-- [ ] Single Responsibility Principle
-- [ ] No code duplication (DRY)
-- [ ] Appropriate error handling with PlatformValidationResult
-- [ ] No magic numbers/strings (extract to named constants)
-- [ ] Type annotations on all functions
-- [ ] No implicit any types
-- [ ] Early returns/guard clauses used
-
-#### Naming Conventions
-
-- [ ] Names reveal intent (WHAT not HOW)
-- [ ] Specific names, not generic (`employeeRecords` not `data`)
-- [ ] Methods: Verb + Noun (`getEmployee`, `validateInput`)
-- [ ] Booleans: is/has/can/should prefix (`isActive`, `hasPermission`)
-- [ ] No cryptic abbreviations (`employeeCount` not `empCnt`)
-
-#### Platform Patterns
-
-- [ ] Uses platform validation fluent API (.And(), .AndAsync())
-- [ ] No direct side effects in command handlers (use entity events)
-- [ ] DTO mapping in DTO classes, not handlers
-- [ ] Static expressions for entity queries
-
-#### Security
-
-- [ ] No hardcoded credentials or secrets
-- [ ] Proper authorization checks
-- [ ] Input validation at boundaries
-- [ ] No SQL injection risks
-
-#### Performance
-
-- [ ] No O(n²) complexity (use dictionary for lookups)
-- [ ] No N+1 query patterns (batch load related entities)
-- [ ] Project only needed properties (don't load all then select one)
-- [ ] Pagination for all list queries (never get all without paging)
-- [ ] Parallel queries for independent operations
-- [ ] Appropriate use of async/await
-- [ ] Entity query expressions have database indexes configured
-- [ ] MongoDB collections have `Ensure*IndexesAsync()` methods
-- [ ] EF Core migrations include indexes for WHERE clause columns
-
-### Backend-Specific Checks
-
-- [ ] CQRS patterns followed correctly
-- [ ] Repository usage (no direct DbContext access)
-- [ ] Entity DTO mapping patterns
-- [ ] Validation using PlatformValidationResult
-
-### Frontend-Specific Checks
-
-- [ ] Component base class inheritance correct (AppBase\*)
-- [ ] State management via PlatformVmStore
-- [ ] Memory leaks (missing .pipe(this.untilDestroyed()))
-- [ ] Template binding issues
-- [ ] BEM classes on ALL template elements
-
-### Common Anti-Patterns to Flag
-
-- [ ] Unused imports or variables
-- [ ] Console.log/Debug.WriteLine left in code
-- [ ] Hardcoded values that should be configuration
-- [ ] Missing async/await keywords
-- [ ] Incorrect exception handling
-- [ ] Missing validation
-
-### Test-Specific Checks (When Diff Includes Test Files)
-
-Apply these checks ONLY to files matching `*.Tests.*/*.cs` or `e2e/tests/**/*.spec.ts`:
-
-#### Assertion Quality
-
-- [ ] Every mutation test (create/update/delete) asserts at least one domain field, not just HTTP status
-- [ ] Preferred: follow-up query verification after mutations (proves DB round-trip)
-- [ ] Validation error tests parse response body and inspect error content (not just `IsSuccessStatusCode.Should().BeFalse()`)
-- [ ] Setup steps (arrange phase HTTP calls) have status assertion with descriptive `because` string
-- [ ] Domain boolean flags verified where applicable (`wasCreated`, `wasSoftDeleted`, `wasRestored`)
-- [ ] E2E update tests include post-mutation field re-read (not just `waitForLoading()`)
-
-#### Data Verification
-
-- [ ] After create: asserts `id` not null + at least 1 domain field matches input
-- [ ] After update: asserts same `id` retained + at least 1 changed field
-- [ ] After delete: asserts domain flag or absence from list
-- [ ] Search tests: verify matched item contains search term (not just count > 0)
-
-#### Test Structure
-
-- [ ] TC-ID annotation present (`[Trait("TestCase", "...")]` or TC-ID in test title)
-- [ ] No hardcoded test data (uses `TestDataHelper` / `createTestSnippet()`)
-- [ ] Cleanup tracked in `currentTestData` (E2E) or UUID-isolated (integration)
-- [ ] `because` strings on FluentAssertions calls (C#) are descriptive and unique
-
-#### Anti-Patterns to Flag in Tests
-
-- [ ] Status-only assertions: `response.StatusCode.Should().Be(OK)` with no body check or follow-up query
-- [ ] Missing intermediate assertions: setup calls without status verification
-- [ ] E2E tests ending at `waitForLoading()` with no field verification
-- [ ] Validation tests checking only `IsSuccessStatusCode.Should().BeFalse()`
-- [ ] Identical `because` strings across multiple assertions
-
----
-
-## Phase 2: Holistic Review (Review the Accumulated Report)
-
+**Phase 2: Holistic Review (Review the Accumulated Report)**
 After ALL files reviewed, **re-read the report** to see big picture:
 
 - [ ] Overall technical approach makes sense?
@@ -201,22 +112,153 @@ After ALL files reviewed, **re-read the report** to see big picture:
 - [ ] No duplicated logic across changes?
 - [ ] Service boundaries respected?
 - [ ] No circular dependencies?
-- [ ] Test assertion density adequate? (each test verifies meaningful domain state, not just HTTP status)
-- [ ] No "placeholder" tests that only check HTTP status and defer real assertions?
-- [ ] Assertion patterns consistent across test files in the same feature area?
-- [ ] Related documentation updated? (feature docs, test specs, CHANGELOG, README, architecture docs)
-- [ ] No docs describe old/removed behavior that conflicts with current changes?
-- [ ] New APIs, entities, or features have corresponding doc entries?
 
----
+**Clean Code & Over-engineering Checks:**
 
-## Phase 3: Generate Final Review Result
+- [ ] **YAGNI:** Any code solving hypothetical future problems? Unused params, speculative interfaces, config for one-time ops?
+- [ ] **KISS:** Any unnecessarily complex solution? Could this be simpler while meeting same requirement?
+- [ ] **Function complexity:** Methods >30 lines? Nesting >3 levels? Multiple responsibilities in one function?
+- [ ] **Over-engineering:** Abstractions for single-use cases? Generic where specific suffices? Feature flags for things that could just be changed?
+- [ ] **Readability:** Would a new team member understand this in <2 minutes? Are names self-documenting?
 
+**Documentation Staleness Check (REQUIRED):**
+
+Cross-reference changed files against related documentation using this mapping:
+
+| Changed file pattern   | Docs to check for staleness                                                                                    |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `.claude/hooks/**`     | `docs/claude/hooks/README.md`, `docs/claude/hooks-reference.md`, hook count tables in `docs/claude/hooks/*.md` |
+| `.claude/skills/**`    | `docs/claude/skills/README.md`, skill count/catalog tables                                                     |
+| `.claude/workflows/**` | `CLAUDE.md` workflow catalog table, `docs/claude/` workflow references                                         |
+| Service code `**`      | `docs/business-features/` doc for the affected service                                                         |
+| Frontend code `**`     | `docs/frontend-patterns-reference.md`, relevant business-feature docs                                          |
+| Frontend legacy `**`   | `docs/frontend-patterns-reference.md`, relevant business-feature docs                                          |
+| `CLAUDE.md`            | `docs/claude/README.md` (navigation hub must stay in sync)                                                     |
+| Framework code `**`    | `docs/backend-patterns-reference.md`, `docs/claude/advanced-patterns.md`                                       |
+| `docs/templates/**`    | Any docs generated from those templates                                                                        |
+
+- [ ] For each changed file, check if matching docs exist and are still accurate
+- [ ] Flag docs where counts, tables, examples, or descriptions no longer match the code
+- [ ] Flag missing docs for new features/components that should be documented
+- [ ] Check test specs (`docs/business-features/**/test-*`) reflect current behavior
+- [ ] **Do NOT auto-fix** — flag in report with specific stale section and what changed
+
+**Correctness & Bug Detection:**
+
+- [ ] **Edge cases:** Null/undefined inputs handled? Empty collections? Boundary values (0, -1, max)?
+- [ ] **Error paths:** What happens when this fails? Are errors caught, logged, and propagated correctly?
+- [ ] **Race conditions:** Any async code with shared state? Concurrent access patterns safe?
+- [ ] **Business logic:** Does the logic match the requirement? Trace one complete happy path + one error path through the code.
+
+**Phase 3: Generate Final Review Result**
 Update report with final sections:
 
-### Output Format
+- [ ] Overall Assessment (big picture summary)
+- [ ] Critical Issues (must fix before merge)
+- [ ] High Priority (should fix)
+- [ ] Architecture Recommendations
+- [ ] Documentation Staleness (list stale docs with what changed, or "No doc updates needed")
+- [ ] Positive Observations
+- [ ] Suggested commit message (based on changes)
 
-**Summary:** Brief overall assessment of the changes
+## Review Checklist
+
+### 1. Architecture Compliance
+
+- [ ] Follows Clean Architecture layers (Domain, Application, Persistence, Service)
+- [ ] Uses correct repository pattern (search for: service-specific repository interface)
+- [ ] CQRS pattern: Command/Query + Handler + Result in ONE file (search for: existing command patterns)
+- [ ] No cross-service direct database access
+
+### 2. Code Quality & Clean Code
+
+- [ ] Single Responsibility Principle — each function/class does ONE thing
+- [ ] No code duplication (DRY) — grep for similar code, extract if 3+ occurrences
+- [ ] Appropriate error handling with project validation patterns (search for: validation result pattern)
+- [ ] No magic numbers/strings (extract to named constants)
+- [ ] Type annotations on all functions
+- [ ] No implicit any types
+- [ ] Early returns/guard clauses used
+- [ ] YAGNI — no speculative features, unused parameters, premature abstractions
+- [ ] KISS — simplest solution that meets the requirement
+- [ ] Function length <30 lines, nesting depth ≤3 levels
+- [ ] Follows existing codebase conventions (verify with grep for 3+ examples)
+
+### 2.5. Naming Conventions
+
+- [ ] Names reveal intent (WHAT not HOW)
+- [ ] Specific names, not generic (`employeeRecords` not `data`)
+- [ ] Methods: Verb + Noun (`getEmployee`, `validateInput`)
+- [ ] Booleans: is/has/can/should prefix (`isActive`, `hasPermission`)
+- [ ] No cryptic abbreviations (`employeeCount` not `empCnt`)
+
+### 3. Platform Patterns
+
+- [ ] Uses platform validation fluent API (.And(), .AndAsync())
+- [ ] No direct side effects in command handlers (use entity events)
+- [ ] DTO mapping in DTO classes, not handlers
+- [ ] Static expressions for entity queries
+
+### 4. Security
+
+- [ ] No hardcoded credentials
+- [ ] Proper authorization checks
+- [ ] Input validation at boundaries
+- [ ] No SQL injection risks
+
+### 5. Performance
+
+- [ ] No O(n²) complexity (use dictionary for lookups)
+- [ ] No N+1 query patterns (batch load related entities)
+- [ ] Project only needed properties (don't load all then select one)
+- [ ] Pagination for all list queries (never get all without paging)
+- [ ] Parallel queries for independent operations
+- [ ] Appropriate use of async/await
+- [ ] Entity query expressions have database indexes configured
+- [ ] Database collections have index management methods (search for: index setup pattern)
+- [ ] Database migrations include indexes for WHERE clause columns
+
+### 6. Common Issues to Check
+
+- [ ] Unused imports or variables
+- [ ] Console.log/Debug.WriteLine statements left in
+- [ ] Hardcoded values that should be configuration
+- [ ] Missing async/await keywords
+- [ ] Incorrect exception handling
+- [ ] Missing validation
+
+### 7. Backend-Specific Checks
+
+- [ ] CQRS patterns followed correctly
+- [ ] Repository usage (no direct DbContext access)
+- [ ] Entity DTO mapping patterns
+- [ ] Validation using project validation patterns
+
+### 8. Frontend-Specific Checks
+
+- [ ] Component base class inheritance correct (search for: project base component classes)
+- [ ] State management patterns (search for: project store base class)
+- [ ] Memory leaks (search for: subscription cleanup pattern)
+- [ ] Template binding issues
+- [ ] BEM class naming on all elements
+
+### 9. Documentation Staleness
+
+- [ ] Changed service code → check `docs/business-features/` for affected service
+- [ ] Changed frontend code → check `docs/frontend-patterns-reference.md` + business-feature docs
+- [ ] Changed framework code → check `docs/backend-patterns-reference.md`, `docs/claude/advanced-patterns.md`
+- [ ] Changed `.claude/hooks/**` → check `docs/claude/hooks/README.md`, `docs/claude/hooks-reference.md`
+- [ ] Changed `.claude/skills/**` → check `docs/claude/skills/README.md`, skill catalogs
+- [ ] Changed `.claude/workflows/**` → check `CLAUDE.md` workflow catalog, `docs/claude/` references
+- [ ] New feature/component added → verify corresponding doc exists or flag as missing
+- [ ] Test specs in `docs/business-features/**/` reflect current behavior after changes
+- [ ] API changes reflected in relevant API docs or Swagger annotations
+
+## Output Format
+
+Provide feedback in this format:
+
+**Summary:** Brief overall assessment
 
 **Critical Issues:** (Must fix before commit)
 
@@ -233,23 +275,27 @@ Update report with final sections:
 - Suggestion 1
 - Suggestion 2
 
+**Documentation Staleness:** (Docs that may need updating)
+
+- Doc 1: What is stale and why
+- `No doc updates needed` — if no changed file maps to a doc
+
 **Positive Notes:**
 
 - What was done well
 
-**Architecture Recommendations:** (If applicable)
-
-- Recommendation 1
-
-**Suggested Commit Message:** Based on changes (conventional commit format)
+**Suggested Commit Message:**
 
 ```
-<type>(<scope>): <description>
+type(scope): description
 
-<body - what and why>
+- Detail 1
+- Detail 2
 ```
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

@@ -1,175 +1,45 @@
 ---
 name: migration
-description: '[Implementation] ⚡⚡ Create or run database migrations'
-argument-hint: [add <name> | update | list | rollback | migration-description]
+version: 1.0.0
+description: '[Architecture] Create data or schema migrations following platform patterns'
+activation: user-invoked
 ---
 
-# Migration: $ARGUMENTS
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
-Create or run database migrations following EasyPlatform patterns.
+**Prerequisites:** **MUST READ** before executing:
 
-## Summary
+- `.claude/skills/shared/understand-code-first-protocol.md`
+- `.claude/skills/shared/evidence-based-reasoning-protocol.md`
 
-**Goal:** Create idempotent data or schema migrations following EasyPlatform conventions (EF Core, PlatformDataMigration, MongoDB).
+## Quick Summary
 
-| Step | Action               | Key Notes                                                                   |
-| ---- | -------------------- | --------------------------------------------------------------------------- |
-| 1    | Analyze requirements | Identify migration type: EF Core schema, data, or MongoDB                   |
-| 2    | Design migration     | Plan rollback, paging for large datasets, performance                       |
-| 3    | Generate migration   | Follow `YYYYMMDDHHMMSS_Name` naming convention                              |
-| 4    | Verify               | Idempotent, paged, proper error handling, `OnlyForDbsCreatedBeforeDate` set |
-| 5    | Wait for approval    | Present design before creating files                                        |
+**Goal:** Create data or schema migrations following your project's platform patterns.
 
-**Key Principles:**
+**Workflow:**
+1. **Analyze** — Understand migration requirements and target database
+2. **Create** — Generate migration following platform conventions
+3. **Verify** — Run and validate the migration
 
-- Use paging (200-500 page size) for large datasets with `dismissSendEvent: true`
-- Migrations must be idempotent (safe to run multiple times)
-- Never create files without explicit user approval
+**Key Rules:**
+- Follow platform migration patterns (EF migrations or `PlatformDataMigrationExecutor`)
+- Always use understand-code-first protocol before creating migrations
 
-## Quick Commands (db-migrate)
+<migration-description>$ARGUMENTS</migration-description>
 
-Parse `$ARGUMENTS` for quick operations:
+Activate `easyplatform-backend` skill. **⚠️ MUST READ** `references/migration-patterns.md` for migration patterns.
 
-- `add <name>` → Create new EF Core migration
-- `update` → Apply pending migrations
-- `list` → List all migrations and status
-- `rollback` → Revert last migration
-- No argument or description → Create new migration (proceed to Phase 1)
+**IMPORTANT:** Present your migration design and wait for explicit user approval before creating files.
 
-**Database providers:**
-
-- SQL Server: `PlatformExampleApp.TextSnippet.Persistence`
-- PostgreSQL: `PlatformExampleApp.TextSnippet.Persistence.PostgreSql`
-- MongoDB: Uses `PlatformMongoMigrationExecutor` (code-based, runs on startup)
-    - Location: `*.Persistence.Mongo/Migrations/`
-
-**EF Core quick commands:**
+## Example
 
 ```bash
-# Add migration
-cd src/Backend/PlatformExampleApp.TextSnippet.Persistence
-dotnet ef migrations add <MigrationName> --startup-project ../PlatformExampleApp.TextSnippet.Api
-
-# Apply migrations
-dotnet ef database update --startup-project ../PlatformExampleApp.TextSnippet.Api
-
-# List migrations
-dotnet ef migrations list --startup-project ../PlatformExampleApp.TextSnippet.Api
+/migration "Add department field to Employee entity"
 ```
-
-**Safety:** Warn before applying to production. Show pending changes. Recommend backup before destructive operations.
 
 ---
 
-## Phase 1: Analyze Requirements
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
-1. **Parse migration description** from: $ARGUMENTS
-2. **Identify migration type:**
-    - Schema migration (EF Core) - for SQL Server/PostgreSQL table changes
-    - Data migration (PlatformDataMigrationExecutor) - for data transformations
-    - MongoDB migration (PlatformMongoMigrationExecutor) - for MongoDB changes
-
-3. **Search for existing patterns:**
-    - `src/Backend/*/Persistence/Migrations/` for schema migrations
-    - Search for `PlatformDataMigrationExecutor` implementations
-
-## Phase 2: Design Migration
-
-1. **Determine affected entities and tables**
-2. **Plan rollback strategy if applicable**
-3. **Consider data volume and performance:**
-    - Use paging for large datasets (PageSize: 200-500)
-    - Set `dismissSendEvent: true` if entity events not needed
-    - Use `checkDiff: false` for bulk updates
-
-## Phase 3: Generate Migration
-
-Follow naming convention: `YYYYMMDDHHMMSS_MigrationName`
-
-**For EF Core Schema Migration:**
-
-```bash
-dotnet ef migrations add MigrationName --project src/Backend/Service}.Persistence
-```
-
-**For Data Migration (SQL Server/PostgreSQL):**
-
-```csharp
-public class YYYYMMDDHHMMSS_MigrationName : PlatformDataMigrationExecutor<{Service}DbContext>
-{
-    public override string Name => "YYYYMMDDHHMMSS_MigrationName";
-    public override DateTime? OnlyForDbsCreatedBeforeDate => new(YYYY, MM, DD);
-    public override bool AllowRunInBackgroundThread => true;
-
-    public override async Task Execute({Service}DbContext dbContext)
-    {
-        var queryBuilder = repository.GetQueryBuilder(q => q.Where(FilterExpr()));
-        await RootServiceProvider.ExecuteInjectScopedPagingAsync(
-            maxItemCount: await repository.CountAsync(q => queryBuilder(q)),
-            pageSize: 200,
-            ExecutePaging,
-            queryBuilder);
-    }
-
-    private static async Task<List<Entity>> ExecutePaging(
-        int skip, int take,
-        Func<IQueryable<Entity>, IQueryable<Entity>> qb,
-        IRepo<Entity> repo,
-        IPlatformUnitOfWorkManager uow)
-    {
-        using var unitOfWork = uow.Begin();
-        var items = await repo.GetAllAsync(q => qb(q).OrderBy(e => e.Id).Skip(skip).Take(take));
-        // Apply transformations
-        await repo.UpdateManyAsync(items, dismissSendEvent: true, checkDiff: false);
-        await unitOfWork.CompleteAsync();
-        return items;
-    }
-}
-```
-
-**For MongoDB Migration:**
-
-```csharp
-internal sealed class YYYYMMDDHHMMSS_MigrationName : PlatformMongoMigrationExecutor<{Service}DbContext>
-{
-    public override string Name => "YYYYMMDDHHMMSS_MigrationName";
-    public override DateTime? OnlyForDbInitBeforeDate => new(YYYY, MM, DD);
-    public override DateTime? ExpirationDate => new(YYYY, MM, DD); // Optional: auto-delete after date
-
-    public override async Task Execute({Service}DbContext dbContext)
-    {
-        // Ensure indexes
-        await dbContext.EnsureInboxBusMessageCollectionIndexesAsync(true);
-        await dbContext.EnsureOutboxBusMessageCollectionIndexesAsync(true);
-
-        // Or custom index/data operations
-        var collection = dbContext.GetCollection<Entity>();
-        await collection.Indexes.CreateOneAsync(
-            new CreateIndexModel<Entity>(
-                Builders<Entity>.IndexKeys.Ascending(e => e.Field),
-                new CreateIndexOptions { Unique = true }));
-    }
-}
-```
-
-## Phase 4: Verify
-
-- [ ] Migration is idempotent (safe to run multiple times)
-- [ ] Large datasets use paging
-- [ ] Proper error handling
-- [ ] Unit of work for transactions
-- [ ] `OnlyForDbsCreatedBeforeDate` set correctly
-- [ ] Tested with sample data
-
-## Phase 5: Wait for Approval
-
-**CRITICAL:** Present your migration design and wait for explicit user approval before creating files.
-
----
-
-Use `backend-data-migration` skill for detailed guidance.
-
-## IMPORTANT Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

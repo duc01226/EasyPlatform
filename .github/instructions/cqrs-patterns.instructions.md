@@ -1,10 +1,10 @@
 ---
-applyTo: "**/UseCaseCommands/**/*.cs,**/UseCaseQueries/**/*.cs"
+applyTo: '**/UseCaseCommands/**/*.cs,**/UseCaseQueries/**/*.cs'
 ---
 
 # CQRS Command & Query Patterns
 
-> Auto-loads when editing Command/Query files. See `docs/claude/backend-patterns.md` for full reference.
+> Auto-loads when editing Command/Query files. See `docs/backend-patterns-reference.md` for full reference.
 
 ## Command Pattern (All-in-One File)
 

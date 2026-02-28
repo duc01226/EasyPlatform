@@ -65,6 +65,12 @@ commit_mapping:
   feature: features
   devtools: null
   platform: features
+  candidate_app: fixes
+  growth: features
+  talents: features
+  surveys: features
+  insights: features
+  accounts: features
 
 # Writing guidelines for generated content
 guidelines:

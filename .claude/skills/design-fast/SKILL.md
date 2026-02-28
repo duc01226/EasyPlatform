@@ -1,11 +1,30 @@
 ---
 name: design-fast
-description: '[Design & Content] Create a quick design'
-argument-hint: [tasks]
+version: 1.0.0
+description: '[Design] Create a quick design'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
 Think hard to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <tasks>$ARGUMENTS</tasks>
+
+> **Skill Variant:** Variant of design skills — quick design implementation.
+
+## Quick Summary
+
+**Goal:** Create a quick UI design using design intelligence databases and subagents.
+
+**Workflow:**
+1. **Research** — Run `ui-ux-pro-max` searches for design intelligence
+2. **Design** — Use `ui-ux-designer` subagent to create the design
+3. **Review** — Present to user for approval
+
+**Key Rules:**
+- Always activate `ui-ux-pro-max` FIRST for design intelligence
+- Default to pure HTML/CSS/JS if user doesn't specify framework
+- Use `ai-multimodal` for generating real visual assets
 
 ## Required Skills (Priority Order)
 
@@ -34,7 +53,9 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 - Always review, analyze and double check generated assets with `ai-multimodal` skills to verify quality.
 - Maintain and update `./docs/design-guidelines.md` docs if needed.
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

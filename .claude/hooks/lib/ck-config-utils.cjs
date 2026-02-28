@@ -1,61 +1,114 @@
 /**
- * ClaudeKit Config Utils - Facade
+ * ClaudeKit Config Utilities - Facade Module
  *
- * This file re-exports all utilities from modularized ck-* modules
- * for backward compatibility. New code should import from specific modules:
+ * This module provides backward compatibility by re-exporting from specialized modules.
+ * For new code, prefer importing directly from the specific modules:
  *
- * - ck-config.cjs  - Config loading, paths, plan resolution
- * - ck-git.cjs     - Git operations
- * - ck-naming.cjs  - Naming patterns, slug sanitization
- * - ck-session.cjs - Session state management
- * - ck-paths.cjs   - Temp file paths
+ * - ck-session-state.cjs  - Session state management
+ * - ck-config-loader.cjs  - Config loading and merging
+ * - ck-path-utils.cjs     - Path sanitization and validation
+ * - ck-plan-resolver.cjs  - Plan path resolution
+ * - ck-git-utils.cjs      - Git operations
+ * - ck-env-utils.cjs      - Environment utilities
  *
  * @module ck-config-utils
  */
 
 'use strict';
 
-// Re-export all from modularized modules
-const ckConfig = require('./ck-config.cjs');
-const ckGit = require('./ck-git.cjs');
-const ckNaming = require('./ck-naming.cjs');
-const ckSession = require('./ck-session.cjs');
+// Re-export from specialized modules for backward compatibility
+const {
+  getSessionTempPath,
+  readSessionState,
+  writeSessionState,
+  deleteSessionState
+} = require('./ck-session-state.cjs');
+
+const {
+  CONFIG_PATH,
+  LOCAL_CONFIG_PATH,
+  GLOBAL_CONFIG_PATH,
+  DEFAULT_CONFIG,
+  deepMerge,
+  loadConfigFromPath,
+  loadConfig,
+  getDefaultConfig,
+  sanitizeConfig
+} = require('./ck-config-loader.cjs');
+
+const {
+  INVALID_FILENAME_CHARS,
+  sanitizeSlug,
+  normalizePath,
+  normalizePathForComparison,
+  isAbsolutePath,
+  sanitizePath
+} = require('./ck-path-utils.cjs');
+
+const {
+  findMostRecentPlan,
+  resolvePlanPath,
+  getReportsPath,
+  formatIssueId,
+  formatDate,
+  validateNamingPattern,
+  resolveNamingPattern
+} = require('./ck-plan-resolver.cjs');
+
+const {
+  execSafe,
+  getGitBranch,
+  extractIssueFromBranch,
+  extractSlugFromBranch
+} = require('./ck-git-utils.cjs');
+
+const {
+  escapeShellValue,
+  writeEnv
+} = require('./ck-env-utils.cjs');
 
 module.exports = {
-  // From ck-config
-  CONFIG_PATH: ckConfig.CONFIG_PATH,
-  LOCAL_CONFIG_PATH: ckConfig.LOCAL_CONFIG_PATH,
-  GLOBAL_CONFIG_PATH: ckConfig.GLOBAL_CONFIG_PATH,
-  DEFAULT_CONFIG: ckConfig.DEFAULT_CONFIG,
-  deepMerge: ckConfig.deepMerge,
-  loadConfigFromPath: ckConfig.loadConfigFromPath,
-  loadConfig: ckConfig.loadConfig,
-  normalizePath: ckConfig.normalizePath,
-  isAbsolutePath: ckConfig.isAbsolutePath,
-  sanitizePath: ckConfig.sanitizePath,
-  sanitizeConfig: ckConfig.sanitizeConfig,
-  escapeShellValue: ckConfig.escapeShellValue,
-  writeEnv: ckConfig.writeEnv,
-  resolvePlanPath: ckConfig.resolvePlanPath,
-  findMostRecentPlan: ckConfig.findMostRecentPlan,
-  getReportsPath: ckConfig.getReportsPath,
+  // Session state
+  getSessionTempPath,
+  readSessionState,
+  writeSessionState,
+  deleteSessionState,
 
-  // From ck-git
-  getGitBranch: ckGit.getGitBranch,
-  getGitRemoteUrl: ckGit.getGitRemoteUrl,
-  extractSlugFromBranch: ckGit.extractSlugFromBranch,
-  extractIssueFromBranch: ckGit.extractIssueFromBranch,
+  // Config loading
+  CONFIG_PATH,
+  LOCAL_CONFIG_PATH,
+  GLOBAL_CONFIG_PATH,
+  DEFAULT_CONFIG,
+  deepMerge,
+  loadConfigFromPath,
+  loadConfig,
+  getDefaultConfig,
+  sanitizeConfig,
 
-  // From ck-naming
-  INVALID_FILENAME_CHARS: ckNaming.INVALID_FILENAME_CHARS,
-  sanitizeSlug: ckNaming.sanitizeSlug,
-  formatDate: ckNaming.formatDate,
-  formatIssueId: ckNaming.formatIssueId,
-  validateNamingPattern: ckNaming.validateNamingPattern,
-  resolveNamingPattern: ckNaming.resolveNamingPattern,
+  // Path utilities
+  INVALID_FILENAME_CHARS,
+  sanitizeSlug,
+  normalizePath,
+  normalizePathForComparison,
+  isAbsolutePath,
+  sanitizePath,
 
-  // From ck-session
-  getSessionTempPath: ckSession.getSessionTempPath,
-  readSessionState: ckSession.readSessionState,
-  writeSessionState: ckSession.writeSessionState
+  // Plan resolution
+  findMostRecentPlan,
+  resolvePlanPath,
+  getReportsPath,
+  formatIssueId,
+  formatDate,
+  validateNamingPattern,
+  resolveNamingPattern,
+
+  // Git utilities
+  execSafe,
+  getGitBranch,
+  extractIssueFromBranch,
+  extractSlugFromBranch,
+
+  // Environment utilities
+  escapeShellValue,
+  writeEnv
 };

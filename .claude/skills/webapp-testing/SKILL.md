@@ -1,30 +1,41 @@
 ---
 name: webapp-testing
-description: "[Testing] Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs."
+version: 1.0.0
+description: '[Testing] Individual page/component testing with Python Playwright scripts. Use for dev debugging, automation, and verifying specific UI behaviors.'
+
+allowed-tools: NONE
+license: Complete terms in LICENSE.txt
 ---
 
-# Web Application Testing
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
-## Summary
+**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
-**Goal:** Test local web applications using native Python Playwright scripts with server lifecycle management.
+## Quick Summary
 
-| Step | Action | Key Notes |
-|------|--------|-----------|
-| 1 | Determine approach | Static HTML: read source for selectors; Dynamic: use server helper |
-| 2 | Start server | `python scripts/with_server.py --server "cmd" --port N -- python script.py` |
-| 3 | Reconnaissance | Navigate, wait for `networkidle`, screenshot/inspect DOM |
-| 4 | Execute actions | Use discovered selectors with Playwright API |
-| 5 | Clean up | Always close browser when done |
+**Goal:** Test local web applications using Python Playwright scripts with server lifecycle management.
 
-**Key Principles:**
+> **For full-site QA audits (accessibility, performance, security, SEO), use `test-ui` instead.**
+
+**Workflow:**
+
+1. **Decide Approach** — Static HTML (read selectors directly) vs dynamic app (use server helper)
+2. **Start Server** — Use `scripts/with_server.py` for automatic server lifecycle management
+3. **Reconnaissance** — Navigate, wait for `networkidle`, screenshot/inspect DOM
+4. **Execute Actions** — Write Playwright scripts using discovered selectors
+
+**Key Rules:**
+
 - Always wait for `networkidle` before inspecting DOM on dynamic apps
-- Run scripts with `--help` first -- treat as black boxes, do not read source unless necessary
-- Use `sync_playwright()` with `headless=True` for chromium
+- Use bundled scripts as black boxes; run `--help` first, don't read source
+- Always launch Chromium in headless mode and close browser when done
+
+# Web Application Testing
 
 To test local web applications, write native Python Playwright scripts.
 
 **Helper Scripts Available**:
+
 - `scripts/with_server.py` - Manages server lifecycle (supports multiple servers)
 
 **Always run scripts with `--help` first** to see usage. DO NOT read the source until you try running the script first and find that a customized solution is abslutely necessary. These scripts can be very large and thus pollute your context window. They exist to be called directly as black-box scripts rather than ingested into your context window.
@@ -53,11 +64,13 @@ User task → Is it static HTML?
 To start a server, run `--help` first, then use the helper:
 
 **Single server:**
+
 ```bash
 python scripts/with_server.py --server "npm run dev" --port 5173 -- python your_automation.py
 ```
 
 **Multiple servers (e.g., backend + frontend):**
+
 ```bash
 python scripts/with_server.py \
   --server "cd backend && python server.py" --port 3000 \
@@ -66,6 +79,7 @@ python scripts/with_server.py \
 ```
 
 To create an automation script, include only Playwright logic (servers are managed automatically):
+
 ```python
 from playwright.sync_api import sync_playwright
 
@@ -81,11 +95,12 @@ with sync_playwright() as p:
 ## Reconnaissance-Then-Action Pattern
 
 1. **Inspect rendered DOM**:
-   ```python
-   page.screenshot(path='/tmp/inspect.png', full_page=True)
-   content = page.content()
-   page.locator('button').all()
-   ```
+
+    ```python
+    page.screenshot(path='/tmp/inspect.png', full_page=True)
+    content = page.content()
+    page.locator('button').all()
+    ```
 
 2. **Identify selectors** from inspection results
 
@@ -107,11 +122,13 @@ with sync_playwright() as p:
 ## Reference Files
 
 - **examples/** - Examples showing common patterns:
-  - `element_discovery.py` - Discovering buttons, links, and inputs on a page
-  - `static_html_automation.py` - Using file:// URLs for local HTML
-  - `console_logging.py` - Capturing console logs during automation
+    - `element_discovery.py` - Discovering buttons, links, and inputs on a page
+    - `static_html_automation.py` - Using file:// URLs for local HTML
+    - `console_logging.py` - Capturing console logs during automation
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

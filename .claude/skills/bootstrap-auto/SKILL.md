@@ -1,30 +1,32 @@
 ---
 name: bootstrap-auto
-description: '[Utilities] ⚡⚡⚡⚡ Bootstrap a new project automatically'
-argument-hint: [user-requirements]
+version: 1.0.0
+description: '[Implementation] Bootstrap a new project automatically'
+activation: user-invoked
 ---
 
-## Summary
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
-**Goal:** Bootstrap a complete new project from scratch with research, design, implementation, testing, and documentation.
+## Quick Summary
 
-| Step | Action             | Key Notes                                                 |
-| ---- | ------------------ | --------------------------------------------------------- |
-| 1    | Git init           | Ensure git is initialized with `main` branch              |
-| 2    | Research           | Parallel researcher subagents, reports <= 150 lines       |
-| 3    | Tech stack         | Planner + researchers find best fit, save to `./docs`     |
-| 4    | Wireframe & design | UI/UX designer creates guidelines + HTML wireframes       |
-| 5    | Implementation     | Follow plan phases, type-check after each step            |
-| 6    | Testing            | Real tests only -- no fakes/mocks to pass builds          |
-| 7    | Code review        | Fix critical issues, re-test until all pass               |
-| 8    | Documentation      | README, PDR, code-standards, system-architecture, roadmap |
-| 9    | Onboarding         | Guide user through setup, 1 question at a time            |
+**Goal:** Automatically bootstrap a new project end-to-end: research, design, implement, test, review, document, and onboard.
 
-**Key Principles:**
+**Workflow:**
 
-- YAGNI, KISS, DRY -- every solution must honor these
-- Brutal honesty about feasibility and trade-offs
-- Never use fake data or mocks just to pass tests
+1. **Research** — Parallel researcher subagents explore idea validation and solutions
+2. **Tech Stack** — Find best-fit tech stack with planner + researchers
+3. **Wireframe & Design** — Create design guidelines, HTML wireframes, generate assets
+4. **Implementation** — Execute plan step-by-step with UI/UX subagent for frontend
+5. **Testing** — Write real tests, run with tester subagent, fix until all pass
+6. **Code Review** — Review with code-reviewer, iterate until clean
+7. **Documentation** — Generate README, PDR, code standards, architecture docs
+8. **Onboarding** — Guide user through setup one question at a time
+
+**Key Rules:**
+
+- YAGNI, KISS, DRY principles throughout
+- Never use fake data to pass tests
+- Research reports must be <=150 lines each
 
 **Ultrathink** to plan & bootstrap a new project follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules in your `CLAUDE.md` file:
 
@@ -88,7 +90,7 @@ Follow strictly these following steps:
     - **IMPORTANT:** Try to predict the font name (Google Fonts) and font size in the given screenshot, don't just use **Inter** or **Poppins** fonts.
 - Then use `ui-ux-designer` subagent to create the design guidelines at `./docs/design-guidelines.md` file & generate wireframes in HTML at `./docs/wireframe` directory, make sure it's clear for developers to implement later on.
 - If there are no logo provided, use `ai-multimodal` skill to generate a logo.
-- Use `test-ui` skill to take a screenshot of the wireframes and save it at `./docs/wireframes/` directory.
+- Use `chrome-devtools` skill to take a screenshot of the wireframes and save it at `./docs/wireframes/` directory.
 - Ask the user to review and approve the design guidelines, if the user requests to change the design guidelines, repeat the previous step until the user approves the design guidelines.
 - **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
 
@@ -98,9 +100,9 @@ Follow strictly these following steps:
 - Use `ui-ux-designer` subagent to implement the frontend part follow the design guidelines at `./docs/design-guidelines.md` file.
     - Use `ai-multimodal` skill to generate the assets.
     - Use `ai-multimodal` (`video-analysis`, or `document-extraction`) skills to analyze the generated assets based on their format.
-    - Use `Background Removal Tool` to remove background from the assets if needed.
+    - Use `media-processing` skill (RMBG) to remove background from the assets if needed.
     - Use `ai-multimodal` (`image-generation`) skill to edit the assets if needed.
-    - Use `imagemagick` skill to crop or resize the assets if needed.
+    - Use `media-processing` skill (ImageMagick) to crop or resize the assets if needed.
 - Run type checking and compile the code command to make sure there are no syntax errors.
 
 ### Testing
@@ -139,7 +141,9 @@ Follow strictly these following steps:
 - Ask the user if they want to commit and push to git repository, if yes, use `git-manager` subagent to commit and push to git repository.
 - **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

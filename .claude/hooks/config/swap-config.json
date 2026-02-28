@@ -14,7 +14,7 @@
   },
   "limits": {
     "maxEntriesPerSession": 100,
-    "maxTotalBytes": 52428800,
+    "maxTotalBytes": 262144000,
     "maxSingleFile": 5242880
   },
   "summary": {

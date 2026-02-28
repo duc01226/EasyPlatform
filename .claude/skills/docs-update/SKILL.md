@@ -1,169 +1,243 @@
 ---
 name: docs-update
-description: '[Docs] ⚡⚡⚡ Analyze the codebase and update documentation (general + feature docs)'
+version: 2.0.0
+description: '[Documentation] Holistic documentation orchestrator — detects impacted docs from git changes and updates project docs + business feature docs'
+activation: user-invoked
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-# Documentation Update (Holistic)
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
-Update general project documentation AND run feature-specific documentation updates when source code changes are detected.
+> **Critical Purpose:** Ensure ALL documentation stays in sync with code changes — project docs, business feature docs, and AI companions.
 
-> **⛔ MANDATORY:** This skill is the SINGLE documentation orchestrator. After updating general docs (Phase 2), you MUST run Phase 3 to evaluate and execute `/feature-docs` for any module with source code changes. Do NOT skip Phase 3. Do NOT consider documentation complete until Phase 3 has run.
+## Quick Summary
 
-## Summary
+**Goal:** Detect which documentation categories are impacted by recent code changes and update them accordingly.
 
-| Phase | Action | Key Notes |
-|-------|--------|-----------|
-| 0 | Change Detection | Detect changed modules from git diff; decide feature-docs trigger |
-| 1 | Parallel Codebase Scouting | Spawn scouts to gather file context |
-| 2 | General Documentation Update | README, PDR, architecture, code standards |
-| 3 | **Feature Documentation (MANDATORY)** | Evaluate and invoke `/feature-docs` per affected module, or log skip reason |
+**Workflow:**
 
----
+1. **Phase 0: Triage** — `git diff` to categorize what changed and which doc types are impacted
+2. **Phase 1: Project Docs** — Update project-level docs (README, codebase-summary, etc.) if impacted
+3. **Phase 2: Business Feature Docs** — Detect affected modules, update existing feature docs in `docs/business-features/`
+4. **Phase 3: Summary Report** — What was checked, updated, and skipped
 
-## Phase 0: Change Detection
+**Key Rules:**
 
-Determine which modules have source code changes that may require documentation updates.
-
-### Steps
-
-1. **Detect changes** — Run both, merge and deduplicate:
-   - `git diff --name-only` (unstaged)
-   - `git diff --cached --name-only` (staged)
-
-2. **Map files to modules** — For each changed file, extract the module:
-   - `src/Backend/PlatformExampleApp.{Module}.*/**` → `{Module}` (e.g., `TextSnippet`)
-   - `src/Frontend/apps/playground-text-snippet/**` → `TextSnippet`
-   - `src/Frontend/libs/**` → skip (shared libraries)
-   - `src/Platform/**` → skip (framework)
-   - `docs/**`, `.claude/**`, `plans/**` → skip (non-source paths)
-   - Other paths → skip
-
-3. **Find existing feature docs** — For each identified module:
-   - Search `docs/business-features/{Module}/detailed-features/README.*.md`
-   - Also search `docs/features/README.*.md`
-   - If docs exist → mark module for Phase 3 feature-docs update
-   - If no docs exist → log "No feature docs found for {Module}, skipping"
-
-4. **Store detection result** — Remember which modules need feature-docs updates for Phase 3.
-
-### Skip Conditions (No Feature-Docs Trigger)
-
-Skip feature-docs entirely if:
-- No changed files detected (clean working tree)
-- All changes are in non-source paths (docs, config, tests, plans only)
-- No modules could be identified from changed file paths
-- No existing feature docs found for any identified module
+- NEVER create new business feature docs from scratch — only update existing ones
+- Fast exit when no documentation is impacted (e.g., only `.claude/` config changes)
+- Always report what was checked, even if nothing needed updating
 
 ---
 
-## Phase 1: Parallel Codebase Scouting
+## Phase 0: Triage — Detect Impacted Documentation
 
-**You (main agent) must spawn scouts** - subagents cannot spawn subagents.
+### Step 0.1: Collect Changed Files
 
-1. Run `ls -la` to identify actual project directories
-2. Spawn 2-4 `scout-external` (preferred, uses Gemini 2M context) or `scout` (fallback) via Task tool
-3. Target directories **that actually exist** - adapt to project structure, don't hardcode paths
-4. Merge scout results into context summary
+1. Run `git diff --name-only HEAD` (captures both staged and unstaged changes)
+2. If no uncommitted changes, run `git diff --name-only HEAD~1` (last commit)
+3. If still empty, run `git diff --name-only origin/develop...HEAD` (branch changes)
+
+### Step 0.2: Categorize Changes
+
+Classify each changed file into documentation impact categories:
+
+| Changed File Pattern | Impact Category | Action |
+| --- | --- | --- |
+| `src/Services/**` | **feature-docs** + project-docs | Phase 1 + Phase 2 |
+| `{frontend-apps-dir}/**`, `{frontend-libs-dir}/{domain-lib}/**` | **feature-docs** + project-docs | Phase 1 + Phase 2 |
+| `{legacy-frontend-dir}/**Client/**` | **feature-docs** + project-docs | Phase 1 + Phase 2 |
+| `src/Platform/**` | project-docs | Phase 1 only |
+| `docs/**` | project-docs | Phase 1 only |
+| `.claude/**`, config files only | **none** | Fast exit |
+| `{frontend-libs-dir}/{platform-core-lib}/**`, `{frontend-libs-dir}/{common-lib}/**` | project-docs | Phase 1 only |
+
+### Step 0.3: Fast Exit Check
+
+If ALL changed files fall into the **none** category (e.g., only `.claude/`, `.github/`, root config files):
+- Report: `"No documentation impacted by current changes (config/tooling only)."`
+- **Exit early** — skip Phase 1 and Phase 2.
 
 ---
 
-## Phase 2: General Documentation Update (docs-manager Agent)
+## Phase 1: Project Documentation Update
 
-Pass the gathered file list to `docs-manager` agent to update documentation:
+**When to run:** Changed files include `src/Platform/**`, `docs/**`, or architectural changes.
 
-- `README.md`: Update README (keep it under 300 lines)
-- `docs/project-overview-pdr.md`: Update project overview and PDR (Product Development Requirements)
-- `docs/codebase-summary.md`: Update codebase summary
-- `docs/code-standards.md`: Update codebase structure and code standards
-- `docs/system-architecture.md`: Update system architecture
-- `docs/project-roadmap.md`: Update project roadmap
-- `docs/deployment-guide.md` [optional]: Update deployment guide
-- `docs/design-guidelines.md` [optional]: Update design guidelines
+**When to skip:** Only service-layer or frontend feature files changed (no architectural impact). Skip and proceed to Phase 2.
+
+### Step 1.1: Spawn Scouts (standalone invocation only)
+
+When invoked standalone (not as a workflow step), spawn scouts for broad codebase context:
+
+1. Spawn 2-4 `scout-external` (preferred) or `scout` (fallback) via Task tool
+2. Target directories that actually exist — adapt to project structure
+3. Merge scout results into context summary
+
+**When invoked as a workflow step:** Skip scouting — use git diff context from Phase 0 directly.
+
+### Step 1.2: Update Project Docs
+
+Pass context to `docs-manager` agent to update impacted project docs:
+
+- `docs/codebase-summary.md`: Update if service structure or dependencies changed
+- `docs/system-architecture.md`: Update if cross-service patterns changed
+- `README.md`: Update if project scope or setup changed (keep under 300 lines)
+
+Only update docs that are **directly impacted** by the changes. Do not regenerate all docs.
 
 ---
 
-## Phase 3: Feature Documentation Update (MANDATORY)
+## Phase 2: Business Feature Documentation Update
 
-> **⛔ YOU MUST EXECUTE THIS PHASE.** This is not optional. After Phase 2, you must evaluate feature-docs needs and either invoke `/feature-docs` or log a skip reason with evidence.
+> **This phase replaces the need to invoke `/feature-docs` separately for update scenarios.**
+> docs-update handles the full update lifecycle: detection → analysis → update → verification.
+> Only invoke `/feature-docs` directly when **creating new feature docs from scratch**.
 
-### Step 3.1: Evaluate Phase 0 Results
+**When to run:** Changed files match `src/Services/**`, `{frontend-apps-dir}/**`, `{frontend-libs-dir}/{domain-lib}/**`, or `{legacy-frontend-dir}/**Client/**`.
 
-Review the modules and detection results collected in Phase 0.
+**When to skip:** No service-layer or frontend feature files changed. Report: `"No business feature docs impacted."`
 
-### Step 3.2: Execute Based on Results
+### Step 2.1: Auto-Detect Affected Modules
 
-**If modules with existing feature docs were detected:**
+<!-- Source: feature-docs Step 1.0 -->
 
-For EACH module identified in Phase 0 that has existing feature docs:
+Extract unique module names from changed file paths:
 
-1. **Invoke the `/feature-docs` skill** using the Skill tool:
+| Changed File Path Pattern | Detected Module |
+| --- | --- |
+| `src/Services/{Module}/**` | {Module} |
+| `{frontend-apps-dir}/{app-name}/**` | {Module} (map app to module) |
+| `{frontend-libs-dir}/{domain-lib}/src/{feature}/**` | {Module} (map feature to module) |
+| `{legacy-frontend-dir}/{Module}Client/**` | {Module} |
+
+Build project-specific mapping by examining:
+```bash
+ls -d src/Services/*/
+ls -d docs/business-features/*/
+```
+
+### Step 2.2: Check Existing Docs
+
+For each detected module:
+
+1. Check if `docs/business-features/{Module}/` exists
+2. Check if `docs/business-features/{Module}/detailed-features/` has feature docs
+3. **If docs exist** → proceed to Step 2.3 (update mode)
+4. **If no docs exist** → report: `"Module {Module} has no feature docs. Consider running /feature-docs to create them."` and skip
+
+### Step 2.3: Diff Analysis
+
+<!-- Source: feature-docs Step 1.5.1 -->
+
+1. Categorize changes by type: backend entity, command, query, frontend component, i18n, etc.
+2. Map each change to impacted documentation sections using the table below
+
+### Step 2.4: Section Impact Mapping
+
+<!-- Source: feature-docs Step 1.5.2 -->
+
+| Change Type | Impacted Doc Sections |
+| --- | --- |
+| New entity property | 3 (Business Requirements), 9 (Domain Model), 10 (API Reference) |
+| New API endpoint | 10 (API Reference), 12 (Backend Controllers), 14 (Security) |
+| New frontend component | 11 (Frontend Components) |
+| New filter/query | 3 (Business Requirements), 10 (API Reference) |
+| New i18n keys | 11 (Frontend Components) |
+| Any new functionality | **17 (Test Specs), 18 (Test Data), 19 (Edge Cases), 20 (Regression Impact)** — MANDATORY |
+| Any change | 1 (Executive Summary), 26 (Version History) — ALWAYS UPDATE |
+
+### Step 2.5: Update Impacted Sections
+
+For each module with existing docs:
+
+1. Read the existing feature doc (`README.{FeatureName}.md`)
+2. Update ONLY the sections identified in Step 2.4
+3. **Mandatory test coverage** — when documenting new functionality, MUST update:
+   - Section 17 (Test Specifications): Add TC-{MOD}-XXX test cases with GIVEN/WHEN/THEN
+   - Section 18 (Test Data): Add seed data for new test cases
+   - Section 19 (Edge Cases): Add boundary conditions and error states
+   - Section 20 (Regression Impact): Add regression risk rows
+4. Update Section 26 (Version History) with new version entry
+5. Add CHANGELOG entry under `[Unreleased]` following Keep a Changelog format
+
+### Step 2.6: AI Companion Sync
+
+If `README.{FeatureName}.ai.md` exists alongside the updated feature doc:
+- Update the AI companion to reflect changes (keep 300-500 lines)
+- Update `Last synced` timestamp
+
+### Step 2.7: Verification (Mandatory)
+
+<!-- Source: feature-docs Phase 3.5 -->
+
+After updating feature docs, run a verification pass on all changed sections:
+
+1. **Evidence audit** — Every test case (TC-{MOD}-XXX) MUST have `file:line` evidence. Read the claimed file at the claimed line and verify the code supports the assertion. Fix immediately if wrong.
+2. **Domain model check** — Verify entity properties, types, and enum values against actual source code. Remove anything not found in source.
+3. **Cross-reference audit** — Test Summary counts match actual TC count. No template placeholders remain (`{FilePath}`, `{LineRange}`). All internal links resolve.
+
+**If verification finds hallucinated or stale content → fix before completing Phase 2.**
+
+### Step 2.8: TC Coverage Cross-Reference
+
+After updating feature docs, cross-reference integration test TC codes against doc TC codes:
+
+1. Use the Grep tool to find all `[Trait("TestSpec", ...)]` in the affected service's integration test project:
    ```
-   Skill: feature-docs
-   Args: {Module}
+   Grep pattern="Trait\(\"TestSpec\"" path="src/Services/{ServiceDir}/{Service}.IntegrationTests" glob="*.cs"
    ```
-   This triggers the feature-docs skill which updates feature-specific documentation (26-section business docs, API reference, test specs) incrementally based on changed files.
+2. Use the Grep tool to find all `TC-{MOD}-XXX` in the affected feature doc Section 17 / test-specs doc:
+   ```
+   Grep pattern="TC-[A-Z]{2,}-[0-9]+" path="docs/business-features/{Module}/detailed-features" glob="*.md"
+   ```
+3. Compare the TC codes found:
+   - TC in docs but no Trait in code → flag as `Status: Untested` in the doc
+   - Trait in code but no TC in docs → add TC entry to the feature doc Section 17
+4. Report discrepancies in the Phase 3 Summary Report
 
-2. **Log result:** `"Feature docs: TRIGGERED for {Module} — source changes detected in {count} files"`
+### Decision: When docs-update Handles It vs. When to Recommend /feature-docs
 
-3. **Repeat** for each affected module.
-
-**If NO modules detected (all skip conditions met):**
-
-1. **Log with evidence:** `"Feature docs: SKIPPED — [reason]"` where reason is one of:
-   - "clean working tree (no changed files)"
-   - "all changes in non-source paths: {list paths}"
-   - "no modules identified from changed paths"
-   - "no existing feature docs found for modules: {list modules}"
-2. Proceed to completion.
-
-### Phase 3 Checklist
-
-- [ ] Phase 0 detection results reviewed
-- [ ] For each detected module: `/feature-docs {Module}` invoked OR skip reason logged
-- [ ] All feature-docs invocations completed successfully
-- [ ] Final log entry confirming Phase 3 completion
+| Scenario | Action |
+| --- | --- |
+| Existing docs + code changes | **docs-update handles it** (Steps 2.1–2.7 above) |
+| No existing docs for module | Report: recommend `/feature-docs` for creation |
+| Major new feature (new entity, new service, >10 new endpoints) | **docs-update handles update**, but report: "Consider full `/feature-docs` review for completeness" |
+| User explicitly asks for full 26-section doc | Defer to `/feature-docs` |
 
 ---
 
-## Additional requests
+## Phase 3: Summary Report
+
+Always output a summary of what happened:
+
+```
+### Documentation Update Summary
+
+**Triage:** {N} files changed → {categories detected}
+
+**Project Docs:**
+- {Updated/Skipped}: {reason}
+
+**Business Feature Docs:**
+- Module {X}: {Updated sections A, B, C / No existing docs / Not impacted}
+- Module {Y}: {Updated sections D, E / Skipped: no feature docs}
+
+**Recommendations:**
+- {Any new docs that should be created}
+- {Any stale docs flagged but not auto-fixed}
+```
+
+---
+
+## Additional Requests
 
 <additional_requests>
 $ARGUMENTS
 </additional_requests>
 
-## [CRITICAL] Code Evidence Requirements
+---
 
-All documentation MUST follow evidence rules from `.claude/skills/feature-docs/SKILL.md` → `[CRITICAL] MANDATORY CODE EVIDENCE RULE`
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
-### Quick Reference
-
-- **Format**: `**Evidence**: {FilePath}:{LineNumber}`
-- **Status**: ✅ Verified / ⚠️ Stale / ❌ Missing
-- **Verification**: 3-pass verification required before completion
-
-### Stale Evidence Detection
-
-When updating documentation:
-
-1. **Read actual source files** at claimed line numbers
-2. **Verify evidence matches** documented behavior
-3. **Update stale references** - mark with ⚠️ if line numbers changed
-4. **Refresh line numbers** after code changes
-
-### Evidence Verification Table (Required)
-
-| Entity/Component | Documented Lines | Actual Lines | Status      |
-| ---------------- | ---------------- | ------------ | ----------- |
-| `Entity.cs`      | L6-15            | L6-15        | ✅ Verified |
-| `Handler.cs`     | L45-60           | L52-67       | ⚠️ Stale    |
-
-## Important
-
-- Use `docs/` directory as the source of truth for documentation.
-
-**IMPORTANT**: **Do not** start implementing.
-
-## IMPORTANT Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

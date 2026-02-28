@@ -7,10 +7,11 @@
  * frontend TypeScript files.
  *
  * Pattern Matching:
- *   src/Frontend/*                    → Angular 19 apps
+ *   src/WebV2/*                    → Angular 19 apps
+ *   src/Web/*                      → Legacy Angular apps
  *   libs/platform-core/*           → Platform core library
- *   libs/platform-core/*            → Shared components library
- *   libs/apps-domains/*            → Domain library
+ *   libs/bravo-common/*            → Shared components library
+ *   libs/bravo-domain/*            → Domain library
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
@@ -24,156 +25,54 @@ const path = require('path');
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FRONTEND_GUIDE_PATH = 'docs/claude/frontend-typescript-complete-guide.md';
-const FRONTEND_PATTERN_MARKER = '## EasyPlatform Frontend Code Patterns';
-const PATTERN_DEDUP_LINES = 300;
+const SHARED_PATTERN_MARKER = '## EasyPlatform Code Patterns';
 
 const FRONTEND_PATTERNS = [
-    {
-        name: 'Frontend Apps',
-        patterns: [/src[\/\\]Frontend[\/\\]/i],
-        description: 'Angular 19 standalone apps'
-    },
-    {
-        name: 'Platform Core',
-        patterns: [/libs[\/\\]platform-core[\/\\]/i],
-        description: 'Platform core framework library'
-    },
-    {
-        name: 'Platform Core',
-        patterns: [/libs[\/\\]platform-core[\/\\]/i],
-        description: 'Shared UI components library'
-    },
-    {
-        name: 'Apps Domains',
-        patterns: [/libs[\/\\]apps-domains[\/\\]/i],
-        description: 'Domain models and API services'
-    }
+  {
+    name: 'WebV2 Apps',
+    patterns: [
+      /src[\/\\]WebV2[\/\\]/i
+    ],
+    description: 'Angular 19 standalone apps (Growth, Employee, etc.)'
+  },
+  {
+    name: 'Legacy Web Apps',
+    patterns: [
+      /src[\/\\]Web[\/\\]/i
+    ],
+    description: 'Legacy Angular apps (bravoTALENTS, CandidateApp, etc.)'
+  },
+  {
+    name: 'Platform Core',
+    patterns: [
+      /libs[\/\\]platform-core[\/\\]/i
+    ],
+    description: 'Platform core framework library'
+  },
+  {
+    name: 'Bravo Common',
+    patterns: [
+      /libs[\/\\]bravo-common[\/\\]/i
+    ],
+    description: 'Shared UI components library'
+  },
+  {
+    name: 'Bravo Domain',
+    patterns: [
+      /libs[\/\\]bravo-domain[\/\\]/i
+    ],
+    description: 'Domain models and API services'
+  }
 ];
 
 // App-specific patterns for more detailed guidance
 const APP_PATTERNS = {
-    TextSnippet: /PlatformExampleApp[\/\\].*TextSnippet/i,
-    'playground-text-snippet': /Frontend[\/\\]apps[\/\\]playground-text-snippet/i
-};
-
-// File type patterns for type-specific guidance
-const FILE_TYPE_PATTERNS = {
-    component: {
-        pattern: /\.component\.ts$/i,
-        guidance: {
-            title: 'Component Pattern',
-            rules: [
-                'Extend `AppBaseComponent`, `AppBaseVmComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent`',
-                'NEVER extend Platform* classes directly - always use AppBase* classes',
-                'NEVER extend raw Angular Component',
-                'Use `ChangeDetectionStrategy.OnPush` and `ViewEncapsulation.None`',
-                'Template: ALL elements MUST have BEM classes (`block__element --modifier`)'
-            ],
-            baseClassGuide: `
-**Choose base class by complexity:**
-| Complexity | Base Class | When to Use |
-|------------|------------|-------------|
-| Simple | \`AppBaseComponent\` | No state, simple display |
-| With ViewModel | \`AppBaseVmComponent\` | Self-managed state, no external store |
-| With Store | \`AppBaseVmStoreComponent\` | External store for complex state |
-| With Form | \`AppBaseFormComponent\` | Forms with validation |`
-        }
-    },
-    store: {
-        pattern: /\.store\.ts$/i,
-        guidance: {
-            title: 'Store Pattern',
-            rules: [
-                'Extend `PlatformVmStore<TViewModel>`',
-                'Use `effectSimple()` for API calls with auto loading/error state',
-                'Use `select()` for derived state',
-                'Use `updateState()` for state updates',
-                'Mark store as `@Injectable()` (not providedIn root)'
-            ],
-            baseClassGuide: `
-**Store structure:**
-\`\`\`typescript
-@Injectable()
-export class MyStore extends PlatformVmStore<MyVm> {
-    loadData = this.effectSimple(() =>
-        this.api.getData().pipe(this.tapResponse(d => this.updateState({ data: d }))), 'loadData');
-    readonly data$ = this.select(s => s.data);
-    readonly loading$ = this.isLoading$('loadData');
-}
-\`\`\``
-        }
-    },
-    form: {
-        pattern: /[-.]form\.component\.ts$/i,
-        guidance: {
-            title: 'Form Component Pattern',
-            rules: [
-                'Extend `AppBaseFormComponent<TFormVm>`',
-                'Implement `initialFormConfig()` returning `PlatformFormConfig<T>`',
-                'Use `validateForm()` before submission',
-                'Use `dependentValidations` for cross-field validation',
-                'FormArrays: use `modelItems` and `itemControl` in config'
-            ],
-            baseClassGuide: `
-**Form config structure:**
-\`\`\`typescript
-protected initialFormConfig = () => ({
-    controls: {
-        email: new FormControl(this.currentVm().email, [Validators.required]),
-        items: { modelItems: () => vm.items, itemControl: (i) => new FormGroup({...}) }
-    },
-    dependentValidations: { endDate: ['startDate'] }
-});
-\`\`\``
-        }
-    },
-    service: {
-        pattern: /[-.]api\.service\.ts$|[-.]service\.ts$/i,
-        guidance: {
-            title: 'API Service Pattern',
-            rules: [
-                'Extend `PlatformApiService`',
-                'NEVER use HttpClient directly',
-                'Define `protected get apiUrl()` returning base URL',
-                'Use `get()`, `post()`, `put()`, `delete()` methods',
-                'Use `{ enableCache: true }` for cacheable requests'
-            ],
-            baseClassGuide: `
-**Service structure:**
-\`\`\`typescript
-@Injectable({ providedIn: 'root' })
-export class MyApiService extends PlatformApiService {
-    protected get apiUrl() { return environment.apiUrl + '/api/my'; }
-    getAll(): Observable<Item[]> { return this.get(''); }
-    save(cmd: SaveCmd): Observable<Result> { return this.post('', cmd); }
-}
-\`\`\``
-        }
-    },
-    viewModel: {
-        pattern: /\.view-model\.ts$|\.vm\.ts$/i,
-        guidance: {
-            title: 'ViewModel Pattern',
-            rules: [
-                'Implement `IPlatformVm` interface',
-                'Add `clone()` method for immutable updates',
-                'Add helper methods for derived state',
-                'Use constructor with partial initialization',
-                'Add static factory methods if needed'
-            ],
-            baseClassGuide: `
-**ViewModel structure:**
-\`\`\`typescript
-export class MyVm implements IPlatformVm {
-    items: Item[] = [];
-    loading = false;
-    constructor(data?: Partial<MyVm>) { Object.assign(this, data); }
-    clone(): MyVm { return new MyVm({ ...this }); }
-    get activeItems() { return this.items.filter(i => i.isActive); }
-}
-\`\`\``
-        }
-    }
+  'growth': /WebV2[\/\\]apps[\/\\]growth/i,
+  'employee': /WebV2[\/\\]apps[\/\\]employee/i,
+  'survey': /WebV2[\/\\]apps[\/\\]survey/i,
+  'bravoTALENTS': /Web[\/\\]bravoTALENTS/i,
+  'CandidateApp': /Web[\/\\]CandidateApp/i,
+  'bravoSURVEYS': /Web[\/\\]bravoSURVEYS/i
 };
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -185,184 +84,210 @@ export class MyVm implements IPlatformVm {
  * Reads the transcript to avoid duplicate injections
  */
 function wasRecentlyInjected(transcriptPath) {
-    try {
-        if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
-        const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-        // Check last 200 lines for recent injection
-        const recentLines = transcript.split('\n').slice(-200).join('\n');
-        return recentLines.includes('**Frontend TypeScript Context Detected**');
-    } catch (e) {
-        return false;
-    }
+  try {
+    if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
+    const transcript = fs.readFileSync(transcriptPath, 'utf-8');
+    // Check last 200 lines for recent injection
+    const recentLines = transcript.split('\n').slice(-200).join('\n');
+    return recentLines.includes('**Frontend TypeScript Context Detected**');
+  } catch (e) {
+    return false;
+  }
 }
 
-/**
- * Check if frontend code patterns were already injected by code-patterns-injector hook
- */
-function werePatternsRecentlyInjected(transcriptPath) {
-    try {
-        if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
-        const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-        const recentLines = transcript.split('\n').slice(-PATTERN_DEDUP_LINES).join('\n');
-        return recentLines.includes(FRONTEND_PATTERN_MARKER);
-    } catch (e) {
-        return false;
-    }
+function werePatternRecentlyInjected(transcriptPath) {
+  try {
+    if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
+    const transcript = fs.readFileSync(transcriptPath, 'utf-8');
+    const recentLines = transcript.split('\n').slice(-300).join('\n');
+    return recentLines.includes(SHARED_PATTERN_MARKER);
+  } catch {
+    return false;
+  }
 }
 
 function isTypeScriptFile(filePath) {
-    if (!filePath) return false;
-    const ext = path.extname(filePath).toLowerCase();
-    return ext === '.ts' || ext === '.tsx';
+  if (!filePath) return false;
+  const ext = path.extname(filePath).toLowerCase();
+  return ext === '.ts' || ext === '.tsx';
 }
 
 function detectFrontendContext(filePath) {
-    if (!filePath) return null;
+  if (!filePath) return null;
 
-    // Normalize path separators
-    const normalizedPath = filePath.replace(/\\/g, '/');
+  // Normalize path separators
+  const normalizedPath = filePath.replace(/\\/g, '/');
 
-    for (const context of FRONTEND_PATTERNS) {
-        for (const pattern of context.patterns) {
-            if (pattern.test(normalizedPath)) {
-                return context;
-            }
-        }
+  for (const context of FRONTEND_PATTERNS) {
+    for (const pattern of context.patterns) {
+      if (pattern.test(normalizedPath)) {
+        return context;
+      }
     }
+  }
 
-    return null;
+  return null;
 }
 
 function detectApp(filePath) {
-    if (!filePath) return null;
+  if (!filePath) return null;
 
-    const normalizedPath = filePath.replace(/\\/g, '/');
+  const normalizedPath = filePath.replace(/\\/g, '/');
 
-    for (const [appName, pattern] of Object.entries(APP_PATTERNS)) {
-        if (pattern.test(normalizedPath)) {
-            return appName;
-        }
+  for (const [appName, pattern] of Object.entries(APP_PATTERNS)) {
+    if (pattern.test(normalizedPath)) {
+      return appName;
     }
+  }
 
-    return null;
-}
-
-function detectFileType(filePath) {
-    if (!filePath) return null;
-
-    const fileName = path.basename(filePath);
-
-    // Check patterns in order of specificity (form before component)
-    const orderedTypes = ['form', 'service', 'store', 'viewModel', 'component'];
-
-    for (const typeName of orderedTypes) {
-        const typeInfo = FILE_TYPE_PATTERNS[typeName];
-        if (typeInfo && typeInfo.pattern.test(fileName)) {
-            return { name: typeName, ...typeInfo.guidance };
-        }
-    }
-
-    return null;
+  return null;
 }
 
 function shouldInject(filePath, transcriptPath) {
-    // Skip non-TypeScript files
-    if (!isTypeScriptFile(filePath)) return false;
+  // Skip non-TypeScript files
+  if (!isTypeScriptFile(filePath)) return false;
 
-    // Skip if no frontend context detected
-    const context = detectFrontendContext(filePath);
-    if (!context) return false;
+  // Skip if no frontend context detected
+  const context = detectFrontendContext(filePath);
+  if (!context) return false;
 
-    // Skip if already injected recently
-    if (wasRecentlyInjected(transcriptPath)) return false;
+  // Skip if already injected recently
+  if (wasRecentlyInjected(transcriptPath)) return false;
 
-    return true;
+  return true;
 }
 
-function buildInjection(context, filePath, app, fileType, patternsAlreadyInjected) {
-    const fileName = path.basename(filePath);
+function buildInjection(context, filePath, app, patternsAlreadyInjected) {
+  const fileName = path.basename(filePath);
 
-    const lines = [
-        '',
-        '## Frontend TypeScript Context Detected',
-        '',
-        `**Context:** ${context.name}`,
-        `**File:** ${fileName}`,
-        fileType ? `**Type:** ${fileType.title}` : '',
-        app ? `**App:** ${app}` : '',
-        ''
-    ];
+  const lines = [
+    '',
+    '## Frontend TypeScript Context Detected',
+    '',
+    `**Context:** ${context.name}`,
+    `**File:** ${fileName}`,
+    app ? `**App:** ${app}` : '',
+    ''
+  ];
 
-    // Add file type-specific guidance (priority)
-    if (fileType) {
-        lines.push(`### ${fileType.title} Guidelines`, '');
-
-        if (fileType.rules && fileType.rules.length > 0) {
-            fileType.rules.forEach((rule, i) => {
-                lines.push(`${i + 1}. ${rule}`);
-            });
-            lines.push('');
-        }
-
-        if (fileType.baseClassGuide) {
-            lines.push(fileType.baseClassGuide, '');
-        }
-    } else if (!patternsAlreadyInjected) {
-        // Generic guidance for non-typed files (skip if patterns already injected)
-        lines.push(
-            '### Required Reading',
-            '',
-            `Before implementing frontend TypeScript changes, you **MUST READ**:`,
-            '',
-            `**\`${FRONTEND_GUIDE_PATH}\`**`,
-            '',
-            'This guide contains:',
-            '- Component patterns (PlatformComponent, PlatformVmStore, AppBaseFormComponent)',
-            '- State management (PlatformVmStore with signals)',
-            '- API service patterns (extend PlatformApiService)',
-            '- Form patterns with validation (PlatformFormComponent)',
-            '- RxJS operators and subscription management (.untilDestroyed())',
-            '- BEM class naming conventions for templates',
-            ''
-        );
-    }
-
-    // Always include critical rules
+  if (!patternsAlreadyInjected) {
     lines.push(
-        '### Critical Rules',
-        '',
-        '1. **Components:** Extend `AppBaseComponent`, `AppBaseVmComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent` - NEVER Platform* directly or raw Component',
-        '2. **State:** Use `PlatformVmStore` for state management - NEVER manual signals',
-        '3. **API:** Extend `PlatformApiService` for HTTP calls - NEVER direct HttpClient',
-        '4. **Subscriptions:** Always use `.pipe(this.untilDestroyed())` - NEVER manual unsubscribe',
-        '5. **Templates:** All elements MUST have BEM classes (`block__element --modifier`, space-separated)',
-        ''
+      '### ⚠️ IMPORTANT — MUST READ',
+      '',
+      `Before implementing frontend TypeScript changes, you **⚠️ MUST READ** the following file:`,
+      '',
+      `**\`${FRONTEND_GUIDE_PATH}\`**`,
+      '',
+      'This guide contains:',
+      '- Component patterns (PlatformComponent, PlatformVmStore, AppBaseFormComponent)',
+      '- State management (PlatformVmStore with signals)',
+      '- API service patterns (extend PlatformApiService)',
+      '- Form patterns with validation (PlatformFormComponent)',
+      '- RxJS operators and subscription management (.untilDestroyed())',
+      '- BEM class naming conventions for templates',
+      ''
+    );
+  }
+
+  lines.push(
+    '### Critical Rules',
+    '',
+    '1. **Components:** Extend `AppBaseComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent` - NEVER raw Component',
+    '2. **State:** Use `PlatformVmStore` for state management - NEVER manual signals',
+    '3. **API:** Extend `PlatformApiService` for HTTP calls - NEVER direct HttpClient',
+    '4. **Subscriptions:** Always use `.pipe(this.untilDestroyed())` - NEVER manual unsubscribe',
+    '5. **Templates:** All elements MUST have BEM classes (block__element --modifier)',
+    ''
+  );
+
+  // Add app-specific guidance
+  if (app) {
+    lines.push(
+      '### App-Specific Notes',
+      '',
+      `Working in **${app}** app:`,
+      ''
     );
 
-    // Add app-specific guidance
-    if (app) {
-        lines.push('### App-Specific Notes', '', `Working in **${app}** app:`, '');
-
-        if (app === 'playground-text-snippet') {
-            lines.push(
-                '- Angular 19 standalone components',
-                '- AppBase* classes in `shared/base/`',
-                '- Use platform-core patterns',
-                '- Follow BEM naming conventions',
-                ''
-            );
-        } else if (app === 'TextSnippet') {
-            lines.push('- Example application patterns', '- Use platform framework components', '- Follow established coding patterns', '');
-        }
+    if (app === 'growth' || app === 'employee' || app === 'survey') {
+      lines.push(
+        '- Angular 19 standalone components with signals',
+        '- Use `@use \'shared-mixin\'` for SCSS imports',
+        '- Use CSS variables for theming',
+        ''
+      );
+    } else if (app === 'bravoTALENTS' || app === 'bravoSURVEYS') {
+      lines.push(
+        '- **Angular 12** with NgModules (not standalone)',
+        '- Use `@import \'~assets/scss/variables\'` for SCSS',
+        '',
+        '### Platform Component Rules (WebV1) - MANDATORY',
+        '',
+        '**Component Hierarchy (OOP/DRY Principle):**',
+        '- Platform lib (`@orient/bravo-common`) → `PlatformComponent`, `PlatformVmComponent`, `PlatformFormComponent`',
+        '- App base (defined per app) → `AppBaseComponent` extends `PlatformComponent`',
+        '- Feature components → extend app base classes',
+        '',
+        '**Each app defines its own base classes** (for app-wide custom logic):',
+        '- `AppBaseComponent` - Base for all components in this app',
+        '- `AppBaseVmComponent` - With ViewModel support',
+        '- `AppBaseFormComponent` - For forms with validation',
+        '- `AppBaseVmStoreComponent` - For complex state with store',
+        '',
+        '**API Calls - Use `effectSimple` (auto-handles loading state):**',
+        '```typescript',
+        '// In Store: effectSimple auto-handles loading/error state',
+        'loadData = this.effectSimple(() => ',
+        '  this.api.getData().pipe(this.tapResponse(data => this.updateState({ data }))));',
+        '',
+        '// In Component: use effectSimple or observerLoadingErrorState',
+        'this.effectSimple(() => this.api.getData().pipe(...));',
+        '```',
+        '',
+        '**Constructor DI (required):**',
+        '```typescript',
+        'constructor(',
+        '    changeDetector: ChangeDetectorRef,',
+        '    elementRef: ElementRef<HTMLElement>,',
+        '    cacheService: PlatformCachingService,',
+        '    toast: ToastrService,',
+        '    translateSrv: PlatformTranslateService',
+        ') { super(changeDetector, elementRef, cacheService, toast, translateSrv); }',
+        '```',
+        '',
+        '**Anti-Patterns to AVOID:**',
+        '```typescript',
+        '// ❌ WRONG: Manual destroy subject',
+        'private destroy$ = new Subject();',
+        'ngOnDestroy() { this.destroy$.next(); }',
+        '',
+        '// ✅ CORRECT: Use platform base class',
+        'this.data$.pipe(this.untilDestroyed()).subscribe();',
+        '```',
+        ''
+      );
+    } else if (app === 'CandidateApp') {
+      lines.push(
+        '- Bootstrap 3 grid system',
+        '- Use `ca-` BEM prefix for classes',
+        '- Font Awesome icons',
+        '',
+        '### Platform Component Rules (WebV1)',
+        '- Platform lib → `PlatformComponent` from `@orient/bravo-common`',
+        '- App base → `AppBaseComponent` extends `PlatformComponent` (defined per app)',
+        '- All components → extend app\'s `AppBaseComponent`',
+        '- Use `this.untilDestroyed()` for subscriptions',
+        '- Use `effectSimple()` for API calls (auto-handles loading state)',
+        ''
+      );
     }
+  }
 
-    // Filter out empty lines from middle
-    return lines
-        .filter((line, i, arr) => {
-            if (line === '' && arr[i - 1] === '') return false;
-            return true;
-        })
-        .join('\n');
+  // Filter out empty lines from middle
+  return lines.filter((line, i, arr) => {
+    if (line === '' && arr[i - 1] === '') return false;
+    return true;
+  }).join('\n');
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -370,46 +295,45 @@ function buildInjection(context, filePath, app, fileType, patternsAlreadyInjecte
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function main() {
-    try {
-        const stdin = fs.readFileSync(0, 'utf-8').trim();
-        if (!stdin) process.exit(0);
+  try {
+    const stdin = fs.readFileSync(0, 'utf-8').trim();
+    if (!stdin) process.exit(0);
 
-        const payload = JSON.parse(stdin);
-        const toolName = payload.tool_name || '';
-        const toolInput = payload.tool_input || {};
-        const transcriptPath = payload.transcript_path || '';
+    const payload = JSON.parse(stdin);
+    const toolName = payload.tool_name || '';
+    const toolInput = payload.tool_input || {};
+    const transcriptPath = payload.transcript_path || '';
 
-        // Only process Edit, Write, MultiEdit tools
-        if (!['Edit', 'Write', 'MultiEdit'].includes(toolName)) {
-            process.exit(0);
-        }
-
-        // Extract file path from tool input
-        const filePath = toolInput.file_path || toolInput.filePath || '';
-        if (!filePath) process.exit(0);
-
-        // Check if we should inject
-        if (!shouldInject(filePath, transcriptPath)) {
-            process.exit(0);
-        }
-
-        // Detect context, app, and file type
-        const context = detectFrontendContext(filePath);
-        if (!context) process.exit(0);
-
-        const app = detectApp(filePath);
-        const fileType = detectFileType(filePath);
-
-        // Output the injection
-        const patternsAlreadyInjected = werePatternsRecentlyInjected(transcriptPath);
-        const injection = buildInjection(context, filePath, app, fileType, patternsAlreadyInjected);
-        console.log(injection);
-
-        process.exit(0);
-    } catch (error) {
-        // Non-blocking - just exit silently
-        process.exit(0);
+    // Only process Edit, Write, MultiEdit tools
+    if (!['Edit', 'Write', 'MultiEdit'].includes(toolName)) {
+      process.exit(0);
     }
+
+    // Extract file path from tool input
+    const filePath = toolInput.file_path || toolInput.filePath || '';
+    if (!filePath) process.exit(0);
+
+    // Check if we should inject
+    if (!shouldInject(filePath, transcriptPath)) {
+      process.exit(0);
+    }
+
+    // Detect context and app
+    const context = detectFrontendContext(filePath);
+    if (!context) process.exit(0);
+
+    const app = detectApp(filePath);
+    const patternsAlreadyInjected = werePatternRecentlyInjected(transcriptPath);
+
+    // Output the injection
+    const injection = buildInjection(context, filePath, app, patternsAlreadyInjected);
+    console.log(injection);
+
+    process.exit(0);
+  } catch (error) {
+    // Non-blocking - just exit silently
+    process.exit(0);
+  }
 }
 
 main();

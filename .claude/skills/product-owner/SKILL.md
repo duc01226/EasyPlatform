@@ -1,74 +1,364 @@
 ---
 name: product-owner
-description: "[Team Roles] Assist Product Owners with idea capture, backlog management, prioritization frameworks, and stakeholder communication. Use when working with product ideas, backlog items, sprint planning, or prioritization decisions. Triggers on keywords like "idea", "backlog", "prioritize", "sprint planning", "user value", "stakeholder", "product vision"."
-allowed-tools: Read, Write, Edit, Grep, Glob, TodoWrite, WebSearch
+version: 1.0.0
+description: '[Project Management] Capture ideas, manage product backlogs, apply prioritization frameworks (RICE, MoSCoW), and facilitate stakeholder communication. Triggers: product owner, backlog management, user story prioritization, product roadmap, product backlog.'
+allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch
 ---
 
-# Product Owner
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
-Role: value-driven decisions, backlog management, stakeholder communication, product vision alignment.
+## Quick Summary
 
-## When to Activate
+**Goal:** Help Product Owners capture ideas, manage backlogs, and prioritize using RICE, MoSCoW, and Value/Effort frameworks.
 
-- Backlog prioritization or ordering decisions
-- Product roadmap or sprint planning
-- Stakeholder communication (sprint reviews, roadmap updates)
-- Idea capture and value assessment
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+>
+> - `project-structure-reference.md` -- project patterns and structure
+>
+> If file not found, search for: project documentation, coding standards, architecture docs.
 
-## Workflow
+**Workflow:**
 
-1. Understand product context -- load relevant module docs from `docs/business-features/`
-2. Route to the appropriate task skill below
-3. Validate output against quality checklist
+1. **Idea Capture** — Structure raw concepts with module detection and domain context
+2. **Backlog Management** — Create/refine PBIs, track dependencies
+3. **Prioritization** — Apply RICE score, MoSCoW, or Value/Effort matrix
+4. **Validation** — MANDATORY interview to confirm assumptions before completion
 
-## Task Routing
+**Key Rules:**
 
-| Task                  | Skill             | Command              |
-| --------------------- | ----------------- | -------------------- |
-| Capture idea          | team-idea         | `/team-idea`         |
-| Prioritize backlog    | team-prioritize   | `/team-prioritize`   |
-| Sprint/project status | team-status       | `/team-status`       |
-| Track dependencies    | team-dependency   | `/team-dependency`   |
-| Refine idea to PBI    | team-refine       | `/team-refine`       |
-| Create user stories   | team-story        | `/team-story`        |
-| Quality gate check    | team-quality-gate | `/team-quality-gate` |
+- Use numeric priority ordering (1-999), never High/Medium/Low categories
+- Always detect project module and load feature context for domain ideas
+- Post-refinement validation interview is NOT optional
+- Use domain-specific entity names (Candidate, Employee, Goal, etc.)
 
-## ⚠️ MUST READ Frameworks Reference
+# Product Owner Assistant
 
-**⚠️ MUST READ** `.claude/skills/shared/team-frameworks.md` — RICE, MoSCoW, Value vs Effort matrix.
+Help Product Owners capture ideas, manage backlogs, and make prioritization decisions using established frameworks.
 
-## Business Documentation Paths
+---
 
-| Content             | Path                                        |
-| ------------------- | ------------------------------------------- |
-| Feature Index       | `docs/business-features/{Module}/INDEX.md`  |
-| Module Requirements | `docs/business-features/{Module}/README.md` |
-| Idea Templates      | `team-artifacts/templates/idea-template.md` |
-| PBI Templates       | `team-artifacts/templates/pbi-template.md`  |
+## Project Context Awareness
 
-## PO-Specific Guidelines
+When working on domain ideas, automatically detect and load business feature context.
 
-- Always use numeric priority ordering (1 = highest), never High/Med/Low categories
-- Focus on user value and business outcomes, not technical implementation details
-- Explicitly list "Out of Scope" to prevent scope creep
-- Identify upstream/downstream dependencies for every PBI
-- Stakeholder communication must quantify or qualify value propositions
+### Module Detection
+
+**Dynamic Discovery:**
+
+1. Run: `Glob("docs/business-features/*/README.md")`
+2. Extract module names from paths
+3. Match keywords using `.claude/skills/shared/module-detection-keywords.md`
+
+**Detection Approach (silent auto-detect):**
+
+- Auto-detect module(s) without displaying confidence levels
+- Only prompt when ambiguous: "Which project module is this for?" + list Glob results
+
+### Feature Context Loading
+
+Once module detected:
+
+1. Read `docs/business-features/{module}/README.md` (first 200 lines for overview)
+2. Extract feature list from Quick Navigation
+3. Identify closest matching feature(s)
+4. Note related entities and services
+
+**Multi-module support:** If 2+ modules detected, load ALL modules.
+
+### Domain Vocabulary
+
+Use exact entity names from docs:
+
+- ServiceA: Candidate (not "Applicant"), Job, JobApplication, Interview, CV
+- ServiceB: Goal, Kudos, PerformanceReview, CheckIn, Timesheet
+- Use "Employee" not "User" for staff members
+- Use "Candidate" not "Applicant" for recruitment
+
+### Token Budget
+
+Target 8-12K tokens total for feature context loading:
+
+- Module README overview: ~2K tokens
+- Full feature doc sections: 3-5K tokens per feature
+- Multi-module: Load all detected (may increase total)
+
+---
+
+## Core Capabilities
+
+### 1. Idea Capture
+
+- Transform raw concepts into structured idea artifacts
+- Identify problem statements and value propositions
+- Tag and categorize for future refinement
+- **NEW:** Detect module and inject feature context
+
+### 2. Backlog Management
+
+- Create and refine Product Backlog Items (PBIs)
+- Maintain backlog ordering (not categories)
+- Track dependencies and blockers
+
+### 3. Prioritization Frameworks
+
+#### RICE Score
+
+```
+RICE = (Reach × Impact × Confidence) / Effort
+
+Reach: # users affected per quarter
+Impact: 0.25 (minimal) | 0.5 (low) | 1 (medium) | 2 (high) | 3 (massive)
+Confidence: 0.5 (low) | 0.8 (medium) | 1.0 (high)
+Effort: Person-months
+```
+
+#### MoSCoW
+
+- **Must Have**: Critical for release, non-negotiable
+- **Should Have**: Important but not vital
+- **Could Have**: Nice to have, low effort
+- **Won't Have**: Out of scope this cycle
+
+#### Value vs Effort Matrix
+
+```
+         High Value
+             │
+    Quick    │    Strategic
+    Wins     │    Priorities
+─────────────┼─────────────
+    Fill     │    Time
+    Ins      │    Sinks
+             │
+         Low Value
+   Low Effort    High Effort
+```
+
+### 4. Sprint Planning Support
+
+- Capacity planning based on velocity
+- Sprint goal definition
+- Commitment vs forecast distinction
+
+---
+
+## Artifact Templates
+
+### Idea Template Generation
+
+Include in frontmatter (if project domain):
+
+```yaml
+module: ServiceB # Detected module
+related_features: [GoalManagement, Kudos] # From README feature list
+feature_doc_path: docs/business-features/ServiceB/detailed-features/README.GoalManagementFeature.md
+entities: [Goal, Employee, OrganizationalUnit] # From .ai.md
+```
+
+Use domain vocabulary in idea description based on loaded context.
+
+### Template Locations
+
+- Idea: `team-artifacts/templates/idea-template.md`
+- PBI: `team-artifacts/templates/pbi-template.md`
+
+---
+
+## Workflow Integration
+
+### Creating Ideas (with Domain Context)
+
+When user says "new idea" or "feature request":
+
+1. Use `/idea` command workflow
+2. **Detect module** from conversation keywords
+3. **Load feature context** from docs/business-features/
+4. Populate idea-template.md with domain fields
+5. Save to `team-artifacts/ideas/`
+6. Suggest next step: `/refine {idea-file}`
+
+### Prioritizing Backlog
+
+When user says "prioritize" or "order backlog":
+
+1. Read all PBIs in `team-artifacts/pbis/`
+2. Apply requested framework (RICE, MoSCoW, Value/Effort)
+3. Output ordered list with scores
+4. Update priority field in PBI frontmatter
+
+---
 
 ## Output Conventions
 
-- Ideas: `{YYMMDD}-po-idea-{slug}.md`
-- PBIs: `{YYMMDD}-pbi-{slug}.md`
-- Status values: `draft` | `under_review` | `approved` | `rejected` | `in_progress` | `done`
+### File Naming
+
+```
+{YYMMDD}-po-idea-{slug}.md
+{YYMMDD}-pbi-{slug}.md
+```
+
+### Priority Values
+
+- Numeric ordering: 1 (highest) to 999 (lowest)
+- Never use High/Medium/Low categories
+
+### Status Values
+
+`draft` | `under_review` | `approved` | `rejected` | `in_progress` | `done`
+
+---
+
+## Anti-Patterns to Avoid
+
+1. **Category-based priority** - Use ordered sequence, not High/Med/Low
+2. **Vague acceptance criteria** - Require GIVEN/WHEN/THEN format
+3. **Scope creep** - Explicitly list "Out of Scope"
+4. **Missing dependencies** - Always identify upstream/downstream
+5. **Generic terminology** - Use domain-specific entity names
+
+---
+
+## Integration Points
+
+| When           | Trigger          | Action                                 |
+| -------------- | ---------------- | -------------------------------------- |
+| Idea captured  | `/idea` complete | Suggest `/refine`, note module context |
+| PBI ready      | PBI approved     | Notify BA for stories                  |
+| Sprint planned | Sprint goal set  | Update PBI assignments                 |
+| Domain feature | Module detected  | Load business feature docs             |
+
+---
+
+## Stakeholder Communication Templates
+
+### Sprint Review Summary
+
+```markdown
+## Sprint {N} Review
+
+**Sprint Goal:** {goal}
+**Status:** {achieved | partially | not achieved}
+
+### Completed Items
+
+| PBI | Value Delivered |
+| --- | --------------- |
+|     |                 |
+
+### Carried Over
+
+| PBI | Reason | Plan |
+| --- | ------ | ---- |
+|     |        |      |
+
+### Key Metrics
+
+- Velocity: {points}
+- Commitment: {%}
+```
+
+### Roadmap Update
+
+```markdown
+## Roadmap Update - {Date}
+
+### This Quarter
+
+| Priority | Item | Target | Status |
+| -------- | ---- | ------ | ------ |
+| 1        |      |        |        |
+
+### Next Quarter
+
+| Item | Dependencies | Notes |
+| ---- | ------------ | ----- |
+|      |              |       |
+
+### Deferred
+
+| Item | Reason |
+| ---- | ------ |
+|      |        |
+```
+
+---
 
 ## Quality Checklist
+
+Before completing PO artifacts:
 
 - [ ] Problem statement is user-focused, not solution-focused
 - [ ] Value proposition quantified or qualified
 - [ ] Priority has numeric order
 - [ ] Dependencies explicitly listed
 - [ ] Status frontmatter current
+- [ ] **Module detected and context loaded** (if domain-related)
+- [ ] **Domain vocabulary used correctly**
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+## Post-Refinement Validation (MANDATORY)
+
+**Every idea/PBI refinement must end with a validation interview.**
+
+After completing idea capture or PBI creation, validate with user to:
+
+1. Confirm assumptions about user needs
+2. Verify scope boundaries
+3. Surface potential concerns
+4. Brainstorm alternatives
+
+### Validation Interview Process
+
+Use `AskUserQuestion` tool with 3-5 questions:
+
+| Category     | Example Questions                                 |
+| ------------ | ------------------------------------------------- |
+| User Value   | "Is the value proposition clear to stakeholders?" |
+| Scope        | "Should we explicitly exclude feature X?"         |
+| Priority     | "Does this priority align with roadmap?"          |
+| Dependencies | "Are there blockers from other teams?"            |
+| Risk         | "What's the biggest concern with this approach?"  |
+
+### Document Validation Results
+
+Add to idea/PBI:
+
+```markdown
+## Validation Summary
+
+**Validated:** {date}
+
+### Confirmed Decisions
+
+- {decision}: {user choice}
+
+### Concerns Raised
+
+- {concern}: {resolution}
+
+### Action Items
+
+- [ ] {follow-up if any}
+```
+
+### When to Escalate
+
+- Priority conflicts with roadmap
+- Resource constraints identified
+- Stakeholder alignment needed
+- Cross-team dependency discovered
+
+**This step is NOT optional - always validate before marking complete.**
+
+## Related
+
+- `business-analyst`
+- `project-manager`
+
+---
+
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

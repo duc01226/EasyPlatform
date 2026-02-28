@@ -1,8 +1,25 @@
 ---
 name: plan-archive
-description: "[Planning] Write journal entries and archive specific plans or all plans"
-argument-hint: [path-to-plan] (default: all plans)
+version: 1.0.0
+description: '[Planning] Write journal entries and archive specific plans or all plans'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+## Quick Summary
+
+**Goal:** Write journal entries and archive completed or obsolete plans from the plans/ directory.
+
+**Workflow:**
+1. **Identify** -- Find plans to archive (specific or all completed)
+2. **Journal** -- Write summary journal entry for archived plans
+3. **Archive** -- Move plans to archive location or mark as completed
+
+**Key Rules:**
+- Preserve plan content during archival, never delete
+- Write journal entry documenting what was archived and why
+- Clean up plans/ directory for better organization
 
 ## Your mission
 
@@ -61,11 +78,6 @@ After archiving the plans, provide summary:
 - Number of plans deleted permanently
 - Table of plans that are archived or deleted (title, status, created date, LOC)
 - Table of journal entries that are created (title, status, created date, LOC)
-
-## IMPORTANT Task Planning Notes (MUST FOLLOW)
-
-- Always plan and break work into many small todo tasks using `TaskCreate`
-- Always add a final review todo task to verify work quality
 
 ## Important Notes
 

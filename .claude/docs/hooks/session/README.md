@@ -42,8 +42,8 @@ Session hooks handle Claude Code lifecycle events: starting sessions, resuming f
 | Hook | Matcher | Purpose |
 |------|---------|---------|
 | `session-init.cjs` | `startup\|resume\|clear\|compact` | Project detection, env setup |
-| `session-resume.cjs` | `startup\|resume\|compact` | Todo/checkpoint restoration |
-| `session-end.cjs` | `clear` | Cleanup session state |
+| `session-resume.cjs` | `resume` | Todo/checkpoint restoration |
+| `session-end.cjs` | `clear\|exit\|compact` | Cleanup session state |
 | `subagent-init.cjs` | `*` | Inherit parent state |
 
 ## Hook Details
@@ -63,10 +63,7 @@ SessionStart:compact hook success: Session compact. Project: single-repo | PM: n
 ```
 
 **Modules used**:
-- `si-project.cjs` - Project type detection
-- `si-python.cjs` - Python environment detection
 - `si-exec.cjs` - Command execution
-- `si-output.cjs` - Output formatting
 
 ### session-resume.cjs
 
@@ -166,15 +163,12 @@ Set by session hooks:
 | `ck-git.cjs` | Git information extraction |
 | `ck-naming.cjs` | Naming convention helpers |
 | `ck-paths.cjs` | Path resolution |
-| `ck-session.cjs` | Session state management |
+| `ck-session-state.cjs` | Session state management |
 | `si-exec.cjs` | Safe command execution |
-| `si-output.cjs` | Output formatting |
-| `si-project.cjs` | Project type detection |
-| `si-python.cjs` | Python environment detection |
 
 ## Checkpoint System
 
-During PreCompact, `save-context-memory.cjs` creates checkpoints:
+During PreCompact, checkpoints are created:
 
 ```markdown
 # Context Memory Checkpoint
@@ -220,4 +214,4 @@ cat .claude/settings.json | jq '.hooks.SessionStart'
 
 ---
 
-*See also: [Pattern Learning](../patterns/) for lesson injection during session start*
+*See also: [Hooks Overview](../README.md)*

@@ -194,9 +194,9 @@ ls -ld /path/to/allowed/directory
 ping api.anthropic.com
 ```
 
-**Use default model (Sonnet):**
+**Use default model:**
 ```bash
-claude "simple task"
+claude --model sonnet "simple task"
 ```
 
 **Reduce context:**

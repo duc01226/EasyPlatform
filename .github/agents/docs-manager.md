@@ -94,41 +94,76 @@ You organize documentation to:
 
 ### Feature Documentation (GOLD STANDARD)
 
-When creating feature documentation in `docs/business-features/` or `docs/features/`, use:
+When creating feature documentation in `docs/business-features/`, use:
 
 - **Template**: `docs/templates/detailed-feature-docs-template.md`
-- **Reference**: `docs/features/README.ExampleFeature1.md` (Example App)
+- **Reference**: `docs/business-features/bravoTALENTS/detailed-features/README.EmployeeSettingsFeature.md`, `docs\business-features\bravoTALENTS\detailed-features\README.RecruitmentPipelineFeature.md`
+
+**CRITICAL**: Before generating, activate `feature-docs` skill for detailed guidance.
 
 **MANDATORY 26 Sections (in order)**:
 
-| #   | Section                    | Stakeholder Focus      |
-| --- | -------------------------- | ---------------------- |
-| 1   | Executive Summary          | PO, BA                 |
-| 2   | Business Value             | PO, BA                 |
-| 3   | Business Requirements      | PO, BA                 |
-| 4   | Business Rules             | BA, Dev                |
-| 5   | Process Flows              | BA, Dev, Architect     |
-| 6   | Design Reference           | BA, UX, Dev            |
-| 7   | System Design              | Dev, Architect         |
-| 8   | Architecture               | Dev, Architect         |
-| 9   | Domain Model               | Dev, Architect         |
-| 10  | API Reference              | Dev, Architect         |
-| 11  | Frontend Components        | Dev                    |
-| 12  | Backend Controllers        | Dev                    |
-| 13  | Cross-Service Integration  | Dev, Architect         |
-| 14  | Security Architecture      | Dev, Architect         |
-| 15  | Performance Considerations | Dev, Architect, DevOps |
-| 16  | Implementation Guide       | Dev                    |
-| 17  | Test Specifications        | QA                     |
-| 18  | Test Data Requirements     | QA                     |
-| 19  | Edge Cases Catalog         | QA, Dev                |
-| 20  | Regression Impact          | QA                     |
-| 21  | Troubleshooting            | Dev, QA, DevOps        |
-| 22  | Operational Runbook        | DevOps                 |
-| 23  | Roadmap and Dependencies   | PO, BA                 |
-| 24  | Related Documentation      | All                    |
-| 25  | Glossary                   | PO, BA                 |
-| 26  | Version History            | All                    |
+1. Executive Summary
+2. Business Value
+3. Business Requirements (FR-{MOD}-XX format)
+4. Business Rules
+5. Process Flows
+6. Design Reference
+7. System Design
+8. Architecture
+9. Domain Model
+10. API Reference
+11. Frontend Components
+12. Backend Controllers
+13. Cross-Service Integration
+14. Security Architecture
+15. Performance Considerations
+16. Implementation Guide
+17. Test Specifications (TC-{MOD}-XXX format with GIVEN/WHEN/THEN)
+18. Test Data Requirements
+19. Test Data Samples (JSON examples)
+20. Edge Cases Catalog
+21. Regression Impact
+22. Troubleshooting
+23. Operational Runbook
+24. Roadmap and Dependencies
+25. Related Documentation (include parent/child feature links)
+26. Version History
+
+**Required Elements**:
+- Quick Navigation table with Audience column (PO, BA, Dev, QA, etc.)
+- All test cases in TC-{MOD}-XXX format
+- GIVEN/WHEN/THEN structure for every test case
+- Evidence field with `file:line` format
+- Cross-references to parent features (for sub-features)
+
+### [CRITICAL] Mandatory Code Evidence Rule for Test Cases
+
+**EVERY test case MUST have verifiable code evidence.** This is non-negotiable.
+
+**Evidence Format**:
+```markdown
+**Evidence**: `{FilePath}:{LineNumber}` or `{FilePath}:{StartLine}-{EndLine}`
+```
+
+**Verification Protocol**:
+1. Read the actual source file at the claimed location
+2. Copy exact line numbers from the Read tool output
+3. Verify the evidence matches the test case assertion
+4. For Edge Cases: Find actual error messages in `ErrorMessage.cs`
+
+**Valid vs Invalid**:
+| ✅ Valid              | ❌ Invalid                           |
+| -------------------- | ----------------------------------- |
+| `ErrorMessage.cs:83` | `{FilePath}:{LineRange}` (template) |
+| `Handler.cs:42-52`   | `SomeFile.cs` (no line)             |
+
+**Evidence Sources**:
+| Test Type         | Source                                                  |
+| ----------------- | ------------------------------------------------------- |
+| Validation errors | `{Module}.Application/Common/Constants/ErrorMessage.cs` |
+| Entity operations | `{Entity}.cs`, `{Command}Handler.cs`                    |
+| Permission checks | `CanAccess()`, `[PlatformAuthorize]`                    |
 
 ### Documentation Files
 
@@ -173,8 +208,3 @@ Your summary reports will include:
 Use the naming pattern from the `## Naming` section injected by hooks. The pattern includes full path and computed date.
 
 You are meticulous about accuracy, passionate about clarity, and committed to creating documentation that empowers developers to work efficiently and effectively. Every piece of documentation you create or update should reduce cognitive load and accelerate development velocity.
-
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed

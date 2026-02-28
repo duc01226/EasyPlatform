@@ -1,0 +1,18 @@
+version: 1
+last_updated: "2026-02-24T11:14:58.907Z"
+patterns:
+  pat-260126-1643-aatzym:
+    file: frontend/always-use-semicolons-in-typescript.yaml
+    category: frontend
+    confidence: 1
+    tags: ["frontend", "always", "semicolons", "typescript"]
+  pat-260126-1643-u4fgbv:
+    file: frontend/use-bem-naming-for-css-classes.yaml
+    category: frontend
+    confidence: 1
+    tags: ["frontend", "naming", "classes"]
+  pat-260126-1643-uers28:
+    file: general/add-type-annotations-to-all-functions.yaml
+    category: general
+    confidence: 1
+    tags: ["general", "type", "annotations", "functions"]

@@ -1,8 +1,24 @@
 ---
 name: coding-level
+version: 1.0.0
 description: '[Utilities] Set coding experience level for tailored explanations'
-argument-hint: [0-5]
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+## Quick Summary
+
+**Goal:** Set the user's coding experience level to tailor explanation depth and detail.
+
+**Workflow:**
+1. **Ask** -- Query user for their experience level (beginner/intermediate/expert)
+2. **Configure** -- Adjust response verbosity and explanation depth accordingly
+
+**Key Rules:**
+- Expert: minimal explanation, focus on code and architecture
+- Intermediate: moderate explanation with key concepts
+- Beginner: detailed explanation with examples and context
 
 Set your coding experience level for tailored explanations and output format.
 
@@ -56,7 +72,9 @@ For finer control, you can also use `/output-style` with these styles:
 - `coding-level-4-lead`
 - `coding-level-5-god`
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

@@ -1,27 +1,30 @@
 ---
 name: worktree
-description: "[Utilities] Create isolated git worktree for parallel development"
-argument-hint: [feature-description] OR [project] [feature] (monorepo)
+version: 1.0.0
+description: '[Git] Create isolated git worktree for parallel development'
+activation: user-invoked
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+## Quick Summary
+
+**Goal:** Create isolated git worktrees for parallel feature development with automatic branch naming and env file setup.
+
+**Workflow:**
+
+1. **Get Repo Info** — Run `worktree.cjs info` to detect repo type, base branch, env files
+2. **Detect Prefix** — Infer branch prefix from keywords (fix, feat, refactor, docs, etc.)
+3. **Convert Slug** — Transform description to kebab-case slug (max 50 chars)
+4. **Execute** — Run `worktree.cjs create` with project, slug, prefix, and env files
+
+**Key Rules:**
+
+- For monorepos, ask user which project if not specified
+- Always ask which env files to copy via AskUserQuestion
+- Handle error codes (BRANCH_CHECKED_OUT, WORKTREE_EXISTS, etc.) gracefully
+
 Create an isolated git worktree for parallel feature development.
-
-## Summary
-
-**Goal:** Create isolated git worktrees with auto-detected branch prefixes for parallel feature development.
-
-| Step | Action          | Key Notes                                                                        |
-| ---- | --------------- | -------------------------------------------------------------------------------- |
-| 1    | Get repo info   | `worktree.cjs info` -- detect monorepo/standalone, env files, dirty state        |
-| 2    | Gather info     | Auto-detect branch prefix from keywords (fix/feat/refactor/docs/test/chore/perf) |
-| 3    | Convert to slug | Description to kebab-case, max 50 chars                                          |
-| 4    | Execute create  | `worktree.cjs create` with prefix, env files, project (monorepo)                 |
-
-**Key Principles:**
-
-- For monorepo: ask which project if not specified via AskUserQuestion
-- Always ask which env files to copy to the worktree
-- Use `worktree.cjs remove` to clean up worktrees and branches
 
 ## Workflow
 
@@ -154,7 +157,9 @@ Output: Worktree created at ../worktrees/myrepo-login-validation-bug
         Branch: fix/login-validation-bug
 ```
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

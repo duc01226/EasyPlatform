@@ -9,8 +9,9 @@ This directory contains hooks for Claude Code sessions.
 | **Notifications** | `notifications/` | Multi-provider notification system (Telegram, Discord, Slack) |
 | **Scout Block** | `scout-block.cjs` | Blocks heavy directories (node_modules, .git, etc.) |
 | **Privacy Block** | `privacy-block.cjs` | Prevents access to sensitive files |
+| **Modularization** | `modularization-hook.js` | Suggests code modularization for large files |
 | **Session Init** | `session-init.cjs` | Session startup initialization |
-| **Dev Rules** | `dev-rules-reminder.cjs` | Development rules injection (includes modularization reminders) |
+| **Dev Rules** | `dev-rules-reminder.cjs` | Development rules injection |
 
 ## Notifications
 

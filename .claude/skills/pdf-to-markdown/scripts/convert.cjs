@@ -1,41 +1,66 @@
 #!/usr/bin/env node
+
 /**
  * PDF to Markdown Converter CLI
  *
  * Usage:
- *   node convert.cjs --file <input.pdf> [--output <output.md>]
+ *   node convert.cjs --input ./doc.pdf [--output ./out.md] [--mode auto|native|ocr]
  *
  * Options:
- *   --file <path>   Input PDF file (required)
- *   --output <path> Output MD path (default: input name + .md)
- *   --help          Show usage information
+ *   --input, -i       Input PDF file (required)
+ *   --output, -o      Output markdown path (default: input.md)
+ *   --mode, -m        Conversion mode: auto, native, ocr (default: auto)
+ *   --help, -h        Show help message
  */
 
-const path = require('node:path');
-const { convertPdfToMarkdown, generateOutputPath, resolvePath } = require('./lib/pdf-converter.cjs');
+const path = require('path');
 
 /**
  * Parse command line arguments
- * @param {string[]} argv - Process arguments
- * @returns {Object} Parsed arguments
+ * @param {string[]} argv
+ * @returns {object}
  */
 function parseArgs(argv) {
   const args = {
-    file: null,
+    input: null,
     output: null,
+    mode: 'auto',
     help: false
   };
 
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === '--file' && argv[i + 1]) {
-      args.file = argv[++i];
-    } else if (arg === '--output' && argv[i + 1]) {
-      args.output = argv[++i];
-    } else if (arg === '--help' || arg === '-h') {
-      args.help = true;
-    } else if (!arg.startsWith('--') && !args.file) {
-      args.file = arg;
+    const nextArg = argv[i + 1];
+
+    switch (arg) {
+      case '--input':
+      case '-i':
+        args.input = nextArg;
+        i++;
+        break;
+
+      case '--output':
+      case '-o':
+        args.output = nextArg;
+        i++;
+        break;
+
+      case '--mode':
+      case '-m':
+        args.mode = nextArg;
+        i++;
+        break;
+
+      case '--help':
+      case '-h':
+        args.help = true;
+        break;
+
+      default:
+        // Positional argument = input file
+        if (!arg.startsWith('-') && !args.input) {
+          args.input = arg;
+        }
     }
   }
 
@@ -43,81 +68,157 @@ function parseArgs(argv) {
 }
 
 /**
- * Print usage information
+ * Print help message
  */
-function printUsage() {
+function printHelp() {
   console.log(`
-PDF to Markdown Converter
+pdf-to-markdown - Convert PDF files to Markdown
 
-Usage:
-  node convert.cjs --file <input.pdf> [options]
+USAGE:
+  node convert.cjs --input <file.pdf> [options]
+  node convert.cjs <file.pdf> [options]
 
-Options:
-  --file <path>    Input PDF file (required)
-  --output <path>  Output Markdown path (default: same name as input)
-  --help, -h       Show this help message
+OPTIONS:
+  --input, -i <path>     Input PDF file (required)
+  --output, -o <path>    Output markdown path (default: same as input with .md)
+  --mode, -m <mode>      Conversion mode: auto, native, ocr (default: auto)
+  --help, -h             Show this help message
 
-Examples:
-  node convert.cjs --file ./document.pdf
-  node convert.cjs --file ./doc.pdf --output ./output/doc.md
+MODES:
+  auto     Auto-detect if PDF has native text or needs OCR (default)
+  native   Fast extraction for PDFs with selectable text
+  ocr      Use OCR for scanned documents (requires tesseract.js)
 
-Known Limitations:
-  - Tables may not be accurately converted
-  - Multi-column layouts may interleave text
-  - Scanned PDFs require OCR (not supported)
-  - Complex formatting may be simplified
+EXAMPLES:
+  # Basic conversion (auto-detect mode)
+  node convert.cjs --input ./document.pdf
+
+  # With custom output
+  node convert.cjs -i ./report.pdf -o ./output/report.md
+
+  # Force native mode (skip detection)
+  node convert.cjs -i ./doc.pdf --mode native
+
+OUTPUT:
+  Returns JSON on success:
+  {
+    "success": true,
+    "input": "/path/to/input.pdf",
+    "output": "/path/to/output.md",
+    "stats": { "pages": 5, "mode": "native" }
+  }
+
+EXIT CODES:
+  0  Success
+  1  Error
 `);
 }
 
 /**
- * Output result as JSON
- * @param {Object} result - Conversion result
+ * Print result as JSON
+ * @param {object} result
  */
-function outputJson(result) {
+function printResult(result) {
   console.log(JSON.stringify(result, null, 2));
 }
 
 /**
- * Main CLI function
+ * Validate arguments
+ * @param {object} args
+ * @returns {{valid: boolean, error?: string}}
+ */
+function validateArgs(args) {
+  if (!args.input) {
+    return {
+      valid: false,
+      error: 'Input file required. Use --input <path> or provide positional argument.'
+    };
+  }
+
+  const validModes = ['auto', 'native', 'ocr'];
+  if (!validModes.includes(args.mode)) {
+    return {
+      valid: false,
+      error: `Invalid mode: ${args.mode}. Must be one of: ${validModes.join(', ')}`
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Check if dependencies are installed
+ * @returns {{available: boolean, missing: string[]}}
+ */
+function checkDependencies() {
+  const missing = [];
+
+  try {
+    require.resolve('@opendocsg/pdf2md');
+  } catch {
+    missing.push('@opendocsg/pdf2md');
+  }
+
+  return {
+    available: missing.length === 0,
+    missing
+  };
+}
+
+/**
+ * Main entry point
  */
 async function main() {
   const args = parseArgs(process.argv);
-  const cwd = process.cwd();
 
-  // Handle --help
   if (args.help) {
-    printUsage();
+    printHelp();
     process.exit(0);
   }
 
-  // Validate required --file argument
-  if (!args.file) {
-    console.error('Error: --file argument is required');
-    console.error('Run with --help for usage information');
+  const validation = validateArgs(args);
+  if (!validation.valid) {
+    printResult({ success: false, error: validation.error });
     process.exit(1);
   }
 
-  // Resolve paths
-  const inputPath = resolvePath(args.file, cwd);
-  const outputPath = args.output
-    ? resolvePath(args.output, cwd)
-    : generateOutputPath(inputPath, cwd);
+  const deps = checkDependencies();
+  if (!deps.available) {
+    printResult({
+      success: false,
+      error: `Missing dependencies: ${deps.missing.join(', ')}. Run 'npm install' in skill directory.`,
+      hint: `cd ${path.dirname(__dirname)} && npm install`
+    });
+    process.exit(1);
+  }
 
-  // Convert PDF to Markdown
-  const result = await convertPdfToMarkdown({ inputPath, outputPath });
+  // Import converter (lazy load after dependency check)
+  const { convert } = require('./lib/converter.cjs');
 
-  // Output JSON result
-  outputJson(result);
+  try {
+    const result = await convert({
+      input: args.input,
+      output: args.output,
+      mode: args.mode
+    });
 
-  // Exit with appropriate code
-  process.exit(result.success ? 0 : 1);
+    printResult(result);
+    process.exit(result.success ? 0 : 1);
+
+  } catch (error) {
+    printResult({
+      success: false,
+      error: error.message || 'Unexpected error during conversion'
+    });
+    process.exit(1);
+  }
 }
 
-// Run
-main().catch(err => {
-  outputJson({
+// Run main
+main().catch(error => {
+  console.error(JSON.stringify({
     success: false,
-    error: err.message || 'Unknown error'
-  });
+    error: `Unhandled error: ${error.message}`
+  }));
   process.exit(1);
 });

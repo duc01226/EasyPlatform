@@ -149,7 +149,7 @@ Several skills require external CLI tools:
 - **MongoDB Shell**: https://www.mongodb.com/try/download/shell
 - **MongoDB Tools**: https://www.mongodb.com/try/download/database-tools
 
-#### web-frameworks, ui-styling
+#### web-frameworks, shadcn-tailwind
 - **Node.js 18+**: https://nodejs.org/
 - **pnpm**: `npm install -g pnpm`
 - **yarn**: `npm install -g yarn`
@@ -307,7 +307,7 @@ npm install -g rmbg-cli
 ```
 
 **For other skills:**
-Most other skills (better-auth, repomix, shopify, devops, web-frameworks, ui-styling, databases) use only Python stdlib and require no `pip install`.
+Most other skills (better-auth, repomix, shopify, devops, web-frameworks, shadcn-tailwind, databases) use only Python stdlib and require no `pip install`.
 
 ## Development Setup
 

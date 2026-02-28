@@ -1,951 +1,982 @@
 # Team Collaboration Guide
 
-> **Complete guide for using Claude Code's team collaboration features across all roles: Product Owner, Business Analyst, QA Engineer, QC Specialist, Designer, and Project Manager.**
+> Claude Code setup for Product Owners, Business Analysts, QA Engineers, QC Specialists, UX Designers, and Project Managers.
+
+**Version:** 1.0 | **Last Updated:** 2026-01-19
 
 ---
 
-## Table of Contents
+## Quick Navigation
 
-1. [Quick Start](#quick-start)
-2. [Architecture Overview](#architecture-overview)
-3. [Role-Specific Guides](#role-specific-guides)
-4. [Workflow Sequences](#workflow-sequences)
-5. [Commands Reference](#commands-reference)
-6. [Real-Life Examples](#real-life-examples)
-7. [Artifact Naming Convention](#artifact-naming-convention)
-8. [Best Practices](#best-practices)
+| Section | Audience | Purpose |
+|---------|----------|---------|
+| [Quick Start](#quick-start-by-role) | All Roles | First success in 2 minutes |
+| [Command Reference](#command-reference) | All Roles | All 11 commands with examples |
+| [Workflow Tutorials](#workflow-tutorials) | All Roles | End-to-end process flows |
+| [Real-World Example](#real-world-example) | All Roles | Employee Photo Upload feature |
+| [Cheat Sheet](#cheat-sheet) | All Roles | Printable quick reference |
+| [Troubleshooting](#troubleshooting) | All Roles | Common issues and fixes |
 
 ---
 
-## Quick Start
+## Before You Start
 
-### 5-Minute Setup
+Ensure your environment is ready:
 
+1. **Claude Code installed** - Verify with `claude --version`
+2. **Team skills accessible** - Check with `ls .claude/skills/team-*/`
+3. **Understand artifact naming** - Format: `{YYMMDD}-{role}-{type}-{slug}.md`
+4. **Know where artifacts live** - All artifacts in `team-artifacts/`
+
+---
+
+## Quick Start by Role
+
+Each role has a 3-step path to first success.
+
+### Product Owner: Capture to Prioritize
+
+**What You'll Achieve:** Feature idea captured and prioritized in backlog
+
+1. **Capture an idea**
+   ```bash
+   /idea "Allow employees to upload profile photos"
+   ```
+   Creates: `team-artifacts/ideas/260119-po-idea-employee-photo-upload.md`
+
+2. **Refine to PBI** (when ready)
+   ```bash
+   /refine team-artifacts/ideas/260119-po-idea-employee-photo-upload.md
+   ```
+   Creates PBI with acceptance criteria in GIVEN/WHEN/THEN format
+
+3. **Prioritize backlog**
+   ```bash
+   /prioritize rice
+   ```
+   Scores and orders all PBIs using RICE framework
+
+**Next:** See [Prioritization Frameworks](#prioritize) for RICE vs MoSCoW vs Value-Effort
+
+---
+
+### Business Analyst: Refine to Stories
+
+**What You'll Achieve:** PBI broken into testable user stories
+
+1. **Review idea or request**
+   Read the idea file or receive verbal request from PO
+
+2. **Refine into PBI**
+   ```bash
+   /refine team-artifacts/ideas/260119-po-idea-employee-photo-upload.md
+   ```
+   Generates acceptance criteria with GIVEN/WHEN/THEN scenarios
+
+3. **Create user stories**
+   ```bash
+   /story team-artifacts/pbis/260119-pbi-employee-photo-upload.md
+   ```
+   Slices PBI into vertical stories meeting INVEST criteria
+
+**Next:** See [/story command](#story) for INVEST criteria details
+
+---
+
+### QA Engineer: PBI to Test Cases
+
+**What You'll Achieve:** Test specification with executable test cases
+
+1. **Generate test spec from PBI**
+   ```bash
+   /test-spec team-artifacts/pbis/260119-pbi-employee-photo-upload.md
+   ```
+   Creates test strategy with scenarios (positive, negative, edge)
+
+2. **Run quality gate**
+   ```bash
+   /quality-gate pre-qa team-artifacts/test-specs/260119-testspec-employee-photo-upload.md
+   ```
+   Verifies test coverage and completeness
+
+**Next:** See [/test-spec](#test-spec) for TC-ID conventions
+
+---
+
+### UX Designer: Requirements to Design Spec
+
+**What You'll Achieve:** Component specification ready for handoff
+
+1. **Create design spec from PBI**
+   ```bash
+   /design-spec team-artifacts/pbis/260119-pbi-employee-photo-upload.md
+   ```
+   Generates component inventory and state documentation
+
+2. **Review design tokens**
+   Spec maps to existing tokens in `docs/design-system/design-tokens.md`
+
+3. **Hand off to development**
+   Share `team-artifacts/design-specs/260119-designspec-employee-photo-upload.md` with developers
+
+**Next:** See [/design-spec command](#design-spec) for accessibility checklist
+
+---
+
+### Project Manager: Track and Report
+
+**What You'll Achieve:** Status report with blockers and dependencies
+
+1. **Generate status report**
+   ```bash
+   /status sprint
+   ```
+   Aggregates PBIs, commits, blockers into formatted report
+
+2. **Check dependencies**
+   ```bash
+   /dependency all
+   ```
+   Visualizes upstream/downstream dependencies with risk indicators
+
+3. **Prepare team sync agenda**
+   ```bash
+   /team-sync daily
+   ```
+   Generates meeting agenda with yesterday/today/blockers format
+
+**Next:** See [PM Reporting Workflow](#workflow-4-pm-reporting) for ceremony types
+
+---
+
+## Command Reference
+
+All 11 team commands with examples-first documentation.
+
+### Capture Commands
+
+#### /idea
+
+**Example:**
 ```bash
-# 1. Verify setup
-ls team-artifacts/          # Should show: ideas/, pbis/, test-specs/, design-specs/, qc-reports/
+/idea "Dark mode toggle for settings page"
+```
 
-# 2. Try your first command based on role:
-/team-idea "User authentication improvement"     # Product Owner
-/team-refine IDEA-260119-001                     # Business Analyst
-/team-test-spec PBI-260119-001                   # QA Engineer
-/team-design-spec PBI-260119-001                 # UX Designer
-/team-status sprint                              # Project Manager
+**What it does:** Captures a raw idea as a structured artifact for backlog consideration.
+
+**Creates:** `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md`
+
+**Options:**
+- `title`: Brief title (optional, will prompt if not provided)
+
+**Tip:** Keep titles under 10 words. Problem-focused, not solution-focused.
+
+---
+
+### Transform Commands
+
+#### /refine
+
+**Example:**
+```bash
+/refine team-artifacts/ideas/260119-po-idea-dark-mode-toggle.md
+```
+
+**What it does:** Transforms idea into PBI with GIVEN/WHEN/THEN acceptance criteria.
+
+**Creates:** `team-artifacts/pbis/{YYMMDD}-pbi-{slug}.md`
+
+**Options:**
+- `idea-file`: Path to idea file or IDEA-ID (required)
+
+**Tip:** Refining generates at least 3 scenarios: happy path, edge case, error case.
+
+---
+
+#### /story
+
+**Example:**
+```bash
+/story team-artifacts/pbis/260119-pbi-dark-mode-toggle.md
+```
+
+**What it does:** Breaks PBI into vertical user stories meeting INVEST criteria.
+
+**Creates:** `team-artifacts/pbis/stories/{YYMMDD}-us-{slug}-*.md`
+
+**Options:**
+- `pbi-file`: Path to PBI file or PBI-ID (required)
+
+**Tip:** Stories >8 points should be split further.
+
+---
+
+#### /prioritize
+
+**Example:**
+```bash
+/prioritize rice
+/prioritize moscow scope:sprint
+```
+
+**What it does:** Orders backlog items using specified prioritization framework.
+
+**Creates:** Updates `priority` field in PBI frontmatter
+
+**Options:**
+- `framework`: `rice` | `moscow` | `value-effort` (default: rice)
+- `scope`: `all` | `sprint` | `feature-{name}` (default: all)
+
+**Tip:** RICE for data-driven teams, MoSCoW for release planning.
+
+---
+
+### Test Commands
+
+#### /test-spec
+
+**Example:**
+```bash
+/test-spec team-artifacts/pbis/260119-pbi-dark-mode-toggle.md
+```
+
+**What it does:** Generates test specification from PBI acceptance criteria.
+
+**Creates:** `team-artifacts/test-specs/{YYMMDD}-testspec-{feature}.md`
+
+**Options:**
+- `pbi-file`: Path to PBI file or PBI-ID (required)
+
+**Tip:** Test specs identify test strategy: unit, integration, E2E coverage. Includes detailed TC-{MOD}-{NNN} cases with `Evidence: {file}:{line}` linking to code.
+
+---
+
+#### /quality-gate
+
+**Example:**
+```bash
+/quality-gate pre-dev team-artifacts/pbis/260119-pbi-dark-mode-toggle.md
+/quality-gate pre-release PR#123
+```
+
+**What it does:** Runs quality checklist for artifact or PR at specified stage.
+
+**Creates:** `team-artifacts/qc-reports/{YYMMDD}-gate-{type}-{slug}.md`
+
+**Options:**
+- `target`: Artifact path, PR number, or gate type (required)
+- Gate types: `pre-dev`, `pre-qa`, `pre-release`
+
+**Tip:** Run pre-dev gate before assigning PBI to developers.
+
+---
+
+### Design Commands
+
+#### /design-spec
+
+**Example:**
+```bash
+/design-spec team-artifacts/pbis/260119-pbi-dark-mode-toggle.md
+```
+
+**What it does:** Creates design specification with component inventory and states.
+
+**Creates:** `team-artifacts/design-specs/{YYMMDD}-designspec-{feature}.md`
+
+**Options:**
+- `source`: Path to PBI, requirements doc, or Figma URL (required)
+
+**Tip:** Spec includes all states: default, hover, active, disabled, error, loading.
+
+---
+
+### PM Commands
+
+#### /status
+
+**Example:**
+```bash
+/status sprint
+/status feature-dark-mode
+```
+
+**What it does:** Generates status report from current artifacts and git activity.
+
+**Creates:** `plans/reports/{YYMMDD}-status-{scope}.md`
+
+**Options:**
+- `scope`: `sprint` | `project` | `feature-{name}` (default: sprint)
+
+**Tip:** Run at end of day to capture daily progress.
+
+---
+
+#### /dependency
+
+**Example:**
+```bash
+/dependency all
+/dependency team-artifacts/pbis/260119-pbi-dark-mode-toggle.md
+```
+
+**What it does:** Maps and visualizes dependencies between features.
+
+**Creates:** Console output or saved to file
+
+**Options:**
+- `target`: PBI file, feature name, or `all` (default: all)
+
+**Tip:** Look for red indicators (blocking 3+ items) and external dependencies.
+
+---
+
+#### /team-sync
+
+**Example:**
+```bash
+/team-sync daily
+/team-sync sprint-review
+```
+
+**What it does:** Generates meeting agenda with relevant status items.
+
+**Creates:** Console output or saved to file
+
+**Options:**
+- `type`: `daily` | `weekly` | `sprint-review` | `sprint-planning` (default: daily)
+
+**Tip:** Run 10 minutes before standup to have fresh data.
+
+---
+
+## Workflow Tutorials
+
+Four end-to-end workflows with swimlane diagrams showing role handoffs.
+
+### Workflow 1: Idea to PBI
+
+**Trigger:** New feature idea or enhancement request
+**Roles:** Product Owner, Business Analyst
+**Output:** Prioritized PBI with user stories
+
+#### Swimlane
+
+```
++------------------------------------------------------------------+
+| IDEA TO PBI WORKFLOW                                              |
++----------+-------------------------------------------------------+
+|          |                                                       |
+|   PO     |  /idea --> [idea.md] --> Review --> /prioritize       |
+|          |               |                          |            |
++----------+---------------|--------------------------+------------+
+|          |               v                          |            |
+|   BA     |          /refine --> [pbi.md] --> /story |            |
+|          |                          |               |            |
+|          |                          v               v            |
+|          |                     [stories/]    [backlog ordered]   |
++----------+-------------------------------------------------------+
+```
+
+#### Steps
+
+| # | Role | Command | Output |
+|---|------|---------|--------|
+| 1 | PO | `/idea "feature description"` | `ideas/260119-po-idea-*.md` |
+| 2 | BA | `/refine {idea-file}` | `pbis/260119-pbi-*.md` |
+| 3 | BA | `/story {pbi-file}` | `pbis/stories/260119-us-*.md` |
+| 4 | PO | `/prioritize rice` | Updated priority in PBIs |
+
+#### Handoffs
+
+| From | To | Artifact | Signal |
+|------|-----|----------|--------|
+| PO | BA | idea.md | Idea status: `under_review` |
+| BA | PO | pbi.md | PBI status: `approved` |
+| PO | Dev | stories | Priority assigned, sprint planned |
+
+---
+
+### Workflow 2: PBI to Tests
+
+**Trigger:** PBI approved and assigned to sprint
+**Roles:** QA Engineer, QC Specialist
+**Output:** Test cases with quality gate report
+
+#### Swimlane
+
+```
++------------------------------------------------------------------+
+| PBI TO TESTS WORKFLOW                                             |
++----------+-------------------------------------------------------+
+|          |                                                       |
+|   QA     |  [pbi.md] --> /test-spec                              |
+|          |                   |                                   |
+|          |                   v                                   |
+|          |            [testspec.md + TC-*-* cases]               |
+|          |                   |                                   |
++----------+-------------------+-----------------------------------+
+|          |                   v                                   |
+|   QC     |                           /quality-gate               |
+|          |                                  |                    |
+|          |                                  v                    |
+|          |                           [gate-report.md]            |
+|          |                              PASS/FAIL                |
++----------+-------------------------------------------------------+
+```
+
+#### Steps
+
+| # | Role | Command | Output |
+|---|------|---------|--------|
+| 1 | QA | `/test-spec {pbi-file}` | `test-specs/260119-testspec-*.md` with TC-{MOD}-{NNN} cases |
+| 2 | QC | `/quality-gate pre-qa {testspec}` | `qc-reports/260119-gate-*.md` |
+
+#### Handoffs
+
+| From | To | Artifact | Signal |
+|------|-----|----------|--------|
+| Dev | QA | pbi.md | PBI status: `in_progress` |
+| QA | QC | testspec.md | Test cases generated |
+| QC | Dev | gate-report | Gate status: PASS -> proceed |
+
+#### Quality Gate Criteria (Pre-QA)
+
+- [ ] All test cases have TC-{MOD}-{NNN} ID
+- [ ] Every test case has Evidence field
+- [ ] At least 3 categories: positive, negative, edge
+- [ ] Test summary counts match actual cases
+
+---
+
+### Workflow 3: Design Workflow
+
+**Trigger:** PBI requires UI changes
+**Roles:** UX Designer, (Developer for handoff)
+**Output:** Design specification ready for implementation
+
+#### Swimlane
+
+```
++------------------------------------------------------------------+
+| DESIGN WORKFLOW                                                   |
++----------+-------------------------------------------------------+
+|          |                                                       |
+|   UX     |  [pbi.md] --> /design-spec --> Review                 |
+|          |                   |              |                    |
+|          |                   v              v                    |
+|          |            [designspec.md] --> Iterate                |
+|          |                   |                                   |
++----------+-------------------+-----------------------------------+
+|          |                   v                                   |
+|   Dev    |            /code-review (design review)               |
+|          |                   |                                   |
+|          |                   v                                   |
+|          |              Implementation                           |
++----------+-------------------------------------------------------+
+```
+
+#### Steps
+
+| # | Role | Command | Output |
+|---|------|---------|--------|
+| 1 | UX | `/design-spec {pbi-file}` | `design-specs/260119-designspec-*.md` |
+| 2 | UX | Review design tokens | Maps to existing tokens |
+| 3 | Dev | `/code-review` (on spec) | Feedback for iteration |
+
+#### Handoffs
+
+| From | To | Artifact | Signal |
+|------|-----|----------|--------|
+| BA | UX | pbi.md | UI requirements identified |
+| UX | Dev | designspec.md | All states documented |
+
+#### Design Spec Checklist
+
+- [ ] All component states (default, hover, active, disabled, error, loading)
+- [ ] Design tokens mapped (no hardcoded values)
+- [ ] BEM classes defined
+- [ ] Accessibility requirements included
+
+---
+
+### Workflow 4: PM Reporting
+
+**Trigger:** End of day, sprint ceremony, or stakeholder request
+**Roles:** Project Manager
+**Output:** Status report with dependency analysis
+
+#### Swimlane
+
+```
++------------------------------------------------------------------+
+| PM REPORTING WORKFLOW                                             |
++----------+-------------------------------------------------------+
+|          |                                                       |
+|   PM     |  Gather Data --> /status --> /dependency              |
+|          |       |             |              |                  |
+|          |       |             v              v                  |
+|          |  [pbis, git] --> [status.md] --> [dep-map]            |
+|          |                     |              |                  |
+|          |                     +------+-------+                  |
+|          |                            v                          |
+|          |                     /team-sync agenda                 |
+|          |                            |                          |
+|          |                            v                          |
+|          |                     Share with team                   |
++----------+-------------------------------------------------------+
+```
+
+#### Steps
+
+| # | Role | Command | Output |
+|---|------|---------|--------|
+| 1 | PM | `/status sprint` | `plans/reports/260119-status-sprint.md` |
+| 2 | PM | `/dependency all` | Dependency visualization |
+| 3 | PM | `/team-sync daily` | Meeting agenda |
+
+#### Report Types
+
+| Type | Trigger | Command |
+|------|---------|---------|
+| Daily | End of day | `/status sprint` |
+| Weekly | Friday PM | `/status project` |
+| Feature | Milestone | `/status feature-{name}` |
+| Review | Sprint end | `/team-sync sprint-review` |
+
+---
+
+## Real-World Example
+
+### Employee Photo Upload Feature
+
+Let's walk through adding profile photo upload to BravoSUITE's Employee Management module.
+
+**Scenario:** HR wants employees to upload profile photos visible in org charts, directories, and emails.
+
+**Constraints:**
+- Max file size: 5MB
+- Formats: JPG, PNG, WEBP
+- Display: 200x200px avatar (cropped circle)
+- Storage: Azure Blob Storage
+
+**Roles Involved:** PO, BA, UX, QA, QC
+
+---
+
+#### Day 1: PO Captures the Idea
+
+**Maria (Product Owner) runs:**
+```bash
+/idea "Employee profile photo upload for org charts and directories"
+```
+
+**Claude creates:** `team-artifacts/ideas/260119-po-idea-employee-photo-upload.md`
+
+```yaml
+---
+id: IDEA-260119-001
+title: Employee Profile Photo Upload
+status: draft
+created_by: po
+created_date: 2026-01-19
+---
+
+## Problem Statement
+Employees have no visual identity in org charts and directories.
+
+## Proposed Solution
+Allow employees to upload profile photos from their profile settings page.
+
+## Target Users
+- Employees (uploaders)
+- Managers (viewers in org charts)
+- HR (directory management)
+
+## Business Value
+- Improved colleague recognition
+- Professional company directories
+- Enhanced org chart usability
+```
+
+**Maria says:** "Ready for BA refinement"
+**Action:** Sets status to `under_review`
+
+---
+
+#### Day 2: BA Refines to PBI
+
+**Tom (Business Analyst) runs:**
+```bash
+/refine team-artifacts/ideas/260119-po-idea-employee-photo-upload.md
+```
+
+**Claude creates:** `team-artifacts/pbis/260119-pbi-employee-photo-upload.md`
+
+**Key acceptance criteria generated:**
+
+```gherkin
+Scenario: Successful photo upload
+  Given employee is on profile settings page
+  And employee has no current photo
+  When employee selects a JPG file under 5MB
+  And clicks "Upload"
+  Then photo is displayed as 200x200 avatar
+  And success message "Photo uploaded successfully" appears
+
+Scenario: Oversized file rejected
+  Given employee is on profile settings page
+  When employee selects a file over 5MB
+  Then error message "File exceeds 5MB limit" appears
+  And upload button remains enabled
+
+Scenario: Invalid format rejected
+  Given employee is on profile settings page
+  When employee selects a GIF file
+  Then error message "Only JPG, PNG, WEBP allowed" appears
+```
+
+**Dependencies identified:**
+- Upstream: Azure Blob Storage configuration
+- Downstream: Org chart component, email service
+
+---
+
+#### Day 2 (continued): BA Creates User Stories
+
+**Tom runs:**
+```bash
+/story team-artifacts/pbis/260119-pbi-employee-photo-upload.md
+```
+
+**Stories created:**
+
+| Story | Points | Slice |
+|-------|--------|-------|
+| US-001: Upload photo from settings | 3 | Backend API + Frontend form |
+| US-002: Display photo in profile | 2 | Frontend avatar component |
+| US-003: Show photo in org chart | 2 | Org chart integration |
+| US-004: Handle upload errors | 2 | Validation + error UI |
+
+**Tom updates PBI status:** `approved`
+
+---
+
+#### Day 3: UX Creates Design Spec
+
+**Sarah (UX Designer) runs:**
+```bash
+/design-spec team-artifacts/pbis/260119-pbi-employee-photo-upload.md
+```
+
+**Key components specified:**
+
+```
+Component: photo-upload
+States: default, hover, dragging, uploading, success, error
+Tokens: --spacing-md (16px), --color-border-default
+
++------------------------+
+|   +----------------+   |
+|   |   [Avatar]     |   |  default state
+|   |   200x200      |   |
+|   +----------------+   |
+|   [Choose File]        |
+|   JPG, PNG, WEBP - 5MB |
++------------------------+
+
+Accessibility:
+- Focus ring on upload button
+- aria-label="Upload profile photo"
+- Progress: aria-live="polite" for upload status
+```
+
+---
+
+#### Day 4: QA Creates Test Spec
+
+**Alex (QA Engineer) runs:**
+```bash
+/test-spec team-artifacts/pbis/260119-pbi-employee-photo-upload.md
+```
+
+**Test cases generated:**
+
+| TC ID | Title | Type |
+|-------|-------|------|
+| TC-TAL-001 | Successful JPG upload | Positive |
+| TC-TAL-002 | Successful PNG upload | Positive |
+| TC-TAL-003 | Reject file > 5MB | Negative |
+| TC-TAL-004 | Reject GIF format | Negative |
+| TC-TAL-005 | Upload with slow network | Edge |
+| TC-TAL-006 | Cancel mid-upload | Edge |
+| TC-TAL-007 | Replace existing photo | Positive |
+
+**Evidence example:**
+```markdown
+#### TC-TAL-003: Reject file > 5MB
+- **Evidence:** `EmployeePhotoUploadCommand.cs:45`
+```
+
+```csharp
+// Line 45
+.And(_ => File.Size <= 5 * 1024 * 1024, "File exceeds 5MB limit")
+```
+
+---
+
+#### Day 5: QC Runs Quality Gate
+
+**Jordan (QC Specialist) runs:**
+```bash
+/quality-gate pre-dev team-artifacts/pbis/260119-pbi-employee-photo-upload.md
+```
+
+**Gate Report:**
+
+| Criterion | Status | Notes |
+|-----------|--------|-------|
+| Acceptance criteria in GIVEN/WHEN/THEN | PASS | 3 scenarios |
+| Out of scope defined | PASS | "Video uploads, GIF support" |
+| Design spec approved | PASS | All states documented |
+| Dependencies identified | PASS | Azure, org chart, email |
+
+**Gate Status: PASS**
+
+**Next:** Assign to Sprint 15 for implementation
+
+---
+
+## Cheat Sheet
+
+Printable quick reference for daily use.
+
+### Command Tree
+
+```
+team/
++-- CAPTURE
+|   +-- /idea [title]              Capture new idea
+|
++-- TRANSFORM
+|   +-- /refine {idea}             Idea -> PBI
+|   +-- /story {pbi}               PBI -> Stories
+|   +-- /prioritize [framework]    Order backlog
+|
++-- TEST
+|   +-- /test-spec {pbi}           Generate test spec (includes test cases)
+|   +-- /quality-gate {target}     Run QC checklist
+|
++-- DESIGN
+|   +-- /design-spec {source}      Create design spec
+|
++-- REPORT
+    +-- /status [scope]            Generate status report
+    +-- /dependency [target]       Map dependencies
+    +-- /team-sync [type]          Meeting agenda
 ```
 
 ### Role Quick Reference
 
-| Role | Primary Commands | Output Location |
-|------|-----------------|-----------------|
-| **Product Owner** | `/team-idea`, `/team-prioritize` | `team-artifacts/team-ideas/` |
-| **Business Analyst** | `/team-refine`, `/team-story` | `team-artifacts/pbis/` |
-| **QA Engineer** | `/team-test-spec`, `/team-test-cases` | `team-artifacts/team-test-specs/` |
-| **QC Specialist** | `/team-quality-gate` | `team-artifacts/qc-reports/` |
-| **UX Designer** | `/team-design-spec` | `team-artifacts/team-design-specs/` |
-| **Project Manager** | `/team-status`, `/team-dependency`, `/team-team-sync` | `plans/reports/` |
+| Role | Start With | Then | Output |
+|------|------------|------|--------|
+| PO | `/idea` | `/prioritize` | Ordered backlog |
+| BA | `/refine` | `/story` | User stories w/ AC |
+| QA | `/test-spec` | `/quality-gate` | TC-*-* test cases |
+| QC | `/quality-gate` | - | PASS/FAIL report |
+| UX | `/design-spec` | - | Component specs |
+| PM | `/status` | `/dependency` | Sprint report |
 
----
-
-## Architecture Overview
+### First Command by Role
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                    TEAM COLLABORATION LAYER                          │
-├─────────────────────────────────────────────────────────────────────┤
-│  ARTIFACTS        │  WORKFLOWS          │  HANDOFFS                  │
-│  /team-artifacts/ │  idea-to-pbi        │  PO → BA → Dev → QA        │
-│    /team-ideas/        │  pbi-to-tests       │  Designer → Dev            │
-│    /pbis/         │  design-workflow    │  QA → QC → Release         │
-│    /team-test-specs/   │  pm-reporting       │  PM ← All Roles            │
-│    /team-design-specs/ │                     │                            │
-├─────────────────────────────────────────────────────────────────────┤
-│                        SKILLS LAYER (6)                              │
-│  product-owner │ business-analyst │ qa-engineer                      │
-│  qc-specialist │ ux-designer      │ project-manager                  │
-├─────────────────────────────────────────────────────────────────────┤
-│                       COMMANDS LAYER (11)                            │
-│  /team-idea │ /team-refine │ /team-prioritize │ /team-story                              │
-│  /team-test-spec │ /team-test-cases │ /team-quality-gate │ /team-design-spec             │
-│  /team-status │ /team-dependency │ /team-team-sync                                  │
-├─────────────────────────────────────────────────────────────────────┤
-│                         HOOKS LAYER (2)                              │
-│  role-context-injector │ artifact-path-resolver                      │
-└─────────────────────────────────────────────────────────────────────┘
+PO -> /idea "..."          # Capture feature request
+BA -> /refine {idea}       # Transform to PBI
+QA -> /test-spec {pbi}     # Generate test spec
+QC -> /quality-gate pre-*  # Run quality gate
+UX -> /design-spec {pbi}   # Create design spec
+PM -> /status sprint       # Generate status
 ```
 
-### Handoff Flow
+### Workflow Triggers
+
+| Say This | Activates | Sequence |
+|----------|-----------|----------|
+| "new idea" | idea-to-pbi | /idea -> /refine -> /story -> /prioritize |
+| "test this pbi" | pbi-to-tests | /test-spec -> /quality-gate |
+| "design spec for" | design-workflow | /design-spec -> /code-review |
+| "status report" | pm-reporting | /status -> /dependency |
+
+### Auto-Detection Keywords
 
 ```
-Product Owner ──/team-idea──> Business Analyst ──/team-refine──> Developer
-       │                        │                          │
-       │                   /team-story                     implements
-       │                        │                          │
-       └────────────────────────┼──────────────────────────┤
-                                │                          │
-                          QA Engineer <────────────────────┘
-                         /team-test-spec
-                               │
-                        QC Specialist
-                        /team-quality-gate
-                               │
-                        ───Release───
+idea-to-pbi:    "feature request", "backlog item", "capture idea"
+pbi-to-tests:   "test cases from", "qa this", "test spec for"
+design-workflow: "ui spec", "component spec", "design the"
+pm-reporting:   "sprint status", "project update", "progress report"
 ```
 
----
+### Artifact Paths
 
-## Role-Specific Guides
-
-> **Detailed Guides Available:** Each role has a comprehensive standalone guide with templates, real-world examples, and quick reference cards.
->
-> | Role | Guide |
-> |------|-------|
-> | Product Owner | [product-owner-guide.md](./team-roles/product-owner-guide.md) |
-> | Business Analyst | [business-analyst-guide.md](./team-roles/business-analyst-guide.md) |
-> | QA Engineer | [qa-engineer-guide.md](./team-roles/qa-engineer-guide.md) |
-> | QC Specialist | [qc-specialist-guide.md](./team-roles/qc-specialist-guide.md) |
-> | UX Designer | [ux-designer-guide.md](./team-roles/ux-designer-guide.md) |
-> | Project Manager | [project-manager-guide.md](./team-roles/project-manager-guide.md) |
-
-### Product Owner (PO)
-
-**Purpose:** Capture ideas, manage backlog, prioritize features
-
-**Available Commands:**
-- `/team-idea` - Capture new product ideas
-- `/team-prioritize` - Apply prioritization frameworks (MoSCoW, WSJF, RICE)
-
-**Skill Activation:** Automatic when working in `team-artifacts/team-ideas/`
-
-**Workflow:**
 ```
-1. Capture idea → /team-idea "feature description"
-2. Add context → Problem, value proposition, stakeholders
-3. Tag for refinement → status: needs-refinement
-4. Hand off to BA → /team-refine IDEA-XXXXXX-NNN
+team-artifacts/
++-- ideas/           # Raw ideas (PO, Anyone)
++-- pbis/            # Product Backlog Items (BA, PO)
+|   +-- stories/     # User stories (BA)
++-- test-specs/      # Test specifications (QA)
++-- design-specs/    # Design documentation (UX)
++-- qc-reports/      # Quality gate reports (QC)
++-- templates/       # Templates (read-only)
 ```
 
-**Output Template:** `team-artifacts/templates/team-idea-template.md`
+### Naming Pattern
 
----
-
-### Business Analyst (BA)
-
-**Purpose:** Refine requirements, write user stories, define acceptance criteria
-
-**Available Commands:**
-- `/team-refine` - Refine idea into PBI with acceptance criteria
-- `/team-story` - Create detailed user stories from PBI
-
-**Key Standards:**
-- **User Story Format:** As a [persona], I want [goal], so that [benefit]
-- **Acceptance Criteria:** GIVEN/WHEN/THEN (BDD format)
-- **INVEST Criteria:** Independent, Negotiable, Valuable, Estimable, Small, Testable
-
-**Workflow:**
-```
-1. Receive idea → Read team-artifacts/team-ideas/IDEA-XXXXXX-NNN.md
-2. Refine to PBI → /team-refine IDEA-XXXXXX-NNN
-3. Break into stories → /team-story PBI-XXXXXX-NNN
-4. Define acceptance criteria → GIVEN/WHEN/THEN format
-5. Hand off to Dev/QA
-```
-
-**Output Templates:**
-- `team-artifacts/templates/pbi-template.md`
-- `team-artifacts/templates/user-story-template.md`
-
----
-
-### QA Engineer
-
-**Purpose:** Create test plans, generate test cases, analyze coverage
-
-**Available Commands:**
-- `/team-test-spec` - Generate test specification from PBI/team-story
-- `/team-test-cases` - Generate detailed test cases with steps
-
-**Key Standards:**
-- **Test Case ID Format:** `TC-{MOD}-{NNN}` (e.g., TC-AUTH-001)
-- **Evidence Field:** Required with `file:line` format
-- **Coverage Types:** Positive, negative, edge cases, boundary
-
-**Workflow:**
-```
-1. Receive PBI/Story → Read acceptance criteria
-2. Create test spec → /team-test-spec PBI-XXXXXX-NNN
-3. Generate test cases → /team-test-cases TS-XXXXXX-NNN
-4. Map to acceptance criteria → Ensure full coverage
-5. Execute tests → Record evidence with file:line
-6. Hand off to QC → /team-quality-gate
-```
-
-**Output Template:** `team-artifacts/templates/team-test-spec-template.md`
-
----
-
-### QC Specialist
-
-**Purpose:** Quality gates, compliance verification, audit trails
-
-**Available Commands:**
-- `/team-quality-gate` - Run quality gate checklist (pre-dev, pre-qa, pre-release)
-
-**Gate Types:**
-| Gate | When | Focus |
-|------|------|-------|
-| `pre-dev` | Before development | Requirements completeness, design approval |
-| `pre-qa` | Before QA testing | Code review, unit tests, documentation |
-| `pre-release` | Before deployment | Integration tests, security scan, stakeholder sign-off |
-
-**Workflow:**
-```
-1. Identify gate type → pre-dev | pre-qa | pre-release
-2. Run quality gate → /team-quality-gate pre-release PBI-XXXXXX-NNN
-3. Verify checklist items → All criteria must pass
-4. Document findings → Record any blockers
-5. Sign off or reject → Update gate status
-```
-
----
-
-### UX Designer
-
-**Purpose:** Design specifications, component documentation, accessibility
-
-**Available Commands:**
-- `/team-design-spec` - Generate design specification from PBI
-
-**Key Standards:**
-- **Component States:** Default, hover, active, disabled, error, loading
-- **Responsive Breakpoints:** Mobile (320px+), Tablet (768px+), Desktop (1024px+)
-- **Accessibility:** WCAG 2.1 AA compliance required
-- **Design Tokens:** Colors, typography, spacing from design system
-
-**Workflow:**
-```
-1. Receive PBI → Understand requirements
-2. Create design spec → /team-design-spec PBI-XXXXXX-NNN
-3. Document states → All component states
-4. Define tokens → Reference design system
-5. Add accessibility notes → WCAG requirements
-6. Hand off to Dev → Share Figma link + spec
-```
-
-**Output Template:** `team-artifacts/templates/team-design-spec-template.md`
-
----
-
-### Project Manager (PM)
-
-**Purpose:** Status tracking, dependency management, team coordination
-
-**Available Commands:**
-- `/team-status` - Generate status report (sprint, project, feature)
-- `/team-dependency` - Track and visualize dependencies
-- `/team-team-sync` - Generate meeting agendas (daily, weekly, sprint-review, sprint-planning)
-
-**Report Types:**
-| Command | Output | Use Case |
-|---------|--------|----------|
-| `/team-status sprint` | Sprint progress, blockers, metrics | Daily standups, sprint reviews |
-| `/team-status project` | Overall project health | Stakeholder updates |
-| `/team-status feature-auth` | Feature-specific status | Feature tracking |
-| `/team-dependency PBI-XXX` | Dependency graph | Risk identification |
-| `/team-team-sync daily` | Daily standup agenda | Team meetings |
-| `/team-team-sync weekly` | Weekly sync agenda | Cross-team coordination |
-
-**Workflow:**
-```
-1. Gather data → Read team-artifacts/, git activity
-2. Generate report → /team-status sprint
-3. Identify blockers → Flag risks and dependencies
-4. Facilitate sync → /team-team-sync daily
-5. Track action items → Update status
-```
-
----
-
-## Workflow Sequences
-
-### 1. Idea to PBI Workflow
-
-**Trigger:** New feature request or improvement idea
-
-```bash
-# Step 1: Product Owner captures idea
-/team-idea "Add dark mode toggle to settings page"
-
-# Output: team-artifacts/team-ideas/260119-po-idea-dark-mode-toggle.md
-
-# Step 2: Business Analyst refines to PBI
-/team-refine team-artifacts/team-ideas/260119-po-idea-dark-mode-toggle.md
-
-# Output: team-artifacts/pbis/260119-ba-pbi-dark-mode-toggle.md
-
-# Step 3: BA creates user stories
-/team-story team-artifacts/pbis/260119-ba-pbi-dark-mode-toggle.md
-
-# Output: team-artifacts/pbis/stories/260119-ba-story-dark-mode-toggle.md
-
-# Step 4: PO prioritizes in backlog
-/team-prioritize team-artifacts/pbis/260119-ba-pbi-dark-mode-toggle.md
-```
-
-**Automated Workflow:** Run all steps with `/workflow idea-to-pbi`
-
----
-
-### 2. PBI to Tests Workflow
-
-**Trigger:** PBI ready for development/testing
-
-```bash
-# Step 1: QA creates test specification
-/team-test-spec team-artifacts/pbis/260119-ba-pbi-dark-mode-toggle.md
-
-# Output: team-artifacts/team-test-specs/260119-qa-testspec-dark-mode-toggle.md
-
-# Step 2: QA generates detailed test cases
-/team-test-cases team-artifacts/team-test-specs/260119-qa-testspec-dark-mode-toggle.md
-
-# Output: team-artifacts/team-test-specs/260119-qa-testcases-dark-mode-toggle.md
-
-# Step 3: QC runs quality gate
-/team-quality-gate pre-qa team-artifacts/pbis/260119-ba-pbi-dark-mode-toggle.md
-
-# Output: team-artifacts/qc-reports/260119-qc-gate-dark-mode-toggle.md
-```
-
-**Automated Workflow:** Run all steps with `/workflow pbi-to-tests`
-
----
-
-### 3. Design Workflow
-
-**Trigger:** UI/UX work required for PBI
-
-```bash
-# Step 1: Designer creates design spec
-/team-design-spec team-artifacts/pbis/260119-ba-pbi-dark-mode-toggle.md
-
-# Output: team-artifacts/team-design-specs/260119-ux-designspec-dark-mode-toggle.md
-
-# Step 2: Review design implementation
-/review/codebase "Check dark mode implementation against design spec"
-```
-
-**Automated Workflow:** Run all steps with `/workflow design-workflow`
-
----
-
-### 4. PM Reporting Workflow
-
-**Trigger:** Status update needed
-
-```bash
-# Step 1: Generate sprint status
-/team-status sprint
-
-# Output: plans/reports/pm-260119-status-sprint.md
-
-# Step 2: Track dependencies
-/team-dependency team-artifacts/pbis/260119-ba-pbi-dark-mode-toggle.md
-
-# Step 3: Prepare team sync
-/team-team-sync daily
-```
-
-**Automated Workflow:** Run all steps with `/workflow pm-reporting`
-
----
-
-## Commands Reference
-
-### Product Owner Commands
-
-#### `/team-idea`
-Capture a new product idea with structured template.
-
-```bash
-# Basic usage
-/team-idea "Feature description"
-
-# With context
-/team-idea "Add biometric authentication" --context "Users requesting faster login"
-
-# From existing document
-/team-idea path/to/requirements.md
-```
-
-**Output:** `team-artifacts/team-ideas/{YYMMDD}-po-idea-{slug}.md`
-
----
-
-#### `/team-prioritize`
-Apply prioritization framework to backlog items.
-
-```bash
-# MoSCoW prioritization
-/team-prioritize team-artifacts/pbis/*.md --framework moscow
-
-# WSJF (Weighted Shortest Job First)
-/team-prioritize PBI-260119-001 --framework wsjf
-
-# RICE scoring
-/team-prioritize --framework rice
-```
-
----
-
-### Business Analyst Commands
-
-#### `/team-refine`
-Refine an idea into a Product Backlog Item with acceptance criteria.
-
-```bash
-# From idea
-/team-refine team-artifacts/team-ideas/260119-po-idea-dark-mode.md
-
-# With additional context
-/team-refine IDEA-260119-001 --stakeholders "Mobile team, Design team"
-```
-
-**Output:** `team-artifacts/pbis/{YYMMDD}-ba-pbi-{slug}.md`
-
----
-
-#### `/team-story`
-Create user stories from a PBI.
-
-```bash
-# From PBI
-/team-story team-artifacts/pbis/260119-ba-pbi-dark-mode.md
-
-# Generate multiple stories
-/team-story PBI-260119-001 --personas "admin,user,guest"
-```
-
-**Output:** `team-artifacts/pbis/stories/{YYMMDD}-ba-story-{slug}.md`
-
----
-
-### QA Engineer Commands
-
-#### `/team-test-spec`
-Generate test specification from requirements.
-
-```bash
-# From PBI
-/team-test-spec team-artifacts/pbis/260119-ba-pbi-dark-mode.md
-
-# From user story
-/team-test-spec team-artifacts/pbis/stories/260119-ba-story-dark-mode.md
-
-# With coverage focus
-/team-test-spec PBI-260119-001 --focus "edge-cases,security"
-```
-
-**Output:** `team-artifacts/team-test-specs/{YYMMDD}-qa-testspec-{slug}.md`
-
----
-
-#### `/team-test-cases`
-Generate detailed test cases with steps.
-
-```bash
-# From test spec
-/team-test-cases team-artifacts/team-test-specs/260119-qa-testspec-dark-mode.md
-
-# With specific coverage
-/team-test-cases TS-260119-001 --types "positive,negative,boundary"
-```
-
-**Output:** `team-artifacts/team-test-specs/{YYMMDD}-qa-testcases-{slug}.md`
-
----
-
-### QC Specialist Commands
-
-#### `/team-quality-gate`
-Run quality gate checklist.
-
-```bash
-# Pre-development gate
-/team-quality-gate pre-dev PBI-260119-001
-
-# Pre-QA gate
-/team-quality-gate pre-qa PBI-260119-001
-
-# Pre-release gate
-/team-quality-gate pre-release PBI-260119-001
-```
-
-**Output:** `team-artifacts/qc-reports/{YYMMDD}-qc-gate-{slug}.md`
-
----
-
-### UX Designer Commands
-
-#### `/team-design-spec`
-Generate design specification.
-
-```bash
-# From PBI
-/team-design-spec team-artifacts/pbis/260119-ba-pbi-dark-mode.md
-
-# With component focus
-/team-design-spec PBI-260119-001 --components "toggle,settings-panel"
-```
-
-**Output:** `team-artifacts/team-design-specs/{YYMMDD}-ux-designspec-{slug}.md`
-
----
-
-### Project Manager Commands
-
-#### `/team-status`
-Generate status report.
-
-```bash
-# Sprint status
-/team-status sprint
-
-# Project-wide status
-/team-status project
-
-# Feature-specific status
-/team-status feature-authentication
-```
-
-**Output:** `plans/reports/{YYMMDD}-pm-status-{scope}.md`
-
----
-
-#### `/team-dependency`
-Track and visualize dependencies.
-
-```bash
-# Single PBI dependencies
-/team-dependency PBI-260119-001
-
-# All active PBIs
-/team-dependency --scope active
-
-# Critical path analysis
-/team-dependency --critical-path
-```
-
----
-
-#### `/team-team-sync`
-Generate meeting agendas.
-
-```bash
-# Daily standup
-/team-team-sync daily
-
-# Weekly sync
-/team-team-sync weekly
-
-# Sprint review
-/team-team-sync sprint-review
-
-# Sprint planning
-/team-team-sync sprint-planning
-```
-
----
-
-## Real-Life Examples
-
-### Example 1: New Feature - User Authentication Redesign
-
-**Scenario:** Product Owner receives feedback that login is too slow. The team needs to implement biometric authentication.
-
-```bash
-# Day 1: PO captures the idea
-/team-idea "Add biometric authentication (Face ID, fingerprint) to mobile app login"
-
-# Claude generates: team-artifacts/team-ideas/260119-po-idea-biometric-auth.md
-# Contains: Problem statement, value proposition, affected users, dependencies
-```
-
-**Idea Output:**
-```markdown
----
-id: IDEA-260119-001
-title: "Add biometric authentication to mobile app"
-submitted_by: "Product Owner"
-status: needs-refinement
-priority: 800
----
-
-## Problem Statement
-Users report login takes 15+ seconds. Current password-only flow causes friction.
-
-## Value Proposition
-- Reduce login time from 15s to <2s
-- Increase daily active users by estimated 12%
-- Improve security posture
-
-## Stakeholders
-- Mobile team (implementation)
-- Security team (approval)
-- Design team (UX flow)
-```
-
-```bash
-# Day 2: BA refines into PBI
-/team-refine team-artifacts/team-ideas/260119-po-idea-biometric-auth.md
-
-# Claude generates: team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
-```
-
-**PBI Output:**
-```markdown
----
-id: PBI-260119-001
-title: "Biometric Authentication for Mobile Login"
-source_idea: IDEA-260119-001
-priority: 800
-effort: 13
----
-
-## User Stories
-1. As a mobile user, I want to login with Face ID, so that I can access the app quickly
-2. As a mobile user, I want to login with fingerprint, so that I have an alternative biometric option
-3. As a security admin, I want biometric to be optional, so that users can choose their preference
-
-## Acceptance Criteria
-
-### AC-001: Face ID Login
-**GIVEN** user has Face ID enabled on device
-**AND** user has enabled biometric login in app settings
-**WHEN** user opens the app
-**THEN** Face ID prompt appears
-**AND** successful scan logs user in within 2 seconds
-
-### AC-002: Fingerprint Login
-**GIVEN** user has fingerprint sensor on device
-**WHEN** user taps "Login with fingerprint"
-**THEN** fingerprint prompt appears
-**AND** successful scan logs user in within 2 seconds
-
-### AC-003: Fallback to Password
-**GIVEN** biometric authentication fails 3 times
-**WHEN** user attempts 4th biometric login
-**THEN** app shows password input field
-**AND** displays message "Please enter your password"
-```
-
-```bash
-# Day 3: QA creates test spec
-/team-test-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
-
-# Claude generates: team-artifacts/team-test-specs/260119-qa-testspec-biometric-auth.md
-```
-
-**Test Spec Output:**
-```markdown
----
-id: TS-260119-001
-feature: "Biometric Authentication"
-source_pbi: PBI-260119-001
-coverage: 95%
----
-
-## Test Cases
-
-### TC-AUTH-001: Face ID Happy Path
-**Priority:** Critical
-**Type:** Positive
-
-| Step | Action | Expected Result |
-|------|--------|-----------------|
-| 1 | Enable Face ID in device settings | Face ID available |
-| 2 | Enable biometric in app settings | Setting saved |
-| 3 | Close and reopen app | Face ID prompt appears |
-| 4 | Complete Face ID scan | User logged in <2s |
-
-**Evidence:** `src/auth/biometric.service.ts:45`
-
-### TC-AUTH-002: Fingerprint Happy Path
-**Priority:** Critical
-**Type:** Positive
-...
-
-### TC-AUTH-003: Biometric Fallback After 3 Failures
-**Priority:** High
-**Type:** Negative
-...
-
-### TC-AUTH-004: Device Without Biometric Support
-**Priority:** Medium
-**Type:** Edge Case
-...
-```
-
-```bash
-# Day 4: Designer creates design spec
-/team-design-spec team-artifacts/pbis/260119-ba-pbi-biometric-auth.md
-
-# Claude generates: team-artifacts/team-design-specs/260119-ux-designspec-biometric-auth.md
-```
-
-```bash
-# Day 5: QC runs pre-dev quality gate
-/team-quality-gate pre-dev PBI-260119-001
-
-# Output shows checklist:
-# ✓ Requirements complete
-# ✓ Acceptance criteria in GIVEN/WHEN/THEN
-# ✓ Design spec approved
-# ✓ Test spec created
-# ✓ Dependencies identified
-# → GATE PASSED - Ready for development
-```
-
-```bash
-# Day 10: PM generates status report
-/team-status sprint
-
-# Claude generates: plans/reports/260119-pm-status-sprint.md
-```
-
----
-
-### Example 2: Bug Fix Workflow
-
-**Scenario:** QA finds a bug during testing.
-
-```bash
-# Step 1: QA documents the bug
-/team-idea "BUG: Login button unresponsive on slow networks"
-
-# Step 2: BA creates quick PBI
-/team-refine --type bug team-artifacts/team-ideas/260119-po-idea-login-button-bug.md
-
-# Step 3: QA adds regression test
-/team-test-cases --type regression PBI-260119-002
-
-# Step 4: QC verifies fix
-/team-quality-gate pre-release PBI-260119-002
-```
-
----
-
-### Example 3: Sprint Planning
-
-**Scenario:** PM prepares for sprint planning meeting.
-
-```bash
-# Generate sprint planning agenda
-/team-team-sync sprint-planning
-
-# Output includes:
-# - Velocity metrics from last sprint
-# - Proposed stories with effort estimates
-# - Team capacity calculation
-# - Dependency warnings
-# - Suggested sprint goal
-```
-
----
-
-### Example 4: Cross-Team Handoff
-
-**Scenario:** Feature moving from design to development.
-
-```bash
-# Designer completes spec
-/team-design-spec PBI-260119-003
-
-# Designer triggers handoff workflow
-/workflow design-workflow
-
-# This automatically:
-# 1. Validates design spec completeness
-# 2. Checks all states documented
-# 3. Verifies accessibility notes
-# 4. Creates handoff checklist
-# 5. Notifies development team
-```
-
----
-
-## Artifact Naming Convention
-
-### Pattern
 ```
 {YYMMDD}-{role}-{type}-{slug}.md
+
+Examples:
+260119-po-idea-dark-mode.md
+260119-ba-story-user-settings.md
+260119-qa-testspec-login.md
 ```
 
-### Components
+### Common Patterns
 
-| Component | Description | Examples |
-|-----------|-------------|----------|
-| `YYMMDD` | Date (auto-computed) | 260119 |
-| `role` | Role code | po, ba, qa, qc, ux, pm |
-| `type` | Artifact type | idea, pbi, story, testspec, designspec, gate, status |
-| `slug` | Descriptive kebab-case | dark-mode-toggle, user-auth |
-
-### Examples
-
+**Feature from Scratch:**
 ```
-260119-po-idea-biometric-auth.md          # PO idea
-260119-ba-pbi-biometric-auth.md           # BA PBI
-260119-ba-story-face-id-login.md          # BA user story
-260119-qa-testspec-biometric-auth.md      # QA test spec
-260119-qa-testcases-biometric-auth.md     # QA test cases
-260119-ux-designspec-biometric-auth.md    # UX design spec
-260119-qc-gate-biometric-auth.md          # QC quality gate
-260119-pm-status-sprint-12.md             # PM status report
+/idea "..." -> /refine {idea} -> /story {pbi} -> /design-spec {pbi} -> /test-spec {pbi}
 ```
 
-### Role Codes
-
-| Role | Code |
-|------|------|
-| Product Owner | `po` |
-| Business Analyst | `ba` |
-| QA Engineer | `qa` |
-| QC Specialist | `qc` |
-| UX Designer | `ux` |
-| Project Manager | `pm` |
-
----
-
-## Best Practices
-
-### 1. Always Use Templates
-
-Templates ensure consistency and completeness:
-
-```bash
-# Templates auto-loaded when working in artifact folders
-# Hook: role-context-injector.cjs
-
-# Manual template reference
-cat team-artifacts/templates/pbi-template.md
+**Sprint Prep:**
+```
+/prioritize rice -> /quality-gate pre-dev {pbi} -> /team-sync sprint-planning
 ```
 
-### 2. Follow Handoff Sequence
-
+**End of Day:**
 ```
-PO → BA → Dev → QA → QC → Release
-     ↑           ↑
-  Designer ──────┘
+/status sprint -> /dependency all
 ```
 
-### 3. Quality Gate Checkpoints
-
-| Gate | Required Before |
-|------|-----------------|
-| `pre-dev` | Starting development |
-| `pre-qa` | Starting QA testing |
-| `pre-release` | Deploying to production |
-
-### 4. Link Artifacts
-
-Always reference source artifacts:
-
-```markdown
----
-source_idea: IDEA-260119-001
-source_pbi: PBI-260119-001
----
+**Before Demo:**
+```
+/quality-gate pre-release -> /team-sync sprint-review
 ```
 
-### 5. Use Evidence Format
+### Framework Quick Ref
 
-QA test cases must include file references:
-
-```markdown
-**Evidence:** `src/auth/login.service.ts:142`
-```
-
-### 6. Numeric Priorities
-
-Use numeric priorities (1-999) instead of High/Medium/Low:
-
-```markdown
-priority: 800  # ✓ Correct
-priority: High # ✗ Avoid
-```
-
-### 7. INVEST Criteria for Stories
-
-Validate user stories against INVEST:
-
-- **I**ndependent - Can be delivered separately
-- **N**egotiable - Details can be discussed
-- **V**aluable - Delivers user value
-- **E**stimable - Team can estimate effort
-- **S**mall - Fits in one sprint
-- **T**estable - Has clear acceptance criteria
-
-### 8. BDD Format for Acceptance Criteria
-
-Always use GIVEN/WHEN/THEN:
-
-```markdown
-**GIVEN** precondition
-**AND** additional precondition
-**WHEN** action occurs
-**THEN** expected result
-**AND** additional result
-```
+| Framework | Use When | Formula/Categories |
+|-----------|----------|-------------------|
+| RICE | Data-driven | (Reach x Impact x Confidence) / Effort |
+| MoSCoW | Release planning | Must/Should/Could/Won't |
+| Value-Effort | Quick triage | High-High, High-Low, Low-High, Low-Low |
 
 ---
 
 ## Troubleshooting
 
-### Context Not Injected
+### Command Not Found
 
-**Problem:** Role-specific context not appearing when working with artifacts.
+**Error:** `Command '/idea' not found`
 
-**Solution:** Ensure file path includes `team-artifacts/`:
-```bash
-# ✓ Correct - context injected
-team-artifacts/team-ideas/my-idea.md
+**Fix:**
+1. Verify skills exist: `ls .claude/skills/team-*/`
+2. Check skill file has YAML frontmatter
+3. Restart Claude Code: `claude --restart`
 
-# ✗ Wrong - no context
-ideas/my-idea.md
-```
+---
 
-### Naming Suggestion Not Appearing
+### Artifact Path Error
 
-**Problem:** Artifact path resolver not suggesting names.
+**Error:** `Cannot find artifact: team-artifacts/ideas/...`
 
-**Solution:** File must be in `team-artifacts/` and not already follow convention:
-```bash
-# Will get suggestion
-team-artifacts/team-ideas/my-idea.md
+**Fix:**
+1. Check file exists: `ls team-artifacts/ideas/`
+2. Verify naming format: `{YYMMDD}-{role}-{type}-{slug}.md`
+3. Use tab completion for paths
 
-# Already correct - no suggestion
-team-artifacts/team-ideas/260119-po-idea-my-idea.md
-```
+---
 
 ### Workflow Not Triggering
 
-**Problem:** Automated workflow not starting.
+**Error:** Saying "new idea" doesn't start idea-to-pbi workflow
 
-**Solution:** Use explicit workflow command:
-```bash
-/workflow idea-to-pbi
-/workflow pbi-to-tests
-/workflow design-workflow
-/workflow pm-reporting
-```
+**Fix:**
+1. Check workflows.json exists: `cat .claude/workflows.json`
+2. Verify `triggerPatterns` array includes your phrase
+3. Use explicit command: `/idea "..."` instead of natural language
 
 ---
 
-## Related Documentation
+### Quality Gate Fails
 
-- [Claude Kit Setup](./claude-kit-setup.md) - Hooks, skills, agents configuration
-- [Architecture Overview](./architecture.md) - System architecture and patterns
-- [Development Rules](../.claude/workflows/development-rules.md) - Coding standards
+**Error:** Gate status: FAIL
+
+**Common Causes:**
+- Missing GIVEN/WHEN/THEN in acceptance criteria
+- Test cases without TC-{MOD}-{NNN} IDs
+- No Evidence field in test cases
+- Dependencies not documented
+
+**Fix:** Review gate report and address each failed criterion
 
 ---
 
-*Last updated: 2026-01-19*
+### Test Case ID Conflict
+
+**Error:** Duplicate TC-TAL-001 found
+
+**Fix:**
+1. Use unique module codes: TAL (Talents), GRO (Growth), SUR (Surveys)
+2. Increment sequence within module
+3. Check existing specs: `grep -r "TC-TAL" team-artifacts/test-specs/`
+
+---
+
+### Skill Not Loading
+
+**Error:** PO skill not activating
+
+**Fix:**
+1. Check SKILL.md exists: `ls .claude/skills/product-owner/`
+2. Verify `infer: true` in frontmatter
+3. Check `description` matches your context
+4. Manually invoke: `/product-owner`
+
+---
+
+### Artifact Template Missing
+
+**Error:** Template not found for idea
+
+**Fix:**
+1. Check templates: `ls team-artifacts/templates/`
+2. Expected files: `idea-template.md`, `pbi-template.md`, `test-spec-template.md`
+3. Regenerate: Copy from `.claude/skills/*/templates/`
+
+---
+
+### Hook Not Executing
+
+**Error:** Role context not injected
+
+**Fix:**
+1. Check hooks exist: `ls .claude/hooks/`
+2. Verify hook is executable (has shebang line)
+3. Check hook output: Run manually in terminal
+4. Review `.claude/settings.local.json` for hook config
+
+---
+
+## Source Files
+
+| Component | Location |
+|-----------|----------|
+| Skills | `.claude/skills/{role}/SKILL.md` |
+| Skills | `.claude/skills/team-*/SKILL.md` |
+| Workflows | `.claude/workflows.json` |
+| Templates | `team-artifacts/templates/` |
+| Hooks | `.claude/hooks/` |
+
+---
+
+**Need help?** Run `/help` or check [Claude Code documentation](https://claude.com/claude-code).

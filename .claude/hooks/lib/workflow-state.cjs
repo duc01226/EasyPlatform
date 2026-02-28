@@ -1,362 +1,261 @@
 #!/usr/bin/env node
-/**
- * Workflow State Management Library (Per-Session)
- *
- * Provides persistent state tracking for multi-step workflows using
- * per-session files to prevent cross-session state leaks.
- *
- * Features:
- * - Per-session file isolation (CLAUDE_SESSION_ID)
- * - Atomic writes (write-to-temp-then-rename)
- * - Step completion tracking
- * - Recovery context for post-compaction injection
- * - Graceful error handling
- *
- * Fixes:
- * - Stale state from previous sessions blocking new workflows
- * - Race conditions from shared global state file
- */
-
 'use strict';
+
+/**
+ * Workflow State Management - Persistent workflow tracking across context compaction
+ *
+ * Provides functions to load, save, and manage workflow state in a session-specific
+ * temp file that survives context compaction events.
+ *
+ * Storage: /tmp/ck/workflow-{sessionId}.json
+ *
+ * @module workflow-state
+ */
 
 const fs = require('fs');
 const path = require('path');
-const { WORKFLOW_DIR, ensureDir, sanitizeSessionId } = require('./ck-paths.cjs');
+const { CK_TMP_DIR, ensureDir } = require('./ck-paths.cjs');
 
-// Legacy path (for migration cleanup)
-const LEGACY_STATE_FILE = path.join(process.cwd(), '.claude', '.workflow-state.json');
-
-// --- Internal helpers ---
+// Workflow state directory
+const WORKFLOW_DIR = path.join(CK_TMP_DIR, 'workflow');
 
 /**
- * Get current session ID from environment
- * @returns {string} Session ID or 'default'
+ * Get workflow state file path for a session
+ * @param {string} sessionId - Session identifier
+ * @returns {string} Path to workflow state file
  */
-function getSessionId() {
-  return process.env.CLAUDE_SESSION_ID || 'default';
+function getWorkflowPath(sessionId) {
+  return path.join(WORKFLOW_DIR, `${sessionId}.json`);
 }
 
 /**
- * Get workflow state file path for current session
- * @param {string} [sessionId] - Override session ID
- * @returns {string} Full path to workflow state file
+ * Default workflow state schema
+ * @returns {Object} Default empty workflow state
  */
-function getStatePath(sessionId) {
-  const sid = sanitizeSessionId(sessionId || getSessionId());
-  return path.join(WORKFLOW_DIR, `${sid}.json`);
+function getDefaultState() {
+  return {
+    workflowType: null,       // See workflows.json for all workflow types
+    workflowSteps: [],        // Array of step names in order
+    currentStepIndex: -1,     // Index of current step (-1 = not started)
+    completedSteps: [],       // Array of completed step names
+    activePlan: null,         // Path to active plan file
+    todos: [],                // Snapshot of TaskCreate items
+    startedAt: null,          // ISO timestamp when workflow started
+    lastUpdatedAt: null,      // ISO timestamp of last update
+    metadata: {}              // Additional workflow-specific data
+  };
 }
 
 /**
- * Read state from per-session file
- * @param {string} [sessionId] - Override session ID
- * @returns {Object|null} State object or null
+ * Load workflow state from temp file
+ * @param {string} sessionId - Session identifier
+ * @returns {Object} Workflow state or default empty state
  */
-function readStateFile(sessionId) {
+function loadState(sessionId) {
+  if (!sessionId) return getDefaultState();
+
+  const statePath = getWorkflowPath(sessionId);
   try {
-    const filePath = getStatePath(sessionId);
-    if (!fs.existsSync(filePath)) return null;
-    const content = fs.readFileSync(filePath, 'utf-8');
-    return JSON.parse(content);
-  } catch {
-    return null;
+    if (!fs.existsSync(statePath)) return getDefaultState();
+    const data = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+    return { ...getDefaultState(), ...data };
+  } catch (e) {
+    return getDefaultState();
   }
 }
 
 /**
- * Write state atomically (write-to-temp-then-rename)
- * @param {Object} state - State to write
- * @param {string} [sessionId] - Override session ID
- * @returns {boolean} Success
+ * Save workflow state atomically to temp file
+ * Uses write-to-temp-then-rename pattern to prevent corruption
+ *
+ * @param {string} sessionId - Session identifier
+ * @param {Object} state - Workflow state to save
+ * @returns {boolean} Success status
  */
-function writeStateFile(state, sessionId) {
-  let tmpFile = null;
+function saveState(sessionId, state) {
+  if (!sessionId) return false;
+
+  ensureDir(WORKFLOW_DIR);
+  const statePath = getWorkflowPath(sessionId);
+  const tmpFile = statePath + '.' + Math.random().toString(36).slice(2);
+
   try {
-    ensureDir(WORKFLOW_DIR);
-    const filePath = getStatePath(sessionId);
-    tmpFile = filePath + '.' + Math.random().toString(36).slice(2);
-    fs.writeFileSync(tmpFile, JSON.stringify(state, null, 2));
-    fs.renameSync(tmpFile, filePath);
+    const stateToSave = {
+      ...state,
+      lastUpdatedAt: new Date().toISOString()
+    };
+    fs.writeFileSync(tmpFile, JSON.stringify(stateToSave, null, 2));
+    fs.renameSync(tmpFile, statePath);
     return true;
   } catch (e) {
-    // Clean up temp file on failure
-    try {
-      if (tmpFile) fs.unlinkSync(tmpFile);
-    } catch (_) {}
+    try { fs.unlinkSync(tmpFile); } catch (_) { /* ignore */ }
     return false;
   }
 }
 
 /**
- * Delete state file
- * @param {string} [sessionId] - Override session ID
+ * Initialize a new workflow
+ * @param {string} sessionId - Session identifier
+ * @param {Object} options - Workflow initialization options
+ * @param {string} options.workflowType - Type of workflow
+ * @param {string[]} options.workflowSteps - Ordered list of step names
+ * @param {string} [options.activePlan] - Path to active plan
+ * @param {Object} [options.metadata] - Additional metadata
+ * @returns {Object} Initialized workflow state
  */
-function deleteStateFile(sessionId) {
-  try {
-    const filePath = getStatePath(sessionId);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  } catch {
-    // Silent fail
-  }
-}
-
-// --- Public API (signatures unchanged for callers) ---
-
-/**
- * Validate state has v2.0 structure (sequence, currentStep).
- * Detects stale v1.x state files that use workflowSteps/currentStepIndex.
- * @param {Object} state - State object to validate
- * @returns {boolean} True if valid v2.0 state
- */
-function isValidState(state) {
-  return state
-    && Array.isArray(state.sequence)
-    && typeof state.currentStep === 'number';
-}
-
-/**
- * Load current workflow state
- * @returns {Object|null} Current state or null if none exists
- */
-function loadState() {
-  const state = readStateFile();
-  if (state && !isValidState(state)) {
-    // Stale v1.x state — clear and return null
-    deleteStateFile();
-    return null;
-  }
-  return state;
-}
-
-/**
- * Save workflow state
- * @param {Object} state - State object to save
- */
-function saveState(state) {
-  writeStateFile(state);
-}
-
-/**
- * Clear workflow state
- * @param {string} [sessionId] - Optional session ID (used by session-end.cjs)
- */
-function clearState(sessionId) {
-  deleteStateFile(sessionId);
-}
-
-/**
- * Create new workflow state
- * @param {Object} params - Workflow parameters
- * @returns {Object} Created state
- */
-function createState({ workflowId, workflowName, sequence, originalPrompt, commandMapping }) {
+function initWorkflow(sessionId, options) {
   const state = {
-    workflowId,
-    workflowName,
-    sequence,
-    commandMapping: commandMapping || {},
-    currentStep: 0,
-    completedSteps: [],
-    startTime: new Date().toISOString(),
-    originalPrompt: originalPrompt || '',
-    lastUpdated: new Date().toISOString(),
-    sessionId: getSessionId()
+    ...getDefaultState(),
+    workflowType: options.workflowType,
+    workflowSteps: options.workflowSteps || [],
+    currentStepIndex: 0,
+    activePlan: options.activePlan || null,
+    startedAt: new Date().toISOString(),
+    metadata: options.metadata || {}
   };
 
-  saveState(state);
+  saveState(sessionId, state);
   return state;
 }
 
 /**
- * Mark a step as completed
- * @param {string} stepId - Step ID to mark complete
- * @returns {Object|null} Updated state
+ * Mark a workflow step as complete and advance to next
+ * @param {string} sessionId - Session identifier
+ * @param {string} stepName - Name of completed step
+ * @returns {Object} Updated workflow state
  */
-function markStepComplete(stepId) {
-  const state = loadState();
-  if (!state) return null;
+function markStepComplete(sessionId, stepName) {
+  const state = loadState(sessionId);
 
-  if (!state.completedSteps.includes(stepId)) {
-    state.completedSteps.push(stepId);
+  if (!state.completedSteps.includes(stepName)) {
+    state.completedSteps.push(stepName);
   }
 
-  // Auto-advance to next step
-  const currentIdx = state.sequence.indexOf(stepId);
-  if (currentIdx !== -1 && currentIdx >= state.currentStep) {
-    state.currentStep = currentIdx + 1;
+  // Advance to next step if current step matches
+  const currentStep = state.workflowSteps[state.currentStepIndex];
+  if (currentStep === stepName && state.currentStepIndex < state.workflowSteps.length) {
+    state.currentStepIndex++;
   }
 
-  delete state.inProgressStep;
-  state.lastUpdated = new Date().toISOString();
-
-  // Check if workflow complete
-  if (state.currentStep >= state.sequence.length) {
-    clearState();
-    return null;
-  }
-
-  saveState(state);
+  saveState(sessionId, state);
   return state;
 }
 
 /**
- * Get current step info
- * @returns {Object|null} Current step details
+ * Get current step information
+ * @param {string} sessionId - Session identifier
+ * @returns {Object} Current step info
  */
-function getCurrentStepInfo() {
-  const state = loadState();
-  if (!state) return null;
-
-  const currentStepId = state.sequence[state.currentStep];
-  const cmd = state.commandMapping?.[currentStepId];
+function getCurrentStepInfo(sessionId) {
+  const state = loadState(sessionId);
 
   return {
-    stepId: currentStepId,
-    stepNumber: state.currentStep + 1,
-    totalSteps: state.sequence.length,
-    claudeCommand: cmd?.claude || `/${currentStepId}`,
-    remainingSteps: state.sequence.slice(state.currentStep),
+    workflowType: state.workflowType,
+    currentStep: state.workflowSteps[state.currentStepIndex] || null,
+    currentStepIndex: state.currentStepIndex,
+    totalSteps: state.workflowSteps.length,
     completedSteps: state.completedSteps,
-    workflowName: state.workflowName,
-    workflowId: state.workflowId,
-    commandMapping: state.commandMapping || {}
+    remainingSteps: state.workflowSteps.slice(state.currentStepIndex + 1),
+    activePlan: state.activePlan,
+    isComplete: state.currentStepIndex >= state.workflowSteps.length - 1 &&
+                state.completedSteps.includes(state.workflowSteps[state.workflowSteps.length - 1])
   };
 }
 
 /**
- * Build workflow continuation reminder
- * @returns {string|null} Reminder text or null if no active workflow
+ * Update todos snapshot in workflow state
+ * @param {string} sessionId - Session identifier
+ * @param {Array} todos - TaskCreate items to snapshot
+ * @returns {boolean} Success status
  */
-function buildContinuationReminder() {
-  const info = getCurrentStepInfo();
-  if (!info) return null;
+function updateTodos(sessionId, todos) {
+  const state = loadState(sessionId);
+  state.todos = todos || [];
+  return saveState(sessionId, state);
+}
 
-  const remainingDisplay = info.remainingSteps.map(step => {
-    const cmd = info.commandMapping?.[step];
-    return cmd?.claude || `/${step}`;
-  }).join(' \u2192 ');
+/**
+ * Clear workflow state for a session
+ * @param {string} sessionId - Session identifier
+ * @returns {boolean} Success status
+ */
+function clearState(sessionId) {
+  if (!sessionId) return false;
 
+  const statePath = getWorkflowPath(sessionId);
+  try {
+    if (fs.existsSync(statePath)) {
+      fs.unlinkSync(statePath);
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Check if workflow is active for a session
+ * @param {string} sessionId - Session identifier
+ * @returns {boolean} True if workflow is active
+ */
+function hasActiveWorkflow(sessionId) {
+  const state = loadState(sessionId);
+  return state.workflowType !== null && state.workflowSteps.length > 0;
+}
+
+/**
+ * Generate recovery context string for injection after compaction
+ * @param {string} sessionId - Session identifier
+ * @returns {string|null} Recovery context or null if no active workflow
+ */
+function getRecoveryContext(sessionId) {
+  const state = loadState(sessionId);
+
+  if (!state.workflowType) return null;
+
+  const info = getCurrentStepInfo(sessionId);
   const lines = [
-    '',
-    '## Active Workflow',
-    '',
-    `**Workflow:** ${info.workflowName}`,
-    `**Progress:** Step ${info.stepNumber}/${info.totalSteps}`,
-    `**Current Step:** \`${info.claudeCommand}\``,
-    `**Remaining:** ${remainingDisplay}`,
-    '',
-    '### Instructions (MUST FOLLOW)',
-    '',
-    `1. **CONTINUE** the workflow by executing: \`${info.claudeCommand}\``,
-    '2. After completing this step, proceed to the next step in sequence',
-    '3. Do NOT skip steps unless explicitly instructed by the user',
-    ''
+    `## Workflow Recovery Context`,
+    ``,
+    `**Active Workflow:** ${state.workflowType}`,
+    `**Current Step:** ${info.currentStep || 'None'} (${info.currentStepIndex + 1}/${info.totalSteps})`,
   ];
+
+  if (state.activePlan) {
+    lines.push(`**Active Plan:** ${state.activePlan}`);
+  }
+
+  if (info.completedSteps.length > 0) {
+    lines.push(`**Completed:** ${info.completedSteps.join(', ')}`);
+  }
+
+  if (info.remainingSteps.length > 0) {
+    lines.push(`**Remaining:** ${info.remainingSteps.join(' → ')}`);
+  }
+
+  if (state.todos.length > 0) {
+    lines.push(``, `**Pending Todos:**`);
+    state.todos
+      .filter(t => t.status !== 'completed')
+      .forEach(t => lines.push(`- [ ] ${t.content}`));
+  }
+
+  lines.push(``, `**Action Required:** Continue from "${info.currentStep}" step.`);
 
   return lines.join('\n');
 }
 
-/**
- * Get recovery context for post-compaction injection
- * @returns {string|null} Recovery context markdown or null
- */
-function getRecoveryContext() {
-  const state = loadState();
-  if (!state || !state.workflowId) return null;
-
-  const info = getCurrentStepInfo();
-  if (!info) return null;
-
-  const completed = state.completedSteps.map(s => {
-    const cmd = state.commandMapping?.[s];
-    return `  - [x] ${cmd?.claude || `/${s}`}`;
-  }).join('\n');
-
-  const remaining = info.remainingSteps.map(s => {
-    const cmd = state.commandMapping?.[s];
-    return `  - [ ] ${cmd?.claude || `/${s}`}`;
-  }).join('\n');
-
-  return [
-    '## Workflow Recovery',
-    '',
-    `**${state.workflowName}** (step ${info.stepNumber}/${info.totalSteps})`,
-    `Original prompt: "${state.originalPrompt}"`,
-    '',
-    '### Progress',
-    completed || '  (none)',
-    '',
-    '### Remaining',
-    remaining,
-    '',
-    `**Next:** Execute \`${info.claudeCommand}\``,
-    ''
-  ].join('\n');
-}
-
-/**
- * Check if user prompt indicates workflow completion/skip
- * @param {string} prompt - User prompt
- * @returns {string|null} Action: 'complete', 'skip', 'abort', or null
- */
-function detectWorkflowControl(prompt) {
-  const lowerPrompt = prompt.toLowerCase().trim();
-
-  // Abort patterns
-  if (/^(stop|abort|cancel|quit)\s*(workflow|the workflow)?$/.test(lowerPrompt)) {
-    return 'abort';
-  }
-
-  // Skip current step patterns
-  if (/^skip(\s+this)?(\s+step)?$/.test(lowerPrompt)) {
-    return 'skip';
-  }
-
-  // Complete current step patterns
-  if (/^(done|complete|finished|next)(\s+step)?$/.test(lowerPrompt)) {
-    return 'complete';
-  }
-
-  return null;
-}
-
-/**
- * Clean up legacy global state file if it exists
- * Call once during migration to remove old .claude/.workflow-state.json
- */
-function cleanupLegacyStateFile() {
-  try {
-    if (fs.existsSync(LEGACY_STATE_FILE)) {
-      fs.unlinkSync(LEGACY_STATE_FILE);
-    }
-  } catch {
-    // Silent fail
-  }
-}
-
-/**
- * Check if a workflow is currently active
- * @returns {boolean} True if workflow is active
- */
-function hasActiveWorkflow() {
-  const state = loadState();
-  return state !== null && Array.isArray(state.sequence) && state.sequence.length > 0;
-}
-
 module.exports = {
+  WORKFLOW_DIR,
+  getWorkflowPath,
+  getDefaultState,
   loadState,
   saveState,
-  clearState,
-  createState,
+  initWorkflow,
   markStepComplete,
   getCurrentStepInfo,
+  updateTodos,
+  clearState,
   hasActiveWorkflow,
-  buildContinuationReminder,
-  getRecoveryContext,
-  detectWorkflowControl,
-  cleanupLegacyStateFile,
-  // For testing
-  getStatePath,
-  LEGACY_STATE_FILE
+  getRecoveryContext
 };

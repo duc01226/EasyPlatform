@@ -1,11 +1,30 @@
 ---
 name: design-screenshot
-description: '[Design & Content] Create a design based on screenshot'
-argument-hint: [screenshot]
+version: 1.0.0
+description: '[Design] Create a design based on screenshot'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
 Think hard to plan & start designing follow exactly this screenshot:
 <screenshot>$ARGUMENTS</screenshot>
+
+> **Skill Variant:** Variant of design skills — recreate/implement from screenshot.
+
+## Quick Summary
+
+**Goal:** Analyze a screenshot and recreate the design as functional code.
+
+**Workflow:**
+1. **Analyze** — Process screenshot with vision capabilities
+2. **Research** — Run `ui-ux-pro-max` for matching design patterns
+3. **Implement** — Recreate the design as code using design subagent
+
+**Key Rules:**
+- Always activate `ui-ux-pro-max` FIRST for design intelligence
+- Match the screenshot as closely as possible
+- Use `ai-multimodal` for detailed screenshot analysis
 
 ## Required Skills (Priority Order)
 
@@ -28,16 +47,18 @@ Think hard to plan & start designing follow exactly this screenshot:
 5. Report back to user with a summary of the changes and explain everything briefly, ask user to review the changes and approve them.
 6. If user approves the changes, update the `./docs/design-guidelines.md` docs if needed.
 
-## IMPORTANT Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
-
 ## Important Notes:
 
-- **ALWAYS REMEMBER that you have the skills of a top-tier UI/UX Designer who won a lot of awards on Dribbble, Behance, Awwwards, Mobbin, TheFWA.**
+- **ALWAYS REMEBER that you have the skills of a top-tier UI/UX Designer who won a lot of awards on Dribbble, Behance, Awwwards, Mobbin, TheFWA.**
 - Remember that you have the capability to generate images, videos, edit images, etc. with ai-multimodal skill for image generation. Use them to create the design with real assets.
 - Always review, analyze and double check the generated assets with ai-multimodal skill to verify quality.
-- Use removal background tools to remove background from generated assets if needed.
+- Use `media-processing` skill (RMBG) to remove background from generated assets if needed.
 - Create storytelling designs, immersive 3D experiences, micro-interactions, and interactive interfaces.
 - Maintain and update `./docs/design-guidelines.md` docs if needed.
+
+---
+
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

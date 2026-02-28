@@ -1,86 +1,139 @@
 ---
 name: test-specs-docs
-description: "[Testing] Create or update EasyPlatform test specifications in docs/test-specs/{Module}/. Covers external memory-driven analysis, 4-priority test generation, comprehensive document structure with ERD and traceability. Triggers on "test specs", "test specifications", "test cases", "test scenarios", "QA documentation", "Given-When-Then", "BDD", "TDD", "coverage"."
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
+version: 1.1.0
+description: '[Documentation] Create or update test specifications in docs/test-specs/{Module}/. Use when asked to create test specs, write test cases, document test scenarios, or generate Given-When-Then specifications. Triggers on "test specs", "test specifications", "test cases", "test scenarios", "QA documentation", "Given-When-Then".'
+
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **Skill Variant:** Use this skill for **interactive test writing**. For autonomous test generation, use `tasks-test-generation`.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
-# EasyPlatform Test Specifications Documentation
+## Quick Summary
 
-Generate comprehensive test specifications with Given-When-Then format and code evidence.
+**Goal:** Generate comprehensive test specifications with Given-When-Then format and code evidence for project modules.
 
-## ⚠️ MUST READ References
+**Workflow:**
 
-**IMPORTANT: You MUST read these reference files for complete protocol. Do NOT skip.**
+1. **Context Gathering** — Identify module, read existing specs, gather code evidence
+2. **Write Test Specs** — Create test cases with priority, GWT steps, acceptance criteria, test data, evidence
+3. **Index Updates** — Update PRIORITY-INDEX.md and master README.md
 
-- **⚠️ MUST READ** `references/test-case-templates.md` — document structure, test case template, priority groups, analysis methodology
-- **⚠️ MUST READ** `.claude/skills/shared/bdd-gherkin-templates.md` — BDD/Gherkin format templates
-- **⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — validation checkpoints, confidence levels
+**Key Rules:**
+
+- Test case IDs follow `TC-[MODULE]-[FEATURE]-[NUM]` format
+- Every test case MUST reference actual source code (anti-hallucination)
+- MUST READ `references/test-spec-template.md` before executing
+- Verify IDs against PRIORITY-INDEX.md to avoid duplicates
+
+## Project Pattern Discovery
+
+Before implementation, search your codebase for project-specific patterns:
+
+- Search for: `test-specs`, `TC-`, test specifications
+- Look for: existing test spec folders, priority indexes, module test documents
+
+> **MANDATORY IMPORTANT MUST** Read the `integration-test-reference.md` companion doc for project-specific patterns and code examples.
+> If file not found, continue with search-based discovery above.
+
+# Test Specifications Documentation
+
+Generate comprehensive test specifications following project conventions with Given-When-Then format and code evidence.
+
+---
+
+## Prerequisites
+
+**MUST READ** `references/test-spec-template.md` before executing -- contains full module test spec template, Given-When-Then best practices, acceptance criteria format, evidence requirements, and complete example required by Phase 2.
 
 ## Output Structure
+
 ```
 docs/test-specs/
-  README.md                     # Master index
-  PRIORITY-INDEX.md             # Tests by P0-P3
-  INTEGRATION-TESTS.md          # Cross-module scenarios
-  VERIFICATION-REPORT.md        # Verification status
-  {Module}/README.md            # Module test specs
+  README.md              # Master index
+  PRIORITY-INDEX.md      # All tests by P0-P3
+  INTEGRATION-TESTS.md   # Cross-module scenarios
+  VERIFICATION-REPORT.md # Verification status
+  {Module}/README.md     # Module test specs
 ```
 
+---
+
 ## Test Case ID Format
+
 ```
 TC-[MODULE]-[FEATURE]-[NUM]
 ```
-Examples: `TC-TXT-SNP-001`, `TC-ACC-AUTH-001`
+
+**⚠️ MUST READ** `shared/references/module-codes.md` for module codes, feature codes, and TC ID formats.
+
+---
 
 ## Priority Classification
-| Priority | Level    | Description                    |
-| -------- | -------- | ------------------------------ |
-| **P0**   | Critical | Security, auth, data integrity |
-| **P1**   | High     | Core business workflows        |
-| **P2**   | Medium   | Secondary features, filters    |
-| **P3**   | Low      | UI enhancements, non-essential |
+
+| Priority        | Description                    | Guideline                                       |
+| --------------- | ------------------------------ | ----------------------------------------------- |
+| **P0** Critical | Security, auth, data integrity | If this fails, users can't work or data at risk |
+| **P1** High     | Core business workflows        | Core happy-path for business operations         |
+| **P2** Medium   | Secondary features             | Enhances but doesn't block core workflows       |
+| **P3** Low      | UI enhancements, non-essential | Nice-to-have polish                             |
+
+---
 
 ## Workflow
 
 ### Phase 1: Context Gathering
-1. Identify target module from user input or codebase search
-2. Read existing specs: `docs/test-specs/README.md`, `{Module}/README.md`, `PRIORITY-INDEX.md`
-3. Gather code evidence: Validate() methods, entity rules, [PlatformAuthorize], handler conditionals
 
-### Phase 2: Test Generation
-1. Build knowledge model using external memory-driven analysis (see `references/test-case-templates.md`)
-2. Generate test cases in 4 priority groups: Critical, High, Medium, Low
-3. Use mandatory document structure from references
-4. Include: Feature Overview, ERD, Test Cases, Traceability Matrix, Coverage Analysis
+1. **Identify target module** from user request or codebase search
+2. **Read existing specs**: `docs/test-specs/README.md`, `docs/test-specs/{Module}/README.md`, `PRIORITY-INDEX.md`
+3. **Gather code evidence**: Validation logic, business rules, authorization, edge cases
+
+### Phase 2: Write Test Specifications
+
+**⚠️ MUST READ:** `references/test-spec-template.md` for full module template, GWT best practices, and complete example.
+
+Each test case requires: Priority, Preconditions, Given-When-Then steps, Acceptance Criteria (success + failure), Test Data (JSON), Edge Cases, Evidence (controller + handler refs + code snippets), Related Files table.
 
 ### Phase 3: Index Updates
-- Update `PRIORITY-INDEX.md` with new test cases
-- Update master `README.md` with module links
 
-### Phase 4: Approval Gate
-Present test plan with coverage analysis for explicit approval before finalizing.
+1. Add new test cases to `PRIORITY-INDEX.md` in appropriate priority section
+2. Ensure master `docs/test-specs/README.md` links to module
 
-## Evidence Requirements
-Every test case MUST include:
-1. Controller reference with authorization policies
-2. Handler/Command reference with line numbers
-3. Code snippet in `<details>` block
-4. Related files table (Backend/Frontend layers)
+---
+
+## Anti-Hallucination Protocols
+
+- Every test case MUST reference actual source code
+- Read validation logic before writing acceptance criteria
+- Verify authorization policies from controller attributes
+- Verify line numbers are current using Grep
+- Read PRIORITY-INDEX.md before assigning new IDs - never duplicate
+
+---
 
 ## Quality Checklist
-- [ ] IDs follow TC-[MODULE]-[FEATURE]-[NUM] format
+
+- [ ] Test case IDs follow TC-[MODULE]-[FEATURE]-[NUM] format
 - [ ] All IDs unique (verified against PRIORITY-INDEX.md)
+- [ ] Priority assigned per classification guidelines
 - [ ] Given-When-Then format for all test steps
-- [ ] Both success and failure acceptance criteria
+- [ ] Acceptance criteria include success AND failure cases
 - [ ] Test data in JSON format
-- [ ] Edge cases documented
+- [ ] Edge cases with expected outcomes
 - [ ] Code evidence with file paths and line numbers
+- [ ] Code snippets in `<details>` blocks
+- [ ] Related files table (Backend/Frontend layers)
 - [ ] PRIORITY-INDEX.md updated
+- [ ] Links to business-features docs
 
+## References
 
-## IMPORTANT Task Planning Notes
+| File                               | Contents                                                                                                            |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `references/test-spec-template.md` | Full module template, GWT best practices, acceptance criteria format, evidence requirements, complete Kudos example |
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+---
+
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

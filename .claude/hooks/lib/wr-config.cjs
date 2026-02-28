@@ -30,36 +30,38 @@ function getDefaultConfig() {
     workflows: {
       feature: {
         name: 'Feature Implementation',
-        whenToUse: 'User wants to implement, add, create, or build a new feature or functionality.',
-        whenNotToUse: 'User is fixing a bug, refactoring, or investigating.',
+        whenToUse: 'User wants to implement new functionality, add a feature, create a component, build a capability',
+        whenNotToUse: 'Bug fixes, documentation, test-only tasks, feature requests/ideas',
         sequence: ['plan', 'cook', 'test', 'code-review'],
         confirmFirst: true
       },
       bugfix: {
         name: 'Bug Fix',
-        whenToUse: 'User reports a bug, error, crash, or broken functionality.',
-        whenNotToUse: 'User wants new features or refactoring.',
+        whenToUse: 'User reports a bug, error, crash, or something not working; wants to fix/debug',
+        whenNotToUse: 'New feature implementation, code improvement, investigation-only',
         sequence: ['scout', 'investigate', 'debug', 'plan', 'fix', 'code-review', 'test'],
         confirmFirst: false
       },
       documentation: {
         name: 'Documentation',
-        whenToUse: 'User wants to write, update, or improve documentation.',
-        whenNotToUse: 'User wants code changes or bug fixes.',
+        whenToUse: 'User wants to create, update, or improve documentation, READMEs, or code comments',
+        whenNotToUse: 'Feature implementation, bug fixes, test writing',
         sequence: ['scout', 'investigate', 'docs-update', 'watzup'],
         confirmFirst: false
       }
     },
     commandMapping: {
-      scout: { claude: '/scout' },
-      investigate: { claude: '/investigate' },
       plan: { claude: '/plan' },
       cook: { claude: '/cook' },
       test: { claude: '/test' },
+      'test-initial': { claude: '/test' },
       fix: { claude: '/fix' },
       debug: { claude: '/debug' },
-      'code-review': { claude: '/review:codebase' },
-      'docs-update': { claude: '/docs:update' },
+      scout: { claude: '/scout' },
+      investigate: { claude: '/feature-investigation' },
+      'code-review': { claude: '/code-review' },
+      'code-simplifier': { claude: '/code-simplifier' },
+      'docs-update': { claude: '/docs-update' },
       watzup: { claude: '/watzup' }
     }
   };

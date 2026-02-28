@@ -1,11 +1,30 @@
 ---
 name: design-video
-description: '[Design & Content] Create a design based on video'
-argument-hint: [video]
+version: 1.0.0
+description: '[Design] Create a design based on video'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
 Think hard to plan & start designing follow exactly this video:
 <video>$ARGUMENTS</video>
+
+> **Skill Variant:** Variant of design skills — recreate/implement from video.
+
+## Quick Summary
+
+**Goal:** Analyze a video recording and recreate the UI design and interactions as functional code.
+
+**Workflow:**
+1. **Analyze** — Process video with vision capabilities to identify UI patterns
+2. **Research** — Run `ui-ux-pro-max` for matching design patterns
+3. **Implement** — Recreate design and interactions as code
+
+**Key Rules:**
+- Always activate `ui-ux-pro-max` FIRST for design intelligence
+- Capture both static layout AND interaction patterns from video
+- Use `ai-multimodal` for video analysis
 
 ## Required Skills (Priority Order)
 
@@ -14,7 +33,7 @@ Think hard to plan & start designing follow exactly this video:
 
 **Ensure token efficiency while maintaining high quality.**
 
-## Workflow
+## Workflow:
 
 1. Use `ai-multimodal` skills to describe super details of the video: be specific about describing every element, every interaction, every animation, every transition, every color, every font, every border, every spacing, every size, every shape, every texture, every material, every light, every shadow, every reflection, every refraction, every blur, every glow, every image, background transparency, etc.
     - **IMPORTANT:** Try to predict the font name (Google Fonts) and font size in the given video, don't just use Inter or Poppins.
@@ -28,16 +47,18 @@ Think hard to plan & start designing follow exactly this video:
 5. Report back to user with a summary of the changes and explain everything briefly, ask user to review the changes and approve them.
 6. If user approves the changes, update the `./docs/design-guidelines.md` docs if needed.
 
-## IMPORTANT Task Planning Notes
+## Important Notes:
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
-
-## Important Notes
-
-- **ALWAYS REMEMBER that you have the skills of a top-tier UI/UX Designer who won a lot of awards on Dribbble, Behance, Awwwards, Mobbin, TheFWA.**
+- **ALWAYS REMEBER that you have the skills of a top-tier UI/UX Designer who won a lot of awards on Dribbble, Behance, Awwwards, Mobbin, TheFWA.**
 - Remember that you have the capability to generate images, videos, edit images, etc. with ai-multimodal skill for image generation. Use them to create the design with real assets.
 - Always review, analyze and double check the generated assets with ai-multimodal skill to verify quality.
-- Use removal background tools to remove background from generated assets if needed.
+- Use `media-processing` skill (RMBG) to remove background from generated assets if needed.
 - Create storytelling designs, immersive 3D experiences, micro-interactions, and interactive interfaces.
 - Maintain and update `./docs/design-guidelines.md` docs if needed.
+
+---
+
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

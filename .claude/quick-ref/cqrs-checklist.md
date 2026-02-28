@@ -1,6 +1,6 @@
 # CQRS Quick Checklist
 
-> One-page reference for CQRS implementation in EasyPlatform
+> One-page reference for CQRS implementation in BravoSUITE
 
 ## File Organization Rule
 

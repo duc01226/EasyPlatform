@@ -1,0 +1,32 @@
+# Test .ckignore fixture
+# Directories to ignore
+node_modules/
+dist/
+.git/
+coverage/
+
+# Build artifacts
+*.dll
+*.exe
+*.pdb
+bin/
+obj/
+
+# IDE files
+.vs/
+.idea/
+*.suo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files (should trigger privacy-block if Read)
+# These are commented out for test purposes
+# .env
+# .env.local
+# secrets.yaml
+
+# Test patterns
+*.test.tmp
+*.mock.json

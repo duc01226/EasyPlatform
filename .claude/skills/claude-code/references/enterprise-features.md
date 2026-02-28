@@ -151,7 +151,7 @@ Deploy via AWS Bedrock:
 {
   "provider": "bedrock",
   "region": "us-east-1",
-  "model": "anthropic.claude-sonnet-4-5",
+  "model": "anthropic.sonnet",
   "credentials": {
     "accessKeyId": "${AWS_ACCESS_KEY_ID}",
     "secretAccessKey": "${AWS_SECRET_ACCESS_KEY}"
@@ -168,7 +168,7 @@ Deploy via GCP Vertex AI:
   "provider": "vertex",
   "project": "company-project",
   "location": "us-central1",
-  "model": "claude-sonnet-4-5",
+  "model": "sonnet",
   "credentials": "/path/to/service-account.json"
 }
 ```

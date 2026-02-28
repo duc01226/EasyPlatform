@@ -1,0 +1,51 @@
+{
+  "settings": {
+    "enabled": true,
+    "showDetection": true,
+    "quickPrefix": "quick:"
+  },
+  "workflows": [
+    {
+      "id": "feature",
+      "name": "Feature Implementation",
+      "priority": 1,
+      "triggerPatterns": ["\\bimplement\\b", "\\badd\\b.*feature", "\\bcreate\\b.*new", "\\bbuild\\b"],
+      "excludePatterns": ["\\bexplain\\b", "\\bhow\\s+does\\b"],
+      "sequence": ["/plan", "/cook", "/test"]
+    },
+    {
+      "id": "bugfix",
+      "name": "Bug Fix",
+      "priority": 2,
+      "triggerPatterns": ["\\bbug\\b", "\\bfix\\b", "\\berror\\b", "\\bnot\\s+working\\b"],
+      "excludePatterns": [],
+      "sequence": ["/scout", "/debug", "/fix", "/test"]
+    },
+    {
+      "id": "refactor",
+      "name": "Code Refactoring",
+      "priority": 3,
+      "triggerPatterns": ["\\brefactor\\b", "\\brestructure\\b", "\\bclean\\s*up\\b"],
+      "excludePatterns": [],
+      "sequence": ["/plan", "/code", "/test", "/code-review"]
+    },
+    {
+      "id": "investigation",
+      "name": "Code Investigation",
+      "priority": 4,
+      "triggerPatterns": ["\\bhow\\s+does\\b", "\\bexplain\\b", "\\bwhere\\s+is\\b", "\\binvestigate\\b"],
+      "excludePatterns": [],
+      "sequence": ["/scout", "/investigate"]
+    }
+  ],
+  "commandMapping": {
+    "/plan": ["plan"],
+    "/cook": ["cook", "code", "implement"],
+    "/test": ["test"],
+    "/scout": ["scout", "investigate"],
+    "/debug": ["debug"],
+    "/fix": ["fix"],
+    "/code": ["code"],
+    "/code-review": ["code-review", "review"]
+  }
+}

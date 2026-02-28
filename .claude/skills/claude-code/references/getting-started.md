@@ -186,7 +186,7 @@ project/
 
 # Try common workflows
 /cook implement feature X
-/fix-fast bug in Y
+/fix:fast bug in Y
 /test
 ```
 

@@ -55,47 +55,47 @@ claude "analyze the changes in PR #42"
 ## Documentation Management
 
 ```bash
-/docs-init                    # Create initial docs structure
-/docs-update                  # Update all docs based on codebase
-/docs-summarize auth security # Focused documentation update
+/docs:init                    # Create initial docs structure
+/docs:update                  # Update all docs based on codebase
+/docs:summarize auth security # Focused documentation update
 ```
 
 ## Git Operations
 
 ```bash
-/commit                        # Stage and commit
-/git-cp                        # Stage, commit, and push
-/git-pr feature-branch main    # Create pull request from feature-branch to main
+/git-cp                        # Stage and commit
+/git:cp                        # Stage, commit, and push
+/git:pr feature-branch main    # Create pull request from feature-branch to main
 ```
 
 ## Design & Content
 
 **UI/UX design:**
 ```bash
-/design-fast create landing page for SaaS product
-/design-good build immersive dashboard with data viz
-/design-screenshot analyze this design and suggest improvements
+/design:fast create landing page for SaaS product
+/design:good build immersive dashboard with data viz
+/design:screenshot analyze this design and suggest improvements
 ```
 
 **Content creation:**
 ```bash
-/content-good write product description for new feature
-/content-fast create blog post about our API
-/content-cro optimize landing page copy for conversions
+/content:good write product description for new feature
+/content:fast create blog post about our API
+/content:cro optimize landing page copy for conversions
 ```
 
 ## Project Initialization
 
 ```bash
-/bootstrap-auto create Next.js app with auth and database
-/bootstrap --fast quick React app with TypeScript
+/bootstrap:auto create Next.js app with auth and database
+/bootstrap:auto:fast quick React app with TypeScript
 ```
 
 ## Advanced Workflows
 
 **Codebase analysis:**
 ```bash
-/review-codebase analyze authentication implementation
+/code-review analyze authentication implementation
 /scout-ext find all payment-related files
 ```
 
@@ -108,12 +108,11 @@ claude "analyze the changes in PR #42"
 
 **Payment integrations:**
 ```bash
-/integrate-sepay add Vietnamese payment gateway
-/integrate-polar implement subscription billing
+/payment-integration add Vietnamese payment gateway
 ```
 
 **Skill management:**
 ```bash
-/skill-create payment-processing  # Create new skill
-/skill-optimize frontend-dev      # Improve existing skill
+/skill:create payment-processing  # Create new skill
+/skill:optimize frontend-dev      # Improve existing skill
 ```

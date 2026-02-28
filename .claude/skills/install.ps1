@@ -584,15 +584,15 @@ function Install-NodeDeps {
     # Install local npm packages for skills
     Write-Info "Installing local npm packages for skills..."
 
-    # test-ui (browser automation via Puppeteer)
-    $testUiPath = Join-Path $ScriptDir "test-ui\scripts"
-    $testUiPackageJson = Join-Path $testUiPath "package.json"
-    if ((Test-Path $testUiPath) -and (Test-Path $testUiPackageJson)) {
-        Write-Info "Installing test-ui dependencies..."
-        Push-Location $testUiPath
+    # chrome-devtools
+    $chromeDevToolsPath = Join-Path $ScriptDir "chrome-devtools\scripts"
+    $chromePackageJson = Join-Path $chromeDevToolsPath "package.json"
+    if ((Test-Path $chromeDevToolsPath) -and (Test-Path $chromePackageJson)) {
+        Write-Info "Installing chrome-devtools dependencies..."
+        Push-Location $chromeDevToolsPath
         npm install --quiet
         Pop-Location
-        Write-Success "test-ui dependencies installed"
+        Write-Success "chrome-devtools dependencies installed"
     }
 
     # sequential-thinking
@@ -628,15 +628,59 @@ function Install-NodeDeps {
         Write-Success "markdown-novel-viewer dependencies installed"
     }
 
-    # kanban (gray-matter)
-    $kanbanPath = Join-Path $ScriptDir "kanban"
-    $kanbanPackageJson = Join-Path $kanbanPath "package.json"
-    if ((Test-Path $kanbanPath) -and (Test-Path $kanbanPackageJson)) {
-        Write-Info "Installing kanban dependencies..."
-        Push-Location $kanbanPath
+    # plans-kanban (gray-matter)
+    $plansKanbanPath = Join-Path $ScriptDir "plans-kanban"
+    $plansKanbanPackageJson = Join-Path $plansKanbanPath "package.json"
+    if ((Test-Path $plansKanbanPath) -and (Test-Path $plansKanbanPackageJson)) {
+        Write-Info "Installing plans-kanban dependencies..."
+        Push-Location $plansKanbanPath
         npm install --quiet
         Pop-Location
-        Write-Success "kanban dependencies installed"
+        Write-Success "plans-kanban dependencies installed"
+    }
+
+    # markdown-to-pdf (md-to-pdf, gray-matter)
+    $mdToPdfPath = Join-Path $ScriptDir "markdown-to-pdf"
+    $mdToPdfPackageJson = Join-Path $mdToPdfPath "package.json"
+    if ((Test-Path $mdToPdfPath) -and (Test-Path $mdToPdfPackageJson)) {
+        Write-Info "Installing markdown-to-pdf dependencies..."
+        Push-Location $mdToPdfPath
+        npm install --quiet
+        Pop-Location
+        Write-Success "markdown-to-pdf dependencies installed"
+    }
+
+    # markdown-to-docx (markdown-docx, gray-matter)
+    $mdToDocxPath = Join-Path $ScriptDir "markdown-to-docx"
+    $mdToDocxPackageJson = Join-Path $mdToDocxPath "package.json"
+    if ((Test-Path $mdToDocxPath) -and (Test-Path $mdToDocxPackageJson)) {
+        Write-Info "Installing markdown-to-docx dependencies..."
+        Push-Location $mdToDocxPath
+        npm install --quiet
+        Pop-Location
+        Write-Success "markdown-to-docx dependencies installed"
+    }
+
+    # docx-to-markdown (mammoth, turndown, turndown-plugin-gfm)
+    $docxToMdPath = Join-Path $ScriptDir "docx-to-markdown"
+    $docxToMdPackageJson = Join-Path $docxToMdPath "package.json"
+    if ((Test-Path $docxToMdPath) -and (Test-Path $docxToMdPackageJson)) {
+        Write-Info "Installing docx-to-markdown dependencies..."
+        Push-Location $docxToMdPath
+        npm install --quiet
+        Pop-Location
+        Write-Success "docx-to-markdown dependencies installed"
+    }
+
+    # pdf-to-markdown (@opendocsg/pdf2md)
+    $pdfToMdPath = Join-Path $ScriptDir "pdf-to-markdown"
+    $pdfToMdPackageJson = Join-Path $pdfToMdPath "package.json"
+    if ((Test-Path $pdfToMdPath) -and (Test-Path $pdfToMdPackageJson)) {
+        Write-Info "Installing pdf-to-markdown dependencies..."
+        Push-Location $pdfToMdPath
+        npm install --quiet
+        Pop-Location
+        Write-Success "pdf-to-markdown dependencies installed"
     }
 
     # Optional: Shopify CLI (ask user unless auto-confirming)

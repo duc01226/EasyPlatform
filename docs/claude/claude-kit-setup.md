@@ -1,18 +1,109 @@
-# Claude Kit Setup - Comprehensive Guide
+# Claude Kit Setup - Comprehensive Documentation
 
-> Complete documentation for the EasyPlatform Claude Code Kit configuration, hooks, skills, agents, learning system, and workflow orchestration.
+> **DEPRECATED:** This document has been split into modular documentation. Use the new docs:
+>
+> - [hooks/README.md](./hooks/README.md) - Hook system overview
+> - [hooks/README.md](./hooks/README.md) - Hooks overview
+> - [configuration/README.md](./configuration/README.md) - Configuration files
+> - [skills/README.md](./skills/README.md) - Skills catalog (includes all migrated commands)
+>
+> This file is kept for reference but may be removed in future updates.
 
-## Executive Summary
+---
 
-The `.claude/` directory contains a sophisticated Claude Code Kit that transforms Claude from a basic code assistant into an intelligent, self-improving development partner. Key capabilities:
+> BravoSUITE's advanced Claude Code configuration with workflow automation, lessons system, and context-aware AI capabilities.
 
-- **Learning System**: Simple `/learn` command that appends lessons to `docs/lessons.md`, injected into sessions by `lessons-injector.cjs`
-- **18 Specialized Agents**: Role-specific subagents for scouting, planning, debugging, reviewing, etc.
-- **150+ Skills**: Domain-specific capabilities from backend development to AI prompting
-- **Workflow Orchestration**: Intent detection with multilingual support, automatic workflow routing, and auto-checkpoints
-- **Notification System**: Multi-provider alerts (Discord, Slack, Telegram) for task completion
-- **Todo Enforcement**: Ensures planned, structured task execution
-- **Memory Persistence**: Cross-session learning via `MEMORY.md` and `lessons.md`
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Quick Start (5 Minutes)](#quick-start-5-minutes)
+3. [Directory Structure](#directory-structure)
+4. [Configuration Files](#configuration-files)
+5. [Hook System](#hook-system)
+6. [Workflow Automation](#workflow-automation)
+7. [Lessons System](#lessons-system)
+8. [Skills Catalog](#skills-catalog)
+9. [Agents](#agents)
+10. [Commands Reference](#commands-reference)
+11. [Output Styles (Coding Levels)](#output-styles-coding-levels)
+12. [Long-Running State Tracking](#long-running-state-tracking)
+13. [System Integration Flow](#system-integration-flow)
+14. [Troubleshooting](#troubleshooting)
+
+---
+
+## Overview
+
+The `.claude` directory contains a sophisticated Claude Code configuration that transforms Claude from a basic AI assistant into a workflow-aware development partner. Key capabilities:
+
+| Capability                  | Description                                          |
+| --------------------------- | ---------------------------------------------------- |
+| **Lessons System**          | Learns from human feedback via `/learn` skill        |
+| **Workflow Automation**     | Auto-detects intent and follows structured workflows |
+| **Context Persistence**     | Survives context compaction via checkpoints          |
+| **Coding Level Adaptation** | Adjusts output style to developer experience level   |
+| **Domain-Aware Context**    | Injects relevant patterns based on file types        |
+
+### Design Principles
+
+- **Non-blocking**: All hooks exit 0 even on errors
+- **Privacy-first**: Metadata only, no stdout/stderr content stored
+- **Atomic operations**: File locking and write-temp-rename patterns
+- **Graceful degradation**: Missing modules don't crash the system
+
+---
+
+## Quick Start (5 Minutes)
+
+### Prerequisites
+
+- Claude Code CLI installed (`npm i -g @anthropic-ai/claude-code`)
+- Node.js 18+ (for hooks)
+- Git repository initialized
+
+### Step 1: Copy Configuration
+
+```bash
+# Required directories
+cp -r .claude/ your-project/.claude/
+
+# Required root files
+cp CLAUDE.md your-project/
+```
+
+### Step 2: Install Dependencies
+
+```bash
+cd your-project/.claude/hooks
+npm install  # If package.json exists
+```
+
+### Step 3: Verify Setup
+
+```bash
+# Test hooks are working
+node .claude/hooks/verify-hooks.cjs
+
+# Start Claude Code
+claude
+```
+
+### Step 4: Customize
+
+1. Edit `.claude/.ck.json` for project settings (coding level, assertions)
+2. Review `.claude/settings.json` for permissions
+3. Add project-specific assertions to `.ck.json`
+
+### What You Get
+
+| Feature            | Enabled By                         | Description                                |
+| ------------------ | ---------------------------------- | ------------------------------------------ |
+| Workflow detection | workflow-router.cjs                | Auto-detect feature/bugfix/refactor intent |
+| Context injection  | *-context.cjs hooks                | Domain-specific patterns for C#/TS/SCSS    |
+| Lessons            | lessons-injector.cjs               | Inject learned lessons into context        |
+| Todo enforcement   | edit-enforcement.cjs, skill-enforcement.cjs | Block impl without planning                |
+| File protection    | scout-block.cjs, privacy-block.cjs | Prevent access to .git, .env               |
+| Output adaptation  | session-init.cjs                   | Adjust verbosity to coding level           |
 
 ---
 
@@ -20,591 +111,354 @@ The `.claude/` directory contains a sophisticated Claude Code Kit that transform
 
 ```
 .claude/
-├── settings.json           # Main configuration (permissions, hooks, plugins)
-├── settings.local.json     # Developer-specific overrides (gitignored)
-├── settings.local.json.example # Template for local settings
-├── workflows.json          # Workflow definitions with multilingual triggers
-├── .ck.json               # Claude Kit project-specific settings
 ├── agents/                 # 18 specialized subagent definitions
-│   ├── scout.md           # Codebase exploration
-│   ├── planner.md         # Implementation planning
-│   ├── code-reviewer.md   # Code quality assessment
-│   ├── debugger.md        # Issue investigation
-│   └── ...                # 14 more agents
-├── config/                 # Configuration templates
-│   ├── README.md          # Directory documentation
-│   ├── release-notes-template.yaml  # Release notes structure
-│   ├── skill-template.md  # Template for new skills
-│   └── agent-template.md  # Template for new agents
-├── hooks/                  # Event-driven processing
-│   ├── auto-fix-trigger.cjs # Build/test failure escalation
-│   ├── lessons-injector.cjs # Inject lessons into context
-│   ├── pattern-learner.cjs  # Detect /learn commands
-│   ├── session-init.cjs   # Session initialization
-│   ├── workflow-router.cjs # Intent detection
-│   ├── todo-enforcement.cjs # Task tracking + plan gate
-│   ├── tool-output-swap.cjs # External memory swap hook
-│   ├── config/            # Hook configurations
-│   │   └── swap-config.json # Swap thresholds and limits
-│   ├── notifications/     # Multi-provider notification system
-│   │   ├── notify.cjs     # Main router
-│   │   ├── lib/
-│   │   │   ├── env-loader.cjs  # .env cascade loader
-│   │   │   └── sender.cjs      # HTTP with throttling
-│   │   └── providers/
-│   │       ├── discord.cjs
-│   │       ├── slack.cjs
-│   │       └── telegram.cjs
-│   └── lib/               # Shared utilities
-│       ├── failure-state.cjs      # Build/test failure tracking
-│       ├── lessons-writer.cjs     # Append-only lesson capture
-│       └── swap-engine.cjs        # External memory swap engine
-├── skills/                 # 70+ capability modules
-│   ├── SKILL.md files     # Individual skill definitions
-│   └── references/        # Skill reference documentation
-├── (lessons.md moved to docs/lessons.md)
+│   ├── planner.md         # Research and planning agent
+│   ├── code-reviewer.md   # Code review agent
+│   ├── code-simplifier.md # Post-implementation cleanup agent
+│   ├── debugger.md        # Debugging specialist
+│   └── ...
+├── commands/               # 60+ slash commands
+│   ├── plan.md            # /plan - Create implementation plans
+│   ├── plan/hard.md       # /plan-hard - Deep research planning
+│   ├── plan/parallel.md   # /plan-parallel - Parallel-executable phases
+│   ├── plan/validate.md   # /plan-validate - Validate plan with interview
+│   ├── cook.md            # /cook - Implement features
+│   ├── fix.md             # /fix - Fix bugs
+│   ├── fix/hard.md        # /fix-hard - Complex issue resolution
+│   ├── fix/test.md        # /fix-test - Test suite fixes
+│   ├── fix/ci.md          # /fix-ci - CI/CD pipeline fixes
+│   ├── review/post-task.md # /review-post-task - Two-pass code review
+│   └── ...
+├── hooks/                  # 35 lifecycle event handlers
+│   ├── session-init.cjs   # SessionStart: Initialize session context
+│   ├── workflow-router.cjs # UserPromptSubmit: Detect workflows
+│   ├── lessons-injector.cjs # UserPromptSubmit/PreToolUse: Inject lessons
+│   ├── init-reference-docs.cjs # UserPromptSubmit: Scaffold companion docs
+│   ├── edit-enforcement.cjs # PreToolUse: Block edits without todos
+│   ├── skill-enforcement.cjs # PreToolUse: Block impl skills without todos
+│   ├── todo-tracker.cjs   # PostToolUse: Track todo usage
+│   ├── verify-hooks.cjs   # Utility: Validate all hooks
+│   ├── lib/               # Shared hook utilities
+│   │   ├── edit-state.cjs # Edit state tracking
+│   │   ├── swap-engine.cjs # External Memory Swap engine
+│   │   ├── workflow-state.cjs # Persistent workflow state
+│   │   ├── todo-state.cjs # Todo enforcement state management
+│   │   └── ...
+│   └── tests/             # Hook test files (5 tests)
+│       ├── test-scout-block.js
+│       ├── test-privacy-block.js
+│       └── ...
+├── lessons.md             # Learned lessons (human-readable)
+├── output-styles/          # 6 coding level definitions
+│   ├── coding-level-0-eli5.md
+│   ├── coding-level-4-lead.md  # Tech Lead mode
+│   └── ...
 ├── scripts/                # Utility scripts
-│   ├── resolve_env.py     # Environment resolution
+│   ├── set-active-plan.cjs
 │   ├── generate_catalogs.py
 │   └── ...
-└── workflows/              # Workflow guidelines
-    └── development-rules.md
+├── skills/                 # 70+ skill definitions
+│   ├── debug/
+│   ├── code-review/
+│   ├── planning/
+│   └── ...
+├── settings.json           # Main Claude Code settings
+├── .ck.json               # Project-specific config (coding level, assertions)
+├── workflows.json         # Workflow automation definitions (v1.2.0)
+├── statusline.cjs         # Cross-platform Node.js statusline
+├── statusline.sh          # Bash statusline (macOS/Linux)
+└── statusline.ps1         # PowerShell statusline (Windows)
 ```
 
 ---
 
-## Learning System
+## Configuration Files
 
-Simple manual learning mechanism for cross-session knowledge persistence.
+### settings.json
 
-### How It Works
-
-1. **User teaches:** `/learn <instruction>` or "remember this/that"
-2. **Hook saves:** `pattern-learner.cjs` (UserPromptSubmit) appends to `docs/lessons.md`
-3. **Hook injects:** `lessons-injector.cjs` (UserPromptSubmit + PreToolUse:Edit|Write|MultiEdit) injects lessons.md as system-reminder
-
-### Files
-
-- `docs/lessons.md` - Append-only lesson log
-- `.claude/hooks/pattern-learner.cjs` - Detects /learn commands, writes lessons
-- `.claude/hooks/lessons-injector.cjs` - Injects lessons into context
-- `.claude/hooks/lib/lessons-writer.cjs` - `appendLesson()` utility
-
-### Lesson Format
-
-```markdown
-## Behavioral Lessons
-- [2026-02-24] INIT: Always verify BEM classes on every template element after frontend edits
-- [2026-02-24] INIT: Check base class hierarchy -- extend AppBaseComponent, not PlatformComponent
-
-## Process Improvements
-(manually added during retrospectives)
-```
-
----
-
-## Hooks System
-
-### Hook Architecture Diagram
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          HOOK LIFECYCLE FLOW                                 │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ SESSION START                                                        │    │
-│  │  ├── session-init.cjs ──────────► Set CK_* env vars, detect project │    │
-│  │  ├── session-resume.cjs ────────► Restore todos after compact       │    │
-│  │  └── lessons-injector.cjs ─────► Inject lessons from lessons.md    │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                      │                                       │
-│                                      ▼                                       │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ USER PROMPT SUBMIT                                                   │    │
-│  │  ├── workflow-router.cjs ───────► Detect intent, route workflow     │    │
-│  │  ├── dev-rules-reminder.cjs ───► Inject development rules           │    │
-│  │  └── pattern-learner.cjs ──────► Detect /learn & implicit patterns  │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                      │                                       │
-│                                      ▼                                       │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ PRE TOOL USE (Before execution)                                      │    │
-│  │  ├── todo-enforcement.cjs ─────► Block /cook without todos          │    │
-│  │  ├── scout-block.cjs ──────────► Prevent wasteful queries           │    │
-│  │  ├── privacy-block.cjs ────────► Filter sensitive files             │    │
-│  │  └── *-context.cjs (4 hooks) ──► Inject domain patterns on edit:    │    │
-│  │       ├── backend-csharp-context.cjs     (.cs files)                │    │
-│  │       ├── frontend-typescript-context.cjs (.ts/.tsx)                │    │
-│  │       ├── design-system-context.cjs      (UI work)                  │    │
-│  │       └── scss-styling-context.cjs       (.scss files)              │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                      │                                       │
-│                                      ▼                                       │
-│                            [TOOL EXECUTION]                                  │
-│                                      │                                       │
-│                                      ▼                                       │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ POST TOOL USE (After execution)                                      │    │
-│  │  ├── todo-tracker.cjs ─────────► Track TodoWrite changes            │    │
-│  │  ├── post-edit-prettier.cjs ──► Auto-format edited files            │    │
-│  │  ├── workflow-step-tracker.cjs ► Track workflow progress            │    │
-│  │  └── auto-fix-trigger.cjs ───► Detect build/test failures (3-tier) │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                      │                                       │
-│                                      ▼                                       │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ PRE COMPACT (Before context compaction)                              │    │
-│  │  ├── write-compact-marker.cjs ─► Mark compaction point              │    │
-│  │  ├── save-context-memory.cjs ──► Persist todos before compact       │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                      │                                       │
-│                                      ▼                                       │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ NOTIFICATION (Task completion)                                       │    │
-│  │  └── notify.cjs ───────────────► Send Discord/Slack/Telegram alert  │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                      │                                       │
-│                                      ▼                                       │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ SESSION END (Session termination)                                    │    │
-│  │  └── session-end.cjs ────────► Capture failure lessons, cleanup     │    │
-│  └─────────────────────────────────────────────────────────────────────┘    │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### Hook Quick Reference
-
-| Hook | Count | Key Handlers |
-|------|-------|--------------|
-| SessionStart | 3 | session-init, session-resume, root-deps-check |
-| UserPromptSubmit | 4 | workflow-router, dev-rules-reminder, pattern-learner, lessons-injector |
-| PreToolUse | 16 | search-before-code, lessons-injector, todo-enforcement, code-review-rules-injector, cross-platform-bash, scout-block, privacy-block, project-boundary, 5× context injectors, role-context-injector, figma-context-extractor, artifact-path-resolver, notify |
-| PostToolUse | 10 | todo-tracker, edit-complexity-tracker, post-edit-rule-check, prettier, workflow-step-tracker, tool-output-swap, bash-cleanup, compact-suggestion, ownership-tracker, auto-fix-trigger |
-| PreCompact | 2 | write-compact-marker, save-context-memory |
-| Notification | 1 | notify.cjs (Discord/Slack/Telegram) |
-| SessionEnd | 1 | session-end.cjs (failure lessons, cleanup) |
-| Stop | 1 | notify.cjs (send alert on stop) |
-| SubagentStart | 1 | subagent-init.cjs (context inheritance) |
-| **Total** | **~40** | Across 9 hook types |
-
-### Hook Types
-
-| Hook              | Trigger Event                    | Use Case                              |
-|-------------------|----------------------------------|---------------------------------------|
-| SessionStart      | New session begins               | Environment setup, pattern injection  |
-| SubagentStart     | Subagent spawned                 | Context inheritance                   |
-| UserPromptSubmit  | User sends message               | Workflow detection, todo enforcement  |
-| PreToolUse        | Before tool execution            | Validation, logging                   |
-| PostToolUse       | After tool execution             | Event capture, feedback tracking      |
-| PreCompact        | Before context compaction        | Pattern analysis, playbook curation   |
-| SessionEnd        | Session terminates               | Cleanup, final sync                   |
-| Notification      | System notifications             | User feedback capture                 |
-
-### Hook Configuration (settings.json)
+Main Claude Code configuration file.
 
 ```json
 {
+  "permissions": {
+    "allow": ["Bash(git:*)", "Bash(npm:*)", "Edit", "Read", ...],
+    "deny": ["Bash(rm -rf /*)", "Edit(**/.env*)", ...],
+    "ask": ["Bash(git push:*)", "Bash(npm publish:*)"],
+    "defaultMode": "bypassPermissions"
+  },
   "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup|resume|clear|compact",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/session-init.cjs"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node .claude/hooks/lessons-injector.cjs"
-          }
-        ]
-      }
-    ]
+    "SessionStart": [...],
+    "UserPromptSubmit": [...],
+    "PreToolUse": [...],
+    "PostToolUse": [...],
+    "PreCompact": [...],
+    "SessionEnd": [...]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "node .claude/statusline.cjs"
+  },
+  "enabledPlugins": {
+    "code-review@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    ...
   }
 }
 ```
 
-### Key Hooks
+**Key Features:**
 
-#### session-init.cjs
-- Detects project type (monorepo, npm, pip)
-- Sets 30+ CK_* environment variables
-- Injects coding level guidelines
-- Outputs user assertions for context
+- **Permissions**: Fine-grained allow/deny/ask lists for tool access
+- **Hooks**: Lifecycle event handlers (see [Hook System](#hook-system))
+- **Plugins**: Official Claude plugins for LSP, code review, etc.
 
-#### workflow-router.cjs
-- Pattern-based intent detection from user prompts
-- Supports 5 languages (en, vi, zh, ja, ko)
-- Routes to appropriate workflow sequence
-- Tracks workflow state across messages
+### .ck.json
 
-#### todo-enforcement.cjs
-- Blocks implementation skills without active todos
-- Allows research skills (scout, investigate, plan)
-- Bypass with "quick:" prefix
-- Ensures structured task execution
+Project-specific configuration.
 
-#### compact-suggestion.cjs
-- Suggests `/compact` after 50 tool calls
-- Tracks heavy tools: Bash, Read, Grep, Glob, Skill, Edit, Write, MultiEdit, WebFetch, WebSearch
-- One-time suggestion per session (no spam)
-- Auto-resets when /compact detected
-- State: `.claude/.compact-state.json` via `lib/compact-state.cjs`
-- Test: `CK_DEBUG=1 echo '{"tool_name":"Read"}' | node .claude/hooks/compact-suggestion.cjs`
-
-#### code-review-rules-injector.cjs
-- Auto-injects project-specific code review rules when running review skills
-- Triggers on: `code-review`, `review-pr`, `review-changes`, `tasks-code-review` (and prefix variants)
-- Rules file: `docs/code-review-rules.md` (external, not in `.claude/`)
-- Config: `.claude/.ck.json` under `codeReview` section
-- Test: `echo '{"tool_name":"Skill","tool_input":{"skill":"code-review"}}' | node .claude/hooks/code-review-rules-injector.cjs`
-
-**Configuration (.claude/.ck.json):**
 ```json
 {
+  "codingLevel": 4,          // 0-5 (ELI5 to God mode)
+  "project": "single-repo",
+  "packageManager": "npm",
+  "plan": {
+    "naming": "{date}-{issue}-{slug}",
+    "validation": ["frontmatter", "status", "title"]
+  },
   "codeReview": {
+    "enabled": true,
     "rulesPath": "docs/code-review-rules.md",
-    "injectOnSkills": ["code-review", "review-pr", "review-changes", "tasks-code-review"],
-    "enabled": true
-  }
-}
-```
-
-**To update code review rules:**
-1. Edit `docs/code-review-rules.md` directly
-2. Changes take effect immediately on next `/code-review` skill invocation
-3. No hook restart required
-
-#### auto-fix-trigger.cjs
-
-- **Hook**: PostToolUse (Bash)
-- Detects build/test command failures (dotnet, npm, nx, npx, yarn)
-- 3-tier escalation based on consecutive failures per category:
-  - **1st failure**: Suggestion to investigate
-  - **2nd failure**: Stronger warning to change approach + **error snippet** (last ~10 lines, truncated at 500 chars)
-  - **3rd+ failure**: Rollback review recommendation + error snippet
-- `extractErrorSummary(toolResult, maxLines=10)` extracts tail of stderr/stdout from `payload.tool_result`
-- Tracks failure state via `lib/failure-state.cjs` (per-session temp files)
-- Resets counter on successful command in same category
-- Fail-open design (always exits 0)
-
-#### post-edit-rule-check.cjs
-
-- **Hook**: PostToolUse (Edit|Write|MultiEdit)
-- Validates edited `.cs`/`.ts` files against 6 CLAUDE.md rules after each edit
-- Reads the actual file from disk post-edit for full-context validation
-- Uses positive regex + negative regex (e.g., detects `HttpClient` but suppresses if `PlatformApiService` present)
-- Session dedup via `rule-violations.json` — same rule on same file fires once per session
-- Violation metrics counter in `violation-metrics.json` for feedback loop measurement
-- Advisory only — **never blocks** (always exits 0)
-
-**Rules enforced:**
-
-| Rule ID | File | Detects | Negative Pattern |
-|---------|------|---------|-----------------|
-| `raw-httpclient` | `.ts` | Direct `HttpClient` usage | `PlatformApiService` present |
-| `missing-untilDestroyed` | `.ts` | `.subscribe()` without `untilDestroyed()` | `untilDestroyed` present |
-| `throw-validation` | `.cs` | `throw.*ValidationException` | — |
-| `side-effect-in-handler` | `.cs` | Side effects in `CommandHandler` | — |
-| `dto-mapping-in-handler` | `.cs` | `MapToEntity`/`MapToObject` in handler | — |
-| `raw-component` | `.ts` | Extends `PlatformComponent` directly | `AppBaseComponent` present |
-
-#### todo-enforcement.cjs (Plan Gate Addition)
-
-- Added plan artifact gate for implementation skills (`cook`, `fix`, `code`, `implement`, `feature`)
-- Checks if workflow has a plan step and current step is past it
-- Verifies `plans/` directory contains a plan matching today's date (YYMMDD format)
-- Advisory warning only — never blocks execution
-
-#### Self-Improvement Hooks
-
-**lessons-writer.cjs** (`lib/lessons-writer.cjs`):
-
-- `appendLesson(category, description)`: Thread-safe append to `docs/lessons.md` with date prefix
-- `captureFailureLessons(maxLessons)`: Scans recent events, writes unique failure types
-- Called from `session-end.cjs` on exit and `pattern-learner.cjs` on confirmed/taught patterns
-- **Frequency scoring**: Sidecar `docs/lessons-freq.json` tracks per-rule hit counts
-  - `recordLessonFrequency(ruleId, description)` — increment count for a rule
-  - `getTopLessons(n=10)` — return top N lessons sorted by frequency
-  - `loadFrequencyData()` / `saveFrequencyData(data)` — raw sidecar access
-- `lessons-injector.cjs` now sorts lessons by frequency (highest first) via `sortLessonsByFrequency()`
-- All sync, all fail-open
-
-**failure-state.cjs** (`lib/failure-state.cjs`):
-
-- `recordFailure(sessionId, category, commandSummary, errorSnippet)` — tracks consecutive failures per category, returns count
-- `recordSuccess(sessionId, category)` — resets counter for category
-- `getFailureSummary(sessionId)` — returns all active failures with counts and last error snippets
-- `clearFailureState(sessionId)` — clears all failure state for session
-- State file: `{os.tmpdir()}/ck/{sessionId}/failure-state.json`
-
-#### search-before-code.cjs
-
-- **Hook**: PreToolUse (Edit|Write|MultiEdit)
-- Enforces "search existing patterns first" before code modifications
-- **Dynamic threshold** by file extension:
-  - `.cs`, `.ts` → **10 lines** (strict — primary codebase languages)
-  - `.html`, `.scss`, `.tsx`, `.css`, `.sass` → **20 lines** (default)
-- Checks transcript for Grep/Glob evidence; caches via `CK_SEARCH_PERFORMED` env var
-- Exempt: `.claude/`, `plans/`, `docs/`, `.md`, `node_modules/`, `dist/`, `obj/`, `bin/`
-- Bypass: "skip search" / "no search" / "just do it" keywords, or `CK_SKIP_SEARCH_CHECK=1`
-- Exit code **1** to block (not 2)
-
----
-
-## Notification System
-
-### Overview
-
-Multi-provider notification system that alerts users when Claude completes tasks or needs input. Supports Discord, Slack, and Telegram with automatic provider detection and smart throttling.
-
-### Architecture
-
-```
-User → Claude Task → Notification Hook → notify.cjs
-                                              │
-                         ┌────────────────────┼────────────────────┐
-                         ▼                    ▼                    ▼
-                    Discord              Slack               Telegram
-                   (webhook)           (webhook)            (Bot API)
-```
-
-### Configuration
-
-1. Copy `.claude/hooks/notifications/.env.example` to `.claude/.env` or `~/.claude/.env`
-2. Add credentials for your preferred provider(s)
-3. Notifications auto-enable when credentials detected
-
-### Environment Cascade
-
-Priority (highest to lowest):
-1. `process.env` - Runtime environment
-2. `~/.claude/.env` - User global settings
-3. `.claude/.env` - Project settings
-
-### Providers
-
-| Provider | Credential | Setup Guide |
-|----------|------------|-------------|
-| Telegram | `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` | Create bot via @BotFather |
-| Discord | `DISCORD_WEBHOOK_URL` | Server Settings > Integrations > Webhooks |
-| Slack | `SLACK_WEBHOOK_URL` | api.slack.com/apps > Incoming Webhooks |
-
-### Throttling
-
-Provider errors trigger 5-minute cooldown to prevent spam:
-- State file: `/tmp/ck-noti-throttle.json`
-- Clears automatically on successful send
-
-### Hook Configuration
-
-```json
-{
-  "Notification": [
-    {
-      "hooks": [
-        {
-          "type": "command",
-          "command": "node \"%CLAUDE_PROJECT_DIR%\"/.claude/hooks/notifications/notify.cjs"
-        }
-      ]
-    }
+    "injectOnSkills": ["code-review", "review-pr", "review-changes", "code-reviewer"]
+  },
+  "assertions": [
+    "Backend: Use service-specific repositories (IGrowthRootRepository)",
+    "Backend: Use PlatformValidationResult fluent API",
+    "Frontend: Extend AppBaseComponent",
+    ...
   ]
 }
 ```
 
----
+**Key Features:**
 
-## Agents System
+- **Coding Level**: Determines output style (see [Output Styles](#output-styles-coding-levels))
+- **Assertions**: 15 project-specific rules injected into context
+- **Plan Settings**: Naming conventions and validation rules
+- **Code Review**: Auto-injects project-specific review rules when review skills activate (see below)
 
-### Overview
+#### Code Review Rules Configuration
 
-23 specialized subagents with role-specific prompts, tools, and behavioral guidelines. Each agent is defined in `.claude/agents/*.md` with YAML frontmatter.
+The `codeReview` section enables automatic injection of project-specific code review rules:
 
-### Agent Definition Format
+| Field            | Type     | Description                                                        |
+| ---------------- | -------- | ------------------------------------------------------------------ |
+| `enabled`        | boolean  | Enable/disable rule injection (default: `true`)                    |
+| `rulesPath`      | string   | Path to rules markdown file (default: `docs/code-review-rules.md`) |
+| `injectOnSkills` | string[] | Skills that trigger injection                                      |
 
-```markdown
----
-name: agent-name
-description: >-
-  When to use this agent and what it does
-tools: Glob, Grep, Read, ...  # Available tools
-model: inherit                 # Model selection
----
+**How it works:**
 
-[Agent system prompt with instructions]
+1. When a review skill is invoked (e.g., `/code-review`, `/review-pr`)
+2. Hook checks if rules were recently injected (deduplication)
+3. Reads rules from the configured markdown file
+4. Injects rules into Claude's context for the review session
+
+**To update code review rules:**
+
+1. Edit `docs/code-review-rules.md` directly
+2. Add patterns with ❌ (wrong) and ✅ (correct) examples
+3. Rules auto-inject next time a review skill is used
+
+**To add new trigger skills:**
+
+1. Add skill name to `injectOnSkills` array
+2. Skill matching is case-insensitive and partial (e.g., "review" matches "review-pr")
+
+### workflows.json
+
+Workflow automation definitions (v1.2.0).
+
+```json
+{
+  "version": "1.2.0",
+  "workflows": {
+    "feature": {
+      "sequence": ["plan", "cook", "code-simplifier", "code-review", "test", "docs-update", "watzup"],
+      "triggers": {
+        "en": ["implement", "add", "create", "build", "develop"],
+        "vi": ["thêm", "tạo", "xây dựng"],
+        ...
+      }
+    },
+    "bugfix": {
+      "sequence": ["scout", "investigate", "debug", "plan", "fix", "code-simplifier", "code-review", "test"],
+      "triggers": { "en": ["bug", "fix", "error", "broken"], ... }
+    },
+    ...
+  },
+  "stepMappings": {
+    "plan": { "skill": "plan", "todoLabel": "/plan - Create implementation plan" },
+    "cook": { "skill": "cook", "todoLabel": "/cook - Implement feature" },
+    ...
+  },
+  "commandMapping": {
+    "plan": { "claude": "/plan", "copilot": "@workspace /plan" },
+    "cook": { "claude": "/cook", "copilot": "@workspace /cook" },
+    "code": { "claude": "/code", "copilot": "@workspace /code" },
+    "test": { "claude": "/test", "copilot": "@workspace /test" },
+    ...
+  },
+  "checkpoints": {
+    "enabled": true,
+    "intervalMinutes": 30,
+    "path": "plans/reports",
+    "autoSaveOnCompact": true,
+    "filenamePattern": "checkpoint-{YYMMDD}-{HHMM}-{slug}.md"
+  }
+}
 ```
 
-### Available Agents
+**Key Features:**
 
-| Agent             | Purpose                                        | Key Tools                          |
-|-------------------|------------------------------------------------|------------------------------------|
-| scout             | Codebase exploration with priority categorization | Glob, Grep, Read                  |
-| scout-external    | External tool integration (Gemini, OpenCode)   | Bash, WebFetch                     |
-| planner           | Implementation planning with mental models     | All tools                          |
-| code-reviewer     | Comprehensive code quality assessment          | All tools                          |
-| debugger          | Issue investigation and root cause analysis   | All tools                          |
-| tester            | Test validation and coverage analysis         | All tools                          |
-| database-admin    | Database operations and optimization          | All tools                          |
-| docs-manager      | Documentation management                      | All tools                          |
-| fullstack-developer | Implementation execution                     | All tools                          |
-| git-manager       | Git operations with conventional commits      | Glob, Grep, Read, Bash             |
-| journal-writer    | Technical difficulty documentation            | All tools                          |
-| mcp-manager       | MCP server integration management             | All tools                          |
-| project-manager   | Project coordination and reporting            | All tools (except Bash)            |
-| researcher        | Technical research and synthesis              | All tools                          |
-| brainstormer      | Solution exploration and architectural debate | All tools                          |
-| architect         | System architecture, trade-offs, ADRs         | All tools (opus model)             |
-| code-simplifier   | Code refinement for clarity                   | All tools                          |
-| copywriter        | Marketing and engagement copy                 | All tools                          |
-| ui-ux-designer    | Interface design and accessibility            | All tools                          |
+- **Cross-Platform Commands**: 12 commands mapped for both Claude Code and GitHub Copilot
+- **Checkpoints**: Automatic state preservation every 30 minutes and on compaction
+- **Multilingual Triggers**: 5 languages (en, vi, zh, ja, ko)
 
-### Agent Output Standards
+**Workflow Types:**
 
-Agents follow structured output formats:
-- **Scout**: Priority-categorized numbered file lists
-- **Planner**: Implementation plans with effort estimates
-- **Code-reviewer**: Severity-prioritized findings with fixes
-- **Debugger**: Root cause analysis with evidence
-- **Architect**: Trade-off matrices, ADRs with alternatives, service boundary diagrams
+| Type          | Sequence                                                                        |
+| ------------- | ------------------------------------------------------------------------------- |
+| feature       | plan → cook → code-simplifier → code-review → test → docs-update → watzup       |
+| bugfix        | scout → investigate → debug → plan → fix → code-simplifier → code-review → test |
+| documentation | scout → investigate → docs-update → watzup                                      |
+| refactor      | plan → code → code-simplifier → code-review → test                              |
+| review        | code-review → watzup                                                            |
+| investigation | scout → investigate                                                             |
 
-### Architect Agent
+**Command Mapping (Claude Code ↔ GitHub Copilot):**
 
-Senior architecture agent with 8 mental models for complex design decisions:
-- Second-Order Thinking, Systems Thinking, Trade-off Analysis
-- Risk-First Architecture, Inversion, 80/20 Rule
-- Conway's Law Awareness, Technical Debt Quadrant
-
-**Use for:** Technology trade-offs, service boundaries, ADR creation, integration strategy.
-
-**Model:** opus (for reasoning depth)
-
-See `.claude/agents/architect.md` for full mental models and ADR template.
-
----
-
-## Skills Framework
-
-### Skill Structure
-
-Each skill is defined in `.claude/skills/{skill-name}/SKILL.md`:
-
-```markdown
----
-name: skill-name
-description: When to use this skill
-triggers: keyword patterns that activate
-tools: available tools
----
-
-[Skill instructions and guidelines]
-
-## References (optional)
-- references/topic.md
-```
-
-### Skill Categories (Complete Inventory)
-
-| Category | Skills | Count |
-|----------|--------|-------|
-| **Planning** | `ask`, `brainstorm`, `context`, `plan`, `plan-fast`, `plan-hard`, `plan-two`, `plan-review`, `plan-validate`, `plan-ci`, `plan-archive`, `plan-analysis`, `problem-solving`, `research`, `sequential-thinking` | 15 |
-| **Implementation** | `code`, `code-auto`, `code-no-test`, `code-parallel`, `code-patterns`, `cook`, `cook-auto`, `cook-auto-fast`, `cook-auto-parallel`, `cook-fast`, `cook-hard`, `cook-parallel`, `create-feature`, `feature`, `migration`, `generate-dto` | 16 |
-| **Fix & Debug** | `fix`, `fix-fast`, `fix-hard`, `fix-ci`, `fix-issue`, `fix-logs`, `fix-parallel`, `fix-test`, `fix-types`, `fix-ui`, `debug`, `investigate` | 12 |
-| **Review & Quality** | `review`, `review-changes`, `review-codebase`, `review-post-task`, `code-review`, `code-simplifier`, `security`, `performance`, `why-review` | 9 |
-| **Testing** | `test`, `test-ui`, `review-tests`, `update-tests`, `generate-tests`, `test-generation`, `test-specs-docs`, `webapp-testing`, `e2e-record` | 9 |
-| **Documentation** | `docs-init`, `docs-update`, `docs-summarize`, `docs-seeker`, `documentation`, `business-feature-docs`, `feature-docs` | 7 |
-| **Frontend** | `frontend-angular`, `frontend-design`, `ui-ux-pro-max`, `web-design-guidelines`, `design-describe`, `design-fast`, `design-good`, `design-screenshot`, `design-video` | 9 |
-| **Backend / Platform** | `easyplatform-backend`, `api-design`, `database-optimization`, `bug-diagnosis`, `arch-cross-service-integration`, `arch-performance-optimization`, `arch-security-review` | 7 |
-| **Git & Release** | `git-cp`, `git-pr`, `git-merge`, `git-conflict-resolve`, `pr`, `changelog-update`, `release-notes`, `branch-comparison` | 8 |
-| **DevOps & Infra** | `devops`, `build`, `lint`, `package-upgrade` | 4 |
-| **Team Collaboration** | `team-idea`, `team-refine`, `team-story`, `team-prioritize`, `team-dependency`, `team-status`, `team-team-sync`, `team-quality-gate`, `team-test-spec`, `team-test-cases`, `team-design-spec`, `team-figma-extract` | 12 |
-| **Tooling & Meta** | `ck-help`, `claude-code`, `ai-dev-tools-sync`, `checkpoint`, `compact`, `recover`, `kanban`, `watzup`, `coding-level`, `mcp-management`, `use-mcp`, `repomix`, `scout`, `scout-ext` | 14 |
-| **Learning** | `learn`, `memory-management`, `context-optimization` | 3 |
-| **Skill Management** | `skill-create`, `skill-add`, `skill-optimize`, `skill-plan`, `skill-fix-logs` | 5 |
-| **Document Conversion** | `docx-to-markdown`, `markdown-to-docx`, `markdown-to-pdf`, `pdf-to-markdown` | 4 |
-| **Subagent Tasks** | `tasks-code-review`, `tasks-documentation`, `tasks-feature-implementation`, `tasks-spec-update`, `tasks-test-generation` | 5 |
-| **Workflow** | `workflow-start`, `worktree`, `refactoring` | 3 |
-| | **Total** | **~150** |
-
-### Skill Activation
-
-Skills activate via:
-1. **Explicit**: `/skill-name` or `/skill-name args`
-2. **Automatic**: Trigger keyword detection in prompts
-3. **Agent delegation**: Agents invoke skills during execution
-
-### Command Variants (cook)
-
-The `/cook` command supports hierarchical variants for different execution modes:
-
-| Command | Mode | Description |
-|---------|------|-------------|
-| `/cook` | Default | Standard implementation with planning |
-| `/cook/fast` | ⚡ Fast | Skip research, minimal planning, trust knowledge |
-| `/cook/hard` | ⚡⚡⚡⚡ Thorough | Extra research, detailed planning, mandatory reviews |
-| `/cook/parallel` | ⚡⚡⚡ Parallel | Multiple subagents working concurrently |
-
-#### /cook/fast
-```
-Workflow: Quick Plan → Rapid Implementation → Quick Validation → Optional Commit
-Use when: Simple features, bug fixes with known solutions, "just do it"
-Trade-off: ~2x faster, skips research/review phases
-```
-
-#### /cook/hard
-```
-Workflow: Deep Research (2-3 agents) → Comprehensive Plan → Verified Implementation → Mandatory Testing → Mandatory Review → Documentation
-Use when: Critical production features, security changes, API modifications
-Trade-off: Thorough with quality gates (2+ researcher reports, 0 critical findings required)
-```
-
-#### /cook/parallel
-```
-Workflow: Task Decomposition → Parallel Research → Parallel Planning → Parallel Implementation → Integration
-Use when: Multi-component features, large refactoring, parallel test writing
-Trade-off: ~2-3x faster but higher coordination complexity
-Rules: File ownership per subagent, max 3 concurrent, sync points between phases
-```
-
-Example parallel task split:
-```
-"Add user authentication with login UI"
-├── Backend API (subagent 1)
-│   ├── auth-controller.ts
-│   └── auth-service.ts
-├── Frontend UI (subagent 2)
-│   ├── login-page.component.ts
-│   └── login-form.component.ts
-└── Tests (subagent 3)
-    ├── auth.spec.ts
-    └── login.e2e.ts
-```
+| Step             | Claude Code              | GitHub Copilot                      |
+| ---------------- | ------------------------ | ----------------------------------- |
+| plan             | `/plan`                  | `@workspace /plan`                  |
+| cook             | `/cook`                  | `@workspace /cook`                  |
+| code             | `/code`                  | `@workspace /code`                  |
+| test             | `/test`                  | `@workspace /test`                  |
+| fix              | `/fix`                   | `@workspace /fix`                   |
+| debug            | `/debug`                 | `@workspace /debug`                 |
+| scout            | `/scout`                 | `@workspace /scout`                 |
+| investigate      | `/feature-investigation` | `@workspace /feature-investigation` |
+| code-review      | `/code-review`           | `@workspace /code-review`           |
+| code-simplifier  | `/code-simplifier`       | `@workspace /code-simplifier`       |
+| review:post-task | `/review-post-task`      | `@workspace /review-post-task`      |
+| docs-update      | `/docs-update`           | `@workspace /docs-update`           |
+| watzup           | `/watzup`                | `@workspace /watzup`                |
 
 ---
 
-## Workflow Orchestration
+## Hook System
 
-> How this project's `.claude/` setup automatically detects user intent and orchestrates multi-step development workflows.
+Hooks are lifecycle event handlers that execute at specific points in the Claude Code session.
 
-### Overview
+### Hook Lifecycle
 
-This workspace implements a **multi-layer orchestration system** for Claude Code that:
+```
+SessionStart (startup|resume|clear|compact)
+    ↓
+UserPromptSubmit (every user message)
+    ↓
+PreToolUse (before tool execution)
+    ↓
+[Tool Execution]
+    ↓
+PostToolUse (after tool execution)
+    ↓
+PreCompact (before context compaction)
+    ↓
+SessionEnd (clear)
+```
 
-1. **Automatically detects** user intent from natural language prompts
-2. **Injects workflow instructions** into the LLM's context before it responds
-3. **Guides the AI** through multi-step development workflows (plan → implement → test → review)
+### Hook Files
 
-The system uses **hooks** (JavaScript scripts), **configuration files** (JSON), and **skills** (prompt templates) to achieve zero-touch workflow automation.
+| Hook                              | Event                    | Purpose                                                              |
+| --------------------------------- | ------------------------ | -------------------------------------------------------------------- |
+| `session-init.cjs`                | SessionStart             | Initialize session, detect project, inject coding level              |
+| `workflow-router.cjs`             | UserPromptSubmit         | Detect intent, start workflows                                       |
+| `lessons-injector.cjs`            | UserPromptSubmit         | Inject lessons from docs/lessons.md                               |
+| `dev-rules-reminder.cjs`          | UserPromptSubmit         | Inject development rules                                             |
+| `scout-block.cjs`                 | PreToolUse               | Block access to ignored directories                                  |
+| `privacy-block.cjs`               | PreToolUse               | Block access to sensitive files                                      |
+| `backend-csharp-context.cjs`      | PreToolUse (Edit/Write)  | Inject C# patterns for .cs files                                     |
+| `frontend-typescript-context.cjs` | PreToolUse (Edit/Write)  | Inject TS patterns for .ts files                                     |
+| `post-edit-prettier.cjs`          | PostToolUse (Edit/Write) | Format edited files with Prettier                                    |
+| `skill-enforcement.cjs`           | PreToolUse (Skill)       | Block implementation skills without todos                            |
+| `todo-tracker.cjs`                | PostToolUse (TaskCreate) | Track todo usage for enforcement                                     |
+| `write-compact-marker.cjs`        | PreCompact               | Write compaction marker for statusline baseline reset                |
+| `tool-output-swap.cjs`            | PostToolUse              | Externalize large outputs to swap files for post-compaction recovery |
 
-### Architecture
+### Context Injection Flow
+
+```
+Edit .cs file requested
+    ↓
+PreToolUse: backend-csharp-context.cjs
+    ↓
+Injects: Repository patterns, validation fluent API,
+         entity event handlers, DTO mapping patterns
+    ↓
+Claude applies patterns in edit
+```
+
+### Todo Enforcement System
+
+The todo enforcement system ensures workflows aren't skipped by blocking implementation skills when no todos have been set.
+
+**Components:**
+
+| File                   | Event                    | Purpose                                                              |
+| ---------------------- | ------------------------ | -------------------------------------------------------------------- |
+| `lib/todo-state.cjs`   | -                        | State management library (with lastTodos recovery)                   |
+| `skill-enforcement.cjs` | PreToolUse (Skill)       | Blocks implementation skills without todos                           |
+| `todo-tracker.cjs`     | PostToolUse (TaskCreate) | Updates state when todos are set (stores last 10 todos for recovery) |
+
+**Allowed Skills (always pass):**
+
+- Investigation: `scout`, `investigate`, `explore`, `planning`
+- Planning: `plan`, `plan-hard`, `plan-validate`, `design`
+- Review: `analyze`, `review`, `code-review`, `watzup`, `debug`
+- Utility: `help`, `memory`, `checkpoint`, `recover`, `git:status`
+
+**Blocked Skills (require todos):**
+
+- Implementation: `cook`, `code`, `fix`, `feature`, `implement`
+- Development: `refactor`, `build`, `create`, `develop`, `migration`
+
+**Flow:**
+
+```
+Skill tool invoked
+    ↓
+skill-enforcement.cjs checks skill name
+    ↓
+If implementation skill:
+    ├─ Check todo state file exists
+    ├─ If hasTodos: true → Allow execution
+    └─ If no todos → Block with message:
+       "BLOCKED: Call TaskCreate before implementation"
+    ↓
+If allowed skill → Always pass through
+```
+
+**Bypass Mechanism:**
+
+The system allows bypassing with `CK_BYPASS_TODO_CHECK=1` environment variable for testing or recovery scenarios.
+
+---
+
+## Workflow Automation
+
+The workflow system automatically detects user intent and follows structured development workflows through a multi-layer orchestration system.
+
+### Architecture Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -626,7 +480,7 @@ The system uses **hooks** (JavaScript scripts), **configuration files** (JSON), 
 │                                   ┌───────────────────────▼────────────────┐│
 │                                   │     Inject Instructions to LLM         ││
 │                                   │  "Detected: Feature Implementation"   ││
-│                                   │  "Following: /plan → /plan-validate → /plan-review..."││
+│                                   │  "Following: /plan → ... → /cook → /review-changes → /test → ..."     ││
 │                                   └───────────────────────┬────────────────┘│
 │                                                           │                  │
 │  ┌───────────────────────────────────────────────────────▼─────────────────┐│
@@ -638,300 +492,73 @@ The system uses **hooks** (JavaScript scripts), **configuration files** (JSON), 
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Workflow Configuration (workflows.json)
+### Intent Detection
 
-Defines all workflow types, their trigger patterns, and step sequences:
-
-```json
-{
-  "$schema": "./workflows.schema.json",
-  "version": "2.0.0",
-  "settings": {
-    "enabled": true,
-    "confirmHighImpact": true,
-    "showDetection": true,
-    "allowOverride": true,
-    "overridePrefix": "quick:"
-  },
-  "workflows": {
-    "feature": {
-      "name": "Feature Implementation",
-      "triggerPatterns": [
-        "\\b(implement|add|create|build|develop|make)\\b.*\\b(feature|functionality|capability)\\b",
-        "\\bnew\\s+(feature|functionality|capability)\\b"
-      ],
-      "excludePatterns": ["\\b(fix|bug|error|broken|issue)\\b"],
-      "sequence": ["scout", "investigate", "plan", "plan-validate", "plan-review", "cook", "why-review", "code-simplifier", "code-review", "changelog-update", "test", "docs-update", "watzup"],
-      "confirmFirst": false
-    },
-    "bugfix": {
-      "name": "Bug Fix",
-      "whenToUse": "Bug, error, crash, broken functionality",
-      "sequence": ["scout", "investigate", "debug", "plan", "plan-review", "plan-validate", "why-review", "fix", "code-simplifier", "review-changes", "code-review", "changelog", "test", "watzup"],
-      "confirmFirst": false
-    }
-  },
-  "commandMapping": {
-    "plan": { "claude": "/plan" },
-    "cook": { "claude": "/cook" },
-    "test": { "claude": "/test" },
-    "fix": { "claude": "/fix" },
-    "code-review": { "claude": "/review-codebase" }
-  }
-}
-```
-
-### Workflow Types — Complete Catalog (23 Workflows)
-
-All workflows are defined in `.claude/workflows.json` v2.0.0. The workflow router automatically matches user intent to the correct workflow.
-
-#### Code-Producing Workflows (9)
-
-| ID | Name | Sequence | When to Use |
-|----|------|----------|-------------|
-| `feature` | Feature Implementation | scout → investigate → plan → plan-review → plan-validate → why-review → cook → code-simplifier → review-changes → code-review → changelog → test → docs-update → watzup | New feature, functionality, module, component |
-| `bugfix` | Bug Fix | scout → investigate → debug → plan → plan-review → plan-validate → why-review → fix → code-simplifier → review-changes → code-review → changelog → test → watzup | Bug, error, crash, broken functionality |
-| `refactor` | Code Refactoring | scout → investigate → plan → plan-review → plan-validate → why-review → code → code-simplifier → review-changes → code-review → changelog → test → watzup | Restructure, clean up, technical debt |
-| `migration` | Database Migration | scout → investigate → plan → plan-review → plan-validate → code → review-changes → code-review → test → watzup | Schema changes, data migrations, EF migrations |
-| `batch-operation` | Batch Operation | plan → plan-review → plan-validate → why-review → code → code-simplifier → review-changes → test → watzup | Multi-file batch changes, bulk renames |
-| `deployment` | Deployment & Infra | scout → investigate → plan → plan-review → plan-validate → code → review-changes → code-review → test → watzup | CI/CD, Docker, deploy to environments |
-| `performance` | Performance Optimization | scout → investigate → plan → plan-review → plan-validate → code → review-changes → code-review → test → watzup | Slow queries, latency, bottlenecks |
-| `verification` | Verification & Validation | scout → investigate → test-initial → plan → plan-review → plan-validate → fix → code-simplifier → review-changes → code-review → test → watzup | Verify correctness, ensure expected behavior |
-| `e2e-testing` | E2E Testing | scout → investigate → plan → plan-review → plan-validate → code → review-changes → code-review → test → watzup | Playwright test creation, E2E coverage |
-
-#### Review & Quality Workflows (4)
-
-| ID | Name | Sequence | When to Use |
-|----|------|----------|-------------|
-| `quality-audit` | Quality Audit | code-review → plan → plan-review → plan-validate → code → review-changes → test → watzup | Review code for best practices, audit-and-fix |
-| `review` | Code Review | code-review → watzup | PR review, code quality check |
-| `review-changes` | Review Changes | review-changes | Pre-commit review of uncommitted changes |
-| `security-audit` | Security Audit | scout → investigate → watzup | Vulnerability assessment, OWASP check |
-
-#### Documentation Workflows (2)
-
-| ID | Name | Sequence | When to Use |
-|----|------|----------|-------------|
-| `documentation` | Documentation Update | scout → investigate → plan → plan-review → plan-validate → docs-update → review-changes → review-post-task → watzup | General docs, README, code comments |
-| `business-feature-docs` | Business Feature Docs | scout → investigate → plan → plan-review → plan-validate → docs-update → review-changes → review-post-task → watzup | 26-section business feature template |
-
-#### Planning & Investigation Workflows (3)
-
-| ID | Name | Sequence | When to Use |
-|----|------|----------|-------------|
-| `investigation` | Code Investigation | scout → investigate | Understand how code works (read-only) |
-| `pre-development` | Pre-Development Setup | quality-gate → plan → plan-review → plan-validate | Quality gate + plan before coding |
-| `design-workflow` | Design Workflow | design-spec → review-changes → code-review → watzup | UI/UX design specification |
-
-#### Team & PM Workflows (5)
-
-| ID | Name | Sequence | When to Use |
-|----|------|----------|-------------|
-| `idea-to-pbi` | Idea to PBI | idea → refine → story → prioritize → watzup | Product idea → PBI → user stories |
-| `pbi-to-tests` | PBI to Tests | test-spec → test-cases → quality-gate → watzup | Generate test specs from PBIs |
-| `pm-reporting` | PM Reporting | status → dependency | Sprint status report, project progress |
-| `sprint-planning` | Sprint Planning | prioritize → dependency → team-sync | Backlog prioritization, sprint kickoff |
-| `release-prep` | Release Preparation | quality-gate → status | Pre-release checks, go-live verification |
-| `full-feature-lifecycle` | Full Feature Lifecycle | idea → refine → story → design-spec → plan → plan-review → plan-validate → cook → review-changes → test-spec → quality-gate → watzup | Complete feature from idea to release |
-
-*Lower priority number = higher preference when multiple workflows match*
-
-### Workflow Router (workflow-router.cjs)
-
-The **core orchestration engine** intercepts every user prompt:
+The `workflow-router.cjs` hook analyzes user prompts for trigger keywords:
 
 ```javascript
-function detectIntent(userPrompt, config) {
-  const { workflows, settings } = config;
+// Pattern-based scoring with priority weights
+const scores = {
+  feature: calculateScore(prompt, ['implement', 'add', 'create', 'build']),
+  bugfix: calculateScore(prompt, ['bug', 'fix', 'error', 'broken']),
+  documentation: calculateScore(prompt, ['docs', 'document', 'readme']),
+  ...
+};
 
-  // Check for override prefix ("quick:" skips detection)
-  if (settings.allowOverride && userPrompt.toLowerCase().startsWith(settings.overridePrefix)) {
-    return { skipped: true, reason: 'override_prefix' };
-  }
-
-  // Check for explicit command (e.g., "/plan" bypasses detection)
-  if (/^\/\w+/.test(userPrompt.trim())) {
-    return { skipped: true, reason: 'explicit_command' };
-  }
-
-  // Score each workflow by pattern matching
-  const scores = [];
-  for (const [workflowId, workflow] of Object.entries(workflows)) {
-    let score = 0;
-
-    // Check exclude patterns first
-    if (workflow.excludePatterns?.some(p => new RegExp(p, 'i').test(userPrompt))) continue;
-
-    // Check trigger patterns
-    for (const pattern of workflow.triggerPatterns || []) {
-      if (new RegExp(pattern, 'i').test(userPrompt)) score += 10;
-    }
-
-    if (score > 0) scores.push({ workflowId, workflow, score });
-  }
-
-  // Return highest scoring workflow
-  scores.sort((a, b) => (b.score - b.workflow.priority) - (a.score - a.workflow.priority));
-  return scores[0] ? { detected: true, ...scores[0] } : { detected: false };
-}
+// Highest score wins
+const detectedWorkflow = Object.entries(scores)
+  .filter(([_, score]) => score > 0.5)
+  .sort((a, b) => b[1] - a[1])[0]?.[0];
 ```
 
 ### Workflow Detection Matrix
 
-| User Prompt                 | Matched Patterns | Excluded By            | Result            |
-|-----------------------------|------------------|------------------------|-------------------|
-| "Add dark mode feature"     | `add.*feature`   | -                      | Feature workflow  |
-| "Fix the login bug"         | `fix`, `bug`     | -                      | Bugfix workflow   |
-| "Add a fix for the crash"   | `add`, `fix`     | `fix` excludes feature | Bugfix wins       |
-| "/plan dark mode"           | -                | `^\/\w+` (explicit)    | Skip detection    |
-| "quick: add button"         | -                | `quick:` prefix        | Skip detection    |
-| "How does auth work?"       | `how does.*work` | -                      | Investigation     |
+| User Prompt                 | Matched Patterns | Excluded By            | Result                 |
+| --------------------------- | ---------------- | ---------------------- | ---------------------- |
+| "Add dark mode feature"     | `add.*feature`   | -                      | Feature workflow       |
+| "Fix the login bug"         | `fix`, `bug`     | -                      | Bugfix workflow        |
+| "Add a fix for the crash"   | `add`, `fix`     | `fix` excludes feature | Bugfix wins            |
+| "/plan dark mode"           | -                | `^\/\w+` (explicit)    | Skip detection         |
+| "quick: add button"         | -                | `quick:` prefix        | Skip detection         |
+| "How does auth work?"       | `how does.*work` | -                      | Investigation          |
+| "Refactor the user service" | `refactor`       | -                      | Refactor workflow      |
+| "Update the README"         | `readme`         | -                      | Documentation workflow |
 
-### Override Mechanisms
+### Workflow Execution
 
-| Method | Example | Result |
-|--------|---------|--------|
-| **Quick prefix** | `quick: add a button` | Skip workflow, handle directly |
-| **Explicit command** | `/plan implement dark mode` | Execute /plan directly |
-| **Say "quick"** | (after detection) `quick` | Cancel workflow |
-| **Say "skip"** | (during workflow) `skip` | Skip current step |
-| **Say "abort"** | (during workflow) `abort` | Cancel entire workflow |
-
-### Workflow State Persistence
-
-For long-running workflows, the system includes **state persistence** to prevent context loss:
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    WORKFLOW STATE PERSISTENCE                           │
-├─────────────────────────────────────────────────────────────────────────┤
-│  Workflow Detected ──▶ Creates .claude/.workflow-state.json             │
-│           │                                                             │
-│  Each User Prompt ──▶ Checks for active workflow                        │
-│           │           ├─▶ Injects continuation reminder                 │
-│           │           └─▶ Shows progress: "Step 2/7"                    │
-│           │                                                             │
-│  Skill Completes ──▶ Updates state, advances to next step               │
-│           │                                                             │
-│  Workflow Complete ──▶ Clears state file                                │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-**State File Schema** (`.claude/.workflow-state.json`):
-
-```json
-{
-  "workflowId": "bugfix",
-  "workflowName": "Bug Fix",
-  "sequence": ["scout", "investigate", "debug", "plan", "plan-validate", "plan-review", "fix", "code-simplifier", "code-review", "test"],
-  "currentStep": 0,
-  "completedSteps": [],
-  "startTime": "2026-01-07T15:23:34.000Z",
-  "originalPrompt": "fix the login bug",
-  "ttlHours": 24
-}
-```
-
-### Todo Enforcement System
-
-The workspace enforces todo list creation before implementation work via runtime hooks.
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                   TODO ENFORCEMENT FLOW                          │
-├─────────────────────────────────────────────────────────────────┤
-│  User calls Skill tool (e.g., /cook, /fix)                       │
-│           │                                                      │
-│  PreToolUse event fires → todo-enforcement.cjs executes          │
-│           │                                                      │
-│           ├─ Skill in ALLOWED list? → Pass through               │
-│           ├─ Has "quick:" bypass? → Pass through                 │
-│           └─ Check .todo-state.json for active todos             │
-│                   │                                              │
-│                   ├─ Has todos → Allow execution                 │
-│                   └─ No todos → BLOCK with error message         │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Allowed Skills (No Todos Required):**
-
-| Category | Skills |
-|----------|--------|
-| Research | `/scout`, `/investigate`, `/research`, `/docs-seeker` |
-| Planning | `/plan`, `/plan-fast`, `/plan-hard`, `/plan-validate` |
-| Status | `/watzup`, `/checkpoint`, `/kanban`, `/compact` |
-
-**Blocked Skills (Todos Required):**
-
-| Category | Skills |
-|----------|--------|
-| Implementation | `/cook`, `/fix`, `/code`, `/feature`, `/refactoring` |
-| Testing | `/test`, `/debug`, `/build` |
-| Review/Git | `/code-review`, `/commit` |
-
-### Context Preservation System
-
-Automatic checkpoint/restore prevents loss of todos and progress during context compaction:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                CONTEXT PRESERVATION FLOW                         │
-├─────────────────────────────────────────────────────────────────┤
-│  SAVE (PreCompact)                    RESTORE (SessionStart)     │
-│  ─────────────────                    ─────────────────────      │
-│  save-context-memory.cjs              session-resume.cjs          │
-│           │                                    │                  │
-│  1. Export todos from state           1. Find latest checkpoint   │
-│  2. Capture context stats             2. Check age (<24h)         │
-│  3. Write checkpoint file             3. Parse "Active Todos"     │
-│     plans/reports/memory-             4. Restore to state file    │
-│     checkpoint-YYMMDD-HHMMSS.md       5. Output reminder to LLM   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-**Age Validation:**
-- **< 24h:** Auto-restore todos on session resume
-- **> 24h:** Warning shown, manual restore required
-
-### Automatic Checkpoints
-
-Workflows can auto-save context at regular intervals:
-
-```json
-{
-  "settings": {
-    "checkpoints": {
-      "enabled": true,
-      "intervalMinutes": 30,
-      "path": "plans/reports",
-      "autoSaveOnCompact": true,
-      "filenamePattern": "checkpoint-{YYMMDD}-{HHMM}-{slug}.md"
-    }
-  }
-}
-```
-
-Workflows with `enableCheckpoints: true`:
-- Feature Implementation
-- Bug Fix
-- Code Investigation
-- Code Refactoring
+1. **Detection**: User prompt analyzed for intent
+2. **Announcement**: `"Detected: Feature Implementation workflow"`
+3. **TaskCreate**: All workflow steps created as todo items
+4. **Confirmation**: Ask user to proceed (skip with `quick:` prefix)
+5. **Execution**: Follow each step, updating todo status
+6. **Recovery**: State persisted to survive context compaction
 
 ### Complete Execution Flow Example
 
 **User Types:** "Add a dark mode toggle to the settings page"
 
-**Phase 1: Hook Execution**
+#### Phase 1: Hook Execution (Before LLM Sees Prompt)
+
 ```
-1. UserPromptSubmit event fires
-2. workflow-router.cjs executes:
-   - Pattern "add" matches feature.triggerPatterns ✓
-   - No exclude patterns matched
-   - Score: 10 points for "feature" workflow
-   - Output: Workflow instructions to stdout
+┌────────────────────────────────────────────────────────────────────┐
+│ CLAUDE CODE RUNTIME                                                │
+│                                                                    │
+│  1. User submits prompt via CLI                                    │
+│  2. UserPromptSubmit event fires                                   │
+│  3. workflow-router.cjs executes:                                  │
+│     - Pattern "add" matches feature.triggerPatterns ✓              │
+│     - No exclude patterns matched ("fix", "bug" not present)       │
+│     - Score: 10 points for "feature" workflow                      │
+│     - Confidence: 100%                                             │
+│  4. dev-rules-reminder.cjs executes:                               │
+│     → Session context, paths, naming patterns to stdout            │
+└────────────────────────────────────────────────────────────────────┘
 ```
 
-**Phase 2: LLM Receives Context**
+#### Phase 2: LLM Receives Combined Context
+
+Claude sees this in its context window:
+
 ```
 [User Message]
 Add a dark mode toggle to the settings page
@@ -940,1058 +567,2008 @@ Add a dark mode toggle to the settings page
 ## Workflow Detected
 
 **Intent:** Feature Implementation (100% confidence)
-**Workflow:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /changelog → /test → /docs-update → /watzup
+**Workflow:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /sre-review → /changelog → /test → /docs-update → /watzup
 
 ### Instructions (MUST FOLLOW)
-1. Announce detected workflow to user
-2. CREATE TODO LIST (MANDATORY) for each step
-3. ASK: "Proceed with this workflow? (yes/no/quick)"
-4. EXECUTE each step, marking todos completed
+1. **FIRST:** Announce the detected workflow to the user
+2. **ASK:** "Proceed with this workflow? (yes/no/quick)"
+3. **THEN:** Execute each step in sequence
 ```
 
-**Phase 3: LLM Response**
-```
-> Detected: **Feature Implementation** workflow.
-> I will follow: /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /changelog → /test → /docs-update → /watzup
+#### Phase 3: Sequential Skill Execution
 
-[Creates todo list:]
-- [ ] Execute /plan - Create implementation plan
-- [ ] Execute /plan-validate - Validate plan with critical questions
-- [ ] Execute /plan-review - Self-review plan
-- [ ] Execute /cook - Implement feature
-- [ ] Execute /code-simplifier - Simplify code
+User says "yes", then Claude executes each step:
+
+```
+Step 1: Claude calls Skill tool with skill="plan"
+  → Creates implementation plan at plans/251231-1128-dark-mode/README.md
+
+Step 2: Claude calls Skill tool with skill="cook"
+  → Implements the feature, creates src/components/DarkModeToggle.tsx
+
+Step 3: Claude calls Skill tool with skill="test"
+  → Runs tests, verifies all pass
+
+Step 4: Claude calls Skill tool with skill="code-review"
+  → Reviews implementation, reports any issues
+
+Step 5: Claude calls Skill tool with skill="docs-update"
+  → Updates documentation
+
+Step 6: Claude calls Skill tool with skill="watzup"
+  → Generates summary of changes
+```
+
+### How the LLM "Follows" Workflows
+
+The LLM doesn't have built-in workflow logic. Instead, it follows instructions because they're injected as system context:
+
+| Layer         | Mechanism                | What Happens                                  |
+| ------------- | ------------------------ | --------------------------------------------- |
+| **Hook**      | JavaScript script        | Runs BEFORE LLM, analyzes prompt              |
+| **Injection** | stdout → system-reminder | Instructions appended to LLM's context        |
+| **Inference** | LLM reads "MUST FOLLOW"  | LLM treats injected text as authoritative     |
+| **Tools**     | Skill/Bash/Read/Edit     | LLM calls tools to execute each workflow step |
+
+**Key Insight:** Instructions with phrases like "MUST FOLLOW", "Instructions", and numbered steps influence LLM behavior because they appear as system-level guidance that the model is trained to respect.
+
+### Override Mechanisms
+
+| Mechanism        | Usage                  | Effect                                 |
+| ---------------- | ---------------------- | -------------------------------------- |
+| `quick:` prefix  | `quick: add button`    | Skip confirmation, still creates todos |
+| Explicit command | `/fix the bug`         | Directly executes specific skill       |
+| Simple task      | Single-line changes    | Skip workflow entirely                 |
+| Say "quick"      | After detection prompt | Skip full workflow, handle directly    |
+
+### Workflow Troubleshooting
+
+#### Workflow Not Detected
+
+1. Check if patterns in `workflows.json` match your prompt
+2. Verify `settings.enabled` is `true`
+3. Check if an exclude pattern is blocking detection
+4. Try explicit command: `/plan your task`
+
+#### Wrong Workflow Detected
+
+1. Review pattern priorities (lower number = higher priority)
+2. Add exclude patterns to prevent false matches
+3. Use `quick:` prefix to bypass detection
+
+#### Workflow Steps Forgotten (Context Loss)
+
+**Automatic Recovery (v1.2.0+):** The system includes 3-hook recovery infrastructure:
+
+| Hook                        | Event                 | Action                     |
+| --------------------------- | --------------------- | -------------------------- |
+| `write-compact-marker.cjs`  | PreCompact            | Write marker for recovery  |
+| `post-compact-recovery.cjs` | SessionStart (resume) | Inject recovery context    |
+| `workflow-step-tracker.cjs` | PostToolUse (Skill)   | Advance to next step       |
+
+**Manual Recovery:** Use `/recover` command or find latest checkpoint at `plans/reports/memory-checkpoint-*.md`
+
+### Workflow Best Practices
+
+1. **Define Clear Patterns**: Use specific regex patterns that minimize false positives
+2. **Use Exclude Patterns**: Prevent workflow conflicts by excluding competing keywords
+3. **Set Appropriate Priorities**: Ensure most specific workflows have lower priority numbers
+4. **Require Confirmation for High-Impact**: Set `confirmFirst: true` for feature/refactor workflows
+5. **Keep Sequences Focused**: Fewer steps = faster execution, more steps = thorough coverage
+
+---
+
+## Lessons System
+
+The learning system uses a simple file-based approach to capture and inject lessons learned during development sessions.
+
+### How It Works
+
+| Component              | Description                                                    |
+| ---------------------- | -------------------------------------------------------------- |
+| **`/learn` skill**     | Appends lessons to `docs/lessons.md`                        |
+| **`lessons-injector.cjs`** | Injects lessons on `UserPromptSubmit` and `PreToolUse(Edit\|Write\|MultiEdit)` |
+| **`docs/lessons.md`** | Human-readable markdown file storing all learned patterns    |
+
+### Lesson Injection Flow
+
+```
+1. User invokes /learn with a lesson
+       ↓
+2. /learn skill appends to docs/lessons.md
+       ↓
+3. On next prompt, lessons-injector.cjs reads docs/lessons.md
+       ↓
+4. Lessons injected into Claude's context window
+       ↓
+5. Claude follows lessons as contextual instructions
+```
+
+### Key Files
+
+| File                     | Role                                          |
+| ------------------------ | --------------------------------------------- |
+| `/learn` skill           | Appends lessons to `docs/lessons.md`       |
+| `lessons-injector.cjs`   | Injects lessons on prompt submit and edits    |
+| `docs/lessons.md`     | Human-readable lessons storage                |
+
+---
+
+## Skills Catalog
+
+Skills are reusable prompt templates that provide specialized capabilities. **77 skills** organized by domain.
+
+### Skill Structure
+
+```markdown
+---
+name: Debugging
+description: Systematic debugging framework...
+version: 3.0.0
+languages: all
+---
+
+# Debugging
+
+## Core Principle
+**NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST**
+
+## When to Use
 ...
 
-Proceed with this workflow? (yes/no/quick)
+## The Four Techniques
+...
 ```
 
-**Phase 4: Sequential Execution**
-```
-User: "yes"
+### Development Skills (11)
 
-Step 1: Claude calls Skill("plan") → Creates plan → ✓
-Step 2: Claude calls Skill("plan-validate") → Validates plan → ✓
-Step 3: Claude calls Skill("plan-review") → Self-reviews plan → ✓
-Step 4: Claude calls Skill("cook") → Implements feature → ✓
-Step 5: Claude calls Skill("code-simplifier") → Simplifies code → ✓
-Step 6: Claude calls Skill("code-review") → Reviews changes → ✓
-Step 7: Claude calls Skill("test") → Runs tests → ✓
-Step 8: Claude calls Skill("docs-update") → Updates docs → ✓
-Step 9: Claude calls Skill("watzup") → Summarizes → ✓
-```
+| Skill             | Description                                     | Trigger Keywords           |
+| ----------------- | ----------------------------------------------- | -------------------------- |
+| `debug`           | 4-phase systematic debugging framework          | bug, error, investigate    |
+| `code-review`     | Receive/request reviews with verification gates | review, check, audit       |
+| `code-simplifier` | Post-implementation cleanup                     | simplify, refactor, clean  |
+| `refactoring`     | Safe code restructuring                         | refactor, restructure      |
+| `test-spec` | Generate test specifications and test cases     | test, unit test, coverage  |
+| `webapp-testing`  | Web application testing strategies              | e2e, integration, selenium |
+| `commit`          | Stage and commit with conventional messages     | commit, git commit         |
+| `learn`           | Teach Claude a pattern explicitly               | remember, always, never    |
+| `package-upgrade` | Upgrade dependencies safely                     | upgrade, update deps       |
+| `skill-creator`   | Create new skills                               | create skill, new skill    |
 
-### Troubleshooting
+### Architecture Skills (4)
 
-| Issue | Solution |
-|-------|----------|
-| Workflow not detected | Check patterns in `workflows.json`, verify `settings.enabled` |
-| Wrong workflow detected | Review priorities, add exclude patterns, use `quick:` prefix |
-| Hook errors | Check script syntax, verify `%CLAUDE_PROJECT_DIR%` resolves |
-| State not persisting | Check `.claude/.workflow-state.json` write permissions |
+| Skill                            | Description                          | Trigger Keywords               |
+| -------------------------------- | ------------------------------------ | ------------------------------ |
+| `api-design`                     | REST API endpoint design             | API, endpoint, controller      |
+| `arch-security-review`           | Security vulnerability analysis      | security, authorization, OWASP |
+| `arch-performance-optimization`  | Performance bottleneck analysis      | slow, optimize, performance    |
+| `arch-cross-service-integration` | Cross-service communication patterns | integration, sync, message bus |
 
-### Best Practices
+### Frontend Skills (6)
 
-1. **Define Clear Patterns**: Use specific regex that minimize false positives
-2. **Use Exclude Patterns**: Prevent workflow conflicts by excluding competing keywords
-3. **Set Appropriate Priorities**: Lower priority number = higher preference
-4. **Require Confirmation**: Set `confirmFirst: true` for high-impact workflows
-5. **Include Code Review**: Add `/code-review` step after code changes
+| Skill              | Description                                       | Trigger Keywords                             |
+| ------------------ | ------------------------------------------------- | -------------------------------------------- |
+| `frontend-design`  | UI/UX implementation with design systems          | UI, design, styling                          |
+| `frontend-angular` | Angular 19 components, forms, state, API services | Angular, component, form, store, API service |
+| `shadcn-tailwind`  | React component library + Tailwind CSS            | shadcn, Tailwind, Radix                      |
+| `ui-ux-pro-max`    | Advanced UI/UX patterns                           | user experience, interface                   |
+| `threejs`          | 3D graphics with Three.js                         | 3D, WebGL, Three.js                          |
+
+### Backend Skills (5)
+
+| Skill                   | Description                          | Trigger Keywords            |
+| ----------------------- | ------------------------------------ | --------------------------- |
+| `easyplatform-backend`  | CQRS, repository, entity, validation | C#, backend, CQRS, .NET     |
+| `databases`             | MongoDB, PostgreSQL patterns         | database, query, SQL, Mongo |
+| `database-optimization` | Query optimization, indexing, N+1    | slow query, N+1, index      |
+| `better-auth`           | Framework-agnostic TypeScript auth   | auth, OAuth, JWT, session   |
+| `payment-integration`   | Payment gateway integration          | Stripe, payment, checkout   |
+
+### Planning Skills (4)
+
+| Skill                 | Description                                         | Trigger Keywords                           |
+| --------------------- | --------------------------------------------------- | ------------------------------------------ |
+| `planning`            | Mental models, plan file format (includes research) | plan, design, architect, research, explore |
+| `problem-solving`     | Problem decomposition frameworks                    | problem, analyze, solve                    |
+| `sequential-thinking` | Step-by-step reasoning                              | think, reason, steps                       |
+| `plan-analysis`       | Analyze existing plans                              | analyze plan, review plan                  |
+
+### Documentation Skills (5)
+
+| Skill                   | Description                                             | Trigger Keywords                            |
+| ----------------------- | ------------------------------------------------------- | ------------------------------------------- |
+| `documentation`         | Technical documentation and README files                | document, API docs, JSDoc, README           |
+| `feature-docs` | BravoSUITE business module docs (includes feature-docs) | business feature, module docs, feature docs |
+| `docs-seeker`           | Search technical documentation                          | find docs, search docs                      |
+| `test-specs-docs`       | Test specification documentation                        | test specs, test docs                       |
+| `repomix`               | Repository analysis and summarization                   | repo summary, codebase                      |
+
+### AI/ML Skills (6)
+
+| Skill               | Description                           | Trigger Keywords              |
+| ------------------- | ------------------------------------- | ----------------------------- |
+| `ai-artist`         | Prompt engineering for LLMs/image gen | prompt, LLM, image generation |
+| `ai-multimodal`     | Gemini API multimedia processing      | audio, video, image analysis  |
+| `mcp-builder`       | MCP server development                | MCP, server, protocol         |
+| `mcp-management`    | Manage MCP server integrations        | MCP tools, MCP resources      |
+| `google-adk-python` | Google ADK for Python                 | Google ADK, agent SDK         |
+| `ai-dev-tools-sync` | Sync Claude Code and Copilot configs  | sync tools, AI config         |
+
+### DevOps Skills (4)
+
+| Skill              | Description                        | Trigger Keywords              |
+| ------------------ | ---------------------------------- | ----------------------------- |
+| `devops`           | Cloudflare, Docker, GCP deployment | deploy, cloud, container, K8s |
+| `chrome-devtools`  | Browser automation with Puppeteer  | browser, puppeteer, CDP       |
+| `media-processing` | FFmpeg, ImageMagick, RMBG          | video, audio, image edit      |
+| `shopify`          | Shopify development patterns       | Shopify, e-commerce           |
+
+### Utility Skills (7)
+
+| Skill                       | Description                          | Trigger Keywords                |
+| --------------------------- | ------------------------------------ | ------------------------------- |
+| `context-optimization`      | Context window management            | context, compress, tokens       |
+| `memory-management`         | Cross-session memory and checkpoints | remember, save pattern, persist |
+| `branch-comparison`         | Git branch analysis                  | compare branches, git diff      |
+| `debug`                     | Bug investigation                    | debug, diagnose, trace          |
+| `domain-name-brainstormer`  | Generate domain name ideas           | domain, naming, TLD             |
+| `developer-growth-analysis` | Analyze coding patterns for growth   | growth, learning, improve       |
+| `markdown-novel-viewer`     | Markdown novel rendering             | novel, markdown viewer          |
+
+### Document Processing Skills (4)
+
+| Skill                  | Description                   | Trigger Keywords         |
+| ---------------------- | ----------------------------- | ------------------------ |
+| `document-skills/pdf`  | PDF processing and extraction | PDF, extract PDF         |
+| `document-skills/docx` | Word document processing      | DOCX, Word, document     |
+| `document-skills/xlsx` | Excel spreadsheet processing  | Excel, XLSX, spreadsheet |
+| `document-skills/pptx` | PowerPoint processing         | PowerPoint, PPTX, slides |
+
+### Task-Specific Skills (5)
+
+| Skill                          | Description                     | Trigger Keywords  |
+| ------------------------------ | ------------------------------- | ----------------- |
+| `tasks-feature-implementation` | Feature implementation workflow | implement feature |
+| `tasks-code-review`            | Code review workflow            | review code       |
+| `tasks-documentation`          | Documentation workflow          | update docs       |
+| `tasks-test-generation`        | Test generation workflow        | generate tests    |
+| `tasks-spec-update`            | Specification update workflow   | update spec       |
+
+### Mobile & Web Framework Skills (3)
+
+| Skill                   | Description                    | Trigger Keywords              |
+| ----------------------- | ------------------------------ | ----------------------------- |
+| `mobile-development`    | React Native, Flutter patterns | mobile, React Native, Flutter |
+| `web-frameworks`        | Next.js, Remix, Astro patterns | Next.js, Remix, SSR           |
+| `feature`               | General feature implementation | implement, build feature      |
+| `feature-investigation` | Investigate existing features  | how does, explain, trace      |
 
 ---
 
-## Memory Management
+## Agents
 
-### Memory Files
+Agents are specialized subprocesses that handle complex, multi-step tasks autonomously. **18 agents** with different capabilities.
 
-| File                    | Location          | Purpose                                                 |
-|-------------------------|-------------------|---------------------------------------------------------|
-| `MEMORY.md`             | project root      | Project memory reference (golden rules, patterns)       |
-| `lessons.md`            | `docs/`           | Append-only lesson log (behavioral, process)            |
+### Agent Overview
 
-### Lesson Lifecycle
+| Agent                 | Purpose                                  | Model  | Auto-Invocation       |
+| --------------------- | ---------------------------------------- | ------ | --------------------- |
+| `planner`             | Research and create implementation plans | opus   | /plan, /plan-hard     |
+| `code-reviewer`       | Comprehensive code review                | sonnet | /code-review, /review |
+| `debugger`            | Investigate and fix issues               | sonnet | /debug, /fix-hard     |
+| `tester`              | Validate code quality through tests      | sonnet | /test                 |
+| `researcher`          | Comprehensive research on topics         | sonnet | /research             |
+| `docs-manager`        | Manage technical documentation           | sonnet | /docs-update          |
+| `ui-ux-designer`      | UI/UX design and review                  | sonnet | /design               |
+| `code-simplifier`     | Post-implementation cleanup              | sonnet | /code-simplifier      |
+| `fullstack-developer` | Implementation phases                    | sonnet | /cook                 |
+| `git-manager`         | Stage, commit, push changes              | sonnet | /commit, /git         |
+| `scout`               | Locate files across codebase             | sonnet | /scout                |
+| `scout-external`      | External tool codebase search            | sonnet | /scout-ext            |
+| `brainstormer`        | Evaluate architectural approaches        | sonnet | /brainstorm           |
+| `database-admin`      | Database operations and optimization     | sonnet | /db-migrate           |
+| `project-manager`     | Track progress, consolidate reports      | sonnet | Manual                |
+| `journal-writer`      | Document technical difficulties          | sonnet | /journal              |
+| `mcp-manager`         | Manage MCP server integrations           | sonnet | /use-mcp              |
+| `copywriter`          | Marketing and engagement copy            | sonnet | /content              |
 
-1. **Capture**: User invokes `/learn <instruction>` or says "remember this"
-2. **Storage**: `pattern-learner.cjs` appends to `docs/lessons.md` with date prefix
-3. **Injection**: `lessons-injector.cjs` injects all lessons into session context
-4. **Persistence**: Lessons persist across sessions (append-only, never pruned automatically)
+### Agent Invocation Patterns
+
+**Automatic (via skill):**
+
+```
+User: "Create a plan for adding dark mode"
+→ Claude calls Skill tool with skill="plan"
+→ plan.md skill activates planner agent
+→ Planner agent creates comprehensive plan
+```
+
+**Manual (via Task tool):**
+
+```
+User: "Use the debugger agent to investigate this issue"
+→ Claude calls Task tool with subagent_type="debugger"
+→ Debugger agent runs investigation workflow
+```
+
+**Background (parallel execution):**
+
+```
+User: "Research these three topics in parallel"
+→ Claude calls Task tool 3x with run_in_background=true
+→ Three researcher agents run concurrently
+→ Results collected when all complete
+```
+
+### Agent Context Injection
+
+Each agent receives context via `subagent-init.cjs` hook:
+
+```
+Agent starts
+    ↓
+subagent-init.cjs executes
+    ↓
+Injects:
+  - Active plan path (CK_ACTIVE_PLAN)
+  - Reports directory (CK_REPORTS_DIR)
+  - Naming conventions (CK_NAME_PATTERN)
+  - Project-specific rules (assertions)
+  - Coding level (CK_CODING_LEVEL)
+```
+
+### Agent Output Patterns
+
+| Agent          | Output Location      | Format                         |
+| -------------- | -------------------- | ------------------------------ |
+| planner        | plans/{date}-{slug}/ | plan.md + phase-XX.md files    |
+| researcher     | plans/reports/       | researcher-{date}-{slug}.md    |
+| code-reviewer  | inline               | Review comments with line refs |
+| tester         | inline               | Test results with coverage     |
+| git-manager    | inline               | Git operation status           |
+| docs-manager   | docs/                | Updated documentation files    |
+| scout          | inline               | File paths and descriptions    |
+| journal-writer | plans/reports/       | journal-{date}-{slug}.md       |
+
+### Agent Definition Structure
+
+```markdown
+---
+name: planner
+description: Use this agent for research and planning...
+model: opus
+---
+
+You are an expert planner with deep expertise...
+
+## Your Skills
+**IMPORTANT**: Use `planning` skills...
+
+## Role Responsibilities
+- YAGNI, KISS, DRY principles
+- Token efficiency
+- Concise grammar
+...
+```
 
 ---
 
-## External Memory Swap System
+## Commands Reference
 
-### Overview
+Commands are slash-invocable prompts that trigger specific actions. **95 commands** available.
 
-The External Memory Swap system externalizes large tool outputs to disk files with semantic summaries for **post-compaction recovery** without re-executing tools. This enables Claude to recover exact content after context compaction.
+### Command Structure
 
-### Critical Constraint
+```markdown
+---
+description: Create implementation plan for a feature
+---
 
-> **PostToolUse hooks CANNOT transform tool output.** They can only observe and inject additional content. The original output still enters context during the active session.
+Analyze the task and create a comprehensive plan...
 
-### Value Proposition
-
-| What It Does | What It Does NOT Do |
-|--------------|---------------------|
-| ✅ Post-compaction exact recovery | ❌ Reduce active session tokens |
-| ✅ Semantic summaries for quick reference | ❌ Transform tool output |
-| ✅ Session-isolated storage | ❌ Work as virtual memory |
-| ✅ Tool-specific threshold tuning | ❌ Provide token savings during session |
-
-### Architecture
-
-```
-Tool Execution (Read/Grep/Glob/Bash)
-         │
-         ▼
-┌─────────────────────┐
-│  PostToolUse Hook   │
-│  tool-output-swap   │
-└─────────┬───────────┘
-          │
-          ▼
-┌─────────────────────┐     size < threshold
-│  shouldExternalize  │─────────────────────► No action
-└─────────┬───────────┘
-          │ size >= threshold
-          ▼
-┌─────────────────────┐
-│    externalize()    │──► Write swap files + inject pointer
-└─────────────────────┘
-
-... After Context Compaction ...
-
-┌─────────────────────┐
-│  SessionStart Hook  │
-│ post-compact-recovery│
-└─────────┬───────────┘
-          │
-          ▼
-Inject swap inventory table → LLM can Read exact content
+**IMPORTANT**: Do not start implementing...
 ```
 
-### Components
+### Planning Commands (10)
 
-| File | Location | Purpose |
-|------|----------|---------|
-| `swap-engine.cjs` | `.claude/hooks/lib/` | Core externalization logic |
-| `tool-output-swap.cjs` | `.claude/hooks/` | PostToolUse hook entry |
-| `swap-config.json` | `.claude/hooks/config/` | Thresholds and limits |
+| Command       | Variant     | Description                                      |
+| ------------- | ----------- | ------------------------------------------------ |
+| `/plan`       | -           | Create implementation plan with YAML frontmatter |
+| `/plan`       | `:hard`     | Deep research with parallel researcher agents    |
+| `/plan`       | `:parallel` | Create parallel-executable phases                |
+| `/plan`       | `:validate` | Validate plan with critical questions interview  |
+| `/plan`       | `:fast`     | Quick planning without deep research             |
+| `/plan`       | `:two`      | Two-phase planning approach                      |
+| `/plan`       | `:ci`       | Plan CI/CD pipeline changes                      |
+| `/plan`       | `:cro`      | Conversion rate optimization planning            |
+| `/plan`       | `:archive`  | Archive completed plan                           |
+| `/brainstorm` | -           | Brainstorm solutions and approaches              |
+
+### Implementation Commands (16)
+
+| Command            | Variant          | Description                                     |
+| ------------------ | ---------------- | ----------------------------------------------- |
+| `/cook`            | -                | Implement features using orchestrated subagents |
+| `/cook`            | `:hard`          | Complex implementation with thorough approach   |
+| `/cook`            | `:fast`          | Quick implementation without full workflow      |
+| `/cook`            | `:parallel`      | Parallel implementation phases                  |
+| `/cook`            | `:auto`          | Auto-continue implementation                    |
+| `/cook`            | `:auto/fast`     | Fast auto-continue                              |
+| `/cook`            | `:auto/parallel` | Parallel auto-continue                          |
+| `/code`            | -                | Write code with best practices                  |
+| `/code`            | `:auto`          | Auto-continue coding                            |
+| `/code`            | `:parallel`      | Parallel coding tasks                           |
+| `/code`            | `:no-test`       | Code without running tests                      |
+| `/code-simplifier` | -                | Simplify and refine code                        |
+| `/create-feature`  | -                | Create new feature scaffold                     |
+| `/feature`         | -                | Feature documentation                           |
+| `/generate-dto`    | -                | Generate DTO from entity                        |
+| `/migration`       | -                | Database migration commands                     |
+
+### Bug Fix Commands (10)
+
+| Command      | Variant     | Description                                |
+| ------------ | ----------- | ------------------------------------------ |
+| `/fix`       | -           | Debug and fix issues systematically        |
+| `/fix`       | `:hard`     | Complex issue with full debugging workflow |
+| `/fix`       | `:fast`     | Quick fix without deep analysis            |
+| `/fix`       | `:test`     | Fix failing tests                          |
+| `/fix`       | `:ci`       | Fix CI/CD pipeline failures                |
+| `/fix`       | `:ui`       | Fix UI/UX issues                           |
+| `/fix`       | `:types`    | Fix TypeScript type errors                 |
+| `/fix`       | `:parallel` | Parallel fix execution                     |
+| `/fix`       | `:logs`     | Fix based on log analysis                  |
+| `/fix-issue` | -           | Fix GitHub issue                           |
+
+### Investigation Commands (5)
+
+| Command                  | Variant | Description                   |
+| ------------------------ | ------- | ----------------------------- |
+| `/scout`                 | -       | Locate files across codebase  |
+| `/scout`                 | `:ext`  | External tool codebase search |
+| `/feature-investigation` | -       | Deep dive into implementation |
+| `/debug`                 | -       | Debug specific issue          |
+| `/ask`                   | -       | Ask questions about codebase  |
+
+### Review Commands (5)
+
+| Command           | Variant      | Description                |
+| ----------------- | ------------ | -------------------------- |
+| `/review`         | -            | Request code review        |
+| `/review`         | `:post-task` | Two-pass review after task |
+| `/review`         | `:codebase`  | Review entire codebase     |
+| `/review-changes` | -            | Review recent changes      |
+| `/lint`           | -            | Run linting checks         |
+
+### Testing Commands (3)
+
+| Command  | Variant | Description             |
+| -------- | ------- | ----------------------- |
+| `/test`  | -       | Run and analyze tests   |
+| `/test`  | `:ui`   | Run UI/E2E tests        |
+| `/build` | -       | Build project and check |
+
+### Git Commands (6)
+
+| Command          | Variant  | Description                 |
+| ---------------- | -------- | --------------------------- |
+| `/git`           | `/cm`    | Stage and commit changes    |
+| `/git`           | `/cp`    | Cherry-pick commits         |
+| `/git`           | `/merge` | Merge branches              |
+| `/git`           | `/pr`    | Create pull request         |
+| `/pr`            | -        | Create/manage pull requests |
+| `/release-notes` | -        | Generate release notes      |
+
+### Documentation Commands (5)
+
+| Command    | Variant      | Description                   |
+| ---------- | ------------ | ----------------------------- |
+| `/docs`    | `/init`      | Initialize documentation      |
+| `/docs`    | `/update`    | Update documentation          |
+| `/docs`    | `/summarize` | Summarize documentation       |
+| `/watzup`  | -            | Generate change summary       |
+| `/journal` | -            | Write technical journal entry |
+
+### Content Commands (4)
+
+| Command    | Variant    | Description                  |
+| ---------- | ---------- | ---------------------------- |
+| `/content` | `/fast`    | Quick content generation     |
+| `/content` | `/good`    | Quality content generation   |
+| `/content` | `/enhance` | Enhance existing content     |
+| `/content` | `/cro`     | Conversion-optimized content |
+
+### Design Commands (6)
+
+| Command   | Variant       | Description                  |
+| --------- | ------------- | ---------------------------- |
+| `/design` | `/fast`       | Quick design generation      |
+| `/design` | `/good`       | Quality design generation    |
+| `/design` | `/3d`         | 3D design generation         |
+| `/design` | `/screenshot` | Design from screenshot       |
+| `/design` | `/describe`   | Describe design requirements |
+| `/design` | `/video`      | Video design generation      |
+
+### Utility Commands (12)
+
+| Command         | Description                   |
+| --------------- | ----------------------------- |
+| `/checkpoint`   | Save context checkpoint       |
+| `/recover`      | Restore from checkpoint       |
+| `/compact`      | Trigger context compaction    |
+| `/context`      | Show context information      |
+| `/coding-level` | Change output verbosity level |
+| `/ck-help`      | Claude Kit help               |
+| `/kanban`       | View plans as kanban board    |
+| `/performance`  | Performance analysis          |
+| `/security`     | Security analysis             |
+| `/worktree`     | Git worktree operations       |
+| `/preview`      | Preview changes               |
+| `/db-migrate`   | Database migration            |
+
+### Bootstrap Commands (5)
+
+| Command      | Variant          | Description                  |
+| ------------ | ---------------- | ---------------------------- |
+| `/bootstrap` | -                | Bootstrap new project        |
+| `/bootstrap` | `:auto`          | Auto-bootstrap with defaults |
+| `/bootstrap` | `:auto/fast`     | Fast auto-bootstrap          |
+| `/bootstrap` | `:auto/parallel` | Parallel auto-bootstrap      |
+
+### Integration Commands (2)
+
+| Command            | Description             |
+| ------------------ | ----------------------- |
+| `/integrate/polar` | Integrate Polar.sh      |
+| `/integrate/sepay` | Integrate SePay payment |
+
+### Skill Management Commands (5)
+
+| Command  | Variant     | Description                |
+| -------- | ----------- | -------------------------- |
+| `/skill` | `/add`      | Add new skill              |
+| `/skill` | `/create`   | Create skill from template |
+| `/skill` | `/fix-logs` | Fix skill based on logs    |
+| `/skill` | `/optimize` | Optimize skill performance |
+| `/skill` | `/plan`     | Plan skill improvements    |
+
+### MCP Commands (1)
+
+| Command    | Description          |
+| ---------- | -------------------- |
+| `/use-mcp` | Use MCP server tools |
+
+---
+
+## Output Styles (Coding Levels)
+
+Output styles adapt Claude's communication based on the developer's experience level.
 
 ### Configuration
 
+Set in `.claude/.ck.json`:
+
 ```json
 {
-  "enabled": true,
-  "thresholds": {
-    "default": 4096,
-    "Read": 8192,
-    "Grep": 4096,
-    "Bash": 6144,
-    "Glob": 2048
-  },
-  "retention": {
-    "defaultHours": 24,
-    "accessedHours": 48,
-    "neverAccessedHours": 6
-  },
-  "limits": {
-    "maxEntriesPerSession": 100,
-    "maxTotalBytes": 52428800,
-    "maxSingleFile": 5242880
-  }
+  "codingLevel": 4
 }
 ```
 
-### Storage Structure
+### Levels Overview
 
-```
-{os.tmpdir()}/ck/swap/{sessionId}/
-├── index.jsonl          # Session manifest (JSONL format - atomic appends)
-├── {uuid}.content       # Raw content (exact)
-└── {uuid}.meta.json     # Metadata + summary
-```
+| Level | Name          | Target Audience                 | Characteristics                                            |
+| ----- | ------------- | ------------------------------- | ---------------------------------------------------------- |
+| 0     | ELI5          | Complete beginners              | Explain everything, real-world analogies, max hand-holding |
+| 1     | Junior        | 0-2 years experience            | Include examples, explain patterns, define terms           |
+| 2     | Mid           | 2-5 years experience            | Balanced explanations, some patterns assumed               |
+| 3     | Senior        | 5-8 years experience            | Concise, focus on edge cases, minimal explanation          |
+| 4     | **Tech Lead** | 8-15 years experience (default) | Strategic thinking, risk analysis, architecture focus      |
+| 5     | God Mode      | 15+ years / domain experts      | Code only, zero hand-holding, maximum velocity             |
 
-**Note:** Uses `os.tmpdir()` for cross-platform support (Windows: `%TEMP%`, Unix: `/tmp`)
+### Injection Mechanism
 
-### Key Functions
-
-#### shouldExternalize(toolName, toolResult, toolInput)
-- Checks if swap is enabled
-- Prevents recursion (skips swap file reads)
-- Compares byte size against tool-specific thresholds
-- Returns true if output should be externalized
-
-#### externalize(sessionId, toolName, toolInput, toolResult)
-- Validates disk space limits
-- Generates UUID for swap entry
-- Writes content file and metadata
-- Appends to JSONL index (atomic)
-- Returns pointer info or null on failure
-
-#### extractSummary(content, toolName)
-- Tool-specific summarization:
-  - **Read**: Extracts class/function/interface signatures
-  - **Grep**: Shows match count and preview
-  - **Glob**: Shows file count and extension types
-  - **Default**: Truncates content
-
-#### buildPointer(entry)
-- Creates markdown reference with:
-  - Swap ID, tool, input
-  - Size metrics (chars, estimated tokens)
-  - Summary and key patterns
-  - Retrieval command
-
-### Integration Points
-
-#### PostToolUse Hook (tool-output-swap.cjs)
-- Triggered for: Read, Grep, Glob, Bash
-- Calls shouldExternalize() → externalize() → buildPointer()
-- Outputs markdown pointer to stdout
-
-#### SessionStart Hook (session-resume.cjs)
-- Loads swap entries for current session
-- Injects inventory table with retrieval paths
-- Escapes markdown pipes in summaries
-
-#### SessionEnd Hook (session-end.cjs)
-- On "clear": Deletes entire session swap directory
-- On "compact": Runs retention cleanup + orphan removal
-
-### Cleanup Behavior
-
-| Trigger | Action |
-|---------|--------|
-| `/clear` | Delete all swap files for session |
-| Context compact | Remove expired files (>24h default) |
-| Session end | Cleanup orphan files |
-
-### Safety Features
-
-1. **Fail-open**: All errors exit 0 (never blocks Claude)
-2. **Recursion prevention**: Skips reads from swap directory
-3. **Session isolation**: Files scoped by session ID
-4. **Atomic writes**: JSONL append-only index
-5. **Disk limits**: maxTotalBytes, maxEntriesPerSession
-
----
-
-## Scripts & Utilities
-
-### resolve_env.py
-
-Centralized environment variable resolver with priority hierarchy:
-
-1. Runtime environment variables (highest)
-2. Project skill-specific: `.claude/skills/<skill>/.env`
-3. Project shared: `.claude/skills/.env`
-4. Project global: `.claude/.env`
-5. User skill-specific: `~/.claude/skills/<skill>/.env`
-6. User shared: `~/.claude/skills/.env`
-7. User global: `~/.claude/.env` (lowest)
-
-```bash
-# Usage
-python .claude/scripts/resolve_env.py GEMINI_API_KEY --skill ai-multimodal
-```
-
-### generate_catalogs.py
-
-Generates YAML catalogs from skill data files.
-
-```bash
-python .claude/scripts/generate_catalogs.py --skills
-```
-
-### Other Scripts
-
-- `scan_skills.py`: Discovers and catalogs skill definitions
-- `set-active-plan.cjs`: Plan state management
-- `worktree.cjs`: Git worktree operations
-
----
-
-## ClaudeKit Paths (`ck-paths.cjs`)
-
-Centralized namespace for all temp files:
+`session-init.cjs` reads codingLevel from `.ck.json` and injects the appropriate style:
 
 ```javascript
-const CK_TMP_DIR = '/tmp/ck';          // Root directory
-const MARKERS_DIR = '/tmp/ck/markers'; // Session markers
-const DEBUG_DIR = '/tmp/ck/debug';
-const CALIBRATION_PATH = '/tmp/ck/calibration.json';
+const level = config.codingLevel ?? 4;  // Default to Tech Lead
+const stylePath = `.claude/output-styles/coding-level-${level}-*.md`;
+const style = fs.readFileSync(glob.sync(stylePath)[0], 'utf-8');
+console.log(style);  // Injected into session context
 ```
 
-Benefits:
-- Single namespace cleanup (`rm -rf /tmp/ck/`)
-- No collisions with other tools
-- Easy debugging (all state in one place)
+### Example Comparison by Level
+
+**Task:** "Add input validation to an API endpoint"
 
 ---
 
-## Configuration Files
+**Level 0 (ELI5):**
 
-### settings.json
+> ### Big Picture
+>
+> We need to make sure people send us the right information before we try to use it.
+>
+> ### Real-World Analogy
+>
+> Think of it like a bouncer at a club checking IDs. Before anyone gets in, the bouncer makes sure they have proper identification. Our code does the same thing with data!
+>
+> ### Let's Try It Step by Step
+>
+> ```csharp
+> // Step 1: Check if the email is provided
+> if (string.IsNullOrEmpty(request.Email))
+> {
+>     // If no email, return an error message
+>     return BadRequest("Please provide an email address");
+> }
+> ```
+>
+> **What this does:** It looks at the email field and says "Is this empty?" If yes, we send back a friendly message.
+>
+> ### Try It Yourself
+>
+> Try sending a request without an email and see what happens!
+>
+> ### Check-In
+>
+> Does this make sense? Any questions about validation?
 
-Main configuration covering:
-- **Permissions**: allow/deny/ask lists for tools and commands
-- **Hooks**: Event-to-handler mappings
-- **Plugins**: Enabled integrations (code-review, lsp, etc.)
-- **Models**: Default model settings
+---
 
-### settings.local.json (Developer Overrides)
+**Level 4 (Tech Lead) - Default:**
 
-Developer-specific settings that override `settings.json` without modifying shared configuration. This file is gitignored.
+> ### Executive Summary
+>
+> Implement validation using PlatformValidationResult fluent API per project standards. 2-3 hours effort including edge cases. Main risk: breaking existing API consumers if error format changes.
+>
+> ### Risk Assessment
+>
+> | Risk | L | I | Mitigation |
+> |------|---|---|------------|
+> | Consumer breaking change | M | H | Version error format, add deprecation header |
+> | Inconsistent adoption | M | M | Lint rules, code review checklist |
+>
+> ### Recommended Approach
+>
+> ```csharp
+> public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
+>     => base.Validate()
+>         .And(_ => Email.IsNotNullOrEmpty(), "Email required")
+>         .And(_ => Email.IsValidEmail(), "Invalid email format")
+>         .And(_ => Amount > 0, "Amount must be positive");
+> ```
+>
+> Uses existing fluent validation pattern. No new dependencies.
+>
+> ### Decisions Needed
+>
+> 1. Error message format - user-facing vs developer-facing?
+> 2. Async validation for uniqueness checks?
 
-**Load Priority** (highest to lowest):
-1. `settings.local.json` - Developer overrides
-2. `settings.json` - Project shared settings
-3. `~/.claude/settings.json` - User global settings
+---
 
-**Merge Behavior**: Deep merge - local settings add to or override specific values without replacing entire sections.
+**Level 5 (God Mode):**
 
-**Setup**:
-```bash
-# Copy template and customize
-cp .claude/settings.local.json.example .claude/settings.local.json
+> ```csharp
+> public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
+>     => base.Validate()
+>         .And(_ => Email.IsNotNullOrEmpty(), "Email required")
+>         .And(_ => Email.IsValidEmail(), "Invalid format");
+> ```
+>
+> `PlatformValidationResult` fluent API. Chain with `.AndAsync()` for DB checks.
+
+---
+
+### Level 4 (Tech Lead) - Full Specification
+
+From `coding-level-4-lead.md`:
+
+**Communication Rules:**
+
+- Lead with executive summary (3-4 sentences max)
+- Quantify everything (latency, throughput, cost, effort)
+- Be explicit about assumptions and confidence levels
+- Identify decisions needing stakeholder alignment
+
+**Risk Rules:**
+
+- Include formal risk assessment (likelihood × impact)
+- Identify single points of failure
+- Propose mitigation strategies
+- Flag security/compliance implications
+
+**Code Rules:**
+
+- Focus on interfaces and contracts over implementation
+- Show only essential code
+- Include complexity analysis
+- Design for extensibility
+
+**Required Response Structure:**
+
+1. Executive Summary
+2. Risk Assessment (table)
+3. Strategic Options (comparison)
+4. Recommended Approach
+5. Operational Considerations
+6. Business Impact
+7. Decisions Needed
+
+### Level 5 (God Mode) - Full Specification
+
+From `coding-level-5-god.md`:
+
+**Communication Rules:**
+
+- Answer exactly what was asked - nothing more
+- Default to code, not prose
+- Assume they understand everything
+- Be terse - every word must earn its place
+- Challenge their approach if you see critical flaws
+
+**FORBIDDEN:**
+
+- Explaining concepts, patterns, or syntax
+- Adding context, background, or motivation
+- Comments unless requested
+- Summaries or "Key Takeaways"
+- Clarifying questions for minor ambiguities
+
+---
+
+## Long-Running State Tracking
+
+The system persists workflow state across context compaction events.
+
+### State Storage
+
+```javascript
+// workflow-state.cjs
+const WORKFLOW_DIR = '/tmp/ck/workflow';
+
+function getDefaultState() {
+  return {
+    workflowType: null,       // 'feature' | 'bugfix' | 'refactor' | ...
+    workflowSteps: [],        // Ordered step names
+    currentStepIndex: -1,     // Current position
+    completedSteps: [],       // Completed step names
+    activePlan: null,         // Path to active plan
+    todos: [],                // TaskCreate snapshot
+    lastTodos: [],            // Last 10 todos for recovery (actual content)
+    startedAt: null,          // ISO timestamp
+    lastUpdatedAt: null,      // ISO timestamp
+    metadata: {}              // Additional data
+  };
+}
 ```
 
-**Example settings.local.json**:
+### Recovery Flow
+
+```
+PreCompact triggered (manual|auto)
+    ↓
+write-compact-marker.cjs writes marker
+    → Resets statusline baseline
+    → Marks compaction point for recovery
+    ↓
+Context compaction occurs
+    ↓
+SessionStart triggered (resume|compact)
+    ↓
+post-compact-recovery.cjs reads workflow state
+    ↓
+Injects recovery context:
+    - Active workflow type
+    - Current step
+    - Completed/remaining steps
+    - Pending todos
+    - Action required
+```
+
+### Checkpoint Format
+
+```markdown
+# Memory Checkpoint - 2025-01-12T05:00:00Z
+
+## Workflow State
+- **Type:** feature
+- **Current Step:** cook (3/7)
+- **Completed:** plan, scout
+- **Remaining:** test → code-review → docs-update → watzup
+
+## Active Plan
+plans/250112-feature-auth/plan.md
+
+## Pending Todos
+- [ ] [Workflow] /cook - Implement feature
+- [ ] [Workflow] /test - Run tests
+- [ ] [Workflow] /code-review - Request review
+
+## Recovery Instructions
+Continue from step "cook". Read plan.md for implementation details.
+```
+
+### External Memory Swap
+
+The External Memory Swap system complements the checkpoint-based recovery by externalizing large tool outputs (Read, Grep, Bash, Glob) to swap files. This enables **exact content retrieval** after context compaction.
+
+**Key Components:**
+
+| File                      | Purpose                                          |
+| ------------------------- | ------------------------------------------------ |
+| `tool-output-swap.cjs`    | PostToolUse hook that externalizes large outputs |
+| `lib/swap-engine.cjs`     | Core externalization engine with locking         |
+| `config/swap-config.json` | Thresholds and limits configuration              |
+
+**Configuration (swap-config.json):**
+
+| Parameter                     | Default | Description                            |
+| ----------------------------- | ------- | -------------------------------------- |
+| `thresholds.Read`             | 8KB     | Chars before externalizing Read output |
+| `thresholds.Grep`             | 4KB     | Chars before externalizing Grep output |
+| `thresholds.Bash`             | 6KB     | Chars before externalizing Bash output |
+| `thresholds.Glob`             | 2KB     | Chars before externalizing Glob output |
+| `limits.maxEntriesPerSession` | 100     | Max swap files per session             |
+| `limits.maxTotalBytes`        | 250MB   | Total storage limit                    |
+
+**Flow:**
+
+```
+Tool output > threshold → externalize() → swap file + pointer
+                                              ↓
+                        Post-compaction → recovery injects swap inventory
+                                              ↓
+                        Claude retrieves exact content via Read tool
+```
+
+**Detailed Documentation:** [hooks/external-memory-swap.md](hooks/external-memory-swap.md)
+
+---
+
+## System Integration Flow
+
+### Complete Request Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                         SESSION START                            │
+├─────────────────────────────────────────────────────────────────┤
+│ 1. session-init.cjs                                             │
+│    ├─ Detect project type, package manager                     │
+│    ├─ Load .ck.json (coding level, assertions)                  │
+│    ├─ Inject output style based on coding level                 │
+│    ├─ Inject lessons from docs/lessons.md                    │
+│    └─ Set up environment variables                              │
+│                                                                  │
+│ 2. post-compact-recovery.cjs (if resume/compact)                │
+│    ├─ Find checkpoints within 24 hours                          │
+│    └─ Inject workflow recovery context with lastTodos           │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                       USER PROMPT SUBMIT                         │
+├─────────────────────────────────────────────────────────────────┤
+│ 3. workflow-router.cjs                                          │
+│    ├─ Analyze prompt for intent keywords                        │
+│    ├─ Score each workflow type                                  │
+│    ├─ Detect workflow and generate TaskCreate items              │
+│    └─ Inject workflow announcement                              │
+│                                                                  │
+│ 4. dev-rules-reminder.cjs                                       │
+│    └─ Inject relevant development rules                         │
+│                                                                  │
+│ 5. lessons-injector.cjs                                         │
+│    └─ Inject lessons from docs/lessons.md                    │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                        TOOL EXECUTION                            │
+├─────────────────────────────────────────────────────────────────┤
+│ 6. PreToolUse (Bash|Glob|Grep|Read|Edit|Write)                  │
+│    ├─ scout-block.cjs → Block .ckignore directories             │
+│    └─ privacy-block.cjs → Block sensitive files                 │
+│                                                                  │
+│ 7. PreToolUse (Skill)                                           │
+│    └─ skill-enforcement.cjs → Block impl skills without todos   │
+│                                                                  │
+│ 8. PreToolUse (Edit|Write|MultiEdit)                            │
+│    ├─ backend-csharp-context.cjs → Inject C# patterns           │
+│    ├─ frontend-typescript-context.cjs → Inject TS patterns      │
+│    └─ scss-styling-context.cjs → Inject SCSS patterns           │
+│                                                                  │
+│ [Tool Executes]                                                  │
+│                                                                  │
+│ 9. PostToolUse (Edit|Write)                                     │
+│    └─ post-edit-prettier.cjs → Format with Prettier             │
+│                                                                  │
+│ 10. PostToolUse (TaskCreate)                                     │
+│     └─ todo-tracker.cjs → Update todo state                     │
+│                                                                  │
+│ 11. PostToolUse (Skill)                                         │
+│     └─ workflow-step-tracker.cjs → Mark step complete           │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                       CONTEXT COMPACTION                         │
+├─────────────────────────────────────────────────────────────────┤
+│ 13. PreCompact (manual|auto)                                    │
+│     └─ write-compact-marker.cjs → Write marker for recovery     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Lessons Learning Flow
+
+```
+User invokes /learn → /learn skill appends to docs/lessons.md
+                         ↓
+Next session/prompt → lessons-injector.cjs injects lessons into context
+                         ↓
+Claude follows lessons as contextual instructions
+```
+
+---
+
+## Quick Reference
+
+### Environment Variables
+
+| Variable             | Description                |
+| -------------------- | -------------------------- |
+| `CK_SESSION_ID`      | Current session identifier |
+| `CK_PROJECT_TYPE`    | Detected project type      |
+| `CK_GIT_BRANCH`      | Current git branch         |
+| `CK_DEBUG`           | Enable debug logging       |
+| `CLAUDE_PROJECT_DIR` | Project directory path     |
+
+### Key Paths
+
+| Path                                   | Purpose                |
+| -------------------------------------- | ---------------------- |
+| `/tmp/ck/workflow/{sessionId}.json`    | Workflow state         |
+| `plans/reports/memory-checkpoint-*.md` | Compaction checkpoints |
+| `.claude/.ck.json`                     | Project configuration  |
+| `.claude/settings.json`                | Claude Code settings   |
+
+### Lessons File
+
+The `docs/lessons.md` file stores learned lessons in human-readable markdown format, managed by the `/learn` skill and `lessons-injector.cjs` hook.
+
+### Statusline Scripts
+
+Three platform-specific statusline implementations:
+
+| Script           | Platform                 | Description               |
+| ---------------- | ------------------------ | ------------------------- |
+| `statusline.cjs` | Node.js (cross-platform) | Default, works everywhere |
+| `statusline.sh`  | Bash (macOS/Linux)       | Native shell version      |
+| `statusline.ps1` | PowerShell (Windows)     | Native Windows version    |
+
+Default configuration in settings.json uses Node.js variant:
+
 ```json
-{
-  "permissions": {
-    "allow": [
-      "Bash(python*)",
-      "Bash(docker*)",
-      "Bash(for*)",
-      "Bash(while*)"
-    ]
+"statusLine": {
+  "type": "command",
+  "command": "node .claude/statusline.cjs"
+}
+```
+
+### Common Commands
+
+```bash
+# Change coding level
+/coding-level 3   # Set to Senior mode
+
+# Manual checkpoint
+/checkpoint       # Save context checkpoint
+
+# Recover from compaction
+/recover          # Restore from last checkpoint
+
+# Force workflow
+quick: implement auth  # Skip confirmation, run feature workflow
+
+# Explicit skill
+/fix the bug      # Run fix skill directly
+```
+
+---
+
+## Maintenance
+
+### Adding New Skills
+
+1. Create directory: `.claude/skills/{skill-name}/`
+2. Create `skill.md` with frontmatter
+3. Add references in `references/` subdirectory
+4. Run `python .claude/scripts/scan_skills.py` to update catalog
+
+### Adding New Hooks
+
+1. Create hook file in `.claude/hooks/`
+2. Add to appropriate event in `settings.json`
+3. Ensure hook exits 0 on success/error (non-blocking)
+4. Run `node .claude/hooks/verify-hooks.cjs` to validate
+
+### Hook Verification
+
+The `verify-hooks.cjs` script validates all hooks registered in settings.json.
+
+**Checks performed:**
+
+- File existence for all registered hooks
+- Valid shebang (`#!/usr/bin/env node`)
+- Syntax validity (can be `require()`d)
+- Required libraries in `lib/` directory
+
+**Running verification:**
+
+```bash
+node .claude/hooks/verify-hooks.cjs
+```
+
+**Sample output:**
+
+```
+## Hook Verification Report
+
+**Status:** ALL VALID
+**Hooks Checked:** 23 (22 valid)
+**Libraries:** 6/6
+
+### Issues
+**Warnings:**
+- [Notification] notify-waiting.js: Missing shebang
+```
+
+**Exit Codes:**
+
+- `0` - All hooks valid
+- `1` - Issues found (with report)
+
+### Hook Testing
+
+Test files in `.claude/hooks/tests/`:
+
+| Test File                     | Coverage                          |
+| ----------------------------- | --------------------------------- |
+| `test-scout-block.js`         | Directory/file blocking patterns  |
+| `test-privacy-block.js`       | Sensitive file protection         |
+| `test-context-tracker.cjs`    | Session detection, token tracking |
+| `test-ckignore.js`            | Ignore pattern matching           |
+| `test-modularization-hook.js` | Hook modularization patterns      |
+
+**Running tests:**
+
+```bash
+node .claude/hooks/tests/test-scout-block.js
+node .claude/hooks/tests/test-privacy-block.js
+node .claude/hooks/tests/test-context-tracker.cjs
+```
+
+---
+
+## How Each Hook Helps (Detailed)
+
+This section provides an in-depth explanation of how each hook contributes to the overall system effectiveness.
+
+### SessionStart Hooks
+
+#### session-init.cjs - Foundation Layer
+
+**Purpose:** Establishes session context and injects coding guidelines.
+
+**How It Helps:**
+
+1. **Project Detection** - Automatically identifies project type, package manager, and frameworks:
+
+   ```javascript
+   // Detects: single-repo, monorepo, python, rust, go, etc.
+   function detectProjectType() {
+     if (fs.existsSync('BravoSUITE.sln')) return 'single-repo';
+     if (fs.existsSync('nx.json')) return 'monorepo';
+     if (fs.existsSync('pyproject.toml')) return 'python';
+     // ...
+   }
+   ```
+
+   **Benefit:** Claude immediately understands the tech stack without asking.
+
+2. **Coding Level Injection** - Loads output style based on developer experience:
+
+   ```javascript
+   // Reads .ck.json → codingLevel → loads coding-level-{N}.md
+   const codingLevel = ckConfig.codingLevel || 4;
+   const styleContent = fs.readFileSync(`output-styles/coding-level-${codingLevel}.md`);
+   // Outputs style guidelines to stdout → Claude receives them
+   ```
+
+   **Benefit:** Responses match developer expectations (beginner=verbose, senior=concise).
+
+3. **User Assertions Injection** - Loads project-specific rules:
+
+   ```javascript
+   // From .ck.json assertions array
+   // "Backend: Use service-specific repositories (IGrowthRootRepository)"
+   // "Frontend: Extend AppBaseComponent"
+   // Outputs as numbered list → Claude follows as hard constraints
+   ```
+
+   **Benefit:** Enforces architectural decisions without repeating in every prompt.
+
+#### post-compact-recovery.cjs - Continuity Layer
+
+**Purpose:** Restores workflow state after context compaction.
+
+**How It Helps:**
+
+1. **Checkpoint Discovery** - Finds recent checkpoints:
+
+   ```javascript
+   // Searches plans/reports/memory-checkpoint-*.md within 24 hours
+   const checkpoints = glob.sync('plans/reports/memory-checkpoint-*.md')
+     .filter(f => Date.now() - fs.statSync(f).mtimeMs < 24 * 60 * 60 * 1000);
+   ```
+
+2. **Workflow State Recovery** - Restores workflow progress:
+
+   ```javascript
+   // Loads workflow-state.json → outputs recovery context
+   // "Detected workflow: feature (step 3/7: cook)"
+   // "Completed: plan, scout | Remaining: test, code-review, docs-update, watzup"
+   ```
+
+   **Benefit:** Long-running tasks survive context compaction without losing progress.
+
+3. **LastTodos Recovery** - Restores actual todo content:
+
+   ```javascript
+   // lib/todo-state.cjs stores last 10 todos
+   // Recovery hook reads and outputs them for Claude to resume
+   ```
+
+   **Benefit:** Even if TaskCreate state is lost, actual content is preserved.
+
+### UserPromptSubmit Hooks
+
+#### workflow-router.cjs - Intent Detection Layer
+
+**Purpose:** Automatically detects development intent and routes to appropriate workflow.
+
+**How It Helps:**
+
+1. **Pattern Matching** - Scores prompts against trigger keywords:
+
+   ```javascript
+   function detectIntent(userPrompt) {
+     const scores = {};
+     for (const [workflowId, workflow] of Object.entries(workflows)) {
+       let score = 0;
+       for (const pattern of workflow.triggers.en) {
+         if (new RegExp(pattern, 'i').test(userPrompt)) {
+           score += pattern.length > 5 ? 15 : 10; // Longer patterns = higher confidence
+         }
+       }
+       scores[workflowId] = score;
+     }
+     // Highest score with >50% confidence wins
+     return Object.entries(scores).sort((a, b) => b[1] - a[1])[0];
+   }
+   ```
+
+2. **TaskCreate Generation** - Pre-creates workflow steps:
+
+   ```javascript
+   // Outputs TaskCreate suggestion with all workflow steps
+   // Claude sees: "Create these todos: /scout → /investigate → /plan → ... → /cook → /review-changes → ..."
+   const todoItems = workflow.sequence.map(step => ({
+     content: `[Workflow] /${step} - ${stepMappings[step].todoLabel}`,
+     status: step === workflow.sequence[0] ? 'in_progress' : 'pending',
+     activeForm: `Executing /${step}`
+   }));
+   ```
+
+   **Benefit:** Workflows are tracked via TaskCreate, surviving context compaction.
+
+3. **Quick Mode Detection** - Handles `quick:` prefix:
+
+   ```javascript
+   // "quick: add auth" → Detects feature workflow, skips confirmation
+   const quickMode = userPrompt.startsWith('quick:');
+   if (quickMode) {
+     // Outputs: "Quick mode detected. Starting feature workflow immediately."
+   }
+   ```
+
+   **Benefit:** Users can skip confirmation for routine tasks.
+
+### PreToolUse Hooks
+
+#### scout-block.cjs & privacy-block.cjs - Security Layer
+
+**Purpose:** Prevents access to ignored directories and sensitive files.
+
+**How It Helps:**
+
+```javascript
+// scout-block.cjs - Blocks .ckignore patterns
+const ignoredPatterns = [
+  'node_modules/**', 'dist/**', '.git/**',
+  'vendor/**', 'coverage/**'
+];
+
+// privacy-block.cjs - Blocks sensitive files
+const sensitivePatterns = [
+  '**/.env*', '**/secrets.json', '**/credentials.json',
+  '**/id_rsa*', '**/*.pem'
+];
+
+function shouldBlock(toolInput, patterns) {
+  const filePath = extractPath(toolInput);
+  return patterns.some(pattern => minimatch(filePath, pattern));
+}
+
+// If blocked: outputs warning, exits 2 (blocked)
+// If allowed: exits 0 (continue)
+```
+
+**Benefit:** Prevents accidentally exposing secrets or wasting tokens on irrelevant files.
+
+#### skill-enforcement.cjs - Workflow Discipline Layer
+
+**Purpose:** Ensures implementation skills have TaskCreate context.
+
+**How It Helps:**
+
+```javascript
+// Blocks: cook, code, fix, implement, refactor, build
+// Allows: plan, scout, investigate, analyze, review, debug
+
+function checkSkill(skillName) {
+  const IMPLEMENTATION_SKILLS = ['cook', 'code', 'fix', 'implement', 'refactor'];
+  const ALLOWED_SKILLS = ['plan', 'scout', 'investigate', 'analyze', 'review'];
+
+  if (ALLOWED_SKILLS.some(s => skillName.includes(s))) return true;
+  if (IMPLEMENTATION_SKILLS.some(s => skillName.includes(s))) {
+    // Check if TaskCreate was called
+    const todoState = loadTodoState();
+    if (!todoState.hasTodos) {
+      // Outputs blocking message, exits 2
+      console.log('BLOCKED: Call TaskCreate before implementation skills.');
+      return false;
+    }
+  }
+  return true;
+}
+```
+
+**Benefit:** Forces workflow discipline - planning before implementation.
+
+#### backend-csharp-context.cjs & frontend-typescript-context.cjs - Pattern Injection Layer
+
+**Purpose:** Injects domain-specific patterns when editing files.
+
+**How It Helps:**
+
+```javascript
+// backend-csharp-context.cjs - For .cs files
+function injectCSharpPatterns(filePath) {
+  const patterns = {
+    repository: `Use service-specific repositories:
+      - IGrowthRootRepository<T> for bravoGROWTH
+      - ICandidatePlatformRootRepository<T> for bravoTALENTS`,
+    validation: `Use PlatformValidationResult fluent API:
+      .And(condition, message)
+      .AndAsync(asyncCondition, message)
+      Never throw ValidationException`,
+    dto: `DTOs own mapping:
+      PlatformEntityDto<TEntity, TKey>.MapToEntity()
+      PlatformDto<T>.MapToObject()`
+  };
+  // Outputs relevant patterns based on file content
+}
+
+// frontend-typescript-context.cjs - For .ts files
+function injectTypeScriptPatterns(filePath) {
+  const patterns = {
+    component: `Extend AppBaseComponent/AppBaseVmStoreComponent`,
+    state: `Use PlatformVmStore for state management`,
+    api: `Extend PlatformApiService for HTTP calls`,
+    subscription: `Always use .pipe(this.untilDestroyed())`
+  };
+}
+```
+
+**Benefit:** Claude applies correct patterns without needing full documentation context.
+
+### PostToolUse Hooks
+
+#### todo-tracker.cjs - State Management Layer
+
+**Purpose:** Tracks TaskCreate usage for enforcement and recovery.
+
+**How It Helps:**
+
+```javascript
+// Updates todo-state.json on every TaskCreate call
+function updateTodoState(todos) {
+  const state = {
+    hasTodos: todos.length > 0,
+    lastUpdated: new Date().toISOString(),
+    todoCount: todos.length,
+    lastTodos: todos.slice(-10) // Store last 10 for recovery
+  };
+  atomicWriteFile(TODO_STATE_FILE, JSON.stringify(state));
+}
+```
+
+**Benefit:** Enables edit-enforcement/skill-enforcement and recovery from compaction.
+
+#### post-edit-prettier.cjs - Code Quality Layer
+
+**Purpose:** Auto-formats edited files with Prettier.
+
+**How It Helps:**
+
+```javascript
+// After Edit/Write tool completes successfully
+function formatFile(filePath) {
+  if (!shouldFormat(filePath)) return; // Skip non-formattable files
+
+  const ext = path.extname(filePath);
+  const formatters = {
+    '.ts': 'prettier --write',
+    '.tsx': 'prettier --write',
+    '.js': 'prettier --write',
+    '.json': 'prettier --write',
+    '.css': 'prettier --write',
+    '.scss': 'prettier --write',
+    '.md': 'prettier --write'
+  };
+
+  if (formatters[ext]) {
+    execSync(`${formatters[ext]} "${filePath}"`, { stdio: 'pipe' });
   }
 }
 ```
 
-**Use Cases**:
-- Add developer-specific Bash permissions (python, docker, etc.)
-- Enable plugins for personal workflows
-- Override model settings for testing
+**Benefit:** Consistent code formatting without manual intervention.
 
-### config/ Directory
+### PreCompact Hooks
 
-Centralized configuration templates for skills, agents, and workflows.
+#### write-compact-marker.cjs - Compaction Marker
 
-| File | Purpose |
-|------|---------|
-| `release-notes-template.yaml` | Template for release notes generation |
-| `skill-template.md` | Template for creating new skills |
-| `agent-template.md` | Template for creating new agents |
+**Purpose:** Writes compaction marker for statusline baseline reset and recovery point.
 
-**Creating New Skills**:
-1. Copy `.claude/config/skill-template.md` to `.claude/skills/{skill-name}/SKILL.md`
-2. Update YAML frontmatter with skill details
-3. Add skill-specific content and examples
+**Benefit:** Enables post-compact-recovery.cjs to detect and restore state after compaction.
 
-**Creating New Agents**:
-1. Copy `.claude/config/agent-template.md` to `.claude/agents/{agent-name}.md`
-2. Update frontmatter with agent details
-3. Define agent behavior and constraints
-
-### .ck.json
-
-Project-specific Claude Kit settings:
-- Coding level (0-5 scale)
-- Plan naming format
-- User assertions (15 EasyPlatform architecture rules)
-- Validation settings
-
-### workflows.json
-
-Workflow definitions with:
-- Sequence of skills/commands
-- Multilingual trigger patterns
-- Priority weights
-- Copilot command mappings
+> **Note:** Lesson writing is handled by the `/learn` skill, not a PreCompact hook.
 
 ---
 
-## How Everything Works Together
+## Detailed Workflow Execution Examples
 
-### Session Lifecycle
+This section shows step-by-step code execution for main use cases.
 
-```
-1. SESSION START
-   ├── session-init.cjs → Detect project, set env vars
-   ├── lessons-injector.cjs → Inject lessons from lessons.md
-   └── Output environment context + assertions
+### Example 1: Feature Implementation Workflow
 
-2. USER PROMPT
-   ├── workflow-router.cjs → Detect intent, suggest workflow
-   ├── todo-enforcement.cjs → Check/require todo list
-   └── Route to appropriate skill/agent
+**User Prompt:** `"Add dark mode toggle to settings page"`
 
-3. SKILL EXECUTION
-   ├── PreToolUse hooks → Validation + context injection
-   ├── Tool execution
-   ├── PostToolUse hooks → Track workflow progress
-   └── Auto-format edited files
-
-4. CONTEXT COMPACTION
-   ├── write-compact-marker.cjs → Mark compaction point
-   └── save-context-memory.cjs → Persist todos + state
-
-5. SESSION END
-   └── Cleanup, state persistence
-```
-
-### Learning Flow
+#### Step 1: SessionStart Hooks Fire
 
 ```
-User teaches (/learn) → pattern-learner.cjs → lessons.md → lessons-injector.cjs → Session Context
-       ↑                                                                              │
-       └──────────────────── Improved Future Executions ◀─────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ session-init.cjs executes                                       │
+├─────────────────────────────────────────────────────────────────┤
+│ detectProjectType() → 'single-repo'                             │
+│ loadCkConfig() → { codingLevel: 4, assertions: [...] }          │
+│                                                                 │
+│ STDOUT:                                                          │
+│ "Project: single-repo | PM: npm | Level: 4 (Tech Lead)"         │
+│ "User Assertions:"                                              │
+│ "1. Backend: Use service-specific repositories"                 │
+│ "2. Frontend: Extend AppBaseComponent"                          │
+│ ...                                                             │
+│                                                                 │
+│ Lessons Injection:                                              │
+│ lessons-injector.cjs reads docs/lessons.md                   │
+│ Injects relevant lessons into context                           │
+│                                                                 │
+│ Exit: 0 (success)                                               │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Value Proposition
+#### Step 2: UserPromptSubmit Hooks Fire
 
-| Component            | Benefit                                                |
-|----------------------|--------------------------------------------------------|
-| Learning System      | Claude retains lessons across sessions via lessons.md |
-| Specialized Agents   | Expert-level handling for specific task types         |
-| Skills Framework     | Consistent, well-documented capabilities              |
-| Workflow Orchestration | Structured, complete task execution with checkpoints |
-| Notification System  | Never miss task completion, reduced context-switching |
-| Todo Enforcement     | No forgotten steps, visible progress                  |
-| Memory Persistence   | Cross-session knowledge retention                     |
-| Environment Detection | Context-aware behavior                               |
-
----
-
-## Best Practices
-
-### For Users
-
-1. **Use workflows**: Let intent detection route to appropriate sequence
-2. **Maintain todos**: Keep task list updated for visibility
-3. **Teach with /learn**: Use `/learn` to persist important patterns
-4. **Use agents**: Delegate complex tasks to specialized agents
-
-### For Extension
-
-1. **Add skills**: Create `SKILL.md` with YAML frontmatter
-2. **Add agents**: Create `agent.md` in `.claude/agents/`
-3. **Add hooks**: Register in `settings.json`
-4. **Customize workflows**: Edit `workflows.json`
-
-### Troubleshooting
-
-| Issue                          | Solution                                           |
-|--------------------------------|----------------------------------------------------|
-| Lessons not injecting          | Check `lessons.md` has entries, lessons-injector.cjs is active |
-| Workflow not detected          | Check trigger patterns in workflows.json          |
-| Todo enforcement blocking      | Use "quick:" prefix or create todo list           |
-
----
-
-## How to Trigger Learning
-
-This project has two complementary learning mechanisms.
-
-### 1. Explicit Pattern Teaching (`/learn`)
-
-Teach Claude specific patterns, conventions, or corrections that persist across sessions.
-
-**Teach a pattern:**
 ```
-/learn always use PlatformValidationResult instead of throwing exceptions
+┌─────────────────────────────────────────────────────────────────┐
+│ workflow-router.cjs executes                                    │
+├─────────────────────────────────────────────────────────────────┤
+│ Input: "Add dark mode toggle to settings page"                  │
+│                                                                 │
+│ detectIntent():                                                 │
+│   scores = {                                                    │
+│     feature: 25,    // "add" (10) + "toggle" (10) + "page" (5)  │
+│     bugfix: 0,                                                  │
+│     documentation: 0,                                           │
+│     refactor: 5     // "settings" could be refactor             │
+│   }                                                             │
+│   winner = 'feature' (confidence: 0.83)                         │
+│                                                                 │
+│ generateTodoItems():                                            │
+│   sequence = ['plan', 'cook', 'code-simplifier', 'code-review', │
+│               'test', 'docs-update', 'watzup']                  │
+│   todos = [                                                     │
+│     { content: '[Workflow] /plan - Create plan', status: 'pending' },
+│     { content: '[Workflow] /cook - Implement', status: 'pending' },
+│     ...                                                         │
+│   ]                                                             │
+│                                                                 │
+│ STDOUT:                                                          │
+│ "Detected: **Feature Implementation** workflow"                 │
+│ "Sequence: /scout → /investigate → /plan → ... → /cook → /code-simplifier → /review-changes →" │
+│ "          /code-review → /sre-review → /changelog → /test → /docs-update → /watzup"          │
+│ "Create todos: [JSON array]"                                    │
+│                                                                 │
+│ Exit: 0 (success)                                               │
+└─────────────────────────────────────────────────────────────────┘
+
 ```
 
-**Teach with wrong/right examples:**
+#### Step 3: Claude Calls TaskCreate Tool
+
 ```
-/learn [wrong] throw new ValidationException() [right] return PlatformValidationResult.Invalid()
-```
+┌─────────────────────────────────────────────────────────────────┐
+│ Claude processes hook outputs and calls TaskCreate               │
+├─────────────────────────────────────────────────────────────────┤
+│ TaskCreate({                                                     │
+│   todos: [                                                      │
+│     { content: '[Workflow] /plan', status: 'in_progress', ... },│
+│     { content: '[Workflow] /cook', status: 'pending', ... },    │
+│     ...                                                         │
+│   ]                                                             │
+│ })                                                              │
+└─────────────────────────────────────────────────────────────────┘
 
-**What happens:** The `pattern-learner.cjs` hook captures your teaching and appends it to `docs/lessons.md`. The `lessons-injector.cjs` hook injects all lessons into future sessions.
-
-### 2. Claude Auto-Memory
-
-Claude's built-in auto-memory at `~/.claude/projects/<project>/memory/MEMORY.md` stores stable patterns confirmed across multiple interactions. The project-level `MEMORY.md` at the repo root is also auto-loaded.
-
-### Quick Reference: Learning Triggers
-
-| Trigger | System | Storage | Injection |
-|---------|--------|---------|-----------|
-| `/learn <pattern>` | Lessons | `docs/lessons.md` | UserPromptSubmit + PreToolUse |
-| "remember this" | Lessons | `docs/lessons.md` | Same |
-| Claude notices stable pattern | Auto-Memory | `~/.claude/projects/.../MEMORY.md` | System prompt |
-
----
-
-## How Hooks Help - Detailed Workflow Execution
-
-This section provides detailed explanations of how each hook category helps and step-by-step workflow execution traces for main use cases.
-
-### Hook Categories and Their Purpose
-
-#### 1. SessionStart Hooks - Environment Bootstrap
-
-**What they do**: Initialize the session environment, detect project context, and inject learned patterns.
-
-**Why they help**:
-- **Consistency**: Every session starts with the same context awareness (project type, package manager, framework)
-- **Memory**: Previously learned patterns are injected, so Claude doesn't repeat mistakes
-- **Efficiency**: Environment variables (`CK_*`) are set once, avoiding repeated detection
-
-**Execution Trace**:
-```
-User starts Claude session
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ session-init.cjs (fires on: startup|resume|clear|compact)                    │
-│                                                                              │
-│ 1. Read stdin JSON payload: { source: "startup", session_id: "..." }        │
-│                                                                              │
-│ 2. Detect project context:                                                   │
-│    ├── detectProjectType() → "single-repo" (checks pnpm-workspace.yaml,     │
-│    │                          lerna.json, package.json workspaces)          │
-│    ├── detectPackageManager() → "npm" (checks lock files)                   │
-│    └── detectFramework() → "react" (checks package.json deps)               │
-│                                                                              │
-│ 3. Set 30+ environment variables via CLAUDE_ENV_FILE:                       │
-│    CK_PROJECT_TYPE=single-repo                                               │
-│    CK_PACKAGE_MANAGER=npm                                                    │
-│    CK_GIT_BRANCH=main                                                        │
-│    CK_CODING_LEVEL=4                                                         │
-│    CK_NAME_PATTERN=260112-1430-GH-88-{slug}                                  │
-│    ...                                                                       │
-│                                                                              │
-│ 4. Output context summary:                                                   │
-│    "Session startup. Project: single-repo | PM: npm | Plan naming: ..."     │
-│                                                                              │
-│ 5. Inject coding level guidelines (if codingLevel != -1):                   │
-│    Output: "# Tech Lead Communication Mode..."                               │
-│                                                                              │
-│ 6. Output user assertions (15 EasyPlatform rules)                           │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ session-resume.cjs (fires on: startup|resume|compact)                        │
-│                                                                              │
-│ 1. Load checkpoint from .claude/memory/checkpoints/<session_id>.json        │
-│ 2. If checkpoint exists and < 24h old:                                       │
-│    ├── Restore todo list state                                               │
-│    ├── Restore workflow state                                                │
-│    └── Output: "Restored: 3 todos, workflow: feature-implementation"        │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ lessons-injector.cjs (fires on: UserPromptSubmit + PreToolUse:Edit|Write)   │
-│                                                                              │
-│ 1. Load lessons from docs/lessons.md                                      │
-│                                                                              │
-│ 2. Parse lesson lines (format: "- [date] Category: Description")           │
-│                                                                              │
-│ 3. Inject as system-reminder:                                               │
-│    "## Lessons Learned                                                       │
-│    - Always verify BEM classes on every template element                    │
-│    - Check base class hierarchy -- extend AppBaseComponent                 │
-│    - Run search-before-code before writing any new code"                    │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ PostToolUse: todo-tracker.cjs executes                          │
+├─────────────────────────────────────────────────────────────────┤
+│ updateTodoState():                                              │
+│   state = {                                                     │
+│     hasTodos: true,                                             │
+│     todoCount: 7,                                               │
+│     lastUpdated: '2025-01-12T05:00:00Z',                        │
+│     lastTodos: [...7 todos...]                                  │
+│   }                                                             │
+│   atomicWriteFile(TODO_STATE_FILE, state)                       │
+│                                                                 │
+│ Exit: 0 (success)                                               │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-#### 2. UserPromptSubmit Hooks - Intent Detection & Workflow Routing
+#### Step 4: Claude Calls Skill Tool (/plan)
 
-**What they do**: Analyze user prompts to detect intent and route to appropriate workflows.
-
-**Why they help**:
-- **Automation**: Users don't need to know which skills to invoke
-- **Consistency**: Same request triggers same workflow sequence
-- **Guidance**: Provides step-by-step workflow instructions
-
-**Execution Trace**:
 ```
-User submits: "Add a dark mode toggle to the settings page"
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ workflow-router.cjs                                                          │
-│                                                                              │
-│ 1. Parse stdin: { prompt: "Add a dark mode toggle..." }                     │
-│                                                                              │
-│ 2. Check for override prefix ("quick:"):                                     │
-│    if (prompt.startsWith("quick:")) → skip detection                        │
-│                                                                              │
-│ 3. Check for explicit command (/skill):                                      │
-│    if (/^\/\w+/.test(prompt)) → skip detection                              │
-│                                                                              │
-│ 4. Detect intent from workflows.json:                                        │
-│    ┌──────────────────────────────────────────────────────────────────────┐ │
-│    │ For each workflow in config.workflows:                                │ │
-│    │   - Check excludePatterns first (skip if matched)                    │ │
-│    │   - Check triggerPatterns: ["\\b(implement|add|create|build)\\b"]    │ │
-│    │   - "add" matches → score += 10                                       │ │
-│    │   - adjustedScore = score - priority (lower = higher preference)      │ │
-│    │                                                                        │ │
-│    │ Result: { workflowId: "feature", confidence: 100 }                    │ │
-│    └──────────────────────────────────────────────────────────────────────┘ │
-│                                                                              │
-│ 5. Create workflow state:                                                    │
-│    createState({                                                             │
-│      workflowId: "feature",                                                  │
-│      workflowName: "Feature Implementation",                                 │
-│      sequence: ["plan", "plan-validate", "plan-review", "cook", "code-simplifier", "code-review", "test"],                     │
-│      originalPrompt: "Add a dark mode toggle..."                            │
-│    })                                                                        │
-│    → Saves to .claude/memory/.workflow-state.json                           │
-│                                                                              │
-│ 6. Generate instructions output:                                             │
-│    "## Workflow Detected                                                     │
-│    **Intent:** Feature Implementation (100% confidence)                      │
-│    **Workflow:** /plan → /plan-validate → /plan-review → /cook → /simplify...                │
-│                                                                              │
-│    ### Instructions (MUST FOLLOW)                                            │
-│    1. ANNOUNCE: Tell the user...                                             │
-│    2. EXECUTE: Follow the workflow sequence..."                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ dev-rules-reminder.cjs                                                       │
-│                                                                              │
-│ 1. Check if relevant development rules should be injected                   │
-│ 2. Based on detected intent, inject relevant guidelines                     │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ PreToolUse: skill-enforcement.cjs executes                       │
+├─────────────────────────────────────────────────────────────────┤
+│ Input: Skill { name: 'plan' }                                   │
+│                                                                 │
+│ checkSkill('plan'):                                             │
+│   'plan' is in ALLOWED_SKILLS → Always pass                     │
+│                                                                 │
+│ Exit: 0 (allow execution)                                       │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ [Skill 'plan' executes - creates implementation plan]           │
+└─────────────────────────────────────────────────────────────────┘
+
 ```
 
-#### 3. PreToolUse Hooks - Validation & Context Injection
+#### Step 5: Claude Calls Skill Tool (/cook)
 
-**What they do**: Validate tool calls before execution and inject domain-specific context.
-
-**Why they help**:
-- **Prevention**: Block problematic actions before they happen
-- **Guidance**: Inject relevant patterns when editing specific file types
-- **Security**: Filter sensitive file access
-
-**Execution Trace** (for Edit tool on a `.cs` file):
 ```
-Claude attempts: Edit(file_path="/src/MyService.cs", ...)
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ todo-enforcement.cjs (matcher: Skill)                                        │
-│                                                                              │
-│ [Skipped - only triggers for Skill tool, not Edit]                          │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ scout-block.cjs (matcher: Bash|Glob|Grep|Read|Edit|Write)                   │
-│                                                                              │
-│ 1. Check if running inside /scout skill                                     │
-│ 2. If yes and tool is Edit/Write → BLOCK (exit 2)                          │
-│    "Scout skills are read-only. Use /cook for modifications."               │
-│ 3. If no → Allow (exit 0)                                                    │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ privacy-block.cjs (matcher: Bash|Glob|Grep|Read|Edit|Write)                 │
-│                                                                              │
-│ 1. Check file_path against sensitive patterns:                              │
-│    - **/.env*, ~/.ssh/**, ~/.aws/**, **/secrets/**                          │
-│ 2. If matches → BLOCK (exit 2)                                              │
-│    "Access to sensitive file blocked: .env"                                  │
-│ 3. If clean → Allow (exit 0)                                                 │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ backend-csharp-context.cjs (matcher: Edit|Write|MultiEdit)                  │
-│                                                                              │
-│ 1. Check if file_path ends with .cs:                                        │
-│    ✓ /src/MyService.cs matches                                               │
-│                                                                              │
-│ 2. Inject C# backend patterns:                                               │
-│    "## C# Backend Context                                                    │
-│                                                                              │
-│    **Repository Pattern**: Use IPlatformQueryableRootRepository<T,K>        │
-│    **Validation**: Use PlatformValidationResult fluent API                  │
-│    **Side Effects**: Put in Entity Event Handlers, not command handlers     │
-│    **CQRS**: Command + Result + Handler in ONE file                         │
-│                                                                              │
-│    Example:                                                                  │
-│    ```csharp                                                                 │
-│    protected override async Task<PlatformValidationResult<T>>               │
-│        ValidateRequestAsync(...) => await v                                  │
-│            .AndAsync(r => repo.GetByIdAsync(...))                            │
-│    ```"                                                                      │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-[Tool executes with injected context]
+┌─────────────────────────────────────────────────────────────────┐
+│ PreToolUse: skill-enforcement.cjs executes                       │
+├─────────────────────────────────────────────────────────────────┤
+│ Input: Skill { name: 'cook' }                                   │
+│                                                                 │
+│ checkSkill('cook'):                                             │
+│   'cook' is in IMPLEMENTATION_SKILLS → Check todos              │
+│   loadTodoState() → { hasTodos: true }                          │
+│   Todos exist → Allow execution                                 │
+│                                                                 │
+│ Exit: 0 (allow execution)                                       │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-**Execution Trace** (for Skill tool - /cook without todos):
+#### Step 6: Claude Edits TypeScript File
+
 ```
-Claude attempts: Skill(skill="cook", args="add dark mode toggle")
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ skill-enforcement.cjs (matcher: Skill)                                       │
-│                                                                              │
-│ 1. Parse stdin: { tool_name: "Skill", tool_input: { skill: "cook" } }       │
-│                                                                              │
-│ 2. Check if skill is META_SKILLS (always allowed):                           │
-│    META_SKILLS = ['help', 'memory', 'checkpoint', 'watzup', ...]            │
-│    'cook' NOT in set → Continue validation                                   │
-│                                                                              │
-│ 3. Check CK_QUICK_MODE bypass:                                              │
-│    Not set → Continue validation                                             │
-│                                                                              │
-│ 4. Check workflow + todo state:                                              │
-│    workflowActive = true, todosExist = false                                │
-│                                                                              │
-│ 5. WORKFLOW + NO TODOS → BLOCK (exit 1)                                      │
-│    Output:                                                                   │
-│    "## Workflow Task Enforcement Block                                        │
-│                                                                              │
-│    Skill blocked: cook                                                       │
-│    Call TaskCreate for EACH workflow step BEFORE executing any skill.        │
-│                                                                              │
-│    ### Why?                                                                  │
-│    Task tracking ensures:                                                    │
-│    - No steps are forgotten during implementation                            │
-│    - Context preserved if session compacts                                   │
-│    - Progress visible to you and the user                                   │
-│                                                                              │
-│    ### To proceed:                                                           │
-│    **Option 1**: Use TodoWrite to create a task list, then retry /cook      │
-│    **Option 2**: /cook quick: <args> (bypass, not recommended)"             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+┌─────────────────────────────────────────────────────────────────┐
+│ PreToolUse: frontend-typescript-context.cjs executes            │
+├─────────────────────────────────────────────────────────────────┤
+│ Input: Edit { file: 'settings.component.ts' }                   │
+│                                                                 │
+│ shouldInject('.ts') → true                                      │
+│ injectPatterns():                                               │
+│                                                                 │
+│ STDOUT:                                                          │
+│ "## TypeScript/Angular Patterns"                                │
+│ "- Extend AppBaseVmStoreComponent for stateful components"      │
+│ "- Use PlatformVmStore for state management"                    │
+│ "- Always .pipe(this.untilDestroyed()) for subscriptions"       │
+│ "- BEM class naming: block__element --modifier"                 │
+│                                                                 │
+│ Exit: 0 (success)                                               │
+└─────────────────────────────────────────────────────────────────┘
 
-#### 4. PostToolUse Hooks - Tracking & Formatting
+┌─────────────────────────────────────────────────────────────────┐
+│ [Edit tool executes - modifies settings.component.ts]           │
+└─────────────────────────────────────────────────────────────────┘
 
-**What they do**: Track workflow progress and auto-format code after edits.
+┌─────────────────────────────────────────────────────────────────┐
+│ PostToolUse: post-edit-prettier.cjs executes                    │
+├─────────────────────────────────────────────────────────────────┤
+│ Input: Edit { file: 'settings.component.ts', exit_code: 0 }     │
+│                                                                 │
+│ shouldFormat('.ts') → true                                      │
+│ execSync('prettier --write "settings.component.ts"')            │
+│                                                                 │
+│ Exit: 0 (success)                                               │
+└─────────────────────────────────────────────────────────────────┘
 
-**Why they help**:
-- **Tracking**: Workflow progress is automatically monitored
-- **Formatting**: Code is auto-formatted after edits
-
-**Execution Trace** (after successful Skill execution):
-```
-Skill(/cook) completes successfully
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ todo-tracker.cjs (matcher: TodoWrite)                                        │
-│                                                                              │
-│ [Skipped - only triggers for TodoWrite tool]                                │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ post-edit-prettier.cjs (matcher: Edit|Write)                                │
-│                                                                              │
-│ [Skipped - only triggers for Edit/Write tools]                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ workflow-step-tracker.cjs (matcher: Skill)                                  │
-│                                                                              │
-│ 1. Load workflow state from .workflow-state.json                            │
-│ 2. Check if current skill matches expected step:                            │
-│    state.sequence[state.currentStep] === 'cook' ✓                           │
-│ 3. Mark step complete:                                                       │
-│    state.currentStep++ → 3 (next: 'code-simplifier')                        │
-│    state.completedSteps.push('cook')                                        │
-│ 4. Save updated state                                                        │
-│ 5. Output next step reminder:                                                │
-│    "Step completed: /cook. Next: /code-simplifier (4/8)"                    │
-└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-#### 5. PreCompact Hooks - State Preservation
+#### Step 7: Context Compaction Triggered
 
-**What they do**: Save session state before context compaction.
-
-**Why they help**:
-- **Memory**: Todo and workflow state survive context resets
-- **Continuity**: Checkpoints enable session resumption
-
-**Execution Trace** (on context compaction):
 ```
-Context window fills up → Compaction triggered
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ write-compact-marker.cjs (matcher: manual|auto)                             │
-│                                                                              │
-│ 1. Write timestamp marker:                                                   │
-│    → .claude/memory/.compact-marker                                          │
-└─────────────────────────────────────────────────────────────────────────────┘
-    │
-    ▼
-┌─────────────────────────────────────────────────────────────────────────────┐
-│ save-context-memory.cjs (matcher: manual|auto)                              │
-│                                                                              │
-│ 1. Save current todo list to checkpoint:                                     │
-│    → .claude/memory/checkpoints/<session_id>.json                           │
-│ 2. Save workflow state                                                       │
-│ 3. Save any accumulated context                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│ PreCompact: write-compact-marker.cjs executes                   │
+├─────────────────────────────────────────────────────────────────┤
+│ writeMarker():                                                  │
+│   - Write compaction marker for statusline baseline reset       │
+│   - Mark compaction point for post-compact-recovery.cjs         │
+│                                                                 │
+│ Exit: 0 (success)                                               │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Example 2: Bug Fix Workflow
+
+**User Prompt:** `"Fix the login error when session expires"`
+
+#### Workflow Detection & Routing
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ workflow-router.cjs                                             │
+├─────────────────────────────────────────────────────────────────┤
+│ Input: "Fix the login error when session expires"               │
+│                                                                 │
+│ detectIntent():                                                 │
+│   scores = {                                                    │
+│     feature: 0,                                                 │
+│     bugfix: 35,   // "fix" (15) + "error" (15) + "login" (5)    │
+│     documentation: 0,                                           │
+│     refactor: 0                                                 │
+│   }                                                             │
+│   winner = 'bugfix' (confidence: 0.95)                          │
+│                                                                 │
+│ STDOUT:                                                          │
+│ "Detected: **Bug Fix** workflow"                                │
+│ "Sequence: /scout → /investigate → /debug → /plan → ... → /fix → /code-simplifier →"           │
+│ "          /review-changes → /code-review → /changelog → /test → /watzup"                     │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Scout Phase - Exploring Codebase
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ PreToolUse: scout-block.cjs executes                            │
+├─────────────────────────────────────────────────────────────────┤
+│ Input: Grep { path: 'src/', pattern: 'session.*expire' }        │
+│                                                                 │
+│ shouldBlock('src/'):                                            │
+│   Not in .ckignore patterns                                     │
+│                                                                 │
+│ Exit: 0 (allow)                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ PreToolUse: scout-block.cjs executes                            │
+├─────────────────────────────────────────────────────────────────┤
+│ Input: Read { file: 'node_modules/auth/session.js' }            │
+│                                                                 │
+│ shouldBlock('node_modules/'):                                   │
+│   Matches .ckignore pattern 'node_modules/**'                   │
+│                                                                 │
+│ STDOUT:                                                          │
+│ "BLOCKED: Path matches .ckignore pattern"                       │
+│                                                                 │
+│ Exit: 2 (blocked)                                               │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### Debug Phase - Reading Sensitive Files Blocked
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ PreToolUse: privacy-block.cjs executes                          │
+├─────────────────────────────────────────────────────────────────┤
+│ Input: Read { file: '.env.local' }                              │
+│                                                                 │
+│ shouldBlock('.env.local'):                                      │
+│   Matches sensitive pattern '**/.env*'                          │
+│                                                                 │
+│ STDOUT:                                                          │
+│ "BLOCKED: Sensitive file access denied"                         │
+│ "Pattern: **/.env*"                                             │
+│                                                                 │
+│ Exit: 2 (blocked)                                               │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Example 3: Todo Enforcement Blocking
+
+**User Prompt:** `"/cook implement the feature"` (without prior planning)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ PreToolUse: skill-enforcement.cjs executes                       │
+├─────────────────────────────────────────────────────────────────┤
+│ Input: Skill { name: 'cook' }                                   │
+│                                                                 │
+│ checkSkill('cook'):                                             │
+│   'cook' is in IMPLEMENTATION_SKILLS → Check todos              │
+│   loadTodoState() → { hasTodos: false }                         │
+│   No todos exist → Block execution                              │
+│                                                                 │
+│ STDOUT:                                                          │
+│ "═══════════════════════════════════════════════════════════"   │
+│ "BLOCKED: Implementation skill requires TaskCreate first"        │
+│ "═══════════════════════════════════════════════════════════"   │
+│ ""                                                              │
+│ "Skill 'cook' is blocked because no todos have been set."       │
+│ ""                                                              │
+│ "Required action:"                                              │
+│ "1. Detect workflow or use /plan"                               │
+│ "2. Call TaskCreate with workflow steps"                         │
+│ "3. Then invoke /cook"                                          │
+│ ""                                                              │
+│ "Allowed without todos: /plan, /scout, /feature-investigation, /analyze"  │
+│ "═══════════════════════════════════════════════════════════"   │
+│                                                                 │
+│ Exit: 2 (blocked)                                               │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Example 4: Recovery After Context Compaction
+
+**After compaction, new session starts:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ SessionStart: session-init.cjs executes                         │
+├─────────────────────────────────────────────────────────────────┤
+│ [Standard initialization as shown in Example 1]                 │
+│ Exit: 0                                                         │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│ SessionStart: post-compact-recovery.cjs executes                │
+├─────────────────────────────────────────────────────────────────┤
+│ Trigger: startup=compact (context compaction just occurred)     │
+│                                                                 │
+│ findCheckpoints():                                              │
+│   checkpoints = glob('plans/reports/memory-checkpoint-*.md')    │
+│   recent = filter(within 24 hours)                              │
+│   latest = 'memory-checkpoint-250112-0500.md'                   │
+│                                                                 │
+│ loadWorkflowState():                                            │
+│   state = {                                                     │
+│     workflowType: 'feature',                                    │
+│     currentStepIndex: 2,                                        │
+│     completedSteps: ['plan', 'cook'],                           │
+│     pendingSteps: ['code-simplifier', 'code-review', 'test',    │
+│                    'docs-update', 'watzup']                     │
+│   }                                                             │
+│                                                                 │
+│ loadLastTodos():                                                │
+│   todos = [                                                     │
+│     { content: '[Workflow] /plan', status: 'completed' },       │
+│     { content: '[Workflow] /cook', status: 'completed' },       │
+│     { content: '[Workflow] /code-simplifier', status: 'pending' },
+│     ...                                                         │
+│   ]                                                             │
+│                                                                 │
+│ STDOUT:                                                          │
+│ "════════════════════════════════════════════════════════════"  │
+│ "WORKFLOW RECOVERY - Context compaction detected"               │
+│ "════════════════════════════════════════════════════════════"  │
+│ ""                                                              │
+│ "Active Workflow: feature"                                      │
+│ "Current Step: code-simplifier (3/7)"                           │
+│ "Completed: plan ✓, cook ✓"                                     │
+│ "Remaining: code-simplifier → code-review → test →"             │
+│ "           docs-update → watzup"                               │
+│ ""                                                              │
+│ "Recovered Todos:"                                              │
+│ "[JSON array of todos to restore via TaskCreate]"                │
+│ ""                                                              │
+│ "ACTION REQUIRED:"                                              │
+│ "1. Call TaskCreate with recovered todos above"                  │
+│ "2. Continue from /code-simplifier"                             │
+│ "════════════════════════════════════════════════════════════"  │
+│                                                                 │
+│ Exit: 0 (success)                                               │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-### Complete Workflow Execution Traces
+## Troubleshooting
 
-#### Use Case 1: Feature Implementation Workflow
+Common issues and their solutions when working with Claude Kit.
 
-```
-USER: "Add a dark mode toggle to the settings page"
+### Hooks Not Executing
 
-═══════════════════════════════════════════════════════════════════════════════
-PHASE 1: DETECTION & ROUTING
-═══════════════════════════════════════════════════════════════════════════════
+**Symptoms:** Context not injected, workflows not detected, lessons missing.
 
-┌─ UserPromptSubmit ──────────────────────────────────────────────────────────┐
-│ workflow-router.cjs:                                                         │
-│   Input: "Add a dark mode toggle..."                                         │
-│   Pattern match: "add" → triggers: ["\\b(implement|add|create)\\b"]         │
-│   Detected: Feature Implementation (100% confidence)                         │
-│   Workflow: scout → investigate → plan → plan-review → plan-validate → why-review → cook → code-simplifier → review-changes → code-review → changelog → test → docs-update → watzup│
-│                                                                              │
-│ Output:                                                                      │
-│   "## Workflow Detected                                                      │
-│    **Intent:** Feature Implementation                                        │
-│    **Workflow:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /changelog → /test → /docs-update → /watzup"│
-└─────────────────────────────────────────────────────────────────────────────┘
+**Diagnosis:**
 
-═══════════════════════════════════════════════════════════════════════════════
-PHASE 2: PLANNING (/plan)
-═══════════════════════════════════════════════════════════════════════════════
+```bash
+# Verify hooks are registered in settings.json
+cat .claude/settings.json | grep -A 50 '"hooks"'
 
-┌─ PreToolUse (Skill: plan) ──────────────────────────────────────────────────┐
-│ skill-enforcement.cjs:                                                       │
-│   'plan' NOT in META_SKILLS → check todos                                    │
-│   todosExist = true (created by TaskCreate) → ALLOWED                        │
-└─────────────────────────────────────────────────────────────────────────────┘
+# Test a hook manually
+echo '{"session_id":"test","type":"main"}' | node .claude/hooks/session-init.cjs
 
-[Claude executes /plan skill, creates implementation plan]
-
-┌─ PostToolUse ───────────────────────────────────────────────────────────────┐
-│ workflow-step-tracker.cjs:                                                   │
-│   Step completed: plan (1/6)                                                 │
-│   Next step: plan-review                                                     │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-═══════════════════════════════════════════════════════════════════════════════
-PHASE 3: IMPLEMENTATION (/cook)
-═══════════════════════════════════════════════════════════════════════════════
-
-┌─ PreToolUse (Skill: cook) ──────────────────────────────────────────────────┐
-│ skill-enforcement.cjs:                                                       │
-│   'cook' NOT in META_SKILLS → check todos                                    │
-│   todosExist = true (tasks created earlier) → ALLOWED                        │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-[Claude creates/uses todos, then implements dark mode]
-
-┌─ PreToolUse (Edit: settings.component.ts) ──────────────────────────────────┐
-│ scout-block.cjs: Not in scout → ALLOWED                                      │
-│ privacy-block.cjs: Not sensitive → ALLOWED                                  │
-│ frontend-typescript-context.cjs:                                             │
-│   File: *.ts → Inject Angular patterns:                                      │
-│   "## TypeScript/Angular Context                                             │
-│    - Extend AppBaseComponent                                                 │
-│    - Use PlatformVmStore for state                                          │
-│    - Use .pipe(this.untilDestroyed()) for subscriptions"                    │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-[Claude edits TypeScript files with injected context]
-
-┌─ PostToolUse (Edit complete) ───────────────────────────────────────────────┐
-│ post-edit-prettier.cjs:                                                      │
-│   Run prettier on modified file                                              │
-│   npx prettier --write settings.component.ts                                │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-[Continues editing, CSS, tests...]
-
-┌─ PostToolUse (Skill: cook complete) ────────────────────────────────────────┐
-│ workflow-step-tracker.cjs:                                                   │
-│   Step completed: cook (3/6)                                                 │
-│   Next step: code-simplifier                                                 │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-═══════════════════════════════════════════════════════════════════════════════
-PHASE 4: TESTING (/test)
-═══════════════════════════════════════════════════════════════════════════════
-
-[Similar flow: PreToolUse validation → execution → PostToolUse tracking]
-
-┌─ PostToolUse (Skill: test complete) ────────────────────────────────────────┐
-│ workflow-step-tracker.cjs:                                                   │
-│   Step completed: test (6/6)                                                 │
-│   Workflow complete!                                                         │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-═══════════════════════════════════════════════════════════════════════════════
-PHASE 5: CODE REVIEW (/code-review)
-═══════════════════════════════════════════════════════════════════════════════
-
-[Similar flow...]
-
-┌─ PostToolUse (Skill: code-review complete) ─────────────────────────────────┐
-│ workflow-step-tracker.cjs:                                                   │
-│   Step completed: code-review (5/6)                                         │
-│   Next step: test                                                            │
-│   Output: "Step completed: /code-review. Next: /test (6/6)"                 │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-═══════════════════════════════════════════════════════════════════════════════
-PHASE 6: CONTEXT COMPACTION (if triggered)
-═══════════════════════════════════════════════════════════════════════════════
-
-┌─ PreCompact ────────────────────────────────────────────────────────────────┐
-│ write-compact-marker.cjs:                                                    │
-│   Mark compaction timestamp                                                  │
-│                                                                              │
-│ save-context-memory.cjs:                                                     │
-│   Save todos, workflow state to checkpoint                                   │
-└─────────────────────────────────────────────────────────────────────────────┘
+# Check for Node.js errors
+node -c .claude/hooks/session-init.cjs  # Syntax check
 ```
 
-#### Use Case 2: Bug Fix Workflow
+**Solutions:**
+
+1. **Hook not in settings.json** - Add to appropriate event array:
+
+   ```json
+   "hooks": {
+     "SessionStart": [{ "command": "node .claude/hooks/session-init.cjs" }]
+   }
+   ```
+
+2. **Node.js version** - Ensure Node.js 18+: `node --version`
+3. **Missing dependencies** - Run `npm install` in `.claude/hooks/` if `package.json` exists
+4. **Permission issues** (Unix) - Ensure executable: `chmod +x .claude/hooks/*.cjs`
+5. **Path issues** - Use relative paths from project root, not absolute paths
+
+### Workflow Not Detected
+
+**Symptoms:** No "Detected: [workflow]" message, TaskCreate not auto-created.
+
+**Diagnosis:**
+
+```bash
+# Check workflows.json exists and is valid
+cat .claude/workflows.json | jq '.workflows | keys'
+
+# Test workflow-router manually
+echo '{"user_prompt":"add a dark mode feature"}' | node .claude/hooks/workflow-router.cjs
+```
+
+**Solutions:**
+
+1. **Prompt lacks trigger keywords** - Use explicit keywords like "implement", "fix bug", "refactor"
+2. **Exclude pattern blocking** - Check `workflows.json` → `triggers.exclude` patterns
+3. **Use explicit command** - Prefix with `/plan`, `/fix`, etc. to bypass detection
+4. **Use `quick:` prefix** - Force workflow without confirmation: `quick: add feature`
+
+### Lessons Not Injecting
+
+**Symptoms:** Learned patterns not appearing in context.
+
+**Diagnosis:**
+
+```bash
+# Check lessons file exists and has content
+cat docs/lessons.md 2>/dev/null || echo "No lessons file"
+
+# Check lessons-injector.cjs is registered in settings.json
+cat .claude/settings.json | jq '.hooks'
+```
+
+**Solutions:**
+
+1. **No lessons file** - Use `/learn` to create lessons
+2. **Empty file** - Add lessons with `/learn`
+3. **Hook not registered** - Add `lessons-injector.cjs` to `settings.json` hooks
+
+### Todo Enforcement Blocking
+
+**Symptoms:** "BLOCKED: Call TaskCreate before implementation" errors.
+
+**Diagnosis:**
+
+```bash
+# Check todo state file
+cat /tmp/ck/todo-state.json 2>/dev/null || echo "No state file"
+
+# Check which skills are blocked
+grep -A 5 "BLOCKED_SKILLS" .claude/hooks/skill-enforcement.cjs
+```
+
+**Solutions:**
+
+1. **Call TaskCreate first** - Create todos before using implementation skills
+2. **Use planning skills** - `/plan`, `/scout`, `/feature-investigation` are always allowed
+3. **Bypass temporarily**:
+
+   ```bash
+   CK_BYPASS_TODO_CHECK=1 claude  # Disable enforcement for session
+   ```
+
+4. **Reset state** - Delete `/tmp/ck/todo-state.json` to clear stale state
+
+### Context Lost After Compaction
+
+**Symptoms:** Workflow steps forgotten, todos missing, state lost.
+
+**Diagnosis:**
+
+```bash
+# Check for recent checkpoints
+ls -la plans/reports/memory-checkpoint-*.md | head -5
+
+# Check workflow state
+cat /tmp/ck/workflow/*.json 2>/dev/null | jq '.workflowType, .currentStepIndex'
+```
+
+**Solutions:**
+
+1. **Use /recover command** - Restores from latest checkpoint
+2. **Read checkpoint manually** - `Read plans/reports/memory-checkpoint-*.md`
+3. **Check PreCompact hooks** - Ensure `write-compact-marker.cjs` is registered
+4. **Manual todo recovery** - Use `lastTodos` from workflow state file
+
+### Notifications Not Sending
+
+**Symptoms:** No messages to Telegram/Discord/Slack on session events.
+
+**Diagnosis:**
+
+```bash
+# Test notification manually
+echo '{"hook_event_name":"Stop"}' | node .claude/hooks/notifications/notify.cjs
+
+# Check throttle state (prevents spam)
+cat /tmp/ck-noti-throttle.json 2>/dev/null
+
+# Check env vars
+echo "TELEGRAM: $TELEGRAM_BOT_TOKEN | DISCORD: $DISCORD_WEBHOOK_URL"
+```
+
+**Solutions:**
+
+1. **Set env vars** - Export credentials:
+
+   ```bash
+   export TELEGRAM_BOT_TOKEN=your_token
+   export TELEGRAM_CHAT_ID=your_chat_id
+   export DISCORD_WEBHOOK_URL=your_webhook
+   ```
+
+2. **Clear throttle** - Delete `/tmp/ck-noti-throttle.json`
+3. **Check provider status** - Verify Telegram bot, Discord webhook are active
+4. **Enable debug** - `CK_DEBUG=1 claude` to see notification logs
+
+### Context Injection Not Working
+
+**Symptoms:** C#/TypeScript patterns not appearing when editing files.
+
+**Diagnosis:**
+
+```bash
+# Test context injection hook
+echo '{"tool_name":"Edit","tool_input":{"file_path":"test.cs"}}' | \
+  node .claude/hooks/backend-csharp-context.cjs
+```
+
+**Solutions:**
+
+1. **File extension mismatch** - Hook filters by extension (`.cs`, `.ts`, `.tsx`)
+2. **Hook not registered** - Add to `PreToolUse` event in settings.json
+3. **Token budget** - Context injection respects token limits
+4. **Path pattern** - Some hooks filter by path (e.g., only `src/Services/`)
+
+### Performance Issues
+
+**Symptoms:** Slow responses, high latency, hook timeouts.
+
+**Solutions:**
+
+1. **Simplify hook logic** - Complex regex patterns slow PreToolUse
+3. **Use codingLevel 4+** - Higher levels produce more concise output
+4. **Enable caching** - Some hooks support result caching
+5. **Parallelize hooks** - Ensure independent hooks don't block each other
+
+### Scout Block False Positives
+
+**Symptoms:** Legitimate directories being blocked by scout-block.cjs.
+
+**Diagnosis:**
+
+```bash
+# Check .ckignore patterns
+cat .claude/.ckignore
+
+# Test scout block
+echo '{"tool_name":"Glob","tool_input":{"pattern":"src/valid/**"}}' | \
+  node .claude/hooks/scout-block.cjs
+```
+
+**Solutions:**
+
+1. **Whitelist in .ckignore** - Use negation: `!src/node_modules/allowed/`
+2. **Adjust patterns** - Edit `.ckignore` to be more specific
+3. **Bypass for session** - `CK_BYPASS_SCOUT_BLOCK=1 claude`
+
+### Common Error Messages
+
+| Error                    | Cause                  | Solution                                |
+| ------------------------ | ---------------------- | --------------------------------------- |
+| `Cannot find module`     | Missing npm dependency | `cd .claude/hooks && npm install`       |
+| `ENOENT: no such file`   | Missing config file    | Create required file (`.ck.json`, etc.) |
+| `Permission denied`      | File not executable    | `chmod +x .claude/hooks/*.cjs`          |
+| `JSON parse error`       | Invalid JSON in config | Validate with `jq . file.json`          |
+| `ETIMEOUT`               | Hook took too long     | Simplify hook logic or increase timeout |
+| `Hook returned non-zero` | Hook error             | Check hook stderr output                |
+
+### Verification Commands
+
+```bash
+# Full hook verification
+node .claude/hooks/verify-hooks.cjs
+
+# Workflow state inspection
+cat /tmp/ck/workflow/*.json | jq '.'
+
+# Check lessons file
+cat docs/lessons.md 2>/dev/null || echo "No lessons"
+```
+
+### Debug Mode
+
+Enable comprehensive logging:
+
+```bash
+# Full debug output
+CK_DEBUG=1 claude
+
+# Debug specific hook
+CK_DEBUG=session-init claude
 
 ```
-USER: "Fix the login error on mobile devices"
 
-═══════════════════════════════════════════════════════════════════════════════
-PHASE 1: DETECTION & LESSON INJECTION
-═══════════════════════════════════════════════════════════════════════════════
+Debug output includes:
 
-┌─ SessionStart (if new session) ─────────────────────────────────────────────┐
-│ lessons-injector.cjs:                                                        │
-│   Loaded lessons from docs/lessons.md                                    │
-│   Injected as system-reminder:                                              │
-│   "## Lessons Learned                                                        │
-│    - Always verify BEM classes on every template element                    │
-│    - Run search-before-code before writing any new code"                    │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-┌─ UserPromptSubmit ──────────────────────────────────────────────────────────┐
-│ workflow-router.cjs:                                                         │
-│   Pattern match: "fix", "error" → triggers: ["\\b(bug|fix|error)\\b"]       │
-│   Detected: Bug Fix (100% confidence)                                        │
-│   Workflow: scout → investigate → debug → plan → plan-review → plan-validate → why-review → fix → code-simplifier → review-changes → code-review → changelog → test → watzup│
-└─────────────────────────────────────────────────────────────────────────────┘
-
-═══════════════════════════════════════════════════════════════════════════════
-PHASE 2: INVESTIGATION (/scout, /investigate, /debug)
-═══════════════════════════════════════════════════════════════════════════════
-
-[Scout finds relevant files - requires tasks (created after workflow-start)]
-[Investigate analyzes patterns - requires tasks]
-[Debug identifies root cause - requires tasks]
-
-═══════════════════════════════════════════════════════════════════════════════
-PHASE 3: FIX
-═══════════════════════════════════════════════════════════════════════════════
-
-[Claude uses injected lessons from lessons.md]
-[Finds the bug: token validation missing on mobile user agent]
-
-[Claude continues debugging and applies fix]
-```
+- Hook execution timing
+- Pattern matching scores
 
 ---
 
-### Summary: How Hooks Help
+## Summary
 
-| Hook Category | Key Benefits | Impact |
-|---------------|--------------|--------|
-| **SessionStart** | Environment bootstrap, pattern injection | Every session starts informed |
-| **UserPromptSubmit** | Intent detection, workflow guidance | Consistent task execution |
-| **PreToolUse** | Validation, context injection | Prevents mistakes, provides guidance |
-| **PostToolUse** | Workflow tracking, formatting | Progress monitoring, code quality |
-| **PreCompact** | State preservation | Todo/workflow state survives context resets |
-| **Notification** | Alert delivery | Never miss important events |
+The `.claude` setup transforms Claude Code into a sophisticated development partner through:
 
-**The Hook System Supports Learning**:
+1. **Adaptive Communication**: Coding levels adjust output to developer experience
+2. **Workflow Automation**: Auto-detects intent, follows structured processes
+3. **Lessons System**: Learns from human feedback via `/learn` skill
+4. **Context Persistence**: Survives compaction via checkpoints
+5. **Domain Awareness**: Injects relevant patterns based on file types
+6. **Safety Guards**: Blocks sensitive files, validates permissions
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                                                                              │
-│   USER TEACHES            SESSION START           TOOL USE                  │
-│   ┌───────────┐          ┌───────────┐          ┌───────────┐              │
-│   │ /learn    │─────────▶│ Inject    │─────────▶│ Inject    │              │
-│   │ command   │          │ Lessons   │          │ Lessons   │              │
-│   └───────────┘          └───────────┘          └───────────┘              │
-│        │                                                                    │
-│        ▼                                                                    │
-│   ┌───────────┐                                                             │
-│   │ lessons.md│  Append-only log persists across sessions                  │
-│   └───────────┘                                                             │
-│                                                                              │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Learning System Technical Reference
-
-### File Structure
-
-```
-docs/
-├── lessons.md               # Append-only lesson log
-.claude/
-├── hooks/
-│   ├── pattern-learner.cjs  # Detects /learn commands
-│   ├── lessons-injector.cjs # Injects lessons into context
-│   └── lib/
-│       └── lessons-writer.cjs # appendLesson() utility
-```
-
-**Data Flow:**
-
-```
-User invokes /learn → pattern-learner.cjs → appendLesson() → lessons.md
-                                                                    │
-Session starts / tool use ─────────────────────────────────────────▶│
-                                                                    │
-lessons-injector.cjs reads lessons.md → injects as system-reminder  │
-```
-
----
-
-### Lesson Format
-
-Lessons are stored as simple markdown lines in `docs/lessons.md`:
-
-**Example:**
-
-```markdown
-## Behavioral Lessons
-- [2026-02-24] INIT: Always verify BEM classes on every template element
-- [2026-02-24] INIT: Check base class hierarchy -- extend AppBaseComponent
-- [2026-02-24] INIT: Run search-before-code before writing any new code
-
-## Process Improvements
-(manually added during retrospectives)
-```
-
----
-
-## Related Documentation
-
-- [Architecture](./architecture.md) - System architecture and planning protocol
-- [Troubleshooting](./troubleshooting.md) - Investigation protocol and common issues
-- [Backend Patterns](./backend-patterns.md) - CQRS, Repository, Entity patterns
-- [Frontend Patterns](./frontend-patterns.md) - Component, Store, Form patterns
-- [Decision Trees](./decision-trees.md) - Quick decision guides
-- [Skills README](.claude/skills/README.md) - Skill development guide
-- [Agent Skills Spec](.claude/skills/agent_skills_spec.md) - Agent specification
+This creates a feedback loop where Claude continuously improves its behavior for the specific project, while maintaining structured workflows that ensure quality and consistency.

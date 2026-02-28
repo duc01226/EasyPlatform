@@ -10,6 +10,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 const {
   runHook,
   runHookSequence,
@@ -18,7 +19,8 @@ const {
   createPreToolUseInput,
   createPostToolUseInput,
   createSessionStartInput,
-  createSessionEndInput
+  createSessionEndInput,
+  createPreCompactInput
 } = require('../lib/hook-runner.cjs');
 const {
   assertEqual,
@@ -37,6 +39,29 @@ const {
   createDaysAgoTimestamp
 } = require('../lib/test-utils.cjs');
 
+/**
+ * Write todo state to /tmp/ck/todo/todo-state-{sessionId}.json
+ * skill-enforcement reads from this path via hasTodos().
+ */
+function setupCkTodoState(sessionId, state) {
+  const todoDir = path.join(os.tmpdir(), 'ck', 'todo');
+  fs.mkdirSync(todoDir, { recursive: true });
+  const stateFile = path.join(todoDir, `todo-state-${sessionId}.json`);
+  fs.writeFileSync(stateFile, JSON.stringify({
+    hasTodos: false, pendingCount: 0, completedCount: 0,
+    inProgressCount: 0, lastTodos: [], bypasses: [], metadata: {},
+    ...state
+  }, null, 2));
+  return stateFile;
+}
+
+function cleanupCkTodoState(sessionId) {
+  try {
+    const f = path.join(os.tmpdir(), 'ck', 'todo', `todo-state-${sessionId}.json`);
+    if (fs.existsSync(f)) fs.unlinkSync(f);
+  } catch (_) { /* ignore */ }
+}
+
 // Hook paths
 const SESSION_INIT = getHookPath('session-init.cjs');
 const SESSION_RESUME = getHookPath('session-resume.cjs');
@@ -44,7 +69,7 @@ const SESSION_END = getHookPath('session-end.cjs');
 const PRIVACY_BLOCK = getHookPath('privacy-block.cjs');
 const SCOUT_BLOCK = getHookPath('scout-block.cjs');
 const TODO_TRACKER = getHookPath('todo-tracker.cjs');
-const SKILL_ENFORCEMENT = getHookPath('skill-enforcement.cjs');
+const TODO_ENFORCEMENT = getHookPath('skill-enforcement.cjs');
 
 // ============================================================================
 // Session Lifecycle Chain Tests
@@ -176,18 +201,11 @@ const todoFlowTests = [
   {
     name: '[todo-flow] tracker -> enforcement allows with active todos',
     fn: async () => {
-      const tmpDir = createTempDir();
+      const sessionId = `integration-flow-${Date.now()}`;
       try {
-        // Track todos first
-        const todoInput = createPostToolUseInput('TodoWrite', {
-          todos: [{ content: 'Active task', status: 'in_progress' }]
-        });
-        await runHook(TODO_TRACKER, todoInput, { cwd: tmpDir });
-
-        // Setup active todos for enforcement check
-        setupTodoState(tmpDir, {
+        // Setup todo state in the correct /tmp/ck/ path
+        setupCkTodoState(sessionId, {
           hasTodos: true,
-          taskCount: 1,
           pendingCount: 0,
           inProgressCount: 1,
           completedCount: 0
@@ -195,26 +213,31 @@ const todoFlowTests = [
 
         // Enforcement should allow skill with active todos
         const skillInput = createPreToolUseInput('Skill', { skill: 'cook' });
-        const result = await runHook(SKILL_ENFORCEMENT, skillInput, { cwd: tmpDir });
+        const result = await runHook(TODO_ENFORCEMENT, skillInput, {
+          env: { CK_SESSION_ID: sessionId }
+        });
 
         assertAllowed(result.code, 'Should allow with active todos');
       } finally {
-        cleanupTempDir(tmpDir);
+        cleanupCkTodoState(sessionId);
       }
     }
   },
   {
     name: '[todo-flow] enforcement blocks implementation skill without todos',
     fn: async () => {
-      const tmpDir = createTempDir();
+      const sessionId = `integration-noflow-${Date.now()}`;
       try {
         // No todos setup - enforcement should block (exit 1)
         const skillInput = createPreToolUseInput('Skill', { skill: 'cook' });
-        const result = await runHook(SKILL_ENFORCEMENT, skillInput, { cwd: tmpDir });
+        const result = await runHook(TODO_ENFORCEMENT, skillInput, {
+          env: { CK_SESSION_ID: sessionId }
+        });
 
+        // skill-enforcement blocks with exit code 1 (not 2)
         assertTrue(result.code === 1, 'Should block /cook without todos (exit 1)');
       } finally {
-        cleanupTempDir(tmpDir);
+        cleanupCkTodoState(sessionId);
       }
     }
   }

@@ -1,10 +1,10 @@
 ---
-applyTo: '**/*.cs,**/*.ts'
+applyTo: "**/*.cs,**/*.ts"
 ---
 
 # Bug Investigation Protocol
 
-> Auto-loads when editing code files. See `.ai/docs/AI-DEBUGGING-PROTOCOL.md` for full protocol.
+> Auto-loads when editing code files. See `.github/AI-DEBUGGING-PROTOCOL.md` for full protocol.
 
 ## Investigation Workflow
 
@@ -33,7 +33,6 @@ applyTo: '**/*.cs,**/*.ts'
 ### Confidence Declaration
 
 Before making changes, declare confidence:
-
 - **< 90% confidence** → Ask user, gather more evidence
 - **≥ 90% confidence** → Proceed with fix
 
@@ -54,36 +53,34 @@ When investigating, search with multiple patterns:
 
 ### Backend
 
-| Symptom                    | Common Cause                               | Check                       |
-| -------------------------- | ------------------------------------------ | --------------------------- |
-| Stale data after update    | Missing `checkDiff: true` on `UpdateAsync` | Repository call parameters  |
-| Event not firing           | Missing Event Handler registration         | `UseCaseEvents/` folder     |
-| Cross-service data missing | Message bus consumer not waiting           | `TryWaitUntilAsync` usage   |
-| Out-of-order processing    | Missing `LastMessageSyncDate` check        | Consumer idempotency        |
-| N+1 queries                | Await inside loop                          | Use `GetByIdsAsync` batch   |
-| Validation bypassed        | Logic in handler, not entity               | Move to `Entity.Validate()` |
+| Symptom | Common Cause | Check |
+|---------|-------------|-------|
+| Stale data after update | Missing `checkDiff: true` on `UpdateAsync` | Repository call parameters |
+| Event not firing | Missing Event Handler registration | `UseCaseEvents/` folder |
+| Cross-service data missing | Message bus consumer not waiting | `TryWaitUntilAsync` usage |
+| Out-of-order processing | Missing `LastMessageSyncDate` check | Consumer idempotency |
+| N+1 queries | Await inside loop | Use `GetByIdsAsync` batch |
+| Validation bypassed | Logic in handler, not entity | Move to `Entity.Validate()` |
 
 ### Frontend
 
-| Symptom                | Common Cause                        | Check                     |
-| ---------------------- | ----------------------------------- | ------------------------- |
-| Memory leak            | Missing `untilDestroyed()`          | Subscription cleanup      |
-| Stale UI               | Manual signals instead of store     | Use `PlatformVmStore`     |
-| Form not validating    | Missing validators in config        | `initialFormConfig` setup |
-| Component not updating | Missing `@Watch` decorator          | Replace `ngOnChanges`     |
-| API errors silent      | Missing `observerLoadingErrorState` | Add error state tracking  |
+| Symptom | Common Cause | Check |
+|---------|-------------|-------|
+| Memory leak | Missing `untilDestroyed()` | Subscription cleanup |
+| Stale UI | Manual signals instead of store | Use `PlatformVmStore` |
+| Form not validating | Missing validators in config | `initialFormConfig` setup |
+| Component not updating | Missing `@Watch` decorator | Replace `ngOnChanges` |
+| API errors silent | Missing `observerLoadingErrorState` | Add error state tracking |
 
 ## Tracing Data Flow
 
 ### Backend Flow
-
 ```
 Controller → Command → Handler → ValidateRequestAsync → HandleAsync
     → Repository → Entity Events → Message Bus
 ```
 
 ### Frontend Flow
-
 ```
 Component → Store.effect → ApiService → Backend API
     → tapResponse → updateState → Signal/Observable → Template
@@ -96,104 +93,66 @@ Component → Store.effect → ApiService → Backend API
 - **NEVER** fix symptoms without finding root cause
 - **NEVER** apply broad changes when targeted fix suffices
 
----
+## Investigation & Recommendation Protocol
 
-## 6-Phase Architectural Validation (Code Removal)
+**CRITICAL: Before recommending code removal or architectural changes:**
 
-**MANDATORY when considering code removal during bug fixes. See [AI-DEBUGGING-PROTOCOL.md](.ai/docs/AI-DEBUGGING-PROTOCOL.md) for complete protocol.**
-
-**Quick Decision:**
-
-- Considering code removal? → Run `/investigate-removal` skill first
-- Already have evidence? → Declare confidence level (90%+ required for HIGH risk)
-
-### Validation Chain (Required for Removal Recommendations)
+### Validation Chain (Required)
 
 ```
-Phase 1: Static Analysis
-    ↓ Find ALL references (grep searches)
-Phase 2: Dynamic Analysis
-    ↓ Trace injection → usage → callers
-Phase 3: Cross-Module Check
-    ↓ Search Platform/Backend/Frontend modules
-Phase 4: Test Coverage
-    ↓ Identify affected tests
-Phase 5: Impact Assessment
-    ↓ What breaks if removed?
-Phase 6: Confidence Calculation
-    ↓ Evidence completeness score
-ONLY THEN → Recommend removal
+1. Interface/API identified
+   ↓
+2. ALL implementations found (Grep: "class.*:.*IInterfaceName")
+   ↓
+3. ALL registrations traced (Grep: "AddScoped|AddSingleton|AddTransient")
+   ↓
+4. ALL usage sites verified (Grep + Read actual usage)
+   ↓
+5. Cross-service impact: Check ALL 5 services
+   ↓
+6. Impact assessment: What breaks if removed?
+   ↓
+7. Confidence declaration: X% confident based on [evidence]
+   ↓
+ONLY THEN → Output recommendation
 ```
 
 ### Evidence Requirements
 
-| Evidence Type      | Required       | How to Get                                               |
-| ------------------ | -------------- | -------------------------------------------------------- |
-| Static references  | ✅             | `grep -r "TargetName" --include="*.cs" --include="*.ts"` |
-| Dynamic usage      | ✅             | Read files, trace call chain with file:line              |
-| Cross-module check | ✅             | Search Platform/Backend/Frontend separately              |
-| Test coverage      | ✅ (HIGH risk) | Find tests that would break                              |
-| Impact analysis    | ✅ (HIGH risk) | List dependent code paths                                |
-| Confidence level   | ✅             | Declare percentage with evidence summary                 |
+| Evidence Type | Required | How to Get |
+|--------------|----------|------------|
+| Static references | ✅ | `grep -r "TargetName" --include="*.cs"` |
+| Dynamic usage | ✅ | Read files, trace call chain |
+| Cross-service check | ✅ | Search ALL 5 services |
+| Confidence level | ✅ | Declare X% with reasoning |
+| Impact analysis | ✅ (HIGH risk) | List what breaks |
 
-### Confidence Thresholds
+### Confidence Levels
 
-| Risk Level            | Confidence Required | Example                                   |
-| --------------------- | ------------------- | ----------------------------------------- |
-| **HIGH** (removal)    | **90%+**            | Removing classes, registrations, methods  |
-| **MEDIUM** (refactor) | **80%+**            | Changing method signatures, restructuring |
-| **LOW** (rename)      | **70%+**            | Variable renames, formatting              |
+- **95-100%** — Full trace, all services checked → Safe to recommend
+- **80-94%** — Main paths verified → Proceed with caution
+- **60-79%** — Partial trace → Gather more evidence
+- **<60%** — Insufficient → DO NOT recommend
 
-**Rule:** <90% confidence for removal → Run `/investigate-removal` or gather more evidence
+### Cross-Service Validation (MANDATORY)
+
+**Always check ALL 5 microservices:**
+- bravoGROWTH
+- bravoTALENTS
+- bravoSURVEYS
+- Accounts
+- bravoINSIGHTS
+
+```bash
+for svc in bravoGROWTH bravoTALENTS bravoSURVEYS Accounts bravoINSIGHTS; do
+    grep -r "TargetName" "src/Services/$svc" --include="*.cs"
+done
+```
 
 ### Breaking Change Risk Matrix
 
-| Risk       | Criteria                                        | Required Actions                              |
-| ---------- | ----------------------------------------------- | --------------------------------------------- |
-| **HIGH**   | Remove registrations, delete classes/interfaces | Complete 6-phase validation + impact analysis |
-| **MEDIUM** | Refactor methods, change signatures             | Usage trace + test verification               |
-| **LOW**    | Rename variables, code formatting               | Code review only                              |
-
-### Workflow Safeguards
-
-When working within active workflows, checkpoints will remind you:
-
-- **Bugfix workflow:** "CHECKPOINT: If considering code removal, run /investigate-removal first"
-- **Refactor workflow:** "CHECKPOINT: If removing code, run /investigate-removal first"
-
-### EasyPlatform-Specific Searches
-
-**Backend (C#):**
-
-```bash
-# Repository patterns
-grep -r "IPlatformQueryableRootRepository<.*>" --include="*.cs"
-
-# CQRS registrations
-grep -r "AddScoped.*Handler|AddTransient.*Handler" --include="*.cs"
-
-# Entity event handlers
-grep -r "PlatformApplicationDomainEventHandler" --include="*.cs"
-```
-
-**Frontend (TypeScript):**
-
-```bash
-# Component hierarchy
-grep -r "extends.*AppBase.*Component" --include="*.ts"
-
-# Store patterns
-grep -r "PlatformVmStore" --include="*.ts"
-
-# API services
-grep -r "extends PlatformApiService" --include="*.ts"
-```
-
-### Quick Reference
-
-**Before recommending removal:**
-
-1. Complete 6-phase validation OR run `/investigate-removal`
-2. Declare confidence ≥90% with evidence
-3. Document what breaks if removed
-4. Reference file:line for all claims
+| Risk | Criteria | Required Evidence |
+|------|----------|-------------------|
+| **HIGH** | Remove registrations, delete classes, change interfaces | Full usage trace + impact analysis + all 5 services |
+| **MEDIUM** | Refactor methods, change signatures | Usage trace + test verification + all 5 services |
+| **LOW** | Rename variables, formatting | Code review only |

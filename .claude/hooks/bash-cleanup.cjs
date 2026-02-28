@@ -15,10 +15,11 @@
 
 const { runHookSync } = require('./lib/hook-runner.cjs');
 const { debug } = require('./lib/debug-log.cjs');
-const { cleanupTempFiles } = require('./lib/temp-cleanup.cjs');
+const { cleanupAll } = require('./lib/temp-file-cleanup.cjs');
 
 runHookSync('bash-cleanup', () => {
-  const cleaned = cleanupTempFiles();
+  // Clean project root + .claude/ recursively
+  const cleaned = cleanupAll();
 
   if (cleaned > 0) {
     debug('bash-cleanup', `Removed ${cleaned} tmpclaude temp file(s)`);

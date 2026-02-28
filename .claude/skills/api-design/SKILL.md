@@ -1,72 +1,47 @@
 ---
 name: api-design
-description: "[Implementation] Use when designing or modifying REST API endpoints, controller structure, route patterns, request/response DTOs. Triggers on keywords like "API endpoint", "REST", "controller", "route", "HTTP", "request body", "response"."
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
+version: 2.1.0
+description: "[Architecture] Use when designing or modifying REST API endpoints, controller structure, route patterns, request/response DTOs. Triggers on keywords like "API endpoint", "REST", "controller", "route", "HTTP", "request body", "response"."
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+## Quick Summary
+
+**Goal:** Design or modify REST API endpoints following the project platform patterns and REST best practices.
+
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+>
+> - `backend-patterns-reference.md` -- project patterns and structure
+>
+> If file not found, search for: project documentation, coding standards, architecture docs.
+
+**Workflow:**
+
+1. **Design** — Define routes using RESTful conventions (plural nouns, proper HTTP methods)
+2. **Implement** — Create controller + CQRS command/query with validation and authorization
+3. **Verify** — Run API design checklist (routes, auth, validation, paging, error handling)
+
+**Key Rules:**
+
+- Follow `PlatformBaseController` + CQRS pattern from CLAUDE.md
+- Use proper route naming: `/api/{resource}` (plural, lowercase, no verbs)
+- Validation in Command/Query `Validate()`, NOT in controller
+- Always add `[PlatformAuthorize]` attributes
+- MUST READ `.ai/docs/backend-code-patterns.md` before implementation
 
 # REST API Design
 
-Expert API design agent for EasyPlatform following platform patterns and REST best practices.
+Expert API design agent for the project following platform patterns and REST best practices.
 
-## Summary
+**Patterns:** Follow CLAUDE.md backend patterns for controller, CQRS command/query, validation, and authorization.
 
-**Goal:** Design REST API endpoints following EasyPlatform controller patterns with proper routing, DTOs, authorization, and CQRS integration.
+**MUST READ** before implementation:
 
-| Step | Action            | Key Notes                                                   |
-| ---- | ----------------- | ----------------------------------------------------------- |
-| 1    | Define routes     | RESTful naming: GET list, GET by ID, POST save, DELETE      |
-| 2    | Create DTOs       | Request/response DTOs with validation; DTO owns mapping     |
-| 3    | Wire CQRS         | Controller delegates to `Cqrs.SendAsync(command/query)`     |
-| 4    | Add authorization | `[PlatformAuthorize]` at controller + role-level per action |
-| 5    | Document          | OpenAPI attributes, response types                          |
-
-**Key Principles:**
-
-- Controllers are thin — delegate all logic to CQRS commands/queries
-- Use `PlatformBaseController` as base class with `Cqrs` property
-- POST for create/update (not PUT); custom actions as `POST {id}/action`
-
-## Controller Pattern
-
-```csharp
-[ApiController]
-[Route("api/[controller]")]
-[PlatformAuthorize]  // Require authentication
-public class EmployeeController : PlatformBaseController
-{
-    // GET api/employee - List with filtering
-    [HttpGet]
-    public async Task<IActionResult> GetList([FromQuery] GetEmployeeListQuery query)
-        => Ok(await Cqrs.SendAsync(query));
-
-    // GET api/employee/{id} - Single by ID
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(string id)
-        => Ok(await Cqrs.SendAsync(new GetEmployeeByIdQuery { Id = id }));
-
-    // POST api/employee - Create/Update
-    [HttpPost]
-    [PlatformAuthorize(Roles = "Admin,Manager")]
-    public async Task<IActionResult> Save([FromBody] SaveEmployeeCommand command)
-        => Ok(await Cqrs.SendAsync(command));
-
-    // DELETE api/employee/{id} - Delete
-    [HttpDelete("{id}")]
-    [PlatformAuthorize(Roles = "Admin")]
-    public async Task<IActionResult> Delete(string id)
-        => Ok(await Cqrs.SendAsync(new DeleteEmployeeCommand { Id = id }));
-
-    // POST api/employee/search - Complex search
-    [HttpPost("search")]
-    public async Task<IActionResult> Search([FromBody] SearchEmployeesQuery query)
-        => Ok(await Cqrs.SendAsync(query));
-
-    // POST api/employee/{id}/action - Custom action
-    [HttpPost("{id}/activate")]
-    public async Task<IActionResult> Activate(string id)
-        => Ok(await Cqrs.SendAsync(new ActivateEmployeeCommand { Id = id }));
-}
-```
+- `.ai/docs/backend-code-patterns.md`
 
 ## Route Naming Conventions
 
@@ -80,82 +55,7 @@ public class EmployeeController : PlatformBaseController
 | Custom Action   | POST        | `/api/{resource}/{id}/{action}` | `POST /api/employees/123/activate` |
 | Nested Resource | GET         | `/api/{parent}/{id}/{child}`    | `GET /api/departments/1/employees` |
 
-## Request/Response DTOs
-
-### Query DTO (GET requests)
-
-```csharp
-// Simple query params - use record
-public record GetEmployeeListQuery : PlatformCqrsPagedQuery<GetEmployeeListQueryResult, EmployeeDto>
-{
-    public List<EmploymentStatus>? Statuses { get; init; }
-    public string? SearchText { get; init; }
-    public string? DepartmentId { get; init; }
-}
-```
-
-### Command DTO (POST/PUT/DELETE)
-
-```csharp
-public sealed class SaveEmployeeCommand : PlatformCqrsCommand<SaveEmployeeCommandResult>
-{
-    public string? Id { get; set; }  // Null for create
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-
-    public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
-    {
-        return base.Validate()
-            .And(_ => FirstName.IsNotNullOrEmpty(), "FirstName is required")
-            .And(_ => Email.IsNotNullOrEmpty(), "Email is required")
-            .And(_ => Email.Contains("@"), "Invalid email format");
-    }
-}
-```
-
-### Response DTO
-
-```csharp
-// For single entity
-public sealed class SaveEmployeeCommandResult : PlatformCqrsCommandResult
-{
-    public EmployeeDto Entity { get; set; } = null!;
-}
-
-// For paged list
-public sealed class GetEmployeeListQueryResult : PlatformCqrsPagedQueryResult<EmployeeDto>
-{
-    public Dictionary<EmploymentStatus, int> StatusCounts { get; set; } = new();
-
-    public GetEmployeeListQueryResult(List<Employee> items, int total, GetEmployeeListQuery req, Dictionary<EmploymentStatus, int> counts)
-        : base(items.SelectList(e => new EmployeeDto(e)), total, req)
-    {
-        StatusCounts = counts;
-    }
-}
-```
-
-## Authorization Patterns
-
-```csharp
-// Controller level - all endpoints
-[PlatformAuthorize]
-public class SecureController : PlatformBaseController { }
-
-// Endpoint level - specific roles
-[HttpPost]
-[PlatformAuthorize(Roles = "Admin,Manager")]
-public async Task<IActionResult> AdminOnly() { }
-
-// Handler level - business validation
-protected override async Task<PlatformValidationResult<T>> ValidateRequestAsync(...)
-{
-    return await validation
-        .And(_ => RequestContext.HasRole("Admin") || RequestContext.UserId() == req.TargetUserId,
-            "Can only modify own data or be Admin");
-}
-```
+**⚠️ MUST READ:** CLAUDE.md for CQRS command/query DTOs, validation patterns, and authorization patterns.
 
 ## File Upload Endpoints
 
@@ -216,7 +116,13 @@ public sealed class UploadCommand : PlatformCqrsCommand<UploadCommandResult>
 - **Business Logic in Controller**: Keep controllers thin, logic in handlers
 - **Inconsistent Naming**: Follow `{Resource}Controller` pattern
 
-## IMPORTANT Task Planning Notes
+## Related
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- `easyplatform-backend`
+
+---
+
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

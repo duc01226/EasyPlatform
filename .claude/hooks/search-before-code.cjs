@@ -1,32 +1,28 @@
 #!/usr/bin/env node
 /**
- * Search-Before-Code Enforcement Hook (PreToolUse)
+ * Search Before Code Hook - Edit/Write Validation
  *
- * Enforces "search existing patterns first" before code modifications.
- * Validates that Grep/Glob was used before Edit/Write/MultiEdit tools.
+ * Enforces "search existing code first" rule by checking for recent Grep/Glob
+ * tool calls before allowing Edit/Write/MultiEdit operations.
  *
- * Trigger: PreToolUse:Edit|Write|MultiEdit
+ * Part of Pattern-First Coding Enforcement (Quality Audit 2026-02-07).
  *
- * Enforcement Strategy:
- *   - CHECK 1: File extension (.ts, .tsx, .cs, .html, .scss)
- *   - CHECK 2: Pattern keywords (PlatformVmStore, Command.*Handler, etc.)
- *   - CHECK 3: Transcript analysis (last 100 lines for Grep/Glob)
- *   - CHECK 4: Trivial change threshold (< 10 lines for .cs/.ts, < 20 for others)
+ * Trigger: PreToolUse → Edit|Write|MultiEdit
+ * Logic:
+ *   1. Check transcript for recent Grep/Glob calls (last 100 lines)
+ *   2. If no search found AND file appears to implement new pattern → BLOCK
+ *   3. Output blocking message with guidance
+ *   4. Exception: Trivial files (< 20 lines), user override with "skip search" in message
+ *
+ * Configuration (.ck.json):
+ *   searchBeforeCode.enabled - Enable/disable hook (default: true)
+ *   searchBeforeCode.requireSearchFor - File patterns requiring search (default: .ts, .tsx, .cs)
+ *   searchBeforeCode.trivialLineThreshold - Max lines for trivial exception (default: 20)
  *
  * Exit Codes:
- *   0 - Allowed (search evidence found or exempt)
- *   1 - Blocked (no search evidence for non-trivial code change)
- *
- * Bypass:
- *   - Use "skip search" | "no search" | "just do it" in prompt
- *   - Set CK_SKIP_SEARCH_CHECK=1 environment variable
- *   - Files matching EXEMPT_PATTERNS
- *
- * Evidence Strategy:
- *   - On Edit/Write: Check CK_SEARCH_PERFORMED env (O(1) read, set externally)
- *   - Fallback: Check transcript for recent Grep/Glob tool calls
+ *   0 - Success (allow operation)
+ *   1 - Blocked (search required)
  */
-
 'use strict';
 
 const fs = require('fs');
@@ -36,293 +32,178 @@ const path = require('path');
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const BYPASS_ENV = process.env.CK_SKIP_SEARCH_CHECK === '1';
-const SEARCH_PERFORMED = process.env.CK_SEARCH_PERFORMED === '1';
+const SEARCH_WINDOW_LINES = 100; // Check last N lines of transcript for searches
+const TRIVIAL_LINE_THRESHOLD = 20; // Files with fewer lines are considered trivial
+const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
-// File extensions that require search-first validation
-const CODE_EXTENSIONS = new Set(['.ts', '.tsx', '.cs', '.html', '.scss', '.sass', '.css']);
+// File extensions that require pattern search
+const REQUIRE_SEARCH_EXTENSIONS = ['.ts', '.tsx', '.cs', '.html', '.scss'];
 
-// EasyPlatform framework patterns that indicate complex implementation
-const FRAMEWORK_PATTERNS = [
+// Keywords indicating new pattern implementation (triggers search requirement)
+const PATTERN_KEYWORDS = [
+  'ifValidator',
   'PlatformVmStore',
-  'AppBaseComponent',
-  'AppBaseVmStoreComponent',
   'AppBaseFormComponent',
-  'PlatformApiService',
-  'PlatformCqrsCommand',
   'Command.*Handler',
-  'Query.*Handler',
-  'IPlatformQueryableRootRepository',
-  'PlatformValidationResult',
-  'RootEntity',
-  'PlatformEntityDto'
+  'Repository',
+  'PlatformApiService'
 ];
-
-// File patterns exempt from enforcement
-const EXEMPT_PATTERNS = [
-  /(^|[/\\])\.claude[/\\]/,          // .claude/ config
-  /(^|[/\\])plans[/\\]/,             // Plan documents
-  /(^|[/\\])docs[/\\]/,              // Documentation
-  /\.md$/i,                           // Markdown files
-  /(^|[/\\])temp[/\\]/,              // Temporary files
-  /(^|[/\\])\\.git[/\\]/,            // Git metadata
-  /(^|[/\\])node_modules[/\\]/,      // Node modules
-  /(^|[/\\])dist[/\\]/,              // Build output
-  /(^|[/\\])obj[/\\]/,               // C# obj
-  /(^|[/\\])bin[/\\]/                // C# bin
-];
-
-// Bypass keywords in prompts
-const BYPASS_KEYWORDS = ['skip search', 'no search', 'just do it', 'quick:'];
-
-// Tools that modify code
-const CODE_MODIFYING_TOOLS = new Set(['Edit', 'Write', 'MultiEdit']);
-
-// Search tools that satisfy requirement
-const SEARCH_TOOLS = new Set(['Grep', 'Glob']);
-
-// Minimum lines changed to trigger enforcement
-const DEFAULT_MIN_LINES = 20;
-const STRICT_MIN_LINES = 10;
-const STRICT_EXTENSIONS = new Set(['.cs', '.ts']);
-
-function getMinLinesThreshold(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
-  return STRICT_EXTENSIONS.has(ext) ? STRICT_MIN_LINES : DEFAULT_MIN_LINES;
-}
-
-// Transcript lookback window
-const LOOKBACK_WINDOW = 100;
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Check if file extension requires search validation
- * @param {string} filePath - File path to check
- * @returns {boolean}
+ * Check if file extension requires search
  */
-function isCodeFile(filePath) {
+function requiresSearch(filePath) {
   if (!filePath) return false;
   const ext = path.extname(filePath).toLowerCase();
-  return CODE_EXTENSIONS.has(ext);
+  return REQUIRE_SEARCH_EXTENSIONS.includes(ext);
 }
 
 /**
- * Check if file path is exempt from enforcement
- * @param {string} filePath - File path to check
- * @returns {boolean}
+ * Check if file content contains pattern implementation keywords
  */
-function isExemptFile(filePath) {
-  if (!filePath) return false;
-
-  // Normalize path for consistent matching
-  const normalized = filePath.replace(/\\/g, '/');
-
-  return EXEMPT_PATTERNS.some(pattern => pattern.test(normalized));
-}
-
-/**
- * Check if content contains framework patterns requiring search
- * @param {string} content - File content to check
- * @returns {boolean}
- */
-function containsFrameworkPatterns(content) {
+function containsPatternImplementation(content) {
   if (!content) return false;
-
-  return FRAMEWORK_PATTERNS.some(pattern => {
-    const regex = new RegExp(pattern, 'i');
+  return PATTERN_KEYWORDS.some(keyword => {
+    const regex = new RegExp(keyword, 'i');
     return regex.test(content);
   });
 }
 
-/**
- * Estimate lines changed in edit
- * @param {object} toolInput - Edit tool input
- * @returns {number}
- */
-function estimateLinesChanged(toolInput) {
-  if (!toolInput) return 0;
-
-  const oldString = toolInput.old_string || '';
-  const newString = toolInput.new_string || '';
-  const content = toolInput.content || '';
-
-  // For Write tool, count lines in content
-  if (content) {
-    return content.split('\n').length;
-  }
-
-  // For Edit tool, estimate diff size
-  const oldLines = oldString.split('\n').length;
-  const newLines = newString.split('\n').length;
-  return Math.max(oldLines, newLines);
-}
+const TRANSCRIPT_MAX_LINES = 500; // Cap transcript to last N lines
+const TRANSCRIPT_MAX_BYTES = 512 * 1024; // 512KB size guard
 
 /**
- * Check if prompt contains bypass keywords
- * @param {object} payload - Hook payload
- * @returns {boolean}
- */
-function hasPromptBypass(payload) {
-  const toolInput = payload.tool_input || {};
-
-  // Check for bypass keywords in description and prompt only
-  // (not content — Write tool file content may contain these words as legitimate text)
-  const fieldsToCheck = [
-    toolInput.description,
-    payload.prompt
-  ];
-
-  return fieldsToCheck.some(field => {
-    if (!field || typeof field !== 'string') return false;
-    return BYPASS_KEYWORDS.some(keyword =>
-      field.toLowerCase().includes(keyword.toLowerCase())
-    );
-  });
-}
-
-/**
- * Check recent tool history for search evidence
+ * Read transcript once with size guard
  * @param {string} transcriptPath - Path to transcript file
- * @param {number} lookbackWindow - Number of recent lines to check
- * @returns {boolean}
+ * @returns {string} Transcript content (last TRANSCRIPT_MAX_LINES lines)
  */
-function hasRecentSearchEvidence(transcriptPath, lookbackWindow = LOOKBACK_WINDOW) {
-  if (!transcriptPath || !fs.existsSync(transcriptPath)) {
-    return false;
-  }
-
+function readTranscriptOnce(transcriptPath) {
   try {
-    const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-    const lines = transcript.split('\n');
-
-    // Search last N lines for Grep/Glob tool calls
-    const recentLines = lines.slice(-lookbackWindow);
-    const toolCallPattern = /<invoke name="(Grep|Glob)">/;
-
-    return recentLines.some(line => toolCallPattern.test(line));
-  } catch (error) {
-    // Non-blocking: If transcript read fails, allow continuation
-    return false;
+    if (!transcriptPath || !fs.existsSync(transcriptPath)) return '';
+    const stat = fs.statSync(transcriptPath);
+    const content = fs.readFileSync(transcriptPath, 'utf-8');
+    // Always cap to last N lines (protects against unbounded reads in long sessions)
+    if (stat.size > TRANSCRIPT_MAX_BYTES || content.split('\n').length > TRANSCRIPT_MAX_LINES) {
+      return content.split('\n').slice(-TRANSCRIPT_MAX_LINES).join('\n');
+    }
+    return content;
+  } catch {
+    return '';
   }
 }
 
 /**
- * Build warning/error message
- * @param {string} filePath - File being edited
- * @param {string} reason - Reason for enforcement
- * @returns {string}
+ * Check if transcript contains recent Grep/Glob searches
+ * @param {string} transcriptContent - Already-read transcript string
  */
-function buildMessage(filePath, reason) {
-  return `
-🚫 BLOCKED: Search Existing Patterns First
+function hasRecentSearch(transcriptContent) {
+  if (!transcriptContent) return false;
+  const recentLines = transcriptContent.split('\n').slice(-SEARCH_WINDOW_LINES).join('\n');
+  return recentLines.includes('"tool_name":"Grep"') || recentLines.includes('"tool_name":"Glob"');
+}
 
-File: ${filePath}
-Reason: ${reason}
+/**
+ * Check if user explicitly requested to skip search
+ * @param {string} transcriptContent - Already-read transcript string
+ */
+function hasSkipSearchOverride(transcriptContent) {
+  if (!transcriptContent) return false;
+  const recentLines = transcriptContent.split('\n').slice(-50).join('\n');
+  return /skip\s+search|no\s+search|just\s+do\s+it/i.test(recentLines);
+}
 
-Before modifying code, you MUST search for existing implementations:
-
-  1. Use Grep to find similar patterns:
-     Grep: pattern="<feature-name>|<entity-name>|<concept>"
-
-  2. Use Glob to locate related files:
-     Glob: pattern="**/*<similar-file-pattern>*"
-
-  3. Read base classes and framework utilities
-  4. Verify no duplication exists
-  5. Document search evidence in your response
-
-WHY: Prevents code duplication, ensures pattern consistency, reuses battle-tested code.
-
-This enforcement ensures adherence to CLAUDE.md Golden Rule #4.
-
-Bypass (for trivial changes only):
-  - Add "skip search" or "no search" or "just do it" to your prompt
-  - Set CK_SKIP_SEARCH_CHECK=1 environment variable
-
-Learn more: CLAUDE.md Golden Rule #4, docs/claude/architecture.md
-`.trim();
+/**
+ * Check if file is trivial (small enough to not require search)
+ */
+function isTrivialFile(content) {
+  if (!content) return true;
+  const lines = content.split('\n').length;
+  return lines < TRIVIAL_LINE_THRESHOLD;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// MAIN LOGIC
+// MAIN
 // ═══════════════════════════════════════════════════════════════════════════
 
-try {
-  // Read stdin
-  const stdin = fs.readFileSync(0, 'utf-8').trim();
-  if (!stdin) process.exit(0);
+function main() {
+  try {
+    const stdin = fs.readFileSync(0, 'utf-8').trim();
+    if (!stdin) process.exit(0);
 
-  const payload = JSON.parse(stdin);
-  const toolName = payload.tool_name || '';
-  const toolInput = payload.tool_input || {};
+    const payload = JSON.parse(stdin);
 
-  // Only enforce on code-modifying tools
-  if (!CODE_MODIFYING_TOOLS.has(toolName)) {
+    // Only handle Edit/Write/MultiEdit
+    if (!['Edit', 'Write', 'MultiEdit'].includes(payload.tool_name)) process.exit(0);
+
+    // Load config
+    let config = { enabled: true };
+    try {
+      const { loadConfig } = require('./lib/ck-config-utils.cjs');
+      const fullConfig = loadConfig() || {};
+      config = fullConfig.searchBeforeCode || config;
+    } catch { /* use defaults */ }
+
+    // Early exit if disabled
+    if (config.enabled === false) process.exit(0);
+
+    // Get file path
+    const filePath = payload.tool_input?.file_path
+        || payload.tool_input?.filePath
+        || payload.tool_input?.edits?.[0]?.file_path
+        || '';
+
+    // Skip if file doesn't require search
+    if (!requiresSearch(filePath)) process.exit(0);
+
+    // Get file content
+    const newContent = payload.tool_input?.new_string
+        || payload.tool_input?.content
+        || payload.tool_input?.edits?.[0]?.new_string
+        || '';
+
+    // Skip if trivial file
+    if (isTrivialFile(newContent)) process.exit(0);
+
+    // Read transcript ONCE (single read with size guard)
+    const transcriptPath = payload.transcript_path || '';
+    const transcript = readTranscriptOnce(transcriptPath);
+
+    // Skip if user explicitly requested to skip search
+    if (hasSkipSearchOverride(transcript)) process.exit(0);
+
+    // Check if implementing new pattern
+    if (!containsPatternImplementation(newContent)) process.exit(0);
+
+    // Check for recent search
+    if (hasRecentSearch(transcript)) process.exit(0);
+
+    // BLOCK: No search found
+    console.error('\n═══════════════════════════════════════════════════════════════════════');
+    console.error('⛔ BLOCKED: Search existing code before implementing');
+    console.error('═══════════════════════════════════════════════════════════════════════\n');
+    console.error('File:', filePath);
+    console.error('Reason: New pattern implementation detected without prior code search\n');
+    console.error('REQUIRED ACTIONS:');
+    console.error('1. Use Grep/Glob to find 3+ similar patterns in BravoSUITE codebase');
+    console.error('2. Study existing implementations (NOT generic framework docs)');
+    console.error('3. Provide file:line evidence in your plan\n');
+    console.error('Example:');
+    console.error('  grep -r "ifValidator" src/WebV2 --include="*.ts" -A 3\n');
+    console.error('Override: Add "skip search" to your message if this is intentional');
+    console.error('═══════════════════════════════════════════════════════════════════════\n');
+
+    process.exit(1); // Block the operation
+  } catch (error) {
+    // Non-blocking on errors - allow operation to proceed
+    if (process.env.CK_DEBUG) {
+      console.error(`[SearchBeforeCode] Error: ${error.message}`);
+    }
     process.exit(0);
   }
-
-  // Check for environment bypass
-  if (BYPASS_ENV) {
-    process.exit(0);
-  }
-
-  // Check for prompt bypass keywords
-  if (hasPromptBypass(payload)) {
-    process.exit(0);
-  }
-
-  // Get file path
-  const filePath = toolInput.file_path || toolInput.notebook_path || '';
-
-  // Check if file is exempt
-  if (isExemptFile(filePath)) {
-    process.exit(0);
-  }
-
-  // Check if file extension requires validation
-  if (!isCodeFile(filePath)) {
-    process.exit(0);
-  }
-
-  // Check if change is trivial (< MIN_LINES_THRESHOLD lines)
-  const linesChanged = estimateLinesChanged(toolInput);
-  if (linesChanged < getMinLinesThreshold(filePath)) {
-    process.exit(0);
-  }
-
-  // Check cache first (O(1) performance)
-  if (SEARCH_PERFORMED) {
-    process.exit(0);
-  }
-
-  // Fallback: Check recent transcript for search evidence
-  const hasSearchEvidence = hasRecentSearchEvidence(payload.transcript_path);
-
-  if (hasSearchEvidence) {
-    process.exit(0);
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // NO SEARCH EVIDENCE FOUND - Additional validation for framework patterns
-  // ─────────────────────────────────────────────────────────────────────────
-
-  const content = toolInput.content || toolInput.new_string || '';
-  const hasFrameworkPattern = containsFrameworkPatterns(content);
-
-  let reason = 'No search evidence found (Grep/Glob)';
-  if (hasFrameworkPattern) {
-    reason += ' and framework patterns detected (PlatformVmStore, Command handlers, etc.)';
-  }
-
-  const message = buildMessage(filePath, reason);
-  console.log(message);
-  process.exit(1);
-
-} catch (error) {
-  // Non-blocking: Log error and allow continuation
-  console.error(`Search-before-code hook error: ${error.message}`);
-  process.exit(0);
 }
+
+main();

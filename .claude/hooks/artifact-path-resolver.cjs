@@ -1,39 +1,130 @@
 #!/usr/bin/env node
-'use strict';
-
 /**
  * Artifact Path Resolver Hook
  *
  * Auto-resolves output paths for team commands.
  * Ensures consistent naming and folder placement.
  *
- * @hook PreToolUse
- * @tools Write
- * @pattern stdin/stdout (non-blocking)
+ * @trigger PreToolUse (Write)
+ * @resolves Output paths for /idea, /refine, /story, /test-spec, /design-spec
+ *
+ * Input: JSON via stdin with tool_name, tool_input
+ * Output: Context string via stdout with resolved path info
+ * Exit: 0 (non-blocking)
+ *
+ * Note: This hook provides path suggestions in context. It does NOT modify
+ * the actual tool_input. The AI should use the suggested path.
  */
 
 const fs = require('fs');
 const path = require('path');
+const { normalizePath } = require('./lib/ck-path-utils.cjs');
 
-// Module codes for role identification
-const MODULE_CODES = {
-  PRODUCT_OWNER: 'po',
-  BUSINESS_ANALYST: 'ba',
-  QA_ENGINEER: 'qa',
-  QC_SPECIALIST: 'qc',
-  UX_DESIGNER: 'ux',
-  PROJECT_MANAGER: 'pm'
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Command to artifact folder mappings
+const COMMAND_PATH_MAPPINGS = {
+  'idea': 'team-artifacts/ideas/',
+  'refine': 'team-artifacts/pbis/',
+  'story': 'team-artifacts/pbis/stories/',
+  'test-spec': 'team-artifacts/test-specs/',
+  'design-spec': 'team-artifacts/design-specs/',
+  'quality-gate': 'team-artifacts/qc-reports/',
+  'status': 'plans/reports/'
 };
 
-// Auto-generate role pattern for regex from MODULE_CODES
-const ROLE_PATTERN = Object.values(MODULE_CODES).join('|');
+// Type mapping for file naming
+const TYPE_MAPPING = {
+  'idea': 'idea',
+  'refine': 'pbi',
+  'story': 'story',
+  'test-spec': 'testspec',
+  'design-spec': 'designspec',
+  'quality-gate': 'gate',
+  'status': 'status'
+};
+
+// Role mapping for file naming
+const ROLE_MAPPING = {
+  'idea': 'po',
+  'refine': 'ba',
+  'story': 'ba',
+  'test-spec': 'qa',
+  'design-spec': 'ux',
+  'quality-gate': 'qc',
+  'status': 'pm'
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Main entry point - stdin/stdout pattern
+ * Extract slug from title or path
  */
+function extractSlug(input) {
+  return input
+    .toLowerCase()
+    .replace(/\.md$/, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 50) || 'unnamed';
+}
+
+/**
+ * Detect current command from file path or content patterns
+ */
+function detectCommand(filePath, content) {
+  const normalizedPath = (normalizePath(filePath) || '').toLowerCase();
+
+  // Check path patterns
+  for (const [command, pathPrefix] of Object.entries(COMMAND_PATH_MAPPINGS)) {
+    if (normalizedPath.includes(pathPrefix.toLowerCase())) {
+      return command;
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Generate resolved path info
+ */
+function generatePathInfo(command, filePath) {
+  const basePath = COMMAND_PATH_MAPPINGS[command];
+  if (!basePath) return null;
+
+  const date = new Date();
+  const dateStr = date.toISOString().slice(2, 10).replace(/-/g, '');
+
+  const role = ROLE_MAPPING[command];
+  const type = TYPE_MAPPING[command];
+  const slug = extractSlug(path.basename(filePath));
+
+  // Construct filename
+  const filename = role
+    ? `${dateStr}-${role}-${type}-${slug}.md`
+    : `${dateStr}-${type}-${slug}.md`;
+
+  const fullPath = `${basePath}${filename}`;
+
+  return {
+    command,
+    basePath,
+    filename,
+    fullPath,
+    pattern: '{YYMMDD}-{role}-{type}-{slug}.md'
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN EXECUTION
+// ═══════════════════════════════════════════════════════════════════════════
+
 async function main() {
   try {
-    // Read JSON payload from stdin
     const stdin = fs.readFileSync(0, 'utf-8').trim();
     if (!stdin) process.exit(0);
 
@@ -47,98 +138,34 @@ async function main() {
     }
 
     // Extract file path from tool input
-    const filePath = toolInput.file_path || toolInput.path || '';
+    const filePath = toolInput.file_path || '';
     if (!filePath) process.exit(0);
 
-    // Detect if this is a team artifact path that needs resolution
-    const normalizedPath = filePath.replace(/\\/g, '/');
+    // Detect command from path
+    const command = detectCommand(filePath, toolInput.content || '');
+    if (!command) process.exit(0);
 
-    // Check if path is in team-artifacts and may need standardization
-    if (normalizedPath.includes('team-artifacts/')) {
-      const suggestion = suggestStandardPath(normalizedPath);
-      if (suggestion) {
-        console.log(suggestion);
-      }
-    }
+    // Generate path info
+    const pathInfo = generatePathInfo(command, filePath);
+    if (!pathInfo) process.exit(0);
 
+    // Output context with path suggestion
+    const output = [
+      '',
+      '## Artifact Path (auto-resolved)',
+      '',
+      `**Command:** /${pathInfo.command}`,
+      `**Suggested Path:** ${pathInfo.fullPath}`,
+      `**Pattern:** ${pathInfo.pattern}`,
+      ''
+    ].join('\n');
+
+    console.log(output);
     process.exit(0);
   } catch (error) {
-    // Non-blocking - always exit 0 even on error
+    // Non-blocking - exit silently on error
     process.exit(0);
   }
-}
-
-/**
- * Suggest standardized path if current path doesn't follow convention
- */
-function suggestStandardPath(currentPath) {
-  const date = new Date();
-  const dateStr = date.toISOString().slice(2, 10).replace(/-/g, '');
-
-  // Extract filename from path
-  const filename = path.basename(currentPath);
-
-  // Check if filename already follows convention: {YYMMDD}-{role}-{type}-{slug}.md
-  // Uses ROLE_PATTERN constant for maintainability
-  const conventionRegex = new RegExp(`^\\d{6}-(${ROLE_PATTERN})-\\w+-[\\w-]+\\.md$`);
-  if (conventionRegex.test(filename)) {
-    return null; // Already follows convention
-  }
-
-  // Determine artifact type from path (uses MODULE_CODES for consistency)
-  let artifactType = null;
-  let role = null;
-
-  if (currentPath.includes('team-artifacts/ideas')) {
-    artifactType = 'idea';
-    role = MODULE_CODES.PRODUCT_OWNER;
-  } else if (currentPath.includes('team-artifacts/pbis/stories')) {
-    artifactType = 'story';
-    role = MODULE_CODES.BUSINESS_ANALYST;
-  } else if (currentPath.includes('team-artifacts/pbis')) {
-    artifactType = 'pbi';
-    role = MODULE_CODES.BUSINESS_ANALYST;
-  } else if (currentPath.includes('team-artifacts/test-specs')) {
-    artifactType = 'testspec';
-    role = MODULE_CODES.QA_ENGINEER;
-  } else if (currentPath.includes('team-artifacts/design-specs')) {
-    artifactType = 'designspec';
-    role = MODULE_CODES.UX_DESIGNER;
-  } else if (currentPath.includes('team-artifacts/qc-reports')) {
-    artifactType = 'gate';
-    role = MODULE_CODES.QC_SPECIALIST;
-  }
-
-  if (!artifactType || !role) {
-    return null;
-  }
-
-  // Extract slug from current filename
-  const slug = extractSlug(filename);
-  const suggestedFilename = `${dateStr}-${role}-${artifactType}-${slug}.md`;
-  const suggestedPath = path.dirname(currentPath) + '/' + suggestedFilename;
-
-  return [
-    `## Artifact Path Suggestion`,
-    `- **Current:** ${filename}`,
-    `- **Suggested:** ${suggestedFilename}`,
-    `- **Convention:** {YYMMDD}-{role}-{type}-{slug}.md`,
-    ``,
-    `Consider using the standardized naming convention for consistency.`
-  ].join('\n');
-}
-
-/**
- * Extract slug from filename
- */
-function extractSlug(filename) {
-  return filename
-    .toLowerCase()
-    .replace(/\.md$/, '')
-    .replace(/^\d{6}-\w+-\w+-/, '') // Remove existing convention prefix if any
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '')
-    .slice(0, 50) || 'unnamed';
 }
 
 main();

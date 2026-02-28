@@ -4,7 +4,6 @@
  * Tests for:
  * - privacy-block.cjs: Blocks access to sensitive files
  * - scout-block.cjs: Blocks overly broad search patterns
- * - cross-platform-bash.cjs: Warns about Windows-specific commands
  */
 
 const path = require('path');
@@ -32,8 +31,6 @@ const {
 // Hook paths
 const PRIVACY_BLOCK = getHookPath('privacy-block.cjs');
 const SCOUT_BLOCK = getHookPath('scout-block.cjs');
-const CROSS_PLATFORM = getHookPath('cross-platform-bash.cjs');
-
 // ============================================================================
 // privacy-block.cjs Tests
 // ============================================================================
@@ -300,157 +297,6 @@ const scoutBlockTests = [
 ];
 
 // ============================================================================
-// cross-platform-bash.cjs Tests
-// ============================================================================
-
-const crossPlatformTests = [
-  // WARN - Windows-specific commands (exit 0, but stdout has warning)
-  {
-    name: '[cross-platform] blocks dir /b /s command',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'dir /b /s path' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertBlocked(result.code, 'Should block Windows dir with flags');
-      const output = result.stdout + (result.stderr || '');
-      assertContains(output, 'dir', 'Should mention dir command');
-    }
-  },
-  {
-    name: '[cross-platform] warns on > nul redirect',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'echo test > nul' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should not block');
-      assertContains(result.stdout, '/dev/null', 'Should suggest /dev/null');
-    }
-  },
-  {
-    name: '[cross-platform] blocks type command',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'type file.txt' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertBlocked(result.code, 'Should block Windows type command');
-      const output = result.stdout + (result.stderr || '');
-      assertContains(output, 'cat', 'Should suggest cat');
-    }
-  },
-  {
-    name: '[cross-platform] blocks copy command',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'copy src.txt dest.txt' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertBlocked(result.code, 'Should block Windows copy command');
-      const output = result.stdout + (result.stderr || '');
-      assertContains(output, 'cp', 'Should suggest cp');
-    }
-  },
-  {
-    name: '[cross-platform] warns on backslash paths',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'ls D:\\path\\to\\file' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should not block');
-      assertContains(result.stdout.toLowerCase(), 'forward slash', 'Should suggest forward slashes');
-    }
-  },
-  {
-    name: '[cross-platform] blocks cls command',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'cls' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertBlocked(result.code, 'Should block Windows cls command');
-      const output = result.stdout + (result.stderr || '');
-      assertContains(output, 'clear', 'Should suggest clear');
-    }
-  },
-  {
-    name: '[cross-platform] blocks del command',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'del file.txt' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertBlocked(result.code, 'Should block Windows del command');
-      const output = result.stdout + (result.stderr || '');
-      assertContains(output, 'rm', 'Should suggest rm');
-    }
-  },
-  {
-    name: '[cross-platform] blocks move command',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'move src.txt dest.txt' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertBlocked(result.code, 'Should block Windows move command');
-      const output = result.stdout + (result.stderr || '');
-      assertContains(output, 'mv', 'Should suggest mv');
-    }
-  },
-  {
-    name: '[cross-platform] warns on 2>nul redirect',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'cmd 2>nul' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should not block');
-      assertContains(result.stdout, '/dev/null', 'Should suggest /dev/null');
-    }
-  },
-
-  // NO WARN - Portable commands
-  {
-    name: '[cross-platform] no warn on ls command',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'ls -la' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should allow ls');
-      assertEqual(result.stdout.trim(), '', 'Should have no output for portable commands');
-    }
-  },
-  {
-    name: '[cross-platform] no warn on forward slash paths',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'ls "D:/path/to/file"' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should allow forward slashes');
-      assertNotContains(result.stdout, 'Cross-Platform', 'Should not warn');
-    }
-  },
-  {
-    name: '[cross-platform] no warn on /dev/null redirect',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'cmd > /dev/null 2>&1' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should allow /dev/null');
-      assertNotContains(result.stdout, 'Cross-Platform', 'Should not warn');
-    }
-  },
-  {
-    name: '[cross-platform] ignores non-Bash tools',
-    fn: async () => {
-      const input = createPreToolUseInput('Read', { file_path: 'D:\\test.txt' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should ignore non-Bash');
-      assertEqual(result.stdout.trim(), '', 'Should have no output');
-    }
-  },
-  {
-    name: '[cross-platform] no warn on cat command',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'cat file.txt' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should allow cat');
-      assertNotContains(result.stdout, 'Cross-Platform', 'Should not warn');
-    }
-  },
-  {
-    name: '[cross-platform] no warn on rm command',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: 'rm -rf node_modules' });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should allow rm');
-      assertNotContains(result.stdout, 'Cross-Platform', 'Should not warn');
-    }
-  }
-];
-
-// ============================================================================
 // Edge Case: Path Traversal & Injection Tests (10 tests)
 // ============================================================================
 
@@ -619,14 +465,6 @@ const inputValidationTests = [
     }
   },
   {
-    name: '[cross-platform] handles array instead of string command',
-    fn: async () => {
-      const input = createPreToolUseInput('Bash', { command: ['ls', '-la'] });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should handle array command');
-    }
-  },
-  {
     name: '[privacy-block] handles deeply nested input',
     fn: async () => {
       let nested = { file_path: '.env' };
@@ -686,16 +524,6 @@ const resourceLimitTests = [
     }
   },
   {
-    name: '[cross-platform] handles very long command',
-    fn: async () => {
-      const longCmd = 'echo ' + 'a'.repeat(10000);
-      const input = createPreToolUseInput('Bash', { command: longCmd });
-      const result = await runHook(CROSS_PLATFORM, input);
-      assertAllowed(result.code, 'Should handle long command');
-      assertFalse(result.timedOut, 'Should not timeout');
-    }
-  },
-  {
     name: '[privacy-block] handles concurrent calls for different tools',
     fn: async () => {
       const inputs = [
@@ -743,7 +571,6 @@ module.exports = {
   tests: [
     ...privacyBlockTests,
     ...scoutBlockTests,
-    ...crossPlatformTests,
     ...pathTraversalTests,
     ...inputValidationTests,
     ...resourceLimitTests

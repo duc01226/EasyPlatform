@@ -51,8 +51,8 @@ figma_link: "https://www.figma.com/design/ABC123/FeatureName"
 
 | Command | Description |
 |---------|-------------|
-| `/team-figma-extract {url}` | Extract design specs from Figma URL |
-| `/team-design-spec {pbi-path}` | Auto-detects and extracts if `figma_link` present |
+| `/figma-extract {url}` | Extract design specs from Figma URL |
+| `/design-spec {pbi-path}` | Auto-detects and extracts if `figma_link` present |
 
 ## Rate Limits
 

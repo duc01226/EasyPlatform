@@ -1,46 +1,73 @@
 #!/usr/bin/env node
+
 /**
  * Markdown to PDF Converter CLI
+ * Converts markdown files to PDF with syntax highlighting and custom CSS
  *
  * Usage:
- *   node convert.cjs --file <input.md> [--output <output.pdf>] [--style <custom.css>]
+ *   node convert.cjs --input ./doc.md [--output ./out.pdf] [--css ./style.css]
  *
  * Options:
- *   --file <path>   Input markdown file (required)
- *   --output <path> Output PDF path (default: input name + .pdf)
- *   --style <path>  Custom CSS file path
- *   --help          Show usage information
+ *   --input, -i       Input markdown file (required)
+ *   --output, -o      Output PDF path (default: input.pdf)
+ *   --css, -c         Custom CSS file path
+ *   --no-highlight    Disable syntax highlighting
+ *   --help, -h        Show help message
  */
 
-const path = require('node:path');
-const { convertToPdf, generateOutputPath, resolvePath } = require('./lib/pdf-generator.cjs');
+const path = require('path');
 
 /**
  * Parse command line arguments
  * @param {string[]} argv - Process arguments
- * @returns {Object} Parsed arguments
+ * @returns {{input: string|null, output: string|null, css: string|null, noHighlight: boolean, help: boolean}}
  */
 function parseArgs(argv) {
   const args = {
-    file: null,
+    input: null,
     output: null,
-    style: null,
+    css: null,
+    noHighlight: false,
     help: false
   };
 
   for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
-    if (arg === '--file' && argv[i + 1]) {
-      args.file = argv[++i];
-    } else if (arg === '--output' && argv[i + 1]) {
-      args.output = argv[++i];
-    } else if (arg === '--style' && argv[i + 1]) {
-      args.style = argv[++i];
-    } else if (arg === '--help' || arg === '-h') {
-      args.help = true;
-    } else if (!arg.startsWith('--') && !args.file) {
-      // Positional argument as file
-      args.file = arg;
+    const nextArg = argv[i + 1];
+
+    switch (arg) {
+      case '--input':
+      case '-i':
+        args.input = nextArg;
+        i++;
+        break;
+
+      case '--output':
+      case '-o':
+        args.output = nextArg;
+        i++;
+        break;
+
+      case '--css':
+      case '-c':
+        args.css = nextArg;
+        i++;
+        break;
+
+      case '--no-highlight':
+        args.noHighlight = true;
+        break;
+
+      case '--help':
+      case '-h':
+        args.help = true;
+        break;
+
+      default:
+        // Handle positional argument (assume input file)
+        if (!arg.startsWith('-') && !args.input) {
+          args.input = arg;
+        }
     }
   }
 
@@ -48,85 +75,168 @@ function parseArgs(argv) {
 }
 
 /**
- * Print usage information
+ * Print help message
+ * @returns {void}
  */
-function printUsage() {
+function printHelp() {
   console.log(`
-Markdown to PDF Converter
+markdown-to-pdf - Convert markdown files to PDF
 
-Usage:
-  node convert.cjs --file <input.md> [options]
+USAGE:
+  node convert.cjs --input <file.md> [options]
+  node convert.cjs <file.md> [options]
 
-Options:
-  --file <path>    Input markdown file (required)
-  --output <path>  Output PDF path (default: same name as input)
-  --style <path>   Custom CSS file for styling
-  --help, -h       Show this help message
+OPTIONS:
+  --input, -i <path>     Input markdown file (required)
+  --output, -o <path>    Output PDF path (default: same as input with .pdf)
+  --css, -c <path>       Custom CSS stylesheet
+  --no-highlight         Disable code syntax highlighting
+  --help, -h             Show this help message
 
-Examples:
-  node convert.cjs --file ./README.md
-  node convert.cjs --file ./doc.md --output ./output/doc.pdf
-  node convert.cjs --file ./report.md --style ./custom.css
+EXAMPLES:
+  # Basic conversion
+  node convert.cjs --input ./README.md
+
+  # With custom output path
+  node convert.cjs -i ./docs/guide.md -o ./output/guide.pdf
+
+  # With custom CSS
+  node convert.cjs -i ./report.md -c ./custom-style.css
+
+OUTPUT:
+  Returns JSON on success:
+  {
+    "success": true,
+    "input": "/path/to/input.md",
+    "output": "/path/to/output.pdf",
+    "pages": 5
+  }
+
+  Returns JSON on error:
+  {
+    "success": false,
+    "error": "Error description"
+  }
+
+EXIT CODES:
+  0  Success
+  1  Error (missing input, conversion failed, etc.)
 `);
 }
 
 /**
- * Output result as JSON
- * @param {Object} result - Conversion result
+ * Print result as JSON
+ * @param {object} result - Result object
+ * @returns {void}
  */
-function outputJson(result) {
+function printResult(result) {
   console.log(JSON.stringify(result, null, 2));
 }
 
 /**
- * Main CLI function
+ * Validate arguments
+ * @param {{input: string|null}} args - Parsed arguments
+ * @returns {{valid: boolean, error?: string}}
+ */
+function validateArgs(args) {
+  if (!args.input) {
+    return {
+      valid: false,
+      error: 'Input file is required. Use --input <path> or provide a positional argument.'
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Check if dependencies are installed
+ * @returns {{available: boolean, missing: string[]}}
+ */
+function checkDependencies() {
+  const missing = [];
+
+  try {
+    require.resolve('md-to-pdf');
+  } catch {
+    missing.push('md-to-pdf');
+  }
+
+  try {
+    require.resolve('gray-matter');
+  } catch {
+    missing.push('gray-matter');
+  }
+
+  return {
+    available: missing.length === 0,
+    missing
+  };
+}
+
+/**
+ * Main entry point
+ * @returns {Promise<void>}
  */
 async function main() {
   const args = parseArgs(process.argv);
-  const cwd = process.cwd();
-  const skillDir = path.join(__dirname, '..');
-  const defaultCssPath = path.join(skillDir, 'assets', 'default-style.css');
 
-  // Handle --help
+  // Handle help flag
   if (args.help) {
-    printUsage();
+    printHelp();
     process.exit(0);
   }
 
-  // Validate required --file argument
-  if (!args.file) {
-    console.error('Error: --file argument is required');
-    console.error('Run with --help for usage information');
+  // Validate arguments
+  const validation = validateArgs(args);
+  if (!validation.valid) {
+    printResult({
+      success: false,
+      error: validation.error
+    });
     process.exit(1);
   }
 
-  // Resolve paths
-  const inputPath = resolvePath(args.file, cwd);
-  const outputPath = args.output
-    ? resolvePath(args.output, cwd)
-    : generateOutputPath(inputPath, cwd);
-  const cssPath = args.style ? resolvePath(args.style, cwd) : null;
+  // Check dependencies
+  const deps = checkDependencies();
+  if (!deps.available) {
+    printResult({
+      success: false,
+      error: `Missing dependencies: ${deps.missing.join(', ')}. Run 'npm install' in the skill directory.`,
+      hint: `cd ${path.dirname(__dirname)} && npm install`
+    });
+    process.exit(1);
+  }
 
-  // Convert to PDF
-  const result = await convertToPdf({
-    inputPath,
-    outputPath,
-    cssPath,
-    defaultCssPath
-  });
+  // Import converter (lazy load after dependency check)
+  const { convert } = require('./lib/converter.cjs');
 
-  // Output JSON result
-  outputJson(result);
+  // Perform conversion
+  try {
+    const result = await convert({
+      input: args.input,
+      output: args.output,
+      css: args.css,
+      noHighlight: args.noHighlight
+    });
 
-  // Exit with appropriate code
-  process.exit(result.success ? 0 : 1);
+    printResult(result);
+    process.exit(result.success ? 0 : 1);
+
+  } catch (error) {
+    printResult({
+      success: false,
+      error: error.message || 'Unexpected error during conversion'
+    });
+    process.exit(1);
+  }
 }
 
-// Run
-main().catch(err => {
-  outputJson({
+// Run main function
+main().catch(error => {
+  console.error(JSON.stringify({
     success: false,
-    error: err.message || 'Unknown error'
-  });
+    error: `Unhandled error: ${error.message}`
+  }));
   process.exit(1);
 });

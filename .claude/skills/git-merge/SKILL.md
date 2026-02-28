@@ -1,8 +1,25 @@
 ---
 name: git-merge
-description: "[Git & Release] ⚠️ Merge code from one branch to another"
-argument-hint: [branch] [from-branch]
+version: 1.0.0
+description: '[Git] ⚠️ Merge code from one branch to another'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+## Quick Summary
+
+**Goal:** Merge code from one branch to another with safety checks and conflict resolution.
+
+**Workflow:**
+1. **Validate** -- Check source/target branches, verify clean working tree
+2. **Merge** -- Execute git merge with appropriate strategy
+3. **Resolve** -- Handle conflicts if any, verify merge result
+
+**Key Rules:**
+- WARNING: destructive operation -- always confirm with user first
+- Verify clean working tree before merge
+- Use `/git-conflict-resolve` if conflicts arise
 
 ## Variables
 
@@ -45,7 +62,9 @@ git push origin {TO_BRANCH}
 - If you need more clarifications, use `AskUserQuestion` tool to ask the user for more details.
 - Always fetch and pull latest remote state before merging to avoid stale conflicts.
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

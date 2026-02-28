@@ -12,18 +12,19 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 
 | Skill | Description |
 |-------|-------------|
-| `backend-development` | Backend systems (Node.js, Python, Go, Rust), APIs, databases |
-| `frontend-angular` | Angular 19 components, forms, stores, API services |
 | `easyplatform-backend` | EasyPlatform .NET backend (CQRS, entities, migrations) |
+| `frontend-angular` | Angular 19 components, forms, state management, API services |
 | `api-design` | REST API endpoints, controllers, DTOs |
-| `migration` | Create or run database migrations (EF Core, MongoDB, data) |
+| `databases` | MongoDB, PostgreSQL queries and optimization |
 
 ### Architecture
 
 | Skill | Description |
 |-------|-------------|
-| `performance` | Database, API, frontend performance |
-| `plan` | Implementation planning and strategy |
+| `arch-cross-service-integration` | Cross-service communication patterns |
+| `arch-performance-optimization` | Database, API, frontend performance |
+| `arch-security-review` | Security vulnerabilities, authorization |
+| `planning` | Implementation planning and strategy |
 | `refactoring` | Code restructuring and improvement |
 
 ### AI & Automation
@@ -33,7 +34,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 | `ai-multimodal` | Google Gemini for audio/video/image processing |
 | `ai-artist` | Prompt engineering for AI image/text generation |
 | `ai-dev-tools-sync` | Sync Claude Code and Copilot configurations |
-| `test-ui` | Puppeteer browser automation |
+| `chrome-devtools` | Puppeteer browser automation |
 | `mcp-builder` | Create MCP servers for external integrations |
 | `mcp-management` | Manage MCP server tools and resources |
 
@@ -44,7 +45,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 | `debug` | Systematic debugging framework (includes EasyPlatform-specific patterns) |
 | `code-review` | Comprehensive code review |
 | `code-simplifier` | Simplify code for clarity |
-| `test-generation` | Generate unit and integration tests |
+| `test-spec` | Generate test specifications, test cases, and integration tests |
 | `webapp-testing` | Web application testing strategies |
 
 ### DevOps & Infrastructure
@@ -63,7 +64,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 | `documentation` | Technical documentation enhancement |
 | `docs-seeker` | Search technical docs (context7, llms.txt) |
 | `feature-docs` | Feature documentation with test verification |
-| `business-feature-docs` | EasyPlatform business feature docs |
+| `feature-docs` | EasyPlatform business feature docs |
 | `readme-improvement` | README enhancement |
 | `release-notes` | Generate release notes |
 
@@ -71,8 +72,8 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 
 | Skill | Description |
 |-------|-------------|
-| `investigate` | Understand existing feature logic |
-| `research` | Technical research synthesis |
+| `feature-investigation` | Understand existing feature logic |
+| `planning` | Research, analyze, investigate, plan, design, architect |
 | `branch-comparison` | Compare git branches, analyze diffs |
 | `sequential-thinking` | Structured problem-solving |
 
@@ -96,7 +97,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 
 | Skill | Description |
 |-------|-------------|
-| `learn` | Teach Claude patterns/preferences (saves to `docs/lessons.md`) |
+| `learn` | Teach Claude patterns/preferences & manage learned pattern library |
 | `memory-management` | Save/retrieve patterns across sessions |
 | `context-optimization` | Optimize token usage |
 
@@ -124,7 +125,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 |-------|-------------|
 | `product-owner` | Product backlog management, prioritization, stakeholder communication |
 | `business-analyst` | Requirements refinement, user stories, BDD acceptance criteria |
-| `qa-engineer` | Test specification, test case design, coverage analysis |
+| `test-spec` | Test specification, test case design, coverage analysis |
 | `qc-specialist` | Quality gate assessment, release readiness, compliance |
 | `ux-designer` | Design specifications, Figma integration, accessibility |
 | `project-manager` | Sprint planning, status reporting, dependency tracking |
@@ -178,7 +179,7 @@ Skills auto-activate based on:
 3. Add references as needed
 4. Test with `/my-skill`
 
-See: `/skill-plan` for guided skill creation.
+See: `/skill-creator` for guided skill creation.
 
 ---
 

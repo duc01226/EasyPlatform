@@ -1,0 +1,22 @@
+id: pat-260112-2219-aurv9y
+category: frontend
+type: preference
+trigger:
+  keywords: ["always", "semicolons", "typescript"]
+  file_patterns: []
+  context: always use semicolons in TypeScript
+content:
+  wrong:
+
+  right: semicolons in TypeScript
+  rationale: always use semicolons in TypeScript
+metadata:
+  source: explicit-teaching
+  confidence: 1
+  first_seen: 2026-01-12
+  last_confirmed: 2026-01-13
+  occurrences: 3
+  confirmations: 2
+  conflicts: 0
+  related_files: []
+tags: ["frontend", "always", "semicolons", "typescript"]

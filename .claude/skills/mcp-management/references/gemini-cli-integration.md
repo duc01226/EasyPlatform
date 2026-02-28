@@ -136,9 +136,9 @@ Limit tool exposure:
 ```json
 {
   "mcpServers": {
-    "test-ui": {
+    "chrome-devtools": {
       "command": "npx",
-      "args": ["-y", "test-ui-mcp@latest"],
+      "args": ["-y", "chrome-devtools-mcp@latest"],
       "includeTools": ["navigate_page", "screenshot"],
       "excludeTools": ["evaluate_js"]
     }

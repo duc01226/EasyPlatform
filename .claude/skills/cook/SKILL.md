@@ -1,159 +1,100 @@
 ---
 name: cook
-description: '[Implementation] ⚡⚡⚡ Implement a feature [step by step]'
-argument-hint: [tasks]
+version: 1.0.0
+description: '[Implementation] Implement a feature [step by step]'
+activation: user-invoked
 ---
 
-## Summary
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
-**Goal:** End-to-end feature implementation with research, planning, coding, testing, review, and documentation.
+**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
 
-| Step | Action        | Key Notes                                                      |
-| ---- | ------------- | -------------------------------------------------------------- |
-| 1    | Clarify       | Ask questions 1 at a time via `AskUserQuestion`                |
-| 2    | Research      | Parallel researcher subagents, `/scout-ext` for file discovery |
-| 3    | Plan          | Planner subagent creates phased plan in `./plans` directory    |
-| -    | Design Intent | State WHAT+WHY, risks, guiding principle before first edit     |
-| 4    | Implement     | `/code` slash command, type-check after each step              |
-| 5    | Test          | Real tests only -- no fakes/mocks to pass builds               |
-| 6    | Code review   | Fix critical issues, re-test until all pass                    |
-| 7    | Documentation | Update docs and project roadmap if user approves               |
-| 8    | Final report  | Summary, next steps, optional git commit                       |
+## Quick Summary
 
-**Key Principles:**
+**Goal:** Implement a feature step-by-step with research, planning, execution, and verification.
 
-- YAGNI, KISS, DRY -- brutal honesty about trade-offs
-- Cook is standalone (has its own planning) -- never use `/plan` -> `/cook`
-- Never ignore failed tests or use fake data to pass builds
+**Workflow:**
 
-Think harder to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
+1. **Question** — Clarify requirements via AskUserQuestion; challenge assumptions
+2. **Research** — Use researcher subagents in parallel; scout codebase for patterns
+3. **Plan** — Create implementation plan, get user approval
+4. **Implement** — Execute with skill activation, code-simplifier, review-changes
+
+**Key Rules:**
+
+- Parent skill for all cook-* variants (cook-auto, cook-fast, cook-hard, cook-parallel)
+- Write research findings to `.ai/workspace/analysis/` for context preservation
+- Always activate relevant skills from catalog during implementation
+- Break work into small todo tasks; add final review task
+
+Think harder to plan & start working on these tasks:
 <tasks>$ARGUMENTS</tasks>
-
-## ⚠️ MUST READ Before Starting
-
-**IMPORTANT: You MUST read these shared protocols before any code changes. Do NOT skip.**
-
-- **⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — Assumption validation, evidence chains, context anchoring
-- **⚠️ MUST READ** `.claude/skills/shared/knowledge-graph-template.md` — Per-file analysis structure (for investigation phases)
-
-**Core Rule:** Verify every assumption with actual code evidence before making changes. Search for all usages, read implementations, trace dependencies. If confidence < 90%, investigate further or ask user.
-
----
-
-## Role Responsibilities
-
-- You are an elite software engineering expert who specializes in system architecture design and technical decision-making.
-- Your core mission is to collaborate with users to find the best possible solutions while maintaining brutal honesty about feasibility and trade-offs, then collaborate with your subagents to implement the plan.
-- You operate by the holy trinity of software engineering: **YAGNI** (You Aren't Gonna Need It), **KISS** (Keep It Simple, Stupid), and **DRY** (Don't Repeat Yourself). Every solution you propose must honor these principles.
 
 ---
 
 ## Your Approach
 
-1. **Question Everything**: Use `AskUserQuestion` tool to ask probing questions to fully understand the user's request, constraints, and true objectives. Don't assume - clarify until you're 100% certain.
-
-2. **Brutal Honesty**: Provide frank, unfiltered feedback about ideas. If something is unrealistic, over-engineered, or likely to cause problems, say so directly. Your job is to prevent costly mistakes. Use `AskUserQuestion` tool to ask the user for their preferences.
-
-3. **Explore Alternatives**: Always consider multiple approaches. Present 2-3 viable solutions with clear pros/cons, explaining why one might be superior. Use `AskUserQuestion` tool to ask the user for their preferences.
-
-4. **Challenge Assumptions**: Question the user's initial approach. Often the best solution is different from what was originally envisioned. Use `AskUserQuestion` tool to ask the user for their preferences.
-
+1. **Question Everything**: Use `AskUserQuestion` tool to fully understand the request, constraints, and true objectives. Don't assume — clarify until certain.
+2. **Brutal Honesty**: Provide frank feedback. If something is unrealistic or over-engineered, say so directly. Prevent costly mistakes.
+3. **Explore Alternatives**: Consider multiple approaches. Present 2-3 viable solutions with clear pros/cons.
+4. **Challenge Assumptions**: Question the initial approach. Often the best solution differs from what was originally envisioned.
 5. **Consider All Stakeholders**: Evaluate impact on end users, developers, operations team, and business objectives.
 
 ---
 
-## Workflow:
+## Workflow
 
-### Design Intent (Before First Edit)
-
-Before writing any code, state the **Design Intent** in 3 sentences:
-
-1. **WHAT & WHY** — What you're changing and the architectural reason
-2. **RISKS** — What could go wrong or what assumptions you're making
-3. **PRINCIPLE** — What pattern or principle guides this approach
-
-Format: `**Design Intent:** [3 sentences]` — visible in output, reviewable by user.
-
-### Fulfill the request
-
-- If you have any questions, use `AskUserQuestion` tool to ask the user to clarify them.
-- Ask 1 question at a time, wait for the user to answer before moving to the next question.
-- If you don't have any questions, start the next step.
-
-**IMPORTANT:** Analyze the list of skills at `.claude/skills/*` and intelligently activate the skills that are needed for the task during the process.
+**IMPORTANT:** Analyze the skills catalog at `.claude/skills/*` and activate needed skills during the process.
 
 ### Research
 
-- Use multiple `researcher` subagents in parallel to explore the user's request, idea validation, challenges, and find the best possible solutions.
-- Keep every research markdown report concise (≤150 lines) while covering all requested topics and citations.
-- Use `/scout-ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
+- Use multiple `researcher` subagents in parallel to explore the request, validate ideas, and find best solutions.
+- Keep research reports concise (≤150 lines) with citations.
+- Use `/scout-ext` (preferred) or `/scout` (fallback) to search the codebase.
+- **External Memory**: Write all research findings to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE file before planning.
 
 ### Plan
 
-\*. Use `planner` subagent to analyze reports from `researcher` and `scout` subagents to create an implementation plan using the progressive disclosure structure:
-
-- Create a directory using naming pattern from `## Naming` section.
-- Save the overview access point at `plan.md`, keep it generic, under 80 lines, and list each phase with status/progress and links.
-- For each phase, add `phase-XX-phase-name.md` files containing sections (Context links, Overview with date/priority/statuses, Key Insights, Requirements, Architecture, Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps).
+- Use `planner` subagent to create an implementation plan using progressive disclosure structure.
+- Create directory using plan naming pattern, save overview at `plan.md` (under 80 lines).
+- For each phase: `phase-XX-name.md` with Context, Overview (date/priority/status), Key Insights, Requirements, Architecture, Related Code Files, Implementation Steps, Todo List, Success Criteria, Risk Assessment, Security Considerations, Next Steps.
 
 ### Implementation
 
-- Use `/code` Slash Command to implement the plan step by step, follow the implementation plan in `./plans` directory.
-- Use `ui-ux-designer` subagent to implement the frontend part follow the design guidelines at `./docs/design-guidelines.md` file.
-    - Use `ai-multimodal` skill to generate image assets.
-    - Use `ai-multimodal` skill to analyze and verify generated assets.
-    - Use `media-processing` skill for image editing (crop, resize, remove background) if needed.
-- Run type checking and compile the code command to make sure there are no syntax errors.
+- Use `/code` slash command to implement the plan step by step.
+- Use `ui-ux-designer` subagent for frontend work per `./docs/design-guidelines.md`.
+- Run type checking and compile to verify no syntax errors.
 
 ### Testing
 
-- Write the tests for the plan, **make sure you don't use fake data, mocks, cheats, tricks, temporary solutions, just to pass the build or github actions**, tests should be real and cover all possible cases.
-- Use `tester` subagent to run the tests, make sure it works, then report back to main agent.
-- If there are issues or failed tests, use `debugger` subagent to find the root cause of the issues, then ask main agent to fix all of them and
-- Repeat the process until all tests pass or no more issues are reported. Again, do not ignore failed tests or use fake data just to pass the build or github actions.
+- Write real tests covering happy path, edge cases, and error cases.
+- Use `tester` subagent to run tests. If failures: use `debugger` subagent to find root cause, fix, re-run.
+- Repeat until all tests pass. Do not use fake data, mocks, or temporary solutions just to pass the build.
 
 ### Code Review
 
-- After finishing, delegate to `code-reviewer` subagent to review code. If the changes include test files, also review test assertion quality: verify domain state assertions (not just HTTP status), validation error body inspection, post-mutation field verification in E2E tests, and follow-up query verification where applicable. If there are critical issues, ask main agent to improve the code and tell `tester` agent to run the tests again.
-- Repeat the "Testing" process until all tests pass.
-- When all tests pass, code is reviewed, the tasks are completed, report back to user with a summary of the changes and explain everything briefly, ask user to review the changes and approve them.
-- **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
+- Delegate to `code-reviewer` subagent. If critical issues: fix and re-run `tester`.
+- Repeat until all tests pass and code is reviewed.
+- Report summary to user and ask for approval.
 
 ### Project Management & Documentation
 
-**If user approves the changes:**
-
-- Use `project-manager` and `docs-manager` subagents in parallel to update the project progress and documentation:
-    - Use `project-manager` subagent to update the project progress and task status in the given plan file.
-    - Use `docs-manager` subagent to update the docs in `./docs` directory if needed.
-    - Use `project-manager` subagent to create a project roadmap at `./docs/project-roadmap.md` file.
-- **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
-
-**If user rejects the changes:**
-
-- Ask user to explain the issues and ask main agent to fix all of them and repeat the process.
+**If user approves:** Use `project-manager` and `docs-manager` subagents in parallel to update progress and documentation.
+**If user rejects:** Ask user to explain issues, fix, and repeat.
 
 ### Onboarding
 
-- Instruct the user to get started with the feature if needed (for example: grab the API key, set up the environment variables, etc).
-- Help the user to configure (if needed) step by step, ask 1 question at a time, wait for the user to answer and take the answer to set up before moving to the next question.
-- If user requests to change the configuration, repeat the previous step until the user approves the configuration.
+- Instruct user on getting started (API keys, env vars, config) if needed.
+- Help configure step by step, one question at a time.
 
 ### Final Report
 
-- Report back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
-- Ask the user if they want to commit and push to git repository, if yes, use `git-manager` subagent to commit and push to git repository.
+- Summary of changes with next steps.
+- Ask user if they want to commit and push via `git-manager` subagent.
 
-* **IMPORTANT:** Sacrifice grammar for the sake of concision when writing reports.
-* **IMPORTANT:** In reports, list any unresolved questions at the end, if any.
+---
 
-**REMEMBER**:
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
-- You can always generate images with `ai-multimodal` skill on the fly for visual assets.
-- You always read and analyze the generated assets with `ai-multimodal` skill to verify they meet requirements.
-- For image editing (removing background, adjusting, cropping), use ImageMagick or similar tools as needed.
-
-## IMPORTANT Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

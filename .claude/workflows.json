@@ -1,459 +1,704 @@
 {
-    "$schema": "./workflows.schema.json",
-    "commandMapping": {
-        "changelog": {
-            "claude": "/changelog-update",
-            "copilot": "/changelog-update"
-        },
-        "code": {
-            "claude": "/code",
-            "copilot": "/code"
-        },
-        "code-review": {
-            "claude": "/review-codebase",
-            "copilot": "/review/codebase"
-        },
-        "code-simplifier": {
-            "claude": "/code-simplifier",
-            "copilot": "/code-simplifier"
-        },
-        "cook": {
-            "claude": "/cook",
-            "copilot": "/cook"
-        },
-        "debug": {
-            "claude": "/debug",
-            "copilot": "/debug"
-        },
-        "dependency": {
-            "claude": "/team-dependency",
-            "copilot": "/team/dependency"
-        },
-        "design-spec": {
-            "claude": "/team-design-spec",
-            "copilot": "/team/design-spec"
-        },
-        "docs-update": {
-            "claude": "/docs-update",
-            "copilot": "/docs/update"
-        },
-        "feature-docs": {
-            "claude": "/feature-docs",
-            "copilot": "/feature-docs"
-        },
-        "fix": {
-            "claude": "/fix",
-            "copilot": "/fix"
-        },
-        "idea": {
-            "claude": "/team-idea",
-            "copilot": "/team/idea"
-        },
-        "investigate": {
-            "claude": "/investigate",
-            "copilot": "/investigate"
-        },
-        "plan": {
-            "claude": "/plan",
-            "copilot": "/plan"
-        },
-        "plan-review": {
-            "claude": "/plan-review",
-            "copilot": "/plan/review"
-        },
-        "plan-validate": {
-            "claude": "/plan-validate",
-            "copilot": "/plan/validate"
-        },
-        "prioritize": {
-            "claude": "/team-prioritize",
-            "copilot": "/team/prioritize"
-        },
-        "quality-gate": {
-            "claude": "/team-quality-gate",
-            "copilot": "/team/quality-gate"
-        },
-        "refine": {
-            "claude": "/team-refine",
-            "copilot": "/team/refine"
-        },
-        "review-changes": {
-            "claude": "/review-changes",
-            "copilot": "/review-changes"
-        },
-        "review-post-task": {
-            "claude": "/review-post-task",
-            "copilot": "/review-post-task"
-        },
-        "scout": {
-            "claude": "/scout",
-            "copilot": "/scout"
-        },
-        "status": {
-            "claude": "/team-status",
-            "copilot": "/team/status"
-        },
-        "story": {
-            "claude": "/team-story",
-            "copilot": "/team/story"
-        },
-        "team-sync": {
-            "claude": "/team-team-sync",
-            "copilot": "/team/team-sync"
-        },
-        "test": {
-            "claude": "/test",
-            "copilot": "/test"
-        },
-        "test-cases": {
-            "claude": "/team-test-cases",
-            "copilot": "/team/test-cases"
-        },
-        "test-initial": {
-            "claude": "/test",
-            "copilot": "/test"
-        },
-        "test-spec": {
-            "claude": "/team-test-spec",
-            "copilot": "/team/test-spec"
-        },
-        "watzup": {
-            "claude": "/watzup",
-            "copilot": "/watzup"
-        },
-        "why-review": {
-            "claude": "/why-review",
-            "copilot": "/why-review"
-        }
+  "$schema": "./workflows.schema.json",
+  "commandMapping": {
+    "changelog": {
+      "claude": "/changelog",
+      "copilot": "/changelog"
     },
-    "description": "Workflow automation configuration for Claude Code and GitHub Copilot — AI-native intent detection (v2)",
-    "settings": {
-        "allowOverride": true,
-        "checkpoints": {
-            "autoSaveOnCompact": true,
-            "enabled": true,
-            "filenamePattern": "checkpoint-{YYMMDD}-{HHMM}-{slug}.md",
-            "intervalMinutes": 30,
-            "path": "plans/reports"
-        },
-        "confirmHighImpact": true,
-        "enabled": true,
-        "overridePrefix": "quick:",
-        "showDetection": true
+    "code": {
+      "claude": "/code",
+      "copilot": "/code"
     },
-    "version": "2.0.0",
-    "workflows": {
-        "batch-operation": {
-            "confirmFirst": false,
-            "description": "Multi-file batch operations requiring progress tracking",
-            "enableCheckpoints": true,
-            "name": "Batch Operation",
-            "preActions": {
-                "injectContext": "BATCH OPERATION PROTOCOL:\n1. Plan: List ALL files to modify, define change pattern\n2. Validate plan — get user approval before bulk changes\n3. Why-review: Challenge whether batch change is necessary (vs per-file solutions)\n4. Implement: Apply changes file-by-file with progress tracking\n5. Code-simplifier: KISS/DRY/YAGNI pass on all changed files\n6. Run tests after batch to catch regressions\n7. Summary report with file count and change summary\n\nSAFETY:\n- ALWAYS list all affected files in plan before modifying\n- Use find-and-replace patterns, not manual edits\n- Checkpoint progress every 10 files\n- If any file fails, STOP and report before continuing"
-            },
-            "sequence": ["plan", "plan-review", "plan-validate", "why-review", "code", "code-simplifier", "review-changes", "test", "watzup"],
-            "whenNotToUse": "Single-file changes, test file creation, documentation updates.",
-            "whenToUse": "User wants to apply changes across multiple files, directories, or components at once. Includes batch updates, bulk renames, find-and-replace across codebase, merge/combine/consolidate multiple files or modules into one, or operations targeting 'all' or 'every' instance."
-        },
-        "bugfix": {
-            "confirmFirst": false,
-            "description": "Systematic debugging and fix workflow with investigation-first approach",
-            "enableCheckpoints": true,
-            "name": "Bug Fix",
-            "preActions": {
-                "injectContext": "BUG FIX PROTOCOL:\n1. Scout: Find files related to the reported issue\n2. Investigate: Understand current vs expected behavior\n3. Debug: Identify root cause with evidence (file:line)\n4. Plan fix with minimal blast radius\n5. Validate plan before implementing\n6. Validate fix rationale with /why-review\n7. Fix the identified issue\n8. Simplify code for readability and consistency\n9. Code review for quality and regression risk\n10. Update changelog\n11. Run tests to verify fix and no regressions\n12. Update documentation (general + feature docs via change detection)\n13. Summary report of fix and verification results\n- Guardrail: Fix root cause, not symptom\n- Guardrail: Minimal change scope — avoid refactoring during bug fix"
-            },
-            "sequence": ["scout", "investigate", "debug", "plan", "plan-review", "plan-validate", "why-review", "fix", "code-simplifier", "review-changes", "code-review", "changelog", "test", "docs-update", "watzup"],
-            "whenNotToUse": "User wants new features, refactoring, documentation, or investigation without fixing.",
-            "whenToUse": "User reports a bug, error, crash, broken functionality, or asks to fix/debug/troubleshoot an issue. Includes regression fixes, 'not working' reports, and exception traces."
-        },
-        "business-feature-docs": {
-            "confirmFirst": false,
-            "description": "Business feature documentation with 26-section template enforcement",
-            "enableCheckpoints": true,
-            "name": "Business Feature Documentation",
-            "preActions": {
-                "activateSkill": "business-feature-docs",
-                "injectContext": "BUSINESS FEATURE DOC REQUIREMENTS:\n- 26 sections mandatory (see template)\n- Quick Navigation with Audience column\n- TC-XX-XXX test case format with GIVEN/WHEN/THEN\n- Evidence field with file:line format\n- Cross-reference parent features if sub-feature\n\nMANDATORY UPDATE CHECKLIST (when updating existing docs):\n- ALWAYS update test sections 17-20 when documenting new functionality\n- ALWAYS update CHANGELOG.md with feature entry\n- ALWAYS update Version History (Section 26) with new version entry",
-                "readFiles": ["docs/templates/detailed-feature-docs-template.md"]
-            },
-            "sequence": ["scout", "investigate", "plan", "plan-review", "plan-validate", "docs-update", "review-changes", "review-post-task", "watzup"],
-            "whenNotToUse": "General documentation updates, code comments, README changes.",
-            "whenToUse": "User wants to create or update business feature documentation using the 26-section template. Includes module docs targeting docs/business-features/."
-        },
-        "deployment": {
-            "confirmFirst": false,
-            "description": "Deployment and CI/CD pipeline management",
-            "enableCheckpoints": true,
-            "name": "Deployment & Infrastructure",
-            "preActions": {
-                "activateSkill": "devops",
-                "injectContext": "DEPLOYMENT WORKFLOW:\n1. Review infrastructure requirements\n2. Plan deployment strategy (Docker, K8s, CI/CD)\n3. Implement configuration changes\n4. Verify deployment readiness\n\nGUARDRAILS:\n- Always verify rollback strategy exists\n- Never modify production configs without explicit approval"
-            },
-            "sequence": ["scout", "investigate", "plan", "plan-review", "plan-validate", "code", "review-changes", "code-review", "test", "watzup"],
-            "whenNotToUse": "Explaining deployment concepts, checking deployment status/history.",
-            "whenToUse": "User wants to set up or modify deployment, infrastructure, CI/CD pipelines, Docker configuration, or deploy to environments."
-        },
-        "design-workflow": {
-            "confirmFirst": false,
-            "description": "Designer workflow: create design specification from requirements, hand off for review",
-            "enableCheckpoints": false,
-            "name": "Design Workflow",
-            "preActions": {
-                "activateSkill": "ui-ux-pro-max",
-                "injectContext": "DESIGN WORKFLOW:\n1. Read requirements/PBI\n2. Create design spec with component inventory\n3. Document states, tokens, accessibility\n4. Review with code-review agent",
-                "readFiles": ["docs/design-system/FrontendDesignSystem.md"]
-            },
-            "sequence": ["design-spec", "review-changes", "code-review", "watzup"],
-            "whenNotToUse": "Implementing an existing design in code, coding from a spec.",
-            "whenToUse": "User wants to create a UI/UX design specification, mockup, wireframe, or component spec from requirements."
-        },
-        "documentation": {
-            "confirmFirst": false,
-            "description": "Documentation creation and update workflow",
-            "enableCheckpoints": true,
-            "name": "Documentation Update",
-            "preActions": {
-                "injectContext": "DOCUMENTATION PROTOCOL:\n1. Identify all docs affected by recent changes\n2. Verify code examples compile and are accurate\n3. Update cross-references and navigation links\n4. Ensure consistent terminology across docs\n5. Match docs to current codebase state\n- Rules: Evidence-based (cite file:line), no stale content, match existing doc style\n- Output: Updated docs with verified code references"
-            },
-            "sequence": ["scout", "investigate", "plan", "plan-review", "plan-validate", "docs-update", "review-changes", "review-post-task", "watzup"],
-            "whenNotToUse": "Business feature docs (use business-feature-docs), code implementation, test-only changes.",
-            "whenToUse": "User wants to write, update, or improve general documentation, README, or code comments."
-        },
-        "e2e-testing": {
-            "confirmFirst": false,
-            "description": "E2E test creation, recording, and coverage gap analysis workflow using Playwright",
-            "enableCheckpoints": true,
-            "name": "E2E Testing",
-            "preActions": {
-                "activateSkill": "e2e-record",
-                "injectContext": "E2E TESTING PROTOCOL:\n1. Read existing page objects in src/Frontend/e2e/page-objects/\n2. Read existing tests in src/Frontend/e2e/tests/ for patterns\n3. Use TC-{MOD}-{FEAT}-{NUM} format for test case IDs\n4. Use page objects — never raw selectors in test files\n5. Use test-helpers.ts for fixtures and api-helpers.ts for API calls\n6. Add priority tags: @P0 (smoke), @P1 (critical), @P2 (standard), @P3 (edge)\n- Guardrail: Never modify existing test logic — only add annotations or new tests\n- Guardrail: Always clean up test data in afterEach hooks"
-            },
-            "sequence": ["scout", "investigate", "plan", "plan-review", "plan-validate", "code", "review-changes", "code-review", "test", "watzup"],
-            "whenNotToUse": "Unit tests, integration tests, API-only testing, test execution without creation.",
-            "whenToUse": "User wants to create, record, or enhance E2E tests. Includes Playwright test creation, codegen recording, coverage gap analysis, TC-ID annotation, and E2E test refactoring."
-        },
-        "feature": {
-            "confirmFirst": false,
-            "description": "Full feature development workflow with planning, implementation, testing, and documentation",
-            "enableCheckpoints": true,
-            "name": "Feature Implementation",
-            "preActions": {
-                "injectContext": "FEATURE IMPLEMENTATION PROTOCOL:\n1. Search for existing patterns before creating new code\n2. Follow platform hierarchy: Entity > Service > Component\n3. Place business logic in lowest appropriate layer\n4. Use platform base classes (PlatformComponent, PlatformApiService, PlatformVmStore)\n5. Validate design rationale with /why-review before implementation\n6. Add changelog entry for user-facing changes\n- Rules: YAGNI (no speculative features), BEM for all UI elements, untilDestroyed() for subscriptions\n- Backend: CQRS Command+Result+Handler in ONE file, DTO owns mapping, side effects in Event Handlers\n- Guardrail: Provide file:line evidence of pattern search in plan"
-            },
-            "sequence": ["scout", "investigate", "plan", "plan-review", "plan-validate", "why-review", "cook", "code-simplifier", "review-changes", "code-review", "changelog", "test", "docs-update", "watzup"],
-            "whenNotToUse": "Bug fixes, documentation-only, test-only, migration, refactoring, investigation.",
-            "whenToUse": "User wants to implement, add, create, build, or develop a new feature, functionality, module, or component."
-        },
-        "full-feature-lifecycle": {
-            "confirmFirst": true,
-            "description": "Complete feature from idea to release with all role handoffs",
-            "enableCheckpoints": true,
-            "name": "Full Feature Lifecycle",
-            "preActions": {
-                "injectContext": "FULL FEATURE LIFECYCLE:\n1. PO captures idea\n2. BA refines and creates stories\n3. Designer creates design spec\n4. Dev plans and implements with plan validation\n5. QA generates test spec\n6. QC runs quality gate\n7. Update documentation (general + feature docs via change detection)\n8. Summary report\n9. PO signs off acceptance\n\nThis is an end-to-end workflow crossing all roles."
-            },
-            "sequence": ["idea", "refine", "story", "design-spec", "plan", "plan-review", "plan-validate", "cook", "review-changes", "test-spec", "quality-gate", "docs-update", "watzup"],
-            "whenNotToUse": "Quick fixes, minor changes, single-role tasks.",
-            "whenToUse": "Complete feature from idea to release with all role handoffs."
-        },
-        "idea-to-pbi": {
-            "confirmFirst": false,
-            "description": "PO/BA workflow: capture idea, refine to PBI, create stories, prioritize",
-            "enableCheckpoints": true,
-            "name": "Idea to PBI",
-            "preActions": {
-                "activateSkill": "product-owner",
-                "injectContext": "IDEA-TO-PBI WORKFLOW:\n1. Capture idea with problem statement\n2. Refine into PBI with acceptance criteria\n3. Break into user stories (GIVEN/WHEN/THEN)\n4. Prioritize using RICE or MoSCoW"
-            },
-            "sequence": ["idea", "refine", "story", "prioritize", "watzup"],
-            "whenNotToUse": "Bug fixes, code implementation, investigation.",
-            "whenToUse": "User has a new product idea, feature request, or wants to add to the backlog. Includes refining ideas into PBIs and creating user stories."
-        },
-        "investigation": {
-            "confirmFirst": false,
-            "description": "Codebase exploration and understanding workflow",
-            "enableCheckpoints": true,
-            "name": "Code Investigation",
-            "preActions": {
-                "injectContext": "INVESTIGATION PROTOCOL:\n- DO NOT modify any files — read-only analysis\n- Trace code paths with evidence (file:line references)\n- Map dependencies and side effects\n- Declare confidence level for findings (<90% = flag uncertainty)\n- Output: Clear explanation with code evidence and dependency map"
-            },
-            "sequence": ["scout", "investigate"],
-            "whenNotToUse": "Any task requiring code changes: implementing, fixing, refactoring, creating, updating, deleting, deploying, or writing documentation.",
-            "whenToUse": "User asks how something works, where code is located, wants to understand or explore a codebase feature, trace code paths, or explain implementation details."
-        },
-        "migration": {
-            "confirmFirst": false,
-            "description": "Database schema and data migration workflow",
-            "enableCheckpoints": true,
-            "name": "Database Migration",
-            "preActions": {
-                "activateSkill": "easyplatform-backend",
-                "injectContext": "DATABASE MIGRATION PROTOCOL:\n1. Analyze current schema and identify breaking changes\n2. Plan rollback strategy before implementation\n3. Use PlatformDataMigrationExecutor for data migrations\n4. Use EF migrations for schema changes\n5. Verify migration is idempotent (safe to re-run)\n- Guardrail: Always provide rollback path\n- Guardrail: Never delete data without backup strategy"
-            },
-            "sequence": ["scout", "investigate", "plan", "plan-review", "plan-validate", "code", "review-changes", "code-review", "test", "watzup"],
-            "whenNotToUse": "Explaining migration concepts, checking migration history/status.",
-            "whenToUse": "User wants to create or run database migrations: schema changes, data migrations, EF migrations, adding/removing/altering columns or tables."
-        },
-        "pbi-to-tests": {
-            "confirmFirst": false,
-            "description": "QA workflow: generate test spec from PBI, create detailed test cases, run quality gate",
-            "enableCheckpoints": true,
-            "name": "PBI to Tests",
-            "preActions": {
-                "activateSkill": "qa-engineer",
-                "injectContext": "PBI-TO-TESTS WORKFLOW:\n1. Read PBI acceptance criteria\n2. Generate test specification with TC-{MOD}-{NNN} IDs\n3. Create detailed test cases with evidence\n4. Run pre-QA quality gate"
-            },
-            "sequence": ["test-spec", "test-cases", "quality-gate", "watzup"],
-            "whenNotToUse": "Running existing tests, executing test suites.",
-            "whenToUse": "User wants to create or generate test specs/cases from a PBI, feature, or story. Includes QA test generation."
-        },
-        "performance": {
-            "confirmFirst": false,
-            "description": "Performance analysis and optimization workflow",
-            "enableCheckpoints": true,
-            "name": "Performance Optimization",
-            "preActions": {
-                "activateSkill": "performance",
-                "injectContext": "PERFORMANCE WORKFLOW:\n1. Profile and identify bottlenecks\n2. Analyze root causes\n3. Plan optimization strategy\n4. Validate plan assumptions\n5. Implement changes\n6. Verify with benchmarks"
-            },
-            "sequence": ["scout", "investigate", "plan", "plan-review", "plan-validate", "code", "review-changes", "code-review", "test", "watzup"],
-            "whenNotToUse": "Explaining performance concepts, checking performance reports/history.",
-            "whenToUse": "User wants to analyze or optimize performance: fix slow queries, reduce latency, improve throughput, resolve N+1 problems, address bottlenecks."
-        },
-        "pm-reporting": {
-            "confirmFirst": false,
-            "description": "PM workflow: generate status report and dependency analysis",
-            "enableCheckpoints": false,
-            "name": "PM Reporting",
-            "preActions": {
-                "activateSkill": "project-manager",
-                "injectContext": "PM REPORTING WORKFLOW:\n1. Gather sprint/project data\n2. Generate status report with metrics\n3. Analyze dependencies and blockers\n4. Output to plans/reports/"
-            },
-            "sequence": ["status", "dependency"],
-            "whenNotToUse": "Git status, commit status, PR status, build status, quick one-line status checks.",
-            "whenToUse": "User wants a status report, sprint update, project progress report, blocker analysis, or comprehensive project overview."
-        },
-        "pre-development": {
-            "confirmFirst": false,
-            "description": "Quality gate and planning before starting development",
-            "enableCheckpoints": false,
-            "name": "Pre-Development Setup",
-            "preActions": {
-                "activateSkill": "plan",
-                "injectContext": "PRE-DEVELOPMENT WORKFLOW:\n1. Run quality-gate checks (ensure clean slate)\n2. Create implementation plan\n3. Review plan for quality and completeness\n4. Validate plan with critical questions"
-            },
-            "sequence": ["quality-gate", "plan", "plan-review", "plan-validate"],
-            "whenNotToUse": "Already in development, just wanting to explain pre-development concept.",
-            "whenToUse": "User wants to prepare before starting development: quality gate checks, setup for new feature work, kick off a new feature, pre-coding preparation."
-        },
-        "quality-audit": {
-            "confirmFirst": false,
-            "description": "Quality audit workflow: review code for best practices, plan fixes, implement improvements, verify with tests",
-            "enableCheckpoints": true,
-            "name": "Quality Audit",
-            "preActions": {
-                "injectContext": "QUALITY AUDIT PROTOCOL:\n1. Review code against platform patterns and best practices\n2. Identify defects with severity (Critical/Major/Minor)\n3. CRITICAL GATE: Present findings to user BEFORE implementing fixes\n4. Fix only approved items\n5. Verify each fix with tests\n- Rules: Evidence-based findings (file:line), no speculative improvements, fix what's broken not what's different"
-            },
-            "sequence": ["code-review", "plan", "plan-review", "plan-validate", "code", "review-changes", "test", "watzup"],
-            "whenNotToUse": "Reviewing uncommitted changes (use review-changes), PR review, bug fixes.",
-            "whenToUse": "User wants a quality audit: review code for best practices, ensure no flaws, verify quality standards, audit-and-fix workflow, systematic review, or review project configuration/settings quality (e.g., CI/CD config, linter settings, AI agent settings, hooks quality, MCP servers, tooling configuration). Also matches: 'review X quality', 'ensure best practices', 'no enhancement needed', 'audit hooks/settings/config'."
-        },
-        "refactor": {
-            "confirmFirst": false,
-            "description": "Code improvement and restructuring workflow",
-            "enableCheckpoints": true,
-            "name": "Code Refactoring",
-            "preActions": {
-                "injectContext": "REFACTORING PROTOCOL:\n1. Define refactoring scope and expected outcomes\n2. CHECKPOINT: If removing code, run /investigate-removal first\n3. Verify all tests pass BEFORE refactoring\n4. Validate design rationale with /why-review\n5. Apply incremental changes — one concern at a time\n6. Verify tests pass AFTER each change\n7. No behavior changes — same inputs produce same outputs\n8. Update documentation (general + feature docs via change detection)\n- Guardrail: Never change behavior during refactoring\n- Guardrail: Follow platform hierarchy (Entity > Service > Component)"
-            },
-            "sequence": ["scout", "investigate", "plan", "plan-review", "plan-validate", "why-review", "code", "code-simplifier", "review-changes", "code-review", "changelog", "test", "docs-update", "watzup"],
-            "whenNotToUse": "Bug fixes, new features, quality audits.",
-            "whenToUse": "User wants to refactor, restructure, reorganize, clean up code, improve code quality, extract methods, rename, split/merge components, or address technical debt."
-        },
-        "release-prep": {
-            "confirmFirst": false,
-            "description": "Quality gate checks and status report before release",
-            "enableCheckpoints": true,
-            "name": "Release Preparation",
-            "preActions": {
-                "activateSkill": "project-manager",
-                "injectContext": "RELEASE PREPARATION PROTOCOL:\n1. Run pre-release quality gate — check:\n   - Open PRs awaiting merge\n   - Failing tests or builds\n   - Code review completeness\n   - CHANGELOG.md up-to-date\n   - No known critical/major bugs\n2. Generate status report with pass/fail per criterion\n3. Output: PASS (clear to release) or FAIL with blocking items"
-            },
-            "sequence": ["quality-gate", "status"],
-            "whenNotToUse": "Git release commands, npm publish, release notes generation, release branch management.",
-            "whenToUse": "User wants to prepare for a release: pre-release checks, release readiness, deployment checklist, go-live verification."
-        },
-        "review": {
-            "confirmFirst": false,
-            "description": "Code review and quality check workflow",
-            "name": "Code Review",
-            "preActions": {
-                "injectContext": "CODE REVIEW PROTOCOL:\n- Severity levels: CRITICAL (must fix), MAJOR (should fix), MINOR (nice to have), NOTE (informational)\n- Check: Security (OWASP), performance (N+1, memory leaks), correctness, maintainability\n- Verify: Platform patterns compliance, BEM naming, proper base class usage\n- Output: Structured findings with file:line references and suggested fixes"
-            },
-            "sequence": ["code-review", "watzup"],
-            "whenNotToUse": "Reviewing uncommitted/staged changes (use review-changes), reviewing plans/designs/docs, quality audits with fixes.",
-            "whenToUse": "User wants a code review, PR review, code quality check, or audit of specific code or changes."
-        },
-        "review-changes": {
-            "confirmFirst": false,
-            "description": "Review uncommitted changes before commit",
-            "name": "Review Changes",
-            "preActions": {
-                "injectContext": "PRE-COMMIT REVIEW:\n- Review all staged and unstaged changes\n- Check for: security issues, debug artifacts (console.log, debugger), incomplete code, style violations\n- Verify no sensitive files (.env, credentials) are staged\n- Report findings with file:line references\n- Output: PASS (safe to commit) or ISSUES FOUND (with list)"
-            },
-            "sequence": ["review-changes"],
-            "whenNotToUse": "PR reviews, codebase reviews, branch comparisons",
-            "whenToUse": "User wants to review current uncommitted, staged, or unstaged changes before committing"
-        },
-        "security-audit": {
-            "confirmFirst": false,
-            "description": "Security review and vulnerability assessment",
-            "enableCheckpoints": true,
-            "name": "Security Audit",
-            "preActions": {
-                "activateSkill": "arch-security-review",
-                "injectContext": "SECURITY AUDIT WORKFLOW:\n1. Scan for OWASP Top 10 vulnerabilities\n2. Review authentication and authorization patterns\n3. Check input validation and sanitization\n4. Assess data protection and encryption\n5. Report findings with severity ratings\n\nGUARDRAILS:\n- Read-only analysis unless fix is approved\n- Use CVSS scoring for severity\n- Check both frontend and backend attack surfaces"
-            },
-            "sequence": ["scout", "investigate", "watzup"],
-            "whenNotToUse": "Implementing new security features, fixing known security bugs.",
-            "whenToUse": "User wants a security audit: vulnerability assessment, OWASP check, security review, penetration test analysis."
-        },
-        "sprint-planning": {
-            "confirmFirst": false,
-            "description": "Comprehensive sprint planning: prioritize backlog, analyze dependencies, prepare team sync",
-            "enableCheckpoints": true,
-            "name": "Sprint Planning Session",
-            "preActions": {
-                "activateSkill": "product-owner",
-                "injectContext": "SPRINT PLANNING:\n1. /prioritize - Review and prioritize backlog\n2. /dependency - Check blockers and dependencies\n3. /team-sync - Generate planning meeting agenda"
-            },
-            "sequence": ["prioritize", "dependency", "team-sync"],
-            "whenNotToUse": "Sprint review, retrospective, sprint status report, end-of-sprint activities.",
-            "whenToUse": "User wants to plan a sprint: prioritize backlog, analyze dependencies, prepare team sync, iteration planning, or sprint kickoff."
-        },
-        "testing": {
-            "confirmFirst": false,
-            "description": "Test creation and execution workflow",
-            "name": "Testing",
-            "preActions": {
-                "injectContext": "TEST EXECUTION:\n- Run relevant test suites for the current context\n- Report results with pass/fail counts and failure details\n- For failing tests, include file:line and error message\n- Suggest fixes for failures when root cause is clear"
-            },
-            "sequence": ["test"],
-            "whenNotToUse": "Test specification creation (use pbi-to-tests), test case generation from PBI.",
-            "whenToUse": "User wants to run test suites, check test coverage, or execute tests."
-        },
-        "verification": {
-            "confirmFirst": false,
-            "description": "Investigation-first verification: understand scope, test/validate, report findings, conditionally plan fix with approval",
-            "enableCheckpoints": true,
-            "name": "Verification & Validation",
-            "preActions": {
-                "injectContext": "VERIFICATION PROTOCOL:\n1. Define expected behavior — what 'correct' means\n2. Reproduce the scenario under test\n3. Verify with evidence (test output, logs, code traces)\n4. CRITICAL GATE: STOP and report to user — PASS or FAIL with evidence\n5. If issue found and user approves: plan fix, validate, implement\n6. If no issue: document verification evidence\n7. Update documentation (general + feature docs via change detection)\n- Guardrail: Evidence-based verification — never assume correctness without proof"
-            },
-            "sequence": ["scout", "investigate", "test-initial", "plan", "plan-review", "plan-validate", "fix", "code-simplifier", "review-changes", "code-review", "test", "docs-update", "watzup"],
-            "whenNotToUse": "New feature implementation, code review, documentation, investigation-only, quality audits.",
-            "whenToUse": "User wants to verify, validate, confirm, check that something works correctly, or ensure expected behavior. Includes 'make sure', 'ensure that', 'verify changes', 'ensure no flaws', and 'must work as expected' requests. Takes priority over review-changes when intent is verification/validation rather than read-only review."
-        }
+    "code-review": {
+      "claude": "/code-review",
+      "copilot": "/code-review"
+    },
+    "code-simplifier": {
+      "claude": "/code-simplifier",
+      "copilot": "/code-simplifier"
+    },
+    "cook": {
+      "claude": "/cook",
+      "copilot": "/cook"
+    },
+    "debug": {
+      "claude": "/debug",
+      "copilot": "/debug"
+    },
+    "dependency": {
+      "claude": "/dependency",
+      "copilot": "/dependency"
+    },
+    "design-spec": {
+      "claude": "/design-spec",
+      "copilot": "/design-spec"
+    },
+    "docs-update": {
+      "claude": "/docs-update",
+      "copilot": "/docs-update"
+    },
+    "fix": {
+      "claude": "/fix",
+      "copilot": "/fix"
+    },
+    "idea": {
+      "claude": "/idea",
+      "copilot": "/idea"
+    },
+    "investigate": {
+      "claude": "/feature-investigation",
+      "copilot": "/feature-investigation"
+    },
+    "plan": {
+      "claude": "/plan",
+      "copilot": "/plan"
+    },
+    "plan-review": {
+      "claude": "/plan-review",
+      "copilot": "/plan-review"
+    },
+    "plan-validate": {
+      "claude": "/plan-validate",
+      "copilot": "/plan-validate"
+    },
+    "prioritize": {
+      "claude": "/prioritize",
+      "copilot": "/prioritize"
+    },
+    "quality-gate": {
+      "claude": "/quality-gate",
+      "copilot": "/quality-gate"
+    },
+    "refine": {
+      "claude": "/refine",
+      "copilot": "/refine"
+    },
+    "review-changes": {
+      "claude": "/review-changes",
+      "copilot": "/review-changes"
+    },
+    "scout": {
+      "claude": "/scout",
+      "copilot": "/scout"
+    },
+    "status": {
+      "claude": "/status",
+      "copilot": "/status"
+    },
+    "sre-review": {
+      "claude": "/sre-review",
+      "copilot": "/sre-review"
+    },
+    "story": {
+      "claude": "/story",
+      "copilot": "/story"
+    },
+    "team-sync": {
+      "claude": "/team-sync",
+      "copilot": "/team-sync"
+    },
+    "test": {
+      "claude": "/test",
+      "copilot": "/test"
+    },
+    "test-initial": {
+      "claude": "/test",
+      "copilot": "/test"
+    },
+    "test-spec": {
+      "claude": "/test-spec",
+      "copilot": "/test-spec"
+    },
+    "watzup": {
+      "claude": "/watzup",
+      "copilot": "/watzup"
+    },
+    "why-review": {
+      "claude": "/why-review",
+      "copilot": "/why-review"
+    },
+    "handoff": {
+      "claude": "/handoff",
+      "copilot": "/handoff"
+    },
+    "acceptance": {
+      "claude": "/acceptance",
+      "copilot": "/acceptance"
+    },
+    "retro": {
+      "claude": "/retro",
+      "copilot": "/retro"
+    },
+    "review-artifact": {
+      "claude": "/review-artifact",
+      "copilot": "/review-artifact"
     }
+  },
+  "description": "Workflow automation configuration for Claude Code and GitHub Copilot (multilingual)",
+  "settings": {
+    "allowOverride": true,
+    "enabled": true,
+    "overridePrefix": "quick:",
+    "showDetection": true
+  },
+  "version": "2.0.0",
+  "workflows": {
+    "release-prep": {
+      "confirmFirst": false,
+      "description": "Pre-release quality gate with SRE review and status verification",
+      "name": "Release Preparation",
+      "preActions": {
+        "activateSkill": "qc-specialist",
+        "injectContext": "RELEASE PREPARATION PROTOCOL:\n1. SRE review for production readiness (service-layer/API changes)\n2. Run pre-release quality gate  --  check:\n   - Open PRs awaiting merge\n   - Failing tests or builds\n   - Code review completeness\n   - CHANGELOG.md up-to-date\n   - No known critical/major bugs\n3. Generate status report with pass/fail per criterion\n4. Output: PASS (clear to release) or FAIL with blocking items listed"
+      },
+      "sequence": [
+        "sre-review",
+        "quality-gate",
+        "status"
+      ],
+      "whenNotToUse": "Rollbacks, hotfixes, release notes writing, release branch operations",
+      "whenToUse": "User wants to verify release readiness, run pre-release quality gate, or check if ready to deploy/ship"
+    },
+    "bugfix": {
+      "confirmFirst": false,
+      "description": "Systematic debugging and fix workflow with investigation-first approach",
+      "name": "Bug Fix",
+      "preActions": {
+        "injectContext": "BUG FIX PROTOCOL:\n1. Scout: Find files related to the reported issue\n2. Investigate: Understand current vs expected behavior\n   IMPORTANT: When analyzing 'unused' code during investigation:\n   - Follow Investigation Protocol (CLAUDE.md)\n   - Require grep evidence, confidence ≥80%, cross-service checks (all services)\n   - Use /investigate skill for removal/refactoring decisions\n3. Debug: Identify root cause with evidence (file:line)\n4. Plan fix with minimal blast radius\n5. Validate plan before implementing\n6. Validate fix rationale with /why-review\n7. Fix the identified issue\n8. Simplify code for readability and consistency\n9. Code review for quality and regression risk\n10. Update changelog\n11. Run tests to verify fix and no regressions\n12. Summary report of fix and verification results"
+      },
+      "sequence": [
+        "scout",
+        "investigate",
+        "debug",
+        "plan",
+        "plan-review",
+        "plan-validate",
+        "why-review",
+        "fix",
+        "code-simplifier",
+        "review-changes",
+        "code-review",
+        "changelog",
+        "test",
+        "docs-update",
+        "watzup"
+      ],
+      "whenNotToUse": "New feature implementation, code improvement/refactoring, investigation-only (no fix), documentation updates",
+      "whenToUse": "User reports a bug, error, crash, failure, regression, or something not working; wants to fix/debug/troubleshoot an issue"
+    },
+    "feature-docs": {
+      "confirmFirst": false,
+      "description": "Business feature documentation with 26-section template enforcement, plan validation, and mandatory test coverage",
+      "name": "Business Feature Documentation",
+      "preActions": {
+        "activateSkill": "feature-docs",
+        "readFiles": [
+          "docs/templates/detailed-feature-docs-template.md"
+        ],
+        "injectContext": "BUSINESS FEATURE DOC PROTOCOL:\n- 26 sections mandatory (see template)\n- Quick Navigation with Audience column\n- TC-XX-XXX test case format with GIVEN/WHEN/THEN\n- Evidence field with file:line format\n- Cross-reference parent features if sub-feature\n\nMANDATORY UPDATE CHECKLIST (when updating existing docs):\n- ALWAYS update test sections 17-20 (Test Specifications, Test Data, Edge Cases, Regression Impact) when documenting new functionality\n- ALWAYS update CHANGELOG.md with feature entry\n- ALWAYS update Version History (Section 26) with new version entry\n- Plan MUST include all impacted sections identified from diff analysis\n- Plan MUST be validated via /plan-review and /plan-validate before any edits begin\n\nOUTPUT: Complete 26-section README.{Feature}.md + AI companion README.{Feature}.ai.md (300-500 lines)"
+      },
+      "sequence": [
+        "scout",
+        "investigate",
+        "plan",
+        "plan-review",
+        "plan-validate",
+        "docs-update",
+        "review-changes",
+        "review-post-task",
+        "watzup"
+      ],
+      "whenNotToUse": "Bug fixes, feature implementation, test writing, debugging, refactoring",
+      "whenToUse": "User wants to create or update business feature documentation in docs/business-features/"
+    },
+    "documentation": {
+      "confirmFirst": false,
+      "description": "Documentation creation and update workflow with plan validation",
+      "name": "Documentation Update",
+      "preActions": {
+        "injectContext": "IMPORTANT: For business feature docs in docs/business-features/, use feature-docs workflow instead.\n\nDOCUMENTATION UPDATE PROTOCOL:\n1. Scout: Identify all documentation files affected by recent changes\n2. Investigate: Read existing docs, understand current structure and content\n3. Plan: List all files and sections to update with specific changes\n4. Validate plan via /plan-review before making any edits\n5. Execute updates following existing doc conventions and templates\n6. Review changes before finalizing\n7. Summary report of all documentation changes\n\nRULES:\n- For business feature docs (26-section format), use feature-docs workflow instead\n- Match existing style and formatting of target documents\n- Update table of contents and cross-references if structure changes\n- Never create new doc files when existing ones should be updated"
+      },
+      "sequence": [
+        "scout",
+        "investigate",
+        "plan",
+        "plan-review",
+        "plan-validate",
+        "docs-update",
+        "review-changes",
+        "review-post-task",
+        "watzup"
+      ],
+      "whenNotToUse": "Feature implementation, bug fixes, test writing",
+      "whenToUse": "User wants to create, update, or improve documentation, READMEs, or code comments"
+    },
+    "feature": {
+      "confirmFirst": false,
+      "description": "Full feature development workflow with search-first approach, planning, implementation, testing, and documentation",
+      "name": "Feature Implementation",
+      "preActions": {
+        "injectContext": "FEATURE IMPLEMENTATION PROTOCOL:\n⚠️ MANDATORY: Search existing code BEFORE planning\n1. Scout: Find similar features, patterns, and implementation examples using Grep/Glob\n2. Investigate: Study existing patterns - validate with 3+ codebase examples (NOT generic framework docs)\n3. Plan: Design solution following discovered project patterns (CQRS, state management, CSS methodology, validation, etc.)\n4. Validate plan via /plan-review before any code changes\n5. Validate design rationale with /why-review (features/refactors)\n6. Implement with /cook (backend + frontend)\n7. Simplify code for readability and consistency\n8. Code review for quality, security, patterns compliance\n9. SRE review for production readiness (service-layer/API changes)\n10. Update changelog with feature entry\n11. Run tests to verify no regressions\n12. Update documentation if feature impacts business docs\n13. Summary report of all changes\n\nGUARDRAIL: Provide file:line evidence of pattern search in plan. Follow project conventions over generic docs."
+      },
+      "sequence": [
+        "scout",
+        "investigate",
+        "plan",
+        "plan-review",
+        "plan-validate",
+        "why-review",
+        "cook",
+        "code-simplifier",
+        "review-changes",
+        "code-review",
+        "sre-review",
+        "changelog",
+        "test",
+        "docs-update",
+        "watzup"
+      ],
+      "whenNotToUse": "Bug fixes, documentation, test-only tasks, feature requests/ideas (no implementation), PBI/story creation, design specs",
+      "whenToUse": "User wants to implement new functionality, add a feature, create a component, build a capability, or develop a module"
+    },
+    "investigation": {
+      "confirmFirst": false,
+      "description": "Codebase exploration and understanding workflow",
+      "name": "Code Investigation",
+      "preActions": {
+        "injectContext": "INVESTIGATION PROTOCOL:\n1. Scout: Find relevant files, entry points, and related code\n2. Investigate: Trace code paths, understand architecture and data flow\n- Output findings as structured analysis with file:line references\n- Include architecture diagrams where helpful\n- Identify patterns, dependencies, and potential concerns\n\nGUARDRAIL: This is a READ-ONLY workflow. DO NOT modify any files. Only read, analyze, and report."
+      },
+      "sequence": [
+        "scout",
+        "investigate"
+      ],
+      "whenNotToUse": "Any action that modifies code (implement, fix, create, refactor, test, review, document, design, plan)",
+      "whenToUse": "User wants to understand how code works, find where logic lives, explore architecture, trace code paths, or get explanations"
+    },
+    "refactor": {
+      "confirmFirst": false,
+      "description": "Code improvement and restructuring workflow with search-first approach",
+      "name": "Code Refactoring",
+      "preActions": {
+        "injectContext": "REFACTORING PROTOCOL:\n⚠️ MANDATORY: Search existing code BEFORE planning\n1. Scout: Find similar refactoring patterns, identify target architecture examples using Grep/Glob\n2. Investigate: Study existing patterns - validate with 3+ codebase examples (NOT generic framework docs)\n3. Plan: Identify code smells, define target architecture following discovered project patterns\n4. Validate plan  --  ensure no behavioral changes, only structural\n5. Validate design rationale with /why-review (features/refactors)\n6. Implement incrementally  --  small, verifiable steps\n7. Simplify: Remove dead code, flatten nesting, extract duplicates\n   CRITICAL: Before removing any code:\n   - Use /investigate skill for 'unused' code verification\n   - Require evidence: grep results + confidence ≥80% + cross-service validation\n   - See Investigation Protocol (CLAUDE.md)\n8. Code review: Verify no functional regressions\n9. SRE review for production readiness (service-layer/API changes)\n10. Update changelog with refactoring summary\n11. Run tests  --  all existing tests MUST pass\n12. Summary report of structural improvements\n\nGUARDRAILS:\n- Refactoring MUST NOT change observable behavior\n- Follow project patterns: CQRS, state management, CSS methodology, validation, etc.\n- Apply Code Responsibility Hierarchy: Entity > Service > Component\n- Provide file:line evidence of pattern search in plan"
+      },
+      "sequence": [
+        "scout",
+        "investigate",
+        "plan",
+        "plan-review",
+        "plan-validate",
+        "why-review",
+        "code",
+        "code-simplifier",
+        "review-changes",
+        "code-review",
+        "sre-review",
+        "changelog",
+        "test",
+        "docs-update",
+        "watzup"
+      ],
+      "whenNotToUse": "Bug fixes, new feature development",
+      "whenToUse": "User wants to restructure, reorganize, clean up, or improve existing code without changing behavior; technical debt"
+    },
+    "review-changes": {
+      "confirmFirst": false,
+      "description": "Review uncommitted changes before commit with summary report",
+      "name": "Review Current Changes",
+      "preActions": {
+        "injectContext": "PRE-COMMIT REVIEW:\n- Review all staged and unstaged changes\n- Check for: security issues, debug artifacts (console.log, debugger), incomplete code, style violations\n- Verify no sensitive files (.env, credentials) are staged\n- Check architecture compliance, naming, patterns\n- Report findings with file:line references\n- Output: PASS (safe to commit) or ISSUES FOUND (with list)"
+      },
+      "sequence": [
+        "review-changes",
+        "watzup"
+      ],
+      "whenNotToUse": "PR reviews, codebase reviews, branch comparisons",
+      "whenToUse": "User wants to review current uncommitted, staged, or unstaged changes before committing"
+    },
+    "review": {
+      "confirmFirst": false,
+      "description": "Code review and quality check workflow",
+      "name": "Code Review",
+      "preActions": {
+        "injectContext": "CODE REVIEW PROTOCOL:\n1. Review code for quality, patterns compliance, security, and performance\n2. Apply project standards: CQRS, state management, CSS methodology, Code Responsibility Hierarchy\n3. Check docs/code-review-rules.md for project-specific review rules\n4. Report findings with severity (Critical/Major/Minor) and file:line references\n5. Summarize with actionable recommendations"
+      },
+      "sequence": [
+        "code-review",
+        "watzup"
+      ],
+      "whenNotToUse": "Reviewing uncommitted changes (use review-changes), reviewing plans/designs/specs/docs",
+      "whenToUse": "User wants a code review, PR review, codebase quality audit, or code quality check"
+    },
+    "testing": {
+      "confirmFirst": false,
+      "description": "Test creation and execution workflow",
+      "name": "Testing",
+      "preActions": {
+        "injectContext": "TEST EXECUTION:\n- Run relevant test suites for the current context\n- Report results with pass/fail counts and failure details\n- For failing tests, include file:line and error message\n- Suggest fixes for failures when root cause is clear"
+      },
+      "sequence": [
+        "test"
+      ],
+      "whenNotToUse": "Test specification creation (use pbi-to-tests), test case generation from PBI",
+      "whenToUse": "User wants to write tests, run test suites, check test coverage, or execute tests"
+    },
+    "batch-operation": {
+      "confirmFirst": false,
+      "description": "Multi-file batch operations requiring progress tracking",
+      "name": "Batch Operation",
+      "preActions": {
+        "injectContext": "BATCH OPERATION PROTOCOL:\n1. Plan: List ALL files to modify, define change pattern\n2. Validate plan  --  get user approval before bulk changes\n3. Why-review: Challenge whether batch change is necessary (vs per-file solutions)\n4. Implement: Apply changes file-by-file with progress tracking\n5. Code-simplifier: KISS/DRY/YAGNI pass on all changed files\n6. Review changes for correctness and completeness\n7. SRE-review: Assess blast radius of bulk changes\n8. Run tests after batch to catch regressions\n9. Summary report with file count and change summary\n\nSAFETY:\n- ALWAYS list all affected files in plan before modifying\n- Use find-and-replace patterns, not manual edits\n- Checkpoint progress every 10 files\n- If any file fails, STOP and report before continuing"
+      },
+      "sequence": [
+        "plan",
+        "plan-review",
+        "plan-validate",
+        "why-review",
+        "code",
+        "code-simplifier",
+        "review-changes",
+        "sre-review",
+        "test",
+        "docs-update",
+        "watzup"
+      ],
+      "whenNotToUse": "Test-only operations, documentation",
+      "whenToUse": "User wants to modify multiple files at once: bulk rename, find-and-replace across codebase, update all instances"
+    },
+    "idea-to-pbi": {
+      "confirmFirst": false,
+      "description": "PO/BA workflow: capture idea, refine to PBI, create stories, prioritize",
+      "name": "Idea to PBI",
+      "preActions": {
+        "activateSkill": "product-owner",
+        "injectContext": "IDEA-TO-PBI WORKFLOW:\n1. Capture idea with problem statement\n2. Refine into PBI with acceptance criteria\n3. Break into user stories (GIVEN/WHEN/THEN)\n4. Prioritize using RICE or MoSCoW"
+      },
+      "sequence": [
+        "idea",
+        "refine",
+        "story",
+        "prioritize"
+      ],
+      "whenNotToUse": "Bug fixes, direct implementation (use feature workflow)",
+      "whenToUse": "User has a new idea, feature request, or wants to add to backlog; wants to refine idea into PBI with stories"
+    },
+    "sprint-planning": {
+      "confirmFirst": false,
+      "description": "Sprint planning ceremony with backlog prioritization and dependency check",
+      "name": "Sprint Planning",
+      "preActions": {
+        "activateSkill": "product-owner",
+        "injectContext": "SPRINT PLANNING:\n1. /prioritize - Review and prioritize backlog\n2. /dependency - Check blockers and dependencies\n3. /team-sync - Generate planning meeting agenda"
+      },
+      "sequence": [
+        "prioritize",
+        "dependency",
+        "team-sync"
+      ],
+      "whenNotToUse": "Sprint reviews, sprint status reports, sprint retrospectives",
+      "whenToUse": "User wants to plan a sprint, run backlog grooming/refinement, or kick off a new sprint"
+    },
+    "pre-development": {
+      "confirmFirst": false,
+      "description": "Quality gate verification before development begins",
+      "name": "Pre-Development Check",
+      "preActions": {
+        "activateSkill": "qc-specialist",
+        "injectContext": "PRE-DEVELOPMENT CHECK:\n1. Verify PBI/story acceptance criteria clear\n2. Check design specs available\n3. Verify dependencies identified\n4. If PASS  ->  proceed to planning\n5. Validate plan before implementation"
+      },
+      "sequence": [
+        "quality-gate",
+        "plan",
+        "plan-review",
+        "plan-validate"
+      ],
+      "whenNotToUse": "QA checks, release prep, production readiness",
+      "whenToUse": "User wants to verify readiness before starting development: check prerequisites, quality gate, start dev"
+    },
+    "pbi-to-tests": {
+      "confirmFirst": false,
+      "description": "QA workflow: generate test spec from PBI, create detailed test cases, run quality gate",
+      "name": "PBI to Tests",
+      "preActions": {
+        "activateSkill": "test-spec",
+        "injectContext": "PBI-TO-TESTS WORKFLOW:\n1. Read PBI acceptance criteria\n2. Generate test specification and detailed test cases with TC-{MOD}-{NNN} IDs and evidence\n3. Run pre-QA quality gate"
+      },
+      "sequence": [
+        "test-spec",
+        "quality-gate"
+      ],
+      "whenNotToUse": "Running existing tests, checking test results",
+      "whenToUse": "User wants to generate test specs or test cases from a PBI, feature, story, or acceptance criteria"
+    },
+    "design-workflow": {
+      "confirmFirst": false,
+      "description": "Designer workflow: create design specification from requirements, hand off for review",
+      "name": "Design Workflow",
+      "preActions": {
+        "activateSkill": "ux-designer",
+        "readFiles": [
+          "docs/design-system/DesignSystem.md"
+        ],
+        "injectContext": "DESIGN WORKFLOW:\n1. Read requirements/PBI\n2. Create design spec with component inventory\n3. Document states, tokens, accessibility\n4. Review with code-review agent"
+      },
+      "sequence": [
+        "design-spec",
+        "code-review"
+      ],
+      "whenNotToUse": "Implementing an existing design in code",
+      "whenToUse": "User wants to create a UI/UX design spec, mockup, wireframe, or component specification"
+    },
+    "pm-reporting": {
+      "confirmFirst": false,
+      "description": "PM workflow: generate status report and dependency analysis",
+      "name": "PM Reporting",
+      "preActions": {
+        "activateSkill": "project-manager",
+        "injectContext": "PM REPORTING WORKFLOW:\n1. Gather sprint/project data\n2. Generate status report with metrics\n3. Analyze dependencies and blockers\n4. Output to plans/reports/"
+      },
+      "sequence": [
+        "status",
+        "dependency"
+      ],
+      "whenNotToUse": "Git status, build status, PR status, commit status",
+      "whenToUse": "User wants a status report, sprint update, project progress report, or weekly summary"
+    },
+    "verification": {
+      "confirmFirst": false,
+      "description": "Investigate-first verification: understand context, test/check behavior, report findings with root cause, then fix only if user approves",
+      "name": "Verification & Validation",
+      "preActions": {
+        "injectContext": "VERIFICATION WORKFLOW PROTOCOL:\n1. Scout: Find files related to what needs verification\n2. Investigate: Understand current behavior, trace code paths\n   NOTE: If investigation reveals 'unused' code:\n   - Follow Investigation Protocol (CLAUDE.md lines 302-430)\n   - Use /investigate skill for evidence-based analysis\n   - Require confidence ≥80% before recommending removal\n3. Test (initial): Run relevant tests, check behavior, gather evidence\n4. **CRITICAL GATE**: STOP and report to user:\n   - What was verified\n   - Current behavior vs expected behavior\n   - Root cause analysis (if issue found)\n   - Verdict: PASS or FAIL with evidence\n5. ASK USER: 'Should I proceed to fix this?' (only if FAIL)\n6. If PASS or user declines  ->  mark remaining steps completed\n7. If user approves fix  ->  Plan fix with minimal blast radius\n8. Implement fix  ->  Simplify code  ->  Review changes  ->  Code review for quality\n9. Run tests to verify fix and no regressions\n10. Summary report of verification results and any fixes applied"
+      },
+      "sequence": [
+        "scout",
+        "investigate",
+        "test-initial",
+        "plan",
+        "plan-review",
+        "plan-validate",
+        "fix",
+        "code-simplifier",
+        "review-changes",
+        "code-review",
+        "test",
+        "watzup"
+      ],
+      "whenNotToUse": "Bug reports (known broken), investigation-only, feature implementation, code reviews",
+      "whenToUse": "User wants to verify, validate, confirm, or ensure something is correct/working; sanity check or double-check"
+    },
+    "quality-audit": {
+      "confirmFirst": false,
+      "description": "Quality audit: review artifacts for best practices, identify flaws and enhancements, fix if needed",
+      "name": "Quality Audit",
+      "preActions": {
+        "injectContext": "QUALITY AUDIT WORKFLOW:\n1. Code Review: Audit artifacts for quality, best practices, completeness\n2. Plan: Document findings, propose fixes and enhancements\n3. Plan Review: Validate fix plan before implementation\n4. Code: Implement approved fixes\n5. Review changes for correctness\n6. Test: Verify fixes don't break anything\n7. Watzup: Summarize all changes made\n\nCRITICAL GATE after code-review:\n- Report findings to user with severity (Critical/Major/Minor/Suggestion)\n- ASK: 'Found N issues. Should I proceed to fix?' \n- If user approves  ->  continue with plan  ->  plan-review  ->  code  ->  test  ->  watzup\n- If user declines  ->  mark remaining steps completed"
+      },
+      "sequence": [
+        "code-review",
+        "plan",
+        "plan-review",
+        "plan-validate",
+        "code",
+        "review-changes",
+        "test",
+        "watzup"
+      ],
+      "whenNotToUse": "Bug fixes, feature implementation, investigation-only, reviewing uncommitted changes, PR reviews",
+      "whenToUse": "User wants to audit code quality, review skills/commands/hooks for best practices, find flaws and suggest enhancements"
+    },
+    "deployment": {
+      "confirmFirst": false,
+      "description": "Deployment and CI/CD pipeline management",
+      "name": "Deployment & Infrastructure",
+      "preActions": {
+        "activateSkill": "devops",
+        "injectContext": "DEPLOYMENT WORKFLOW:\n1. Review infrastructure requirements\n2. Plan deployment strategy (Docker, K8s, CI/CD)\n3. Implement configuration changes\n4. Review changes before deployment review\n5. Verify deployment readiness\n\nGUARDRAILS:\n- Always verify rollback strategy exists\n- Never modify production configs without explicit approval\n- Check scripts/k8s/ for existing deployment helpers"
+      },
+      "sequence": [
+        "scout",
+        "investigate",
+        "plan",
+        "plan-review",
+        "plan-validate",
+        "code",
+        "review-changes",
+        "code-review",
+        "sre-review",
+        "test",
+        "watzup"
+      ],
+      "whenNotToUse": "Explaining deployment concepts, checking deployment status/history, infrastructure investigation only",
+      "whenToUse": "User wants to set up or modify deployment, infrastructure, CI/CD pipelines, Docker configuration, Kubernetes setup, or deploy to environments"
+    },
+    "migration": {
+      "confirmFirst": false,
+      "description": "Database schema and data migration workflow",
+      "name": "Database Migration",
+      "preActions": {
+        "activateSkill": "easyplatform-backend",
+        "injectContext": "DATABASE MIGRATION PROTOCOL:\n1. Analyze current schema and identify breaking changes\n2. Plan rollback strategy before implementation\n3. Use PlatformDataMigrationExecutor for data migrations\n4. Use EF migrations for schema changes\n5. Review changes before code review\n6. Verify migration is idempotent (safe to re-run)\n\nGUARDRAILS:\n- Always provide rollback path\n- Never delete data without backup strategy\n- Test migration on dev data before production"
+      },
+      "sequence": [
+        "scout",
+        "investigate",
+        "plan",
+        "plan-review",
+        "plan-validate",
+        "code",
+        "review-changes",
+        "code-review",
+        "sre-review",
+        "test",
+        "docs-update",
+        "watzup"
+      ],
+      "whenNotToUse": "Explaining migration concepts, checking migration history/status, schema investigation only",
+      "whenToUse": "User wants to create or run database migrations: schema changes, data migrations, EF migrations, adding/removing/altering columns or tables"
+    },
+    "security-audit": {
+      "confirmFirst": false,
+      "description": "Security review and vulnerability assessment",
+      "name": "Security Audit",
+      "preActions": {
+        "activateSkill": "arch-security-review",
+        "injectContext": "SECURITY AUDIT WORKFLOW:\n1. Scan for OWASP Top 10 vulnerabilities\n2. Review authentication and authorization patterns\n3. Check input validation and sanitization\n4. Assess data protection and encryption\n5. Report findings with severity ratings\n\nGUARDRAILS:\n- Read-only analysis unless fix is approved\n- Use CVSS scoring for severity\n- Check both frontend and backend attack surfaces"
+      },
+      "sequence": [
+        "scout",
+        "investigate",
+        "watzup"
+      ],
+      "whenNotToUse": "Implementing new security features, fixing known security bugs (use bugfix workflow)",
+      "whenToUse": "User wants a security audit: vulnerability assessment, OWASP check, security review, penetration test analysis, or security compliance check"
+    },
+    "po-ba-handoff": {
+      "confirmFirst": false,
+      "description": "PO hands off idea/PBI to BA for refinement and story creation",
+      "name": "PO to BA Handoff",
+      "preActions": {
+        "activateSkill": "product-owner",
+        "injectContext": "PO-BA HANDOFF:\n1. Capture idea with /idea\n2. Review artifact quality with /review-artifact\n3. Create handoff record with /handoff\n4. BA refines into PBI with /refine\n5. BA creates user stories with /story"
+      },
+      "sequence": [
+        "idea",
+        "review-artifact",
+        "handoff",
+        "refine",
+        "story"
+      ],
+      "whenNotToUse": "Direct development, design-first workflows, already refined requirements",
+      "whenToUse": "PO hands off idea/PBI to BA for refinement and story creation"
+    },
+    "ba-dev-handoff": {
+      "confirmFirst": false,
+      "description": "BA hands off refined stories to development team with quality gate",
+      "name": "BA to Dev Handoff",
+      "preActions": {
+        "activateSkill": "business-analyst",
+        "injectContext": "BA-DEV HANDOFF:\n1. Review artifact completeness with /review-artifact\n2. Run quality gate with /quality-gate\n3. Create handoff record with /handoff\n4. Proceed to planning with /plan\n5. Validate plan before implementation"
+      },
+      "sequence": [
+        "review-artifact",
+        "quality-gate",
+        "handoff",
+        "plan",
+        "plan-review",
+        "plan-validate"
+      ],
+      "whenNotToUse": "Unrefined ideas, missing acceptance criteria, design-first features",
+      "whenToUse": "BA hands off refined stories to development team, pre-dev quality gate"
+    },
+    "dev-qa-handoff": {
+      "confirmFirst": false,
+      "description": "Development complete, handoff to QA for testing",
+      "name": "Dev to QA Handoff",
+      "preActions": {
+        "injectContext": "DEV-QA HANDOFF:\n1. Create handoff record with /handoff\n2. Generate test spec and test cases with /test-spec"
+      },
+      "sequence": [
+        "handoff",
+        "test-spec"
+      ],
+      "whenNotToUse": "Incomplete features, missing unit tests, untested code",
+      "whenToUse": "Development complete, handoff to QA for testing"
+    },
+    "qa-po-acceptance": {
+      "confirmFirst": false,
+      "description": "Testing complete, QA hands off to PO for acceptance and sign-off",
+      "name": "QA to PO Acceptance",
+      "preActions": {
+        "activateSkill": "qc-specialist",
+        "injectContext": "QA-PO ACCEPTANCE:\n1. Run quality gate with /quality-gate\n2. Create handoff record with /handoff\n3. PO acceptance decision with /acceptance"
+      },
+      "sequence": [
+        "quality-gate",
+        "handoff",
+        "acceptance"
+      ],
+      "whenNotToUse": "Incomplete testing, known defects, missing test coverage",
+      "whenToUse": "Testing complete, QA hands off to PO for acceptance and sign-off"
+    },
+    "design-dev-handoff": {
+      "confirmFirst": false,
+      "description": "Designer hands off design spec to developer for implementation",
+      "name": "Designer to Dev Handoff",
+      "preActions": {
+        "activateSkill": "ux-designer",
+        "injectContext": "DESIGN-DEV HANDOFF:\n1. Create design spec with /design-spec\n2. Review artifact with /review-artifact\n3. Create handoff record with /handoff\n4. Proceed to planning with /plan\n5. Validate plan before implementation"
+      },
+      "sequence": [
+        "design-spec",
+        "review-artifact",
+        "handoff",
+        "plan",
+        "plan-review",
+        "plan-validate"
+      ],
+      "whenNotToUse": "Incomplete designs, missing specs, design exploration",
+      "whenToUse": "Designer hands off design spec to developer for implementation"
+    },
+    "sprint-retro": {
+      "confirmFirst": false,
+      "description": "End of sprint retrospective with feedback and action items",
+      "name": "Sprint Retrospective",
+      "preActions": {
+        "injectContext": "SPRINT RETRO:\n1. Generate status report with /status\n2. Run retrospective with /retro\n- Gather what went well, what didn't, action items\n- Output to plans/reports/"
+      },
+      "sequence": [
+        "status",
+        "retro"
+      ],
+      "whenNotToUse": "Mid-sprint, planning activities, status reporting",
+      "whenToUse": "End of sprint, gather feedback, identify improvements, create action items"
+    },
+    "full-feature-lifecycle": {
+      "confirmFirst": false,
+      "description": "Complete feature from idea to release with all role handoffs",
+      "name": "Full Feature Lifecycle",
+      "preActions": {
+        "injectContext": "FULL FEATURE LIFECYCLE:\n1. PO captures idea\n2. BA refines and creates stories\n3. Designer creates design spec\n4. Dev plans and implements with plan validation\n5. Code simplification, review changes, code review, SRE review\n6. QA generates test spec\n7. QC runs quality gate\n8. PO signs off acceptance\n\nThis is an end-to-end workflow crossing all roles."
+      },
+      "sequence": [
+        "idea",
+        "refine",
+        "story",
+        "design-spec",
+        "plan",
+        "plan-review",
+        "plan-validate",
+        "cook",
+        "code-simplifier",
+        "review-changes",
+        "code-review",
+        "sre-review",
+        "test-spec",
+        "quality-gate",
+        "docs-update",
+        "watzup",
+        "acceptance"
+      ],
+      "whenNotToUse": "Quick fixes, minor changes, single-role tasks",
+      "whenToUse": "Complete feature from idea to release with all role handoffs"
+    }
+  }
 }

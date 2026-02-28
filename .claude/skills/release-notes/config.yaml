@@ -80,7 +80,7 @@ services:
 
     platform-core:
         patterns:
-            - 'src/Platform/Easy.Platform*/**'
+            - 'src/Platform/**'
         label: 'Platform Core'
         impact: 'critical'
 
@@ -192,7 +192,7 @@ validation:
 # LLM transform settings
 llm_transforms:
     enabled: true
-    model: 'claude-sonnet-4-20250514'
+    model: 'sonnet'
     cache_ttl_hours: 24
     transform_types:
         - summarize

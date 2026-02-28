@@ -10,13 +10,26 @@
 const fs = require('fs');
 const path = require('path');
 const { loadEnv } = require('./lib/env-loader.cjs');
-const { checkThrottle } = require('./lib/notification-throttle.cjs');
 
-// Provider prefixes to check for enablement (remote providers)
+// Provider prefixes to check for enablement
 const PROVIDER_PREFIXES = ['TELEGRAM', 'DISCORD', 'SLACK'];
 
-// Providers that are enabled by default (local providers)
-const DEFAULT_ENABLED_PROVIDERS = ['desktop', 'terminal-bell'];
+/**
+ * Check if event is a permission/command approval prompt
+ * These should NOT trigger external notifications (user sees them in terminal)
+ * @see https://github.com/anthropics/claude-code/issues/11964
+ * @param {Object} input - Event data
+ * @returns {boolean} True if permission prompt (skip notification)
+ */
+function isPermissionPrompt(input) {
+  // Check notification_type (for future when bug #11964 is fixed)
+  if (input.notification_type === 'permission_prompt') {
+    return true;
+  }
+  // Fallback: check message content
+  const message = input.message || '';
+  return message.includes('permission') && message.includes('use');
+}
 
 /**
  * Read JSON from stdin
@@ -51,11 +64,11 @@ async function readStdin() {
       resolve({});
     });
 
-    // Timeout after 1 second (Claude Code sends input immediately)
+    // Timeout after 5 seconds (safety)
     setTimeout(() => {
       console.error('[notify] Stdin timeout');
       resolve({});
-    }, 1000);
+    }, 5000);
   });
 }
 
@@ -87,41 +100,6 @@ function loadProvider(providerName) {
   return null;
 }
 
-// WHITELIST: Only these events trigger notifications
-// - Stop: Claude completed task (dialog)
-// - idle_prompt: Claude waiting for user input (dialog)
-// Everything else is blocked to prevent notification spam
-const ALLOWED_EVENTS = ['Stop', 'idle_prompt', 'AskUserQuestion'];
-
-// Events that bypass subagent filter (always notify even from subagent)
-const ALWAYS_NOTIFY_EVENTS = ['Stop'];
-
-/**
- * Check if this event is allowed to trigger notifications
- * WHITELIST approach: only Stop and idle_prompt are allowed
- * @param {Object} input - Hook input
- * @returns {boolean} True if allowed
- */
-function isAllowedEvent(input) {
-  const hookType = input.hook_event_name;
-  const notificationType = input.notification_type;
-  const toolName = input.tool_name;
-
-  // Check if hook_event_name, notification_type, or tool_name is in whitelist
-  return ALLOWED_EVENTS.includes(hookType) || ALLOWED_EVENTS.includes(notificationType) || ALLOWED_EVENTS.includes(toolName);
-}
-
-/**
- * Check if running in subagent context
- * Subagents should not trigger user-facing notifications (except Stop)
- * @param {Object} input - Hook input
- * @returns {boolean} True if subagent context
- */
-function isSubagentContext(input) {
-  // Check agent_type in input payload (only reliable method - no env vars set by subagent-init.cjs)
-  return !!input.agent_type;
-}
-
 /**
  * Main notification router
  */
@@ -129,54 +107,24 @@ async function main() {
   try {
     // Read input from stdin
     const input = await readStdin();
-    const hookType = input.hook_event_name;
-    const notificationType = input.notification_type;
-
-    // 1. WHITELIST CHECK: Only allow Stop and idle_prompt events
-    // Everything else is blocked to prevent notification spam
-    if (!isAllowedEvent(input)) {
-      console.error(`[notify] Skipped: not in whitelist (${hookType || notificationType || 'unknown'})`);
-      process.exit(0);
-    }
-
-    // 2. Subagent context filtering (skip non-critical notifications)
-    if (isSubagentContext(input)) {
-      if (!ALWAYS_NOTIFY_EVENTS.includes(hookType)) {
-        console.error(`[notify] Skipped: subagent context (${hookType || notificationType})`);
-        process.exit(0);
-      }
-    }
-
-    // 3. Event-type throttling (prevent spam even in parent session)
-    const eventKey = notificationType || hookType;
-    if (checkThrottle(eventKey, input.session_id)) {
-      console.error(`[notify] Throttled: ${eventKey} (cooldown active)`);
-      process.exit(0);
-    }
 
     // Load environment with cascade
     const cwd = input.cwd || process.cwd();
     const env = loadEnv(cwd);
 
-    // Collect all providers to call
-    const providersToCall = new Set();
-
-    // Add env-configured providers (remote)
-    for (const prefix of PROVIDER_PREFIXES) {
-      if (hasProviderEnv(prefix, env)) {
-        providersToCall.add(prefix.toLowerCase());
-      }
-    }
-
-    // Add default-enabled providers (local)
-    for (const providerName of DEFAULT_ENABLED_PROVIDERS) {
-      providersToCall.add(providerName);
+    // Skip permission/command approval prompts - user sees these in terminal
+    if (isPermissionPrompt(input)) {
+      console.error('[notify] Skipped: permission prompt');
+      process.exit(0);
     }
 
     // Find and call enabled providers
     const results = [];
 
-    for (const providerName of providersToCall) {
+    for (const prefix of PROVIDER_PREFIXES) {
+      if (!hasProviderEnv(prefix, env)) continue;
+
+      const providerName = prefix.toLowerCase();
       const provider = loadProvider(providerName);
 
       if (!provider) {

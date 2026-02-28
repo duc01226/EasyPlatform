@@ -1,0 +1,22 @@
+id: pat-260113-0726-ve8m7b
+category: general
+type: preference
+trigger:
+  keywords: ["prefer", "const", "over"]
+  file_patterns: []
+  context: prefer const over let
+content:
+  wrong: let
+  right: const
+  rationale:
+
+metadata:
+  source: explicit-teaching
+  confidence: 1
+  first_seen: 2026-01-13
+  last_confirmed: 2026-01-13
+  occurrences: 4
+  confirmations: 3
+  conflicts: 0
+  related_files: []
+tags: ["general", "prefer", "const", "over"]

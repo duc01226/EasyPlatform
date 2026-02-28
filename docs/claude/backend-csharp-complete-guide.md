@@ -1,6 +1,6 @@
 # Backend C# Complete Guide
 
-> Comprehensive reference for C# backend development in EasyPlatform - patterns, principles, and best practices.
+> Comprehensive reference for C# backend development in BravoSUITE - patterns, principles, and best practices.
 
 ---
 
@@ -8,7 +8,7 @@
 
 | Category | Key Pattern | Location/Example |
 |----------|-------------|------------------|
-| **Repository** | Platform queryable repos | `IPlatformQueryableRootRepository<T, TKey>` |
+| **Repository** | Service-specific repos | `IGrowthRootRepository<T>`, `ICandidatePlatformRootRepository<T>` |
 | **CQRS** | Command+Handler+Result in ONE file | `UseCaseCommands/{Feature}/Save{Entity}Command.cs` |
 | **Validation** | Fluent `PlatformValidationResult` | `.And()`, `.AndAsync()`, `.EnsureFound()` |
 | **Side Effects** | Entity Event Handlers | `UseCaseEvents/{Feature}/{Action}On{Event}EntityEventHandler.cs` |
@@ -115,9 +115,9 @@ public class SaveEmployeeCommandHandler :
 Clients shouldn't depend on interfaces they don't use.
 
 ```csharp
-// Platform repositories provide clean abstractions
-IPlatformQueryableRootRepository<Employee, string>  // Queryable repository for entities
-IPlatformRootRepository<Employee, string>           // Base repository operations
+// Platform repositories are segregated by service
+IGrowthRootRepository<Employee>           // Only growth-related operations
+ICandidatePlatformRootRepository<Job>     // Only candidate-related operations
 ```
 
 #### Dependency Inversion Principle (DIP)
@@ -127,7 +127,7 @@ Depend on abstractions, not concretions.
 // CORRECT: Inject interfaces
 internal sealed class SaveEmployeeCommandHandler
 {
-    private readonly IPlatformQueryableRootRepository<Employee, string> repository;  // Interface, not concrete
+    private readonly IGrowthRootRepository<Employee> repository;  // Interface, not concrete
     private readonly INotificationService notificationService;    // Interface, not concrete
 }
 ```
@@ -255,14 +255,16 @@ public partial class Employee
 
 ### Repository Priority Order
 
-**CRITICAL: Use platform repositories consistently.**
+**CRITICAL: Always prefer service-specific repositories.**
 
 ```csharp
-// PRIMARY - Platform queryable repository (for query operations)
-IPlatformQueryableRootRepository<Employee, string>
+// 1. PREFERRED - Service-specific repositories
+IGrowthRootRepository<Employee>              // bravoGROWTH service
+ICandidatePlatformRootRepository<Job>        // bravoTALENTS service
+ISurveysPlatformRootRepository<Survey>       // bravoSURVEYS service
 
-// ALTERNATIVE - Base repository (when queryable not needed)
-IPlatformRootRepository<Employee, string>
+// 2. FALLBACK - Only when service-specific not available
+IPlatformQueryableRootRepository<Entity, Key>
 ```
 
 ### Repository API Reference
@@ -346,7 +348,8 @@ public static class EmployeeRepositoryExtensions
 {
     // Get single entity with EnsureFound
     public static async Task<Employee> GetByUniqueExprAsync(
-        this IPlatformQueryableRootRepository<Employee, string> employeeRepository,
+        this IGrowthRootRepository<Employee> employeeRepository,
+        int productScope,
         string employeeCompanyId,
         string employeeUserId,
         CancellationToken cancellationToken = default,
@@ -354,7 +357,7 @@ public static class EmployeeRepositoryExtensions
     {
         return await employeeRepository
             .FirstOrDefaultAsync(
-                Employee.UniqueExpr(employeeCompanyId, employeeUserId),
+                Employee.UniqueExpr(productScope, employeeCompanyId, employeeUserId),
                 cancellationToken,
                 loadRelatedEntities)
             .EnsureFound();
@@ -362,7 +365,8 @@ public static class EmployeeRepositoryExtensions
 
     // Projection pattern - return only ID for performance
     public static async Task<string> GetEmployeeIdByUniqueExprAsync(
-        this IPlatformQueryableRootRepository<Employee, string> employeeRepository,
+        this IGrowthRootRepository<Employee> employeeRepository,
+        int productScope,
         string employeeCompanyId,
         string employeeUserId,
         CancellationToken cancellationToken = default)
@@ -370,7 +374,7 @@ public static class EmployeeRepositoryExtensions
         return await employeeRepository
             .FirstOrDefaultAsync(
                 queryBuilder: query => query
-                    .Where(Employee.UniqueExpr(employeeCompanyId, employeeUserId))
+                    .Where(Employee.UniqueExpr(productScope, employeeCompanyId, employeeUserId))
                     .Select(p => p.Id),
                 cancellationToken: cancellationToken)
             .EnsureFound();
@@ -378,7 +382,7 @@ public static class EmployeeRepositoryExtensions
 
     // Batch validation pattern
     public static async Task<List<Employee>> GetByIdsValidatedAsync(
-        this IPlatformQueryableRootRepository<Employee, string> repo,
+        this IGrowthRootRepository<Employee> repo,
         List<string> ids,
         CancellationToken ct = default)
     {
@@ -434,11 +438,11 @@ public sealed class SaveEmployeeCommandResult : PlatformCqrsCommandResult
 internal sealed class SaveEmployeeCommandHandler :
     PlatformCqrsCommandApplicationHandler<SaveEmployeeCommand, SaveEmployeeCommandResult>
 {
-    private readonly IPlatformQueryableRootRepository<Employee, string> repository;
+    private readonly IGrowthRootRepository<Employee> repository;
     private readonly IFileService fileService;
 
     public SaveEmployeeCommandHandler(
-        IPlatformQueryableRootRepository<Employee, string> repository,
+        IGrowthRootRepository<Employee> repository,
         IFileService fileService,
         // ... other dependencies
         ) : base(/* base params */)
@@ -522,7 +526,7 @@ public sealed class GetEmployeeListQueryResult : PlatformCqrsPagedQueryResult<Em
 internal sealed class GetEmployeeListQueryHandler :
     PlatformCqrsQueryApplicationHandler<GetEmployeeListQuery, GetEmployeeListQueryResult>
 {
-    private readonly IPlatformQueryableRootRepository<Employee, string> repository;
+    private readonly IGrowthRootRepository<Employee> repository;
     private readonly IPlatformFullTextSearchPersistenceService searchService;
 
     protected override async Task<GetEmployeeListQueryResult> HandleAsync(
@@ -1028,9 +1032,9 @@ public class EmployeeEntityEventBusMessageProducer :
 internal sealed class UpsertOrDeleteEmployeeConsumer :
     PlatformApplicationMessageBusConsumer<EmployeeEntityEventBusMessage>
 {
-    private readonly IPlatformQueryableRootRepository<Employee, string> repository;
-    private readonly IPlatformQueryableRootRepository<Company, string> companyRepo;
-    private readonly IPlatformQueryableRootRepository<User, string> userRepo;
+    private readonly IGrowthRootRepository<Employee> repository;
+    private readonly IGrowthRootRepository<Company> companyRepo;
+    private readonly IGrowthRootRepository<User> userRepo;
 
     // Filter: Should this message be processed?
     public override async Task<bool> HandleWhen(EmployeeEntityEventBusMessage msg, string routingKey)
@@ -1125,7 +1129,7 @@ if (!companyExists || !userExists)
 [PlatformRecurringJob("0 3 * * *")]  // Daily at 3 AM
 public sealed class ProcessEmployeesJob : PlatformApplicationPagedBackgroundJobExecutor
 {
-    private readonly IPlatformQueryableRootRepository<Employee, string> repository;
+    private readonly IGrowthRootRepository<Employee> repository;
 
     protected override int PageSize => 50;
 
@@ -1242,7 +1246,7 @@ public sealed class MasterSyncJob : PlatformApplicationBackgroundJobExecutor
 ## 9. Data Migration
 
 ```csharp
-public class MigrateEmployeeData : PlatformDataMigrationExecutor<TextSnippetDbContext>
+public class MigrateEmployeeData : PlatformDataMigrationExecutor<GrowthDbContext>
 {
     public override string Name => "20251022000000_MigrateEmployeeData";
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 22);
@@ -1266,7 +1270,7 @@ public class MigrateEmployeeData : PlatformDataMigrationExecutor<TextSnippetDbCo
         int skip,
         int take,
         Func<IQueryable<Employee>, IQueryable<Employee>> qb,
-        IPlatformQueryableRootRepository<Employee, string> repo,
+        IGrowthRootRepository<Employee> repo,
         IPlatformUnitOfWorkManager uow)
     {
         using var unitOfWork = uow.Begin();
@@ -1541,11 +1545,11 @@ Business Logic with Dependencies (DB, Services)?
 public sealed class EmployeeHelper : IPlatformHelper
 {
     private readonly IPlatformApplicationRequestContext requestContext;
-    private readonly IPlatformQueryableRootRepository<Employee, string> repository;
+    private readonly IGrowthRootRepository<Employee> repository;
 
     public EmployeeHelper(
         IPlatformApplicationRequestContextAccessor contextAccessor,
-        IPlatformQueryableRootRepository<Employee, string> repository)
+        IGrowthRootRepository<Employee> repository)
     {
         requestContext = contextAccessor.Current;  // Extract .Current
         this.repository = repository;
@@ -1604,11 +1608,11 @@ public static class EmployeeUtil
 ### Repository Anti-Patterns
 
 ```csharp
-// DON'T: Create custom repository interfaces unnecessarily
-ICustomEmployeeRepository repo;  // WRONG - unnecessary abstraction
+// DON'T: Use generic repository when service-specific exists
+IPlatformQueryableRootRepository<Employee, string> repo;  // WRONG
 
-// DO: Use platform repository
-IPlatformQueryableRootRepository<Employee, string> repo;  // CORRECT
+// DO: Use service-specific repository
+IGrowthRootRepository<Employee> repo;  // CORRECT
 ```
 
 ### Validation Anti-Patterns
@@ -1737,7 +1741,7 @@ public sealed class Save{Entity}CommandResult : PlatformCqrsCommandResult
 internal sealed class Save{Entity}CommandHandler :
     PlatformCqrsCommandApplicationHandler<Save{Entity}Command, Save{Entity}CommandResult>
 {
-    private readonly IPlatformQueryableRootRepository<{Entity}, string> repository;
+    private readonly I{Service}RootRepository<{Entity}> repository;
 
     protected override async Task<Save{Entity}CommandResult> HandleAsync(
         Save{Entity}Command req, CancellationToken ct)
@@ -1841,4 +1845,4 @@ RequestContext.IsSeedingTestingData()
 
 ---
 
-*This document consolidates all backend C# patterns for EasyPlatform development. For frontend patterns, see `frontend-patterns.md`.*
+*This document consolidates all backend C# patterns for BravoSUITE development. For frontend patterns, see `frontend-patterns.md`.*

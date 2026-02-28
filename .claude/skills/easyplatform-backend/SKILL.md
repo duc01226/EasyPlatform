@@ -1,38 +1,54 @@
 ---
 name: easyplatform-backend
-description: '[Implementation] Complete Easy.Platform backend development for EasyPlatform. Covers CQRS commands/queries, entities, validation, migrations, background jobs, and message bus. Use for any .NET backend task in this monorepo.'
+version: 3.0.0
+description: '[Architecture] Complete Easy.Platform backend development. Covers CQRS commands/queries, entities, validation, migrations, background jobs, and message bus. All reference patterns merged inline. Formerly backend-development.'
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** before executing:
+
+- `.claude/skills/shared/understand-code-first-protocol.md`
+- `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+
+## Quick Summary
+
+**Goal:** Develop .NET backend features using Easy.Platform CQRS, repository, and entity patterns.
+
+**Workflow:**
+
+1. **Classify Task** — Use decision tree: Command (write) / Query (read) / Entity / Event Handler / Migration / Job
+2. **Implement** — Follow per-pattern templates: Command+Handler+Result in one file, static expressions on entities
+3. **Validate** — Use `PlatformValidationResult` fluent API, never throw for validation errors
+
+**Key Rules:**
+
+- Side effects go in Entity Event Handlers (`UseCaseEvents/`), NEVER in command handlers
+- Cross-service communication via message bus only, NEVER direct DB access
+- MUST READ `.ai/docs/backend-code-patterns.md` before implementation
+- DTOs own mapping responsibility via `MapToEntity()` / `MapToObject()`
+- All reference patterns now merged inline below (no external files needed)
+
+**Content:** 7 main patterns (CQRS Commands, Queries, Entities, Event Handlers, Migrations, Jobs, Message Bus) + detailed sub-patterns for validation, expressions, paging, scrolling, dependency waiting, race conditions, cron schedules, and anti-patterns.
+
 # Easy.Platform Backend Development
 
-Complete backend development patterns for EasyPlatform .NET 9 microservices. All patterns consolidated inline for efficient context loading.
+Complete backend development patterns for .NET 9 microservices using Easy.Platform. All reference patterns merged inline.
 
-## Summary
+## Project Pattern Discovery
 
-**Goal:** Comprehensive .NET 9 CQRS backend patterns — commands, queries, entities, events, migrations, jobs, message bus — with zero external references.
+Before implementation, search your codebase for project-specific patterns:
 
-**Coverage:** 7 major patterns, 850+ lines of inline examples, anti-patterns catalog, complete fluent API reference.
+- Search for: `RootRepository`, `CqrsCommand`, `PlatformValidation`, `EntityEventHandler`, `DataMigration`
+- Look for: service-specific repository interfaces, entity base classes, command/query conventions, event handler naming
 
-| Pattern         | File Location                                  | Key Classes                                                       |
-| --------------- | ---------------------------------------------- | ----------------------------------------------------------------- |
-| CQRS Commands   | `UseCaseCommands/{Feature}/`                   | `PlatformCqrsCommand`, `PlatformCqrsCommandApplicationHandler`    |
-| CQRS Queries    | `UseCaseQueries/{Feature}/`                    | `PlatformCqrsPagedQuery`, `GetQueryBuilder`                       |
-| Entities        | `{Service}.Domain/Entities/`                   | `RootEntity`, `RootAuditedEntity`, static expressions             |
-| Event Handlers  | `UseCaseEvents/{Feature}/`                     | `PlatformCqrsEntityEventApplicationHandler`                       |
-| Migrations      | `DataMigrations/`, `Migrations/`               | `PlatformDataMigrationExecutor`, `PlatformMongoMigrationExecutor` |
-| Background Jobs | `BackgroundJobs/`                              | `PlatformApplicationPagedBackgroundJobExecutor`                   |
-| Message Bus     | `MessageBusProducers/`, `MessageBusConsumers/` | `PlatformApplicationMessageBusConsumer`                           |
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ `backend-patterns-reference.md` for project-specific patterns and code examples.
+> If file not found, continue with search-based discovery above.
 
-**Critical Rules:**
+**MUST READ** before implementation:
 
-1. **Validation:** `PlatformValidationResult` fluent API (`.And()`, `.AndAsync()`) — NEVER throw exceptions
-2. **Side Effects:** Entity Event Handlers in `UseCaseEvents/` — NEVER in command handlers
-3. **Cross-Service:** Message bus only — NEVER direct database access
-4. **DTO Mapping:** DTOs own mapping via `MapToEntity()` — NEVER in handlers
-5. **File Structure:** Command + Result + Handler in ONE file
-
----
+- `.ai/docs/backend-code-patterns.md`
 
 ## Quick Decision Tree
 
@@ -41,14 +57,22 @@ Complete backend development patterns for EasyPlatform .NET 9 microservices. All
 ├── API endpoint?
 │   ├── Creates/Updates/Deletes data → CQRS Command (§1)
 │   └── Reads data → CQRS Query (§2)
-├── Business entity? → Entity Development (§3)
-├── Side effects (notifications, emails)? → Entity Event Handler (§4) - NEVER in command handlers!
-├── Data transformation/backfill? → Migration (§5)
-├── Scheduled/recurring task? → Background Job (§6)
-└── Cross-service sync? → Message Bus (§7) - NEVER direct DB access!
+│
+├── Business entity?
+│   └── Entity Development (§3)
+│
+├── Side effects (notifications, emails, external APIs)?
+│   └── Entity Event Handler (§4) - NEVER in command handlers!
+│
+├── Data transformation/backfill?
+│   └── Migration (§5)
+│
+├── Scheduled/recurring task?
+│   └── Background Job (§6)
+│
+└── Cross-service sync?
+    └── Message Bus (§7) - NEVER direct DB access!
 ```
-
----
 
 ## File Organization
 
@@ -66,13 +90,19 @@ Complete backend development patterns for EasyPlatform .NET 9 microservices. All
 └── Entities/{Entity}.cs                                 # Domain entities
 ```
 
+## Critical Rules
+
+1. **Repository:** Use service-specific repos (search for `RootRepository` in your codebase to find project interfaces)
+2. **Validation:** Use `PlatformValidationResult` fluent API - NEVER throw exceptions
+3. **Side Effects:** Handle in Entity Event Handlers - NEVER in command handlers
+4. **DTO Mapping:** DTOs own mapping via `PlatformEntityDto<T,K>.MapToEntity()`
+5. **Cross-Service:** Use message bus - NEVER direct database access
+
 ---
 
-# §1. CQRS Commands
+## §1. CQRS Commands
 
 **File:** `UseCaseCommands/{Feature}/Save{Entity}Command.cs` (Command + Result + Handler in ONE file)
-
-## Basic Command Template
 
 ```csharp
 public sealed class SaveEmployeeCommand : PlatformCqrsCommand<SaveEmployeeCommandResult>
@@ -99,6 +129,7 @@ internal sealed class SaveEmployeeCommandHandler :
             ? req.MapToNewEntity().With(e => e.CreatedBy = RequestContext.UserId())
             : await repository.GetByIdAsync(req.Id, ct)
                 .EnsureFound().Then(e => req.UpdateEntity(e));
+
         await entity.ValidateAsync(repository, ct).EnsureValidAsync();
         await repository.CreateOrUpdateAsync(entity, ct);
         return new SaveEmployeeCommandResult { Entity = new EmployeeDto(entity) };
@@ -106,11 +137,9 @@ internal sealed class SaveEmployeeCommandHandler :
 }
 ```
 
----
+### Command Validation Patterns
 
-## Command Validation Patterns
-
-### Sync Validation (in Command class)
+#### Sync Validation (in Command class)
 
 ```csharp
 public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
@@ -123,7 +152,7 @@ public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
 }
 ```
 
-### Async Validation (in Handler)
+#### Async Validation (in Handler)
 
 ```csharp
 protected override async Task<PlatformValidationResult<SaveCommand>> ValidateRequestAsync(
@@ -141,7 +170,7 @@ protected override async Task<PlatformValidationResult<SaveCommand>> ValidateReq
 }
 ```
 
-### Chained Validation with Of<>
+#### Chained Validation with Of<>
 
 ```csharp
 return this.Validate(p => p.Id.IsNotNullOrEmpty(), "Id required")
@@ -151,12 +180,124 @@ return this.Validate(p => p.Id.IsNotNullOrEmpty(), "Id required")
 
 ---
 
-## Repository Extensions
+## §2. CQRS Queries
+
+**File:** `UseCaseQueries/{Feature}/Get{Entity}ListQuery.cs`
+
+```csharp
+public sealed class GetEmployeeListQuery : PlatformCqrsPagedQuery<GetEmployeeListQueryResult, EmployeeDto>
+{
+    public List<Status> Statuses { get; set; } = [];
+    public string? SearchText { get; set; }
+}
+
+internal sealed class GetEmployeeListQueryHandler :
+    PlatformCqrsQueryApplicationHandler<GetEmployeeListQuery, GetEmployeeListQueryResult>
+{
+    protected override async Task<GetEmployeeListQueryResult> HandleAsync(
+        GetEmployeeListQuery req, CancellationToken ct)
+    {
+        var qb = repository.GetQueryBuilder((uow, q) => q
+            .Where(e => e.CompanyId == RequestContext.CurrentCompanyId())
+            .WhereIf(req.Statuses.Any(), e => req.Statuses.Contains(e.Status))
+            .PipeIf(req.SearchText.IsNotNullOrEmpty(), q =>
+                searchService.Search(q, req.SearchText, Employee.DefaultFullTextSearchColumns())));
+
+        var (total, items) = await (
+            repository.CountAsync((uow, q) => qb(uow, q), ct),
+            repository.GetAllAsync((uow, q) => qb(uow, q)
+                .OrderByDescending(e => e.CreatedDate)
+                .PageBy(req.SkipCount, req.MaxResultCount), ct)
+        );
+        return new GetEmployeeListQueryResult(items.SelectList(e => new EmployeeDto(e)), total, req);
+    }
+}
+```
+
+### Query Patterns
+
+#### GetQueryBuilder (Reusable Queries)
+
+```csharp
+var queryBuilder = repository.GetQueryBuilder((uow, q) => q
+    .Where(e => e.CompanyId == RequestContext.CurrentCompanyId())
+    .WhereIf(req.Statuses.Any(), e => req.Statuses.Contains(e.Status))
+    .WhereIf(req.FilterIds.IsNotNullOrEmpty(), e => req.FilterIds!.Contains(e.Id))
+    .WhereIf(req.FromDate.HasValue, e => e.CreatedDate >= req.FromDate)
+    .WhereIf(req.ToDate.HasValue, e => e.CreatedDate <= req.ToDate)
+    .PipeIf(req.SearchText.IsNotNullOrEmpty(), q =>
+        searchService.Search(q, req.SearchText, Entity.DefaultFullTextSearchColumns())));
+```
+
+#### Parallel Tuple Queries
+
+```csharp
+var (total, items) = await (
+    repository.CountAsync((uow, q) => queryBuilder(uow, q), ct),
+    repository.GetAllAsync((uow, q) => queryBuilder(uow, q)
+        .OrderByDescending(e => e.CreatedDate)
+        .PageBy(req.SkipCount, req.MaxResultCount), ct,
+        e => e.RelatedEntity,     // Eager load
+        e => e.AnotherRelated)
+);
+```
+
+#### Full-Text Search
+
+```csharp
+// In entity - define searchable columns
+public static Expression<Func<Entity, object?>>[] DefaultFullTextSearchColumns()
+    => [e => e.Name, e => e.Code, e => e.Description, e => e.Email];
+
+// In query handler
+.PipeIf(req.SearchText.IsNotNullOrEmpty(), q =>
+    searchService.Search(
+        q,
+        req.SearchText,
+        Entity.DefaultFullTextSearchColumns(),
+        fullTextAccurateMatch: true,      // true=exact phrase, false=fuzzy
+        includeStartWithProps: Entity.DefaultFullTextSearchColumns()  // For autocomplete
+    ))
+```
+
+#### Aggregation Query
+
+```csharp
+var (total, items, statusCounts) = await (
+    repository.CountAsync((uow, q) => queryBuilder(uow, q), ct),
+    repository.GetAllAsync((uow, q) => queryBuilder(uow, q).PageBy(skip, take), ct),
+    repository.GetAllAsync((uow, q) => queryBuilder(uow, q)
+        .GroupBy(e => e.Status)
+        .Select(g => new { Status = g.Key, Count = g.Count() }), ct)
+);
+```
+
+#### Single Entity Query
+
+```csharp
+protected override async Task<GetEntityByIdQueryResult> HandleAsync(
+    GetEntityByIdQuery req, CancellationToken ct)
+{
+    var entity = await repository.GetByIdAsync(req.Id, ct,
+        e => e.RelatedEntity,
+        e => e.Children)
+        .EnsureFound($"Entity not found: {req.Id}");
+
+    return new GetEntityByIdQueryResult
+    {
+        Entity = new EntityDto(entity)
+            .WithRelated(entity.RelatedEntity)
+            .WithChildren(entity.Children)
+    };
+}
+```
+
+### Repository Extensions
 
 ```csharp
 // Extension pattern
 public static async Task<Employee> GetByEmailAsync(
-    this IPlatformQueryableRootRepository<Employee> repo, string email, CancellationToken ct = default)
+    this IServiceRootRepository<Employee> repo, string email, CancellationToken ct = default)
     => await repo.FirstOrDefaultAsync(Employee.ByEmailExpr(email), ct).EnsureFound();
 
 public static async Task<List<Entity>> GetByIdsValidatedAsync(
@@ -171,9 +312,7 @@ public static async Task<string> GetIdByCodeAsync(
 await repo.FirstOrDefaultAsync(q => q.Where(expr).Select(e => e.Id), ct);
 ```
 
----
-
-## Fluent Helpers
+### Fluent Helpers
 
 ```csharp
 // Mutation & transformation
@@ -194,131 +333,7 @@ await items.ParallelAsync(item => ProcessAsync(item, ct), maxConcurrent: 10);
 await repo.GetByIdAsync(id).PipeActionIf(cond, e => e.Update()).PipeActionAsyncIf(() => svc.Any(), e => e.Sync());
 ```
 
----
-
-# §2. CQRS Queries
-
-**File:** `UseCaseQueries/{Feature}/Get{Entity}ListQuery.cs`
-
-## Paged Query Template
-
-```csharp
-public sealed class GetEmployeeListQuery : PlatformCqrsPagedQuery<GetEmployeeListQueryResult, EmployeeDto>
-{
-    public List<Status> Statuses { get; set; } = [];
-    public string? SearchText { get; set; }
-}
-
-internal sealed class GetEmployeeListQueryHandler :
-    PlatformCqrsQueryApplicationHandler<GetEmployeeListQuery, GetEmployeeListQueryResult>
-{
-    protected override async Task<GetEmployeeListQueryResult> HandleAsync(
-        GetEmployeeListQuery req, CancellationToken ct)
-    {
-        var qb = repository.GetQueryBuilder((uow, q) => q
-            .Where(e => e.CompanyId == RequestContext.CurrentCompanyId())
-            .WhereIf(req.Statuses.Any(), e => req.Statuses.Contains(e.Status))
-            .PipeIf(req.SearchText.IsNotNullOrEmpty(), q =>
-                searchService.Search(q, req.SearchText, Employee.DefaultFullTextSearchColumns())));
-        var (total, items) = await (
-            repository.CountAsync((uow, q) => qb(uow, q), ct),
-            repository.GetAllAsync((uow, q) => qb(uow, q)
-                .OrderByDescending(e => e.CreatedDate).PageBy(req.SkipCount, req.MaxResultCount), ct)
-        );
-        return new GetEmployeeListQueryResult(items.SelectList(e => new EmployeeDto(e)), total, req);
-    }
-}
-```
-
----
-
-## GetQueryBuilder (Reusable Queries)
-
-```csharp
-var queryBuilder = repository.GetQueryBuilder((uow, q) => q
-    .Where(e => e.CompanyId == RequestContext.CurrentCompanyId())
-    .WhereIf(req.Statuses.Any(), e => req.Statuses.Contains(e.Status))
-    .WhereIf(req.FilterIds.IsNotNullOrEmpty(), e => req.FilterIds!.Contains(e.Id))
-    .WhereIf(req.FromDate.HasValue, e => e.CreatedDate >= req.FromDate)
-    .WhereIf(req.ToDate.HasValue, e => e.CreatedDate <= req.ToDate)
-    .PipeIf(req.SearchText.IsNotNullOrEmpty(), q =>
-        searchService.Search(q, req.SearchText, Entity.DefaultFullTextSearchColumns())));
-```
-
----
-
-## Parallel Tuple Queries
-
-```csharp
-var (total, items) = await (
-    repository.CountAsync((uow, q) => queryBuilder(uow, q), ct),
-    repository.GetAllAsync((uow, q) => queryBuilder(uow, q)
-        .OrderByDescending(e => e.CreatedDate)
-        .PageBy(req.SkipCount, req.MaxResultCount), ct,
-        e => e.RelatedEntity,     // Eager load
-        e => e.AnotherRelated)
-);
-```
-
----
-
-## Full-Text Search
-
-```csharp
-// In entity - define searchable columns
-public static Expression<Func<Entity, object?>>[] DefaultFullTextSearchColumns()
-    => [e => e.Name, e => e.Code, e => e.Description, e => e.Email];
-
-// In query handler
-.PipeIf(req.SearchText.IsNotNullOrEmpty(), q =>
-    searchService.Search(
-        q,
-        req.SearchText,
-        Entity.DefaultFullTextSearchColumns(),
-        fullTextAccurateMatch: true,      // true=exact phrase, false=fuzzy
-        includeStartWithProps: Entity.DefaultFullTextSearchColumns()  // For autocomplete
-    ))
-```
-
----
-
-## Single Entity Query
-
-```csharp
-protected override async Task<GetEntityByIdQueryResult> HandleAsync(
-    GetEntityByIdQuery req, CancellationToken ct)
-{
-    var entity = await repository.GetByIdAsync(req.Id, ct,
-        e => e.RelatedEntity,
-        e => e.Children)
-        .EnsureFound($"Entity not found: {req.Id}");
-
-    return new GetEntityByIdQueryResult
-    {
-        Entity = new EntityDto(entity)
-            .WithRelated(entity.RelatedEntity)
-            .WithChildren(entity.Children)
-    };
-}
-```
-
----
-
-## Aggregation Query
-
-```csharp
-var (total, items, statusCounts) = await (
-    repository.CountAsync((uow, q) => queryBuilder(uow, q), ct),
-    repository.GetAllAsync((uow, q) => queryBuilder(uow, q).PageBy(skip, take), ct),
-    repository.GetAllAsync((uow, q) => queryBuilder(uow, q)
-        .GroupBy(e => e.Status)
-        .Select(g => new { Status = g.Key, Count = g.Count() }), ct)
-);
-```
-
----
-
-## Query Patterns Summary
+### Query Patterns Summary
 
 | Pattern                        | Usage                 | Example                                                       |
 | ------------------------------ | --------------------- | ------------------------------------------------------------- |
@@ -333,13 +348,13 @@ var (total, items, statusCounts) = await (
 
 ---
 
-# §3. Entity Development
+## §3. Entity Development
 
 **File:** `{Service}.Domain/Entities/{Entity}.cs`
 
-## Entity Base Classes
+### Entity Base Classes
 
-### Non-Audited Entity
+#### Non-Audited Entity
 
 ```csharp
 public class Employee : RootEntity<Employee, string>
@@ -348,7 +363,7 @@ public class Employee : RootEntity<Employee, string>
 }
 ```
 
-### Audited Entity (With Audit Trail)
+#### Audited Entity (With Audit Trail)
 
 ```csharp
 public class AuditedEmployee : RootAuditedEntity<AuditedEmployee, string, string>
@@ -357,9 +372,7 @@ public class AuditedEmployee : RootAuditedEntity<AuditedEmployee, string, string
 }
 ```
 
----
-
-## Complete Entity Template
+### Entity Structure Template
 
 ```csharp
 [TrackFieldUpdatedDomainEvent]  // Track all field changes
@@ -477,9 +490,7 @@ public sealed class Entity : RootEntity<Entity, string>
 }
 ```
 
----
-
-## Expression Composition
+### Expression Composition
 
 | Pattern     | Usage            | Example                             |
 | ----------- | ---------------- | ----------------------------------- |
@@ -502,9 +513,7 @@ public static Expression<Func<E, bool>> ComplexExpr(int s, string c, int? m)
         .AndAlsoIf(m != null, () => e => e.Start <= Clock.UtcNow.AddMonths(-m!.Value));
 ```
 
----
-
-## Computed Property Rules
+### Computed Property Rules
 
 **MUST have empty setter `set { }`**
 
@@ -522,9 +531,7 @@ public bool IsRoot
 public bool IsRoot => Id == RootId;
 ```
 
----
-
-## DTO Mapping
+### DTO Mapping
 
 ```csharp
 public class EmployeeDto : PlatformEntityDto<Employee, string>
@@ -554,9 +561,7 @@ public sealed class ConfigDto : PlatformDto<ConfigValue>
 var dtos = employees.SelectList(e => new EmployeeDto(e, e.User).WithCompany(e.Company!));
 ```
 
----
-
-## Static Validation Method
+### Static Validation Method
 
 ```csharp
 public static List<string> ValidateEntity(Entity? e)
@@ -565,13 +570,31 @@ public static List<string> ValidateEntity(Entity? e)
 
 ---
 
-# §4. Entity Event Handlers (Side Effects)
+## §4. Entity Event Handlers (Side Effects)
 
-**CRITICAL:** NEVER call side effects in command handlers!
+### CRITICAL RULE
 
-**File:** `UseCaseEvents/{Feature}/Send{Action}On{Event}{Entity}EntityEventHandler.cs`
+**NEVER call side effects directly in command handlers!**
 
-## Implementation Pattern
+Platform automatically raises `PlatformCqrsEntityEvent` on repository CRUD. Handle side effects in Entity Event Handlers instead.
+
+**File Location & Naming:**
+
+```
+{Service}.Application/
+└── UseCaseEvents/
+    └── {Feature}/
+        └── {Action}On{Event}{Entity}EntityEventHandler.cs
+```
+
+**Naming Examples:**
+
+- `SendNotificationOnCreateLeaveRequestEntityEventHandler.cs`
+- `UpdateCategoryStatsOnSnippetChangeEventHandler.cs`
+- `SyncEmployeeOnEmployeeUpdatedEntityEventHandler.cs`
+- `SendEmailOnPublishGoalEntityEventHandler.cs`
+
+### Implementation Pattern
 
 ```csharp
 internal sealed class SendNotificationOnCreateEntityEntityEventHandler
@@ -625,11 +648,9 @@ internal sealed class SendNotificationOnCreateEntityEntityEventHandler
 }
 ```
 
----
+### CRUD Action Filtering
 
-## CRUD Action Filtering
-
-### Single Action
+#### Single Action
 
 ```csharp
 public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @event)
@@ -638,7 +659,7 @@ public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @eve
 }
 ```
 
-### Multiple Actions
+#### Multiple Actions
 
 ```csharp
 public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @event)
@@ -648,7 +669,7 @@ public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @eve
 }
 ```
 
-### Updated with Specific Condition
+#### Updated with Specific Condition
 
 ```csharp
 public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @event)
@@ -658,7 +679,7 @@ public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @eve
 }
 ```
 
-### Skip Test Data Seeding
+#### Skip Test Data Seeding
 
 ```csharp
 public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @event)
@@ -668,9 +689,7 @@ public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @eve
 }
 ```
 
----
-
-## Accessing Event Data
+### Accessing Event Data
 
 | Property                                   | Description                            |
 | ------------------------------------------ | -------------------------------------- |
@@ -682,9 +701,9 @@ public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @eve
 
 ---
 
-# §5. Data Migrations
+## §5. Data Migrations
 
-## Migration Type Decision
+### Migration Type Decision
 
 ```
 Is this a schema change?
@@ -714,14 +733,48 @@ Is this a schema change?
 
 > **CRITICAL:** `PlatformMongoMigrationExecutor` uses `Activator.CreateInstance` — NO DI support.
 > If you need DI (inject other DbContexts, repositories, services), use `PlatformDataMigrationExecutor<MongoDbContext>` instead.
+> This works because `PlatformMongoDbContext` implements `IPlatformDbContext`, and `MigrateDataAsync` scans the DbContext's assembly for `PlatformDataMigrationExecutor<TDbContext>`.
 
----
+### File Locations
 
-## Pattern 1: EF Core Schema Migration
+#### EF Core Schema Migrations
+
+```
+{Service}.Persistence/
+└── Migrations/
+    └── {Timestamp}_{MigrationName}.cs
+```
+
+#### Data Migrations (EF Core)
+
+```
+{Service}.Application/ or {Service}.Persistence/
+└── DataMigrations/
+    └── {Date}_{MigrationName}DataMigration.cs
+```
+
+#### Data Migrations (MongoDB — PlatformDataMigrationExecutor)
+
+```
+{Service}.Data.MongoDb/
+└── DataMigrations/
+    └── {Date}_{MigrationName}Migration.cs
+    NOTE: Must be in same project/assembly as MongoDbContext (scanned by GetType().Assembly)
+```
+
+#### MongoDB Migrations (PlatformMongoMigrationExecutor)
+
+```
+{Service}.Data.MongoDb/
+└── Migrations/
+    └── {Date}_{MigrationName}.cs
+```
+
+### Pattern 1: EF Core Schema Migration
 
 ```bash
 # Navigate to persistence project
-cd src/Services/bravoGROWTH/Growth.Persistence
+cd src/Services/{ServiceDir}/{Service}.Persistence
 
 # Add migration
 dotnet ef migrations add AddEmployeePhoneNumber
@@ -764,21 +817,19 @@ public partial class AddEmployeePhoneNumber : Migration
 }
 ```
 
----
-
-## Pattern 2: Data Migration (SQL/PostgreSQL)
+### Pattern 2: Data Migration (SQL/PostgreSQL)
 
 ```csharp
-public sealed class MigrateEmployeePhoneNumbers : PlatformDataMigrationExecutor<GrowthDbContext>
+public sealed class MigrateEmployeePhoneNumbers : PlatformDataMigrationExecutor<ServiceDbContext>
 {
     public override string Name => "20251015000000_MigrateEmployeePhoneNumbers";
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 15);
     public override bool AllowRunInBackgroundThread => true;
 
-    private readonly IGrowthRootRepository<Employee> employeeRepo;
+    private readonly IServiceRootRepository<Employee> employeeRepo;
     private const int PageSize = 200;
 
-    public override async Task Execute(GrowthDbContext dbContext)
+    public override async Task Execute(ServiceDbContext dbContext)
     {
         var queryBuilder = employeeRepo.GetQueryBuilder((uow, q) =>
             q.Where(e => e.PhoneNumber == null && e.LegacyPhone != null));
@@ -804,7 +855,7 @@ public sealed class MigrateEmployeePhoneNumbers : PlatformDataMigrationExecutor<
         int skip,
         int take,
         Func<IPlatformUnitOfWork, IQueryable<Employee>, IQueryable<Employee>> queryBuilder,
-        IGrowthRootRepository<Employee> repo,
+        IServiceRootRepository<Employee> repo,
         IPlatformUnitOfWorkManager uowManager)
     {
         using var unitOfWork = uowManager.Begin();
@@ -834,21 +885,21 @@ public sealed class MigrateEmployeePhoneNumbers : PlatformDataMigrationExecutor<
 }
 ```
 
----
-
-## Pattern 3: MongoDB Migration (Simple — No DI)
+### Pattern 3: MongoDB Migration (Simple — No DI)
 
 > **⚠️ `PlatformMongoMigrationExecutor` has NO constructor injection and NO `RootServiceProvider`.**
+> It uses `Activator.CreateInstance`. Only `Execute(TDbContext dbContext)` is available.
 > Access collections via `dbContext` (e.g., `dbContext.UserCollection`, `dbContext.GetCollection<T>()`).
+> If you need DI, use Pattern 5 (`PlatformDataMigrationExecutor<MongoDbContext>`) instead.
 
 ```csharp
 // Field rename migration — access collections via dbContext parameter
-public sealed class MigrateFieldName : PlatformMongoMigrationExecutor<SurveyPlatformMongoDbContext>
+public sealed class MigrateFieldName : PlatformMongoMigrationExecutor<ServiceMongoDbContext>
 {
     public override string Name => "20251015_MigrateFieldName";
     public override DateTime? OnlyForDbInitBeforeDate => new DateTime(2025, 10, 15);
 
-    public override async Task Execute(SurveyPlatformMongoDbContext dbContext)
+    public override async Task Execute(ServiceMongoDbContext dbContext)
     {
         var collection = dbContext.GetCollection<BsonDocument>("distributions");
         var filter = Builders<BsonDocument>.Filter.Exists("OldFieldName");
@@ -861,29 +912,27 @@ public sealed class MigrateFieldName : PlatformMongoMigrationExecutor<SurveyPlat
 }
 
 // Index recreation migration — simplest pattern
-public sealed class RecreateIndexes : PlatformMongoMigrationExecutor<SurveyPlatformMongoDbContext>
+public sealed class RecreateIndexes : PlatformMongoMigrationExecutor<ServiceMongoDbContext>
 {
     public override string Name => "20251015_RecreateIndexes";
     public override DateTime? OnlyForDbInitBeforeDate => new DateTime(2025, 10, 15);
 
-    public override async Task Execute(SurveyPlatformMongoDbContext dbContext)
+    public override async Task Execute(ServiceMongoDbContext dbContext)
     {
         await dbContext.InternalEnsureIndexesAsync(recreate: true);
     }
 }
 ```
 
----
-
-## Pattern 4: Cross-Service Data Sync (One-Time)
+### Pattern 4: Cross-Service Data Sync (One-Time)
 
 ```csharp
-public sealed class SyncEmployeesFromAccounts : PlatformDataMigrationExecutor<GrowthDbContext>
+public sealed class SyncEmployeesFromAccounts : PlatformDataMigrationExecutor<ServiceDbContext>
 {
     public override string Name => "20251015000000_SyncEmployeesFromAccounts";
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2025, 10, 15);
 
-    public override async Task Execute(GrowthDbContext dbContext)
+    public override async Task Execute(ServiceDbContext dbContext)
     {
         var sourceEmployees = await accountsDbContext.Employees
             .Where(e => e.CreatedDate < OnlyForDbsCreatedBeforeDate)
@@ -907,24 +956,26 @@ public sealed class SyncEmployeesFromAccounts : PlatformDataMigrationExecutor<Gr
 }
 ```
 
----
+### Pattern 5: Cross-DB Data Migration to MongoDB (DI-Supported)
 
-## Pattern 5: Cross-DB Data Migration to MongoDB (DI-Supported)
-
-> **Use when:** You need to read from a SQL/PostgreSQL DB and write to MongoDB.
+> **Use when:** You need to read from a SQL/PostgreSQL DB (e.g., Accounts) and write to MongoDB.
+> `PlatformDataMigrationExecutor<MongoDbContext>` gives you full DI + `RootServiceProvider` + paging.
 > Must be placed in the **same project** as the MongoDbContext (assembly scanning).
 
+**Real example:** Backfill `UserCompany.IsActive` from a source service's `UserCompanyInfos`.
+
 ```csharp
-// Real example: bravoSURVEYS — backfill UserCompany.IsActive from Accounts
+// File: {Service}.Data.MongoDb/DataMigrations/{Date}_{MigrationName}Migration.cs
+
 public sealed class MigrateUserCompanyIsActiveFromAccountsDbMigration
-    : PlatformDataMigrationExecutor<SurveyPlatformMongoDbContext>  // ← MongoDB context
+    : PlatformDataMigrationExecutor<ServiceMongoDbContext>  // ← MongoDB context, NOT EF Core
 {
     private const int PageSize = 100;
-    private readonly AccountsPlatformDbContext accountsPlatformDbContext;  // ← DI works!
+    private readonly SourceServiceDbContext accountsPlatformDbContext;  // ← DI: cross-DB EF Core context
 
     public MigrateUserCompanyIsActiveFromAccountsDbMigration(
         IPlatformRootServiceProvider rootServiceProvider,
-        AccountsPlatformDbContext accountsPlatformDbContext)  // ← Constructor injection
+        SourceServiceDbContext accountsPlatformDbContext)  // ← Constructor injection works!
         : base(rootServiceProvider)
     {
         this.accountsPlatformDbContext = accountsPlatformDbContext;
@@ -934,10 +985,10 @@ public sealed class MigrateUserCompanyIsActiveFromAccountsDbMigration
     public override DateTime? OnlyForDbsCreatedBeforeDate => new(2026, 02, 06);
     public override bool AllowRunInBackgroundThread => true;
 
-    public override async Task Execute(SurveyPlatformMongoDbContext dbContext)
+    public override async Task Execute(ServiceMongoDbContext dbContext)
     {
         var totalCount = await accountsPlatformDbContext
-            .GetQuery<AccountUserCompanyInfo>()
+            .GetQuery<SourceEntity>()
             .EfCoreCountAsync();
 
         if (totalCount == 0) return;
@@ -945,19 +996,20 @@ public sealed class MigrateUserCompanyIsActiveFromAccountsDbMigration
         await RootServiceProvider.ExecuteInjectScopedPagingAsync(
             maxItemCount: totalCount,
             pageSize: PageSize,
-            MigrateUserCompanyIsActivePaging);  // Static method, DI-resolved params
+            MigrateUserCompanyIsActivePaging);  // ← Static method, params resolved by DI
     }
 
-    // Static paging: first 2 params MUST be (int skipCount, int pageSize)
+    // Static paging method: first 2 params MUST be (int skipCount, int pageSize)
+    // Remaining params are resolved from DI container
     private static async Task MigrateUserCompanyIsActivePaging(
         int skipCount,
         int pageSize,
-        AccountsPlatformDbContext accountsPlatformDbContext,  // ← DI-resolved
-        SurveyPlatformMongoDbContext surveyDbContext)          // ← DI-resolved
+        SourceServiceDbContext accountsPlatformDbContext,  // ← DI-resolved
+        ServiceMongoDbContext surveyDbContext)          // ← DI-resolved
     {
-        // 1. Read from SQL/PostgreSQL
+        // 1. Read from SQL/PostgreSQL source
         var userCompanyInfos = await accountsPlatformDbContext
-            .GetQuery<AccountUserCompanyInfo>()
+            .GetQuery<SourceEntity>()
             .OrderBy(p => p.Id)
             .Skip(skipCount)
             .Take(pageSize)
@@ -1008,21 +1060,21 @@ public sealed class MigrateUserCompanyIsActiveFromAccountsDbMigration
 }
 ```
 
----
+**Why this works:** `PlatformMongoDbContext` implements `IPlatformDbContext`. Its `MigrateDataAsync()` calls `IPlatformDbContext.MigrateDataAsync<TDbContext>()` which scans `GetType().Assembly` for `PlatformDataMigrationExecutor<TDbContext>`. `CreateNewInstance` uses `ActivatorUtilities.CreateInstance` (full DI support).
 
-## Scrolling vs Paging
+### Scrolling vs Paging
 
 ```csharp
-// PAGING: When skip/take stays consistent (items don't disappear)
+// PAGING: When skip/take stays consistent
+// (items don't disappear from query after processing)
 await RootServiceProvider.ExecuteInjectScopedPagingAsync(...);
 
 // SCROLLING: When processed items excluded from next query
+// (e.g., status change means item no longer matches filter)
 await UnitOfWorkManager.ExecuteInjectScopedScrollingPagingAsync(...);
 ```
 
----
-
-## Key Migration Options
+### Migration Options & Flags
 
 | Option                        | Purpose               | When to Use                          |
 | ----------------------------- | --------------------- | ------------------------------------ |
@@ -1033,16 +1085,16 @@ await UnitOfWorkManager.ExecuteInjectScopedScrollingPagingAsync(...);
 
 ---
 
-# §6. Background Jobs
+## §6. Background Jobs
 
-## Job Type Decision Tree
+### Job Type Decision Tree
 
 ```
 Does processing affect the query result?
 ├── NO → Simple Paged (skip/take stays consistent)
 │   └── Use: PlatformApplicationPagedBackgroundJobExecutor
 │
-└── YES → Scrolling needed (processed items excluded)
+└── YES → Scrolling needed (processed items excluded from next query)
     │
     └── Is this multi-tenant (company-based)?
         ├── YES → Batch Scrolling (batch by company, scroll within)
@@ -1052,9 +1104,9 @@ Does processing affect the query result?
             └── Use: ExecuteInjectScopedScrollingPagingAsync
 ```
 
----
+### Pattern 1: Simple Paged Job
 
-## Pattern 1: Simple Paged Job
+Use when: Items don't change during processing (or changes don't affect query).
 
 ```csharp
 [PlatformRecurringJob("0 3 * * *")]  // Daily at 3 AM
@@ -1094,15 +1146,16 @@ public sealed class ProcessPendingItemsJob : PlatformApplicationPagedBackgroundJ
 }
 ```
 
----
+### Pattern 2: Batch Scrolling Job (Multi-Tenant)
 
-## Pattern 2: Batch Scrolling Job (Multi-Tenant)
+Use when: Processing per-company, data changes during processing.
 
 ```csharp
 [PlatformRecurringJob("0 0 * * *")]  // Daily at midnight
 public sealed class SyncCompanyDataJob
     : PlatformApplicationBatchScrollingBackgroundJobExecutor<Entity, string>
 {
+    // Batch key = CompanyId, Entity = what we're processing
     protected override int BatchKeyPageSize => 50;   // Companies per page
     protected override int BatchPageSize => 25;       // Entities per company batch
 
@@ -1133,18 +1186,71 @@ public sealed class SyncCompanyDataJob
         object? param,
         IServiceProvider serviceProvider)
     {
+        Logger.LogInformation("Processing {Count} entities for company {CompanyId}",
+            entities.Count, batchKey);
+
         await entities.ParallelAsync(async entity =>
         {
             entity.MarkSynced();
             await repository.UpdateAsync(entity);
-        }, maxConcurrent: 1);
+        }, maxConcurrent: 1);  // Often 1 to avoid race conditions within company
     }
 }
 ```
 
----
+### Pattern 3: Scrolling Job (Data Changes During Processing)
 
-## Pattern 3: Master Job (Schedules Child Jobs)
+Use when: Processing creates a log/record that excludes item from next query.
+
+```csharp
+public sealed class ProcessAndLogJob : PlatformApplicationBackgroundJobExecutor
+{
+    public override async Task ProcessAsync(object? param)
+    {
+        var queryBuilder = repository.GetQueryBuilder((uow, q) =>
+            q.Where(x => x.Status == Status.Pending)
+             .Where(x => !processedLogRepo.Query().Any(log => log.EntityId == x.Id)));
+
+        var totalCount = await repository.CountAsync((uow, q) => queryBuilder(uow, q));
+
+        await UnitOfWorkManager.ExecuteInjectScopedScrollingPagingAsync<Entity>(
+            processingDelegate: ExecutePaged,
+            maxPageCount: totalCount / PageSize,
+            param: param,
+            pageSize: PageSize);
+    }
+
+    private static async Task<List<Entity>> ExecutePaged(
+        object? param,
+        int? limitPageSize,
+        IServiceRepository<Entity> repo,
+        IServiceRepository<ProcessedLog> logRepo)
+    {
+        var items = await repo.GetAllAsync((uow, q) =>
+            q.Where(x => x.Status == Status.Pending)
+             .Where(x => !logRepo.Query().Any(log => log.EntityId == x.Id))
+             .OrderBy(x => x.Id)
+             .PipeIf(limitPageSize != null, q => q.Take(limitPageSize!.Value)));
+
+        if (items.IsEmpty()) return items;
+
+        // Create log entries (excludes from next query)
+        await logRepo.CreateManyAsync(items.SelectList(e => new ProcessedLog(e)));
+
+        foreach (var item in items)
+        {
+            item.Process();
+            await repo.UpdateAsync(item, dismissSendEvent: true);
+        }
+
+        return items;
+    }
+}
+```
+
+### Pattern 4: Master Job (Schedules Child Jobs)
+
+Use when: Complex coordination across companies and date ranges.
 
 ```csharp
 [PlatformRecurringJob("0 6 * * *")]
@@ -1174,9 +1280,7 @@ public sealed class MasterSchedulerJob : PlatformApplicationBackgroundJobExecuto
 }
 ```
 
----
-
-## Cron Schedule Reference
+### Cron Schedule Reference
 
 | Schedule       | Cron Expression | Description       |
 | -------------- | --------------- | ----------------- |
@@ -1187,9 +1291,7 @@ public sealed class MasterSchedulerJob : PlatformApplicationBackgroundJobExecuto
 | Weekly Sunday  | `0 0 * * 0`     | Midnight Sunday   |
 | Monthly 1st    | `0 0 1 * *`     | Midnight, 1st day |
 
----
-
-## Job Attributes
+### Job Attributes
 
 ```csharp
 // Basic recurring job
@@ -1204,12 +1306,41 @@ public sealed class MasterSchedulerJob : PlatformApplicationBackgroundJobExecuto
 
 ---
 
-# §7. Message Bus
+## §7. Message Bus (Cross-Service)
 
-## Message Definition
+**CRITICAL:** Cross-service data sync uses message bus - NEVER direct database access!
+
+### File Locations
+
+#### Producer (Source Service)
+
+```
+{Service}.Application/
+└── MessageBusProducers/
+    └── {Entity}EntityEventBusMessageProducer.cs
+```
+
+#### Consumer (Target Service)
+
+```
+{Service}.Application/
+└── MessageBusConsumers/
+    └── {SourceEntity}/
+        └── {Action}On{Entity}EntityEventBusConsumer.cs
+```
+
+#### Message Definition (Shared)
+
+```
+Bravo.Shared/
+└── CrossServiceMessages/
+    └── {Entity}EntityEventBusMessage.cs
+```
+
+### Message Definition
 
 ```csharp
-// In PlatformExampleApp.Shared/CrossServiceMessages/
+// In Bravo.Shared
 public sealed class EmployeeEntityEventBusMessage
     : PlatformCqrsEntityEventBusMessage<EmployeeEventData, string>
 {
@@ -1232,25 +1363,56 @@ public sealed class EmployeeEventData
     public bool IsDeleted { get; set; }
 
     public EmployeeEventData() { }
-    public EmployeeEventData(Employee entity) { Id = entity.Id; FullName = entity.FullName; }
 
-    public TargetEmployee ToEntity() => new TargetEmployee { SourceId = Id, FullName = FullName };
-    public TargetEmployee UpdateEntity(TargetEmployee existing) { existing.FullName = FullName; return existing; }
+    public EmployeeEventData(Employee entity)
+    {
+        Id = entity.Id;
+        FullName = entity.FullName;
+        Email = entity.Email;
+        CompanyId = entity.CompanyId;
+        IsDeleted = entity.IsDeleted;
+    }
+
+    public TargetEmployee ToEntity() => new TargetEmployee
+    {
+        SourceId = Id,
+        FullName = FullName,
+        Email = Email,
+        CompanyId = CompanyId
+    };
+
+    public TargetEmployee UpdateEntity(TargetEmployee existing)
+    {
+        existing.FullName = FullName;
+        existing.Email = Email;
+        return existing;
+    }
 }
 ```
 
----
+### Pattern 1: Entity Event Producer
 
-## Entity Event Producer
+Auto-publishes when entity changes via repository CRUD.
 
 ```csharp
 internal sealed class EmployeeEntityEventBusMessageProducer
     : PlatformCqrsEntityEventBusMessageProducer<EmployeeEntityEventBusMessage, Employee, string>
 {
+    public EmployeeEntityEventBusMessageProducer(
+        ILoggerFactory loggerFactory,
+        IPlatformUnitOfWorkManager unitOfWorkManager,
+        IServiceProvider serviceProvider,
+        IPlatformRootServiceProvider rootServiceProvider)
+        : base(loggerFactory, unitOfWorkManager, serviceProvider, rootServiceProvider)
+    {
+    }
+
     public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Employee> @event)
     {
         if (@event.RequestContext.IsSeedingTestingData()) return false;
-        return @event.EntityData.IsActive || @event.CrudAction == PlatformCqrsEntityEventCrudAction.Deleted;
+
+        return @event.EntityData.IsActive ||
+               @event.CrudAction == PlatformCqrsEntityEventCrudAction.Deleted;
     }
 
     protected override Task<EmployeeEntityEventBusMessage> BuildMessageAsync(
@@ -1264,9 +1426,7 @@ internal sealed class EmployeeEntityEventBusMessageProducer
 }
 ```
 
----
-
-## Entity Event Consumer
+### Pattern 2: Entity Event Consumer
 
 ```csharp
 internal sealed class UpsertOrDeleteEmployeeOnEmployeeEntityEventBusConsumer
@@ -1277,7 +1437,10 @@ internal sealed class UpsertOrDeleteEmployeeOnEmployeeEntityEventBusConsumer
 
     public override async Task<bool> HandleWhen(
         EmployeeEntityEventBusMessage message,
-        string routingKey) => true;
+        string routingKey)
+    {
+        return true;
+    }
 
     public override async Task HandleLogicAsync(
         EmployeeEntityEventBusMessage message,
@@ -1286,16 +1449,25 @@ internal sealed class UpsertOrDeleteEmployeeOnEmployeeEntityEventBusConsumer
         var payload = message.Payload;
         var entityData = payload.EntityData;
 
-        // Wait for dependencies
+        // ═══════════════════════════════════════════════════════════════════
+        // WAIT FOR DEPENDENCIES (with timeout)
+        // ═══════════════════════════════════════════════════════════════════
         var companyMissing = await Util.TaskRunner
             .TryWaitUntilAsync(
                 () => companyRepo.AnyAsync(c => c.Id == entityData.CompanyId),
                 maxWaitSeconds: message.IsForceSyncDataRequest() ? 30 : 300)
             .Then(found => !found);
 
-        if (companyMissing) return;
+        if (companyMissing)
+        {
+            Logger.LogWarning("Company {CompanyId} not found, skipping employee sync",
+                entityData.CompanyId);
+            return;
+        }
 
-        // Handle delete
+        // ═══════════════════════════════════════════════════════════════════
+        // HANDLE DELETE
+        // ═══════════════════════════════════════════════════════════════════
         if (payload.CrudAction == PlatformCqrsEntityEventCrudAction.Deleted ||
             (payload.CrudAction == PlatformCqrsEntityEventCrudAction.Updated && entityData.IsDeleted))
         {
@@ -1303,8 +1475,11 @@ internal sealed class UpsertOrDeleteEmployeeOnEmployeeEntityEventBusConsumer
             return;
         }
 
-        // Handle create/update
-        var existing = await employeeRepo.FirstOrDefaultAsync(e => e.SourceId == entityData.Id);
+        // ═══════════════════════════════════════════════════════════════════
+        // HANDLE CREATE/UPDATE
+        // ═══════════════════════════════════════════════════════════════════
+        var existing = await employeeRepo.FirstOrDefaultAsync(
+            e => e.SourceId == entityData.Id);
 
         if (existing == null)
         {
@@ -1318,13 +1493,54 @@ internal sealed class UpsertOrDeleteEmployeeOnEmployeeEntityEventBusConsumer
                 entityData.UpdateEntity(existing)
                     .With(e => e.LastMessageSyncDate = message.CreatedUtcDate));
         }
+        // else: Skip - we have a newer version already
     }
 }
 ```
 
----
+### Pattern 3: Custom Message (Non-Entity)
 
-## Message Naming Convention
+```csharp
+// Message definition
+public sealed class NotificationRequestMessage : PlatformBusMessage
+{
+    public string UserId { get; set; } = "";
+    public string Subject { get; set; } = "";
+    public string Body { get; set; } = "";
+    public NotificationType Type { get; set; }
+}
+
+// Producer (manual publish)
+public class NotificationService
+{
+    private readonly IPlatformMessageBusProducer messageBus;
+
+    public async Task SendNotificationAsync(NotificationRequest request)
+    {
+        await messageBus.PublishAsync(new NotificationRequestMessage
+        {
+            UserId = request.UserId,
+            Subject = request.Subject,
+            Body = request.Body,
+            Type = request.Type
+        });
+    }
+}
+
+// Consumer
+internal sealed class ProcessNotificationRequestConsumer
+    : PlatformApplicationMessageBusConsumer<NotificationRequestMessage>
+{
+    public override async Task HandleLogicAsync(
+        NotificationRequestMessage message,
+        string routingKey)
+    {
+        await notificationService.ProcessAsync(message);
+    }
+}
+```
+
+### Message Naming Convention
 
 | Type    | Producer Role | Pattern                                           | Example                                            |
 | ------- | ------------- | ------------------------------------------------- | -------------------------------------------------- |
@@ -1333,11 +1549,9 @@ internal sealed class UpsertOrDeleteEmployeeOnEmployeeEntityEventBusConsumer
 
 **Consumer Naming:** Consumer class name = Message class name + `Consumer` suffix
 
----
+### Key Patterns
 
-## Key Message Bus Patterns
-
-### Wait for Dependencies
+#### Wait for Dependencies
 
 ```csharp
 var found = await Util.TaskRunner.TryWaitUntilAsync(
@@ -1347,7 +1561,7 @@ var found = await Util.TaskRunner.TryWaitUntilAsync(
 if (!found) return;
 ```
 
-### Prevent Race Conditions
+#### Prevent Race Conditions
 
 ```csharp
 if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
@@ -1357,45 +1571,66 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 }
 ```
 
----
+#### Force Sync Detection
 
-# Anti-Patterns Catalog
-
-| Don't                                        | Do                                                  | Pattern       |
-| -------------------------------------------- | --------------------------------------------------- | ------------- |
-| `throw new ValidationException()`            | `PlatformValidationResult` fluent API               | Commands      |
-| Side effects in command handler              | Entity Event Handler in `UseCaseEvents/`            | Side Effects  |
-| Direct cross-service DB access               | Message bus                                         | Cross-Service |
-| DTO mapping in handler                       | `PlatformEntityDto.MapToEntity()`                   | DTOs          |
-| Separate Command/Handler files               | ONE file: Command + Result + Handler                | CQRS          |
-| `protected bool HandleWhen()`                | `public override async Task<bool> HandleWhen()`     | Events        |
-| Two generic parameters in event handler      | Single generic: `<Entity>`                          | Events        |
-| Computed property without `set { }`          | Add empty setter                                    | Entities      |
-| Missing `[JsonIgnore]` on navigation         | Add `[JsonIgnore]`                                  | Entities      |
-| No dependency waiting in consumer            | `TryWaitUntilAsync`                                 | Message Bus   |
-| No race condition handling                   | Check `LastMessageSyncDate`                         | Message Bus   |
-| Only check `Deleted` action                  | Also check soft delete flag                         | Message Bus   |
-| Use `PlatformMongoMigrationExecutor` with DI | Use `PlatformDataMigrationExecutor<MongoDbContext>` | Migrations    |
-| Unbounded parallelism                        | `maxConcurrent: 5`                                  | Jobs          |
-| Wrong pagination for changing data           | Use scrolling pattern                               | Jobs          |
+```csharp
+var timeout = message.IsForceSyncDataRequest() ? 30 : 300;
+```
 
 ---
 
-## Checklist
+## Anti-Patterns
 
-- [ ] Service-specific repository (`IPlatformQueryableRootRepository<T>`)
-- [ ] Fluent validation (`.And()`, `.AndAsync()`) — NEVER throw
-- [ ] No side effects in command handlers (use Entity Event Handlers)
-- [ ] DTO mapping in DTO class (`MapToEntity()`, `MapToObject()`)
-- [ ] Cross-service uses message bus (NEVER direct DB access)
-- [ ] Jobs have `maxConcurrent` parameter for parallelism
-- [ ] Migrations use `dismissSendEvent: true`, `checkDiff: false`
-- [ ] MongoDB migrations: `PlatformMongoMigrationExecutor` (simple) vs `PlatformDataMigrationExecutor<MongoDbContext>` (DI)
-- [ ] Database indexes configured for Entity static expression properties (see `.ai/docs/backend-code-patterns.md` Pattern 17)
+| Don't                                                   | Do                                                        |
+| ------------------------------------------------------- | --------------------------------------------------------- |
+| `throw new ValidationException()`                       | Use `PlatformValidationResult` fluent API                 |
+| Side effects in command handler                         | Entity Event Handler in `UseCaseEvents/`                  |
+| `IPlatformRootRepository<T>`                            | Service-specific: `IServiceRootRepository<T>`             |
+| Direct cross-service DB access                          | Message bus                                               |
+| DTO mapping in handler                                  | `PlatformEntityDto.MapToEntity()`                         |
+| Separate Command/Handler files                          | ONE file: Command + Result + Handler                      |
+| `protected bool HandleWhen()`                           | `public override async Task<bool> HandleWhen()`           |
+| No paging for large datasets                            | Use `ExecuteInjectScopedPagingAsync`                      |
+| Send events during migration                            | `dismissSendEvent: true`                                  |
+| Missing unit of work                                    | `using var uow = uowManager.Begin()`                      |
+| Use migration for ongoing sync                          | Use message bus consumers                                 |
+| Use `PlatformMongoMigrationExecutor` when you need DI   | Use `PlatformDataMigrationExecutor<MongoDbContext>`       |
+| Assume MongoMigrationExecutor has `RootServiceProvider` | It does NOT — only `PlatformDataMigrationExecutor` has it |
+| Update MongoDB one-by-one in a loop                     | Use `BulkWriteAsync` with `List<WriteModel<T>>`           |
+| No dependency waiting (message bus)                     | `TryWaitUntilAsync`                                       |
+| No race condition handling                              | Check `LastMessageSyncDate`                               |
+| Blocking in producer                                    | Keep `BuildMessageAsync` fast                             |
+| Only check `Deleted` action                             | Also check soft delete flag                               |
+| Unbounded parallelism                                   | `maxConcurrent: 5`                                        |
+| Long-running without unit of work                       | Commit per batch                                          |
+| Business logic in entity properties                     | Use methods                                               |
+| Missing `[JsonIgnore]` on navigation                    | Add `[JsonIgnore]`                                        |
+| Complex logic in getters                                | Extract to method                                         |
+| Computed property without `set { }`                     | Add empty setter                                          |
 
 ---
 
-## Task Planning Notes
+## Verification Checklist
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- [ ] Uses service-specific repository (`I{Service}RootRepository<T>`)
+- [ ] Validation uses fluent API (`.And()`, `.AndAsync()`)
+- [ ] No side effects in command handlers
+- [ ] DTO mapping in DTO class
+- [ ] Cross-service uses message bus
+- [ ] Background jobs have `maxConcurrent` limit
+- [ ] Migrations use `dismissSendEvent: true`
+- [ ] Entity event handlers use `public override async Task<bool> HandleWhen()`
+- [ ] MongoDB migrations choose correct executor (Mongo vs Data)
+- [ ] Cross-DB migrations use `PlatformDataMigrationExecutor<MongoDbContext>`
+
+## Related
+
+- `api-design`
+- `database-optimization`
+
+---
+
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

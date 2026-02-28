@@ -1,10 +1,10 @@
 ---
-applyTo: "**/UseCaseEvents/**/*.cs"
+applyTo: '**/UseCaseEvents/**/*.cs'
 ---
 
 # Entity Event Handler Patterns
 
-> Auto-loads when editing Entity Event files. See `docs/claude/backend-patterns.md` for full reference.
+> Auto-loads when editing Entity Event files. See `docs/backend-patterns-reference.md` for full reference.
 
 ## Entity Event Handler (Side Effects)
 
@@ -53,6 +53,7 @@ Cross-service + Background processing?  -> PlatformApplicationBackgroundJob
 `{Action}On{CrudAction}{EntityName}EntityEventHandler`
 
 Examples:
+
 - `SendNotificationOnCreateLeaveRequestEntityEventHandler`
 - `UpdateSummaryOnUpdateEmployeeEntityEventHandler`
 - `CleanupOnDeleteProjectEntityEventHandler`

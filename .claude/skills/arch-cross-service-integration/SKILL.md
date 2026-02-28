@@ -1,12 +1,17 @@
 ---
 name: arch-cross-service-integration
+version: 1.1.0
 description: '[Architecture] Use when designing or implementing cross-service communication, data synchronization, or service boundary patterns.'
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
 ## Quick Summary
 
-**Goal:** Design and implement cross-service communication, data sync, and service boundary patterns in EasyPlatform.
+**Goal:** Design and implement cross-service communication, data sync, and service boundary patterns.
 
 **Workflow:**
 
@@ -20,7 +25,13 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 - Never access another service's database directly
 - Use `LastMessageSyncDate` for conflict resolution (only update if newer)
 - Consumers must wait for dependencies with `TryWaitUntilAsync`
-- Messages defined in shared project (e.g., PlatformExampleApp.Shared)
+- Messages defined in shared project (search for: shared message definitions, bus message classes)
+
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+>
+> - `backend-patterns-reference.md` — backend CQRS, entity event bus, message bus patterns
+>
+> If file not found, search for: cross-service message definitions, entity event producers, message bus consumers.
 
 # Cross-Service Integration Workflow
 
@@ -40,19 +51,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 
 ## Service Boundaries
 
-### EasyPlatform Services
-
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        EasyPlatform                                  │
-├─────────────────────────────────────────────────────────────────────┤
-│          Service A          │          Service B                     │
-│        (Domain Owner)       │        (Consumer)                      │
-├─────────────────────────────────────────────────────────────────────┤
-│                      Shared Infrastructure                           │
-│              RabbitMQ │ Redis │ MongoDB │ PostgreSQL                 │
-└─────────────────────────────────────────────────────────────────────┘
-```
+> **Note:** Search for `project-structure-reference.md` or the project's service directories to discover the platform's service map, data ownership matrix, and shared infrastructure components.
 
 ## Communication Patterns
 
@@ -70,7 +69,7 @@ Source Service                    Target Service
       │ Auto-raise                      │
       ▼                                 ▼
 ┌────────────┐                   ┌────────────┐
-│  Producer  │── RabbitMQ ────▶ │  Consumer  │
+│  Producer  │── MsgBus  ────▶ │  Consumer  │
 └────────────┘                   └────────────┘
 ```
 
@@ -81,8 +80,8 @@ Source Service                    Target Service
 **Use when**: Real-time data needed, no local copy required.
 
 ```csharp
-// In Service A, calling another service's API
-public class AccountsApiClient
+// In Service A, calling Service B API
+public class ServiceBApiClient
 {
     private readonly HttpClient _client;
 
@@ -112,11 +111,7 @@ var accountsData = await accountsDbContext.Users.ToListAsync();
 
 ## Data Ownership Matrix
 
-| Entity      | Owner Service | Consumers      |
-| ----------- | ------------- | -------------- |
-| TextSnippet | TextSnippet   | Other services |
-| User        | Accounts      | All services   |
-| Company     | Accounts      | All services   |
+> **Note:** Search for `project-structure-reference.md` or the project's documentation for the entity ownership matrix. Each entity should have exactly ONE owning service; consumers receive synced copies via message bus.
 
 ## Synchronization Patterns
 
@@ -195,8 +190,7 @@ Use `LastMessageSyncDate` for ordering - only update if message is newer. See CL
 ### Message Not Arriving
 
 ```bash
-# Check RabbitMQ queues
-rabbitmqctl list_queues
+# Check message broker queues (search for: queue management commands)
 
 # Check producer is publishing
 grep -r "HandleWhen" --include="*Producer.cs" -A 5

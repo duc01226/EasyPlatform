@@ -6,7 +6,7 @@ Scans .claude/skills/ directory to build catalog at runtime.
 Usage:
     python ck-help.py                    # Overview with quick start
     python ck-help.py fix                # Category guide with workflow
-    python ck-help.py plan:fast          # Command details
+    python ck-help.py plan-fast          # Skill details
     python ck-help.py debug login error  # Task recommendations
     python ck-help.py auth               # Search (unknown word)
 """
@@ -96,7 +96,7 @@ CATEGORY_GUIDES = {
     "bootstrap": {
         "title": "Project Setup",
         "workflow": [
-            ("Quick start", "`/bootstrap --fast` \"requirements\""),
+            ("Quick start", "`/bootstrap-auto-fast` \"requirements\""),
             ("Full setup", "`/bootstrap` \"detailed requirements\""),
         ],
         "tip": "Include tech stack preferences in description",
@@ -138,7 +138,7 @@ CATEGORY_GUIDES = {
     "review": {
         "title": "Code Review",
         "workflow": [
-            ("Full review", "`/review-codebase`"),
+            ("Full review", "`/code-review`"),
         ],
         "tip": "Review before merging to main",
     },
@@ -154,8 +154,7 @@ CATEGORY_GUIDES = {
     "integrate": {
         "title": "Integration",
         "workflow": [
-            ("Polar.sh", "`/integrate-polar`"),
-            ("SePay", "`/integrate-sepay`"),
+            ("Payment Systems", "`/payment-integration`"),
         ],
         "tip": "Read API docs before integrating",
     },
@@ -163,7 +162,7 @@ CATEGORY_GUIDES = {
         "title": "Skill Management",
         "workflow": [
             ("Create", "`/skill-create`"),
-            ("Optimize", "`/skill-plan`"),
+            ("Optimize", "`/skill-optimize`"),
         ],
         "tip": "Skills extend agent capabilities",
     },
@@ -200,10 +199,10 @@ CATEGORY_GUIDES = {
 }
 
 
-def detect_prefix(commands_dir: Path) -> str:
-    """Detect if commands use /ck: prefix based on directory structure."""
-    ck_commands_dir = commands_dir / "ck"
-    return "ck:" if ck_commands_dir.exists() and ck_commands_dir.is_dir() else ""
+def detect_prefix(skills_dir: Path) -> str:
+    """Detect if skills use /ck- prefix based on directory structure."""
+    # Check if any skill starts with "ck-"
+    return ""  # No prefix needed for skills
 
 
 def parse_frontmatter(file_path: Path) -> dict:
@@ -233,8 +232,8 @@ def parse_frontmatter(file_path: Path) -> dict:
     return result
 
 
-def discover_commands(skills_dir: Path, prefix: str) -> dict:
-    """Scan .claude/skills/ and build skill catalog (formerly commands)."""
+def discover_skills(skills_dir: Path, prefix: str) -> dict:
+    """Scan .claude/skills/ and build skill catalog."""
     commands = {}
     categories = {}
 
@@ -242,38 +241,27 @@ def discover_commands(skills_dir: Path, prefix: str) -> dict:
         return {"commands": commands, "categories": categories}
 
     # Scan all SKILL.md files
-    for skill_dir in sorted(skills_dir.iterdir()):
-        if not skill_dir.is_dir():
-            continue
-        md_file = skill_dir / "SKILL.md"
-        if not md_file.exists():
-            continue
+    for skill_file in skills_dir.rglob("SKILL.md"):
+        skill_dir = skill_file.parent
+        skill_name = skill_dir.name
 
-        # Get skill name from directory name
-        cmd_name = skill_dir.name
-
-        # Determine category from name prefix (e.g., fix-ci -> fix, plan-hard -> plan)
-        parts = cmd_name.split('-')
-        if len(parts) > 1 and parts[0] in ['fix', 'plan', 'cook', 'code', 'design', 'content',
-                                             'docs', 'git', 'review', 'scout', 'skill', 'bootstrap',
-                                             'team', 'test', 'integrate']:
-            category = parts[0]
-        else:
-            category = "core"
+        # Derive category from skill name prefix (e.g., fix-fast -> fix)
+        parts = skill_name.split('-')
+        category = parts[0] if len(parts) > 1 else "core"
 
         # Parse frontmatter
-        fm = parse_frontmatter(md_file)
+        fm = parse_frontmatter(skill_file)
         description = fm.get('description', '')
 
-        # Skip if no description (not a real skill)
+        # Skip if no description
         if not description:
             continue
 
         # Clean description (remove emoji indicators)
         clean_desc = re.sub(r'^[^\w\s]+\s*', '', description).strip()
 
-        # Format skill name with prefix
-        formatted_name = f"/{prefix}{cmd_name}" if prefix else f"/{cmd_name}"
+        # Format skill name as command trigger
+        formatted_name = f"/{prefix}{skill_name}" if prefix else f"/{skill_name}"
 
         # Add to commands
         if category not in commands:
@@ -307,8 +295,8 @@ def detect_intent(input_str: str, categories: list) -> str:
     if input_lower in [c.lower() for c in categories]:
         return "category"
 
-    # Check if it looks like a command (has colon)
-    if ':' in input_str:
+    # Check if it looks like a specific skill (has hyphen suggesting compound name)
+    if '-' in input_str and len(input_str.split()) == 1:
         return "command"
 
     # Multiple words = task description
@@ -399,13 +387,13 @@ def show_command(data: dict, command: str, prefix: str) -> None:
     commands = data["commands"]
 
     # Normalize search term
-    search = command.lower().replace("/ck:", "").replace("/", "").replace(":", "")
+    search = command.lower().replace("/ck-", "").replace("/", "").replace(":", "-")
 
     found = None
     for cmds in commands.values():
         for cmd in cmds:
             # Normalize command name for comparison
-            name = cmd["name"].lower().replace("/ck:", "").replace("/", "").replace(":", "")
+            name = cmd["name"].lower().replace("/ck-", "").replace("/", "")
             if name == search:
                 found = cmd
                 break
@@ -620,7 +608,7 @@ def show_config_guide() -> None:
     print("**Plan Validation:**")
     print("- `mode: \"prompt\"` - Ask user after plan creation (default)")
     print("- `mode: \"auto\"` - Always run validation interview")
-    print("- `mode: \"off\"` - Skip; user runs `/plan:validate` manually")
+    print("- `mode: \"off\"` - Skip; user runs `/plan-validate` manually")
     print()
     print("Validation interviews the user with critical questions to confirm")
     print("assumptions, risks, and architectural decisions before implementation.")
@@ -816,9 +804,9 @@ def main():
         print("Error: .claude/skills/ directory not found.")
         sys.exit(1)
 
-    # Detect prefix and discover skills
-    prefix = detect_prefix(skills_dir)
-    data = discover_commands(skills_dir, prefix)
+    # Discover skills
+    prefix = ""
+    data = discover_skills(skills_dir, prefix)
 
     if not data["commands"]:
         print("No skills found in .claude/skills/")

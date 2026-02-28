@@ -1,12 +1,59 @@
 ---
 name: investigate
 description: '[Fix & Debug] Investigate and explain how existing features or logic work. READ-ONLY exploration with no code changes.'
+version: 2.1.0
 allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** before executing:
+
+- `.claude/skills/shared/understand-code-first-protocol.md`
+- `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+
+## Quick Summary
+
+**Goal:** READ-ONLY exploration of existing features and logic — understand how code works without making changes.
+
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+>
+> - `project-structure-reference.md` -- project patterns and structure
+>
+> If file not found, search for: project documentation, coding standards, architecture docs.
+
+**Workflow:**
+
+1. **Discovery** — Search codebase for related files (Entities > Commands > Events > Controllers)
+2. **Knowledge Graph** — Read and document purpose, symbols, dependencies per file
+3. **Flow Mapping** — Trace entry points through pipeline to exit points
+4. **Analysis** — Extract business rules, validation, authorization, error handling
+5. **Synthesis** — Write executive summary with key files and flow diagrams
+6. **Present** — Deliver findings, offer deeper dives on subtopics
+
+**Key Rules:**
+
+- Strictly READ-ONLY — no code changes allowed
+- Evidence-based: every claim needs `file:line` proof (grep results, read confirmations)
+- Mark unverified claims as "inferred" with low confidence
+- Write analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`
+- For UI investigation, activate `visual-component-finder` skill FIRST
 
 # Feature Investigation
 
 READ-ONLY exploration skill for understanding existing features. No code changes.
+
+## Investigation Mindset (NON-NEGOTIABLE)
+
+**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
+
+- Do NOT assume code works as named — verify by reading actual implementations
+- Every finding must include `file:line` evidence (grep results, read confirmations)
+- If you cannot prove a claim with a code trace, mark it as "inferred" with low confidence
+- Question assumptions: "Does this actually do what I think?" → read the implementation, not just the signature
+- Challenge completeness: "Is this all?" → grep for related usages, consumers, and cross-service references
+- Verify relationships: "Does A really call B?" → trace the actual call path with evidence
+- No "looks like it works" without proof — state what you verified and how
 
 ## Summary
 
@@ -23,10 +70,11 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 
 **Key Principles:**
 
-- **Be skeptical. Critical thinking. Everything needs traced proof.** — Never accept code at face value; verify claims against actual behavior, trace data flow end-to-end, and demand evidence (file:line references, grep results, runtime confirmation) for every finding
 - Strictly READ-ONLY — no code changes allowed
-- MUST read anti-hallucination-protocol.md and knowledge-graph-template.md before starting
+- MUST read evidence-based-reasoning-protocol.md and knowledge-graph-template.md before starting
 - Evidence-based: validate every assumption with actual code references
+
+> **UI/Frontend Investigation?** If investigating a UI component from a screenshot, image, or visual reference, activate `visual-component-finder` skill FIRST. It uses a pre-built component index (`docs/component-index.json`) to match visuals to Angular components with >=85% confidence before deeper investigation.
 
 ## Mode Selection
 
@@ -48,12 +96,10 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 
 **IMPORTANT: You MUST read these files before starting. Do NOT skip.**
 
-- **⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — Assumption validation, evidence chains, context anchoring
+- **⚠️ MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` — Assumption validation, evidence chains, context anchoring
 - **⚠️ MUST READ** `.claude/skills/shared/knowledge-graph-template.md` — Per-file analysis structure
 
 **If preceded by `/scout`:** Use Scout's numbered file list as analysis targets. Skip redundant discovery. Prioritize HIGH PRIORITY files first.
-
-**If task involves UI** (fix UI, update UI, screenshot analysis): Run `/find-component` first to identify matched components and narrow investigation scope.
 
 ## Investigation Techniques
 
@@ -164,8 +210,8 @@ Document flow as text diagram:
 
 #### Frontend Patterns
 
-- `AppBaseVmStoreComponent` - State management components
-- `PlatformVmStore` - Store implementations
+- `project store component base (search for: store component base class)` - State management components
+- `project store base (search for: store base class)` - Store implementations
 - `effectSimple` / `tapResponse` - Effect handling
 - `observerLoadingErrorState` - Loading/error states
 - API services extending `PlatformApiService`
@@ -174,7 +220,9 @@ Document flow as text diagram:
 
 ### Analysis File Setup
 
-Autonomous mode writes analysis to `.ai/workspace/analysis/[feature-name]-investigation.md` with:
+**MANDATORY (all modes):** Write analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`. Re-read ENTIRE file before presenting findings in Step 6. This prevents knowledge loss during long investigations.
+
+Analysis file structure:
 
 ```markdown
 ## Metadata
@@ -329,3 +377,136 @@ For each file, document in `## Knowledge Graph`:
 
 - Always plan and break many small todo tasks
 - Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+
+---
+
+## Investigation & Recommendation Protocol
+
+> Moved from CLAUDE.md. This protocol applies when recommending code changes (removal, refactoring, replacement) — not just feature investigation. It ensures evidence-based architectural decisions and prevents mistakes like the Npgsql IDbContextFactory incident.
+
+**📚 Reference:** See `.claude/skills/shared/evidence-based-reasoning-protocol.md` for comprehensive evidence-based reasoning protocols with verification commands and forbidden phrases. See `.claude/patterns/anti-hallucination-patterns.md` for bad vs good response examples.
+
+### Golden Rule: Evidence Before Conclusion
+
+**NEVER recommend code changes (removal, refactoring, replacement) without completing this validation chain:**
+
+```
+1. Interface/API identified
+   ↓
+2. ALL implementations found (Grep: "class.*:.*IInterfaceName")
+   ↓
+3. ALL registrations traced (Grep: "AddScoped.*IInterfaceName|AddSingleton.*IInterfaceName")
+   ↓
+4. ALL usage sites verified (Grep: "IInterfaceName" in context of injection/calls)
+   ↓
+5. Cross-service impact: Check ALL project services (ServiceB, ServiceA, ServiceC, ServiceD)
+   ↓
+6. Impact assessment: What breaks if removed?
+   ↓
+7. Confidence declaration: X% confident based on [evidence list]
+   ↓
+ONLY THEN → Output recommendation
+```
+
+**If ANY step incomplete → STOP and gather more evidence OR state "Insufficient evidence to recommend removal"**
+
+### Mistake Patterns & Prevention
+
+| Mistake Pattern                | Prevention Rule                             | Grep Pattern                                 |
+| ------------------------------ | ------------------------------------------- | -------------------------------------------- |
+| **"This is unused"**           | Require proof of zero references            | `grep -r "TargetName" --include="*.cs"`      |
+| **"Remove this registration"** | Trace interface → impl → ALL call sites     | `grep "IInterfaceName" -A 5 -B 5`            |
+| **"Replace X with Y"**         | Impact analysis: what depends on X?         | `grep "using.*X\|: X\|<X>" --include="*.cs"` |
+| **"This can be simplified"**   | Verify edge cases preserved                 | Check tests, usage contexts                  |
+| **"Dual registration"**        | Compare services: Growth vs Surveys pattern | Cross-service comparison required            |
+
+### Breaking Change Risk Matrix
+
+Before recommending ANY architectural change, assess risk level:
+
+| Risk Level | Criteria                                                      | Required Evidence                                                               |
+| ---------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| **HIGH**   | Removing registrations, deleting classes, changing interfaces | Full usage trace + impact analysis + cross-service check (all project services) |
+| **MEDIUM** | Refactoring methods, changing signatures, updating patterns   | Usage trace + test verification + cross-service check (all project services)    |
+| **LOW**    | Renaming variables, formatting, adding comments               | Code review only                                                                |
+
+**For HIGH/MEDIUM risk changes:** Require explicit confidence declaration with evidence summary before proceeding.
+
+### Evidence Hierarchy
+
+1. **Code Evidence (Primary)** — Actual usage in codebase (Grep results, Read file confirmations)
+2. **Test Evidence** — Unit/integration tests covering the code path
+3. **Documentation** — Comments, docs explaining purpose
+4. **Inference** — Logical deduction (LOWEST priority, must be validated)
+
+**Rule:** Recommendations based on inference alone are FORBIDDEN. Always upgrade to code evidence.
+
+### Validation Checklist for Code Removal
+
+Before recommending removal of ANY code element, verify ALL of these:
+
+- [ ] **No static references** — `grep -r "ClassName" --include="*.cs"` returns 0 results
+- [ ] **No string literals** — `grep -r "\"ClassName\"|'ClassName'"` returns 0 results
+- [ ] **No dynamic invocations** — Check reflection, factory patterns, message bus registrations
+- [ ] **No DI container registrations** — Search `services.Add*<ClassName>` patterns
+- [ ] **No configuration references** — Check appsettings.json, environment variables
+- [ ] **No test dependencies** — Check test projects for usage
+- [ ] **Cross-service impact** — Search ALL project's microservices (ServiceB, ServiceA, ServiceC, ServiceD)
+
+**Confidence Declaration:** If checklist not 100% complete, state: "Confidence: <90% — did not verify [missing items]"
+
+### Interface → Implementation → Usage Trace Protocol
+
+For any interface-based recommendation:
+
+```bash
+# Step 1: Find ALL implementations
+grep -r "class.*:.*ITargetInterface" --include="*.cs"
+
+# Step 2: Find ALL registrations
+grep -r "AddScoped\|AddSingleton\|AddTransient.*ITargetInterface" --include="*.cs"
+
+# Step 3: Find ALL injection points
+grep -r "ITargetInterface" --include="*.cs" -A 5 -B 5
+
+# Step 4: Find ALL usage in found implementations
+# Read each file from Step 3, trace method calls
+
+# Step 5: Cross-service check (MANDATORY - all project services)
+for svc in ServiceB ServiceA ServiceC Accounts ServiceD; do
+    grep -r "ITargetInterface" "services directory/$svc" --include="*.cs"
+done
+
+# ONLY if ALL steps show zero usage → recommend removal
+```
+
+### Comparison Pattern (Service vs Service)
+
+When investigating service-specific implementations:
+
+1. **Find working reference service** — Identify service where feature works correctly
+2. **Compare implementations** — Side-by-side file comparison
+3. **Identify differences** — List what's different between working vs non-working
+4. **Verify each difference** — Understand WHY each difference exists
+5. **Recommend changes** — Based on proven working pattern, not assumptions
+
+### Confidence Levels (Required for Architectural Recommendations)
+
+Every recommendation for code removal/refactoring MUST include confidence level:
+
+- **95-100%** — Full trace completed, all checklist items verified, all project services checked
+- **80-94%** — Main usage paths verified, some edge cases unverified
+- **60-79%** — Implementation found, usage partially traced
+- **<60%** — Insufficient evidence → DO NOT RECOMMEND, gather more evidence first
+
+**Format:** `Confidence: 85% — Verified main usage in Surveys service, did not check ServiceA/ServiceB`
+
+### When to Activate This Protocol
+
+Trigger the full validation chain for:
+
+- Any recommendation to remove registrations, classes, interfaces
+- Architectural changes affecting multiple services
+- "This seems unused" observations
+- Cross-service dependency analysis
+- Breaking change impact assessment

@@ -1,8 +1,25 @@
 ---
 name: design-describe
-description: '[Design & Content] Describe a design based on screenshot/video'
-argument-hint: [screenshot]
+version: 1.0.0
+description: '[Design] Describe a design based on screenshot/video'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+> **Skill Variant:** Variant of design skills — describe UI from screenshot or video.
+
+## Quick Summary
+
+**Goal:** Analyze a screenshot or video and produce a detailed written description of the UI design.
+
+**Workflow:**
+1. **Analyze** — Process the visual input (screenshot/video) using vision capabilities
+2. **Describe** — Write detailed description of layout, colors, typography, interactions
+
+**Key Rules:**
+- Use `ai-multimodal` skill for image/video analysis
+- Focus on design elements: layout, spacing, colors, typography, interactions
 
 Think hard to describe the design based on this screenshot/video:
 <screenshot>$ARGUMENTS</screenshot>
@@ -25,7 +42,9 @@ Think hard to describe the design based on this screenshot/video:
     - For each phase, add `phase-XX-phase-name.md` files containing sections (Context links, Overview with date/priority/statuses, Key Insights, Requirements, Architecture, Related code files, Implementation Steps, Todo list, Success Criteria, Risk Assessment, Security Considerations, Next steps).
 3. Report back to user with a summary of the plan.
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

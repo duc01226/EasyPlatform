@@ -1,85 +1,170 @@
 ---
 name: branch-comparison
-description: "[Git & Release] Use when the user asks to compare branches, analyze git diffs, review changes, update specifications based on code changes, or sync specs with implementation. Triggers on keywords like "compare branches", "git diff", "what changed", "branch comparison", "spec update", "sync specs"."
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
+version: 1.0.1
+description: "[Git] Use when the user asks to compare branches, analyze git diffs, review changes between branches, update specifications based on code changes, or analyze what changed. Triggers on keywords like "compare branches", "git diff", "what changed", "branch comparison", "code changes", "spec update"."
+
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+## Quick Summary
+
+**Goal:** Analyze all file changes between git branches, perform impact analysis, and update specification documents.
+
+**Workflow:**
+
+1. **Discovery** — Run git diff/log, classify changes (Frontend/Backend, Feature/Bugfix)
+2. **Knowledge Graph** — Document each changed file with dependencies, impact level, service context
+3. **Analysis** — Code review (strengths, weaknesses, security), refactoring recommendations
+4. **Approval Gate** — Present findings for explicit approval before updating specs
+5. **Spec Update** — Update requirements, tests, architecture docs based on approved analysis
+
+**Key Rules:**
+
+- Must read `evidence-based-reasoning-protocol.md` before executing
+- All analysis must be evidence-based from actual git diffs
+- Never proceed past approval gate without explicit user approval
 
 # Branch Comparison & Specification Update
 
-Expert full-stack analyst for branch diff analysis, impact assessment, and spec synchronization.
+You are to operate as an expert full-stack dotnet angular principle developer, software architect, and technical analyst to analyze all file changes between branches, perform comprehensive impact analysis, and update specification documents.
 
-**⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — validation checkpoints, evidence chains, confidence levels
+**IMPORTANT**: Always thinks hard, plan step by step to-do list first before execute. Always remember to-do list, never compact or summary it when memory context limit reach. Always preserve and carry your to-do list through every operation.
+
+**Prerequisites:** **⚠️ MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
 ---
 
-## Phase 1: Branch Analysis
+## PHASE 1: EXTERNAL MEMORY-DRIVEN BRANCH ANALYSIS
 
-Build structured analysis in `.ai/workspace/analysis/[comparison-name].md`.
+Build a structured knowledge model in `.ai/workspace/analysis/[comparison-name].analysis.md`.
 
-### Git Change Detection
+### PHASE 1A: INITIALIZATION AND DISCOVERY
+
+1. **Initialize** the analysis file with standard headings
+
+### GIT BRANCH ANALYSIS DISCOVERY
+
+**GIT_DIFF_COMPREHENSIVE_ANALYSIS**: Start with systematic git change detection:
+
+1. **Primary Change Detection Commands**:
+
 ```bash
-git diff --name-status [source]..[target]
-git diff --stat [source]..[target]
-git log --oneline [source]..[target]
+git diff --name-status [source-branch]..[target-branch]
+git diff --stat [source-branch]..[target-branch]
+git log --oneline [source-branch]..[target-branch]
 ```
 
-### Change Classification
-For each changed file, document:
-- `filePath`, `changeType` (A/M/D), `impactLevel` (Critical/High/Medium/Low)
-- `serviceContext` (Frontend/Backend/Config/DB)
-- Purpose: Feature, Bug Fix, Refactor
+Document results under `## Git Diff Analysis` and `## Commit History`.
 
-### Related Files Discovery
-For each changed file, find: importers, dependencies, test files, API consumers, UI components.
+2. **Change Impact & Scope Classification**: Document under `## Change Classification` and `## Change Scope Analysis`:
+    - Types: Frontend, Backend, Config, DB
+    - Purpose: Feature, Bug Fix, Refactor
 
-> If file list exceeds 75, prioritize by impactLevel (Critical > High > Medium > Low).
+**RELATED_FILES_COMPREHENSIVE_DISCOVERY**: For each changed file, discover all related components:
 
-## Phase 2: Analysis & Planning
+- Importers
+- Dependencies
+- Test files
+- API consumers
+- UI components
 
-### Code Review Analysis
-- Strengths, weaknesses, security concerns, performance implications
+Save ALL changed files AND related files to `## Comprehensive File List` with:
 
-### Refactoring Recommendations
-- Immediate improvements, structural changes, technical debt
+- `filePath`
+- `changeType`
+- `relationshipType`
+- `impactLevel`
+- `serviceContext`
 
-### Specification Update Plan
-- New requirements discovered, test spec updates needed, documentation gaps
+**INTELLIGENT_SCOPE_MANAGEMENT**: If file list exceeds 75, prioritize by impactLevel (Critical > High > Medium > Low).
 
-## Phase 3: Approval Gate
+### PHASE 1B: KNOWLEDGE GRAPH CONSTRUCTION
 
-**CRITICAL**: Present analysis and plan for approval before executing updates.
+**IMPORTANT: MUST DO WITH TODO LIST**
 
-## Phase 4: Execution
+For each file, document in `## Knowledge Graph`:
 
-Update specification documents with: requirements, test specs, architecture docs, review findings.
+- All standard fields from feature-implementation skill
+- Focus on change-specific context
 
-### Spec Update Mode
-**⚠️ MUST READ** `.claude/skills/branch-comparison/references/spec-update-workflow.md`
+### PHASE 1C: OVERALL ANALYSIS
 
-Provides:
-- **Pattern-based discovery** - grep patterns for finding spec files and cross-referencing
-- **Gap analysis template** - Component | Specified | Implemented | Gap
-- **Update checklist** - Entities, commands, queries, events, API endpoints
-- **3 update patterns** - Entity spec, command spec, API endpoint spec
+Write comprehensive summary showing:
 
-## Phase 5: Validation
+- Complete end-to-end workflows discovered
+- Key architectural patterns and relationships
+- Business logic workflows affected
+- Integration points and dependencies
 
-Verify updated specifications accurately reflect all changes. Cross-reference:
-```bash
-# Verify all commands are documented
-grep -r "class.*Command" --include="*.cs" -l  # Find implementations
-grep -r "CommandName" docs/specifications/     # Check in specs
-```
+---
 
-## Guidelines
+## PHASE 2: COMPREHENSIVE ANALYSIS AND PLANNING
 
-- **Evidence-based**: All updates grounded in concrete `git diff` output
-- **Comprehensive impact**: Analyze direct and indirect effects, including cross-service
-- **Platform-aware**: Respect CQRS, Clean Architecture, platform patterns
-- **Full traceability**: Ensure links between code, requirements, and tests
+Generate detailed analysis under these headings:
 
+### 1. Code Review Analysis
 
-## IMPORTANT Task Planning Notes
+- Strengths
+- Weaknesses
+- Security concerns
+- Performance implications
+- Maintainability
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+### 2. Refactoring Recommendations
+
+- Immediate improvements
+- Structural changes
+- Technical debt items
+
+### 3. Specification Update Plan
+
+- New Requirements Discovery
+- Test Specification Updates
+- Documentation Strategy
+
+---
+
+## PHASE 3: APPROVAL GATE
+
+**CRITICAL**: Present comprehensive analysis, code review, refactoring recommendations, and specification update plan for explicit approval. **DO NOT** proceed without it.
+
+---
+
+## PHASE 4: SPECIFICATION UPDATE EXECUTION
+
+Once approved, read existing specification document and update with:
+
+- Requirements
+- Test Specifications
+- Architecture Documentation
+- Code Review findings
+
+---
+
+## SUCCESS VALIDATION
+
+Verify updated specification accurately reflects all changes. Document under `## Specification Validation`.
+
+---
+
+## Branch Comparison Guidelines
+
+- **Evidence-Based Analysis**: Start with `git diff` and base all updates on concrete code changes
+- **Comprehensive Impact Assessment**: Analyze direct and indirect effects, including cross-service impacts
+- **Enterprise Architecture Awareness**: Respect platform patterns, CQRS, and Clean Architecture
+- **Quality-Focused Approach**: Perform thorough code review and identify refactoring opportunities
+- **Specification Completeness**: Ensure full traceability between code, requirements, and tests
+
+## Related
+
+- `commit`
+- `code-review`
+
+---
+
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

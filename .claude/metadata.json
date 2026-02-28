@@ -467,6 +467,12 @@
           "installedVersion": "v2.1.0"
         },
         {
+          "path": "scripts/scan_commands.py",
+          "checksum": "a141fb1933862ea8f716f934bc2c35447fd3db2c17f237e20909ed19931e9b41",
+          "ownership": "user",
+          "installedVersion": "v2.1.0"
+        },
+        {
           "path": "scripts/scan_skills.py",
           "checksum": "bd51e3a7dd81511164090dbc98d5f16a867d7fc434ad46201923518bbf1316de",
           "ownership": "user",
@@ -833,145 +839,145 @@
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/references/cdp-domains.md",
+          "path": "skills/chrome-devtools/references/cdp-domains.md",
           "checksum": "fa81fa0fda1ae94ff2c25c924cfcb16f5a6e967b6d8412ddd372dc8a1b26f601",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/references/performance-guide.md",
+          "path": "skills/chrome-devtools/references/performance-guide.md",
           "checksum": "e9391edae861ecd6fac3af4384a7e692def9c9cacbb8c5d4f7ff207475f977c0",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/references/puppeteer-reference.md",
+          "path": "skills/chrome-devtools/references/puppeteer-reference.md",
           "checksum": "dcec4af083b7fe2d405a40aad2b511317c1e9deaa2bec5ca91ec9959aff1a423",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/__tests__/selector.test.js",
+          "path": "skills/chrome-devtools/scripts/__tests__/selector.test.js",
           "checksum": "69fa6c4d04f2c8d0578325894fc06ea820e4c771d267d90969f09343e076d5e2",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/.gitignore",
+          "path": "skills/chrome-devtools/scripts/.gitignore",
           "checksum": "4135c9bc6d5275ea5d2b998ae111ab875956332218bf8053b479a80c569412a5",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/aria-snapshot.js",
+          "path": "skills/chrome-devtools/scripts/aria-snapshot.js",
           "checksum": "770def314a983b3362d4736a05cb3e2e0992ef8b1b4d46f46bb7d85c388de910",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/click.js",
+          "path": "skills/chrome-devtools/scripts/click.js",
           "checksum": "927083fa56707dddada3fe0c1641e7abf00d8d18049470edf13879d98524c033",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/console.js",
+          "path": "skills/chrome-devtools/scripts/console.js",
           "checksum": "fcea72a5e1a80cfee82d24c40999e047a9badefca0cf5b4f1dd53b5f8a8a2dd9",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/evaluate.js",
+          "path": "skills/chrome-devtools/scripts/evaluate.js",
           "checksum": "78ab2875d5d71575dae26f87f57faa0cd3760ba09403c723cd43c0c2ad81d3d7",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/fill.js",
+          "path": "skills/chrome-devtools/scripts/fill.js",
           "checksum": "4bb8c0947c2bfe570aa7327060284c4ba5cc480fcacf857652276d436b714444",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/inject-auth.js",
+          "path": "skills/chrome-devtools/scripts/inject-auth.js",
           "checksum": "017dc060cf36e3de47ee78b93ca01babeeced84fdfd903962cddf6d79d416adf",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/install-deps.sh",
+          "path": "skills/chrome-devtools/scripts/install-deps.sh",
           "checksum": "c236b59df7a234079da05bdb18c22f064955a3ccea315431fa87f8a413ecc78c",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/install.sh",
+          "path": "skills/chrome-devtools/scripts/install.sh",
           "checksum": "bdd10bfe4195ca105704c2b4ba2f641f484e3706bb6cf57030372e5a90aa10df",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/lib/browser.js",
+          "path": "skills/chrome-devtools/scripts/lib/browser.js",
           "checksum": "bb54d46b24ab205bb1440810754dbb3ab31712cbf95c54b3dcbca59c31f71a6b",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/lib/selector.js",
+          "path": "skills/chrome-devtools/scripts/lib/selector.js",
           "checksum": "0c988abbec29cfb7361920c773673191a94d99c01fe1aec5a42cb48aeb6acf88",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/navigate.js",
+          "path": "skills/chrome-devtools/scripts/navigate.js",
           "checksum": "68719c2cdcb43f736d9edc9b3d1718ca717139dca34f8fd3c6014e7e6744fe96",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/network.js",
+          "path": "skills/chrome-devtools/scripts/network.js",
           "checksum": "11eee93df619e65a2e3d9167fe66ebc98be9e6ab73fbe165036e6cc9616799c0",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/package.json",
+          "path": "skills/chrome-devtools/scripts/package.json",
           "checksum": "c9820cccfe82545cc91397fd97c18a4c13c4a95937d892e6f1f389012a616f0f",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/performance.js",
+          "path": "skills/chrome-devtools/scripts/performance.js",
           "checksum": "e98ad5ad37ce0165d93a3f148894dd26252714586f05b0236ccb6d971c6cd3cc",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/README.md",
+          "path": "skills/chrome-devtools/scripts/README.md",
           "checksum": "3cea88c23e3c6302f1c4035d24be6ec8665c290860b03343e8d065af94a2a5e7",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/screenshot.js",
+          "path": "skills/chrome-devtools/scripts/screenshot.js",
           "checksum": "d2fe8415bdfabd7907b78330d3e928644d3c8334abed1295576877fdfd044c15",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/select-ref.js",
+          "path": "skills/chrome-devtools/scripts/select-ref.js",
           "checksum": "bde38b95dda31e4a77a595d46e98e912daba48269e2ececc30c78e65db45edab",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/scripts/snapshot.js",
+          "path": "skills/chrome-devtools/scripts/snapshot.js",
           "checksum": "d5ef361b6af181070c45edbb9cad6b88df1f4d0a193bdb308e2ec0aaff0a58c0",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/test-ui/SKILL.md",
+          "path": "skills/chrome-devtools/SKILL.md",
           "checksum": "fd1a6cf52a431fbcda8e8b5a3b6a738287f503023ed5622081dbb3737bcb00a5",
           "ownership": "user",
           "installedVersion": "v2.1.0"
@@ -1225,30 +1231,6 @@
         {
           "path": "skills/databases/SKILL.md",
           "checksum": "0567d1899bd7fa7530f9a4ac78f38ae597c3ca5adc27958efda4d0052bc03304",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "skills/debugging/references/defense-in-depth.md",
-          "checksum": "89e23fdfcd85ecb2ea867e9770775cd8c7211682af4152719364b1005d0f5497",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "skills/debugging/references/root-cause-tracing.md",
-          "checksum": "4df0e51b2d26a407d3e2ffba19c7c0cf8d01698c1745009e667b69ba2c962100",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "skills/debugging/references/systematic-debugging.md",
-          "checksum": "2c97f742d43baae7206d0859d42bb6837cb89949c7ab0c3fa37d6df129f2b628",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "skills/debugging/references/verification.md",
-          "checksum": "ac56942520327efaf29b415b27e6a4211d88386d0072c5d400fdee39eba8bbf3",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
@@ -3041,121 +3023,91 @@
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/planning/references/codebase-understanding.md",
-          "checksum": "ef6417c8cd53c4df07c6ea96e29e6081113cb2a12bbd126f6709a6cfa5215934",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "skills/planning/references/output-standards.md",
-          "checksum": "858d776bb6bdc381815b275030908ea5c857beaed584b9bf9a3e2558da581dde",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "skills/planning/references/plan-organization.md",
-          "checksum": "938ac47a11784947abc1e6d96ba0edb33e2a87867d57d07edf85507318199fcd",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "skills/planning/references/research-phase.md",
-          "checksum": "71d54835710655c7f69489dc56d2112a9adb0452aa43a002d1a81f1e727c1b79",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "skills/planning/references/solution-design.md",
-          "checksum": "805525a1f228e080809cd8794735ed148fb37c2702517a8982488f72a31ab7f0",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
           "path": "skills/planning/SKILL.md",
           "checksum": "63d61df71fdb3c978157f026d199cb33029fe51292a62306feef81f45112e0d2",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/assets/dashboard-template.html",
+          "path": "skills/plans-kanban/assets/dashboard-template.html",
           "checksum": "b3948e08afe2689875992686e186907ae458a2cb70ca4a1c8f615ff630a1cecd",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/assets/dashboard.css",
+          "path": "skills/plans-kanban/assets/dashboard.css",
           "checksum": "33f1806c532700e50ff73d9c6fb3b3f1beef25f39b6091ba692c4bf4b12d4b07",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/assets/dashboard.js",
+          "path": "skills/plans-kanban/assets/dashboard.js",
           "checksum": "36d14cddc0c7de37340e75c3cc54f52a171617d6d428f2f7d9481865a1619878",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/assets/favicon.png",
+          "path": "skills/plans-kanban/assets/favicon.png",
           "checksum": "2ea58b8c84129d6f3fc3b697c57bd26d93218b535d74b0b3fbca713808e62837",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/package.json",
+          "path": "skills/plans-kanban/package.json",
           "checksum": "05a25bed2e7d60a52fe4fa20bc943ff566e3149ef1fba24a77590d7995e7320f",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/scripts/lib/dashboard-renderer.cjs",
+          "path": "skills/plans-kanban/scripts/lib/dashboard-renderer.cjs",
           "checksum": "b6fa5f18245f41a925094a7b7f76cc735b691d8abb78472d038d29c6804aa66d",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/scripts/lib/http-server.cjs",
+          "path": "skills/plans-kanban/scripts/lib/http-server.cjs",
           "checksum": "7b6cb868a79e28245bbd63d779217eb591fc7a00c24d5a8c7f3522e5e24028ea",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/scripts/lib/plan-metadata-extractor.cjs",
+          "path": "skills/plans-kanban/scripts/lib/plan-metadata-extractor.cjs",
           "checksum": "48cc9baa77555b132d49216f712c760e6587456754577bfbb4ba5d9d60477da8",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/scripts/lib/plan-parser.cjs",
+          "path": "skills/plans-kanban/scripts/lib/plan-parser.cjs",
           "checksum": "59fd55968b6ca2f59048cb346dae2b9fb8c6c609862439113f46beb471cc6ba4",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/scripts/lib/plan-scanner.cjs",
+          "path": "skills/plans-kanban/scripts/lib/plan-scanner.cjs",
           "checksum": "9fb30c731ea46865234896a569060425d0abcbe014c04eeab581e879082842e3",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/scripts/lib/port-finder.cjs",
+          "path": "skills/plans-kanban/scripts/lib/port-finder.cjs",
           "checksum": "276d366c2f7a35594e913a43671e32a823c1639b367546f354fac97c115df20f",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/scripts/lib/process-mgr.cjs",
+          "path": "skills/plans-kanban/scripts/lib/process-mgr.cjs",
           "checksum": "5d371e1d3a2d3c665e9f92bf39be373032a48364ee1c0fd270f5dedd0f841094",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/scripts/server.cjs",
+          "path": "skills/plans-kanban/scripts/server.cjs",
           "checksum": "9777bb6823b56ede0af4d7485dbfdbea0ee327f536de7f23465ddba38bada3e1",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/kanban/SKILL.md",
+          "path": "skills/plans-kanban/SKILL.md",
           "checksum": "5a09a1f76b8617e64157ba9fc2811c8668136a25213ec9b6e6a343c8afeedfb2",
           "ownership": "user",
           "installedVersion": "v2.1.0"
@@ -3425,32 +3377,38 @@
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/skill-plan/LICENSE.txt",
+          "path": "skills/skill-creator/LICENSE.txt",
           "checksum": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/skill-plan/scripts/init_skill.py",
+          "path": "skills/skill-creator/scripts/init_skill.py",
           "checksum": "0bba250b94caa4cb2b28b15dad26fdcf371aeda4c9797b8120e55c2e33e0c73c",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/skill-plan/scripts/package_skill.py",
+          "path": "skills/skill-creator/scripts/package_skill.py",
           "checksum": "692525dd8096aee51730ab142fb2605894a6f1a4135bcffebbf4f8ed3cf8715e",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/skill-plan/scripts/quick_validate.py",
+          "path": "skills/skill-creator/scripts/quick_validate.py",
           "checksum": "41647b79d15e7e51b944d56843e9f87a33f4c66e64ded5964d1f95bad2fe634a",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "skills/skill-plan/SKILL.md",
+          "path": "skills/skill-creator/SKILL.md",
           "checksum": "d12765385cb7ddc5783e6d4e41b999a7d2b43b3b3955b51fdfe7f9886e283f89",
+          "ownership": "user",
+          "installedVersion": "v2.1.0"
+        },
+        {
+          "path": "skills/template-skill/SKILL.md",
+          "checksum": "eb685d91de039ed864fbd790cddf31684b017fd4a34ee1a55760d8d7cdbadefa",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },

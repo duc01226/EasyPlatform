@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "last_updated": "2026-01-13T00:34:41.991Z",
+  "category_buckets": {
+    "cqrs": {
+      "success": 0,
+      "failure": 0
+    },
+    "repository": {
+      "success": 0,
+      "failure": 0
+    },
+    "migration": {
+      "success": 0,
+      "failure": 0
+    },
+    "build": {
+      "success": 0,
+      "failure": 0
+    },
+    "test": {
+      "success": 12,
+      "failure": 4
+    },
+    "lint": {
+      "success": 0,
+      "failure": 0
+    },
+    "other": {
+      "success": 0,
+      "failure": 0
+    }
+  },
+  "error_classification": {
+    "validation": 0,
+    "runtime": 0,
+    "timeout": 0,
+    "syntax": 0,
+    "permission": 0,
+    "unknown": 4
+  },
+  "daily_history": []
+}

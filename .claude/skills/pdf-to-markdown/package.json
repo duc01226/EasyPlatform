@@ -1,16 +1,21 @@
 {
   "name": "pdf-to-markdown",
   "version": "1.0.0",
-  "description": "Convert PDF files to Markdown",
+  "description": "Convert PDF files to Markdown with native text and OCR support",
   "main": "scripts/convert.cjs",
   "scripts": {
-    "convert": "node scripts/convert.cjs",
-    "test": "node tests/convert.test.cjs"
+    "start": "node scripts/convert.cjs",
+    "test": "node tests/run-tests.cjs"
   },
   "dependencies": {
-    "pdf-parse": "^1.1.1"
+    "@opendocsg/pdf2md": "^0.1.28"
+  },
+  "optionalDependencies": {
+    "pdfjs-dist": "^4.10.38",
+    "tesseract.js": "^5.1.1"
   },
   "engines": {
     "node": ">=18.0.0"
-  }
+  },
+  "private": true
 }

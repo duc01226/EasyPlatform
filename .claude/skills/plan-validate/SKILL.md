@@ -1,28 +1,31 @@
 ---
 name: plan-validate
+version: 1.0.0
 description: '[Planning] Validate plan with critical questions interview'
-argument-hint: [plan-path]
+activation: user-invoked
 ---
 
-> **CRITICAL:** Do NOT use `EnterPlanMode` tool — it blocks Write/Edit/Task tools. Follow the workflow below.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
-## Summary
+**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
 
-**Goal:** Validate an implementation plan by interviewing the user with critical questions to confirm assumptions and surface risks before coding.
+## Quick Summary
 
-| Step | Action                  | Key Notes                                                                  |
-| ---- | ----------------------- | -------------------------------------------------------------------------- |
-| 1    | Read plan files         | `plan.md` and all `phase-*.md` -- find decision points, assumptions, risks |
-| 2    | Extract question topics | Scan for architecture, assumptions, tradeoffs, risks, scope keywords       |
-| 3    | Generate questions      | 2-4 concrete options per question, mark recommended option                 |
-| 4    | Interview user          | Use AskUserQuestion with configured question count (min-max)               |
-| 5    | Document answers        | Add `## Validation Summary` to plan.md with confirmed decisions            |
+**Goal:** Interview the user with critical questions to validate assumptions and surface issues in a plan before coding begins.
 
-**Key Principles:**
+**Workflow:**
 
-- Only ask about genuine decision points -- don't manufacture artificial choices
+1. **Read Plan** — Parse plan.md and phase files for decisions, assumptions, risks
+2. **Extract Topics** — Scan for architecture, assumptions, tradeoffs, risks, scope keywords
+3. **Generate Questions** — Formulate concrete questions with 2-4 options each
+4. **Interview User** — Present questions using configured count range
+5. **Document Answers** — Add Validation Summary section to plan.md
+
+**Key Rules:**
+
+- Only ask about genuine decision points; don't manufacture artificial choices
 - Prioritize questions that could change implementation significantly
-- Document answers but do NOT modify phase files -- just note what needs updating
+- Do NOT modify phase files; just document what needs updating
 
 ## Your mission
 
@@ -30,9 +33,9 @@ Interview the user with critical questions to validate assumptions, confirm deci
 
 ## Plan Resolution
 
-1. If `$ARGUMENTS` provided → Use that path
-2. Else check `## Plan Context` section → Use active plan path
-3. If no plan found → Ask user to specify path or run `/plan-hard` first
+1. If `$ARGUMENTS` provided -> Use that path
+2. Else check `## Plan Context` section -> Use active plan path
+3. If no plan found -> Ask user to specify path or run `/plan-hard` first
 
 ## Configuration (from injected context)
 
@@ -57,14 +60,13 @@ Read the plan directory:
 
 Scan plan content for:
 
-| Category         | Keywords to detect                                                                                                                                       |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Architecture** | "approach", "pattern", "design", "structure", "database", "API"                                                                                          |
-| **Assumptions**  | "assume", "expect", "should", "will", "must", "default"                                                                                                  |
-| **Tradeoffs**    | "tradeoff", "vs", "alternative", "option", "choice", "either/or"                                                                                         |
-| **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern"                                                                                        |
-| **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"                                                                                                 |
-| **Reasoning**    | Check: Does Architecture section explain WHY, not just WHAT? Does Risk Assessment include failure modes? Is there a Design Intent or Trade-offs section? |
+| Category         | Keywords to detect                                                |
+| ---------------- | ----------------------------------------------------------------- |
+| **Architecture** | "approach", "pattern", "design", "structure", "database", "API"   |
+| **Assumptions**  | "assume", "expect", "should", "will", "must", "default"           |
+| **Tradeoffs**    | "tradeoff", "vs", "alternative", "option", "choice", "either/or"  |
+| **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern" |
+| **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"          |
 
 ### Step 3: Generate Questions
 
@@ -103,7 +105,7 @@ Use `AskUserQuestion` tool to present questions.
 
 **Rules:**
 
-- Use question count from `## Plan Context` → `Validation: mode=X, questions=MIN-MAX`
+- Use question count from `## Plan Context` -> `Validation: mode=X, questions=MIN-MAX`
 - Group related questions when possible (max 4 questions per tool call)
 - Focus on: assumptions, risks, tradeoffs, architecture
 
@@ -123,7 +125,6 @@ After collecting answers, update the plan:
 
 - {decision 1}: {user choice}
 - {decision 2}: {user choice}
-  1
 
 ### Action Items
 
@@ -141,13 +142,16 @@ After validation completes, provide summary:
 - Any items flagged for plan revision
 - Recommendation: proceed to implementation or revise plan first
 
+## **IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks using `TaskCreate`
+- Always add a final review todo task to verify work quality and identify fixes/enhancements
+- **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
+  1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
+  2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+
 ## Important Notes
 
 **IMPORTANT:** Only ask questions about genuine decision points - don't manufacture artificial choices.
 **IMPORTANT:** If plan is simple with few decisions, it's okay to ask fewer than min questions.
 **IMPORTANT:** Prioritize questions that could change implementation significantly.
-
-## IMPORTANT Task Planning Notes (MUST FOLLOW)
-
-- Always plan and break work into many small todo tasks using `TaskCreate`
-- Always add a final review todo task to verify work quality

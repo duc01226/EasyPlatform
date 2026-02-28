@@ -1,16 +1,33 @@
 ---
 name: cook-auto-parallel
-description: '[Implementation] ⚡⚡⚡ Plan parallel phases & execute with fullstack-developer agents'
-argument-hint: [tasks]
+version: 1.0.0
+description: '[Implementation] Plan parallel phases & execute with fullstack-developer agents'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+> **Skill Variant:** Variant of `/cook` — autonomous parallel execution with fullstack-developer subagents.
+
+## Quick Summary
+
+**Goal:** Plan parallel-executable phases and dispatch to fullstack-developer subagents for concurrent implementation.
+
+**Workflow:**
+1. **Plan** — Create plan with parallel-executable phases (strict file ownership)
+2. **Dispatch** — Launch fullstack-developer subagents per phase
+3. **Merge** — Integrate results and verify
+
+**Key Rules:**
+- Each subagent owns specific files; no cross-boundary edits
+- Autonomous mode: no user confirmation between phases
+- Break work into todo tasks; add final self-review task
 
 **Ultrathink parallel** to implement: <tasks>$ARGUMENTS</tasks>
 
 **IMPORTANT:** Activate needed skills. Ensure token efficiency. Sacrifice grammar for concision.
-
-## ⚠️ Anti-Hallucination Reminder
-
-**Before modifying ANY code:** Verify assumptions with actual code evidence. Search for usages, read implementations, trace dependencies. If confidence < 90% on any change, investigate first or ask user. See `.claude/skills/shared/anti-hallucination-protocol.md` for full protocol.
 
 ## Workflow
 
@@ -19,10 +36,11 @@ argument-hint: [tasks]
 - Use max 2 `researcher` agents in parallel if tasks complex
 - Use `/scout-ext` to search codebase
 - Keep reports ≤150 lines
+- **External Memory**: Write research to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read before parallel execution.
 
 ### 2. Parallel Planning
 
-- Trigger `/plan-hard --parallel <detailed-instruction>`
+- Trigger `/plan-parallel <detailed-instruction>`
 - Wait for plan with dependency graph, execution strategy, file ownership matrix
 
 ### 3. Parallel Implementation
@@ -60,7 +78,9 @@ argument-hint: [tasks]
 
 **Example:** Phases 1-3 parallel → Launch 3 fullstack-developer agents → Wait → Phase 4 sequential
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

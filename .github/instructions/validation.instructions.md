@@ -1,10 +1,10 @@
 ---
-applyTo: "**/UseCaseCommands/**/*.cs,**/*Validation*.cs"
+applyTo: '**/UseCaseCommands/**/*.cs,**/*Validation*.cs'
 ---
 
 # Validation Patterns
 
-> Auto-loads when editing Command/Validation files. See `docs/claude/backend-patterns.md` for full reference.
+> Auto-loads when editing Command/Validation files. See `docs/backend-patterns-reference.md` for full reference.
 
 ## Fluent Validation Style (MANDATORY)
 

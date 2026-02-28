@@ -71,60 +71,34 @@ function setupEditState(tmpDir, state) {
 }
 
 /**
- * Setup mock checkpoint file in the format session-resume.cjs expects.
- * Creates a markdown file named memory-checkpoint-YYYYMMDD-HHMMSS.md
- * in {tmpDir}/plans/reports/ with ### Active Todos section.
+ * Setup mock checkpoint file
  * @param {string} tmpDir - Temp directory path
- * @param {object} data - Checkpoint data ({ timestamp, todos })
+ * @param {object} data - Checkpoint data
  * @returns {string} Path to the checkpoint file
  */
 function setupCheckpoint(tmpDir, data) {
-  const reportsDir = path.join(tmpDir, 'plans', 'reports');
-  fs.mkdirSync(reportsDir, { recursive: true });
-
-  const ts = new Date(data.timestamp || new Date().toISOString());
-  const pad = (n) => String(n).padStart(2, '0');
-  const filename = `memory-checkpoint-${ts.getFullYear()}${pad(ts.getMonth() + 1)}${pad(ts.getDate())}-${pad(ts.getHours())}${pad(ts.getMinutes())}${pad(ts.getSeconds())}.md`;
-
-  const statusMap = { completed: 'x', in_progress: '~', pending: ' ' };
-  const todos = data.todos || [];
-  const todosSection = todos
-    .map((t, i) => `${i + 1}. [${statusMap[t.status] || ' '}] ${t.content}`)
-    .join('\n');
-
-  const content = [
-    '# Memory Checkpoint',
-    '',
-    '## Todo List State',
-    '',
-    `- **Last Updated:** ${data.timestamp || new Date().toISOString()}`,
-    `- **Task Count:** ${todos.length}`,
-    '',
-    '### Active Todos',
-    '',
-    todosSection,
-    '',
-    '---',
-    ''
-  ].join('\n');
-
-  const checkpointFile = path.join(reportsDir, filename);
-  fs.writeFileSync(checkpointFile, content);
+  const checkpointDir = path.join(tmpDir, '.claude', 'checkpoints');
+  fs.mkdirSync(checkpointDir, { recursive: true });
+  const checkpointFile = path.join(checkpointDir, 'latest.json');
+  fs.writeFileSync(checkpointFile, JSON.stringify({
+    timestamp: new Date().toISOString(),
+    ...data
+  }, null, 2));
   return checkpointFile;
 }
 
 /**
- * Setup mock patterns file
+ * Setup mock lessons file
  * @param {string} tmpDir - Temp directory path
- * @param {Array} patterns - Array of pattern objects
- * @returns {string} Path to the patterns file
+ * @param {Array} lessons - Array of lesson objects
+ * @returns {string} Path to the lessons file
  */
-function setupPatterns(tmpDir, patterns) {
-  const patternsDir = path.join(tmpDir, '.claude', 'patterns');
-  fs.mkdirSync(patternsDir, { recursive: true });
-  const patternsFile = path.join(patternsDir, 'learned.json');
-  fs.writeFileSync(patternsFile, JSON.stringify(patterns, null, 2));
-  return patternsFile;
+function setupAceLessons(tmpDir, lessons) {
+  const memoryDir = path.join(tmpDir, '.claude', 'memory');
+  fs.mkdirSync(memoryDir, { recursive: true });
+  const lessonsFile = path.join(memoryDir, 'lessons.json');
+  fs.writeFileSync(lessonsFile, JSON.stringify(lessons, null, 2));
+  return lessonsFile;
 }
 
 /**
@@ -301,41 +275,17 @@ function createTimestamp(hoursAgo = 0) {
 }
 
 /**
- * Generate unique test session ID for isolation
- * @returns {string} Unique session ID
- */
-function generateTestSessionId() {
-  return `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
-/**
- * Setup mock workflow state for testing (per-session path)
- * Writes to /tmp/ck/workflow/{sessionId}.json (matches production path).
- * Tests MUST pass { CLAUDE_SESSION_ID: sessionId } env to runHook.
- * @param {string} tmpDir - Temp directory path (unused, kept for backward compat)
+ * Setup mock workflow state for testing
+ * @param {string} tmpDir - Temp directory path
  * @param {object} state - Workflow state object
- * @param {string} [sessionId] - Optional session ID (generates unique if not provided)
- * @returns {{ stateFile: string, sessionId: string }} Path and session ID
+ * @returns {string} Path to the state file
  */
-function setupWorkflowState(tmpDir, state, sessionId) {
-  const sid = sessionId || generateTestSessionId();
-  const workflowDir = path.join(os.tmpdir(), 'ck', 'workflow');
-  fs.mkdirSync(workflowDir, { recursive: true });
-  const stateFile = path.join(workflowDir, `${sid}.json`);
+function setupWorkflowState(tmpDir, state) {
+  const claudeDir = path.join(tmpDir, '.claude');
+  fs.mkdirSync(claudeDir, { recursive: true });
+  const stateFile = path.join(claudeDir, '.workflow-state.json');
   fs.writeFileSync(stateFile, JSON.stringify(state, null, 2));
-  return { stateFile, sessionId: sid };
-}
-
-/**
- * Cleanup workflow state file created by setupWorkflowState
- * @param {string} stateFile - Path to state file
- */
-function cleanupWorkflowState(stateFile) {
-  try {
-    if (stateFile && fs.existsSync(stateFile)) {
-      fs.unlinkSync(stateFile);
-    }
-  } catch { /* silent */ }
+  return stateFile;
 }
 
 /**
@@ -443,7 +393,7 @@ module.exports = {
   setupTodoState,
   setupEditState,
   setupCheckpoint,
-  setupPatterns,
+  setupAceLessons,
   setupCkIgnore,
   createMockFile,
   readStateFile,
@@ -456,8 +406,6 @@ module.exports = {
   getTestsDir,
   createTimestamp,
   setupWorkflowState,
-  cleanupWorkflowState,
-  generateTestSessionId,
   setupWorkflowConfig,
   setupCompactMarker,
   readCalibration,

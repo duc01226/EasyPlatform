@@ -1,8 +1,12 @@
 ---
 name: repomix
+version: 1.0.0
 description: '[AI & Tools] Package code repositories into single AI-friendly files using Repomix with customizable patterns and multiple output formats. Triggers: repomix, package repo, repository context, codebase snapshot, repo pack.'
+
 allowed-tools: NONE
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
 ## Quick Summary
 

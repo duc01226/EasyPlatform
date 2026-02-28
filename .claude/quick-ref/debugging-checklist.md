@@ -72,7 +72,7 @@
 
 ---
 
-## Common EasyPlatform Bug Locations
+## Common BravoSUITE Bug Locations
 
 | Symptom            | Check First                          |
 | ------------------ | ------------------------------------ |

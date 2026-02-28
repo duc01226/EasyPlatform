@@ -1,10 +1,10 @@
 ---
-applyTo: "src/WebV2/**/*.ts,src/WebV2/**/*.html,src/Web/**/*.ts,src/Web/**/*.html,libs/**/*.ts"
+applyTo: 'src/WebV2/**/*.ts,src/WebV2/**/*.html,src/Web/**/*.ts,src/Web/**/*.html,libs/**/*.ts'
 ---
 
 # Angular Frontend Patterns
 
-> Auto-loads when editing Angular TypeScript/HTML files. See `docs/claude/frontend-patterns.md` for full reference.
+> Auto-loads when editing Angular TypeScript/HTML files. See `docs/frontend-patterns-reference.md` for full reference.
 
 ## Component Hierarchy
 
@@ -48,15 +48,20 @@ export abstract class PlatformComponent {
 ```typescript
 @Injectable()
 export class MyStore extends PlatformVmStore<MyVm> {
-    protected get enableCaching() { return true; }
+    protected get enableCaching() {
+        return true;
+    }
     protected cachedStateKeyName = () => 'MyStore';
     protected vmConstructor = (data?: Partial<MyVm>) => new MyVm(data);
 
-    loadData = this.effectSimple(() =>
-        this.api.getData().pipe(
-            this.observerLoadingErrorState('load'),
-            this.tapResponse(data => this.updateState({ data }))
-        ), 'loadData');
+    loadData = this.effectSimple(
+        () =>
+            this.api.getData().pipe(
+                this.observerLoadingErrorState('load'),
+                this.tapResponse(data => this.updateState({ data }))
+            ),
+        'loadData'
+    );
 
     readonly data$ = this.select(state => state.data);
     readonly loading$ = this.isLoading$('loadData');
@@ -72,7 +77,7 @@ export class MyStore extends PlatformVmStore<MyVm> {
         <app-loading [target]="this">
             @if (vm(); as vm) {
                 @for (i of vm.items; track i.id) {
-                    <div class="entity-list__item">{{i.name}}</div>
+                    <div class="entity-list__item">{{ i.name }}</div>
                 }
             }
         </app-loading>
@@ -80,7 +85,9 @@ export class MyStore extends PlatformVmStore<MyVm> {
     providers: [EntityStore]
 })
 export class EntityListComponent extends AppBaseVmStoreComponent<EntityState, EntityStore> {
-    ngOnInit() { this.store.load(); }
+    ngOnInit() {
+        this.store.load();
+    }
 }
 ```
 
@@ -115,10 +122,18 @@ protected initialFormConfig = () => ({
 ```typescript
 @Injectable({ providedIn: 'root' })
 export class EmployeeApiService extends PlatformApiService {
-    protected get apiUrl() { return environment.apiUrl + '/api/Employee'; }
-    getEmployees(query?: Query): Observable<Employee[]> { return this.get<Employee[]>('', query); }
-    saveEmployee(cmd: SaveCommand): Observable<Result> { return this.post<Result>('', cmd); }
-    search(criteria: Search): Observable<Employee[]> { return this.post('/search', criteria, { enableCache: true }); }
+    protected get apiUrl() {
+        return environment.apiUrl + '/api/Employee';
+    }
+    getEmployees(query?: Query): Observable<Employee[]> {
+        return this.get<Employee[]>('', query);
+    }
+    saveEmployee(cmd: SaveCommand): Observable<Result> {
+        return this.post<Result>('', cmd);
+    }
+    search(criteria: Search): Observable<Employee[]> {
+        return this.post('/search', criteria, { enableCache: true });
+    }
 }
 ```
 
@@ -137,12 +152,7 @@ export class MyComponent {
 }
 
 // RxJS utilities
-this.search$.pipe(
-    skipDuplicates(500),
-    applyIf(this.isEnabled$, debounceTime(300)),
-    distinctUntilObjectValuesChanged(),
-    this.untilDestroyed()
-).subscribe();
+this.search$.pipe(skipDuplicates(500), applyIf(this.isEnabled$, debounceTime(300)), distinctUntilObjectValuesChanged(), this.untilDestroyed()).subscribe();
 ```
 
 ## BEM HTML Template Standard
@@ -194,31 +204,43 @@ canActivate(): Observable<boolean> { return this.authService.hasRole$(PlatformRo
 
 ```typescript
 import {
-    date_addDays, date_format, date_timeDiff,
-    list_groupBy, list_distinctBy, list_sortBy,
-    string_isEmpty, string_truncate,
-    immutableUpdate, deepClone, removeNullProps,
-    guid_generate, task_delay, task_debounce
+    date_addDays,
+    date_format,
+    date_timeDiff,
+    list_groupBy,
+    list_distinctBy,
+    list_sortBy,
+    string_isEmpty,
+    string_truncate,
+    immutableUpdate,
+    deepClone,
+    removeNullProps,
+    guid_generate,
+    task_delay,
+    task_debounce
 } from '@libs/platform-core';
 ```
 
-## Platform Utilities
+## BravoCommon Components
 
 ```typescript
-// Use platform-core utilities for common operations
-import { list_groupBy, list_distinctBy, date_format, date_addDays } from '@libs/platform-core';
+<bravo-select formControlName="ids" [fetchDataFn]="fetchFn" [multiple]="true" [searchable]="true" />
+<div appTextEllipsis [maxTextEllipsisLines]="2">...</div>
+{{ date | localizedDate:'shortDate' }} | {{ 'item' | pluralize:count }}
+BravoArrayUtil.toDictionary(items, x => x.id);
+BravoDateUtil.format(new Date(), 'DD/MM/YYYY');
 ```
 
 ## Forbidden Patterns
 
-| Forbidden | Why | Correct |
-|-----------|-----|---------|
-| `ngOnChanges` | Error-prone | `@Watch` decorator |
-| `implements OnInit, OnDestroy` | Use base class | Extend platform base |
-| Manual `destroy$ = new Subject()` | Memory leaks | `this.untilDestroyed()` |
-| `takeUntil(this.destroy$)` | Redundant | `this.untilDestroyed()` |
-| Direct `HttpClient` | Missing interceptors | `PlatformApiService` |
-| Manual signals for state | Inconsistent | `PlatformVmStore` |
+| Forbidden                         | Why                  | Correct                 |
+| --------------------------------- | -------------------- | ----------------------- |
+| `ngOnChanges`                     | Error-prone          | `@Watch` decorator      |
+| `implements OnInit, OnDestroy`    | Use base class       | Extend platform base    |
+| Manual `destroy$ = new Subject()` | Memory leaks         | `this.untilDestroyed()` |
+| `takeUntil(this.destroy$)`        | Redundant            | `this.untilDestroyed()` |
+| Direct `HttpClient`               | Missing interceptors | `PlatformApiService`    |
+| Manual signals for state          | Inconsistent         | `PlatformVmStore`       |
 
 ## TypeScript Style
 

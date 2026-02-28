@@ -288,7 +288,7 @@ Tools Used:
    3 Read
    2 Bash
    2 Write
-   1 TodoWrite
+   1 TaskCreate
    1 Grep
    1 Glob
 ```
@@ -369,7 +369,7 @@ Tools Used:
    6 Read
    3 Write
    2 Bash
-   1 TodoWrite
+   1 TaskCreate
 ```
 
 Files Modified:

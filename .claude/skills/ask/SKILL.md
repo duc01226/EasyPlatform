@@ -1,8 +1,25 @@
 ---
 name: ask
-description: '[Planning] ⚡ Answer technical and architectural questions.'
-argument-hint: [technical-question]
+version: 1.0.0
+description: '[Utilities] Answer technical and architectural questions.'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+## Quick Summary
+
+**Goal:** Answer technical and architectural questions with evidence-based analysis.
+
+**Workflow:**
+1. **Understand** -- Parse the question and identify scope
+2. **Research** -- Search codebase for evidence and examples
+3. **Answer** -- Provide concise, evidence-backed answer
+
+**Key Rules:**
+- Every claim must be backed by code evidence (`file:line`)
+- Keep answers concise and actionable
+- Reference existing patterns over theoretical solutions
 
 ## Context
 
@@ -42,7 +59,7 @@ You are a Senior Systems Architect providing expert consultation and architectur
 ## Process
 
 1. **Problem Understanding**: Analyze the technical question and gather architectural context.
-    - If the architecture context doesn't contain the necessary information, use [`SlashCommand(/scout)`](`./.claude/skills/scout.md`) to scout the codebase again.
+    - If the architecture context doesn't contain the necessary information, use `/scout` skill to scout the codebase again.
 2. **Expert Consultation**:
     - Systems Designer: Define system boundaries, data flows, and component relationships
     - Technology Strategist: Evaluate technology choices, patterns, and industry best practices
@@ -65,7 +82,9 @@ You are a Senior Systems Architect providing expert consultation and architectur
 
 This command focuses on architectural consultation and strategic guidance. Do not start implementing anything.
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

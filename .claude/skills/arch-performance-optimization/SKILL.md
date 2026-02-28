@@ -1,8 +1,13 @@
 ---
 name: arch-performance-optimization
+version: 1.1.0
 description: '[Architecture] Use when analyzing and improving performance for database queries, API endpoints, or frontend rendering.'
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
 ## Quick Summary
 

@@ -1,18 +1,31 @@
 ---
 name: code-parallel
-description: '[Implementation] ⚡ Execute parallel or sequential phases based on plan structure'
-argument-hint: [plan-path]
+version: 1.0.0
+description: '[Implementation] Execute parallel or sequential phases based on plan structure'
+activation: user-invoked
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+> **Skill Variant:** Variant of `/code` — parallel phase execution from a plan.
+
+## Quick Summary
+
+**Goal:** Execute implementation phases from an existing plan using parallel fullstack-developer subagents.
+
+**Workflow:**
+1. **Load** — Read the implementation plan and identify parallel phases
+2. **Dispatch** — Launch subagents per phase with strict file ownership
+3. **Merge** — Integrate results and verify
+
+**Key Rules:**
+- Requires an existing plan file as input
+- Each subagent owns specific files; no cross-boundary edits
+- Sequential phases must wait for dependencies
+
 Execute plan: <plan>$ARGUMENTS</plan>
-
-**⚠️ MUST READ before implementation:**
-
-- `.claude/skills/shared/anti-hallucination-protocol.md` — Assumption validation, evidence chains, context anchoring
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
-**Core Rule:** Verify every assumption with actual code evidence before making changes. If confidence < 90%, investigate further or ask user.
 
 **IMPORTANT:** Activate needed skills. Ensure token efficiency. Sacrifice grammar for concision.
 
@@ -23,6 +36,7 @@ Execute plan: <plan>$ARGUMENTS</plan>
 - Read `plan.md` from given path
 - **Check for:** Dependency graph, Execution strategy, Parallelization Info, File Ownership matrix
 - **Decision:** IF parallel-executable → Step 2A, ELSE → Step 2B
+- **External Memory**: Re-read any `.ai/workspace/analysis/` files referenced in the plan before dispatching to parallel agents.
 
 ### 2A. Parallel Execution
 
@@ -73,7 +87,9 @@ Follow `./.claude/workflows/primary-workflow.md`:
 - Parallel: "Phases 1-3 parallel, then 4" → Launch 3 agents → Wait → Launch 1 agent
 - Sequential: "Phase 1 → 2 → 3" → Main agent implements each phase
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

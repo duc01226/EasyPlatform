@@ -3,7 +3,7 @@ name: {skill-name}
 description: >-
   Use when {trigger conditions}.
   Triggers on keywords like "{keyword1}", "{keyword2}", "{keyword3}".
-allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TodoWrite
+allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 infer: true
 ---
 

@@ -30,17 +30,14 @@ const MARKERS_DIR = path.join(CK_TMP_DIR, 'markers');
 // Global calibration data (shared by design - records compact thresholds)
 const CALIBRATION_PATH = path.join(CK_TMP_DIR, 'calibration.json');
 
-// Hook metrics data (shared - tracks hook effectiveness)
-const METRICS_PATH = path.join(CK_TMP_DIR, 'hook-metrics.json');
-
 // Debug logs directory
 const DEBUG_DIR = path.join(CK_TMP_DIR, 'debug');
 
-// Swap files directory (for externalized large tool outputs)
+// External memory swap directory (tool output externalization)
 const SWAP_DIR = path.join(CK_TMP_DIR, 'swap');
 
-// Workflow state directory (per-session workflow tracking)
-const WORKFLOW_DIR = path.join(CK_TMP_DIR, 'workflow');
+// Session state directory (consolidated from /tmp/ck-session-*.json)
+const SESSION_STATE_DIR = path.join(CK_TMP_DIR, 'session');
 
 /**
  * Ensure directory exists
@@ -78,6 +75,36 @@ function getDebugLogPath(sessionId) {
 }
 
 /**
+ * Get swap directory for a session
+ * @param {string} sessionId - Session ID
+ * @returns {string} Full path to session swap directory
+ */
+function getSwapDir(sessionId) {
+  return path.join(SWAP_DIR, sessionId);
+}
+
+/**
+ * Ensure swap directory exists for a session
+ * @param {string} sessionId - Session ID
+ * @returns {string} Full path to session swap directory
+ */
+function ensureSwapDir(sessionId) {
+  const swapPath = getSwapDir(sessionId);
+  ensureDir(swapPath);
+  return swapPath;
+}
+
+/**
+ * Get session state file path
+ * @param {string} sessionId - Session ID
+ * @returns {string} Full path to session state file (/tmp/ck/session/{id}.json)
+ */
+function getSessionStatePath(sessionId) {
+  ensureDir(SESSION_STATE_DIR);
+  return path.join(SESSION_STATE_DIR, `${sessionId}.json`);
+}
+
+/**
  * Initialize ClaudeKit temp directories
  * Call this at startup to ensure directories exist
  */
@@ -85,6 +112,8 @@ function initDirs() {
   ensureDir(CK_TMP_DIR);
   ensureDir(MARKERS_DIR);
   ensureDir(DEBUG_DIR);
+  ensureDir(SWAP_DIR);
+  ensureDir(SESSION_STATE_DIR);
 }
 
 /**
@@ -101,68 +130,24 @@ function cleanAll() {
   }
 }
 
-/**
- * Sanitize session ID to prevent path injection
- * Only allows alphanumeric characters and dashes
- * @param {string} sessionId - Raw session ID
- * @returns {string} Sanitized session ID
- */
-function sanitizeSessionId(sessionId) {
-  const raw = (typeof sessionId === 'string' && sessionId) ? sessionId : 'default';
-  return raw.replace(/[^a-zA-Z0-9-]/g, '_');
-}
-
-/**
- * Get swap directory for a session
- * @param {string} sessionId - Session ID
- * @returns {string} Full path to session swap directory
- */
-function getSwapDir(sessionId) {
-  return path.join(SWAP_DIR, sanitizeSessionId(sessionId));
-}
-
-/**
- * Ensure swap directory exists for a session
- * @param {string} sessionId - Session ID
- * @returns {string} Full path to session swap directory
- */
-function ensureSwapDir(sessionId) {
-  const dir = getSwapDir(sessionId);
-  ensureDir(dir);
-  return dir;
-}
-
-/**
- * Get workflow state file path for a session
- * @param {string} sessionId - Session ID
- * @returns {string} Full path to workflow state file
- */
-function getWorkflowPath(sessionId) {
-  return path.join(WORKFLOW_DIR, `${sanitizeSessionId(sessionId)}.json`);
-}
-
 module.exports = {
   // Directories
   CK_TMP_DIR,
   MARKERS_DIR,
   DEBUG_DIR,
   SWAP_DIR,
-  WORKFLOW_DIR,
+  SESSION_STATE_DIR,
 
   // Files
   CALIBRATION_PATH,
-  METRICS_PATH,
 
   // Helpers
   ensureDir,
   getMarkerPath,
   getDebugLogPath,
-  getWorkflowPath,
-  initDirs,
-  cleanAll,
-
-  // Swap helpers
-  sanitizeSessionId,
   getSwapDir,
-  ensureSwapDir
+  ensureSwapDir,
+  getSessionStatePath,
+  initDirs,
+  cleanAll
 };

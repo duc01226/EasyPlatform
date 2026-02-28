@@ -1,11 +1,28 @@
 ---
 name: skill-optimize
-description: "[Tooling & Meta] Optimize an existing agent skill"
-argument-hint: [skill-name] [prompt]
+version: 1.0.0
+description: '[Skill Management] Optimize an existing agent skill'
+activation: user-invoked
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+## Quick Summary
+
+**Goal:** Optimize an existing skill for token efficiency, clarity, and effectiveness.
+
+**Workflow:**
+1. **Analyze** — Review skill structure, line count, progressive disclosure
+2. **Optimize** — Reduce SKILL.md size, move details to references, improve clarity
+3. **Validate** — Verify skill still works correctly after optimization
+
+**Key Rules:**
+- Delegates to `skill-creator` for optimization patterns
+- SKILL.md target: under 100 lines with progressive disclosure
+- Reference files also under 100 lines each
+
 Think harder.
-Use `skill-plan` and `claude-code` skills.
+Use `skill-creator` and `claude-code` skills.
 Use `docs-seeker` skills to search for documentation if needed.
 
 ## Arguments
@@ -17,11 +34,10 @@ PROMPT: $2 (default: empty)
 
 Optimize an existing skill in `.claude/skills/${SKILL}` directory.
 
-**Mode:** If `$ARGUMENTS` contains `--auto`, skip user confirmation and implement directly.
-Otherwise, propose a plan and ask user to review:
+**Mode detection:**
 
-- If approved: Write plan per "Output Requirements", then ask to start implementing.
-- If rejected: Revise or ask clarifying questions, then repeat.
+- If arguments contain "auto" or "trust me": Skip plan approval, implement directly.
+- Otherwise: Propose plan first, ask user to review before implementing.
 
 ## Additional instructions
 
@@ -43,7 +59,9 @@ An output implementation plan must also follow the progressive disclosure struct
 - Each skill teaches Claude how to perform a specific development task, not what a tool does.
 - Claude Code can activate multiple skills automatically to achieve the user's request.
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

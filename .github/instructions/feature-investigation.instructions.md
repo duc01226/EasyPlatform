@@ -1,5 +1,5 @@
 ---
-applyTo: '**/*.cs,**/*.ts'
+applyTo: "**/*.cs,**/*.ts"
 ---
 
 # Feature Investigation Protocol
@@ -17,16 +17,19 @@ applyTo: '**/*.cs,**/*.ts'
 6. Implementation     → Read actual code logic
 ```
 
-## EasyPlatform Service Map
+## BravoSUITE Service Map
 
-| Service         | Domain      | Key Entities                           |
-| --------------- | ----------- | -------------------------------------- |
-| **TextSnippet** | Example app | TextSnippetEntity, TextSnippetCategory |
+| Service | Domain | Key Entities |
+|---------|--------|-------------|
+| **bravoTALENTS** | Recruitment | Candidate, JobPost, Pipeline, Interview |
+| **bravoGROWTH** | Employee lifecycle | Employee, Goal, Kudos, Review, CheckIn, Timesheet |
+| **bravoSURVEYS** | Survey management | Survey, Question, Response, Template |
+| **bravoINSIGHTS** | Analytics | Dashboard, Report, Widget |
+| **Accounts** | Authentication | User, Role, Permission, Company |
 
 ## Search Strategy
 
 ### Step 1: Find Entry Points
-
 ```
 Search for: Controller endpoints → [Entity]Controller.cs
 Search for: Command/Query files → UseCaseCommands/[Feature]/*.cs
@@ -34,14 +37,12 @@ Search for: Frontend components → [feature]-*.component.ts
 ```
 
 ### Step 2: Trace the Stack
-
 ```
 Backend:  Controller → Command → Handler → Entity → Repository → Events
 Frontend: Component → Store → ApiService → Backend API
 ```
 
 ### Step 3: Cross-Service Communication
-
 ```
 Search for: *EventBusMessageProducer → outgoing messages
 Search for: *Consumer.cs → incoming messages
@@ -66,22 +67,22 @@ src/WebV2/apps/{app}/src/app/
     pages/{feature}/              # Feature pages
     components/{feature}/         # Feature components
 
-src/Frontend/libs/apps-domains/
+src/WebV2/libs/bravo-domain/
     {domain}/                     # Shared API services, models
 ```
 
 ## Platform Pattern Recognition
 
-| Pattern        | Files to Check                                             |
-| -------------- | ---------------------------------------------------------- |
-| CQRS Command   | `UseCaseCommands/{Feature}/{Verb}{Entity}Command.cs`       |
-| CQRS Query     | `UseCaseQueries/{Feature}/Get{Entity}Query.cs`             |
-| Entity Events  | `UseCaseEvents/{Feature}/{Action}On{Event}EventHandler.cs` |
-| Message Bus    | `MessageBus/{Entity}EventBusMessage*.cs`                   |
-| Background Job | `BackgroundJobs/{JobName}BackgroundJob.cs`                 |
-| Data Migration | `DataMigrations/{Timestamp}_{Description}.cs`              |
-| Store          | `{feature}.store.ts`                                       |
-| API Service    | `{domain}-api.service.ts`                                  |
+| Pattern | Files to Check |
+|---------|---------------|
+| CQRS Command | `UseCaseCommands/{Feature}/{Verb}{Entity}Command.cs` |
+| CQRS Query | `UseCaseQueries/{Feature}/Get{Entity}Query.cs` |
+| Entity Events | `UseCaseEvents/{Feature}/{Action}On{Event}EventHandler.cs` |
+| Message Bus | `MessageBus/{Entity}EventBusMessage*.cs` |
+| Background Job | `BackgroundJobs/{JobName}BackgroundJob.cs` |
+| Data Migration | `DataMigrations/{Timestamp}_{Description}.cs` |
+| Store | `{feature}.store.ts` |
+| API Service | `{domain}-api.service.ts` |
 
 ## Investigation Checklist
 
@@ -93,152 +94,56 @@ src/Frontend/libs/apps-domains/
 - [ ] Read existing tests for expected behavior?
 - [ ] Checked for background jobs related to the feature?
 
----
-
 ## Architectural Recommendation Protocol
 
-**MANDATORY before recommending removal, refactoring, or architectural changes. See [AI-DEBUGGING-PROTOCOL.md](.ai/docs/AI-DEBUGGING-PROTOCOL.md) for complete 6-phase protocol.**
+**Before recommending removal, refactoring, or architectural changes:**
 
-### Quick Decision Tree
+### Validation Requirements
 
 ```
-Considering code removal?
-    ↓
-YES → Run `/investigate-removal` skill
-    ↓
-NO → Proceed with feature investigation
+1. Static Analysis   → Find ALL references (grep -r "TargetName")
+2. Dynamic Analysis  → Trace actual usage in implementation
+3. Cross-Service     → Check ALL 5 services (MANDATORY)
+4. Impact Assessment → List what breaks if removed
+5. Confidence Level  → Declare X% based on evidence
 ```
-
-### 6-Phase Validation Requirements
-
-**Use when:** Considering removal of classes, registrations, methods, or architectural changes.
-
-| Phase                     | Action                             | Evidence Required                   |
-| ------------------------- | ---------------------------------- | ----------------------------------- |
-| 1. Static Analysis        | Grep searches for all references   | File paths + line numbers           |
-| 2. Dynamic Analysis       | Trace injection → usage → callers  | Complete usage chain                |
-| 3. Cross-Module Check     | Search Platform, Backend, Frontend | Per-module usage summary            |
-| 4. Test Coverage          | Find affected tests                | Test files that would break         |
-| 5. Impact Assessment      | What breaks if removed?            | Dependent code paths with file:line |
-| 6. Confidence Calculation | Evidence completeness score        | 90%+ for removal, 80%+ for refactor |
-
-### Confidence Requirements
-
-| Risk Level            | Threshold           | Examples                                                    |
-| --------------------- | ------------------- | ----------------------------------------------------------- |
-| **HIGH** (removal)    | **90%+** required   | Remove classes, delete registrations, drop database columns |
-| **MEDIUM** (refactor) | **80%+** acceptable | Change method signatures, restructure modules               |
-| **LOW** (rename)      | **70%+** acceptable | Rename variables, reformat code                             |
-
-**Rule:** <90% confidence for removal → Run `/investigate-removal` skill first
 
 ### When NOT to Recommend Changes
 
-- **<90% confidence** — Insufficient evidence, investigate more
-- **Interface without usage trace** — Might be used in factory/provider patterns (e.g., `IDbContextFactory`)
-- **Dual registration patterns** — Compare with other services first
+- **<80% confidence** — Insufficient evidence, investigate more
+- **Interface without usage trace** — Might be used in factory/provider patterns
+- **Dual registration** — Compare with other services first (e.g., Growth vs Surveys)
 - **"Seems unused"** — Must prove with evidence, not assumption
-- **Cross-module code** — Verify ALL modules (Platform, Backend, Frontend) before recommending
 
 ### Comparison Pattern (Service vs Service)
 
-When investigating architectural differences between modules:
+When investigating architectural differences:
 
-1. **Find working reference** — Which module works correctly?
+1. **Find working reference service** — Which service works correctly?
 2. **Compare implementations** — Side-by-side file comparison
 3. **Identify differences** — What's different between working vs non-working?
 4. **Verify each difference** — Understand WHY each difference exists
 5. **Recommend based on proven pattern** — Not assumptions
 
-**Example:** TextSnippet uses `AddDbContext` + `AddDbContextFactory` (dual registration) → Verify if other services follow same pattern before recommending changes
+**Example:** Surveys Npgsql issue → Compare with Growth → Found Growth uses dual registration → Recommend matching Growth pattern
 
-### Evidence-Based Confidence Format
+### Evidence-Based Confidence
 
 Every architectural recommendation MUST include:
 
 ```markdown
-## Recommendation: [REMOVE/KEEP/REFACTOR/INSUFFICIENT_EVIDENCE]
+Confidence: X% — [Evidence summary]
 
-**Confidence:** X% — [Evidence summary]
-
-### Evidence Checklist
-
-- [x] Phase 1: Static analysis complete (file:line references)
-- [x] Phase 2: Dynamic usage traced (injection → usage → callers)
-- [x] Phase 3: Cross-module check (Platform ✅, Backend ✅, Frontend ✅)
-- [x] Phase 4: Test coverage identified (3 tests would break)
-- [x] Phase 5: Impact assessment (what breaks documented)
-- [x] Phase 6: Confidence calculated based on evidence completeness
-
-### Impact Assessment
-
-**If removed:**
-
-- ❌ BREAKS: DataProvider.GetCountAsync (DataProvider.cs:45)
-- ❌ BREAKS: All COUNT queries (5 handlers affected)
-- ❌ BREAKS: 12 unit tests in DataProvider.Tests.cs
+Evidence:
+1. ✅ Static references checked
+2. ✅ Dynamic usage traced
+3. ✅ Cross-service verified (all 5 services)
+4. ✅ Impact assessment completed
+5. ✅ Alternative patterns compared
 ```
 
-### EasyPlatform-Specific Investigation Patterns
-
-**Backend Search Commands:**
-
-```bash
-# Find entity definitions
-grep -r "class.*Entity.*:.*RootEntity" --include="*.cs"
-
-# Find CQRS command handlers
-grep -r "PlatformCqrsCommandApplicationHandler" --include="*.cs"
-
-# Find repository usage
-grep -r "IPlatformQueryableRootRepository" --include="*.cs"
-
-# Find entity event handlers
-grep -r "PlatformApplicationDomainEventHandler" --include="*.cs"
-
-# Find message bus patterns
-grep -r "EventBusMessage.*Producer\|.*Consumer" --include="*.cs"
+**Format Example:**
 ```
-
-**Frontend Search Commands:**
-
-```bash
-# Find component hierarchy
-grep -r "extends AppBase.*Component" --include="*.ts"
-
-# Find state stores
-grep -r "PlatformVmStore" --include="*.ts"
-
-# Find API services
-grep -r "extends PlatformApiService" --include="*.ts"
-
-# Find form components
-grep -r "extends.*FormComponent" --include="*.ts"
+Confidence: 92% — Verified Surveys usage, cross-checked with Growth pattern,
+all 5 services checked. Did not verify INSIGHTS (not applicable).
 ```
-
-### Workflow Integration
-
-When working within active workflows, checkpoints will guide you:
-
-- **Bugfix workflow:** "CHECKPOINT: If considering code removal, run /investigate-removal first"
-- **Refactor workflow:** "CHECKPOINT: If removing code, run /investigate-removal first"
-
-These checkpoints are language-agnostic and context-aware, triggering only during relevant operations.
-
-### Quick Reference Card
-
-**Before any architectural change:**
-
-| Task               | Required Action                                       |
-| ------------------ | ----------------------------------------------------- |
-| Removal            | Complete 6 phases OR run `/investigate-removal`       |
-| Refactor           | Usage trace + test verification + 80%+ confidence     |
-| Rename             | Code review + 70%+ confidence                         |
-| Investigation only | Read-only `/investigate` (no removal recommendations) |
-
-**Evidence standards:**
-
-- All claims backed by file:line references
-- Dynamic usage traced (not just static grep)
-- Cross-module impact verified
-- Test coverage identified

@@ -27,6 +27,8 @@
  *   baselineRecorded: boolean,
  *   baseline: number,          // Token count at baseline
  *   lastTokenTotal: number,    // For token drop detection (replaces global state)
+ *   toolCallCount: number,     // Tool calls since last reset (for compact suggestions)
+ *   lastToolCountWarned: number, // Last count at which we showed warning (prevent spam)
  *   timestamp: number
  * }
  *
@@ -306,6 +308,8 @@ function writeResetMarker(sessionId, trigger = 'clear') {
     baselineRecorded: false,
     baseline: 0,
     lastTokenTotal: 0,
+    toolCallCount: 0,
+    lastToolCountWarned: 0,
     timestamp: Date.now()
   });
 }
@@ -319,11 +323,126 @@ function clearAllState() {
   cleanAll();
 }
 
+// ============================================================================
+// Tool Call Counting (for /compact suggestions)
+// ============================================================================
+
+// Tool call thresholds for compact suggestions
+const TOOL_COUNT_INITIAL_THRESHOLD = 50;  // First suggestion at 50 calls
+const TOOL_COUNT_REMINDER_INTERVAL = 20;  // Remind every 20 calls after
+
+/**
+ * Increment tool call count for a session
+ * @param {string} sessionId - Session ID
+ * @returns {number} New tool call count
+ */
+function incrementToolCount(sessionId) {
+  const effectiveSessionId = sessionId || 'default';
+  let marker = readMarker(effectiveSessionId);
+
+  if (!marker) {
+    // Create new marker if doesn't exist
+    marker = {
+      sessionId: effectiveSessionId,
+      trigger: 'tool_count_init',
+      baselineRecorded: false,
+      baseline: 0,
+      lastTokenTotal: 0,
+      toolCallCount: 1,
+      lastToolCountWarned: 0,
+      timestamp: Date.now()
+    };
+  } else {
+    // Increment existing count (default to 0 if not present)
+    marker.toolCallCount = (marker.toolCallCount || 0) + 1;
+  }
+
+  writeMarker(effectiveSessionId, marker);
+  return marker.toolCallCount;
+}
+
+/**
+ * Get current tool call count for a session
+ * @param {string} sessionId - Session ID
+ * @returns {number} Current tool call count
+ */
+function getToolCount(sessionId) {
+  const effectiveSessionId = sessionId || 'default';
+  const marker = readMarker(effectiveSessionId);
+  return marker?.toolCallCount || 0;
+}
+
+/**
+ * Check if we should suggest /compact based on tool call count
+ * Returns true at 50 calls, then every 20 calls thereafter (70, 90, 110...)
+ * Only returns true once per threshold (tracks lastToolCountWarned)
+ * @param {string} sessionId - Session ID
+ * @returns {{ shouldSuggest: boolean, count: number }}
+ */
+function shouldSuggestCompact(sessionId) {
+  const effectiveSessionId = sessionId || 'default';
+  let marker = readMarker(effectiveSessionId);
+
+  if (!marker) {
+    return { shouldSuggest: false, count: 0 };
+  }
+
+  const count = marker.toolCallCount || 0;
+  const lastWarned = marker.lastToolCountWarned || 0;
+
+  // Calculate the threshold we've crossed
+  let currentThreshold = 0;
+  if (count >= TOOL_COUNT_INITIAL_THRESHOLD) {
+    // Initial threshold or reminder interval
+    const countAfterInitial = count - TOOL_COUNT_INITIAL_THRESHOLD;
+    if (countAfterInitial <= 0) {
+      currentThreshold = TOOL_COUNT_INITIAL_THRESHOLD;
+    } else {
+      // Calculate which reminder threshold we're at
+      const reminderNumber = Math.floor(countAfterInitial / TOOL_COUNT_REMINDER_INTERVAL);
+      currentThreshold = TOOL_COUNT_INITIAL_THRESHOLD + (reminderNumber * TOOL_COUNT_REMINDER_INTERVAL);
+    }
+  }
+
+  // Should suggest if we crossed a threshold we haven't warned about
+  const shouldSuggest = currentThreshold > 0 && currentThreshold > lastWarned;
+
+  if (shouldSuggest) {
+    // Update lastToolCountWarned to prevent repeated suggestions
+    marker.lastToolCountWarned = currentThreshold;
+    writeMarker(effectiveSessionId, marker);
+  }
+
+  return { shouldSuggest, count };
+}
+
+/**
+ * Reset tool call count for a session (called on /compact)
+ * @param {string} sessionId - Session ID
+ */
+function resetToolCount(sessionId) {
+  const effectiveSessionId = sessionId || 'default';
+  let marker = readMarker(effectiveSessionId);
+
+  if (marker) {
+    marker.toolCallCount = 0;
+    marker.lastToolCountWarned = 0;
+    writeMarker(effectiveSessionId, marker);
+  }
+}
+
 module.exports = {
   trackContext,
   writeResetMarker,
   clearAllState,
   getCompactThreshold,
+  // Tool call counting
+  incrementToolCount,
+  getToolCount,
+  shouldSuggestCompact,
+  resetToolCount,
+  TOOL_COUNT_INITIAL_THRESHOLD,
+  TOOL_COUNT_REMINDER_INTERVAL,
   // Export for testing
   detectTokenDrop,
   checkResetMarker,

@@ -1,99 +1,141 @@
 - category: ai-ml
-  description: '[Tooling & Meta] Synchronize and update Claude Code and GitHub Copilot
+  description: '[AI & Tools] Write and optimize prompts for AI-generated outcomes
+    across text and image models. Use when crafting prompts for LLMs (Claude, GPT,
+    Gemini), image generators (Midjourney, DALL-E, Stable Diffusion, Imagen, Flux),
+    or video generators (Veo, Runway). Covers prompt structure, style keywords, negative
+    prompts, chain-of-thought, few-shot examples, iterative refinement, and domain-specific
+    patterns for marketing, code, and creative writing.'
+  has_references: true
+  has_scripts: false
+  name: ai-artist
+  path: ai-artist\SKILL.md
+- category: ai-ml
+  description: '[AI & Tools] Synchronize and update Claude Code and GitHub Copilot
     development tool configurations to work similarly. Use when asked to update Claude
     Code setup, update Copilot setup, sync AI dev tools, add new skills/prompts/agents
     across both platforms, or ensure Claude and Copilot configurations are aligned.
     Covers skills, prompts, agents, instructions, workflows, and chat modes.'
-  has_references: false
+  has_references: true
   has_scripts: false
   name: ai-dev-tools-sync
   path: ai-dev-tools-sync\SKILL.md
 - category: ai-ml
-  description: '[Tooling & Meta] Process and generate multimedia content using Google
-    Gemini API for better vision capabilities. Capabilities include analyze audio
-    files (transcription with timestamps, summarization, speech understanding, music/sound
-    analysis up to 9.5 hours), understand images (better image analysis than Claude
-    models, captioning, reasoning, object detection, design extraction, OCR, visual
-    Q&A, segmentation, handle multiple images), process videos (scene detection, Q&A,
-    temporal analysis, YouTube URLs, up to 6 hours), extract from documents (PDF tables,
-    forms, charts, diagrams, multi-page), generate images (text-to-image with Imagen
-    4, editing, composition, refinement), generate videos (text-to-video with Veo
-    3, 8-second clips with native audio). Use when working with audio/video files,
-    analyzing images or screenshots (instead of default vision capabilities of Claude,
-    only fallback to Claude''s vision capabilities if needed), processing PDF documents,
-    extracting structured data from media, creating images/videos from text prompts,
-    or implementing multimodal AI features. Supports Gemini 3/2.5, Imagen 4, and Veo
-    3 models with context windows up to 2M tokens.'
+  description: '[AI & Tools] Process and generate multimedia content using Google
+    Gemini API -- vision analysis, audio transcription, video processing, document
+    extraction, image/video generation. Triggers on multimodal, vision API, image
+    recognition, audio transcription, video analysis, gemini, imagen, document extraction.'
   has_references: true
   has_scripts: true
   name: ai-multimodal
   path: ai-multimodal\SKILL.md
 - category: frontend
-  description: Expert API design agent for EasyPlatform following platform patterns
-    and REST best practices.
+  description: '**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+    before executing.'
   has_references: false
   has_scripts: false
   name: api-design
   path: api-design\SKILL.md
 - category: other
-  description: '[Review & Quality] Use when reviewing code for security vulnerabilities,
+  description: '[Architecture] Use when designing or implementing cross-service communication,
+    data synchronization, or service boundary patterns.'
+  has_references: false
+  has_scripts: false
+  name: arch-cross-service-integration
+  path: arch-cross-service-integration\SKILL.md
+- category: other
+  description: '[Architecture] Use when analyzing and improving performance for database
+    queries, API endpoints, or frontend rendering.'
+  has_references: false
+  has_scripts: false
+  name: arch-performance-optimization
+  path: arch-performance-optimization\SKILL.md
+- category: other
+  description: '[Architecture] Use when reviewing code for security vulnerabilities,
     implementing authorization, or ensuring data protection.'
   has_references: false
   has_scripts: false
   name: arch-security-review
   path: arch-security-review\SKILL.md
 - category: other
-  description: '[Planning] ⚡ Answer technical and architectural questions.'
+  description: '[Utilities] Answer technical and architectural questions.'
   has_references: false
   has_scripts: false
   name: ask
   path: ask\SKILL.md
 - category: other
-  description: '[Utilities] ⚡⚡⚡⚡⚡ Bootstrap a new project step by step'
+  description: '[Implementation] Bootstrap a new project step by step'
   has_references: false
   has_scripts: false
   name: bootstrap
   path: bootstrap\SKILL.md
 - category: other
-  description: '[Utilities] ⚡⚡⚡⚡ Bootstrap a new project automatically'
+  description: '[Implementation] Bootstrap a new project automatically'
   has_references: false
   has_scripts: false
   name: bootstrap-auto
   path: bootstrap-auto\SKILL.md
 - category: other
-  description: '[Planning] ⚡⚡ Brainstorm a feature'
+  description: '[Implementation] Quickly bootstrap a new project automatically'
+  has_references: false
+  has_scripts: false
+  name: bootstrap-auto-fast
+  path: bootstrap-auto-fast\SKILL.md
+- category: other
+  description: '[Implementation] Bootstrap project with parallel execution'
+  has_references: false
+  has_scripts: false
+  name: bootstrap-auto-parallel
+  path: bootstrap-auto-parallel\SKILL.md
+- category: other
+  description: '[Content] Brainstorm a feature'
   has_references: false
   has_scripts: false
   name: brainstorm
   path: brainstorm\SKILL.md
 - category: other
-  description: '> **Skill Variant:** Use this skill for **quick bug triage and interactive
-    debugging** with user feedback. For systematic autonomous debugging workflows
-    with 4-phase protocol and verification gates, u'
+  description: '**Goal:** Analyze all file changes between git branches, perform impact
+    analysis, and update specification documents.'
   has_references: false
   has_scripts: false
-  name: bug-diagnosis
-  path: bug-diagnosis\SKILL.md
-- category: frontend
-  description: '[DevOps & Infra] Build backend and/or frontend projects'
-  has_references: false
-  has_scripts: false
-  name: build
-  path: build\SKILL.md
+  name: branch-comparison
+  path: branch-comparison\SKILL.md
 - category: other
-  description: '[Tooling & Meta] Save memory checkpoint to preserve analysis context'
+  description: '**Goal:** Refine requirements into actionable user stories with BDD
+    acceptance criteria and business rule traceability.'
+  has_references: false
+  has_scripts: false
+  name: business-analyst
+  path: business-analyst\SKILL.md
+- category: other
+  description: '[Documentation] Generate or update changelog entries. Use for release
+    changelogs, version history, and change tracking across any project.'
+  has_references: true
+  has_scripts: false
+  name: changelog
+  path: changelog\SKILL.md
+- category: other
+  description: '[Utilities] Save analysis context to checkpoint file for recovery'
   has_references: false
   has_scripts: false
   name: checkpoint
   path: checkpoint\SKILL.md
+- category: multimedia
+  description: '[AI & Tools] Browser automation, debugging, and performance analysis
+    using Puppeteer CLI scripts. Use for automating browsers, taking screenshots,
+    analyzing performance, monitoring network traffic, web scraping, form automation,
+    and JavaScript debugging.'
+  has_references: true
+  has_scripts: true
+  name: chrome-devtools
+  path: chrome-devtools\SKILL.md
 - category: other
-  description: '[Tooling & Meta] ClaudeKit usage guide - just type naturally'
+  description: '[Utilities] ClaudeKit usage guide - just type naturally'
   has_references: false
   has_scripts: false
   name: ck-help
   path: ck-help\SKILL.md
 - category: dev-tools
-  description: '[Tooling & Meta] Claude Code CLI setup, configuration, troubleshooting,
+  description: '[Utilities] Claude Code CLI setup, configuration, troubleshooting,
     and feature guidance. Triggers on claude code setup, hook not firing, MCP connection,
     context limit, skill creation, slash command setup.'
   has_references: true
@@ -101,7 +143,45 @@
   name: claude-code
   path: claude-code\SKILL.md
 - category: other
-  description: '[Review & Quality] Simplifies and refines code for clarity, consistency,
+  description: '[Implementation] Start coding & testing an existing plan'
+  has_references: false
+  has_scripts: false
+  name: code
+  path: code\SKILL.md
+- category: other
+  description: '[Implementation] [AUTO] Start coding & testing an existing plan (trust
+    me bro)'
+  has_references: false
+  has_scripts: false
+  name: code-auto
+  path: code-auto\SKILL.md
+- category: other
+  description: '[Implementation] Start coding an existing plan (no testing)'
+  has_references: false
+  has_scripts: false
+  name: code-no-test
+  path: code-no-test\SKILL.md
+- category: other
+  description: '[Implementation] Execute parallel or sequential phases based on plan
+    structure'
+  has_references: false
+  has_scripts: false
+  name: code-parallel
+  path: code-parallel\SKILL.md
+- category: utilities
+  description: '[Code Quality] Use when receiving code review feedback (especially
+    if unclear or technically questionable), when completing tasks or major features
+    requiring review before proceeding, or before making any completion/success claims.
+    Covers three practices - receiving feedback with technical rigor over performative
+    agreement, requesting reviews via code-reviewer subagent, and verification gates
+    requiring evidence before any status claims. Essential for subagent-driven development,
+    pull requests, and preventing false completion claims.'
+  has_references: true
+  has_scripts: false
+  name: code-review
+  path: code-review\SKILL.md
+- category: other
+  description: '[Code Quality] Simplifies and refines code for clarity, consistency,
     and maintainability while preserving all functionality. Focuses on recently modified
     code unless instructed otherwise.'
   has_references: false
@@ -115,96 +195,84 @@
   name: coding-level
   path: coding-level\SKILL.md
 - category: other
-  description: Stage changes and create well-structured git commits following Conventional
-    Commits format.
+  description: '**Goal:** Stage changes and create well-structured git commits following
+    Conventional Commits format.'
   has_references: false
   has_scripts: false
   name: commit
   path: commit\SKILL.md
 - category: other
-  description: '[Tooling & Meta] Compress conversation context to optimize tokens'
+  description: '[Utilities] Compress context to optimize token usage'
   has_references: false
   has_scripts: false
   name: compact
   path: compact\SKILL.md
 - category: other
-  description: '[Design & Content] Analyze the current content and optimize for conversion'
-  has_references: false
-  has_scripts: false
-  name: content-cro
-  path: content-cro\SKILL.md
-- category: other
-  description: '[Design & Content] Analyze the current copy issues and enhance it'
-  has_references: false
-  has_scripts: false
-  name: content-enhance
-  path: content-enhance\SKILL.md
-- category: other
-  description: '[Design & Content] Write creative & smart copy [FAST]'
-  has_references: false
-  has_scripts: false
-  name: content-fast
-  path: content-fast\SKILL.md
-- category: other
-  description: '[Design & Content] Write good creative & smart copy [GOOD]'
-  has_references: false
-  has_scripts: false
-  name: content-good
-  path: content-good\SKILL.md
-- category: other
-  description: '[Planning] Load current project development context'
+  description: '[Utilities] Load project context for current session'
   has_references: false
   has_scripts: false
   name: context
   path: context\SKILL.md
 - category: other
-  description: Manage context window efficiently to maintain productivity in long
-    sessions.
+  description: '**Goal:** Manage context window efficiently to maintain productivity
+    in long Claude Code sessions.'
   has_references: false
   has_scripts: false
   name: context-optimization
   path: context-optimization\SKILL.md
 - category: other
-  description: '[Implementation] ⚡⚡⚡ Implement a feature [step by step]'
+  description: '[Implementation] Implement a feature [step by step]'
   has_references: false
   has_scripts: false
   name: cook
   path: cook\SKILL.md
 - category: other
-  description: '[Implementation] ⚡⚡ Implement a feature automatically ("trust
-    me bro")'
+  description: '[Implementation] Implement a feature automatically (trust me bro)'
   has_references: false
   has_scripts: false
   name: cook-auto
   path: cook-auto\SKILL.md
 - category: other
-  description: '[Implementation] ⚡ No research. Only scout, plan & implement ["trust
-    me bro"]'
+  description: '[Implementation] No research. Only scout, plan & implement [trust
+    me bro]'
   has_references: false
   has_scripts: false
   name: cook-auto-fast
   path: cook-auto-fast\SKILL.md
 - category: other
-  description: '[Implementation] ⚡⚡⚡ Plan parallel phases & execute with fullstack-developer
+  description: '[Implementation] Plan parallel phases & execute with fullstack-developer
     agents'
   has_references: false
   has_scripts: false
   name: cook-auto-parallel
   path: cook-auto-parallel\SKILL.md
 - category: other
-  description: '[Implementation] ⚡ Fast implementation - skip research, minimal
-    planning'
+  description: '[Implementation] Fast implementation - skip research, minimal planning'
   has_references: false
   has_scripts: false
   name: cook-fast
   path: cook-fast\SKILL.md
 - category: other
-  description: '[Implementation] ⚡⚡⚡⚡ Thorough implementation with maximum
-    verification'
+  description: '[Implementation] Thorough implementation with maximum verification'
   has_references: false
   has_scripts: false
   name: cook-hard
   path: cook-hard\SKILL.md
+- category: other
+  description: '[Implementation] Parallel implementation - multiple tasks simultaneously'
+  has_references: false
+  has_scripts: false
+  name: cook-parallel
+  path: cook-parallel\SKILL.md
+- category: other
+  description: '[Content] Create high-converting copy for marketing materials, social
+    media, landing pages, email campaigns, and product descriptions. Triggers on:
+    copywriting, marketing copy, social media post, landing page copy, email campaign,
+    product description.'
+  has_references: false
+  has_scripts: false
+  name: copywriting
+  path: copywriting\SKILL.md
 - category: other
   description: '[Implementation] Scaffold a new feature with backend and frontend
     components'
@@ -212,172 +280,257 @@
   has_scripts: false
   name: create-feature
   path: create-feature\SKILL.md
-- category: database
-  description: Expert database performance agent for EasyPlatform. Optimizes queries,
-    indexes, and data access patterns for MongoDB, SQL Server, and PostgreSQL.
-  has_references: false
-  has_scripts: false
-  name: database-optimization
-  path: database-optimization\SKILL.md
-- category: database
-  description: '[DevOps & Infra] Database technology selection, schema design, query
-    optimization, and migration guidance for MongoDB, SQL Server, PostgreSQL, and
-    Redis. Triggers on database schema, mongodb query, sql server, postgresql, redis
-    cache, database migration, index optimization.'
-  has_references: true
-  has_scripts: false
-  name: databases
-  path: databases\SKILL.md
 - category: other
-  description: '[DevOps & Infra] Run or create database migrations'
+  description: '[DevOps] Run or create database migrations'
   has_references: false
   has_scripts: false
   name: db-migrate
   path: db-migrate\SKILL.md
-- category: frontend
-  description: '[Frontend] Create immersive interactive 3D designs with Three.js'
+- category: other
+  description: '[Project Management] Map and visualize feature dependencies between
+    modules, services, and work items. Triggers on dependency map, dependency graph,
+    what blocks, blockers, critical path, feature sequencing.'
   has_references: false
   has_scripts: false
-  name: design-3d
-  path: design-3d\SKILL.md
+  name: dependency
+  path: dependency\SKILL.md
 - category: frontend
-  description: '[Design & Content] Describe a design based on screenshot/video'
+  description: '[Design] Describe a design based on screenshot/video'
   has_references: false
   has_scripts: false
   name: design-describe
   path: design-describe\SKILL.md
 - category: frontend
-  description: '[Design & Content] Create a quick design'
+  description: '[Design] Create a quick design'
   has_references: false
   has_scripts: false
   name: design-fast
   path: design-fast\SKILL.md
 - category: frontend
-  description: '[Design & Content] Create an immersive design'
+  description: '[Design] Create an immersive design'
   has_references: false
   has_scripts: false
   name: design-good
   path: design-good\SKILL.md
 - category: frontend
-  description: '[Design & Content] Create a design based on screenshot'
+  description: '[Design] Create a design based on screenshot'
   has_references: false
   has_scripts: false
   name: design-screenshot
   path: design-screenshot\SKILL.md
 - category: frontend
-  description: '[Design & Content] Create a design based on video'
+  description: '[Project Management] Create UI/UX design specifications from requirements,
+    PBIs, or user stories. Produces structured design spec documents with layout,
+    typography, colors, interactions, and responsive breakpoints. Triggers on design
+    spec, design specification, UI specification, component spec, layout spec, wireframe,
+    mockup.'
+  has_references: false
+  has_scripts: false
+  name: design-spec
+  path: design-spec\SKILL.md
+- category: frontend
+  description: '[Design] Create a design based on video'
   has_references: false
   has_scripts: false
   name: design-video
   path: design-video\SKILL.md
+- category: infrastructure
+  description: '[DevOps] Deploy and manage cloud infrastructure on Cloudflare (Workers,
+    R2, D1, KV, Pages, Durable Objects, Browser Rendering), Docker containers, and
+    Google Cloud Platform (Compute Engine, GKE, Cloud Run, App Engine, Cloud Storage).
+    Use when deploying serverless functions to the edge, configuring edge computing
+    solutions, managing Docker containers and images, setting up CI/CD pipelines,
+    optimizing cloud infrastructure costs, implementing global caching strategies,
+    working with cloud databases, or building cloud-native applications.'
+  has_references: true
+  has_scripts: true
+  name: devops
+  path: devops\SKILL.md
+- category: other
+  description: '[Documentation] Analyze the codebase and create initial documentation'
+  has_references: false
+  has_scripts: false
+  name: docs-init
+  path: docs-init\SKILL.md
 - category: dev-tools
-  description: '[Docs] Search technical documentation using executable scripts to
-    detect query type, fetch from llms.txt sources (context7.com), and analyze results.
-    Use when user needs: (1) Topic-specific documentation (features/components/concepts),
-    (2) Library/framework documentation, (3) GitHub repository analysis, (4) Documentation
-    discovery with automated agent distribution strategy'
+  description: '[Documentation] Search technical documentation using executable scripts
+    to detect query type, fetch from llms.txt sources (context7.com), and analyze
+    results. Use when user needs topic-specific documentation, library/framework documentation,
+    GitHub repository analysis, or documentation discovery with automated agent distribution
+    strategy.'
   has_references: true
   has_scripts: true
   name: docs-seeker
   path: docs-seeker\SKILL.md
+- category: other
+  description: '[Documentation] Holistic documentation orchestrator — detects impacted
+    docs from git changes and updates project docs + business feature docs'
+  has_references: false
+  has_scripts: false
+  name: docs-update
+  path: docs-update\SKILL.md
 - category: multimedia
-  description: 'Comprehensive document creation, editing, and analysis with support
-    for tracked changes, comments, formatting preservation, and text extraction. When
-    Claude needs to work with professional documents (.docx files) for: (1) Creating
-    new documents, (2) Modifying or editing content, (3) Working with tracked changes,
-    (4) Adding comments, or any other document tasks'
+  description: '[Document Processing] Comprehensive document creation, editing, and
+    analysis with support for tracked changes, comments, formatting preservation,
+    and text extraction. When Claude needs to work with professional documents (.docx
+    files) for: (1) Creating new documents, (2) Modifying or editing content, (3)
+    Working with tracked changes, (4) Adding comments, or any other document tasks'
   has_references: false
   has_scripts: true
   name: document-skills/docx
   path: document-skills\docx\SKILL.md
 - category: multimedia
-  description: Comprehensive PDF manipulation toolkit for extracting text and tables,
-    creating new PDFs, merging/splitting documents, and handling forms. When Claude
-    needs to fill in a PDF form or programmatically process, generate, or analyze
-    PDF documents at scale.
+  description: '[Document Processing] Comprehensive PDF manipulation toolkit for extracting
+    text and tables, creating new PDFs, merging/splitting documents, and handling
+    forms. When Claude needs to fill in a PDF form or programmatically process, generate,
+    or analyze PDF documents at scale.'
   has_references: false
   has_scripts: true
   name: document-skills/pdf
   path: document-skills\pdf\SKILL.md
 - category: multimedia
-  description: 'Presentation creation, editing, and analysis. When Claude needs to
-    work with presentations (.pptx files) for: (1) Creating new presentations, (2)
-    Modifying or editing content, (3) Working with layouts, (4) Adding comments or
-    speaker notes, or any other presentation tasks'
+  description: '[Document Processing] Presentation creation, editing, and analysis.
+    When Claude needs to work with presentations (.pptx files) for: (1) Creating new
+    presentations, (2) Modifying or editing content, (3) Working with layouts, (4)
+    Adding comments or speaker notes, or any other presentation tasks'
   has_references: false
   has_scripts: true
   name: document-skills/pptx
   path: document-skills\pptx\SKILL.md
+- category: multimedia
+  description: '[Document Processing] Comprehensive spreadsheet creation, editing,
+    and analysis with support for formulas, formatting, data analysis, and visualization.
+    When Claude needs to work with spreadsheets (.xlsx, .xlsm, .csv, .tsv, etc) for:
+    (1) Creating new spreadsheets with formulas and formatting, (2) Reading or analyzing
+    data, (3) Modify existing spreadsheets while preserving formulas, (4) Data analysis
+    and visualization in spreadsheets, or (5) Recalculating formulas'
+  has_references: false
+  has_scripts: false
+  name: document-skills/xlsx
+  path: document-skills\xlsx\SKILL.md
 - category: other
-  description: '[Utilities] Convert Microsoft Word (.docx) files to Markdown. Use
-    when importing Word documents, extracting content from DOCX for version control,
-    or converting documentation to Markdown format.'
+  description: '**Goal:** Enhance code documentation, API docs, README files, and
+    technical writing with verified accuracy.'
+  has_references: false
+  has_scripts: false
+  name: documentation
+  path: documentation\SKILL.md
+- category: other
+  description: '[Document Processing] Convert Microsoft Word (.docx) files to Markdown
+    with GFM support (tables, images, code blocks). Cross-platform.'
   has_references: false
   has_scripts: true
   name: docx-to-markdown
   path: docx-to-markdown\SKILL.md
-- category: frontend
-  description: '**Goal:** Extract design specifications (dimensions, layout, colors,
-    typography) from Figma designs via MCP server for implementation.'
+- category: backend
+  description: '[Architecture] Complete Easy.Platform backend development. Covers
+    CQRS commands/queries, entities, validation, migrations, background jobs, and
+    message bus. All reference patterns merged inline. Formerly backend-development.'
   has_references: false
   has_scripts: false
-  name: figma-design
-  path: figma-design\SKILL.md
+  name: easyplatform-backend
+  path: easyplatform-backend\SKILL.md
 - category: other
-  description: '[Fix & Debug] ⚡⚡ Analyze and fix issues [INTELLIGENT ROUTING]'
+  description: '**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md`
+    and `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.'
+  has_references: false
+  has_scripts: false
+  name: feature
+  path: feature\SKILL.md
+- category: other
+  description: '[Documentation] Create or update business feature documentation in
+    docs/business-features/{Module}/. Generates comprehensive 26-section docs with
+    verified code evidence and AI companion files. Triggers on: feature docs, business
+    feature documentation, module documentation, document feature, update feature
+    docs, ai companion, ai context file, quick feature docs, feature readme, single
+    file docs, verified documentation.'
+  has_references: false
+  has_scripts: false
+  name: feature-docs
+  path: feature-docs\SKILL.md
+- category: other
+  description: '**Goal:** Interactive feature implementation with comprehensive knowledge
+    graph analysis and external memory management (same core as `feature` skill).'
+  has_references: false
+  has_scripts: false
+  name: feature-implementation
+  path: feature-implementation\SKILL.md
+- category: other
+  description: '**Goal:** Investigate and explain how existing features or logic work
+    through READ-ONLY code exploration -- no modifications.'
+  has_references: false
+  has_scripts: false
+  name: feature-investigation
+  path: feature-investigation\SKILL.md
+- category: other
+  description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
   has_references: false
   has_scripts: false
   name: fix
   path: fix\SKILL.md
 - category: other
-  description: '[Fix & Debug] ⚡ Analyze Github Actions logs and fix issues'
+  description: '[Implementation] Analyze Github Actions logs and fix issues'
   has_references: false
   has_scripts: false
   name: fix-ci
   path: fix-ci\SKILL.md
 - category: other
-  description: '[Fix & Debug] ⚡ Analyze and fix small issues [FAST]'
+  description: '[Implementation] Analyze and fix small issues [FAST]'
   has_references: false
   has_scripts: false
   name: fix-fast
   path: fix-fast\SKILL.md
 - category: other
-  description: '[Fix & Debug] ⚡⚡⚡ Use subagents to plan and fix hard issues'
+  description: '[Implementation] Use subagents to plan and fix hard issues'
   has_references: false
   has_scripts: false
   name: fix-hard
   path: fix-hard\SKILL.md
 - category: other
-  description: '[Fix & Debug] ⚡ Analyze logs and fix issues'
+  description: '[Implementation] Debug and fix GitHub issues with systematic investigation'
+  has_references: false
+  has_scripts: false
+  name: fix-issue
+  path: fix-issue\SKILL.md
+- category: other
+  description: '[Implementation] Analyze logs and fix issues'
   has_references: false
   has_scripts: false
   name: fix-logs
   path: fix-logs\SKILL.md
 - category: other
-  description: '[Fix & Debug] ⚡⚡ Analyze & fix issues with parallel fullstack-developer
+  description: '[Implementation] Analyze & fix issues with parallel fullstack-developer
     agents'
   has_references: false
   has_scripts: false
   name: fix-parallel
   path: fix-parallel\SKILL.md
 - category: other
-  description: '[Fix & Debug] ⚡⚡ Run test suite and fix issues'
+  description: '[Implementation] Run test suite and fix issues'
   has_references: false
   has_scripts: false
   name: fix-test
   path: fix-test\SKILL.md
 - category: other
-  description: '[Fix & Debug] ⚡ Fix type errors'
+  description: '[Implementation] Fix type errors'
   has_references: false
   has_scripts: false
   name: fix-types
   path: fix-types\SKILL.md
 - category: frontend
-  description: '[Fix & Debug] ⚡⚡ Analyze and fix UI issues'
+  description: '[Implementation] Analyze and fix UI issues'
   has_references: false
   has_scripts: false
   name: fix-ui
   path: fix-ui\SKILL.md
+- category: frontend
+  description: '[Frontend] Use when creating or modifying Angular components, forms,
+    stores, or API services with proper base class inheritance, state management,
+    and platform patterns.'
+  has_references: false
+  has_scripts: false
+  name: frontend-angular
+  path: frontend-angular\SKILL.md
 - category: frontend
   description: '[Frontend] Create distinctive, production-grade frontend interfaces
     with high design quality. Use this skill when the user asks to build web components,
@@ -390,75 +543,103 @@
   name: frontend-design
   path: frontend-design\SKILL.md
 - category: other
-  description: '[Implementation] Generate entity DTO from an existing entity'
+  description: '[Git] Resolve git merge/cherry-pick/rebase conflicts with backup,
+    analysis, and reporting'
   has_references: false
   has_scripts: false
-  name: generate-dto
-  path: generate-dto\SKILL.md
+  name: git-conflict-resolve
+  path: git-conflict-resolve\SKILL.md
 - category: other
-  description: '[Git & Release] Stage, commit and push all code in the current branch'
+  description: '[Git] Stage, commit and push all code in the current branch'
   has_references: false
   has_scripts: false
   name: git-cp
   path: git-cp\SKILL.md
 - category: other
-  description: 'TO_BRANCH: $1 (defaults to `main`) FROM_BRANCH: $2 (defaults to current
-    branch)'
+  description: '[Git] ⚠️ Merge code from one branch to another'
   has_references: false
   has_scripts: false
-  name: git-pr
-  path: git-pr\SKILL.md
+  name: git-merge
+  path: git-merge\SKILL.md
 - category: other
-  description: '[Utilities] ⚡⚡ Implement payment integration with Polar.sh'
+  description: '**Goal:** Capture raw product ideas as structured backlog artifacts
+    with project module context.'
   has_references: false
   has_scripts: false
-  name: integrate-polar
-  path: integrate-polar\SKILL.md
+  name: idea
+  path: idea\SKILL.md
 - category: other
-  description: '[Utilities] ⚡⚡ Implement payment integration with SePay.vn'
+  description: '[Testing] Generate integration tests from git changes (default) or
+    user prompt. Subcutaneous CQRS tests with real DI, no mocks.'
+  has_references: true
+  has_scripts: false
+  name: integration-test
+  path: integration-test\SKILL.md
+- category: other
+  description: '[Fix & Debug] Investigate and explain how existing features or logic
+    work. READ-ONLY exploration with no code changes.'
   has_references: false
   has_scripts: false
-  name: integrate-sepay
-  path: integrate-sepay\SKILL.md
+  name: investigate
+  path: investigate\SKILL.md
 - category: other
-  description: '[Utilities] ⚡ Write some journal entries.'
+  description: '[Utilities] Write some journal entries.'
   has_references: false
   has_scripts: false
   name: journal
   path: journal\SKILL.md
 - category: other
-  description: Explicitly teach Claude patterns, preferences, or conventions to remember
-    across sessions.
+  description: '[Project Management] AI agent orchestration board (Coming Soon)'
   has_references: false
   has_scripts: false
+  name: kanban
+  path: kanban\SKILL.md
+- category: other
+  description: '[Utilities] Teach Claude lessons that persist across sessions. Triggers
+    on ''remember this'', ''always do'', ''never do'', ''learn this'', ''from now
+    on''. Saves to docs/lessons.md, auto-injected via hook.'
+  has_references: false
+  has_scripts: true
   name: learn
   path: learn\SKILL.md
 - category: other
-  description: '[Tooling & Meta] Manage learned patterns - list, view, archive, boost
-- category: other
-  description: '[DevOps & Infra] Run linters and fix issues for backend or frontend'
+  description: '[Code Quality] Run linters and fix issues for backend or frontend'
   has_references: false
   has_scripts: false
   name: lint
   path: lint\SKILL.md
 - category: other
-  description: '[Utilities] Convert markdown files to Microsoft Word (.docx) with
-    custom styling. Use when generating Word documents from markdown, creating editable
-    documentation, or exporting reports for Microsoft Office.'
+  description: '[Content] Background HTTP server rendering markdown files with calm,
+    book-like reading experience.'
+  has_references: false
+  has_scripts: true
+  name: markdown-novel-viewer
+  path: markdown-novel-viewer\SKILL.md
+- category: other
+  description: '[Document Processing] Convert markdown files to Microsoft Word (.docx)
+    format with GFM support and math rendering'
   has_references: false
   has_scripts: true
   name: markdown-to-docx
   path: markdown-to-docx\SKILL.md
 - category: other
-  description: '[Utilities] Convert markdown files to PDF with custom styling. Use
-    when generating PDF documents from markdown, creating printable documentation,
-    or exporting reports.'
+  description: '[Document Processing] Convert markdown files to PDF with syntax highlighting
+    and custom CSS support. Cross-platform (Windows, macOS, Linux).'
   has_references: false
   has_scripts: true
   name: markdown-to-pdf
   path: markdown-to-pdf\SKILL.md
+- category: frontend
+  description: '[AI & Tools] Guide for creating high-quality MCP (Model Context Protocol)
+    servers that enable LLMs to interact with external services through well-designed
+    tools. Use when building MCP servers to integrate external APIs or services, whether
+    in Python (FastMCP) or Node/TypeScript (MCP SDK).'
+  has_references: false
+  has_scripts: true
+  name: mcp-builder
+  path: mcp-builder\SKILL.md
 - category: dev-tools
-  description: '[Tooling & Meta] Manage Model Context Protocol (MCP) servers - discover,
+  description: '[AI & Tools] Manage Model Context Protocol (MCP) servers - discover,
     analyze, and execute tools/prompts/resources from configured MCP servers. Use
     when working with MCP integrations, need to discover available MCP capabilities,
     filter MCP tools for specific tasks, execute MCP tools programmatically, access
@@ -469,7 +650,7 @@
   name: mcp-management
   path: mcp-management\SKILL.md
 - category: multimedia
-  description: '[Utilities] Process multimedia files with FFmpeg (video/audio encoding,
+  description: '[AI & Tools] Process multimedia files with FFmpeg (video/audio encoding,
     conversion, streaming, filtering, hardware acceleration), ImageMagick (image manipulation,
     format conversion, batch processing, effects, composition), and RMBG (AI-powered
     background removal). Use when converting media formats, encoding videos with specific
@@ -484,57 +665,55 @@
   name: media-processing
   path: media-processing\SKILL.md
 - category: other
-  description: Build and maintain a knowledge graph of patterns, decisions, and learnings
-    across sessions.
-  has_references: true
+  description: '**Goal:** Persist patterns, decisions, and task progress across sessions
+    using two complementary memory systems.'
+  has_references: false
   has_scripts: false
   name: memory-management
   path: memory-management\SKILL.md
 - category: other
-  description: '[Implementation] ⚡⚡ Create data or schema migration'
+  description: '[Architecture] Create data or schema migrations following platform
+    patterns'
   has_references: false
   has_scripts: false
   name: migration
   path: migration\SKILL.md
 - category: other
-  description: You are to operate as an expert frontend package management specialist,
-    npm ecosystem analyst, and software architecture expert to analyze package.json
-    files, research latest versions, collect breakin
+  description: '**Goal:** Analyze npm package dependencies, research latest versions
+    and breaking changes, and generate a phased upgrade plan.'
   has_references: false
   has_scripts: false
   name: package-upgrade
   path: package-upgrade\SKILL.md
-- category: backend
-  description: '[Utilities] Implement payment integrations with SePay (Vietnamese
-    payment gateway with VietQR, bank transfers, cards) and Polar (global SaaS monetization
-    platform with subscriptions, usage-based billing, automated benefits). Use when
-    integrating payment processing, implementing checkout flows, managing subscriptions,
-    handling webhooks, processing bank transfers, generating QR codes, automating
-    benefit delivery, or building billing systems. Supports authentication (API keys,
-    OAuth2), product management, customer portals, tax compliance (Polar as MoR),
-    and comprehensive SDK integrations (Node.js, PHP, Python, Go, Laravel, Next.js).'
-  has_references: true
-  has_scripts: true
-  name: payment-integration
-  path: payment-integration\SKILL.md
 - category: other
-  description: '[Utilities] Convert PDF files to Markdown. Use when extracting text
-    from PDFs, creating editable documentation from PDF reports, or converting PDF
-    content to version-controlled markdown files.'
+  description: '[Document Processing] Convert PDF files to Markdown with support for
+    native text PDFs and scanned documents (OCR). Cross-platform.'
   has_references: false
   has_scripts: true
   name: pdf-to-markdown
   path: pdf-to-markdown\SKILL.md
 - category: other
-  description: '[Planning] Use when you need to plan technical solutions that are
-    scalable, secure, and maintainable.'
+  description: '[Debugging] Analyze and optimize performance bottlenecks'
+  has_references: false
+  has_scripts: false
+  name: performance
+  path: performance\SKILL.md
+- category: other
+  description: '[Planning] Intelligent plan creation with prompt enhancement'
   has_references: false
   has_scripts: false
   name: plan
   path: plan\SKILL.md
 - category: other
-  description: Read and analyze the plans, then write journal entries and archive
-    specific plans or all plans in the `plans` directory.
+  description: '**Goal:** Analyze an implementation plan, assess its impact on the
+    codebase, and update specification documents accordingly.'
+  has_references: false
+  has_scripts: false
+  name: plan-analysis
+  path: plan-analysis\SKILL.md
+- category: other
+  description: '[Planning] Write journal entries and archive specific plans or all
+    plans'
   has_references: false
   has_scripts: false
   name: plan-archive
@@ -553,22 +732,33 @@
   name: plan-cro
   path: plan-cro\SKILL.md
 - category: other
-  description: '[Planning] ⚡⚡ No research. Only analyze and create an implementation
+  description: '[Planning] No research. Only analyze and create an implementation
     plan'
   has_references: false
   has_scripts: false
   name: plan-fast
   path: plan-fast\SKILL.md
 - category: other
-  description: '[Planning] ⚡⚡⚡ Research, analyze, and create an implementation
-    plan. Use --parallel for parallel-executable phases'
+  description: '[Planning] Research, analyze, and create an implementation plan'
   has_references: false
   has_scripts: false
   name: plan-hard
   path: plan-hard\SKILL.md
 - category: other
-  description: '[Planning] ⚡⚡⚡⚡ Research & create an implementation plan with
-    2 approaches'
+  description: '[Planning] Create detailed plan with parallel-executable phases'
+  has_references: false
+  has_scripts: false
+  name: plan-parallel
+  path: plan-parallel\SKILL.md
+- category: other
+  description: '[Planning] Auto-review plan for validity, correctness, and best practices
+    before implementation'
+  has_references: false
+  has_scripts: false
+  name: plan-review
+  path: plan-review\SKILL.md
+- category: other
+  description: '[Planning] Research & create an implementation plan with 2 approaches'
   has_references: false
   has_scripts: false
   name: plan-two
@@ -579,111 +769,150 @@
   has_scripts: false
   name: plan-validate
   path: plan-validate\SKILL.md
+- category: utilities
+  description: '**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+    before executing.'
+  has_references: false
+  has_scripts: false
+  name: planning
+  path: planning\SKILL.md
 - category: other
-  description: '[Git & Release] ⚡ Create a pull request with standard format'
+  description: '[Planning] Plans dashboard server with progress tracking and timeline
+    visualization.'
+  has_references: false
+  has_scripts: true
+  name: plans-kanban
+  path: plans-kanban\SKILL.md
+- category: other
+  description: '[Git] Create pull request with standard format'
   has_references: false
   has_scripts: false
   name: pr
   path: pr\SKILL.md
 - category: other
-  description: '[Utilities] Path to markdown file, plan directory, or plans collection'
+  description: '[Project Management] Order backlog items using RICE, MoSCoW, or Value-Effort
+    frameworks. Produces prioritized lists with scores and rationale. Triggers on
+    prioritize backlog, RICE score, MoSCoW, value effort matrix, feature prioritization.'
   has_references: false
   has_scripts: false
-  name: preview
-  path: preview\SKILL.md
+  name: prioritize
+  path: prioritize\SKILL.md
 - category: utilities
-  description: '[Planning] Apply systematic problem-solving techniques for complexity
+  description: '[Utilities] Apply systematic problem-solving techniques for complexity
     spirals (simplification cascades), innovation blocks (collision-zone thinking),
     recurring patterns (meta-pattern recognition), assumption constraints (inversion
-    exercise), scale uncertainty (scale game), and dispatch when stuck. Techniques
-    derived from Microsoft Amplifier project patterns adapted for immediate application.'
-  has_references: false
+    exercise), and scale uncertainty (scale game). Triggers: problem-solving, structured
+    thinking, decision framework, simplification cascade, collision-zone thinking,
+    meta-pattern, inversion exercise, scale game.'
+  has_references: true
   has_scripts: false
   name: problem-solving
   path: problem-solving\SKILL.md
 - category: other
-  description: Help QA Engineers create comprehensive test specifications, generate
-    test cases from acceptance criteria, and ensure adequate test coverage.
+  description: '[Project Management] Capture ideas, manage product backlogs, apply
+    prioritization frameworks (RICE, MoSCoW), and facilitate stakeholder communication.
+    Triggers: product owner, backlog management, user story prioritization, product
+    roadmap, product backlog.'
   has_references: false
   has_scripts: false
-  name: qa-engineer
-  path: qa-engineer\SKILL.md
+  name: product-owner
+  path: product-owner\SKILL.md
 - category: other
-  description: '[Tooling & Meta] Restore workflow context from checkpoint after session
+  description: '[Project Management] Generate project status reports, track dependencies,
+    manage risk registers, and facilitate team sync meetings. Triggers: project status,
+    sprint tracking, risk assessment, project timeline, blocker report, meeting agenda.'
+  has_references: true
+  has_scripts: false
+  name: project-manager
+  path: project-manager\SKILL.md
+- category: other
+  description: '[Project Management] Enforce quality gates, verify compliance with
+    standards, track quality metrics, and generate audit trails. Triggers: quality
+    gate, compliance, audit trail, quality metrics, qc specialist, standards verification.'
+  has_references: false
+  has_scripts: false
+  name: qc-specialist
+  path: qc-specialist\SKILL.md
+- category: other
+  description: '[Utilities] Restore workflow context from checkpoint after session
     loss'
   has_references: false
   has_scripts: false
   name: recover
   path: recover\SKILL.md
 - category: other
-  description: '[Git & Release] Generate professional release notes from git commits
-    between two refs with automated categorization. Use when creating release notes
-    from git history.'
-  has_references: true
+  description: '[Code Quality] Restructure code without changing behavior using extract
+    method, extract class, rename, move, and inline patterns. Triggers: refactor,
+    extract method, extract class, rename symbol, restructure code, clean up code,
+    decompose function.'
+  has_references: false
+  has_scripts: false
+  name: refactoring
+  path: refactoring\SKILL.md
+- category: other
+  description: '**Goal:** Transform raw ideas into actionable Product Backlog Items
+    using BA best practices, hypothesis validation, and domain research.'
+  has_references: false
+  has_scripts: false
+  name: refine
+  path: refine\SKILL.md
+- category: other
+  description: '[Git] Generate professional release notes from git commits between
+    two refs with automated categorization. Use when creating release notes from git
+    history.'
+  has_references: false
   has_scripts: false
   name: release-notes
   path: release-notes\SKILL.md
 - category: dev-tools
-  description: '[Tooling & Meta] Package entire code repositories into single AI-friendly
-    files using Repomix. Capabilities include pack codebases with customizable include/exclude
-    patterns, generate multiple output formats (XML, Markdown, plain text), preserve
-    file structure and context, optimize for AI consumption with token counting, filter
-    by file types and directories, add custom headers and summaries. Use when packaging
-    codebases for AI analysis, creating repository snapshots for LLM context, analyzing
-    third-party libraries, preparing for security audits, generating documentation
-    context, or evaluating unfamiliar codebases.'
+  description: '[AI & Tools] Package code repositories into single AI-friendly files
+    using Repomix with customizable patterns and multiple output formats. Triggers:
+    repomix, package repo, repository context, codebase snapshot, repo pack.'
   has_references: true
   has_scripts: true
   name: repomix
   path: repomix\SKILL.md
 - category: utilities
   description: '[Planning] Use when you need to research, analyze, and plan technical
-    solutions that are scalable, secure, and maintainable.'
+    solutions that are scalable, secure, and maintainable. For implementation planning,
+    see also `planning` skill.'
   has_references: false
   has_scripts: false
   name: research
   path: research\SKILL.md
 - category: other
-  description: '[Review & Quality] ⚡⚡ Perform comprehensive code review'
-  has_references: false
-  has_scripts: false
-  name: review
-  path: review\SKILL.md
-- category: other
-  description: '[Review & Quality] Review all uncommitted changes before commit'
+  description: '[Code Quality] Review all uncommitted changes before commit'
   has_references: false
   has_scripts: false
   name: review-changes
   path: review-changes\SKILL.md
 - category: other
-  description: '[Review & Quality] ⚡⚡⚡ Scan & analyze the codebase.'
-  has_references: false
-  has_scripts: false
-  name: review-codebase
-  path: review-codebase\SKILL.md
-- category: other
-  description: '[Review & Quality] ⚡⚡⚡ Two-pass code review for task completion'
+  description: '[Code Quality] Two-pass code review for task completion'
   has_references: false
   has_scripts: false
   name: review-post-task
   path: review-post-task\SKILL.md
 - category: other
-  description: Fast codebase search to locate files needed for a task. Token-efficient,
-    parallel execution.
+  description: '**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+    before executing.'
   has_references: false
   has_scripts: false
   name: scout
   path: scout\SKILL.md
 - category: other
-  description: Utilize external agentic tools to scout given directories or explore
-    the codebase for files needed to complete the task using a fast, token efficient
-    agent.
+  description: '[Investigation] Use external agentic tools to scout given directories'
   has_references: false
   has_scripts: false
   name: scout-ext
   path: scout-ext\SKILL.md
+- category: other
+  description: '[Code Quality] Perform security review on specified scope'
+  has_references: false
+  has_scripts: false
+  name: security
+  path: security\SKILL.md
 - category: utilities
-  description: '[Planning] Apply structured, reflective problem-solving for complex
+  description: '[AI & Tools] Apply structured, reflective problem-solving for complex
     tasks requiring multi-step analysis, revision capability, and hypothesis verification.
     Use for complex problem decomposition, adaptive planning, analysis needing course
     correction, problems with unclear scope, multi-step solutions, and hypothesis-driven
@@ -693,46 +922,77 @@
   name: sequential-thinking
   path: sequential-thinking\SKILL.md
 - category: other
-  description: Think harder. Use `skill-plan` and `claude-code` skills.
+  description: '[Skill Management] Add new reference files or scripts to a skill'
   has_references: false
   has_scripts: false
   name: skill-add
   path: skill-add\SKILL.md
 - category: other
-  description: '[Tooling & Meta] Create a new agent skill'
-  has_references: false
-  has_scripts: false
+  description: '[Skill Management] Create new Claude Code skills or scan/fix invalid
+    skill headers. Triggers on: create skill, new skill, skill schema, scan skills,
+    fix skills, invalid skill, validate skills, skill header.'
+  has_references: true
+  has_scripts: true
   name: skill-create
   path: skill-create\SKILL.md
+- category: dev-tools
+  description: '**Goal:** Guide creation of effective Claude Code skills with proper
+    structure, progressive disclosure, and bundled resources.'
+  has_references: false
+  has_scripts: true
+  name: skill-creator
+  path: skill-creator\SKILL.md
 - category: other
-  description: '[Tooling & Meta] Fix the agent skill based on `logs.txt` file.'
+  description: '[Skill Management] Fix the agent skill based on `logs.txt` file.'
   has_references: false
   has_scripts: false
   name: skill-fix-logs
   path: skill-fix-logs\SKILL.md
 - category: other
-  description: Think harder. Use `skill-plan` and `claude-code` skills.
+  description: '[Skill Management] Optimize an existing agent skill'
   has_references: false
   has_scripts: false
   name: skill-optimize
   path: skill-optimize\SKILL.md
+- category: other
+  description: '[Code Quality] Production readiness review for service-layer and API
+    changes'
+  has_references: false
+  has_scripts: false
+  name: sre-review
+  path: sre-review\skill.md
+- category: other
+  description: '**Goal:** Generate a project status report covering progress, blockers,
+    and next steps.'
+  has_references: false
+  has_scripts: false
+  name: status
+  path: status\SKILL.md
+- category: other
+  description: '**Goal:** Break Product Backlog Items into implementable user stories
+    using vertical slicing, SPIDR splitting, and INVEST criteria.'
+  has_references: false
+  has_scripts: false
+  name: story
+  path: story\SKILL.md
 - category: utilities
-  description: '[Testing] Autonomous subagent variant of code-review. Use when reviewing
-    code changes, pull requests, or performing refactoring analysis with focus on
-    patterns, security, and performance.'
+  description: '[Code Quality] Autonomous subagent variant of code-review. Use when
+    reviewing code changes, pull requests, or performing refactoring analysis with
+    focus on patterns, security, and performance.'
   has_references: false
   has_scripts: false
   name: tasks-code-review
   path: tasks-code-review\SKILL.md
 - category: other
-  description: '[Docs] Autonomous subagent variant of documentation. Use when creating
-    or updating technical documentation, API documentation, or inline code documentation.'
+  description: '[Subagent Tasks] Autonomous subagent variant of documentation. Use
+    when creating or updating technical documentation, API documentation, or inline
+    code documentation.'
   has_references: false
   has_scripts: false
   name: tasks-documentation
   path: tasks-documentation\SKILL.md
 - category: other
-  description: '[Implementation] Autonomous subagent variant of feature-implementation.
+  description: '[Subagent Tasks] Autonomous subagent variant of feature-implementation.
     Use when implementing new features or enhancements requiring multi-layer changes
     (Domain, Application, Persistence, API, Frontend).'
   has_references: false
@@ -740,141 +1000,132 @@
   name: tasks-feature-implementation
   path: tasks-feature-implementation\SKILL.md
 - category: other
-  description: '[Testing] Use when updating specifications, comparing branches, or
-    ensuring documentation reflects current implementation.'
+  description: '[Subagent Tasks] Use when updating specifications, comparing branches,
+    or ensuring documentation reflects current implementation.'
   has_references: false
   has_scripts: false
   name: tasks-spec-update
   path: tasks-spec-update\SKILL.md
 - category: other
-  description: '[Testing] Use when creating or enhancing unit tests, integration tests,
-    or defining test strategies for backend and frontend code.'
-  has_references: false
+  description: '[Subagent Tasks] Autonomous subagent variant of test-generation. Use
+    when creating or enhancing unit tests, integration tests, or defining test strategies
+    for backend and frontend code.'
+  has_references: true
   has_scripts: false
   name: tasks-test-generation
   path: tasks-test-generation\SKILL.md
 - category: other
-  description: Map and visualize dependencies between features and work items.
+  description: '**Goal:** Facilitate team synchronization by generating cross-team
+    status updates and alignment items.'
   has_references: false
   has_scripts: false
-  name: team-dependency
-  path: team-dependency\SKILL.md
-- category: frontend
-  description: Create comprehensive UI/UX specifications for implementation.
-  has_references: true
-  has_scripts: false
-  name: team-design-spec
-  path: team-design-spec\SKILL.md
+  name: team-sync
+  path: team-sync\SKILL.md
 - category: other
-  description: Extract design specifications from Figma files using MCP integration.
-  has_references: false
-  has_scripts: false
-  name: team-figma-extract
-  path: team-figma-extract\SKILL.md
-- category: other
-  description: Capture raw ideas as structured artifacts for backlog consideration.
-  has_references: false
-  has_scripts: false
-  name: team-idea
-  path: team-idea\SKILL.md
-- category: other
-  description: Order backlog items using data-driven prioritization frameworks.
-  has_references: false
-  has_scripts: false
-  name: team-prioritize
-  path: team-prioritize\SKILL.md
-- category: other
-  description: Verify artifacts meet quality criteria at development stages.
-  has_references: true
-  has_scripts: false
-  name: team-quality-gate
-  path: team-quality-gate\SKILL.md
-- category: other
-  description: Transform captured ideas into actionable Product Backlog Items using
-    BA best practices, Hypothesis-Driven Development, and domain research.
-  has_references: false
-  has_scripts: false
-  name: team-refine
-  path: team-refine\SKILL.md
-- category: other
-  description: Generate project/sprint status reports with metrics.
-  has_references: false
-  has_scripts: false
-  name: team-status
-  path: team-status\SKILL.md
-- category: other
-  description: Break Product Backlog Items into implementable user stories using vertical
-    slicing and SPIDR patterns.
-  has_references: true
-  has_scripts: false
-  name: team-story
-  path: team-story\SKILL.md
-- category: other
-  description: Generate meeting agendas and action item tracking.
-  has_references: false
-  has_scripts: false
-  name: team-team-sync
-  path: team-team-sync\SKILL.md
-- category: other
-  description: Create detailed, executable test cases from specifications.
-  has_references: false
-  has_scripts: false
-  name: team-test-cases
-  path: team-test-cases\SKILL.md
-- category: other
-  description: Generate comprehensive test specifications from requirements.
-  has_references: false
-  has_scripts: false
-  name: team-test-spec
-  path: team-test-spec\SKILL.md
-- category: other
-  description: '[Testing] ⚡ Run tests locally and analyze the summary report.'
+  description: '[Testing] Run tests locally and analyze the summary report.'
   has_references: false
   has_scripts: false
   name: test
   path: test\SKILL.md
 - category: other
-  description: '> **Skill Variant:** Use this skill for **interactive test writing**
-    where the user is actively engaged and can provide feedback. For autonomous test
-    generation, use `tasks-test-generation` instead.'
+  description: '[Testing] Generate test specifications, test cases, and coverage analysis
+    from PBIs or codebase. Comprehensive test planning with GWT format, evidence requirements,
+    and traceability. Triggers on: test spec, test cases, qa, test plan, test coverage,
+    test matrix, test strategy, what to test, Given When Then, BDD.'
   has_references: false
   has_scripts: false
-  name: test-generation
-  path: test-generation\SKILL.md
+  name: test-spec
+  path: test-spec\SKILL.md
+- category: other
+  description: '[Documentation] Create or update test specifications in docs/test-specs/{Module}/.
+    Use when asked to create test specs, write test cases, document test scenarios,
+    or generate Given-When-Then specifications. Triggers on "test specs", "test specifications",
+    "test cases", "test scenarios", "QA documentation", "Given-When-Then".'
+  has_references: true
+  has_scripts: false
+  name: test-specs-docs
+  path: test-specs-docs\SKILL.md
+- category: frontend
+  description: '[Testing] Full-site QA audit (accessibility, performance, security,
+    SEO) with visual reports. Use for comprehensive QA audits of deployed sites.'
+  has_references: false
+  has_scripts: false
+  name: test-ui
+  path: test-ui\SKILL.md
+- category: frontend
+  description: '[Frontend] Frontend UI/UX design intelligence - activate FIRST when
+    user requests beautiful, stunning, gorgeous, or aesthetic interfaces. 50 styles,
+    21 palettes, 50 font pairings, 20 charts, 8 stacks. Triggers on ui design, ux
+    design, design system, color palette, typography, glassmorphism, claymorphism,
+    neumorphism, bento grid, font pairing, ui-ux-pro-max, stunning interface, beautiful
+    ui.'
+  has_references: false
+  has_scripts: true
+  name: ui-ux-pro-max
+  path: ui-ux-pro-max\SKILL.md
 - category: dev-tools
-  description: '[Tooling & Meta] Utilize tools of Model Context Protocol (MCP) servers'
+  description: '[AI & Tools] Utilize tools of Model Context Protocol (MCP) servers'
   has_references: false
   has_scripts: false
   name: use-mcp
   path: use-mcp\SKILL.md
+- category: frontend
+  description: '**Goal:** Assist UX Designers with design specs, component docs, accessibility
+    audits, and dev handoffs.'
+  has_references: false
+  has_scripts: false
+  name: ux-designer
+  path: ux-designer\SKILL.md
 - category: other
-  description: '[Utilities] ⚡ Review recent changes and wrap up the work'
+  description: '[Frontend] Auto-activated visual-to-code component finder. Matches
+    screenshots to Angular components with >=85% confidence using BEM classes, route
+    paths, text content, and component selectors. Also supports index refresh/sync.
+    Triggers on: screenshot, find component, find page, where is this, fix ui, update
+    ui, fix screen, this page, this component, which component, locate component,
+    visual match, find code for, match screenshot, refresh component index, update
+    component index, sync component index, rebuild index.'
+  has_references: true
+  has_scripts: true
+  name: visual-component-finder
+  path: visual-component-finder\SKILL.md
+- category: other
+  description: '[Utilities] Review recent changes and wrap up the work'
   has_references: false
   has_scripts: false
   name: watzup
   path: watzup\SKILL.md
 - category: frontend
-  description: '[Frontend] Review UI code for web interface design compliance covering
-    WCAG 2.2/3.0 accessibility, responsive design, performance, usability, and modern
-    best practices. Use when asked to ''review my UI'', ''check accessibility'', ''audit
-    design'', ''review UX'', ''check responsive design'', or ''check my site against
-    best practices''. Actions: review, check, audit, analyze, validate. Topics: accessibility,
-    WCAG, ARIA, semantic HTML, focus states, forms, animation, typography, content
-    handling, images, performance, Core Web Vitals, navigation, touch interaction,
-    responsive design, mobile-first, dark mode, internationalization, hydration.'
-  has_references: false
+  description: '[Code Quality] Review UI code for web design best practices including
+    WCAG 2.2 accessibility, responsive design, Core Web Vitals performance, and modern
+    UX patterns. Review-only skill. Triggers on design guidelines review, accessibility
+    audit, visual review, UI compliance check, WCAG check.'
+  has_references: true
   has_scripts: false
   name: web-design-guidelines
   path: web-design-guidelines\SKILL.md
 - category: other
-  description: Start a workflow by ID from the workflow catalog injected by the hook
-    system. This creates workflow state and prepares the step sequence for execution.
+  description: '[Testing] Individual page/component testing with Python Playwright
+    scripts. Use for dev debugging, automation, and verifying specific UI behaviors.'
+  has_references: false
+  has_scripts: true
+  name: webapp-testing
+  path: webapp-testing\SKILL.md
+- category: other
+  description: '[Code Quality] Validate design rationale completeness in plan files
+    before implementation'
+  has_references: false
+  has_scripts: false
+  name: why-review
+  path: why-review\skill.md
+- category: other
+  description: '**Goal:** Activate a workflow by ID, creating tracking tasks and announcing
+    the workflow sequence.'
   has_references: false
   has_scripts: false
   name: workflow-start
   path: workflow-start\SKILL.md
 - category: other
-  description: Create an isolated git worktree for parallel feature development.
+  description: '[Git] Create isolated git worktree for parallel development'
   has_references: false
   has_scripts: false
   name: worktree

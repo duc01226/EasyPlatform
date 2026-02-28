@@ -41,23 +41,29 @@ const VALID_FIELDS = new Set([
   'hooks',
 ]);
 
+// Project-specific convention fields (not official but widely used in this project)
+// These are flagged as INFO, not ERROR
+const PROJECT_CONVENTION_FIELDS = new Set([
+  'activation',
+  'version',
+]);
+
 // Known invalid fields that can be safely removed
 const REMOVABLE_FIELDS = new Set([
-  'version',
   'license',
   'infer',
 ]);
 
 // Known field typos/aliases to fix
 const FIELD_FIXES = {
-  'tools': 'allowed-tools',  // common mistake: "tools" instead of "allowed-tools"
+  'tools': 'allowed-tools',
 };
 
 // --- Helpers ---
 
 /**
  * Parse YAML frontmatter from SKILL.md content.
- * Returns { fields: Map<string, {line, value}>, startLine, endLine, raw }
+ * Returns { fields: Map<string, {line, value, lines}>, startLine, endLine, raw, allLines }
  */
 function parseFrontmatter(content) {
   const lines = content.split('\n');
@@ -77,13 +83,11 @@ function parseFrontmatter(content) {
 
   for (let i = 1; i < endIdx; i++) {
     const line = lines[i];
-    // Top-level field (not indented continuation)
     const fieldMatch = line.match(/^(\w[\w-]*):\s*(.*)/);
     if (fieldMatch) {
       currentField = fieldMatch[1];
       fields.set(currentField, { line: i, value: fieldMatch[2], lines: [i] });
     } else if (currentField && (line.startsWith('  ') || line.startsWith('\t'))) {
-      // Continuation line for multi-line value (e.g., description: >-)
       const existing = fields.get(currentField);
       if (existing) existing.lines.push(i);
     }
@@ -119,17 +123,20 @@ function findSkillFiles(dir) {
 }
 
 /**
+ * Check if description spans multiple YAML lines (breaks catalog parsing).
+ */
+function isMultilineDescription(fm) {
+  const desc = fm.fields.get('description');
+  if (!desc) return false;
+  return desc.lines.length > 1;
+}
+
+/**
  * Validate a single SKILL.md file.
  * Returns { path, issues[], fixes[] }
  */
 function validateSkill(filePath) {
-  let content;
-  try {
-    content = fs.readFileSync(filePath, 'utf-8');
-  } catch (err) {
-    const relPath = path.relative(PROJECT_ROOT, filePath).replace(/\\/g, '/');
-    return { path: relPath, issues: [{ severity: 'error', field: null, message: `Could not read file: ${err.message}` }], fixes: [] };
-  }
+  const content = fs.readFileSync(filePath, 'utf-8');
   const relPath = path.relative(PROJECT_ROOT, filePath).replace(/\\/g, '/');
   const result = { path: relPath, issues: [], fixes: [] };
 
@@ -139,30 +146,75 @@ function validateSkill(filePath) {
     return result;
   }
 
-  // Check for missing recommended fields
-  if (!fm.fields.has('name') && !fm.fields.has('description')) {
-    result.issues.push({ severity: 'warn', field: null, message: 'Missing both name and description' });
-  }
+  // Missing description
   if (!fm.fields.has('description')) {
     result.issues.push({ severity: 'warn', field: 'description', message: 'Missing description (recommended for auto-activation)' });
+  }
+
+  // Multi-line description (breaks catalog parsing)
+  if (isMultilineDescription(fm)) {
+    result.issues.push({
+      severity: 'error',
+      field: 'description',
+      message: 'Multi-line description detected — catalog parsing may fail. Collapse to single-line quoted string.',
+    });
+  }
+
+  // Description without category prefix
+  if (fm.fields.has('description')) {
+    const descVal = fm.fields.get('description').value || '';
+    const stripped = descVal.replace(/^['"]/, '');
+    if (stripped && !stripped.startsWith('[')) {
+      result.issues.push({
+        severity: 'info',
+        field: 'description',
+        message: 'Description missing [Category] prefix (convention: start with [Category])',
+      });
+    }
+  }
+
+  // Name format check
+  if (fm.fields.has('name')) {
+    const nameVal = fm.fields.get('name').value || '';
+    const cleanName = nameVal.replace(/^['"]|['"]$/g, '');
+    if (cleanName && !/^[a-z0-9][a-z0-9-]*$/.test(cleanName)) {
+      result.issues.push({
+        severity: 'error',
+        field: 'name',
+        message: `Invalid name "${cleanName}" — must be lowercase, hyphens, start with letter/number`,
+      });
+    }
+    if (cleanName.length > 64) {
+      result.issues.push({
+        severity: 'error',
+        field: 'name',
+        message: `Name exceeds 64 chars (${cleanName.length})`,
+      });
+    }
   }
 
   // Check each field against schema
   for (const [field] of fm.fields) {
     if (VALID_FIELDS.has(field)) continue;
 
-    if (REMOVABLE_FIELDS.has(field)) {
+    if (PROJECT_CONVENTION_FIELDS.has(field)) {
+      result.issues.push({
+        severity: 'info',
+        field,
+        message: `Field "${field}" — project convention, not in official schema (OK for this project)`,
+      });
+    } else if (REMOVABLE_FIELDS.has(field)) {
       result.issues.push({
         severity: 'warn',
         field,
-        message: `Invalid field "${field}" — not in official schema, ignored by runtime`,
+        message: `Field "${field}" — not in official schema, ignored by runtime`,
       });
       result.fixes.push({ action: 'remove', field });
     } else if (field in FIELD_FIXES) {
       result.issues.push({
         severity: 'warn',
         field,
-        message: `Invalid field "${field}" — did you mean "${FIELD_FIXES[field]}"?`,
+        message: `Field "${field}" — did you mean "${FIELD_FIXES[field]}"?`,
       });
       result.fixes.push({ action: 'rename', field, newField: FIELD_FIXES[field] });
     } else {
@@ -174,7 +226,7 @@ function validateSkill(filePath) {
     }
   }
 
-  // Check for infer content that should be in description
+  // Check for infer→description migration
   if (fm.fields.has('infer') && fm.fields.has('description')) {
     const desc = fm.fields.get('description').value || '';
     if (!desc.toLowerCase().includes('trigger')) {
@@ -208,7 +260,6 @@ function applyFixes(filePath, fixes) {
   const fm = parseFrontmatter(content);
   if (!fm) return false;
 
-  // Collect lines to remove (process in reverse to maintain indices)
   const linesToRemove = new Set();
 
   for (const fix of fixes) {
@@ -220,23 +271,14 @@ function applyFixes(filePath, fixes) {
         linesToRemove.add(lineIdx);
       }
     } else if (fix.action === 'rename') {
-      // Skip rename if target field already exists (avoid duplicates)
-      if (fm.fields.has(fix.newField)) {
-        // Target exists — remove the old field instead of renaming
-        for (const lineIdx of fieldInfo.lines) {
-          linesToRemove.add(lineIdx);
-        }
-      } else {
-        const lineIdx = fieldInfo.line;
-        lines[lineIdx] = lines[lineIdx].replace(
-          new RegExp(`^${fix.field}:`),
-          `${fix.newField}:`
-        );
-      }
+      const lineIdx = fieldInfo.line;
+      lines[lineIdx] = lines[lineIdx].replace(
+        new RegExp(`^${fix.field}:`),
+        `${fix.newField}:`
+      );
     }
   }
 
-  // Remove lines in reverse order
   const sortedRemoves = [...linesToRemove].sort((a, b) => b - a);
   for (const idx of sortedRemoves) {
     lines.splice(idx, 1);
@@ -257,6 +299,9 @@ function main() {
 
   let totalIssues = 0;
   let totalFixed = 0;
+  let errorCount = 0;
+  let warnCount = 0;
+  let infoCount = 0;
   const results = [];
 
   for (const filePath of skillFiles) {
@@ -266,6 +311,12 @@ function main() {
     if (result.issues.length === 0) continue;
 
     totalIssues += result.issues.length;
+    for (const issue of result.issues) {
+      if (issue.severity === 'error') errorCount++;
+      else if (issue.severity === 'warn') warnCount++;
+      else infoCount++;
+    }
+
     console.log(`${result.path}:`);
     for (const issue of result.issues) {
       const icon = issue.severity === 'error' ? 'ERROR' : issue.severity === 'warn' ? 'WARN' : 'INFO';
@@ -286,17 +337,14 @@ function main() {
   console.log('--- Summary ---');
   console.log(`Skills scanned: ${skillFiles.length}`);
   console.log(`Skills with issues: ${results.filter(r => r.issues.length > 0).length}`);
-  console.log(`Total issues: ${totalIssues}`);
+  console.log(`Total issues: ${totalIssues} (${errorCount} errors, ${warnCount} warnings, ${infoCount} info)`);
   if (FIX_MODE) console.log(`Fixes applied: ${totalFixed}`);
 
-  // Valid fields reference
   console.log('\nValid frontmatter fields (official schema):');
   console.log(`  ${[...VALID_FIELDS].join(', ')}`);
+  console.log(`Project convention fields (accepted):  ${[...PROJECT_CONVENTION_FIELDS].join(', ')}`);
   console.log('Source: https://code.claude.com/docs/en/skills');
 
-  const errorCount = results.reduce(
-    (sum, r) => sum + r.issues.filter(i => i.severity === 'error').length, 0
-  );
   return errorCount > 0 ? 1 : 0;
 }
 

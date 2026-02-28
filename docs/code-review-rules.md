@@ -1,567 +1,942 @@
-# EasyPlatform Code Review Rules
+# BravoSUITE Code Review Rules
 
-> **Purpose:** Comprehensive checklist for code reviewers. Auto-injected when running /code-review skills.
-> **Last Updated:** 2026-01-23
-> **Sources:** CLAUDE.md, docs/claude/*.md, .claude/quick-ref/*.md, .claude/skills/code-review/
+> **Comprehensive code review rules, conventions, and best practices for BravoSUITE development.**
+> Auto-injected when code review skills are activated.
 
 ---
 
 ## Table of Contents
 
-1. [Backend (C#) - Critical Rules](#backend-c---critical-rules)
-2. [Frontend (TypeScript/Angular) - Critical Rules](#frontend-typescriptangular---critical-rules)
-3. [SCSS/CSS Styling Rules](#scsscss-styling-rules)
+1. [Critical Rules (MUST-FOLLOW)](#critical-rules-must-follow)
+2. [Backend Rules (C#)](#backend-rules-c)
+3. [Frontend Rules (TypeScript/Angular)](#frontend-rules-typescriptangular)
 4. [Architecture Rules](#architecture-rules)
-5. [Clean Code Rules](#clean-code-rules)
+5. [Clean Code Principles](#clean-code-principles)
 6. [Performance Rules](#performance-rules)
-7. [Security & Authorization](#security--authorization)
-8. [Anti-Pattern Detection](#anti-pattern-detection)
-9. [Code Review Process Rules](#code-review-process-rules)
-10. [Verification Rules](#verification-rules)
+7. [Security Rules](#security-rules)
+8. [Anti-Patterns Catalog](#anti-patterns-catalog)
+9. [Decision Trees](#decision-trees)
+10. [Quick Reference Checklists](#quick-reference-checklists)
+11. [Related Documents](#related-documents)
 
 ---
 
-## Backend (C#) - Critical Rules
+## Critical Rules (MUST-FOLLOW)
 
-### Repository Pattern
+### Core Principles
 
-- [ ] Uses `IPlatformQueryableRootRepository<TEntity, TKey>` - NEVER generic `IPlatformRootRepository`
-- [ ] Repository extensions use static expressions for reusability
-- [ ] `GetByIdsAsync()` for batch loading - NEVER N+1 queries
-- [ ] `.PageBy()` for all collection queries
-- [ ] Creates repository extensions for reusable queries
-- [ ] Uses `loadRelatedEntities` parameter for eager loading
+- **YAGNI** - You Aren't Gonna Need It: Don't implement features until needed
+- **KISS** - Keep It Simple, Stupid: Simplest solution that works
+- **DRY** - Don't Repeat Yourself: Extract shared logic, no duplication
 
-### Validation Pattern
+### The 90% Rule (Class Responsibility)
 
-- [ ] Uses `PlatformValidationResult` fluent API (`.And()`, `.AndAsync()`, `.AndNot()`, `.AndNotAsync()`)
-- [ ] NEVER throws `ValidationException` directly
-- [ ] Entity validation in Entity class, not Handler
-- [ ] Uses `.EnsureFound()`, `.EnsureValid()`, `.EnsureValidAsync()` fluent helpers
-- [ ] Async validation in `ValidateRequestAsync()` override
-- [ ] Validation chained with `.Of<T>()` when needed
+**Logic belongs in the LOWEST appropriate layer:**
 
-### CQRS Pattern
+```
+Entity/Model (Lowest)  →  Service  →  Component/Handler (Highest)
+```
 
-- [ ] Command + Result + Handler in ONE file under `UseCaseCommands/{Feature}/`
-- [ ] DTO owns mapping via `MapToEntity()` / `MapToObject()` - NEVER in handlers
-- [ ] Side effects in Entity Event Handlers (`UseCaseEvents/`) - NEVER in command handlers
-- [ ] Query handlers use `GetQueryBuilder` for reusable queries
-- [ ] Parallel tuple pattern for independent queries: `var (a, b) = await (task1, task2)`
+| Layer            | Contains                                                                  |
+| ---------------- | ------------------------------------------------------------------------- |
+| **Entity/Model** | Business logic, validation, display helpers, static factory methods, dropdown options, constants |
+| **Service**      | API calls, command factories, data transformation                         |
+| **Component/Handler** | UI events ONLY - delegates all logic to lower layers                 |
 
-### Entity Patterns
+```typescript
+// ❌ WRONG: Logic in component
+readonly providerTypes = [{ value: 1, label: 'ITViec' }, ...];
 
-- [ ] Uses `RootEntity<TEntity, TKey>` or `RootAuditedEntity<TEntity, TKey, TUserKey>`
-- [ ] Static expression methods for reusable filters (`UniqueExpr()`, `OfCompanyExpr()`)
-- [ ] `[TrackFieldUpdatedDomainEvent]` attribute on tracked properties
-- [ ] `[ComputedEntityProperty]` with empty setter for computed props
-- [ ] `[PlatformNavigationProperty]` for related entity loading
-- [ ] Search columns defined as `static Expression<Func<T, object?>>[] SearchColumns()`
+// ✅ CORRECT: Logic in entity/model
+export class JobProvider {
+  static readonly dropdownOptions = [{ value: 1, label: 'ITViec' }, ...];
+  static getDisplayLabel(value: number): string {
+    return this.dropdownOptions.find(x => x.value === value)?.label ?? '';
+  }
+}
+```
 
-### DTO Patterns
+### Mandatory Type Annotations
 
-- [ ] Reusable DTOs extend `PlatformEntityDto<TEntity, TKey>`
-- [ ] Implements `MapToEntity()`, `GetSubmittedId()`, `GenerateNewId()`
-- [ ] With* fluent methods for optional related data loading
-- [ ] Constructor accepts entity for mapping
+All functions MUST have explicit parameter and return types:
 
-### Async Execution
+```typescript
+// ❌ WRONG
+function getUser(id) { ... }
 
-- [ ] Independent async operations use tuple pattern: `var (a, b) = await (task1, task2)`
-- [ ] Uses `.ParallelAsync()` for collection processing
-- [ ] Flag: Sequential awaits where operations don't depend on each other
-- [ ] Uses `task.WaitResult()` not `task.Wait()` (preserves stack trace)
-
-### Domain Responsibility (90% Rule)
-
-- [ ] Logic 90% belonging to Entity → should be in Entity
-- [ ] Duplicated logic across handlers → move to entity method or Helper
-- [ ] Static factory methods in Entity for creation
-- [ ] Mapping responsibility in DTO, not handler
-
-### Background Jobs
-
-- [ ] Extends `PlatformApplicationPagedBackgroundJobExecutor` or `PlatformApplicationBatchScrollingBackgroundJobExecutor`
-- [ ] Uses `[PlatformRecurringJob("cron")]` attribute
-- [ ] Paged processing with `PageBy()` for large datasets
-- [ ] `dismissSendEvent: true` in migrations to avoid event storms
-
-### Message Bus
-
-- [ ] Consumers extend `PlatformApplicationMessageBusConsumer<TMessage>`
-- [ ] Uses `TryWaitUntilAsync()` for dependency waiting
-- [ ] Handles `LastMessageSyncDate` for idempotency
-- [ ] Proper CRUD action handling (Created, Updated, Deleted)
+// ✅ CORRECT
+function getUser(id: string): Promise<User> { ... }
+```
 
 ---
 
-## Frontend (TypeScript/Angular) - Critical Rules
+## Backend Rules (C#)
 
-### Component Hierarchy
+### Parallel Execution (CRITICAL)
 
-- [ ] Extends `AppBaseComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent`
-- [ ] NEVER extends `PlatformComponent` directly (use AppBase* layer)
-- [ ] NEVER raw `@Component` without base class
+Independent async operations MUST use `Util.TaskRunner.WhenAll()`:
 
-### State Management
+```csharp
+// ❌ WRONG: Sequential awaits (slow)
+var entity1 = await repo1.GetByIdAsync(id1, ct);
+var entity2 = await repo2.GetByIdAsync(id2, ct);
 
-- [ ] Uses `PlatformVmStore` for complex state
-- [ ] NEVER uses manual signals for state (`employees = signal([])`)
-- [ ] Store pattern: `effectSimple()`, `select()`, `updateState()`
-- [ ] Uses `observerLoadingErrorState()` for loading/error tracking
+// ✅ CORRECT: Parallel execution
+var (entity1, entity2) = await Util.TaskRunner.WhenAll(
+    repo1.GetByIdAsync(id1, ct),
+    repo2.GetByIdAsync(id2, ct)
+);
+```
 
-### Subscription Cleanup
+**Flag:** Any consecutive `await` statements where operations don't depend on each other.
 
-- [ ] ALL subscriptions use `.pipe(this.untilDestroyed())`
-- [ ] Flag: Any `.subscribe()` without `untilDestroyed()`
-- [ ] NEVER uses `private destroy$ = new Subject()` with `takeUntil`
+### Domain Responsibility (CRITICAL)
+
+Validation and business logic belongs in **Entity**, not Handler:
+
+```csharp
+// ❌ WRONG: Validation in handler
+// In SaveCustomFieldCommandHandler
+private PlatformValidationResult ValidateAndSetRelationshipType(Field field, Template template) { ... }
+
+// ✅ CORRECT: Validation in entity
+// In CompanyClassFieldTemplate entity
+public CompanyClassFieldTemplate UpsertFields(List<Field> fields)
+{
+    foreach (var field in fields)
+        EnsureCanUpsertField(field).EnsureValid();
+    this.Fields.UpsertBy(f => f.Code, fields);
+    return this;
+}
+```
+
+**Flag:** Duplicated validation logic across related handlers → move to entity.
+
+### Repository Pattern Priority
+
+Always use microservice-specific repositories:
+
+```csharp
+// ❌ WRONG: Generic repository
+IPlatformRootRepository<Employee>
+
+// ✅ CORRECT: Service-specific repositories
+ICandidatePlatformRootRepository<Employee>  // bravoTALENTS
+IGrowthRootRepository<Employee>             // bravoGROWTH
+ISurveysPlatformRootRepository<Survey>      // bravoSURVEYS
+```
+
+**Repository Operations:**
+
+```csharp
+// ✅ Use explicit parameter names
+await repository.CreateOrUpdateAsync(entity, cancellationToken: ct);
+await repository.DeleteByIdAsync(id, ct);  // NOT fetch-then-delete
+await repository.GetAllAsync(expr, ct);    // NOT GetAsync()
+
+// ✅ Extend with extensions, not custom interfaces
+public static class EmployeeRepositoryExtensions
+{
+    public static async Task<Employee> GetByEmailAsync(
+        this IGrowthRootRepository<Employee> repo, string email, CancellationToken ct)
+        => await repo.FirstOrDefaultAsync(Employee.ByEmailExpr(email), ct).EnsureFound();
+}
+```
+
+### Fluent Validation Style
+
+Use fluent `.Validate().And()` pattern, not `if-return`:
+
+```csharp
+// ❌ WRONG: if-return style
+if (field.Group == null)
+    return PlatformValidationResult.Valid<object>(null);
+
+// ✅ CORRECT: Fluent style
+return this
+    .Validate(f => f.Group != null, "Group required")
+    .And(f => IsCompatibleWithGroup(f), "Incompatible relationship type");
+
+// ✅ CORRECT: Async fluent validation
+return await validation
+    .AndAsync(r => repo.GetByIdsAsync(r.Ids, ct).ThenValidateFoundAllAsync(r.Ids, ids => $"Not found: {ids}"))
+    .AndNotAsync(r => repo.AnyAsync(e => e.IsExternal && r.Ids.Contains(e.Id), ct), "External not allowed");
+```
+
+### DTO Mapping Responsibility
+
+DTOs own their mapping logic:
+
+```csharp
+// ❌ WRONG: Mapping in handler
+protected override async Task<Result> HandleAsync(Command req, CancellationToken ct)
+{
+    var config = new AuthConfigurationValue
+    {
+        ClientId = req.Dto.ClientId,  // Manual mapping!
+        ClientSecret = req.Dto.ClientSecret
+    };
+}
+
+// ✅ CORRECT: DTO owns mapping
+public sealed class AuthConfigDto : PlatformDto<AuthConfigValue>
+{
+    public string ClientId { get; set; } = "";
+    public override AuthConfigValue MapToObject() => new() { ClientId = ClientId };
+}
+
+// Handler uses MapToObject()
+var config = req.AuthConfiguration.MapToObject()
+    .With(p => p.ClientSecret = encryptionService.Encrypt(p.ClientSecret));
+```
+
+### Side Effects in Entity Event Handlers
+
+Side effects (notifications, emails, external APIs) MUST go in Entity Event Handlers:
+
+```csharp
+// ❌ WRONG: Side effects in command handler
+protected override async Task<Result> HandleAsync(Command req, CancellationToken ct)
+{
+    await repository.CreateAsync(entity, ct);
+    await notificationService.SendAsync(entity);  // BREAKS event-driven architecture!
+}
+
+// ✅ CORRECT: Side effects in event handler (UseCaseEvents/)
+internal sealed class SendNotificationOnCreateEntityEventHandler
+    : PlatformCqrsEntityEventApplicationHandler<Entity>
+{
+    public override async Task<bool> HandleWhen(PlatformCqrsEntityEvent<Entity> @event)
+        => @event.CrudAction == PlatformCqrsEntityEventCrudAction.Created;
+
+    protected override async Task HandleAsync(PlatformCqrsEntityEvent<Entity> @event, CancellationToken ct)
+        => await notificationService.SendAsync(@event.EntityData);
+}
+```
+
+### Command Patterns
+
+```csharp
+// Command + Result + Handler in ONE file under UseCaseCommands/{Feature}/
+public sealed class SaveEntityCommand : PlatformCqrsCommand<SaveEntityCommandResult>
+{
+    public EntityDto Entity { get; set; } = null!;  // DTO in command, not flat properties
+
+    public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
+        => base.Validate().And(_ => Entity != null, "Entity required");
+}
+
+public sealed class SaveEntityCommandResult : PlatformCqrsCommandResult
+{
+    public EntityDto Entity { get; set; } = null!;
+}
+
+internal sealed class SaveEntityCommandHandler :
+    PlatformCqrsCommandApplicationHandler<SaveEntityCommand, SaveEntityCommandResult>
+{
+    protected override async Task<SaveEntityCommandResult> HandleAsync(SaveEntityCommand req, CancellationToken ct)
+    {
+        // Mapping via DTO methods, not manual mapping
+        var entity = req.Entity.MapToNewEntity().With(e => e.CreatedBy = RequestContext.UserId());
+        await repository.CreateAsync(entity, ct);
+        return new() { Entity = new EntityDto(entity) };
+    }
+}
+```
+
+### Cross-Service Communication
+
+```csharp
+// ❌ WRONG: Direct database access across services
+var otherServiceData = await otherDbContext.Entities.ToListAsync();
+
+// ✅ CORRECT: Use message bus
+await messageBus.PublishAsync(new RequestDataMessage());
+
+// Entity Event Bus Producer (auto-publishes on entity changes)
+public class EmployeeEntityEventBusMessageProducer :
+    PlatformCqrsEntityEventBusMessageProducer<EmployeeEventBusMessage, Employee, string> { }
+```
+
+### Naming Conventions
+
+| Element       | Convention       | Example                                             |
+| ------------- | ---------------- | --------------------------------------------------- |
+| Commands      | `[Verb][Entity]Command` | `SaveLeaveRequestCommand`, `ApproveOrderCommand` |
+| Queries       | `Get[Entity][Query]` | `GetActiveUsersQuery`, `GetOrdersByStatusQuery`  |
+| Handlers      | `[CommandName]Handler` | `SaveLeaveRequestCommandHandler`                |
+| Validation    | `Validate[Context]Valid` | `ValidateLeaveRequestValid()`                 |
+| Ensure        | `Ensure[Context]Valid` | `EnsureCanApprove()` (returns object or throws)  |
+| Booleans      | `Is/Has/Can/Should` | `IsActive`, `HasPermission`, `CanEdit`          |
+| Collections   | Plural           | `users`, `orders`, `items`                          |
+
+---
+
+## Frontend Rules (TypeScript/Angular)
+
+### Component Base Classes (CRITICAL)
+
+Components MUST extend platform base classes:
+
+| Scenario        | Base Class                              |
+| --------------- | --------------------------------------- |
+| Simple display  | `AppBaseComponent`                      |
+| Complex state   | `AppBaseVmStoreComponent<TState, TStore>` |
+| Forms           | `AppBaseFormComponent<TViewModel>`      |
+
+```typescript
+// ❌ WRONG: Raw component with implements
+export class MyComponent implements OnInit, OnDestroy { }
+
+// ✅ CORRECT: Extends platform base
+export class MyComponent extends AppBaseFormComponent<MyFormVm> { }
+```
+
+### Forbidden Patterns (CRITICAL)
+
+| Forbidden Pattern | Why | Correct Alternative |
+| ----------------- | --- | ------------------- |
+| `ngOnChanges` | Error-prone, complex | `@Watch` decorator |
+| `implements OnInit, OnDestroy` | Use base class | Extend platform base |
+| Manual `destroy$ = new Subject()` | Memory leaks | `this.untilDestroyed()` |
+| `takeUntil(this.destroy$)` | Redundant | `this.untilDestroyed()` |
+
+```typescript
+// ❌ WRONG: ngOnChanges
+export class MyComponent implements OnChanges {
+    ngOnChanges(changes: SimpleChanges): void { ... }
+}
+
+// ✅ CORRECT: @Watch decorator
+export class MyComponent extends AppBaseVmStoreComponent<State, Store> {
+    @Watch('onFieldChanged') fieldTemplate: FieldTemplate;
+    private onFieldChanged(value: FieldTemplate): void { ... }
+}
+```
+
+### Subscription Cleanup (CRITICAL)
+
+ALL subscriptions MUST use `.pipe(this.untilDestroyed())`:
+
+```typescript
+// ❌ WRONG: No cleanup
+this.formControl.valueChanges.subscribe(value => { ... });
+
+// ❌ WRONG: Manual destroy subject
+private destroy$ = new Subject<void>();
+ngOnInit() {
+    this.data$.pipe(takeUntil(this.destroy$)).subscribe(...);
+}
+ngOnDestroy() { this.destroy$.next(); this.destroy$.complete(); }
+
+// ✅ CORRECT: Platform cleanup
+this.formControl.valueChanges
+    .pipe(this.untilDestroyed())
+    .subscribe(value => { ... });
+```
 
 ### API Services
 
-- [ ] Extends `PlatformApiService`
-- [ ] NEVER uses direct `HttpClient` injection
-- [ ] Override `get apiUrl()` property
-- [ ] Uses `{ enableCache: true }` for cacheable requests
+Services MUST extend `PlatformApiService`:
 
-### Form Patterns
+```typescript
+// ❌ WRONG: Direct HttpClient
+constructor(private http: HttpClient) {}
 
-- [ ] Extends `AppBaseFormComponent<TViewModel>`
-- [ ] Implements `initialFormConfig()` for form setup
-- [ ] Uses `validateForm()` before submission
-- [ ] FormArray pattern with `modelItems` and `itemControl`
-- [ ] Uses `ifAsyncValidator()` for conditional async validation
+// ✅ CORRECT: Platform service
+@Injectable({ providedIn: 'root' })
+export class EmployeeApiService extends PlatformApiService {
+    protected get apiUrl() { return environment.apiUrl + '/api/Employee'; }
 
-### Change Detection
-
-- [ ] Uses `@Watch` decorator instead of `ngOnChanges`
-- [ ] Uses `@WatchWhenValuesDiff` for debounced changes
-
-### Template Patterns
-
-- [ ] Uses `@if (vm(); as vm)` for conditional rendering
-- [ ] Uses `@for` with `track` expression
-- [ ] Uses `<app-loading-and-error-indicator [target]="this">`
-- [ ] Handles empty state when no data
-
-### Performance Patterns
-
-- [ ] Uses `trackBy` for all `@for` loops (`trackByItem = this.ngForTrackByItemProp<T>('id')`)
-- [ ] Components use `ChangeDetectionStrategy.OnPush` when possible
-- [ ] Large lists (>100 items) use `CdkVirtualScrollViewport`
-- [ ] Route modules use lazy loading (`loadChildren`)
-- [ ] HTTP caching enabled for static data (`{ enableCache: true }`)
-
----
-
-## SCSS/CSS Styling Rules
-
-### BEM Classes (MANDATORY)
-
-- [ ] ALL template elements have BEM classes (`block__element --modifier`)
-- [ ] Block name matches component selector (kebab-case, without prefix)
-- [ ] Elements use `__` double underscore separator
-- [ ] Modifiers use `--` as SEPARATE class (space-separated, not suffix)
-- [ ] Form inputs have identifying modifiers (`--name`, `--email`)
-- [ ] Loop items use generic element names with state modifiers
-
-```html
-<!-- CORRECT -->
-<button class="user-form__btn --primary --large">Save</button>
-
-<!-- WRONG -->
-<button class="user-form__btn--primary">Save</button>
+    getEmployees(query?: Query): Observable<Employee[]> {
+        return this.get<Employee[]>('', query);
+    }
+}
 ```
 
-### SCSS Structure
+### State Management
 
-- [ ] File starts with `@use 'shared-mixin' as *;`
-- [ ] Host element has `@include flex-layout;` if page-level
-- [ ] Main wrapper class contains full styling (not just host)
-- [ ] Layout uses flex mixins (`flex-col`, `flex-row`, `flex-layout`)
-- [ ] Typography uses `text-base()` mixin
-- [ ] All colors use CSS variables (`var(--*)`)
-- [ ] All spacing uses rem values (0.25, 0.5, 0.75, 1, 1.5, 2rem)
-- [ ] Borders use `var(--bd-pri-cl)` or `var(--bd-sec-cl)`
-- [ ] No hardcoded hex colors
-- [ ] No inline styles in HTML
-- [ ] No tag selectors (div, span, button)
-- [ ] Nesting depth max 3 levels
+```typescript
+// ❌ WRONG: Manual signals for state
+employees = signal([]);
+loading = signal(false);
+error = signal<string | null>(null);
 
-### Color Variables
+// ✅ CORRECT: Platform store pattern
+@Injectable()
+export class EmployeeStore extends PlatformVmStore<EmployeeVm> {
+    loadEmployees = this.effectSimple(() =>
+        this.api.getEmployees().pipe(
+            this.tapResponse(data => this.updateState({ employees: data }))
+        )
+    );
+    readonly employees$ = this.select(state => state.employees);
+}
+```
 
-| Category   | Variables                                           |
-| ---------- | --------------------------------------------------- |
-| Background | `--bg-pri-cl`, `--bg-sec-cl`, `--bg-hover-cl`       |
-| Text       | `--text-pri-cl`, `--text-sec-cl`, `--primary-cl`    |
-| Border     | `--bd-pri-cl`, `--bd-sec-cl`                        |
-| Status     | `--color-success-*`, `--color-warning-*`, `--color-error-*` |
+### BEM Classes (CRITICAL)
+
+ALL HTML elements MUST have BEM classes:
+
+```html
+<!-- ❌ WRONG: Elements without classes -->
+<div class="user-list">
+    <div><h1>Users</h1></div>
+    <div>
+        @for (user of vm.users; track user.id) {
+        <div><span>{{ user.name }}</span></div>
+        }
+    </div>
+</div>
+
+<!-- ✅ CORRECT: All elements have BEM classes -->
+<div class="user-list">
+    <div class="user-list__header">
+        <h1 class="user-list__title">Users</h1>
+    </div>
+    <div class="user-list__content">
+        @for (user of vm.users; track user.id) {
+        <div class="user-list__item">
+            <span class="user-list__item-name">{{ user.name }}</span>
+        </div>
+        }
+    </div>
+</div>
+```
+
+**BEM Naming:**
+- Block: `user-list`
+- Element: `user-list__header`, `user-list__item`
+- Modifier: Separate class with `--` prefix: `user-list__btn --primary --large`
+
+### TypeScript Style
+
+- **Always use semicolons** in TypeScript
+- **Explicit type annotations** on all functions
+- **Specific names**: `employeeRecords` not `data`
+- **Boolean prefixes**: `is/has/can/should` (`isActive`, `hasPermission`)
 
 ---
 
 ## Architecture Rules
 
-### Logic Placement Hierarchy
+### Microservices Architecture
+
+| Rule | Description |
+| ---- | ----------- |
+| Service Independence | Each service (bravoTALENTS, bravoGROWTH, etc.) is a distinct subdomain |
+| No Direct Dependencies | Services CANNOT reference each other's domain/application layers |
+| Message Bus Only | Cross-service communication MUST use message bus patterns |
+| Shared Components | Only Easy.Platform and Bravo.Shared can be referenced across services |
+| Data Duplication | Each service maintains own data; sync via message bus events |
+| Domain Boundaries | Each service owns its domain concepts and business logic |
+
+### Backend Layer Structure
+
+| Layer | Contains |
+| ----- | -------- |
+| **Domain** | Entity, Repository, ValueObject, DomainService, Exceptions, Helpers, Constants |
+| **Application** | ApplicationService, DTOs, CQRS Commands/Queries, BackgroundJobs, MessageBus |
+| **Infrastructure** | External service implementations, data access, file storage, messaging |
+| **Presentation** | Controllers, API endpoints, middleware, authentication |
+
+### Frontend Component Hierarchy
 
 ```
-Entity/Model (Lowest) → Service → Component/Handler (Highest)
+Platform lib (@orient/bravo-common)
+    ↓
+PlatformComponent → PlatformVmComponent → PlatformFormComponent
+    ↓
+App base (per-app)
+    ↓
+AppBaseComponent → AppBaseVmComponent → AppBaseFormComponent
+    ↓
+Feature components
 ```
 
-- [ ] Constants, dropdowns, display helpers → Entity/Model
-- [ ] API calls, data transformation → Service
-- [ ] UI event handling ONLY → Component
+### Component Reuse vs New Component
 
-### Cross-Service Communication
-
-- [ ] Uses RabbitMQ message bus for cross-service communication
-- [ ] NEVER direct database access between services
-- [ ] Entity Event Consumers for incoming messages
-- [ ] Producer pattern for outgoing messages
-
-### Code Duplication
-
-- [ ] Search for similar implementations before creating new
-- [ ] Compare related handlers for shared logic
-- [ ] Check for repeated mapping code
-- [ ] Extract to Helper (with deps) or Util (pure functions)
-
-### Clean Architecture Layers
-
-- [ ] Domain Layer: Entities, domain events, value objects
-- [ ] Application Layer: CQRS handlers, jobs, events
-- [ ] Persistence Layer: Repository implementations
-- [ ] Service/API Layer: Controllers
+| Scenario | Action |
+| -------- | ------ |
+| Can enhance existing with generic, optional inputs without leaking foreign domain logic | Reuse existing |
+| Can compose thin wrapper around existing store/components | Create wrapper |
+| Existing cannot fulfill requirement even with generic enhancements | Create new |
+| New behavior would complicate existing with unrelated concerns | Create new |
 
 ---
 
-## Clean Code Rules
+## Clean Code Principles
 
-### Naming Conventions
+### Method Design
 
-| Type               | Convention                             | Example                      |
-| ------------------ | -------------------------------------- | ---------------------------- |
-| Classes/Interfaces | PascalCase                             | `UserService`, `IRepository` |
-| Methods/Functions  | PascalCase (C#), camelCase (TS)        | `GetUserById`, `getUserById` |
-| Variables/Fields   | camelCase                              | `userName`, `isActive`       |
-| Constants          | UPPER_SNAKE_CASE (TS), PascalCase (C#) | `MAX_RETRY`, `MaxRetryCount` |
-| Booleans           | is, has, can, should prefix            | `isVisible`, `hasPermission` |
-| Collections        | Plural                                 | `users`, `orders`, `items`   |
+- **Single Responsibility**: One method = one purpose
+- **Pure functions**: Avoid side effects when possible
+- **Early returns**: Reduce nesting with guard clauses
+- **Consistent abstraction level**: Don't mix high-level and low-level operations
 
-### Method Naming Patterns
-
-| Pattern             | Purpose               | Example                     |
-| ------------------- | --------------------- | --------------------------- |
-| `Get*`              | Retrieve data         | `GetUserById`               |
-| `Find*`             | Search (may be null)  | `FindByEmail`               |
-| `Create*` / `Build*`| Construct new         | `CreateOrder`               |
-| `Validate*`         | Check validity        | `ValidateEmail`             |
-| `Is*` / `Has*`      | Boolean check         | `IsActive`, `HasPermission` |
-
-### Code Quality
-
-- [ ] Single Responsibility per method/class
-- [ ] Consistent abstraction level within method
-- [ ] No magic numbers - use named constants
-- [ ] Comments explain WHY, not WHAT
-- [ ] Early return for guard clauses
-- [ ] Max 2-3 levels of nesting
-
-### No Magic Numbers
+### Code Flow (Step-by-Step Pattern)
 
 ```csharp
-// WRONG
-if (status == 3) { }
-var timeout = 30000;
+// ✅ Clear step-by-step flow with spacing
+public async Task<Result> HandleAsync(Command req, CancellationToken ct)
+{
+    // Step 1: Validate input
+    req.Validate().EnsureValid();
 
-// CORRECT
-private const int StatusApproved = 3;
-private const int DefaultTimeoutMs = 30000;
-if (status == StatusApproved) { }
+    // Step 2: Load dependencies (parallel)
+    var (entity, company) = await Util.TaskRunner.WhenAll(
+        repository.GetByIdAsync(req.Id, ct),
+        companyRepo.GetByIdAsync(req.CompanyId, ct)
+    );
+
+    // Step 3: Apply business logic
+    entity.UpdateFrom(req).EnsureValid();
+
+    // Step 4: Persist changes
+    await repository.UpdateAsync(entity, ct);
+
+    // Step 5: Return result
+    return new Result { Entity = new EntityDto(entity) };
+}
 ```
+
+### No Magic Numbers/Strings
+
+```csharp
+// ❌ WRONG: Magic numbers
+if (status == 1) { ... }
+var maxRetries = 3;
+
+// ✅ CORRECT: Named constants
+public static class EntityStatus
+{
+    public const int Active = 1;
+    public const int Inactive = 2;
+}
+
+private const int MaxRetryCount = 3;
+if (status == EntityStatus.Active) { ... }
+```
+
+### Naming Guidelines
+
+| Type | Convention | Example |
+| ---- | ---------- | ------- |
+| Classes/Interfaces | PascalCase | `UserService`, `IRepository` |
+| Methods (C#) | PascalCase | `GetUserById()` |
+| Methods (TS) | camelCase | `getUserById()` |
+| Variables/Fields | camelCase | `userName`, `isActive` |
+| Constants | UPPER_SNAKE_CASE | `MAX_RETRY_COUNT` |
+| Booleans | is/has/can/should | `isVisible`, `hasPermission` |
 
 ---
 
 ## Performance Rules
 
-### Query Optimization
-
-- [ ] Project only needed properties in queries
-- [ ] Use `.PageBy()` for all collection queries
-- [ ] Avoid O(n²) - use dictionary/lookup instead of nested loops
-- [ ] Use parallel queries when operations are independent
+### Backend Performance
 
 ```csharp
-// WRONG: Loads all data then filters
-var ids = (await repo.GetAllAsync(x => x.IsActive)).Select(x => x.Id).ToList();
-
-// CORRECT: Projects in query
-var ids = await repo.GetAllAsync(q => q.Where(x => x.IsActive).Select(x => x.Id));
-```
-
-### Parallel Execution
-
-```csharp
-// CORRECT: Parallel independent queries
-var (users, orders, products) = await (
-    userRepo.GetAllAsync(filter),
-    orderRepo.GetAllAsync(filter),
-    productRepo.GetAllAsync(filter)
-);
-
-// WRONG: Sequential when not needed
-var users = await userRepo.GetAllAsync(filter);
-var orders = await orderRepo.GetAllAsync(filter);
-```
-
-### Database Indexing
-
-```csharp
-// Entity defines query expressions
-public class Employee : RootEntity<Employee, string>
+// ❌ WRONG: O(n) LINQ inside loops
+foreach (var item in items)
 {
-    public string CompanyId { get; set; } = "";
-    public Status Status { get; set; }
-    public DateTime CreatedDate { get; set; }
+    var match = allMatches.FirstOrDefault(m => m.Id == item.Id);  // O(n) each iteration
+}
 
-    // These expressions REQUIRE matching indexes
-    public static Expression<Func<Employee, bool>> OfCompanyExpr(string companyId)
-        => e => e.CompanyId == companyId;
-    public static Expression<Func<Employee, bool>> IsActiveExpr()
-        => e => e.Status == Status.Active;
+// ✅ CORRECT: Dictionary lookup
+var matchDict = allMatches.ToDictionary(m => m.Id);
+foreach (var item in items)
+{
+    var match = matchDict.GetValueOrDefault(item.Id);  // O(1)
+}
+
+// ❌ WRONG: Await inside loops
+foreach (var id in ids)
+{
+    var item = await repo.GetByIdAsync(id, ct);  // N+1 queries
+}
+
+// ✅ CORRECT: Batch load
+var items = await repo.GetByIdsAsync(ids, ct);
+
+// ❌ WRONG: Load all then select
+var items = await repo.GetAllAsync(x => true, ct);
+var ids = items.Select(x => x.Id).ToList();
+
+// ✅ CORRECT: Project in query
+var ids = await repo.FirstOrDefaultAsync(q => q.Where(expr).Select(e => e.Id), ct);
+
+// ✅ Always paginate collections
+var items = await repo.GetAllAsync(q => q.Where(expr).PageBy(skip, take), ct);
+```
+
+### Frontend Performance
+
+```typescript
+// ✅ Use trackBy for ngFor
+trackByItem = this.ngForTrackByItemProp<User>('id');
+
+// ✅ Use effectSimple for auto loading state
+loadData = this.effectSimple(() =>
+    this.api.getData().pipe(this.tapResponse(data => this.updateState({ data }))));
+
+// ✅ Use platform caching
+return this.post('/search', criteria, { enableCache: true });
+```
+
+### Entity Index Configuration (CRITICAL)
+
+Database queries using entity expressions MUST have corresponding indexes configured at the persistence layer.
+
+#### MongoDB Index Rules
+
+- [ ] **Expression → Index Mapping:** All static expressions used in `repository.GetAllAsync(expr)` or `FirstOrDefaultAsync(expr)` have matching indexes in `Ensure{Entity}IndexesAsync()` methods
+- [ ] **Compound Index Order:** Index fields match expression filter order (leftmost prefix rule)
+- [ ] **Text Search:** Full-text queries have text indexes on target fields
+- [ ] **Unique Constraints:** Unique business rules use `CreateIndexOptions { Unique = true }`
+
+**Example:**
+
+```csharp
+// Entity Expression
+public static Expression<Func<Employee, bool>> IsActiveExpr()
+    => e => e.CompanyId == companyId && e.Status == Status.Active && !e.IsDeleted;
+
+// Required Index in DbContext
+public async Task EnsureEmployeeIndexesAsync()
+{
+    await EmployeeCollection.Indexes.CreateManyAsync([
+        new CreateIndexModel<Employee>(
+            Builders<Employee>.IndexKeys
+                .Ascending(p => p.CompanyId)
+                .Ascending(p => p.Status)
+                .Ascending(p => p.IsDeleted))
+    ]);
 }
 ```
 
-**EF Core Index Configuration:**
+#### EF Core Index Rules
+
+- [ ] **Filter Columns:** Entities with frequent WHERE clause filters have indexes
+- [ ] **Composite Selectivity:** Multi-column indexes ordered by selectivity (most selective first)
+- [ ] **Foreign Keys:** Navigation properties have indexes (auto-created by EF migrations)
+- [ ] **Migration Validation:** New queries in handler code trigger index check in migrations
+
+**Example:**
 
 ```csharp
-// DbContext OnModelCreating
-modelBuilder.Entity<Employee>()
-    .HasIndex(e => e.CompanyId);  // Single field
-
-modelBuilder.Entity<Employee>()
-    .HasIndex(e => new { e.CompanyId, e.Status })
-    .IncludeProperties(e => new { e.FullName, e.Email });  // Covering index
-
-modelBuilder.Entity<Employee>()
-    .HasIndex(e => e.CompanyId)
-    .HasFilter("Status = 'Active' AND IsDeleted = 0");  // Filtered index
+// Entity configuration
+builder.HasIndex(e => new { e.CompanyId, e.Status, e.IsDeleted })
+    .HasDatabaseName("IX_Employee_CompanyId_Status_IsDeleted");
 ```
 
-**MongoDB Index Configuration:**
+#### Code Review Validation Protocol
 
-```csharp
-// DbContext InitializeAsync
-await EmployeeCollection.Indexes.CreateManyAsync([
-    new CreateIndexModel<Employee>(
-        Builders<Employee>.IndexKeys.Ascending(e => e.CompanyId)),
-    new CreateIndexModel<Employee>(
-        Builders<Employee>.IndexKeys
-            .Ascending(e => e.CompanyId)
-            .Ascending(e => e.Status)),
-    new CreateIndexModel<Employee>(
-        Builders<Employee>.IndexKeys
-            .Text(e => e.FullName)
-            .Text(e => e.Email))
-]);
-```
+When reviewing code with entity expressions, validate index coverage:
 
-**Verification Checklist:**
+1. **Identify expression fields:** `Employee.IsActiveExpr()` uses `CompanyId`, `Status`, `IsDeleted`
+2. **Check DbContext/Migrations:** Search for `CreateIndexModel` or `HasIndex` with those fields
+3. **Verify field order:** Index should cover expression fields in query order
+4. **Flag if missing:** "CRITICAL: Expression `Employee.IsActiveExpr()` requires compound index on `CompanyId+Status+IsDeleted`"
 
-- [ ] Every `static Expression` filter property has index in DbContext
-- [ ] Composite indexes for multi-field queries (`CompanyId + Status`)
-- [ ] Text indexes for full-text search columns (`Entity.SearchColumns()`)
-- [ ] Covering indexes with `INCLUDE` for frequently selected columns (SQL Server)
-- [ ] Index created in both EF migrations AND MongoDB `InitializeAsync`
+#### Performance Impact Examples
+
+| Scenario | Without Index | With Index | Impact |
+|----------|---------------|------------|--------|
+| Filter by CompanyId (10k employees) | Full collection scan ~500ms | Index seek ~5ms | **100x faster** |
+| Text search on FullName | O(n) scan | Text index lookup | **50-100x faster** |
+| Compound filter (CompanyId+Status) | Partial index use or full scan | Composite index | **20-50x faster** |
+
+### Custom Analyzer Rules (Enforced)
+
+| Rule ID | Description |
+| ------- | ----------- |
+| `EASY_PLATFORM_ANALYZERS_STEP001` | Missing blank line between dependent statements |
+| `EASY_PLATFORM_ANALYZERS_STEP002` | Unexpected blank line within a step |
+| `EASY_PLATFORM_ANALYZERS_STEP003` | Step must consume all previous outputs |
+| `EASY_PLATFORM_ANALYZERS_PERF001` | Avoid O(n) LINQ inside loops |
+| `EASY_PLATFORM_ANALYZERS_PERF002` | Avoid 'await' inside loops |
+| `EASY_PLATFORM_ANALYZERS_DISALLOW_USING_STATIC` | Disallow 'using static' directive |
 
 ---
 
-## Security & Authorization
+## Security Rules
 
-### Backend Authorization
+### Input Validation
 
-- [ ] `[PlatformAuthorize]` attribute on controllers/actions
-- [ ] Role validation in `ValidateRequestAsync()`
-- [ ] Entity-level access expressions (`UserCanAccessExpr()`)
-- [ ] Company scope validation using `RequestContext.CurrentCompanyId()`
+- Always validate user input
+- Use parameterized queries (Entity Framework handles this)
+- Implement proper authorization checks
+- Log security-relevant events
 
-### Frontend Authorization
+### Authorization
 
-- [ ] `hasRole()` checks in component getters
-- [ ] `@if (hasRole(...))` guards in templates
-- [ ] Route guards for protected routes
+```csharp
+// Controller level
+[PlatformAuthorize(PlatformRoles.Admin, PlatformRoles.Manager)]
+[HttpPost]
+public async Task<IActionResult> Save([FromBody] SaveCommand cmd) => Ok(await Cqrs.SendAsync(cmd));
+
+// Handler level validation
+protected override async Task<PlatformValidationResult<T>> ValidateRequestAsync(...)
+    => await v
+        .AndNotAsync(_ => !RequestContext.HasRole(PlatformRoles.Admin), "Admin only")
+        .AndAsync(_ => repo.AnyAsync(e => e.CompanyId == RequestContext.CurrentCompanyId()), "Same company");
+
+// Entity level filter
+public static Expression<Func<Employee, bool>> UserCanAccessExpr(string userId, string companyId)
+    => e => e.UserId == userId || (e.CompanyId == companyId && e.IsPublic);
+```
+
+### Sensitive Data
+
+- Never commit secrets (.env, API keys, credentials)
+- Don't expose sensitive data in DTOs
+- Use encryption for sensitive fields
+
+### Ownership Protocol (for 3+ file changes)
+
+When modifying 3+ files, explicitly consider:
+
+1. **Confidence Score (1-10):** How confident are you these changes work correctly?
+2. **Ownership:** Can you explain every change and fix bugs that arise?
+3. **Debug Entry Point:** If this breaks in production, which file:line do you check first?
+
+**Why this matters:** AI-generated code that passes mechanical review but has no owner leads to "the AI wrote it" deflection when bugs surface. Every line you ship is YOUR responsibility.
+
+**Example:**
+```
+Confidence: 8/10 (main path verified, edge cases for concurrent access untested)
+Ownership: I will fix bugs for 14 days post-merge
+Debug Entry: EmployeeService.cs:145 (query construction is the riskiest change)
+```
+
+### Operational Readiness (service-layer and API changes)
+
+For backend service-layer or API changes, verify:
+
+#### Observability
+
+- [ ] **Logging:** External API calls log errors with context (request ID, user, parameters)
+- [ ] **Metrics:** Operations >100ms tracked with duration metrics
+- [ ] **Tracing:** Cross-service calls include correlation IDs
+- [ ] **Alerting:** Error rate thresholds considered (>5% = warning, >10% = critical)
+
+```csharp
+// ❌ WRONG: No error context
+var result = await httpClient.GetAsync(url);
+
+// ✅ CORRECT: Structured logging with context
+try {
+    var result = await httpClient.GetAsync(url);
+} catch (Exception ex) {
+    logger.LogError(ex, "External API call failed. URL={Url}, User={UserId}", url, userId);
+    throw;
+}
+```
+
+#### Reliability
+
+- [ ] **Retry:** Transient failures use retry policy (3 attempts, exponential backoff)
+- [ ] **Timeout:** HTTP clients configured with timeout (default: 30s)
+- [ ] **Fallback:** Critical paths define degraded-mode behavior
+
+```csharp
+// ✅ CORRECT: Retry with exponential backoff (Polly)
+var policy = Policy
+    .Handle<HttpRequestException>()
+    .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt)));
+
+httpClient.Timeout = TimeSpan.FromSeconds(30);
+var result = await policy.ExecuteAsync(() => httpClient.GetAsync(url));
+```
+
+**Scope:** Service-layer and API changes only. Frontend-only changes exempt.
 
 ---
 
-## Anti-Pattern Detection
+## Anti-Patterns Catalog
 
 ### Backend Anti-Patterns
 
-| Pattern                             | Flag As                           | Correct Approach                   |
-| ----------------------------------- | --------------------------------- | ---------------------------------- |
-| `throw new ValidationException()`   | Direct throw                      | Use `PlatformValidationResult`     |
-| Mapping in handler                  | Handler responsibility violation  | DTO owns mapping                   |
-| Side effects in command handler     | Event handler violation           | Use entity event handlers          |
-| Fetch-then-delete                   | Inefficient                       | Use `DeleteByIdAsync()` directly   |
-| `await otherDbContext...`           | Cross-service DB access           | Use message bus                    |
-| `ICustomEntityRepository`           | Custom repository interface       | Platform repo + extensions         |
+| Anti-Pattern | Correct Pattern |
+| ------------ | --------------- |
+| Direct cross-service DB access | Use message bus communication |
+| Custom repository interfaces | Platform repositories with extensions |
+| Manual validation with exceptions | PlatformValidationResult fluent API |
+| Side effects in command handler | Entity Event Handlers |
+| DTO mapping in handler | DTO owns mapping via MapToObject() |
+| Logic in controllers | CQRS Command Handlers |
+| Mixing abstraction levels | Consistent level per method |
+| Fetch-then-delete | `DeleteByIdAsync(id)` |
 
 ### Frontend Anti-Patterns
 
-| Pattern                               | Flag As                    | Correct Approach            |
-| ------------------------------------- | -------------------------- | --------------------------- |
-| `private http: HttpClient`            | Direct HTTP                | Extend `PlatformApiService` |
-| `employees = signal([])`              | Manual signals             | Use `PlatformVmStore`       |
-| `ngOnChanges()`                       | Lifecycle method           | Use `@Watch` decorator      |
-| `.subscribe()` without `untilDestroyed()` | Memory leak            | Add `.pipe(this.untilDestroyed())` |
-| Template element without class        | Missing BEM                | Add BEM class               |
-| `extends PlatformComponent`           | Wrong base class           | Use `AppBaseComponent`      |
-| `private destroy$ = new Subject()`    | Manual cleanup             | Use `this.untilDestroyed()` |
+| Anti-Pattern | Correct Pattern |
+| ------------ | --------------- |
+| Direct `HttpClient` | `PlatformApiService` |
+| Manual signals for state | `PlatformVmStore` |
+| Manual destroy Subject | `this.untilDestroyed()` |
+| `ngOnChanges` | `@Watch` decorator |
+| `implements OnInit, OnDestroy` | Extend platform base class |
+| Elements without BEM classes | All elements have BEM classes |
+| Missing `untilDestroyed()` | All subscriptions use it |
+
+### Architecture Anti-Patterns
+
+| Anti-Pattern | Correct Pattern |
+| ------------ | --------------- |
+| Skip planning | Always EnterPlanMode for non-trivial tasks |
+| Assume service boundaries | Verify through code analysis |
+| Create custom solutions | Use established Easy.Platform patterns |
+| Create without searching | Search for existing implementations first |
+| Logic in component | Logic in lowest layer (entity/model) |
 
 ---
 
-## Code Review Process Rules
+## Decision Trees
 
-### Receiving Feedback
-
-```
-1. READ: Complete feedback without reacting
-2. UNDERSTAND: Restate requirement in own words (or ask)
-3. VERIFY: Check against codebase reality
-4. EVALUATE: Technically sound for THIS codebase?
-5. RESPOND: Technical acknowledgment or reasoned pushback
-6. IMPLEMENT: One item at a time, test each
-```
-
-### Forbidden Responses
-
-- NEVER: "You're absolutely right!" (performative)
-- NEVER: "Great point!" / "Excellent feedback!"
-- NEVER: "Let me implement that now" (before verification)
-- INSTEAD: Restate technical requirement, ask clarifying questions, or just start working
-
-### When to Push Back
-
-- Suggestion breaks existing functionality
-- Reviewer lacks full context
-- Violates YAGNI (unused feature)
-- Technically incorrect for this stack
-- Conflicts with architectural decisions
-
-### Acknowledging Correct Feedback
+### Repository Pattern Decision
 
 ```
-CORRECT: "Fixed. [Brief description of what changed]"
-CORRECT: "Good catch - [specific issue]. Fixed in [location]."
-CORRECT: [Just fix it and show in the code]
+Simple CRUD operations?
+    → Use IPlatformQueryableRootRepository<TEntity, TKey>
 
-WRONG: "You're absolutely right!"
-WRONG: "Thanks for catching that!"
+Complex queries needed?
+    → Create RepositoryExtensions with static expressions
+
+Legacy custom repository exists?
+    → Gradually migrate to platform repository
+
+Cross-service data access?
+    → Use message bus (NEVER direct DB access)
+```
+
+### Validation Pattern Decision
+
+```
+Simple property validation?
+    → Command.Validate() method
+
+Async validation (DB check)?
+    → Handler.ValidateRequestAsync()
+
+Business rule validation?
+    → Entity.ValidateForXXX() method
+
+Cross-field validation?
+    → PlatformValidators.dateRange(), etc.
+```
+
+### Event Pattern Decision
+
+```
+Within same service + Entity changed?
+    → EntityEventApplicationHandler
+
+Within same service + Command completed?
+    → CommandEventApplicationHandler
+
+Cross-service + Data sync needed?
+    → EntityEventBusMessageProducer/Consumer
+
+Cross-service + Background processing?
+    → PlatformApplicationBackgroundJob
+```
+
+### Component Decision
+
+```
+Simple UI display?
+    → AppBaseComponent
+
+Complex state management?
+    → AppBaseVmStoreComponent<State, Store>
+
+Form with validation?
+    → AppBaseFormComponent<FormVm>
 ```
 
 ---
 
-## Verification Rules
+## Quick Reference Checklists
 
-### Iron Law
+### Backend Review Checklist
 
-```
-NO COMPLETION CLAIMS WITHOUT FRESH VERIFICATION EVIDENCE
-```
+- [ ] Independent awaits use `Util.TaskRunner.WhenAll()`?
+- [ ] Validation logic in entity, not handler?
+- [ ] Using fluent validation style?
+- [ ] Delete by ID, not fetch-then-delete?
+- [ ] Queries paginated and projected?
+- [ ] Service-specific repositories used?
+- [ ] DTO owns mapping responsibility?
+- [ ] Side effects in Entity Event Handlers?
+- [ ] No direct cross-service DB access?
+- [ ] Proper authorization checks?
+- [ ] Entity expressions have corresponding database indexes?
+- [ ] MongoDB `Ensure*IndexesAsync()` methods exist for queried collections?
+- [ ] EF Core migrations include indexes for filter columns?
 
-### Verification Gate
+### Frontend Review Checklist
 
-```
-1. IDENTIFY: What command proves this claim?
-2. RUN: Execute the FULL command (fresh, complete)
-3. READ: Full output, check exit code, count failures
-4. VERIFY: Does output confirm the claim?
-5. ONLY THEN: Make the claim
-```
+- [ ] Components extend platform base classes?
+- [ ] No `ngOnChanges` usage?
+- [ ] All subscriptions have `untilDestroyed()`?
+- [ ] Services extend `PlatformApiService`?
+- [ ] No `implements OnInit, OnDestroy` without base?
+- [ ] All HTML elements have BEM classes?
+- [ ] Using platform store pattern?
+- [ ] No manual destroy Subject?
+- [ ] Explicit type annotations on functions?
+- [ ] Semicolons used consistently?
+- [ ] API calls filtering large datasets use indexed fields?
+- [ ] No client-side filtering of large arrays (use server-side pagination)?
 
-### Common Verification Requirements
+### Architecture Review Checklist
 
-| Claim              | Requires                          | Not Sufficient                    |
-| ------------------ | --------------------------------- | --------------------------------- |
-| Tests pass         | Test command output: 0 failures   | Previous run, "should pass"       |
-| Linter clean       | Linter output: 0 errors           | Partial check                     |
-| Build succeeds     | Build command: exit 0             | Linter passing                    |
-| Bug fixed          | Test original symptom: passes     | Code changed, assumed fixed       |
-| Regression test    | Red-green cycle verified          | Test passes once                  |
-| Requirements met   | Line-by-line checklist            | Tests passing                     |
+- [ ] Logic in lowest appropriate layer?
+- [ ] No duplicated logic across changes?
+- [ ] New files in correct architectural layers?
+- [ ] Service boundaries respected?
+- [ ] Clean Architecture followed?
+- [ ] Constants/columns in Model, not Component?
 
-### Red Flags - STOP
+### Pre-Commit Checklist
 
-- Using "should", "probably", "seems to"
-- Expressing satisfaction before verification
-- About to commit/push/PR without verification
-- Trusting agent success reports
-- Relying on partial verification
-
----
-
-## Pre-Removal Verification Checklist
-
-Before removing ANY code:
-
-- [ ] Searched static imports?
-- [ ] Searched string literals in code?
-- [ ] Checked dynamic invocations (attributes, properties)?
-- [ ] Read actual implementations?
-- [ ] Traced full dependency chain?
-- [ ] Assessed what breaks if removed?
-- [ ] Confidence level >= 90%?
-
-**If ANY unchecked** → DO MORE INVESTIGATION
-**If confidence < 90%** → REQUEST USER CONFIRMATION
+- [ ] Linting passed?
+- [ ] Tests passed?
+- [ ] No syntax errors?
+- [ ] No secrets committed?
+- [ ] Focused commits with clean messages?
+- [ ] Operational readiness verified? (service-layer/API changes only)
 
 ---
 
-## Quick Decision Trees
+## Related Documents
 
-### Backend Task
-
-```
-Need backend feature?
-├── API endpoint → PlatformBaseController + CQRS Command
-├── Business logic → Command Handler in Application layer
-├── Data access → Repository Extensions with static expressions
-├── Cross-service → Entity Event Consumer
-├── Scheduled task → PlatformApplicationBackgroundJob
-└── Migration → PlatformDataMigrationExecutor / EF migrations
-```
-
-### Frontend Task
-
-```
-Need frontend feature?
-├── Simple component → AppBaseComponent
-├── Complex state → AppBaseVmStoreComponent + Store
-├── Forms → AppBaseFormComponent
-├── API calls → PlatformApiService
-├── Cross-domain → apps-domains library
-└── Reusable → platform-core library
-```
-
-### Helper vs Util
-
-```
-Business Logic with Dependencies (DB, Services)?
-├── YES → Helper (Application layer, injectable service)
-└── NO → Util (Pure functions, static class)
-```
+| Document | Purpose |
+| -------- | ------- |
+| [`CLEAN-CODE-RULES.md`](../CLEAN-CODE-RULES.md) | Extended clean code rules with decision trees |
+| [`.github/AI-DEBUGGING-PROTOCOL.md`](../.github/AI-DEBUGGING-PROTOCOL.md) | Evidence-based debugging protocol |
+| [`docs/claude/anti-patterns.md`](claude/anti-patterns.md) | Detailed anti-pattern examples with code |
+| [`docs/claude/backend-patterns.md`](claude/backend-patterns.md) | Backend CQRS, repository, validation patterns |
+| [`docs/claude/frontend-patterns.md`](claude/frontend-patterns.md) | Frontend component hierarchy, platform APIs |
+| [`docs/claude/backend-csharp-complete-guide.md`](claude/backend-csharp-complete-guide.md) | Comprehensive C# reference (~76KB) |
+| [`docs/claude/frontend-typescript-complete-guide.md`](claude/frontend-typescript-complete-guide.md) | Complete Angular/TS guide (~57KB) |
+| [`docs/claude/scss-styling-guide.md`](claude/scss-styling-guide.md) | BEM methodology, design tokens (~30KB) |
 
 ---
 
 ## Source References
 
-| Document                                   | Content                           |
-| ------------------------------------------ | --------------------------------- |
-| `docs/claude/backend-patterns.md`          | CQRS, Repository, Entity patterns |
-| `docs/claude/frontend-patterns.md`         | Component, Store, Form patterns   |
-| `docs/claude/clean-code-rules.md`          | Naming, structure, quality        |
-| `docs/claude/scss-styling-guide.md`        | BEM, SCSS structure, colors       |
-| `docs/claude/advanced-patterns.md`         | Fluent helpers, anti-patterns     |
-| `docs/claude/authorization-patterns.md`    | Security, roles, permissions      |
-| `docs/claude/decision-trees.md`            | Quick decision guides             |
-| `.claude/quick-ref/cqrs-checklist.md`      | CQRS quick reference              |
-| `.claude/quick-ref/debugging-checklist.md` | Debug verification checklist      |
-| `.claude/skills/code-review/references/`   | Review process, verification      |
+Rules consolidated from:
+- PR #35309, #35419 feedback
+- `CLEAN-CODE-RULES.md`
+- `docs/claude/anti-patterns.md`
+- `.github/AI-DEBUGGING-PROTOCOL.md`
+- `.claude/skills/code-review/SKILL.md`
+- `.claude/workflows/development-rules.md`
+- `docs/lessons.md` (learned lessons via /learn skill)
+
+---
+
+> **Remember:** Technical correctness over social comfort. Verify before implementing. Ask before assuming. Evidence before claims.

@@ -1,10 +1,10 @@
 ---
-applyTo: "**/DataMigrations/**/*.cs,**/Migrations/**/*.cs"
+applyTo: '**/DataMigrations/**/*.cs,**/Migrations/**/*.cs'
 ---
 
 # Data Migration Patterns
 
-> Auto-loads when editing Migration files. See `docs/claude/backend-patterns.md` for full reference.
+> Auto-loads when editing Migration files. See `docs/backend-patterns-reference.md` for full reference.
 
 ## EF Core Migration
 

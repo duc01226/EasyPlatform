@@ -1,0 +1,51 @@
+index:
+  pat-001:
+    file: backend/always-use-const.yaml
+    category: backend
+  pat-002:
+    file: frontend/bem-classes.yaml
+    category: frontend
+  pat-003:
+    file: backend/repository-pattern.yaml
+    category: backend
+  pat-004:
+    file: frontend/untilDestroyed.yaml
+    category: frontend
+
+patterns:
+  pat-001:
+    id: pat-001
+    trigger: correction
+    pattern: "use const instead of let"
+    confidence: 0.85
+    category: backend
+    createdAt: "2026-01-01T00:00:00Z"
+    lastUsed: "2026-01-10T00:00:00Z"
+    usageCount: 15
+  pat-002:
+    id: pat-002
+    trigger: explicit
+    pattern: "always add BEM classes"
+    confidence: 0.92
+    category: frontend
+    createdAt: "2026-01-05T00:00:00Z"
+    lastUsed: "2026-01-11T00:00:00Z"
+    usageCount: 23
+  pat-003:
+    id: pat-003
+    trigger: correction
+    pattern: "use service-specific repository interfaces"
+    confidence: 0.78
+    category: backend
+    createdAt: "2026-01-02T00:00:00Z"
+    lastUsed: "2026-01-09T00:00:00Z"
+    usageCount: 8
+  pat-004:
+    id: pat-004
+    trigger: explicit
+    pattern: "always use .pipe(this.untilDestroyed())"
+    confidence: 0.95
+    category: frontend
+    createdAt: "2026-01-03T00:00:00Z"
+    lastUsed: "2026-01-12T00:00:00Z"
+    usageCount: 31

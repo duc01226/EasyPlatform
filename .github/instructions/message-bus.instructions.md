@@ -1,10 +1,10 @@
 ---
-applyTo: "**/MessageBus*/**/*.cs,**/*Consumer*.cs,**/*Producer*.cs"
+applyTo: '**/MessageBus*/**/*.cs,**/*Consumer*.cs,**/*Producer*.cs'
 ---
 
 # Message Bus Patterns (Cross-Service Communication)
 
-> Auto-loads when editing MessageBus/Consumer/Producer files. See `docs/claude/backend-patterns.md` for full reference.
+> Auto-loads when editing MessageBus/Consumer/Producer files. See `docs/backend-patterns-reference.md` for full reference.
 
 ## Entity Event Bus Producer
 

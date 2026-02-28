@@ -1,516 +1,384 @@
 {
-    "alwaysThinkingEnabled": true,
-    "attribution": {
-        "commit": "Generated with [Claude Code](https://claude.com/claude-code)",
-        "pr": "Generated with [Claude Code](https://claude.com/claude-code)"
-    },
-    "cleanupPeriodDays": 30,
-    "enabledPlugins": {
-        "code-review@claude-plugins-official": true,
-        "code-simplifier@claude-plugins-official": true,
-        "commit-commands@claude-plugins-official": true,
-        "csharp-lsp@claude-plugins-official": true,
-        "frontend-design@claude-plugins-official": true,
-        "github@claude-plugins-official": true,
-        "playwright@claude-plugins-official": true,
-        "typescript-lsp@claude-plugins-official": true
-    },
-    "env": {
-        "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1",
-        "MCP_TIMEOUT": "30000"
-    },
-    "hooks": {
-        "Notification": [
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notifications/notify.cjs",
-                        "type": "command"
-                    }
-                ]
-            }
+  "alwaysThinkingEnabled": true,
+  "attribution": {
+    "commit": "Generated with [Claude Code](https://claude.com/claude-code)",
+    "pr": "Generated with [Claude Code](https://claude.com/claude-code)"
+  },
+  "cleanupPeriodDays": 30,
+  "enabledPlugins": {
+    "code-review@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "csharp-lsp@claude-plugins-official": true,
+    "frontend-design@claude-plugins-official": true,
+    "github@claude-plugins-official": true,
+    "playwright@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": true
+  },
+  "env": {
+    "CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR": "1",
+    "MCP_TIMEOUT": "30000"
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-waiting.js",
+            "type": "command"
+          }
         ],
-        "PostToolUse": [
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/todo-tracker.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "TodoWrite|TaskCreate|TaskUpdate"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-edit-rule-check.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Edit|Write|MultiEdit"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-edit-prettier.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Edit|Write"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-step-tracker.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Skill"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/tool-output-swap.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Read|Grep|Glob|Bash|WebFetch|WebSearch"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/bash-cleanup.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Bash"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/compact-suggestion.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Bash|Read|Grep|Glob|Skill|Edit|Write|MultiEdit|WebFetch|WebSearch"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ownership-tracker.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Edit|Write"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/auto-fix-trigger.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Bash"
-            }
+        "matcher": "idle_prompt|AskUserPrompt"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/tool-output-swap.cjs",
+            "type": "command"
+          }
         ],
-        "PreCompact": [
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/write-compact-marker.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/save-context-memory.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "manual|auto"
-            }
+        "matcher": "Read|Grep|Glob"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/bash-cleanup.cjs",
+            "type": "command"
+          }
         ],
-        "PreToolUse": [
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/search-before-code.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Edit|Write|MultiEdit"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lessons-injector.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Edit|Write|MultiEdit"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/edit-enforcement.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Edit|Write|MultiEdit|NotebookEdit"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/skill-enforcement.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Skill"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/code-review-rules-injector.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Skill"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/cross-platform-bash.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Bash"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/scout-block.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/privacy-block.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Bash|Glob|Grep|Read|Edit|Write|MultiEdit|NotebookEdit"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/project-boundary.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Edit|Write|MultiEdit|NotebookEdit|Bash|Glob|Grep|Read"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/design-system-context.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/code-patterns-injector.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/backend-csharp-context.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/frontend-typescript-context.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/scss-styling-context.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Edit|Write|MultiEdit"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/role-context-injector.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Read|Write"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/figma-context-extractor.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Read"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/artifact-path-resolver.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "Write"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notifications/notify.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "AskUserQuestion"
-            }
+        "matcher": "Bash"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-edit-prettier.cjs",
+            "type": "command"
+          }
         ],
-        "SessionEnd": [
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-end.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "clear|exit|compact"
-            }
+        "matcher": "Edit|Write|MultiEdit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/todo-tracker.cjs",
+            "type": "command"
+          }
         ],
-        "SessionStart": [
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-init.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "startup|resume|clear|compact"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-resume.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "startup|resume|compact"
-            },
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/root-deps-check.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "startup"
-            }
+        "matcher": "TaskCreate|TaskUpdate"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-step-tracker.cjs",
+            "type": "command"
+          }
         ],
-        "Stop": [
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notifications/notify.cjs",
-                        "type": "command"
-                    }
-                ]
-            }
+        "matcher": "Skill"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/tool-counter.cjs",
+            "type": "command"
+          }
         ],
-        "SubagentStart": [
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init.cjs",
-                        "type": "command"
-                    }
-                ],
-                "matcher": "*"
-            }
+        "matcher": "Bash|Edit|Write|Read|Grep|Glob|Task"
+      }
+    ],
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/write-compact-marker.cjs",
+            "type": "command"
+          }
         ],
-        "UserPromptSubmit": [
-            {
-                "hooks": [
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/dev-rules-reminder.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pattern-learner.cjs",
-                        "type": "command"
-                    },
-                    {
-                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lessons-injector.cjs",
-                        "type": "command"
-                    }
-                ]
-            }
+        "matcher": "manual|auto"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/windows-command-detector.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/scout-block.cjs",
+            "type": "command"
+          },
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/privacy-block.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash|Glob|Grep|Read|Edit|Write|NotebookEdit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/path-boundary-block.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash|Edit|Write|MultiEdit|NotebookEdit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/edit-enforcement.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/skill-enforcement.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Skill"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/code-review-rules-injector.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Skill"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lessons-injector.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write|MultiEdit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/search-before-code.cjs",
+            "type": "command"
+          },
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/design-system-context.cjs",
+            "type": "command"
+          },
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/code-patterns-injector.cjs",
+            "type": "command"
+          },
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/backend-csharp-context.cjs",
+            "type": "command"
+          },
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/frontend-typescript-context.cjs",
+            "type": "command"
+          },
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/scss-styling-context.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Edit|Write|MultiEdit"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/role-context-injector.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Read|Write"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/figma-context-extractor.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Read"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/artifact-path-resolver.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "Write"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/path-boundary-block.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "mcp__filesystem__*"
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-end.cjs",
+            "type": "command"
+          },
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-waiting.js",
+            "type": "command"
+          }
+        ],
+        "matcher": "clear|exit|compact"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-waiting.js",
+            "type": "command"
+          }
         ]
-    },
-    "permissions": {
-        "_note": "allow list is documentation-only (bypassPermissions mode); deny list is enforced",
-        "allow": [
-            "Bash(git:*)",
-            "Bash(npm:*)",
-            "Bash(npx:*)",
-            "Bash(dotnet:*)",
-            "Bash(nx:*)",
-            "Bash(node:*)",
-            "Bash(find:*)",
-            "Bash(ls:*)",
-            "Bash(cat:*)",
-            "Bash(head:*)",
-            "Bash(tail:*)",
-            "Bash(wc:*)",
-            "Bash(pwd)",
-            "Bash(echo:*)",
-            "Bash(mkdir:*)",
-            "Bash(cp:*)",
-            "Bash(mv:*)",
-            "Bash(touch:*)",
-            "Bash(grep:*)",
-            "Bash(awk:*)",
-            "Bash(sed:*)",
-            "Bash(sort:*)",
-            "Bash(uniq:*)",
-            "Bash(diff:*)",
-            "Bash(curl:*)",
-            "Bash(wget:*)",
-            "Bash(tar:*)",
-            "Bash(zip:*)",
-            "Bash(unzip:*)",
-            "Bash(cd:*)",
-            "Bash(which:*)",
-            "Bash(whoami)",
-            "Bash(date)",
-            "Bash(env)",
-            "Bash(printenv:*)",
-            "Bash(dir:*)",
-            "Bash(type:*)",
-            "Edit",
-            "NotebookEdit",
-            "Skill",
-            "SlashCommand",
-            "WebFetch",
-            "WebSearch",
-            "Write",
-            "Read",
-            "Glob",
-            "Grep",
-            "Bash(npm run:*)"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-init.cjs",
+            "type": "command"
+          }
         ],
-        "ask": [
-            "Bash(git push:*)",
-            "Bash(npm publish:*)",
-            "Bash(docker push:*)",
-            "Bash(docker rm:*)",
-            "Bash(docker rmi:*)",
-            "Bash(docker system prune:*)",
-            "Bash(dotnet nuget push:*)"
+        "matcher": "startup|resume|clear|compact"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-compact-recovery.cjs",
+            "type": "command"
+          }
         ],
-        "defaultMode": "bypassPermissions",
-        "deny": [
-            "EnterPlanMode",
-            "Bash(rm -rf /*)",
-            "Bash(rm -rf ~/*)",
-            "Bash(rm -rf .)",
-            "Bash(rm -rf *)",
-            "Bash(git push --force:*)",
-            "Bash(git push -f:*)",
-            "Bash(git reset --hard:*)",
-            "Bash(git clean -fd:*)",
-            "Bash(git branch -D:*)",
-            "Bash(git stash drop:*)",
-            "Bash(git stash clear)",
-            "Bash(git checkout -- .)",
-            "Bash(git checkout -- *)",
-            "Bash(git checkout .)",
-            "Bash(git restore .)",
-            "Bash(git restore --staged .)",
-            "Edit(**/.env*)",
-            "Edit(.env*)",
-            "Edit(**/secrets/**)",
-            "Edit(**/credentials*)",
-            "Edit(**/generated/**)",
-            "Edit(**/obj/**)",
-            "Edit(**/bin/**)",
-            "Edit(**/dist/**)",
-            "Edit(**/node_modules/**)",
-            "Read(**/.env*)",
-            "Read(.env*)",
-            "Read(**/secrets/**)",
-            "Read(**/credentials*)",
-            "Read(~/.ssh/**)",
-            "Read(~/.aws/**)",
-            "Read(~/.config/gcloud/**)",
-            "Read(~/.azure/**)",
-            "Read(~/.kube/config)",
-            "Read(~/.docker/config.json)",
-            "Read(~/.npmrc)",
-            "Read(~/.git-credentials)",
-            "Read(~/.netrc)",
-            "Write(**/.env*)",
-            "Write(.env*)",
-            "Write(**/secrets/**)",
-            "Write(**/credentials*)",
-            "Write(**/generated/**)",
-            "Write(**/obj/**)",
-            "Write(**/bin/**)",
-            "Write(**/dist/**)",
-            "Write(**/node_modules/**)",
-            "Glob(**/.env*)",
-            "Glob(**/secrets/**)",
-            "Glob(**/credentials*)",
-            "Glob(~/.ssh/**)",
-            "Glob(~/.aws/**)",
-            "Glob(~/.config/gcloud/**)",
-            "Glob(~/.azure/**)",
-            "Glob(~/.kube/config)",
-            "Glob(~/.docker/config.json)",
-            "Glob(~/.npmrc)",
-            "Glob(~/.git-credentials)",
-            "Glob(~/.netrc)",
-            "Grep(**/.env*)",
-            "Grep(**/secrets/**)",
-            "Grep(**/credentials*)",
-            "Grep(~/.ssh/**)",
-            "Grep(~/.aws/**)",
-            "Grep(~/.config/gcloud/**)",
-            "Grep(~/.azure/**)",
-            "Grep(~/.kube/config)",
-            "Grep(~/.docker/config.json)",
-            "Grep(~/.npmrc)",
-            "Grep(~/.git-credentials)",
-            "Grep(~/.netrc)",
-            "Edit(~/.ssh/**)",
-            "Edit(~/.aws/**)",
-            "Edit(~/.config/gcloud/**)",
-            "Edit(~/.azure/**)",
-            "Edit(~/.kube/config)",
-            "Edit(~/.docker/config.json)",
-            "Edit(~/.npmrc)",
-            "Edit(~/.git-credentials)",
-            "Edit(~/.netrc)",
-            "Write(~/.ssh/**)",
-            "Write(~/.aws/**)",
-            "Write(~/.config/gcloud/**)",
-            "Write(~/.azure/**)",
-            "Write(~/.kube/config)",
-            "Write(~/.docker/config.json)",
-            "Write(~/.npmrc)",
-            "Write(~/.git-credentials)",
-            "Write(~/.netrc)",
-            "Edit(.mcp.json)",
-            "Write(.mcp.json)"
+        "matcher": "resume|compact"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/session-resume.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "resume"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/npm-auto-install.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "startup"
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/subagent-init.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/workflow-router.cjs",
+            "type": "command"
+          },
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/dev-rules-reminder.cjs",
+            "type": "command"
+          },
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lessons-injector.cjs",
+            "type": "command"
+          },
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/init-reference-docs.cjs",
+            "type": "command"
+          }
         ]
-    },
-    "statusLine": {
-        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/statusline.cjs",
-        "padding": 0,
-        "type": "command"
-    }
+      }
+    ]
+  },
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "ask": ["Bash(git push:*)", "Bash(npm publish:*)", "Bash(docker push:*)"],
+    "defaultMode": "bypassPermissions",
+    "deny": [
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~/*)",
+      "Bash(rm -rf .)",
+      "Bash(rm -rf /)",
+      "Bash(del /s:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(git branch -D:*)",
+      "Bash(git stash drop:*)",
+      "Bash(git checkout -- .)",
+      "Bash(git restore .)",
+      "Edit(**/.env*)",
+      "Edit(.env*)",
+      "Edit(**/secrets/**)",
+      "Edit(**/credentials*)",
+      "Edit(**/generated/**)",
+      "Edit(**/obj/**)",
+      "Edit(**/bin/**)",
+      "Edit(**/dist/**)",
+      "Edit(**/node_modules/**)",
+      "Edit(.github/workflows/**)",
+      "Read(**/.env*)",
+      "Read(.env*)",
+      "Read(**/secrets/**)",
+      "Read(**/credentials*)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.config/gcloud/**)",
+      "Write(**/.env*)",
+      "Write(.env*)",
+      "Write(**/secrets/**)",
+      "Write(**/credentials*)",
+      "Write(**/generated/**)",
+      "Write(**/obj/**)",
+      "Write(**/bin/**)",
+      "Write(**/dist/**)",
+      "Write(**/node_modules/**)",
+      "Write(.github/workflows/**)"
+    ]
+  },
+  "statusLine": {
+    "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/statusline.cjs",
+    "padding": 0,
+    "type": "command"
+  }
 }

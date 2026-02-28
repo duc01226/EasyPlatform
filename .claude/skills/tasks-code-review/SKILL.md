@@ -1,31 +1,62 @@
 ---
 name: tasks-code-review
-description: '[Testing] Autonomous subagent variant of code-review. Use when reviewing code changes, pull requests, or performing refactoring analysis with focus on patterns, security, and performance.'
+version: 1.0.0
+description: '[Code Quality] Autonomous subagent variant of code-review. Use when reviewing code changes, pull requests, or performing refactoring analysis with focus on patterns, security, and performance.'
+
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
+
+## Quick Summary
+
+**Goal:** Autonomous comprehensive code review with structured checklists for architecture, patterns, quality, security, and performance (subagent variant of `code-review`).
+
+**Workflow:**
+
+1. **Understand Context** — Get changed files, full diff, commit messages
+2. **Categorize Changes** — Group by layer (Domain, Application, Persistence, Frontend)
+3. **Review Each Category** — Backend checklist (Entity, Command/Query, Repository, EventHandler), Frontend checklist (Component, Store, Form, API Service)
+4. **Security Review** — Authorization, input validation, sensitive data
+5. **Performance Review** — Database (indexes, eager loading, paging), API (parallel ops, caching), Frontend (lazy loading, track-by, OnPush)
+
+**Key Rules:**
+
+- **Autonomous**: Use for comprehensive reviews without user feedback loop
+- **Structured Checklists**: Follow category-specific checklists for complete coverage
+- **Report Format**: Critical/Major/Minor issues with file:line references
+- **Anti-Patterns**: Flag side effects in handlers, wrong repository types, DTO mapping in handlers, N+1 queries
 
 > **Skill Variant:** Use this skill for **autonomous, comprehensive code reviews** with structured checklists. For interactive code review discussions with user feedback, use `code-review` instead.
 
 # Code Review Workflow
 
-## Summary
+## Review Mindset (NON-NEGOTIABLE)
 
-**Goal:** Perform autonomous, comprehensive code reviews with structured checklists covering architecture, patterns, quality, security, and performance.
+**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
 
-| Step | Action                  | Key Notes                                                          |
-| ---- | ----------------------- | ------------------------------------------------------------------ |
-| 1    | Understand context      | Read changed files, identify scope and intent                      |
-| 2    | Architecture compliance | Clean Architecture layers, repository patterns, service boundaries |
-| 3    | Pattern adherence       | CQRS, entity patterns, component hierarchy, platform base classes  |
-| 4    | Code quality            | SRP, DRY, naming, abstractions                                     |
-| 5    | Security & performance  | Authorization, injection, N+1, pagination, caching                 |
-| 6    | Generate report         | Findings with severity, file references, suggested fixes           |
+- Do NOT accept code correctness at face value — verify by reading actual implementations
+- Every finding must include `file:line` evidence (grep results, read confirmations)
+- If you cannot prove a claim with a code trace, do NOT include it in the report
+- Question assumptions: "Does this actually work?" → trace the call path to confirm
+- Challenge completeness: "Is this all?" → grep for related usages across services
+- Verify side effects: "What else does this change break?" → check consumers and dependents
+- No "looks fine" without proof — state what you verified and how
 
-**Key Principles:**
+## Core Principles (ENFORCE ALL)
 
-- Autonomous variant — for interactive reviews with user feedback, use `code-review` instead
-- Check all 5 review dimensions: architecture, patterns, quality, security, performance
-- Every finding must reference specific file and line
+**YAGNI** — Flag code solving hypothetical future problems (unused params, speculative interfaces, premature abstractions)
+**KISS** — Flag unnecessarily complex solutions. Ask: "Is there a simpler way that meets the same requirement?"
+**DRY** — Actively grep for similar/duplicate code across the codebase. If 3+ similar patterns exist, flag for extraction.
+**Clean Code** — Readable > clever. Names reveal intent. Functions do one thing. No deep nesting (≤3 levels). Methods <30 lines.
+**Follow Convention** — Before flagging ANY pattern violation, grep for 3+ existing examples in the codebase. Codebase convention wins over textbook rules.
+**No Flaws/No Bugs** — Trace logic paths. Verify edge cases (null, empty, boundary values). Check error handling covers failure modes.
+**Proof Required** — Every claim backed by `file:line` evidence or grep results. Speculation is forbidden.
+**Doc Staleness** — Cross-reference changed files against related docs (feature docs, test specs, READMEs). Flag any doc that is stale or missing updates to reflect current code changes.
 
 ## When to Use This Skill
 
@@ -50,12 +81,18 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 - [ ] Frontend component hierarchy respected
 - [ ] Platform base classes used correctly
 
-### 3. Code Quality
+### 3. Code Quality & Clean Code
 
-- [ ] Single Responsibility Principle
-- [ ] No code duplication
-- [ ] Meaningful naming
-- [ ] Appropriate abstractions
+- [ ] Single Responsibility Principle — each function/class does ONE thing
+- [ ] No code duplication (DRY) — grep for similar code, extract if 3+ occurrences
+- [ ] Meaningful naming — reveals intent, no cryptic abbreviations
+- [ ] Appropriate abstractions — no over-engineering for single-use cases
+- [ ] YAGNI — no speculative features, unused parameters, premature abstractions
+- [ ] KISS — simplest solution that meets the requirement
+- [ ] Function length <30 lines, nesting depth ≤3 levels
+- [ ] Follows existing codebase conventions (verify with grep for 3+ examples)
+- [ ] Edge cases handled: null, empty collections, boundary values
+- [ ] Error paths verified: failures caught, logged, propagated correctly
 
 ### 4. Security
 
@@ -224,6 +261,36 @@ git log main...HEAD --oneline
 - [ ] OnPush change detection
 ```
 
+## Common Issues to Flag
+
+### :x: Anti-Patterns
+
+```csharp
+// Issue: Side effect in command handler
+await notificationService.SendAsync(...);
+
+// Issue: Wrong repository type
+GenericRootRepository<Entity>  // Should be service-specific
+
+// Issue: DTO mapping in handler
+var entity = new Entity { Name = request.Name };  // Should use DTO.MapToEntity()
+
+// Issue: Missing eager loading
+var items = await repo.GetAllAsync(...);  // Missing relations
+items.ForEach(i => Console.WriteLine(i.Related.Name));  // N+1!
+```
+
+```typescript
+// Issue: No loading state
+this.api.getItems().subscribe(items => this.items = items);
+
+// Issue: Direct mutation
+this.state.items.push(newItem);
+
+// Issue: Missing cleanup
+this.data$.subscribe(...);  // Missing untilDestroyed()
+```
+
 ## Review Report Template
 
 ```markdown
@@ -239,11 +306,18 @@ git log main...HEAD --oneline
 
 [APPROVED | APPROVED WITH COMMENTS | CHANGES REQUESTED]
 
+## Strengths
+
+1. [Positive point 1]
+2. [Positive point 2]
+
 ## Issues Found
 
 ### Critical (Must Fix)
 
 1. **[File:Line]**: [Description]
+    - Problem: [Explanation]
+    - Suggestion: [Fix]
 
 ### Major (Should Fix)
 
@@ -259,6 +333,19 @@ git log main...HEAD --oneline
 2. [Recommendation 2]
 ```
 
+## Review Commands
+
+```bash
+# Find potential issues
+grep -r "new Entity {" --include="*.cs"  # DTO mapping in handler
+grep -r "SendAsync\|NotifyAsync" --include="*CommandHandler.cs"  # Side effects
+grep -r "GenericRootRepository" --include="*.cs"  # Generic repository (should be service-specific)
+
+# Check patterns
+grep -r "observerLoadingErrorState" --include="*.ts"  # Loading tracking
+grep -r "untilDestroyed" --include="*.ts"  # Subscription cleanup
+```
+
 ## Verification Checklist
 
 - [ ] All changed files reviewed
@@ -266,6 +353,7 @@ git log main...HEAD --oneline
 - [ ] Platform patterns followed
 - [ ] Security concerns addressed
 - [ ] Performance considered
+- [ ] Documentation staleness checked (changed files cross-referenced against related docs)
 - [ ] Review report generated
 
 ## Related

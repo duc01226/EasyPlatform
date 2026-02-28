@@ -1,27 +1,35 @@
 ---
 name: tasks-documentation
-description: '[Docs] Autonomous subagent variant of documentation. Use when creating or updating technical documentation, API documentation, or inline code documentation.'
+version: 1.0.0
+description: '[Subagent Tasks] Autonomous subagent variant of documentation. Use when creating or updating technical documentation, API documentation, or inline code documentation.'
+
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+## Quick Summary
+
+**Goal:** Autonomous documentation generation with structured templates for code comments, API docs, and architecture docs (subagent variant of `documentation`).
+
+**Workflow:**
+
+1. **Identify Type** — Code comments, API documentation, or architecture documentation
+2. **Apply Pattern** — C# XML docs, TypeScript JSDoc, API endpoint docs, README structure, or inline comments
+3. **Follow Guidelines** — Document "why" not "what", include examples, keep close to code, update with changes
+
+**Key Rules:**
+
+- **Autonomous**: Use for documentation tasks without user feedback loop
+- **DO**: Document public APIs, explain "why", include usage examples, keep docs close to code
+- **DON'T**: State obvious, leave TODOs indefinitely, duplicate code in docs, create separate stale docs
+- **Comment Types**: `<summary>` for public APIs, `//` for complex logic, `TODO`/`FIXME`/`HACK`/`NOTE` markers
 
 > **Skill Variant:** Use this skill for **autonomous documentation generation** with structured templates. For interactive documentation tasks with user feedback, use `documentation` instead.
 
 # Documentation Workflow
-
-## Summary
-
-**Goal:** Autonomously generate or update code documentation (XML docs, JSDoc, API docs, architecture docs) following platform conventions.
-
-- **Code Comments:** XML docs for C# public APIs, JSDoc for TypeScript, inline for complex logic
-- **API Documentation:** Endpoint descriptions, request/response schemas, error codes
-- **Architecture Documentation:** Component diagrams, data flow, integration guides
-- **Comment Types:** `/// <summary>` for APIs, `// TODO:` for planned work, `// HACK:` for workarounds
-
-**Key Principles:**
-
-- Explain "why" not "what" -- never state the obvious
-- Keep documentation close to code, update when code changes
-- Use this skill for autonomous generation; use `documentation` for interactive tasks
 
 ## When to Use This Skill
 
@@ -60,6 +68,16 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 /// This command handles both create and update operations.
 /// For new employees, the Id should be null or empty.
 /// </remarks>
+/// <example>
+/// <code>
+/// var command = new SaveEmployeeCommand
+/// {
+///     Name = "John Doe",
+///     Email = "john@example.com"
+/// };
+/// var result = await handler.HandleAsync(command, cancellationToken);
+/// </code>
+/// </example>
 public sealed class SaveEmployeeCommand : PlatformCqrsCommand<SaveEmployeeCommandResult>
 {
     /// <summary>
@@ -74,6 +92,15 @@ public sealed class SaveEmployeeCommand : PlatformCqrsCommand<SaveEmployeeComman
     /// <value>Must be non-empty and max 200 characters.</value>
     public string Name { get; set; } = string.Empty;
 }
+
+/// <summary>
+/// Represents a unique expression for finding an employee.
+/// </summary>
+/// <param name="companyId">The company identifier.</param>
+/// <param name="userId">The user identifier.</param>
+/// <returns>An expression that matches the unique employee.</returns>
+public static Expression<Func<Employee, bool>> UniqueExpr(string companyId, string userId)
+    => e => e.CompanyId == companyId && e.UserId == userId;
 ```
 
 ## Pattern 2: TypeScript JSDoc
@@ -84,7 +111,9 @@ public sealed class SaveEmployeeCommand : PlatformCqrsCommand<SaveEmployeeComman
  *
  * @example
  * ```typescript
- * @Component({ providers: [FeatureListStore] })
+ * @Component({
+ *   providers: [FeatureListStore]
+ * })
  * export class FeatureListComponent {
  *   constructor(private store: FeatureListStore) {
  *     store.loadItems();
@@ -93,12 +122,52 @@ public sealed class SaveEmployeeCommand : PlatformCqrsCommand<SaveEmployeeComman
  * ```
  */
 @Injectable()
-export class FeatureListStore extends PlatformVmStore<FeatureListState> {
+export class FeatureListStore extends BaseVmStore<FeatureListState> {
   /**
    * Loads items from the API with current filters.
+   *
+   * @remarks
+   * This effect automatically tracks loading state under the key 'loadItems'.
    * Use `isLoading$('loadItems')` to check loading status.
+   *
+   * @see {@link FeatureApiService.getList}
    */
   public loadItems = this.effectSimple(() => /* ... */);
+
+  /**
+   * Updates the filter criteria and resets to first page.
+   *
+   * @param filters - Partial filter object to merge with current filters
+   *
+   * @example
+   * ```typescript
+   * // Filter by status
+   * store.setFilters({ status: FeatureStatus.Active });
+   *
+   * // Filter by search text
+   * store.setFilters({ searchText: 'keyword' });
+   * ```
+   */
+  public setFilters(filters: Partial<FeatureFilters>): void {
+    // ...
+  }
+}
+
+/**
+ * Represents a feature entity from the API.
+ */
+export interface FeatureDto {
+  /** Unique identifier */
+  id: string;
+
+  /** Display name of the feature */
+  name: string;
+
+  /**
+   * Current status of the feature.
+   * @default FeatureStatus.Draft
+   */
+  status: FeatureStatus;
 }
 ````
 
@@ -116,14 +185,135 @@ public class EmployeeController : PlatformBaseController
     /// <summary>
     /// Retrieves a paginated list of employees.
     /// </summary>
+    /// <param name="query">Query parameters for filtering and pagination.</param>
+    /// <returns>Paginated list of employees.</returns>
     /// <response code="200">Returns the employee list.</response>
-    /// <response code="401">Unauthorized.</response>
+    /// <response code="400">Invalid query parameters.</response>
+    /// <response code="401">Unauthorized - authentication required.</response>
+    /// <response code="403">Forbidden - insufficient permissions.</response>
     [HttpGet]
     [ProducesResponseType(typeof(GetEmployeeListQueryResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> GetList([FromQuery] GetEmployeeListQuery query)
         => Ok(await Cqrs.SendAsync(query));
+
+    /// <summary>
+    /// Creates or updates an employee.
+    /// </summary>
+    /// <param name="command">Employee data to save.</param>
+    /// <returns>The saved employee.</returns>
+    /// <response code="200">Employee saved successfully.</response>
+    /// <response code="400">Validation failed.</response>
+    /// <response code="404">Employee not found (for updates).</response>
+    [HttpPost]
+    [ProducesResponseType(typeof(SaveEmployeeCommandResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Save([FromBody] SaveEmployeeCommand command)
+        => Ok(await Cqrs.SendAsync(command));
 }
 ```
+
+## Pattern 4: README Documentation
+
+```markdown
+# Feature Name
+
+Brief description of what this feature does.
+
+## Overview
+
+More detailed explanation of the feature's purpose and functionality.
+
+## Architecture
+```
+
+┌─────────────────┐ ┌──────────────────┐ ┌─────────────────┐
+│ Frontend │────▶│ API Layer │────▶│ Domain Layer │
+│ Component │ │ Controller │ │ Entity │
+└─────────────────┘ └──────────────────┘ └─────────────────┘
+
+````
+
+## Usage
+
+### Backend
+
+```csharp
+// Example usage
+var command = new SaveFeatureCommand { Name = "Example" };
+var result = await handler.HandleAsync(command, cancellationToken);
+````
+
+### Frontend
+
+```typescript
+// Example usage
+this.store.loadItems();
+```
+
+## Configuration
+
+| Setting        | Description               | Default |
+| -------------- | ------------------------- | ------- |
+| `MaxItems`     | Maximum items per page    | 50      |
+| `CacheTimeout` | Cache duration in seconds | 300     |
+
+## API Endpoints
+
+| Method | Endpoint            | Description           |
+| ------ | ------------------- | --------------------- |
+| GET    | `/api/feature`      | List features         |
+| POST   | `/api/feature`      | Create/update feature |
+| DELETE | `/api/feature/{id}` | Delete feature        |
+
+## Error Handling
+
+| Code | Description          |
+| ---- | -------------------- |
+| 400  | Invalid request data |
+| 404  | Feature not found    |
+| 409  | Conflict (duplicate) |
+
+## Related
+
+- [Entity Documentation](./Entity.md)
+- [API Reference](./API.md)
+
+````
+
+## Pattern 5: Inline Code Comments
+
+```csharp
+protected override async Task<SaveEmployeeCommandResult> HandleAsync(
+    SaveEmployeeCommand request, CancellationToken cancellationToken)
+{
+    // Step 1: Determine if this is a create or update operation
+    var isCreate = request.Id.IsNullOrEmpty();
+
+    // Step 2: Get or create the entity
+    var employee = isCreate
+        ? request.MapToNewEntity()
+            .With(e => e.CreatedBy = RequestContext.UserId())
+        : await repository.GetByIdAsync(request.Id, cancellationToken)
+            .EnsureFound($"Employee not found: {request.Id}")
+            .Then(existing => request.UpdateEntity(existing));
+
+    // Step 3: Validate business rules
+    // NOTE: This checks for duplicate codes within the same company
+    await employee.ValidateAsync(repository, cancellationToken).EnsureValidAsync();
+
+    // Step 4: Persist changes
+    // The repository automatically raises entity events for cross-service sync
+    var saved = await repository.CreateOrUpdateAsync(employee, cancellationToken);
+
+    // Step 5: Return result
+    return new SaveEmployeeCommandResult
+    {
+        Employee = new EmployeeDto(saved)
+    };
+}
+````
 
 ## Documentation Guidelines
 

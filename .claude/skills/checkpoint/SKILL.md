@@ -1,28 +1,31 @@
 ---
 name: checkpoint
-description: '[Tooling & Meta] Save memory checkpoint to preserve analysis context'
+version: 1.0.0
+description: '[Utilities] Save analysis context to checkpoint file for recovery'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+## Quick Summary
+
+**Goal:** Save current analysis context and progress to an external file for recovery after context loss.
+
+**Workflow:**
+
+1. **Gather Context** — Collect task state, findings, files analyzed, decisions made
+2. **Write Checkpoint** — Save structured markdown to `plans/reports/checkpoint-{timestamp}-{slug}.md`
+3. **Update Todos** — Reflect checkpoint creation in task tracking
+
+**Key Rules:**
+
+- Save checkpoints every 30-60 minutes during complex tasks
+- Include file paths, line numbers, and recovery instructions
+- Document decisions with rationale for future reference
 
 # Save Memory Checkpoint
 
 Save current analysis, findings, and progress to an external memory file to prevent context loss during long-running tasks.
-
-## Summary
-
-**Goal:** Persist current task context, findings, and progress to a checkpoint file for recovery after context compaction.
-
-| Step | Action                | Key Notes                                                    |
-| ---- | --------------------- | ------------------------------------------------------------ |
-| 1    | Determine location    | Filename: `plans/reports/checkpoint-{YYMMDD-HHMM}-{slug}.md` |
-| 2    | Gather context        | Task, findings, files analyzed/modified, progress, decisions |
-| 3    | Write checkpoint file | Structured markdown with recovery instructions               |
-| 4    | Update todo list      | Mark checkpoint creation complete                            |
-
-**Key Principles:**
-
-- Save checkpoints every 30-60 minutes during complex tasks
-- Include file paths, line numbers, and exact findings -- be specific
-- Always include recovery instructions for easy task resumption
 
 ## Usage
 
@@ -192,7 +195,9 @@ Update your todo list to reflect checkpoint was created:
 - `/compact` - Manually trigger context compaction
 - `/watzup` - Generate progress summary
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

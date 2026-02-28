@@ -1,12 +1,30 @@
 ---
 name: frontend-angular
-description: '[Frontend] Use when creating or modifying Angular components, forms, stores, or API services in WebV2 (Angular 19) with proper base class inheritance, state management, and platform patterns.'
+version: 1.0.0
+description: '[Frontend] Use when creating or modifying Angular components, forms, stores, or API services with proper base class inheritance, state management, and platform patterns.'
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** before executing:
+
+- `.claude/skills/shared/understand-code-first-protocol.md`
+- `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+
 ## Quick Summary
 
-**Goal:** Create or modify Angular 19 frontend code in WebV2 -- components, forms, stores, and API services -- following platform patterns.
+**Goal:** Create or modify Angular frontend code -- components, forms, stores, and API services -- following platform patterns.
+
+## Project Pattern Discovery
+
+Before implementation, search your codebase for project-specific patterns:
+
+- Search for: `BaseComponent`, `VmStore`, `FormComponent`, `ApiService`, `untilDestroyed`
+- Look for: project base component classes, shared component libraries, state store conventions
+
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ `frontend-patterns-reference.md` for project-specific patterns and code examples.
+> If file not found, continue with search-based discovery above.
 
 **Workflow:**
 
@@ -36,8 +54,10 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 
 ## File Locations
 
+Search your project to find the frontend directory structure. Common pattern:
+
 ```
-src/WebV2/apps/{app-name}/src/app/
+{frontend-apps-dir}/{app-name}/src/app/
   features/
     {feature}/
       {feature}.component.ts          # Component
@@ -46,7 +66,7 @@ src/WebV2/apps/{app-name}/src/app/
       {feature}.store.ts               # Store (if complex state)
       {feature}-form.component.ts      # Form component
 
-src/Frontend/libs/apps-domains/src/lib/
+{frontend-libs-dir}/{domain-lib}/src/lib/
   {domain}/
     services/
       {feature}-api.service.ts         # API Service

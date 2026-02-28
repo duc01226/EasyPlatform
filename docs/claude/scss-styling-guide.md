@@ -1,19 +1,18 @@
-# SCSS Styling Guide - EasyPlatform Frontend
+# SCSS Styling Guide - BravoSUITE Frontend
 
 > Comprehensive SCSS/CSS styling rules, BEM methodology, and best practices for Angular TypeScript components.
-> **Target:** All frontend applications in `src/Frontend/`
+> **Target:** All frontend applications in `src/WebV2/` and `src/Web/`
 
 ## Executive Summary
 
-| Aspect          | Standard                                                            |
-| --------------- | ------------------------------------------------------------------- |
-| **Methodology** | Modified BEM: `.block__element.--modifier1.--modifier2`             |
-| **Units**       | `rem` for spacing/sizing, CSS variables for colors                  |
-| **Import**      | `@use 'shared-mixin' as *;` (Angular 19)                            |
-| **Philosophy**  | OOP Encapsulation - classes describe structure like class hierarchy |
+| Aspect | Standard |
+|--------|----------|
+| **Methodology** | Modified BEM: `.block__element.--modifier1.--modifier2` |
+| **Units** | `rem` for spacing/sizing, CSS variables for colors |
+| **Import** | `@use 'shared-mixin' as *;` (WebV2) |
+| **Philosophy** | OOP Encapsulation - classes describe structure like class hierarchy |
 
 **Critical Rules:**
-
 1. ALL HTML elements MUST have BEM classes (even without styling)
 2. Never use hardcoded hex colors - always CSS variables
 3. Use flex mixins, never manual flexbox
@@ -51,32 +50,32 @@ Modifier: .component-name__element.--modifier (SEPARATE class with --)
 
 ### 1.2 Naming Examples
 
-| Angular Selector    | Block Name         | Element                    | Modifier                              |
-| ------------------- | ------------------ | -------------------------- | ------------------------------------- |
-| `app-user-form`     | `.user-form`       | `.user-form__input`        | `.user-form__input.--name`            |
-| `orient-kudos-list` | `.kudos-list`      | `.kudos-list__item`        | `.kudos-list__item.--active`          |
-| `platform-select`   | `.platform-select` | `.platform-select__option` | `.platform-select__option.--selected` |
+| Angular Selector | Block Name | Element | Modifier |
+|------------------|------------|---------|----------|
+| `app-user-form` | `.user-form` | `.user-form__input` | `.user-form__input.--name` |
+| `orient-kudos-list` | `.kudos-list` | `.kudos-list__item` | `.kudos-list__item.--active` |
+| `bravo-select` | `.bravo-select` | `.bravo-select__option` | `.bravo-select__option.--selected` |
 
 ### 1.3 Common Element Names
 
-| Category        | Elements                                                                                      |
-| --------------- | --------------------------------------------------------------------------------------------- |
-| **Structure**   | `__header`, `__body`, `__footer`, `__content`, `__container`, `__wrapper`, `__main-container` |
-| **Content**     | `__title`, `__text`, `__label`, `__description`, `__subtitle`, `__paragraph`                  |
-| **Interactive** | `__button`, `__btn`, `__icon`, `__link`, `__action`, `__close-btn`                            |
-| **Form**        | `__field`, `__input`, `__select`, `__form-row`, `__field-wrapper`, `__label`                  |
-| **Table**       | `__table`, `__row`, `__cell`, `__pagination`, `__table-section`                               |
-| **Card**        | `__card`, `__card-header`, `__card-body`, `__card-footer`                                     |
+| Category | Elements |
+|----------|----------|
+| **Structure** | `__header`, `__body`, `__footer`, `__content`, `__container`, `__wrapper`, `__main-container` |
+| **Content** | `__title`, `__text`, `__label`, `__description`, `__subtitle`, `__paragraph` |
+| **Interactive** | `__button`, `__btn`, `__icon`, `__link`, `__action`, `__close-btn` |
+| **Form** | `__field`, `__input`, `__select`, `__form-row`, `__field-wrapper`, `__label` |
+| **Table** | `__table`, `__row`, `__cell`, `__pagination`, `__table-section` |
+| **Card** | `__card`, `__card-header`, `__card-body`, `__card-footer` |
 
 ### 1.4 Common Modifier Names
 
-| Category   | Modifiers                                                                    |
-| ---------- | ---------------------------------------------------------------------------- |
-| **State**  | `--active`, `--disabled`, `--selected`, `--loading`, `--open`, `--collapsed` |
-| **Status** | `--valid`, `--invalid`, `--flagged`, `--warning`, `--error`, `--success`     |
-| **Mode**   | `--view-mode`, `--edit-mode`, `--create-mode`                                |
-| **Size**   | `--small`, `--large`, `--compact`                                            |
-| **Type**   | `--primary`, `--secondary`, `--cancel`, `--submit`                           |
+| Category | Modifiers |
+|----------|-----------|
+| **State** | `--active`, `--disabled`, `--selected`, `--loading`, `--open`, `--collapsed` |
+| **Status** | `--valid`, `--invalid`, `--flagged`, `--warning`, `--error`, `--success` |
+| **Mode** | `--view-mode`, `--edit-mode`, `--create-mode` |
+| **Size** | `--small`, `--large`, `--compact` |
+| **Type** | `--primary`, `--secondary`, `--cancel`, `--submit` |
 
 ### 1.5 Multiple Modifiers
 
@@ -131,7 +130,6 @@ When an element has multiple modifiers, each is a separate class:
 **Every HTML element should have a BEM class, even if no styling is needed.** This makes HTML self-documenting, similar to how OOP classes describe object structure.
 
 Classes serve as:
-
 - **Documentation**: Describes what the element IS (semantic role)
 - **Structure**: Shows parent-child relationships via BEM naming
 - **Maintainability**: Easy to add styles later without touching HTML
@@ -204,11 +202,13 @@ For items in loops, use generic element names with modifiers for states:
 
 ```html
 @for (user of vm.users; track user.id) {
-<div class="user-list__item" [class.--active]="user.isActive" [class.--selected]="user.isSelected">
-    <span class="user-list__item-name">{{ user.name }}</span>
-    <span class="user-list__item-email">{{ user.email }}</span>
-    <span class="user-list__item-status" [class.--online]="user.isOnline"> {{ user.status }} </span>
-</div>
+    <div class="user-list__item" [class.--active]="user.isActive" [class.--selected]="user.isSelected">
+        <span class="user-list__item-name">{{ user.name }}</span>
+        <span class="user-list__item-email">{{ user.email }}</span>
+        <span class="user-list__item-status" [class.--online]="user.isOnline">
+            {{ user.status }}
+        </span>
+    </div>
 }
 ```
 
@@ -216,9 +216,9 @@ For items in loops, use generic element names with modifiers for states:
 
 ## 3. Required SCSS Structure
 
-### 3.1 Shared Mixin Import (Required)
+### 3.1 WebV2 Import (Required)
 
-Every component SCSS file MUST start with:
+Every WebV2 component SCSS file MUST start with:
 
 ```scss
 @use 'shared-mixin' as *;
@@ -261,7 +261,6 @@ app-employee-list {
 ```
 
 **Why both?**
-
 - **Host element**: Angular's `<app-component>` is an unknown HTML element without default display. Setting `display: flex` makes it participate in layout.
 - **Main class**: Contains the full styling and matches the wrapper div in HTML.
 
@@ -272,24 +271,18 @@ Keep nesting to **3 levels maximum** for readability:
 ```scss
 // CORRECT: Flat structure with clear element names
 .component {
-    &__header {
-    }
-    &__header-title {
-    }
-    &__header-actions {
-    }
-    &__body {
-    }
-    &__footer {
-    }
+    &__header { }
+    &__header-title { }
+    &__header-actions { }
+    &__body { }
+    &__footer { }
 }
 
 // AVOID: Deep nesting
 .component {
     &__header {
         &__title {
-            &__icon {
-            } // Too deep - refactor to &__header-title-icon
+            &__icon { } // Too deep - refactor to &__header-title-icon
         }
     }
 }
@@ -372,13 +365,13 @@ Keep nesting to **3 levels maximum** for readability:
 
 ### 4.3 When to Use Which Mixin
 
-| Use Case                    | Mixin                           |
-| --------------------------- | ------------------------------- |
-| Page-level component        | `@include flex-layout;` on host |
-| Scrollable column container | `@include flex-col();`          |
-| Full-size scrollable area   | `@include flex-col-full();`     |
-| Horizontal row of items     | `@include flex-row();`          |
-| Custom direction/wrap       | `@include flex();`              |
+| Use Case | Mixin |
+|----------|-------|
+| Page-level component | `@include flex-layout;` on host |
+| Scrollable column container | `@include flex-col();` |
+| Full-size scrollable area | `@include flex-col-full();` |
+| Horizontal row of items | `@include flex-row();` |
+| Custom direction/wrap | `@include flex();` |
 
 ---
 
@@ -416,25 +409,25 @@ Keep nesting to **3 levels maximum** for readability:
 
 ### 5.2 Typography Scale
 
-| Name      | rem      | px   | Weight  | Usage                         |
-| --------- | -------- | ---- | ------- | ----------------------------- |
-| Caption   | 0.75rem  | 12px | 400     | Labels, hints, secondary info |
-| Body      | 0.875rem | 14px | 400     | Default text, paragraphs      |
-| Body Bold | 0.875rem | 14px | 500-600 | Emphasis, names               |
-| Large     | 1rem     | 16px | 400-600 | Sub-titles, larger body       |
-| Heading   | 1.25rem  | 20px | 600     | Section titles                |
-| Title     | 1.5rem   | 24px | 600     | Page titles                   |
+| Name | rem | px | Weight | Usage |
+|------|-----|----|----|-------|
+| Caption | 0.75rem | 12px | 400 | Labels, hints, secondary info |
+| Body | 0.875rem | 14px | 400 | Default text, paragraphs |
+| Body Bold | 0.875rem | 14px | 500-600 | Emphasis, names |
+| Large | 1rem | 16px | 400-600 | Sub-titles, larger body |
+| Heading | 1.25rem | 20px | 600 | Section titles |
+| Title | 1.5rem | 24px | 600 | Page titles |
 
 ### 5.3 Typography Examples
 
 ```scss
 &__title {
-    @include text-title(); // 20px, semi-bold
+    @include text-title();  // 20px, semi-bold
     margin: 0;
 }
 
 &__subtitle {
-    @include text-sub-title(); // 16px, semi-bold
+    @include text-sub-title();  // 16px, semi-bold
 }
 
 &__label {
@@ -447,7 +440,7 @@ Keep nesting to **3 levels maximum** for readability:
 
 &__name {
     @include text-base(0.875rem, 500);
-    @include text-ellipsis(); // Truncate with ellipsis
+    @include text-ellipsis();  // Truncate with ellipsis
 }
 ```
 
@@ -459,59 +452,59 @@ Keep nesting to **3 levels maximum** for readability:
 
 **Background Colors:**
 
-| Variable                 | Hex       | Usage                          |
-| ------------------------ | --------- | ------------------------------ |
-| `--bg-pri-cl`            | `#ffffff` | Cards, panels, dialogs         |
-| `--bg-sec-cl`            | `#fcfcfc` | Secondary backgrounds, inputs  |
+| Variable | Hex | Usage |
+|----------|-----|-------|
+| `--bg-pri-cl` | `#ffffff` | Cards, panels, dialogs |
+| `--bg-sec-cl` | `#fcfcfc` | Secondary backgrounds, inputs |
 | `--color-neutral-bg-bg2` | `#f6f8fb` | Page background, table headers |
-| `--color-neutral-bg-bg3` | `#edf2f7` | Section background             |
-| `--bg-hover-cl`          | `#edf2f7` | Hover states                   |
+| `--color-neutral-bg-bg3` | `#edf2f7` | Section background |
+| `--bg-hover-cl` | `#edf2f7` | Hover states |
 
 **Text Colors:**
 
-| Variable        | Hex       | Usage                |
-| --------------- | --------- | -------------------- |
-| `--text-pri-cl` | `#354047` | Primary text         |
+| Variable | Hex | Usage |
+|----------|-----|-------|
+| `--text-pri-cl` | `#354047` | Primary text |
 | `--text-sec-cl` | `#8b8e93` | Secondary/muted text |
-| `--primary-cl`  | `#43b9de` | Links, brand accent  |
+| `--primary-cl` | `#43b9de` | Links, brand accent |
 
 **Border Colors:**
 
-| Variable      | Hex       | Usage             |
-| ------------- | --------- | ----------------- |
-| `--bd-pri-cl` | `#ececec` | Primary borders   |
+| Variable | Hex | Usage |
+|----------|-----|-------|
+| `--bd-pri-cl` | `#ececec` | Primary borders |
 | `--bd-sec-cl` | `#c7d5e0` | Secondary borders |
 
 **Status Colors:**
 
-| Status  | Background           | Text                   |
-| ------- | -------------------- | ---------------------- |
+| Status | Background | Text |
+|--------|------------|------|
 | Success | `--color-success-bg` | `--color-success-text` |
 | Warning | `--color-warning-bg` | `--color-warning-text` |
-| Error   | `--color-error-bg`   | `--color-error-text`   |
-| Info    | `--color-info-bg`    | `--primary-cl`         |
+| Error | `--color-error-bg` | `--color-error-text` |
+| Info | `--color-info-bg` | `--primary-cl` |
 
 ### 6.2 Spacing Scale
 
 Always use `rem` values:
 
-| Size | rem     | px   | Usage                          |
-| ---- | ------- | ---- | ------------------------------ |
-| XS   | 0.25rem | 4px  | Tight spacing, icon gaps       |
-| SM   | 0.5rem  | 8px  | Small gaps, padding            |
-| MD   | 0.75rem | 12px | Medium gaps, field spacing     |
-| LG   | 1rem    | 16px | Standard gaps, section padding |
-| XL   | 1.5rem  | 24px | Section gaps, page padding     |
-| XXL  | 2rem    | 32px | Large section spacing          |
+| Size | rem | px | Usage |
+|------|-----|----|----|
+| XS | 0.25rem | 4px | Tight spacing, icon gaps |
+| SM | 0.5rem | 8px | Small gaps, padding |
+| MD | 0.75rem | 12px | Medium gaps, field spacing |
+| LG | 1rem | 16px | Standard gaps, section padding |
+| XL | 1.5rem | 24px | Section gaps, page padding |
+| XXL | 2rem | 32px | Large section spacing |
 
 ### 6.3 Border Radius Scale
 
-| Component              | Radius  |
-| ---------------------- | ------- |
+| Component | Radius |
+|-----------|--------|
 | Inputs, small elements | 0.25rem |
-| Cards, sections        | 0.5rem  |
-| Large panels           | 0.75rem |
-| Pills, badges          | 1rem+   |
+| Cards, sections | 0.5rem |
+| Large panels | 0.75rem |
+| Pills, badges | 1rem+ |
 
 ### 6.4 Shadows
 
@@ -523,9 +516,7 @@ box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.08);
 box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
 // Heavy shadow - modals, dialogs
-box-shadow:
-    0 32px 64px 0 rgba(0, 0, 0, 0.19),
-    0 2px 21px 0 rgba(0, 0, 0, 0.15);
+box-shadow: 0 32px 64px 0 rgba(0, 0, 0, 0.19), 0 2px 21px 0 rgba(0, 0, 0, 0.15);
 ```
 
 ---
@@ -608,8 +599,7 @@ app-employee-list {
     width: 100%;
     border-collapse: collapse;
 
-    th,
-    td {
+    th, td {
         padding: 0.75rem 1rem;
         text-align: left;
         border-bottom: 1px solid var(--bd-pri-cl);
@@ -717,7 +707,7 @@ app-employee-list {
         color: white;
 
         &:hover {
-            background: var(--btn-hover-color, #31b0d9);
+            background: var(--bravo-btn-hover-color, #31b0d9);
         }
     }
 
@@ -740,9 +730,8 @@ app-employee-list {
         }
     }
 
-    &:disabled,
-    &.--disabled {
-        background: var(--btn-disabled-color, #cfdbe5);
+    &:disabled, &.--disabled {
+        background: var(--bravo-btn-disabled-color, #cfdbe5);
         cursor: not-allowed;
         pointer-events: none;
     }
@@ -813,23 +802,17 @@ app-employee-list {
     font-weight: 500;
     text-transform: capitalize;
 
-    &.--active,
-    &.--valid,
-    &.--success {
+    &.--active, &.--valid, &.--success {
         background-color: var(--color-success-bg);
         color: var(--color-success-text);
     }
 
-    &.--pending,
-    &.--warning,
-    &.--flagged {
+    &.--pending, &.--warning, &.--flagged {
         background-color: var(--color-warning-bg);
         color: var(--color-warning-text);
     }
 
-    &.--inactive,
-    &.--error,
-    &.--deleted {
+    &.--inactive, &.--error, &.--deleted {
         background-color: var(--color-error-bg);
         color: var(--color-error-text);
     }
@@ -1074,15 +1057,15 @@ app-employee-list {
 
 <!-- WRONG: Inline styles -->
 <div class="user-list__item" style="background: red;">
-    <!-- WRONG: ID selectors for styling -->
-    <div id="main-content">
-        <!-- CORRECT -->
-        <div class="user-list">
-            <div class="user-list__item">
-                <span class="user-list__item-name">Name</span>
-                <span class="user-list__item-email">Email</span>
-            </div>
-        </div>
+
+<!-- WRONG: ID selectors for styling -->
+<div id="main-content">
+
+<!-- CORRECT -->
+<div class="user-list">
+    <div class="user-list__item">
+        <span class="user-list__item-name">Name</span>
+        <span class="user-list__item-email">Email</span>
     </div>
 </div>
 ```
@@ -1120,13 +1103,11 @@ margin: 1.5rem;
 gap: 0.5rem;
 
 // WRONG: Missing SCSS import
-.component {
-}
+.component { }
 
 // CORRECT: Always include import
 @use 'shared-mixin' as *;
-.component {
-}
+.component { }
 
 // WRONG: Only styling host element
 app-my-component {
@@ -1143,28 +1124,21 @@ app-my-component {
 }
 
 // WRONG: Tag selectors
-div {
-}
-span {
-}
-button {
-}
+div { }
+span { }
+button { }
 
 // CORRECT: BEM class selectors
-&__container {
-}
-&__text {
-}
-&__btn {
-}
+&__container { }
+&__text { }
+&__btn { }
 
 // WRONG: Deep nesting
 .component {
     &__header {
         &__title {
             &__icon {
-                &.--active {
-                } // 5 levels deep!
+                &.--active { } // 5 levels deep!
             }
         }
     }
@@ -1172,14 +1146,10 @@ button {
 
 // CORRECT: Flat structure
 .component {
-    &__header {
-    }
-    &__header-title {
-    }
-    &__header-title-icon {
-    }
-    &__header-title-icon.--active {
-    }
+    &__header { }
+    &__header-title { }
+    &__header-title-icon { }
+    &__header-title-icon.--active { }
 }
 ```
 
@@ -1230,9 +1200,14 @@ button {
 
 ```
 SCSS Variables & Mixins:
-├── src/Frontend/libs/share-styles/shared-mixin.scss    # Import this
-├── src/Frontend/libs/share-styles/mixin/layout.scss    # flex, flex-col, flex-row
-├── src/Frontend/libs/share-styles/mixin/text.scss      # text-base, text-ellipsis
-├── src/Frontend/libs/share-styles/shared-variables.scss # CSS custom properties
-└── src/Frontend/libs/platform-core/src/styles/mixins.scss # flex-layout, utilities
+├── src/WebV2/libs/share-styles/shared-mixin.scss          # Import this (WebV2)
+├── src/WebV2/libs/share-styles/mixin/layout.scss          # flex, flex-col, flex-row
+├── src/WebV2/libs/share-styles/mixin/text.scss            # text-base, text-ellipsis
+├── src/WebV2/libs/share-styles/shared-variables.scss      # CSS custom properties
+├── src/WebV2/libs/bravo-common/src/styles/variables.scss  # SCSS variables
+└── src/WebV2/libs/bravo-common/src/styles/mixins.scss     # flex-layout, utilities
+
+V1 Apps (bravoTALENTS, CandidateApp):
+├── src/Web/bravoTALENTSClient/assets/scss/variables.scss
+└── src/Web/CandidateAppClient/assets/scss/variables.scss
 ```

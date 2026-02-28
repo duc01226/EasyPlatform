@@ -2,7 +2,7 @@
 
 Based on [Keep a Changelog](https://keepachangelog.com/).
 
-## Format
+## Standard Format
 
 ```markdown
 ## [Unreleased]
@@ -43,20 +43,30 @@ Write for both technical and non-technical readers:
 |-------------------|------------------------|
 | Added UserController | Added user management API |
 | Fixed null reference | Fixed user profile loading error |
-| Refactored service layer | Improved performance of data loading |
-| Added enum StageCategory | Added stage categories for pipeline tracking |
+| Refactored service layer | Improved data loading performance |
+| Added StageCategory enum | Added stage categories for pipeline tracking |
+| Created migration file | Database schema updated for new features |
 
 ### Grouping
 
 Group related changes by module/feature:
 
 ```markdown
-### TextSnippet: Content Management
+### bravoTALENTS: Hiring Pipeline
+
+**Feature**: Customizable hiring pipeline builder for recruitment.
 
 #### Added
-- Rich text editor with markdown
-- Category organization
-- Full-text search
+
+**Backend**:
+- Pipeline and Stage entities with CRUD operations
+- Pipeline duplication and default templates
+- Multi-language support (EN/VI)
+
+**Frontend**:
+- Drag-and-drop stage builder
+- Pipeline filter and stage display components
+- Updated navigation and job creation wizard
 ```
 
 ### Linking
@@ -66,97 +76,44 @@ Reference PRs, issues, or docs when helpful:
 ```markdown
 #### Fixed
 - Fixed candidate search timeout (PR #123)
+- Resolved pipeline stage ordering issue (#456)
 ```
 
-## Examples
+### Documentation Section
 
-### Good Example - Business-Focused
+Include documentation updates:
+
+```markdown
+#### Documentation
+- `README.FeatureName.md` - 26-section feature documentation
+- `README.FeatureName.ai.md` - AI companion documentation
+```
+
+## Changelog Location
+
+- **Primary**: `./CHANGELOG.md` (project root)
+- **Fallback**: `./docs/CHANGELOG.md`
+- **Never**: Create in both locations
+
+## [Unreleased] Section
+
+Always use `[Unreleased]` for pending changes:
 
 ```markdown
 ## [Unreleased]
 
-### TextSnippet: Content Management System
+### Feature A
+...
 
-**Feature**: Rich text snippet management with advanced categorization and search.
+### Feature B
+...
 
-#### Added
-- Rich text editor with markdown support and syntax highlighting
-- Hierarchical category system with nested tags
-- Full-text search across all snippets with filters
-- Multi-language content support (EN/VI)
-- Snippet versioning and history tracking
-- Import/export functionality
+---
 
-#### Changed
-- Improved snippet preview with real-time rendering
-- Enhanced category navigation with breadcrumbs
+## [1.0.0] - 2026-01-14
+
+### Released features
+...
 ```
 
-### Bad Example - Too Technical
-
-```markdown
-## [Unreleased]
-
-### Pipeline Changes
-
-#### Added
-- Pipeline.cs entity
-- StageCategory enum
-- PipelineController with CRUD operations
-- SavePipelineCommand handler
-- GetPipelineQuery handler
-- PipelineDto mapping
-```
-
-## Tips
-
-1. **Focus on user value**: Explain what users can now do, not what code changed
-2. **Use active voice**: "Added user export" not "User export was added"
-3. **Be specific**: Include key details that matter to users
-4. **Group logically**: Related changes go in one section
-5. **Keep it concise**: One line per change, clear and direct
-6. **Avoid technical jargon**: Unless your audience is purely technical
-7. **Reference related docs**: Link to detailed documentation when helpful
-
-## Entry Types Reference
-
-### Added
-For new features that users can now use.
-
-**Focus**: What new capabilities do users have?
-
-### Changed
-For modifications to existing features that affect user experience.
-
-**Focus**: What behavior is different? How does it affect users?
-
-### Fixed
-For bug fixes that resolve user-facing issues.
-
-**Focus**: What problem no longer occurs?
-
-### Deprecated
-For features that will be removed in a future version.
-
-**Focus**: What should users stop relying on? When will it be removed?
-
-### Removed
-For features that have been completely removed.
-
-**Focus**: What can users no longer do? What's the alternative?
-
-### Security
-For security vulnerability fixes.
-
-**Focus**: What risk has been eliminated? (Use general terms, don't expose vulnerabilities)
-
-## When to Use This vs release-notes
-
-| Scenario | Use This Template | Use release-notes Skill |
-|----------|-------------------|------------------------|
-| During PR/feature development | ✅ Yes | ❌ No |
-| Manual business-focused entry | ✅ Yes | ❌ No |
-| At release time | ❌ No | ✅ Yes |
-| Automated from commits | ❌ No | ✅ Yes |
-| [Unreleased] section | ✅ Yes | ❌ No |
-| Versioned release docs | ❌ No | ✅ Yes |
+Move entries from `[Unreleased]` to versioned section on release.

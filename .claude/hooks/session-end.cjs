@@ -1,80 +1,77 @@
 #!/usr/bin/env node
 /**
- * SessionEnd Hook - Cleanup on session end (clear, compact, exit)
+ * SessionEnd Hook - Cleanup on session end
+ *
+ * Fires: When session ends (clear, compact, user exit)
+ * Purpose: Delete compact marker files to reset context baseline on /clear
+ *          Clean up tmpclaude temp files on any session end
+ *          Write pending-tasks warning for next session (exit/clear only)
+ *
+ * Exit Codes:
+ *   0 - Success (non-blocking)
  */
 
+'use strict';
+
 const fs = require('fs');
+const path = require('path');
+const { runHookSync } = require('./lib/hook-runner.cjs');
+const { debug } = require('./lib/debug-log.cjs');
 const { deleteMarker } = require('./lib/context-tracker.cjs');
-const { clearState: clearWorkflowState, cleanupLegacyStateFile } = require('./lib/workflow-state.cjs');
-const { clearEditState } = require('./lib/edit-state.cjs');
-const { cleanupTempFiles } = require('./lib/temp-cleanup.cjs');
+const { cleanupAll } = require('./lib/temp-file-cleanup.cjs');
+const { cleanupSwapFiles, deleteSessionSwap } = require('./lib/swap-engine.cjs');
+const { getTodoState } = require('./lib/todo-state.cjs');
 
-let _swapEngine = null;
-function getSwapEngine() {
-  if (_swapEngine) return _swapEngine;
+const PENDING_TASKS_FILE = path.join(__dirname, '..', 'pending-tasks-warning.json');
 
-  try {
-    _swapEngine = require('./lib/swap-engine.cjs');
-  } catch (e) {
-    if (process.env.CK_DEBUG) console.error(`[session-end] Failed to load swap-engine: ${e.message}`);
-    return null;
+runHookSync('session-end', (event) => {
+  const reason = event.reason || 'unknown';
+  const sessionId = event.session_id || null;
+
+  debug('session-end', `Reason: ${reason}, Session: ${sessionId}`);
+
+  // === Pending tasks warning (BEFORE cleanup) ===
+  // Write warning file for exit/clear so next session sees unfinished tasks
+  if ((reason === 'exit' || reason === 'clear') && sessionId) {
+    try {
+      const state = getTodoState(sessionId);
+      if (state.inProgressCount > 0 || state.pendingCount > 0) {
+        const warning = {
+          inProgressCount: state.inProgressCount,
+          pendingCount: state.pendingCount,
+          reason,
+          timestamp: new Date().toISOString(),
+          lastTodos: (state.lastTodos || []).slice(0, 10)
+        };
+        fs.writeFileSync(PENDING_TASKS_FILE, JSON.stringify(warning, null, 2), 'utf8');
+        debug('session-end', `Wrote pending-tasks warning: ${state.inProgressCount} in-progress, ${state.pendingCount} pending`);
+      }
+    } catch (e) {
+      debug('session-end', `Failed to write pending-tasks warning: ${e.message}`);
+    }
   }
-  return _swapEngine;
-}
 
-function cleanupSwapFiles(reason, sessionId) {
-  const engine = getSwapEngine();
-  if (!engine) return;
+  // Clean up tmpclaude temp files (project root + .claude/ recursively)
+  cleanupAll();
 
-  try {
-    const config = engine.loadConfig();
-    if (!config.enabled) return;
-
-    if (reason === 'clear') {
-      engine.deleteSessionSwap(sessionId);
-      return;
-    }
-
-    if (reason === 'compact') {
-      engine.cleanupSwapFiles(sessionId, config.retention?.defaultHours || 24);
-      engine.cleanupOrphans(sessionId);
-    }
-  } catch (e) {
-    if (process.env.CK_DEBUG) console.error(`[session-end] Swap cleanup error: ${e.message}`);
+  // Delete marker on /clear to reset context baseline
+  // SessionEnd fires with OLD session_id before new session starts
+  // This ensures clean slate for the next session
+  if (reason === 'clear' && sessionId) {
+    deleteMarker(sessionId);
+    debug('session-end', `Deleted marker for session ${sessionId}`);
   }
-}
 
-async function main() {
-  try {
-    const stdin = fs.readFileSync(0, 'utf-8').trim();
-    const data = stdin ? JSON.parse(stdin) : {};
-    const reason = data.reason || 'unknown';
-    const sessionId = data.session_id || null;
-
-    // Always clean up temp files on session end
-    // These files (tmpclaude-xxxx-cwd) are created by Task tool during the session
-    cleanupTempFiles();
-
-    // Clean up swap files based on trigger type
-    if (sessionId) {
-      cleanupSwapFiles(reason, sessionId);
+  // Clean up swap files based on reason
+  if (sessionId) {
+    if (reason === 'clear' || reason === 'exit') {
+      // Full cleanup on clear/exit - delete entire swap directory
+      deleteSessionSwap(sessionId);
+      debug('session-end', `Deleted swap directory for session ${sessionId}`);
+    } else if (reason === 'compact') {
+      // On compact, only cleanup old files (keep recent for recovery)
+      cleanupSwapFiles(sessionId, 24); // 24 hour retention
+      debug('session-end', `Cleaned old swap files for session ${sessionId}`);
     }
-
-    // Delete marker on /clear to reset context baseline
-    // SessionEnd fires with OLD session_id before new session starts
-    // This ensures clean slate for the next session
-    if (reason === 'clear' && sessionId) {
-      deleteMarker(sessionId);
-      // Clear workflow state (per-session file) and edit state on session clear
-      clearWorkflowState(sessionId);
-      cleanupLegacyStateFile();
-      clearEditState();
-    }
-
-    process.exit(0);
-  } catch (error) {
-    process.exit(0);
   }
-}
-
-main();
+});

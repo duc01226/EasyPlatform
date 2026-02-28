@@ -1,221 +1,331 @@
-# Integration Test Scenarios
+# Cross-Module Integration Test Specifications
 
-> End-to-end test scenarios spanning multiple modules
+> End-to-end test scenarios spanning multiple BravoSUITE modules
 
 ---
 
 ## Overview
 
-Integration tests verify the interaction between multiple components:
-
-- Frontend ↔ Backend API
-- Command ↔ Event Handler
-- Producer ↔ Consumer (Message Bus)
-- Multi-database operations
+These integration tests verify data flow and event processing between services via RabbitMQ message bus. Each test validates the complete workflow from producer to consumer.
 
 ---
 
-## E2E Scenarios
+## Integration Test Categories
 
-### INT-001: Full Snippet Lifecycle
+| Category | Producer | Consumer(s) | Priority |
+|----------|----------|-------------|----------|
+| Employee Lifecycle | bravoTALENTS, Accounts | All services | P0 |
+| Goal & Performance | bravoGROWTH | bravoINSIGHTS | P1 |
+| Survey Analytics | bravoSURVEYS | bravoINSIGHTS | P1 |
+| Notification Delivery | All services | NotificationMessage | P1 |
+| Permission Sync | Accounts | PermissionProvider | P0 |
+
+---
+
+## TC-INT-EMP-001: Candidate Hired Creates Employee
+
+**Priority**: P0-Critical
+
+**Preconditions**:
+- Candidate exists in bravoTALENTS with status "Offer Accepted"
+- Target company exists in Accounts
+- RabbitMQ message bus is operational
+
+**Test Steps** (Given-When-Then):
+```gherkin
+Given a candidate "John Doe" exists in bravoTALENTS
+  And the candidate has accepted an offer for company "ACME Corp"
+  And the offer has a start date of "2025-02-01"
+When the recruiter marks the candidate as "Hired"
+Then a "CandidateHiredEvent" message is published to RabbitMQ
+  And Accounts service receives the message
+  And a new User record is created with the candidate's email
+  And bravoGROWTH service receives the message
+  And a new Employee record is created linked to the User
+  And the employee's start date matches the offer date
+```
+
+**Acceptance Criteria**:
+- ✅ User created in Accounts within 30 seconds of hiring
+- ✅ Employee created in bravoGROWTH with correct company association
+- ✅ Employee linked to newly created User ID
+- ❌ Duplicate User not created if email exists
+- ❌ Hiring fails gracefully if company doesn't exist
+
+**Evidence**:
+- Producer: `bravoTALENTS.Service/Application/UseCaseEvents/Candidate/PublishCandidateHiredEventHandler.cs`
+- Consumer (Accounts): `Accounts.Service/Application/MessageBusConsumers/CandidateHiredConsumer.cs`
+- Consumer (Growth): `bravoGROWTH.Service/Application/MessageBusConsumers/CandidateHiredConsumer.cs`
+- Message: `bravoTALENTS.Service/Domain/Events/CandidateHiredEventBusMessage.cs`
+
+**Test Data**:
+```json
+{
+  "candidateId": "cand-001",
+  "email": "john.doe@example.com",
+  "firstName": "John",
+  "lastName": "Doe",
+  "companyId": "comp-acme-001",
+  "offerId": "offer-001",
+  "startDate": "2025-02-01",
+  "jobTitle": "Software Engineer"
+}
+```
+
+---
+
+## TC-INT-EMP-002: User Created Syncs Across Services
+
+**Priority**: P0-Critical
+
+**Preconditions**:
+- User created in Accounts service
+- All consuming services are operational
+
+**Test Steps** (Given-When-Then):
+```gherkin
+Given an administrator creates a new user in Accounts
+  And the user is assigned to company "ACME Corp"
+  And the user has role "Employee"
+When the user record is saved successfully
+Then a "UserCreatedEvent" message is published to RabbitMQ
+  And bravoTALENTS receives and creates a corresponding candidate app user
+  And bravoGROWTH receives and creates a corresponding employee record
+  And bravoSURVEYS receives and creates a corresponding respondent record
+  And PermissionProvider receives and caches user permissions
+```
+
+**Acceptance Criteria**:
+- ✅ All services sync user data within 60 seconds
+- ✅ User ID is consistent across all services
+- ✅ Company association is preserved
+- ❌ Partial sync does not leave orphan records
+
+**Evidence**:
+- Producer: `Accounts.Service/Application/UseCaseEvents/User/PublishUserCreatedEventHandler.cs`
+- Message: `Accounts.Service/Domain/Events/UserEntityEventBusMessage.cs`
+- Consumer Pattern: Each service has `UserCreatedConsumer.cs`
+
+---
+
+## TC-INT-GOL-001: Goal Completion Updates Analytics
 
 **Priority**: P1-High
 
-**Description**: Complete lifecycle of a text snippet from creation to deletion.
+**Preconditions**:
+- Employee has an active goal in bravoGROWTH
+- Goal progress is at 100%
+- bravoINSIGHTS dashboard exists for the company
 
-**Modules Involved**:
-
-- TextSnippet API
-- Entity Events
-- Message Bus
-
-**Test Steps**:
-
+**Test Steps** (Given-When-Then):
 ```gherkin
-Given the system is running with RabbitMQ connected
-  And I am an authenticated user
-
-# Create
-When I create a snippet with text "Integration Test"
-Then the snippet should be saved to database
-  And an EntityCreated event should be published to message bus
-  And the consumer should process the event
-
-# Read
-When I retrieve the snippet by ID
-Then I should receive the correct snippet data
-
-# Update
-When I update the snippet text to "Updated Integration Test"
-Then the snippet should be updated in database
-  And an EntityUpdated event should be published
-
-# Search
-When I search for "Integration"
-Then the updated snippet should appear in results
-
-# Delete
-When I delete the snippet
-Then the snippet should be removed from database
-  And an EntityDeleted event should be published
+Given employee "Jane Smith" has a goal "Complete Q4 Sales Target"
+  And the goal belongs to objective "Increase Revenue"
+  And the goal progress is at 95%
+When the employee updates goal progress to 100%
+  And the goal status changes to "Completed"
+Then a "GoalCompletedEvent" message is published
+  And bravoINSIGHTS receives the event
+  And the Goal Completion Rate tile is recalculated
+  And the Objective Progress dashboard is updated
+  And historical trend data is recorded
 ```
 
-**Verification Points**:
+**Acceptance Criteria**:
+- ✅ Analytics updated within 5 minutes
+- ✅ Goal completion counted in period statistics
+- ✅ Objective rollup percentages recalculated
+- ❌ Deleted goals not counted in statistics
 
-- [ ] Database record created/updated/deleted
-- [ ] Message bus events published
-- [ ] Consumers process events successfully
-- [ ] Search index updated
+**Evidence**:
+- Producer: `bravoGROWTH.Service/Application/UseCaseEvents/Goal/PublishGoalCompletedEventHandler.cs`
+- Consumer: `bravoINSIGHTS.Service/Application/MessageBusConsumers/GoalCompletedConsumer.cs`
+- Analytics: `bravoINSIGHTS.Service/Application/UseCaseCommands/Dashboard/RecalculateGoalMetricsCommand.cs`
 
 ---
 
-### INT-002: Category with Snippets
+## TC-INT-SUR-001: Survey Response Aggregation
 
 **Priority**: P1-High
 
-**Description**: Category management with associated snippets.
+**Preconditions**:
+- Survey published and distributed to employees
+- Survey has numeric rating questions
+- Response deadline not passed
 
-**Test Steps**:
-
+**Test Steps** (Given-When-Then):
 ```gherkin
-Given I am an authenticated user
-
-# Setup
-When I create category "Test Category"
-  And I create 3 snippets in "Test Category"
-Then all snippets should have the category association
-
-# Filter
-When I filter snippets by "Test Category"
-Then I should see only the 3 associated snippets
-
-# Category Update
-When I rename category to "Updated Category"
-Then snippets should reflect the new category name
+Given a survey "Employee Engagement 2025" is active
+  And 50 employees have been invited
+  And 30 employees have already submitted responses
+When employee #31 submits their survey response
+Then a "SurveyResponseSubmittedEvent" is published
+  And bravoINSIGHTS receives the event
+  And real-time response count is updated (31/50)
+  And aggregate scores are recalculated
+  And response rate percentage is updated (62%)
 ```
+
+**Acceptance Criteria**:
+- ✅ Real-time count updated immediately
+- ✅ Aggregate calculations include new response
+- ✅ Anonymous responses not traceable to individuals
+- ❌ Late responses (after deadline) marked but not counted
+
+**Evidence**:
+- Producer: `bravoSURVEYS.Service/Application/UseCaseEvents/Response/PublishResponseSubmittedEventHandler.cs`
+- Consumer: `bravoINSIGHTS.Service/Application/MessageBusConsumers/SurveyResponseConsumer.cs`
 
 ---
 
-### INT-003: Background Job Execution
-
-**Priority**: P2-Medium
-
-**Description**: Manual background job scheduling and execution.
-
-**Test Steps**:
-
-```gherkin
-Given the background job infrastructure is running
-
-When I trigger DemoScheduleBackgroundJobManuallyCommand
-Then the job should be queued in Hangfire
-  And the job should execute within scheduled time
-  And job completion should be logged
-```
-
----
-
-### INT-004: Message Bus Round-Trip
+## TC-INT-NOT-001: Notification Delivery Pipeline
 
 **Priority**: P1-High
 
-**Description**: Verify message bus producer-consumer flow.
+**Preconditions**:
+- NotificationMessage service operational
+- Email/Push notification channels configured
+- User notification preferences set
 
-**Test Steps**:
-
+**Test Steps** (Given-When-Then):
 ```gherkin
-Given RabbitMQ is running
-  And consumers are registered and listening
-
-When I save a snippet (triggers producer)
-Then TextSnippetEntityEventBusMessageProducer should publish message
-  And SnippetTextEntityEventBusConsumer should receive message
-  And consumer should process without errors
+Given user "Jane Smith" has email notifications enabled
+  And user has registered a mobile device for push notifications
+When bravoGROWTH triggers a "Goal Deadline Reminder" notification
+Then NotificationMessage service receives the notification request
+  And user preferences are checked
+  And email notification is queued for delivery
+  And push notification is sent to registered devices
+  And notification status is recorded as "Sent"
 ```
 
-**Verification Points**:
+**Acceptance Criteria**:
+- ✅ Notification delivered via all enabled channels
+- ✅ User preferences respected (no spam)
+- ✅ Delivery status tracked per channel
+- ❌ Disabled channels skipped without error
 
-- [ ] Message appears in RabbitMQ queue
-- [ ] Consumer acknowledges message
-- [ ] No dead-letter messages
+**Evidence**:
+- Producer: Various services via `INotificationService.SendAsync()`
+- Consumer: `NotificationMessage.Service/Application/MessageBusConsumers/NotificationRequestConsumer.cs`
+- Delivery: `NotificationMessage.Service/Application/UseCaseCommands/Notification/ProcessNotificationCommand.cs`
 
 ---
 
-### INT-005: Multi-Database Demo
+## TC-INT-PER-001: Permission Cache Invalidation
 
-**Priority**: P2-Medium
+**Priority**: P0-Critical
 
-**Description**: Verify multi-database functionality.
+**Preconditions**:
+- User has cached permissions in PermissionProvider
+- Role change pending in Accounts
 
-**Test Steps**:
-
+**Test Steps** (Given-When-Then):
 ```gherkin
-Given SQL Server, MongoDB, and PostgreSQL are running
-
-When I trigger multi-database demo command
-Then data should be written to primary database
-  And domain event should trigger cross-database sync
-  And MultiDbDemoEntity should exist in secondary database
+Given user "John Doe" has role "Employee" with limited permissions
+  And the permissions are cached in PermissionProvider
+When an administrator promotes John to "Manager" role
+Then Accounts publishes "UserRoleChangedEvent"
+  And PermissionProvider invalidates John's permission cache
+  And new permission set is calculated
+  And all services receive updated permission context
+  And John can immediately access manager-level features
 ```
+
+**Acceptance Criteria**:
+- ✅ Permission cache invalidated within 10 seconds
+- ✅ No stale permissions used after role change
+- ✅ All services respect new permission level
+- ❌ Demoted users lose access immediately
+
+**Evidence**:
+- Producer: `Accounts.Service/Application/UseCaseEvents/Role/PublishRoleChangedEventHandler.cs`
+- Consumer: `PermissionProvider.Service/Application/MessageBusConsumers/UserRoleChangedConsumer.cs`
+- Cache: `PermissionProvider.Service/Infrastructure/Caching/PermissionCacheManager.cs`
 
 ---
 
-## Performance Tests
+## TC-INT-TEN-001: Multi-Tenant Data Isolation
 
-### PERF-001: Search Performance
+**Priority**: P0-Critical
 
-**Target**: < 500ms for 10,000 snippets
+**Preconditions**:
+- Two companies exist: "ACME Corp" and "Beta Inc"
+- Both companies have employees and data
 
-**Test Steps**:
-
+**Test Steps** (Given-When-Then):
 ```gherkin
-Given 10,000 snippets exist in database
-When I perform full-text search
-Then results should return within 500ms
+Given user "Admin A" belongs to "ACME Corp"
+  And user "Admin B" belongs to "Beta Inc"
+  And both companies have goals, surveys, and employees
+When Admin A queries for all goals
+Then only "ACME Corp" goals are returned
+  And "Beta Inc" goals are never visible
+  And database queries include CompanyId filter
+  And API responses contain only tenant-scoped data
+```
+
+**Acceptance Criteria**:
+- ✅ 100% data isolation between tenants
+- ✅ CompanyId enforced at repository level
+- ✅ Cross-tenant access returns empty results, not errors
+- ❌ No data leakage in any API response
+
+**Evidence**:
+- Repository Filter: All repositories extend `OfCompanyExpr()` pattern
+- Request Context: `IPlatformApplicationRequestContext.CurrentCompanyId()`
+- Query Example: `repository.GetAllAsync(Entity.OfCompanyExpr(companyId))`
+
+---
+
+## Integration Test Execution Order
+
+For regression testing, execute in this order:
+
+1. **P0 - Security & Data Integrity**
+   - TC-INT-TEN-001 (Multi-tenant isolation)
+   - TC-INT-PER-001 (Permission sync)
+   - TC-INT-EMP-002 (User sync)
+
+2. **P0 - Employee Lifecycle**
+   - TC-INT-EMP-001 (Candidate hired)
+
+3. **P1 - Business Workflows**
+   - TC-INT-GOL-001 (Goal analytics)
+   - TC-INT-SUR-001 (Survey aggregation)
+   - TC-INT-NOT-001 (Notification delivery)
+
+---
+
+## Message Bus Verification
+
+### Required Message Types
+
+| Message | Producer | Consumers |
+|---------|----------|-----------|
+| `UserEntityEventBusMessage` | Accounts | All services |
+| `CandidateHiredEventBusMessage` | bravoTALENTS | Accounts, bravoGROWTH |
+| `GoalCompletedEventBusMessage` | bravoGROWTH | bravoINSIGHTS |
+| `SurveyResponseEventBusMessage` | bravoSURVEYS | bravoINSIGHTS |
+| `NotificationRequestMessage` | All | NotificationMessage |
+| `PermissionChangedEventBusMessage` | Accounts | PermissionProvider |
+
+### Health Check Endpoints
+
+```
+GET /health/rabbitmq - Message bus connectivity
+GET /health/consumers - Consumer registration status
+GET /health/producers - Producer registration status
 ```
 
 ---
 
-### PERF-002: Bulk Operations
+## Document Maintenance
 
-**Target**: < 5s for 1,000 inserts
-
-**Test Steps**:
-
-```gherkin
-When I create 1,000 snippets via bulk API
-Then all records should be saved within 5 seconds
-  And no timeout errors should occur
-```
+| Version | Date | Changes |
+|---------|------|---------|
+| 1.0 | 2025-12-30 | Initial integration test specifications |
 
 ---
 
-## Test Environment Requirements
-
-### Infrastructure
-
-- Docker containers running (SQL Server, MongoDB, PostgreSQL, RabbitMQ, Redis)
-- API service running on localhost:5001
-- Frontend running on localhost:4001
-
-### Commands
-
-```bash
-# Start infrastructure
-docker-compose -f src/platform-example-app.docker-compose.yml up -d
-
-# Run integration tests
-dotnet test --filter "Category=Integration"
-
-# Run E2E tests (Playwright)
-cd src/Frontend/e2e
-npm test
-```
-
----
-
-## Related Documentation
-
-- [Test Specs README](./README.md)
-- [Priority Index](./PRIORITY-INDEX.md)
-- [TextSnippet Tests](./TextSnippet/README.md)
+*Generated for BravoSUITE v2.0 - Enterprise HR & Talent Management Platform*

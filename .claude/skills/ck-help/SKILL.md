@@ -1,28 +1,31 @@
 ---
 name: ck-help
-description: '[Tooling & Meta] ClaudeKit usage guide - just type naturally'
-argument-hint: [category|command|task description]
+version: 1.0.0
+description: '[Utilities] ClaudeKit usage guide - just type naturally'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+## Quick Summary
+
+**Goal:** Provide ClaudeKit usage guidance by running the help script and presenting results based on output type.
+
+**Workflow:**
+
+1. **Translate** — Convert user arguments to English if needed
+2. **Execute** — Run `python .claude/scripts/ck-help.py "$ARGUMENTS"`
+3. **Detect Type** — Read `@CK_OUTPUT_TYPE` marker (comprehensive-docs, category-guide, command-details, search-results, task-recommendations)
+4. **Present** — Show COMPLETE script output verbatim, then add practical context and examples
+
+**Key Rules:**
+
+- Never replace or summarize script output; always show it fully then enhance
+- `/plan` then `/code` is the correct flow; NEVER suggest `/plan` then `/cook`
+- `/cook` is standalone (has its own planning)
 
 Think harder.
 All-in-one ClaudeKit guide. Run the script and present output based on type markers.
-
-## Summary
-
-**Goal:** Provide ClaudeKit usage guidance by running `ck-help.py` and presenting results with contextual enhancements.
-
-| Step | Action              | Key Notes                                                          |
-| ---- | ------------------- | ------------------------------------------------------------------ |
-| 1    | Translate arguments | Always translate `$ARGUMENTS` to English before script             |
-| 2    | Run script          | `python .claude/scripts/ck-help.py "$ARGUMENTS"`                   |
-| 3    | Detect output type  | Read `@CK_OUTPUT_TYPE:` marker (docs/category/command/search/task) |
-| 4    | Present output      | Show COMPLETE script output verbatim, then add value-add context   |
-
-**Key Principles:**
-
-- Never replace or summarize script output -- always show fully, then enhance
-- `/plan` -> `/code` for planned work; `/cook` is standalone (never `/plan` -> `/cook`)
-- Adjust presentation style based on output type marker
 
 ## Pre-Processing
 
@@ -137,7 +140,9 @@ Never replace or summarize the script output. Always show it fully, then enhance
 - **`/cook`**: Standalone - plans internally, no separate `/plan` needed
 - **NEVER** suggest `/plan` → `/cook` (cook has its own planning)
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

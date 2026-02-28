@@ -663,6 +663,7 @@ await target.WaitUntilGetValidResultAsync(t => repo.GetByIdAsync(t.Id), r => r !
 // ❌ Manual validation throw → ✅ Use PlatformValidationResult fluent API
 // ❌ Side effects in handler → ✅ Use entity event handlers
 // ❌ DTO mapping in handler → ✅ DTO owns mapping via MapToObject()/MapToEntity()
+// ❌ await in foreach → ✅ items.ParallelAsync(async item => await Process(item))
 
 // ✅ Correct DTO mapping
 public sealed class ConfigDto : PlatformDto<ConfigValue> { public override ConfigValue MapToObject() => new() { ClientId = ClientId }; }

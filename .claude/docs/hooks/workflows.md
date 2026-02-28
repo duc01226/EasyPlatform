@@ -1,34 +1,36 @@
 # Workflow System Documentation
 
-> Detects user intent and routes to appropriate workflows.
+> AI-driven catalog injection for automated workflow selection and execution.
 
 ## Overview
 
-The workflow system analyzes user prompts to detect intent (feature, bug fix, refactor, etc.) and routes to predefined workflow sequences.
+The workflow system injects a compact workflow catalog on each qualifying user prompt. The AI reads the catalog, matches user intent against `whenToUse`/`whenNotToUse` fields, and activates the best-matching workflow via `/workflow-start <id>`.
+
+```
+User prompt → Catalog injection → AI intent matching → Workflow activation
+```
 
 ## Hooks
 
-| Hook                        | Trigger             | Purpose                          |
-| --------------------------- | ------------------- | -------------------------------- |
-| `workflow-router.cjs`       | UserPromptSubmit    | Detect intent, activate workflow |
-| `workflow-step-tracker.cjs` | PostToolUse (Skill) | Track workflow progress          |
+| Hook                        | Trigger             | Purpose                              |
+| --------------------------- | ------------------- | ------------------------------------ |
+| `workflow-router.cjs`       | UserPromptSubmit    | Inject workflow catalog for AI selection |
+| `workflow-step-tracker.cjs` | PostToolUse (Skill) | Track workflow step progress         |
 
-## Intent Detection
+## Catalog Injection
 
-```
-User prompt → Keyword analysis → Intent classification → Workflow activation
-```
+On every non-command prompt ≥15 characters, `workflow-router.cjs` injects:
 
-### Intent Types
+1. **Workflow Catalog** — ~2 lines per workflow (name, `whenToUse`, `whenNotToUse`, step sequence)
+2. **Detection Instructions** — Match prompt → select workflow → call `/workflow-start <id>` → create TaskCreate items
+3. **Active Workflow Context** — If a workflow is already active, shows current step and allows auto-switch
 
-| Intent            | Trigger Keywords                                    | Workflow Sequence                                                                                                                          |
-| ----------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **Feature**       | implement, add, create, build, develop, new feature | /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /changelog → /test → /docs-update → /watzup |
-| **Bug Fix**       | bug, fix, error, broken, issue, crash, not working  | /scout → /investigate → /debug → /plan → /plan-review → /plan-validate → /why-review → /fix → /code-simplifier → /review-changes → /code-review → /changelog → /test → /watzup |
-| **Documentation** | docs, document, readme, update docs                 | /scout → /investigate → /plan → /plan-review → /plan-validate → /docs-update → /review-changes → /review-post-task → /watzup              |
-| **Refactoring**   | refactor, restructure, clean up, improve code       | /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /code → /code-simplifier → /review-changes → /code-review → /changelog → /test → /watzup |
-| **Code Review**   | review, check, audit code, PR review                | /code-review → /watzup                                                                                                                    |
-| **Investigation** | how does, where is, explain, understand, find       | /scout → /investigate                                                                                                                     |
+### Skip Conditions
+
+Catalog injection is skipped when:
+- Prompt starts with `/` (explicit command)
+- Prompt is < 15 characters (confirmations like "yes", "ok", "go ahead")
+- Workflow settings are disabled
 
 ## Workflow State
 
@@ -36,41 +38,16 @@ Stored in `.claude/.workflow-state.json`:
 
 ```json
 {
-  "active_workflow": "feature",
-  "current_step": 3,
-  "total_steps": 8,
-  "steps": [
-    { "skill": "/plan", "status": "completed" },
-    { "skill": "/plan-review", "status": "completed" },
-    { "skill": "/cook", "status": "in_progress" },
-    { "skill": "/code-simplifier", "status": "pending" },
-    { "skill": "/review-changes", "status": "pending" },
-    { "skill": "/code-review", "status": "pending" },
-    { "skill": "/test", "status": "pending" },
-    { "skill": "/docs-update", "status": "pending" },
-    { "skill": "/watzup", "status": "pending" }
-  ],
-  "started_at": "2026-01-13T09:00:00Z"
+  "workflowType": "feature",
+  "workflowSteps": ["plan", "plan-review", "cook", "code-simplifier", "code-review", "changelog", "test", "docs-update", "watzup"],
+  "currentStepIndex": 2,
+  "completedSteps": ["plan", "plan-review"],
+  "activePlan": null,
+  "todos": [],
+  "startedAt": "2026-01-13T09:00:00.000Z",
+  "lastUpdatedAt": "2026-01-13T09:30:00.000Z",
+  "metadata": {}
 }
-```
-
-## Output Format
-
-When workflow is detected:
-
-```markdown
-## Active Workflow
-
-**Workflow:** Feature Implementation
-**Progress:** Step 3/8
-**Current Step:** `/cook`
-**Remaining:** /cook → /code-simplifier → /review-changes → /code-review → /test → /docs-update → /watzup
-
-### Instructions (MUST FOLLOW)
-
-1. **CONTINUE** the workflow by executing: `/cook`
-2. After completing this step, proceed to the next step in sequence
-3. Do NOT skip steps unless explicitly instructed by the user
 ```
 
 ## Workflow Controls
@@ -81,31 +58,61 @@ Users can control workflow execution:
 | --------------- | ------------------------------- |
 | `skip`          | Skip current step, move to next |
 | `abort`         | Cancel active workflow          |
-| `quick:` prefix | Bypass workflow detection       |
+| `quick:` prefix | Skip workflow confirmation, execute directly |
 
 ## Lib Modules
 
-| Module               | Purpose                   |
-| -------------------- | ------------------------- |
-| `wr-config.cjs`      | Workflow definitions      |
-| `wr-control.cjs`     | Workflow state management |
-| `wr-detect.cjs`      | Intent detection logic    |
-| `wr-output.cjs`      | Output formatting         |
-| `workflow-state.cjs` | State persistence         |
+| Module               | Purpose                                        |
+| -------------------- | ---------------------------------------------- |
+| `wr-config.cjs`      | Load workflow configuration from workflows.json |
+| `workflow-state.cjs` | State persistence and step info                |
+| `workflow-router.cjs`| Catalog injection + post-activation output     |
 
 ## Configuration
 
-Workflow definitions in `.claude/workflows.json`:
+Workflow definitions in `.claude/workflows.json` (v2.0.0):
 
 ```json
 {
-  "feature": {
-    "name": "Feature Implementation",
-    "triggers": ["implement", "add", "create", "build"],
-    "steps": ["/plan", "/plan-review", "/cook", "/code-simplifier", "/review-codebase", "/test", "/docs/update", "/watzup"]
+  "version": "2.0.0",
+  "settings": {
+    "enabled": true,
+    "showDetection": true,
+    "allowOverride": true,
+    "overridePrefix": "quick:",
+    "confirmHighImpact": true
+  },
+  "commandMapping": {
+    "cook": { "claude": "/cook", "copilot": "/cook" },
+    "code-review": { "claude": "/code-review", "copilot": "/code-review" }
+  },
+  "workflows": {
+    "feature": {
+      "name": "Feature Implementation",
+      "confirmFirst": false,
+      "whenToUse": "User wants to implement new functionality...",
+      "whenNotToUse": "Bug fixes, documentation...",
+      "sequence": ["plan", "plan-review", "cook", "code-simplifier", "code-review", "changelog", "test", "docs-update", "watzup"],
+      "preActions": {
+        "activateSkill": "...",
+        "readFiles": ["..."],
+        "injectContext": "..."
+      }
+    }
   }
 }
 ```
+
+### Workflow Options
+
+| Field          | Type     | Description                                           |
+| -------------- | -------- | ----------------------------------------------------- |
+| `name`         | string   | Display name                                          |
+| `confirmFirst` | bool     | Ask user before starting                              |
+| `whenToUse`    | string   | Natural language — when AI should select this workflow |
+| `whenNotToUse` | string   | Natural language — when AI should NOT select this      |
+| `sequence`     | string[] | Step IDs executed in order                            |
+| `preActions`   | object   | Optional: `activateSkill`, `readFiles`, `injectContext` |
 
 ## Debugging
 
@@ -116,9 +123,9 @@ cat .claude/.workflow-state.json | jq
 
 Check workflow definitions:
 ```bash
-cat .claude/workflows.json | jq '.feature'
+cat .claude/workflows.json | jq '.workflows.feature'
 ```
 
 ---
 
-*See also: [Session Lifecycle](session/) for workflow state persistence*
+*See also: [Configuration Reference](../configuration.md) | [Session Lifecycle](session/) for workflow state persistence*

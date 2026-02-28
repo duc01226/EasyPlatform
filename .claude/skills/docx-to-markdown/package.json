@@ -1,21 +1,19 @@
 {
   "name": "docx-to-markdown",
   "version": "1.0.0",
-  "description": "Convert Microsoft Word (.docx) to Markdown",
+  "description": "Convert Microsoft Word (.docx) files to Markdown with GFM support",
   "main": "scripts/convert.cjs",
   "scripts": {
-    "convert": "node scripts/convert.cjs",
-    "test": "node tests/convert.test.cjs"
+    "start": "node scripts/convert.cjs",
+    "test": "node tests/run-tests.cjs"
   },
   "dependencies": {
-    "@truto/turndown-plugin-gfm": "^1.0.0",
     "mammoth": "^1.11.0",
-    "turndown": "^7.2.2"
+    "turndown": "^7.2.0",
+    "turndown-plugin-gfm": "^1.0.2"
   },
   "engines": {
     "node": ">=18.0.0"
   },
-  "devDependencies": {
-    "docx": "^9.5.1"
-  }
+  "private": true
 }

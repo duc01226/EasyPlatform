@@ -1,31 +1,70 @@
-# EasyPlatform - Code Instructions
+# Easy.Platform - Code Instructions
 
-> **.NET 9 + Angular 19 Development Platform Framework**
+> .NET 9 Framework + Angular Frontend | Platform Framework & Example Application
 
-Easy.Platform is a reusable framework providing CQRS, validation, repository, message bus, and background job infrastructure for building .NET microservices with Angular frontends. The `src/Backend/` TextSnippet app demonstrates all patterns end-to-end.
+> **⚠️ MANDATORY — Confirm Before Execute:** If the user prompt is longer than 100 characters, you **MUST** first confirm your understanding of the request and clarify the user's intent before executing any task. Restate what you understood, ask clarifying questions if ambiguous, and only proceed after the user confirms. During confirmation, check if the task matches any workflow from the workflow catalog. If the task is non-trivial, auto-activate the detected workflow immediately. If AI judges the task is simple, AI MUST ask the user whether to skip the workflow. This applies to ALL AI tools (Claude Code, GitHub Copilot, etc.).
 
-Detailed patterns and protocols are in `docs/claude/`.
+**Sections:** [TL;DR](#tldr--what-you-must-know-before-writing-any-code) | [Search First](#mandatory-search-existing-code-first) | [First Action](#first-action-decision-before-any-tool-call) | [Task Planning](#important-task-planning-rules-must-follow) | [Code Hierarchy](#code-responsibility-hierarchy-critical) | [Plan Before Implement](#mandatory-plan-before-implement) | [Naming](#naming-conventions) | [File Locations](#key-file-locations) | [Dev Commands](#development-commands) | [Integration Testing](#integration-testing) | [Local Startup](#local-system-startup) | [Evidence & Investigation](#evidence-based-reasoning--investigation-protocol-mandatory) | [Skill Activation](#automatic-skill-activation-mandatory) | [Documentation Index](#documentation-index) | [Workflow Lookup](#workflow-keyword-lookup--execution-protocol)
 
 ---
 
-## Quick Summary (Read This First)
+## TL;DR — What You Must Know Before Writing Any Code
 
-**What this is:** A .NET 9 backend + Angular 19 frontend monorepo built on Easy.Platform framework. Backend uses Clean Architecture (Domain → Application → Persistence → Api) with CQRS. Frontend uses Nx workspace with platform base classes.
+**Project:** Easy.Platform is a .NET 9 framework for building microservices with CQRS, event-driven architecture, and multi-database support. It includes PlatformExampleApp (TextSnippet) as a reference implementation. Backend: .NET 9 + Easy.Platform + CQRS + MongoDB/PostgreSQL/SQL Server. Frontend: Angular + Nx. Messaging: RabbitMQ.
 
-**Golden rules (violations = bugs):**
+**Golden Rules (memorize these):**
 
-1. **Logic goes in the LOWEST layer:** Entity/Model > Service > Component/Handler
-2. **Backend:** Platform repositories only, `PlatformValidationResult` fluent API (never throw), side effects in Event Handlers (never handlers), DTOs own mapping, Command+Result+Handler in ONE file, cross-service via RabbitMQ only — *because custom implementations bypass framework audit/retry/UoW, throwing loses structured error aggregation, inline side effects create untestable coupling, and handler mapping creates transport-domain coupling*
-3. **Frontend:** Extend `AppBaseComponent`/`AppBaseVmStoreComponent`/`AppBaseFormComponent` (never raw Component), `PlatformVmStore` for state, extend `PlatformApiService` (never direct HttpClient), always `untilDestroyed()`, all elements need BEM classes — *because raw Components skip subscription cleanup and loading state management, direct HttpClient bypasses centralized auth/error handling, and missing untilDestroyed() causes memory leaks on every component destroy*
-4. **🔍 CRITICAL: Always search existing code patterns FIRST** before creating anything new — use Grep/Glob to find similar implementations, read base classes, verify no duplication exists — *because creating duplicate code violates DRY, bypasses battle-tested framework features, creates maintenance burden, and misses reusable utilities that already solve the problem*
-5. **Always plan before implementing** non-trivial tasks (use `/plan` commands)
-6. **Always create todos BEFORE any action** when the prompt modifies files or involves multiple steps — all skills are blocked without active todos when a workflow is active
-7. **Detect workflow from prompt** before any tool call — match keywords to workflow table below
-8. **Evidence-based only** — verify with code evidence, never fabricate or assume
+1. **Repositories** — Use `IPlatformRootRepository<TEntity>` or service-specific repository interfaces
+2. **Validation** — `PlatformValidationResult` fluent API (`.And()`, `.AndAsync()`), NEVER throw exceptions
+3. **Side Effects** — Entity Event Handlers in `UseCaseEvents/`, NEVER in command handlers
+4. **DTO Mapping** — DTOs own mapping via `PlatformEntityDto<TEntity, TKey>.MapToEntity()` or `PlatformDto<T>.MapToObject()`, NEVER map in handlers
+5. **Cross-Service** — RabbitMQ message bus ONLY, NEVER direct database access
+6. **Frontend State** — `PlatformVmStore` + `effectSimple()`, NEVER manual signals or direct `HttpClient`
+7. **Base Classes** — Always extend `AppBaseComponent`/`AppBaseVmStoreComponent`/`AppBaseFormComponent` + `.pipe(this.untilDestroyed())` + BEM classes on all template elements. Extend `PlatformApiService` for HTTP calls.
 
-**Key paths:** Backend `src/Backend/`, Frontend `src/Frontend/apps/playground-text-snippet/`, Platform framework `src/Platform/`, Patterns `docs/claude/`
+**Architecture Hierarchy** — Place logic in LOWEST layer: `Entity/Model → Service → Component/Handler`
 
-**Anti-patterns (never do):** Cross-service DB access *(deployment coupling + hidden data contracts)*, side effects in command handlers *(untestable coupling + no independent retry)*, DTO mapping in handlers *(transport-domain coupling)*, direct HttpClient *(bypasses auth/error handling)*, manual signals *(loses store lifecycle management)*, missing `untilDestroyed()` *(memory leaks)*, missing BEM classes *(breaks style scoping)*, status-only test assertions *(proves nothing about domain behavior -- verify fields/flags, prefer follow-up query)*
+**First Principles (Code Quality in AI Era):**
+
+1. **Understanding > Output** — Never ship code you can't explain. AI generates candidates; humans validate intent.
+2. **Design Before Mechanics** — Document WHY before WHAT. A 3-sentence rationale prevents 3-day debugging sessions.
+3. **Own Your Abstractions** — Every dependency, framework, and platform decision is YOUR responsibility. Understand what's under the hood.
+4. **Operational Awareness** — Code that works but can't be debugged, monitored, or rolled back is technical debt in disguise.
+5. **Depth Over Breadth** — One well-understood solution beats ten AI-generated variants. Quality compounds; quantity decays.
+
+**Decision Quick-Ref:**
+
+| Task               | → Pattern                                                      |
+| ------------------ | -------------------------------------------------------------- |
+| New API endpoint   | `PlatformBaseController` + CQRS Command                        |
+| Business logic     | Command Handler (Application layer)                            |
+| Data access        | `IPlatformRootRepository<TEntity>` + extensions                |
+| Cross-service sync | Entity Event Consumer (message bus)                            |
+| Scheduled task     | `PlatformApplicationBackgroundJob`                             |
+| Migration          | `PlatformDataMigrationExecutor` / EF migrations                |
+| Simple component   | Extend `AppBaseComponent`                                      |
+| Complex state      | `AppBaseVmStoreComponent` + `PlatformVmStore`                  |
+| Forms              | `AppBaseFormComponent` with validation                         |
+| API calls          | Service extending `PlatformApiService`                         |
+| Repository         | `IPlatformRootRepository<TEntity>`                             |
+| Complex queries    | `RepositoryExtensions` with static expressions                 |
+| Integration test   | Extend `PlatformServiceIntegrationTestWithAssertions<TModule>` |
+
+**Workflow:** Always plan before implementing non-trivial tasks. Match user prompt to workflow catalog (below). If modification keywords present → use Feature/Refactor/Bugfix workflow. Fallback → `/plan <prompt>`.
+
+**Key Locations:** `src/Platform/Easy.Platform/` (framework core), `src/Backend/` (PlatformExampleApp backend), `src/Frontend/` (Angular frontend), `src/Frontend/libs/platform-core/` (frontend framework)
+
+## MANDATORY: Search Existing Code FIRST
+
+**Before writing ANY code:**
+
+1. **Grep/Glob search** for similar patterns in the codebase (find 3+ examples)
+2. **Follow codebase pattern**, NOT generic framework docs
+3. **Provide evidence** in plan (file:line references)
+
+**Why:** This project has specific conventions. PlatformExampleApp serves as the reference implementation.
+
+**Enforced by:** Feature/Bugfix/Refactor workflows (scout → investigate steps)
 
 ---
 
@@ -33,57 +72,50 @@ Detailed patterns and protocols are in `docs/claude/`.
 
 **⛔ STOP — DO NOT CALL ANY TOOL YET ⛔**
 
+```
 1. Explicit slash command? (e.g., `/plan`, `/cook`) → Execute it
-2. Prompt matches workflow? → Activate workflow + confirm if required
+2. Prompt matches workflow? → Auto-activate workflow (non-trivial) or ask to skip (simple)
 3. MODIFICATION keywords present? → Use Feature/Refactor/Bugfix workflow
    (update, add, create, implement, enhance, insert, fix, change, remove, delete)
 4. Pure research? (no modification keywords) → Investigation workflow
-5. **FALLBACK → MUST invoke `/plan <prompt>` FIRST**
+5. FALLBACK → MUST invoke `/plan <prompt>` FIRST
+```
 
 **CRITICAL: Modification > Research.** If prompt contains BOTH research AND modification intent, **modification workflow wins** (investigation is a substep of `/plan`).
 
----
+### ⛔ WORKFLOW DETECTION IS NON-NEGOTIABLE
 
-## **IMPORTANT: Task Planning Rules (MUST FOLLOW)**
+VERY FIRST action on ANY non-trivial prompt (>15 chars, not "yes/no/continue") MUST be workflow detection → `/workflow-start <id>`. NEVER jump to TaskCreate, Read, Grep, Edit before activating a workflow.
 
-- **Create todos for ANY prompt that modifies files or involves multiple steps** — if the task edits, creates, or deletes files, or requires more than one logical step, create todos FIRST before any action
-- **When a workflow is active, create exactly ONE todo per workflow step** — if the workflow has 7 steps, create 7 `TaskCreate` calls. Do NOT combine or summarize steps into fewer todos. The enforcement hook will block execution if todo count < workflow step count
-- **Always break tasks into many small todo items** — granular tracking prevents missed steps
-- **Always add a final review todo task** to review all work done at the end to find any fix or enhancement needed
-- **Mark todos complete immediately** after finishing each one — do not batch completions
-- **Exactly ONE todo in_progress at any time** — complete current before starting next
-- **If blocked, create a new todo** describing what needs resolution — never mark blocked tasks as completed
-- **No speculation or hallucination** — always answer with proof (code evidence, file:line references, search results). If unsure, investigate first; never fabricate
-- **Skip todos ONLY for:** single-line typo fixes, pure Q&A with no file changes, or `quick:` prefixed prompts
+**❌** `"verify changes"` → `[TaskCreate immediately]` — WRONG: skipped workflow match
+**✅** `"verify changes"` → `[/workflow-start verification]` → `[TaskCreate]` → execute immediately
+
+For simple/straightforward tasks (single-file changes, clear small fixes), AI MUST ask the user whether to skip the workflow.
 
 ---
 
-## CRITICAL: Always Plan Before Implement
+## IMPORTANT: Task Planning Rules (MUST FOLLOW)
 
-Before implementing ANY non-trivial task, you MUST:
+These rules apply to EVERY task, whether using a workflow or not:
 
-1. **Plan First** - Use `/plan` commands (`/plan`, `/plan-fast`, `/plan-hard`, `/plan-hard --parallel`) to create implementation plans
-2. **Investigate & Analyze** - Explore codebase, understand context
-3. **Create Implementation Plan** - Write detailed plan with specific files and approach
-4. **Validate Plan** - Execute `/plan-validate` or `/plan-review` to check plan quality
-5. **Get User Approval** - Present plan and wait for user confirmation before any code changes
-6. **Only Then Implement** - Execute the approved plan
-
-**Do NOT use `EnterPlanMode` tool** — it enters a restricted read-only mode that blocks Write, Edit, and Task tools, preventing plan file creation and subagent usage. Use `/plan` commands instead.
-
-**Exceptions:** Single-line fixes, user says "just do it", pure research with no changes.
-
-> **Full protocol:** See [docs/claude/architecture.md#planning-protocol](docs/claude/architecture.md#planning-protocol)
+1. **MANDATORY task creation for file-modifying prompts** — If the prompt could result in ANY file changes (code, config, docs), you MUST create `TaskCreate` items BEFORE making changes. This applies even without a workflow match. Only skip for single-line trivial fixes or pure questions.
+2. **Always break work into many small todo tasks** — granular tasks prevent losing track of progress
+3. **Always add a final review todo task** to review all work done, find any fixes or enhancements needed, **and check for doc staleness** (cross-reference changed files against `docs/` — see watzup skill for the mapping table)
+4. **Mark todos as completed IMMEDIATELY** after finishing each task — never batch completions
+5. **Exactly ONE task in_progress at a time** — complete current before starting next
+6. **Use TaskCreate proactively** for any task with 2+ steps or any task that modifies files — visibility into progress is critical
+7. **On context loss**, check `TaskList` for `[Workflow]` items to recover your place
+8. **No speculation or hallucination** — always answer with proof (code references, search results, file evidence). If unsure, investigate first rather than guessing.
+9. **Evidence-based recommendations** — Before recommending code removal/refactoring, complete the Investigation Protocol validation chain. Declare confidence level for all architectural recommendations.
+10. **Breaking change assessment** — Any recommendation that could break functionality requires HIGH/MEDIUM risk validation (see Investigation & Recommendation Protocol).
 
 ---
 
-## Key Principles
+## Code Responsibility Hierarchy (CRITICAL)
 
-### Code Responsibility Hierarchy (CRITICAL)
+**Place logic in the LOWEST appropriate layer to enable reuse and prevent duplication.** If logic belongs 90% to class A, put it in class A.
 
-**Place logic in the LOWEST appropriate layer to enable reuse and prevent duplication:**
-
-```text
+```
 Entity/Model (Lowest)  →  Service  →  Component/Handler (Highest)
 ```
 
@@ -93,549 +125,291 @@ Entity/Model (Lowest)  →  Service  →  Component/Handler (Highest)
 | **Service**      | API calls, command factories, data transformation                                         |
 | **Component**    | UI event handling ONLY - delegates all logic to lower layers                              |
 
-### Backend Principles
+**Anti-Pattern**: Logic in component/handler that should be in entity → leads to duplicated code.
 
-1. **Use Platform Repositories:** `IPlatformQueryableRootRepository<TEntity, TKey>`
-2. **Use Platform Validation:** `PlatformValidationResult` fluent API
-3. **Event-Driven Side Effects:** Never call side effects in command handlers
-4. **CQRS File Organization:** Command + Result + Handler in ONE file
-5. **DTO Mapping Responsibility:** DTOs own mapping via `MapToObject()` / `MapToEntity()`
-6. **Message Bus for Cross-Service:** Never direct database access
-7. **Justify Every Dependency:** Evaluate against [`docs/claude/dependency-policy.md`](docs/claude/dependency-policy.md) before adding
+```typescript
+// ❌ WRONG: Logic in component
+readonly providerTypes = [{ value: 1, label: 'Type A' }, ...];
 
-### Frontend Principles
+// ✅ CORRECT: Logic in entity/model
+export class SomeEntity {
+  static readonly dropdownOptions = [{ value: 1, label: 'Type A' }, ...];
+  static getDisplayLabel(value: number): string { return this.dropdownOptions.find(x => x.value === value)?.label ?? ''; }
+}
 
-1. **Component Hierarchy:** `PlatformComponent` → `AppBaseComponent` → Feature
-2. **State Management:** `PlatformVmStore` for complex state
-3. **API Services:** Extend `PlatformApiService`
-4. **Subscription Cleanup:** Always use `untilDestroyed()`
-5. **Form Validation:** Use `PlatformFormComponent` with `initialFormConfig`
-6. **BEM CSS Naming:** ALL UI elements must have BEM classes (`block__element --modifier`)
-
-### Critical Anti-Patterns
-
-- **Backend:** No cross-service DB access, no side effects in handlers, DTO owns mapping (not handler)
-- **Frontend:** No direct HttpClient, always `untilDestroyed()`, no manual signals, all elements need BEM classes
-- **Testing:** No status-only test assertions -- verify domain fields/flags; prefer follow-up query over response-body-only
-
-> **Full catalog with examples:** See [advanced-patterns.md](docs/claude/advanced-patterns.md)
-
-### BEM Naming Convention (MANDATORY)
-
-Every UI element MUST have a BEM class, even without special styling. Block (`user-list`) → Element (`user-list__header`) → Modifier (separate `--` class: `user-list__btn --primary --small`)
-
-```html
-<div class="user-list">
-    <div class="user-list__header">
-        <h1 class="user-list__title">Users</h1>
-    </div>
-    <div class="user-list__content">
-        @for (user of vm.users; track user.id) {
-        <div class="user-list__item">
-            <span class="user-list__item-name">{{ user.name }}</span>
-            <button class="user-list__btn --primary --small">Edit</button>
-        </div>
-        }
-    </div>
-</div>
+// Component just uses entity
+readonly providerTypes = SomeEntity.dropdownOptions;
 ```
 
-> **SCSS patterns & full methodology:** See [scss-styling-guide.md](docs/claude/scss-styling-guide.md) | **Code patterns:** See [backend-patterns.md](docs/claude/backend-patterns.md) and [frontend-patterns.md](docs/claude/frontend-patterns.md)
+## Mandatory: Plan Before Implement
 
----
+Before implementing ANY non-trivial task, you MUST:
 
-## AI Agent Guidelines
+1. **Use Plan Skill** - Use /plan skill automatically
+2. **Investigate & Analyze** - Explore codebase, understand context
+3. **Create Implementation Plan** - Write detailed plan with files and approach
+4. **Get User Approval** - Wait for confirmation before code changes
+5. **Then Implement** - Execute the approved plan
 
-### Success Factors
+**Exceptions:** Single-line fixes, user says "just do it", pure research with no changes.
 
-1. **🔍 Search-First Protocol (MANDATORY):** Before writing ANY code:
-   - Use Grep to find similar implementations: `pattern: <feature-name>|<entity-name>|<concept>`
-   - Use Glob to locate related files: `pattern: **/*<similar-file-pattern>*`
-   - Read base classes and platform utilities
-   - Verify no duplication exists
-   - Document search evidence (patterns used, files reviewed)
-   - **Enforcement:** `search-before-code.cjs` hook blocks Edit/Write without search evidence
-2. **Evidence-Based:** Verify patterns with grep/search before implementing
-3. **Platform-First:** Use Easy.Platform patterns over custom solutions
-4. **Service Boundaries:** Verify through code analysis, never assume
-5. **Check Base Classes:** Use IntelliSense to verify available methods
+**Automated enforcement:** `edit-enforcement.cjs` warns at 4 unique files modified without an active plan, re-warns at 8 files. Blocks non-exempt file edits without TaskCreate.
 
-### Key Rules
-
-- Always use TaskCreate/TaskUpdate to track tasks
-- Always plan before implementing non-trivial changes
-- Always verify code exists before assuming removal is safe
-- Declare confidence level when uncertain (if <90%, ask user before proceeding)
-- `/why-review` runs automatically in 9 workflows after implementation (`cook`/`fix`/`code`), before code review. Audits reasoning quality with Understanding Score (0-5). Score < 3 flags mechanical changes. Soft review -- never blocks commits. See `docs/adr/` for decision records it validates against.
-- **Learning System:** Use `/learn <lesson>` or `remember this: <lesson>` to save patterns to `docs/lessons.md`. Lessons are auto-injected into every prompt and before file edits via `lessons-injector.cjs`.
-
-### Investigation Workflow
-
-When given any task:
-
-1. **Context Discovery** - Extract domain concepts, search for related code
-2. **Service Boundary** - Identify which microservice owns the concept
-3. **Platform Patterns** - Check established patterns before custom solutions
-4. **Evidence-Based** - Verify with code evidence, never assume
-
-### Quick Verification Checklist
-
-Before removing/changing ANY code:
-
-- [ ] Searched static imports?
-- [ ] Searched string literals?
-- [ ] Checked dynamic invocations?
-- [ ] Read actual implementations?
-- [ ] Traced dependencies?
-- [ ] Declared confidence level?
-
-> **Full protocol:** See [troubleshooting.md#investigation-protocol](docs/claude/troubleshooting.md#investigation-protocol)
-
----
-
-## Architecture Overview
-
-### System Architecture
-
-- **Backend:** .NET 9 with Clean Architecture (Domain, Application, Infrastructure, Persistence, Api)
-- **Frontend:** Angular 19 Nx workspace with component-based architecture
-- **Platform Foundation:** Easy.Platform framework providing base infrastructure
-- **Communication:** RabbitMQ message bus for cross-service communication
-- **Data Storage:** Multi-database support (MongoDB, SQL Server, PostgreSQL)
-
-### Example Application
-
-- **Backend:** `src/Backend/` - TextSnippet service demonstrating all patterns
-- **Frontend:** `src/Frontend/apps/playground-text-snippet/` - Angular example
-
----
-
-## Project Structure
-
-### Backend
-
-```text
-src/Platform/                    # Easy.Platform framework
-├── Easy.Platform/               # Core (CQRS, validation, repositories)
-├── Easy.Platform.AspNetCore/    # ASP.NET Core integration
-├── Easy.Platform.MongoDB/       # MongoDB patterns
-├── Easy.Platform.RabbitMQ/      # Message bus
-└── Easy.Platform.*/             # Other modules
-
-src/Backend/          # Example microservice
-├── *.Api/                       # Web API layer
-├── *.Application/               # CQRS handlers, jobs, events
-├── *.Domain/                    # Entities, domain events
-├── *.Infrastructure/            # External concerns (storage, external APIs)
-├── *.Persistence*/              # Database implementations
-└── *.Shared/                    # Cross-service utilities
-```
-
-### Frontend
-
-```text
-src/Frontend/       # Angular 19 Nx workspace
-├── apps/
-│   └── playground-text-snippet/ # Example app
-└── libs/
-    ├── platform-core/           # Base classes, utilities
-    ├── platform-components/     # Reusable UI components
-    ├── apps-domains/            # Business domain code
-    ├── apps-domains-components/ # Domain-specific components
-    └── apps-shared-components/  # Shared app components
-```
-
----
-
-## Quick Decision Trees
-
-### Backend Task
-
-```text
-Need backend feature?
-├── API endpoint → PlatformBaseController + CQRS Command
-├── Business logic → Command Handler in Application layer
-├── Data access → Repository Extensions with static expressions
-├── Cross-service → Entity Event Consumer
-├── Scheduled task → PlatformApplicationPagedBackgroundJobExecutor
-└── Migration → PlatformDataMigrationExecutor / EF migrations
-```
-
-### Frontend Task
-
-```text
-Need frontend feature?
-├── Simple component → Extend AppBaseComponent
-├── Complex state → AppBaseVmStoreComponent + PlatformVmStore
-├── Forms → AppBaseFormComponent with validation
-├── API calls → Service extending PlatformApiService
-├── Cross-domain → apps-domains library
-└── Reusable → platform-core library
-```
-
-> **More decision guides:** See [decision-trees.md](docs/claude/decision-trees.md)
-
----
-
-## Documentation Index
-
-### Quick Start (`docs/claude/`)
-
-| Document                                       | Purpose                                | When to Use                  |
-| ---------------------------------------------- | -------------------------------------- | ---------------------------- |
-| [README.md](docs/claude/README.md)             | **Start here** - Navigation & decision trees | First reference for any task |
-| [claude-kit-setup.md](docs/claude/claude-kit-setup.md) | Claude Kit (hooks, skills, workflows) | Hook/skill internals |
-
-### Pattern References (`docs/claude/`)
-
-| Document                                                                                   | Purpose                             | When to Use              |
-| ------------------------------------------------------------------------------------------ | ----------------------------------- | ------------------------ |
-| [backend-patterns.md](docs/claude/backend-patterns.md)                                     | CQRS, Repository, Entity, Validation | Backend tasks           |
-| [frontend-patterns.md](docs/claude/frontend-patterns.md)                                   | Components, Forms, Stores, API       | Frontend tasks          |
-| [advanced-patterns.md](docs/claude/advanced-patterns.md)                                   | Fluent helpers, expression composition | Complex implementations |
-| [authorization-patterns.md](docs/claude/authorization-patterns.md)                         | Security and migration patterns      | Auth/migration tasks    |
-| [scss-styling-guide.md](docs/claude/scss-styling-guide.md)                                 | BEM methodology, design tokens       | Styling tasks           |
-
-### Complete Guides (`docs/claude/`)
-
-| Document                                                                                   | Purpose                                    | Size   |
-| ------------------------------------------------------------------------------------------ | ------------------------------------------ | ------ |
-| [backend-csharp-complete-guide.md](docs/claude/backend-csharp-complete-guide.md)           | Comprehensive C# reference: SOLID, patterns | Large |
-| [frontend-typescript-complete-guide.md](docs/claude/frontend-typescript-complete-guide.md) | Complete Angular/TS guide with principles   | Large |
-
-### Architecture & Operations (`docs/claude/`)
-
-| Document                                                             | Purpose                            |
-| -------------------------------------------------------------------- | ---------------------------------- |
-| [architecture.md](docs/claude/architecture.md)                       | System architecture & planning     |
-| [troubleshooting.md](docs/claude/troubleshooting.md)                 | Investigation protocol & issues    |
-| [decision-trees.md](docs/claude/decision-trees.md)                   | Quick decision guides              |
-| [clean-code-rules.md](docs/claude/clean-code-rules.md)               | Universal coding standards         |
-| [team-collaboration-guide.md](docs/claude/team-collaboration-guide.md) | Team roles, commands, workflows  |
-| [subagent-registry.md](docs/claude/subagent-registry.md)             | Subagent capabilities & protocols  |
-| [agent-orchestration-principles.md](docs/claude/agent-orchestration-principles.md) | Multi-agent coordination patterns |
-| [dependency-policy.md](docs/claude/dependency-policy.md)             | Package evaluation rules           |
-
-### Architectural Decision Records (`docs/adr/`)
-
-| Document                                                          | Decision                                                |
-| ----------------------------------------------------------------- | ------------------------------------------------------- |
-| [001-cqrs-over-crud](docs/adr/001-cqrs-over-crud.md)             | CQRS for all operations instead of plain CRUD           |
-| [002-rabbitmq-message-bus](docs/adr/002-rabbitmq-message-bus.md)  | RabbitMQ for cross-service communication                |
-| [003-multi-database-support](docs/adr/003-multi-database-support.md) | DB-agnostic repository with engine-specific modules  |
-| [004-event-driven-side-effects](docs/adr/004-event-driven-side-effects.md) | Side effects in event handlers, not command handlers |
-| [005-dto-owns-mapping](docs/adr/005-dto-owns-mapping.md)         | DTOs own all transport-to-domain mapping                |
-
-### Project Documentation
-
-| File                                                                    | Purpose                          |
-| ----------------------------------------------------------------------- | -------------------------------- |
-| [README.md](README.md)                                                  | Platform overview & quick start  |
-| [Getting Started](docs/getting-started.md)                              | Dev setup & prerequisites        |
-| [Architecture Overview](docs/architecture-overview.md)                  | System architecture & diagrams   |
-| **[Business Features](docs/BUSINESS-FEATURES.md)**                      | **Module docs, features, APIs**  |
-| [Backend Quick Reference](docs/backend-quickref.md)                     | Backend cheatsheet               |
-| [Frontend Quick Reference](docs/frontend-quickref.md)                   | Frontend cheatsheet              |
-| [Testing Strategy](docs/TESTING.md)                                     | Testing approach & coverage      |
-| [Test Specifications](docs/test-specs/)                                 | TC-IDs, test cases by module     |
-| [Design System](docs/design-system/FrontendDesignSystem.md)             | UI tokens, component library     |
-| [Code Review Rules](docs/code-review-rules.md)                          | Review checklist (auto-injected) |
-| [Commit Conventions](docs/contributing/commit-conventions.md)           | Conventional commit format       |
-| [.ai/docs/AI-DEBUGGING-PROTOCOL.md](.ai/docs/AI-DEBUGGING-PROTOCOL.md) | Mandatory debugging & investigation protocol (includes 6-phase architectural validation) |
-| [.claude/hooks/tests/](.claude/hooks/tests/)                            | Claude hooks test infrastructure |
-
-> **Claude Hooks Development:** Check existing tests in `.claude/hooks/tests/` before adding new ones. Use `test-utils.cjs`, `hook-runner.cjs` and patterns in `suites/`.
-
-### Prompt-Based Documentation Lookup
-
-When a user prompt matches these keywords, read the corresponding doc first:
-
-| User Prompt Contains                          | Read First                                                            |
-| --------------------------------------------- | --------------------------------------------------------------------- |
-| setup, install, prerequisites, onboarding     | `docs/getting-started.md`                                             |
-| test, coverage, TC-ID, test spec              | `docs/TESTING.md`, `docs/test-specs/`                                 |
-| design system, tokens, UI library             | `docs/design-system/FrontendDesignSystem.md`                          |
-| commit, commit message, conventional          | `docs/contributing/commit-conventions.md`                             |
-| business feature, module docs                 | `docs/BUSINESS-FEATURES.md`, `docs/business-features/`               |
-| backend pattern, CQRS, repository             | `docs/backend-quickref.md` → `docs/claude/backend-patterns.md`       |
-| frontend pattern, component, store            | `docs/frontend-quickref.md` → `docs/claude/frontend-patterns.md`     |
-| architecture, system design                   | `docs/architecture-overview.md` → `docs/claude/architecture.md`      |
-| styling, SCSS, BEM, CSS                       | `docs/claude/scss-styling-guide.md`                                   |
-| security, auth, authorization                 | `docs/claude/authorization-patterns.md`                               |
-| dependency, package, library                  | `docs/claude/dependency-policy.md`                                    |
-| debug, investigate, troubleshoot              | `docs/claude/troubleshooting.md`                                      |
-| code review, review rules                     | `docs/code-review-rules.md`                                          |
-| release notes, changelog                      | `docs/release-notes/`, `CHANGELOG.md`                                |
-
----
-
-## Code Patterns Reference (Quick Reference)
-
-> Full procedural code examples are loaded **on-demand** by hooks when editing source files.
-> This section contains declarative pattern names and interfaces only.
-
-**On-demand pattern files (auto-injected when editing source files):**
-
-- **Backend:** `.ai/docs/backend-code-patterns.md` — 16 patterns with full C# code examples
-- **Frontend:** `.ai/docs/frontend-code-patterns.md` — 6 patterns with full TypeScript code examples
-- **Compact reference:** `.ai/docs/compact-pattern-reference.md` — Quick lookup table for subagents
-
-### Backend Pattern Index
-
-| #   | Pattern            | Key Interface/Contract                                                                             |
-| --- | ------------------ | -------------------------------------------------------------------------------------------------- |
-| 1   | Clean Architecture | Domain → Application → Persistence → Api layers                                                    |
-| 2   | Repository         | `IPlatformQueryableRootRepository<TEntity, TKey>` + static expression extensions                   |
-| 3   | Repository API     | `CreateAsync`, `GetByIdAsync`, `GetAllAsync`, `FirstOrDefaultAsync`, `CountAsync`                  |
-| 4   | Validation         | `PlatformValidationResult.And().AndAsync()` fluent chain, never throw                              |
-| 5   | Cross-Service      | `PlatformCqrsEntityEventBusMessageProducer` + `PlatformApplicationMessageBusConsumer`              |
-| 6   | Full-Text Search   | `searchService.Search(q, text, Entity.SearchColumns())` in query builder                           |
-| 7   | CQRS Command       | Command + Result + Handler in ONE file, `PlatformCqrsCommandApplicationHandler`                    |
-| 8   | Query              | `PlatformCqrsPagedQuery` + `GetQueryBuilder()` + parallel count/items                              |
-| 9   | Side Effects       | Entity Event Handlers in `UseCaseEvents/`, never in command handlers                               |
-| 10  | Entity             | `RootEntity<T, TKey>`, static expressions, `[TrackFieldUpdatedDomainEvent]`, navigation properties |
-| 11  | DTO                | `PlatformEntityDto<T, TKey>.MapToEntity()`, DTO owns mapping, constructor from entity              |
-| 12  | Fluent Helpers     | `.With()`, `.Then()`, `.EnsureFound()`, `.EnsureValid()`, `.ParallelAsync()`                       |
-| 13  | Background Jobs    | `PlatformApplicationPagedBackgroundJobExecutor`, `[PlatformRecurringJob("cron")]`                  |
-| 14  | Message Bus        | `PlatformApplicationMessageBusConsumer<TMessage>`, `TryWaitUntilAsync()` for deps                  |
-| 15  | Data Migration     | `PlatformDataMigrationExecutor<TDbContext>`, `OnlyForDbsCreatedBeforeDate`                         |
-| 16  | Multi-Database     | `PlatformEfCorePersistenceModule` / `PlatformMongoDbPersistenceModule`                             |
-
-### Frontend Pattern Index
-
-| #   | Pattern             | Key Interface/Contract                                                                 |
-| --- | ------------------- | -------------------------------------------------------------------------------------- |
-| 1   | Component Hierarchy | `PlatformComponent → AppBaseComponent → Feature` (never extend Platform* directly)     |
-| 2   | Component API       | `observerLoadingErrorState()`, `untilDestroyed()`, `tapResponse()`, `isLoading$()`     |
-| 3   | State Store         | `PlatformVmStore<T>`, `effectSimple()`, `updateState()`, `select()`                    |
-| 4   | API Service         | Extend `PlatformApiService`, `get apiUrl`, typed CRUD methods                          |
-| 5   | Forms               | `PlatformFormComponent`, `initialFormConfig()`, `validateForm()`, FormArray support    |
-| 6   | Advanced            | `@Watch`, `skipDuplicates()`, `distinctUntilObjectValuesChanged()`, platform utilities |
-
-> **Full templates & additional patterns (authorization, migration, helpers):** See `.ai/docs/backend-code-patterns.md` and `.ai/docs/frontend-code-patterns.md`
-
----
-
-## Development Commands
-
-### Local Development Setup
-
-**Prerequisites:** Docker Desktop running, .NET 9 SDK, Node.js + npm.
-
-**Step 1: Start infrastructure** (databases + message bus in Docker):
-
-```bash
-cd src
-docker network create platform-example-app-network
-docker-compose -f platform-example-app.docker-compose.yml -f platform-example-app.docker-compose.override.yml -p easyplatform-example up --detach sql-data mongo-data postgres-sql rabbitmq redis-cache
-```
-
-Or use the CMD script: `src/start-dev-platform-example-app.infrastructure.cmd`
-
-**Step 2: Run backend natively** (hot reload + debugging):
-
-```bash
-dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
-```
-
-**Step 3: Run frontend natively** (hot reload):
-
-```bash
-cd src/Frontend
-npm install
-npx nx serve playground-text-snippet
-```
-
-**Full Docker alternative** (builds and runs everything in containers — API on :5001, SPA on :4001):
-
-```bash
-cd src
-start-dev-platform-example-app.cmd
-```
-
-### Build & Test
-
-```bash
-dotnet build src/Easy.Platform.sln                               # Build all backend
-dotnet test [Project].csproj                                     # Run backend tests
-cd src/Frontend && npx nx build playground-text-snippet           # Build frontend
-cd src/Frontend && npx nx test platform-core                     # Run frontend tests
-```
-
-### Infrastructure Config
-
-- Docker compose files: `src/platform-example-app.docker-compose.yml` + `*.override.yml`
-- Docker project name: `easyplatform-example`
-- Docker network: `platform-example-app-network` (must be created before first run)
-- Default DB engine: **Postgres** (`UseDbType=Postgres` in override)
-- API env when Dockerized: `ASPNETCORE_ENVIRONMENT=Development.Docker`
-
-### Database Connections (Dev)
-
-| Service    | Host:Port       | Credentials        | Notes                    |
-| ---------- | --------------- | ------------------ | ------------------------ |
-| SQL Server | localhost:14330 | sa / 123456Abc     | Port mapped from 1433    |
-| MongoDB    | localhost:27017 | root / rootPassXXX | authSource=admin         |
-| PostgreSQL | localhost:54320 | postgres / postgres| Port mapped from 5432    |
-| Redis      | localhost:6379  | —                  |                          |
-| RabbitMQ   | localhost:5672  | guest / guest      | Management UI on :15672  |
-
----
-
-## Shell Environment (Windows)
-
-Claude Code runs in Git Bash (MINGW64) on Windows. Use Unix commands, not CMD equivalents.
-
-| Windows CMD (DON'T USE) | Unix Equivalent (USE THIS) | Purpose                  |
-| ----------------------- | -------------------------- | ------------------------ |
-| `dir /b /s path`        | `find path -type f`        | Recursive file listing   |
-| `type file`             | `cat file`                 | View file content        |
-| `copy src dst`          | `cp src dst`               | Copy file                |
-| `set VAR=value`         | `export VAR=value`         | Set environment variable |
-
-**Path handling:** Use forward slashes (`D:/GitSources/EasyPlatform`) or escaped backslashes in strings.
-
----
-
-## Universal Clean Code Rules
-
-- **No code duplication** — Search and reuse existing implementations
-- **SOLID principles** — Single responsibility, dependency inversion
-- **90% Logic Rule** — If logic belongs 90% to class A, put it in class A
-
-### Naming Conventions
+## Naming Conventions
 
 | Type        | Convention                | Example                                                 |
 | ----------- | ------------------------- | ------------------------------------------------------- |
-| Classes     | PascalCase                | `UserService`, `EmployeeDto`                            |
-| Methods     | PascalCase (C#)           | `GetEmployeeAsync()`                                    |
-| Methods     | camelCase (TS)            | `getEmployee()`                                         |
-| Variables   | camelCase                 | `userName`, `employeeList`                              |
 | Constants   | UPPER_SNAKE_CASE          | `MAX_RETRY_COUNT`                                       |
 | Booleans    | Prefix with verb          | `isActive`, `hasPermission`, `canEdit`, `shouldProcess` |
 | Collections | Plural                    | `users`, `items`, `employees`                           |
 | BEM CSS     | block__element --modifier | All frontend template elements must have BEM classes    |
 
-> **Detailed rules:** See [clean-code-rules.md](docs/claude/clean-code-rules.md) | **Code review rules:** [code-review-rules.md](docs/code-review-rules.md) (auto-injected on `/code-review`)
+## Key File Locations
 
----
-
-## Changelog & Release Notes
-
-| Aspect         | changelog-update (Manual)       | release-notes (Automated) |
-| -------------- | ------------------------------- | ------------------------- |
-| **Purpose**    | Manual CHANGELOG.md updates     | Automated release notes   |
-| **Input**      | Manual file review              | Conventional commits      |
-| **Output**     | `CHANGELOG.md` [Unreleased]     | `docs/release-notes/*.md` |
-| **When**       | During development (PR/feature) | Release time (v1.x.x)     |
-| **Invocation** | `/changelog-update`             | `/release-notes`          |
-
----
-
-## MCP Server Configuration
-
-| Server              | Purpose                                      |
-| ------------------- | -------------------------------------------- |
-| context7            | Up-to-date library documentation retrieval   |
-| figma               | Design extraction for PBI-driven development |
-| github              | GitHub API integration (repos, PRs, issues)  |
-| memory              | Knowledge graph for persistent memory        |
-| sequential-thinking | Step-by-step problem solving                 |
-
-Config: `.mcp.json` | Keys: `.env.local` (gitignored) | Docs: [.mcp.README.md](.mcp.README.md)
-
----
-
-## Getting Help
-
-1. **Study Examples:** `src/Backend` for backend, `src/Frontend` for frontend
-2. **Search Codebase:** Use grep/glob to find existing patterns
-3. **Check Rule Files:** `docs/claude/` for detailed guidance
-4. **Read Base Classes:** Check platform-core source for available APIs
-
----
-
-## Path-Based Skill Activation (MANDATORY)
-
-Before creating/modifying files in these paths, ALWAYS invoke the corresponding skill first:
-
-| Path Pattern                 | Skill                           | Pre-Read                                           |
-| ---------------------------- | ------------------------------- | -------------------------------------------------- |
-| `docs/business-features/**`  | `/business-feature-docs`        | `docs/templates/detailed-feature-docs-template.md` |
-| `docs/features/**`           | `/feature-docs`                 | Existing sibling docs in same folder               |
-| `src/**/*Command*.cs`        | `/easyplatform-backend`         | CQRS patterns in this file                         |
-| `src/**/*.component.ts`      | `/frontend-angular`             | Component, form, store, API service patterns       |
-| `src/**/*.store.ts`          | `/frontend-angular`             | Component, form, store, API service patterns       |
-| `src/**/*-api.service.ts`    | `/frontend-angular`             | Component, form, store, API service patterns       |
-| `src/**/*.component.scss`    | Read SCSS guide                 | `docs/claude/scss-styling-guide.md`                |
-| Screenshot + UI intent       | `/find-component` **(before /scout)** | `docs/component-index.json`                   |
-
----
-
-## CRITICAL: Todo Enforcement (Runtime Enforced — Force Workflow First)
-
-**ALL non-meta skills are blocked** unless you have active todos. This enforces the "workflow first" pipeline: detect workflow → `/workflow-start` → `TaskCreate` → then skills.
-
-### Always Allowed (Meta Skills — No Workflow/Tasks Required)
-
-- `/help`, `/memory`, `/memory-management`, `/checkpoint`, `/recover`, `/context`
-- `/ck-help`, `/watzup`, `/compact`, `/kanban`, `/coding-level`
-- `/workflow-start` (always allowed — it's the entry point)
-
-### Blocked Without Tasks (Everything Else)
-
-- **Research:** `/scout`, `/investigate`, `/plan`, `/research` — require tasks when workflow active
-- **Implementation:** `/cook`, `/fix`, `/code`, `/feature`, `/refactoring`
-- **Testing:** `/test`, `/debug`, `/code-review`, `/commit`
-- **File edits:** `Edit`, `Write`, `MultiEdit` on non-exempt files (enforced by `edit-enforcement.cjs`)
-
-### Enforcement Architecture
-
-| Hook | Trigger | Gates |
-|------|---------|-------|
-| `skill-enforcement.cjs` | PreToolUse:Skill | Blocks non-meta skills without tasks |
-| `edit-enforcement.cjs` | PreToolUse:Edit\|Write\|MultiEdit\|NotebookEdit | Blocks file edits without tasks |
-
-### Bypass
-
-Use `quick:` prefix to bypass enforcement (not recommended):
-
-```bash
-/cook quick: add a button
+```
+src/Platform/Easy.Platform/      # Framework core
+src/Platform/Easy.Platform.AspNetCore/  # ASP.NET Core integration
+src/Platform/Easy.Platform.MongoDB/     # MongoDB persistence
+src/Platform/Easy.Platform.EfCore/      # EF Core persistence
+src/Platform/Easy.Platform.RabbitMQ/    # Message bus
+src/Platform/Easy.Platform.RedisCache/  # Caching
+src/Platform/Easy.Platform.AutomationTest/  # Test framework
+src/Backend/                     # PlatformExampleApp backend
+src/Frontend/                    # Angular frontend (Nx workspace)
+src/Frontend/apps/playground-text-snippet/  # Example frontend app
+src/Frontend/libs/platform-core/ # Frontend framework core
+docs/                            # Project documentation
+.claude/hooks/                   # Claude Code hooks
+docs/code-review-rules.md        # Code review rules (auto-injected)
+docs/lessons.md                  # Learned lessons (injected via hook, written via /learn skill)
 ```
 
-### Context Preservation
+## Development Commands
 
-- Todos automatically saved to checkpoints during context compaction
-- Todos auto-restored on session resume (if checkpoint < 24h old)
-- Subagents inherit parent todo state for context continuity
-- **External Memory Swap**: Large tool outputs (>threshold) externalized to disk for post-compaction recovery
+```bash
+# Backend
+dotnet build Easy.Platform.sln
+dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
 
-### External Memory Swap
+# Frontend
+cd src/Frontend && npm install
+cd src/Frontend && npm start
 
-Large tool outputs (Read >8KB, Grep >4KB, Glob >2KB, Bash >6KB) are automatically externalized to `{temp}/ck/swap/{sessionId}/` with semantic summaries for post-compaction recovery. Use `Read: {path}` to retrieve content after context loss.
+# Docker (Example App)
+# See start-dev-platform-example-app*.cmd scripts in src/
 
-> **Details:** See [claude-kit-setup.md#external-memory-swap-system](docs/claude/claude-kit-setup.md#external-memory-swap-system)
+# Claude Hooks Tests
+node .claude/hooks/tests/test-all-hooks.cjs
+node .claude/hooks/tests/test-lib-modules.cjs
+node .claude/hooks/tests/test-lib-modules-extended.cjs
+```
 
----
+## Integration Testing
 
-## Automatic Workflow Detection (MUST FOLLOW)
+Subcutaneous CQRS tests through real DI (no HTTP), against live infrastructure. Reference: `src/Backend/PlatformExampleApp.Tests.Integration/`. Platform base: `src/Platform/Easy.Platform.AutomationTest/IntegrationTests/`.
 
-The `workflow-router.cjs` hook injects a workflow catalog into every qualifying prompt as a `system-reminder`. **Follow the injected catalog's detection steps exactly** — it contains the authoritative workflow list and activation procedure.
+**Setup:** Create fixture extending `PlatformServiceIntegrationTestFixture<T>`, base class extending `PlatformServiceIntegrationTestWithAssertions<T>` with `ResolveRepository<TEntity>` override, test classes with `[Collection]` attribute.
 
-**Key rule:** When the injected catalog says to invoke `/workflow-start <id>`, do it BEFORE any other action (no file reads, no tool calls). The catalog is the single source of truth for workflow matching.
+**Key APIs:** `ExecuteCommandAsync`, `ExecuteQueryAsync`, `AssertEntityExistsAsync<T>`, `AssertEntityMatchesAsync<T>`, `AssertEntityDeletedAsync<T>`, `IntegrationTestHelper.UniqueName()`, `TestUserContextFactory.Create*()`
+
+## Local System Startup
+
+Start order: **Infrastructure → Backend API → Frontend**. Docker compose files in `src/`.
+
+### Infrastructure Ports
+
+| Service       | Port                               | Credentials         |
+| ------------- | ---------------------------------- | -------------------- |
+| MongoDB       | 127.0.0.1:27017                    | root / rootPassXXX   |
+| Elasticsearch | 127.0.0.1:9200                     | (no auth)            |
+| RabbitMQ      | 127.0.0.1:5672 (AMQP), :15672 (UI) | guest / guest       |
+| Redis         | 127.0.0.1:6379                     | —                    |
+| PostgreSQL    | 127.0.0.1:54320                    | postgres / postgres  |
+| SQL Server    | 127.0.0.1:14330 (optional)         | sa / 123456Abc       |
+
+### Quick Start
+
+| Goal                     | Command                                                 |
+| ------------------------ | ------------------------------------------------------- |
+| **Full system (Docker)** | `src/start-dev-platform-example-app.cmd`                |
+| **MongoDB variant**      | `src/start-dev-platform-example-app-mongodb.cmd`        |
+| **PostgreSQL variant**   | `src/start-dev-platform-example-app-postgres.cmd`       |
+| **SQL Server variant**   | `src/start-dev-platform-example-app-usesql.cmd`         |
+| **No rebuild**           | `src/start-dev-platform-example-app-NO-REBUILD.cmd`     |
+| **Reset all data**       | `src/start-dev-platform-example-app-RESET-DATA.cmd`     |
+| **Infra only**           | `src/start-dev-platform-example-app.infrastructure.cmd` |
+
+**Notes:** All Docker ports bind `127.0.0.1` (not `0.0.0.0`). See `src/platform-example-app.docker-compose.yml` for full configuration.
+
+## Evidence-Based Reasoning & Investigation Protocol (MANDATORY)
+
+Speculation is FORBIDDEN. Every claim about code behavior, every recommendation for changes, must be backed by evidence. Ref: [Evidence-Based Reasoning Protocol](.claude/skills/shared/evidence-based-reasoning-protocol.md) (mandatory) | [Anti-Hallucination Patterns](.claude/patterns/anti-hallucination-patterns.md) (optional deep-dive).
+
+### Core Rules
+
+1. **Evidence before conclusion** — Cite `file:line`, grep results, or framework docs. Never use "obviously...", "I think...", "this is because..." without proof.
+2. **Confidence declaration required** — Every recommendation must state confidence level with evidence list.
+3. **Inference alone is FORBIDDEN** — Always upgrade to code evidence (grep results, file reads). When unsure: *"I don't have enough evidence yet. Need to investigate [specific items]."*
+4. **Cross-project validation** — Check both Platform framework and PlatformExampleApp before recommending architectural changes.
+
+### Confidence Levels
+
+| Level       | Meaning                                                           | Action                                      |
+| ----------- | ----------------------------------------------------------------- | ------------------------------------------- |
+| **95-100%** | Full trace, all checklist items verified, both layers checked     | Recommend freely                            |
+| **80-94%**  | Main paths verified, some edge cases unverified                   | Recommend with caveats                      |
+| **60-79%**  | Implementation found, usage partially traced                      | Recommend cautiously                        |
+| **<60%**    | Insufficient evidence                                             | **DO NOT RECOMMEND** — gather more evidence |
+
+**Format:** `Confidence: 85% — Verified in Platform core and ExampleApp, did not check all persistence providers`
+
+**When < 80%:** List what's verified vs. unverified, ask user before proceeding.
+
+### Breaking Change Risk Matrix
+
+| Risk       | Criteria                                                      | Required Evidence                                         |
+| ---------- | ------------------------------------------------------------- | --------------------------------------------------------- |
+| **HIGH**   | Removing registrations, deleting classes, changing interfaces | Full usage trace + impact analysis + all consumers        |
+| **MEDIUM** | Refactoring methods, changing signatures                      | Usage trace + test verification                           |
+| **LOW**    | Renaming, formatting, comments                                | Code review only                                          |
+
+### Validation Checklist (for code removal/refactoring/replacement)
+
+Before recommending changes, complete ALL items — skip none:
+
+- [ ] Find ALL implementations — `grep "class.*:.*IInterfaceName"`
+- [ ] Trace ALL registrations — `grep "AddScoped.*IName|AddSingleton.*IName"`
+- [ ] Verify ALL usage sites — injection points, method calls, static references (`grep -r "ClassName"` = 0)
+- [ ] Check string literals / dynamic invocations (reflection, factories, message bus)
+- [ ] Check config references (appsettings.json, env vars) and test dependencies
+- [ ] Cross-project check — Platform framework + PlatformExampleApp
+- [ ] Assess impact — what breaks if removed?
+- [ ] Declare confidence — X% with evidence list
+
+**If ANY step incomplete → STOP. State "Insufficient evidence."**
+
+### Investigation Patterns
+
+**Layer comparison:** Find working reference in PlatformExampleApp → compare with Platform framework → identify/verify patterns → recommend based on proven pattern.
+
+**Use `/investigate` skill** for: removing registrations/classes, cross-layer changes, "this seems unused" claims, breaking change assessment.
+
+## Automatic Skill Activation (MANDATORY)
+
+When working in specific areas, these skills MUST be automatically activated BEFORE any file creation or modification:
+
+### Path-Based Skill Activation
+
+| Path Pattern                                  | Skill                  | Pre-Read Files           |
+| --------------------------------------------- | ---------------------- | ------------------------ |
+| `src/Backend/**/*.cs`                         | `easyplatform-backend` | CQRS patterns reference  |
+| `src/Platform/**/*.cs`                        | `easyplatform-backend` | Framework patterns       |
+| `src/Frontend/**/*.component.ts`              | `frontend-angular`     | Component base class     |
+| `src/Frontend/**/*.store.ts`                  | `frontend-angular`     | Store patterns           |
+| `docs/design-system/**`                       | `ui-ux-designer`       | Design tokens file       |
+
+### Activation Protocol
+
+Before creating or modifying files matching these patterns, Claude MUST:
+
+1. **Activate the skill** - Use `/skill-name` or Skill tool
+2. **Read reference files** - Template + existing example in same folder
+3. **Follow skill workflow** - Apply all skill-specific rules
+
+## Documentation Index
+
+**Full reference:** [`docs/claude/README.md`](docs/claude/README.md) — skills (155+), hooks, agents (24+), configuration, patterns, complete guides.
+
+### Project & Operations (`docs/`)
+
+| Document / Directory                                                                  | Purpose                                 | When to Use                    |
+| ------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------ |
+| [getting-started.md](docs/getting-started.md)                                         | Dev environment setup                   | Onboarding, first-time setup   |
+| [deployment.md](docs/deployment.md)                                                   | Deployment procedures                   | CI/CD, Docker, K8s tasks       |
+| [monitoring.md](docs/monitoring.md)                                                   | Observability, alerting                 | Production issues, SRE tasks   |
+| [codebase-summary.md](docs/codebase-summary.md)                                       | High-level project overview             | Understanding project scope    |
+| [code-review-rules.md](docs/code-review-rules.md)                                     | Code review standards                   | PR reviews, quality audits     |
+| [lessons.md](docs/lessons.md)                                                         | Learned lessons (auto-injected)         | Avoiding repeated mistakes     |
+| [ai-agent-reference.md](docs/ai-agent-reference.md)                                   | AI agent guidelines                     | AI behavioral context          |
+| [claude-setup-improvement-principles.md](docs/claude-setup-improvement-principles.md) | AI operational principles               | Improving AI setup quality     |
+| [design-system/](docs/design-system/README.md)                                        | Design tokens, BEM, style guides        | UI/UX work, styling, theming   |
+| [architecture-decisions/](docs/architecture-decisions/README.md)                      | ADRs (Architecture Decision Records)    | Reviewing past design choices  |
+| [templates/](docs/templates/)                                                         | Doc templates: ADR, changelog, etc.     | Creating new documentation     |
+| [test-specs/](docs/test-specs/README.md)                                              | Test specs, integration tests           | Test planning, coverage gaps   |
+| [release-notes/](docs/release-notes/)                                                 | Release changelogs                      | Release prep, changelog review |
+
+### Doc Lookup Guide
+
+| If user prompt mentions...                                         | → Read first                                                          |
+| ------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| TextSnippet, example app, reference implementation                 | `src/Backend/PlatformExampleApp.TextSnippet.Application/`             |
+| Integration tests, subcutaneous testing, test base class           | `src/Backend/PlatformExampleApp.Tests.Integration/`                   |
+| Platform framework, CQRS, entities, validation                     | `src/Platform/Easy.Platform/`                                         |
+| Frontend patterns, Angular, stores, forms                          | `src/Frontend/libs/platform-core/`                                    |
+| Backend patterns, CQRS, entities, validation                       | `docs/backend-patterns-reference.md`                                  |
+| Frontend patterns, Angular, stores, forms                          | `docs/frontend-patterns-reference.md`                                 |
+| UI design, styling, BEM, design tokens, themes                     | `docs/design-system/`                                                 |
+| Deployment, Docker, K8s, CI/CD, infrastructure                     | `docs/deployment.md`, `docs/monitoring.md`                            |
+| Architecture decisions, ADR, design rationale                      | `docs/architecture-decisions/`                                        |
+| Test specs, test coverage                                          | `docs/test-specs/`                                                    |
+| Hooks, skills, agents, Claude Code config                          | `docs/claude/` subdirectories                                         |
+
+**Additional Resources:** [README.md](README.md), [EasyPlatform.README.md](EasyPlatform.README.md)
+
+## Workflow Keyword Lookup & Execution Protocol
+
+### Quick Keyword → Workflow Lookup
+
+Use this table for fast matching. If prompt contains keywords in left column, use the workflow ID on right:
+
+| If prompt contains...                                                  | → Use workflow ID        |
+| ---------------------------------------------------------------------- | ------------------------ |
+| fix, bug, error, crash, broken, failing, regression, debug             | `bugfix`                 |
+| implement, add, create, build, develop, new feature, new component     | `feature`                |
+| refactor, restructure, clean up, reorganize, technical debt, simplify  | `refactor`               |
+| how does, where is, explain, understand, trace, explore, find logic    | `investigation`          |
+| docs, documentation, readme, update docs                               | `documentation`          |
+| review code, code review, PR review, audit code                        | `review`                 |
+| review changes, uncommitted, staged, before commit                     | `review-changes`         |
+| verify, validate, confirm, ensure, check, sanity                       | `verification`           |
+| test, run tests, coverage, test suite                                  | `testing`                |
+| deploy, CI/CD, Docker, Kubernetes, infrastructure, pipeline            | `deployment`             |
+| migration, schema, EF migration, alter table, add column               | `migration`              |
+| security, vulnerability, OWASP, penetration, compliance                | `security-audit`         |
+| idea, feature request, backlog, PBI, story                             | `idea-to-pbi`            |
+| sprint, planning, grooming, backlog                                    | `sprint-planning`        |
+| release, ready to deploy, ship, pre-release                            | `release-prep`           |
+| bulk, batch, rename all, replace across, update all                    | `batch-operation`        |
+| quality, audit, best practices, flaws, enhance                         | `quality-audit`          |
+| pre-dev, ready to start, prerequisites, start dev                      | `pre-development`        |
+| test spec, test cases from PBI, acceptance criteria                    | `pbi-to-tests`           |
+| design spec, mockup, wireframe, UI spec                                | `design-workflow`        |
+| status report, sprint update, progress, weekly                         | `pm-reporting`           |
+| retro, retrospective, sprint end, lessons learned                      | `sprint-retro`           |
+| full lifecycle, idea to release, complete feature, end-to-end          | `full-feature-lifecycle` |
+| why review, design rationale, validate plan, check alternatives        | invoke `/why-review`     |
+| sre review, production readiness, operational readiness, observability | invoke `/sre-review`     |
+
+> **Note:** The full workflow catalog with sequences, keywords, and descriptions is defined in `.claude/workflows.json` and auto-injected by `workflow-router.cjs` on every prompt.
 
 ### Workflow Execution Protocol
 
 **CRITICAL: First action after workflow detection MUST be calling `/workflow-start <workflowId>` then TaskCreate. No exceptions.**
 
-1. **DETECT:** Read the workflow catalog above and match against user's prompt semantics. Use the Keywords column for guidance.
-2. **ACTIVATE:** Call `/workflow-start <workflowId>` using the ID from the first column
-3. **CREATE TODOS FIRST (HARD BLOCKING):** Use `TaskCreate` to create todo items for ALL workflow steps BEFORE doing anything else
-    - This is NOT optional - it is a hard requirement
-    - If you skip this step, you WILL lose track of the workflow
-4. **ANNOUNCE:** Tell user: `"Detected: [Intent]. Following workflow: [sequence]"`
-5. **CONFIRM (if marked Yes):** Ask: `"Proceed with this workflow? (yes/no/quick)"`
+1. **DETECT:** Match prompt against keyword table above and FIRST ACTION DECISION tree (see top of file)
+2. **JUDGE:** Is the task simple? If yes → AI MUST ask user whether to skip workflow
+3. **ACTIVATE (non-trivial):** Auto-activate via `/workflow-start <workflowId>` — no confirmation needed
+4. **CREATE TASKS (HARD BLOCKING):** Use `TaskCreate` for ALL workflow steps BEFORE doing anything else — this is NOT optional
+5. **ANNOUNCE:** Tell user: `"Detected: [Intent]. Following workflow: [sequence]"`
 6. **EXECUTE:** Follow each step in sequence, updating todo status as you progress
 
-> **Full workflow definitions:** See `.claude/workflows.json` | **Copilot equivalent:** [copilot-instructions.md](.github/copilot-instructions.md#workflow-decision-guide-comprehensive)
+### Task Breakdown Order (CRITICAL)
+
+- TODO items MUST be created at **workflow step level FIRST** (e.g., "[Workflow] /scout", "[Workflow] /investigate", "[Workflow] /plan", etc.)
+- Implementation-level subtasks should be created WITHIN each workflow step as it becomes active
+- NEVER skip workflow-level TODOs in favor of jumping directly to implementation tasks
+- When a prompt starts with an explicit command (e.g., `/plan`), still create workflow-level TODOs for the FULL detected workflow
+
+**Simple task exception:** If AI judges the task is simple/straightforward (single-file changes, clear small fixes), AI MUST ask the user: "This seems simple. Skip workflow? (yes/no)". If user says no, activate workflow as normal. If user says "just do it" or "no workflow", skip without asking.
+
+> Workflow catalog injection, continuity (TaskCreate tracking), recovery after context loss, and `quick:` override are handled automatically by `workflow-router.cjs` and `post-compact-recovery.cjs` hooks.

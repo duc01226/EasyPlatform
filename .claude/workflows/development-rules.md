@@ -10,11 +10,9 @@
   - Use composition over inheritance for complex widgets
   - Extract utility functions into separate modules
   - Create dedicated service classes for business logic
-- Use `docs-seeker` skill for exploring latest docs of plugins/packages if needed
+- Use `docs-seeker` skill for fetching latest documentation of libraries/packages via Context7 MCP
 - Use `gh` bash command to interact with Github features if needed
-- Use `psql` bash command to query Postgres database for debugging if needed
-- Use `ai-multimodal` skill for describing details of images, videos, documents, etc. if needed
-- Use `ai-multimodal` skill and `imagemagick` skill for generating and editing images, videos, documents, etc. if needed
+- Use `ai-multimodal` skill for describing, generating, or editing images, videos, documents, etc. if needed
 - Use `sequential-thinking` skill and `debug` skills for sequential thinking, analyzing code, debugging, etc. if needed
 - **[IMPORTANT]** Follow the codebase structure and code standards in `./docs` during implementation.
 - **[IMPORTANT]** Do not just simulate the implementation or mocking them, always implement the real code.
@@ -24,6 +22,12 @@
   - Frontend: Constants, column arrays, role lists → static properties in Model class, NOT in Component
   - Frontend: Display logic (CSS class, status text) → instance getter in Model, NOT switch in Component
 
+## Understand Code First (MANDATORY)
+- **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before any code modification
+- Read and understand existing code before making changes
+- Validate assumptions with grep/read evidence, never guess
+- Search for existing patterns before creating new ones
+
 ## Code Quality Guidelines
 - Read and follow codebase structure and code standards in `./docs`
 - Don't be too harsh on code linting, but **make sure there are no syntax errors and code are compilable**
@@ -31,24 +35,6 @@
 - Use reasonable code quality standards that enhance developer productivity
 - Use try catch error handling & cover security standards
 - Use `code-reviewer` agent to review code after every implementation
-
-## Documentation Workflow (MANDATORY)
-
-### Business Feature Documentation
-When creating/updating files in `docs/business-features/**`:
-1. **MUST** run `/business-feature-docs` skill first
-2. **MUST** read template: `docs/templates/detailed-feature-docs-template.md`
-3. **MUST** reference: `docs/features/README.ExampleFeature1.md`
-4. **MUST** include all 26 sections in correct order
-5. **MUST** include Quick Navigation table with Audience column
-6. **MUST** use TC-{MOD}-XXX format for test cases with GIVEN/WHEN/THEN
-
-### General Documentation
-When creating/updating files in `docs/**`:
-1. Check for existing templates in `docs/templates/`
-2. Check for sibling docs in same folder as reference
-3. Use `/feature-docs` skill for single-file feature docs
-4. Use `/documentation` skill for general docs
 
 ## Pre-commit/Push Rules
 - Run linting before commit
@@ -70,11 +56,9 @@ After completing any code changes, check for stale documentation before closing 
 
 1. Run `git diff --name-only` to list changed files.
 2. Map changed files to relevant docs:
-   - `.claude/hooks/**` → `docs/claude/claude-kit-setup.md`, `.claude/docs/hooks/README.md`, `.claude/docs/hooks/enforcement.md`
-   - `.claude/skills/**`, `.claude/workflows.json`, `.claude/settings.json` → `docs/claude/claude-kit-setup.md`
-   - `src/Backend/**/*.cs` → `docs/business-features/` (relevant module), `docs/claude/backend-patterns.md`, `CHANGELOG.md`
-   - `src/Frontend/**/*.ts` → `docs/business-features/` (relevant module), `docs/claude/frontend-patterns.md`, `CHANGELOG.md`
-   - `src/Platform/**` → `docs/architecture-overview.md`, `CHANGELOG.md`
+   - Hook/skill/workflow files → `docs/claude/` reference docs (check counts, tables, file lists)
+   - Service code (`src/Services/**`) → `docs/business-features/` for the affected module
+   - Frontend code (`src/WebV2/**`) → `docs/frontend-patterns-reference.md` + business-feature docs
    - `CLAUDE.md` structural changes → `docs/claude/README.md`
 3. For each potentially stale doc: flag it in the final review task or update it immediately.
 4. Output `No doc updates needed` if no mapping applies.

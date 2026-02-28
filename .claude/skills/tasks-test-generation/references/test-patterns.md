@@ -1,157 +1,373 @@
-# Test Patterns Reference
+# Test Generation Patterns & Examples
 
-Additional patterns extending the base 5 patterns in SKILL.md.
-
----
-
-## Pattern 6: Docker-compose Integration Test
-
-Use when testing against a running docker-compose stack. No teardown needed — UUID-based data isolation prevents conflicts.
-
-**Prerequisites:**
-- `docker-compose -f src/platform-example-app.docker-compose.yml -f src/platform-example-app.docker-compose.override.yml -p easyplatform-example up -d`
-- API reachable at `http://localhost:5001`
-- Extends `TextSnippetIntegrationTestBase` which handles health checking
-
-**Example test class:**
+## Pattern 1: Command Handler Unit Test
 
 ```csharp
-using Easy.Platform.IntegrationTest;
-using PlatformExampleApp.Tests.Integration.Infrastructure;
-
-namespace PlatformExampleApp.Tests.Integration.TextSnippet;
-
-/// <summary>
-/// Integration tests against the full docker-compose stack.
-/// No teardown — UUID-isolated data prevents conflicts between runs.
-/// Uses typed deserialization (PostAsync/GetAsync) — NOT raw JSON parsing.
-/// </summary>
-[Trait("Category", "Integration")]
-public class TextSnippetCrudTests : TextSnippetIntegrationTestBase
+public class SaveEmployeeCommandTests
 {
-    [Fact]
-    [Trait("TestCase", "TC-SNP-CRT-001")]
-    public async Task SaveSnippet_ValidData_ReturnsCreatedSnippet()
+    private readonly Mock<I{Service}RootRepository<Employee>> _employeeRepoMock;
+    private readonly Mock<IPlatformApplicationRequestContextAccessor> _contextMock;
+    private readonly SaveEmployeeCommandHandler _handler;
+
+    public SaveEmployeeCommandTests()
     {
-        // Arrange — UUID isolates this test's data
-        var uniqueText = TestDataHelper.GenerateTestText("CRUD Test");
-        var fullText = TestDataHelper.GenerateTestText("CRUD FullText");
+        _employeeRepoMock = new Mock<I{Service}RootRepository<Employee>>();
+        _contextMock = new Mock<IPlatformApplicationRequestContextAccessor>();
 
-        // Act — use typed PostAsync, NOT PostRawAsync
-        var result = await Api.PostAsync<object, SaveSnippetTextCommandResult>(
-            TextSnippetApiEndpoints.SnippetSave,
-            new { Data = new { SnippetText = uniqueText, FullText = fullText } });
+        // Setup default context
+        var requestContext = new Mock<IPlatformApplicationRequestContext>();
+        requestContext.Setup(x => x.UserId()).Returns("test-user-id");
+        requestContext.Setup(x => x.CurrentCompanyId()).Returns("test-company-id");
+        _contextMock.Setup(x => x.Current).Returns(requestContext.Object);
 
-        // Assert — verify domain fields, NOT just HTTP status
-        result.SavedData.Should().NotBeNull("response must contain savedData");
-
-        result.SavedData.Id.Should().NotBeNullOrEmpty(
-            "newly created snippet must have an assigned id");
-
-        result.SavedData.SnippetText.Should().Be(uniqueText,
-            "returned snippetText must match the submitted value");
+        _handler = new SaveEmployeeCommandHandler(
+            Mock.Of<ILoggerFactory>(),
+            Mock.Of<IPlatformUnitOfWorkManager>(),
+            Mock.Of<IServiceProvider>(),
+            Mock.Of<IPlatformRootServiceProvider>(),
+            _employeeRepoMock.Object
+        );
     }
 
     [Fact]
-    [Trait("TestCase", "TC-SNP-SRC-001")]
-    public async Task SearchSnippet_ByText_ReturnsMatchingResults()
-    {
-        // Arrange — create first, then search
-        var uniqueText = TestDataHelper.GenerateTestText("Search Test");
-
-        await Api.PostAsync<object, SaveSnippetTextCommandResult>(
-            TextSnippetApiEndpoints.SnippetSave,
-            new { Data = new { SnippetText = uniqueText, FullText = "Searchable content" } });
-
-        // Act — use typed GetAsync, NOT GetRawAsync
-        var searchResult = await Api.GetAsync<SearchSnippetTextQueryResult>(
-            $"{TextSnippetApiEndpoints.SnippetSearch}?searchText={Uri.EscapeDataString(uniqueText)}&skipCount=0&maxResultCount=10");
-
-        // Assert — verify domain data, NOT just HTTP status
-        searchResult.Items.Should().NotBeEmpty(
-            "search should find the snippet we just created");
-
-        searchResult.Items.Should().Contain(
-            item => item.SnippetText == uniqueText,
-            "search results must contain an item with our unique snippetText");
-    }
-}
-```
-
-**Key rules:**
-- Always use `TestDataHelper.GenerateTestId()` / `GenerateTestText()` / `GenerateTestName()` — never hardcode names
-- Extend `TextSnippetIntegrationTestBase` — it handles HttpClient and health check via `IAsyncLifetime`
-- No `[Cleanup]` or teardown — docker-compose environment accumulates test data harmlessly
-- Tests are fully independent — any ordering, any parallelism
-- Use `[Trait("TestCase", "TC-XXX")]` for TC-ID traceability
-
----
-
-## Pattern 7: WaitUntil Assertion
-
-Use when testing async operations that complete out-of-band (message bus consumers, background jobs). Poll the API until the expected state appears or timeout expires.
-
-**API:** `Util.TaskRunner.TryWaitUntilAsync` returns `Task<bool>` (false on timeout). `WaitUntilAsync` throws `TimeoutException` on timeout.
-
-**Parameters:**
-- `maxWaitSeconds` — total timeout (default: 30s)
-- `waitIntervalSeconds` — polling interval (default: 2s)
-- `waitForMsg` — descriptive message for timeout errors
-
-**Example — wait for message bus event processing:**
-
-```csharp
-using Easy.Platform.Common.Utils;
-using Easy.Platform.IntegrationTest;
-using FluentAssertions;
-using PlatformExampleApp.Tests.Integration.Infrastructure;
-
-namespace PlatformExampleApp.Tests.Integration.TextSnippet;
-
-[Trait("Category", "Integration")]
-public class MessageBusTests : TextSnippetIntegrationTestBase
-{
-    [Fact]
-    [Trait("TestCase", "INT-004")]
-    public async Task SaveSnippet_MessageBusConsumer_ProcessesEvent()
+    public async Task HandleAsync_CreateEmployee_ReturnsNewEmployee()
     {
         // Arrange
-        var uniqueText = TestDataHelper.GenerateTestText("MsgBus Test");
+        var command = new SaveEmployeeCommand
+        {
+            Name = "John Doe",
+            Email = "john@example.com"
+        };
 
-        // Act — save triggers entity event → producer → RabbitMQ → consumer
-        await Api.PostAsync<object, SaveSnippetTextCommandResult>(
-            TextSnippetApiEndpoints.SnippetSave,
-            new { Data = new { SnippetText = uniqueText, FullText = "Message bus test" } });
+        _employeeRepoMock
+            .Setup(x => x.CreateAsync(It.IsAny<Employee>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Employee e, CancellationToken _) => e);
 
-        // Assert — poll until consumer has processed (search returns the item with matching text)
-        var found = await Util.TaskRunner.TryWaitUntilAsync(
-            condition: async () =>
-            {
-                var searchResult = await Api.GetAsync<SearchSnippetTextQueryResult>(
-                    $"{TextSnippetApiEndpoints.SnippetSearch}?searchText={Uri.EscapeDataString(uniqueText)}&skipCount=0&maxResultCount=10");
-                return searchResult.Items.Any(item => item.SnippetText == uniqueText);
-            },
-            maxWaitSeconds: 30,
-            waitIntervalSeconds: 2,
-            waitForMsg: "Message bus consumer to process entity event");
+        // Act
+        var result = await _handler.HandleAsync(command, CancellationToken.None);
 
-        found.Should().BeTrue("message bus consumer should process entity event within 30s");
+        // Assert
+        Assert.NotNull(result.Employee);
+        Assert.Equal("John Doe", result.Employee.Name);
+        _employeeRepoMock.Verify(x => x.CreateAsync(
+            It.Is<Employee>(e => e.Name == "John Doe"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_UpdateEmployee_UpdatesExisting()
+    {
+        // Arrange
+        var existingEmployee = new Employee { Id = "emp-1", Name = "Old Name" };
+        var command = new SaveEmployeeCommand
+        {
+            Id = "emp-1",
+            Name = "New Name"
+        };
+
+        _employeeRepoMock
+            .Setup(x => x.GetByIdAsync("emp-1", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingEmployee);
+
+        _employeeRepoMock
+            .Setup(x => x.UpdateAsync(It.IsAny<Employee>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Employee e, CancellationToken _) => e);
+
+        // Act
+        var result = await _handler.HandleAsync(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal("New Name", result.Employee.Name);
+        _employeeRepoMock.Verify(x => x.UpdateAsync(
+            It.Is<Employee>(e => e.Name == "New Name"),
+            It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task HandleAsync_InvalidCommand_ReturnsValidationError()
+    {
+        // Arrange
+        var command = new SaveEmployeeCommand
+        {
+            Name = ""  // Invalid: empty name
+        };
+
+        // Act & Assert
+        var result = command.Validate();
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.Contains("Name"));
     }
 }
 ```
 
-**Configuration table:**
+---
 
-| Scenario | `maxWaitSeconds` | `waitIntervalSeconds` |
-|---|---|---|
-| Message bus consumer | 30 | 2 |
-| Background job (fast) | 60 | 3 |
-| Background job (slow/paged) | 120 | 5 |
-| Search index update | 15 | 1 |
+## Pattern 2: Query Handler Unit Test
 
-**Key rules:**
-- Use `TryWaitUntilAsync` when you want a boolean result (no exception on timeout)
-- Use `WaitUntilAsync` when timeout should fail the test with `TimeoutException`
-- Always set a meaningful timeout — never use very large values
-- Assert on the result with a descriptive failure message
-- Polling interval should be >= 1s to avoid hammering the API
+```csharp
+public class GetEmployeeListQueryTests
+{
+    private readonly Mock<I{Service}RootRepository<Employee>> _repoMock;
+    private readonly GetEmployeeListQueryHandler _handler;
+
+    [Fact]
+    public async Task HandleAsync_WithFilters_ReturnsFilteredResults()
+    {
+        // Arrange
+        var employees = new List<Employee>
+        {
+            new() { Id = "1", Name = "Active", Status = EmployeeStatus.Active },
+            new() { Id = "2", Name = "Inactive", Status = EmployeeStatus.Inactive }
+        };
+
+        _repoMock.Setup(x => x.CountAsync(It.IsAny<Expression<Func<Employee, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
+
+        _repoMock.Setup(x => x.GetAllAsync(It.IsAny<Func<IPlatformUnitOfWork, IQueryable<Employee>, IQueryable<Employee>>>(), It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<Employee, object>>[]>()))
+            .ReturnsAsync(employees.Where(e => e.Status == EmployeeStatus.Active).ToList());
+
+        var query = new GetEmployeeListQuery
+        {
+            Statuses = [EmployeeStatus.Active],
+            SkipCount = 0,
+            MaxResultCount = 10
+        };
+
+        // Act
+        var result = await _handler.HandleAsync(query, CancellationToken.None);
+
+        // Assert
+        Assert.Single(result.Items);
+        Assert.Equal("Active", result.Items[0].Name);
+    }
+}
+```
+
+---
+
+## Pattern 3: Entity Validation Test
+
+```csharp
+public class EmployeeEntityTests
+{
+    [Fact]
+    public void UniqueExpr_ReturnsCorrectExpression()
+    {
+        // Arrange
+        var employees = new List<Employee>
+        {
+            new() { CompanyId = "c1", UserId = "u1" },
+            new() { CompanyId = "c1", UserId = "u2" },
+            new() { CompanyId = "c2", UserId = "u1" }
+        }.AsQueryable();
+
+        // Act
+        var expr = Employee.UniqueExpr("c1", "u1");
+        var result = employees.Where(expr).ToList();
+
+        // Assert
+        Assert.Single(result);
+        Assert.Equal("u1", result[0].UserId);
+    }
+
+    [Fact]
+    public async Task ValidateAsync_DuplicateCode_ReturnsError()
+    {
+        // Arrange
+        var repoMock = new Mock<I{Service}RootRepository<Employee>>();
+        repoMock.Setup(x => x.AnyAsync(It.IsAny<Expression<Func<Employee, bool>>>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);  // Duplicate exists
+
+        var employee = new Employee { Id = "new", Code = "EMP001", CompanyId = "c1" };
+
+        // Act
+        var result = await employee.ValidateAsync(repoMock.Object, CancellationToken.None);
+
+        // Assert
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.Contains("already exists"));
+    }
+
+    [Fact]
+    public void ComputedProperty_IsActive_CalculatesCorrectly()
+    {
+        // Arrange
+        var activeEmployee = new Employee { Status = EmployeeStatus.Active, IsDeleted = false };
+        var inactiveEmployee = new Employee { Status = EmployeeStatus.Inactive, IsDeleted = false };
+        var deletedEmployee = new Employee { Status = EmployeeStatus.Active, IsDeleted = true };
+
+        // Assert
+        Assert.True(activeEmployee.IsActive);
+        Assert.False(inactiveEmployee.IsActive);
+        Assert.False(deletedEmployee.IsActive);
+    }
+}
+```
+
+---
+
+## Pattern 4: Angular Component Test
+
+```typescript
+describe('FeatureListComponent', () => {
+    let component: FeatureListComponent;
+    let fixture: ComponentFixture<FeatureListComponent>;
+    let store: FeatureListStore;
+    let apiMock: jasmine.SpyObj<FeatureApiService>;
+
+    beforeEach(async () => {
+        apiMock = jasmine.createSpyObj('FeatureApiService', ['getList', 'delete']);
+
+        await TestBed.configureTestingModule({
+            imports: [FeatureListComponent],
+            providers: [FeatureListStore, { provide: FeatureApiService, useValue: apiMock }]
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(FeatureListComponent);
+        component = fixture.componentInstance;
+        store = TestBed.inject(FeatureListStore);
+    });
+
+    it('should create', () => {
+        expect(component).toBeTruthy();
+    });
+
+    it('should load items on init', () => {
+        // Arrange
+        const items = [{ id: '1', name: 'Test' }];
+        apiMock.getList.and.returnValue(of({ items, totalCount: 1 }));
+
+        // Act
+        fixture.detectChanges();
+
+        // Assert
+        expect(apiMock.getList).toHaveBeenCalled();
+        expect(component.vm()?.items).toEqual(items);
+    });
+
+    it('should delete item', fakeAsync(() => {
+        // Arrange
+        store.updateState({ items: [{ id: '1', name: 'Test' }] });
+        apiMock.delete.and.returnValue(of(void 0));
+
+        // Act
+        component.onDelete({ id: '1', name: 'Test' });
+        tick();
+
+        // Assert
+        expect(apiMock.delete).toHaveBeenCalledWith('1');
+        expect(component.vm()?.items.length).toBe(0);
+    }));
+
+    it('should show loading state', () => {
+        // Arrange
+        apiMock.getList.and.returnValue(new Subject()); // Never completes
+
+        // Act
+        fixture.detectChanges();
+
+        // Assert
+        expect(store.isLoading$('loadItems')()).toBe(true);
+    });
+});
+```
+
+---
+
+## Pattern 5: Angular Store Test
+
+```typescript
+describe('FeatureListStore', () => {
+    let store: FeatureListStore;
+    let apiMock: jasmine.SpyObj<FeatureApiService>;
+
+    beforeEach(() => {
+        apiMock = jasmine.createSpyObj('FeatureApiService', ['getList', 'save', 'delete']);
+
+        TestBed.configureTestingModule({
+            providers: [FeatureListStore, { provide: FeatureApiService, useValue: apiMock }]
+        });
+
+        store = TestBed.inject(FeatureListStore);
+    });
+
+    it('should initialize with default state', () => {
+        expect(store.currentVm().items).toEqual([]);
+        expect(store.currentVm().pagination.pageIndex).toBe(0);
+    });
+
+    it('should load items', fakeAsync(() => {
+        // Arrange
+        const items = [{ id: '1', name: 'Test' }];
+        apiMock.getList.and.returnValue(of({ items, totalCount: 1 }));
+
+        // Act
+        store.loadItems();
+        tick();
+
+        // Assert
+        expect(store.currentVm().items).toEqual(items);
+        expect(store.currentVm().pagination.totalCount).toBe(1);
+    }));
+
+    it('should update state immutably', () => {
+        // Arrange
+        const initialItems = store.currentVm().items;
+
+        // Act
+        store.updateState({ items: [{ id: '1', name: 'New' }] });
+
+        // Assert
+        expect(store.currentVm().items).not.toBe(initialItems);
+    });
+
+    it('should handle API error', fakeAsync(() => {
+        // Arrange
+        apiMock.getList.and.returnValue(throwError(() => new Error('API Error')));
+
+        // Act
+        store.loadItems();
+        tick();
+
+        // Assert
+        expect(store.getErrorMsg$('loadItems')()).toContain('Error');
+    }));
+});
+```
+
+---
+
+## Anti-Patterns to AVOID
+
+### Testing implementation, not behavior
+
+```csharp
+// WRONG - testing internal method calls
+Assert.True(handler.WasValidateCalled);
+
+// CORRECT - testing observable behavior
+Assert.Equal("Expected", result.Value);
+```
+
+### Not mocking dependencies
+
+```csharp
+// WRONG - using real repository
+var handler = new Handler(new RealRepository());
+
+// CORRECT - using mock
+var repoMock = new Mock<IRepository>();
+var handler = new Handler(repoMock.Object);
+```
+
+### Missing edge cases
+
+```csharp
+// WRONG - only happy path
+[Fact] public void Save_ValidData_Succeeds() { }
+
+// CORRECT - include edge cases
+[Fact] public void Save_EmptyName_ReturnsError() { }
+[Fact] public void Save_DuplicateCode_ReturnsError() { }
+[Fact] public void Save_NullInput_ThrowsException() { }
+```

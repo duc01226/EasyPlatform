@@ -11,31 +11,63 @@
  *   0 - Success (non-blocking)
  */
 
-'use strict';
-
 const fs = require('fs');
 const path = require('path');
-const { extractFigmaUrls } = require('./lib/figma-utils.cjs');
 
-// Target paths where Figma URLs are expected
+// ═══════════════════════════════════════════════════════════════════════════
+// FIGMA URL PARSING (inlined from figma-utils.cjs — sole consumer)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const FIGMA_URL_REGEX = /https?:\/\/(?:www\.)?figma\.com\/(?:design|file)\/([a-zA-Z0-9]+)(?:\/[^?\s]*)?(?:\?[^&\s]*node-id=([0-9]+-[0-9]+))?/gi;
+
+/**
+ * Extract all Figma URLs from text
+ * @param {string} content - Text content to scan
+ * @returns {Array<{ url: string, fileKey: string, nodeId: string|null, apiNodeId: string|null }>}
+ */
+function extractFigmaUrls(content) {
+  const urls = [];
+  const seen = new Set();
+  let match;
+  const regex = new RegExp(FIGMA_URL_REGEX.source, 'gi');
+  while ((match = regex.exec(content)) !== null) {
+    const url = match[0];
+    const fileKey = match[1];
+    const nodeId = match[2] || null;
+    const key = `${fileKey}:${nodeId}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    urls.push({
+      url,
+      fileKey,
+      nodeId,
+      apiNodeId: nodeId ? nodeId.replace('-', ':') : null
+    });
+  }
+  return urls;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════
+
 const TARGET_PATHS = [
   /team-artifacts[\\/](pbis|design-specs)[\\/]/i,
   /plans[\\/][^\\/]+[\\/]/i
 ];
 
-// Skip template files
 const SKIP_PATHS = [
   /templates[\\/]/i,
   /\.template\.md$/i
 ];
 
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN LOGIC
+// ═══════════════════════════════════════════════════════════════════════════
+
 function main() {
   try {
-    // Read from stdin (standard hook input pattern)
-    const stdin = fs.readFileSync(0, 'utf-8').trim();
-    if (!stdin) process.exit(0);
-
-    const input = JSON.parse(stdin);
+    const input = JSON.parse(fs.readFileSync(process.stdin.fd, 'utf-8'));
     const { tool_name, tool_input } = input;
 
     // Only process Read tool
@@ -71,15 +103,17 @@ function main() {
       process.exit(0);
     }
 
-    // Generate and output extraction context
+    // Generate extraction context
     const output = generateExtractionContext(figmaUrls, filePath);
-    console.log(output);
+
+    // Output as user message
+    console.log(JSON.stringify({
+      user: output
+    }));
 
   } catch (error) {
     // Non-blocking - fail silently
-    if (process.env.CK_DEBUG) {
-      console.error(`[figma-context] Error: ${error.message}`);
-    }
+    console.error(`[figma-context] Error: ${error.message}`);
     process.exit(0);
   }
 }

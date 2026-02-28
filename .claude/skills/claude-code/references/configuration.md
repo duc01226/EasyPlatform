@@ -54,10 +54,11 @@ Settings are applied in order of precedence:
 ### Model Configuration
 
 **model**: Claude model to use
+- `sonnet` (default, balanced coding)
+- `opus` (complex reasoning and architecture)
 
-**Model aliases (recommended - version-independent):**
-
-- `sonnet`: Latest Claude Sonnet (default, most tasks)
+**Model aliases (use these instead of version IDs):**
+- `sonnet`: Latest Claude Sonnet (default for all tasks)
 - `opus`: Latest Claude Opus (complex tasks)
 - `opusplan`: Opus with extended thinking for planning
 
@@ -218,12 +219,12 @@ claude --model opusplan "plan authentication system"
 
 ### Model Selection Guide
 
-**Sonnet**:
+**Sonnet** (default):
 - Balanced performance and cost
-- Default choice for most tasks
-- Good for general development
+- Default choice for all tasks
+- Good for general development, coding, reviews
 
-**Opus**:
+**Opus** (complex tasks):
 - Highest capability
 - Complex reasoning and planning
 - Use for architecture, design, complex debugging

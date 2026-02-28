@@ -1,10 +1,10 @@
 ---
-applyTo: "**/*.test.ts,**/*.spec.ts,**/*Tests*.cs,**/*Test*.cs"
+applyTo: '**/*.test.ts,**/*.spec.ts,**/*Tests*.cs,**/*Test*.cs'
 ---
 
 # Testing Patterns
 
-> Auto-loads when editing test files. See `docs/claude/backend-patterns.md` and `docs/claude/frontend-patterns.md` for full reference.
+> Auto-loads when editing test files. See `docs/backend-patterns-reference.md` and `docs/frontend-patterns-reference.md` for full reference.
 
 ## Backend Testing (C#)
 
@@ -32,6 +32,7 @@ public async Task SaveEmployee_WithValidData_ReturnsCreatedEmployee()
 ```
 
 Examples:
+
 - `SaveEmployee_WithValidData_ReturnsCreatedEmployee`
 - `GetById_WhenNotFound_ThrowsNotFoundException`
 - `Validate_WithEmptyName_ReturnsValidationError`

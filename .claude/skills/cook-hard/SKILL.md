@@ -1,22 +1,35 @@
 ---
 name: cook-hard
-description: '[Implementation] ⚡⚡⚡⚡ Thorough implementation with maximum verification'
-argument-hint: [tasks]
+version: 1.0.0
+description: '[Implementation] Thorough implementation with maximum verification'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+> **Skill Variant:** Variant of `/cook` — thorough implementation with maximum verification.
+
+## Quick Summary
+
+**Goal:** Implement features with deep research, comprehensive planning, and maximum quality verification.
+
+**Workflow:**
+1. **Research** — Deep investigation with multiple researcher subagents
+2. **Plan** — Detailed plan with `/plan-hard`, user approval required
+3. **Implement** — Execute with full code review and SRE review
+4. **Verify** — Run all tests, review changes, update docs
+
+**Key Rules:**
+- Maximum thoroughness: research → plan → implement → review → test → docs
+- User approval required at plan stage
+- Break work into todo tasks; add final self-review task
 
 **Ultrathink** to plan and implement these tasks with maximum verification:
 <tasks>$ARGUMENTS</tasks>
 
 **Mode:** HARD - Extra research, detailed planning, mandatory reviews.
-
-## ⚠️ MUST READ Before Starting
-
-**IMPORTANT: You MUST read these shared protocols before any code changes. Do NOT skip.**
-
-- **⚠️ MUST READ** `.claude/skills/shared/anti-hallucination-protocol.md` — Assumption validation, evidence chains, context anchoring
-- **⚠️ MUST READ** `.claude/skills/shared/knowledge-graph-template.md` — Per-file analysis structure (for investigation phases)
-
-**Core Rule:** Verify every assumption with actual code evidence before making changes. Search for all usages, read implementations, trace dependencies. If confidence < 90%, investigate further or ask user.
 
 ## Workflow
 
@@ -29,6 +42,7 @@ argument-hint: [tasks]
     - Performance considerations
 - Use `/scout-ext` for comprehensive codebase analysis
 - Generate research reports (max 150 lines each)
+- **External Memory**: Write all research to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE file before planning.
 
 ### 2. Comprehensive Planning
 
@@ -96,7 +110,9 @@ argument-hint: [tasks]
 | Review   | 0 critical/major findings |
 | Docs     | Updated if needed         |
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

@@ -12,13 +12,12 @@ Test prompts to verify skills activate correctly. Each section contains prompts 
 
 ## Interactive Skills (infer: true)
 
-### debugging
+### debug
 
 Direct invocation:
 
 ```
-/debugging
-/debugging --autonomous   # For structured headless debugging
+/debug
 ```
 
 Inference test prompts:
@@ -37,7 +36,6 @@ Expected behavior:
 - Follows anti-hallucination protocols
 - Documents evidence before making claims
 - Presents fix proposal before implementing
-- (Autonomous mode: 5-phase workflow with approval gates)
 
 ---
 
@@ -68,12 +66,12 @@ Expected behavior:
 
 ---
 
-### feature
+### feature-implementation
 
 Direct invocation:
 
 ```
-/feature
+/feature-implementation
 ```
 
 Inference test prompts:
@@ -272,33 +270,49 @@ Test prompts:
 
 ```
 "Create an employee list component"
+"Add a dashboard widget component"
+"Build a profile card component"
 "Create a leave request form with validation"
-"Implement a CRUD store for employees"
-"Create an API service for employee data"
-```
-
-Expected: Correct base class, proper lifecycle management, BEM classes
-
-Test prompts:
-
-```
+"Add async email validation to employee form"
+"Implement FormArray for multiple phone numbers"
 "Create a store for employee list with filtering"
 "Add pagination state to the store"
 "Implement loading states for multiple requests"
+"Create an API service with caching"
 ```
 
-Expected: PlatformVmStore, observerLoadingErrorState, effectSimple
+Expected: Correct base class, proper lifecycle management, form base patterns, state management store, loading/error state tracking, side effects, API service patterns
 
 ---
 
 ## Architecture Skills
 
-### performance
+### arch-cross-service-integration
 
 Direct invocation:
 
 ```
-/performance
+/arch-cross-service-integration
+```
+
+Test prompts:
+
+```
+"How should Growth service communicate with Accounts?"
+"Design event bus messages for employee sync"
+"Plan cross-service data consistency"
+```
+
+Expected: Message bus patterns, event-driven architecture
+
+---
+
+### arch-performance-optimization
+
+Direct invocation:
+
+```
+/arch-performance-optimization
 ```
 
 Test prompts:
@@ -310,6 +324,26 @@ Test prompts:
 ```
 
 Expected: Profiling, caching strategies, query optimization
+
+---
+
+### arch-security-review
+
+Direct invocation:
+
+```
+/arch-security-review
+```
+
+Test prompts:
+
+```
+"Review authentication flow security"
+"Check for injection vulnerabilities"
+"Audit authorization patterns in controllers"
+```
+
+Expected: OWASP considerations, authorization checks
 
 ---
 

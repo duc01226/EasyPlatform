@@ -1,17 +1,35 @@
 ---
 name: cook-parallel
-description: '[Implementation] ⚡⚡⚡ Parallel implementation - multiple tasks simultaneously'
-argument-hint: [tasks]
+version: 1.0.0
+description: '[Implementation] Parallel implementation - multiple tasks simultaneously'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+> **Skill Variant:** Variant of `/cook` — parallel multi-task implementation with subagents.
+
+## Quick Summary
+
+**Goal:** Implement multiple independent tasks simultaneously using parallel fullstack-developer subagents.
+
+**Workflow:**
+1. **Plan** — Create plan with parallel phases and strict file ownership
+2. **Dispatch** — Launch fullstack-developer subagents per phase
+3. **Merge** — Integrate all changes and verify
+4. **Review** — Run code-simplifier and review-changes
+
+**Key Rules:**
+- Phases must have non-overlapping file ownership
+- User approval required before dispatching subagents
+- Break work into todo tasks; add final self-review task
 
 Execute these tasks in parallel for maximum efficiency:
 <tasks>$ARGUMENTS</tasks>
 
 **Mode:** PARALLEL - Multiple subagents working concurrently.
-
-## ⚠️ Anti-Hallucination Reminder
-
-**Before modifying ANY code:** Verify assumptions with actual code evidence. Search for usages, read implementations, trace dependencies. If confidence < 90% on any change, investigate first or ask user. See `.claude/skills/shared/anti-hallucination-protocol.md` for full protocol.
 
 ## Workflow
 
@@ -21,6 +39,7 @@ Execute these tasks in parallel for maximum efficiency:
 - Group into parallelizable work units
 - Identify dependencies between units
 - Create dependency graph
+- **External Memory**: Write task analysis to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read before parallel dispatch.
 
 ### 2. Parallel Research (if needed)
 
@@ -102,7 +121,9 @@ Phase 3 (Tests)       ──┘
 | Conflicts    | Risk of merge issues | None       |
 | Context      | Split across agents  | Unified    |
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

@@ -1,90 +1,105 @@
 ---
 name: why-review
-description: '[Review & Quality] Audit completed feature/refactor for reasoning quality with Understanding Score (0-5)'
-argument-hint: [optional-focus-area]
+version: 1.0.0
+description: '[Code Quality] Validate design rationale completeness in plan files before implementation'
+activation: user-invoked
 ---
 
-# /why-review -- Understanding Verification
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
-Audit a completed feature or refactor for reasoning quality. Produces an Understanding Score (0-5).
+**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
-## Summary
+> **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
-**Goal:** Verify that changes were made with understanding, not just pattern compliance.
+## Quick Summary
 
-| Step | Action          | Key Notes                                           |
-| ---- | --------------- | --------------------------------------------------- |
-| 1    | Gather changes  | List all files changed in current session/branch    |
-| 2    | Reasoning audit | For each significant change, check WHY articulation |
-| 3    | ADR alignment   | Cross-reference against docs/adr/ decisions         |
-| 4    | Score & report  | Understanding Score (0-5) with specific gaps        |
+**Goal:** Validate that a plan contains sufficient design rationale (WHY, not just WHAT) before implementation begins.
 
-**Scope:** Runs in all 9 code-producing workflows: feature, refactor, bugfix, migration, batch-operation, deployment, performance, quality-audit, verification.
+**Applies to:** Features and refactors only — bugfixes and trivial changes exempt.
 
-## Workflow
+**Why this exists:** AI code generation optimizes mechanics but misses conceptual quality. This skill ensures the human thinking happened before the mechanical coding starts.
 
-### Step 1: Gather Changes
+## Your Mission
 
-```bash
-git diff --stat main...HEAD
-```
+<task>
+$ARGUMENTS
+</task>
 
-List all changed files since branch diverged from main. Filter to significant changes (skip formatting, imports-only). If on main or no branch history, use `git diff --stat HEAD~5` as fallback.
+## Review Mindset (NON-NEGOTIABLE)
 
-### Step 2: Reasoning Audit
+**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
 
-For each significant change, evaluate:
+- Do NOT accept plan rationale at face value — verify alternatives were genuinely considered
+- Every pass/fail must include evidence (section reference, specific text quoted)
+- If rationale is vague or hand-wavy, flag it — "we chose X" without WHY is a fail
+- Question assumptions: "Is this really the best approach?" → check if alternatives have real trade-offs listed
+- Challenge completeness: "Are all risks identified?" → think about what could go wrong that isn't mentioned
+- No "looks fine" without proof — state what you verified and how
 
-- **WHY articulated?** Was there a Design Intent statement or commit message explaining reasoning?
-- **Alternatives considered?** Did the change mention rejected approaches?
-- **Principle identified?** Can the change be linked to a known pattern/ADR?
+## Plan Resolution
 
-### Step 3: ADR Alignment
+1. If arguments contain a path → use that plan directory
+2. Else check `## Plan Context` in injected context → use active plan path
+3. If no plan found → tell user: "No active plan found. Run `/plan` or `/plan-hard` first."
 
-Cross-reference against `docs/adr/`:
+## Validation Checklist
 
-- Does this change align with or deviate from existing ADRs?
-- If deviating, is the deviation documented and justified?
+Read the plan's `plan.md` and all `phase-*.md` files. Check each item below. Report pass/fail for each.
 
-### Step 4: Understanding Score
+### Required Sections (in plan.md or phase files)
 
-**Scoring Rubric:**
+| #   | Section                     | What to Check                                  | Pass Criteria                                     |
+| --- | --------------------------- | ---------------------------------------------- | ------------------------------------------------- |
+| 1   | **Problem Statement**       | Clearly states WHAT problem is being solved    | 2-3 sentences describing the problem              |
+| 2   | **Alternatives Considered** | 2+ approaches with pros/cons                   | Minimum 2 alternatives with trade-offs            |
+| 3   | **Design Rationale**        | Explains WHY chosen approach over alternatives | Explicit reasoning linking decision to trade-offs |
+| 4   | **Risk Assessment**         | Risks identified with likelihood and impact    | At least 1 risk per phase                         |
+| 5   | **Ownership**               | Clear who maintains code post-merge            | Implicit OK (author owns), explicit better        |
 
-| Score | Criteria                                                                          |
-| ----- | --------------------------------------------------------------------------------- |
-| 5     | All changes have articulated WHY, alternatives considered, ADR alignment verified |
-| 4     | Most changes explained, minor gaps in reasoning                                   |
-| 3     | Some reasoning, some "followed the pattern" without explanation                   |
-| 2     | Mostly compliance-based, little reasoning articulated                             |
-| 1     | No reasoning articulated -- pure pattern following                                |
-| 0     | Changes contradict existing ADRs without justification                            |
+### Optional (Flag if Missing, Don't Fail)
 
-**Output format:**
+| #   | Section                  | When Required                           |
+| --- | ------------------------ | --------------------------------------- |
+| 6   | **Operational Impact**   | Service-layer or API changes            |
+| 7   | **Cross-Service Impact** | Changes touching multiple microservices |
+| 8   | **Migration Strategy**   | Database schema or data changes         |
 
-```
-## Understanding Score: [X]/5
+## Output Format
 
-### Reasoning Found
-- [file]: [reasoning articulated]
+```markdown
+## Why-Review Results
 
-### Reasoning Gaps
-- [file]: [what's missing -- e.g., "no justification for choosing CQRS over simple CRUD"]
+**Plan:** {plan path}
+**Date:** {date}
+**Verdict:** PASS / NEEDS WORK
 
-### ADR Alignment
-- [ADR-001]: Aligned / Deviated (justified) / Deviated (unjustified)
+### Checklist
+
+| #   | Check                   | Status | Notes     |
+| --- | ----------------------- | ------ | --------- |
+| 1   | Problem Statement       | ✅/❌  | {details} |
+| 2   | Alternatives Considered | ✅/❌  | {details} |
+| 3   | Design Rationale        | ✅/❌  | {details} |
+| 4   | Risk Assessment         | ✅/❌  | {details} |
+| 5   | Ownership               | ✅/❌  | {details} |
+
+### Missing Items (if any)
+
+- {specific item to add before implementation}
 
 ### Recommendation
-[If score < 3: "Investigate whether changes were mechanical. Consider documenting the WHY before committing."]
+
+{Proceed to /cook | Add missing sections first}
 ```
+
+## Scope
+
+- **Applies to:** Features, refactors, architectural changes
+- **Exempt:** Bugfixes, config changes, single-file tweaks, documentation-only
+- **Enforcement:** Advisory (soft warning) — does not block implementation
 
 ## Important Notes
 
-- This is a soft review -- never blocks commits
-- Treat score < 3 as a flag to investigate, not a failure
-- Focus on architectural decisions, not formatting choices
-- When in doubt, ask: "Could someone explain why this change was made without reading the diff?"
-
-## IMPORTANT Task Planning Notes
-
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Review only — do NOT modify plan files or implement changes
+- Keep output concise — actionable in <2 minutes
+- If plan is simple and clear, a short "PASS" is sufficient

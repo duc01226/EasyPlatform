@@ -97,10 +97,10 @@ Extract design systems systematically from high-quality references:
 ### With `aesthetic` Skill
 Use `aesthetic` for overall design system guidance and quality evaluation framework. Then use `frontend-design` with `ai-multimodal` for asset generation and analysis that follows those guidelines.
 
-### With `test-ui` Skill
-Use `test-ui` to capture full-screen screenshots from inspiration websites for design extraction. Capture at actual viewport size, not full-page scrolls.
+### With `chrome-devtools` Skill
+Use `chrome-devtools` to capture full-screen screenshots from inspiration websites for design extraction. Capture at actual viewport size, not full-page scrolls.
 
-### With `ui-styling` Skill
+### With `shadcn-tailwind` Skill
 Generate and analyze assets first, then implement using shadcn/ui + Tailwind with colors/styles that complement the generated imagery.
 
 ### With `web-frameworks` Skill

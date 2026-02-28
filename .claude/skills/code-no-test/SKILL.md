@@ -1,39 +1,35 @@
 ---
 name: code-no-test
-description: '[Implementation] ⚡⚡ Start coding an existing plan (no testing)'
-argument-hint: [plan]
+version: 1.0.0
+description: '[Implementation] Start coding an existing plan (no testing)'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+## Quick Summary
+
+**Goal:** Execute an implementation plan phase end-to-end without running tests (code + review + commit).
+
+**Workflow:**
+
+1. **Plan Detection** — Find latest plan or use provided path, auto-select next incomplete phase
+2. **Analysis** — Extract tasks from phase file, initialize todo tracking
+3. **Implementation** — Code changes step-by-step, run type checks
+4. **Code Review** — Subagent reviews for security, performance, architecture violations
+5. **User Approval** — Blocking gate requiring explicit approval
+6. **Finalize** — Update plan status, docs, auto-commit
+
+**Key Rules:**
+
+- One phase per command run, steps must complete in order
+- Critical code review issues block progression (must be 0)
+- User must explicitly approve before finalize step
 
 **MUST READ** `CLAUDE.md` then **THINK HARDER** to start working on the following plan follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <plan>$ARGUMENTS</plan>
-
-## ⚠️ Anti-Hallucination Reminder
-
-**Before modifying ANY code:** Verify assumptions with actual code evidence. Search for usages, read implementations, trace dependencies. If confidence < 90% on any change, investigate first or ask user. See `.claude/skills/shared/anti-hallucination-protocol.md` for full protocol.
-
-## Summary
-
-**Goal:** Execute an implementation plan without testing phase -- code review and user approval still required.
-
-| Step | Action                     | Key Notes                                        |
-| ---- | -------------------------- | ------------------------------------------------ |
-| 0    | Plan detection             | Auto-select latest plan or use argument          |
-| 1    | Analysis & task extraction | Parse phase file, create TodoWrite tasks         |
-| 2    | Implementation             | Code step-by-step, compile to verify             |
-| 3    | Code review                | 0 critical issues required -- blocking gate      |
-| 4    | User approval              | Blocking gate -- must wait for explicit approval |
-| 5    | Finalize                   | Status update, docs, auto-commit                 |
-
-**Key Principles:**
-
-- No testing step -- use when tests are impractical or will be added separately
-- Code review still mandatory with code-reviewer subagent
-- Must read backend and frontend code patterns before implementation
-
-**⚠️ MUST READ before implementation:**
-
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
 
 ---
 
@@ -55,7 +51,7 @@ argument-hint: [plan]
 
 **If `$ARGUMENTS` is empty:**
 
-1. Find latest `plan.md` in `./plans` | `ls -t ./plans/**/plan.md 2>/dev/null | head -1`
+1. Find latest `plan.md` in `./plans` | `find ./plans -name "plan.md" -type f -exec stat -f "%m %N" {} \; 2>/dev/null | sort -rn | head -1 | cut -d' ' -f2-`
 2. Parse plan for phases and status, auto-select next incomplete (prefer IN_PROGRESS or earliest Planned)
 
 **If `$ARGUMENTS` provided:** Use that plan and detect which phase to work on (auto-detect or use argument like "phase-2").
@@ -72,38 +68,38 @@ Task(subagent_type="[type]", prompt="[task description]", description="[brief]")
 
 ## Workflow Sequence
 
-**Rules:** Follow steps 1-6 in order. Each step requires output marker starting with "✓ Step N:". Mark each complete in TodoWrite before proceeding. Do not skip steps.
+**Rules:** Follow steps 1-6 in order. Each step requires output marker starting with "✓ Step N:". Mark each complete in TaskCreate before proceeding. Do not skip steps.
 
 ---
 
 ## Step 1: Analysis & Task Extraction
 
-Read plan file completely. Map dependencies between tasks. List ambiguities or blockers. Identify required skills/tools and activate from catalog. Parse phase file and extract actionable tasks.
+Read plan file completely. Map dependencies between tasks. List ambiguities or blockers. Identify required skills/tools and activate from catalog. Parse phase file and extract actionable tasks. If the plan references analysis files in `.ai/workspace/analysis/`, re-read them before implementation.
 
-**TodoWrite Initialization & Task Extraction:**
+**TaskCreate Initialization & Task Extraction:**
 
-- Initialize TodoWrite with `Step 0: [Plan Name] - [Phase Name]` and all command steps (Step 1 through Step 6)
+- Initialize TaskCreate with `Step 0: [Plan Name] - [Phase Name]` and all command steps (Step 1 through Step 6)
 - Read phase file (e.g., phase-01-preparation.md)
 - Look for tasks/steps/phases/sections/numbered/bulleted lists
-- MUST convert to TodoWrite tasks:
+- MUST convert to TaskCreate tasks:
     - Phase Implementation tasks → Step 2.X (Step 2.1, Step 2.2, etc.)
     - Phase Code Review tasks → Step 3.X (Step 3.1, Step 3.2, etc.)
 - Ensure each task has UNIQUE name (increment X for each task)
-- Add tasks to TodoWrite after their corresponding command step
+- Add tasks to TaskCreate after their corresponding command step
 
 **Output:** `✓ Step 1: Found [N] tasks across [M] phases - Ambiguities: [list or "none"]`
 
-Mark Step 1 complete in TodoWrite, mark Step 2 in_progress.
+Mark Step 1 complete in TaskCreate, mark Step 2 in_progress.
 
 ---
 
 ## Step 2: Implementation
 
-Implement selected plan phase step-by-step following extracted tasks (Step 2.1, Step 2.2, etc.). Mark tasks complete as done. For UI work, call `ui-ux-designer` subagent: "Implement [feature] UI per ./docs/design-guidelines.md". Use `ai-multimodal` skill for image assets, `imagemagick` for editing. Run type checking and compile to verify no syntax errors.
+Implement selected plan phase step-by-step following extracted tasks (Step 2.1, Step 2.2, etc.). Mark tasks complete as done. For UI work, call `ui-ux-designer` subagent: "Implement [feature] UI per ./docs/design-guidelines.md". Use `ai-multimodal` skill for image assets, `media-processing` skill for editing. Run type checking and compile to verify no syntax errors.
 
 **Output:** `✓ Step 2: Implemented [N] files - [X/Y] tasks complete, compilation passed`
 
-Mark Step 2 complete in TodoWrite, mark Step 3 in_progress.
+Mark Step 2 complete in TaskCreate, mark Step 3 in_progress.
 
 ---
 
@@ -117,7 +113,7 @@ Call `code-reviewer` subagent: "Review changes for plan phase [phase-name]. Chec
 
 **Validation:** If critical issues > 0, Step 3 INCOMPLETE - do not proceed.
 
-Mark Step 3 complete in TodoWrite, mark Step 4 in_progress.
+Mark Step 3 complete in TaskCreate, mark Step 4 in_progress.
 
 ---
 
@@ -133,7 +129,7 @@ Present summary (3-5 bullets): what implemented, code review outcome.
 
 **Output (after approval):** `✓ Step 4: User approved - Ready to complete`
 
-Mark Step 4 complete in TodoWrite, mark Step 5 in_progress.
+Mark Step 4 complete in TaskCreate, mark Step 5 in_progress.
 
 ---
 
@@ -151,11 +147,11 @@ Mark Step 4 complete in TodoWrite, mark Step 5 in_progress.
 3. **AUTO-COMMIT (after steps 1 and 2 completes):**
 
 - Run only if: Steps 1 and 2 successful + User approved + Tests passed
-- Auto-stage and commit with message [phase - plan]. Do NOT push unless user explicitly requests
+- Auto-stage, commit with message [phase - plan] and push
 
 **Validation:** Steps 1 and 2 must complete successfully. Step 3 (auto-commit) runs only if conditions met.
 
-Mark Step 5 complete in TodoWrite.
+Mark Step 5 complete in TaskCreate.
 
 **Phase workflow finished. Ready for next plan phase.**
 
@@ -176,7 +172,7 @@ Mark Step 5 complete in TodoWrite.
 
 **If any "✓ Step N:" output missing, that step is INCOMPLETE.**
 
-**TodoWrite tracking required:** Initialize at Step 0, mark each step complete before next.
+**TaskCreate tracking required:** Initialize at Step 0, mark each step complete before next.
 
 **Mandatory subagent calls:**
 
@@ -197,7 +193,9 @@ Mark Step 5 complete in TodoWrite.
 - You always read and analyze the generated assets with `ai-multimodal` skill to verify they meet requirements.
 - For image editing (removing background, adjusting, cropping), use `media-processing` skill or similar tools as needed.
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

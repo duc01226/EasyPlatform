@@ -1,18 +1,17 @@
-# Skills Reference (formerly Commands)
+# Commands Reference (DEPRECATED)
 
-> 150+ slash commands via skills for Claude Code.
+> **All commands have been migrated to skills.** All `/command-name` triggers still work via the skills system.
+> See `.claude/skills/` for the full list.
 
-## What are Skills?
+## What are Commands?
 
-Skills are invoked with `/skill-name`. Each skill is a directory under `.claude/skills/` containing a `SKILL.md` with frontmatter and instructions.
+Commands were direct actions invoked with `/command-name`. They have been consolidated into skills for a unified architecture. All existing triggers continue to work.
 
-> **Migration Note (2026-01-31):** All commands have been merged into the skills system. Commands that were standalone have been converted to skills. Commands that delegated to skills have been deleted. All `/xxx` triggers continue to work.
-
-## Skills by Category
+## Commands by Category
 
 ### Planning & Investigation
 
-| Skill            | Usage                   | Description                      |
+| Command          | Usage                   | Description                      |
 | ---------------- | ----------------------- | -------------------------------- |
 | `/plan`          | `/plan <task>`          | Create implementation plan       |
 | `/plan-fast`     | `/plan-fast <task>`     | Quick plan (less thorough)       |
@@ -20,11 +19,11 @@ Skills are invoked with `/skill-name`. Each skill is a directory under `.claude/
 | `/plan-validate` | `/plan-validate [path]` | Validate plan with interview     |
 | `/scout`         | `/scout <query>`        | Find relevant files              |
 | `/scout-ext`     | `/scout-ext <query>`    | External tools (Gemini, etc.)    |
-| `/investigate`   | `/investigate <topic>`  | Deep investigation               |
+| `/feature-investigation` | `/feature-investigation <topic>` | Deep investigation |
 
 ### Implementation
 
-| Skill             | Usage                    | Description                |
+| Command           | Usage                    | Description                |
 | ----------------- | ------------------------ | -------------------------- |
 | `/cook`           | `/cook`                  | Implement current task     |
 | `/code`           | `/code <task>`           | Write code for task        |
@@ -35,35 +34,36 @@ Skills are invoked with `/skill-name`. Each skill is a directory under `.claude/
 
 ### Testing & Review
 
-| Skill              | Usage              | Description           |
+| Command            | Usage              | Description           |
 | ------------------ | ------------------ | --------------------- |
 | `/test`            | `/test [path]`     | Run or generate tests |
 | `/debug`           | `/debug <issue>`   | Debug problem         |
 | `/review`          | `/review [target]` | Code review           |
-| `/review-codebase` | `/review-codebase` | Full codebase review  |
+| `/code-review`     | `/code-review`     | Full codebase review  |
 | `/review-changes`  | `/review-changes`  | Review recent changes |
 | `/lint`            | `/lint`            | Run linting           |
 | `/build`           | `/build`           | Build project         |
 
 ### Git & Version Control
 
-| Skill       | Usage                | Description              |
+| Command     | Usage                | Description              |
 | ----------- | -------------------- | ------------------------ |
 | `/commit`   | `/commit`            | Stage and commit changes |
+| `/git/cm`   | `/git/cm`            | Alias for commit         |
 | `/pr`       | `/pr`                | Create pull request      |
 | `/worktree` | `/worktree <action>` | Git worktree management  |
 
 ### Documentation
 
-| Skill            | Usage            | Description               |
+| Command          | Usage            | Description               |
 | ---------------- | ---------------- | ------------------------- |
-| `/docs-update`   | `/docs-update`   | Update documentation      |
+| `/docs/update`   | `/docs/update`   | Update documentation      |
 | `/release-notes` | `/release-notes` | Generate release notes    |
 | `/journal`       | `/journal`       | Write development journal |
 
 ### Context & Memory
 
-| Skill         | Usage         | Description                |
+| Command       | Usage         | Description                |
 | ------------- | ------------- | -------------------------- |
 | `/checkpoint` | `/checkpoint` | Save context checkpoint    |
 | `/compact`    | `/compact`    | Trigger context compaction |
@@ -73,84 +73,79 @@ Skills are invoked with `/skill-name`. Each skill is a directory under `.claude/
 
 ### Utility
 
-| Skill           | Usage                 | Description             |
+| Command         | Usage                 | Description             |
 | --------------- | --------------------- | ----------------------- |
 | `/ask`          | `/ask <question>`     | Ask clarifying question |
 | `/brainstorm`   | `/brainstorm <topic>` | Brainstorm solutions    |
-| `/design-fast`  | `/design-fast <ui>`   | Design UI component     |
+| `/design`       | `/design <ui>`        | Design UI component     |
 | `/preview`      | `/preview`            | Preview changes         |
 | `/security`     | `/security`           | Security audit          |
 | `/performance`  | `/performance`        | Performance analysis    |
-| `/migration`    | `/migration`          | Create or run DB migrations |
+| `/migration`    | `/migration`          | Database migration      |
+| `/db-migrate`   | `/db-migrate`         | Run DB migrations       |
 | `/generate-dto` | `/generate-dto`       | Generate DTOs           |
 
 ### Skill Management
 
-| Skill           | Usage                   | Description           |
+| Command         | Usage                   | Description           |
 | --------------- | ----------------------- | --------------------- |
-| `/skill-plan`   | `/skill-plan`           | Create/optimize skill |
+| `/skill`        | `/skill <name>`         | Invoke specific skill |
 | `/ck-help`      | `/ck-help`              | Claude Kit help       |
 | `/coding-level` | `/coding-level <level>` | Set coding complexity |
 | `/use-mcp`      | `/use-mcp <server>`     | Use MCP server        |
 
 ### Bootstrap & Setup
 
-| Skill              | Usage                        | Description               |
-| ------------------ | ---------------------------- | ------------------------- |
-| `/bootstrap`       | `/bootstrap`                 | Project setup             |
-| `/integrate-polar` | `/integrate-polar <system>`  | Integrate Polar.sh        |
-| `/integrate-sepay` | `/integrate-sepay <system>`  | Integrate SePay.vn        |
+| Command      | Usage                 | Description               |
+| ------------ | --------------------- | ------------------------- |
+| `/bootstrap` | `/bootstrap`          | Project setup             |
+| `/integrate` | `/integrate <system>` | Integrate external system |
 
 ### Team Collaboration
 
-| Skill            | Usage                    | Description                          |
+| Command          | Usage                    | Description                          |
 | ---------------- | ------------------------ | ------------------------------------ |
-| `/team-idea`          | `/team-idea <description>`    | Capture product idea                 |
-| `/team-refine`        | `/team-refine <idea-id>`      | Refine idea into PBI                 |
-| `/team-story`         | `/team-story <pbi-id>`        | Create user stories from PBI         |
-| `/team-prioritize`    | `/team-prioritize [ideas]`    | Prioritize ideas using RICE/MoSCoW   |
-| `/team-test-spec`     | `/team-test-spec <pbi-id>`    | Create test specification            |
-| `/team-test-cases`    | `/team-test-cases <spec-id>`  | Generate detailed test cases         |
-| `/team-design-spec`   | `/team-design-spec <source>`  | Create design spec from PBI or Figma |
-| `/team-quality-gate`  | `/team-quality-gate <target>` | QC quality assessment                |
-| `/team-status`        | `/team-status [scope]`        | Project status report                |
-| `/team-dependency`    | `/team-dependency <target>`   | Dependency analysis                  |
-| `/team-team-sync`     | `/team-team-sync`             | Cross-team synchronization           |
-| `/team-figma-extract` | `/team-figma-extract <url>`   | Extract design specs from Figma      |
+| `/idea`          | `/idea <description>`    | Capture product idea                 |
+| `/refine`        | `/refine <idea-id>`      | Refine idea into PBI                 |
+| `/story`         | `/story <pbi-id>`        | Create user stories from PBI         |
+| `/prioritize`    | `/prioritize [ideas]`    | Prioritize ideas using RICE/MoSCoW   |
+| `/test-spec`     | `/test-spec <pbi-id>`    | Create test specification and detailed test cases |
+| `/design-spec`   | `/design-spec <source>`  | Create design spec from PBI or Figma |
+| `/quality-gate`  | `/quality-gate <target>` | QC quality assessment                |
+| `/status`        | `/status [scope]`        | Project status report                |
+| `/dependency`    | `/dependency <target>`   | Dependency analysis                  |
+| `/team-sync`     | `/team-sync`             | Cross-team synchronization           |
+| `/figma-extract` | `/figma-extract <url>`   | Extract design specs from Figma      |
 
-## Skill Structure
+## Skill Structure (Current)
 
-Skills in `.claude/skills/`:
+All commands have been migrated to skills in `.claude/skills/`:
 
 ```
 skills/
-├── skill-name/
-│   ├── SKILL.md        # Required - frontmatter + instructions
-│   ├── references/     # On-demand docs (<100 lines each)
-│   └── scripts/        # Executable code
+├── my-skill/
+│   └── SKILL.md       # Skill definition with YAML frontmatter
 ```
 
-### SKILL.md Format
+### Skill Format
 
 ```markdown
 ---
-name: skill-name
+name: my-skill
+version: 1.0.0
 description: Brief description
+activation: user-invoked
+infer: false
 ---
 
-# Skill Name
-
-[Instructions for Claude]
+# Skill content and instructions
 ```
 
-## Skill Variants
+### Naming Convention
 
-Related skills use dash-separated names:
-
-- `/plan` - Default planning
-- `/plan-fast` - Quick planning
-- `/plan-hard` - Thorough planning
-- `/plan-validate` - Plan validation
+- Skill folder names use hyphens: `cook-auto-fast/SKILL.md`
+- Triggers: `/cook-auto-fast` (hyphens, NOT colons)
+- Old colon-based triggers (e.g., `/cook:auto:fast`) no longer work
 
 ## Built-in vs Custom
 
@@ -163,7 +158,7 @@ Related skills use dash-separated names:
 ## Creating Custom Skills
 
 1. Create `.claude/skills/my-skill/SKILL.md`
-2. Add frontmatter with name/description
+2. Add YAML frontmatter with name/version/description
 3. Write skill instructions
 4. Test with `/my-skill`
 
@@ -181,4 +176,4 @@ See: [Workflow System](hooks/workflows.md)
 
 ---
 
-*Total skills: 150+ | Last updated: 2026-01-31*
+*Total skills: 180+ | Last updated: 2026-01-31*

@@ -48,8 +48,9 @@ function buildTrustVerification(config) {
  */
 const PATTERN_AWARE_AGENT_TYPES = new Set([
   'fullstack-developer', 'debugger', 'tester',
-  'code-reviewer', 'code-simplifier', 'qa-engineer',
-  'planner', 'architect'
+  'code-reviewer', 'code-simplifier',
+  'planner', 'architect',
+  'integration-tester', 'backend-developer'
 ]);
 
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
@@ -65,11 +66,67 @@ function buildCodingPatternContext(agentType) {
   } catch { /* non-blocking */ }
   lines.push(
     '',
-    '**⚠️ MUST READ for full code examples:**',
-    '- `.ai/docs/backend-code-patterns.md` — Backend code patterns (CQRS, Repository, Entity, etc.)',
-    '- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns (Components, Store, Forms, etc.)'
+    '**MUST READ for full code examples:**',
+    '- `.ai/docs/backend-code-patterns.md` - Backend (CQRS, Repository, Entity, etc.)',
+    '- `.ai/docs/frontend-code-patterns.md` - Frontend (Components, Store, Forms, etc.)'
   );
   return lines;
+}
+
+/**
+ * Build plan context lines
+ */
+function buildPlanContext(resolved, reportsPath, plansPath, docsPath) {
+  const activePlan = resolved.resolvedBy === 'session' ? resolved.path : '';
+  const suggestedPlan = resolved.resolvedBy === 'branch' ? resolved.path : '';
+
+  let planLine = '- Plan: none';
+  if (activePlan) planLine = `- Plan: ${activePlan}`;
+  else if (suggestedPlan) planLine = `- Plan: none | Suggested: ${suggestedPlan}`;
+
+  return [
+    `## Context`,
+    planLine,
+    `- Reports: ${reportsPath}`,
+    `- Paths: ${plansPath}/ | ${docsPath}/`,
+    ``
+  ];
+}
+
+/**
+ * Build language section if configured
+ */
+function buildLanguageSection(config) {
+  const thinkingLanguage = config.locale?.thinkingLanguage || '';
+  const responseLanguage = config.locale?.responseLanguage || '';
+  const effectiveThinking = thinkingLanguage || (responseLanguage ? 'en' : '');
+  const hasThinking = effectiveThinking && effectiveThinking !== responseLanguage;
+
+  if (!hasThinking && !responseLanguage) return [];
+
+  return [
+    `## Language`,
+    ...(hasThinking ? [`- Thinking: Use ${effectiveThinking} for reasoning (logic, precision).`] : []),
+    ...(responseLanguage ? [`- Response: Respond in ${responseLanguage} (natural, fluent).`] : []),
+    ``
+  ];
+}
+
+/**
+ * Build parent task state section for subagent awareness
+ */
+function buildParentTodoSection() {
+  const todoState = getTodoStateForSubagent();
+  if (!todoState?.hasTodos) return [];
+
+  return [
+    ``,
+    `## Parent Task Context`,
+    `Tasks: ${todoState.taskCount} total, ${todoState.pendingCount} pending`,
+    ...(todoState.summaryTodos?.length > 0
+      ? [`Active:`, ...todoState.summaryTodos.map(t => `  ${t}`)]
+      : [])
+  ];
 }
 
 /**
@@ -84,100 +141,40 @@ async function main() {
     const agentType = payload.agent_type || 'unknown';
     const agentId = payload.agent_id || 'unknown';
 
-    // Load config for trust verification, naming, and agent-specific context
     const config = loadConfig({ includeProject: false, includeAssertions: false });
-
-    // Compute naming pattern directly (don't rely on env vars which may not propagate)
     const gitBranch = getGitBranch();
     const namePattern = resolveNamingPattern(config.plan, gitBranch);
-
-    // Resolve plan and reports path
     const resolved = resolvePlanPath(null, config);
     const reportsPath = getReportsPath(resolved.path, resolved.resolvedBy, config.plan, config.paths);
-    const activePlan = resolved.resolvedBy === 'session' ? resolved.path : '';
-    const suggestedPlan = resolved.resolvedBy === 'branch' ? resolved.path : '';
     const plansPath = normalizePath(config.paths?.plans) || 'plans';
     const docsPath = normalizePath(config.paths?.docs) || 'docs';
-    const thinkingLanguage = config.locale?.thinkingLanguage || '';
-    const responseLanguage = config.locale?.responseLanguage || '';
-    // Auto-default thinkingLanguage to 'en' when only responseLanguage is set
-    const effectiveThinking = thinkingLanguage || (responseLanguage ? 'en' : '');
 
-    // Build compact context (~200 tokens)
-    const lines = [];
-
-    // Subagent identification
-    lines.push(`## Subagent: ${agentType}`);
-    lines.push(`ID: ${agentId} | CWD: ${payload.cwd || process.cwd()}`);
-    lines.push(``);
-
-    // Plan context (from env vars)
-    lines.push(`## Context`);
-    if (activePlan) {
-      lines.push(`- Plan: ${activePlan}`);
-    } else if (suggestedPlan) {
-      lines.push(`- Plan: none | Suggested: ${suggestedPlan}`);
-    } else {
-      lines.push(`- Plan: none`);
-    }
-    lines.push(`- Reports: ${reportsPath}`);
-    lines.push(`- Paths: ${plansPath}/ | ${docsPath}/`);
-    lines.push(``);
-
-    // Language (thinking + response, if configured)
-    const hasThinking = effectiveThinking && effectiveThinking !== responseLanguage;
-    if (hasThinking || responseLanguage) {
-      lines.push(`## Language`);
-      if (hasThinking) {
-        lines.push(`- Thinking: Use ${effectiveThinking} for reasoning (logic, precision).`);
-      }
-      if (responseLanguage) {
-        lines.push(`- Response: Respond in ${responseLanguage} (natural, fluent).`);
-      }
-      lines.push(``);
-    }
-
-    // Core rules (minimal)
-    lines.push(`## Rules`);
-    lines.push(`- **MUST READ:** .claude/workflows/development-rules.md before implementation`);
-    lines.push(`- Reports → ${reportsPath}`);
-    lines.push(`- YAGNI / KISS / DRY`);
-    lines.push(`- **Class Responsibility:** Logic in LOWEST layer (Model > Service > Component). Mapping → Command/DTO. Constants → Model.`);
-    lines.push(`- Concise, list unresolved Qs at end`);
-
-    // Naming templates (computed directly for reliable injection)
-    lines.push(``);
-    lines.push(`## Naming`);
-    lines.push(`- Report: ${reportsPath}${agentType}-${namePattern}.md`);
-    lines.push(`- Plan dir: ${plansPath}/${namePattern}/`);
-
-    // Trust verification (if enabled)
-    lines.push(...buildTrustVerification(config));
-
-    // Agent-specific context (if configured)
+    // Build compact context by assembling all sections
     const agentContext = getAgentContext(agentType, config);
-    if (agentContext) {
-      lines.push(``);
-      lines.push(`## Agent Instructions`);
-      lines.push(agentContext);
-    }
 
-    // Todo state inheritance (from parent session)
-    const todoState = getTodoStateForSubagent();
-    if (todoState && todoState.hasTodos) {
-      lines.push(``);
-      lines.push(`## Parent Todo Context`);
-      lines.push(`Tasks: ${todoState.taskCount} total, ${todoState.pendingCount} pending`);
-      if (todoState.summaryTodos && todoState.summaryTodos.length > 0) {
-        lines.push(`Active:`);
-        todoState.summaryTodos.forEach(t => lines.push(`  ${t}`));
-      }
-    }
+    const lines = [
+      `## Subagent: ${agentType}`,
+      `ID: ${agentId} | CWD: ${payload.cwd || process.cwd()}`,
+      ``,
+      ...buildPlanContext(resolved, reportsPath, plansPath, docsPath),
+      ...buildLanguageSection(config),
+      `## Rules`,
+      `- **MUST READ:** .claude/workflows/development-rules.md before implementation`,
+      `- Reports → ${reportsPath}`,
+      `- YAGNI / KISS / DRY`,
+      `- **Class Responsibility:** Logic in LOWEST layer (Model > Service > Component). Mapping → Command/DTO. Constants → Model.`,
+      `- Concise, list unresolved Qs at end`,
+      ``,
+      `## Naming`,
+      `- Report: ${reportsPath}${agentType}-${namePattern}.md`,
+      `- Plan dir: ${plansPath}/${namePattern}/`,
+      ...buildTrustVerification(config),
+      ...(agentContext ? [``, `## Agent Instructions`, agentContext] : []),
+      ...buildParentTodoSection(),
+      ...buildCodingPatternContext(agentType)
+    ];
 
-    // Code pattern context for implementation agents
-    lines.push(...buildCodingPatternContext(agentType));
-
-    // CRITICAL: SubagentStart requires hookSpecificOutput.additionalContext format
+    // SubagentStart requires hookSpecificOutput.additionalContext format
     const output = {
       hookSpecificOutput: {
         hookEventName: "SubagentStart",

@@ -14,7 +14,6 @@
 | `.workflow-state.json`         | Workflow execution state (runtime)             | No            |
 | `.edit-state.json`             | Edit count tracking (runtime)                  | No            |
 | `metadata.json`                | Kit installation tracking (auto-generated)     | No            |
-| `../docs/lessons.md`           | Append-only lesson log (moved to docs/)        | Yes           |
 
 ## settings.json
 
@@ -261,28 +260,20 @@ Configure Model Context Protocol servers.
 
 ## workflows.json
 
-Define workflow automation with intent detection.
+Define workflow automation with AI-driven catalog injection.
 
 ### Schema
 
 ```json
 {
-  "$schema": "./workflows.schema.json",
-  "version": "1.2.0",
-  "description": "Workflow configuration",
+  "version": "2.0.0",
+  "description": "Workflow automation configuration",
   "settings": {
     "enabled": true,
     "showDetection": true,
     "allowOverride": true,
     "overridePrefix": "quick:",
-    "confirmHighImpact": true,
-    "supportedLanguages": ["en", "vi", "zh", "ja", "ko"],
-    "checkpoints": {
-      "enabled": true,
-      "intervalMinutes": 30,
-      "path": "plans/reports",
-      "autoSaveOnCompact": true
-    }
+    "confirmHighImpact": true
   },
   "commandMapping": {
     "cook": {
@@ -300,19 +291,12 @@ Define workflow automation with intent detection.
 {
   "workflows": {
     "feature": {
-      "name": "Feature Implementation",
+      "confirmFirst": false,
       "description": "Full feature development workflow",
-      "priority": 10,
-      "confirmFirst": true,
-      "enableCheckpoints": true,
-      "sequence": ["plan", "cook", "code-simplifier", "code-review", "test", "docs-update", "watzup"],
-      "triggerPatterns": [
-        "\\b(implement|add|create)\\b.*\\b(feature|functionality)\\b",
-        "(thêm|tạo).*(tính năng|chức năng)"
-      ],
-      "excludePatterns": [
-        "\\b(fix|bug|error)\\b"
-      ]
+      "name": "Feature Implementation",
+      "sequence": ["plan", "plan-review", "cook", "code-simplifier", "code-review", "changelog", "test", "docs-update", "watzup"],
+      "whenNotToUse": "Bug fixes, documentation, test-only tasks, feature requests/ideas (no implementation), PBI/story creation, design specs",
+      "whenToUse": "User wants to implement new functionality, add a feature, create a component, build a capability, or develop a module"
     }
   }
 }
@@ -320,28 +304,39 @@ Define workflow automation with intent detection.
 
 ### Workflow Options
 
-| Option              | Type     | Description                             |
-| ------------------- | -------- | --------------------------------------- |
-| `name`              | string   | Display name                            |
-| `description`       | string   | What the workflow does                  |
-| `priority`          | number   | Lower = higher priority (checked first) |
-| `confirmFirst`      | bool     | Ask before starting                     |
-| `enableCheckpoints` | bool     | Save progress checkpoints               |
-| `sequence`          | string[] | Steps to execute in order               |
-| `triggerPatterns`   | regex[]  | Patterns that trigger this workflow     |
-| `excludePatterns`   | regex[]  | Patterns that prevent this workflow     |
+| Option         | Type     | Description                                                      |
+| -------------- | -------- | ---------------------------------------------------------------- |
+| `name`         | string   | Display name                                                     |
+| `description`  | string   | What the workflow does                                           |
+| `whenToUse`    | string   | Natural language description of when AI should select this workflow |
+| `whenNotToUse` | string   | Natural language description of when AI should NOT select this workflow |
+| `confirmFirst` | bool     | Ask before starting                                              |
+| `sequence`     | string[] | Steps to execute in order                                        |
+| `preActions`   | object   | Optional pre-activation context (activateSkill, readFiles, injectContext) |
 
-### Built-in Workflows
+### Built-in Workflows (19)
 
-| Workflow        | Priority | Sequence                                                                                                              |
-| --------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
-| `feature`       | 10       | scout → investigate → plan → plan-review → plan-validate → why-review → cook → code-simplifier → review-changes → code-review → changelog → test → docs-update → watzup |
-| `bugfix`        | 20       | scout → investigate → debug → plan → plan-review → plan-validate → why-review → fix → code-simplifier → review-changes → code-review → changelog → test → watzup |
-| `refactor`      | 25       | scout → investigate → plan → plan-review → plan-validate → why-review → code → code-simplifier → review-changes → code-review → changelog → test → watzup |
-| `documentation` | 30       | scout → investigate → plan → plan-review → plan-validate → docs-update → review-changes → review-post-task → watzup   |
-| `review`        | 35       | code-review → watzup                                                                                                  |
-| `testing`       | 40       | test                                                                                                                   |
-| `investigation` | 50       | scout → investigate                                                                                                    |
+| Workflow | When to Use | Sequence |
+| --- | --- | --- |
+| `batch-operation` | Bulk rename, find-and-replace across codebase | plan → plan-review → code → test → watzup |
+| `bugfix` | Fix bugs, errors, crashes, regressions | scout → investigate → debug → plan → plan-review → fix → simplify → review → changelog → test → watzup |
+| `feature-docs` | Create/update business feature docs | scout → investigate → plan → plan-review → docs-update → watzup |
+| `design-workflow` | Create UI/UX design spec | design-spec → code-review |
+| `documentation` | Create or update documentation | scout → investigate → plan → plan-review → docs-update → watzup |
+| `feature` | Implement new functionality | plan → plan-review → cook → simplify → review → changelog → test → docs → watzup |
+| `idea-to-pbi` | Capture idea, refine to PBI with stories | idea → refine → story → prioritize |
+| `investigation` | Understand code, explore architecture | scout → investigate |
+| `pbi-to-tests` | Generate test specs from PBI/acceptance criteria | test-spec → quality-gate |
+| `pm-reporting` | Status report, sprint update, progress | status → dependency |
+| `pre-development` | Verify readiness before starting dev | quality-gate → plan |
+| `quality-audit` | Audit code quality, find flaws | code-review → plan → plan-review → code → test → watzup |
+| `refactor` | Restructure code without behavior change | plan → plan-review → code → simplify → review → changelog → test → watzup |
+| `release-prep` | Pre-release quality gate | quality-gate → status |
+| `review` | Code review, PR review | code-review → watzup |
+| `review-changes` | Review uncommitted changes | review-changes |
+| `sprint-planning` | Plan sprint, backlog grooming | prioritize → dependency → team-sync |
+| `testing` | Write tests, run test suites | test |
+| `verification` | Verify, validate, confirm correctness | scout → investigate → test → plan → plan-review → fix → simplify → review → test → watzup |
 
 ---
 
@@ -394,14 +389,6 @@ Track file edits for context-aware hooks.
   "files": ["src/app.ts", "src/index.ts"]
 }
 ```
-
----
-
-## Learning System
-
-Lessons are stored in `docs/lessons.md` as an append-only log, managed by `pattern-learner.cjs` and injected by `lessons-injector.cjs`.
-
-See [Pattern Learning](hooks/patterns/README.md) for details.
 
 ---
 
@@ -459,9 +446,10 @@ Add project-specific workflows by extending `workflows.json`:
   "workflows": {
     "deploy": {
       "name": "Deployment",
-      "priority": 5,
       "sequence": ["test", "build", "deploy"],
-      "triggerPatterns": ["\\bdeploy\\b"]
+      "whenToUse": "Deploying to staging or production environments",
+      "whenNotToUse": "Local development, testing without deployment",
+      "confirmFirst": false
     }
   }
 }
@@ -469,5 +457,5 @@ Add project-specific workflows by extending `workflows.json`:
 
 ---
 
-*See also: [Hooks System](hooks/README.md) | [Pattern Learning](hooks/patterns/README.md)*
+*See also: [Hooks System](hooks/README.md)*
 

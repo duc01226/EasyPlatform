@@ -1,11 +1,28 @@
 ---
 name: skill-add
-description: "[Tooling & Meta] Add new reference files or scripts to a skill"
-argument-hint: [skill-name] [reference-or-script-prompt]
+version: 1.0.0
+description: '[Skill Management] Add new reference files or scripts to a skill'
+activation: user-invoked
 ---
 
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+## Quick Summary
+
+**Goal:** Add new reference files or scripts to an existing skill directory.
+
+**Workflow:**
+1. **Identify** — Determine target skill and required additions
+2. **Create** — Add reference/script files following skill-creator patterns
+3. **Validate** — Ensure files follow progressive disclosure (<100 lines each)
+
+**Key Rules:**
+- Delegates to `skill-creator` and `claude-code` skills for guidance
+- Reference files must be under 100 lines (progressive disclosure)
+- Scripts must have tests and respect `.env` loading order
+
 Think harder.
-Use `skill-plan` and `claude-code` skills.
+Use `skill-creator` and `claude-code` skills.
 Use `docs-seeker` skills to search for documentation if needed.
 
 ## Arguments
@@ -42,7 +59,9 @@ Base on the requirements:
 - Each skill teaches Claude how to perform a specific development task, not what a tool does.
 - Claude Code can activate multiple skills automatically to achieve the user's request.
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

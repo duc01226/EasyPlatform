@@ -6,7 +6,7 @@
  * - session-resume.cjs: Checkpoint restoration
  * - session-end.cjs: Session cleanup
  * - subagent-init.cjs: Subagent context injection
- * - lessons-injector.cjs: Lessons injection
+ * - ace-session-inject.cjs: Lesson injection
  */
 
 const path = require('path');
@@ -31,6 +31,7 @@ const {
   cleanupTempDir,
   setupCheckpoint,
   setupTodoState,
+  setupAceLessons,
   createMockFile,
   fileExists,
   createTimestamp
@@ -41,6 +42,7 @@ const SESSION_INIT = getHookPath('session-init.cjs');
 const SESSION_RESUME = getHookPath('session-resume.cjs');
 const SESSION_END = getHookPath('session-end.cjs');
 const SUBAGENT_INIT = getHookPath('subagent-init.cjs');
+const ACE_SESSION_INJECT = getHookPath('ace-session-inject.cjs');
 
 // ============================================================================
 // session-init.cjs Tests
@@ -452,6 +454,72 @@ const subagentInitTests = [
 ];
 
 // ============================================================================
+// ace-session-inject.cjs Tests
+// ============================================================================
+
+const aceSessionInjectTests = [
+  {
+    name: '[ace-session-inject] injects high-confidence lessons',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        setupAceLessons(tmpDir, [
+          { problem: 'Test problem', solution: 'Test solution', confidence: 0.9 }
+        ]);
+        const input = createSessionStartInput('startup');
+        const result = await runHook(ACE_SESSION_INJECT, input, { cwd: tmpDir });
+        assertAllowed(result.code);
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[ace-session-inject] handles no lessons file',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createSessionStartInput('startup');
+        const result = await runHook(ACE_SESSION_INJECT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not block without lessons');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[ace-session-inject] handles resume source',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const input = createSessionStartInput('resume');
+        const result = await runHook(ACE_SESSION_INJECT, input, { cwd: tmpDir });
+        assertAllowed(result.code);
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
+  {
+    name: '[ace-session-inject] skips low-confidence lessons',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        setupAceLessons(tmpDir, [
+          { problem: 'Low confidence', solution: 'Test', confidence: 0.2 }
+        ]);
+        const input = createSessionStartInput('startup');
+        const result = await runHook(ACE_SESSION_INJECT, input, { cwd: tmpDir });
+        assertAllowed(result.code);
+        // Low confidence should be filtered out
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  }
+];
+
+// ============================================================================
 // Config File Edge Cases
 // ============================================================================
 
@@ -571,7 +639,25 @@ const configEdgeCaseTests = [
         cleanupTempDir(tmpDir);
       }
     }
-  }
+  },
+  {
+    name: '[ace-session-inject] handles malformed lessons file',
+    fn: async () => {
+      const tmpDir = createTempDir();
+      try {
+        const memoryDir = path.join(tmpDir, '.claude', 'memory');
+        fs.mkdirSync(memoryDir, { recursive: true });
+        // Write malformed lessons
+        fs.writeFileSync(path.join(memoryDir, 'lessons.json'), '{ not valid json');
+
+        const input = createSessionStartInput('startup');
+        const result = await runHook(ACE_SESSION_INJECT, input, { cwd: tmpDir });
+        assertAllowed(result.code, 'Should not crash on malformed lessons');
+      } finally {
+        cleanupTempDir(tmpDir);
+      }
+    }
+  },
 ];
 
 // Export test suite
@@ -582,6 +668,7 @@ module.exports = {
     ...sessionResumeTests,
     ...sessionEndTests,
     ...subagentInitTests,
+    ...aceSessionInjectTests,
     ...configEdgeCaseTests
   ]
 };

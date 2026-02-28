@@ -18,6 +18,13 @@
     "sequential-thinking": {
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-sequential-thinking"]
+    },
+    "figma": {
+      "transport": "http",
+      "url": "https://mcp.figma.com/mcp",
+      "env": {
+        "FIGMA_PERSONAL_ACCESS_TOKEN": "${FIGMA_PERSONAL_ACCESS_TOKEN}"
+      }
     }
   }
 }

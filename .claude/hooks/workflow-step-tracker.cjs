@@ -4,7 +4,6 @@
  *
  * Automatically tracks skill execution and advances workflow state when
  * a workflow step skill completes execution.
- * Also handles /workflow-start activation to create workflow state.
  *
  * Triggers on: Skill tool completion
  *
@@ -12,45 +11,14 @@
  *   0 - Success (non-blocking)
  */
 
-const { loadState, createState, clearState, markStepComplete, getCurrentStepInfo } = require('./lib/workflow-state.cjs');
+const fs = require('fs');
+const { loadState, markStepComplete, getCurrentStepInfo, initWorkflow, clearState } = require('./lib/workflow-state.cjs');
 const { loadWorkflowConfig } = require('./lib/wr-config.cjs');
-const { buildWorkflowCatalog } = require('./lib/wr-detect.cjs');
-const { buildWorkflowInstructions } = require('./lib/wr-output.cjs');
+const { buildWorkflowInstructions } = require('./workflow-router.cjs');
 
-/**
- * Read stdin asynchronously with timeout to prevent hanging
- * @returns {Promise<Object|null>} Parsed JSON payload or null
- */
-async function readStdin() {
-    return new Promise(resolve => {
-        let data = '';
-
-        // Handle no stdin (TTY mode)
-        if (process.stdin.isTTY) {
-            resolve(null);
-            return;
-        }
-
-        process.stdin.setEncoding('utf8');
-        process.stdin.on('data', chunk => {
-            data += chunk;
-        });
-        process.stdin.on('end', () => {
-            if (!data.trim()) {
-                resolve(null);
-                return;
-            }
-            try {
-                resolve(JSON.parse(data));
-            } catch {
-                resolve(null);
-            }
-        });
-        process.stdin.on('error', () => resolve(null));
-
-        // Timeout after 500ms to prevent hanging
-        setTimeout(() => resolve(null), 500);
-    });
+// Get session ID from environment
+function getSessionId() {
+    return process.env.CLAUDE_SESSION_ID || process.env.CK_SESSION_ID || 'default';
 }
 
 /**
@@ -63,16 +31,15 @@ function mapSkillToStepId(skillName, config) {
     if (!config?.commandMapping) return null;
 
     const normalizedSkill = skillName.toLowerCase().trim();
-    // Normalize colon-separated format (e.g., "review:codebase" → "review-codebase")
-    const hyphenSkill = normalizedSkill.replace(/:/g, '-');
 
     for (const [stepId, mapping] of Object.entries(config.commandMapping)) {
         const claudeCmd = mapping.claude || `/${stepId}`;
-        // Extract skill name from command (e.g., "/plan" -> "plan", "/review-codebase" -> "review-codebase")
-        const cmdParts = claudeCmd.replace(/^\//, '').split('/');
+        // Extract skill name from command (e.g., "/plan" -> "plan", "/code-review" -> "code-review")
+        const cmdParts = claudeCmd.replace(/^\//, '').split(/[/:]/);
+
         const cmdSkill = cmdParts[0].toLowerCase();
 
-        if (normalizedSkill === cmdSkill || hyphenSkill === cmdSkill || normalizedSkill === stepId.toLowerCase()) {
+        if (normalizedSkill === cmdSkill || normalizedSkill === stepId.toLowerCase()) {
             return stepId;
         }
     }
@@ -80,55 +47,12 @@ function mapSkillToStepId(skillName, config) {
     return null;
 }
 
-/**
- * Handle /workflow-start activation
- * @param {Object} toolInput - Tool input with skill and args
- * @param {Object} config - Workflow configuration
- * @returns {boolean} true if handled (caller should exit)
- */
-function handleWorkflowStart(toolInput, config) {
-    const workflowId = (toolInput.args || '').trim();
-
-    if (!workflowId) {
-        console.log('\n<!-- workflow-start requires a workflowId argument -->');
-        return true;
-    }
-
-    const workflow = config.workflows?.[workflowId];
-    if (!workflow) {
-        // Decision 11: Error + re-inject catalog
-        console.log(`\n## Unknown Workflow: "${workflowId}"\n`);
-        console.log('Available workflows:\n');
-        const catalog = buildWorkflowCatalog(config);
-        console.log(catalog);
-        return true;
-    }
-
-    // Decision 13: Auto-switch if active workflow exists
-    const existingState = loadState();
-    if (existingState) {
-        clearState();
-    }
-
-    // Create state for the declared workflow
-    createState({
-        workflowId,
-        workflowName: workflow.name,
-        sequence: workflow.sequence,
-        originalPrompt: '',
-        commandMapping: config.commandMapping
-    });
-
-    // Output pre-actions + workflow instructions + todo template
-    const instructions = buildWorkflowInstructions({ workflow, workflowId }, config);
-    console.log(instructions);
-    return true;
-}
-
 async function main() {
     try {
-        const payload = await readStdin();
-        if (!payload) process.exit(0);
+        const stdin = fs.readFileSync(0, 'utf-8').trim();
+        if (!stdin) process.exit(0);
+
+        const payload = JSON.parse(stdin);
 
         // Extract skill name from tool input
         // PostToolUse payload structure: { tool_name, tool_input, tool_response }
@@ -143,58 +67,96 @@ async function main() {
         const skillName = toolInput.skill || '';
         if (!skillName) process.exit(0);
 
-        const config = loadWorkflowConfig();
-        if (!config) process.exit(0);
+        // Get session ID
+        const sessionId = getSessionId();
 
-        // Handle /workflow-start activation
-        if (skillName === 'workflow-start' || skillName === 'workflow:start' || skillName === 'workflow/start') {
-            handleWorkflowStart(toolInput, config);
+        // Handle /workflow-start <id> invocations
+        if (skillName === 'workflow-start') {
+            const workflowId = (toolInput.args || '').trim();
+            const config = loadWorkflowConfig();
+
+            if (!config || !config.workflows) process.exit(0);
+
+            const workflow = config.workflows[workflowId];
+
+            if (!workflow) {
+                // Invalid workflow ID - output error with valid IDs
+                const validIds = Object.keys(config.workflows).sort().join(', ');
+                console.log(`<!-- Error: Unknown workflow "${workflowId}". Valid IDs: ${validIds} -->`);
+                process.exit(0);
+            }
+
+            // Check for active workflow (auto-switch)
+            const currentState = loadState(sessionId);
+            if (currentState?.workflowType) {
+                clearState(sessionId);
+            }
+
+            // Initialize new workflow
+            initWorkflow(sessionId, {
+                workflowType: workflowId,
+                workflowSteps: workflow.sequence
+            });
+
+            // Output post-activation instructions
+            const output = buildWorkflowInstructions(workflowId, workflow, config);
+            console.log(output);
+
             process.exit(0);
         }
 
         // Check for active workflow
-        const state = loadState();
-        if (!state) process.exit(0);
+        const state = loadState(sessionId);
+        if (!state || !state.workflowType) process.exit(0);
+
+        const config = loadWorkflowConfig();
+        if (!config) process.exit(0);
 
         // Map executed skill to step ID
         const stepId = mapSkillToStepId(skillName, config);
         if (!stepId) process.exit(0);
 
         // Check if this skill matches current or any pending step
-        const currentStepIdx = state.currentStep;
-        const stepIdx = state.sequence.indexOf(stepId);
+        const stepIdx = state.workflowSteps.indexOf(stepId);
 
-        if (stepIdx === -1 || stepIdx < currentStepIdx) {
+        if (stepIdx === -1 || stepIdx < state.currentStepIndex) {
             // Skill not in workflow or already completed
             process.exit(0);
         }
 
-        // Mark the step as complete
-        const info = getCurrentStepInfo();
-        const updated = markStepComplete(stepId);
+        // Get current step info before marking complete
+        const info = getCurrentStepInfo(sessionId);
 
-        if (updated) {
-            const nextInfo = getCurrentStepInfo();
+        // Mark the step as complete
+        const updated = markStepComplete(sessionId, stepId);
+
+        if (updated && updated.currentStepIndex < updated.workflowSteps.length) {
+            const nextInfo = getCurrentStepInfo(sessionId);
+            const nextCmd = config.commandMapping?.[nextInfo.currentStep]?.claude || `/${nextInfo.currentStep}`;
+
             console.log(`\n## Workflow Step Completed\n`);
-            console.log(`✓ Completed: \`${info.claudeCommand}\``);
-            console.log(`\n**Next step:** \`${nextInfo.claudeCommand}\` (${nextInfo.stepNumber}/${nextInfo.totalSteps})`);
-            console.log(
-                `\n**Remaining:** ${nextInfo.remainingSteps
-                    .map(s => {
-                        const cmd = state.commandMapping?.[s];
-                        return cmd?.claude || `/${s}`;
-                    })
-                    .join(' → ')}`
-            );
-            console.log(`\n---\n**IMPORTANT:** Execute \`${nextInfo.claudeCommand}\` to continue the workflow.\n`);
-        } else {
+            console.log(`✓ Completed: \`${config.commandMapping?.[stepId]?.claude || `/${stepId}`}\``);
+            console.log(`\n**Next step:** \`${nextCmd}\` (${nextInfo.currentStepIndex + 1}/${nextInfo.totalSteps})`);
+
+            if (nextInfo.remainingSteps.length > 0) {
+                console.log(
+                    `\n**Remaining:** ${nextInfo.remainingSteps
+                        .map(s => {
+                            const cmd = config.commandMapping?.[s];
+                            return cmd?.claude || `/${s}`;
+                        })
+                        .join(' → ')}`
+                );
+            }
+            console.log(`\n---\n**IMPORTANT:** Execute \`${nextCmd}\` to continue the workflow.\n`);
+        } else if (updated) {
             // Workflow complete
             console.log(`\n## Workflow Complete\n`);
-            console.log(`All steps in **${state.workflowName}** have been completed successfully!`);
+            console.log(`All steps in **${state.workflowType}** workflow have been completed successfully!`);
             console.log(
-                `\n✓ Completed steps: ${state.sequence
+                `\n✓ Completed steps: ${state.workflowSteps
                     .map(s => {
-                        const cmd = state.commandMapping?.[s];
+                        const cmd = config.commandMapping?.[s];
                         return cmd?.claude || `/${s}`;
                     })
                     .join(', ')}`
@@ -209,6 +171,4 @@ async function main() {
     }
 }
 
-main()
-    .then(() => process.exit(0))
-    .catch(() => process.exit(0));
+main();

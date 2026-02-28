@@ -1,58 +1,41 @@
 ---
 name: code-auto
-description: "[Implementation] ⚡⚡⚡ [AUTO] Start coding & testing an existing plan (\"trust me bro\")"
-argument-hint: [plan] [all-phases-yes-or-no] (default: yes)
+version: 1.0.0
+description: '[Implementation] [AUTO] Start coding & testing an existing plan (trust me bro)'
+activation: user-invoked
 ---
 
-**MUST READ** `CLAUDE.md` then **THINK HARDER** to start working on the following plan follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+## Quick Summary
+
+**Goal:** Automatically execute an existing plan with testing and code review — no user approval gate (trust mode).
+
+**Workflow:**
+
+1. **Plan Detection** — Find latest plan or use provided path, select next incomplete phase
+2. **Analysis & Tasks** — Extract tasks into TaskCreate with step numbering
+3. **Implementation** — Implement phase step-by-step, run type checks
+4. **Testing** — Tester subagent; must reach 100% pass
+5. **Code Review** — Code-reviewer subagent; must reach 0 critical issues
+6. **Finalize** — Update status, docs, auto-commit; optionally loop to next phase
+
+**Key Rules:**
+
+- No user approval gate (unlike `/code` which has a blocking Step 5)
+- Tests must be 100% passing; critical issues must be 0
+- `$ALL_PHASES=Yes` (default) processes all phases in one run
+- Never comment out tests or use fake data to pass
+
+**MUST READ** `CLAUDE.md` then **THINK HARDER** to start working on the following plan:
 <plan>$ARGUMENTS</plan>
-
-## Summary
-
-**Goal:** Autonomously execute an implementation plan with optional all-phases-in-one-run mode ("trust me bro") -- no user approval gate.
-
-| Step | Action                     | Key Notes                                                         |
-| ---- | -------------------------- | ----------------------------------------------------------------- |
-| 0    | Plan detection             | Auto-select or use provided plan argument                         |
-| 1    | Analysis & task extraction | Parse phase, create TodoWrite tasks via project-manager           |
-| 2    | Implementation             | Code step-by-step, compile to verify                              |
-| 3    | Testing                    | 100% pass required -- blocking gate                               |
-| 4    | Code review                | 0 critical issues required -- blocking gate                       |
-| 5    | Finalize                   | Status update, docs, auto-commit; auto-continue if all-phases=Yes |
-
-**Key Principles:**
-
-- No user approval gate -- skips Step 5 approval compared to `/code`
-- `$ALL_PHASES` defaults to Yes: finishes all phases in one run automatically
-- Must read backend and frontend code patterns before implementation
-
-**⚠️ MUST READ before implementation:**
-
-- `.claude/skills/shared/anti-hallucination-protocol.md` — Assumption validation, evidence chains, context anchoring
-- `.claude/skills/shared/knowledge-graph-template.md` — Per-file analysis structure (for investigation phases)
-- `.ai/docs/backend-code-patterns.md` — Backend code patterns
-- `.ai/docs/frontend-code-patterns.md` — Frontend code patterns
-
-**Core Rule:** Verify every assumption with actual code evidence before making changes. If confidence < 90%, investigate further or ask user.
 
 ## Arguments
 
 - $PLAN: $1 (Mention specific plan or auto detected, default: latest plan)
-- $ALL_PHASES: $2 (`Yes` to finish all phases in one run or `No` to implement phase-by-phase and wait for confirmation, default is `Yes`)
-
----
-
-## Role Responsibilities
-
-- You are a senior software engineer who must study the provided implementation plan end-to-end before writing code.
-- Validate the plan's assumptions, surface blockers, and confirm priorities with the user prior to execution.
-- Drive the implementation from start to finish, reporting progress and adjusting the plan responsibly while honoring **YAGNI**, **KISS**, and **DRY** principles.
-
-**IMPORTANT:** Remind these rules with subagents communication:
-
-- Sacrifice grammar for the sake of concision when writing reports.
-- In reports, list any unresolved questions at the end, if any.
-- Ensure token efficiency while maintaining high quality.
+- $ALL_PHASES: $2 (`Yes` to finish all phases in one run or `No` to implement phase-by-phase, default: `Yes`)
 
 ---
 
@@ -60,162 +43,101 @@ argument-hint: [plan] [all-phases-yes-or-no] (default: yes)
 
 **If `$PLAN` is empty:**
 
-1. Find latest `plan.md` in `./plans` | `ls -t ./plans/**/plan.md 2>/dev/null | head -1`
-2. Parse plan for phases and status, auto-select next incomplete (prefer IN_PROGRESS or earliest Planned)
+1. Find latest `plan.md` in `./plans`
+2. Parse plan for phases and status, auto-select next incomplete
 
-**If `$PLAN` provided:** Use that plan and detect which phase to work on (auto-detect or use argument like "phase-2").
+**If `$PLAN` provided:** Use that plan and detect which phase to work on.
 
 **Output:** `✓ Step 0: [Plan Name] - [Phase Name]`
-
-**Subagent Pattern (use throughout):**
-
-```
-Task(subagent_type="[type]", prompt="[task description]", description="[brief]")
-```
 
 ---
 
 ## Workflow Sequence
 
-**Rules:** Follow steps 1-5 in order. Each step requires output marker starting with "✓ Step N:". Mark each complete in `TodoWrite` before proceeding. Do not skip steps.
+**Rules:** Follow steps 1-5 in order. Each step requires output marker `✓ Step N:`. Mark each complete in TaskCreate before proceeding. Do not skip steps.
 
 ---
 
 ## Step 1: Analysis & Task Extraction
 
-Use `project-manager` agent to read plan file completely. Map dependencies between tasks. List ambiguities or blockers. Identify required skills/tools and activate from catalog. Parse phase file and extract actionable tasks.
+Use `project-manager` agent to read plan file completely. Map dependencies. List ambiguities. Identify required skills. If the plan references analysis files in `.ai/workspace/analysis/`, re-read them before implementation.
 
-**TodoWrite Initialization & Task Extraction:**
-`project-manager` agent must respond back with:
+**TaskCreate Initialization:**
 
-- Initialize `TodoWrite` with `Step 0: [Plan Name] - [Phase Name]` and all command steps (Step 1 through Step 5)
-- Read phase file (e.g., phase-01-preparation.md)
-- Look for tasks/steps/phases/sections/numbered/bulleted lists
-- MUST convert to `TodoWrite` tasks:
+- Initialize TaskCreate with `Step 0: [Plan Name] - [Phase Name]` and all steps (1-5)
+- Read phase file, look for tasks/steps/phases/sections/numbered/bulleted lists
+- Convert to TaskCreate tasks with UNIQUE names:
     - Phase Implementation tasks → Step 2.X (Step 2.1, Step 2.2, etc.)
-    - Phase Testing tasks → Step 3.X (Step 3.1, Step 3.2, etc.)
-    - Phase Code Review tasks → Step 4.X (Step 4.1, Step 4.2, etc.)
-- Ensure each task has UNIQUE name (increment X for each task)
-- Add tasks to `TodoWrite` after their corresponding command step
+    - Phase Testing tasks → Step 3.X
+    - Phase Code Review tasks → Step 4.X
 
 **Output:** `✓ Step 1: Found [N] tasks across [M] phases - Ambiguities: [list or "none"]`
-
-Mark Step 1 complete in `TodoWrite`, mark Step 2 in_progress.
 
 ---
 
 ## Step 2: Implementation
 
-Implement selected plan phase step-by-step following extracted tasks (Step 2.1, Step 2.2, etc.). Mark tasks complete as done. For UI work, call `ui-ux-designer` subagent: "Implement [feature] UI per ./docs/design-guidelines.md". Use `ai-multimodal` skill for image assets, imagemagick in `media-processing` skill for editing. Run type checking and compile to verify no syntax errors.
+Implement selected plan phase step-by-step. Mark tasks complete as done. For UI work, call `ui-ux-designer` subagent. Run type checking and compile.
 
 **Output:** `✓ Step 2: Implemented [N] files - [X/Y] tasks complete, compilation passed`
-
-Mark Step 2 complete in `TodoWrite`, mark Step 3 in_progress.
 
 ---
 
 ## Step 3: Testing
 
-Write tests covering happy path, edge cases, and error cases. Call `tester` subagent: "Run test suite for plan phase [phase-name]". If ANY tests fail: STOP, call `debugger` subagent: "Analyze failures: [details]", fix all issues, re-run `tester`. Repeat until 100% pass.
+Call `tester` subagent. If ANY tests fail: STOP, call `debugger`, fix, re-run. Repeat until 100% pass.
 
-**Testing standards:** Unit tests may use mocks for external dependencies (APIs, DB). Integration tests use test environment. E2E tests use real but isolated data. Forbidden: commenting out tests, changing assertions to pass, TODO/FIXME to defer fixes.
+**Testing standards:** Forbidden: commenting out tests, changing assertions to pass, TODO/FIXME to defer fixes.
 
 **Output:** `✓ Step 3: Tests [X/X passed] - All requirements met`
 
 **Validation:** If X ≠ total, Step 3 INCOMPLETE - do not proceed.
 
-Mark Step 3 complete in `TodoWrite`, mark Step 4 in_progress.
-
 ---
 
 ## Step 4: Code Review
 
-Call `code-reviewer` subagent: "Review code changes in **Step 2** of plan phase [phase-name]. Check security, performance, architecture, YAGNI/KISS/DRY. If the changes include test files, also review test assertion quality: verify domain state assertions (not just HTTP status), validation error body inspection, post-mutation field verification in E2E tests, and follow-up query verification where applicable." If critical issues found: **STOP**, fix all, re-run `tester` to verify, re-run `code-reviewer`. Repeat until no critical issues.
-
-**Critical issues:** Security vulnerabilities (XSS, SQL injection, OWASP), performance bottlenecks, architectural violations, principle violations.
+Call `code-reviewer` subagent. If critical issues found: STOP, fix, re-run `tester`, re-run `code-reviewer`. Repeat until no critical issues.
 
 **Output:** `✓ Step 4: Code reviewed - [0] critical issues`
 
 **Validation:** If critical issues > 0, Step 4 INCOMPLETE - do not proceed.
 
-Mark Step 4 complete in TodoWrite, mark Step 5 in_progress.
-
 ---
 
 ## Step 5: Finalize
 
-1. **STATUS UPDATE - BOTH MANDATORY - PARALLEL EXECUTION:**
+1. **STATUS UPDATE (PARALLEL):** Call `project-manager` + `docs-manager` subagents.
+2. **ONBOARDING CHECK:** Detect onboarding requirements + generate summary.
+3. **AUTO-COMMIT:** Call `git-manager` subagent. Run only if Steps 1-2 successful + Tests passed.
 
-- **Call** `project-manager` sub-agent: "Update plan status in [plan-path]. Mark plan phase [phase-name] as DONE with timestamp. Update roadmap."
-- **Call** `docs-manager` sub-agent: "Update docs for plan phase [phase-name]. Changed files: [list]."
+If $ALL_PHASES is `Yes`: proceed to next phase automatically.
+If $ALL_PHASES is `No`: ask user before proceeding to next phase.
 
-2. **ONBOARDING CHECK:** Detect onboarding requirements (API keys, env vars, config) + generate summary report with next steps.
+**If last phase:** Generate summary report. Ask user about `/preview` and `/plan-archive`.
 
-- If this is the last phase: use `AskUserQuestion` tool to ask if user wants to set up onboarding requirements.
-
-3. **AUTO-COMMIT (after steps 1 and 2 completes):**
-
-- **Call** `git-manager` subagent to handle git operation.
-- Run only if: Steps 1 and 2 successful + Tests passed
-- Auto-stage and commit with message [phase - plan]. Do NOT push unless user explicitly requests
-
-**Validation:** Steps 1 and 2 must complete successfully. Step 3 (auto-commit) runs only if conditions met.
-
-Mark Step 5 complete in `TodoWrite`.
-
-**Important:**
-If $ALL_PHASES is `Yes`, proceed to the next phase automatically.
-If $ALL_PHASES is `No`, wait for user confirmation before proceeding to the next phase:
-
-- Use `AskUserQuestion` tool to ask if user wants to proceed to the next phase: "**Phase workflow finished. Ready for next plan phase.**"
-
-## Summary report
-
-If this is the last phase, generate a concise summary report.
-Use `AskUserQuestion` tool to ask these questions:
-
-- If user wants to preview the report with `/preview` slash command.
-- If user wants to archive the plan with `/plan-archive` slash command.
+**Output:** `✓ Step 5: Finalize - Status updated - Git committed`
 
 ---
 
 ## Critical Enforcement Rules
 
-**Step outputs must follow unified format:** `✓ Step [N]: [Brief status] - [Key metrics]`
+**Step output format:** `✓ Step [N]: [Brief status] - [Key metrics]`
 
-**Examples:**
+**TaskCreate tracking required:** Initialize at Step 0, mark each step complete before next.
 
-- Step 0: `✓ Step 0: [Plan Name] - [Phase Name]`
-- Step 1: `✓ Step 1: Found [N] tasks across [M] phases - Ambiguities: [list]`
-- Step 2: `✓ Step 2: Implemented [N] files - [X/Y] tasks complete`
-- Step 3: `✓ Step 3: Tests [X/X passed] - All requirements met`
-- Step 4: `✓ Step 4: Code reviewed - [0] critical issues`
-- Step 5: `✓ Step 5: Finalize - Status updated - Git committed`
-
-**If any "✓ Step N:" output missing, that step is INCOMPLETE.**
-
-**TodoWrite tracking required:** Initialize at Step 0, mark each step complete before next.
-
-**Mandatory subagent calls:**
-
-- Step 3: `tester`
-- Step 4: `code-reviewer`
-- Step 5: `project-manager` AND `docs-manager` AND `git-manager`
+**Mandatory subagent calls:** Step 3: `tester` | Step 4: `code-reviewer` | Step 5: `project-manager` AND `docs-manager` AND `git-manager`
 
 **Blocking gates:**
 
 - Step 3: Tests must be 100% passing
 - Step 4: Critical issues must be 0
 
-**REMEMBER:**
+Do not skip steps. Do not proceed if validation fails. One plan phase per command run.
 
-- Do not skip steps. Do not proceed if validation fails.
-- One plan phase per command run. Command focuses on single plan phase only.
-- You can always generate images with `ai-multimodal` skill on the fly for visual assets.
-- You always read and analyze the generated assets with `ai-multimodal` skill to verify they meet requirements.
-- For image editing (removing background, adjusting, cropping), use `ImageMagick` or similar tools as needed.
+---
 
-## IMPORTANT Task Planning Notes
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

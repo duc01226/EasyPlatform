@@ -1,18 +1,50 @@
 ---
 name: fix-parallel
-description: '[Fix & Debug] ⚡⚡ Analyze & fix issues with parallel fullstack-developer agents'
-argument-hint: [issues]
+version: 1.0.0
+description: '[Implementation] Analyze & fix issues with parallel fullstack-developer agents'
+activation: user-invoked
 ---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+
+**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` AND `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+> **Skill Variant:** Variant of `/fix` — parallel multi-issue resolution using subagents.
+
+## Quick Summary
+
+**Goal:** Fix multiple independent issues simultaneously using parallel fullstack-developer subagents.
+
+**Workflow:**
+1. **Triage** — Classify issues and verify independence (no shared files)
+2. **Assign** — Distribute issues to parallel subagents with strict file ownership
+3. **Execute** — Subagents fix issues independently
+4. **Merge** — Review and integrate all fixes
+
+**Key Rules:**
+- Debug Mindset: every claim needs `file:line` evidence
+- Issues MUST be independent (no overlapping file modifications)
+- Each subagent owns specific files; no cross-boundary edits
+
+## Debug Mindset (NON-NEGOTIABLE)
+
+**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
+
+- Do NOT assume the first hypothesis is correct — verify with actual code traces
+- Every root cause claim must include `file:line` evidence
+- If you cannot prove a root cause with a code trace, state "hypothesis, not confirmed"
+- Question assumptions: "Is this really the cause?" → trace the actual execution path
+- Challenge completeness: "Are there other contributing factors?" → check related code paths
+- No "should fix it" without proof — verify the fix addresses the traced root cause
+
+## ⚠️ MANDATORY: Confidence & Evidence Gate
+
+**MUST** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
+**95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
 
 **Ultrathink parallel** to fix: <issues>$ARGUMENTS</issues>
 
 **IMPORTANT:** Activate needed skills. Ensure token efficiency. Sacrifice grammar for concision.
-
-## ⚠️ Anti-Hallucination Reminder
-
-**Be skeptical. Critical thinking. Everything needs traced proof.** — Never accept code at face value; verify claims against actual behavior, trace data flow end-to-end, and demand evidence (file:line references, grep results, runtime confirmation) for every finding.
-
-**Before modifying ANY code:** Verify assumptions with actual code evidence. Search for usages, read implementations, trace dependencies. If confidence < 90% on any change, investigate first or ask user. See `.claude/skills/shared/anti-hallucination-protocol.md` for full protocol.
 
 ## Workflow
 
@@ -22,10 +54,11 @@ argument-hint: [issues]
 - Use `/scout-ext` to find related files
 - Categorize issues by scope/area (frontend, backend, auth, payments, etc.)
 - Identify dependencies between issues
+- **External Memory**: Each parallel agent writes findings to `.ai/workspace/analysis/{issue-name}-{agent}.analysis.md`. Main agent re-reads all before coordinating fixes.
 
 ### 2. Parallel Fix Planning
 
-- Trigger `/plan-hard --parallel <detailed-fix-instructions>` for parallel-executable fix plan
+- Trigger `/plan-parallel <detailed-fix-instructions>` for parallel-executable fix plan
 - Wait for plan with dependency graph, execution strategy, file ownership matrix
 - Group independent fixes for parallel execution
 - Sequential fixes for dependent issues
@@ -67,7 +100,9 @@ argument-hint: [issues]
 
 **Example:** Fix 1 (auth) + Fix 2 (payments) + Fix 3 (UI) → Launch 3 fullstack-developer agents → Wait → Fix 4 (integration) sequential
 
-## IMPORTANT Task Planning Notes
+---
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

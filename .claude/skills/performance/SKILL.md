@@ -1,56 +1,53 @@
 ---
 name: performance
-description: '[Review & Quality] Use when analyzing and improving performance for database queries, API endpoints, frontend rendering, or cross-service communication. Triage skill that routes to database-optimization, frontend-patterns, or provides API/job/cross-service profiling guidance.'
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
+version: 1.0.0
+description: '[Debugging] Analyze and optimize performance bottlenecks'
+activation: user-invoked
 ---
 
-# Performance Optimization
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
 
-Triage skill for performance issues. Routes to the correct sub-tool or reference based on bottleneck type.
+**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` AND `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
-## Decision Tree
+## Quick Summary
 
-```
-Performance Issue?
-├── Database (slow queries, N+1, indexes, pagination)
-│   → Invoke database-optimization skill (covers all DB patterns)
-├── Frontend (rendering, bundle size, change detection)
-│   → ⚠️ MUST READ docs/claude/frontend-patterns.md
-│   → Key: OnPush, trackBy, lazy loading, virtual scroll, tree-shaking
-├── API/Endpoint (response time, payload, serialization)
-│   → ⚠️ MUST READ references/performance-patterns.md (parallel queries, caching, DTOs)
-├── Background Jobs (throughput, batch processing)
-│   → ⚠️ MUST READ references/performance-patterns.md (bounded parallelism, batch ops)
-└── Cross-Service (message bus, eventual consistency)
-    → ⚠️ MUST READ references/performance-patterns.md (payload size, idempotency)
-```
+**Goal:** Analyze and optimize performance bottlenecks in database queries, API endpoints, or frontend rendering.
 
-## Quick Assessment Checklist
+**Workflow:**
+1. **Profile** — Identify bottlenecks using profiling data or metrics
+2. **Analyze** — Trace hot paths and measure impact
+3. **Optimize** — Apply targeted optimizations with before/after measurements
 
-1. **Identify** bottleneck type using decision tree above
-2. **Measure** baseline (response time, query count, bundle size)
-3. **Route** to correct sub-tool or reference
-4. **Apply** patterns from the routed resource
-5. **Verify** improvement against baseline
-6. **Monitor** for regressions
+**Key Rules:**
+- Analysis Mindset: measure before and after, never optimize blindly
+- Evidence-based: every claim needs profiling data or benchmarks
+- Focus on highest-impact bottlenecks first
 
-## EP-Specific Quick Wins
+<target>$ARGUMENTS</target>
 
-- **Parallel tuple queries**: `var (a, b) = await (queryA, queryB);`
-- **Eager loading**: `repo.GetAllAsync(filter, ct, e => e.Related)`
-- **Projections**: `.Select(e => new { e.Id, e.Name })` instead of full entity
-- **Full-text search**: `searchService.Search(q, text, Entity.SearchColumns())`
-- **Batch updates**: `repo.UpdateManyAsync(items, dismissSendEvent: true, checkDiff: false)`
-- **Paged processing**: `PageBy(skip, take)` at database level
+## Analysis Mindset (NON-NEGOTIABLE)
 
-For detailed patterns, profiling commands, and anti-patterns:
-**⚠️ MUST READ:** `.claude/skills/performance/references/performance-patterns.md`
+**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
 
-## Approval Gate
+- Do NOT assume a bottleneck location — verify with actual code traces and profiling evidence
+- Every performance claim must include `file:line` evidence
+- If you cannot prove a bottleneck with a code trace, state "suspected, not confirmed"
+- Question assumptions: "Is this really slow?" → trace the actual execution path and query plan
+- Challenge completeness: "Are there other bottlenecks?" → check the full request pipeline
+- No "should improve performance" without proof — measure before and after
 
-Present findings and optimization plan. Wait for explicit user approval before making changes -- performance optimizations can have wide-reaching side effects.
+## ⚠️ MANDATORY: Confidence & Evidence Gate
 
-## IMPORTANT Task Planning Notes
+**MUST** declare `Confidence: X%` with profiling data + `file:line` proof for EVERY claim.
+**95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
 
-- Always plan and break many small todo tasks
-- Always add a final review todo task to review the works done at the end to find any fix or enhancement needed
+Activate `arch-performance-optimization` skill and follow its workflow.
+
+**CRITICAL:** Present findings and optimization plan. Wait for explicit user approval before making changes.
+
+---
+
+**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+
+- Always plan and break work into many small todo tasks
+- Always add a final review todo task to verify work quality and identify fixes/enhancements

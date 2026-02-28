@@ -4,19 +4,19 @@
 
 ## Common Commands
 
-| Command        | Description                      |
-| -------------- | -------------------------------- |
-| `/plan`        | Create implementation plan       |
-| `/plan-hard`   | Comprehensive plan with research |
-| `/cook`        | Implement current task           |
-| `/fix`         | Fix bug or issue                 |
-| `/scout`       | Find relevant files              |
-| `/investigate` | Deep investigation               |
-| `/test`        | Run or generate tests            |
-| `/commit`      | Stage and commit changes         |
-| `/pr`          | Create pull request              |
-| `/review`      | Code review                      |
-| `/watzup`      | Session status summary           |
+| Command                  | Description                      |
+| ------------------------ | -------------------------------- |
+| `/plan`                  | Create implementation plan       |
+| `/plan-hard`             | Comprehensive plan with research |
+| `/cook`                  | Implement current task           |
+| `/fix`                   | Fix bug or issue                 |
+| `/scout`                 | Find relevant files              |
+| `/feature-investigation` | Deep investigation               |
+| `/test`                  | Run or generate tests            |
+| `/commit`                | Stage and commit changes         |
+| `/pr`                    | Create pull request              |
+| `/review`                | Code review                      |
+| `/watzup`                | Session status summary           |
 
 ## Quick Bypasses
 
@@ -28,9 +28,9 @@
 ## Workflow Detection
 
 ```
-Feature → /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /changelog → /test → /docs-update → /watzup
+Feature → /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /cook → /code-simplifier → /review-changes → /code-review → /sre-review → /changelog → /test → /docs-update → /watzup
 Bug Fix → /scout → /investigate → /debug → /plan → /plan-review → /plan-validate → /why-review → /fix → /code-simplifier → /review-changes → /code-review → /changelog → /test → /watzup
-Refactor → /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /code → /code-simplifier → /review-changes → /code-review → /changelog → /test → /watzup
+Refactor → /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /code → /code-simplifier → /review-changes → /code-review → /sre-review → /changelog → /test → /watzup
 Docs → /scout → /investigate → /plan → /plan-review → /plan-validate → /docs-update → /review-changes → /review-post-task → /watzup
 ```
 
@@ -68,16 +68,6 @@ Docs → /scout → /investigate → /plan → /plan-review → /plan-validate �
 | `debugger`            | Issue investigation     |
 | `git-manager`         | Git operations          |
 
-## Pattern Matching Weights
-
-| Factor          | Weight |
-| --------------- | ------ |
-| File path match | 40%    |
-| Category match  | 20%    |
-| Keyword match   | 20%    |
-| Tag match       | 10%    |
-| Confidence      | 10%    |
-
 ## Permissions Format
 
 ```
@@ -107,27 +97,27 @@ Read              # All reads
 
 | Type           | Path                                     |
 | -------------- | ---------------------------------------- |
-| Lessons        | `docs/lessons.md`                     |
+| Lessons        | `docs/lessons.md`                        |
 | Todo State     | `.claude/.todo-state.json`               |
 | Workflow State | `.claude/.workflow-state.json`           |
 
 ## Skill Categories
 
-| Category      | Examples                                    |
-| ------------- | ------------------------------------------- |
-| Development   | `backend-development`, `frontend-angular-*` |
-| Architecture  | `api-design`, `security`, `performance`     |
-| AI            | `ai-multimodal`, `mcp-builder`              |
-| Testing       | `debug`, `code-review`                  |
-| DevOps        | `devops`, `database-optimization`           |
-| Documentation | `docs-seeker`, `feature-docs`               |
+| Category      | Examples                                     |
+| ------------- | -------------------------------------------- |
+| Development   | `easyplatform-backend`, `frontend-angular-*` |
+| Architecture  | `api-design`, `arch-security-review`         |
+| AI            | `ai-multimodal`, `mcp-builder`               |
+| Testing       | `debug`, `code-review`                       |
+| DevOps        | `devops`, `database-optimization`            |
+| Documentation | `docs-seeker`, `feature-docs`                |
 
 ## Common Patterns
 
 ### Start Implementation
 
 ```
-1. Create todos with TodoWrite
+1. Create tasks with TaskCreate
 2. Run /plan or /plan-hard
 3. Get approval
 4. Run /cook
@@ -137,7 +127,7 @@ Read              # All reads
 
 ```
 1. /scout to find files
-2. /investigate to understand
+2. /feature-investigation to understand
 3. /debug for root cause
 4. /fix to resolve
 ```

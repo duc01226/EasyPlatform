@@ -2,33 +2,57 @@
 
 > One-page reference for consistent code reviews
 
-## Two-Phase Report-Driven Review
+## Review Approach (Report-Driven Two-Phase)
 
-**MUST generate TodoWrite tasks for BOTH phases before starting!**
-
-### Phase 1: File-by-File Review (Build Report)
-
+**⛔ MANDATORY FIRST: Create Todo Tasks**
 ```
-[ ] Generated todos for Phase 1 (one per file)?
-[ ] Created report file first?
-[ ] For each file documented: Change Summary, Purpose, Issues, Suggestions?
-[ ] Reviewed code quality, patterns, performance, security per file?
-[ ] Marked each file todo as completed after review?
+[ ] Called TaskCreate with review phase tasks:
+    - [Review Phase 1] Create report file
+    - [Review Phase 1] Review file-by-file and update report
+    - [Review Phase 2] Re-read report for holistic assessment
+    - [Review Phase 3] Generate final review findings
+[ ] Update todo status as each phase completes
 ```
 
-### Phase 2: Holistic Review (Review the Report)
-
+**Step 0: Create Report**
 ```
-[ ] Generated todos for Phase 2?
-[ ] Read accumulated report to see big picture?
-[ ] Technical solution makes sense as a whole?
-[ ] New files/methods in correct responsibility layers?
-[ ] No duplicated logic across multiple files?
-[ ] Backend patterns correct (CQRS, events, repos)?
-[ ] Frontend patterns correct (components, stores, services)?
-[ ] Feature split correctly between backend/frontend?
-[ ] Generated final recommendations by severity?
-[ ] Marked Phase 2 todos as completed?
+[ ] Created report file: plans/reports/code-review-{date}-{slug}.md
+[ ] Initialized with Scope and Files sections
+```
+
+**Phase 1: File-by-File Review (Build Report)**
+For EACH file, update report with:
+```
+[ ] File path
+[ ] Change summary (what changed)
+[ ] Purpose (why this change)
+[ ] Issues found (or "None")
+[ ] Naming, typing, magic numbers checked
+[ ] Responsibility placement verified
+```
+
+**Phase 2: Holistic Review (Review the Report)**
+Re-read accumulated report, then assess:
+```
+[ ] Understood overall technical approach?
+[ ] Solution architecture coherent as unified plan?
+[ ] New files in correct layers?
+[ ] No duplicated logic across changes?
+[ ] Responsibility in LOWEST layer?
+[ ] Backend: mapping in Command/DTO (not Handler)?
+[ ] Frontend: constants/columns in Model (not Component)?
+[ ] Service boundaries respected?
+[ ] No circular dependencies introduced?
+```
+
+**Phase 3: Final Review Result**
+Update report with:
+```
+[ ] Overall Assessment (big picture)
+[ ] Critical Issues (must fix)
+[ ] High Priority (should fix)
+[ ] Architecture Recommendations
+[ ] Positive Observations
 ```
 
 ---
@@ -128,76 +152,44 @@
 ## Performance Review
 
 ```
-[ ] No N+1 query patterns?
-[ ] No O(n²) nested loops on large datasets?
-[ ] Pagination for large datasets (never GetAll without paging)?
-[ ] Project only needed properties in query (not GetAll then Select)?
-[ ] Parallel queries where possible?
+[ ] No O(n²) complexity? (use dictionary for lookups)
+[ ] No N+1 query patterns? (batch load related entities)
+[ ] Project only needed properties? (don't load all then select one)
+[ ] Pagination for all list queries? (never get all without paging)
+[ ] Parallel queries for independent operations?
 [ ] Proper indexing suggested?
 [ ] No unnecessary eager loading?
 ```
 
-### Performance Anti-Patterns
+---
 
-```csharp
-// ❌ BAD: O(n²) - nested loop
-foreach (var user in users)
-    foreach (var order in orders)
-        if (order.UserId == user.Id) { }
+## Clean Code Quality
 
-// ❌ BAD: GetAll then Select one property
-var ids = repo.GetAllAsync().Select(x => x.Id).ToList();
-
-// ❌ BAD: No pagination
-var allUsers = await repo.GetAllAsync(x => x.IsActive);
 ```
-
-```csharp
-// ✅ GOOD: Use dictionary for O(n)
-var ordersByUser = orders.ToLookup(o => o.UserId);
-foreach (var user in users)
-    var userOrders = ordersByUser[user.Id];
-
-// ✅ GOOD: Project in query
-var ids = await repo.GetAllAsync(q => q.Select(x => x.Id));
-
-// ✅ GOOD: Always paginate
-var users = await repo.GetAllAsync(q => q.Where(x => x.IsActive).PageBy(skip, take));
+[ ] No magic numbers/strings? (extract to named constants)
+[ ] No hardcoded values? (use config/constants)
+[ ] Single Responsibility per method?
+[ ] Consistent abstraction levels in methods?
+[ ] No code duplication (DRY)?
+[ ] Early returns/guard clauses used?
+[ ] Type annotations on all functions?
+[ ] No implicit any types?
 ```
 
 ---
 
-## Code Quality
+## Naming Conventions
 
 ```
-[ ] No magic numbers - use named constants?
-[ ] No hardcoded strings for config values?
-[ ] Consistent abstraction levels?
-[ ] Single responsibility per method?
+[ ] Names reveal intent? (WHAT not HOW)
+[ ] Specific names, not generic? (employeeRecords vs data)
+[ ] Domain language used? (candidates vs arr)
+[ ] Methods: Verb + Noun? (getEmployee, validateInput)
+[ ] Booleans: is/has/can/should prefix? (isActive, hasPermission)
+[ ] Collections: plural nouns? (users, employees)
+[ ] No cryptic abbreviations? (employeeCount vs empCnt)
+[ ] Consistent patterns across codebase?
 ```
-
----
-
-## Naming Best Practices
-
-```
-[ ] Names reveal intent? (what, not how)
-[ ] Booleans use is/has/can/should prefix?
-[ ] Collections use plural form?
-[ ] Methods describe action (verb + noun)?
-[ ] No abbreviations except common ones (Id, Url, Api)?
-[ ] Consistent naming across codebase?
-```
-
-### Convention Quick Reference
-
-| Type | C# | TypeScript |
-|------|----|----|
-| Class/Interface | `UserService`, `IRepository` | `UserService`, `IRepository` |
-| Method | `GetUserById` | `getUserById` |
-| Variable | `userName` | `userName` |
-| Constant | `MaxRetryCount` | `MAX_RETRY_COUNT` |
-| Boolean | `isActive`, `hasPermission` | `isActive`, `hasPermission` |
 
 ---
 
@@ -210,10 +202,14 @@ var users = await repo.GetAllAsync(q => q.Where(x => x.IsActive).PageBy(skip, ta
 | Side effects in handler     | Use entity event handlers         |
 | Manual state management     | Use PlatformVmStore               |
 | DTO mapping in handler      | Let DTO own mapping               |
-| Magic numbers (e.g., `if (status == 3)`) | Use named constants or enums |
-| Hardcoded config values     | Use constants or configuration    |
-| Vague names (`data`, `temp`, `val`) | Descriptive names (`userData`, `cachedValue`) |
-| Abbreviations (`usr`, `mgr`, `cnt`) | Full words (`user`, `manager`, `count`) |
+| Magic numbers (e.g., `600`) | Named constant (`ANIMATION_DURATION_MS`) |
+| Hardcoded strings           | Constants or i18n keys            |
+| Generic names (`data`, `result`) | Specific names (`employeeRecords`, `validationResult`) |
+| Cryptic abbreviations (`empCnt`) | Full words (`employeeCount`) |
+| Boolean without prefix (`active`) | With prefix (`isActive`, `hasPermission`) |
+| O(n²) nested lookups | Dictionary lookup O(1) |
+| Load all then `.Select(x.Id)` | Project in query `.Select(e => e.Id)` |
+| Get all without pagination | Always use `.PageBy()` |
 
 ---
 

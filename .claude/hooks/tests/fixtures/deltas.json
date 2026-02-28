@@ -1,0 +1,75 @@
+{
+  "version": "1.0",
+  "deltas": [
+    {
+      "id": "delta-001",
+      "type": "guideline",
+      "content": "Use repository pattern for data access",
+      "conditions": {
+        "filePatterns": ["*.cs"],
+        "intent": ["code", "implement"]
+      },
+      "stats": {
+        "uses": 15,
+        "successes": 12,
+        "failures": 3,
+        "lastUsed": "2026-01-10T00:00:00Z"
+      }
+    },
+    {
+      "id": "delta-002",
+      "type": "warning",
+      "content": "Check for null before accessing navigation properties",
+      "conditions": {
+        "filePatterns": ["*.cs"],
+        "patterns": ["repository", "entity"]
+      },
+      "stats": {
+        "uses": 8,
+        "successes": 7,
+        "failures": 1,
+        "lastUsed": "2026-01-11T00:00:00Z"
+      }
+    },
+    {
+      "id": "delta-003",
+      "type": "guideline",
+      "content": "Always use BEM classes in Angular templates",
+      "conditions": {
+        "filePatterns": ["*.html", "*.component.ts"],
+        "intent": ["code", "implement", "frontend"]
+      },
+      "stats": {
+        "uses": 22,
+        "successes": 20,
+        "failures": 2,
+        "lastUsed": "2026-01-12T00:00:00Z"
+      }
+    },
+    {
+      "id": "delta-004",
+      "type": "reminder",
+      "content": "Use PlatformVmStore for complex component state",
+      "conditions": {
+        "filePatterns": ["*.component.ts"],
+        "patterns": ["state", "signal", "observable"]
+      },
+      "stats": {
+        "uses": 5,
+        "successes": 5,
+        "failures": 0,
+        "lastUsed": "2026-01-08T00:00:00Z"
+      }
+    }
+  ],
+  "candidates": [
+    {
+      "id": "candidate-001",
+      "content": "Consider using async/await instead of .subscribe()",
+      "sourceSession": "session-abc-123",
+      "detectedAt": "2026-01-11T14:30:00Z",
+      "occurrences": 3
+    }
+  ],
+  "updatedAt": "2026-01-12T00:00:00Z"
+}

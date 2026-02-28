@@ -119,13 +119,19 @@ python ~/.claude/scripts/resolve_env.py GEMINI_API_KEY --skill ai-multimodal --f
 
 ## generate_catalogs.py
 
-Generate YAML catalogs from skill data files. Outputs to stdout by default for easy consumption by Claude.
+Generate YAML catalogs from command and skill data files. Outputs to stdout by default for easy consumption by Claude.
 
 ### Usage
 
 ```bash
 # Generate skills catalog (outputs to stdout)
 python .claude/scripts/generate_catalogs.py --skills
+
+# Generate commands catalog (outputs to stdout)
+python .claude/scripts/generate_catalogs.py --commands
+
+# Generate both catalogs (outputs to stdout)
+python .claude/scripts/generate_catalogs.py
 
 # Write to file instead of stdout
 python .claude/scripts/generate_catalogs.py --skills --output guide/SKILLS.yaml
@@ -137,6 +143,7 @@ python .claude/scripts/generate_catalogs.py --help
 ### Input Files
 
 Located in the same directory as the script:
+- `commands_data.yaml` - Source data for commands
 - `skills_data.yaml` - Source data for skills
 
 ### Output

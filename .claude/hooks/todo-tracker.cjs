@@ -1,198 +1,168 @@
 #!/usr/bin/env node
+'use strict';
+
 /**
- * Todo Tracker Hook (PostToolUse)
+ * Todo Tracker - PostToolUse Hook for TaskCreate and TaskUpdate
  *
- * Tracks task tool usage to update todo state file.
- * This enables pre-command validation and context preservation.
+ * Tracks when TaskCreate or TaskUpdate is called and updates the todo state file.
+ * This enables edit-enforcement.cjs and skill-enforcement.cjs to check
+ * if todos exist before allowing implementation.
  *
- * Triggered by: PostToolUse event for TodoWrite, TaskCreate, TaskUpdate tools
+ * Triggers on: PostToolUse → TaskCreate, TaskUpdate
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
+ *
+ * @module todo-tracker
  */
 
-const { getTodoState, setTodoState } = require('./lib/todo-state.cjs');
+const fs = require('fs');
+const { getTodoState, setTodoState, markTodosCalled } = require('./lib/todo-state.cjs');
+const { resetEditCount } = require('./lib/edit-state.cjs');
 
 /**
- * Read stdin asynchronously with timeout to prevent hanging
- * @returns {Promise<Object|null>} Parsed JSON payload or null
+ * Count todos by status
+ * @param {Array} todos - Todo items
+ * @returns {Object} Counts by status
  */
-async function readStdin() {
-  return new Promise((resolve) => {
-    let data = '';
+function countTodos(todos) {
+  if (!Array.isArray(todos)) {
+    return { pending: 0, completed: 0, inProgress: 0 };
+  }
 
-    // Handle no stdin (TTY mode)
-    if (process.stdin.isTTY) {
-      resolve(null);
-      return;
+  return todos.reduce((counts, todo) => {
+    switch (todo.status) {
+      case 'pending':
+        counts.pending++;
+        break;
+      case 'completed':
+        counts.completed++;
+        break;
+      case 'in_progress':
+        counts.inProgress++;
+        break;
     }
-
-    process.stdin.setEncoding('utf8');
-    process.stdin.on('data', chunk => { data += chunk; });
-    process.stdin.on('end', () => {
-      if (!data.trim()) {
-        resolve(null);
-        return;
-      }
-      try {
-        resolve(JSON.parse(data));
-      } catch {
-        resolve(null);
-      }
-    });
-    process.stdin.on('error', () => resolve(null));
-
-    // Timeout after 500ms to prevent hanging
-    setTimeout(() => resolve(null), 500);
-  });
+    return counts;
+  }, { pending: 0, completed: 0, inProgress: 0 });
 }
 
 /**
- * Handle TodoWrite tool (legacy batch format)
- * @param {Object} input - tool_input with todos array
+ * Handle TaskUpdate — adjust counts based on status transition.
+ * Decrements the "from" bucket and increments the "to" bucket.
+ * Since we don't know the previous status, we use a safe heuristic:
+ * - completed: decrement pending or inProgress (whichever > 0, prefer inProgress)
+ * - in_progress: decrement pending (if > 0)
+ * - deleted: decrement pending or inProgress
+ * - pending: no-op (unlikely transition)
+ *
+ * @param {string} sessionId
+ * @param {string} newStatus - The status being set
+ * @param {string} taskId - The task being updated
  */
-function handleTodoWrite(input) {
-  const todos = input?.todos || [];
-  const pending = todos.filter(t => t.status === 'pending').length;
-  const completed = todos.filter(t => t.status === 'completed').length;
-  const inProgress = todos.filter(t => t.status === 'in_progress').length;
+function handleTaskUpdate(sessionId, newStatus, taskId) {
+  const state = getTodoState(sessionId);
+  if (!state.hasTodos) return;
 
-  setTodoState({
-    hasTodos: todos.length > 0,
-    taskCount: todos.length,
-    pendingCount: pending,
-    completedCount: completed,
-    inProgressCount: inProgress,
-    lastTodos: todos.slice(0, 10).map(t => ({
-      content: t.content,
-      status: t.status,
-      activeForm: t.activeForm
-    }))
-  });
-
-  if (process.env.CK_DEBUG) {
-    console.error(`[todo-tracker] TodoWrite: ${todos.length} todos (${pending} pending, ${inProgress} in-progress, ${completed} completed)`);
-  }
-}
-
-/**
- * Handle TaskCreate tool (single task creation)
- * @param {Object} input - tool_input with subject, description, activeForm
- */
-function handleTaskCreate(input) {
-  const state = getTodoState();
-  const newCount = (state.taskCount || 0) + 1;
-  const newPending = (state.pendingCount || 0) + 1;
-
-  // Append to lastTodos (cap at 20 entries)
-  const lastTodos = (state.lastTodos || []).slice(0, 19);
-  lastTodos.push({
-    content: input?.subject || 'Untitled task',
-    status: 'pending',
-    activeForm: input?.activeForm || null
-  });
-
-  setTodoState({
-    hasTodos: true,
-    taskCount: newCount,
-    pendingCount: newPending,
-    completedCount: state.completedCount || 0,
-    inProgressCount: state.inProgressCount || 0,
-    lastTodos
-  });
-
-  if (process.env.CK_DEBUG) {
-    console.error(`[todo-tracker] TaskCreate: "${input?.subject}" (total: ${newCount})`);
-  }
-}
-
-/**
- * Handle TaskUpdate tool (status changes)
- * @param {Object} input - tool_input with taskId, status, etc.
- */
-function handleTaskUpdate(input) {
-  const state = getTodoState();
-  const newStatus = input?.status;
-
-  // Only adjust counts if status is being changed
-  if (newStatus && state.hasTodos) {
-    // Approximate: decrement one from in_progress (most likely source) and increment target
-    // This is imprecise but sufficient for enforcement (hasTodos + taskCount are the critical checks)
-    const update = { hasTodos: true };
-
+  if (newStatus === 'completed' || newStatus === 'deleted') {
+    // Task finishing — decrement active count
+    if (state.inProgressCount > 0) {
+      state.inProgressCount--;
+    } else if (state.pendingCount > 0) {
+      state.pendingCount--;
+    }
     if (newStatus === 'completed') {
-      update.completedCount = (state.completedCount || 0) + 1;
-      // Decrement in_progress if positive, else decrement pending
-      if ((state.inProgressCount || 0) > 0) {
-        update.inProgressCount = state.inProgressCount - 1;
-      } else if ((state.pendingCount || 0) > 0) {
-        update.pendingCount = state.pendingCount - 1;
-      }
-    } else if (newStatus === 'in_progress') {
-      update.inProgressCount = (state.inProgressCount || 0) + 1;
-      if ((state.pendingCount || 0) > 0) {
-        update.pendingCount = state.pendingCount - 1;
-      }
-    } else if (newStatus === 'deleted') {
-      const newCount = Math.max(0, (state.taskCount || 1) - 1);
-      update.taskCount = newCount;
-      update.hasTodos = newCount > 0;
-      // Decrement from most likely source
-      if ((state.pendingCount || 0) > 0) {
-        update.pendingCount = state.pendingCount - 1;
-      } else if ((state.inProgressCount || 0) > 0) {
-        update.inProgressCount = state.inProgressCount - 1;
-      }
+      state.completedCount++;
     }
-
-    // Update lastTodos entry if found by matching
-    if (input?.taskId && input?.subject) {
-      const lastTodos = (state.lastTodos || []).map(t => {
-        if (t.content === input.subject) {
-          return { ...t, status: newStatus };
-        }
-        return t;
-      });
-      update.lastTodos = lastTodos;
+  } else if (newStatus === 'in_progress') {
+    // Task starting — move from pending to inProgress
+    if (state.pendingCount > 0) {
+      state.pendingCount--;
     }
-
-    setTodoState(update);
+    state.inProgressCount++;
   }
 
-  if (process.env.CK_DEBUG) {
-    console.error(`[todo-tracker] TaskUpdate: task=${input?.taskId} status=${newStatus}`);
+  // Update lastTodos status if task matches
+  if (taskId && state.lastTodos) {
+    const todo = state.lastTodos.find(t => t.taskId === taskId);
+    if (todo) {
+      todo.status = newStatus;
+    }
+  }
+
+  setTodoState(sessionId, state);
+}
+
+/**
+ * Main hook execution
+ */
+function main() {
+  try {
+    // Read PostToolUse payload from stdin
+    const stdin = fs.readFileSync(0, 'utf-8').trim();
+    if (!stdin) process.exit(0);
+
+    const payload = JSON.parse(stdin);
+
+    const toolName = payload.tool_name;
+    if (toolName !== 'TodoWrite' && toolName !== 'TaskCreate' && toolName !== 'TaskUpdate') {
+      process.exit(0);
+    }
+
+    // Get session ID (CK_SESSION_ID is the standard for Claude Kit hooks)
+    const sessionId = process.env.CLAUDE_SESSION_ID || process.env.CK_SESSION_ID || 'unknown';
+
+    if (toolName === 'TaskUpdate') {
+      // TaskUpdate — adjust counts based on new status
+      const newStatus = payload.tool_input?.status;
+      const taskId = payload.tool_input?.taskId;
+      if (newStatus) {
+        handleTaskUpdate(sessionId, newStatus, taskId);
+      }
+    } else if (toolName === 'TaskCreate') {
+      // TaskCreate creates one task at a time — increment pending count
+      const state = getTodoState(sessionId);
+      const subject = payload.tool_input?.subject || '';
+      const activeForm = payload.tool_input?.activeForm || '';
+      // tool_result is a string like "Task #8 created successfully: ..."
+      const resultStr = typeof payload.tool_result === 'string' ? payload.tool_result : '';
+      const idMatch = resultStr.match(/Task #(\d+)/);
+      const taskId = idMatch ? idMatch[1] : null;
+
+      state.hasTodos = true;
+      state.pendingCount++;
+
+      // Append to lastTodos (keep last 10, non-completed first)
+      state.lastTodos = state.lastTodos || [];
+      state.lastTodos.push({ content: subject, status: 'pending', activeForm, taskId });
+      if (state.lastTodos.length > 10) {
+        state.lastTodos = state.lastTodos.slice(-10);
+      }
+
+      setTodoState(sessionId, state);
+
+      // Reset edit count since user is now tracking with todos
+      resetEditCount(sessionId);
+    } else {
+      // TodoWrite — batch todo creation (legacy)
+      const todos = payload.tool_input?.todos || [];
+      const counts = countTodos(todos);
+      markTodosCalled(sessionId, counts, todos);
+      resetEditCount(sessionId);
+    }
+
+    if (process.env.CK_DEBUG) {
+      const state = getTodoState(sessionId);
+      console.log(`[todo-tracker] ${toolName}: pending=${state.pendingCount}, inProgress=${state.inProgressCount}, completed=${state.completedCount}`);
+    }
+
+    process.exit(0);
+
+  } catch (error) {
+    if (process.env.CK_DEBUG) {
+      console.error(`[todo-tracker] Error: ${error.message}`);
+    }
+    process.exit(0);
   }
 }
 
-async function main() {
-  const payload = await readStdin();
-  if (!payload) process.exit(0);
-
-  const toolName = payload.tool_name;
-  const input = payload.tool_input;
-
-  switch (toolName) {
-    case 'TodoWrite':
-      handleTodoWrite(input);
-      break;
-    case 'TaskCreate':
-      handleTaskCreate(input);
-      break;
-    case 'TaskUpdate':
-      handleTaskUpdate(input);
-      break;
-    default:
-      // Unknown tool, ignore
-      break;
-  }
-
-  process.exit(0);
-}
-
-main().then(() => process.exit(0)).catch((error) => {
-  // Fail-open: don't block on errors
-  if (process.env.CK_DEBUG) {
-    console.error(`[todo-tracker] Error: ${error.message}`);
-  }
-  process.exit(0);
-});
+main();

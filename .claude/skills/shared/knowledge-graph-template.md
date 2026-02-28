@@ -2,14 +2,6 @@
 
 Standard structure for codebase knowledge capture during investigation and feature analysis.
 
-## Usage
-
-**IMPORTANT:** This template MUST be written to an external report file — NOT held in context only.
-
-- **Path:** `plans/reports/investigation-{date}-{slug}.md`
-- **Purpose:** Persist investigation findings to survive context compaction
-- **Read-back:** Before modifying any code file, re-read the relevant Knowledge Graph entry from the report
-
 ---
 
 ## Per-File Entry Template
