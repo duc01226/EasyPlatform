@@ -34,7 +34,7 @@
     "chat.useAgentsMdFile": true,
     "chat.useNestedAgentsMdFiles": true,
     "github.copilot.chat.codeGeneration.useInstructionFiles": true,
-    "chat.notifyWindowOnConfirmation": true,
+    "chat.notifyWindowOnConfirmation": "windowNotFocused",
     "chat.tools.edits.autoApprove": {
         "*.cjs": true,
         "*.json": true,

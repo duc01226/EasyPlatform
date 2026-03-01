@@ -2,10 +2,10 @@
 name: design-video
 version: 1.0.0
 description: '[Design] Create a design based on video'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 Think hard to plan & start designing follow exactly this video:
 <video>$ARGUMENTS</video>
@@ -17,14 +17,18 @@ Think hard to plan & start designing follow exactly this video:
 **Goal:** Analyze a video recording and recreate the UI design and interactions as functional code.
 
 **Workflow:**
+
 1. **Analyze** — Process video with vision capabilities to identify UI patterns
 2. **Research** — Run `ui-ux-pro-max` for matching design patterns
 3. **Implement** — Recreate design and interactions as code
 
 **Key Rules:**
+
 - Always activate `ui-ux-pro-max` FIRST for design intelligence
 - Capture both static layout AND interaction patterns from video
 - Use `ai-multimodal` for video analysis
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Required Skills (Priority Order)
 

@@ -2,24 +2,28 @@
 name: use-mcp
 version: 1.0.0
 description: '[AI & Tools] Utilize tools of Model Context Protocol (MCP) servers'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Utilize MCP (Model Context Protocol) server tools to extend Claude's capabilities.
 
 **Workflow:**
+
 1. **Discover** -- List available MCP tools and their capabilities
 2. **Select** -- Choose appropriate tool for the task
 3. **Execute** -- Run MCP tool with correct parameters
 
 **Key Rules:**
+
 - Check available MCP servers before attempting to use tools
 - Use MCP tools for capabilities not available in built-in tools
 - Handle MCP tool errors gracefully with fallback approaches
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Execute MCP operations via **Gemini CLI** to preserve context budget.
 
@@ -32,8 +36,8 @@ Execute MCP operations via **Gemini CLI** to preserve context budget.
     echo "$ARGUMENTS. Return JSON only per GEMINI.md instructions." | gemini -y -m gemini-2.5-flash
     ```
 
-2. **Fallback to mcp-manager subagent** (if Gemini CLI unavailable):
-    - Use `mcp-manager` subagent to discover and execute tools
+2. **Fallback to general-purpose subagent** (if Gemini CLI unavailable):
+    - Use `general-purpose` subagent to discover and execute tools
     - If the subagent got issues with the scripts of `mcp-management` skill, use `mcp-builder` skill to fix them
     - **DO NOT** create ANY new scripts
     - The subagent can only use MCP tools if any to achieve this task

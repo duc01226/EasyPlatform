@@ -204,6 +204,28 @@ function hasActiveWorkflow(sessionId) {
 }
 
 /**
+ * Default staleness timeout in milliseconds (30 minutes)
+ */
+const STALE_TIMEOUT_MS = 30 * 60 * 1000;
+
+/**
+ * Check if workflow state is stale (no updates for STALE_TIMEOUT_MS).
+ * Stale workflows are considered abandoned and should be treated as inactive.
+ * @param {string} sessionId - Session identifier
+ * @param {number} [timeoutMs] - Custom timeout in ms (default: 30 min)
+ * @returns {boolean} True if workflow is stale
+ */
+function isWorkflowStale(sessionId, timeoutMs) {
+  const state = loadState(sessionId);
+  if (!state.workflowType || !state.lastUpdatedAt) return false;
+
+  const timeout = timeoutMs || STALE_TIMEOUT_MS;
+  const lastUpdate = new Date(state.lastUpdatedAt).getTime();
+  const elapsed = Date.now() - lastUpdate;
+  return elapsed > timeout;
+}
+
+/**
  * Generate recovery context string for injection after compaction
  * @param {string} sessionId - Session identifier
  * @returns {string|null} Recovery context or null if no active workflow
@@ -247,6 +269,7 @@ function getRecoveryContext(sessionId) {
 
 module.exports = {
   WORKFLOW_DIR,
+  STALE_TIMEOUT_MS,
   getWorkflowPath,
   getDefaultState,
   loadState,
@@ -257,5 +280,6 @@ module.exports = {
   updateTodos,
   clearState,
   hasActiveWorkflow,
+  isWorkflowStale,
   getRecoveryContext
 };

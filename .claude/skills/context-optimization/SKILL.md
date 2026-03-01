@@ -5,7 +5,7 @@ description: "[Utilities] Use when managing context window usage, compressing lo
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, TaskCreate, mcp__memory__*
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -24,6 +24,8 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, TaskCreate, mcp__memory__*
 - Use offset/limit and grep before reading large files
 - Combine search patterns with OR instead of sequential searches
 - At 100K tokens: required compression; at 150K: critical save and summarize
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Context Optimization & Management
 
@@ -84,7 +86,7 @@ Load relevant memories at session start:
 mcp__memory__search_nodes({ query: 'Employee validation pattern' });
 
 // Open specific entities
-mcp__memory__open_nodes({ names: ['EmployeeValidation', 'GrowthService'] });
+mcp__memory__open_nodes({ names: ['EmployeeValidation', 'ServiceAModule'] });
 ```
 
 **When to Select:**
@@ -127,7 +129,7 @@ Delegate specialized tasks to sub-agents:
 
 ```javascript
 // Explore codebase (reduced context)
-Task({ subagent_type: 'Explore', prompt: 'Find all entity event handlers in Growth service' });
+Task({ subagent_type: 'Explore', prompt: 'Find all entity event handlers in the target service' });
 
 // Plan implementation (focused context)
 Task({ subagent_type: 'Plan', prompt: 'Plan leave request approval workflow' });

@@ -7,7 +7,7 @@ allowed-tools: NONE
 license: Apache-2.0
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -25,6 +25,8 @@ license: Apache-2.0
 - Use headed mode on Windows/macOS, headless only on Linux/WSL/CI
 - All scripts output JSON for structured processing
 - Store snapshots in `.claude/chrome-devtools/snapshots/` with timestamps
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Chrome DevTools Agent Skill
 

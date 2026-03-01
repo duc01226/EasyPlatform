@@ -10,7 +10,7 @@
 
 | Field | Value |
 |-------|-------|
-| Module | {bravoTALENTS/bravoGROWTH/bravoSURVEYS/bravoINSIGHTS/Accounts} |
+| Module | {ServiceName} |
 | Service | {ServiceName}.Service |
 | Database | {MongoDB/SQL Server/PostgreSQL} |
 | Schema | {SchemaName} (if SQL) |
@@ -18,11 +18,11 @@
 ### File Locations
 
 ```
-Entities:    src/Services/{Module}/{Service}.Domain/Entities/{Entity}.cs
-Commands:    src/Services/{Module}/{Service}.Application/UseCaseCommands/{Feature}/
-Queries:     src/Services/{Module}/{Service}.Application/UseCaseQueries/{Feature}/
-Controllers: src/Services/{Module}/{Service}.Service/Controllers/{Entity}Controller.cs
-Frontend:    src/WebV2/apps/bravo-{module}-*/src/app/{feature}/
+Entities:    src/Backend/{Service}.Domain/Entities/{Entity}.cs
+Commands:    src/Backend/{Service}.Application/UseCaseCommands/{Feature}/
+Queries:     src/Backend/{Service}.Application/UseCaseQueries/{Feature}/
+Controllers: src/Backend/{Service}.Api/Controllers/{Entity}Controller.cs
+Frontend:    src/Frontend/apps/{module}/src/app/{feature}/
 ```
 
 ---

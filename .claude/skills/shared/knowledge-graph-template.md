@@ -20,7 +20,7 @@ For each analyzed file, document under `## Knowledge Graph`:
 - **referenceFiles**: Files using this file's symbols
 - **relevanceScore**: 1-10 (relevance to the task)
 - **evidenceLevel**: "verified" or "inferred"
-- **platformAbstractions**: Platform base classes used
+- **frameworkAbstractions**: Framework base classes used
 - **serviceContext**: Microservice ownership
 
 ### Investigation Fields

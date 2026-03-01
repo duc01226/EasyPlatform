@@ -6,7 +6,7 @@ description: '[Document Processing] Convert PDF files to Markdown with support f
 allowed-tools: NONE
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -23,6 +23,8 @@ allowed-tools: NONE
 - Use `--mode auto` (default) to let the tool decide native vs OCR
 - OCR for scanned PDFs requires additional `tesseract.js` setup
 - Complex multi-column layouts may not preserve structure perfectly
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # pdf-to-markdown
 

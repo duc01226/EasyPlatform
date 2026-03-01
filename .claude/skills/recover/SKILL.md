@@ -2,10 +2,10 @@
 name: recover
 version: 1.0.0
 description: '[Utilities] Restore workflow context from checkpoint after session loss'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -23,6 +23,8 @@ activation: user-invoked
 - Always restore TaskCreate items before resuming any work
 - Check both `plans/reports/` and plan-specific report directories
 - Use timestamp to find the checkpoint closest to the interruption
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Recover Workflow Context
 

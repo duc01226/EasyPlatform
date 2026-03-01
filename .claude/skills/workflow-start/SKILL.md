@@ -1,7 +1,7 @@
 ---
 name: workflow-start
 version: 1.0.0
-description: "[Skill Management] Activate a workflow from the injected catalog. Use when starting a detected workflow, initializing workflow state, or activating a workflow sequence. Triggers on "start workflow", "activate workflow", "workflow-start", "begin workflow"."
+description: "[Skill Management] Activate a workflow from the injected catalog. Use when starting a detected workflow, initializing workflow state, or activating a workflow sequence. Triggers on 'start workflow', 'activate workflow', 'workflow-start', 'begin workflow'."
 allowed-tools: TaskCreate
 ---
 
@@ -12,14 +12,18 @@ allowed-tools: TaskCreate
 **Goal:** Activate a workflow by ID, creating tracking tasks and announcing the workflow sequence.
 
 **Workflow:**
+
 1. **Match** -- Validate workflow ID against catalog
 2. **Create** -- Set up TaskCreate items for all workflow steps
 3. **Announce** -- Tell user the detected intent and workflow sequence
 
 **Key Rules:**
-- MUST be called as first action after workflow detection (for non-trivial tasks)
-- For simple tasks, AI MUST ask user whether to skip workflow
+
+- AI MUST always detect nearest workflow and ask user via AskUserQuestion to confirm activation
+- Present "Activate [Workflow] (Recommended)" vs "Execute directly without workflow"
 - Create workflow-level tasks BEFORE any implementation tasks
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Workflow Start
 
@@ -59,7 +63,7 @@ Activate a workflow from the injected catalog and initialize step tracking via T
 
 - Call ONLY after reading the workflow catalog injected by the hook
 - Use the exact workflow ID shown in the catalog (e.g., `feature`, `bugfix`, `investigation`)
-- If the workflow has **Confirm first** marker, ask the user BEFORE activation
+- ALWAYS ask the user via AskUserQuestion to confirm activation before proceeding
 - If called while another workflow is active, it will auto-switch (end current, start new)
 
 ---

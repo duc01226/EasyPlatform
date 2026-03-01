@@ -1,27 +1,31 @@
 ---
 name: media-processing
 version: 1.0.0
-description: '[AI & Tools] Process multimedia files with FFmpeg (video/audio encoding, conversion, streaming, filtering, hardware acceleration), ImageMagick (image manipulation, format conversion, batch processing, effects, composition), and RMBG (AI-powered background removal). Use when converting media formats, encoding videos with specific codecs (H.264, H.265, VP9), resizing/cropping images, removing backgrounds from images, extracting audio from video, applying filters and effects, optimizing file sizes, creating streaming manifests (HLS/DASH), generating thumbnails, batch processing images, creating composite images, or implementing media processing pipelines. Supports 100+ formats, hardware acceleration (NVENC, QSV), and complex filtergraphs.'
+description: '[AI & Tools] Use when processing multimedia files with FFmpeg (video/audio encoding, conversion, streaming), ImageMagick (image manipulation, batch processing), or RMBG (AI background removal). Covers format conversion, resizing, filtering, thumbnails, and media pipelines.'
 
 allowed-tools: NONE
 license: MIT
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Process multimedia files using FFmpeg for video/audio encoding, conversion, streaming, and filtering.
 
 **Workflow:**
+
 1. **Identify** -- Match input to correct FFmpeg operation (convert, trim, merge, compress)
 2. **Execute** -- Run FFmpeg command with appropriate codec and quality settings
 3. **Verify** -- Check output file integrity and quality
 
 **Key Rules:**
+
 - Use tool selection table to pick correct FFmpeg operation
 - Prefer hardware-accelerated encoding when available
 - Always verify output file exists and is playable
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Media Processing Skill
 

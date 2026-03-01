@@ -2,10 +2,10 @@
 name: git-conflict-resolve
 version: 1.0.0
 description: '[Git] Resolve git merge/cherry-pick/rebase conflicts with backup, analysis, and reporting'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
@@ -17,15 +17,19 @@ activation: user-invoked
 **Goal:** Resolve git merge/cherry-pick/rebase conflicts with backup, analysis, and structured reporting.
 
 **Workflow:**
+
 1. **Backup** — Create safety backup of current state
 2. **Analyze** — Identify conflict types and affected files
 3. **Resolve** — Apply resolution strategy per conflict
 4. **Report** — Generate conflict resolution report
 
 **Key Rules:**
+
 - Always create backup before resolving conflicts
 - Prefer preserving both sides' intent over arbitrary choice
 - Generate resolution report for audit trail
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Purpose
 

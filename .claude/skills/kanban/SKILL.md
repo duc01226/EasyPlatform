@@ -2,10 +2,10 @@
 name: kanban
 version: 1.0.0
 description: '[Project Management] AI agent orchestration board (Coming Soon)'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -22,6 +22,8 @@ activation: user-invoked
 - Always run server as Claude Code background task (visible in `/tasks`)
 - Never truncate URL to just host:port; display full path + query string
 - Set `timeout: 300000` to prevent premature termination
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Plans dashboard with progress tracking and timeline visualization.
 

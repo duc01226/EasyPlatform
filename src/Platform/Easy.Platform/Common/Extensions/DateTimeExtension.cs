@@ -62,6 +62,62 @@ public static class DateTimeExtension
         return dateTime.Date.AddDays(1).AddTicks(-1);
     }
 
+    /// <summary>
+    /// Converts a DateTime to start of day (00:00:00) in the specified timezone, returns UTC.
+    /// Use for JobRecord StartDate to ensure dates are at midnight in user's local timezone.
+    /// </summary>
+    /// <param name="dateTime">The DateTime to convert (can be any timezone).</param>
+    /// <param name="timezone">The target timezone for calculating start of day.</param>
+    /// <returns>UTC DateTime representing midnight (00:00:00) in the specified timezone.</returns>
+    /// <example>
+    /// // User in UTC+7 saves date 2026-02-10
+    /// // Returns 2026-02-09T17:00:00Z (00:00 ICT = 17:00 UTC previous day)
+    /// var utcStart = someDate.ToStartOfDayInTimezone(TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+    /// </example>
+    public static DateTime ToStartOfDayInTimezone(this DateTime dateTime, TimeZoneInfo timezone)
+    {
+        // Handle UTC input by converting to target timezone first
+        var localDate = dateTime.Kind == DateTimeKind.Utc
+            ? TimeZoneInfo.ConvertTimeFromUtc(dateTime, timezone)
+            : TimeZoneInfo.ConvertTime(dateTime, timezone);
+
+        // Get start of day in that timezone (midnight)
+        var startOfDayLocal = localDate.Date;
+
+        // Convert back to UTC
+        return TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(startOfDayLocal, DateTimeKind.Unspecified),
+            timezone);
+    }
+
+    /// <summary>
+    /// Converts a DateTime to end of day (23:59:59.9999999) in the specified timezone, returns UTC.
+    /// Use for JobRecord EndDate to ensure dates are at end of day in user's local timezone.
+    /// </summary>
+    /// <param name="dateTime">The DateTime to convert (can be any timezone).</param>
+    /// <param name="timezone">The target timezone for calculating end of day.</param>
+    /// <returns>UTC DateTime representing end of day (23:59:59.9999999) in the specified timezone.</returns>
+    /// <example>
+    /// // User in UTC+7 saves end date 2026-02-10
+    /// // Returns 2026-02-10T16:59:59.9999999Z (23:59:59 ICT = 16:59:59 UTC)
+    /// var utcEnd = someDate.ToEndOfDayInTimezone(TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time"));
+    /// </example>
+    public static DateTime ToEndOfDayInTimezone(this DateTime dateTime, TimeZoneInfo timezone)
+    {
+        // Handle UTC input by converting to target timezone first
+        var localDate = dateTime.Kind == DateTimeKind.Utc
+            ? TimeZoneInfo.ConvertTimeFromUtc(dateTime, timezone)
+            : TimeZoneInfo.ConvertTime(dateTime, timezone);
+
+        // Get end of day in that timezone (23:59:59.9999999)
+        var endOfDayLocal = localDate.Date.AddDays(1).AddTicks(-1);
+
+        // Convert back to UTC
+        return TimeZoneInfo.ConvertTimeToUtc(
+            DateTime.SpecifyKind(endOfDayLocal, DateTimeKind.Unspecified),
+            timezone);
+    }
+
     public static DateTime EndDateOfYear(this DateTime dateTime)
     {
         var startOfNextYear = new DateTime(dateTime.Year + 1, 1, 1);

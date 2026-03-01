@@ -2,12 +2,14 @@
 name: cook-hard
 version: 1.0.0
 description: '[Implementation] Thorough implementation with maximum verification'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+- `docs/test-specs/` — Test specifications by module (read existing TCs; generate/update test specs via `/tdd-spec` after implementation)
 
 > **Skill Variant:** Variant of `/cook` — thorough implementation with maximum verification.
 
@@ -16,17 +18,22 @@ activation: user-invoked
 **Goal:** Implement features with deep research, comprehensive planning, and maximum quality verification.
 
 **Workflow:**
+
 1. **Research** — Deep investigation with multiple researcher subagents
 2. **Plan** — Detailed plan with `/plan-hard`, user approval required
 3. **Implement** — Execute with full code review and SRE review
 4. **Verify** — Run all tests, review changes, update docs
 
 **Key Rules:**
+
 - Maximum thoroughness: research → plan → implement → review → test → docs
 - User approval required at plan stage
 - Break work into todo tasks; add final self-review task
 
 **Ultrathink** to plan and implement these tasks with maximum verification:
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
 <tasks>$ARGUMENTS</tasks>
 
 **Mode:** HARD - Extra research, detailed planning, mandatory reviews.
@@ -60,6 +67,22 @@ activation: user-invoked
     - Run type-check and compile
     - Run relevant tests
     - Self-review before proceeding
+
+### Batch Checkpoint (Large Plans)
+
+For plans with 10+ tasks, execute in batches with human review:
+
+1. **Execute batch** — Complete next 3 tasks (or user-specified batch size)
+2. **Report** — Show what was implemented, verification output, any concerns
+3. **Wait** — Say "Ready for feedback" and STOP. Do NOT continue automatically.
+4. **Apply feedback** — Incorporate changes, then execute next batch
+5. **Repeat** until all tasks complete
+
+<HARD-GATE>
+For plans with 10+ tasks, do NOT execute all tasks continuously without checkpoint.
+Stop after every batch for human review. This prevents runaway execution where early
+mistakes compound through later tasks.
+</HARD-GATE>
 
 ### 4. Mandatory Testing
 

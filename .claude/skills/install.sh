@@ -609,8 +609,8 @@ setup_python_env() {
         if [ -d "$skill_dir" ]; then
             skill_name=$(basename "$skill_dir")
 
-            # Skip .venv and document-skills
-            if [ "$skill_name" == ".venv" ] || [ "$skill_name" == "document-skills" ]; then
+            # Skip .venv
+            if [ "$skill_name" == ".venv" ]; then
                 continue
             fi
 

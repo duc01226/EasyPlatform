@@ -12,15 +12,20 @@
 
 const path = require('path');
 const fs = require('fs');
-const { normalizePathForComparison, buildBoundaryAllowlist } = require('./lib/ck-path-utils.cjs');
+
+// Lazy-load ck-path-utils (deferred until after isBoundaryCheckDisabled early exit)
+let _ckPathUtils;
+function getCkPathUtils() {
+    return _ckPathUtils || (_ckPathUtils = require('./lib/ck-path-utils.cjs'));
+}
 
 /**
  * Get project root from environment or cwd
  * @returns {string} Normalized project root path
  */
 function getProjectRoot() {
-  const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  return normalizePathForComparison(root);
+    const root = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+    return getCkPathUtils().normalizePathForComparison(root);
 }
 
 /**
@@ -29,12 +34,12 @@ function getProjectRoot() {
  * @returns {string} Decoded path
  */
 function decodePath(p) {
-  if (!p) return '';
-  try {
-    return decodeURIComponent(p);
-  } catch {
-    return p; // Return as-is if invalid encoding
-  }
+    if (!p) return '';
+    try {
+        return decodeURIComponent(p);
+    } catch {
+        return p; // Return as-is if invalid encoding
+    }
 }
 
 /**
@@ -44,34 +49,38 @@ function decodePath(p) {
  * @returns {string} Absolute resolved path
  */
 function resolveRealPath(p, projectRoot) {
-  if (!p) return '';
+    if (!p) return '';
 
-  // Decode URI components first
-  let decoded = decodePath(p);
+    // Decode URI components first
+    let decoded = decodePath(p);
 
-  // Handle home directory expansion
-  if (decoded.startsWith('~/') || decoded === '~') {
-    const home = process.env.HOME || process.env.USERPROFILE || '';
-    decoded = decoded.replace(/^~/, home);
-  }
+    // Convert MSYS/Git Bash paths (/d/... → D:/...) before path.resolve()
+    // Node.js doesn't understand MSYS format and would resolve /d/path as D:\d\path
+    decoded = getCkPathUtils().convertMsysToWindows(decoded);
 
-  // Resolve to absolute path
-  let resolved;
-  if (path.isAbsolute(decoded)) {
-    resolved = path.resolve(decoded);
-  } else {
-    // Relative paths resolved against project root
-    resolved = path.resolve(projectRoot, decoded);
-  }
+    // Handle home directory expansion
+    if (decoded.startsWith('~/') || decoded === '~') {
+        const home = process.env.HOME || process.env.USERPROFILE || '';
+        decoded = decoded.replace(/^~/, home);
+    }
 
-  // Try to resolve symlinks (fail gracefully if file doesn't exist)
-  try {
-    resolved = fs.realpathSync(resolved);
-  } catch {
-    // File may not exist yet (Write operation), use resolved path
-  }
+    // Resolve to absolute path
+    let resolved;
+    if (path.isAbsolute(decoded)) {
+        resolved = path.resolve(decoded);
+    } else {
+        // Relative paths resolved against project root
+        resolved = path.resolve(projectRoot, decoded);
+    }
 
-  return normalizePathForComparison(resolved);
+    // Try to resolve symlinks (fail gracefully if file doesn't exist)
+    try {
+        resolved = fs.realpathSync(resolved);
+    } catch {
+        // File may not exist yet (Write operation), use resolved path
+    }
+
+    return getCkPathUtils().normalizePathForComparison(resolved);
 }
 
 /**
@@ -79,7 +88,7 @@ function resolveRealPath(p, projectRoot) {
  * @returns {string[]} Array of normalized allowed paths
  */
 function buildAllowlist() {
-  return buildBoundaryAllowlist(getConfigArray('pathBoundaryAllowedDirs'));
+    return getCkPathUtils().buildBoundaryAllowlist(getConfigArray('pathBoundaryAllowedDirs'));
 }
 
 /**
@@ -88,13 +97,13 @@ function buildAllowlist() {
  * @returns {string[]} Array value or empty array
  */
 function getConfigArray(key) {
-  try {
-    const configPath = path.join(process.cwd(), '.claude', '.ck.json');
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    return Array.isArray(config[key]) ? config[key] : [];
-  } catch {
-    return [];
-  }
+    try {
+        const configPath = path.join(process.cwd(), '.claude', '.ck.json');
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        return Array.isArray(config[key]) ? config[key] : [];
+    } catch {
+        return [];
+    }
 }
 
 /**
@@ -102,7 +111,7 @@ function getConfigArray(key) {
  * @returns {boolean} true if boundary check should be skipped
  */
 function isBoundaryCheckDisabled() {
-  return getConfigValue('pathBoundary') === false;
+    return getConfigValue('pathBoundary') === false;
 }
 
 /**
@@ -111,13 +120,13 @@ function isBoundaryCheckDisabled() {
  * @returns {*} Config value or undefined
  */
 function getConfigValue(key) {
-  try {
-    const configPath = path.join(process.cwd(), '.claude', '.ck.json');
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-    return config[key];
-  } catch {
-    return undefined;
-  }
+    try {
+        const configPath = path.join(process.cwd(), '.claude', '.ck.json');
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+        return config[key];
+    } catch {
+        return undefined;
+    }
 }
 
 /**
@@ -127,7 +136,7 @@ function getConfigValue(key) {
  * @returns {boolean} true if path is within directory
  */
 function isWithinDir(targetPath, dir) {
-  return targetPath === dir || targetPath.startsWith(dir + '/');
+    return targetPath === dir || targetPath.startsWith(dir + '/');
 }
 
 /**
@@ -138,11 +147,11 @@ function isWithinDir(targetPath, dir) {
  * @returns {boolean} true if path is outside and not allowlisted
  */
 function isOutsideProject(resolvedPath, projectRoot, allowlist) {
-  if (!resolvedPath) return false; // Empty paths handled by Claude
+    if (!resolvedPath) return false; // Empty paths handled by Claude
 
-  // Check if inside project or any allowlisted directory
-  const allowedDirs = [projectRoot, ...allowlist];
-  return !allowedDirs.some(dir => isWithinDir(resolvedPath, dir));
+    // Check if inside project or any allowlisted directory
+    const allowedDirs = [projectRoot, ...allowlist];
+    return !allowedDirs.some(dir => isWithinDir(resolvedPath, dir));
 }
 
 /**
@@ -153,12 +162,12 @@ function isOutsideProject(resolvedPath, projectRoot, allowlist) {
  * @returns {string[]} Matched values
  */
 function extractMatches(regex, text, filter = () => true) {
-  const results = [];
-  let match;
-  while ((match = regex.exec(text)) !== null) {
-    if (match[1] && filter(match[1])) results.push(match[1]);
-  }
-  return results;
+    const results = [];
+    let match;
+    while ((match = regex.exec(text)) !== null) {
+        if (match[1] && filter(match[1])) results.push(match[1]);
+    }
+    return results;
 }
 
 /**
@@ -168,46 +177,38 @@ function extractMatches(regex, text, filter = () => true) {
  * @returns {Array<{value: string, field: string}>} Extracted paths
  */
 function extractPaths(toolInput, toolName) {
-  if (!toolInput) return [];
+    if (!toolInput) return [];
 
-  const paths = [];
-  const addPath = (value, field) => value && paths.push({ value, field });
+    const paths = [];
+    const addPath = (value, field) => value && paths.push({ value, field });
 
-  // Direct file path fields
-  ['file_path', 'path', 'notebook_path'].forEach(f => addPath(toolInput[f], f));
+    // Direct file path fields
+    ['file_path', 'path', 'notebook_path'].forEach(f => addPath(toolInput[f], f));
 
-  // MCP filesystem array paths
-  if (toolName?.startsWith('mcp__filesystem__') && Array.isArray(toolInput.paths)) {
-    toolInput.paths.forEach(p => addPath(p, 'paths[]'));
-  }
+    // MCP filesystem array paths
+    if (toolName?.startsWith('mcp__filesystem__') && Array.isArray(toolInput.paths)) {
+        toolInput.paths.forEach(p => addPath(p, 'paths[]'));
+    }
 
-  // Bash command parsing
-  if (toolInput.command) {
-    const cmd = toolInput.command;
+    // Bash command parsing
+    if (toolInput.command) {
+        const cmd = toolInput.command;
 
-    // File operation patterns (cat, head, etc.)
-    extractMatches(
-      /(?:cat|head|tail|less|more|vim|nano|code|notepad|type)\s+["']?([^\s"'|><&;]+)/gi,
-      cmd,
-      m => !m.startsWith('-')
-    ).forEach(p => addPath(p, 'command'));
+        // File operation patterns (cat, head, etc.)
+        extractMatches(/(?:cat|head|tail|less|more|vim|nano|code|notepad|type)\s+["']?([^\s"'|><&;]+)/gi, cmd, m => !m.startsWith('-')).forEach(p =>
+            addPath(p, 'command')
+        );
 
-    // Redirection targets (> file, >> file) — skip /dev, /proc, /sys
-    extractMatches(
-      />\s*["']?([^\s"'|><&;]+)/g,
-      cmd,
-      m => !/^\/(?:dev|proc|sys)(\/|$)/.test(m)
-    ).forEach(p => addPath(p, 'command'));
+        // Redirection targets (> file, >> file) — skip /dev, /proc, /sys
+        extractMatches(/>\s*["']?([^\s"'|><&;]+)/g, cmd, m => !/^\/(?:dev|proc|sys)(\/|$)/.test(m)).forEach(p => addPath(p, 'command'));
 
-    // Absolute paths (skip /dev, /proc, /sys)
-    extractMatches(
-      /(?:^|\s)["']?([A-Za-z]:[/\\][^\s"'|><&;]+|\/[^\s"'|><&;]+)/g,
-      cmd,
-      m => !/^\/(?:dev|proc|sys)\//.test(m)
-    ).forEach(p => addPath(p, 'command'));
-  }
+        // Absolute paths (skip /dev, /proc, /sys)
+        extractMatches(/(?:^|\s)["']?([A-Za-z]:[/\\][^\s"'|><&;]+|\/[^\s"'|><&;]+)/g, cmd, m => !/^\/(?:dev|proc|sys)\//.test(m)).forEach(p =>
+            addPath(p, 'command')
+        );
+    }
 
-  return paths;
+    return paths;
 }
 
 /**
@@ -217,7 +218,7 @@ function extractPaths(toolInput, toolName) {
  * @returns {string} Formatted error message
  */
 function formatBlockMessage(blockedPath, projectRoot) {
-  return `
+    return `
 \x1b[31mBLOCKED:\x1b[0m Path outside project boundary
 
   \x1b[33mPath:\x1b[0m ${blockedPath}
@@ -239,58 +240,60 @@ function formatBlockMessage(blockedPath, projectRoot) {
 
 // Main execution
 async function main() {
-  // Check if boundary check is disabled
-  if (isBoundaryCheckDisabled()) {
-    process.exit(0);
-  }
-
-  // Read stdin
-  let input = '';
-  for await (const chunk of process.stdin) {
-    input += chunk;
-  }
-
-  // Parse hook data
-  let hookData;
-  try {
-    hookData = JSON.parse(input);
-  } catch {
-    process.exit(0); // Invalid JSON, allow (fail-open for parse errors)
-  }
-
-  const { tool_input: toolInput, tool_name: toolName } = hookData;
-
-  // Get project root and build allowlist
-  const projectRoot = getProjectRoot();
-  const allowlist = buildAllowlist();
-
-  // Extract and validate all paths
-  const paths = extractPaths(toolInput, toolName);
-
-  for (const { value: rawPath } of paths) {
-    const resolvedPath = resolveRealPath(rawPath, projectRoot);
-
-    if (isOutsideProject(resolvedPath, projectRoot, allowlist)) {
-      console.error(formatBlockMessage(rawPath, projectRoot));
-      process.exit(2); // Block
+    // Check if boundary check is disabled
+    if (isBoundaryCheckDisabled()) {
+        process.exit(0);
     }
-  }
 
-  process.exit(0); // Allow
+    // Read stdin
+    let input = '';
+    for await (const chunk of process.stdin) {
+        input += chunk;
+    }
+
+    // Parse hook data
+    let hookData;
+    try {
+        hookData = JSON.parse(input);
+    } catch {
+        process.exit(0); // Invalid JSON, allow (fail-open for parse errors)
+    }
+
+    const { tool_input: toolInput, tool_name: toolName } = hookData;
+
+    // Get project root and build allowlist
+    const projectRoot = getProjectRoot();
+    const allowlist = buildAllowlist();
+
+    // Extract and validate all paths
+    const paths = extractPaths(toolInput, toolName);
+
+    for (const { value: rawPath } of paths) {
+        const resolvedPath = resolveRealPath(rawPath, projectRoot);
+
+        if (isOutsideProject(resolvedPath, projectRoot, allowlist)) {
+            console.error(formatBlockMessage(rawPath, projectRoot));
+            process.exit(2); // Block
+        }
+    }
+
+    process.exit(0); // Allow
 }
 
 main().catch(() => process.exit(0));
 
 // Export for testing
 module.exports = {
-  getProjectRoot,
-  normalizePathForComparison,
-  decodePath,
-  resolveRealPath,
-  buildAllowlist,
-  isBoundaryCheckDisabled,
-  isOutsideProject,
-  isWithinDir,
-  extractPaths,
-  extractMatches,
+    getProjectRoot,
+    get normalizePathForComparison() {
+        return getCkPathUtils().normalizePathForComparison;
+    },
+    decodePath,
+    resolveRealPath,
+    buildAllowlist,
+    isBoundaryCheckDisabled,
+    isOutsideProject,
+    isWithinDir,
+    extractPaths,
+    extractMatches
 };

@@ -6,9 +6,17 @@ description: "[Investigation] Fast codebase file discovery for task-related file
 allowed-tools: Glob, Grep, Read, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+
+> **Process Discipline:** MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` — counter "already searched" and "pattern is close enough" evasions.
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
@@ -25,6 +33,8 @@ allowed-tools: Glob, Grep, Read, Task, TaskCreate
 - Speed over depth -- return file paths only, no content analysis
 - Target 3-5 minutes total completion time
 - 3-minute timeout per agent; skip agents that don't return in time
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Scout - Fast Codebase File Discovery
 
@@ -64,7 +74,7 @@ Fast codebase search to locate files needed for a task. Token-efficient, paralle
 
 Extract keywords from USER_PROMPT to identify:
 
-- Entity names (e.g., Employee, Candidate, Survey)
+- Entity names (e.g., User, Customer, Order)
 - Feature names (e.g., authentication, notification)
 - File types needed (backend, frontend, or both)
 
@@ -190,7 +200,25 @@ Use naming pattern: `plans/reports/scout-{date}-{slug}.md`
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## Workflow Recommendation
 
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
+> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+>
+> 1. **Activate `investigation` workflow** (Recommended) — scout → investigate
+> 2. **Execute `/scout` directly** — run this skill standalone
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+
+- **"/investigate (Recommended)"** — Deep-dive into discovered files to understand logic and relationships
+- **"/plan"** — If scouted files are sufficient to start planning implementation
+- **"Skip, continue manually"** — user decides
+
+## Closing Reminders
+
+**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.

@@ -52,21 +52,21 @@ Write for both technical and non-technical readers:
 Group related changes by module/feature:
 
 ```markdown
-### bravoTALENTS: Hiring Pipeline
+### TextSnippet: Tag Management
 
-**Feature**: Customizable hiring pipeline builder for recruitment.
+**Feature**: Customizable tag management for text snippet organization.
 
 #### Added
 
 **Backend**:
-- Pipeline and Stage entities with CRUD operations
-- Pipeline duplication and default templates
-- Multi-language support (EN/VI)
+- Tag entity with CRUD operations
+- Tag categorization and default templates
+- Search and filter support
 
 **Frontend**:
-- Drag-and-drop stage builder
-- Pipeline filter and stage display components
-- Updated navigation and job creation wizard
+- Tag management interface
+- Tag filter and display components
+- Updated navigation and snippet editor
 ```
 
 ### Linking

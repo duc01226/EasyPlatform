@@ -1,4 +1,4 @@
-# Getting Started with BravoSUITE
+# Getting Started with EasyPlatform
 
 > Complete setup guide for development environment
 
@@ -101,69 +101,52 @@ npm ping --registry https://vsonline.orientsoftware.net/tfs/DefaultCollection/_p
 
 ```bash
 git clone <repository-url>
-cd BravoSUITE
+cd EasyPlatform
 
-# Start infrastructure (SQL Server, MongoDB, RabbitMQ, Redis)
-.\Bravo-DevStarts\"COMMON Infrastructure Dev-start.cmd"
-
-# Start authentication service
-.\Bravo-DevStarts\"COMMON Accounts Api Dev-start.cmd"
+# Start infrastructure (MongoDB, RabbitMQ, Redis, PostgreSQL)
+src/start-dev-platform-example-app.infrastructure.cmd
 ```
 
 ### Step 2: Choose Development Path
 
 #### Frontend Development
 
-**Modern Angular 19 (WebV2):**
+**Angular 19 (Nx Workspace):**
 ```bash
-cd src\WebV2
+cd src/Frontend
 code .
-npm install --force
-npm run dev-start:growth    # Port 4206
-# OR
-npm run dev-start:employee  # Port 4205
-```
-
-**Legacy Angular 12:**
-```bash
-cd src\Web\bravoTALENTSClient
-code .
-npm install --force
-npm start                   # Port 4200
+npm install
+npm start                   # TextSnippet playground app
 ```
 
 #### Backend Development (.NET 9)
 
 ```bash
 # Open in Visual Studio
-start BravoSUITE.sln
+start Easy.Platform.sln
 
-# Start microservices
-.\Bravo-DevStarts\"GROWTH Api Dev-start.cmd"
-.\Bravo-DevStarts\"TALENTS Api Dev-start.cmd"
-.\Bravo-DevStarts\"SURVEYS Api Dev-start.cmd"
+# Start TextSnippet API
+dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
 ```
 
 #### Full Stack (Docker)
 
 ```bash
 # Requires 6GB RAM
-.\Bravo-DevStarts\StartDocker\"START-ALL.cmd"
+src/start-dev-platform-example-app.cmd
 ```
 
 ### Step 3: Verify Setup
 
 - **Infrastructure**: http://localhost:15672 (RabbitMQ: guest/guest)
-- **API**: https://localhost:7001/swagger (Accounts API)
+- **API**: https://localhost:5001/swagger (TextSnippet API)
 - **Frontend**: http://localhost:4200 (Angular App)
 
 ### Step 4: Test Accounts
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | `surveytool123456@gmail.com` | `Bravo@123` |
-| HR Manager | `test.hr-manager@mailinator.com` | `Bravo@123` |
-| Employee | `test.default@mailinator.com` | `Bravo@123` |
+| Role | Description |
+|------|-------------|
+| Default | Default user context (no auth required for example app) |
 
 ---
 
@@ -184,23 +167,22 @@ start BravoSUITE.sln
 
 ```bash
 # Backend
-dotnet build BravoSUITE.sln
-dotnet run --project [Service].Service
+dotnet build Easy.Platform.sln
+dotnet run --project src/Backend/PlatformExampleApp.TextSnippet.Api
 
-# Frontend (WebV2)
-npm run dev-start:growth    # Port 4206
-npm run dev-start:employee  # Port 4205
-nx build growth-for-company
-nx test bravo-domain
+# Frontend
+cd src/Frontend
+npm install
+npm start
 ```
 
 ## Database Connections
 
 | Database | Connection | Credentials |
 |----------|------------|-------------|
-| SQL Server | localhost,14330 | sa / 123456Abc |
 | MongoDB | localhost:27017 | root / rootPassXXX |
 | PostgreSQL | localhost:54320 | postgres / postgres |
+| SQL Server | localhost,14330 | sa / 123456Abc |
 | Redis | localhost:6379 | - |
 | RabbitMQ | localhost:15672 | guest / guest |
 

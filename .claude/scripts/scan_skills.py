@@ -65,7 +65,7 @@ def scan_skills(base_path: Path) -> List[Dict]:
         if skill_name == 'template-skill':
             continue
 
-        # Handle nested skills (like document-skills/*)
+        # Handle nested skills (e.g. subdirectory-grouped skills)
         if skill_dir.parent.name != 'skills':
             parent_name = skill_dir.parent.name
             skill_name = f"{parent_name}/{skill_name}"
@@ -125,7 +125,7 @@ def categorize_skill(name: str, description: str, content: str) -> str:
         return 'dev-tools'
 
     # Multimedia
-    if any(x in lower_name for x in ['media', 'chrome-devtools', 'document-skills']):
+    if any(x in lower_name for x in ['media', 'chrome-devtools']):
         return 'multimedia'
 
     # Frameworks

@@ -4,7 +4,7 @@
 
 Reference: Search for existing test spec files in `docs/test-specs/{Module}/README.md`
 
-```markdown
+````markdown
 # {Module} - Comprehensive Test Specifications
 
 **Module**: {Module} ([Description])
@@ -17,7 +17,7 @@ Reference: Search for existing test spec files in `docs/test-specs/{Module}/READ
 
 1. [Feature 1 Test Specs](#1-feature-1-test-specs)
 2. [Feature 2 Test Specs](#2-feature-2-test-specs)
-...
+   ...
 
 ---
 
@@ -30,11 +30,13 @@ Reference: Search for existing test spec files in `docs/test-specs/{Module}/READ
 **Priority**: P0-Critical | P1-High | P2-Medium | P3-Low
 
 **Preconditions**:
+
 - User has `{Policy}` authorization
 - Company has active {Feature} subscription
 - [Other setup requirements]
 
 **Test Steps** (Given-When-Then):
+
 ```gherkin
 Given [initial context/state]
   And [additional context if needed]
@@ -43,22 +45,26 @@ When [action performed]
 Then [expected outcome]
   And [additional verification]
 ```
+````
 
 **Acceptance Criteria**:
+
 - Success: [Expected success behavior]
 - Success: [Another success case]
 - Failure: [Expected failure behavior]
 - Failure: [Another failure case]
 
 **Test Data**:
+
 ```json
 {
-  "field": "value",
-  "required": true
+    "field": "value",
+    "required": true
 }
 ```
 
 **Edge Cases**:
+
 - Failure: [Boundary condition 1] -> [Expected error]
 - Failure: [Boundary condition 2] -> [Expected error]
 - Success: [Edge case that should succeed] -> Success
@@ -66,8 +72,8 @@ Then [expected outcome]
 **Evidence**:
 
 - **Controller**: `{Module}.Service/Controllers/{Controller}.cs:L{lines}`
-  - Authorization: `{Policies}`
-  - Endpoint: `{Method} /api/{path}`
+    - Authorization: `{Policies}`
+    - Endpoint: `{Method} /api/{path}`
 
 - **Command Handler**: `{Module}.Application/UseCaseCommands/{Feature}/{Command}.cs:L{lines}`
 
@@ -78,6 +84,7 @@ Then [expected outcome]
 // {File}:L{lines}
 [actual code snippet]
 ```
+
 </details>
 
 **Related Files**:
@@ -105,13 +112,14 @@ See [INTEGRATION-TESTS.md](../INTEGRATION-TESTS.md) for cross-module scenarios.
 
 ## Related Documentation
 
-- **Business Features**: [docs/business-features/{Module}/README.md](../../business-features/{Module}/README.md)
-- **Backend Patterns**: [docs/backend-patterns-reference.md](../../claude/backend-patterns-reference.md)
+- **Business Features**: `docs/business-features/{Module}/README.md`
+- **Backend Patterns**: `docs/project-reference/backend-patterns-reference.md`
 
 ---
 
 **Last Updated**: {Date}
-```
+
+````
 
 ---
 
@@ -135,12 +143,13 @@ Then goal is created with status "Draft"
 Given user is logged in
 When user creates a goal
 Then it works
-```
+````
 
 ### Acceptance Criteria Format
 
 ```markdown
 **Acceptance Criteria**:
+
 - Success: Form validates all required fields (Title, GoalType, TargetDate)
 - Success: Backend creates Goal entity in database
 - Success: Goal assigned to current employee as owner
@@ -155,6 +164,7 @@ Then it works
 ## Evidence Requirements
 
 Every test case MUST include:
+
 1. **Controller reference**: File path + line numbers + authorization policies
 2. **Handler/Command reference**: File path + line numbers for business logic
 3. **Code snippet**: Actual code in `<details>` block for key validation/logic
@@ -164,18 +174,20 @@ Every test case MUST include:
 
 ## Complete Example: Feature Test Case
 
-```markdown
+````markdown
 #### TC-{MOD}-{FEAT}-001: Execute Feature Action Successfully
 
 **Priority**: P1-High
 
 **Preconditions**:
+
 - User has required authorization policy
 - Company has feature enabled
 - User has remaining quota/permission for current period
 - Target entity is active
 
 **Test Steps** (Given-When-Then):
+
 ```gherkin
 Given user is authenticated with required role
   And company has feature enabled
@@ -190,8 +202,10 @@ Then transaction is created
   And result appears in list/feed
   And confirmation message displayed to user
 ```
+````
 
 **Acceptance Criteria**:
+
 - Success: Transaction created with all required fields
 - Success: State updated correctly (e.g., counters, status)
 - Success: Notification sent via message bus
@@ -202,16 +216,18 @@ Then transaction is created
 - Failure: Cross-boundary violation returns authorization error
 
 **Test Data**:
+
 ```json
 {
-  "targetEntityId": "entity-12345",
-  "actionType": "TypeA",
-  "message": "Test action message",
-  "additionalFlag": false
+    "targetEntityId": "entity-12345",
+    "actionType": "TypeA",
+    "message": "Test action message",
+    "additionalFlag": false
 }
 ```
 
 **Edge Cases**:
+
 - Failure: Empty required field -> Validation error
 - Failure: Field exceeds max length -> Validation error
 - Success: Field with special characters -> Success
@@ -220,8 +236,8 @@ Then transaction is created
 **Evidence**:
 
 - **Controller**: `{Service}.Service/Controllers/{Feature}Controller.cs:L{lines}`
-  - Authorization: `{Policy}`
-  - Endpoint: `POST /api/{Feature}/{action}`
+    - Authorization: `{Policy}`
+    - Endpoint: `POST /api/{Feature}/{action}`
 
 - **Command Handler**: `{Service}.Application/UseCaseCommands/{Feature}/{Command}.cs:L{lines}`
 
@@ -238,6 +254,7 @@ return await requestSelfValidation
         "Quota exceeded for this period"
     );
 ```
+
 </details>
 
 **Related Files**:
@@ -248,4 +265,7 @@ return await requestSelfValidation
 | Backend  | Command    | `src/Services/{ServiceDir}/{Service}.Application/UseCaseCommands/{Feature}/{Command}.cs` |
 | Backend  | Entity     | `src/Services/{ServiceDir}/{Service}.Domain/Entities/{Feature}/{Entity}.cs`              |
 | Frontend | Component  | `{frontend-apps-dir}/{app-name}/src/app/{feature}/{action}/{action}.component.ts`        |
+
+```
+
 ```

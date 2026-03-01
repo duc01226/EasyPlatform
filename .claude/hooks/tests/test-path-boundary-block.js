@@ -12,6 +12,8 @@ const os = require('os');
 
 const HOOK_PATH = path.join(__dirname, '..', 'path-boundary-block.cjs');
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..');
+const { generateTestFixtures } = require('../lib/test-fixture-generator.cjs');
+const f = generateTestFixtures();
 
 /**
  * Run the hook with given input
@@ -64,7 +66,7 @@ const allowTests = [
   },
   {
     name: 'project subdir (relative) - should allow',
-    input: { tool_input: { file_path: 'src/Services/Growth/file.cs' } },
+    input: { tool_input: { file_path: f.backendServiceCs } },
     expectBlock: false
   },
   {

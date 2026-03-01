@@ -2,13 +2,13 @@
 /**
  * Code Review Rules Injector - PreToolUse Hook (Skill matcher)
  *
- * Injects BravoSUITE-specific code review rules when review-related skills are activated.
- * Rules are stored externally in docs/code-review-rules.md (configurable via .ck.json).
+ * Injects project-specific code review rules when review-related skills are activated.
+ * Rules are stored externally in docs/project-reference/code-review-rules.md (configurable via .ck.json).
  *
  * Configuration (.ck.json):
  *   "codeReview": {
  *     "enabled": true,
- *     "rulesPath": "docs/code-review-rules.md",
+ *     "rulesPath": "docs/project-reference/code-review-rules.md",
  *     "injectOnSkills": ["code-review", "review-pr", "review-changes"]
  *   }
  *
@@ -24,16 +24,15 @@ const { loadConfig } = require('./lib/ck-config-utils.cjs');
 // DEDUPLICATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const INJECTION_MARKER = '[BravoSUITE Code Review Rules - Auto-Injected]';
+const { CODE_REVIEW_RULES: INJECTION_MARKER, DEDUP_LINES } = require('./lib/dedup-constants.cjs');
 
 function wasRecentlyInjected(transcriptPath) {
     try {
         if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
         const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-        // Check last 300 lines (rules are ~150 lines, so this covers ~2 injections)
         return transcript
             .split('\n')
-            .slice(-300)
+            .slice(-DEDUP_LINES.CODE_REVIEW_RULES)
             .some(line => line.includes(INJECTION_MARKER));
     } catch (e) {
         return false;
@@ -67,9 +66,10 @@ async function main() {
 
         // Check if this skill should trigger injection
         const targetSkills = reviewConfig.injectOnSkills || ['code-review', 'review', 'review:codebase', 'review-changes', 'code-reviewer'];
-        const shouldInject = targetSkills.some(target => skillName.includes(target.toLowerCase()) || target.toLowerCase().includes(skillName))
+        const shouldInject =
+            targetSkills.some(target => skillName.includes(target.toLowerCase()) || target.toLowerCase().includes(skillName)) ||
             // Wildcard: catch future *-review skills automatically
-            || skillName.endsWith('-review');
+            skillName.endsWith('-review');
 
         if (!shouldInject) process.exit(0);
 
@@ -77,7 +77,7 @@ async function main() {
         if (wasRecentlyInjected(payload.transcript_path)) process.exit(0);
 
         // Resolve rules file path
-        const rulesPath = reviewConfig.rulesPath || 'docs/code-review-rules.md';
+        const rulesPath = reviewConfig.rulesPath || 'docs/project-reference/code-review-rules.md';
         const fullPath = path.resolve(process.cwd(), rulesPath);
 
         if (!fs.existsSync(fullPath)) {
@@ -94,7 +94,7 @@ async function main() {
         console.log(`---\n`);
         console.log(rules);
         console.log(`\n---\n`);
-        console.log(`**IMPORTANT:** Apply these BravoSUITE-specific rules during your review.\n`);
+        console.log(`**IMPORTANT:** Apply these project-specific rules during your review.\n`);
 
         process.exit(0);
     } catch (error) {

@@ -3,9 +3,9 @@
  *
  * Tests for:
  * - design-system-context.cjs: Design system documentation injection
- * - backend-csharp-context.cjs: Backend C# guide injection
- * - frontend-typescript-context.cjs: Frontend TypeScript guide injection
- * - scss-styling-context.cjs: SCSS styling guide injection
+ * - backend-context.cjs: Backend context guide injection
+ * - frontend-context.cjs: Frontend context guide injection
+ * - scss-styling-context.cjs: Styling guide injection
  */
 
 const path = require('path');
@@ -13,12 +13,16 @@ const fs = require('fs');
 const { runHook, getHookPath, createPreToolUseInput } = require('../lib/hook-runner.cjs');
 const { assertEqual, assertContains, assertAllowed, assertTrue } = require('../lib/assertions.cjs');
 const { createTempDir, cleanupTempDir, createMockFile } = require('../lib/test-utils.cjs');
+const { generateTestFixtures } = require('../../lib/test-fixture-generator.cjs');
+
+// Get project-agnostic test fixtures
+const f = generateTestFixtures();
 
 // Hook paths
 const DESIGN_SYSTEM_CONTEXT = getHookPath('design-system-context.cjs');
-const BACKEND_CSHARP_CONTEXT = getHookPath('backend-csharp-context.cjs');
-const FRONTEND_TYPESCRIPT_CONTEXT = getHookPath('frontend-typescript-context.cjs');
-const SCSS_STYLING_CONTEXT = getHookPath('scss-styling-context.cjs');
+const BACKEND_CONTEXT = getHookPath('backend-context.cjs');
+const FRONTEND_CONTEXT = getHookPath('frontend-context.cjs');
+const STYLING_CONTEXT = getHookPath('scss-styling-context.cjs');
 
 // ============================================================================
 // design-system-context.cjs Tests
@@ -26,12 +30,12 @@ const SCSS_STYLING_CONTEXT = getHookPath('scss-styling-context.cjs');
 
 const designSystemContextTests = [
     {
-        name: '[design-system-context] injects for WebV2 .scss file',
+        name: '[design-system-context] injects for modern frontend .scss file',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/components/button.scss',
+                    file_path: `${f.modernAppBase}/components/button.scss`,
                     old_string: 'a',
                     new_string: 'b'
                 });
@@ -39,7 +43,7 @@ const designSystemContextTests = [
                 assertAllowed(result.code);
 
                 const output = result.stdout;
-                assertTrue(output.includes('Design System') || output.includes('WebV2') || output === '', 'May inject design system context');
+                assertTrue(output.includes('Design System') || output === '', 'May inject design system context');
             } finally {
                 cleanupTempDir(tmpDir);
             }
@@ -51,7 +55,7 @@ const designSystemContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/app/component.html',
+                    file_path: `${f.modernAppBase}/app/component.html`,
                     old_string: '<div>',
                     new_string: '<div class="x">'
                 });
@@ -68,7 +72,7 @@ const designSystemContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Services/api/controller.cs',
+                    file_path: f.backendControllerCs,
                     old_string: 'x',
                     new_string: 'y'
                 });
@@ -89,7 +93,7 @@ const designSystemContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Read', {
-                    file_path: 'src/WebV2/app.scss'
+                    file_path: `${f.modernAppBase}/app.scss`
                 });
                 const result = await runHook(DESIGN_SYSTEM_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
@@ -132,41 +136,41 @@ const designSystemContextTests = [
 ];
 
 // ============================================================================
-// backend-csharp-context.cjs Tests
+// backend-context.cjs Tests
 // ============================================================================
 
 const backendCsharpContextTests = [
     {
-        name: '[backend-csharp-context] injects for .cs file in Services',
+        name: '[backend-csharp-context] injects for .cs file in backend service',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Services/UserService/Controller.cs',
+                    file_path: f.backendControllerCs,
                     old_string: 'void',
                     new_string: 'Task'
                 });
-                const result = await runHook(BACKEND_CSHARP_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(BACKEND_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
 
                 const output = result.stdout;
-                assertTrue(output.includes('Backend') || output.includes('C#') || output === '', 'May inject backend context');
+                assertTrue(output.includes('Backend') || output === '', 'May inject backend context');
             } finally {
                 cleanupTempDir(tmpDir);
             }
         }
     },
     {
-        name: '[backend-csharp-context] injects for Platform framework file',
+        name: '[backend-csharp-context] injects for framework file',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Platform/Easy.Platform/Repository.cs',
+                    file_path: f.frameworkRepositoryCs,
                     old_string: 'x',
                     new_string: 'y'
                 });
-                const result = await runHook(BACKEND_CSHARP_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(BACKEND_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
 
                 const output = result.stdout;
@@ -177,16 +181,16 @@ const backendCsharpContextTests = [
         }
     },
     {
-        name: '[backend-csharp-context] injects for PlatformExampleApp file',
+        name: '[backend-csharp-context] injects for example app file',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Backend/TextSnippet.Api/Controller.cs',
+                    file_path: f.exampleCs,
                     old_string: 'a',
                     new_string: 'b'
                 });
-                const result = await runHook(BACKEND_CSHARP_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(BACKEND_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
             } finally {
                 cleanupTempDir(tmpDir);
@@ -199,11 +203,11 @@ const backendCsharpContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Services/config.json',
+                    file_path: f.backendConfigJson,
                     old_string: '"x"',
                     new_string: '"y"'
                 });
-                const result = await runHook(BACKEND_CSHARP_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(BACKEND_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
 
                 assertEqual(result.stdout, '', 'Should not inject for non-.cs file');
@@ -223,7 +227,7 @@ const backendCsharpContextTests = [
                     old_string: 'x',
                     new_string: 'y'
                 });
-                const result = await runHook(BACKEND_CSHARP_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(BACKEND_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
 
                 assertEqual(result.stdout, '', 'Should not inject for non-backend .cs');
@@ -237,7 +241,7 @@ const backendCsharpContextTests = [
         fn: async () => {
             const tmpDir = createTempDir();
             try {
-                const result = await runHook(BACKEND_CSHARP_CONTEXT, {}, { cwd: tmpDir });
+                const result = await runHook(BACKEND_CONTEXT, {}, { cwd: tmpDir });
                 assertAllowed(result.code, 'Should fail-open');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -247,41 +251,41 @@ const backendCsharpContextTests = [
 ];
 
 // ============================================================================
-// frontend-typescript-context.cjs Tests
+// frontend-context.cjs Tests
 // ============================================================================
 
 const frontendTypescriptContextTests = [
     {
-        name: '[frontend-typescript-context] injects for WebV2 .ts file',
+        name: '[frontend-typescript-context] injects for modern frontend .ts file',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/app/component.ts',
+                    file_path: `${f.modernAppBase}/app/component.ts`,
                     old_string: 'x',
                     new_string: 'y'
                 });
-                const result = await runHook(FRONTEND_TYPESCRIPT_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
 
                 const output = result.stdout;
-                assertTrue(output.includes('Frontend') || output.includes('TypeScript') || output === '', 'May inject frontend context');
+                assertTrue(output.includes('Frontend') || output === '', 'May inject frontend context');
             } finally {
                 cleanupTempDir(tmpDir);
             }
         }
     },
     {
-        name: '[frontend-typescript-context] injects for libs/platform-core .ts file',
+        name: '[frontend-typescript-context] injects for platform-core .ts file',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'libs/platform-core/src/component.ts',
+                    file_path: `${f.coreLibBase}/src/component.ts`,
                     old_string: 'a',
                     new_string: 'b'
                 });
-                const result = await runHook(FRONTEND_TYPESCRIPT_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
 
                 const output = result.stdout;
@@ -297,11 +301,11 @@ const frontendTypescriptContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/app/page.tsx',
+                    file_path: `${f.modernAppBase}/app/page.tsx`,
                     old_string: 'div',
                     new_string: 'section'
                 });
-                const result = await runHook(FRONTEND_TYPESCRIPT_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
             } finally {
                 cleanupTempDir(tmpDir);
@@ -309,16 +313,16 @@ const frontendTypescriptContextTests = [
         }
     },
     {
-        name: '[frontend-typescript-context] skips .cs files',
+        name: '[frontend-typescript-context] skips backend .cs files',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Services/api.cs',
+                    file_path: f.backendControllerCs,
                     old_string: 'x',
                     new_string: 'y'
                 });
-                const result = await runHook(FRONTEND_TYPESCRIPT_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
 
                 assertEqual(result.stdout, '', 'Should not inject for .cs file');
@@ -333,9 +337,9 @@ const frontendTypescriptContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Read', {
-                    file_path: 'src/WebV2/app.ts'
+                    file_path: `${f.modernAppBase}/app.ts`
                 });
-                const result = await runHook(FRONTEND_TYPESCRIPT_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(FRONTEND_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
 
                 assertEqual(result.stdout, '', 'Should not inject for Read tool');
@@ -349,7 +353,7 @@ const frontendTypescriptContextTests = [
         fn: async () => {
             const tmpDir = createTempDir();
             try {
-                const result = await runHook(FRONTEND_TYPESCRIPT_CONTEXT, {}, { cwd: tmpDir });
+                const result = await runHook(FRONTEND_CONTEXT, {}, { cwd: tmpDir });
                 assertAllowed(result.code, 'Should fail-open');
             } finally {
                 cleanupTempDir(tmpDir);
@@ -364,36 +368,36 @@ const frontendTypescriptContextTests = [
 
 const scssContextTests = [
     {
-        name: '[scss-styling-context] injects for WebV2 .scss file',
+        name: '[scss-styling-context] injects for modern frontend .scss file',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/styles/app.scss',
+                    file_path: `${f.modernAppBase}/styles/app.scss`,
                     old_string: 'color:',
                     new_string: 'background:'
                 });
-                const result = await runHook(SCSS_STYLING_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(STYLING_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
 
                 const output = result.stdout;
-                assertTrue(output.includes('SCSS') || output.includes('Styling') || output === '', 'May inject SCSS context');
+                assertTrue(output.includes('Styling') || output === '', 'May inject styling context');
             } finally {
                 cleanupTempDir(tmpDir);
             }
         }
     },
     {
-        name: '[scss-styling-context] injects for .css file',
+        name: '[scss-styling-context] injects for legacy frontend .css file',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Web/styles/global.css',
+                    file_path: `${f.legacyAppBase}/styles/global.css`,
                     old_string: 'a',
                     new_string: 'b'
                 });
-                const result = await runHook(SCSS_STYLING_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(STYLING_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
             } finally {
                 cleanupTempDir(tmpDir);
@@ -401,16 +405,16 @@ const scssContextTests = [
         }
     },
     {
-        name: '[scss-styling-context] injects for libs .scss file',
+        name: '[scss-styling-context] injects for platform-core .scss file',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'libs/platform-core/styles/theme.scss',
+                    file_path: `${f.coreLibBase}/styles/theme.scss`,
                     old_string: 'x',
                     new_string: 'y'
                 });
-                const result = await runHook(SCSS_STYLING_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(STYLING_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
             } finally {
                 cleanupTempDir(tmpDir);
@@ -423,11 +427,11 @@ const scssContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/app.ts',
+                    file_path: `${f.modernAppBase}/app.ts`,
                     old_string: 'x',
                     new_string: 'y'
                 });
-                const result = await runHook(SCSS_STYLING_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(STYLING_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
 
                 assertEqual(result.stdout, '', 'Should not inject for .ts file');
@@ -442,10 +446,10 @@ const scssContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Write', {
-                    file_path: 'libs/platform-core/new-style.scss',
+                    file_path: `${f.coreLibBase}/new-style.scss`,
                     content: '.btn { display: flex; }'
                 });
-                const result = await runHook(SCSS_STYLING_CONTEXT, input, { cwd: tmpDir });
+                const result = await runHook(STYLING_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
             } finally {
                 cleanupTempDir(tmpDir);
@@ -457,7 +461,7 @@ const scssContextTests = [
         fn: async () => {
             const tmpDir = createTempDir();
             try {
-                const result = await runHook(SCSS_STYLING_CONTEXT, {}, { cwd: tmpDir });
+                const result = await runHook(STYLING_CONTEXT, {}, { cwd: tmpDir });
                 assertAllowed(result.code, 'Should fail-open');
             } finally {
                 cleanupTempDir(tmpDir);

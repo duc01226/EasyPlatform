@@ -2,24 +2,28 @@
 name: skill-optimize
 version: 1.0.0
 description: '[Skill Management] Optimize an existing agent skill'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Optimize an existing skill for token efficiency, clarity, and effectiveness.
 
 **Workflow:**
+
 1. **Analyze** — Review skill structure, line count, progressive disclosure
 2. **Optimize** — Reduce SKILL.md size, move details to references, improve clarity
 3. **Validate** — Verify skill still works correctly after optimization
 
 **Key Rules:**
+
 - Delegates to `skill-creator` for optimization patterns
 - SKILL.md target: under 100 lines with progressive disclosure
 - Reference files also under 100 lines each
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Think harder.
 Use `skill-creator` and `claude-code` skills.

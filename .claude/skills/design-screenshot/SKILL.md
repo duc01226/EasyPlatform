@@ -2,10 +2,10 @@
 name: design-screenshot
 version: 1.0.0
 description: '[Design] Create a design based on screenshot'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 Think hard to plan & start designing follow exactly this screenshot:
 <screenshot>$ARGUMENTS</screenshot>
@@ -17,14 +17,18 @@ Think hard to plan & start designing follow exactly this screenshot:
 **Goal:** Analyze a screenshot and recreate the design as functional code.
 
 **Workflow:**
+
 1. **Analyze** — Process screenshot with vision capabilities
 2. **Research** — Run `ui-ux-pro-max` for matching design patterns
 3. **Implement** — Recreate the design as code using design subagent
 
 **Key Rules:**
+
 - Always activate `ui-ux-pro-max` FIRST for design intelligence
 - Match the screenshot as closely as possible
 - Use `ai-multimodal` for detailed screenshot analysis
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Required Skills (Priority Order)
 

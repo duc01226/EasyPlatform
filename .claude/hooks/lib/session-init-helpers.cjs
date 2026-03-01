@@ -1,0 +1,479 @@
+#!/usr/bin/env node
+/**
+ * Session Init Helpers
+ *
+ * Shared constants and helper functions extracted from:
+ *   - project-config-init.cjs (SKELETON, checkConfigStatus)
+ *   - init-reference-docs.cjs (SCAN_SKILL_MAP, DEFAULT_REFERENCE_DOCS, etc.)
+ *
+ * Consumed by session-init-docs.cjs (the merged SessionStart hook).
+ */
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const { validateConfig } = require('./project-config-schema.cjs');
+const { loadProjectConfig, isConfigPopulated } = require('./project-config-loader.cjs');
+
+const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+const CONFIG_PATH = path.join(PROJECT_DIR, 'docs', 'project-config.json');
+const DOCS_DIR = path.join(PROJECT_DIR, 'docs');
+const REFERENCE_DOCS_DIR = path.join(DOCS_DIR, 'project-reference');
+
+// =============================================================================
+// SKELETON — from project-config-init.cjs
+// =============================================================================
+
+/**
+ * Skeleton template for project-config.json.
+ * Contains all sections that hooks consume, with placeholder values.
+ */
+const SKELETON = {
+    _description: 'Project-specific configuration consumed by .claude hooks at runtime. Update when adding services/apps.',
+    schemaVersion: 2,
+    project: {
+        name: '',
+        description: '',
+        languages: [],
+        packageManagers: []
+    },
+    framework: {
+        name: '',
+        backendPatternsDoc: 'docs/project-reference/backend-patterns-reference.md',
+        frontendPatternsDoc: 'docs/project-reference/frontend-patterns-reference.md',
+        codeReviewDoc: 'docs/project-reference/code-review-rules.md',
+        integrationTestDoc: 'docs/project-reference/integration-test-reference.md',
+        searchPatternKeywords: []
+    },
+    modules: [],
+    contextGroups: [],
+    designSystem: {
+        docsPath: 'docs/project-reference/design-system',
+        appMappings: []
+    },
+    styling: {
+        fileExtensions: [],
+        guideDoc: '',
+        appMap: {},
+        patterns: []
+    },
+    componentSystem: {
+        selectorPrefixes: ['app-'],
+        layerClassification: {}
+    },
+    testing: { frameworks: [], filePatterns: {}, commands: {} },
+    databases: {},
+    messaging: {},
+    api: {},
+    infrastructure: {},
+    referenceDocs: [],
+    custom: {}
+};
+
+// =============================================================================
+// checkConfigStatus — from project-config-init.cjs
+// =============================================================================
+
+/**
+ * Check if project-config.json is still the skeleton (not populated with real values).
+ * @returns {{ exists: boolean, isPopulated: boolean, hasSchemaErrors: boolean, schemaErrors: string[] }}
+ */
+function checkConfigStatus() {
+    if (!fs.existsSync(CONFIG_PATH)) {
+        return { exists: false, isPopulated: false, hasSchemaErrors: false, schemaErrors: [] };
+    }
+
+    let config;
+    try {
+        config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+    } catch {
+        return { exists: true, isPopulated: false, hasSchemaErrors: true, schemaErrors: ['Invalid JSON'] };
+    }
+
+    // Schema validation
+    const result = validateConfig(config);
+    const schemaErrors = result.valid ? [] : result.errors;
+
+    // Delegate populated check to shared helper (DRY)
+    const isPopulated = isConfigPopulated(config);
+
+    return { exists: true, isPopulated, hasSchemaErrors: schemaErrors.length > 0, schemaErrors };
+}
+
+// =============================================================================
+// SCAN_SKILL_MAP — from init-reference-docs.cjs
+// =============================================================================
+
+const SCAN_SKILL_MAP = {
+    'project-structure-reference.md': 'scan-project-structure',
+    'backend-patterns-reference.md': 'scan-backend-patterns',
+    'frontend-patterns-reference.md': 'scan-frontend-patterns',
+    'integration-test-reference.md': 'scan-integration-tests',
+    'feature-docs-reference.md': 'scan-feature-docs',
+    'code-review-rules.md': 'scan-code-review-rules',
+    'scss-styling-guide.md': 'scan-scss-styling',
+    'design-system/README.md': 'scan-design-system',
+    'e2e-test-reference.md': 'scan-e2e-tests',
+    'domain-entities-reference.md': 'scan-domain-entities'
+    // lessons.md excluded — managed by /learn skill
+};
+
+// =============================================================================
+// DEFAULT_REFERENCE_DOCS — from init-reference-docs.cjs
+// =============================================================================
+
+const DEFAULT_REFERENCE_DOCS = [
+    {
+        filename: 'project-structure-reference.md',
+        purpose: 'Project structure, service architecture, directory tree, tech stack, and module registry.',
+        sections: ['Service Architecture', 'Project Directory Tree', 'Tech Stack', 'Module Codes']
+    },
+    {
+        filename: 'backend-patterns-reference.md',
+        purpose: 'Backend patterns: CQRS, repositories, entities, validation, message bus, background jobs.',
+        sections: ['Repository Pattern', 'CQRS Patterns', 'Validation Patterns', 'Entity Patterns', 'Message Bus']
+    },
+    {
+        filename: 'frontend-patterns-reference.md',
+        purpose: 'Frontend patterns: component base classes, state management, API services, styling conventions.',
+        sections: ['Component Base Classes', 'State Management', 'API Services', 'Styling Conventions', 'Directory Structure']
+    },
+    {
+        filename: 'integration-test-reference.md',
+        purpose: 'Integration test patterns: test base classes, fixtures, helpers, and service-specific setup.',
+        sections: ['Test Architecture', 'Test Base Classes', 'Test Helpers', 'Service-Specific Setup']
+    },
+    {
+        filename: 'feature-docs-reference.md',
+        purpose: 'Feature documentation patterns: app-to-service mapping, doc structure, templates, and conventions.',
+        sections: ['App-to-Service Mapping', 'Feature Doc Structure', 'Templates', 'Conventions']
+    },
+    {
+        filename: 'code-review-rules.md',
+        purpose: 'Code review rules, conventions, anti-patterns, decision trees, and checklists.',
+        sections: ['Critical Rules', 'Backend Rules', 'Frontend Rules', 'Architecture Rules', 'Anti-Patterns', 'Checklists']
+    },
+    {
+        filename: 'lessons.md',
+        purpose: 'Learned lessons from past sessions — auto-injected via hook, written via /learn skill.',
+        sections: []
+    },
+    {
+        filename: 'scss-styling-guide.md',
+        purpose: 'SCSS/CSS styling guide: BEM methodology, mixins, variables, theming, responsive patterns.',
+        sections: ['BEM Methodology', 'SCSS Architecture', 'Mixins & Variables', 'Theming', 'Responsive Patterns']
+    },
+    {
+        filename: 'design-system/README.md',
+        purpose: 'Design system index: app-to-doc mapping, design tokens overview, component inventory.',
+        sections: ['Design System Overview', 'App Documentation Map', 'Design Tokens', 'Component Inventory']
+    },
+    {
+        filename: 'e2e-test-reference.md',
+        purpose: 'E2E test patterns: framework architecture, page objects, test configuration, and best practices.',
+        sections: [
+            'Architecture Overview',
+            'Project Structure',
+            'Key Dependencies',
+            'Base Classes',
+            'Page Object Pattern',
+            'Wait & Assertion Patterns',
+            'Configuration',
+            'Running Tests',
+            'Best Practices'
+        ]
+    },
+    {
+        filename: 'domain-entities-reference.md',
+        purpose: 'Domain entities, data models, DTOs, aggregate boundaries, cross-service entity sync, and ER diagrams.',
+        sections: ['Entity Catalog', 'Entity Relationships', 'Cross-Service Entity Map', 'DTO Mapping', 'Aggregate Boundaries']
+    }
+];
+
+// Placeholder marker — present in all generated placeholder docs
+const PLACEHOLDER_MARKER = "<!-- Fill in your project's details below. -->";
+
+// =============================================================================
+// Helper functions — from init-reference-docs.cjs
+// =============================================================================
+
+/**
+ * Check if a file is still a placeholder (not yet populated with real content).
+ * Reads first 512 bytes and checks for the placeholder marker comment.
+ * @param {string} filePath
+ * @returns {boolean}
+ */
+function isPlaceholderFile(filePath) {
+    try {
+        if (!fs.existsSync(filePath)) return false;
+        const fd = fs.openSync(filePath, 'r');
+        const buf = Buffer.alloc(512);
+        fs.readSync(fd, buf, 0, 512, 0);
+        fs.closeSync(fd);
+        return buf.toString('utf-8').includes(PLACEHOLDER_MARKER);
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Check if project-config.json exists and is populated (not skeleton).
+ * @returns {{ exists: boolean, isPopulated: boolean, needsInit: boolean }}
+ */
+function checkProjectConfig() {
+    if (!fs.existsSync(CONFIG_PATH)) {
+        return { exists: false, isPopulated: false, needsInit: true };
+    }
+
+    try {
+        const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf-8'));
+
+        // Delegate populated check to shared helper (DRY)
+        // Fixes bug: previously used .length > 1 instead of filtering ExampleService
+        const populated = isConfigPopulated(config);
+
+        return { exists: true, isPopulated: populated, needsInit: !populated };
+    } catch {
+        // Invalid JSON - needs init
+        return { exists: true, isPopulated: false, needsInit: true };
+    }
+}
+
+/**
+ * Load reference doc definitions from config, falling back to defaults.
+ * @returns {Array<{filename: string, purpose: string, sections?: string[]}>}
+ */
+function getReferenceDocs() {
+    const config = loadProjectConfig();
+    const docs = config.referenceDocs;
+    if (Array.isArray(docs) && docs.length > 0) return docs;
+    return DEFAULT_REFERENCE_DOCS;
+}
+
+/**
+ * Generate placeholder markdown content from a doc definition.
+ * @param {{filename: string, purpose: string, sections?: string[]}} doc
+ * @returns {string}
+ */
+function generatePlaceholderContent(doc) {
+    const title = doc.filename
+        .replace(/\.md$/, '')
+        .replace(/.*\//, '') // strip directory prefix for title
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, c => c.toUpperCase());
+
+    const lines = [
+        `# ${title}`,
+        '',
+        `<!-- This file is referenced by Claude skills and agents for project-specific context. -->`,
+        `<!-- Fill in your project's details below. -->`
+    ];
+
+    const sections = doc.sections || [];
+    for (const section of sections) {
+        lines.push('', `## ${section}`, '', `<!-- Document your ${section.toLowerCase()} here -->`);
+    }
+
+    return lines.join('\n') + '\n';
+}
+
+/**
+ * Initialize design system app-specific docs from project-config.json designSystem.appMappings.
+ * These are dynamic (project-specific), not part of the static referenceDocs list.
+ * @returns {string[]} List of created file descriptions
+ */
+function initDesignSystemAppDocs() {
+    const created = [];
+    try {
+        const config = loadProjectConfig();
+        const docsPath = config.designSystem?.docsPath || 'docs/project-reference/design-system';
+        const appMappings = config.designSystem?.appMappings;
+        if (!Array.isArray(appMappings) || appMappings.length === 0) return created;
+
+        for (const app of appMappings) {
+            if (!app.docFile) continue;
+            const filePath = path.join(PROJECT_DIR, docsPath, app.docFile);
+            if (fs.existsSync(filePath)) continue;
+
+            const parentDir = path.dirname(filePath);
+            if (!fs.existsSync(parentDir)) {
+                fs.mkdirSync(parentDir, { recursive: true });
+            }
+            const doc = {
+                filename: app.docFile,
+                purpose: `Design system documentation for ${app.name || app.docFile}.`,
+                sections: ['Color Tokens', 'Typography', 'Component Patterns', 'Layout Conventions']
+            };
+            fs.writeFileSync(filePath, generatePlaceholderContent(doc), 'utf-8');
+            created.push(`- \`${docsPath}/${app.docFile}\` — ${doc.purpose}`);
+        }
+    } catch {
+        /* non-blocking */
+    }
+    return created;
+}
+
+// =============================================================================
+// GREENFIELD DETECTION — shared helpers for hooks & skills
+// =============================================================================
+
+/**
+ * Non-dot-prefixed directories to ignore when checking if a project has content.
+ * Dot-prefixed directories (e.g., .claude, .git, .github, .vscode, .idea, .devcontainer,
+ * .husky, .cursor, .windsurf, .circleci, .docker, etc.) are ALL ignored automatically
+ * via the dot-prefix check in hasProjectContent() — no need to list them here.
+ */
+const IGNORED_ROOT_DIRS = new Set(['node_modules']);
+
+/**
+ * Check if a directory name should be ignored when detecting project content.
+ * Ignores: all dot-prefixed (hidden) directories + explicit non-dot exceptions.
+ *
+ * @param {string} name - Directory name
+ * @returns {boolean} true if the directory should be ignored
+ */
+function isIgnoredDir(name) {
+    return name.startsWith('.') || IGNORED_ROOT_DIRS.has(name);
+}
+
+/**
+ * Check if the project root contains at least one real content directory
+ * (i.e., a directory that is NOT a hidden/tool/config directory).
+ *
+ * Ignores all dot-prefixed directories (.git, .claude, .vscode, .github, .idea,
+ * .devcontainer, .husky, .cursor, .windsurf, etc.) and node_modules.
+ *
+ * Use case: Guard session-init hooks from creating skeleton files in empty projects.
+ *
+ * @param {string} [projectDir] - Project root (defaults to PROJECT_DIR)
+ * @returns {boolean} true if project has at least one content directory
+ */
+function hasProjectContent(projectDir) {
+    const dir = projectDir || PROJECT_DIR;
+    try {
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        return entries.some(e => e.isDirectory() && !isIgnoredDir(e.name));
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Common code directories that indicate a project has been scaffolded.
+ * If ANY of these exist with content, the project is NOT greenfield.
+ * Covers conventions across major ecosystems:
+ *   - src/ (universal), app/ (Rails, Next.js, Laravel), lib/ (Ruby, Elixir, Dart)
+ *   - server/ + client/ (fullstack), backend/ + frontend/ (monorepo)
+ *   - cmd/ + pkg/ + internal/ (Go), packages/ (monorepo workspaces)
+ */
+const CODE_DIRECTORIES = ['src', 'app', 'lib', 'server', 'client', 'backend', 'frontend', 'cmd', 'pkg', 'internal', 'packages'];
+
+/**
+ * Manifest files that indicate a project has been initialized with a tech stack.
+ */
+const MANIFEST_FILES = [
+    'package.json',
+    '*.sln',
+    '*.csproj',
+    'Cargo.toml',
+    'go.mod',
+    'pyproject.toml',
+    'requirements.txt',
+    'pom.xml',
+    'build.gradle',
+    'Gemfile',
+    'composer.json',
+    'Makefile',
+    'CMakeLists.txt'
+];
+
+/**
+ * Check if the project is a greenfield (no code, no tech stack).
+ *
+ * Greenfield = ALL of:
+ *   - No code directories with content (src/, app/, lib/, server/, etc.)
+ *   - No manifest files (package.json, *.sln, etc.)
+ *   - No populated project-config.json
+ *   - Planning artifacts (.claude/, docs/, plans/, team-artifacts/, README) may exist — still greenfield
+ *
+ * Use case: Skills switch to solution-architect mode when greenfield detected.
+ *
+ * @param {string} [projectDir] - Project root (defaults to PROJECT_DIR)
+ * @returns {boolean} true if project is greenfield (no existing codebase)
+ */
+function isGreenfieldProject(projectDir) {
+    const dir = projectDir || PROJECT_DIR;
+    try {
+        // Check for any code directory with content
+        for (const codeDir of CODE_DIRECTORIES) {
+            const codePath = path.join(dir, codeDir);
+            try {
+                if (fs.existsSync(codePath) && fs.statSync(codePath).isDirectory()) {
+                    const dirEntries = fs.readdirSync(codePath);
+                    if (dirEntries.length > 0) return false;
+                }
+            } catch {
+                /* skip unreadable dirs */
+            }
+        }
+
+        // Check for manifest files
+        const entries = fs.readdirSync(dir);
+        for (const entry of entries) {
+            for (const pattern of MANIFEST_FILES) {
+                if (pattern.startsWith('*')) {
+                    // Glob match (e.g., *.sln)
+                    if (entry.endsWith(pattern.slice(1))) return false;
+                } else {
+                    if (entry === pattern) return false;
+                }
+            }
+        }
+
+        // Check for populated project-config.json
+        const configPath = path.join(dir, 'docs', 'project-config.json');
+        if (fs.existsSync(configPath)) {
+            try {
+                const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+                if (isConfigPopulated(config)) return false;
+            } catch {
+                /* invalid JSON = not populated */
+            }
+        }
+
+        return true;
+    } catch {
+        return true; // If we can't read the directory, assume greenfield
+    }
+}
+
+// =============================================================================
+// EXPORTS
+// =============================================================================
+
+module.exports = {
+    // From project-config-init.cjs
+    SKELETON,
+    checkConfigStatus,
+    // From init-reference-docs.cjs
+    SCAN_SKILL_MAP,
+    DEFAULT_REFERENCE_DOCS,
+    PLACEHOLDER_MARKER,
+    isPlaceholderFile,
+    checkProjectConfig,
+    getReferenceDocs,
+    generatePlaceholderContent,
+    initDesignSystemAppDocs,
+    // Greenfield detection
+    hasProjectContent,
+    isIgnoredDir,
+    isGreenfieldProject,
+    IGNORED_ROOT_DIRS,
+    CODE_DIRECTORIES,
+    MANIFEST_FILES,
+    // Shared paths
+    PROJECT_DIR,
+    CONFIG_PATH,
+    DOCS_DIR,
+    REFERENCE_DOCS_DIR
+};

@@ -5,9 +5,11 @@ description: '[Architecture] Use when designing or implementing cross-service co
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
 
@@ -26,6 +28,8 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 - Use `LastMessageSyncDate` for conflict resolution (only update if newer)
 - Consumers must wait for dependencies with `TryWaitUntilAsync`
 - Messages defined in shared project (search for: shared message definitions, bus message classes)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
 >
@@ -119,7 +123,7 @@ var accountsData = await accountsDbContext.Users.ToListAsync();
 
 ```csharp
 // For initial data population or recovery
-public class FullSyncJob : PlatformApplicationBackgroundJobExecutor
+public class FullSyncJob : BackgroundJobExecutor // project background job base (see docs/project-reference/backend-patterns-reference.md)
 {
     public override async Task ProcessAsync(object? param)
     {
@@ -141,7 +145,7 @@ public class FullSyncJob : PlatformApplicationBackgroundJobExecutor
 
 ```csharp
 // Normal operation via message bus
-internal sealed class EmployeeSyncConsumer : PlatformApplicationMessageBusConsumer<EmployeeEventBusMessage>
+internal sealed class EmployeeSyncConsumer : MessageBusConsumer<EmployeeEventBusMessage> // project message bus base (see docs/project-reference/backend-patterns-reference.md)
 {
     public override async Task HandleLogicAsync(EmployeeEventBusMessage message, string routingKey)
     {
@@ -271,7 +275,7 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 ## Related
 
 - `arch-security-review`
-- `easyplatform-backend`
+- `api-design`
 
 ---
 

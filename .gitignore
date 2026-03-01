@@ -498,3 +498,4 @@ tmpclaude-*
 .claude/temp-reports/
 .claude/.compact-state.json
 .claude/tmp*
+.claude/agent-memory/

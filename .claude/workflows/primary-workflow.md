@@ -15,7 +15,7 @@
 #### 2. Implementation
 - Use `/cook` or `/code` skill to implement the plan.
 - Write clean, readable, and maintainable code
-- Follow established architectural patterns (CQRS, PlatformVmStore, BEM)
+- Follow established architectural patterns (CQRS, project store, BEM)
 - Handle edge cases and error scenarios
 - **[IMPORTANT]** After creating or modifying code file, run compile command/script to check for any compile errors.
 

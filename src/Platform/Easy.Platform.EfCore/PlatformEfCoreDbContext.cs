@@ -1777,11 +1777,9 @@ public abstract class PlatformEfCoreDbContext<TDbContext> : DbContext, IPlatform
     {
         // Get the entity type metadata
         var efCoreEntityTypeMap = Model.FindEntityType(entityType);
-        if (efCoreEntityTypeMap == null)
-            return false;
 
         // Check if the property is a scalar (non-navigation)
-        var property = efCoreEntityTypeMap.FindProperty(propertyInfoName);
+        var property = efCoreEntityTypeMap?.FindProperty(propertyInfoName);
         if (property == null)
             return false;
 

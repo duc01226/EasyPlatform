@@ -1,12 +1,12 @@
 ---
 name: devops
 version: 1.0.0
-description: '[DevOps] Deploy and manage cloud infrastructure on Cloudflare (Workers, R2, D1, KV, Pages, Durable Objects, Browser Rendering), Docker containers, and Google Cloud Platform (Compute Engine, GKE, Cloud Run, App Engine, Cloud Storage). Use when deploying serverless functions to the edge, configuring edge computing solutions, managing Docker containers and images, setting up CI/CD pipelines, optimizing cloud infrastructure costs, implementing global caching strategies, working with cloud databases, or building cloud-native applications.'
+description: '[DevOps] Use when deploying to Cloudflare (Workers, R2, D1, KV, Pages), Docker, or GCP (Compute Engine, GKE, Cloud Run). Covers serverless deployment, container management, CI/CD pipelines, cloud infrastructure costs, caching strategies, and cloud-native applications.'
 allowed-tools: NONE
 license: MIT
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -25,6 +25,8 @@ license: MIT
 - Use multi-stage Docker builds to minimize image size
 - Store secrets in environment variables, never in code
 - Use R2 over S3 when zero egress cost matters
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # DevOps Skill
 
@@ -326,7 +328,7 @@ CMD ["node", "dist/server.js"]
 ## Related
 
 - `databases`
-- `easyplatform-backend`
+- `api-design`
 
 ---
 

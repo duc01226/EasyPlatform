@@ -5,7 +5,7 @@ description: "[Project Management] Assist Business Analysts with requirements re
 allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -23,6 +23,10 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate
 - Always reference existing business rules from `docs/business-features/` before creating new ones
 - User stories must pass INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable)
 - Include entity context and related domain model in every story
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 # Business Analyst Assistant
 
@@ -278,7 +282,8 @@ id: US-{YYMMDD}-{NNN}
 parent_pbi: '{PBI-ID}'
 persona: '{Persona name}'
 priority: P1 | P2 | P3
-effort: 1 | 2 | 3 | 5 | 8 | 13
+story_points: 1 | 2 | 3 | 5 | 8 | 13 | 21
+complexity: Low | Medium | High | Very High
 status: draft | ready | in_progress | done
 module: '' # Project module (if applicable)
 ---

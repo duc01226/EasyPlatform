@@ -2,10 +2,9 @@
 name: skill-create
 version: 2.0.0
 description: '[Skill Management] Create new Claude Code skills or scan/fix invalid skill headers. Triggers on: create skill, new skill, skill schema, scan skills, fix skills, invalid skill, validate skills, skill header.'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -25,12 +24,14 @@ activation: user-invoked
 - SKILL.md under 500 lines; use `references/` for detail
 - Always break work into small todo tasks; always add final self-review task
 
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
 ## Modes
 
-| Mode | Trigger | Action |
-|------|---------|--------|
-| **Create** | `$ARGUMENTS` describes a new skill | Create skill following workflow below |
-| **Scan & Fix** | `$ARGUMENTS` mentions scan, fix, validate, invalid | Run validation across all skills |
+| Mode           | Trigger                                            | Action                                |
+| -------------- | -------------------------------------------------- | ------------------------------------- |
+| **Create**     | `$ARGUMENTS` describes a new skill                 | Create skill following workflow below |
+| **Scan & Fix** | `$ARGUMENTS` mentions scan, fix, validate, invalid | Run validation across all skills      |
 
 ## Prerequisites
 
@@ -53,14 +54,14 @@ activation: user-invoked
 
 ```yaml
 ---
-name: {kebab-case-name}
+name: { kebab-case-name }
 description: '[Category] What it does. Triggers on: keyword1, keyword2.'
 ---
 ```
 
 **Official fields:** `name`, `description`, `argument-hint`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `model`, `context`, `agent`, `hooks`
 
-**Project conventions (non-official but used here):** `activation: user-invoked`, `version: X.Y.Z`
+**Project conventions (non-official but used here):** `disable-model-invocation: true`, `version: X.Y.Z`
 
 ### Rules
 
@@ -80,16 +81,16 @@ description: '[Category] What it does. Triggers on: keyword1, keyword2.'
 
 ### What It Validates
 
-| Check | Rule | Severity |
-|-------|------|----------|
-| Frontmatter exists | Must have `---` delimiters | Error |
-| Description single-line | No literal newlines in description value | Error |
-| Description not empty | Must have description for discoverability | Warning |
-| Name format | Lowercase, hyphens, max 64 chars | Error |
-| No unknown official fields | Flag fields not in official schema | Info |
-| Description has category | Should start with `[Category]` | Warning |
-| File size | SKILL.md should be <500 lines | Warning |
-| Quick Summary exists | Must have `## Quick Summary` in first 30 lines | Warning |
+| Check                      | Rule                                           | Severity |
+| -------------------------- | ---------------------------------------------- | -------- |
+| Frontmatter exists         | Must have `---` delimiters                     | Error    |
+| Description single-line    | No literal newlines in description value       | Error    |
+| Description not empty      | Must have description for discoverability      | Warning  |
+| Name format                | Lowercase, hyphens, max 64 chars               | Error    |
+| No unknown official fields | Flag fields not in official schema             | Info     |
+| Description has category   | Should start with `[Category]`                 | Warning  |
+| File size                  | SKILL.md should be <500 lines                  | Warning  |
+| Quick Summary exists       | Must have `## Quick Summary` in first 30 lines | Warning  |
 
 ### Scan Workflow
 
@@ -98,9 +99,9 @@ description: '[Category] What it does. Triggers on: keyword1, keyword2.'
 3. **Validate** — Check each rule above
 4. **Report** — List issues grouped by severity (Error > Warning > Info)
 5. **Fix** — If user confirms, fix Error-level issues automatically:
-   - Missing frontmatter → add minimal `---\nname: {dir-name}\ndescription: ''\n---`
-   - Multi-line description → collapse to single line
-   - Invalid name → suggest kebab-case fix
+    - Missing frontmatter → add minimal `---\nname: {dir-name}\ndescription: ''\n---`
+    - Multi-line description → collapse to single line
+    - Invalid name → suggest kebab-case fix
 
 ### Validate Script
 

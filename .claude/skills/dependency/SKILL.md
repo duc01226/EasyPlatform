@@ -5,7 +5,7 @@ description: '[Project Management] Map and visualize feature dependencies betwee
 allowed-tools: Read, Write, Grep, Glob, Bash, Edit
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
@@ -29,6 +29,8 @@ allowed-tools: Read, Write, Grep, Glob, Bash, Edit
 - Respect microservice boundaries (cross-service = message bus only)
 - Flag circular dependencies as errors
 - Not for package/npm upgrades (use `package-upgrade` instead)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Dependency Mapping
 
@@ -54,7 +56,7 @@ Analyze and visualize dependencies between features, services, modules, or work 
 ## Prerequisites
 
 - Read the feature/PBI/plan files to understand scope
-- Access to `docs/claude/architecture.md` for service boundary reference
+- Access to `docs/project-reference/project-structure-reference.md` for service boundary reference
 - Understand the project's microservice boundaries (search `src/Services/` for service list)
 
 ## Workflow
@@ -71,12 +73,12 @@ Determine what to map:
 
 For each dependency found, classify by type:
 
-| Type               | Direction                      | Description                                 | Example                                                |
-| ------------------ | ------------------------------ | ------------------------------------------- | ------------------------------------------------------ |
-| **Data**           | Entity A requires Entity B     | Foreign key, navigation property, shared ID | Employee requires Company                              |
-| **Service**        | Service A calls Service B      | Message bus, API call, event consumer       | Service A consumes entity events from Service B |
+| Type               | Direction                      | Description                                 | Example                                           |
+| ------------------ | ------------------------------ | ------------------------------------------- | ------------------------------------------------- |
+| **Data**           | Entity A requires Entity B     | Foreign key, navigation property, shared ID | Employee requires Company                         |
+| **Service**        | Service A calls Service B      | Message bus, API call, event consumer       | Service A consumes entity events from Service B   |
 | **UI**             | Component A embeds Component B | Shared component, library dependency        | Feature form uses shared component library select |
-| **Infrastructure** | Feature needs infra change     | Database migration, config, new queue       | New feature needs Redis cache key                      |
+| **Infrastructure** | Feature needs infra change     | Database migration, config, new queue       | New feature needs Redis cache key                 |
 
 ### Step 3: Build Dependency Graph
 

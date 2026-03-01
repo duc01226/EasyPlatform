@@ -7,7 +7,7 @@ allowed-tools: NONE
 license: Complete terms in LICENSE.txt
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -29,6 +29,8 @@ license: Complete terms in LICENSE.txt
 - Always wait for `networkidle` before inspecting DOM on dynamic apps
 - Use bundled scripts as black boxes; run `--help` first, don't read source
 - Always launch Chromium in headless mode and close browser when done
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Web Application Testing
 

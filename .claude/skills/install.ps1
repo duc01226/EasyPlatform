@@ -818,8 +818,8 @@ function Setup-PythonEnv {
     Get-ChildItem -Path $ScriptDir -Directory | ForEach-Object {
         $skillName = $_.Name
 
-        # Skip .venv and document-skills
-        if ($skillName -eq ".venv" -or $skillName -eq "document-skills") {
+        # Skip .venv
+        if ($skillName -eq ".venv") {
             return
         }
 

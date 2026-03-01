@@ -580,7 +580,7 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
     public const int DefaultInitializationPriority = 10;
     public const int InitializationPriorityTierGap = 10;
 
-    protected static readonly ConcurrentDictionary<string, Assembly> ExecutedRegisterByAssemblies = new();
+    protected static readonly ConcurrentDictionary<IServiceCollection, ConcurrentDictionary<string, Assembly>> ExecutedRegisterByAssemblies = new();
 
     protected readonly SemaphoreSlim InitLockAsync = new(1, 1);
     protected readonly SemaphoreSlim RegisterLockAsync = new(1, 1);
@@ -995,19 +995,31 @@ public abstract class PlatformModule : IPlatformModule, IDisposable
         return loggerFactory.CreateLogger(typeof(PlatformModule).GetNameOrGenericTypeName() + $"-{GetType().Name}");
     }
 
-    protected static void RegisterOncePerAssembly(Action<Assembly> action, List<Assembly> assemblies, string actionName)
+    protected void RegisterOncePerAssembly(Action<Assembly> action, List<Assembly> assemblies, string actionName)
     {
+        var perCollectionRegistry = ExecutedRegisterByAssemblies.GetOrAdd(ServiceCollection, _ => new ConcurrentDictionary<string, Assembly>());
+
         assemblies.ForEach(assembly =>
         {
-            var executedRegisterByAssemblyKey = $"Action:{ExecutedRegisterByAssemblies.ContainsKey(actionName)};Assembly:{assembly.FullName}";
+            var executedRegisterByAssemblyKey = $"Action:{perCollectionRegistry.ContainsKey(actionName)};Assembly:{assembly.FullName}";
 
-            if (!ExecutedRegisterByAssemblies.ContainsKey(executedRegisterByAssemblyKey))
+            if (!perCollectionRegistry.ContainsKey(executedRegisterByAssemblyKey))
             {
                 action(assembly);
 
-                ExecutedRegisterByAssemblies.TryAdd(executedRegisterByAssemblyKey, assembly);
+                perCollectionRegistry.TryAdd(executedRegisterByAssemblyKey, assembly);
             }
         });
+    }
+
+    /// <summary>
+    /// Removes the registration tracking for the given service collection to prevent memory leaks in test scenarios.
+    /// MUST be called in test teardown for any IServiceCollection used with RegisterModule.
+    /// Failure to call causes process-lifetime memory retention of IServiceCollection references.
+    /// </summary>
+    public static void CleanupRegistrationTracking(IServiceCollection serviceCollection)
+    {
+        ExecutedRegisterByAssemblies.TryRemove(serviceCollection, out _);
     }
 
     /// <summary>

@@ -5,7 +5,7 @@ description: '[Project Management] Create UI/UX design specifications from requi
 allowed-tools: Read, Write, Edit, Grep, Glob
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -22,8 +22,10 @@ allowed-tools: Read, Write, Edit, Grep, Glob
 **Key Rules:**
 
 - If Figma URL provided, run `/figma-design` first to extract specs
-- Reference existing design system tokens from `docs/design-system/`
+- Reference existing design system tokens from `docs/project-reference/design-system/`
 - Include accessibility requirements (keyboard nav, ARIA labels, contrast)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Design Specification
 
@@ -39,7 +41,7 @@ Create structured UI/UX design specification documents from requirements or PBIs
 ## When NOT to Use
 
 - Extracting specs from Figma -- use `figma-design` first, then this skill
-- Building the actual UI -- use `frontend-design` or `frontend-angular`
+- Building the actual UI -- use `frontend-design`
 - Full UX research and design process -- use `ux-designer`
 - Reviewing existing UI code -- use `web-design-guidelines`
 
@@ -48,7 +50,7 @@ Create structured UI/UX design specification documents from requirements or PBIs
 Read before executing:
 
 - The source PBI, user story, or requirements document
-- `docs/design-system/` -- project design tokens (if applicable)
+- `docs/project-reference/design-system/` -- project design tokens (if applicable)
 - Existing design specs in `team-artifacts/design-specs/` for format consistency
 
 ## Workflow
@@ -156,13 +158,13 @@ Read before executing:
 
 ## Related Skills
 
-| Skill                   | When to use instead                               |
-| ----------------------- | ------------------------------------------------- |
-| `ux-designer`           | Full UX design process with research              |
-| `figma-design`          | Extract specs from Figma designs                  |
-| `frontend-design`       | Build the actual UI implementation                |
-| `web-design-guidelines` | Review existing UI for compliance                 |
-| `frontend-angular`      | Angular 19 components, forms, state, API services |
+| Skill                   | When to use instead                  |
+| ----------------------- | ------------------------------------ |
+| `ux-designer`           | Full UX design process with research |
+| `figma-design`          | Extract specs from Figma designs     |
+| `frontend-design`       | Build the actual UI implementation   |
+| `interface-design`      | Product UI design (dashboards, apps) |
+| `web-design-guidelines` | Review existing UI for compliance    |
 
 ---
 
@@ -170,3 +172,12 @@ Read before executing:
 
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
+
+---
+
+## Workflow Recommendation
+
+> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+>
+> 1. **Activate `design-workflow` workflow** (Recommended) — design-spec → code-review
+> 2. **Execute `/design-spec` directly** — run this skill standalone

@@ -6,7 +6,7 @@ description: "[Git] Stage changes and create git commits with conventional commi
 allowed-tools: Bash, Read, Glob, Grep
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -26,6 +26,8 @@ allowed-tools: Bash, Read, Glob, Grep
 - Never commit secrets, credentials, or .env files
 - Never use `--amend` or `--no-verify` unless explicitly requested
 - Include `Generated with [Claude Code]` attribution footer
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Git Commit Skill
 
@@ -86,7 +88,7 @@ Extract from file paths:
 
 - `src/auth/` → `auth`
 - `.claude/skills/` → `claude-skills`
-- `libs/platform-core/` → `platform-core`
+- `libs/{shared-lib}/` → `{shared-lib}`
 - Multiple unrelated areas → omit scope
 
 #### Subject Rules

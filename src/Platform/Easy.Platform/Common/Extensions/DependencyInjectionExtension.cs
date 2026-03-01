@@ -1452,7 +1452,7 @@ public static class DependencyInjectionExtension
         Util.TaskRunner.QueueActionInBackground(
             async () =>
             {
-                using (scope) await method(scope);
+                await using (scope) await method(scope);
             },
             retryCount,
             retryDelayProvider,

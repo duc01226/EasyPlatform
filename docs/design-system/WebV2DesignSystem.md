@@ -1,13 +1,13 @@
 # WebV2 Design System - AI Reference Guide
 
-> Single-file reference for AI agents generating HTML/SCSS components in BravoSUITE WebV2.
+> Single-file reference for AI agents generating HTML/SCSS components in EasyPlatform.
 > **Purpose:** Provide design context for consistent, production-ready component generation.
 
 ## Summary
 
 | Aspect | Value |
 |--------|-------|
-| **Target Apps** | `src/WebV2/apps/*`, `src/WebV2/libs/*` |
+| **Target Apps** | `src/Frontend/apps/*`, `src/Frontend/libs/*` |
 | **Framework** | Angular 19, Standalone Components |
 | **SCSS Import** | `@use 'shared-mixin' as *;` |
 | **BEM Pattern** | `.block__element.--modifier` (modifier as separate class) |
@@ -286,7 +286,7 @@ Block name = Component selector without prefix (kebab-case):
 |-----------------------------|-------------------------|
 | `orient-kudos-transactions` | `kudos-transactions`    |
 | `app-employee-list`         | `employee-list`         |
-| `bravo-user-card`           | `user-card`             |
+| `app-user-card`             | `user-card`             |
 
 ### 4.3 Common Element Names
 
@@ -315,9 +315,9 @@ Some blocks are used across multiple components:
 
 ```scss
 // Toolbar pattern (shared block)
-.bravo-toolbar__controls      { @include flex-row(space-between, center); }
-.bravo-toolbar__left-controls { @include flex-row(flex-start, center, 1rem); }
-.bravo-toolbar__right-controls { @include flex-row(flex-end, center, 1rem); }
+.app-toolbar__controls      { @include flex-row(space-between, center); }
+.app-toolbar__left-controls { @include flex-row(flex-start, center, 1rem); }
+.app-toolbar__right-controls { @include flex-row(flex-end, center, 1rem); }
 ```
 
 ---
@@ -354,8 +354,8 @@ Some blocks are used across multiple components:
         <div class="page-name__main-container">
             <!-- Toolbar Section -->
             <div class="page-name__toolbar">
-                <div class="bravo-toolbar__controls">
-                    <div class="bravo-toolbar__left-controls">
+                <div class="app-toolbar__controls">
+                    <div class="app-toolbar__left-controls">
                         <app-search-input
                             [placeholder]="'Search...'"
                             [inputText]="vm.searchText"
@@ -363,7 +363,7 @@ Some blocks are used across multiple components:
                         </app-search-input>
                         <!-- Additional filters -->
                     </div>
-                    <div class="bravo-toolbar__right-controls">
+                    <div class="app-toolbar__right-controls">
                         <a class="page-name__back-link" [routerLink]="['../']">
                             <mat-icon>arrow_back</mat-icon>
                             Back to List
@@ -586,11 +586,11 @@ app-page-name {
     <div class="component__form-row">
         <label class="component__label">Select Field</label>
         <div class="component__field-wrapper">
-            <bravo-select
+            <app-select
                 [items]="options"
                 formControlName="selectField"
                 placeholder="Select...">
-            </bravo-select>
+            </app-select>
         </div>
     </div>
 </div>
@@ -962,11 +962,11 @@ Use the shared `upload-file` component with drag-and-drop support:
 **Custom tooltip component:**
 
 ```html
-<bravo-tooltip
+<app-tooltip
     [text]="'Helpful information'"
     [iconPath]="'assets/icons/info-4.svg'"
     [tooltipClass]="'component__tooltip'">
-</bravo-tooltip>
+</app-tooltip>
 ```
 
 **Popover directive (for rich content):**
@@ -1181,7 +1181,7 @@ app-page-name {
         color: white;
 
         &:hover {
-            background: var(--bravo-btn-hover-color, #31b0d9);
+            background: var(--app-btn-hover-color, #31b0d9);
         }
     }
 
@@ -1196,7 +1196,7 @@ app-page-name {
     }
 
     &:disabled {
-        background: var(--bravo-btn-disabled-color, #cfdbe5);
+        background: var(--app-btn-disabled-color, #cfdbe5);
         cursor: not-allowed;
     }
 }
@@ -1302,20 +1302,17 @@ Before finalizing any component, verify:
 
 ```
 SCSS Variables & Mixins:
-├── src/WebV2/libs/share-styles/shared-mixin.scss          # Import this
-├── src/WebV2/libs/share-styles/mixin/layout.scss          # flex, flex-col, flex-row
-├── src/WebV2/libs/share-styles/mixin/text.scss            # text-base, text-ellipsis
-├── src/WebV2/libs/share-styles/shared-variables.scss      # CSS custom properties
-├── src/WebV2/libs/bravo-common/src/styles/variables.scss  # SCSS variables
-└── src/WebV2/libs/bravo-common/src/styles/mixins.scss     # flex-layout, utilities
+├── src/Frontend/libs/platform-core/styles/shared-mixin.scss      # Import this
+├── src/Frontend/libs/platform-core/styles/mixin/layout.scss      # flex, flex-col, flex-row
+├── src/Frontend/libs/platform-core/styles/mixin/text.scss        # text-base, text-ellipsis
+├── src/Frontend/libs/platform-core/styles/shared-variables.scss  # CSS custom properties
 
 Shared Components:
-├── src/WebV2/libs/bravo-domain/src/_shared/components/search-input/
-├── src/WebV2/libs/bravo-common/src/components/
-└── src/WebV2/libs/bravo-domain/src/_shared/components/_abstracts/
+├── src/Frontend/libs/platform-core/src/components/
+└── src/Frontend/libs/platform-core/src/_shared/components/
 
 Example Components:
-└── src/WebV2/apps/growth-for-company/src/app/routes/
+└── src/Frontend/apps/playground-text-snippet/src/app/
 ```
 
 ---
@@ -1496,14 +1493,14 @@ Progress indicators for loading and status.
 ```scss
 @use '../variables' as *;
 
-bravo-progress-bar {
+app-progress-bar {
     display: flex;
     flex-shrink: 0;
     width: 100%;
     font-size: 0.3125rem;
 }
 
-.bravo-progress-bar.mat-progress-bar {
+.app-progress-bar.mat-progress-bar {
     display: block;
     flex-grow: 1;
     height: 1em;

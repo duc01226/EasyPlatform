@@ -2,24 +2,28 @@
 name: pr
 version: 1.0.0
 description: '[Git] Create pull request with standard format'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Create a pull request with standardized format (summary, test plan, changes list).
 
 **Workflow:**
+
 1. **Analyze** -- Review all commits and changes on the branch
 2. **Draft** -- Create PR title (<70 chars) and body with summary + test plan
 3. **Create** -- Push branch and create PR via `gh pr create`
 
 **Key Rules:**
+
 - PR title under 70 characters; use body for details
 - Include summary bullets and test plan checklist
 - Push to remote with `-u` flag before creating PR
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Create Pull Request: $ARGUMENTS
 

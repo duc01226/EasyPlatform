@@ -1,0 +1,188 @@
+#!/usr/bin/env node
+/**
+ * Frontend Context Injector - PreToolUse Hook
+ *
+ * Automatically injects frontend development guide when editing
+ * frontend files. File extensions and context group names are
+ * configured via docs/project-config.json contextGroups[].
+ *
+ * Pattern Matching:
+ *   Configured via docs/project-config.json contextGroups + modules
+ *
+ * Exit Codes:
+ *   0 - Success (non-blocking)
+ */
+
+const path = require('path');
+const { parsePreToolUseInput, wasRecentlyInjected, werePatternRecentlyInjected } = require('./lib/context-injector-base.cjs');
+const { loadProjectConfig, buildRegexMap, buildPatternList, getContextGroup, getModuleForPath } = require('./lib/project-config-loader.cjs');
+
+// ═══════════════════════════════════════════════════════════════════════════
+// CONFIGURATION (loaded from docs/project-config.json)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const { FRONTEND_CONTEXT: DEDUP_MARKER, DEDUP_LINES } = require('./lib/dedup-constants.cjs');
+
+const config = loadProjectConfig();
+const FRONTEND_PATTERNS = buildPatternList(config.frontendApps?.patterns);
+const APP_PATTERNS = buildRegexMap(config.frontendApps?.appMap);
+const LEGACY_APPS = new Set(config.frontendApps?.legacyApps || []);
+const MODERN_APPS = new Set(config.frontendApps?.modernApps || []);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// HELPER FUNCTIONS
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Frontend file extensions — explicit allowlist (not config-driven to avoid ripple to code-patterns-injector)
+const FRONTEND_EXTENSIONS = new Set(['.html', '.js', '.ts', '.css', '.scss', '.json']);
+
+function isFrontendFile(filePath) {
+    if (!filePath) return false;
+    return FRONTEND_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+}
+
+function detectFrontendContext(filePath) {
+    if (!filePath) return null;
+
+    // v2: try contextGroups first
+    const group = getContextGroup(filePath);
+    if (group) return { name: group.name, patterns: [] };
+
+    // v1 fallback: try pattern-based detection
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    for (const context of FRONTEND_PATTERNS) {
+        for (const pattern of context.patterns) {
+            if (pattern.test(normalizedPath)) {
+                return context;
+            }
+        }
+    }
+
+    return null;
+}
+
+function detectApp(filePath) {
+    if (!filePath) return null;
+
+    // v2: try modules[] first
+    const mod = getModuleForPath(filePath);
+    if (mod && (mod.kind === 'frontend-app' || mod.kind === 'library')) return mod.name;
+
+    // v1 fallback: try appMap
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    for (const [appName, pattern] of Object.entries(APP_PATTERNS)) {
+        if (pattern.test(normalizedPath)) {
+            return appName;
+        }
+    }
+
+    return null;
+}
+
+function shouldInject(filePath, transcriptPath) {
+    // Skip non-frontend files
+    if (!isFrontendFile(filePath)) return false;
+
+    // Skip if no frontend context detected
+    const context = detectFrontendContext(filePath);
+    if (!context) return false;
+
+    // Skip if already injected recently
+    if (wasRecentlyInjected(transcriptPath, DEDUP_MARKER, DEDUP_LINES.FRONTEND_CONTEXT)) return false;
+
+    return true;
+}
+
+function buildInjection(context, filePath, app, patternsAlreadyInjected) {
+    const fileName = path.basename(filePath);
+    const ctxGroup = getContextGroup(filePath);
+    const guideDoc = ctxGroup?.guideDoc || null;
+    const patternsDoc = ctxGroup?.patternsDoc || 'docs/project-reference/frontend-patterns-reference.md';
+
+    const lines = ['', DEDUP_MARKER, '', `**Context:** ${context.name}`, `**File:** ${fileName}`, app ? `**App:** ${app}` : '', ''];
+
+    if (!patternsAlreadyInjected && guideDoc) {
+        lines.push(
+            '### IMPORTANT — MUST READ',
+            '',
+            `Before implementing frontend changes, you **MUST READ** the following file:`,
+            '',
+            `**\`${guideDoc}\`**`,
+            '',
+            `Also review **\`${patternsDoc}\`** for project-specific patterns.`
+        );
+    }
+    const rules = ctxGroup?.rules || [];
+
+    if (rules.length > 0) {
+        lines.push('### Critical Rules', '', `Refer to \`${patternsDoc}\` for class names and detailed examples.`, '');
+        rules.forEach((rule, i) => {
+            lines.push(`${i + 1}. ${rule}`);
+        });
+        lines.push('');
+    }
+
+    lines.push(
+        `**Domain Entities:** Read \`docs/project-reference/domain-entities-reference.md\` for entity catalog, relationships, and cross-service sync map.`,
+        ''
+    );
+
+    // App-specific guidance: v2 modules first, v1 fallback
+    const mod = getModuleForPath(filePath);
+    const appName = mod?.name || app;
+    if (appName) {
+        lines.push('### App-Specific Notes', '', `Working in **${appName}** app:`, '');
+
+        // v2: check module.meta.generation; v1 fallback: MODERN_APPS/LEGACY_APPS sets
+        const generation = mod?.meta?.generation || (MODERN_APPS.has(appName) ? 'modern' : LEGACY_APPS.has(appName) ? 'legacy' : null);
+
+        if (generation === 'modern') {
+            lines.push('- Modern standalone components with signals', "- Use `@use 'shared-mixin'` for SCSS imports", '- Use CSS variables for theming', '');
+        } else if (generation === 'legacy') {
+            lines.push(
+                '- **Legacy app** with NgModules (not standalone)',
+                "- Use `@import '~assets/scss/variables'` for SCSS",
+                '',
+                `Read \`${patternsDoc}\` for:`,
+                '- Component hierarchy and base class constructor signatures',
+                '- API call patterns (effectSimple, observerLoadingErrorState)',
+                '- Subscription management (untilDestroyed)',
+                ''
+            );
+        }
+    }
+
+    // Filter out empty lines from middle
+    return lines
+        .filter((line, i, arr) => {
+            if (line === '' && arr[i - 1] === '') return false;
+            return true;
+        })
+        .join('\n');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MAIN EXECUTION
+// ═══════════════════════════════════════════════════════════════════════════
+
+async function main() {
+    try {
+        const input = parsePreToolUseInput();
+        if (!input) process.exit(0);
+        const { filePath, transcriptPath } = input;
+
+        if (!shouldInject(filePath, transcriptPath)) process.exit(0);
+
+        const context = detectFrontendContext(filePath);
+        if (!context) process.exit(0);
+
+        const app = detectApp(filePath);
+        const patternsAlreadyInjected = werePatternRecentlyInjected(transcriptPath);
+        console.log(buildInjection(context, filePath, app, patternsAlreadyInjected));
+        process.exit(0);
+    } catch (error) {
+        process.exit(0);
+    }
+}
+
+main();

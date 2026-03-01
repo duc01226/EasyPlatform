@@ -5,9 +5,11 @@ description: "[Implementation] Use when the user asks to implement a new feature
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` and `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
 
@@ -34,8 +36,11 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, T
 - **Evidence-Based**: grep/search to verify assumptions, never assume service ownership
 - **High Priority**: Domain Entities, Commands, Queries, EventHandlers, Controllers, BackgroundJobs, Consumers, Components MUST be analyzed
 - **Approval Required**: STOP at Phase 3, do NOT proceed without user confirmation
+- **New Tech/Lib Gate**: If implementation requires new packages/libraries not in project, `TaskCreate` to evaluate top 3 alternatives → compare → recommend with confidence % → `AskUserQuestion` to confirm before installing
 
-> **Skill Variant:** Use this skill for **interactive feature development** where the user is actively engaged and can provide feedback. For autonomous feature implementation, use `tasks-feature-implementation`. For investigating existing features without changes, use `feature-investigation`.
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+> **Skill Variant:** Use this skill for **interactive feature development** where the user is actively engaged and can provide feedback. For investigating existing features without changes, use `feature-investigation`.
 
 # Implementing a New Feature or Enhancement
 
@@ -51,7 +56,7 @@ Your sole objective is to build a structured knowledge model in a Markdown analy
 
 ### PHASE 1A: INITIALIZATION AND DISCOVERY
 
-First, **initialize** the analysis file with a `## Metadata` heading and under it is the full original prompt in a markdown box, like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `.ai/docs/prompt-context.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box).
+First, **initialize** the analysis file with a `## Metadata` heading and under it is the full original prompt in a markdown box, like this: `markdown [content of metadata in here]` (MUST 5 chars for start and end of markdown box), then continue add the task description and full details of the `Source Code Structure` from `docs/project-reference/backend-patterns-reference.md` and `docs/project-reference/frontend-patterns-reference.md` into this `## Metadata` section, with all content in `## Metadata` section must be in a markdown box, like this: `markdown [content of metadata in here]` (MUST 6 chars for start and end of markdown box).
 
 You **MANDATORY IMPORTANT MUST** also create the following top-level headings:
 
@@ -112,14 +117,14 @@ For each file in the `## File List` (following the prioritized order if applicab
 - **`relevanceScore`**: A numerical score (1-10)
 - **`evidenceLevel`**: "verified" or "inferred"
 - **`uncertainties`**: Any aspects you are unsure about
-- **`platformAbstractions`**: Any platform base classes used
+- **`frameworkAbstractions`**: Any framework base classes used
 - **`serviceContext`**: Which microservice this file belongs to
 - **`dependencyInjection`**: Any DI registrations
 - **`genericTypeParameters`**: Generic type relationships
 
 **For Consumer Files (CRITICAL):**
 
-- **`messageBusAnalysis`**: When analyzing any Consumer file (files ending with `Consumer.cs` that extend `PlatformApplicationMessageBusConsumer<T>`), identify the `*BusMessage` type used. Then perform a grep search across ALL services to find files that **send/publish** this message type. List all producer files and their service locations in the `messageBusProducers` field. This analysis is crucial for understanding cross-service integration.
+- **`messageBusAnalysis`**: When analyzing any Consumer file (files ending with `Consumer.cs` that extend the project message bus consumer base class), identify the `*BusMessage` type used. Then perform a grep search across ALL services to find files that **send/publish** this message type. List all producer files and their service locations in the `messageBusProducers` field. This analysis is crucial for understanding cross-service integration.
 
 **Targeted Aspect Analysis:**
 Populate `specificAspects:` key with deeper analysis:
@@ -143,17 +148,17 @@ Write comprehensive `overallAnalysis:` summary showing:
 
 ## PHASE 2: PLAN GENERATION
 
-You MUST ensure all files are analyzed. Then read the ENTIRE Markdown analysis notes file. Then Generate a detailed implementation plan under a `## Plan` heading. Your plan **MANDATORY IMPORTANT MUST** follow coding convention and patterns in `.ai/docs/prompt-context.md`, must ultrathink and think step-by-step todo list to make code changes, for each step must read `.ai/docs/prompt-context.md` to follow code convention and patterns.
+You MUST ensure all files are analyzed. Then read the ENTIRE Markdown analysis notes file. Then Generate a detailed implementation plan under a `## Plan` heading. Your plan **MANDATORY IMPORTANT MUST** follow coding convention and patterns in `docs/project-reference/backend-patterns-reference.md` and `docs/project-reference/frontend-patterns-reference.md`, must ultrathink and think step-by-step todo list to make code changes, for each step must read these pattern references to follow code convention and patterns.
 
 ### PHASE 2.1: VERIFY AND REFACTOR
 
 First, verify and ensure your implementation plan that code patterns, solution must follow code patterns and example in these files:
 
-- `.github/copilot-instructions.md`
-- `.github/instructions/frontend-angular.instructions.md`
-- `.github/instructions/backend-dotnet.instructions.md`
+- `docs/project-reference/backend-patterns-reference.md`
+- `docs/project-reference/frontend-patterns-reference.md`
+- `docs/project-reference/code-review-rules.md`
 
-Then verify and ensure your implementation plan satisfy clean code rules in `.github/instructions/clean-code.instructions.md`
+Then verify and ensure your implementation plan satisfies clean code rules in `docs/project-reference/code-review-rules.md`
 
 ---
 
@@ -205,7 +210,7 @@ Once approved, execute the plan. Before creating or modifying **ANY** file, you 
 - Verify file exists before modification
 - Read current content before editing
 - Check for conflicts with existing code
-- Validate changes against platform patterns
+- Validate changes against project patterns
 
 ---
 
@@ -220,7 +225,7 @@ Before completion, verify the implementation against all requirements. Document 
 - **Evidence-based approach:** Use `grep` and semantic search to verify assumptions
 - **Service boundary discovery:** Find endpoints before assuming responsibilities
 - **Never assume service ownership:** Verify patterns with code evidence
-- **Platform-first approach:** Use established templates
+- **Project-patterns-first approach:** Use established templates
 - **Cross-service sync:** Use an event bus, not direct database access
 - **CQRS adherence:** Follow established Command/Query patterns
 - **Clean architecture respect:** Maintain proper layer dependencies
@@ -260,22 +265,13 @@ Component → Store.effect() → ApiService → Backend
    Template ← Store.state
 ```
 
-### Platform Patterns
+### Project Framework Patterns (see docs/project-reference/backend-patterns-reference.md)
 
-```csharp
-// Command/Query handlers
-PlatformCqrsCommandApplicationHandler<TCommand, TResult>
-PlatformCqrsQueryApplicationHandler<TQuery, TResult>
-
-// Entity event handlers (for side effects)
-PlatformCqrsEntityEventApplicationHandler<TEntity>
-
-// Message bus consumers
-PlatformApplicationMessageBusConsumer<TMessage>
-
-// Repositories
-service-specific repository<TEntity>
-service-specific repository<TEntity>
+```
+// Command/Query handlers — search for: CqrsCommandApplicationHandler, CqrsQueryApplicationHandler
+// Entity event handlers (for side effects) — search for: EntityEventApplicationHandler
+// Message bus consumers — search for: MessageBusConsumer
+// Repositories — search for: service-specific repository interface
 ```
 
 ### Frontend Patterns
@@ -295,11 +291,11 @@ effectSimple(() => api.call().pipe(tapResponse(...)))
 
 ## See Also
 
-- `.ai/docs/AI-DEBUGGING-PROTOCOL.md` - Debugging protocol
-- `.ai/docs/prompt-context.md` - Platform patterns and context
+- `.claude/docs/AI-DEBUGGING-PROTOCOL.md` - Debugging protocol
+- `docs/project-reference/backend-patterns-reference.md` - Backend patterns and context
+- `docs/project-reference/frontend-patterns-reference.md` - Frontend patterns and context
 - `CLAUDE.md` - Codebase instructions
 - `feature-investigation` skill - For exploring existing features (READ-ONLY)
-- `tasks-feature-implementation` skill - Autonomous variant
 
 ## Related
 

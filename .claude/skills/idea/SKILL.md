@@ -2,10 +2,14 @@
 name: idea
 version: 1.0.0
 description: "[Project Management] Capture and structure product ideas as backlog artifacts. Use when capturing new ideas, feature requests, or concepts for future refinement. Triggers on keywords like "capture idea", "new idea", "feature idea", "add to backlog", "quick idea"."
-allowed-tools: Read, Write, Grep, Glob, TaskCreate
+allowed-tools: Read, Write, Grep, Glob, TaskCreate, AskUserQuestion
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
@@ -28,8 +32,25 @@ allowed-tools: Read, Write, Grep, Glob, TaskCreate
 **Key Rules:**
 
 - Output to `team-artifacts/ideas/{YYMMDD}-{role}-idea-{slug}.md`
+
+## Greenfield Mode
+
+> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+
+**When greenfield is detected:**
+
+1. Skip module auto-detection from existing project (no modules exist yet)
+2. Skip "MUST READ project-structure-reference.md" (won't exist)
+3. Focus on broader problem-space capture: market gap, competitors, differentiation
+4. Output tech-agnostic problem statement (no existing tech stack to reference)
+5. Enable web research for market/competitor context (WebSearch)
+6. Increase AskUserQuestion frequency — capture vision, constraints, team profile, scale expectations
+7. **[CRITICAL] DO NOT ask about tech stack during idea capture.** Tech stack is a research-driven decision that comes AFTER full business analysis (business-evaluation phase). If the user volunteers a tech stack preference, acknowledge it but still defer final decision to the tech stack research phase where it will be properly evaluated with pros/cons, market analysis, and team-fit assessment.
+
 - Validation step is mandatory, not optional
 - Auto-detect module silently; only prompt when ambiguous
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Idea Capture
 
@@ -67,7 +88,7 @@ Capture raw ideas as structured artifacts for backlog consideration.
 
 ## Template
 
-See: `team-artifacts/templates/idea-template.md`
+See: `.claude/docs/team-artifacts/templates/idea-template.md`
 
 ## Detailed Workflow
 
@@ -142,7 +163,39 @@ Once module detected:
 - Role: Infer from context or ask
 - Include domain context if detected
 
+### Step 6.5: Idea Discovery Interview (MANDATORY)
+
+Use `AskUserQuestion` to probe the idea with 3-5 structured questions. Each question MUST have 2-4 options with one marked "(Recommended)".
+
+#### Question Categories (pick 3-5 based on idea type):
+
+| Category        | Purpose                           | Example                                      |
+| --------------- | --------------------------------- | -------------------------------------------- |
+| Problem Clarity | Distinguish problem from solution | "What problem does this solve?" with options |
+| User Persona    | Identify primary user             | "Who benefits most?" with role options       |
+| Scope           | MVP vs full vision                | "What's the smallest valuable version?"      |
+| Testability     | Can we define done?               | "How would you verify this works?"           |
+| Impact          | Business value sizing             | "How many users/processes does this affect?" |
+| Constraints     | Known blockers                    | "Any technical/business constraints?"        |
+| Scale           | Expected load and growth          | "How many users/transactions expected?"      |
+
+> **Greenfield note:** In greenfield mode, do NOT include tech stack questions here. Focus on business problem, users, scale, and constraints. Tech stack is evaluated in a dedicated research phase later.
+
+#### Testability Question (ALWAYS include):
+
+"How would you verify this feature works correctly?"
+
+- Options based on domain: manual test steps, automated test criteria, metric thresholds
+
+Document all answers in the idea artifact under `## Discovery Interview`.
+
 ### Step 7: Suggest Next Step
+
+After idea capture, suggest:
+
+1. `/refine` — Refine into PBI (Recommended)
+2. `/tdd-spec` — Jump straight to test spec creation
+3. `/plan` — Start implementation planning
 
 - Output: "Idea captured! To refine into a PBI, run: `/refine {filename}`"
 - If domain module detected: "Module context from {module} will be used during refinement."
@@ -212,6 +265,28 @@ When a project module is detected, include this section in the idea artifact:
 - BR-{MOD}-XXX: {Brief description}
 ```
 
+## UI Sketch Output Format
+
+> **MUST READ:** `.claude/skills/shared/ui-wireframe-protocol.md`
+
+When the idea involves UI changes, include this section in the idea artifact:
+
+```markdown
+## UI Sketch
+
+### Layout
+
+{Rough ASCII wireframe showing spatial arrangement — see ui-wireframe-protocol.md}
+
+### Key Components
+
+- **{Component}** — {purpose} _(tier: common | domain-shared | page/app)_
+- **{Component}** — {purpose} _(tier: common | domain-shared | page/app)_
+```
+
+> Classify components per **Component Hierarchy** in `ui-wireframe-protocol.md` — search existing libs before proposing new components.
+> If backend-only idea: `## UI Sketch` → `N/A — Backend-only change. No UI affected.`
+
 ## Example
 
 ```bash
@@ -232,3 +307,28 @@ Creates with ServiceB context: `team-artifacts/ideas/260119-po-idea-goal-progres
 
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
+
+---
+
+## Workflow Recommendation
+
+> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+>
+> 1. **Activate `idea-to-pbi` workflow** (Recommended) — idea → refine → refine-review → story → story-review → prioritize
+> 2. **Execute `/idea` directly** — run this skill standalone
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+
+- **"/refine (Recommended)"** — Transform idea into actionable PBI
+- **"/web-research"** — If idea needs market research first
+- **"Skip, continue manually"** — user decides
+
+## Closing Reminders
+
+**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.

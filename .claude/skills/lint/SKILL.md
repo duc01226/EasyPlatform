@@ -2,10 +2,10 @@
 name: lint
 version: 1.0.0
 description: '[Code Quality] Run linters and fix issues for backend or frontend'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
@@ -28,6 +28,8 @@ activation: user-invoked
 - `fix` argument = apply safe auto-fixes, report remaining manual items
 - Always show file paths and line numbers in output
 
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
 Run linting: $ARGUMENTS
 
 ## Instructions
@@ -41,7 +43,7 @@ Run linting: $ARGUMENTS
 2. **For Backend (.NET)**:
 
     ```bash
-    dotnet build EasyPlatform.sln /p:TreatWarningsAsErrors=false
+    dotnet build {SolutionName}.sln /p:TreatWarningsAsErrors=false
     ```
 
     - Check for analyzer warnings (CA*, IDE*, etc.)
@@ -50,9 +52,9 @@ Run linting: $ARGUMENTS
 3. **For Frontend (Angular/Nx)**:
 
     ```bash
-    cd src/PlatformExampleAppWeb
+    cd src/{ExampleAppWeb}
     nx lint playground-text-snippet
-    nx lint platform-core
+    nx lint {lib-name}
     ```
 
     With auto-fix:

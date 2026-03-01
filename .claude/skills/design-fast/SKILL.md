@@ -2,10 +2,10 @@
 name: design-fast
 version: 1.0.0
 description: '[Design] Create a quick design'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 Think hard to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <tasks>$ARGUMENTS</tasks>
@@ -17,14 +17,18 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 **Goal:** Create a quick UI design using design intelligence databases and subagents.
 
 **Workflow:**
+
 1. **Research** — Run `ui-ux-pro-max` searches for design intelligence
 2. **Design** — Use `ui-ux-designer` subagent to create the design
 3. **Review** — Present to user for approval
 
 **Key Rules:**
+
 - Always activate `ui-ux-pro-max` FIRST for design intelligence
 - Default to pure HTML/CSS/JS if user doesn't specify framework
 - Use `ai-multimodal` for generating real visual assets
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Required Skills (Priority Order)
 

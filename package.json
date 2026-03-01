@@ -1,11 +1,27 @@
 {
-  "private": true,
-  "description": "EasyPlatform root - MCP server packages for Claude Code local resolution",
-  "devDependencies": {
-    "@modelcontextprotocol/server-github": "2025.4.8",
-    "@modelcontextprotocol/server-memory": "2025.11.25",
-    "@modelcontextprotocol/server-sequential-thinking": "2025.12.18",
-    "@upstash/context7-mcp": "2.1.0",
-    "dotenv-cli": "11.0.0"
-  }
+    "description": "Repository-wide tooling for EasyPlatform monorepo",
+    "devDependencies": {
+        "@commitlint/cli": "^19.0.0",
+        "@commitlint/config-conventional": "^19.0.0",
+        "@modelcontextprotocol/server-github": "2025.4.8",
+        "@modelcontextprotocol/server-memory": "2025.11.25",
+        "@modelcontextprotocol/server-sequential-thinking": "2025.12.18",
+        "@upstash/context7-mcp": "2.1.0",
+        "dotenv-cli": "11.0.0",
+        "husky": "^9.0.0",
+        "lint-staged": "^15.0.0",
+        "prettier": "^3.0.0"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "lint-staged": {
+        "*.{js,jsx,ts,tsx,json,css,scss,html,md}": "prettier --write"
+    },
+    "name": "easyplatform-tooling",
+    "private": true,
+    "scripts": {
+        "prepare": "husky install"
+    },
+    "version": "1.0.0"
 }

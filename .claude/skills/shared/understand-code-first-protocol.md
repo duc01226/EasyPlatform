@@ -4,6 +4,12 @@
 
 ## Core Rule
 
+<HARD-GATE>
+Do NOT write any code, create any plan, or attempt any fix until you have READ and
+UNDERSTOOD the existing code in the target area. Search for 3+ similar implementations
+first. This applies to EVERY task regardless of perceived simplicity.
+</HARD-GATE>
+
 > **#1 Priority: FIND EXISTING EXAMPLE CODE PATTERNS FIRST.** Before writing any code, search the codebase for 3+ similar implementations. Follow the established pattern — never invent new patterns when existing ones work.
 
 > **Before ANY code modification, plan creation, or fix attempt: READ and UNDERSTAND the existing code FIRST.**
@@ -45,13 +51,14 @@ Before creating new files or patterns:
 For non-trivial tasks (multi-file changes, complex fixes, feature implementation):
 
 1. **Write analysis to file** — Save investigation results to `.ai/workspace/analysis/{task-name}.analysis.md`
-   - Include: file list, key patterns found, dependencies, business context, assumptions validated
-   - This prevents losing knowledge during long operations or context compaction
+    - Include: file list, key patterns found, dependencies, business context, assumptions validated
+    - This prevents losing knowledge during long operations or context compaction
 2. **Re-read before acting** — Before generating plans or implementing changes, re-read the ENTIRE analysis file
-   - Ensures decisions are based on complete investigation, not partial memory
+    - Ensures decisions are based on complete investigation, not partial memory
 3. **Update during execution** — Keep the analysis file updated with progress and new findings
 
 **When to use external memory:**
+
 - Any task touching 3+ files
 - Bug diagnosis requiring root cause analysis
 - Feature implementation requiring codebase understanding
@@ -77,17 +84,20 @@ Before modifying code:
 When implementing features that affect data filtering, queries, or business logic, search ALL related files:
 
 **Backend:**
-- Query handlers: `grep -r "Query.*{Entity}" Application/ApplyPlatform/UseCaseQueries/ --include="*.cs"`
-- Command handlers: `grep -r "Command.*{Entity}" Application/UseCaseCommands/ --include="*.cs"`
-- Repository usages: `grep -r "{entity}Repository\\.FindByExprAsync" Application/ --include="*.cs"`
-- Controller endpoints: `grep -r "Route.*{entity}" Controllers/ --include="*.cs"`
+
+- Query handlers: `grep -r "Query.*{Entity}" --include="*.cs"` (search for: query handler directory pattern)
+- Command handlers: `grep -r "Command.*{Entity}" --include="*.cs"` (search for: command handler directory pattern)
+- Repository usages: `grep -r "{entity}Repository" --include="*.cs"` (search for: repository query pattern)
+- Controller endpoints: `grep -r "Route.*{entity}" --include="*.cs"` (search for: controller directory pattern)
 
 **Frontend:**
+
 - API calls: `grep -r "{endpoint-path}" src/ --include="*.ts"`
 - Components: `grep -r "{ApiServiceName}" src/ --include="*.component.ts"`
 
 **Cross-service:**
-- Check ALL services: `for svc in $(ls src/Services/); do grep -r "{pattern}" "src/Services/$svc"; done`
+
+- Check ALL services via `modules[]` in docs/project-config.json (or `backendServices.serviceMap` in v1 configs)
 
 ## Anti-Patterns (DO NOT)
 
@@ -102,5 +112,5 @@ When implementing features that affect data filtering, queries, or business logi
 ## See Also
 
 - `.claude/skills/shared/evidence-based-reasoning-protocol.md` — Detailed validation protocols
-- `.ai/docs/common-prompt.md` — Full investigation & knowledge graph protocol (Phase 1: Knowledge Model → Phase 2: Plan → Phase 3: Approval → Phase 4: Execute)
+- `.claude/docs/common-prompt.md` — Full investigation & knowledge graph protocol (Phase 1: Knowledge Model → Phase 2: Plan → Phase 3: Approval → Phase 4: Execute)
 - `CLAUDE.md` "Investigation & Recommendation Protocol" — Breaking change assessment

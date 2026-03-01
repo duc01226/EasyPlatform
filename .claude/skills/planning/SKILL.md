@@ -6,7 +6,7 @@ allowed-tools: NONE
 license: MIT
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -18,7 +18,7 @@ license: MIT
 
 1. **Research** — Parallel researcher agents, sequential-thinking, docs-seeker, GitHub analysis (max 5 researches)
 2. **Design Context** — Extract Figma specs if URLs present in source artifacts
-3. **Codebase Understanding** — Parallel scout agents, read essential docs (development-rules.md, codebase-summary.md, code-standards.md)
+3. **Codebase Understanding** — Parallel scout agents, read essential docs (development-rules.md, backend-patterns-reference.md, frontend-patterns-reference.md, project-structure-reference.md)
 4. **Solution Design** — Trade-off analysis, security, performance, edge cases, architecture
 5. **Plan Creation** — YAML frontmatter plan.md + detailed phase-XX-\*.md files
 6. **Review** — Run `/plan-review` to validate, ask user to confirm
@@ -29,6 +29,8 @@ license: MIT
 - **DO NOT** use EnterPlanMode tool - already in planning workflow
 - **ALWAYS** run `/plan-review` after plan creation
 - **COLLABORATE**: Ask decision questions, present options with recommendations
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Planning
 
@@ -422,7 +424,7 @@ Map extracted values to existing tokens:
 | 16px           | `--spacing-md`       | Standard spacing |
 | Inter 400 14px | `--font-body`        | Body text        |
 
-Reference: `docs/design-system/tokens.scss` for available tokens.
+Reference: `docs/project-reference/design-system/tokens.scss` for available tokens.
 
 #### Fallback Behavior
 
@@ -516,22 +518,21 @@ No Figma designs referenced. If UI changes are needed:
 
 ALWAYS read these files first:
 
-1. **`./docs/development-rules.md`** (IMPORTANT)
+1. **`./.claude/workflows/development-rules.md`** (IMPORTANT)
     - File Name Conventions
     - File Size Management
     - Development rules and best practices
     - Code quality standards
     - Security guidelines
 
-2. **`./docs/codebase-summary.md`**
-    - Project structure and current status
-    - High-level architecture overview
-    - Component relationships
+2. **`./docs/project-reference/backend-patterns-reference.md`** + **`./docs/project-reference/frontend-patterns-reference.md`**
+    - Backend: CQRS, repositories, entities, validation, message bus
+    - Frontend: component base classes, state management, API services
+    - Naming conventions and coding standards
 
-3. **`./docs/code-standards.md`**
-    - Coding conventions and standards
-    - Language-specific patterns
-    - Naming conventions
+3. **`./docs/project-reference/project-structure-reference.md`**
+    - Service architecture, ports, directory tree
+    - Tech stack and module codes
 
 4. **`./docs/design-guidelines.md`** (if exists)
     - Design system guidelines
@@ -738,6 +739,7 @@ description: 'Add user authentication with OAuth2 support'
 status: pending
 priority: P1
 effort: 8h
+story_points: 8
 issue: 123
 branch: kai/feat/oauth-auth
 tags: [auth, backend, security]
@@ -752,11 +754,11 @@ Brief description of what this plan accomplishes.
 
 ## Phases
 
-| #   | Phase          | Status  | Effort | Link                            |
-| --- | -------------- | ------- | ------ | ------------------------------- |
-| 1   | Setup          | Pending | 2h     | [phase-01](./phase-01-setup.md) |
-| 2   | Implementation | Pending | 4h     | [phase-02](./phase-02-impl.md)  |
-| 3   | Testing        | Pending | 2h     | [phase-03](./phase-03-test.md)  |
+| #   | Phase          | Status  | Effort | SP  | Link                            |
+| --- | -------------- | ------- | ------ | --- | ------------------------------- |
+| 1   | Setup          | Pending | 2h     | 3   | [phase-01](./phase-01-setup.md) |
+| 2   | Implementation | Pending | 4h     | 5   | [phase-02](./phase-02-impl.md)  |
+| 3   | Testing        | Pending | 2h     | 3   | [phase-03](./phase-03-test.md)  |
 
 ## Dependencies
 
@@ -772,7 +774,7 @@ Brief description of what this plan accomplishes.
 
 ##### Phase Files (phase-XX-name.md)
 
-Fully respect the `./docs/development-rules.md` file.
+Fully respect the `./.claude/workflows/development-rules.md` file.
 Each phase file should contain:
 
 ###### Context Links
@@ -899,7 +901,7 @@ List affected files with:
 - Action type (modify/create/delete)
 - Brief change description
 - Dependencies on other changes
-- Fully respect the `./docs/development-rules.md` file.
+- Fully respect the `./.claude/workflows/development-rules.md` file.
 
 #### Output Workflow Process
 
@@ -919,7 +921,7 @@ List affected files with:
 - Self-contained plans with necessary context
 - Code snippets/pseudocode when clarifying
 - Multiple options with trade-offs when appropriate
-- Fully respect the `./docs/development-rules.md` file.
+- Fully respect the `./.claude/workflows/development-rules.md` file.
 
 ##### Writing Style
 
@@ -984,7 +986,7 @@ When no Figma context:
 - Design for future modifications
 - Document decision rationale
 - Avoid over-engineering
-- Fully respect the `./docs/development-rules.md` file.
+- Fully respect the `./.claude/workflows/development-rules.md` file.
 
 ##### Research Depth
 
@@ -1026,7 +1028,7 @@ When no Figma context:
 - Ensure self-contained plans with necessary context
 - Include code snippets/pseudocode when clarifying
 - Provide multiple options with trade-offs when appropriate
-- Fully respect the `./docs/development-rules.md` file.
+- Fully respect the `./.claude/workflows/development-rules.md` file.
 
 **Plan Directory Structure**
 
@@ -1100,8 +1102,8 @@ All agents writing reports MUST:
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
-  1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-  2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+    1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
+    2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
 
 ## Important Notes
 

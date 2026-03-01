@@ -6,7 +6,6 @@
  * - No deprecated fields: triggerPatterns, excludePatterns, priority removed
  * - Catalog generation: buildWorkflowCatalog produces compact, valid output
  * - Catalog injection: buildCatalogInjection includes detection instructions
- * - shouldInjectCatalog: correctly skips short prompts
  * - Command mapping completeness: all sequence steps resolve in commandMapping
  * - Workflow instruction builder: buildWorkflowInstructions produces valid output
  */
@@ -26,7 +25,7 @@ try {
 }
 
 // Load catalog builder functions
-const { buildWorkflowCatalog, buildCatalogInjection, buildWorkflowInstructions, shouldInjectCatalog, getStepDescription } = require(
+const { buildWorkflowCatalog, buildCatalogInjection, buildWorkflowInstructions, getStepDescription } = require(
     path.join(PROJECT_ROOT, '.claude', 'hooks', 'workflow-router.cjs')
 );
 
@@ -155,7 +154,11 @@ assert(
     'Missing Workflow Detection Instructions header'
 );
 assert('Injection references workflow-start', injection.includes('workflow-start'), 'Should reference /workflow-start for activation');
-assert('Injection contains TaskCreate enforcement', injection.includes('TaskCreate') && injection.includes('MANDATORY'), 'Should include TaskCreate enforcement');
+assert(
+    'Injection contains TaskCreate enforcement',
+    injection.includes('TaskCreate') && injection.includes('MANDATORY'),
+    'Should include TaskCreate enforcement'
+);
 assert(
     'Injection contains MATCH/SELECT/ACTIVATE steps',
     injection.includes('MATCH') && injection.includes('SELECT') && injection.includes('ACTIVATE'),
@@ -167,29 +170,11 @@ const quickInjection = buildCatalogInjection(workflowConfig, true);
 assert('Quick mode injection contains quick notice', quickInjection.includes('Quick mode'), 'Quick mode should show notice');
 
 // ============================================================
-// SECTION 6: shouldInjectCatalog Tests
-// Short prompts (< 15 chars) should be skipped
-// ============================================================
-
-console.log('\n--- Section 6: shouldInjectCatalog ---');
-
-assert('Skips "yes"', !shouldInjectCatalog('yes'), 'Should skip short prompt');
-assert('Skips "ok"', !shouldInjectCatalog('ok'), 'Should skip short prompt');
-assert('Skips "continue"', !shouldInjectCatalog('continue'), 'Should skip short prompt');
-assert('Skips "go ahead"', !shouldInjectCatalog('go ahead'), 'Should skip short prompt');
-assert('Skips empty', !shouldInjectCatalog(''), 'Should skip empty prompt');
-assert('Skips "       "', !shouldInjectCatalog('       '), 'Should skip whitespace-only');
-assert('Allows "fix this bug in the login form"', shouldInjectCatalog('fix this bug in the login form'), 'Should allow long prompt');
-assert('Allows "implement new auth"', shouldInjectCatalog('implement new auth'), 'Should allow 15+ char prompt');
-assert('Allows exactly 15 chars', shouldInjectCatalog('1234567890abcde'), 'Should allow exactly 15 chars');
-assert('Skips 14 chars', !shouldInjectCatalog('1234567890abcd'), 'Should skip 14 chars');
-
-// ============================================================
-// SECTION 7: getStepDescription Tests
+// SECTION 6: getStepDescription Tests
 // Known steps should have descriptions
 // ============================================================
 
-console.log('\n--- Section 7: Step Descriptions ---');
+console.log('\n--- Section 6: Step Descriptions ---');
 
 const knownSteps = [
     'plan',
@@ -219,11 +204,11 @@ for (const step of knownSteps) {
 assert('Unknown step uses fallback', getStepDescription('unknown-step') === 'Execute unknown-step', `Got: ${getStepDescription('unknown-step')}`);
 
 // ============================================================
-// SECTION 8: Workflow Instructions Builder Tests
+// SECTION 7: Workflow Instructions Builder Tests
 // buildWorkflowInstructions produces valid post-activation output
 // ============================================================
 
-console.log('\n--- Section 8: Workflow Instructions ---');
+console.log('\n--- Section 7: Workflow Instructions ---');
 
 // Test with feature workflow
 const featureWf = workflows.feature;
@@ -243,15 +228,15 @@ if (featureWf) {
 
     // Verify preActions section if present
     if (featureWf.preActions) {
-        if (featureWf.preActions.activateSkill) {
-            assert(
-                'Feature instructions has Pre-Actions with activateSkill',
-                instructions.includes('Pre-Actions') && instructions.includes(featureWf.preActions.activateSkill),
-                'Should include activateSkill in Pre-Actions'
-            );
-        }
         if (featureWf.preActions.injectContext) {
             assert('Feature instructions has Workflow Context', instructions.includes('Workflow Context'), 'Should include Workflow Context section');
+        }
+        if (featureWf.preActions.readFiles && featureWf.preActions.readFiles.length > 0) {
+            assert(
+                'Feature instructions has Pre-Actions with readFiles',
+                instructions.includes('Pre-Actions') && instructions.includes('Pre-read files'),
+                'Should include readFiles in Pre-Actions'
+            );
         }
     }
 }
@@ -272,11 +257,11 @@ if (bugfixWf) {
 }
 
 // ============================================================
-// SECTION 9: Default Config Validation
+// SECTION 8: Default Config Validation
 // getDefaultConfig should return valid v2.0.0 schema
 // ============================================================
 
-console.log('\n--- Section 9: Default Config ---');
+console.log('\n--- Section 8: Default Config ---');
 
 const defaultConfig = getDefaultConfig();
 
@@ -292,10 +277,10 @@ for (const [id, wf] of Object.entries(defaultConfig.workflows)) {
 }
 
 // ============================================================
-// SECTION 10: Workflow Coverage Summary
+// SECTION 9: Workflow Coverage Summary
 // ============================================================
 
-console.log('\n--- Section 10: Coverage Summary ---');
+console.log('\n--- Section 9: Coverage Summary ---');
 
 assert('All workflows tested', workflowIds.length > 0, `Tested ${workflowIds.length} workflows`);
 

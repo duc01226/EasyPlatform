@@ -26,14 +26,13 @@ const EDIT_DIR = path.join(CK_TMP_DIR, 'edit');
 // State file path pattern
 const STATE_FILE_PREFIX = 'edit-state-';
 
-
 /**
  * Get edit state file path for a session
  * @param {string} sessionId - Session identifier
  * @returns {string} Path to edit state file
  */
 function getEditStatePath(sessionId) {
-  return path.join(EDIT_DIR, `${STATE_FILE_PREFIX}${sessionId}.json`);
+    return path.join(EDIT_DIR, `${STATE_FILE_PREFIX}${sessionId}.json`);
 }
 
 /**
@@ -41,15 +40,17 @@ function getEditStatePath(sessionId) {
  * @returns {Object} Default empty edit state
  */
 function getDefaultState() {
-  return {
-    editCount: 0,              // Number of Edit/Write calls since last TaskCreate
-    writeCount: 0,             // Number of Write calls specifically
-    filesModified: [],         // List of files modified (last 20)
-    sessionStarted: null,      // ISO timestamp of session start
-    lastUpdated: null,         // ISO timestamp of last update
-    planWarningShown: false,   // Plan artifact warning at 4 unique files
-    planWarningShown8: false   // Plan artifact warning at 8 unique files
-  };
+    return {
+        editCount: 0, // Number of Edit/Write calls since last TaskCreate
+        writeCount: 0, // Number of Write calls specifically
+        filesModified: [], // List of files modified (last 20)
+        sessionStarted: null, // ISO timestamp of session start
+        lastUpdated: null, // ISO timestamp of last update
+        planWarningShown: false, // Plan artifact warning at 4 unique files
+        planWarningShown8: false, // Plan artifact warning at 8 unique files
+        projectCodeChecked: false, // Whether projectHasCode() has been evaluated this session
+        projectHasCode: true // Cached result of projectHasCode() (default true = safe fallback)
+    };
 }
 
 /**
@@ -58,18 +59,18 @@ function getDefaultState() {
  * @returns {Object} Edit state or default
  */
 function getEditState(sessionId) {
-  if (!sessionId) return getDefaultState();
+    if (!sessionId) return getDefaultState();
 
-  const statePath = getEditStatePath(sessionId);
-  try {
-    if (!fs.existsSync(statePath)) {
-      return { ...getDefaultState(), sessionStarted: new Date().toISOString() };
+    const statePath = getEditStatePath(sessionId);
+    try {
+        if (!fs.existsSync(statePath)) {
+            return { ...getDefaultState(), sessionStarted: new Date().toISOString() };
+        }
+        const data = JSON.parse(fs.readFileSync(statePath, 'utf8'));
+        return { ...getDefaultState(), ...data };
+    } catch (e) {
+        return { ...getDefaultState(), sessionStarted: new Date().toISOString() };
     }
-    const data = JSON.parse(fs.readFileSync(statePath, 'utf8'));
-    return { ...getDefaultState(), ...data };
-  } catch (e) {
-    return { ...getDefaultState(), sessionStarted: new Date().toISOString() };
-  }
 }
 
 /**
@@ -79,24 +80,28 @@ function getEditState(sessionId) {
  * @returns {boolean} Success status
  */
 function setEditState(sessionId, state) {
-  if (!sessionId) return false;
+    if (!sessionId) return false;
 
-  ensureDir(EDIT_DIR);
-  const statePath = getEditStatePath(sessionId);
-  const tmpFile = statePath + '.' + Math.random().toString(36).slice(2);
+    ensureDir(EDIT_DIR);
+    const statePath = getEditStatePath(sessionId);
+    const tmpFile = statePath + '.' + Math.random().toString(36).slice(2);
 
-  try {
-    const stateToSave = {
-      ...state,
-      lastUpdated: new Date().toISOString()
-    };
-    fs.writeFileSync(tmpFile, JSON.stringify(stateToSave, null, 2));
-    fs.renameSync(tmpFile, statePath);
-    return true;
-  } catch (e) {
-    try { fs.unlinkSync(tmpFile); } catch (_) { /* ignore */ }
-    return false;
-  }
+    try {
+        const stateToSave = {
+            ...state,
+            lastUpdated: new Date().toISOString()
+        };
+        fs.writeFileSync(tmpFile, JSON.stringify(stateToSave, null, 2));
+        fs.renameSync(tmpFile, statePath);
+        return true;
+    } catch (e) {
+        try {
+            fs.unlinkSync(tmpFile);
+        } catch (_) {
+            /* ignore */
+        }
+        return false;
+    }
 }
 
 /**
@@ -107,30 +112,29 @@ function setEditState(sessionId, state) {
  * @returns {Object} Updated state with warning info
  */
 function recordEdit(sessionId, filePath, toolName) {
-  const state = getEditState(sessionId);
+    const state = getEditState(sessionId);
 
-  state.editCount++;
-  if (toolName === 'Write') {
-    state.writeCount++;
-  }
-
-  // Track files modified (keep last 20)
-  if (filePath && !state.filesModified.includes(filePath)) {
-    state.filesModified.push(filePath);
-    if (state.filesModified.length > 20) {
-      state.filesModified = state.filesModified.slice(-20);
+    state.editCount++;
+    if (toolName === 'Write') {
+        state.writeCount++;
     }
-  }
 
-  setEditState(sessionId, state);
+    // Track files modified (keep last 20)
+    if (filePath && !state.filesModified.includes(filePath)) {
+        state.filesModified.push(filePath);
+        if (state.filesModified.length > 20) {
+            state.filesModified = state.filesModified.slice(-20);
+        }
+    }
 
-  return {
-    state,
-    editCount: state.editCount,
-    uniqueFiles: state.filesModified.length
-  };
+    setEditState(sessionId, state);
+
+    return {
+        state,
+        editCount: state.editCount,
+        uniqueFiles: state.filesModified.length
+    };
 }
-
 
 /**
  * Reset edit count (called when TaskCreate is used)
@@ -138,13 +142,12 @@ function recordEdit(sessionId, filePath, toolName) {
  * @returns {boolean} Success status
  */
 function resetEditCount(sessionId) {
-  const state = getEditState(sessionId);
-  state.editCount = 0;
-  state.writeCount = 0;
-  state.filesModified = [];
-  return setEditState(sessionId, state);
+    const state = getEditState(sessionId);
+    state.editCount = 0;
+    state.writeCount = 0;
+    state.filesModified = [];
+    return setEditState(sessionId, state);
 }
-
 
 /**
  * Get current edit count
@@ -152,8 +155,8 @@ function resetEditCount(sessionId) {
  * @returns {number} Current edit count
  */
 function getEditCount(sessionId) {
-  const state = getEditState(sessionId);
-  return state.editCount;
+    const state = getEditState(sessionId);
+    return state.editCount;
 }
 
 /**
@@ -163,8 +166,8 @@ function getEditCount(sessionId) {
  * @returns {boolean} True if warning was already shown
  */
 function getPlanWarningShown(sessionId, level) {
-  const state = getEditState(sessionId);
-  return level >= 8 ? state.planWarningShown8 : state.planWarningShown;
+    const state = getEditState(sessionId);
+    return level >= 8 ? state.planWarningShown8 : state.planWarningShown;
 }
 
 /**
@@ -174,13 +177,13 @@ function getPlanWarningShown(sessionId, level) {
  * @returns {boolean} Success status
  */
 function setPlanWarningShown(sessionId, level) {
-  const state = getEditState(sessionId);
-  if (level >= 8) {
-    state.planWarningShown8 = true;
-  } else {
-    state.planWarningShown = true;
-  }
-  return setEditState(sessionId, state);
+    const state = getEditState(sessionId);
+    if (level >= 8) {
+        state.planWarningShown8 = true;
+    } else {
+        state.planWarningShown = true;
+    }
+    return setEditState(sessionId, state);
 }
 
 /**
@@ -189,38 +192,38 @@ function setPlanWarningShown(sessionId, level) {
  * @returns {boolean} Success status
  */
 function clearEditState(sessionId) {
-  if (!sessionId) return false;
+    if (!sessionId) return false;
 
-  const statePath = getEditStatePath(sessionId);
-  try {
-    if (fs.existsSync(statePath)) {
-      fs.unlinkSync(statePath);
+    const statePath = getEditStatePath(sessionId);
+    try {
+        if (fs.existsSync(statePath)) {
+            fs.unlinkSync(statePath);
+        }
+        return true;
+    } catch (e) {
+        return false;
     }
-    return true;
-  } catch (e) {
-    return false;
-  }
 }
 
 module.exports = {
-  // Constants
-  EDIT_DIR,
+    // Constants
+    EDIT_DIR,
 
-  // Path helpers
-  getEditStatePath,
-  getDefaultState,
+    // Path helpers
+    getEditStatePath,
+    getDefaultState,
 
-  // State operations
-  getEditState,
-  setEditState,
-  recordEdit,
-  resetEditCount,
-  clearEditState,
+    // State operations
+    getEditState,
+    setEditState,
+    recordEdit,
+    resetEditCount,
+    clearEditState,
 
-  // Query functions
-  getEditCount,
+    // Query functions
+    getEditCount,
 
-  // Plan artifact enforcement
-  getPlanWarningShown,
-  setPlanWarningShown
+    // Plan artifact enforcement
+    getPlanWarningShown,
+    setPlanWarningShown
 };

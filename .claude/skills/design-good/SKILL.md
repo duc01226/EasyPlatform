@@ -2,10 +2,10 @@
 name: design-good
 version: 1.0.0
 description: '[Design] Create an immersive design'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 Think hard to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <tasks>$ARGUMENTS</tasks>
@@ -17,15 +17,19 @@ Think hard to plan & start working on these tasks follow the Orchestration Proto
 **Goal:** Create an immersive, high-quality UI design with deep design research and refinement.
 
 **Workflow:**
+
 1. **Research** — Comprehensive `ui-ux-pro-max` searches across all domains
 2. **Design** — Use `ui-ux-designer` subagent with detailed brief
 3. **Refine** — Iterate on feedback, verify with `ai-multimodal`
 4. **Document** — Update design guidelines if needed
 
 **Key Rules:**
+
 - Always activate `ui-ux-pro-max` FIRST for design intelligence
 - Higher quality bar than `/design-fast` — iterate on details
 - Use `ai-multimodal` for generating and reviewing visual assets
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Required Skills (Priority Order)
 

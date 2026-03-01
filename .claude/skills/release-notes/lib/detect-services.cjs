@@ -10,39 +10,40 @@ const fs = require('fs');
 const path = require('path');
 
 // Service patterns from config (hardcoded for performance)
+// NOTE: Update these regex patterns to match your project's directory structure
 const SERVICE_PATTERNS = {
   'backend-api': {
-    patterns: [/src\/PlatformExampleApp\/.*\.Api\//],
+    patterns: [/src\/.*ExampleApp\/.*\.Api\//],
     label: 'Backend API',
     impact: 'high',
   },
   'backend-domain': {
-    patterns: [/src\/PlatformExampleApp\/.*\.Domain\//],
+    patterns: [/src\/.*ExampleApp\/.*\.Domain\//],
     label: 'Domain Model',
     impact: 'high',
   },
   'backend-application': {
-    patterns: [/src\/PlatformExampleApp\/.*\.Application\//],
+    patterns: [/src\/.*ExampleApp\/.*\.Application\//],
     label: 'Application Layer',
     impact: 'medium',
   },
   'backend-persistence': {
-    patterns: [/src\/PlatformExampleApp\/.*\.Persistence.*\//],
+    patterns: [/src\/.*ExampleApp\/.*\.Persistence.*\//],
     label: 'Persistence',
     impact: 'medium',
   },
-  'platform-core': {
-    patterns: [/src\/Platform\/Easy\.Platform.*\//],
-    label: 'Platform Core',
+  'framework-core': {
+    patterns: [/src\/.*Framework.*\//],
+    label: 'Framework Core',
     impact: 'critical',
   },
   'frontend-apps': {
-    patterns: [/src\/PlatformExampleAppWeb\/apps\//],
+    patterns: [/src\/.*ExampleAppWeb\/apps\//],
     label: 'Frontend Apps',
     impact: 'high',
   },
   'frontend-libs': {
-    patterns: [/src\/PlatformExampleAppWeb\/libs\//],
+    patterns: [/src\/.*ExampleAppWeb\/libs\//],
     label: 'Frontend Libraries',
     impact: 'medium',
   },

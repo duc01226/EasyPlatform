@@ -5,7 +5,7 @@
  * - skill-enforcement.cjs: Blocks implementation skills without todos (Skill branch)
  * - todo-tracker.cjs: Records TaskCreate calls
  * - workflow-router.cjs: Injects workflow catalog on qualifying prompts
- * - dev-rules-reminder.cjs: Injects dev rules on prompt submit
+ * - prompt-context-assembler.cjs: Injects dev rules on prompt submit
  */
 
 const path = require('path');
@@ -19,7 +19,7 @@ const { createTempDir, cleanupTempDir, setupTodoState, readStateFile } = require
 const TODO_ENFORCEMENT = getHookPath('skill-enforcement.cjs');
 const TODO_TRACKER = getHookPath('todo-tracker.cjs');
 const WORKFLOW_ROUTER = getHookPath('workflow-router.cjs');
-const DEV_RULES_REMINDER = getHookPath('dev-rules-reminder.cjs');
+const PROMPT_CONTEXT_ASSEMBLER = getHookPath('prompt-context-assembler.cjs');
 
 // Helper to create Skill tool input
 function createSkillInput(skill, args = '') {
@@ -37,16 +37,23 @@ function setupCkTodoState(sessionId, state) {
     const todoDir = path.join(os.tmpdir(), 'ck', 'todo');
     fs.mkdirSync(todoDir, { recursive: true });
     const stateFile = path.join(todoDir, `todo-state-${sessionId}.json`);
-    fs.writeFileSync(stateFile, JSON.stringify({
-        hasTodos: false,
-        pendingCount: 0,
-        completedCount: 0,
-        inProgressCount: 0,
-        lastTodos: [],
-        bypasses: [],
-        metadata: {},
-        ...state
-    }, null, 2));
+    fs.writeFileSync(
+        stateFile,
+        JSON.stringify(
+            {
+                hasTodos: false,
+                pendingCount: 0,
+                completedCount: 0,
+                inProgressCount: 0,
+                lastTodos: [],
+                bypasses: [],
+                metadata: {},
+                ...state
+            },
+            null,
+            2
+        )
+    );
     return stateFile;
 }
 
@@ -58,7 +65,9 @@ function cleanupCkTodoState(sessionId) {
     try {
         const stateFile = path.join(os.tmpdir(), 'ck', 'todo', `todo-state-${sessionId}.json`);
         if (fs.existsSync(stateFile)) fs.unlinkSync(stateFile);
-    } catch (_) { /* ignore */ }
+    } catch (_) {
+        /* ignore */
+    }
 }
 
 // ============================================================================
@@ -744,17 +753,17 @@ const deadModuleVerificationTests = [
 ];
 
 // ============================================================================
-// dev-rules-reminder.cjs Tests
+// prompt-context-assembler.cjs Tests
 // ============================================================================
 
 const devRulesReminderTests = [
     {
-        name: '[dev-rules-reminder] injects context on prompt',
+        name: '[prompt-context-assembler] injects context on prompt',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createUserPromptInput('add a new feature');
-                const result = await runHook(DEV_RULES_REMINDER, input, { cwd: tmpDir });
+                const result = await runHook(PROMPT_CONTEXT_ASSEMBLER, input, { cwd: tmpDir });
                 assertAllowed(result.code, 'Should not block');
                 // May or may not have output depending on config
             } finally {
@@ -763,12 +772,12 @@ const devRulesReminderTests = [
         }
     },
     {
-        name: '[dev-rules-reminder] handles empty prompt',
+        name: '[prompt-context-assembler] handles empty prompt',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createUserPromptInput('');
-                const result = await runHook(DEV_RULES_REMINDER, input, { cwd: tmpDir });
+                const result = await runHook(PROMPT_CONTEXT_ASSEMBLER, input, { cwd: tmpDir });
                 assertAllowed(result.code, 'Should not block empty prompt');
             } finally {
                 cleanupTempDir(tmpDir);

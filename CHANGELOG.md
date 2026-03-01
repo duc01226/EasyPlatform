@@ -31,7 +31,7 @@ Analyzed the Claude Code agent setup against 6 orchestration principles (Plan Mo
 
 - Verification gate hook (`pre-completion-gate.cjs`) warns when tasks completed or commits made without recent test/build evidence
 - Auto-fix trigger hook (`auto-fix-trigger.cjs`) detects build/test failures with 3-tier escalation (suggestion → stronger → rollback review)
-- Self-improvement artifacts: `MEMORY.md` (project memory, auto-loaded), `docs/lessons.md` (append-only lesson log)
+- Self-improvement artifacts: `MEMORY.md` (project memory, auto-loaded), `docs/project-reference/lessons.md` (append-only lesson log)
 - Lessons writer utility auto-captures failure lessons on session exit and pattern learner confirmations
 - Plan artifact gate in todo-enforcement warns when implementation skills invoked without a plan directory
 - Bypass audit trail: `quick:` bypasses now tracked with `bypass: true` field in ACE events
@@ -51,32 +51,34 @@ Analyzed the Claude Code agent setup against 6 orchestration principles (Plan Mo
 Developers can now create high-quality changelog entries that transform technical changes into user-facing value. Systematic 7-step workflow ensures no changes are missed, while business focus guidelines help write for both technical and non-technical audiences.
 
 #### Added
+
 - Changelog-update skill with systematic file review workflow
-  - 7-step process: gather changes → temp notes → file review → holistic analysis → generate entry → update CHANGELOG → cleanup
-  - Temp notes file (`.ai/workspace/changelog-notes-*.md`) prevents missed changes
-  - Business focus guidelines transform technical jargon to user value
+    - 7-step process: gather changes → temp notes → file review → holistic analysis → generate entry → update CHANGELOG → cleanup
+    - Temp notes file (`.ai/workspace/changelog-notes-*.md`) prevents missed changes
+    - Business focus guidelines transform technical jargon to user value
 - Keep a Changelog format reference and compliance
-  - Complete v1.1.0 specification with examples
-  - Entry types: Added, Changed, Fixed, Deprecated, Removed, Security
-  - Good vs bad examples for each category
+    - Complete v1.1.0 specification with examples
+    - Entry types: Added, Changed, Fixed, Deprecated, Removed, Security
+    - Good vs bad examples for each category
 - Changelog entry template with usage guidelines
-  - Business-focused writing patterns
-  - Anti-patterns to avoid
-  - When to use changelog-update vs release-notes
+    - Business-focused writing patterns
+    - Anti-patterns to avoid
+    - When to use changelog-update vs release-notes
 - Both Claude Code and GitHub Copilot support
-  - `.claude/skills/changelog-update/` - Claude skill
-  - `.github/skills/changelog-update/` - Copilot skill
-  - `.github/prompts/changelog-update.prompt.md` - Copilot chat prompt
+    - `.claude/skills/changelog-update/` - Claude skill
+    - `.github/skills/changelog-update/` - Copilot skill
+    - `.github/prompts/changelog-update.prompt.md` - Copilot chat prompt
 
 #### Changed
+
 - CLAUDE.md: Added "Changelog & Release Notes" section (lines 454-514)
-  - Differentiation table: manual vs automated workflows
-  - Complementary usage pattern: development + release phases
-  - Clear guidance on when to use each tool
+    - Differentiation table: manual vs automated workflows
+    - Complementary usage pattern: development + release phases
+    - Clear guidance on when to use each tool
 - Copilot instructions: Added changelog documentation (lines 178-199)
-  - Tool comparison table
-  - Usage scenarios
-  - Template references
+    - Tool comparison table
+    - Usage scenarios
+    - Template references
 
 ---
 
@@ -103,4 +105,3 @@ This release includes 1 new feature.
 ### Added
 
 - **Add AI companion doc generation to feature-docs skills** (AI Tools)
-

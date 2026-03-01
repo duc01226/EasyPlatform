@@ -3,24 +3,32 @@ name: review-changes
 description: '[Code Quality] Review all uncommitted changes before commit'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
 - `.claude/skills/shared/understand-code-first-protocol.md`
 - `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
+
+> **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
 ## Quick Summary
 
 **Goal:** Comprehensive code review of all uncommitted changes following project standards.
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
 >
+> - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)**
 > - `project-structure-reference.md` — service list, directory tree, conventions
 >
-> If file not found, search for: project documentation, coding standards, architecture docs.
+> If files not found, search for: project documentation, coding standards, architecture docs.
 
 **Workflow:**
 
@@ -49,7 +57,7 @@ Target: All uncommitted changes (staged and unstaged) in the current working dir
 
 ## Review Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 - Do NOT accept code correctness at face value — verify by reading actual implementations
 - Every finding must include `file:line` evidence (grep results, read confirmations)
@@ -80,6 +88,9 @@ Before starting, call TaskCreate with:
 - [ ] `[Review Phase 2] Re-read report for holistic assessment` - pending
 - [ ] `[Review Phase 3] Generate final review findings` - pending
       Update todo status as each phase completes. This ensures review is tracked.
+
+> **Note:** If Phase 0 reveals 20+ changed files, replace Phase 1-3 tasks with Systematic Review Protocol tasks:
+> `[Review Phase 1] Categorize and fire parallel sub-agents`, `[Review Phase 2] Synchronize and cross-reference`, `[Review Phase 3] Generate consolidated report`
 
 **Phase 0: Get Changes and Create Report File**
 
@@ -125,17 +136,17 @@ After ALL files reviewed, **re-read the report** to see big picture:
 
 Cross-reference changed files against related documentation using this mapping:
 
-| Changed file pattern   | Docs to check for staleness                                                                                    |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `.claude/hooks/**`     | `docs/claude/hooks/README.md`, `docs/claude/hooks-reference.md`, hook count tables in `docs/claude/hooks/*.md` |
-| `.claude/skills/**`    | `docs/claude/skills/README.md`, skill count/catalog tables                                                     |
-| `.claude/workflows/**` | `CLAUDE.md` workflow catalog table, `docs/claude/` workflow references                                         |
-| Service code `**`      | `docs/business-features/` doc for the affected service                                                         |
-| Frontend code `**`     | `docs/frontend-patterns-reference.md`, relevant business-feature docs                                          |
-| Frontend legacy `**`   | `docs/frontend-patterns-reference.md`, relevant business-feature docs                                          |
-| `CLAUDE.md`            | `docs/claude/README.md` (navigation hub must stay in sync)                                                     |
-| Framework code `**`    | `docs/backend-patterns-reference.md`, `docs/claude/advanced-patterns.md`                                       |
-| `docs/templates/**`    | Any docs generated from those templates                                                                        |
+| Changed file pattern   | Docs to check for staleness                                                                                   |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `.claude/hooks/**`     | `.claude/docs/hooks/README.md`, hook count tables in `.claude/docs/hooks/*.md`                                |
+| `.claude/skills/**`    | `.claude/docs/skills/README.md`, skill count/catalog tables                                                   |
+| `.claude/workflows/**` | `CLAUDE.md` workflow catalog table, `.claude/docs/` workflow references                                       |
+| Service code `**`      | `docs/business-features/` doc for the affected service                                                        |
+| Frontend code `**`     | `docs/project-reference/frontend-patterns-reference.md`, relevant business-feature docs                       |
+| Frontend legacy `**`   | `docs/project-reference/frontend-patterns-reference.md`, relevant business-feature docs                       |
+| `CLAUDE.md`            | `.claude/docs/README.md` (navigation hub must stay in sync)                                                   |
+| Backend code `**`      | `docs/project-reference/backend-patterns-reference.md`, `docs/project-reference/domain-entities-reference.md` |
+| `docs/templates/**`    | Any docs generated from those templates                                                                       |
 
 - [ ] For each changed file, check if matching docs exist and are still accurate
 - [ ] Flag docs where counts, tables, examples, or descriptions no longer match the code
@@ -161,6 +172,16 @@ Update report with final sections:
 - [ ] Positive Observations
 - [ ] Suggested commit message (based on changes)
 
+## Readability Checklist (MUST evaluate)
+
+Before approving, verify the code is **easy to read, easy to maintain, easy to understand**:
+
+- **Schema visibility** — If a function computes a data structure (object, map, config), a comment should show the output shape so readers don't have to trace the code
+- **Non-obvious data flows** — If data transforms through multiple steps (A → B → C), a brief comment should explain the pipeline
+- **Self-documenting signatures** — Function params should explain their role; flag unused params
+- **Magic values** — Unexplained numbers/strings should be named constants or have inline rationale
+- **Naming clarity** — Variables/functions should reveal intent without reading the implementation
+
 ## Review Checklist
 
 ### 1. Architecture Compliance
@@ -172,7 +193,7 @@ Update report with final sections:
 
 ### 2. Code Quality & Clean Code
 
-- [ ] Single Responsibility Principle — each function/class does ONE thing
+- [ ] Single Responsibility Principle — each function/class does ONE thing. Event handlers/consumers/jobs: one handler = one independent concern (failures don't cascade)
 - [ ] No code duplication (DRY) — grep for similar code, extract if 3+ occurrences
 - [ ] Appropriate error handling with project validation patterns (search for: validation result pattern)
 - [ ] No magic numbers/strings (extract to named constants)
@@ -192,9 +213,9 @@ Update report with final sections:
 - [ ] Booleans: is/has/can/should prefix (`isActive`, `hasPermission`)
 - [ ] No cryptic abbreviations (`employeeCount` not `empCnt`)
 
-### 3. Platform Patterns
+### 3. Project Patterns (see docs/project-reference/backend-patterns-reference.md)
 
-- [ ] Uses platform validation fluent API (.And(), .AndAsync())
+- [ ] Uses project validation fluent API (.And(), .AndAsync())
 - [ ] No direct side effects in command handlers (use entity events)
 - [ ] DTO mapping in DTO classes, not handlers
 - [ ] Static expressions for entity queries
@@ -233,6 +254,7 @@ Update report with final sections:
 - [ ] Repository usage (no direct DbContext access)
 - [ ] Entity DTO mapping patterns
 - [ ] Validation using project validation patterns
+- [ ] Seed data in data seeders, NOT in migration executors (if data must exist after DB reset → seeder)
 
 ### 8. Frontend-Specific Checks
 
@@ -245,11 +267,11 @@ Update report with final sections:
 ### 9. Documentation Staleness
 
 - [ ] Changed service code → check `docs/business-features/` for affected service
-- [ ] Changed frontend code → check `docs/frontend-patterns-reference.md` + business-feature docs
-- [ ] Changed framework code → check `docs/backend-patterns-reference.md`, `docs/claude/advanced-patterns.md`
-- [ ] Changed `.claude/hooks/**` → check `docs/claude/hooks/README.md`, `docs/claude/hooks-reference.md`
-- [ ] Changed `.claude/skills/**` → check `docs/claude/skills/README.md`, skill catalogs
-- [ ] Changed `.claude/workflows/**` → check `CLAUDE.md` workflow catalog, `docs/claude/` references
+- [ ] Changed frontend code → check `docs/project-reference/frontend-patterns-reference.md` + business-feature docs
+- [ ] Changed backend code → check `docs/project-reference/backend-patterns-reference.md`
+- [ ] Changed `.claude/hooks/**` → check `.claude/docs/hooks/README.md`
+- [ ] Changed `.claude/skills/**` → check `.claude/docs/skills/README.md`, skill catalogs
+- [ ] Changed `.claude/workflows/**` → check `CLAUDE.md` workflow catalog, `.claude/docs/` references
 - [ ] New feature/component added → verify corresponding doc exists or flag as missing
 - [ ] Test specs in `docs/business-features/**/` reflect current behavior after changes
 - [ ] API changes reflected in relevant API docs or Swagger annotations
@@ -299,3 +321,98 @@ type(scope): description
 
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
+
+---
+
+## Systematic Review Protocol (for 10+ changed files)
+
+> **NON-NEGOTIABLE: When the changeset is large (10+ files), you MUST use this systematic protocol instead of reviewing files one-by-one sequentially.**
+>
+> **Principle:** Review carefully and systematically — break into groups, fire multiple agents to review in parallel. Ensure no flaws, no bugs, no stale info, and best practices in every aspect.
+
+### Auto-Activation
+
+In Phase 0, after running `git status`, count the changed files. If **10 or more files** changed:
+
+1. **STOP** the sequential Phase 1-3 approach
+2. **SWITCH** to this Systematic Review Protocol automatically
+3. **ANNOUNCE** to user: `"Detected {N} changed files. Switching to systematic parallel review protocol."`
+
+The sequential Phase 1-3 approach is ONLY for small changesets (<20 files). For large changesets, the parallel protocol produces better results with fewer missed issues.
+
+### Step 1: Categorize Changes
+
+Group all changed files into logical categories (e.g., by directory, concern, or layer):
+
+| Category                        | Example Groupings                                             |
+| ------------------------------- | ------------------------------------------------------------- |
+| **Claude tooling**              | `.claude/hooks/`, `.claude/skills/`, `.claude/workflows.json` |
+| **Root docs & instructions**    | `CLAUDE.md`, `README.md`, `.github/`                          |
+| **System docs**                 | `.claude/docs/**`                                             |
+| **Project docs & biz features** | `docs/business-features/`, `docs/*-reference.md`              |
+| **Backend code**                | `src/Services/**/*.cs`                                        |
+| **Frontend code**               | `src/{frontend}/**/*.ts`, `src/{legacy-frontend}/**/*.ts`     |
+
+### Step 2: Fire Parallel Sub-Agents
+
+Launch one `code-reviewer` sub-agent per category using the `Agent` tool with `run_in_background: true`. Each sub-agent receives:
+
+- Full list of files in its category
+- Category-specific review checklist
+- Cross-reference verification instructions (counts, tables, links)
+
+**All sub-agents run in parallel** to maximize speed and coverage.
+
+### Step 3: Synchronize & Cross-Reference
+
+After all sub-agents complete:
+
+1. **Collect findings** from each agent's report
+2. **Cross-reference** — verify counts, keyword tables, and references are consistent ACROSS categories
+3. **Detect gaps** — issues that only appear when looking across categories (e.g., a workflow added in `.claude/` but missing from `CLAUDE.md` keyword table)
+4. **Consolidate** into single holistic report with categorized findings
+
+### Step 4: Holistic Big-Picture Assessment
+
+With all category findings combined, assess:
+
+- Overall coherence of changes as a unified plan
+- Cross-category synchronization (do docs match code? do counts match reality?)
+- Risk areas where categories interact
+- Missing documentation updates for changed code
+
+### Why This Protocol Matters
+
+Sequential file-by-file review of 50+ files causes:
+
+- Context window exhaustion before completing review
+- Missed cross-file inconsistencies
+- Shallow review of later files due to attention fatigue
+- No big-picture assessment
+
+Parallel categorized review ensures thorough coverage with holistic synthesis.
+
+---
+
+## Workflow Recommendation
+
+> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+>
+> 1. **Activate `review-changes` workflow** (Recommended) — review-changes → code-review → watzup
+> 2. **Execute `/review-changes` directly** — run this skill standalone
+
+---
+
+## Next Steps
+
+**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+
+- **"/code-review (Recommended)"** — Deeper code quality review
+- **"/watzup"** — Wrap up session and review all changes
+- **"Skip, continue manually"** — user decides
+
+## Closing Reminders
+
+**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.

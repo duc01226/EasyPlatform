@@ -2,13 +2,16 @@
 name: docs-update
 version: 2.0.0
 description: '[Documentation] Holistic documentation orchestrator — detects impacted docs from git changes and updates project docs + business feature docs'
-activation: user-invoked
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 > **Critical Purpose:** Ensure ALL documentation stays in sync with code changes — project docs, business feature docs, and AI companions.
+
+> **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
+
+> **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 ## Quick Summary
 
@@ -17,7 +20,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 **Workflow:**
 
 1. **Phase 0: Triage** — `git diff` to categorize what changed and which doc types are impacted
-2. **Phase 1: Project Docs** — Update project-level docs (README, codebase-summary, etc.) if impacted
+2. **Phase 1: Project Docs** — Update project-level docs (README, project-structure-reference, etc.) if impacted
 3. **Phase 2: Business Feature Docs** — Detect affected modules, update existing feature docs in `docs/business-features/`
 4. **Phase 3: Summary Report** — What was checked, updated, and skipped
 
@@ -28,6 +31,8 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 - Always report what was checked, even if nothing needed updating
 
 ---
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Phase 0: Triage — Detect Impacted Documentation
 
@@ -41,19 +46,20 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 Classify each changed file into documentation impact categories:
 
-| Changed File Pattern | Impact Category | Action |
-| --- | --- | --- |
-| `src/Services/**` | **feature-docs** + project-docs | Phase 1 + Phase 2 |
-| `{frontend-apps-dir}/**`, `{frontend-libs-dir}/{domain-lib}/**` | **feature-docs** + project-docs | Phase 1 + Phase 2 |
-| `{legacy-frontend-dir}/**Client/**` | **feature-docs** + project-docs | Phase 1 + Phase 2 |
-| `src/Platform/**` | project-docs | Phase 1 only |
-| `docs/**` | project-docs | Phase 1 only |
-| `.claude/**`, config files only | **none** | Fast exit |
-| `{frontend-libs-dir}/{platform-core-lib}/**`, `{frontend-libs-dir}/{common-lib}/**` | project-docs | Phase 1 only |
+| Changed File Pattern                                                                | Impact Category                 | Action            |
+| ----------------------------------------------------------------------------------- | ------------------------------- | ----------------- |
+| `src/Services/**`                                                                   | **feature-docs** + project-docs | Phase 1 + Phase 2 |
+| `{frontend-apps-dir}/**`, `{frontend-libs-dir}/{domain-lib}/**`                     | **feature-docs** + project-docs | Phase 1 + Phase 2 |
+| `{legacy-frontend-dir}/**Client/**`                                                 | **feature-docs** + project-docs | Phase 1 + Phase 2 |
+| `src/{Framework}/**`                                                                | project-docs                    | Phase 1 only      |
+| `docs/**`                                                                           | project-docs                    | Phase 1 only      |
+| `.claude/**`, config files only                                                     | **none**                        | Fast exit         |
+| `{frontend-libs-dir}/{platform-core-lib}/**`, `{frontend-libs-dir}/{common-lib}/**` | project-docs                    | Phase 1 only      |
 
 ### Step 0.3: Fast Exit Check
 
 If ALL changed files fall into the **none** category (e.g., only `.claude/`, `.github/`, root config files):
+
 - Report: `"No documentation impacted by current changes (config/tooling only)."`
 - **Exit early** — skip Phase 1 and Phase 2.
 
@@ -61,7 +67,7 @@ If ALL changed files fall into the **none** category (e.g., only `.claude/`, `.g
 
 ## Phase 1: Project Documentation Update
 
-**When to run:** Changed files include `src/Platform/**`, `docs/**`, or architectural changes.
+**When to run:** Changed files include `src/{Framework}/**`, `docs/**`, or architectural changes.
 
 **When to skip:** Only service-layer or frontend feature files changed (no architectural impact). Skip and proceed to Phase 2.
 
@@ -79,8 +85,7 @@ When invoked standalone (not as a workflow step), spawn scouts for broad codebas
 
 Pass context to `docs-manager` agent to update impacted project docs:
 
-- `docs/codebase-summary.md`: Update if service structure or dependencies changed
-- `docs/system-architecture.md`: Update if cross-service patterns changed
+- `docs/project-reference/project-structure-reference.md`: Update if service architecture or cross-service patterns changed
 - `README.md`: Update if project scope or setup changed (keep under 300 lines)
 
 Only update docs that are **directly impacted** by the changes. Do not regenerate all docs.
@@ -103,14 +108,15 @@ Only update docs that are **directly impacted** by the changes. Do not regenerat
 
 Extract unique module names from changed file paths:
 
-| Changed File Path Pattern | Detected Module |
-| --- | --- |
-| `src/Services/{Module}/**` | {Module} |
-| `{frontend-apps-dir}/{app-name}/**` | {Module} (map app to module) |
+| Changed File Path Pattern                           | Detected Module                  |
+| --------------------------------------------------- | -------------------------------- |
+| `src/Services/{Module}/**`                          | {Module}                         |
+| `{frontend-apps-dir}/{app-name}/**`                 | {Module} (map app to module)     |
 | `{frontend-libs-dir}/{domain-lib}/src/{feature}/**` | {Module} (map feature to module) |
-| `{legacy-frontend-dir}/{Module}Client/**` | {Module} |
+| `{legacy-frontend-dir}/{Module}Client/**`           | {Module}                         |
 
 Build project-specific mapping by examining:
+
 ```bash
 ls -d src/Services/*/
 ls -d docs/business-features/*/
@@ -136,15 +142,15 @@ For each detected module:
 
 <!-- Source: feature-docs Step 1.5.2 -->
 
-| Change Type | Impacted Doc Sections |
-| --- | --- |
-| New entity property | 3 (Business Requirements), 9 (Domain Model), 10 (API Reference) |
-| New API endpoint | 10 (API Reference), 12 (Backend Controllers), 14 (Security) |
-| New frontend component | 11 (Frontend Components) |
-| New filter/query | 3 (Business Requirements), 10 (API Reference) |
-| New i18n keys | 11 (Frontend Components) |
-| Any new functionality | **17 (Test Specs), 18 (Test Data), 19 (Edge Cases), 20 (Regression Impact)** — MANDATORY |
-| Any change | 1 (Executive Summary), 26 (Version History) — ALWAYS UPDATE |
+| Change Type            | Impacted Doc Sections                                                                    |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| New entity property    | 3 (Business Requirements), 9 (Domain Model), 10 (API Reference)                          |
+| New API endpoint       | 10 (API Reference), 12 (Backend Controllers), 14 (Security)                              |
+| New frontend component | 11 (Frontend Components)                                                                 |
+| New filter/query       | 3 (Business Requirements), 10 (API Reference)                                            |
+| New i18n keys          | 11 (Frontend Components)                                                                 |
+| Any new functionality  | **17 (Test Specs), 18 (Test Data), 19 (Edge Cases), 20 (Regression Impact)** — MANDATORY |
+| Any change             | 1 (Executive Summary), 26 (Version History) — ALWAYS UPDATE                              |
 
 ### Step 2.5: Update Impacted Sections
 
@@ -153,16 +159,17 @@ For each module with existing docs:
 1. Read the existing feature doc (`README.{FeatureName}.md`)
 2. Update ONLY the sections identified in Step 2.4
 3. **Mandatory test coverage** — when documenting new functionality, MUST update:
-   - Section 17 (Test Specifications): Add TC-{MOD}-XXX test cases with GIVEN/WHEN/THEN
-   - Section 18 (Test Data): Add seed data for new test cases
-   - Section 19 (Edge Cases): Add boundary conditions and error states
-   - Section 20 (Regression Impact): Add regression risk rows
+    - Section 17 (Test Specifications): Add TC-{MOD}-XXX test cases with GIVEN/WHEN/THEN
+    - Section 18 (Test Data): Add seed data for new test cases
+    - Section 19 (Edge Cases): Add boundary conditions and error states
+    - Section 20 (Regression Impact): Add regression risk rows
 4. Update Section 26 (Version History) with new version entry
 5. Add CHANGELOG entry under `[Unreleased]` following Keep a Changelog format
 
 ### Step 2.6: AI Companion Sync
 
 If `README.{FeatureName}.ai.md` exists alongside the updated feature doc:
+
 - Update the AI companion to reflect changes (keep 300-500 lines)
 - Update `Last synced` timestamp
 
@@ -183,26 +190,26 @@ After updating feature docs, run a verification pass on all changed sections:
 After updating feature docs, cross-reference integration test TC codes against doc TC codes:
 
 1. Use the Grep tool to find all `[Trait("TestSpec", ...)]` in the affected service's integration test project:
-   ```
-   Grep pattern="Trait\(\"TestSpec\"" path="src/Services/{ServiceDir}/{Service}.IntegrationTests" glob="*.cs"
-   ```
+    ```
+    Grep pattern="Trait\(\"TestSpec\"" path="src/Services/{ServiceDir}/{Service}.IntegrationTests" glob="*.cs"
+    ```
 2. Use the Grep tool to find all `TC-{MOD}-XXX` in the affected feature doc Section 17 / test-specs doc:
-   ```
-   Grep pattern="TC-[A-Z]{2,}-[0-9]+" path="docs/business-features/{Module}/detailed-features" glob="*.md"
-   ```
+    ```
+    Grep pattern="TC-[A-Z]{2,}-[0-9]+" path="docs/business-features/{Module}/detailed-features" glob="*.md"
+    ```
 3. Compare the TC codes found:
-   - TC in docs but no Trait in code → flag as `Status: Untested` in the doc
-   - Trait in code but no TC in docs → add TC entry to the feature doc Section 17
+    - TC in docs but no Trait in code → flag as `Status: Untested` in the doc
+    - Trait in code but no TC in docs → add TC entry to the feature doc Section 17
 4. Report discrepancies in the Phase 3 Summary Report
 
 ### Decision: When docs-update Handles It vs. When to Recommend /feature-docs
 
-| Scenario | Action |
-| --- | --- |
-| Existing docs + code changes | **docs-update handles it** (Steps 2.1–2.7 above) |
-| No existing docs for module | Report: recommend `/feature-docs` for creation |
+| Scenario                                                       | Action                                                                                              |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| Existing docs + code changes                                   | **docs-update handles it** (Steps 2.1–2.7 above)                                                    |
+| No existing docs for module                                    | Report: recommend `/feature-docs` for creation                                                      |
 | Major new feature (new entity, new service, >10 new endpoints) | **docs-update handles update**, but report: "Consider full `/feature-docs` review for completeness" |
-| User explicitly asks for full 26-section doc | Defer to `/feature-docs` |
+| User explicitly asks for full 26-section doc                   | Defer to `/feature-docs`                                                                            |
 
 ---
 
@@ -237,7 +244,16 @@ $ARGUMENTS
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## Next Steps
 
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
+**MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
+
+- **"/watzup (Recommended)"** — Wrap up session and check for remaining doc staleness
+- **"/review-changes"** — Review all changes before commit
+- **"Skip, continue manually"** — user decides
+
+## Closing Reminders
+
+**MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
+**MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
+**MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.

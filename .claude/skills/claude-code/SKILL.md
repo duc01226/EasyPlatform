@@ -6,7 +6,7 @@ description: '[Utilities] Claude Code CLI setup, configuration, troubleshooting,
 allowed-tools: Read, Bash, Grep, Glob
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -23,6 +23,8 @@ allowed-tools: Read, Bash, Grep, Glob
 - Not for writing application code -- use feature/fix/refactor skills instead
 - Never modify settings without user approval
 - For hooks: check event type, script executability, and JSON output format
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Claude Code
 

@@ -120,6 +120,22 @@ function sanitizePath(pathValue, projectRoot) {
 }
 
 /**
+ * Convert MSYS/Git Bash paths to Windows format on Windows.
+ * Git Bash uses /d/path instead of D:/path — Node.js path.resolve() doesn't
+ * understand this convention and produces wrong results (D:\d\path).
+ * @param {string} p - Path that may be in MSYS format
+ * @returns {string} Windows-format path, or original if not MSYS format
+ */
+function convertMsysToWindows(p) {
+  if (!p || process.platform !== 'win32') return p || '';
+  const match = p.match(/^\/([a-zA-Z])(\/.*|$)/);
+  if (match) {
+    return match[1].toUpperCase() + ':' + (match[2] || '/');
+  }
+  return p;
+}
+
+/**
  * Normalize path for cross-platform comparison
  * Used by security hooks and path-matching logic where consistent
  * comparison is needed (backslash→forward, lowercase on Windows, trailing slash removal)
@@ -129,6 +145,8 @@ function sanitizePath(pathValue, projectRoot) {
 function normalizePathForComparison(p) {
   if (!p) return '';
   let normalized = p.replace(/\\/g, '/');
+  // Convert MSYS/Git Bash paths (/d/... → D:/...) on Windows
+  normalized = convertMsysToWindows(normalized);
   // Remove trailing slash unless it's root
   if (normalized.length > 1 && normalized.endsWith('/')) {
     normalized = normalized.slice(0, -1);
@@ -171,6 +189,7 @@ module.exports = {
   sanitizeSlug,
   normalizePath,
   normalizePathForComparison,
+  convertMsysToWindows,
   buildBoundaryAllowlist,
   isAbsolutePath,
   sanitizePath

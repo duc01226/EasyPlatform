@@ -5,9 +5,11 @@ description: "[Architecture] Use when designing or modifying REST API endpoints,
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
 
@@ -27,11 +29,13 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 **Key Rules:**
 
-- Follow `PlatformBaseController` + CQRS pattern from CLAUDE.md
+- Follow project base controller + CQRS pattern from CLAUDE.md (see docs/project-reference/backend-patterns-reference.md)
 - Use proper route naming: `/api/{resource}` (plural, lowercase, no verbs)
 - Validation in Command/Query `Validate()`, NOT in controller
-- Always add `[PlatformAuthorize]` attributes
-- MUST READ `.ai/docs/backend-code-patterns.md` before implementation
+- Always add authorization attributes (see docs/project-reference/backend-patterns-reference.md)
+- MUST READ `docs/project-reference/backend-patterns-reference.md` before implementation
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # REST API Design
 
@@ -41,7 +45,7 @@ Expert API design agent for the project following platform patterns and REST bes
 
 **MUST READ** before implementation:
 
-- `.ai/docs/backend-code-patterns.md`
+- `docs/project-reference/backend-patterns-reference.md`
 
 ## Route Naming Conventions
 
@@ -65,7 +69,7 @@ Expert API design agent for the project following platform patterns and REST bes
 public async Task<IActionResult> Upload([FromForm] UploadCommand command)
     => Ok(await Cqrs.SendAsync(command));
 
-public sealed class UploadCommand : PlatformCqrsCommand<UploadCommandResult>
+public sealed class UploadCommand : CqrsCommand<UploadCommandResult> // project CQRS base (see docs/project-reference/backend-patterns-reference.md)
 {
     [FromForm]
     public IFormFile File { get; set; } = null!;
@@ -78,7 +82,7 @@ public sealed class UploadCommand : PlatformCqrsCommand<UploadCommandResult>
 ## Error Response Format
 
 ```csharp
-// Platform handles errors automatically with standard format
+// Framework handles errors automatically with standard format
 {
     "type": "validation",
     "title": "Validation Error",
@@ -106,19 +110,19 @@ public sealed class UploadCommand : PlatformCqrsCommand<UploadCommandResult>
 - [ ] Validation in Command/Query Validate()?
 - [ ] Consistent response format?
 - [ ] Paging for list endpoints?
-- [ ] Error handling follows platform patterns?
+- [ ] Error handling follows project patterns?
 
 ## Anti-Patterns
 
 - **Verbs in URLs**: Use `/employees/123/activate` not `/activateEmployee`
-- **Missing Authorization**: Always add `[PlatformAuthorize]`
+- **Missing Authorization**: Always add authorization attributes (see docs/project-reference/backend-patterns-reference.md)
 - **Validation in Controller**: Move to Command/Query `Validate()`
 - **Business Logic in Controller**: Keep controllers thin, logic in handlers
 - **Inconsistent Naming**: Follow `{Resource}Controller` pattern
 
 ## Related
 
-- `easyplatform-backend`
+- `arch-cross-service-integration`
 
 ---
 
