@@ -5,7 +5,7 @@ description: '[Code Quality] Perform security review on specified scope'
 activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -21,7 +21,7 @@ activation: user-invoked
 **Key Rules:**
 - Analysis Mindset: systematic review, not guesswork
 - Check both backend (C#) and frontend (Angular) attack surfaces
-- Use `PlatformAuthorize` and entity-level access expressions
+- Use project authorization attributes and entity-level access expressions (see docs/backend-patterns-reference.md)
 
 <scope>$ARGUMENTS</scope>
 

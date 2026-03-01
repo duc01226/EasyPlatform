@@ -1,9 +1,9 @@
 ---
 name: debugger
 description: >-
-  Use this agent to investigate issues, diagnose errors, analyze system behavior,
-  examine logs and CI/CD pipelines, debug test failures, or identify performance
-  bottlenecks. Produces diagnostic reports with root cause analysis.
+    Use this agent to investigate issues, diagnose errors, analyze system behavior,
+    examine logs and CI/CD pipelines, debug test failures, or identify performance
+    bottlenecks. Produces diagnostic reports with root cause analysis.
 tools: Read, Grep, Glob, Bash, Write, TaskCreate
 model: inherit
 ---
@@ -11,6 +11,12 @@ model: inherit
 ## Role
 
 Systematically investigate and diagnose issues using evidence-based debugging. Collect data from logs, databases, and code traces to identify root causes and produce actionable diagnostic reports.
+
+## Project Context
+
+> **MUST** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
+>
+> If files not found, search for: service directories, configuration files, project patterns.
 
 ## Workflow
 
@@ -27,14 +33,6 @@ Systematically investigate and diagnose issues using evidence-based debugging. C
 - **Activate Skills**: Use `fix` skill for issue routing, `investigate` skill for read-only exploration, `problem-solving` skill for systematic techniques
 - **Systematic Elimination**: Narrow down causes step-by-step; document the chain of events leading to the issue
 - **Cross-Service Awareness**: Issues may span multiple services -- check message bus consumers, entity events, and cross-service boundaries
-
-## Project Context
-
-> **MUST** Plan ToDo Task to READ the following project-specific reference docs:
-> - `project-structure-reference.md` -- primary patterns for this role
-> - `project-structure-reference.md` -- service list, directory tree, ports
->
-> If files not found, search for: service directories, configuration files, project patterns.
 
 ## Output
 

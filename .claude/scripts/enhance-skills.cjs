@@ -38,22 +38,20 @@ const SKILL_RELATIONSHIPS = {
   'release-notes': ['changelog', 'documentation'],
 
   // Frontend cluster
-  'frontend-angular': ['frontend-design', 'api-design'],
-  'frontend-design': ['frontend-angular', 'ui-ux-pro-max', 'shadcn-tailwind'],
+  'frontend-design': ['ui-ux-pro-max', 'shadcn-tailwind'],
   'shadcn-tailwind': ['frontend-design', 'ui-ux-pro-max'],
   'ui-ux-pro-max': ['frontend-design', 'shadcn-tailwind', 'ux-designer'],
   'ux-designer': ['ui-ux-pro-max', 'frontend-design'],
 
   // Backend cluster
-  'easyplatform-backend': ['api-design', 'database-optimization', 'databases'],
-  'api-design': ['easyplatform-backend', 'databases'],
-  'databases': ['database-optimization', 'easyplatform-backend'],
+  'api-design': ['databases', 'database-optimization'],
+  'databases': ['database-optimization', 'api-design'],
   'database-optimization': ['databases', 'arch-performance-optimization'],
 
   // Architecture cluster
   'arch-security-review': ['arch-performance-optimization', 'arch-cross-service-integration', 'code-review'],
   'arch-performance-optimization': ['arch-security-review', 'database-optimization'],
-  'arch-cross-service-integration': ['arch-security-review', 'easyplatform-backend'],
+  'arch-cross-service-integration': ['arch-security-review', 'api-design'],
 
   // Tasks cluster (autonomous)
   'tasks-code-review': ['code-review', 'tasks-test-generation'],
@@ -63,7 +61,7 @@ const SKILL_RELATIONSHIPS = {
   'tasks-test-generation': ['test-spec', 'tasks-code-review'],
 
   // DevOps cluster
-  'devops': ['databases', 'easyplatform-backend'],
+  'devops': ['databases', 'api-design'],
 
   // Git cluster
   'commit': ['changelog', 'branch-comparison'],

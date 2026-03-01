@@ -105,7 +105,7 @@ Read              # All reads
 
 | Category      | Examples                                     |
 | ------------- | -------------------------------------------- |
-| Development   | `easyplatform-backend`, `frontend-angular-*` |
+| Development   | `frontend-design`, `api-design` |
 | Architecture  | `api-design`, `arch-security-review`         |
 | AI            | `ai-multimodal`, `mcp-builder`               |
 | Testing       | `debug`, `code-review`                       |

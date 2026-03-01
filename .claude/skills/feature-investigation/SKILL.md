@@ -5,7 +5,7 @@ description: "[Investigation] Use when the user asks to investigate, explore, un
 allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -138,7 +138,7 @@ Create at `.ai/workspace/analysis/[feature-name]-investigation.analysis.md`:
 
 - Backend: services directory/{ServiceA,ServiceB,ServiceC}/
 - Frontend: frontend directory/apps/, frontend directory/libs/
-- Platform: framework directory/
+- Framework: framework directory/
 
 ## Progress
 
@@ -192,7 +192,7 @@ Create at `.ai/workspace/analysis/[feature-name]-investigation.analysis.md`:
 
 [How data flows through the system]
 
-## Platform Pattern Usage
+## Framework Pattern Usage
 
 [Documentation of platform patterns used]
 ```
@@ -220,7 +220,7 @@ grep: ".*BackgroundJob.*{EntityName}|{EntityName}.*BackgroundJob"
 
 # Message Bus Consumers (MEDIUM PRIORITY)
 grep: ".*Consumer.*{EntityName}|{EntityName}.*Consumer"
-grep: "PlatformApplicationMessageBusConsumer.*{EntityName}"
+grep: "MessageBusConsumer.*{EntityName}" # search for project message bus consumer base class
 
 # Services & Helpers (LOW PRIORITY)
 grep: ".*Service.*{EntityName}|{EntityName}.*Service"
@@ -284,7 +284,7 @@ For each file, document:
 - **relevanceScore**: 1-10 for current investigation
 - **evidenceLevel**: "verified" or "inferred"
 - **uncertainties**: Aspects you are unsure about
-- **platformAbstractions**: Platform base classes used
+- **frameworkAbstractions**: Framework base classes used
 - **serviceContext**: Which microservice (ServiceB, ServiceA, ServiceC)
 - **dependencyInjection**: DI registrations
 - **genericTypeParameters**: Generic type relationships
@@ -376,7 +376,7 @@ API endpoints, message bus integration, database dependencies, external services
 
 Validation rules, business constraints, authorization rules.
 
-### 6. Platform Pattern Usage
+### 6. Framework Pattern Usage
 
 Backend: CQRS, repository, event handlers, message bus, background jobs, validation
 Frontend: Component hierarchy, stores, forms, API services, reactive patterns
@@ -461,24 +461,24 @@ I can explain further:
 
 ---
 
-## Platform-Specific Investigation Patterns
+## Project-Specific Investigation Patterns
 
-### Backend Patterns to Look For
+### Backend Patterns to Look For (see docs/backend-patterns-reference.md)
 
-- `PlatformCqrsCommand` / `PlatformCqrsQuery` - CQRS entry points
-- `PlatformCqrsEntityEventApplicationHandler` - Side effects
-- `PlatformApplicationMessageBusConsumer` - Cross-service consumers
-- `service-specific repository` / `service-specific repository` - Data access
-- `PlatformValidationResult` - Validation logic
-- `[PlatformAuthorize]` - Authorization
+- CQRS command / query base classes - CQRS entry points
+- Entity event application handler - Side effects
+- Message bus consumer base class - Cross-service consumers
+- Service-specific repository interfaces - Data access
+- Project validation fluent API - Validation logic
+- Project authorization attributes - Authorization
 
-### Frontend Patterns to Look For
+### Frontend Patterns to Look For (see docs/frontend-patterns-reference.md)
 
-- `project store component base (search for: store component base class)` - State management components
-- `project store base (search for: store base class)` - Store implementations
+- Project store component base (search for: store component base class) - State management components
+- Project store base (search for: store base class) - Store implementations
 - `effectSimple` / `tapResponse` - Effect handling
 - `observerLoadingErrorState` - Loading/error states
-- API services extending `PlatformApiService`
+- API services extending project API service base class
 
 ---
 
@@ -527,7 +527,7 @@ Present findings in clear format with: Answer, How It Works (with code refs), Ke
 
 - **Evidence-based**: Every claim must have code evidence
 - **Service boundary awareness**: Understand which service owns what
-- **Platform pattern recognition**: Identify platform framework patterns used
+- **Framework pattern recognition**: Identify project framework patterns used
 - **Cross-service tracing**: Follow message bus flows across services
 - **Read-only exploration**: Never suggest changes unless asked
 - **Question-focused**: Always tie findings back to the original question

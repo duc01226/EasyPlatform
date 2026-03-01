@@ -535,8 +535,8 @@
       "description": "Database schema and data migration workflow",
       "name": "Database Migration",
       "preActions": {
-        "activateSkill": "easyplatform-backend",
-        "injectContext": "DATABASE MIGRATION PROTOCOL:\n1. Analyze current schema and identify breaking changes\n2. Plan rollback strategy before implementation\n3. Use PlatformDataMigrationExecutor for data migrations\n4. Use EF migrations for schema changes\n5. Review changes before code review\n6. Verify migration is idempotent (safe to re-run)\n\nGUARDRAILS:\n- Always provide rollback path\n- Never delete data without backup strategy\n- Test migration on dev data before production"
+        "activateSkill": "db-migrate",
+        "injectContext": "DATABASE MIGRATION PROTOCOL:\n1. Analyze current schema and identify breaking changes\n2. Plan rollback strategy before implementation\n3. Use project data migration executor for data migrations\n4. Use EF migrations for schema changes\n5. Review changes before code review\n6. Verify migration is idempotent (safe to re-run)\n\nGUARDRAILS:\n- Always provide rollback path\n- Never delete data without backup strategy\n- Test migration on dev data before production"
       },
       "sequence": [
         "scout",

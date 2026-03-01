@@ -35,20 +35,8 @@
           "installedVersion": "v2.1.0"
         },
         {
-          "path": "agents/brainstormer.md",
-          "checksum": "2b9e2582ba2e260d00b83ddbdc9d1c408eecd95d2bbf6004664241ae8aca52b6",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
           "path": "agents/code-reviewer.md",
           "checksum": "dcf05752bb55ea2271360a8e3a28bf8d5e143d7dd1c13709435f92273fca4aa8",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "agents/copywriter.md",
-          "checksum": "cbc1a3904f1ab43274b27a1494650d14eb6d59a86f30352dfbeef8af65eb44d9",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },
@@ -85,12 +73,6 @@
         {
           "path": "agents/journal-writer.md",
           "checksum": "62f2f9f308ac58ecaa04555c8667967d499e464d720bc2e7c7aa0cd589a7e6ac",
-          "ownership": "user",
-          "installedVersion": "v2.1.0"
-        },
-        {
-          "path": "agents/mcp-manager.md",
-          "checksum": "5e9fa5670fda02937eb0e298c4ee6160204e0902993c2831f3704e15d8782319",
           "ownership": "user",
           "installedVersion": "v2.1.0"
         },

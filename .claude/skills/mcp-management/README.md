@@ -12,7 +12,7 @@ This skill enables Claude to discover, analyze, and execute MCP server capabilit
 - **Intelligent Tool Discovery**: Analyze which tools are relevant for specific tasks
 - **Progressive Disclosure**: Load only necessary tool definitions
 - **Execution Engine**: Call MCP tools with proper parameter handling
-- **Context Efficiency**: Delegate MCP operations to `mcp-manager` subagent
+- **Context Efficiency**: Delegate MCP operations to a general-purpose subagent
 
 ## Quick Start
 
@@ -77,8 +77,8 @@ In main Claude conversation:
 
 ```
 User: "I need to search the web and save results"
-Main Agent: [Spawns mcp-manager subagent]
-mcp-manager: Discovers brave-search + memory tools, reports back
+Main Agent: [Spawns general-purpose subagent]
+subagent: Discovers brave-search + memory tools, reports back
 Main Agent: Uses recommended tools for implementation
 ```
 
@@ -87,7 +87,7 @@ Main Agent: Uses recommended tools for implementation
 ```
 Main Agent (Claude)
     ↓ (delegates MCP tasks)
-mcp-manager Subagent
+General-Purpose Subagent
     ↓ (uses skill)
 mcp-management Skill
     ↓ (connects via)
@@ -176,9 +176,9 @@ Install with `npx`:
 - `@modelcontextprotocol/server-puppeteer` - Browser automation
 - `@modelcontextprotocol/server-fetch` - HTTP requests
 
-## Integration with mcp-manager Agent
+## Integration with Subagents
 
-The `mcp-manager` agent (`.claude/agents/mcp-manager.md`) uses this skill to:
+The `general-purpose` agent uses this skill to:
 
 1. **Discover**: Connect to MCP servers, list capabilities
 2. **Analyze**: Filter relevant tools for tasks

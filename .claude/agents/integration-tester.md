@@ -27,14 +27,14 @@ Generate subcutaneous CQRS integration tests for microservices. Tests execute th
 
 1. **Investigate** — Read test spec or git diff to identify what needs testing
 2. **Analyze** — Study existing test patterns in target service's IntegrationTests project
-3. **Generate** — Create test classes extending `PlatformServiceIntegrationTestWithAssertions<TModule>`
+3. **Generate** — Create test classes extending the project integration test base class (**⚠️ MUST READ** `docs/integration-test-reference.md`)
 4. **Verify** — Build tests, check compilation, validate traceability to test spec
 
 ## Key Rules
 
 - **MUST** activate `integration-test` skill before generating any test code
 - **MUST** read integration test README in project test directories for patterns
-- **MUST** use `TC-{MOD}-{NNN}` format for all test case IDs (see `.claude/skills/shared/references/module-codes.md`)
+- **MUST** use `TC-{MOD}-{NNN}` format for all test case IDs (**⚠️ MUST READ** `.claude/skills/shared/references/module-codes.md`)
 - **MUST** use `[Collection("...")]` attribute on all test classes — xUnit parallel isolation
 - Use `IntegrationTestHelper.UniqueName()` for all test data — prevents cross-test pollution
 - Use `ExecuteCommandAsync` / `ExecuteQueryAsync` — never instantiate handlers directly

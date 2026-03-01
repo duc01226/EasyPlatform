@@ -6,7 +6,7 @@ activation: user-invoked
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 > **Critical Purpose:** Ensure ALL documentation stays in sync with code changes — project docs, business feature docs, and AI companions.
 
@@ -46,7 +46,7 @@ Classify each changed file into documentation impact categories:
 | `src/Services/**` | **feature-docs** + project-docs | Phase 1 + Phase 2 |
 | `{frontend-apps-dir}/**`, `{frontend-libs-dir}/{domain-lib}/**` | **feature-docs** + project-docs | Phase 1 + Phase 2 |
 | `{legacy-frontend-dir}/**Client/**` | **feature-docs** + project-docs | Phase 1 + Phase 2 |
-| `src/Platform/**` | project-docs | Phase 1 only |
+| `src/{Framework}/**` | project-docs | Phase 1 only |
 | `docs/**` | project-docs | Phase 1 only |
 | `.claude/**`, config files only | **none** | Fast exit |
 | `{frontend-libs-dir}/{platform-core-lib}/**`, `{frontend-libs-dir}/{common-lib}/**` | project-docs | Phase 1 only |
@@ -61,7 +61,7 @@ If ALL changed files fall into the **none** category (e.g., only `.claude/`, `.g
 
 ## Phase 1: Project Documentation Update
 
-**When to run:** Changed files include `src/Platform/**`, `docs/**`, or architectural changes.
+**When to run:** Changed files include `src/{Framework}/**`, `docs/**`, or architectural changes.
 
 **When to skip:** Only service-layer or frontend feature files changed (no architectural impact). Skip and proceed to Phase 2.
 

@@ -6,7 +6,7 @@ description: '[Subagent Tasks] Autonomous subagent variant of documentation. Use
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -78,7 +78,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 /// var result = await handler.HandleAsync(command, cancellationToken);
 /// </code>
 /// </example>
-public sealed class SaveEmployeeCommand : PlatformCqrsCommand<SaveEmployeeCommandResult>
+public sealed class SaveEmployeeCommand : CqrsCommand<SaveEmployeeCommandResult> // project CQRS command base
 {
     /// <summary>
     /// The unique identifier of the employee.
@@ -179,8 +179,8 @@ export interface FeatureDto {
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-[PlatformAuthorize]
-public class EmployeeController : PlatformBaseController
+[Authorize] // project authorization attribute (see docs/backend-patterns-reference.md)
+public class EmployeeController : BaseController // project controller base
 {
     /// <summary>
     /// Retrieves a paginated list of employees.

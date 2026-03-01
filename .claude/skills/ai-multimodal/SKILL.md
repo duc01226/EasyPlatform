@@ -5,7 +5,7 @@ description: '[AI & Tools] Process and generate multimedia content using Google 
 allowed-tools: Bash, Read, Write, Edit
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -43,7 +43,7 @@ Process audio, images, videos, and documents or generate images/videos using Goo
 
 - Simple text-only LLM calls -- use Claude directly
 - Reading a file Claude can already read (code, markdown, JSON) -- use `Read` tool
-- Building AI-powered application features -- use `easyplatform-backend` or `frontend-design`
+- Building AI-powered application features -- use `api-design` or `frontend-design`
 - Music composition workflows -- load `references/music-generation.md` only when specifically requested
 - General prompt engineering -- use `ai-artist` skill
 

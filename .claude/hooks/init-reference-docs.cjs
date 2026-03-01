@@ -3,7 +3,7 @@
 
 /**
  * Init Reference Docs Hook
- * On session start, ensures the 5 companion reference docs exist in docs/.
+ * On session start, ensures the 7 companion reference docs exist in docs/.
  * If any file is missing, creates it with a short description of its purpose.
  * Idempotent — skips files that already exist.
  *
@@ -153,6 +153,48 @@ const REFERENCE_DOCS = [
 ## Conventions
 
 <!-- Document naming, ID formats, evidence requirements -->
+`
+  ],
+  [
+    'code-review-rules.md',
+    'Code review rules, conventions, anti-patterns, decision trees, and checklists.',
+    `# Code Review Rules
+
+<!-- This file is referenced by Claude skills and agents for project-specific code review standards. -->
+<!-- Fill in your project's code review rules below. -->
+
+## Critical Rules
+
+<!-- Document MUST-FOLLOW rules: YAGNI, KISS, DRY, class responsibility -->
+
+## Backend Rules
+
+<!-- Document C# conventions: parallel execution, validation, repository, DTO mapping, side effects -->
+
+## Frontend Rules
+
+<!-- Document TypeScript/Angular conventions: base classes, subscriptions, BEM, state management -->
+
+## Architecture Rules
+
+<!-- Document microservices boundaries, layer structure, communication patterns -->
+
+## Anti-Patterns
+
+<!-- Document common anti-patterns with correct alternatives -->
+
+## Checklists
+
+<!-- Document review checklists for backend, frontend, architecture, pre-commit -->
+`
+  ],
+  [
+    'lessons.md',
+    'Learned lessons from past sessions — auto-injected via hook, written via /learn skill.',
+    `# Learned Lessons
+
+<!-- Lessons are auto-injected by lessons-injector.cjs hook on every prompt and before file edits. -->
+<!-- Use /learn skill to add new lessons. -->
 `
   ]
 ];

@@ -6,7 +6,7 @@ description: '[Code Quality] Autonomous subagent variant of code-review. Use whe
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -79,7 +79,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 - [ ] CQRS patterns followed (Command/Query/Handler in ONE file)
 - [ ] Entity patterns correct (expressions, computed properties)
 - [ ] Frontend component hierarchy respected
-- [ ] Platform base classes used correctly
+- [ ] Project base classes used correctly
 
 ### 3. Code Quality & Clean Code
 
@@ -176,7 +176,7 @@ git log main...HEAD --oneline
 ## Event Handler Review
 
 - [ ] In `UseCaseEvents/` folder
-- [ ] Uses `PlatformCqrsEntityEventApplicationHandler<T>`
+- [ ] Uses project entity event handler base class (see docs/backend-patterns-reference.md)
 - [ ] `HandleWhen` is `public override async Task<bool>`
 - [ ] Filters by `CrudAction` appropriately
 ```
@@ -208,7 +208,7 @@ git log main...HEAD --oneline
 
 ## API Service Review
 
-- [ ] Extends `PlatformApiService`
+- [ ] Extends project API service base class (see docs/frontend-patterns-reference.md)
 - [ ] Typed responses
 - [ ] Caching where appropriate
 ```
@@ -220,7 +220,7 @@ git log main...HEAD --oneline
 
 ### Authorization
 
-- [ ] `[PlatformAuthorize]` on controllers
+- [ ] Authorization attributes on controllers (see docs/backend-patterns-reference.md)
 - [ ] Role checks in handlers
 - [ ] Data filtered by company/user context
 
@@ -350,7 +350,7 @@ grep -r "untilDestroyed" --include="*.ts"  # Subscription cleanup
 
 - [ ] All changed files reviewed
 - [ ] Architecture compliance verified
-- [ ] Platform patterns followed
+- [ ] Project patterns followed
 - [ ] Security concerns addressed
 - [ ] Performance considered
 - [ ] Documentation staleness checked (changed files cross-referenced against related docs)

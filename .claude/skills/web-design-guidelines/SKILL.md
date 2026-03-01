@@ -6,7 +6,7 @@ argument-hint: <file-or-pattern>
 allowed-tools: Read, Grep, Glob
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -39,7 +39,7 @@ Review UI code for compliance with WCAG 2.2, Core Web Vitals, and modern web des
 
 ## When NOT to Use
 
-- **Building** UI -- use `frontend-design` or `frontend-angular`
+- **Building** UI -- use `frontend-design`
 - **Creating** design specs -- use `design-spec`
 - **Full UX design** process -- use `ux-designer`
 - Project SCSS review -- also check `docs/claude/scss-styling-guide.md`
@@ -119,8 +119,6 @@ src/components/Modal.tsx:78 - no focus trap for modal dialog
 | `frontend-design`  | Building UI (not reviewing)                       |
 | `design-spec`      | Creating design specifications                    |
 | `ux-designer`      | Full UX design process                            |
-| `frontend-angular` | Angular 19 components, forms, state, API services |
-
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**

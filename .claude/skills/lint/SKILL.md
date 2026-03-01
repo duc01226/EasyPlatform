@@ -5,7 +5,7 @@ description: '[Code Quality] Run linters and fix issues for backend or frontend'
 activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
@@ -41,7 +41,7 @@ Run linting: $ARGUMENTS
 2. **For Backend (.NET)**:
 
     ```bash
-    dotnet build EasyPlatform.sln /p:TreatWarningsAsErrors=false
+    dotnet build {SolutionName}.sln /p:TreatWarningsAsErrors=false
     ```
 
     - Check for analyzer warnings (CA*, IDE*, etc.)
@@ -50,7 +50,7 @@ Run linting: $ARGUMENTS
 3. **For Frontend (Angular/Nx)**:
 
     ```bash
-    cd src/PlatformExampleAppWeb
+    cd src/{ExampleAppWeb}
     nx lint playground-text-snippet
     nx lint platform-core
     ```

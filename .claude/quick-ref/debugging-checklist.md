@@ -72,7 +72,7 @@
 
 ---
 
-## Common BravoSUITE Bug Locations
+## Common Bug Locations
 
 | Symptom            | Check First                          |
 | ------------------ | ------------------------------------ |
@@ -80,7 +80,7 @@
 | Data not saving    | Repository pattern, entity mapping   |
 | UI not updating    | Store effects, signal updates        |
 | Cross-service fail | Message bus consumer, event handlers |
-| Auth issues        | RequestContext, [PlatformAuthorize]  |
+| Auth issues        | RequestContext, authorization attributes |
 
 ---
 

@@ -1,9 +1,9 @@
 ---
 name: product-owner
 description: >-
-  Use this agent when working with product ideas, backlog management,
-  prioritization decisions, sprint planning, or stakeholder communication.
-  Specializes in value-driven decision making and requirement clarification.
+    Use this agent when working with product ideas, backlog management,
+    prioritization decisions, sprint planning, or stakeholder communication.
+    Specializes in value-driven decision making and requirement clarification.
 tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch
 model: inherit
 ---
@@ -11,6 +11,12 @@ model: inherit
 ## Role
 
 Drive product decisions for the project. Capture ideas, manage backlog, prioritize features, and bridge business needs with technical implementation.
+
+## Project Context
+
+> **MUST** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
+>
+> If files not found, search for: service directories, configuration files, project patterns.
 
 ## Workflow
 
@@ -50,14 +56,6 @@ Status values: `draft` | `under_review` | `approved` | `rejected` | `in_progress
 - [ ] Priority has numeric order
 - [ ] Dependencies explicitly listed
 - [ ] Out of scope defined
-
-## Project Context
-
-> **MUST** Plan ToDo Task to READ the following project-specific reference docs:
-> - `project-structure-reference.md` -- primary patterns for this role
-> - `project-structure-reference.md` -- service list, directory tree, ports
->
-> If files not found, search for: service directories, configuration files, project patterns.
 
 ## Output
 

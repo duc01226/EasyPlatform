@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
 """
-Build Component Index for BravoSUITE Visual Component Finder.
+Build Component Index for Visual Component Finder.
 
-Scans all Angular components in src/WebV2/ and src/Web/, extracting:
+Scans Angular components in directories configured via docs/project-config.json,
+extracting:
 - Component selectors, BEM classes, route paths, text content
 - Child/parent component relationships
 - Layer classification (page/domain/common/platform)
 
 Output: docs/component-index.json (or custom path via --output)
 
+Configuration: reads frontendApps.appMap, componentFinder.selectorPrefixes,
+and componentFinder.layerClassification from docs/project-config.json.
+Falls back to scanning all src/**/*.component.ts if config is missing.
+
 Usage:
     python build-component-index.py                    # Full scan (all components)
     python build-component-index.py --git-changes      # Incremental: only re-index git-changed files
     python build-component-index.py --git-changes main # Incremental: changes since 'main' branch
     python build-component-index.py --output path.json # Custom output path
-    python build-component-index.py --webv2-only       # Skip WebV1 components
+    python build-component-index.py --modern-only      # Only index modern framework apps
 """
 
 import argparse
@@ -30,15 +35,14 @@ from pathlib import Path
 # Configuration
 # ---------------------------------------------------------------------------
 
-# Directories to scan (relative to project root)
-WEBV2_DIR = "src/WebV2"
-WEBV1_DIR = "src/Web"
-
 # Directories to skip during scanning
 SKIP_DIRS = {"node_modules", "dist", ".angular", ".nx", "e2e", "__tests__", "test"}
 
 # Default output path (relative to project root)
 DEFAULT_OUTPUT = "docs/component-index.json"
+
+# Default config path (relative to project root)
+PROJECT_CONFIG_PATH = "docs/project-config.json"
 
 # ---------------------------------------------------------------------------
 # Regex patterns
@@ -65,8 +69,8 @@ RE_CLASS_SIMPLE = re.compile(r"export\s+class\s+(\w+)")
 RE_BEM_ROOT = re.compile(r'class="([a-z][a-z0-9-]*(?:__[a-z0-9-]+)?)')
 
 # Extract child component selectors from HTML templates
-# Matches custom element tags (not standard HTML tags)
-RE_CHILD_SELECTORS = re.compile(r"<((?:app-|bravo-|platform-)[a-z0-9-]+|(?:[a-z]+-[a-z]+-[a-z0-9-]+))[^>]*>")
+# Matches custom element tags — prefix list is loaded from project config at runtime
+RE_CHILD_SELECTORS = None  # Built dynamically in load_project_config()
 
 # Extract visible text from HTML templates (headers, labels, buttons)
 # Matches text between > and < that isn't whitespace or Angular bindings
@@ -126,6 +130,96 @@ def find_project_root():
             return parent
     # Fallback: assume script is at .claude/skills/visual-component-finder/scripts/
     return current.parent.parent.parent.parent.parent
+
+
+# ---------------------------------------------------------------------------
+# Project config loading
+# ---------------------------------------------------------------------------
+
+# Runtime config populated by load_project_config()
+_project_config = None
+_scan_dirs = []          # List of (label, abs_path) tuples to scan
+_modern_labels = set()   # Labels considered "modern" framework
+_layer_rules = []        # List of (path_fragment, layer_name) tuples
+_selector_prefixes = []  # Component selector prefixes from config
+
+
+def load_project_config(project_root, verbose=False):
+    """Load docs/project-config.json and derive scan dirs, layer rules, etc.
+
+    Falls back to scanning all src/**/*.component.ts if config is missing.
+    """
+    global _project_config, _scan_dirs, _modern_labels, _layer_rules, _selector_prefixes, RE_CHILD_SELECTORS
+
+    config_path = os.path.join(project_root, PROJECT_CONFIG_PATH)
+    _project_config = {}
+
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r", encoding="utf-8") as f:
+                _project_config = json.load(f)
+            if verbose:
+                print(f"Loaded project config: {config_path}")
+        except (json.JSONDecodeError, OSError) as e:
+            if verbose:
+                print(f"Warning: Could not parse {config_path}: {e}")
+
+    # --- Derive scan directories from frontendApps.appMap ---
+    fe = _project_config.get("frontendApps", {})
+    app_map = fe.get("appMap", {})
+
+    if app_map:
+        for label, regex_str in app_map.items():
+            # Convert regex pattern to a directory path (strip regex escapes)
+            dir_path = regex_str.replace("[\\\\/]", "/").replace("[/\\\\]", "/")
+            abs_dir = os.path.join(project_root, "src", dir_path)
+            # Also try without src/ prefix in case regex already includes it
+            if not os.path.isdir(abs_dir):
+                abs_dir = os.path.join(project_root, dir_path)
+            _scan_dirs.append((label, abs_dir))
+    else:
+        # Fallback: scan all of src/
+        _scan_dirs.append(("src", os.path.join(project_root, "src")))
+
+    # Also scan frontend pattern paths (libs, etc.)
+    fe_patterns = fe.get("patterns", [])
+    for pat in fe_patterns:
+        pat_regex = pat.get("pathRegex", "")
+        if pat_regex:
+            dir_path = pat_regex.replace("[\\\\/]", "/").replace("[/\\\\]", "/")
+            abs_dir = os.path.join(project_root, "src", dir_path)
+            if not os.path.isdir(abs_dir):
+                abs_dir = os.path.join(project_root, dir_path)
+            name = pat.get("name", dir_path)
+            if not any(d[1] == abs_dir for d in _scan_dirs):
+                _scan_dirs.append((name, abs_dir))
+
+    # --- Modern vs legacy labels ---
+    _modern_labels = set(fe.get("modernApps", []))
+
+    # --- Layer classification from componentFinder ---
+    cf = _project_config.get("componentFinder", {})
+    layer_class = cf.get("layerClassification", {})
+    for layer_name, paths in layer_class.items():
+        for p in paths:
+            # Normalize to forward slash for matching
+            _layer_rules.append((p.replace("\\", "/"), layer_name))
+
+    # --- Selector prefixes ---
+    _selector_prefixes = cf.get("selectorPrefixes", ["app-"])
+
+    # Build the child selector regex from prefixes
+    if _selector_prefixes:
+        prefix_pattern = "|".join(re.escape(p) for p in _selector_prefixes)
+        RE_CHILD_SELECTORS = re.compile(
+            rf"<((?:{prefix_pattern})[a-z0-9-]+|(?:[a-z]+-[a-z]+-[a-z0-9-]+))[^>]*>"
+        )
+    else:
+        RE_CHILD_SELECTORS = re.compile(r"<([a-z]+-[a-z]+-[a-z0-9-]+)[^>]*>")
+
+    if verbose:
+        print(f"Scan dirs: {len(_scan_dirs)}, Layer rules: {len(_layer_rules)}, "
+              f"Selector prefixes: {_selector_prefixes}")
 
 
 def should_skip(path_str):
@@ -232,71 +326,78 @@ def extract_text_content(html_content):
 
 
 def determine_layer(rel_path):
-    """Classify component layer based on its file path."""
-    path_lower = rel_path.replace("\\", "/").lower()
+    """Classify component layer based on file path using config-driven rules."""
+    path_normalized = rel_path.replace("\\", "/").lower()
 
-    # WebV2 patterns
-    if "libs/platform-core/" in path_lower:
-        return "platform"
-    if "libs/bravo-common/" in path_lower:
-        return "common"
-    if "libs/bravo-domain/" in path_lower:
-        if "/_shared/" in path_lower or "\\_shared/" in path_lower:
-            return "domain-shared"
-        return "domain"
-    if "/apps/" in path_lower and "/routes/" in path_lower:
+    # Check config-driven layer rules first
+    for path_fragment, layer_name in _layer_rules:
+        if path_fragment.lower() in path_normalized:
+            # Special case: domain-shared detection
+            if layer_name == "domain" and ("/_shared/" in path_normalized or "/_shared\\" in path_normalized):
+                return "domain-shared"
+            return layer_name
+
+    # Generic heuristics (no hardcoded project paths)
+    if "/apps/" in path_normalized and "/routes/" in path_normalized:
         return "page"
-    if "/apps/" in path_lower:
+    if "/apps/" in path_normalized:
         return "app"
-
-    # WebV1 patterns
-    if "bravocomponents/" in path_lower or "libs/" in path_lower:
-        return "common"
-    if "/shared/" in path_lower:
+    if "/shared/" in path_normalized:
         return "shared"
-    if "/pages/" in path_lower or "/containers/" in path_lower:
+    if "/pages/" in path_normalized or "/containers/" in path_normalized:
         return "page"
+    if "/libs/" in path_normalized:
+        return "common"
 
     return "unknown"
 
 
 def determine_app(rel_path):
-    """Determine which app a component belongs to."""
-    path_parts = rel_path.replace("\\", "/").split("/")
+    """Determine which app a component belongs to using config-driven appMap."""
+    path_normalized = rel_path.replace("\\", "/")
 
-    # WebV2: src/WebV2/apps/{app-name}/
-    if "WebV2" in path_parts:
+    # Check config-driven appMap patterns
+    fe = _project_config.get("frontendApps", {})
+    app_map = fe.get("appMap", {})
+    for label, regex_str in app_map.items():
         try:
-            idx = path_parts.index("apps")
-            if idx + 1 < len(path_parts):
-                return path_parts[idx + 1]
-        except ValueError:
-            pass
-        # WebV2 libs
-        try:
-            idx = path_parts.index("libs")
-            if idx + 1 < len(path_parts):
-                return f"lib:{path_parts[idx + 1]}"
-        except ValueError:
+            if re.search(regex_str, path_normalized, re.IGNORECASE):
+                return label
+        except re.error:
             pass
 
-    # WebV1: src/Web/{AppClient}/
-    if "Web" in path_parts and "WebV2" not in path_parts:
-        try:
-            idx = path_parts.index("Web")
-            if idx + 1 < len(path_parts):
-                return path_parts[idx + 1]
-        except ValueError:
-            pass
+    # Generic heuristic: look for apps/{name}/ or libs/{name}/ patterns
+    path_parts = path_normalized.split("/")
+    try:
+        idx = path_parts.index("apps")
+        if idx + 1 < len(path_parts):
+            return path_parts[idx + 1]
+    except ValueError:
+        pass
+    try:
+        idx = path_parts.index("libs")
+        if idx + 1 < len(path_parts):
+            return f"lib:{path_parts[idx + 1]}"
+    except ValueError:
+        pass
 
     return "unknown"
 
 
 def determine_version(rel_path):
-    """Determine Angular version (v1 or v2) based on path."""
-    if "WebV2" in rel_path.replace("\\", "/"):
-        return "v2"
-    return "v1"
+    """Determine modern vs legacy based on config-driven modernApps list."""
+    app = determine_app(rel_path)
+    # Strip "lib:" prefix for lookup
+    app_name = app.replace("lib:", "") if app.startswith("lib:") else app
+    if app_name in _modern_labels:
+        return "modern"
+    fe = _project_config.get("frontendApps", {})
+    if app_name in fe.get("legacyApps", []):
+        return "legacy"
+    # Default: if config has modernApps but this app isn't listed, assume legacy
+    if _modern_labels:
+        return "legacy"
+    return "unknown"
 
 
 def get_scss_path(component_path):
@@ -341,30 +442,34 @@ def extract_routes_from_file(file_path, project_root):
     return routes
 
 
-def build_route_index(project_root, include_v1=True):
-    """Build route path → component mapping from all routing files."""
+def build_route_index(project_root, modern_only=False):
+    """Build route path → component mapping from all routing files.
+
+    Uses _scan_dirs populated from project config.
+    """
     route_map = {}
 
-    # WebV2 route files
-    v2_patterns = [
-        os.path.join(project_root, WEBV2_DIR, "apps", "**", "routes.ts"),
-        os.path.join(project_root, WEBV2_DIR, "apps", "**", "*.routes.ts"),
-    ]
+    for label, scan_dir in _scan_dirs:
+        if not os.path.isdir(scan_dir):
+            continue
+        if modern_only and label not in _modern_labels:
+            continue
 
-    # WebV1 route files
-    v1_patterns = [
-        os.path.join(project_root, WEBV1_DIR, "**", "*routing*.ts"),
-        os.path.join(project_root, WEBV1_DIR, "**", "*routes*.ts"),
-    ] if include_v1 else []
+        # Search for route files in each configured directory
+        route_patterns = [
+            os.path.join(scan_dir, "**", "routes.ts"),
+            os.path.join(scan_dir, "**", "*.routes.ts"),
+            os.path.join(scan_dir, "**", "*routing*.ts"),
+        ]
 
-    for pattern in v2_patterns + v1_patterns:
-        for route_file in glob.glob(pattern, recursive=True):
-            if should_skip(route_file):
-                continue
-            routes = extract_routes_from_file(route_file, project_root)
-            for route in routes:
-                if route["component"]:
-                    route_map[route["component"]] = route["path"]
+        for pattern in route_patterns:
+            for route_file in glob.glob(pattern, recursive=True):
+                if should_skip(route_file):
+                    continue
+                routes = extract_routes_from_file(route_file, project_root)
+                for route in routes:
+                    if route["component"]:
+                        route_map[route["component"]] = route["path"]
 
     return route_map
 
@@ -541,16 +646,16 @@ def load_existing_index(output_path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Build BravoSUITE component index")
+    parser = argparse.ArgumentParser(description="Build component index")
     parser.add_argument(
         "--output", "-o",
         default=None,
         help=f"Output file path (default: {{project_root}}/{DEFAULT_OUTPUT})"
     )
     parser.add_argument(
-        "--webv2-only",
+        "--modern-only",
         action="store_true",
-        help="Only index WebV2 components (skip WebV1)"
+        help="Only index modern framework apps (as defined in project-config.json modernApps)"
     )
     parser.add_argument(
         "--verbose", "-v",
@@ -574,8 +679,11 @@ def main():
         print(f"Project root: {project_root}")
         print(f"Output: {output_path}")
 
+    # Load project config and initialize scan directories
+    load_project_config(project_root, verbose=args.verbose)
+
     # Build route map (always needed)
-    route_map = build_route_index(project_root, include_v1=not args.webv2_only)
+    route_map = build_route_index(project_root, modern_only=args.modern_only)
     if args.verbose:
         print(f"Found {len(route_map)} route-to-component mappings")
 
@@ -629,20 +737,22 @@ def main():
     if args.git_changes is None:
         component_files = []
 
-        # WebV2 components
-        v2_pattern = os.path.join(project_root, WEBV2_DIR, "**", "*.component.ts")
-        v2_files = [f for f in glob.glob(v2_pattern, recursive=True) if not should_skip(f)]
-        component_files.extend(v2_files)
-        if args.verbose:
-            print(f"Found {len(v2_files)} WebV2 component files")
+        # Scan each configured directory
+        for label, scan_dir in _scan_dirs:
+            if not os.path.isdir(scan_dir):
+                if args.verbose:
+                    print(f"Skipping {label}: directory not found ({scan_dir})")
+                continue
+            if args.modern_only and label not in _modern_labels:
+                if args.verbose:
+                    print(f"Skipping {label}: not in modernApps list")
+                continue
 
-        # WebV1 components (unless --webv2-only)
-        if not args.webv2_only:
-            v1_pattern = os.path.join(project_root, WEBV1_DIR, "**", "*.component.ts")
-            v1_files = [f for f in glob.glob(v1_pattern, recursive=True) if not should_skip(f)]
-            component_files.extend(v1_files)
+            pattern = os.path.join(scan_dir, "**", "*.component.ts")
+            files = [f for f in glob.glob(pattern, recursive=True) if not should_skip(f)]
+            component_files.extend(files)
             if args.verbose:
-                print(f"Found {len(v1_files)} WebV1 component files")
+                print(f"Found {len(files)} component files in {label}")
 
         if args.verbose:
             print(f"Total: {len(component_files)} component files")
@@ -674,8 +784,8 @@ def main():
     # Compute stats
     stats = {
         "total": len(components),
-        "v2": sum(1 for c in components if c["version"] == "v2"),
-        "v1": sum(1 for c in components if c["version"] == "v1"),
+        "modern": sum(1 for c in components if c["version"] == "modern"),
+        "legacy": sum(1 for c in components if c["version"] == "legacy"),
         "pages": sum(1 for c in components if c["layer"] == "page"),
         "domain": sum(1 for c in components if c["layer"] in ("domain", "domain-shared")),
         "common": sum(1 for c in components if c["layer"] == "common"),
@@ -707,7 +817,7 @@ def main():
 
     # Summary
     print(f"Component index generated: {output_path}")
-    print(f"  Total: {stats['total']} components ({stats['v2']} V2, {stats['v1']} V1)")
+    print(f"  Total: {stats['total']} components ({stats['modern']} modern, {stats['legacy']} legacy)")
     print(f"  Pages: {stats['pages']}, Domain: {stats['domain']}, Common: {stats['common']}, Platform: {stats['platform']}")
     print(f"  With routes: {stats['withRoutes']}, With BEM: {stats['withBem']}, With store: {stats['withStore']}")
 

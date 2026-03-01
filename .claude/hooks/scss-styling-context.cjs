@@ -7,9 +7,7 @@
  * handles app-specific design tokens.
  *
  * Pattern Matching:
- *   src/WebV2/*                    → Angular 19 apps (shared-mixin)
- *   src/Web/*                      → Legacy Angular apps (variables)
- *   libs/*                         → Shared libraries
+ *   Reads scss.patterns from docs/project-config.json for app detection.
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
@@ -17,48 +15,17 @@
 
 const fs = require('fs');
 const path = require('path');
+const { loadProjectConfig, buildRegexMap, buildPatternList } = require('./lib/project-config-loader.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CONFIGURATION
+// CONFIGURATION (loaded from docs/project-config.json)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const SCSS_GUIDE_PATH = 'docs/claude/scss-styling-guide.md';
 
-const FRONTEND_PATTERNS = [
-  {
-    name: 'WebV2',
-    patterns: [
-      /src[\/\\]WebV2[\/\\]/i,
-      /libs[\/\\]bravo-common[\/\\]/i,
-      /libs[\/\\]platform-core[\/\\]/i
-    ],
-    description: 'Angular 19 with shared-mixin SCSS system'
-  },
-  {
-    name: 'Legacy Web',
-    patterns: [
-      /src[\/\\]Web[\/\\]/i
-    ],
-    description: 'Legacy Angular with SCSS variables'
-  },
-  {
-    name: 'Libraries',
-    patterns: [
-      /libs[\/\\]/i
-    ],
-    description: 'Shared component libraries'
-  }
-];
-
-// App-specific patterns for detailed guidance
-const APP_PATTERNS = {
-  'growth': /WebV2[\/\\]apps[\/\\]growth/i,
-  'employee': /WebV2[\/\\]apps[\/\\]employee/i,
-  'survey': /WebV2[\/\\]apps[\/\\]survey/i,
-  'bravoTALENTS': /Web[\/\\]bravoTALENTS/i,
-  'CandidateApp': /Web[\/\\]CandidateApp/i,
-  'bravoSURVEYS': /Web[\/\\]bravoSURVEYS/i
-};
+const config = loadProjectConfig();
+const FRONTEND_PATTERNS = buildPatternList(config.scss?.patterns);
+const APP_PATTERNS = buildRegexMap(config.scss?.appMap);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -142,7 +109,7 @@ function buildInjection(context, filePath, app) {
     'This guide contains:',
     '- BEM naming conventions (block__element --modifier)',
     '- SCSS architecture patterns and file organization',
-    '- Mixin usage and shared-mixin imports',
+    '- Mixin usage and import patterns',
     '- CSS variable conventions for theming',
     '- Responsive design patterns and breakpoints',
     '- Component-scoped styling best practices',
@@ -151,45 +118,19 @@ function buildInjection(context, filePath, app) {
     '',
     '1. **BEM Classes:** Use `block__element` with separate `--modifier` class',
     '2. **No Magic Numbers:** Use variables for colors, spacing, breakpoints',
-    '3. **Imports:** WebV2 uses `@use \'shared-mixin\'`, Legacy uses `@import`',
-    '4. **Nesting:** Max 3 levels deep, avoid over-specificity',
-    '5. **Component Scope:** Styles scoped to component block class',
+    '3. **Nesting:** Max 3 levels deep, avoid over-specificity',
+    '4. **Component Scope:** Styles scoped to component block class',
     ''
   ];
 
-  // Add context-specific guidance
-  if (context.name === 'WebV2') {
+  // Add context-specific SCSS examples from config (scssExamples array)
+  const scssExamples = context.scssExamples || [];
+  if (scssExamples.length > 0) {
     lines.push(
-      '### WebV2 SCSS Patterns',
+      `### ${context.name} SCSS Patterns`,
       '',
       '```scss',
-      '// Import pattern',
-      '@use \'shared-mixin\' as *;',
-      '',
-      '// CSS Variables for theming',
-      'color: var(--text-primary-cl);',
-      'background: var(--bg-pri-cl);',
-      '',
-      '// Flex mixins',
-      '@include flex-column-container();',
-      '@include flex-row-gap(8px);',
-      '```',
-      ''
-    );
-  } else if (context.name === 'Legacy Web') {
-    lines.push(
-      '### Legacy SCSS Patterns',
-      '',
-      '```scss',
-      '// Import pattern',
-      '@import \'~assets/scss/variables\';',
-      '',
-      '// SCSS Variables',
-      'color: $color-primary;',
-      'background: $color-gray-100;',
-      '',
-      '// Flex mixin',
-      '@include flex-column-container();',
+      ...scssExamples,
       '```',
       ''
     );

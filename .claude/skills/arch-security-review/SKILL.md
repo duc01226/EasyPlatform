@@ -5,7 +5,7 @@ description: '[Architecture] Use when reviewing code for security vulnerabilitie
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -25,8 +25,8 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 **Key Rules:**
 
 - Always check both backend (C#) and frontend (Angular) attack surfaces
-- Use `[PlatformAuthorize]` and entity-level access expressions, never rely on UI-only guards
-- Validate all external data with `PlatformValidationResult`, never trust client input
+- Use project authorization attributes and entity-level access expressions, never rely on UI-only guards (see docs/backend-patterns-reference.md)
+- Validate all external data with project validation API, never trust client input (see docs/backend-patterns-reference.md)
 
 # Security Review Workflow
 
@@ -56,7 +56,7 @@ public async Task<Employee> Get(string id)
 
 // :white_check_mark: SECURE - Authorization enforced
 [HttpGet("{id}")]
-[PlatformAuthorize(Roles.Manager, Roles.Admin)]
+[Authorize(Roles.Manager, Roles.Admin)] // project authorization attribute (see docs/backend-patterns-reference.md)
 public async Task<Employee> Get(string id)
 {
     var employee = await repo.GetByIdAsync(id);
@@ -204,7 +204,7 @@ private bool IsAllowedUrl(string url)
 
 ## Authorization Patterns
 
-**⚠️ MUST READ:** CLAUDE.md for `PlatformAuthorize` controller/handler patterns, `RequestContext` usage, and entity-level access filters.
+**⚠️ MUST READ:** CLAUDE.md for authorization controller/handler patterns, `RequestContext` usage, and entity-level access filters (see docs/backend-patterns-reference.md).
 
 ## Data Protection
 

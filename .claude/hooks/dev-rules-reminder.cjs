@@ -133,7 +133,7 @@ function buildReminder({ thinkingLanguage, responseLanguage, devRulesPath, catal
     // CONFIRM UNDERSTANDING (top priority — injected on every prompt)
     // ─────────────────────────────────────────────────────────────────────────
     `## ⚠️ Confirm Before Execute`,
-    `If the user prompt is longer than 100 characters, you **MUST** first confirm your understanding of the request and clarify the user's intent before executing any task. Restate what you understood, ask clarifying questions if ambiguous, and only proceed after the user confirms. During confirmation, check if the task matches any workflow from the Workflow Catalog. If AI judges the task is non-trivial, auto-activate the detected workflow immediately. If AI judges the task is simple, AI MUST ask the user whether to skip the workflow.`,
+    `If the user prompt could be complex or vague, you **MUST** use the \`AskUserQuestion\` tool to confirm your understanding of the request and clarify the user's intent before executing any task. Restate what you understood, ask clarifying questions if ambiguous, and only proceed after the user confirms. During confirmation, check if the task matches any workflow from the Workflow Catalog. If AI judges the task is non-trivial, auto-activate the detected workflow immediately. If AI judges the task is simple, AI MUST ask the user whether to skip workflow.`,
     ``,
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -166,6 +166,7 @@ function buildReminder({ thinkingLanguage, responseLanguage, devRulesPath, catal
     `- **[CRITICAL] Class Responsibility Rule:** Logic belongs in LOWEST layer (Entity/Model > Service > Component/Handler). Backend: mapping → Command/DTO, not Handler. Frontend: constants/columns/roles → Model class, not Component.`,
     `- Sacrifice grammar for the sake of concision when writing reports.`,
     `- In reports, list any unresolved questions at the end, if any.`,
+    `- **[CRITICAL] After context compaction:** ALWAYS call \`TaskList\` before \`TaskCreate\` — resume existing tasks, do NOT create duplicates (prevents orphan tasks).`,
     `- IMPORTANT: Ensure token consumption efficiency while maintaining high quality.`,
     ``,
 

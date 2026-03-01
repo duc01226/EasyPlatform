@@ -5,7 +5,7 @@ version: 2.1.0
 allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
@@ -134,9 +134,9 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 | ------------------------------ | ------------------------------------------------------------------------------- |
 | Who calls this method          | Grep method name across `*.cs`                                                  |
 | Who injects this service       | Grep interface name in constructors                                             |
-| What events this entity raises | Grep `PlatformCqrsEntityEvent<EntityName>`                                      |
+| What events this entity raises | Grep `EntityEvent<EntityName>` (search for: project entity event class)         |
 | Cross-service consumers        | Grep `*BusMessage` type across all services                                     |
-| Repository usage               | Grep `IRepository<EntityName>` or `IPlatformQueryableRootRepository<EntityName` |
+| Repository usage               | Grep `IRepository<EntityName>` or project queryable repository interface        |
 
 #### Frontend (TypeScript)
 
@@ -197,24 +197,24 @@ Document flow as text diagram:
 3. Check configuration/feature flags
 4. Document business rules
 
-### Platform Pattern Recognition
+### Project Pattern Recognition (see docs/backend-patterns-reference.md and docs/frontend-patterns-reference.md)
 
 #### Backend Patterns
 
-- `PlatformCqrsCommand` / `PlatformCqrsQuery` - CQRS entry points
-- `PlatformCqrsEntityEventApplicationHandler` - Side effects
-- `PlatformApplicationMessageBusConsumer` - Cross-service consumers
-- `IPlatformQueryableRootRepository` - Data access
-- `PlatformValidationResult` - Validation logic
-- `[PlatformAuthorize]` - Authorization
+- CQRS command / query base classes - CQRS entry points
+- Entity event application handler - Side effects
+- Message bus consumer base class - Cross-service consumers
+- Project queryable root repository - Data access
+- Project validation fluent API - Validation logic
+- Project authorization attributes - Authorization
 
 #### Frontend Patterns
 
-- `project store component base (search for: store component base class)` - State management components
-- `project store base (search for: store base class)` - Store implementations
+- Project store component base (search for: store component base class) - State management components
+- Project store base (search for: store base class) - Store implementations
 - `effectSimple` / `tapResponse` - Effect handling
 - `observerLoadingErrorState` - Loading/error states
-- API services extending `PlatformApiService`
+- API services extending project API service base class
 
 ## Evidence Collection
 

@@ -12,8 +12,6 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 
 | Skill | Description |
 |-------|-------------|
-| `easyplatform-backend` | EasyPlatform .NET backend (CQRS, entities, migrations) |
-| `frontend-angular` | Angular 19 components, forms, state management, API services |
 | `api-design` | REST API endpoints, controllers, DTOs |
 | `databases` | MongoDB, PostgreSQL queries and optimization |
 
@@ -42,7 +40,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 
 | Skill | Description |
 |-------|-------------|
-| `debug` | Systematic debugging framework (includes EasyPlatform-specific patterns) |
+| `debug` | Systematic debugging framework (includes project-specific patterns) |
 | `code-review` | Comprehensive code review |
 | `code-simplifier` | Simplify code for clarity |
 | `test-spec` | Generate test specifications, test cases, and integration tests |
@@ -64,7 +62,7 @@ Skills are specialized prompts that provide domain-specific capabilities. Invoke
 | `documentation` | Technical documentation enhancement |
 | `docs-seeker` | Search technical docs (context7, llms.txt) |
 | `feature-docs` | Feature documentation with test verification |
-| `feature-docs` | EasyPlatform business feature docs |
+| `feature-docs` | Business feature documentation |
 | `readme-improvement` | README enhancement |
 | `release-notes` | Generate release notes |
 

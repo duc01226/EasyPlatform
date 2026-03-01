@@ -5,7 +5,7 @@ description: '[DevOps] Run or create database migrations'
 activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
@@ -18,13 +18,13 @@ activation: user-invoked
 
 **Workflow:**
 1. **Identify** — Determine migration type (EF schema vs data migration)
-2. **Create** — Generate migration using `dotnet ef` or `PlatformDataMigrationExecutor`
+2. **Create** — Generate migration using `dotnet ef` or project data migration executor (see docs/backend-patterns-reference.md)
 3. **Verify** — Run migration and confirm schema/data changes
 
 **Key Rules:**
 - Follow platform migration patterns from CLAUDE.md
 - Always backup data before destructive migrations
-- Use `PlatformDataMigrationExecutor` for MongoDB data migrations
+- Use project data migration executor for MongoDB data migrations (see docs/backend-patterns-reference.md)
 
 Database migration: $ARGUMENTS
 
@@ -40,31 +40,31 @@ Database migration: $ARGUMENTS
 2. **Identify database provider** from project:
     - SQL Server: Search for `*.Persistence` projects
     - PostgreSQL: Search for `*.Persistence.PostgreSql` projects
-    - MongoDB: Uses `PlatformMongoMigrationExecutor` (code-based)
+    - MongoDB: Uses project Mongo migration executor (code-based, see docs/backend-patterns-reference.md)
 
 3. **For EF Core (SQL Server/PostgreSQL)**:
 
     Add migration:
 
     ```bash
-    cd src/PlatformExampleApp/PlatformExampleApp.TextSnippet.Persistence
-    dotnet ef migrations add <MigrationName> --startup-project ../PlatformExampleApp.TextSnippet.Api
+    cd src/{ExampleApp}/{ExampleApp}.TextSnippet.Persistence
+    dotnet ef migrations add <MigrationName> --startup-project ../{ExampleApp}.TextSnippet.Api
     ```
 
     Update database:
 
     ```bash
-    dotnet ef database update --startup-project ../PlatformExampleApp.TextSnippet.Api
+    dotnet ef database update --startup-project ../{ExampleApp}.TextSnippet.Api
     ```
 
     List migrations:
 
     ```bash
-    dotnet ef migrations list --startup-project ../PlatformExampleApp.TextSnippet.Api
+    dotnet ef migrations list --startup-project ../{ExampleApp}.TextSnippet.Api
     ```
 
 4. **For MongoDB migrations**:
-    - MongoDB uses code-based migrations via `PlatformMongoMigrationExecutor`
+    - MongoDB uses code-based migrations via project Mongo migration executor (see docs/backend-patterns-reference.md)
     - Location: `*.Persistence.Mongo/Migrations/`
     - Migrations run automatically on application startup
     - To create: Generate new migration class following existing patterns

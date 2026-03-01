@@ -176,8 +176,8 @@ Project-specific preferences and assertions.
     "framework": "auto"
   },
   "assertions": [
-    "This is a .NET 9 + Angular 19 enterprise monorepo",
-    "Backend: Use PlatformValidationResult fluent API",
+    "Read docs/project-structure-reference.md for project tech stack",
+    "Backend: Use project validation fluent API - see docs/backend-patterns-reference.md",
     ...
   ]
 }

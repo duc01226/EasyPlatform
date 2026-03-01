@@ -6,7 +6,7 @@ description: '[Subagent Tasks] Autonomous subagent variant of feature-implementa
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -255,13 +255,13 @@ public class FeatureEntityConfiguration : IEntityTypeConfiguration<Feature>
 
 ```csharp
 // 4. DTO (in EntityDtos/ folder)
-public class FeatureDto : PlatformEntityDto<Feature, string> { }
+public class FeatureDto : EntityDtoBase<Feature, string> { } // project DTO base (see docs/backend-patterns-reference.md)
 
 // 5. Command (Command + Handler + Result in ONE file)
-public sealed class SaveFeatureCommand : PlatformCqrsCommand<SaveFeatureCommandResult> { }
+public sealed class SaveFeatureCommand : CqrsCommand<SaveFeatureCommandResult> { } // project CQRS command base
 
 // 6. Query
-public sealed class GetFeatureListQuery : PlatformCqrsPagedQuery<GetFeatureListQueryResult, FeatureDto> { }
+public sealed class GetFeatureListQuery : CqrsPagedQuery<GetFeatureListQueryResult, FeatureDto> { } // project CQRS query base
 ```
 
 4. **API Layer**
@@ -270,7 +270,7 @@ public sealed class GetFeatureListQuery : PlatformCqrsPagedQuery<GetFeatureListQ
 // 7. Controller
 [ApiController]
 [Route("api/[controller]")]
-public class FeatureController : PlatformBaseController
+public class FeatureController : BaseController // project controller base (see docs/backend-patterns-reference.md)
 {
     [HttpPost]
     public async Task<IActionResult> Save([FromBody] SaveFeatureCommand cmd)
@@ -284,7 +284,7 @@ public class FeatureController : PlatformBaseController
 
 ```typescript
 @Injectable({ providedIn: 'root' })
-export class FeatureApiService extends PlatformApiService {
+export class FeatureApiService extends ApiServiceBase { // project API service base (see docs/frontend-patterns-reference.md)
     protected get apiUrl() {
         return environment.apiUrl + '/api/Feature';
     }
@@ -374,7 +374,7 @@ export class FeatureListComponent extends project store component base (search f
 - `feature-investigation` skill - READ-ONLY exploration (no code changes)
 - `debug` skill - Autonomous debugging workflow
 - `.ai/docs/AI-DEBUGGING-PROTOCOL.md` - Debugging protocol
-- `.ai/docs/prompt-context.md` - Platform patterns and context
+- `.ai/docs/prompt-context.md` - Project patterns and context
 - `CLAUDE.md` - Codebase instructions
 
 ## Related

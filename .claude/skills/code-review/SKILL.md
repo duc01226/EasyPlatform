@@ -5,7 +5,7 @@ description: '[Code Quality] Use when receiving code review feedback (especially
 allowed-tools: NONE
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -160,26 +160,26 @@ Update report with: Overall Assessment, Critical Issues, High Priority, Architec
 6. **Performance** - Efficient data access patterns:
     - No O(n²): use dictionary lookup instead of nested loops
     - Project in query: don't load all then `.Select(x.Id)`
-    - Always paginate: never get all data without `.PageBy()`
-    - Batch load: use `GetByIdsAsync()` not N+1 queries
+    - Always paginate: never get all data without pagination (search for: pagination pattern)
+    - Batch load: use batch-by-IDs pattern, not N+1 queries (search for: batch load pattern)
 7. **Entity Indexes** - Database queries have matching indexes:
     - Database collections: index management methods (search for: index setup pattern)
     - EF Core: Composite indexes in migrations for filter columns
     - Expression fields match index field order (leftmost prefix)
     - Text search queries have text indexes configured
 
-## WebV1 Platform Compliance (`src/Web/**`)
+## Legacy Frontend Pattern Compliance
 
-When reviewing files in `src/Web/**`, verify these MANDATORY patterns.
-**⚠️ MUST READ:** CLAUDE.md "Component Hierarchy" and "Frontend (TypeScript)" sections for full pattern reference.
+When reviewing files in legacy frontend app directories (check `docs/project-config.json` → `frontendApps.legacyApps` for the list), verify these MANDATORY patterns.
+Read `docs/frontend-patterns-reference.md` for full pattern reference.
 
 ### Review Checklist
 
 - [ ] Component extends project's base component class (search for: app base component hierarchy)
 - [ ] Constructor includes required DI and calls `super(...)`
-- [ ] Uses `this.untilDestroyed()` for RxJS subscriptions (NO manual `Subject` destroy pattern)
-- [ ] Services extend `PlatformApiService` (NO direct `HttpClient`)
-- [ ] Store API calls use `effectSimple()` (NOT `observerLoadingErrorState` in store)
+- [ ] Uses subscription cleanup pattern (search for: subscription cleanup pattern) for RxJS subscriptions (NO manual `Subject` destroy pattern)
+- [ ] Services extend project API service base class (NO direct `HttpClient`) (see docs/frontend-patterns-reference.md)
+- [ ] Store API calls use store effect pattern (search for: store effect pattern) (NOT deprecated effect patterns)
 
 ### Anti-Patterns to Flag as CRITICAL
 

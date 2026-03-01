@@ -160,15 +160,6 @@
       {
         "hooks": [
           {
-            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lessons-injector.cjs",
-            "type": "command"
-          }
-        ],
-        "matcher": "Edit|Write|MultiEdit"
-      },
-      {
-        "hooks": [
-          {
             "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/search-before-code.cjs",
             "type": "command"
           },
@@ -190,6 +181,10 @@
           },
           {
             "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/scss-styling-context.cjs",
+            "type": "command"
+          },
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lessons-injector.cjs",
             "type": "command"
           }
         ],
@@ -247,16 +242,6 @@
         "matcher": "clear|exit|compact"
       }
     ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-waiting.js",
-            "type": "command"
-          }
-        ]
-      }
-    ],
     "SessionStart": [
       {
         "hooks": [
@@ -293,6 +278,25 @@
           }
         ],
         "matcher": "startup"
+      },
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/project-config-init.cjs",
+            "type": "command"
+          }
+        ],
+        "matcher": "startup"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/notify-waiting.js",
+            "type": "command"
+          }
+        ]
       }
     ],
     "SubagentStart": [
@@ -318,11 +322,15 @@
             "type": "command"
           },
           {
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/init-reference-docs.cjs",
+            "type": "command"
+          },
+          {
             "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lessons-injector.cjs",
             "type": "command"
           },
           {
-            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/init-reference-docs.cjs",
+            "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lesson-learned-reminder.cjs",
             "type": "command"
           }
         ]

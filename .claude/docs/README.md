@@ -1,6 +1,6 @@
 # Claude Code Documentation
 
-> Comprehensive reference for developers using Claude Code in EasyPlatform.
+> Comprehensive reference for developers using Claude Code.
 
 ## Quick Start
 

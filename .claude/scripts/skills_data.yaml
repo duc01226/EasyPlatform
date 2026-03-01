@@ -422,14 +422,6 @@
   has_scripts: true
   name: docx-to-markdown
   path: docx-to-markdown\SKILL.md
-- category: backend
-  description: '[Architecture] Complete Easy.Platform backend development. Covers
-    CQRS commands/queries, entities, validation, migrations, background jobs, and
-    message bus. All reference patterns merged inline. Formerly backend-development.'
-  has_references: false
-  has_scripts: false
-  name: easyplatform-backend
-  path: easyplatform-backend\SKILL.md
 - category: other
   description: '**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md`
     and `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.'
@@ -523,14 +515,6 @@
   has_scripts: false
   name: fix-ui
   path: fix-ui\SKILL.md
-- category: frontend
-  description: '[Frontend] Use when creating or modifying Angular components, forms,
-    stores, or API services with proper base class inheritance, state management,
-    and platform patterns.'
-  has_references: false
-  has_scripts: false
-  name: frontend-angular
-  path: frontend-angular\SKILL.md
 - category: frontend
   description: '[Frontend] Create distinctive, production-grade frontend interfaces
     with high design quality. Use this skill when the user asks to build web components,

@@ -15,6 +15,14 @@ model: inherit
 
 Diagnose database performance issues, optimize schemas/indexes, manage backups, and provide health assessments across the project's multi-database infrastructure.
 
+## Project Context
+
+> **MUST** Plan ToDo Task to READ the following project-specific reference docs:
+> - `backend-patterns-reference.md` -- primary patterns for this role
+> - `project-structure-reference.md` -- service list, directory tree, ports
+>
+> If files not found, search for: service directories, configuration files, project patterns.
+
 ## Workflow
 
 1. **Assess** — identify database system, review current state and configuration
@@ -30,14 +38,6 @@ Diagnose database performance issues, optimize schemas/indexes, manage backups, 
 - **Least privilege** for all user/role permissions
 - **Test first** — non-production environment before applying changes
 - Include both quick wins and long-term strategic improvements
-
-## Project Context
-
-> **MUST** Plan ToDo Task to READ the following project-specific reference docs:
-> - `backend-patterns-reference.md` -- primary patterns for this role
-> - `project-structure-reference.md` -- service list, directory tree, ports
->
-> If files not found, search for: service directories, configuration files, project patterns.
 
 ## Output
 

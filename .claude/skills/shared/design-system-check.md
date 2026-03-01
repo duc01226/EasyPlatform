@@ -1,13 +1,15 @@
-# Design System Documentation (MANDATORY)
+# Design System Documentation
 
-Before creating any frontend component, store, form, or API service, **⚠️ MUST READ** the design system documentation for your target application.
+Before creating any frontend component, store, form, or API service, read the design system documentation for your target application.
 
 ## Application Design System Locations
 
-| Application                       | Design System Location                           |
-| --------------------------------- | ------------------------------------------------ |
-| **Frontend Apps**     | `docs/design-system/`                    |
-| **Legacy Web Apps**   | `src/Web/{AppName}/docs/design-system/`  |
+Read `docs/project-config.json` → `designSystem` section for project-specific design system doc paths and app mappings.
+
+| Application                       | Design System Location                                              |
+| --------------------------------- | ------------------------------------------------------------------- |
+| **Default**                       | `docs/design-system/`                                               |
+| **App-specific**                  | Check `designSystem.appMappings[]` in `docs/project-config.json`    |
 
 ## Key Docs to Read
 

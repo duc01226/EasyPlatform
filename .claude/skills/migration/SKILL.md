@@ -5,7 +5,7 @@ description: '[Architecture] Create data or schema migrations following platform
 activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
@@ -22,12 +22,12 @@ activation: user-invoked
 3. **Verify** — Run and validate the migration
 
 **Key Rules:**
-- Follow platform migration patterns (EF migrations or `PlatformDataMigrationExecutor`)
+- Follow platform migration patterns (EF migrations or project data migration executor, see docs/backend-patterns-reference.md)
 - Always use understand-code-first protocol before creating migrations
 
 <migration-description>$ARGUMENTS</migration-description>
 
-Activate `easyplatform-backend` skill. **⚠️ MUST READ** `references/migration-patterns.md` for migration patterns.
+**⚠️ MUST READ** `references/migration-patterns.md` for migration patterns.
 
 **IMPORTANT:** Present your migration design and wait for explicit user approval before creating files.
 

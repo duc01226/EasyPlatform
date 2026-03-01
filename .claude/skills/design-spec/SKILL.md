@@ -5,7 +5,7 @@ description: '[Project Management] Create UI/UX design specifications from requi
 allowed-tools: Read, Write, Edit, Grep, Glob
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -39,7 +39,7 @@ Create structured UI/UX design specification documents from requirements or PBIs
 ## When NOT to Use
 
 - Extracting specs from Figma -- use `figma-design` first, then this skill
-- Building the actual UI -- use `frontend-design` or `frontend-angular`
+- Building the actual UI -- use `frontend-design`
 - Full UX research and design process -- use `ux-designer`
 - Reviewing existing UI code -- use `web-design-guidelines`
 
@@ -162,8 +162,6 @@ Read before executing:
 | `figma-design`          | Extract specs from Figma designs                  |
 | `frontend-design`       | Build the actual UI implementation                |
 | `web-design-guidelines` | Review existing UI for compliance                 |
-| `frontend-angular`      | Angular 19 components, forms, state, API services |
-
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**

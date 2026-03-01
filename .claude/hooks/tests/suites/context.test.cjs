@@ -26,12 +26,12 @@ const SCSS_STYLING_CONTEXT = getHookPath('scss-styling-context.cjs');
 
 const designSystemContextTests = [
     {
-        name: '[design-system-context] injects for WebV2 .scss file',
+        name: '[design-system-context] injects for Frontend .scss file',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/components/button.scss',
+                    file_path: 'src/Frontend/apps/playground-text-snippet/components/button.scss',
                     old_string: 'a',
                     new_string: 'b'
                 });
@@ -39,7 +39,7 @@ const designSystemContextTests = [
                 assertAllowed(result.code);
 
                 const output = result.stdout;
-                assertTrue(output.includes('Design System') || output.includes('WebV2') || output === '', 'May inject design system context');
+                assertTrue(output.includes('Design System') || output.includes('Frontend') || output === '', 'May inject design system context');
             } finally {
                 cleanupTempDir(tmpDir);
             }
@@ -51,7 +51,7 @@ const designSystemContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/app/component.html',
+                    file_path: 'src/Frontend/apps/playground-text-snippet/app/component.html',
                     old_string: '<div>',
                     new_string: '<div class="x">'
                 });
@@ -68,7 +68,7 @@ const designSystemContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Services/api/controller.cs',
+                    file_path: 'src/Backend/api/controller.cs',
                     old_string: 'x',
                     new_string: 'y'
                 });
@@ -89,7 +89,7 @@ const designSystemContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Read', {
-                    file_path: 'src/WebV2/app.scss'
+                    file_path: 'src/Frontend/apps/playground-text-snippet/app.scss'
                 });
                 const result = await runHook(DESIGN_SYSTEM_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
@@ -142,7 +142,7 @@ const backendCsharpContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Services/UserService/Controller.cs',
+                    file_path: 'src/Backend/UserService/Controller.cs',
                     old_string: 'void',
                     new_string: 'Task'
                 });
@@ -199,7 +199,7 @@ const backendCsharpContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Services/config.json',
+                    file_path: 'src/Backend/config.json',
                     old_string: '"x"',
                     new_string: '"y"'
                 });
@@ -252,12 +252,12 @@ const backendCsharpContextTests = [
 
 const frontendTypescriptContextTests = [
     {
-        name: '[frontend-typescript-context] injects for WebV2 .ts file',
+        name: '[frontend-typescript-context] injects for Frontend .ts file',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/app/component.ts',
+                    file_path: 'src/Frontend/apps/playground-text-snippet/app/component.ts',
                     old_string: 'x',
                     new_string: 'y'
                 });
@@ -297,7 +297,7 @@ const frontendTypescriptContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/app/page.tsx',
+                    file_path: 'src/Frontend/apps/playground-text-snippet/app/page.tsx',
                     old_string: 'div',
                     new_string: 'section'
                 });
@@ -314,7 +314,7 @@ const frontendTypescriptContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Services/api.cs',
+                    file_path: 'src/Backend/api.cs',
                     old_string: 'x',
                     new_string: 'y'
                 });
@@ -333,7 +333,7 @@ const frontendTypescriptContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Read', {
-                    file_path: 'src/WebV2/app.ts'
+                    file_path: 'src/Frontend/apps/playground-text-snippet/app.ts'
                 });
                 const result = await runHook(FRONTEND_TYPESCRIPT_CONTEXT, input, { cwd: tmpDir });
                 assertAllowed(result.code);
@@ -364,12 +364,12 @@ const frontendTypescriptContextTests = [
 
 const scssContextTests = [
     {
-        name: '[scss-styling-context] injects for WebV2 .scss file',
+        name: '[scss-styling-context] injects for Frontend .scss file',
         fn: async () => {
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/styles/app.scss',
+                    file_path: 'src/Frontend/apps/playground-text-snippet/styles/app.scss',
                     old_string: 'color:',
                     new_string: 'background:'
                 });
@@ -389,7 +389,7 @@ const scssContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/Web/styles/global.css',
+                    file_path: 'src/Frontend/styles/global.css',
                     old_string: 'a',
                     new_string: 'b'
                 });
@@ -423,7 +423,7 @@ const scssContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Edit', {
-                    file_path: 'src/WebV2/app.ts',
+                    file_path: 'src/Frontend/apps/playground-text-snippet/app.ts',
                     old_string: 'x',
                     new_string: 'y'
                 });

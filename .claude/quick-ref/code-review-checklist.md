@@ -61,7 +61,7 @@ Update report with:
 
 ```
 [ ] Follows Clean Architecture layers?
-[ ] Uses platform base classes (not custom)?
+[ ] Uses project base classes (not custom)?
 [ ] Repository pattern for data access?
 [ ] No direct cross-service DB access?
 [ ] Message bus for cross-service communication?
@@ -75,7 +75,7 @@ Update report with:
 
 ```
 [ ] Command + Handler + Result in ONE file?
-[ ] Uses PlatformValidationResult fluent API?
+[ ] Uses project validation fluent API?
 [ ] No side effects in handlers (use event handlers)?
 [ ] Proper async/await patterns?
 [ ] Uses microservice-specific repository?
@@ -84,17 +84,17 @@ Update report with:
 ### Entities
 
 ```
-[ ] Extends correct base (RootEntity/RootAuditedEntity)?
+[ ] Extends correct entity base class?
 [ ] Static expressions for queries?
-[ ] [TrackFieldUpdatedDomainEvent] on tracked fields?
-[ ] [ComputedEntityProperty] has empty set { }?
-[ ] Validation methods return PlatformValidationResult?
+[ ] Domain event tracking on tracked fields?
+[ ] Computed properties configured correctly?
+[ ] Validation methods return project validation result?
 ```
 
 ### DTOs
 
 ```
-[ ] Extends PlatformEntityDto<TEntity, TKey>?
+[ ] Extends project entity DTO base class?
 [ ] Constructor maps core properties?
 [ ] With* fluent methods for optional loading?
 [ ] Overrides GetSubmittedId(), MapToEntity()?
@@ -108,7 +108,7 @@ Update report with:
 ### Components
 
 ```
-[ ] Extends AppBase* (not Platform* directly)?
+[ ] Extends project component base classes (not framework directly)?
 [ ] Uses store for complex state?
 [ ] untilDestroyed() on all subscriptions?
 [ ] trackByItem for @for loops?
@@ -118,7 +118,7 @@ Update report with:
 ### Forms
 
 ```
-[ ] Extends AppBaseFormComponent?
+[ ] Extends project form base class?
 [ ] initialFormConfig() properly defined?
 [ ] Async validators wrapped with ifAsyncValidator?
 [ ] dependentValidations configured?
@@ -128,7 +128,7 @@ Update report with:
 ### State Management
 
 ```
-[ ] Store extends PlatformVmStore?
+[ ] Store extends project store base class?
 [ ] effectSimple() for API calls?
 [ ] observerLoadingErrorState() for tracking?
 [ ] tapResponse() for side effects?
@@ -140,7 +140,7 @@ Update report with:
 ## Security Review
 
 ```
-[ ] [PlatformAuthorize] on protected endpoints?
+[ ] Authorization attribute on protected endpoints?
 [ ] Input validation at entry points?
 [ ] No secrets in code or logs?
 [ ] SQL/NoSQL injection prevention?
@@ -197,10 +197,10 @@ Update report with:
 
 | Pattern                     | Instead Do                        |
 | --------------------------- | --------------------------------- |
-| Direct HttpClient           | Use PlatformApiService            |
+| Direct HttpClient           | Use project API service base      |
 | Custom repository interface | Use service-specific + extensions |
 | Side effects in handler     | Use entity event handlers         |
-| Manual state management     | Use PlatformVmStore               |
+| Manual state management     | Use project store base class      |
 | DTO mapping in handler      | Let DTO own mapping               |
 | Magic numbers (e.g., `600`) | Named constant (`ANIMATION_DURATION_MS`) |
 | Hardcoded strings           | Constants or i18n keys            |

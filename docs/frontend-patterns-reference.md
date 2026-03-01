@@ -1,52 +1,78 @@
 # Frontend Development Patterns — Project Reference
 
-> **Companion doc for generic skills.** Contains project-specific Angular component hierarchy, state management, shared library, design system paths, and WebV2 directory structure. Generic skills reference this file via "MUST READ `frontend-patterns-reference.md`".
+## Document Summary
 
-> Components, Forms, Stores, API Services, BravoCommon Library
+**What this file covers:** Complete Angular 19 + Nx + Easy.Platform frontend reference — from component base classes through state management (PlatformVmStore), reactive forms, API services, BEM templates, SharedCommon shared library, authorization, advanced decorators (@Watch), RxJS operators, caching, and platform-core utilities.
 
-## BravoSUITE Component Base Classes
+**Sections:**
+
+| #   | Section                                                                | What You'll Find                                                                                |
+| --- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1   | [Component Base Classes](#project-component-base-classes)           | `AppBaseComponent` → `AppBaseVmStoreComponent` / `AppBaseFormComponent` hierarchy               |
+| 2   | [State Management](#project-state-management)                       | `PlatformVmStore`, `effectSimple()`, `untilDestroyed()` rules                                   |
+| 3   | [Shared Library](#project-shared-component-library-apps-shared-components)    | AppAlert, AppTable, AppSelect, directives, pipes                                          |
+| 4   | [Directory Structure](#project-frontend-directory-structure)           | `apps/`, `libs/platform-core/`, `libs/apps-shared-components/`, `libs/apps-domains/`                      |
+| 5   | [Design System Paths](#project-design-system-paths)                 | Design tokens, SCSS guide, per-app theme references                                             |
+| 6   | [BEM Template Standard](#component-html-template-standard-bem-classes) | [MUST NOT] elements without classes — BEM naming convention                                     |
+| 7   | [Component Hierarchy](#component-hierarchy)                            | Platform → App → Feature 3-layer inheritance chain                                              |
+| 8   | [Platform Component API](#platform-component-api-reference)            | `PlatformComponent`, `PlatformVmComponent`, `PlatformVmStoreComponent`, `PlatformFormComponent` |
+| 9   | [Usage Examples](#usage-examples)                                      | Loading state, store pattern, form component with validation                                    |
+| 10  | [API Service](#api-service-pattern)                                    | `PlatformApiService` extension, `get`/`post`, `enableCache`                                     |
+| 11  | [Working Examples](#working-examples-reference)                        | Reference files in `playground-text-snippet/` for loading, forms, stores                        |
+| 12  | [SharedCommon Library](#sharedcommon-library-reference)                  | Foundation classes, components, directives, pipes, services, utilities                          |
+| 13  | [Authorization](#frontend-authorization-patterns)                      | `hasRole()`, template guards, route guards                                                      |
+| 14  | [Component Template](#component-template-pattern)                      | Standard `@Component` scaffold with `app-loading-and-error-indicator`                           |
+| 15  | [Task Decision Tree](#frontend-task-decision-tree)                     | Feature → base class selection flowchart                                                        |
+| 16  | [Advanced Component APIs](#advanced-component-apis)                    | `@Watch`, `skipDuplicates`, `ngForTrackBy*`, `storeSubscription`, `devModeCheck*`               |
+| 17  | [Store with Caching](#store-with-caching)                              | `enableCaching`, `cachedStateKeyName`, `vmConstructor`, `beforeInitVm`                          |
+| 18  | [Advanced Form Validators](#advanced-form-validators)                  | `noWhitespaceValidator`, `startEndValidator`, `ifValidator` conditional validation              |
+| 19  | [Platform Core Utilities](#platform-core-utilities)                    | `date_format`, `list_groupBy`, `immutableUpdate`, `PlatformCoreModule`, platform directives     |
+| 20  | [Anti-Patterns](#anti-patterns-critical)                               | 3 [MUST NOT] rules: no direct HttpClient, no manual signals, always `untilDestroyed()`          |
+
+---
+
+## Project Component Base Classes
 
 ```
-AppBaseComponent                     // + Auth, roles, company context
+AppBaseComponent                     // + Auth, roles, context
 ├── AppBaseVmComponent              // + ViewModel + auth context
 ├── AppBaseFormComponent            // + Forms + auth + validation
 └── AppBaseVmStoreComponent         // + Store + auth + loading/error
 ```
 
-- Source: `src/WebV2/libs/platform-core/src/lib/components/abstracts/`
+- Source: `src/Frontend/libs/platform-core/src/lib/components/abstracts/`
 - All components MUST extend one of these base classes
 
-## BravoSUITE State Management
+## Project State Management
 
 - Use `PlatformVmStore` for state management (NEVER manual signals)
 - Use `effectSimple()` for side effects
 - Use `.pipe(this.untilDestroyed())` for all subscriptions
 
-## BravoSUITE Shared Component Library (bravo-common)
+## Project Shared Component Library (apps-shared-components)
 
-- Location: `src/WebV2/libs/bravo-common/`
-- Components: BravoAlert, BravoIcon, BravoTable, Attachment, BravoSelect
-- Directives: AppPopover, TextEllipsis, BravoButton, Autofocus
-- Pipes: LocalizedDate, Pluralize, BravoSafe, TranslateComma
-- Import: `import { BravoCommonModule } from '@libs/bravo-common'`
+- Location: `src/Frontend/libs/apps-shared-components/`
+- Components: AppAlert, AppIcon, AppTable, Attachment, AppSelect
+- Directives: AppPopover, TextEllipsis, AppButton, Autofocus
+- Pipes: LocalizedDate, Pluralize, AppSafe, TranslateComma
+- Import: `import { AppCommonModule } from '@libs/apps-shared-components'`
 
-## BravoSUITE WebV2 Directory Structure
+## Project Frontend Directory Structure
 
 ```
-src/WebV2/
+src/Frontend/
 ├── apps/
-│   ├── growth-for-company/     # HR management (port 4206)
-│   ├── employee/               # Employee self-service (port 4205)
-│   └── ...
+│   └── playground-text-snippet/   # Example app (TextSnippet CRUD)
 ├── libs/
-│   ├── platform-core/          # Base components, stores, API service
-│   ├── bravo-common/           # Shared UI components
-│   ├── bravo-domain/           # Business domain (APIs, models)
-│   └── apps-domains/           # Cross-app shared logic
+│   ├── platform-core/             # Base components, stores, API service
+│   ├── platform-components/       # Reusable platform UI components
+│   ├── apps-shared-components/    # Shared UI components across apps
+│   ├── apps-domains/              # Business domain (APIs, models)
+│   ├── apps-domains-components/   # Cross-domain shared components
 └── ...
 ```
 
-## BravoSUITE Design System Paths
+## Project Design System Paths
 
 - Design tokens: `docs/design-system/`
 - SCSS guide: `docs/claude/scss-styling-guide.md`
@@ -57,40 +83,40 @@ src/WebV2/
 **All UI elements in component templates MUST have BEM classes, even without styling needs.** This makes HTML self-documenting like OOP class hierarchy.
 
 ```html
-<!-- ✅ CORRECT: All elements have BEM classes for structure clarity -->
-<div class="employee-form">
-    <div class="employee-form__header">
-        <h2 class="employee-form__title">Employee Details</h2>
+<!-- CORRECT: All elements have BEM classes for structure clarity -->
+<div class="text-snippet-form">
+    <div class="text-snippet-form__header">
+        <h2 class="text-snippet-form__title">Text Snippet Details</h2>
     </div>
-    <div class="employee-form__body">
-        <div class="employee-form__field">
-            <label class="employee-form__label">Name</label>
-            <input class="employee-form__input" formControlName="name" />
+    <div class="text-snippet-form__body">
+        <div class="text-snippet-form__field">
+            <label class="text-snippet-form__label">Title</label>
+            <input class="text-snippet-form__input" formControlName="title" />
         </div>
-        <div class="employee-form__field">
-            <label class="employee-form__label">Email</label>
-            <input class="employee-form__input" formControlName="email" />
+        <div class="text-snippet-form__field">
+            <label class="text-snippet-form__label">Content</label>
+            <textarea class="text-snippet-form__textarea" formControlName="content"></textarea>
         </div>
     </div>
-    <div class="employee-form__footer">
-        <button class="employee-form__btn --cancel">Cancel</button>
-        <button class="employee-form__btn --submit">Save</button>
+    <div class="text-snippet-form__footer">
+        <button class="text-snippet-form__btn --cancel">Cancel</button>
+        <button class="text-snippet-form__btn --submit">Save</button>
     </div>
 </div>
 
-<!-- ❌ WRONG: Elements without classes - structure unclear -->
-<div class="employee-form">
+<!-- [MUST NOT] Elements without classes - structure unclear -->
+<div class="text-snippet-form">
     <div>
-        <h2>Employee Details</h2>
+        <h2>Text Snippet Details</h2>
     </div>
     <div>
         <div>
-            <label>Name</label>
-            <input formControlName="name" />
+            <label>Title</label>
+            <input formControlName="title" />
         </div>
         <div>
-            <label>Email</label>
-            <input formControlName="email" />
+            <label>Content</label>
+            <textarea formControlName="content"></textarea>
         </div>
     </div>
     <div>
@@ -102,9 +128,9 @@ src/WebV2/
 
 **BEM Naming Convention:**
 
-- **Block**: Component name (e.g., `employee-form`)
-- **Element**: Child using `block__element` (e.g., `employee-form__header`)
-- **Modifier**: Separate class with `--` prefix (e.g., `employee-form__btn --submit --large`)
+- **Block**: Component name (e.g., `text-snippet-form`)
+- **Element**: Child using `block__element` (e.g., `text-snippet-form__header`)
+- **Modifier**: Separate class with `--` prefix (e.g., `text-snippet-form__btn --submit --large`)
 
 ## Component Hierarchy
 
@@ -116,20 +142,20 @@ PlatformComponent                    // Base: lifecycle, subscriptions, signals
 └── PlatformVmStoreComponent        // + ComponentStore state management
 
 // Application framework layer
-AppBaseComponent                     // + Auth, roles, company context
+AppBaseComponent                     // + Auth, roles, context
 ├── AppBaseVmComponent              // + ViewModel + auth context
 ├── AppBaseFormComponent            // + Forms + auth + validation
 └── AppBaseVmStoreComponent         // + Store + auth + loading/error
 
 // Feature implementation layer
-EmployeeListComponent extends AppBaseVmStoreComponent
-LeaveRequestFormComponent extends AppBaseFormComponent
-DashboardComponent extends AppBaseComponent
+TextSnippetListComponent extends AppBaseVmStoreComponent
+TextSnippetDetailComponent extends AppBaseFormComponent
+TaskListComponent extends AppBaseComponent
 ```
 
 ## Platform Component API Reference
 
-**Location**: `src/WebV2/libs/platform-core/src/lib/components/abstracts/`
+**Location**: `src/Frontend/libs/platform-core/src/lib/components/abstracts/`
 
 ### PlatformComponent - Foundation
 
@@ -235,15 +261,15 @@ export class UserListComponent extends PlatformVmStoreComponent<UserListVm, User
 ### Form Component
 
 ```typescript
-export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> {
+export class TextSnippetFormComponent extends AppBaseFormComponent<TextSnippetFormVm> {
   protected initialFormConfig = () => ({
     controls: {
-      email: new FormControl(this.currentVm().email,
-        [Validators.required, Validators.email],
+      snippetText: new FormControl(this.currentVm().snippetText,
+        [Validators.required],
         [ifAsyncValidator(() => !this.isViewMode,
-          checkIsEmployeeEmailUniqueAsyncValidator(...))])
+          checkIsSnippetTextUniqueAsyncValidator(...))])
     },
-    dependentValidations: { email: ['firstName'] }
+    dependentValidations: { snippetText: ['fullText'] }
   });
 
   onSubmit() {
@@ -258,20 +284,20 @@ export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> 
 
 ```typescript
 @Injectable({ providedIn: 'root' })
-export class EmployeeApiService extends PlatformApiService {
+export class TextSnippetApiService extends PlatformApiService {
     protected get apiUrl() {
-        return environment.apiUrl + '/api/Employee';
+        return environment.apiUrl + '/api/TextSnippet';
     }
 
-    getEmployees(query?: Query): Observable<Employee[]> {
-        return this.get<Employee[]>('', query);
+    getTextSnippets(query?: Query): Observable<TextSnippet[]> {
+        return this.get<TextSnippet[]>('', query);
     }
 
-    saveEmployee(cmd: SaveCommand): Observable<Result> {
+    saveTextSnippet(cmd: SaveCommand): Observable<Result> {
         return this.post<Result>('', cmd);
     }
 
-    searchEmployees(criteria: Search): Observable<Employee[]> {
+    searchTextSnippets(criteria: Search): Observable<TextSnippet[]> {
         return this.post('/search', criteria, { enableCache: true });
     }
 }
@@ -279,16 +305,14 @@ export class EmployeeApiService extends PlatformApiService {
 
 ## Working Examples Reference
 
-**Location**: `src/Web/BravoComponents/src/components/platform-examples/`
+**Location**: `src/Frontend/apps/playground-text-snippet/src/app/shared/components/`
 
-| Example          | File                                            | Use Case                     |
-| ---------------- | ----------------------------------------------- | ---------------------------- |
-| Loading/Error    | `loading-error-indicator-demo.component.ts`     | Auto state binding           |
-| Basic Form       | `user-form.component.ts`                        | Simple forms, validation     |
-| Advanced Form    | `product-form.component.ts`                     | FormArrays, async validation |
-| Complex Form     | `user-profile-form.component.ts`                | Nested 3+ levels             |
-| State Management | `user-list.component.ts` + `user-list.store.ts` | ComponentStore, CRUD         |
-| API Service      | `platform-examples-api.service.ts`              | Caching, mock data           |
+| Example            | File                                           | Use Case                     |
+| ------------------ | ---------------------------------------------- | ---------------------------- |
+| Text Snippet CRUD  | `app-text-snippet-detail/`                     | Detail view, state binding   |
+| Task List          | `task-list/task-list.component.ts`             | List with store, loading     |
+| Task Detail        | `task-detail/task-detail.component.ts`         | Detail form, validation      |
+| Nav Loading Test   | `nav-loading-test/nav-loading-test.component.ts` | Navigation loading states |
 
 ### FormArray Pattern
 
@@ -307,9 +331,9 @@ protected initialFormConfig = () => ({
 });
 ```
 
-## BravoCommon Library Reference
+## SharedCommon Library Reference
 
-**Location**: `src/WebV2/libs/bravo-common/`
+**Location**: `src/Frontend/libs/apps-shared-components/`
 
 ### Foundation Classes
 
@@ -322,8 +346,8 @@ export class MyDirective extends BaseDirective {}
 ### Components
 
 ```typescript
-// BravoAlert, BravoIcon, BravoTable, Attachment, BravoSelect
-<bravo-select
+// AppAlert, AppIcon, AppTable, Attachment, AppSelect
+<app-select
   formControlName="ids"
   [fetchDataFn]="fetchFn"
   [multiple]="true"
@@ -333,14 +357,14 @@ export class MyDirective extends BaseDirective {}
 ### Directives
 
 ```typescript
-// AppPopover, TextEllipsis, BravoButton, Autofocus
+// AppPopover, TextEllipsis, AppButton, Autofocus
 <div appTextEllipsis [maxTextEllipsisLines]="2">...</div>
 ```
 
 ### Pipes
 
 ```typescript
-// LocalizedDate, Pluralize, BravoSafe, TranslateComma
+// LocalizedDate, Pluralize, AppSafe, TranslateComma
 {{ date | localizedDate:'shortDate' }}
 {{ 'item' | pluralize:count }}
 ```
@@ -348,9 +372,9 @@ export class MyDirective extends BaseDirective {}
 ### Services
 
 ```typescript
-// BravoTranslateService, ThemeService, BravoScriptService
+// AppTranslateService, ThemeService, AppScriptService
 constructor(
-  private translateSvc: BravoTranslateService,
+  private translateSvc: AppTranslateService,
   private themeSvc: ThemeService
 ) { }
 ```
@@ -358,25 +382,25 @@ constructor(
 ### Utilities
 
 ```typescript
-// BravoArrayUtil, BravoDateUtil, BravoStringUtil
-BravoArrayUtil.toDictionary(items, x => x.id);
-BravoDateUtil.format(new Date(), 'DD/MM/YYYY');
-BravoStringUtil.isNullOrEmpty(value);
+// ArrayUtil, DateUtil, StringUtil
+ArrayUtil.toDictionary(items, x => x.id);
+DateUtil.format(new Date(), 'DD/MM/YYYY');
+StringUtil.isNullOrEmpty(value);
 ```
 
 ### Module Import
 
 ```typescript
-import { BravoCommonModule } from '@libs/bravo-common';
-import { BravoCommonRootModule } from '@libs/bravo-common';  // App root only
-@NgModule({ imports: [BravoCommonModule] })
+import { AppCommonModule } from '@libs/apps-shared-components';
+import { AppCommonRootModule } from '@libs/apps-shared-components';  // App root only
+@NgModule({ imports: [AppCommonModule] })
 ```
 
 ## Frontend Authorization Patterns
 
 ```typescript
 // Component properties
-export class EmployeeFormComponent extends AppBaseFormComponent<EmployeeFormVm> {
+export class TextSnippetFormComponent extends AppBaseFormComponent<TextSnippetFormVm> {
   get canEdit() {
     return this.hasRole(PlatformRoles.Admin, PlatformRoles.Manager)
       && this.isOwnCompany();
@@ -428,7 +452,86 @@ Need to add frontend feature?
 ├── Complex state? → Use AppBaseVmStoreComponent + PlatformVmStore
 ├── Forms? → Extend AppBaseFormComponent with validation
 ├── API calls? → Create service extending PlatformApiService
-├── Cross-domain logic? → Add to bravo-domain shared components
-├── Domain-specific? → Add to bravo-domain/{domain}/ module
-└── Cross-app reusable? → Add to bravo-common components
+├── Cross-domain logic? → Add to apps-domains-components
+├── Domain-specific? → Add to apps-domains/{domain}/ module
+└── Cross-app reusable? → Add to apps-shared-components
+```
+
+## Advanced Component APIs
+
+```typescript
+// @Watch decorator — triggers callback on property change
+@Watch('onChanged') public data?: Data;
+@WatchWhenValuesDiff('search') public term = '';
+private onChanged(v: Data, c: SimpleChange<Data>) { if (!c.isFirstTimeSet) this.update(); }
+
+// Advanced RxJS operators from platform-core
+this.search$.pipe(skipDuplicates(500), applyIf(this.enabled$, debounceTime(300)), tapOnce({ next: v => this.init(v) }), distinctUntilObjectValuesChanged(), this.untilDestroyed()).subscribe();
+
+// PlatformComponent utility APIs
+trackByItem = this.ngForTrackByItemProp<User>('id');
+trackByList = this.ngForTrackByImmutableList(this.users);
+storeSubscription('dataLoad', this.data$.subscribe(...));
+cancelStoredSubscription('dataLoad');
+isLoading$('req1'); isLoading$('req2');
+getAllErrorMsgs$(['req1', 'req2']);
+loadingRequestsCount(); reloadingRequestsCount();
+protected get devModeCheckLoadingStateElement() { return '.spinner'; }
+protected get devModeCheckErrorStateElement() { return '.error'; }
+```
+
+## Store with Caching
+
+```typescript
+@Injectable()
+export class MyStore extends PlatformVmStore<MyVm> {
+  protected get enableCaching() { return true; }
+  protected cachedStateKeyName = () => 'MyStore';
+  protected vmConstructor = (d?: Partial<MyVm>) => new MyVm(d);
+  protected beforeInitVm = () => this.loadInitialData();
+  loadData = this.effectSimple(() => this.api.get().pipe(this.observerLoadingErrorState('load'), this.tapResponse(d => this.updateState({ data: d }))));
+}
+```
+
+## Advanced Form Validators
+
+```typescript
+// Built-in validators
+new FormControl('', [Validators.required, noWhitespaceValidator, startEndValidator('err', c => c.parent?.get('start')?.value, c => c.value)], [ifAsyncValidator(c => c.valid, uniqueValidator)]);
+
+// ifValidator — conditional validation using formControls()
+protected initialFormConfig = () => ({
+  controls: {
+    teamsTenantId: new FormControl('', [
+      ifValidator(
+        () => this.formControls('teamsIsActive').value === true,
+        () => Validators.required
+      )
+    ])
+  }
+});
+// Pattern: ifValidator(() => condition, () => validator)
+```
+
+## Platform Core Utilities
+
+```typescript
+// Utility imports from platform-core
+import { date_format, date_addDays, date_timeDiff, list_groupBy, list_distinctBy, list_sortBy, string_isEmpty, string_truncate, dictionary_map, dictionary_filter, immutableUpdate, deepClone, removeNullProps, guid_generate, task_delay, task_debounce } from '@libs/platform-core';
+
+// Module import
+import { PlatformCoreModule } from '@libs/platform-core';
+@NgModule({ imports: [PlatformCoreModule] })
+
+// Platform Directives
+<div platformSwipeToScroll>/* Horizontal scroll with drag */</div>
+<input [platformDisabledControl]="isDisabled" />
+```
+
+## Anti-Patterns (CRITICAL)
+
+```typescript
+// [MUST NOT] Direct HttpClient → Extend PlatformApiService
+// [MUST NOT] Manual signals → Use PlatformVmStore
+// [MUST NOT] Missing untilDestroyed() → Always use .pipe(this.untilDestroyed())
 ```

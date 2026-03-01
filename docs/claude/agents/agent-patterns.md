@@ -199,7 +199,7 @@ Task({
 
 ---
 
-### Brainstormer Agent
+### Planner Agent (Architecture Evaluation)
 
 **Purpose:** Evaluate options before committing to approach.
 
@@ -212,18 +212,18 @@ Task({
 
 ```typescript
 Task({
-  subagent_type: "brainstormer",
+  subagent_type: "planner",
   prompt: `
-    Debate: How should we handle file uploads > 1GB?
+    Evaluate: How should we handle file uploads > 1GB?
 
     Options to consider:
     1. Chunked upload with resume
     2. Pre-signed URLs to blob storage
     3. Background processing with webhooks
 
-    Evaluate: complexity, cost, UX, reliability
+    Analyze: complexity, cost, UX, reliability
   `,
-  description: "Brainstorm large file uploads"
+  description: "Plan large file uploads"
 })
 ```
 
@@ -231,7 +231,7 @@ Task({
 
 ```typescript
 Task({
-  subagent_type: "brainstormer",
+  subagent_type: "planner",
   prompt: `
     Review proposed change: Move validation from command handlers to entities.
 

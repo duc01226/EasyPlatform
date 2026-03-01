@@ -5,7 +5,7 @@ description: '[Code Quality] Simplifies and refines code for clarity, consistenc
 allowed-tools: Read, Edit, Glob, Grep, Task
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
@@ -125,21 +125,21 @@ function getData() {
     - Run related tests if available
     - Confirm no behavior changes
 
-## Platform Patterns
+## Project Patterns
 
 ### Backend (C#)
 
-- Extract to `Entity.XxxExpr()` static expressions
-- Use fluent helpers: `.With()`, `.Then()`, `.PipeIf()`
-- Move mapping to DTO `MapToObject()` / `MapToEntity()`
-- Use `PlatformValidationResult` fluent API
+- Extract to entity static expressions (search for: entity expression pattern)
+- Use fluent helpers (search for: fluent helper pattern in docs/backend-patterns-reference.md)
+- Move mapping to DTO mapping methods (search for: DTO mapping pattern)
+- Use project validation fluent API (see docs/backend-patterns-reference.md)
 - Check entity expressions have database indexes
 - Verify document database index methods exist for collections
 
 ### Frontend (TypeScript)
 
 - Use `project store base (search for: store base class)` for state management
-- Apply `untilDestroyed()` to all subscriptions
+- Apply subscription cleanup pattern (search for: subscription cleanup pattern) to all subscriptions
 - Ensure BEM class naming on all template elements
 - Use platform base classes (`project base component (search for: base component class)`, `project store component base (search for: store component base class)`)
 

@@ -6,7 +6,7 @@ description: '[Subagent Tasks] Use when updating specifications, comparing branc
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -237,7 +237,7 @@ Creates or updates an employee record.
 
 ## Side Effects
 
-1. **Entity Event**: `PlatformCqrsEntityEvent<Employee>` raised
+1. **Entity Event**: Entity event raised (search for: project entity event class)
 2. **Cross-Service Sync**: Employee synced to target service
 3. **Notification**: Welcome email sent (create only)
 

@@ -1,9 +1,9 @@
 ---
 name: docs-manager
 description: >-
-  Use this agent to manage technical documentation -- detect impacted docs from
-  code changes, update project and business feature docs, maintain doc-code
-  synchronization, and produce documentation summary reports.
+    Use this agent to manage technical documentation -- detect impacted docs from
+    code changes, update project and business feature docs, maintain doc-code
+    synchronization, and produce documentation summary reports.
 tools: Read, Write, Edit, Grep, Glob, Bash, TaskCreate
 model: inherit
 skills: docs-update
@@ -12,6 +12,12 @@ skills: docs-update
 ## Role
 
 Detect which documentation is impacted by code changes and update accordingly. Orchestrate project docs, business feature docs, and AI companion sync to keep documentation accurate and current.
+
+## Project Context
+
+> **MUST** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
+>
+> If files not found, search for: service directories, configuration files, project patterns.
 
 ## Workflow
 
@@ -28,14 +34,6 @@ Detect which documentation is impacted by code changes and update accordingly. O
 - **Evidence Verification**: Every test case (TC-{MOD}-XXX) must have `file:line` evidence -- read claimed file at claimed line to verify
 - **TC Coverage Cross-Reference**: Compare `[Trait("TestSpec", ...)]` in integration tests against TC codes in feature docs; flag discrepancies
 - **Always Report**: Even if nothing needed updating, report what was checked
-
-## Project Context
-
-> **MUST** Plan ToDo Task to READ the following project-specific reference docs:
-> - `project-structure-reference.md` -- primary patterns for this role
-> - `project-structure-reference.md` -- service list, directory tree, ports
->
-> If files not found, search for: service directories, configuration files, project patterns.
 
 ## Output
 

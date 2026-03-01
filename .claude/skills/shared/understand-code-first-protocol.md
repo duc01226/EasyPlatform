@@ -77,17 +77,17 @@ Before modifying code:
 When implementing features that affect data filtering, queries, or business logic, search ALL related files:
 
 **Backend:**
-- Query handlers: `grep -r "Query.*{Entity}" Application/ApplyPlatform/UseCaseQueries/ --include="*.cs"`
-- Command handlers: `grep -r "Command.*{Entity}" Application/UseCaseCommands/ --include="*.cs"`
-- Repository usages: `grep -r "{entity}Repository\\.FindByExprAsync" Application/ --include="*.cs"`
-- Controller endpoints: `grep -r "Route.*{entity}" Controllers/ --include="*.cs"`
+- Query handlers: `grep -r "Query.*{Entity}" --include="*.cs"` (search for: query handler directory pattern)
+- Command handlers: `grep -r "Command.*{Entity}" --include="*.cs"` (search for: command handler directory pattern)
+- Repository usages: `grep -r "{entity}Repository" --include="*.cs"` (search for: repository query pattern)
+- Controller endpoints: `grep -r "Route.*{entity}" --include="*.cs"` (search for: controller directory pattern)
 
 **Frontend:**
 - API calls: `grep -r "{endpoint-path}" src/ --include="*.ts"`
 - Components: `grep -r "{ApiServiceName}" src/ --include="*.component.ts"`
 
 **Cross-service:**
-- Check ALL services: `for svc in $(ls src/Services/); do grep -r "{pattern}" "src/Services/$svc"; done`
+- Check ALL services in backend services directory (see docs/project-config.json for service list)
 
 ## Anti-Patterns (DO NOT)
 

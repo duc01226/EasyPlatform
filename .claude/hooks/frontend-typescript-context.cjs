@@ -7,11 +7,7 @@
  * frontend TypeScript files.
  *
  * Pattern Matching:
- *   src/WebV2/*                    → Angular 19 apps
- *   src/Web/*                      → Legacy Angular apps
- *   libs/platform-core/*           → Platform core library
- *   libs/bravo-common/*            → Shared components library
- *   libs/bravo-domain/*            → Domain library
+ *   Configured via docs/project-config.json frontendApps.patterns
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
@@ -19,61 +15,20 @@
 
 const fs = require('fs');
 const path = require('path');
+const { loadProjectConfig, buildRegexMap, buildPatternList } = require('./lib/project-config-loader.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CONFIGURATION
+// CONFIGURATION (loaded from docs/project-config.json)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const FRONTEND_GUIDE_PATH = 'docs/claude/frontend-typescript-complete-guide.md';
-const SHARED_PATTERN_MARKER = '## EasyPlatform Code Patterns';
+const { CODE_PATTERNS: SHARED_PATTERN_MARKER } = require('./lib/dedup-constants.cjs');
 
-const FRONTEND_PATTERNS = [
-  {
-    name: 'WebV2 Apps',
-    patterns: [
-      /src[\/\\]WebV2[\/\\]/i
-    ],
-    description: 'Angular 19 standalone apps (Growth, Employee, etc.)'
-  },
-  {
-    name: 'Legacy Web Apps',
-    patterns: [
-      /src[\/\\]Web[\/\\]/i
-    ],
-    description: 'Legacy Angular apps (bravoTALENTS, CandidateApp, etc.)'
-  },
-  {
-    name: 'Platform Core',
-    patterns: [
-      /libs[\/\\]platform-core[\/\\]/i
-    ],
-    description: 'Platform core framework library'
-  },
-  {
-    name: 'Bravo Common',
-    patterns: [
-      /libs[\/\\]bravo-common[\/\\]/i
-    ],
-    description: 'Shared UI components library'
-  },
-  {
-    name: 'Bravo Domain',
-    patterns: [
-      /libs[\/\\]bravo-domain[\/\\]/i
-    ],
-    description: 'Domain models and API services'
-  }
-];
-
-// App-specific patterns for more detailed guidance
-const APP_PATTERNS = {
-  'growth': /WebV2[\/\\]apps[\/\\]growth/i,
-  'employee': /WebV2[\/\\]apps[\/\\]employee/i,
-  'survey': /WebV2[\/\\]apps[\/\\]survey/i,
-  'bravoTALENTS': /Web[\/\\]bravoTALENTS/i,
-  'CandidateApp': /Web[\/\\]CandidateApp/i,
-  'bravoSURVEYS': /Web[\/\\]bravoSURVEYS/i
-};
+const config = loadProjectConfig();
+const FRONTEND_PATTERNS = buildPatternList(config.frontendApps?.patterns);
+const APP_PATTERNS = buildRegexMap(config.frontendApps?.appMap);
+const LEGACY_APPS = new Set(config.frontendApps?.legacyApps || []);
+const MODERN_APPS = new Set(config.frontendApps?.modernApps || []);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -159,6 +114,7 @@ function shouldInject(filePath, transcriptPath) {
 
 function buildInjection(context, filePath, app, patternsAlreadyInjected) {
   const fileName = path.basename(filePath);
+  const frontendDoc = config.framework?.frontendPatternsDoc || 'docs/frontend-patterns-reference.md';
 
   const lines = [
     '',
@@ -172,18 +128,18 @@ function buildInjection(context, filePath, app, patternsAlreadyInjected) {
 
   if (!patternsAlreadyInjected) {
     lines.push(
-      '### ⚠️ IMPORTANT — MUST READ',
+      '### IMPORTANT — MUST READ',
       '',
-      `Before implementing frontend TypeScript changes, you **⚠️ MUST READ** the following file:`,
+      `Before implementing frontend TypeScript changes, you **MUST READ** the following file:`,
       '',
       `**\`${FRONTEND_GUIDE_PATH}\`**`,
       '',
-      'This guide contains:',
-      '- Component patterns (PlatformComponent, PlatformVmStore, AppBaseFormComponent)',
-      '- State management (PlatformVmStore with signals)',
-      '- API service patterns (extend PlatformApiService)',
-      '- Form patterns with validation (PlatformFormComponent)',
-      '- RxJS operators and subscription management (.untilDestroyed())',
+      `Also review **\`${frontendDoc}\`** for project-specific patterns covering:`,
+      '- Component hierarchy and base classes',
+      '- State management patterns',
+      '- API service patterns',
+      '- Form patterns with validation',
+      '- RxJS operators and subscription management',
       '- BEM class naming conventions for templates',
       ''
     );
@@ -192,9 +148,11 @@ function buildInjection(context, filePath, app, patternsAlreadyInjected) {
   lines.push(
     '### Critical Rules',
     '',
-    '1. **Components:** Extend `AppBaseComponent`, `AppBaseVmStoreComponent`, or `AppBaseFormComponent` - NEVER raw Component',
-    '2. **State:** Use `PlatformVmStore` for state management - NEVER manual signals',
-    '3. **API:** Extend `PlatformApiService` for HTTP calls - NEVER direct HttpClient',
+    `Refer to \`${frontendDoc}\` for class names and detailed examples.`,
+    '',
+    '1. **Components:** Extend project base component classes - NEVER raw Component',
+    '2. **State:** Use project store base for state management - NEVER manual signals',
+    '3. **API:** Extend project API service base for HTTP calls - NEVER direct HttpClient',
     '4. **Subscriptions:** Always use `.pipe(this.untilDestroyed())` - NEVER manual unsubscribe',
     '5. **Templates:** All elements MUST have BEM classes (block__element --modifier)',
     ''
@@ -209,75 +167,22 @@ function buildInjection(context, filePath, app, patternsAlreadyInjected) {
       ''
     );
 
-    if (app === 'growth' || app === 'employee' || app === 'survey') {
+    if (MODERN_APPS.has(app)) {
       lines.push(
-        '- Angular 19 standalone components with signals',
+        '- Modern standalone components with signals',
         '- Use `@use \'shared-mixin\'` for SCSS imports',
         '- Use CSS variables for theming',
         ''
       );
-    } else if (app === 'bravoTALENTS' || app === 'bravoSURVEYS') {
+    } else if (LEGACY_APPS.has(app)) {
       lines.push(
-        '- **Angular 12** with NgModules (not standalone)',
+        '- **Legacy app** with NgModules (not standalone)',
         '- Use `@import \'~assets/scss/variables\'` for SCSS',
         '',
-        '### Platform Component Rules (WebV1) - MANDATORY',
-        '',
-        '**Component Hierarchy (OOP/DRY Principle):**',
-        '- Platform lib (`@orient/bravo-common`) → `PlatformComponent`, `PlatformVmComponent`, `PlatformFormComponent`',
-        '- App base (defined per app) → `AppBaseComponent` extends `PlatformComponent`',
-        '- Feature components → extend app base classes',
-        '',
-        '**Each app defines its own base classes** (for app-wide custom logic):',
-        '- `AppBaseComponent` - Base for all components in this app',
-        '- `AppBaseVmComponent` - With ViewModel support',
-        '- `AppBaseFormComponent` - For forms with validation',
-        '- `AppBaseVmStoreComponent` - For complex state with store',
-        '',
-        '**API Calls - Use `effectSimple` (auto-handles loading state):**',
-        '```typescript',
-        '// In Store: effectSimple auto-handles loading/error state',
-        'loadData = this.effectSimple(() => ',
-        '  this.api.getData().pipe(this.tapResponse(data => this.updateState({ data }))));',
-        '',
-        '// In Component: use effectSimple or observerLoadingErrorState',
-        'this.effectSimple(() => this.api.getData().pipe(...));',
-        '```',
-        '',
-        '**Constructor DI (required):**',
-        '```typescript',
-        'constructor(',
-        '    changeDetector: ChangeDetectorRef,',
-        '    elementRef: ElementRef<HTMLElement>,',
-        '    cacheService: PlatformCachingService,',
-        '    toast: ToastrService,',
-        '    translateSrv: PlatformTranslateService',
-        ') { super(changeDetector, elementRef, cacheService, toast, translateSrv); }',
-        '```',
-        '',
-        '**Anti-Patterns to AVOID:**',
-        '```typescript',
-        '// ❌ WRONG: Manual destroy subject',
-        'private destroy$ = new Subject();',
-        'ngOnDestroy() { this.destroy$.next(); }',
-        '',
-        '// ✅ CORRECT: Use platform base class',
-        'this.data$.pipe(this.untilDestroyed()).subscribe();',
-        '```',
-        ''
-      );
-    } else if (app === 'CandidateApp') {
-      lines.push(
-        '- Bootstrap 3 grid system',
-        '- Use `ca-` BEM prefix for classes',
-        '- Font Awesome icons',
-        '',
-        '### Platform Component Rules (WebV1)',
-        '- Platform lib → `PlatformComponent` from `@orient/bravo-common`',
-        '- App base → `AppBaseComponent` extends `PlatformComponent` (defined per app)',
-        '- All components → extend app\'s `AppBaseComponent`',
-        '- Use `this.untilDestroyed()` for subscriptions',
-        '- Use `effectSimple()` for API calls (auto-handles loading state)',
+        `Read \`${frontendDoc}\` for:`,
+        '- Component hierarchy and base class constructor signatures',
+        '- API call patterns (effectSimple, observerLoadingErrorState)',
+        '- Subscription management (untilDestroyed)',
         ''
       );
     }

@@ -56,23 +56,14 @@ Reference guide for naming Claude Code skills consistently in BravoSUITE.
 - Decisions impact system architecture
 - Analysis requires system-wide view
 
-### `frontend-angular` Skill (Angular)
+### Frontend Patterns (via docs + hooks)
 
-**Purpose:** Angular 19+ specific patterns and implementations.
-
-**Characteristics:**
-- Angular framework patterns
-- Component/store/form/service patterns
-- BravoSUITE frontend conventions
-- Consolidated from 4 individual skills for improved UX
-
-**BravoSUITE Example:**
-| Skill | Purpose |
-|-------|---------|
-| `frontend-angular` | Components, forms, state management, API services |
+**Approach:** Frontend patterns are handled via `docs/frontend-patterns-reference.md` (auto-injected by `frontend-typescript-context.cjs` hook). No tech-stack-specific skill needed — keeps the skill catalog generic.
 
 **When to Use:**
-- Skill specific to Angular framework
+- `frontend-design` — for UI implementation
+- `web-design-guidelines` — for UI compliance review
+- Pattern reference docs — auto-injected when editing `.ts` files
 - Implements BravoSUITE frontend patterns
 - Creates Angular-specific code
 
@@ -165,7 +156,7 @@ Each variant MUST reference the other in its description:
 | Redundant suffix | `debugging-skill` | `debug` |
 | Mixed case | `DebugHelper` | `debug-helper` |
 | Underscores | `task_runner` | `task-runner` |
-| Overly specific | `angular-19-nx-component` | `frontend-angular` |
+| Overly specific | `angular-19-nx-component` | `frontend-design` |
 | No variant reference | Missing cross-link | Add blockquote |
 | Shared module < 3 consumers | Extracting for 2 skills | Keep inline until 3+ |
 | Over-extraction to references/ | Moving core logic to references | Keep essential patterns in SKILL.md |

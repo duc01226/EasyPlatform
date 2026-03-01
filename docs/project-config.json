@@ -1,0 +1,82 @@
+{
+    "_description": "Project-specific configuration consumed by .claude hooks at runtime. Update when adding services/apps.",
+    "backendServices": {
+        "patterns": [
+            {
+                "description": "PlatformExampleApp backend services",
+                "name": "Backend Services",
+                "pathRegex": "src[\\\\/]Backend[\\\\/]"
+            },
+            {
+                "description": "Easy.Platform framework core",
+                "name": "Platform Framework",
+                "pathRegex": "src[\\\\/]Platform[\\\\/]"
+            }
+        ],
+        "serviceDomains": {
+            "TextSnippet": "Text snippet CRUD example with CQRS, event-driven patterns, and multi-database support"
+        },
+        "serviceMap": {
+            "Platform": "Platform[\\\\/]Easy\\.Platform",
+            "TextSnippet": "Backend[\\\\/]PlatformExampleApp\\.TextSnippet"
+        },
+        "serviceRepositories": {
+            "TextSnippet": "ITextSnippetRootRepository<TEntity>",
+            "User": "IUserRootRepository<TEntity>"
+        }
+    },
+    "componentFinder": {
+        "layerClassification": {
+            "common": ["src/Frontend/libs/apps-shared-components/"],
+            "domain": ["src/Frontend/libs/apps-domains/", "src/Frontend/libs/apps-domains-components/"],
+            "platform": ["src/Frontend/libs/platform-core/", "src/Frontend/libs/platform-components/"]
+        },
+        "selectorPrefixes": ["app-", "platform-example-"]
+    },
+    "designSystem": {
+        "appMappings": [],
+        "docsPath": "docs/design-system"
+    },
+    "framework": {
+        "backendPatternsDoc": "docs/backend-patterns-reference.md",
+        "codeReviewDoc": "docs/code-review-rules.md",
+        "frontendPatternsDoc": "docs/frontend-patterns-reference.md",
+        "integrationTestDoc": "docs/integration-test-reference.md",
+        "name": "Easy.Platform (.NET 9 + Angular)",
+        "searchPatternKeywords": ["CommandHandler", "Repository", "PlatformEntity", "PlatformDto", "PlatformVmStore", "PlatformApiService", "AppBaseComponent"]
+    },
+    "frontendApps": {
+        "appMap": {
+            "playground-text-snippet": "Frontend[\\\\/]apps[\\\\/]playground-text-snippet"
+        },
+        "frontendRegex": "src[\\\\/]Frontend[\\\\/]",
+        "legacyApps": [],
+        "modernApps": ["playground-text-snippet"],
+        "patterns": [
+            {
+                "description": "Angular frontend applications",
+                "name": "Frontend Apps",
+                "pathRegex": "src[\\\\/]Frontend[\\\\/]apps[\\\\/]"
+            },
+            {
+                "description": "Shared frontend libraries",
+                "name": "Frontend Libs",
+                "pathRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]"
+            }
+        ],
+        "sharedLibRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]"
+    },
+    "scss": {
+        "appMap": {
+            "playground-text-snippet": "Frontend[\\\\/]apps[\\\\/]playground-text-snippet"
+        },
+        "patterns": [
+            {
+                "description": "Angular app and lib styles",
+                "name": "Frontend Styles",
+                "pathRegexes": ["src[\\\\/]Frontend[\\\\/]"]
+            }
+        ]
+    },
+    "sharedNamespace": "PlatformExampleApp"
+}

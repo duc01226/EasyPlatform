@@ -5,7 +5,7 @@ description: '[Architecture] Use when designing or implementing cross-service co
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -119,7 +119,7 @@ var accountsData = await accountsDbContext.Users.ToListAsync();
 
 ```csharp
 // For initial data population or recovery
-public class FullSyncJob : PlatformApplicationBackgroundJobExecutor
+public class FullSyncJob : BackgroundJobExecutor // project background job base (see docs/backend-patterns-reference.md)
 {
     public override async Task ProcessAsync(object? param)
     {
@@ -141,7 +141,7 @@ public class FullSyncJob : PlatformApplicationBackgroundJobExecutor
 
 ```csharp
 // Normal operation via message bus
-internal sealed class EmployeeSyncConsumer : PlatformApplicationMessageBusConsumer<EmployeeEventBusMessage>
+internal sealed class EmployeeSyncConsumer : MessageBusConsumer<EmployeeEventBusMessage> // project message bus base (see docs/backend-patterns-reference.md)
 {
     public override async Task HandleLogicAsync(EmployeeEventBusMessage message, string routingKey)
     {
@@ -271,7 +271,7 @@ if (existing.LastMessageSyncDate <= message.CreatedUtcDate)
 ## Related
 
 - `arch-security-review`
-- `easyplatform-backend`
+- `api-design`
 
 ---
 

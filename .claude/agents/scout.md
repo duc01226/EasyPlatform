@@ -76,7 +76,7 @@ grep: ".*EventHandler.*{EntityName}"
 
 # Consumers (cross-service)
 grep: ".*Consumer.*{EntityName}"
-grep: "PlatformApplicationMessageBusConsumer.*{EntityName}"
+grep: "MessageBusConsumer.*{EntityName}"
 
 # Frontend
 grep: "{feature-name}" in **/*.ts

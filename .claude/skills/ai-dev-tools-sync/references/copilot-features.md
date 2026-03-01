@@ -8,8 +8,8 @@ Complete catalog of GitHub Copilot customization features (as of 2026).
 
 | File/Folder | Purpose | Format |
 |-------------|---------|--------|
-| `copilot-instructions.md` | Global instructions for all Copilot interactions | Markdown |
-| `instructions/*.instructions.md` | Path-scoped instructions with `applyTo` frontmatter | Markdown + YAML |
+| `common.copilot-instructions.md` | Generic AI rules (all Copilot interactions) | Markdown |
+| `workspace.copilot-instructions.md` | Project-specific instructions | Markdown |
 | `prompts/*.prompt.md` | Reusable prompts (slash commands) | Markdown + YAML |
 | `agents/*.md` | Agent definitions | Markdown + YAML |
 | `skills/*/SKILL.md` | Agent skills with bundled resources | Markdown + YAML |
@@ -24,26 +24,19 @@ Complete catalog of GitHub Copilot customization features (as of 2026).
 
 ## Feature Details
 
-### Custom Instructions (`copilot-instructions.md`)
+### Custom Instructions (split into two files)
 
-Root instructions auto-included in every request.
+**`common.copilot-instructions.md`** — Generic AI rules (confirm-before-execute, task planning, evidence-based reasoning). Auto-included in every request.
+
+**`workspace.copilot-instructions.md`** — Project-specific rules (architecture, patterns, file locations, naming conventions). Auto-included in every request.
+
 ```markdown
 # Project Guidelines
 - Use TypeScript for all new files
 - Follow BEM naming for CSS classes
 ```
 
-### Path-Scoped Instructions (`.github/instructions/`)
-
-Apply to specific file patterns via `applyTo`:
-```yaml
----
-applyTo: "src/Services/**/*.cs"
-excludeAgent: ["code-review"] # Optional: exclude specific agents
----
-# Backend C# Guidelines
-Use PlatformValidationResult for validation...
-```
+> **Note:** The monolithic `copilot-instructions.md` and `instructions/*.instructions.md` approach has been replaced with the common + workspace split. Path-scoped instructions are now handled via `docs/` reference docs + auto-injecting hooks.
 
 ### Prompts (`.github/prompts/`)
 

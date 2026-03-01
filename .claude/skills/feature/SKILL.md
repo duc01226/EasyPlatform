@@ -5,7 +5,7 @@ description: "[Implementation] Use when the user asks to implement a new feature
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` and `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -112,14 +112,14 @@ For each file in the `## File List` (following the prioritized order if applicab
 - **`relevanceScore`**: A numerical score (1-10)
 - **`evidenceLevel`**: "verified" or "inferred"
 - **`uncertainties`**: Any aspects you are unsure about
-- **`platformAbstractions`**: Any platform base classes used
+- **`frameworkAbstractions`**: Any framework base classes used
 - **`serviceContext`**: Which microservice this file belongs to
 - **`dependencyInjection`**: Any DI registrations
 - **`genericTypeParameters`**: Generic type relationships
 
 **For Consumer Files (CRITICAL):**
 
-- **`messageBusAnalysis`**: When analyzing any Consumer file (files ending with `Consumer.cs` that extend `PlatformApplicationMessageBusConsumer<T>`), identify the `*BusMessage` type used. Then perform a grep search across ALL services to find files that **send/publish** this message type. List all producer files and their service locations in the `messageBusProducers` field. This analysis is crucial for understanding cross-service integration.
+- **`messageBusAnalysis`**: When analyzing any Consumer file (files ending with `Consumer.cs` that extend the project message bus consumer base class), identify the `*BusMessage` type used. Then perform a grep search across ALL services to find files that **send/publish** this message type. List all producer files and their service locations in the `messageBusProducers` field. This analysis is crucial for understanding cross-service integration.
 
 **Targeted Aspect Analysis:**
 Populate `specificAspects:` key with deeper analysis:
@@ -149,11 +149,11 @@ You MUST ensure all files are analyzed. Then read the ENTIRE Markdown analysis n
 
 First, verify and ensure your implementation plan that code patterns, solution must follow code patterns and example in these files:
 
-- `.github/copilot-instructions.md`
-- `.github/instructions/frontend-angular.instructions.md`
-- `.github/instructions/backend-dotnet.instructions.md`
+- `docs/backend-patterns-reference.md`
+- `docs/frontend-patterns-reference.md`
+- `docs/code-review-rules.md`
 
-Then verify and ensure your implementation plan satisfy clean code rules in `.github/instructions/clean-code.instructions.md`
+Then verify and ensure your implementation plan satisfies clean code rules in `docs/code-review-rules.md`
 
 ---
 
@@ -205,7 +205,7 @@ Once approved, execute the plan. Before creating or modifying **ANY** file, you 
 - Verify file exists before modification
 - Read current content before editing
 - Check for conflicts with existing code
-- Validate changes against platform patterns
+- Validate changes against project patterns
 
 ---
 
@@ -220,7 +220,7 @@ Before completion, verify the implementation against all requirements. Document 
 - **Evidence-based approach:** Use `grep` and semantic search to verify assumptions
 - **Service boundary discovery:** Find endpoints before assuming responsibilities
 - **Never assume service ownership:** Verify patterns with code evidence
-- **Platform-first approach:** Use established templates
+- **Project-patterns-first approach:** Use established templates
 - **Cross-service sync:** Use an event bus, not direct database access
 - **CQRS adherence:** Follow established Command/Query patterns
 - **Clean architecture respect:** Maintain proper layer dependencies
@@ -260,22 +260,13 @@ Component → Store.effect() → ApiService → Backend
    Template ← Store.state
 ```
 
-### Platform Patterns
+### Project Framework Patterns (see docs/backend-patterns-reference.md)
 
-```csharp
-// Command/Query handlers
-PlatformCqrsCommandApplicationHandler<TCommand, TResult>
-PlatformCqrsQueryApplicationHandler<TQuery, TResult>
-
-// Entity event handlers (for side effects)
-PlatformCqrsEntityEventApplicationHandler<TEntity>
-
-// Message bus consumers
-PlatformApplicationMessageBusConsumer<TMessage>
-
-// Repositories
-service-specific repository<TEntity>
-service-specific repository<TEntity>
+```
+// Command/Query handlers — search for: CqrsCommandApplicationHandler, CqrsQueryApplicationHandler
+// Entity event handlers (for side effects) — search for: EntityEventApplicationHandler
+// Message bus consumers — search for: MessageBusConsumer
+// Repositories — search for: service-specific repository interface
 ```
 
 ### Frontend Patterns
@@ -296,7 +287,7 @@ effectSimple(() => api.call().pipe(tapResponse(...)))
 ## See Also
 
 - `.ai/docs/AI-DEBUGGING-PROTOCOL.md` - Debugging protocol
-- `.ai/docs/prompt-context.md` - Platform patterns and context
+- `.ai/docs/prompt-context.md` - Project patterns and context
 - `CLAUDE.md` - Codebase instructions
 - `feature-investigation` skill - For exploring existing features (READ-ONLY)
 - `tasks-feature-implementation` skill - Autonomous variant

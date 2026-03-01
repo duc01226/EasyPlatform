@@ -31,7 +31,7 @@ const swapEngine = require('../lib/swap-engine.cjs');
 // ============================================================================
 
 const SAMPLE_CSHARP_CODE = `
-namespace BravoSuite.Services
+namespace MyProject.Services
 {
     public interface IEmployeeService
     {
@@ -94,7 +94,7 @@ Microsoft (R) Build Engine version 17.0.0
 Copyright (C) Microsoft Corporation. All rights reserved.
 
   Determining projects to restore...
-  Restored BravoSuite.sln in 1.5s
+  Restored MyProject.sln in 1.5s
   Employee.Service -> bin/Debug/net9.0/Employee.Service.dll
   Growth.Service -> bin/Debug/net9.0/Growth.Service.dll
 

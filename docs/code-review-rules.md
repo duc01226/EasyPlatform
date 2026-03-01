@@ -1,6 +1,6 @@
-# BravoSUITE Code Review Rules
+# Code Review Rules
 
-> **Comprehensive code review rules, conventions, and best practices for BravoSUITE development.**
+> **Comprehensive code review rules, conventions, and best practices for Easy.Platform development.**
 > Auto-injected when code review skills are activated.
 
 ---
@@ -44,7 +44,7 @@ Entity/Model (Lowest)  →  Service  →  Component/Handler (Highest)
 | **Component/Handler** | UI events ONLY - delegates all logic to lower layers                 |
 
 ```typescript
-// ❌ WRONG: Logic in component
+// [MUST NOT] Logic in component
 readonly providerTypes = [{ value: 1, label: 'ITViec' }, ...];
 
 // ✅ CORRECT: Logic in entity/model
@@ -61,7 +61,7 @@ export class JobProvider {
 All functions MUST have explicit parameter and return types:
 
 ```typescript
-// ❌ WRONG
+// [MUST NOT]
 function getUser(id) { ... }
 
 // ✅ CORRECT
@@ -77,7 +77,7 @@ function getUser(id: string): Promise<User> { ... }
 Independent async operations MUST use `Util.TaskRunner.WhenAll()`:
 
 ```csharp
-// ❌ WRONG: Sequential awaits (slow)
+// [MUST NOT] Sequential awaits (slow)
 var entity1 = await repo1.GetByIdAsync(id1, ct);
 var entity2 = await repo2.GetByIdAsync(id2, ct);
 
@@ -95,7 +95,7 @@ var (entity1, entity2) = await Util.TaskRunner.WhenAll(
 Validation and business logic belongs in **Entity**, not Handler:
 
 ```csharp
-// ❌ WRONG: Validation in handler
+// [MUST NOT] Validation in handler
 // In SaveCustomFieldCommandHandler
 private PlatformValidationResult ValidateAndSetRelationshipType(Field field, Template template) { ... }
 
@@ -117,13 +117,12 @@ public CompanyClassFieldTemplate UpsertFields(List<Field> fields)
 Always use microservice-specific repositories:
 
 ```csharp
-// ❌ WRONG: Generic repository
+// [MUST NOT] Generic repository
 IPlatformRootRepository<Employee>
 
 // ✅ CORRECT: Service-specific repositories
-ICandidatePlatformRootRepository<Employee>  // bravoTALENTS
-IGrowthRootRepository<Employee>             // bravoGROWTH
-ISurveysPlatformRootRepository<Survey>      // bravoSURVEYS
+// Use service-specific repository interfaces defined per microservice
+// e.g. IServiceARootRepository<Employee>, IServiceBRootRepository<Survey>
 ```
 
 **Repository Operations:**
@@ -148,7 +147,7 @@ public static class EmployeeRepositoryExtensions
 Use fluent `.Validate().And()` pattern, not `if-return`:
 
 ```csharp
-// ❌ WRONG: if-return style
+// [MUST NOT] if-return style
 if (field.Group == null)
     return PlatformValidationResult.Valid<object>(null);
 
@@ -168,7 +167,7 @@ return await validation
 DTOs own their mapping logic:
 
 ```csharp
-// ❌ WRONG: Mapping in handler
+// [MUST NOT] Mapping in handler
 protected override async Task<Result> HandleAsync(Command req, CancellationToken ct)
 {
     var config = new AuthConfigurationValue
@@ -195,7 +194,7 @@ var config = req.AuthConfiguration.MapToObject()
 Side effects (notifications, emails, external APIs) MUST go in Entity Event Handlers:
 
 ```csharp
-// ❌ WRONG: Side effects in command handler
+// [MUST NOT] Side effects in command handler
 protected override async Task<Result> HandleAsync(Command req, CancellationToken ct)
 {
     await repository.CreateAsync(entity, ct);
@@ -247,7 +246,7 @@ internal sealed class SaveEntityCommandHandler :
 ### Cross-Service Communication
 
 ```csharp
-// ❌ WRONG: Direct database access across services
+// [MUST NOT] Direct database access across services
 var otherServiceData = await otherDbContext.Entities.ToListAsync();
 
 // ✅ CORRECT: Use message bus
@@ -285,7 +284,7 @@ Components MUST extend platform base classes:
 | Forms           | `AppBaseFormComponent<TViewModel>`      |
 
 ```typescript
-// ❌ WRONG: Raw component with implements
+// [MUST NOT] Raw component with implements
 export class MyComponent implements OnInit, OnDestroy { }
 
 // ✅ CORRECT: Extends platform base
@@ -302,7 +301,7 @@ export class MyComponent extends AppBaseFormComponent<MyFormVm> { }
 | `takeUntil(this.destroy$)` | Redundant | `this.untilDestroyed()` |
 
 ```typescript
-// ❌ WRONG: ngOnChanges
+// [MUST NOT] ngOnChanges
 export class MyComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges): void { ... }
 }
@@ -319,10 +318,10 @@ export class MyComponent extends AppBaseVmStoreComponent<State, Store> {
 ALL subscriptions MUST use `.pipe(this.untilDestroyed())`:
 
 ```typescript
-// ❌ WRONG: No cleanup
+// [MUST NOT] No cleanup
 this.formControl.valueChanges.subscribe(value => { ... });
 
-// ❌ WRONG: Manual destroy subject
+// [MUST NOT] Manual destroy subject
 private destroy$ = new Subject<void>();
 ngOnInit() {
     this.data$.pipe(takeUntil(this.destroy$)).subscribe(...);
@@ -340,7 +339,7 @@ this.formControl.valueChanges
 Services MUST extend `PlatformApiService`:
 
 ```typescript
-// ❌ WRONG: Direct HttpClient
+// [MUST NOT] Direct HttpClient
 constructor(private http: HttpClient) {}
 
 // ✅ CORRECT: Platform service
@@ -357,7 +356,7 @@ export class EmployeeApiService extends PlatformApiService {
 ### State Management
 
 ```typescript
-// ❌ WRONG: Manual signals for state
+// [MUST NOT] Manual signals for state
 employees = signal([]);
 loading = signal(false);
 error = signal<string | null>(null);
@@ -379,7 +378,7 @@ export class EmployeeStore extends PlatformVmStore<EmployeeVm> {
 ALL HTML elements MUST have BEM classes:
 
 ```html
-<!-- ❌ WRONG: Elements without classes -->
+<!-- [MUST NOT] Elements without classes -->
 <div class="user-list">
     <div><h1>Users</h1></div>
     <div>
@@ -424,10 +423,10 @@ ALL HTML elements MUST have BEM classes:
 
 | Rule | Description |
 | ---- | ----------- |
-| Service Independence | Each service (bravoTALENTS, bravoGROWTH, etc.) is a distinct subdomain |
+| Service Independence | Each service is a distinct subdomain |
 | No Direct Dependencies | Services CANNOT reference each other's domain/application layers |
 | Message Bus Only | Cross-service communication MUST use message bus patterns |
-| Shared Components | Only Easy.Platform and Bravo.Shared can be referenced across services |
+| Shared Components | Only Easy.Platform and shared libs can be referenced across services |
 | Data Duplication | Each service maintains own data; sync via message bus events |
 | Domain Boundaries | Each service owns its domain concepts and business logic |
 
@@ -443,7 +442,7 @@ ALL HTML elements MUST have BEM classes:
 ### Frontend Component Hierarchy
 
 ```
-Platform lib (@orient/bravo-common)
+Platform lib (apps-shared-components)
     ↓
 PlatformComponent → PlatformVmComponent → PlatformFormComponent
     ↓
@@ -503,7 +502,7 @@ public async Task<Result> HandleAsync(Command req, CancellationToken ct)
 ### No Magic Numbers/Strings
 
 ```csharp
-// ❌ WRONG: Magic numbers
+// [MUST NOT] Magic numbers
 if (status == 1) { ... }
 var maxRetries = 3;
 
@@ -536,7 +535,7 @@ if (status == EntityStatus.Active) { ... }
 ### Backend Performance
 
 ```csharp
-// ❌ WRONG: O(n) LINQ inside loops
+// [MUST NOT] O(n) LINQ inside loops
 foreach (var item in items)
 {
     var match = allMatches.FirstOrDefault(m => m.Id == item.Id);  // O(n) each iteration
@@ -549,7 +548,7 @@ foreach (var item in items)
     var match = matchDict.GetValueOrDefault(item.Id);  // O(1)
 }
 
-// ❌ WRONG: Await inside loops
+// [MUST NOT] Await inside loops
 foreach (var id in ids)
 {
     var item = await repo.GetByIdAsync(id, ct);  // N+1 queries
@@ -558,7 +557,7 @@ foreach (var id in ids)
 // ✅ CORRECT: Batch load
 var items = await repo.GetByIdsAsync(ids, ct);
 
-// ❌ WRONG: Load all then select
+// [MUST NOT] Load all then select
 var items = await repo.GetAllAsync(x => true, ct);
 var ids = items.Select(x => x.Id).ToList();
 
@@ -722,7 +721,7 @@ For backend service-layer or API changes, verify:
 - [ ] **Alerting:** Error rate thresholds considered (>5% = warning, >10% = critical)
 
 ```csharp
-// ❌ WRONG: No error context
+// [MUST NOT] No error context
 var result = await httpClient.GetAsync(url);
 
 // ✅ CORRECT: Structured logging with context
@@ -915,14 +914,12 @@ Form with validation?
 
 | Document | Purpose |
 | -------- | ------- |
-| [`CLEAN-CODE-RULES.md`](../CLEAN-CODE-RULES.md) | Extended clean code rules with decision trees |
-| [`.github/AI-DEBUGGING-PROTOCOL.md`](../.github/AI-DEBUGGING-PROTOCOL.md) | Evidence-based debugging protocol |
-| [`docs/claude/anti-patterns.md`](claude/anti-patterns.md) | Detailed anti-pattern examples with code |
-| [`docs/claude/backend-patterns.md`](claude/backend-patterns.md) | Backend CQRS, repository, validation patterns |
-| [`docs/claude/frontend-patterns.md`](claude/frontend-patterns.md) | Frontend component hierarchy, platform APIs |
-| [`docs/claude/backend-csharp-complete-guide.md`](claude/backend-csharp-complete-guide.md) | Comprehensive C# reference (~76KB) |
-| [`docs/claude/frontend-typescript-complete-guide.md`](claude/frontend-typescript-complete-guide.md) | Complete Angular/TS guide (~57KB) |
-| [`docs/claude/scss-styling-guide.md`](claude/scss-styling-guide.md) | BEM methodology, design tokens (~30KB) |
+| [`docs/backend-patterns-reference.md`](backend-patterns-reference.md) | Backend CQRS, repository, validation patterns |
+| [`docs/frontend-patterns-reference.md`](frontend-patterns-reference.md) | Frontend component hierarchy, platform APIs |
+| [`docs/integration-test-reference.md`](integration-test-reference.md) | Integration test patterns and conventions |
+| [`docs/claude/backend-csharp-complete-guide.md`](claude/backend-csharp-complete-guide.md) | Comprehensive C# reference |
+| [`docs/claude/frontend-typescript-complete-guide.md`](claude/frontend-typescript-complete-guide.md) | Complete Angular/TS guide |
+| [`docs/claude/scss-styling-guide.md`](claude/scss-styling-guide.md) | BEM methodology, design tokens |
 
 ---
 

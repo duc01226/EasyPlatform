@@ -8,87 +8,6 @@ Development skills provide domain-specific knowledge for implementing features i
 
 ## Backend Skills
 
-### `easyplatform-backend`
-
-**Triggers:** CQRS, commands, entities, migrations, Easy.Platform
-
-The primary skill for BravoSUITE backend development.
-
-#### Key Patterns
-
-**Entity Definition:**
-```csharp
-public class Employee : RootAuditedEntity<Employee, string, string>
-{
-    public string CompanyId { get; set; } = "";
-    public string FullName { get; set; } = "";
-
-    [ComputedEntityProperty]
-    public string DisplayName { get => $"{FullName} ({Email})"; set { } }
-
-    // Static expression for queries
-    public static Expression<Func<Employee, bool>> OfCompanyExpr(string companyId)
-        => e => e.CompanyId == companyId;
-}
-```
-
-**CQRS Command (single file):**
-```csharp
-// Command + Result + Handler in ONE file
-public sealed class SaveEmployeeCommand : PlatformCqrsCommand<SaveEmployeeCommandResult>
-{
-    public string Id { get; set; } = "";
-    public string Name { get; set; } = "";
-
-    public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
-        => base.Validate().And(_ => Name.IsNotNullOrEmpty(), "Name required");
-}
-
-public sealed class SaveEmployeeCommandResult : PlatformCqrsCommandResult
-{
-    public EmployeeDto Entity { get; set; } = null!;
-}
-
-internal sealed class SaveEmployeeCommandHandler :
-    PlatformCqrsCommandApplicationHandler<SaveEmployeeCommand, SaveEmployeeCommandResult>
-{
-    protected override async Task<SaveEmployeeCommandResult> HandleAsync(
-        SaveEmployeeCommand req, CancellationToken ct)
-    {
-        // Implementation
-    }
-}
-```
-
-**Repository Pattern:**
-```csharp
-// Always use service-specific repository
-IGrowthRootRepository<Employee> repository  // bravoGROWTH
-ICandidatePlatformRootRepository<Candidate> repository  // bravoTALENTS
-
-// Repository extensions
-public static async Task<Employee> GetByEmailAsync(
-    this IGrowthRootRepository<Employee> repo,
-    string email,
-    CancellationToken ct = default)
-    => await repo.FirstOrDefaultAsync(Employee.ByEmailExpr(email), ct).EnsureFound();
-```
-
-**Validation:**
-```csharp
-// Fluent validation (NEVER throw exceptions)
-return base.Validate()
-    .And(_ => Name.IsNotNullOrEmpty(), "Name required")
-    .And(_ => FromDate <= ToDate, "Invalid range")
-    .AndAsync(r => repo.AnyAsync(e => e.Id == r.Id, ct), "Entity not found");
-```
-
-#### Source
-
-Location: `.claude/skills/easyplatform-backend/`
-
----
-
 ### `api-design`
 
 **Triggers:** REST, controller, route, HTTP, endpoint, request, response
@@ -214,13 +133,11 @@ Location: `.claude/skills/better-auth/`
 
 ## Frontend Skills
 
-### `frontend-angular`
+### ~~`frontend-angular`~~ *(Removed)*
 
-**Triggers:** Angular, WebV2, component, form, store, API service
+> **Deleted.** Frontend patterns are now handled generically via `docs/frontend-patterns-reference.md` (auto-injected by `frontend-typescript-context.cjs` hook). No tech-stack-specific skill needed.
 
-Angular component patterns for BravoSUITE.
-
-#### Component Hierarchy
+#### Component Hierarchy (reference: `docs/frontend-patterns-reference.md`)
 
 ```
 PlatformComponent
@@ -376,7 +293,7 @@ export class EmployeeApiService extends PlatformApiService {
 
 #### Source
 
-Location: `.claude/skills/frontend-angular/`
+Location: *(deleted — see `docs/frontend-patterns-reference.md`)*
 
 ---
 
@@ -405,7 +322,7 @@ Location: `.claude/skills/frontend-design/`
 
 **Triggers:** shadcn, Radix UI, Tailwind components, React components
 
-React component library skill for shadcn/ui + Tailwind CSS. For React/Next.js projects only -- NOT for Angular (use `frontend-angular` skill instead).
+React component library skill for shadcn/ui + Tailwind CSS. For React/Next.js projects only -- NOT for Angular (see `docs/frontend-patterns-reference.md`).
 
 #### BEM Naming (Angular projects)
 

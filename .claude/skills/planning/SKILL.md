@@ -6,7 +6,7 @@ allowed-tools: NONE
 license: MIT
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -516,7 +516,7 @@ No Figma designs referenced. If UI changes are needed:
 
 ALWAYS read these files first:
 
-1. **`./docs/development-rules.md`** (IMPORTANT)
+1. **`./.claude/workflows/development-rules.md`** (IMPORTANT)
     - File Name Conventions
     - File Size Management
     - Development rules and best practices
@@ -772,7 +772,7 @@ Brief description of what this plan accomplishes.
 
 ##### Phase Files (phase-XX-name.md)
 
-Fully respect the `./docs/development-rules.md` file.
+Fully respect the `./.claude/workflows/development-rules.md` file.
 Each phase file should contain:
 
 ###### Context Links
@@ -899,7 +899,7 @@ List affected files with:
 - Action type (modify/create/delete)
 - Brief change description
 - Dependencies on other changes
-- Fully respect the `./docs/development-rules.md` file.
+- Fully respect the `./.claude/workflows/development-rules.md` file.
 
 #### Output Workflow Process
 
@@ -919,7 +919,7 @@ List affected files with:
 - Self-contained plans with necessary context
 - Code snippets/pseudocode when clarifying
 - Multiple options with trade-offs when appropriate
-- Fully respect the `./docs/development-rules.md` file.
+- Fully respect the `./.claude/workflows/development-rules.md` file.
 
 ##### Writing Style
 
@@ -984,7 +984,7 @@ When no Figma context:
 - Design for future modifications
 - Document decision rationale
 - Avoid over-engineering
-- Fully respect the `./docs/development-rules.md` file.
+- Fully respect the `./.claude/workflows/development-rules.md` file.
 
 ##### Research Depth
 
@@ -1026,7 +1026,7 @@ When no Figma context:
 - Ensure self-contained plans with necessary context
 - Include code snippets/pseudocode when clarifying
 - Provide multiple options with trade-offs when appropriate
-- Fully respect the `./docs/development-rules.md` file.
+- Fully respect the `./.claude/workflows/development-rules.md` file.
 
 **Plan Directory Structure**
 

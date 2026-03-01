@@ -87,7 +87,7 @@
 
 VERY FIRST action on ANY non-trivial prompt (>15 chars, not "yes/no/continue") MUST be workflow detection → `/workflow-start <id>`. NEVER jump to TaskCreate, Read, Grep, Edit before activating a workflow.
 
-**❌** `"verify changes"` → `[TaskCreate immediately]` — WRONG: skipped workflow match
+**[MUST NOT]** `"verify changes"` → `[TaskCreate immediately]` — skipped workflow match
 **✅** `"verify changes"` → `[/workflow-start verification]` → `[TaskCreate]` → execute immediately
 
 For simple/straightforward tasks (single-file changes, clear small fixes), AI MUST ask the user whether to skip the workflow.
@@ -128,7 +128,7 @@ Entity/Model (Lowest)  →  Service  →  Component/Handler (Highest)
 **Anti-Pattern**: Logic in component/handler that should be in entity → leads to duplicated code.
 
 ```typescript
-// ❌ WRONG: Logic in component
+// [MUST NOT] Logic in component
 readonly providerTypes = [{ value: 1, label: 'Type A' }, ...];
 
 // ✅ CORRECT: Logic in entity/model
@@ -302,8 +302,6 @@ When working in specific areas, these skills MUST be automatically activated BEF
 
 | Path Pattern                                  | Skill                  | Pre-Read Files           |
 | --------------------------------------------- | ---------------------- | ------------------------ |
-| `src/Backend/**/*.cs`                         | `easyplatform-backend` | CQRS patterns reference  |
-| `src/Platform/**/*.cs`                        | `easyplatform-backend` | Framework patterns       |
 | `src/Frontend/**/*.component.ts`              | `frontend-angular`     | Component base class     |
 | `src/Frontend/**/*.store.ts`                  | `frontend-angular`     | Store patterns           |
 | `docs/design-system/**`                       | `ui-ux-designer`       | Design tokens file       |

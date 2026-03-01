@@ -2,11 +2,11 @@
 /**
  * Code Patterns Injector - Edit/Write Hook
  *
- * Injects EasyPlatform code patterns on-demand when editing code files:
- *   - Backend (.cs) files in src/(Platform|Services|PlatformExampleApp)
- *   - Frontend (.ts/.tsx/.html) files in src/(WebV2|Web) or libs/(platform-core|bravo-common|bravo-domain)
+ * Injects project code patterns on-demand when editing code files:
+ *   - Backend (.cs) files in configured backend service paths
+ *   - Frontend (.ts/.tsx/.html) files in configured frontend app paths
  *
- * Dedup: Checks transcript for "## EasyPlatform Code Patterns" marker
+ * Dedup: Checks transcript for "## Code Patterns" marker
  * in last 300 lines. After context compaction, re-injects on next trigger.
  *
  * Configuration (.ck.json):
@@ -19,16 +19,42 @@
 
 const fs = require('fs');
 const path = require('path');
+const { loadProjectConfig } = require('./lib/project-config-loader.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CONFIGURATION
+// CONFIGURATION (loaded from docs/project-config.json)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const DEDUP_MARKER = '## EasyPlatform Code Patterns';
+const { CODE_PATTERNS: DEDUP_MARKER } = require('./lib/dedup-constants.cjs');
 const DEDUP_LINES = 300;
 const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-const BACKEND_PATTERNS = path.resolve(PROJECT_DIR, '.ai/docs/backend-code-patterns.md');
-const FRONTEND_PATTERNS = path.resolve(PROJECT_DIR, '.ai/docs/frontend-code-patterns.md');
+const BACKEND_PATTERNS = path.resolve(PROJECT_DIR, 'docs/backend-patterns-reference.md');
+const FRONTEND_PATTERNS = path.resolve(PROJECT_DIR, 'docs/frontend-patterns-reference.md');
+
+const config = loadProjectConfig();
+
+// Build frontend regex from config (falls back to generic: any .ts/.tsx/.html under src/ or libs/)
+const FRONTEND_REGEX = (() => {
+  try {
+    const regex = config.frontendApps?.frontendRegex;
+    if (regex) return new RegExp(regex, 'i');
+  } catch { /* invalid regex in config — use fallback */ }
+  return /(?:src[\\/])|(?:libs[\\/])/i;
+})();
+
+// Build backend regex from config patterns (falls back to generic: any .cs under src/)
+const BACKEND_REGEX = (() => {
+  try {
+    const patterns = config.backendServices?.patterns;
+    if (patterns && Array.isArray(patterns) && patterns.length > 0) {
+      const regexParts = patterns.map(p => p.pathRegex).filter(Boolean);
+      if (regexParts.length > 0) {
+        return new RegExp(`(${regexParts.join('|')})`, 'i');
+      }
+    }
+  } catch { /* invalid regex in config — use fallback */ }
+  return /src[\\/]/i;
+})();
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DOMAIN DETECTION
@@ -40,8 +66,8 @@ function shouldInjectForFile(filePath) {
   const normalized = filePath.replace(/\\/g, '/');
 
   return {
-    backend: ext === '.cs' && /src\/(Platform|Services|PlatformExampleApp)/i.test(normalized),
-    frontend: ['.ts', '.tsx', '.html'].includes(ext) && /(?:src\/(WebV2|Web)\/)|(?:libs\/(platform-core|bravo-common|bravo-domain)\/)/i.test(normalized)
+    backend: ext === '.cs' && BACKEND_REGEX.test(normalized),
+    frontend: ['.ts', '.tsx', '.html'].includes(ext) && FRONTEND_REGEX.test(normalized)
   };
 }
 

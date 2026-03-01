@@ -5,7 +5,7 @@ description: '[Code Quality] Restructure code without changing behavior using ex
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` AND `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -51,7 +51,7 @@ Expert code restructuring agent. Focuses on structural changes that improve code
 
 ### Extract Patterns
 
-| Pattern                | When to Use                         | Platform Example                          |
+| Pattern                | When to Use                         | Example                          |
 | ---------------------- | ----------------------------------- | ----------------------------------------- |
 | **Extract Method**     | Long method, duplicated code        | Move logic to private method              |
 | **Extract Class**      | Class has multiple responsibilities | Create Helper, Service, or Strategy class |
@@ -61,16 +61,16 @@ Expert code restructuring agent. Focuses on structural changes that improve code
 
 ### Move Patterns
 
-| Pattern               | When to Use                       | Platform Example                         |
+| Pattern               | When to Use                       | Example                         |
 | --------------------- | --------------------------------- | ---------------------------------------- |
 | **Move Method**       | Method belongs to different class | Move from Handler to Helper/Entity       |
 | **Move to Extension** | Reusable repository logic         | Create `{Entity}RepositoryExtensions`    |
-| **Move to DTO**       | Mapping logic in handler          | Use `PlatformEntityDto.MapToEntity()`    |
+| **Move to DTO**       | Mapping logic in handler          | Use project DTO base `.MapToEntity()` (see docs/backend-patterns-reference.md) |
 | **Move to Entity**    | Business logic in handler         | Add instance method or static expression |
 
 ### Simplify Patterns
 
-| Pattern                     | When to Use                  | Platform Example                   |
+| Pattern                     | When to Use                  | Example                   |
 | --------------------------- | ---------------------------- | ---------------------------------- |
 | **Inline Variable**         | Temporary variable used once | Remove intermediate variable       |
 | **Inline Method**           | Method body is obvious       | Replace call with body             |
@@ -140,7 +140,7 @@ var entity = await repository.FirstOrDefaultAsync(Entity.IsActiveExpr(), ct)
 3. Check code compiles
 4. Review for consistency
 
-## Platform-Specific Refactorings
+## Project-Specific Refactorings
 
 ### Handler to Helper
 
@@ -188,7 +188,7 @@ var config = new AuthConfig
 };
 
 // AFTER: DTO owns mapping
-// In AuthConfigDto.cs : PlatformDto<AuthConfig>
+// In AuthConfigDto.cs : DtoBase<AuthConfig> // project DTO base class (see docs/backend-patterns-reference.md)
 public override AuthConfig MapToObject() => new AuthConfig
 {
     ClientId = ClientId,

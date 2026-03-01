@@ -31,13 +31,13 @@ Both platforms support skills in `.github/skills/`. Copilot also reads `.claude/
 
 | Claude Code | GitHub Copilot |
 |-------------|----------------|
-| `CLAUDE.md` (root) | `.github/copilot-instructions.md` |
-| Single file | Multi-file with `applyTo` patterns |
+| `CLAUDE.md` (root) | `.github/common.copilot-instructions.md` + `.github/workspace.copilot-instructions.md` |
+| Single file | Split: generic AI rules (common) + project-specific (workspace) |
 
 **Sync Strategy**:
-1. Keep core rules in both files
-2. Use `.github/instructions/` for path-scoped rules (Copilot-specific)
-3. Reference detailed docs from both files
+1. Keep core rules in both CLAUDE.md and workspace.copilot-instructions.md
+2. Reference detailed docs from `docs/` (backend-patterns-reference.md, frontend-patterns-reference.md)
+3. Generic AI rules go in common.copilot-instructions.md
 
 ## Agent Sync
 
@@ -82,12 +82,6 @@ touch .github/prompts/new-prompt.prompt.md
 
 ### Update Core Instructions
 1. Edit `CLAUDE.md`
-2. Edit `.github/copilot-instructions.md`
-3. Keep essential rules in sync
-
-### Add Path-Scoped Instructions (Copilot)
-```bash
-# Copilot-specific feature
-touch .github/instructions/backend-cqrs.instructions.md
-# Add applyTo: "src/Services/**/*Command*.cs"
-```
+2. Edit `.github/common.copilot-instructions.md` (generic AI rules)
+3. Edit `.github/workspace.copilot-instructions.md` (project-specific rules)
+4. Keep essential rules in sync across all three

@@ -6,7 +6,7 @@ description: '[AI & Tools] Manage Model Context Protocol (MCP) servers - discove
 allowed-tools: NONE
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -17,7 +17,7 @@ allowed-tools: NONE
 1. **Config Management** — Use `.claude/.mcp.json`, symlink to `.gemini/settings.json` for Gemini CLI
 2. **Capability Discovery** — `npx tsx scripts/cli.ts list-tools` saves to `assets/tools.json`
 3. **Intelligent Selection** — LLM analyzes tools.json for task-relevant capabilities
-4. **Execution** — Primary: Gemini CLI with stdin piping; Secondary: Direct scripts; Fallback: mcp-manager subagent
+4. **Execution** — Primary: Gemini CLI with stdin piping; Secondary: Direct scripts; Fallback: general-purpose subagent
 
 **Key Rules:**
 
@@ -114,7 +114,7 @@ echo "Take a screenshot of https://example.com" | gemini -y -m gemini-2.5-flash
 npx tsx scripts/cli.ts call-tool memory create_entities '{"entities":[...]}'
 ```
 
-**Fallback: mcp-manager Subagent**
+**Fallback: General-Purpose Subagent**
 
 See [references/gemini-cli-integration.md](references/gemini-cli-integration.md) for complete examples.
 
@@ -150,7 +150,7 @@ See [references/gemini-cli-integration.md](references/gemini-cli-integration.md)
 
 ### Pattern 2: Subagent-Based Execution (Fallback)
 
-Use `mcp-manager` agent when Gemini CLI unavailable. Subagent discovers tools, selects relevant ones, executes tasks, reports back.
+Use `general-purpose` agent when Gemini CLI unavailable. Subagent discovers tools, selects relevant ones, executes tasks, reports back.
 
 **Benefit**: Main context stays clean, only relevant tool definitions loaded when needed.
 
@@ -207,7 +207,7 @@ npx tsx cli.ts list-tools  # Saves to assets/tools.json
 npx tsx cli.ts call-tool memory create_entities '{"entities":[...]}'
 ```
 
-**Method 3: mcp-manager Subagent**
+**Method 3: General-Purpose Subagent**
 
 See [references/gemini-cli-integration.md](references/gemini-cli-integration.md) for complete guide.
 
@@ -235,13 +235,13 @@ See [references/mcp-protocol.md](references/mcp-protocol.md) for:
     - Use when: Need specific tool/server control
     - Execute: `npx tsx scripts/cli.ts call-tool <server> <tool> <args>`
 
-3. **mcp-manager Subagent** (Fallback): Context-efficient delegation
+3. **General-Purpose Subagent** (Fallback): Context-efficient delegation
     - Use when: Gemini unavailable or failed
     - Keeps main context clean
 
 ### Integration with Agents
 
-The `mcp-manager` agent uses this skill to:
+The `general-purpose` agent uses this skill to:
 
 - Check Gemini CLI availability first
 - Execute via `gemini` command if available

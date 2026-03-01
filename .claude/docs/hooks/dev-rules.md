@@ -23,9 +23,9 @@ Development rules hooks inject context-specific guidance when editing files. Eac
 **Matches**: Files ending with `.cs`
 
 **Injects**:
-- CQRS command/query patterns
-- Repository usage (`IPlatformQueryableRootRepository`)
-- Validation patterns (`PlatformValidationResult`)
+- CQRS command/query patterns (see docs/backend-patterns-reference.md)
+- Repository usage patterns
+- Validation patterns
 - Entity event handlers
 - DTO mapping conventions
 
@@ -33,7 +33,7 @@ Development rules hooks inject context-specific guidance when editing files. Eac
 ```markdown
 ## C# Development Context
 
-- Use `PlatformValidationResult` for validation (never throw exceptions)
+- Use project validation API for validation (never throw exceptions)
 - DTOs own mapping via `MapToEntity()` / `MapToObject()`
 - Side effects go in Entity Event Handlers, not command handlers
 ```
@@ -43,8 +43,8 @@ Development rules hooks inject context-specific guidance when editing files. Eac
 **Matches**: Files in frontend directories ending with `.ts`, `.tsx`
 
 **Injects**:
-- Component hierarchy (`PlatformComponent` → `AppBaseComponent`)
-- State management (`PlatformVmStore`)
+- Component hierarchy (project base classes - see docs/frontend-patterns-reference.md)
+- State management (project store - see docs/frontend-patterns-reference.md)
 - Subscription cleanup (`untilDestroyed()`)
 - BEM CSS naming conventions
 
@@ -52,7 +52,7 @@ Development rules hooks inject context-specific guidance when editing files. Eac
 ```markdown
 ## Frontend Development Context
 
-- Extend `AppBaseComponent` or `AppBaseVmStoreComponent`
+- Extend project component base classes (see docs/frontend-patterns-reference.md)
 - Always use `.pipe(this.untilDestroyed())` for subscriptions
 - All elements must have BEM classes (`block__element --modifier`)
 ```
@@ -75,7 +75,7 @@ Development rules hooks inject context-specific guidance when editing files. Eac
 - SCSS variable usage
 - BEM methodology
 - Responsive breakpoints
-- Platform style imports
+- Project style imports
 
 ### dev-rules-reminder.cjs
 

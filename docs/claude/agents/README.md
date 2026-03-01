@@ -1,6 +1,6 @@
 # Agents Reference
 
-> 26+ specialized subagents for autonomous task execution
+> 22 specialized subagents for autonomous task execution
 
 ## Overview
 
@@ -38,13 +38,14 @@ Main Claude Session
 | `architect` | System design decisions, ADR creation (Opus) | All tools |
 | `planner` | Create comprehensive implementation plans | All tools |
 | `Plan` | Software architect for implementation strategy | All tools |
-| `brainstormer` | Evaluate architectural approaches and debates | All tools |
 
 ### Development & Implementation
 
 | Agent | Purpose | Tools |
 |-------|---------|-------|
 | `fullstack-developer` | Execute implementation phases | All tools |
+| `backend-developer` | .NET backend features, CQRS patterns | All tools |
+| `integration-tester` | Generate integration tests from changes | All tools |
 | `code-simplifier` | Simplify code for clarity and maintainability | All tools |
 
 ### Quality & Review
@@ -71,7 +72,7 @@ Main Claude Session
 | `business-analyst` | Requirements refinement, user story creation, BDD acceptance criteria | All tools |
 | `product-owner` | Backlog management, feature prioritization, stakeholder communication | All tools |
 | `qc-specialist` | Quality checkpoints, compliance audits, standards enforcement | All tools |
-| `ux-designer` | Design specifications, wireframes, user flow documentation | All tools |
+| `ui-ux-designer` | Design specifications, wireframes, user flow documentation | All tools |
 
 ### Specialized
 
@@ -79,9 +80,7 @@ Main Claude Session
 |-------|---------|-------|
 | `journal-writer` | Document technical difficulties | All tools |
 | `ui-ux-designer` | UI/UX design work | All tools |
-| `copywriter` | Marketing and engagement copy | All tools |
 | `database-admin` | Database systems management | All tools |
-| `mcp-manager` | MCP server integrations | All tools |
 
 ---
 
@@ -151,7 +150,7 @@ Task({
 | Understand codebase structure | `Explore` | Comprehensive exploration with context |
 | Research new technology | `researcher` | Web search + documentation synthesis |
 | Plan feature implementation | `planner` | Creates structured implementation plans |
-| Evaluate architecture options | `brainstormer` | Debates trade-offs before commitment |
+| Evaluate architecture options | `planner` | Creates structured plans with trade-off analysis |
 | Design system architecture | `architect` | ADR creation, Opus model |
 | Plan E2E test structure | `e2e-runner` | Playwright patterns, BEM selectors |
 | Implement from plan | `fullstack-developer` | Executes implementation phases |
@@ -166,7 +165,7 @@ Task({
 | Prioritize backlog | `product-owner` | MoSCoW, effort/value matrix |
 | Create test plan | `test-spec` | Test coverage, case generation |
 | Quality checkpoint | `qc-specialist` | Audit trails, compliance checks |
-| Design specification | `ux-designer` | Figma integration, design tokens |
+| Design specification | `ui-ux-designer` | Figma integration, design tokens |
 
 ### When NOT to Use Agents
 
@@ -355,4 +354,4 @@ Task({
 
 ---
 
-*Source: Task tool system prompt | 26+ specialized agent types*
+*Source: Task tool system prompt | 22 specialized agent types*

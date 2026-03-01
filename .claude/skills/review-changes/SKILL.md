@@ -3,7 +3,7 @@ name: review-changes
 description: '[Code Quality] Review all uncommitted changes before commit'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
@@ -192,9 +192,9 @@ Update report with final sections:
 - [ ] Booleans: is/has/can/should prefix (`isActive`, `hasPermission`)
 - [ ] No cryptic abbreviations (`employeeCount` not `empCnt`)
 
-### 3. Platform Patterns
+### 3. Project Patterns (see docs/backend-patterns-reference.md)
 
-- [ ] Uses platform validation fluent API (.And(), .AndAsync())
+- [ ] Uses project validation fluent API (.And(), .AndAsync())
 - [ ] No direct side effects in command handlers (use entity events)
 - [ ] DTO mapping in DTO classes, not handlers
 - [ ] Static expressions for entity queries

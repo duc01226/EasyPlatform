@@ -1,6 +1,6 @@
 # Skills Reference
 
-> 152 skills across 15+ domains + 3 shared modules for context-aware AI assistance
+> 153 skills across 15+ domains + 3 shared modules for context-aware AI assistance
 
 ## Overview
 
@@ -48,7 +48,6 @@ Skills Activated: debug, better-auth
 | Skill | Triggers | Description |
 |-------|----------|-------------|
 | `api-design` | REST, controller, route, HTTP, endpoint | API endpoint design patterns |
-| `easyplatform-backend` | CQRS, commands, entities, migrations | BravoSUITE-specific backend |
 | `databases` | MongoDB, PostgreSQL, SQL, queries | Database operations |
 | `database-optimization` | slow query, N+1, index, performance | Query optimization |
 | `better-auth` | authentication, OAuth, JWT, 2FA | Authentication patterns |
@@ -63,7 +62,6 @@ See [development-skills.md](./development-skills.md) for detailed documentation.
 
 | Skill | Triggers | Description |
 |-------|----------|-------------|
-| `frontend-angular` | Angular, WebV2, component, form, store, API service | Angular 19 components, forms, state, API services |
 | `frontend-design` | UI, design, screenshot | UI implementation |
 | `shadcn-tailwind` | shadcn, Radix UI, Tailwind components | React component library (not Angular) |
 | `ui-ux-pro-max` | UX, design system | Advanced UX |
@@ -244,7 +242,7 @@ Reusable content blocks in `.claude/skills/shared/` extracted from multiple skil
 |--------|---------|-----------|
 | `evidence-based-reasoning-protocol.md` | Consolidated evidence-based reasoning: core rules, confidence levels, validation chain, risk matrix | 50 skills (all code-modifying and analysis skills) |
 | `understand-code-first-protocol.md` | Read-before-write protocol, assumption validation, external memory | 34+ skills (all code-modifying skills) |
-| `design-system-check.md` | Mandatory design system doc locations for frontend work | 1 skill (frontend-angular) |
+| `design-system-check.md` | Mandatory design system doc locations for frontend work | frontend-design, web-design-guidelines |
 | `module-detection-keywords.md` | BravoSUITE module keyword lists for context loading | 4 skills (idea, product-owner, refine, story) |
 
 See [shared/README.md](../../.claude/skills/shared/README.md) for full consumer lists and contribution guidelines.
@@ -341,4 +339,4 @@ See [integration-skills.md](./integration-skills.md#creating-skills) for detaile
 
 ---
 
-*Source: `.claude/skills/` | 95 skills across 12 domains + 3 shared modules*
+*Source: `.claude/skills/` | 153 skills across 15+ domains + 3 shared modules*

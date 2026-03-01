@@ -27,6 +27,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { loadProjectConfig } = require('./lib/project-config-loader.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CONFIGURATION
@@ -40,13 +41,11 @@ const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 const REQUIRE_SEARCH_EXTENSIONS = ['.ts', '.tsx', '.cs', '.html', '.scss'];
 
 // Keywords indicating new pattern implementation (triggers search requirement)
-const PATTERN_KEYWORDS = [
-  'ifValidator',
-  'PlatformVmStore',
-  'AppBaseFormComponent',
+// Loaded from docs/project-config.json framework.searchPatternKeywords
+const projectConfig = loadProjectConfig();
+const PATTERN_KEYWORDS = projectConfig.framework?.searchPatternKeywords || [
   'Command.*Handler',
-  'Repository',
-  'PlatformApiService'
+  'Repository'
 ];
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -188,11 +187,12 @@ function main() {
     console.error('File:', filePath);
     console.error('Reason: New pattern implementation detected without prior code search\n');
     console.error('REQUIRED ACTIONS:');
-    console.error('1. Use Grep/Glob to find 3+ similar patterns in BravoSUITE codebase');
+    console.error('1. Use Grep/Glob to find 3+ similar patterns in the codebase');
     console.error('2. Study existing implementations (NOT generic framework docs)');
     console.error('3. Provide file:line evidence in your plan\n');
     console.error('Example:');
-    console.error('  grep -r "ifValidator" src/WebV2 --include="*.ts" -A 3\n');
+    const exampleKeyword = PATTERN_KEYWORDS[0] || 'Repository';
+    console.error(`  grep -r "${exampleKeyword}" src/ --include="*.cs" -A 3\n`);
     console.error('Override: Add "skip search" to your message if this is intentional');
     console.error('═══════════════════════════════════════════════════════════════════════\n');
 

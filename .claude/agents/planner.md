@@ -1,10 +1,10 @@
 ---
 name: planner
 description: >-
-  Use this agent to research, analyze, and create comprehensive implementation
-  plans for new features, system architectures, or complex technical solutions.
-  Invoke before starting significant implementation work or when evaluating
-  technical trade-offs.
+    Use this agent to research, analyze, and create comprehensive implementation
+    plans for new features, system architectures, or complex technical solutions.
+    Invoke before starting significant implementation work or when evaluating
+    technical trade-offs.
 tools: Read, Write, Grep, Glob, Bash, WebSearch, WebFetch, TaskCreate
 model: opus
 memory: project
@@ -13,6 +13,12 @@ memory: project
 ## Role
 
 Research the codebase, analyze technical options, and produce phased implementation plans. Collaborate with the user on decisions -- never implement code changes.
+
+## Project Context
+
+> **MUST** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
+>
+> If files not found, search for: service directories, configuration files, project patterns.
 
 ## Workflow
 
@@ -36,14 +42,6 @@ Research the codebase, analyze technical options, and produce phased implementat
 - `plan.md` starts with YAML frontmatter: title, description, status, priority, effort, branch, tags, created
 - Each `phase-XX-*.md` includes: Context, Overview, Requirements, Alternatives Considered (min 2), Design Rationale, Architecture, Implementation Steps, Todo list, Success Criteria, Risk Assessment
 - Research reports <=150 lines; plan.md <=80 lines
-
-## Project Context
-
-> **MUST** Plan ToDo Task to READ the following project-specific reference docs:
-> - `project-structure-reference.md` -- primary patterns for this role
-> - `project-structure-reference.md` -- service list, directory tree, ports
->
-> If files not found, search for: service directories, configuration files, project patterns.
 
 ## Output
 

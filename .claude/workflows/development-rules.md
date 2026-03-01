@@ -50,6 +50,17 @@
 - Handle edge cases and error scenarios
 - **DO NOT** create new enhanced files, update to the existing files directly.
 
+## Bulk Edit Safety (MANDATORY for multi-file replacements)
+
+When performing bulk find/replace across 3+ files:
+
+1. **Preserve syntax integrity** — Never insert comments that break language syntax (e.g., `ClassName // comment<T>` breaks C# generics). Comments go AFTER complete type expressions: `ClassName<T>  // comment`.
+2. **Grep verification** — After ALL replacements, grep the entire repo for the old term to catch missed references in docs, configs, catalog tables, and tests.
+3. **Doc cascade check** — When deleting/renaming components (agents, skills, hooks), map to affected docs:
+   - `.claude/agents/**` → `docs/claude/agents/README.md`, `docs/claude/agents/agent-patterns.md`, `docs/claude/claude-kit-setup.md`
+   - `.claude/skills/**` → `docs/claude/skills/README.md`, `docs/claude/skills/development-skills.md`, `docs/claude/claude-kit-setup.md`
+   - `.claude/hooks/**` → `docs/claude/hooks/README.md`, `docs/claude/hooks-reference.md`
+
 ## Doc Review (MANDATORY at session wrap-up)
 
 After completing any code changes, check for stale documentation before closing the task:
@@ -57,8 +68,8 @@ After completing any code changes, check for stale documentation before closing 
 1. Run `git diff --name-only` to list changed files.
 2. Map changed files to relevant docs:
    - Hook/skill/workflow files → `docs/claude/` reference docs (check counts, tables, file lists)
-   - Service code (`src/Services/**`) → `docs/business-features/` for the affected module
-   - Frontend code (`src/WebV2/**`) → `docs/frontend-patterns-reference.md` + business-feature docs
+   - Backend service code → `docs/business-features/` for the affected module (see docs/project-config.json for service paths)
+   - Frontend app code → `docs/frontend-patterns-reference.md` + business-feature docs (see docs/project-config.json for app paths)
    - `CLAUDE.md` structural changes → `docs/claude/README.md`
 3. For each potentially stale doc: flag it in the final review task or update it immediately.
 4. Output `No doc updates needed` if no mapping applies.

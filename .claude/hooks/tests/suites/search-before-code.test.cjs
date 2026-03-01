@@ -107,13 +107,15 @@ test('Allows trivial files without search', () => {
 });
 
 // Test 3: Should BLOCK new pattern implementation without search
-test('Blocks ifValidator implementation without search', () => {
+// Content must be >= 20 lines to bypass trivial file check
+test('Blocks pattern keyword implementation without search', () => {
+  const padding = 'const x = 1;\n'.repeat(15); // Pad to exceed trivial threshold
   const payload = {
     tool_name: 'Edit',
     tool_input: {
       file_path: 'component.ts',
-      new_string: `
-import { ifValidator } from '@libs/platform-core';
+      new_string: padding + `
+import { ifValidator } from '@libs/core';
 
 export class MyComponent {
   form = new FormControl('', [
@@ -136,12 +138,13 @@ test('Allows implementation when Grep was used', () => {
     tool_input: { pattern: 'ifValidator' }
   });
 
+  const padding = 'const x = 1;\n'.repeat(15);
   const payload = {
     tool_name: 'Edit',
     tool_input: {
       file_path: 'component.ts',
-      new_string: `
-import { ifValidator } from '@libs/platform-core';
+      new_string: padding + `
+import { ifValidator } from '@libs/core';
 
 export class MyComponent {
   form = new FormControl('', [
@@ -161,12 +164,13 @@ export class MyComponent {
 test('Allows with "skip search" override', () => {
   const transcriptWithOverride = 'User: skip search and just implement it';
 
+  const padding = 'const x = 1;\n'.repeat(15);
   const payload = {
     tool_name: 'Edit',
     tool_input: {
       file_path: 'component.ts',
-      new_string: `
-import { ifValidator } from '@libs/platform-core';
+      new_string: padding + `
+import { ifValidator } from '@libs/core';
 export class MyComponent {
   form = new FormControl('', [ifValidator(() => true, () => Validators.required)]);
 }
@@ -179,22 +183,24 @@ export class MyComponent {
   assert(!result.blocked, 'Should not block with override');
 });
 
-// Test 6: Should detect multiple pattern keywords
-test('Detects PlatformVmStore pattern', () => {
+// Test 6: Should detect config-driven pattern keywords
+// Content must be >= 20 lines to bypass trivial file check
+test('Detects config-driven pattern keyword', () => {
+  const padding = 'const x = 1;\n'.repeat(20); // Pad to exceed trivial threshold
   const payload = {
     tool_name: 'Write',
     tool_input: {
       file_path: 'store.ts',
-      content: `
-export class MyStore extends PlatformVmStore<MyVm> {
-  loadData = this.effectSimple(() => this.api.getData());
+      content: padding + `
+export class MyStore extends SomeCommandHandler {
+  execute() { return this.repository.save(); }
 }
       `.trim()
     }
   };
 
   const result = runHook(payload, '');
-  assert(result.exitCode === 1, 'Should block PlatformVmStore without search');
+  assert(result.exitCode === 1, 'Should block Command.*Handler without search');
 });
 
 // Test 7: Should allow non-pattern code

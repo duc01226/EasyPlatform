@@ -21,7 +21,6 @@ Agents are specialized subagents that Claude spawns via the `Task` tool to handl
 | Agent | Description | When to Use |
 |-------|-------------|-------------|
 | `planner` | Implementation planning, architecture | Planning implementation strategy, identifying critical files, trade-offs |
-| `brainstormer` | Solution brainstorming, technical debates | Evaluating architectural approaches, debating decisions before implementation |
 | `ui-ux-designer` | UI/UX design work | Interface designs, wireframes, design systems, accessibility review |
 
 ### Implementation
@@ -52,9 +51,7 @@ Agents are specialized subagents that Claude spawns via the `Task` tool to handl
 | Agent | Description | When to Use |
 |-------|-------------|-------------|
 | `database-admin` | Database operations | Query optimization, schema design, backup strategies, replication |
-| `copywriter` | Marketing copy | Landing pages, email campaigns, social media, product descriptions |
 | `git-manager` | Git operations | Staging, committing, pushing with conventional commits |
-| `mcp-manager` | MCP server management | Discover tools, analyze relevance, execute MCP capabilities |
 
 ### Team Collaboration
 

@@ -1,7 +1,7 @@
 # EasyPlatform Code Pattern Quick Reference
 
 > Compact reference for planning, investigation, and architecture decisions.
-> Full code examples: `.ai/docs/backend-code-patterns.md` and `.ai/docs/frontend-code-patterns.md`
+> Full code examples: `docs/backend-patterns-reference.md` and `docs/frontend-patterns-reference.md`
 
 ## Backend Patterns
 | #   | Pattern            | Key Interface/Contract                                                                             |

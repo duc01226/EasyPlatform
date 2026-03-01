@@ -8,7 +8,7 @@ Reusable content blocks extracted from multiple skills to eliminate duplication.
 |------|---------|-------|----------------|--------|
 | `evidence-based-reasoning-protocol.md` | Consolidated evidence-based reasoning: core rules, confidence levels, validation chain, risk matrix, code removal checklist | ~740 | All code-modifying and analysis skills (50) | **Active** |
 | `understand-code-first-protocol.md` | Read-before-write protocol, assumption validation, external memory | ~350 | All code-modifying skills (34+) | **Active** |
-| `design-system-check.md` | Mandatory design system doc locations and key files to read before frontend work | 145 | frontend-angular (4 merged) | **Active** |
+| `design-system-check.md` | Mandatory design system doc locations and key files to read before frontend work | 145 | frontend-design, web-design-guidelines | **Active** |
 | `module-detection-keywords.md` | Module keyword lists for automatic context loading | 127 | idea, product-owner, refine, story (4) | **Active** |
 | `references/module-codes.md` | Single source of truth for TC ID formats, service codes, feature codes | ~200 | test-spec, test-specs-docs, integration-test, tasks-test-generation (4) | **Active** |
 

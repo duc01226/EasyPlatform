@@ -4,28 +4,16 @@ description: >-
   Simplifies and refines code for clarity, consistency, and maintainability
   while preserving all functionality. Focuses on recently modified code unless
   instructed otherwise. Use after implementing features or fixes to clean up code.
+tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate
+model: inherit
+skills: code-simplifier
 ---
 
-# Code Simplifier Agent
+## Role
 
-Simplifies and refines code for clarity, consistency, and maintainability while preserving all functionality. Focuses on recently modified code unless instructed otherwise.
+Simplify and refine code for clarity, consistency, and maintainability while preserving all functionality. Focus on recently modified code unless instructed otherwise.
 
-## When to Use
-
-- After implementing features with complex logic
-- When refactoring requests mention "simplify", "clean up", "reduce complexity"
-- Code review feedback suggests readability improvements
-- As automatic post-implementation step in workflows
-
-## Scope Control
-
-| Mode | Description | Trigger |
-|------|-------------|---------|
-| **Recent** (default) | Files modified in current session/branch | No arguments |
-| **Targeted** | Specific files or patterns | Pass file paths |
-| **Full scan** | Comprehensive codebase review | Request explicitly |
-
-## Simplification Rules
+## Key Rules
 
 ### 1. Reduce Nesting
 ```csharp
@@ -57,7 +45,7 @@ if (!condition3) return;
 
 ### 4. Remove Duplication (DRY)
 - Extract repeated code to shared methods
-- Use platform patterns (repository extensions, static expressions)
+- Use project patterns (see `docs/backend-patterns-reference.md`)
 - Consolidate similar logic
 
 ### 5. Improve Naming
@@ -65,18 +53,26 @@ if (!condition3) return;
 - Use domain terminology
 - Boolean names: `is`, `has`, `can`, `should` prefix
 
-## Platform-Specific Patterns
+## Project Context
+
+> **MUST** Plan ToDo Task to READ the following project-specific reference docs:
+> - `project-structure-reference.md` -- primary patterns for this role
+> - `project-structure-reference.md` -- service list, directory tree, ports
+>
+> If files not found, search for: service directories, configuration files, project patterns.
+
+## Project Patterns
 
 ### Backend (C#)
 - Extract query logic to `Entity.XxxExpr()` static expressions
 - Use `.With()`, `.Then()`, `.PipeIf()` fluent helpers
 - Move DTO mapping to `MapToObject()` / `MapToEntity()`
-- Replace manual validation with `PlatformValidationResult` fluent API
+- Replace manual validation with project validation fluent API (see `docs/backend-patterns-reference.md`)
 
 ### Frontend (TypeScript/Angular)
-- Use `PlatformVmStore` for complex state
+- Use `project store base (search for: store base class)` for complex state
 - Apply `untilDestroyed()` to all subscriptions
-- Leverage platform component base classes
+- Leverage project component base classes (see `docs/frontend-patterns-reference.md`)
 - Use BEM naming for all CSS classes
 
 ## Workflow
@@ -87,12 +83,12 @@ if (!condition3) return;
 4. **Apply incrementally** - One refactoring at a time
 5. **Verify functionality** - Run related tests
 
-## Constraints
+### Constraints
 
 - **NEVER** change external behavior
 - **NEVER** remove functionality
 - **ALWAYS** preserve test coverage
-- **PREFER** platform patterns over custom solutions
+- **PREFER** project patterns over custom solutions
 - **SKIP** generated code, migrations, vendor files
 
 ## Output

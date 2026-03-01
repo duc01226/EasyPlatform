@@ -6,25 +6,25 @@
 public class SaveEmployeeCommandTests
 {
     private readonly Mock<I{Service}RootRepository<Employee>> _employeeRepoMock;
-    private readonly Mock<IPlatformApplicationRequestContextAccessor> _contextMock;
+    private readonly Mock<IRequestContextAccessor // project request context accessor (search for actual name)> _contextMock;
     private readonly SaveEmployeeCommandHandler _handler;
 
     public SaveEmployeeCommandTests()
     {
         _employeeRepoMock = new Mock<I{Service}RootRepository<Employee>>();
-        _contextMock = new Mock<IPlatformApplicationRequestContextAccessor>();
+        _contextMock = new Mock<IRequestContextAccessor // project request context accessor (search for actual name)>();
 
         // Setup default context
-        var requestContext = new Mock<IPlatformApplicationRequestContext>();
+        var requestContext = new Mock<IRequestContext // project request context (search for actual name)>();
         requestContext.Setup(x => x.UserId()).Returns("test-user-id");
         requestContext.Setup(x => x.CurrentCompanyId()).Returns("test-company-id");
         _contextMock.Setup(x => x.Current).Returns(requestContext.Object);
 
         _handler = new SaveEmployeeCommandHandler(
             Mock.Of<ILoggerFactory>(),
-            Mock.Of<IPlatformUnitOfWorkManager>(),
+            Mock.Of<IUnitOfWorkManager // project UoW manager (search for actual name)>(),
             Mock.Of<IServiceProvider>(),
-            Mock.Of<IPlatformRootServiceProvider>(),
+            Mock.Of<IRootServiceProvider // project root service provider (search for actual name)>(),
             _employeeRepoMock.Object
         );
     }
@@ -123,7 +123,7 @@ public class GetEmployeeListQueryTests
         _repoMock.Setup(x => x.CountAsync(It.IsAny<Expression<Func<Employee, bool>>>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
-        _repoMock.Setup(x => x.GetAllAsync(It.IsAny<Func<IPlatformUnitOfWork, IQueryable<Employee>, IQueryable<Employee>>>(), It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<Employee, object>>[]>()))
+        _repoMock.Setup(x => x.GetAllAsync(It.IsAny<Func<IUnitOfWork // project unit of work (search for actual name), IQueryable<Employee>, IQueryable<Employee>>>(), It.IsAny<CancellationToken>(), It.IsAny<Expression<Func<Employee, object>>[]>()))
             .ReturnsAsync(employees.Where(e => e.Status == EmployeeStatus.Active).ToList());
 
         var query = new GetEmployeeListQuery

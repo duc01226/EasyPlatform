@@ -57,7 +57,7 @@ function buildCatalogInjection(config, quickMode) {
     lines.push('');
     lines.push('> **MANDATORY:** You MUST check every prompt against this catalog before responding.');
     lines.push('> If a workflow matches and the task is non-trivial, auto-activate it immediately.');
-    lines.push('> If AI judges the task is simple, AI MUST ask the user whether to skip the workflow.');
+    lines.push('> If AI judges the task is simple, AI MUST ask the user whether to skip workflow.');
     lines.push('');
 
     lines.push(buildWorkflowCatalog(config));
@@ -78,9 +78,8 @@ function buildCatalogInjection(config, quickMode) {
     lines.push('');
     lines.push('### Simple Task Exception');
     lines.push('');
-    lines.push('If AI judges the task is simple/straightforward (single-file changes, clear small fixes),');
+    lines.push('If AI judges the task is simple/straightforward (single-file changes, clear small fixes, user says "just do it"),');
     lines.push('AI MUST ask the user: "This seems simple. Skip workflow? (yes/no)". If user says no, activate workflow as normal.');
-    lines.push('If user says "just do it" or "no workflow", skip without asking.');
     lines.push('');
 
     lines.push('### Task Creation Enforcement (HARD BLOCKING)');

@@ -10,7 +10,7 @@ Generate a Mermaid diagram showing the component hierarchy for the matched compo
 | Domain component | Green (#2ECC71) | DOMAIN |
 | Domain shared (_shared/) | Teal (#1ABC9C) | SHARED |
 | Common component (shared library) | Yellow (#F1C40F) | COMMON |
-| Platform component | Gray (#95A5A6) | PLATFORM |
+| Framework component | Gray (#95A5A6) | FRAMEWORK |
 
 ## Template
 

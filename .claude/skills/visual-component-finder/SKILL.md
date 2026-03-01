@@ -4,7 +4,7 @@ version: 1.1.0
 description: '[Frontend] Auto-activated visual-to-code component finder. Matches screenshots to Angular components with >=85% confidence using BEM classes, route paths, text content, and component selectors. Also supports index refresh/sync. Triggers on: screenshot, find component, find page, where is this, fix ui, update ui, fix screen, this page, this component, which component, locate component, visual match, find code for, match screenshot, refresh component index, update component index, sync component index, rebuild index.'
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 Find the Angular component(s) matching this screenshot: `$ARGUMENTS`
 

@@ -8,11 +8,11 @@ BravoSUITE supports two AI coding assistants with equivalent capabilities. Claud
 
 | Aspect              | Claude Code                             | GitHub Copilot                           |
 | ------------------- | --------------------------------------- | ---------------------------------------- |
-| Main Config File    | `CLAUDE.md`                             | `.github/copilot-instructions.md`        |
-| Path-Specific Rules | `.claude/skills/*/SKILL.md`             | `.github/instructions/*.instructions.md` |
+| Main Config File    | `CLAUDE.md`                             | `.github/common.copilot-instructions.md` + `.github/workspace.copilot-instructions.md` |
+| Path-Specific Rules | `.claude/skills/*/SKILL.md`             | *(deleted — use `docs/` reference docs)* |
 | Prompts/Commands    | `.claude/skills/*/SKILL.md`             | `.github/prompts/*.prompt.md`            |
 | Agent Definitions   | `.claude/settings.json` (subagent_type) | `.github/AGENTS.md` (documentation only) |
-| Workflow Config     | `.claude/workflows.json`                | Embedded in `copilot-instructions.md`    |
+| Workflow Config     | `.claude/workflows.json`                | Embedded in `workspace.copilot-instructions.md` |
 | Hooks/Automation    | `.claude/hooks/*.cjs` (JS scripts)      | **Not supported**                        |
 
 ## Feature Comparison
@@ -45,10 +45,11 @@ BravoSUITE supports two AI coding assistants with equivalent capabilities. Claud
 
 ```
 Claude Code                          GitHub Copilot
-├── CLAUDE.md                   ←→   .github/copilot-instructions.md
+├── CLAUDE.md                   ←→   .github/common.copilot-instructions.md
+│                                     .github/workspace.copilot-instructions.md
 ├── .claude/                         .github/
 │   ├── settings.json           ←→   AGENTS.md (doc only)
-│   ├── workflows.json          ←→   copilot-instructions.md (embedded)
+│   ├── workflows.json          ←→   workspace.copilot-instructions.md (embedded)
 │   ├── hooks/                       (not supported)
 │   │   └── workflow-router.cjs
 │   ├── commands/               ←→   prompts/
@@ -85,7 +86,7 @@ Claude Code                          GitHub Copilot
 | File                                    | applyTo Pattern                             | Description                 |
 | --------------------------------------- | ------------------------------------------- | --------------------------- |
 | `backend-dotnet.instructions.md`        | `src/Services/**/*.cs,src/Platform/**/*.cs` | .NET backend patterns       |
-| `frontend-angular.instructions.md`      | `src/WebV2/**/*.ts,**/*.html`               | Angular frontend patterns   |
+| *(deleted — frontend patterns in `docs/frontend-patterns-reference.md`)* | `src/WebV2/**/*.ts,**/*.html` | Angular frontend patterns |
 | `clean-code.instructions.md`            | `**`                                        | Universal clean code rules  |
 | `backend-cqrs.instructions.md`          | CQRS files                                  | CQRS command/query patterns |
 | `cqrs-patterns.instructions.md`         | Commands/Queries                            | Detailed CQRS patterns      |
@@ -125,7 +126,7 @@ Claude Code                          GitHub Copilot
 | `create-migration.prompt.md`         | Create migration            |
 | `create-unit-test.prompt.md`         | Create unit test            |
 | `refactor.prompt.md`                 | Refactoring guidance        |
-| `easyplatform-backend.prompt.md`     | Easy.Platform backend       |
+| `api-design.prompt.md`               | API design patterns         |
 
 ## Key Differences
 
@@ -163,7 +164,7 @@ Since Copilot lacks hooks:
 
 1. Update both:
    - Claude: `.claude/workflows.json` + `workflow-router.cjs`
-   - Copilot: `.github/copilot-instructions.md` workflow table
+   - Copilot: `.github/workspace.copilot-instructions.md` workflow table
 
 2. Create prompt files in both:
    - Claude: `.claude/skills/{workflow}/SKILL.md`

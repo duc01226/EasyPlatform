@@ -1,15 +1,15 @@
 {
   "assertions": [
-    "This is a .NET 9 + Angular 19 enterprise monorepo (BravoSUITE) using Easy.Platform framework",
-    "Backend: Use service-specific repositories (IGrowthRootRepository, ICandidatePlatformRootRepository, ISurveysPlatformRootRepository) - never generic IPlatformRootRepository",
-    "Backend: Use PlatformValidationResult fluent API (.And(), .AndAsync()) - never throw ValidationException",
-    "Backend: Side effects (notifications, emails, external APIs) go in Entity Event Handlers (UseCaseEvents/) - never in command handlers",
-    "Backend: DTOs own mapping via PlatformEntityDto<TEntity, TKey>.MapToEntity() or PlatformDto<T>.MapToObject() - never map in handlers",
+    "Read docs/project-structure-reference.md for project tech stack and architecture",
+    "Backend: Use service-specific repositories - see docs/backend-patterns-reference.md",
+    "Backend: Use project validation fluent API - see docs/backend-patterns-reference.md",
+    "Backend: Side effects go in Entity Event Handlers (UseCaseEvents/) - never in command handlers",
+    "Backend: DTOs own mapping - see docs/backend-patterns-reference.md",
     "Backend: Command + Result + Handler in ONE file under UseCaseCommands/{Feature}/",
-    "Backend: Cross-service communication via RabbitMQ message bus only - never direct database access",
-    "Frontend: Extend AppBaseComponent, AppBaseVmStoreComponent, or AppBaseFormComponent - never raw Component",
-    "Frontend: Use PlatformVmStore for state management - never manual signals",
-    "Frontend: Extend PlatformApiService for HTTP calls - never direct HttpClient",
+    "Backend: Cross-service communication via message bus only - never direct database access",
+    "Frontend: Extend project component base classes - see docs/frontend-patterns-reference.md",
+    "Frontend: Use project state management - see docs/frontend-patterns-reference.md",
+    "Frontend: Extend project API service base for HTTP calls - see docs/frontend-patterns-reference.md",
     "Frontend: Always use .pipe(this.untilDestroyed()) for subscriptions - never manual unsubscribe",
     "Frontend: All template elements must have BEM classes (block__element --modifier)",
     "Architecture: Search for existing implementations before creating new code",
@@ -55,13 +55,13 @@
   "subagent": {
     "agents": {
       "integration-tester": {
-        "contextPrefix": "Focus: BravoSUITE integration tests. Read Growth.IntegrationTests/README.md for patterns. Use TC-{MOD}-XXX format."
+        "contextPrefix": "Focus: Integration tests. Read Growth.IntegrationTests/README.md for patterns. Use TC-{MOD}-XXX format."
       },
       "backend-developer": {
-        "contextPrefix": "Focus: .NET 9 + Easy.Platform CQRS backend. Read .ai/docs/backend-code-patterns.md for patterns."
+        "contextPrefix": "Focus: Backend CQRS development. Read docs/backend-patterns-reference.md for patterns."
       },
       "researcher": {
-        "contextPrefix": "Focus: Technology research for BravoSUITE (.NET 9, Angular 19, MongoDB, RabbitMQ). Check codebase for existing implementations first."
+        "contextPrefix": "Focus: Technology research. Check codebase for existing implementations first."
       }
     }
   },

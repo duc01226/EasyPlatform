@@ -7,9 +7,7 @@
  * backend service files.
  *
  * Pattern Matching:
- *   src/Services/*                  → Backend microservices
- *   src/Platform/*                  → Easy.Platform framework
- *   src/PlatformExampleApp/*        → Example/reference app
+ *   Configured via docs/project-config.json backendServices.patterns
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
@@ -17,48 +15,18 @@
 
 const fs = require('fs');
 const path = require('path');
+const { loadProjectConfig, buildRegexMap, buildPatternList } = require('./lib/project-config-loader.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CONFIGURATION
+// CONFIGURATION (loaded from docs/project-config.json)
 // ═══════════════════════════════════════════════════════════════════════════
 
 const BACKEND_GUIDE_PATH = 'docs/claude/backend-csharp-complete-guide.md';
-const SHARED_PATTERN_MARKER = '## EasyPlatform Code Patterns';
+const { CODE_PATTERNS: SHARED_PATTERN_MARKER } = require('./lib/dedup-constants.cjs');
 
-const BACKEND_PATTERNS = [
-  {
-    name: 'Microservices',
-    patterns: [
-      /src[\/\\]Services[\/\\]/i
-    ],
-    description: 'Backend microservices (bravoTALENTS, bravoGROWTH, bravoSURVEYS, etc.)'
-  },
-  {
-    name: 'Platform Framework',
-    patterns: [
-      /src[\/\\]Platform[\/\\]/i
-    ],
-    description: 'Easy.Platform framework core'
-  },
-  {
-    name: 'Example App',
-    patterns: [
-      /src[\/\\]PlatformExampleApp[\/\\]/i
-    ],
-    description: 'Platform example/reference application'
-  }
-];
-
-// Service-specific patterns for more detailed guidance
-const SERVICE_PATTERNS = {
-  'bravoTALENTS': /Services[\/\\]bravoTALENTS/i,
-  'bravoGROWTH': /Services[\/\\]bravoGROWTH/i,
-  'bravoSURVEYS': /Services[\/\\]bravoSURVEYS/i,
-  'Growth': /Services[\/\\]Growth/i,
-  'Candidate': /Services[\/\\]Candidate/i,
-  'Employee': /Services[\/\\]Employee/i,
-  'Survey': /Services[\/\\]Survey/i
-};
+const config = loadProjectConfig();
+const BACKEND_PATTERNS = buildPatternList(config.backendServices?.patterns);
+const SERVICE_PATTERNS = buildRegexMap(config.backendServices?.serviceMap);
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPER FUNCTIONS
@@ -143,6 +111,7 @@ function shouldInject(filePath, transcriptPath) {
 
 function buildInjection(context, filePath, service, patternsAlreadyInjected) {
   const fileName = path.basename(filePath);
+  const backendDoc = config.framework?.backendPatternsDoc || 'docs/backend-patterns-reference.md';
 
   const lines = [
     '',
@@ -156,18 +125,17 @@ function buildInjection(context, filePath, service, patternsAlreadyInjected) {
 
   if (!patternsAlreadyInjected) {
     lines.push(
-      '### ⚠️ IMPORTANT — MUST READ',
+      '### IMPORTANT — MUST READ',
       '',
-      `Before implementing backend changes, you **⚠️ MUST READ** the following file:`,
+      `Before implementing backend changes, you **MUST READ** the following file:`,
       '',
       `**\`${BACKEND_GUIDE_PATH}\`**`,
       '',
-      'This guide contains:',
-      '- SOLID, DRY, KISS, YAGNI principles with code examples',
-      '- Repository patterns (use service-specific: IGrowthRootRepository, ICandidatePlatformRootRepository)',
-      '- CQRS Command/Query patterns (Command + Result + Handler in ONE file)',
-      '- Entity, DTO, and Validation patterns (PlatformValidationResult fluent API)',
-      '- Event-driven architecture (side effects in Entity Event Handlers)',
+      `Also review **\`${backendDoc}\`** for project-specific patterns covering:`,
+      '- Repository patterns (use service-specific repositories, NEVER generic)',
+      '- CQRS Command/Query patterns',
+      '- Entity, DTO, and validation patterns',
+      '- Event-driven architecture (side effects in entity event handlers)',
       '- Background jobs and data migrations',
       ''
     );
@@ -176,10 +144,12 @@ function buildInjection(context, filePath, service, patternsAlreadyInjected) {
   lines.push(
     '### Critical Rules',
     '',
-    '1. **Repository:** Use `IGrowthRootRepository<T>`, `ICandidatePlatformRootRepository<T>` - NEVER generic',
-    '2. **Validation:** Use `PlatformValidationResult` fluent API - NEVER throw ValidationException',
-    '3. **Side Effects:** Handle in `UseCaseEvents/` event handlers - NEVER in command handlers',
-    '4. **DTO Mapping:** DTOs own mapping via `PlatformEntityDto.MapToEntity()` - NEVER map in handlers',
+    `Refer to \`${backendDoc}\` for class names and detailed examples.`,
+    '',
+    '1. **Repository:** Use service-specific repository interfaces - NEVER generic',
+    '2. **Validation:** Use fluent validation API - NEVER throw exceptions',
+    '3. **Side Effects:** Handle in entity event handlers - NEVER in command handlers',
+    '4. **DTO Mapping:** DTOs own mapping - NEVER map in handlers',
     '5. **Cross-Service:** Use message bus - NEVER direct database access',
     ''
   );
@@ -193,24 +163,14 @@ function buildInjection(context, filePath, service, patternsAlreadyInjected) {
       ''
     );
 
-    if (service.includes('Growth') || service.includes('bravoGROWTH')) {
-      lines.push(
-        '- Use `IGrowthRootRepository<T>` for all entities',
-        '- Performance reviews, goals, OKRs domain',
-        ''
-      );
-    } else if (service.includes('Candidate') || service.includes('bravoTALENTS')) {
-      lines.push(
-        '- Use `ICandidatePlatformRootRepository<T>` for entities',
-        '- Recruitment, applicant tracking domain',
-        ''
-      );
-    } else if (service.includes('Survey') || service.includes('bravoSURVEYS')) {
-      lines.push(
-        '- Use `ISurveysPlatformRootRepository<T>` for entities',
-        '- Surveys, pulse surveys domain',
-        ''
-      );
+    const repos = config.backendServices?.serviceRepositories || {};
+    const domains = config.backendServices?.serviceDomains || {};
+    const repoType = repos[service];
+    const domain = domains[service];
+    if (repoType || domain) {
+      if (repoType) lines.push(`- Use \`${repoType}\` for entities`);
+      if (domain) lines.push(`- ${domain}`);
+      lines.push('');
     }
   }
 

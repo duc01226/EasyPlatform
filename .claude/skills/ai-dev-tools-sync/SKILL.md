@@ -6,7 +6,7 @@ description: '[AI & Tools] Synchronize and update Claude Code and GitHub Copilot
 allowed-tools: NONE
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -23,7 +23,7 @@ allowed-tools: NONE
 
 - Copilot reads `.claude/skills/` automatically (backward compatibility)
 - Both platforms read `.github/prompts/*.prompt.md` and `.github/agents/*.md`
-- Always update both `CLAUDE.md` and `.github/copilot-instructions.md` for instruction changes
+- Always update both `CLAUDE.md` and `.github/common.copilot-instructions.md` + `.github/workspace.copilot-instructions.md` for instruction changes
 
 # AI Dev Tools Sync
 
@@ -46,8 +46,7 @@ Activate this skill when:
 | SKILL.md        | prompts/\*.prompt.md     | `.claude/skills/` + `.github/prompts/`     |
 | agents/\*.md    | agents/\*.md             | `.github/agents/` (shared)                 |
 | workflows/\*.md | -                        | `.claude/workflows/`                       |
-| CLAUDE.md       | copilot-instructions.md  | Root + `.github/`                          |
-| -               | instructions/\*.md       | `.github/instructions/` (applyTo patterns) |
+| CLAUDE.md       | common + workspace .md   | Root + `.github/`                          |
 | -               | chatmodes/\*.chatmode.md | `.github/chatmodes/`                       |
 
 ## Sync Process
@@ -59,7 +58,8 @@ Read these files to understand current configuration:
 ```
 .claude/workflows/orchestration-protocol.md
 .claude/workflows/primary-workflow.md
-.github/copilot-instructions.md
+.github/common.copilot-instructions.md
+.github/workspace.copilot-instructions.md
 .github/AGENTS.md
 CLAUDE.md
 ```
@@ -88,7 +88,7 @@ For each change:
 
 1. **Skills**: Create in both `.claude/skills/` and `.github/skills/`
 2. **Prompts**: Create in both `.claude/skills/` and `.github/prompts/`
-3. **Instructions**: Update both `CLAUDE.md` and `.github/copilot-instructions.md`
+3. **Instructions**: Update `CLAUDE.md` + `.github/common.copilot-instructions.md` + `.github/workspace.copilot-instructions.md`
 4. **Agents**: Update `.github/agents/` (shared by both)
 
 ## Compatibility Notes

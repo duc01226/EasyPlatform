@@ -2,7 +2,7 @@
 /**
  * Code Review Rules Injector - PreToolUse Hook (Skill matcher)
  *
- * Injects BravoSUITE-specific code review rules when review-related skills are activated.
+ * Injects project-specific code review rules when review-related skills are activated.
  * Rules are stored externally in docs/code-review-rules.md (configurable via .ck.json).
  *
  * Configuration (.ck.json):
@@ -24,7 +24,7 @@ const { loadConfig } = require('./lib/ck-config-utils.cjs');
 // DEDUPLICATION
 // ═══════════════════════════════════════════════════════════════════════════
 
-const INJECTION_MARKER = '[BravoSUITE Code Review Rules - Auto-Injected]';
+const { CODE_REVIEW_RULES: INJECTION_MARKER } = require('./lib/dedup-constants.cjs');
 
 function wasRecentlyInjected(transcriptPath) {
     try {
@@ -94,7 +94,7 @@ async function main() {
         console.log(`---\n`);
         console.log(rules);
         console.log(`\n---\n`);
-        console.log(`**IMPORTANT:** Apply these BravoSUITE-specific rules during your review.\n`);
+        console.log(`**IMPORTANT:** Apply these project-specific rules during your review.\n`);
 
         process.exit(0);
     } catch (error) {

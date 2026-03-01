@@ -5,7 +5,7 @@ description: '[Implementation] Bootstrap project with parallel execution'
 activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Ultrathink parallel** to bootstrap: <user-requirements>$ARGUMENTS</user-requirements>
 

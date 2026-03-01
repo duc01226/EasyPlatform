@@ -13,6 +13,14 @@ model: inherit
 
 Create and review UI/UX designs with focus on accessibility, responsive layouts, and design system consistency for the project.
 
+## Project Context
+
+> **MUST** Plan ToDo Task to READ the following project-specific reference docs:
+> - `frontend-patterns-reference.md` -- primary patterns for this role
+> - `project-structure-reference.md` -- service list, directory tree, ports
+>
+> If files not found, search for: service directories, configuration files, project patterns.
+
 ## Workflow
 
 1. **Research** — understand requirements, review `docs/design-system/` tokens, analyze existing patterns in shared UI component library
@@ -29,14 +37,6 @@ Create and review UI/UX designs with focus on accessibility, responsive layouts,
 - Performance: optimize animations, respect `prefers-reduced-motion`
 - All template elements must have BEM classes
 - If requirements are unclear, ask specific questions before proceeding
-
-## Project Context
-
-> **MUST** Plan ToDo Task to READ the following project-specific reference docs:
-> - `frontend-patterns-reference.md` -- primary patterns for this role
-> - `project-structure-reference.md` -- service list, directory tree, ports
->
-> If files not found, search for: service directories, configuration files, project patterns.
 
 ## Quality Standards
 

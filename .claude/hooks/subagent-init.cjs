@@ -21,6 +21,8 @@ const {
   normalizePath
 } = require('./lib/ck-config-utils.cjs');
 const { getTodoStateForSubagent } = require('./lib/todo-state.cjs');
+const { loadProjectConfig } = require('./lib/project-config-loader.cjs');
+const { CODE_PATTERNS: CODE_PATTERNS_MARKER } = require('./lib/dedup-constants.cjs');
 
 /**
  * Get agent-specific context from config
@@ -58,7 +60,11 @@ const COMPACT_REF_PATH = path.resolve(PROJECT_DIR, '.ai/docs/compact-pattern-ref
 
 function buildCodingPatternContext(agentType) {
   if (!PATTERN_AWARE_AGENT_TYPES.has(agentType)) return [];
-  const lines = ['', '## EasyPlatform Code Patterns'];
+  const projConfig = loadProjectConfig();
+  const backendDoc = projConfig.framework?.backendPatternsDoc || 'docs/backend-patterns-reference.md';
+  const frontendDoc = projConfig.framework?.frontendPatternsDoc || 'docs/frontend-patterns-reference.md';
+
+  const lines = ['', CODE_PATTERNS_MARKER];
   try {
     if (fs.existsSync(COMPACT_REF_PATH)) {
       lines.push(fs.readFileSync(COMPACT_REF_PATH, 'utf-8'));
@@ -67,8 +73,8 @@ function buildCodingPatternContext(agentType) {
   lines.push(
     '',
     '**MUST READ for full code examples:**',
-    '- `.ai/docs/backend-code-patterns.md` - Backend (CQRS, Repository, Entity, etc.)',
-    '- `.ai/docs/frontend-code-patterns.md` - Frontend (Components, Store, Forms, etc.)'
+    `- \`${backendDoc}\` - Backend (CQRS, Repository, Entity, etc.)`,
+    `- \`${frontendDoc}\` - Frontend (Components, Store, Forms, etc.)`
   );
   return lines;
 }

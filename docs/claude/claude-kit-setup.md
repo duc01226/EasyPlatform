@@ -111,7 +111,7 @@ claude
 
 ```
 .claude/
-├── agents/                 # 18 specialized subagent definitions
+├── agents/                 # 22 specialized subagent definitions
 │   ├── planner.md         # Research and planning agent
 │   ├── code-reviewer.md   # Code review agent
 │   ├── code-simplifier.md # Post-implementation cleanup agent
@@ -749,7 +749,7 @@ languages: all
 | Skill              | Description                                       | Trigger Keywords                             |
 | ------------------ | ------------------------------------------------- | -------------------------------------------- |
 | `frontend-design`  | UI/UX implementation with design systems          | UI, design, styling                          |
-| `frontend-angular` | Angular 19 components, forms, state, API services | Angular, component, form, store, API service |
+| *(removed — handled by hooks + `docs/frontend-patterns-reference.md`)* | | |
 | `shadcn-tailwind`  | React component library + Tailwind CSS            | shadcn, Tailwind, Radix                      |
 | `ui-ux-pro-max`    | Advanced UI/UX patterns                           | user experience, interface                   |
 | `threejs`          | 3D graphics with Three.js                         | 3D, WebGL, Three.js                          |
@@ -758,7 +758,7 @@ languages: all
 
 | Skill                   | Description                          | Trigger Keywords            |
 | ----------------------- | ------------------------------------ | --------------------------- |
-| `easyplatform-backend`  | CQRS, repository, entity, validation | C#, backend, CQRS, .NET     |
+| `api-design`            | REST API endpoint design, CQRS       | C#, backend, CQRS, .NET     |
 | `databases`             | MongoDB, PostgreSQL patterns         | database, query, SQL, Mongo |
 | `database-optimization` | Query optimization, indexing, N+1    | slow query, N+1, index      |
 | `better-auth`           | Framework-agnostic TypeScript auth   | auth, OAuth, JWT, session   |
@@ -847,7 +847,7 @@ languages: all
 
 ## Agents
 
-Agents are specialized subprocesses that handle complex, multi-step tasks autonomously. **18 agents** with different capabilities.
+Agents are specialized subprocesses that handle complex, multi-step tasks autonomously. **22 agents** with different capabilities.
 
 ### Agent Overview
 
@@ -865,12 +865,9 @@ Agents are specialized subprocesses that handle complex, multi-step tasks autono
 | `git-manager`         | Stage, commit, push changes              | sonnet | /commit, /git         |
 | `scout`               | Locate files across codebase             | sonnet | /scout                |
 | `scout-external`      | External tool codebase search            | sonnet | /scout-ext            |
-| `brainstormer`        | Evaluate architectural approaches        | sonnet | /brainstorm           |
 | `database-admin`      | Database operations and optimization     | sonnet | /db-migrate           |
 | `project-manager`     | Track progress, consolidate reports      | sonnet | Manual                |
 | `journal-writer`      | Document technical difficulties          | sonnet | /journal              |
-| `mcp-manager`         | Manage MCP server integrations           | sonnet | /use-mcp              |
-| `copywriter`          | Marketing and engagement copy            | sonnet | /content              |
 
 ### Agent Invocation Patterns
 

@@ -5,7 +5,7 @@ description: "[Utilities] Use when saving or retrieving important patterns, deci
 allowed-tools: Read, Write, Edit, Glob, Grep, TaskCreate, mcp__memory__*
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -142,7 +142,7 @@ mcp__memory__create_entities([
         name: 'EmployeeValidationPattern',
         entityType: 'Pattern',
         observations: [
-            'Use PlatformValidationResult fluent API',
+            'Use project validation fluent API (see docs/backend-patterns-reference.md)',
             'Chain with .And() and .AndAsync()',
             "Return validation result, don't throw",
             'Location: Growth.Application/UseCaseCommands/'
@@ -174,7 +174,7 @@ mcp__memory__create_relations([
 mcp__memory__add_observations([
     {
         entityName: 'EmployeeValidationPattern',
-        contents: ['Also supports .AndNot() for negative validation', 'Use .Of<IPlatformCqrsRequest>() for type conversion']
+        contents: ['Also supports .AndNot() for negative validation', 'Use .Of<ICqrsRequest>() for type conversion (see docs/backend-patterns-reference.md)']
     }
 ]);
 ```

@@ -6,13 +6,7 @@
  * frontend files. Uses file path patterns to select the appropriate guide.
  *
  * Pattern Matching:
- *   src/WebV2/*                    → WebV2DesignSystem.md
- *   src/Web/bravoTALENTS*          → bravoTALENTSClientDesignSystem.md
- *   src/Web/CandidateApp*          → CandidateAppClientDesignSystem.md
- *   src/Web/JobPortal*             → CandidateAppClientDesignSystem.md
- *   src/Web/bravoINSIGHTS*         → bravoTALENTSClientDesignSystem.md
- *   src/Web/bravoSURVEYS*          → bravoTALENTSClientDesignSystem.md
- *   src/Web/PulseSurveys*          → bravoTALENTSClientDesignSystem.md
+ *   Reads designSystem.appMappings from docs/project-config.json for app detection.
  *
  * Exit Codes:
  *   0 - Success (non-blocking)
@@ -20,46 +14,15 @@
 
 const fs = require('fs');
 const path = require('path');
+const { loadProjectConfig, buildPatternList } = require('./lib/project-config-loader.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
-// CONFIGURATION
+// CONFIGURATION (loaded from docs/project-config.json)
 // ═══════════════════════════════════════════════════════════════════════════
 
-const DESIGN_SYSTEM_DOCS_PATH = 'docs/design-system';
-
-const APP_PATTERNS = [
-  {
-    name: 'WebV2',
-    patterns: [
-      /src[\/\\]WebV2[\/\\]/i,
-      /libs[\/\\]bravo-common[\/\\]/i,
-      /libs[\/\\]bravo-domain[\/\\]/i,
-      /libs[\/\\]platform-core[\/\\]/i
-    ],
-    docFile: 'WebV2DesignSystem.md',
-    description: 'Angular 19 standalone components with shared-mixin SCSS'
-  },
-  {
-    name: 'bravoTALENTS',
-    patterns: [
-      /src[\/\\]Web[\/\\]bravoTALENTS/i,
-      /src[\/\\]Web[\/\\]bravoINSIGHTS/i,
-      /src[\/\\]Web[\/\\]bravoSURVEYS/i,
-      /src[\/\\]Web[\/\\]PulseSurveys/i
-    ],
-    docFile: 'bravoTALENTSClientDesignSystem.md',
-    description: 'Legacy Angular with SCSS variables and sprite icons'
-  },
-  {
-    name: 'CandidateApp',
-    patterns: [
-      /src[\/\\]Web[\/\\]CandidateApp/i,
-      /src[\/\\]Web[\/\\]JobPortal/i
-    ],
-    docFile: 'CandidateAppClientDesignSystem.md',
-    description: 'Bootstrap 3 grid with ca- BEM prefix and Font Awesome icons'
-  }
-];
+const config = loadProjectConfig();
+const DESIGN_SYSTEM_DOCS_PATH = config.designSystem?.docsPath || 'docs/design-system';
+const APP_PATTERNS = buildPatternList(config.designSystem?.appMappings);
 
 // File extensions that indicate frontend files
 const FRONTEND_EXTENSIONS = [
@@ -150,41 +113,17 @@ function buildInjection(app, filePath) {
     ''
   ];
 
-  // Add app-specific quick tips
-  if (app.name === 'WebV2') {
-    lines.push(
-      '- **SCSS:** Use `@use \'shared-mixin\'` imports',
-      '- **Colors:** Use CSS variables `--bg-pri-cl`, `--text-primary-cl`',
-      '- **Layout:** Use flex mixins `@include flex-column-container()`',
-      '- **Components:** Angular 19 standalone with signals',
-      '- **BEM:** Block__element with separate --modifier class'
-    );
-  } else if (app.name === 'bravoTALENTS') {
-    lines.push(
-      '- **SCSS:** Use `@import \'~assets/scss/variables\'`',
-      '- **Colors:** Use SCSS variables `$color-primary`, `$color-gray-*`',
-      '- **Icons:** Use sprite icons `<span class="icon icon-name"></span>`',
-      '- **Layout:** Use `flex-column-container` mixin',
-      '- **BEM:** Module-specific prefix (e.g., `recruitment-*`)'
-    );
-  } else if (app.name === 'CandidateApp') {
-    lines.push(
-      '- **Grid:** Bootstrap 3 `col-xs-*`, `col-sm-*`, `col-md-*`',
-      '- **BEM:** Use `ca-` prefix for all classes',
-      '- **Icons:** Font Awesome `<i class="fa fa-*"></i>`',
-      '- **Variables:** Import from `_variables.scss`',
-      '- **Modals:** Use Bootstrap modals with `ca-modal` class'
-    );
+  // Add app-specific quick tips from config (quickTips array in designSystem.appMappings)
+  const quickTips = app.quickTips || [];
+  for (const tip of quickTips) {
+    lines.push(`- ${tip}`);
   }
 
-  lines.push(
-    '',
-    '### V1 Modern UI Note',
-    '',
-    'If building **NEW modern UI** in V1 apps (bravoTALENTS/CandidateApp), also **⚠️ MUST READ**:',
-    '`docs/design-system/WebV1ModernStyleGuide.md` for V2 aesthetic guidelines.',
-    ''
-  );
+  // Add modern UI note from config if present
+  const modernNote = config.designSystem?.modernUiNote;
+  if (modernNote) {
+    lines.push('', '### Modern UI Note', '', modernNote, '');
+  }
 
   return lines.join('\n');
 }

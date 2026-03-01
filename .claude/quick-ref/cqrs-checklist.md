@@ -1,6 +1,6 @@
 # CQRS Quick Checklist
 
-> One-page reference for CQRS implementation in BravoSUITE
+> One-page reference for CQRS implementation. Base class names shown are generic placeholders -- see docs/backend-patterns-reference.md for actual project class names.
 
 ## File Organization Rule
 
@@ -20,25 +20,25 @@ Exception: Reusable EntityDtos -> EntityDtos/ folder
 ```csharp
 // File: Save{Entity}Command.cs
 
-public sealed class Save{Entity}Command : PlatformCqrsCommand<Save{Entity}CommandResult>
+public sealed class Save{Entity}Command : CqrsCommandBase<Save{Entity}CommandResult>
 {
     public string Id { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
 
-    public override PlatformValidationResult<IPlatformCqrsRequest> Validate()
+    public override ValidationResult Validate()
     {
         return base.Validate()
             .And(_ => Name.IsNotNullOrEmpty(), "Name required");
     }
 }
 
-public sealed class Save{Entity}CommandResult : PlatformCqrsCommandResult
+public sealed class Save{Entity}CommandResult : CqrsCommandResultBase
 {
     public {Entity}Dto Entity { get; set; } = null!;
 }
 
 internal sealed class Save{Entity}CommandHandler :
-    PlatformCqrsCommandApplicationHandler<Save{Entity}Command, Save{Entity}CommandResult>
+    CqrsCommandHandlerBase<Save{Entity}Command, Save{Entity}CommandResult>
 {
     protected override async Task<Save{Entity}CommandResult> HandleAsync(
         Save{Entity}Command request, CancellationToken ct)
@@ -55,20 +55,20 @@ internal sealed class Save{Entity}CommandHandler :
 ```csharp
 // File: Get{Entity}ListQuery.cs
 
-public sealed class Get{Entity}ListQuery : PlatformCqrsPagedQuery<Get{Entity}ListQueryResult, {Entity}Dto>
+public sealed class Get{Entity}ListQuery : CqrsPagedQueryBase<Get{Entity}ListQueryResult, {Entity}Dto>
 {
     public List<Status> Statuses { get; set; } = [];
     public string? SearchText { get; set; }
 }
 
-public sealed class Get{Entity}ListQueryResult : PlatformCqrsPagedQueryResult<{Entity}Dto>
+public sealed class Get{Entity}ListQueryResult : CqrsPagedQueryResultBase<{Entity}Dto>
 {
     public Get{Entity}ListQueryResult(List<{Entity}Dto> items, long total, Get{Entity}ListQuery query)
         : base(items, total, query) { }
 }
 
 internal sealed class Get{Entity}ListQueryHandler :
-    PlatformCqrsQueryApplicationHandler<Get{Entity}ListQuery, Get{Entity}ListQueryResult>
+    CqrsQueryHandlerBase<Get{Entity}ListQuery, Get{Entity}ListQueryResult>
 {
     protected override async Task<Get{Entity}ListQueryResult> HandleAsync(
         Get{Entity}ListQuery request, CancellationToken ct)
@@ -128,7 +128,7 @@ NEVER in Handler:
 ❌ await externalApi.SyncAsync(entity);
 
 ALWAYS via Event Handler:
-✅ Platform auto-raises PlatformCqrsEntityEvent
+✅ Framework auto-raises entity domain events
 ✅ Create: SendNotificationOnCreate{Entity}EntityEventHandler
 ✅ Location: UseCaseEvents/{Feature}/
 ```

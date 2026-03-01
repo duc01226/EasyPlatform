@@ -5,7 +5,7 @@ description: '[Implementation] Scaffold a new feature with backend and frontend 
 activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
@@ -50,7 +50,7 @@ Create a new feature: $ARGUMENTS
     - Angular components and services
     - DTOs and validation
 
-4. **Use Platform Patterns**
+4. **Use Project Patterns**
     - Reference patterns from CLAUDE.md
     - Use `.github/prompts/` templates for scaffolding:
         - `create-cqrs-command.prompt.md`

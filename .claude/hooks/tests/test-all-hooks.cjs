@@ -2,7 +2,7 @@
 /**
  * Comprehensive Test Suite for Claude Hooks (Enhanced)
  *
- * Tests all 26 hooks in the BravoSUITE Claude Code integration.
+ * Tests all hooks in the Claude Code integration.
  * Covers: SessionStart, SessionEnd, SubagentStart, UserPromptSubmit,
  *         PreToolUse, PostToolUse, PreCompact, Notification
  *
@@ -317,6 +317,95 @@ async function testPostCompactRecovery() {
   }
 }
 
+async function testProjectConfigInit() {
+  logSection('SessionStart: project-config-init.cjs');
+
+  // Test 1: When config exists, should exit silently
+  {
+    const result = await runHook('project-config-init.cjs', { source: 'startup' });
+    logResult('Exits 0 when config exists', result.code === 0);
+    // In our repo docs/project-config.json exists, so no output expected
+    logResult('No output when config exists', !result.stdout.includes('Project Config Initialized'));
+  }
+
+  // Test 2: When config is missing, should create skeleton and output instructions
+  {
+    const tmpDir = createTempDir();
+    try {
+      const docsDir = path.join(tmpDir, 'docs');
+      fs.mkdirSync(docsDir, { recursive: true });
+      const result = await runHook('project-config-init.cjs', { source: 'startup' }, {
+        env: { CLAUDE_PROJECT_DIR: tmpDir }
+      });
+      logResult('Exits 0 when config missing', result.code === 0);
+      logResult('Outputs initialization message', result.stdout.includes('Project Config Initialized'));
+      logResult('Outputs ACTION REQUIRED', result.stdout.includes('ACTION REQUIRED'));
+      logResult('Outputs scan instructions', result.stdout.includes('scan the project'));
+
+      // Verify skeleton was created
+      const configPath = path.join(docsDir, 'project-config.json');
+      const configExists = fs.existsSync(configPath);
+      logResult('Creates skeleton file', configExists);
+
+      if (configExists) {
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+        logResult('Skeleton has backendServices', !!config.backendServices);
+        logResult('Skeleton has frontendApps', !!config.frontendApps);
+        logResult('Skeleton has designSystem', !!config.designSystem);
+        logResult('Skeleton has scss', !!config.scss);
+        logResult('Skeleton has componentFinder', !!config.componentFinder);
+        logResult('Skeleton has sharedNamespace', 'sharedNamespace' in config);
+      }
+    } finally {
+      cleanupTempDir(tmpDir);
+    }
+  }
+
+  // Test 3: Creates docs/ directory if missing
+  {
+    const tmpDir = createTempDir();
+    try {
+      const result = await runHook('project-config-init.cjs', { source: 'startup' }, {
+        env: { CLAUDE_PROJECT_DIR: tmpDir }
+      });
+      logResult('Exits 0 when docs/ missing', result.code === 0);
+      logResult('Creates docs/ directory', fs.existsSync(path.join(tmpDir, 'docs')));
+      logResult('Creates config inside docs/', fs.existsSync(path.join(tmpDir, 'docs', 'project-config.json')));
+    } finally {
+      cleanupTempDir(tmpDir);
+    }
+  }
+
+  // Test 4: Empty input handled gracefully
+  {
+    const result = await runHook('project-config-init.cjs', null);
+    logResult('Empty input exits 0', result.code === 0);
+  }
+
+  // Test 5: Idempotent — second run does nothing
+  {
+    const tmpDir = createTempDir();
+    try {
+      const docsDir = path.join(tmpDir, 'docs');
+      fs.mkdirSync(docsDir, { recursive: true });
+
+      // First run — creates file
+      await runHook('project-config-init.cjs', { source: 'startup' }, {
+        env: { CLAUDE_PROJECT_DIR: tmpDir }
+      });
+
+      // Second run — should be silent
+      const result = await runHook('project-config-init.cjs', { source: 'startup' }, {
+        env: { CLAUDE_PROJECT_DIR: tmpDir }
+      });
+      logResult('Second run exits 0', result.code === 0);
+      logResult('Second run produces no output', !result.stdout.includes('Project Config Initialized'));
+    } finally {
+      cleanupTempDir(tmpDir);
+    }
+  }
+}
+
 async function testSessionEnd() {
   logSection('SessionEnd: session-end.cjs');
 
@@ -563,6 +652,56 @@ async function testLessonsInjector() {
         result.code === 0 && result.stdout.includes('## Learned Lessons'));
       logResult('Output includes lesson entries',
         result.stdout.includes('repository pattern'));
+    } finally {
+      cleanupTempDir(tempDir);
+    }
+  }
+}
+
+async function testLessonLearnedReminder() {
+  logSection('UserPromptSubmit: lesson-learned-reminder.cjs');
+
+  // Test 1: Empty stdin exits 0
+  {
+    const result = await runHook('lesson-learned-reminder.cjs', null);
+    logResult('Empty stdin exits 0', result.code === 0);
+  }
+
+  // Test 2: Normal prompt outputs reminder
+  {
+    const result = await runHook('lesson-learned-reminder.cjs', { prompt: 'implement feature' });
+    logResult('Outputs reminder on normal prompt', result.code === 0 && result.stdout.includes('[LESSON-LEARNED-REMINDER]'));
+    logResult('Contains TaskCreate instruction', result.stdout.includes('TaskCreate'));
+    logResult('Contains /learn instruction', result.stdout.includes('/learn'));
+  }
+
+  // Test 3: Dedup — skip when marker in recent transcript
+  {
+    const tempDir = createTempDir();
+    const transcriptPath = path.join(tempDir, 'transcript.jsonl');
+    fs.writeFileSync(transcriptPath, '[LESSON-LEARNED-REMINDER] Task Planning\n'.repeat(5));
+    try {
+      const result = await runHook('lesson-learned-reminder.cjs', {
+        prompt: 'test', transcript_path: transcriptPath
+      });
+      logResult('Dedup: skips when marker in transcript',
+        result.code === 0 && !result.stdout.includes('[LESSON-LEARNED-REMINDER]'));
+    } finally {
+      cleanupTempDir(tempDir);
+    }
+  }
+
+  // Test 4: No dedup when transcript has no marker
+  {
+    const tempDir = createTempDir();
+    const transcriptPath = path.join(tempDir, 'transcript.jsonl');
+    fs.writeFileSync(transcriptPath, 'Some other content\nNo marker here\n');
+    try {
+      const result = await runHook('lesson-learned-reminder.cjs', {
+        prompt: 'test', transcript_path: transcriptPath
+      });
+      logResult('Injects when transcript has no marker',
+        result.code === 0 && result.stdout.includes('[LESSON-LEARNED-REMINDER]'));
     } finally {
       cleanupTempDir(tempDir);
     }
@@ -1040,9 +1179,9 @@ async function testContextInjectors() {
   // Design System Context
   logSubsection('design-system-context.cjs');
   const frontendPaths = [
-    'src/WebV2/apps/growth/src/app.component.ts',
-    'src/WebV2/libs/bravo-common/src/button.component.ts',
-    'src/WebV2/apps/employee/src/pages/profile.component.ts'
+    'src/Frontend/apps/playground-text-snippet/src/app/app.component.ts',
+    'src/Frontend/libs/platform-core/src/lib/components/button.component.ts',
+    'src/Frontend/libs/apps-shared-components/src/profile.component.ts'
   ];
 
   for (const filePath of frontendPaths) {
@@ -1059,8 +1198,8 @@ async function testContextInjectors() {
   // Backend C# Context
   logSubsection('backend-csharp-context.cjs');
   const backendPaths = [
-    'src/Services/Growth/Commands/SaveCommand.cs',
-    'src/Services/Talents/Entities/Employee.cs',
+    'src/Backend/PlatformExampleApp.TextSnippet.Application/UseCaseCommands/SaveTextSnippetCommand.cs',
+    'src/Backend/PlatformExampleApp.TextSnippet.Domain/Entities/TextSnippetEntity.cs',
     'src/Platform/Easy.Platform/Application/Handler.cs'
   ];
 
@@ -1075,9 +1214,9 @@ async function testContextInjectors() {
   // Frontend TypeScript Context
   logSubsection('frontend-typescript-context.cjs');
   const tsPaths = [
-    'src/WebV2/libs/bravo-common/src/component.ts',
-    'src/WebV2/apps/growth/src/app.module.ts',
-    'src/WebV2/libs/platform-core/src/store.ts'
+    'src/Frontend/libs/platform-core/src/lib/components/component.ts',
+    'src/Frontend/apps/playground-text-snippet/src/app/app.module.ts',
+    'src/Frontend/libs/platform-core/src/lib/store.ts'
   ];
 
   for (const filePath of tsPaths) {
@@ -1091,9 +1230,9 @@ async function testContextInjectors() {
   // SCSS Styling Context
   logSubsection('scss-styling-context.cjs');
   const scssPaths = [
-    'src/WebV2/apps/growth/styles/main.scss',
-    'src/WebV2/libs/bravo-common/src/button.component.scss',
-    'src/WebV2/styles/_variables.scss'
+    'src/Frontend/apps/playground-text-snippet/src/styles/main.scss',
+    'src/Frontend/libs/platform-core/src/lib/button.component.scss',
+    'src/Frontend/styles/_variables.scss'
   ];
 
   for (const filePath of scssPaths) {
@@ -1230,7 +1369,7 @@ async function testNotification() {
   {
     const result = await runHook('notify-waiting.js', {
       hook_event_name: 'AskUserPrompt',
-      cwd: 'D:/GitSources/BravoSuite',
+      cwd: 'D:/Projects/MyProject',
       session_id: 'test-001'
     }, testEnv);
     logResult('AskUserPrompt event (dialog)', result.code === 0);
@@ -1240,7 +1379,7 @@ async function testNotification() {
   {
     const result = await runHook('notify-waiting.js', {
       hook_event_name: 'Stop',
-      cwd: 'D:/GitSources/BravoSuite',
+      cwd: 'D:/Projects/MyProject',
       session_id: 'test-002'
     }, testEnv);
     logResult('Stop event (dialog)', result.code === 0);
@@ -1250,7 +1389,7 @@ async function testNotification() {
   {
     const result = await runHook('notify-waiting.js', {
       hook_event_name: 'SubagentStop',
-      cwd: 'D:/GitSources/BravoSuite',
+      cwd: 'D:/Projects/MyProject',
       agent_type: 'scout',
       session_id: 'test-003'
     }, testEnv);
@@ -1324,7 +1463,7 @@ async function testNotification() {
       hook_event_name: 'Notification',
       notification_type: 'permission_prompt',
       message: 'Claude needs your permission to use Bash',
-      cwd: 'D:/GitSources/BravoSuite'
+      cwd: 'D:/Projects/MyProject'
     }, testEnv);
     logResult('Permission prompt (skipped)', result.code === 0);
   }
@@ -1335,7 +1474,7 @@ async function testNotification() {
       hook_event_name: 'Notification',
       notification_type: 'idle_prompt',
       message: 'Claude is waiting for your input',
-      cwd: 'D:/GitSources/BravoSuite'
+      cwd: 'D:/Projects/MyProject'
     }, testEnv);
     logResult('Idle prompt (not skipped)', result.code === 0);
   }
@@ -1347,7 +1486,7 @@ async function testNotification() {
     const result = await runHook('notify-waiting.js', {
       hook_event_name: 'Notification',
       message: 'Claude needs your permission to use Bash',
-      cwd: 'D:/GitSources/BravoSuite'
+      cwd: 'D:/Projects/MyProject'
       // Note: notification_type intentionally omitted to simulate bug #11964
     }, testEnv);
     logResult('Message-based permission detection (skipped)', result.code === 0);
@@ -1358,7 +1497,7 @@ async function testNotification() {
     const result = await runHook('notify-waiting.js', {
       hook_event_name: 'Notification',
       message: 'Claude needs your permission to use Write',
-      cwd: 'D:/GitSources/BravoSuite'
+      cwd: 'D:/Projects/MyProject'
     }, testEnv);
     logResult('Write permission message (skipped)', result.code === 0);
   }
@@ -1368,7 +1507,7 @@ async function testNotification() {
     const result = await runHook('notify-waiting.js', {
       hook_event_name: 'Notification',
       message: 'Check file permission settings',
-      cwd: 'D:/GitSources/BravoSuite'
+      cwd: 'D:/Projects/MyProject'
     }, testEnv);
     logResult('Non-permission message with "permission" word (not skipped)', result.code === 0);
   }
@@ -1401,6 +1540,41 @@ async function testLibModules() {
     } catch (err) {
       logResult(`${libFile} loads without error`, false, err.message);
     }
+  }
+}
+
+// ============================================================================
+// Dedup Constants Consistency Tests
+// ============================================================================
+
+async function testDedupConstants() {
+  logSection('Dedup Constants Consistency');
+
+  // Test 1: Module loads and exports expected keys
+  let constants;
+  try {
+    constants = require(path.join(HOOKS_DIR, 'lib', 'dedup-constants.cjs'));
+    logResult('Module loads without error', true);
+  } catch (err) {
+    logResult('Module loads without error', false, err.message);
+    return;
+  }
+
+  logResult('Exports CODE_PATTERNS (non-empty string)', typeof constants.CODE_PATTERNS === 'string' && constants.CODE_PATTERNS.length > 0);
+  logResult('Exports LESSON_LEARNED (non-empty string)', typeof constants.LESSON_LEARNED === 'string' && constants.LESSON_LEARNED.length > 0);
+
+  // Test 2: All consuming hooks import from dedup-constants (no inline definitions)
+  const hookFiles = [
+    'backend-csharp-context.cjs',
+    'frontend-typescript-context.cjs',
+    'code-patterns-injector.cjs',
+    'lesson-learned-reminder.cjs'
+  ];
+
+  for (const file of hookFiles) {
+    const content = fs.readFileSync(path.join(HOOKS_DIR, file), 'utf-8');
+    const usesSharedModule = content.includes('dedup-constants');
+    logResult(`${file} imports dedup-constants`, usesSharedModule);
   }
 }
 
@@ -1492,6 +1666,7 @@ async function runAllTests() {
   if (!FILTER || 'session'.includes(FILTER)) {
     await testSessionInit();
     await testPostCompactRecovery();
+    await testProjectConfigInit();
     await testSessionEnd();
   }
 
@@ -1505,6 +1680,7 @@ async function runAllTests() {
     await testWorkflowRouter();
     await testDevRulesReminder();
     await testLessonsInjector();
+    await testLessonLearnedReminder();
   }
 
   // PreToolUse
@@ -1535,6 +1711,11 @@ async function runAllTests() {
   // Lib Modules
   if (!FILTER || 'lib'.includes(FILTER)) {
     await testLibModules();
+  }
+
+  // Dedup Constants
+  if (!FILTER || 'dedup'.includes(FILTER) || 'lib'.includes(FILTER)) {
+    await testDedupConstants();
   }
 
   // Edge Cases

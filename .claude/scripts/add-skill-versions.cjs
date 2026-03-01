@@ -10,11 +10,10 @@ const path = require('path');
 const SKILLS_DIR = path.join(__dirname, '..', 'skills');
 const DRY_RUN = process.argv.includes('--dry-run');
 
-// BravoSUITE mature skills (frequently used, well-established)
+// Mature skills (frequently used, well-established)
 const MATURE_SKILLS = [
   'debug', 'code-review', 'documentation',
-  'test-spec', 'feature', 'easyplatform-backend',
-  'frontend-angular',
+  'test-spec', 'feature', 'frontend-design',
   'feature-docs', 'code-simplifier', 'planning',
   'refactoring', 'api-design', 'commit'
 ];

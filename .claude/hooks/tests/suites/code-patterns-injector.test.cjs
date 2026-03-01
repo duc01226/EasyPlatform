@@ -20,7 +20,7 @@ const { createTempDir, cleanupTempDir, createMockFile } = require('../lib/test-u
 
 // Hook under test
 const HOOK_PATH = getHookPath('code-patterns-injector.cjs');
-const MARKER = '## EasyPlatform Code Patterns';
+const { CODE_PATTERNS: MARKER } = require('../../lib/dedup-constants.cjs');
 
 // Project root (4 levels up from suites/)
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..', '..', '..');
@@ -34,9 +34,9 @@ const RUN_OPTS = { env: { CLAUDE_PROJECT_DIR: PROJECT_ROOT } };
 
 const triggerTests = [
     {
-        name: '[code-patterns-injector] injects backend patterns for .cs in Services',
+        name: '[code-patterns-injector] injects backend patterns for .cs in Backend',
         fn: async () => {
-            const input = { tool_name: 'Edit', tool_input: { file_path: 'src/Services/bravoGROWTH/Application/SaveCommand.cs' }, transcript_path: '' };
+            const input = { tool_name: 'Edit', tool_input: { file_path: 'src/Backend/PlatformExampleApp.TextSnippet.Application/UseCaseCommands/SaveTextSnippetCommand.cs' }, transcript_path: '' };
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
             assertAllowed(result.code);
             assertContains(result.stdout, MARKER, 'Should contain pattern marker');
@@ -55,18 +55,9 @@ const triggerTests = [
         }
     },
     {
-        name: '[code-patterns-injector] injects backend patterns for .cs in PlatformExampleApp',
+        name: '[code-patterns-injector] injects frontend patterns for .ts in Frontend apps',
         fn: async () => {
-            const input = { tool_name: 'Edit', tool_input: { file_path: 'src/PlatformExampleApp/TextSnippet/SaveCommand.cs' }, transcript_path: '' };
-            const result = await runHook(HOOK_PATH, input, RUN_OPTS);
-            assertAllowed(result.code);
-            assertContains(result.stdout, MARKER, 'Should contain pattern marker');
-        }
-    },
-    {
-        name: '[code-patterns-injector] injects frontend patterns for .ts in WebV2',
-        fn: async () => {
-            const input = { tool_name: 'Write', tool_input: { file_path: 'src/WebV2/apps/growth/component.ts' }, transcript_path: '' };
+            const input = { tool_name: 'Write', tool_input: { file_path: 'src/Frontend/apps/playground-text-snippet/src/app/component.ts' }, transcript_path: '' };
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
             assertAllowed(result.code);
             assertContains(result.stdout, MARKER, 'Should contain pattern marker');
@@ -75,9 +66,9 @@ const triggerTests = [
         }
     },
     {
-        name: '[code-patterns-injector] injects frontend patterns for .ts in legacy Web',
+        name: '[code-patterns-injector] injects frontend patterns for .ts in Frontend libs',
         fn: async () => {
-            const input = { tool_name: 'Edit', tool_input: { file_path: 'src/Web/bravoTALENTS/user-list.component.ts' }, transcript_path: '' };
+            const input = { tool_name: 'Edit', tool_input: { file_path: 'src/Frontend/libs/platform-core/src/lib/components/component.ts' }, transcript_path: '' };
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
             assertAllowed(result.code);
             assertContains(result.stdout, MARKER, 'Should contain pattern marker');
@@ -85,18 +76,9 @@ const triggerTests = [
         }
     },
     {
-        name: '[code-patterns-injector] injects frontend patterns for .component.html in WebV2',
+        name: '[code-patterns-injector] injects frontend patterns for .component.html in Frontend',
         fn: async () => {
-            const input = { tool_name: 'Edit', tool_input: { file_path: 'src/WebV2/apps/growth/user-list.component.html' }, transcript_path: '' };
-            const result = await runHook(HOOK_PATH, input, RUN_OPTS);
-            assertAllowed(result.code);
-            assertContains(result.stdout, MARKER, 'Should contain pattern marker');
-        }
-    },
-    {
-        name: '[code-patterns-injector] injects frontend patterns for .ts in libs/bravo-domain',
-        fn: async () => {
-            const input = { tool_name: 'Edit', tool_input: { file_path: 'libs/bravo-domain/employee.service.ts' }, transcript_path: '' };
+            const input = { tool_name: 'Edit', tool_input: { file_path: 'src/Frontend/apps/playground-text-snippet/src/app/user-list.component.html' }, transcript_path: '' };
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
             assertAllowed(result.code);
             assertContains(result.stdout, MARKER, 'Should contain pattern marker');
@@ -108,7 +90,7 @@ const triggerTests = [
             const input = {
                 tool_name: 'MultiEdit',
                 tool_input: {
-                    edits: [{ file_path: 'src/Services/bravoGROWTH/Application/SaveCommand.cs', old_string: 'a', new_string: 'b' }]
+                    edits: [{ file_path: 'src/Backend/PlatformExampleApp.TextSnippet.Application/UseCaseCommands/SaveCommand.cs', old_string: 'a', new_string: 'b' }]
                 },
                 transcript_path: ''
             };
@@ -118,7 +100,7 @@ const triggerTests = [
         }
     },
     {
-        name: '[code-patterns-injector] skips .html outside WebV2/Web',
+        name: '[code-patterns-injector] skips .html outside Frontend',
         fn: async () => {
             const input = { tool_name: 'Edit', tool_input: { file_path: 'docs/index.html' }, transcript_path: '' };
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
@@ -136,7 +118,7 @@ const triggerTests = [
         }
     },
     {
-        name: '[code-patterns-injector] skips .cs outside Platform/Services/PlatformExampleApp',
+        name: '[code-patterns-injector] skips .cs outside Backend/Platform',
         fn: async () => {
             const input = { tool_name: 'Edit', tool_input: { file_path: 'docs/example.cs' }, transcript_path: '' };
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
@@ -147,7 +129,7 @@ const triggerTests = [
     {
         name: '[code-patterns-injector] skips non-Edit/Write tools (Read)',
         fn: async () => {
-            const input = { tool_name: 'Read', tool_input: { file_path: 'src/Services/bravoGROWTH/Save.cs' }, transcript_path: '' };
+            const input = { tool_name: 'Read', tool_input: { file_path: 'src/Backend/PlatformExampleApp.TextSnippet.Application/Save.cs' }, transcript_path: '' };
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
             assertAllowed(result.code);
             assertEqual(result.stdout.trim(), '', 'Should not inject for Read tool');
@@ -178,7 +160,7 @@ const dedupTests = [
                 const lines = Array(100).fill('some line').concat([MARKER]).concat(Array(50).fill('more content'));
                 const transcriptPath = createMockFile(tmpDir, 'transcript.jsonl', lines.join('\n'));
 
-                const input = { tool_name: 'Edit', tool_input: { file_path: 'src/Services/bravoGROWTH/Save.cs' }, transcript_path: transcriptPath };
+                const input = { tool_name: 'Edit', tool_input: { file_path: 'src/Backend/PlatformExampleApp.TextSnippet.Application/Save.cs' }, transcript_path: transcriptPath };
                 const result = await runHook(HOOK_PATH, input, RUN_OPTS);
                 assertAllowed(result.code);
                 assertEqual(result.stdout.trim(), '', 'Should skip when marker in recent transcript');
@@ -196,7 +178,7 @@ const dedupTests = [
                 const lines = [MARKER].concat(Array(400).fill('other content'));
                 const transcriptPath = createMockFile(tmpDir, 'transcript.jsonl', lines.join('\n'));
 
-                const input = { tool_name: 'Edit', tool_input: { file_path: 'src/Services/bravoGROWTH/Save.cs' }, transcript_path: transcriptPath };
+                const input = { tool_name: 'Edit', tool_input: { file_path: 'src/Backend/PlatformExampleApp.TextSnippet.Application/Save.cs' }, transcript_path: transcriptPath };
                 const result = await runHook(HOOK_PATH, input, RUN_OPTS);
                 assertAllowed(result.code);
                 assertContains(result.stdout, MARKER, 'Should inject when marker is beyond 300 lines');
@@ -208,7 +190,7 @@ const dedupTests = [
     {
         name: '[code-patterns-injector] injects when no transcript path provided',
         fn: async () => {
-            const input = { tool_name: 'Edit', tool_input: { file_path: 'src/Services/bravoGROWTH/Save.cs' }, transcript_path: '' };
+            const input = { tool_name: 'Edit', tool_input: { file_path: 'src/Backend/PlatformExampleApp.TextSnippet.Application/Save.cs' }, transcript_path: '' };
             const result = await runHook(HOOK_PATH, input, RUN_OPTS);
             assertAllowed(result.code);
             assertContains(result.stdout, MARKER, 'Should inject when no transcript');
