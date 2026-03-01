@@ -2,24 +2,28 @@
 name: compact
 version: 1.0.0
 description: '[Utilities] Compress context to optimize token usage'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Compress conversation context to optimize token usage while preserving critical information.
 
 **Workflow:**
+
 1. **Analyze** -- Identify essential vs. expendable context
 2. **Compress** -- Remove redundant information, summarize findings
 3. **Verify** -- Ensure critical decisions and progress are preserved
 
 **Key Rules:**
+
 - Preserve: decisions made, files modified, current task state
 - Remove: redundant tool outputs, repeated searches, verbose logs
 - Use when context window approaches limits
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Compact Context
 

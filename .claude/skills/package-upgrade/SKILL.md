@@ -5,7 +5,7 @@ description: "[Code Quality] Use when the user asks to analyze package upgrades,
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -24,6 +24,8 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, WebFetch, WebSearch, T
 - Must read anti-hallucination protocols before executing
 - Research only from official sources (npm, GitHub, official docs)
 - Declare confidence level; if < 90%, request user verification
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Frontend Package Upgrade Analysis & Planning
 
@@ -54,9 +56,9 @@ Initialize analysis file with:
 **Find all package.json files**:
 
 ```
-src/PlatformExampleAppWeb/package.json
-src/PlatformExampleAppWeb/apps/*/package.json
-src/PlatformExampleAppWeb/libs/*/package.json
+src/{ExampleAppWeb}/package.json
+src/{ExampleAppWeb}/apps/*/package.json
+src/{ExampleAppWeb}/libs/*/package.json
 ```
 
 For each package.json, document:

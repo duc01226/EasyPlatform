@@ -6,7 +6,7 @@ description: '[Git] Generate professional release notes from git commits between
 allowed-tools: NONE
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -24,6 +24,8 @@ allowed-tools: NONE
 - **Advanced**: Service detection, breaking change analysis, PR metadata, contributor stats, version bumping
 - **Human Review**: Generated notes are Draft status, require review/enhance/approve before publish
 - **Validation**: `validate-notes.cjs` scores against quality rules (100 points)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Release Notes Generation Skill
 
@@ -188,7 +190,7 @@ node .claude/skills/release-notes/lib/bump-version.cjs
 node .claude/skills/release-notes/lib/bump-version.cjs --prerelease beta
 
 # Per-service versioning
-node .claude/skills/release-notes/lib/bump-version.cjs --service platform-core
+node .claude/skills/release-notes/lib/bump-version.cjs --service {service-name}
 
 # Dry run (don't write version file)
 node .claude/skills/release-notes/lib/bump-version.cjs --dry-run

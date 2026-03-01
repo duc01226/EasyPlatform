@@ -6,21 +6,25 @@ description: '[Document Processing] Convert markdown files to PDF with syntax hi
 allowed-tools: NONE
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Convert Markdown files to PDF with syntax highlighting and custom CSS support.
 
 **Workflow:**
+
 1. **Install** -- Ensure required tools (pandoc + wkhtmltopdf or weasyprint) are available
 2. **Convert** -- Run conversion with syntax highlighting and optional CSS
 3. **Verify** -- Check PDF output for formatting and completeness
 
 **Key Rules:**
+
 - Requires pandoc + a PDF engine (wkhtmltopdf or weasyprint)
 - Supports syntax highlighting for code blocks
 - Custom CSS can be applied for styling
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # markdown-to-pdf
 

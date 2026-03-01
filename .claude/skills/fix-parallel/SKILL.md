@@ -2,12 +2,13 @@
 name: fix-parallel
 version: 1.0.0
 description: '[Implementation] Analyze & fix issues with parallel fullstack-developer agents'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` AND `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Skill Variant:** Variant of `/fix` — parallel multi-issue resolution using subagents.
 
@@ -16,19 +17,21 @@ activation: user-invoked
 **Goal:** Fix multiple independent issues simultaneously using parallel fullstack-developer subagents.
 
 **Workflow:**
+
 1. **Triage** — Classify issues and verify independence (no shared files)
 2. **Assign** — Distribute issues to parallel subagents with strict file ownership
 3. **Execute** — Subagents fix issues independently
 4. **Merge** — Review and integrate all fixes
 
 **Key Rules:**
+
 - Debug Mindset: every claim needs `file:line` evidence
 - Issues MUST be independent (no overlapping file modifications)
 - Each subagent owns specific files; no cross-boundary edits
 
 ## Debug Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 - Do NOT assume the first hypothesis is correct — verify with actual code traces
 - Every root cause claim must include `file:line` evidence
@@ -39,7 +42,7 @@ activation: user-invoked
 
 ## ⚠️ MANDATORY: Confidence & Evidence Gate
 
-**MUST** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
+**MANDATORY IMPORTANT MUST** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
 **95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
 
 **Ultrathink parallel** to fix: <issues>$ARGUMENTS</issues>
@@ -92,13 +95,19 @@ activation: user-invoked
 - Update plan files, docs, roadmap
 - If rejected: fix and repeat
 
-### 7. Final Report
+### 7. Prove Fix
+
+- **MANDATORY:** Run `/prove-fix` for EACH parallel fix
+- Build code proof traces per change with confidence scores
+- If any change scores < 80%, return to debug for that fix
+
+### 8. Final Report
 
 - Summary of all fixes from parallel phases
-- Verification status per issue
+- Verification status per issue (include prove-fix confidence scores)
 - Ask to commit (use `git-manager` if yes)
 
-**Example:** Fix 1 (auth) + Fix 2 (payments) + Fix 3 (UI) → Launch 3 fullstack-developer agents → Wait → Fix 4 (integration) sequential
+**Example:** Fix 1 (auth) + Fix 2 (payments) + Fix 3 (UI) → Launch 3 fullstack-developer agents → Wait → Prove each fix → Fix 4 (integration) sequential
 
 ---
 

@@ -2,10 +2,10 @@
 name: plan-parallel
 version: 1.0.0
 description: '[Planning] Create detailed plan with parallel-executable phases'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
 
@@ -25,6 +25,8 @@ activation: user-invoked
 - Each phase MUST have exclusive file ownership -- no file modified by multiple phases
 - Phases must be independently executable with clear dependency matrix
 - Planning-only skill -- never implement code, always get user approval first
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Activate `planning` skill.
 
@@ -49,8 +51,8 @@ $ARGUMENTS
 2. Follow strictly to the "Plan Creation & Organization" rules of `planning` skill.
 3. Use multiple `researcher` agents (max 2 agents) in parallel to research for this task:
    Each agent research for a different aspect of the task and are allowed to perform max 5 tool calls.
-4. Analyze the codebase by reading `codebase-summary.md`, `code-standards.md`, `system-architecture.md` and `project-overview-pdr.md` file.
-   **ONLY PERFORM THIS FOLLOWING STEP IF `codebase-summary.md` is not available or older than 3 days**: Use `/scout <instructions>` slash command to search the codebase for files needed to complete the task.
+4. Analyze the codebase by reading `backend-patterns-reference.md`, `frontend-patterns-reference.md`, and `project-structure-reference.md` file.
+   **ONLY PERFORM THIS FOLLOWING STEP IF reference docs are placeholders or older than 3 days**: Use `/scout <instructions>` slash command to search the codebase for files needed to complete the task.
 5. Main agent gathers all research and scout report filepaths, and pass them to `planner` subagent with the prompt to create a parallel-optimized implementation plan.
 6. Main agent receives the implementation plan from `planner` subagent, and ask user to review the plan
 
@@ -166,8 +168,8 @@ Phase 04: Integration Tests (depends on 01, 02, 03)
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
-  1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-  2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+    1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
+    2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
 
 ## Important Notes
 

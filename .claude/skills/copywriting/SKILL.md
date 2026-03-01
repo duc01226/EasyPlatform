@@ -1,11 +1,11 @@
 ---
 name: copywriting
 version: 1.0.0
-description: "[Content] Create high-converting copy for marketing materials, social media, landing pages, email campaigns, and product descriptions. Triggers on: copywriting, marketing copy, social media post, landing page copy, email campaign, product description."
+description: '[Content] Create high-converting copy for marketing materials, social media, landing pages, email campaigns, and product descriptions. Triggers on: copywriting, marketing copy, social media post, landing page copy, email campaign, product description.'
 allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -27,6 +27,8 @@ allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch
 
 ---
 
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
 ## Writing Principles
 
 1. **User-Centric**: Write for the reader's benefit, not the brand's ego
@@ -43,12 +45,12 @@ allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch
 
 ## Platform Guidelines
 
-| Platform | Key Rule |
-|---|---|
-| Twitter/X | First 140 chars critical. Avoid hashtags. Thread for stories. |
-| LinkedIn | Professional but not boring. Story-driven. First 2 lines hook. |
-| Landing Pages | Hero = promise outcome. Bullets = benefits not features. |
-| Email | Subject = curiosity/urgency. Body = scannable. P.S. = reinforce CTA. |
+| Platform      | Key Rule                                                             |
+| ------------- | -------------------------------------------------------------------- |
+| Twitter/X     | First 140 chars critical. Avoid hashtags. Thread for stories.        |
+| LinkedIn      | Professional but not boring. Story-driven. First 2 lines hook.       |
+| Landing Pages | Hero = promise outcome. Bullets = benefits not features.             |
+| Email         | Subject = curiosity/urgency. Body = scannable. P.S. = reinforce CTA. |
 
 ## Output Format
 

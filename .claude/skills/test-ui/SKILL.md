@@ -2,12 +2,14 @@
 name: test-ui
 version: 1.0.0
 description: '[Testing] Full-site QA audit (accessibility, performance, security, SEO) with visual reports. Use for comprehensive QA audits of deployed sites.'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
 
@@ -28,6 +30,8 @@ activation: user-invoked
 - Do NOT implement fixes; this is a testing/reporting skill only
 - Save all screenshots in the report directory
 - Support authenticated routes via cookie/token/localStorage injection
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Activate the chrome-devtools skill.
 

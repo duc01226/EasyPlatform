@@ -1,8 +1,0 @@
-{
-  "session_id": "test-boundary",
-  "started_at": "2026-01-12T15:35:53.732Z",
-  "active_deltas": [],
-  "delta_usage": {},
-  "injection_timestamp": "2026-01-12T15:35:53.732Z",
-  "implicit_feedback_window_ms": 30000
-}

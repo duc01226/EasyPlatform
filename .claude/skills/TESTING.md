@@ -258,30 +258,7 @@ Expected: Side effects in event handler, not command handler
 
 ## Frontend Skills
 
-### frontend-angular
-
-Direct invocation:
-
-```
-/frontend-angular
-```
-
-Test prompts:
-
-```
-"Create an employee list component"
-"Add a dashboard widget component"
-"Build a profile card component"
-"Create a leave request form with validation"
-"Add async email validation to employee form"
-"Implement FormArray for multiple phone numbers"
-"Create a store for employee list with filtering"
-"Add pagination state to the store"
-"Implement loading states for multiple requests"
-"Create an API service with caching"
-```
-
-Expected: Correct base class, proper lifecycle management, form base patterns, state management store, loading/error state tracking, side effects, API service patterns
+_(frontend-angular skill removed — frontend patterns handled by `docs/project-reference/frontend-patterns-reference.md` + auto-injected by `frontend-context.cjs` hook)_
 
 ---
 
@@ -298,7 +275,7 @@ Direct invocation:
 Test prompts:
 
 ```
-"How should Growth service communicate with Accounts?"
+"How should ServiceA communicate with ServiceB?"
 "Design event bus messages for employee sync"
 "Plan cross-service data consistency"
 ```
@@ -354,6 +331,6 @@ For each skill test:
 - [ ] Direct invocation works (`/skill-name`)
 - [ ] Inference activates for relevant prompts
 - [ ] Correct workflow phases are followed
-- [ ] Platform patterns are applied
+- [ ] Project patterns are applied
 - [ ] Anti-patterns are avoided
 - [ ] Output matches expected format

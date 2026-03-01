@@ -2,12 +2,14 @@
 name: cook-auto-parallel
 version: 1.0.0
 description: '[Implementation] Plan parallel phases & execute with fullstack-developer agents'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Skill Variant:** Variant of `/cook` — autonomous parallel execution with fullstack-developer subagents.
 
@@ -16,11 +18,13 @@ activation: user-invoked
 **Goal:** Plan parallel-executable phases and dispatch to fullstack-developer subagents for concurrent implementation.
 
 **Workflow:**
+
 1. **Plan** — Create plan with parallel-executable phases (strict file ownership)
 2. **Dispatch** — Launch fullstack-developer subagents per phase
 3. **Merge** — Integrate results and verify
 
 **Key Rules:**
+
 - Each subagent owns specific files; no cross-boundary edits
 - Autonomous mode: no user confirmation between phases
 - Break work into todo tasks; add final self-review task
@@ -28,6 +32,8 @@ activation: user-invoked
 **Ultrathink parallel** to implement: <tasks>$ARGUMENTS</tasks>
 
 **IMPORTANT:** Activate needed skills. Ensure token efficiency. Sacrifice grammar for concision.
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Workflow
 

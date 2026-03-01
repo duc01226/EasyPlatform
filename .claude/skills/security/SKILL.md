@@ -2,32 +2,36 @@
 name: security
 version: 1.0.0
 description: '[Code Quality] Perform security review on specified scope'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
 
 **Goal:** Perform security review against OWASP Top 10 and project authorization patterns.
 
 **Workflow:**
+
 1. **Scope** — Identify security-sensitive code areas
 2. **Audit** — Review against OWASP categories and platform security patterns
 3. **Report** — Document findings with severity and remediation
 
 **Key Rules:**
+
 - Analysis Mindset: systematic review, not guesswork
-- Check both backend (C#) and frontend (Angular) attack surfaces
-- Use `PlatformAuthorize` and entity-level access expressions
+- Check both backend and frontend attack surfaces
+- Use project authorization attributes and entity-level access expressions (see docs/project-reference/backend-patterns-reference.md)
 
 <scope>$ARGUMENTS</scope>
 
 ## Analysis Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 - Do NOT assume code is secure at face value — verify by reading actual implementations
 - Every vulnerability finding must include `file:line` evidence

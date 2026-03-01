@@ -2,24 +2,28 @@
 name: git-merge
 version: 1.0.0
 description: '[Git] ⚠️ Merge code from one branch to another'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Merge code from one branch to another with safety checks and conflict resolution.
 
 **Workflow:**
+
 1. **Validate** -- Check source/target branches, verify clean working tree
 2. **Merge** -- Execute git merge with appropriate strategy
 3. **Resolve** -- Handle conflicts if any, verify merge result
 
 **Key Rules:**
+
 - WARNING: destructive operation -- always confirm with user first
 - Verify clean working tree before merge
 - Use `/git-conflict-resolve` if conflicts arise
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Variables
 

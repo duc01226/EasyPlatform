@@ -2,12 +2,13 @@
 name: cook
 version: 1.0.0
 description: '[Implementation] Implement a feature [step by step]'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
 
@@ -22,10 +23,37 @@ activation: user-invoked
 
 **Key Rules:**
 
-- Parent skill for all cook-* variants (cook-auto, cook-fast, cook-hard, cook-parallel)
+- Parent skill for all cook-\* variants (cook-auto, cook-fast, cook-hard, cook-parallel)
 - Write research findings to `.ai/workspace/analysis/` for context preservation
 - Always activate relevant skills from catalog during implementation
 - Break work into small todo tasks; add final review task
+
+## Greenfield Mode
+
+> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+
+**When greenfield is detected:**
+
+1. If an **approved plan exists** in `plans/`: scaffold project structure from the plan
+2. If **no approved plan**: redirect to `/plan` first — "No approved plan found. Run /plan first to create a greenfield project plan."
+3. Generate: folder layout, starter files, build config, CI skeleton, CLAUDE.md
+4. Skip codebase pattern search (no patterns exist yet)
+5. Use plan's tech stack decisions to generate project scaffold
+6. After scaffolding, run `/project-config` to populate project configuration
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+## Variant Decision Guide
+
+| If implementation needs...  | Use                   | Why                                     |
+| --------------------------- | --------------------- | --------------------------------------- |
+| Quick, straightforward      | `/cook-fast`          | Skip deep research, minimal planning    |
+| Complex, multi-layer        | `/cook-hard`          | Maximum verification, subagent research |
+| Backend + frontend parallel | `/cook-parallel`      | Parallel fullstack-developer agents     |
+| Full autonomous execution   | `/cook-auto`          | Minimal user interaction                |
+| Fast autonomous             | `/cook-auto-fast`     | Auto + skip deep research               |
+| Parallel autonomous         | `/cook-auto-parallel` | Auto + parallel agents                  |
+| General/interactive         | `/cook` (this skill)  | Step-by-step with user collaboration    |
 
 Think harder to plan & start working on these tasks:
 <tasks>$ARGUMENTS</tasks>
@@ -98,3 +126,12 @@ Think harder to plan & start working on these tasks:
 
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
+
+---
+
+## Workflow Recommendation
+
+> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+>
+> 1. **Activate `feature` workflow** (Recommended) — scout → investigate → plan → cook → review → sre-review → test → docs
+> 2. **Execute `/cook` directly** — run this skill standalone

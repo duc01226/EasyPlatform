@@ -2,10 +2,10 @@
 name: plan-cro
 version: 1.0.0
 description: '[Planning] Create a CRO plan for the given content'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
@@ -16,14 +16,18 @@ activation: user-invoked
 **Goal:** Create a CRO (Conversion Rate Optimization) plan for the given content or feature.
 
 **Workflow:**
+
 1. **Analyze** — Review current content/feature for conversion bottlenecks
 2. **Research** — Identify CRO best practices and A/B test opportunities
 3. **Plan** — Create actionable CRO improvement plan with measurable goals
 
 **Key Rules:**
+
 - PLANNING-ONLY: do not implement, only create CRO plan
 - Focus on user behavior, conversion funnels, and measurable outcomes
 - Always offer `/plan-review` after plan creation
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## PLANNING-ONLY — Collaboration Required
 
@@ -71,7 +75,7 @@ Activate `planning` skill.
 
 ## Workflow
 
-- If the user provides a screenshots or videos, use `ai-multimodal` skill to describe as detailed as possible the issue, make sure copywriter can fully understand the issue easily based on the description.
+- If the user provides a screenshots or videos, use `ai-multimodal` skill to describe as detailed as possible the issue, make sure the CRO analyst can fully understand the issue easily based on the description.
 - If the user provides a URL, use `web_fetch` tool to fetch the content of the URL and analyze the current issues.
 - You can use screenshot capture tools along with `ai-multimodal` skill to capture screenshots of the exact parent container and analyze the current issues with the appropriate Gemini analysis skills (`ai-multimodal`, `gemini-video-understanding`, or `gemini-document-processing`).
 - Use `/scout-ext` (preferred) or `/scout` (fallback) slash command to search the codebase for files needed to complete the task
@@ -103,8 +107,8 @@ Activate `planning` skill.
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
-  1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-  2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+    1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
+    2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
 
 ## REMINDER — Planning-Only Command
 

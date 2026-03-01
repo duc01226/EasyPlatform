@@ -1,13 +1,13 @@
 # Web V1 Modern Style Guide - V2 Aesthetics for Legacy Apps
 
-> Build new UI in bravoTALENTSClient / CandidateAppClient using V1 components but styled like WebV2
+> Build new UI in legacy apps using V1 components but styled like WebV2
 
 ## Summary
 
 | Aspect | Value |
 |--------|-------|
 | **Use Case** | NEW UI in V1 apps that should look like WebV2 |
-| **Target Apps** | `src/Web/bravoTALENTSClient/*`, `src/Web/CandidateAppClient/*` |
+| **Target Apps** | Legacy V1 apps using V2 visual aesthetics |
 | **Approach** | V1 component structure + V2 visual aesthetics |
 | **Page BG** | `#f6f8fb` |
 | **Card BG** | `#ffffff` with `0.5rem` radius |
@@ -134,7 +134,7 @@ $v2-font-title: 1.5rem;      // 24px
 ### Usage in V1 Components
 
 ```scss
-// bravoTALENTSClient
+// TextSnippet example
 .candidate-list__header-title {
     @include v2-text(1.25rem, 600);
 }
@@ -213,7 +213,7 @@ $v2-font-title: 1.5rem;      // 24px
 
 ## 5. Component Templates
 
-### 5.1 Page Container (bravoTALENTS)
+### 5.1 Page Container
 
 ```html
 <div class="page-container">
@@ -222,7 +222,7 @@ $v2-font-title: 1.5rem;      // 24px
             <app-search-input></app-search-input>
         </div>
         <div class="toolbar__right">
-            <button class="bravo-button bravo-button--primary">Add</button>
+            <button class="app-button app-button--primary">Add</button>
         </div>
     </section>
 
@@ -300,7 +300,7 @@ $v2-font-title: 1.5rem;      // 24px
 }
 ```
 
-### 5.3 Modern Table (bravoTALENTS)
+### 5.3 Modern Table
 
 ```html
 <div class="modern-table-container">
@@ -497,8 +497,8 @@ $v2-font-title: 1.5rem;      // 24px
         <!-- Content -->
     </div>
     <div class="modern-card__footer">
-        <button class="bravo-button">Cancel</button>
-        <button class="bravo-button bravo-button--primary">Save</button>
+        <button class="app-button">Cancel</button>
+        <button class="app-button app-button--primary">Save</button>
     </div>
 </div>
 ```

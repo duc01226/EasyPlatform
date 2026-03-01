@@ -1,187 +1,151 @@
 # Claude Code Documentation
 
-> Comprehensive reference for developers using Claude Code in EasyPlatform.
+> Comprehensive AI-assisted development documentation for YourProject
 
-## Quick Start
+## Quick Links
 
-```bash
-# Common commands
-/plan          # Create implementation plan
-/cook          # Implement current task
-/scout         # Find relevant files
-/commit        # Stage and commit changes
+| Goal                         | Document                                                                                        |
+| ---------------------------- | ----------------------------------------------------------------------------------------------- |
+| **New to Claude Code?**      | [quick-start.md](./quick-start.md) - 5-minute onboarding                                        |
+| **Need a skill?**            | [skills/README.md](./skills/README.md) - 178 skills catalog                                     |
+| **Building a feature?**      | [skills/development-skills.md](./skills/development-skills.md)                                  |
+| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 35 hooks deep-dive                                       |
+| **Understanding workflows?** | `CLAUDE.md` workflow catalog (project root) - 46 workflows                                      |
+| **Configuring Claude?**      | [configuration/README.md](./configuration/README.md)                                            |
+| **Team collaboration?**      | [team-collaboration-guide.md](./team-collaboration-guide.md) - PO, BA, QA, QC, UX, PM workflows |
 
-# Bypass workflow detection
-quick: add a button
-```
-
-## Documentation Index
-
-| Document                                  | Description                             | Path                      |
-| ----------------------------------------- | --------------------------------------- | ------------------------- |
-| **[Quick Reference](quick-reference.md)** | One-page cheat sheet                    | `docs/quick-reference.md` |
-| [Hooks System](hooks/README.md)           | Hooks, event lifecycle, registration    | `docs/hooks/`             |
-| [Skills Reference](skills.md)             | 84+ skills organized by category        | `docs/skills.md`          |
-| [Commands Reference](commands.md)         | 49+ slash commands with usage           | `docs/commands.md`        |
-| [Agents Reference](agents.md)             | 22+ specialized agent types             | `docs/agents.md`          |
-| [Configuration](configuration.md)         | All config files and schemas            | `docs/configuration.md`   |
-| [Figma Setup](figma-setup.md)             | Figma integration for design extraction | `docs/figma-setup.md`     |
-
-### Hooks Subsystem Documentation
-
-| Document                                     | Description                        |
-| -------------------------------------------- | ---------------------------------- |
-| [Session Lifecycle](hooks/session/README.md) | State management, checkpoints      |
-| [Workflows](hooks/workflows.md)              | Intent detection and routing       |
-| [Dev Rules](hooks/dev-rules.md)              | Context-aware development guidance |
-| [Enforcement](hooks/enforcement.md)          | Safety blocks and validation       |
-
----
-
-## Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        Claude Code Session                       │
-├─────────────────────────────────────────────────────────────────┤
-│  Events: SessionStart → UserPromptSubmit → PreToolUse →         │
-│          PostToolUse → PreCompact → SessionEnd                  │
-├─────────────────────────────────────────────────────────────────┤
-│                         Hook Subsystems                          │
-├──────────────┬──────────────┬──────────────┬───────────────────┤
-│   Session    │  Workflows   │  Dev Rules   │   Enforcement     │
-│  (4 hooks)   │  (2 hooks)   │  (5 hooks)   │    (5 hooks)      │
-├──────────────┼──────────────┼──────────────┼───────────────────┤
-│ Notifications│              │              │                   │
-│  (1 hook)    │              │              │                   │
-└──────────────┴──────────────┴──────────────┴───────────────────┘
-```
-
----
-
-## Event Trigger Flow
-
-| Event                | Trigger                           | Hooks (Count)                                                                                                                                                                                                                                        |
-| -------------------- | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **SessionStart**     | `startup\|resume\|clear\|compact` | session-init, session-resume, post-compact-recovery, lessons-injector, npm-auto-install (5)                                                                                                                                                          |
-| **SubagentStart**    | `*`                               | subagent-init (1)                                                                                                                                                                                                                                    |
-| **UserPromptSubmit** | Always                            | workflow-router, dev-rules-reminder, lessons-injector (3)                                                                                                                                                                                            |
-| **PreToolUse**       | Tool-specific matchers            | windows-command-detector, scout-block, privacy-block, path-boundary-block, edit-complexity-tracker, todo-enforcement, code-review-rules-injector, context injectors (5), role-context-injector, figma-context-extractor, artifact-path-resolver (16) |
-| **PostToolUse**      | Tool-specific matchers            | tool-output-swap, bash-cleanup, post-edit-prettier, todo-tracker, workflow-step-tracker, tool-counter, notify-waiting (7)                                                                                                                            |
-| **PreCompact**       | `manual\|auto`                    | write-compact-marker (1)                                                                                                                                                                                                                             |
-| **SessionEnd**       | `clear\|exit\|compact`            | session-end, notify-waiting (2)                                                                                                                                                                                                                      |
-| **Stop**             | Always                            | notify-waiting (1)                                                                                                                                                                                                                                   |
-| **Notification**     | `idle_prompt`                     | notify-waiting.js (1)                                                                                                                                                                                                                                |
-
----
-
-## Storage Locations
-
-| File                                   | Purpose                                             |
-| -------------------------------------- | --------------------------------------------------- |
-| `.claude/settings.json`                | Main configuration, hook registrations, permissions |
-| `.claude/.ck.json`                     | Claude Kit session state                            |
-| `.claude/.todo-state.json`             | Todo persistence across sessions                    |
-| `.claude/.workflow-state.json`         | Workflow progress tracking                          |
-| `.claude/.edit-state.json`             | Edit operation tracking                             |
-| `docs/lessons.md`                      | Learned lessons (via /learn skill)                  |
-
----
-
-## Subsystem Overview
-
-### 1. Session Lifecycle
-
-Manages session state, initialization, resume, and cleanup.
-
-- **Hooks**: session-init, session-resume, post-compact-recovery, npm-auto-install, session-end, subagent-init
-- **Storage**: `.ck.json`, `.todo-state.json`
-- **Docs**: [hooks/session/](hooks/session/)
-
-### 2. Workflow System
-
-Detects user intent and routes to appropriate workflows.
-
-- **Hooks**: workflow-router, workflow-step-tracker
-- **Storage**: `.workflow-state.json`
-- **Docs**: [hooks/workflows.md](hooks/workflows.md)
-
-### 3. Development Rules
-
-Injects context-aware development guidance based on file types.
-
-- **Hooks**: backend-csharp-context, frontend-typescript-context, design-system-context, scss-styling-context, dev-rules-reminder
-- **Docs**: [hooks/dev-rules.md](hooks/dev-rules.md)
-
-### 4. Enforcement & Safety
-
-Blocks unsafe or out-of-scope operations.
-
-- **Hooks**: todo-enforcement, scout-block, privacy-block, windows-command-detector, post-edit-prettier
-- **Docs**: [hooks/enforcement.md](hooks/enforcement.md)
-
----
-
-## Getting Started
-
-### For Users
-
-1. **Skills**: Use `/skill-name` to invoke skills (e.g., `/commit`, `/plan`, `/cook`)
-2. **Workflows**: Detected automatically from prompts (e.g., "implement X" triggers Feature workflow)
-3. **Todos**: Required for implementation skills (enforced by todo-enforcement hook)
-
-### For Customization
-
-1. Edit `.claude/settings.json` to modify hook registrations
-2. Create skills in `.claude/skills/skill-name/SKILL.md`
-
----
-
-## Cross-References
-
-### By Task Type
-
-| Task              | Start With                                            | Primary Docs                                             |
-| ----------------- | ----------------------------------------------------- | -------------------------------------------------------- |
-| **New Feature**   | `/plan` → `/plan-review` → `/plan-validate` → `/cook` | [Commands](commands.md), [Workflows](hooks/workflows.md) |
-| **Bug Fix**       | `/scout` → `/investigate` → `/fix`                    | [Agents](agents.md), [Skills](skills.md)                 |
-| **Code Review**   | `/review`                                             | [Agents](agents.md#quality--review)                      |
-| **Exploration**   | `/scout` or Task tool                                 | [Agents](agents.md#research--investigation)              |
-| **Configuration** | Edit files directly                                   | [Configuration](configuration.md)                        |
-
-### By Concept
-
-| Concept                    | Documentation                                         |
-| -------------------------- | ----------------------------------------------------- |
-| How hooks work             | [Hooks Overview](hooks/README.md)                     |
-| How workflows are detected | [Workflows](hooks/workflows.md)                       |
-| How permissions work       | [Configuration](configuration.md#permissions-section) |
-| How agents are invoked     | [Agents](agents.md#agent-invocation)                  |
-
-## Related Documentation
-
-- [CLAUDE.md](../../CLAUDE.md) - Project-level Claude Code instructions
-- [docs/claude/](../../docs/claude/) - Backend/frontend pattern guides
-
-## File Structure
+## Documentation Map
 
 ```
 .claude/docs/
-├── README.md              # This file - main navigation
-├── quick-reference.md     # One-page cheat sheet
-├── skills.md              # Skills catalog (84+)
-├── commands.md            # Commands catalog (49+)
-├── agents.md              # Agents reference (22+)
-├── configuration.md       # Config file schemas
-└── hooks/
-    ├── README.md          # Hooks overview
-    ├── workflows.md       # Workflow system
-    ├── dev-rules.md       # Dev rules injection
-    ├── enforcement.md     # Safety enforcement
-    └── session/
-        └── README.md      # Session lifecycle
+|-- README.md                 <- You are here (Navigation hub)
+|-- quick-start.md            5-minute onboarding guide
+|
+|-- skills/                   178 skills across 15+ domains
+|   |-- README.md             Skills overview + full catalog
+|   |-- development-skills.md Backend, frontend, databases
+|   +-- integration-skills.md DevOps, AI tools, MCP
+|
+|-- hooks/                    35 hooks, 25 lib modules
+|   |-- README.md             Hooks overview, lessons system, session lifecycle
+|   |-- architecture.md       System architecture with diagrams
+|   |-- external-memory-swap.md  Post-compaction recovery via swap files
+|   +-- extending-hooks.md    How to create custom hooks
+|
+|-- agents/                   Subagent configurations
+|   |-- README.md             Agents overview
+|   +-- agent-patterns.md     When/how to use each agent
+|
+|-- configuration/            All configuration files
+|   |-- README.md             Config overview
+|   |-- settings-reference.md settings.json reference
+|   +-- output-styles.md      Coding levels 0-5
+|
++-- troubleshooting.md        Consolidated troubleshooting guide
 ```
+
+## Quick Decision Trees
+
+### "I need to..."
+
+| Task                | Command         | Skill                   |
+| ------------------- | --------------- | ----------------------- |
+| Implement a feature | `/cook`         | `feature`               |
+| Fix a bug           | `/fix`          | `debug`                 |
+| Create a PR         | `/git/pr`       | `commit`                |
+| Understand code     | `/scout`        | `feature-investigation` |
+| Plan implementation | `/plan`         | `planning`              |
+| Run tests           | `/test`         | `test-spec`             |
+| Review code         | `/review`       | `code-review`           |
+| Debug issues        | `/debug`        | `debug`                 |
+| Create user story   | `/story`        | `business-analyst`      |
+| Prioritize backlog  | `/prioritize`   | `product-owner`         |
+| Create test cases   | `/test-spec`    | `test-spec`             |
+| Quality checkpoint  | `/quality-gate` | `qc-specialist`         |
+| Create design spec  | `/design-spec`  | `ux-designer`           |
+
+### "I want to learn about..."
+
+| Topic                                       | Start Here                                                                    |
+| ------------------------------------------- | ----------------------------------------------------------------------------- |
+| How skills work                             | [skills/README.md](./skills/README.md)                                        |
+| How skills are activated                    | [skills/README.md](./skills/README.md)                                        |
+| How lessons system works                    | [hooks/README.md](./hooks/README.md) — `/learn` skill + lessons-injector hook |
+| How hooks intercept events                  | [hooks/architecture.md](./hooks/architecture.md)                              |
+| Hook execution order by event               | [hooks/README.md](./hooks/README.md) — hook catalog + execution order         |
+| Session lifecycle (init → compact → resume) | [hooks/README.md#session-lifecycle](./hooks/README.md#session-lifecycle)      |
+| External Memory Swap system                 | [hooks/external-memory-swap.md](./hooks/external-memory-swap.md)              |
+| Workflow detection and routing              | `CLAUDE.md` workflow catalog (project root)                                   |
+| How to create custom hooks                  | [hooks/extending-hooks.md](./hooks/extending-hooks.md)                        |
+| How to configure output                     | [configuration/output-styles.md](./configuration/output-styles.md)            |
+| How team collaboration works                | [team-collaboration-guide.md](./team-collaboration-guide.md)                  |
+| How to update code review rules             | [hooks/README.md#code-review-rules](./hooks/README.md#code-review-rules)      |
+
+## Document Sizes (for context planning)
+
+| Document                            | Lines | Tokens (est.) | Load Time |
+| ----------------------------------- | ----- | ------------- | --------- |
+| quick-start.md                      | ~180  | ~500          | Fast      |
+| skills/README.md                    | ~350  | ~900          | Fast      |
+| skills/development-skills.md        | ~500  | ~1300         | Moderate  |
+| hooks/README.md                     | ~310  | ~800          | Fast      |
+| hooks/architecture.md               | ~310  | ~800          | Fast      |
+| configuration/settings-reference.md | ~390  | ~1000         | Moderate  |
+| troubleshooting.md                  | ~415  | ~1100         | Moderate  |
+
+**Tip:** Load smaller docs first. Reference larger docs only when needed.
+
+## Core Pattern References
+
+| Document                                                     | When to Use                                                 |
+| ------------------------------------------------------------ | ----------------------------------------------------------- |
+| `docs/project-reference/project-structure-reference.md`      | Understanding project structure                             |
+| `docs/project-reference/backend-patterns-reference.md`       | Backend development tasks (project-specific companion doc)  |
+| `docs/project-reference/frontend-patterns-reference.md`      | Frontend development tasks (project-specific companion doc) |
+| `docs/project-reference/integration-test-reference.md`       | Test fixtures, patterns, module abbreviations               |
+| `docs/project-reference/feature-docs-reference.md`           | Feature doc templates, app/service mapping                  |
+| `docs/project-reference/domain-entities-reference.md`        | Domain entity catalog, relationships, cross-service sync    |
+| [skill-naming-conventions.md](./skill-naming-conventions.md) | Skill naming rules and prefix guide                         |
+| [configuration/README.md](./configuration/README.md)         | Settings schema, permissions, hooks config                  |
+
+## Complete Guides (Large Reference Docs)
+
+| Document                                       | Size  | Use Case                             |
+| ---------------------------------------------- | ----- | ------------------------------------ |
+| `docs/backend-complete-guide.md`               | ~76KB | Full backend reference (in `docs/`)  |
+| `docs/frontend-complete-guide.md`              | ~57KB | Complete frontend guide (in `docs/`) |
+| `docs/project-reference/scss-styling-guide.md` | ~30KB | BEM, design tokens (in `docs/`)      |
+
+## Related Documentation
+
+| Location                                | Content                               |
+| --------------------------------------- | ------------------------------------- |
+| `CLAUDE.md` (project root)              | Root instructions (always read first) |
+| `docs/project-reference/design-system/` | Frontend design system                |
+| `docs/business-features/`               | Business feature docs                 |
+
+## How to Use This Documentation
+
+1. **Start with `CLAUDE.md`** (project root) - Essential rules and quick decisions
+2. **New to Claude Code?** - Follow [quick-start.md](./quick-start.md)
+3. **Find the right skill** - Browse [skills/README.md](./skills/README.md)
+4. **Activate skills** - Check [skills/README.md](./skills/README.md) for triggers
+5. **Understand internals** - Dive into [hooks/](./hooks/) for deep knowledge
+6. **Troubleshoot issues** - See [troubleshooting.md](./troubleshooting.md)
+
+## Statistics
+
+| Category            | Count |
+| ------------------- | ----- |
+| Skills              | 178   |
+| Hooks               | 35    |
+| Lib Modules         | 25    |
+| Hook Events         | 9     |
+| Agents              | 24    |
+| Workflows           | 46    |
+| Tests               | 527   |
+| Documentation Files | 31    |
 
 ---
 
-*Documentation for Claude Code v2.1.0 | Last updated: 2026-01-13*
+_Last updated: 2026-03-06 | Source: `.claude/` directory analysis_

@@ -2,7 +2,7 @@
 
 > **MANDATORY** for all skills that modify code, review code, make architectural recommendations, or diagnose issues.
 > Speculation is FORBIDDEN. Every claim must be backed by evidence.
-> Ref: [CLAUDE.md](CLAUDE.md) Evidence-Based Reasoning section | [Anti-Hallucination Patterns](.claude/patterns/anti-hallucination-patterns.md) (optional deep-dive)
+> Ref: [CLAUDE.md](CLAUDE.md) Evidence-Based Reasoning section | [Anti-Hallucination Patterns](.claude/docs/anti-hallucination-patterns.md) (optional deep-dive)
 
 ---
 
@@ -10,7 +10,7 @@
 
 1. **Evidence before conclusion** — Cite `file:line`, grep results, or framework docs. Never use "obviously...", "I think...", "this is because..." without proof.
 2. **Confidence declaration required** — Every recommendation must state confidence level with evidence list.
-3. **Inference alone is FORBIDDEN** — Always upgrade to code evidence (grep results, file reads). When unsure: *"I don't have enough evidence yet. Need to investigate [specific items]."*
+3. **Inference alone is FORBIDDEN** — Always upgrade to code evidence (grep results, file reads). When unsure: _"I don't have enough evidence yet. Need to investigate [specific items]."_
 4. **Cross-service validation** — Check all services in the project before recommending architectural changes.
 
 ## Pre-Claim Verification Checklist
@@ -29,22 +29,22 @@ For ANY statement claiming "This is wrong...", "This should be...", "The issue i
 
 ## Forbidden Phrases (without evidence)
 
-| Forbidden | Evidence-Based Alternative |
-|-----------|--------------------------|
-| "should be public/private" | "Grep shows N similar methods at [files]" |
-| "the order matters" | "Framework docs at [URL] specify..." |
-| "this is because..." | "Evidence from [file:line] shows..." |
-| "obviously..." / "I think..." | "Based on [evidence], confidence: X%" |
-| "probably..." / "usually..." | "Found in N/M cases: [pattern]" |
+| Forbidden                     | Evidence-Based Alternative                |
+| ----------------------------- | ----------------------------------------- |
+| "should be public/private"    | "Grep shows N similar methods at [files]" |
+| "the order matters"           | "Framework docs at [URL] specify..."      |
+| "this is because..."          | "Evidence from [file:line] shows..."      |
+| "obviously..." / "I think..." | "Based on [evidence], confidence: X%"     |
+| "probably..." / "usually..."  | "Found in N/M cases: [pattern]"           |
 
 ## Confidence Levels
 
-| Level | Criteria | Action |
-|-------|----------|--------|
-| **95-100%** | Full trace, all checklist items verified, all services checked | Recommend freely |
-| **80-94%** | Main paths verified, some edge cases unverified | Recommend with caveats |
-| **60-79%** | Implementation found, usage partially traced | Recommend cautiously |
-| **<60%** | Insufficient evidence | **DO NOT RECOMMEND** — gather more evidence |
+| Level       | Criteria                                                       | Action                                      |
+| ----------- | -------------------------------------------------------------- | ------------------------------------------- |
+| **95-100%** | Full trace, all checklist items verified, all services checked | Recommend freely                            |
+| **80-94%**  | Main paths verified, some edge cases unverified                | Recommend with caveats                      |
+| **60-79%**  | Implementation found, usage partially traced                   | Recommend cautiously                        |
+| **<60%**    | Insufficient evidence                                          | **DO NOT RECOMMEND** — gather more evidence |
 
 **Format:** `Confidence: 85% — Verified main usage in [service], did not check [other services]`
 
@@ -52,11 +52,11 @@ For ANY statement claiming "This is wrong...", "This should be...", "The issue i
 
 ## Breaking Change Risk Matrix
 
-| Risk | Criteria | Required Evidence |
-|------|----------|-------------------|
-| **HIGH** | Removing registrations, deleting classes, changing interfaces | Full usage trace + impact analysis + all services |
-| **MEDIUM** | Refactoring methods, changing signatures | Usage trace + test verification + all services |
-| **LOW** | Renaming, formatting, comments | Code review only |
+| Risk       | Criteria                                                      | Required Evidence                                 |
+| ---------- | ------------------------------------------------------------- | ------------------------------------------------- |
+| **HIGH**   | Removing registrations, deleting classes, changing interfaces | Full usage trace + impact analysis + all services |
+| **MEDIUM** | Refactoring methods, changing signatures                      | Usage trace + test verification + all services    |
+| **LOW**    | Renaming, formatting, comments                                | Code review only                                  |
 
 ## Validation Chain (for code removal/refactoring/replacement)
 
@@ -113,6 +113,6 @@ Every 10 operations:
 
 ## See Also
 
-- `.claude/patterns/anti-hallucination-patterns.md` — Comprehensive examples and verification commands (optional deep-dive)
+- `.claude/docs/anti-hallucination-patterns.md` — Comprehensive examples and verification commands (optional deep-dive)
 - `.claude/skills/shared/understand-code-first-protocol.md` — Read-before-write protocol
 - `CLAUDE.md` "Evidence-Based Reasoning & Investigation Protocol" — Breaking change assessment (always in context)

@@ -2,12 +2,13 @@
 name: cook-fast
 version: 1.0.0
 description: '[Implementation] Fast implementation - skip research, minimal planning'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Skill Variant:** Variant of `/cook` — fast implementation skipping research with minimal planning.
 
@@ -16,14 +17,18 @@ activation: user-invoked
 **Goal:** Implement features quickly with minimal research and streamlined planning.
 
 **Workflow:**
+
 1. **Scout** — Quick codebase scan for patterns
 2. **Plan** — Lightweight implementation plan
 3. **Implement** — Execute with code-simplifier review
 
 **Key Rules:**
+
 - Skip deep research; rely on codebase patterns
 - Still requires user approval before implementing
 - Break work into todo tasks; add final self-review task
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Start working on these tasks immediately with minimal planning:
 <tasks>$ARGUMENTS</tasks>

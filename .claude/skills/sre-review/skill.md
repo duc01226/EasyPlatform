@@ -2,12 +2,13 @@
 name: sre-review
 version: 1.0.0
 description: '[Code Quality] Production readiness review for service-layer and API changes'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
@@ -29,7 +30,7 @@ $ARGUMENTS
 
 ## Review Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 - Do NOT accept operational readiness at face value — verify by reading actual implementations
 - Every score must include `file:line` evidence (grep results, read confirmations)
@@ -72,13 +73,22 @@ Review the changed files and score each criterion 0-2:
 | 7   | **Error Handling**        | Errors handled gracefully — no swallowed exceptions, no generic catch-all without logging                     |
 | 8   | **Fallback Behavior**     | Critical paths define what happens when dependencies fail (degraded mode, cached response, user-facing error) |
 
+### Data Integrity (max 4 points)
+
+| #   | Criterion              | What to Check                                                                                                 |
+| --- | ---------------------- | ------------------------------------------------------------------------------------------------------------- |
+| 9   | **Seed vs Migration**  | Seed data (default records, system config) lives in startup data seeders, NOT in one-time migration executors |
+| 10  | **Seeder Idempotency** | Data seeders use check-then-create pattern (query before insert) — safe for repeated runs on any environment  |
+
+**Decision test for reviewers:** _"If the database is reset, does this data still need to exist?"_ Yes → must be in a seeder. No → migration is acceptable.
+
 ## Scoring
 
 | Score | Verdict        | Recommendation                                                                            |
 | ----- | -------------- | ----------------------------------------------------------------------------------------- |
-| 12-16 | **PASS**       | Production-ready. Proceed to commit.                                                      |
-| 8-11  | **NEEDS WORK** | Address gaps before deploying to production. OK for dev/staging.                          |
-| 0-7   | **NOT READY**  | Significant operational gaps. Review Operational Readiness rules in code-review-rules.md. |
+| 15-20 | **PASS**       | Production-ready. Proceed to commit.                                                      |
+| 10-14 | **NEEDS WORK** | Address gaps before deploying to production. OK for dev/staging.                          |
+| 0-9   | **NOT READY**  | Significant operational gaps. Review Operational Readiness rules in code-review-rules.md. |
 
 ## Output Format
 
@@ -107,6 +117,13 @@ Review the changed files and score each criterion 0-2:
 | 6   | Timeout Config    | 0/1/2 | ...      |
 | 7   | Error Handling    | 0/1/2 | ...      |
 | 8   | Fallback Behavior | 0/1/2 | ...      |
+
+### Data Integrity ({X}/4)
+
+| #   | Criterion          | Score | Evidence |
+| --- | ------------------ | ----- | -------- |
+| 9   | Seed vs Migration  | 0/1/2 | ...      |
+| 10  | Seeder Idempotency | 0/1/2 | ...      |
 
 ### Gaps to Address
 

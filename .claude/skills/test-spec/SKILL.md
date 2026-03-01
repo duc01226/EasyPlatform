@@ -5,7 +5,7 @@ description: '[Testing] Generate test specifications, test cases, and coverage a
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -14,6 +14,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
 >
 > - `project-structure-reference.md` -- project patterns and structure
+> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 >
 > If file not found, search for: project documentation, coding standards, architecture docs.
 
@@ -30,7 +31,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 1. **Test Planning** — Define scope, strategy, environments, identify test types needed
 2. **Test Specification** — Extract/analyze scenarios, categorize (positive/negative/edge/security)
 3. **Approval Gate** — Present test plan for user confirmation before generating cases
-4. **Test Case Generation** — Create TC-{SVC}-{NNN} cases with GWT, evidence, priority
+4. **Test Case Generation** — Create TC-{FEATURE}-{NNN} cases with GWT, evidence, priority
 5. **Coverage Analysis** — Map cases to requirements, identify gaps, traceability matrix
 6. **Validation** — Interview user to confirm coverage, priorities, test data needs
 
@@ -42,9 +43,12 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 - **⚠️ ALWAYS PLAN TASKS** — Use `TaskCreate` to break work into granular todo items BEFORE starting. Must include a final review task.
 - Every test case must have `Evidence: {FilePath}:{LineNumber}`
 - NEVER proceed past approval gate without explicit user confirmation
+- For permanent TC writing to feature docs, prefer `/tdd-spec` which writes directly to Section 17
 - Minimum 3 test categories: positive, negative, edge cases
 
 ---
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Task Planning (MANDATORY)
 
@@ -221,10 +225,19 @@ Build structured knowledge model in `.ai/workspace/analysis/[feature-name].analy
 
 Generate test cases in **4 priority groups**: Critical (P0), High (P1), Medium (P2), Low (P3).
 
+### TC Code Numbering Rules
+
+When creating new `TC-{FEATURE}-{NNN}` codes:
+
+1. **Always check the feature doc's first** — `docs/business-features/{App}/detailed-features/` contains existing TC codes. New codes must not collide.
+2. **Existing docs use decade-based grouping** — e.g., GM: 001-004 (CRUD), 011-013 (validation), 021-023 (permissions), 031-033 (events). Find the next free decade.
+3. **If a collision is unavoidable** — renumber in the doc side only. Keep `[Trait("TestSpec")]` in .cs files unchanged and add a renumbering note in the doc.
+4. **Feature doc is the canonical registry** — the `[Trait("TestSpec")]` in test files is for traceability, not the source of truth for numbering.
+
 ### Test Case Format
 
 ```markdown
-#### TC-{SVC}-{NNN}: {Descriptive title}
+#### TC-{FEATURE}-{NNN}: {Descriptive title}
 
 - **Priority:** P0 | P1 | P2 | P3
 - **Type:** Positive | Negative | Boundary | Integration | Security
@@ -310,8 +323,8 @@ team-artifacts/test-specs/{YYMMDD}-testspec-{feature}.md        # From PBI mode
 
 Refer to `shared/references/module-codes.md` for full code tables.
 
-- **Spec-level:** `TS-{SVC}-{NNN}` (e.g., TS-GRO-001)
-- **Test case:** `TC-{SVC}-{NNN}` (e.g., TC-GRO-015)
+- **Spec-level:** `TS-{FEATURE}-{NNN}` (e.g., TS-GM-001)
+- **Test case:** `TC-{FEATURE}-{NNN}` (e.g., TC-GM-015)
 
 ---
 
@@ -319,7 +332,7 @@ Refer to `shared/references/module-codes.md` for full code tables.
 
 Before completing test artifacts:
 
-- [ ] Every test case has `TC-{SVC}-{NNN}` ID
+- [ ] Every test case has `TC-{FEATURE}-{NNN}` ID
 - [ ] Every test case has `Evidence` field with `file:line`
 - [ ] Test summary counts match actual test case count
 - [ ] At least 3 categories: positive, negative, edge
@@ -333,5 +346,4 @@ Before completing test artifacts:
 
 - `test-specs-docs` — Write test specs to `docs/test-specs/` (permanent docs)
 - `qc-specialist` — Quality gates after test case generation
-- `tasks-test-generation` — Autonomous unit/integration test code generation
 - `integration-test` — the project CQRS integration test code generation

@@ -6,7 +6,7 @@ description: '[Planning] Plans dashboard server with progress tracking and timel
 allowed-tools: NONE
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -23,6 +23,8 @@ allowed-tools: NONE
 - Requires `npm install` before first use (gray-matter)
 - Use `/kanban` slash command for quick access
 - Scans for directories containing `plan.md` files
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # plans-kanban
 

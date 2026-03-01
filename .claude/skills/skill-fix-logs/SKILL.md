@@ -2,24 +2,28 @@
 name: skill-fix-logs
 version: 1.0.0
 description: '[Skill Management] Fix the agent skill based on `logs.txt` file.'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Fix a skill based on error analysis from its `logs.txt` file.
 
 **Workflow:**
+
 1. **Read** — Analyze the skill's `logs.txt` for errors and failures
 2. **Diagnose** — Identify root cause of skill malfunction
 3. **Fix** — Apply corrections to SKILL.md, scripts, or references
 
 **Key Rules:**
+
 - Delegates to `skill-creator` for fix patterns
 - Focus on the specific errors reported in logs
 - Test the fix by running the skill again
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Think harder.
 Use `skill-creator` and `claude-code` skills.

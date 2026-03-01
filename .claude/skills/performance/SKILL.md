@@ -2,23 +2,26 @@
 name: performance
 version: 1.0.0
 description: '[Debugging] Analyze and optimize performance bottlenecks'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` AND `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
 
 **Goal:** Analyze and optimize performance bottlenecks in database queries, API endpoints, or frontend rendering.
 
 **Workflow:**
+
 1. **Profile** — Identify bottlenecks using profiling data or metrics
 2. **Analyze** — Trace hot paths and measure impact
 3. **Optimize** — Apply targeted optimizations with before/after measurements
 
 **Key Rules:**
+
 - Analysis Mindset: measure before and after, never optimize blindly
 - Evidence-based: every claim needs profiling data or benchmarks
 - Focus on highest-impact bottlenecks first
@@ -27,7 +30,7 @@ activation: user-invoked
 
 ## Analysis Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 - Do NOT assume a bottleneck location — verify with actual code traces and profiling evidence
 - Every performance claim must include `file:line` evidence
@@ -38,7 +41,7 @@ activation: user-invoked
 
 ## ⚠️ MANDATORY: Confidence & Evidence Gate
 
-**MUST** declare `Confidence: X%` with profiling data + `file:line` proof for EVERY claim.
+**MANDATORY IMPORTANT MUST** declare `Confidence: X%` with profiling data + `file:line` proof for EVERY claim.
 **95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
 
 Activate `arch-performance-optimization` skill and follow its workflow.

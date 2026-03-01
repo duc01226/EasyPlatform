@@ -137,16 +137,16 @@ function buildRecoveryInjection(workflowState, stepInfo, sessionState, checkpoin
     if (inProgressTodos.length > 0 || pendingTodos.length > 0) {
       lines.push('### Todo Items to Restore');
       lines.push('');
-      lines.push('**IMPORTANT:** Call TaskCreate to restore these items:');
+      lines.push('**⚠️ CRITICAL:** Call `TaskList` FIRST to check for existing tasks.');
+      lines.push('If tasks already exist, **resume them** — do NOT create duplicates.');
+      lines.push('Only use `TaskCreate` if TaskList returns empty.');
       lines.push('');
-      lines.push('```json');
-      const todosToRestore = [...inProgressTodos, ...pendingTodos].map(t => ({
-        content: t.content,
-        status: t.status,
-        activeForm: t.activeForm || `Working on ${t.content}`
-      }));
-      lines.push(JSON.stringify(todosToRestore, null, 2));
-      lines.push('```');
+      lines.push('Expected tasks from before compaction:');
+      lines.push('');
+      [...inProgressTodos, ...pendingTodos].forEach(t => {
+        const marker = t.status === 'in_progress' ? '[~]' : '[ ]';
+        lines.push(`- ${marker} ${t.content}`);
+      });
       lines.push('');
     }
   }
@@ -191,7 +191,7 @@ function buildRecoveryInjection(workflowState, stepInfo, sessionState, checkpoin
   // Action Instructions
   lines.push('### ⚡ REQUIRED ACTIONS');
   lines.push('');
-  lines.push('1. **FIRST:** Call TaskCreate to restore todo items above');
+  lines.push('1. **FIRST:** Call `TaskList` to check existing tasks — resume them, do NOT create duplicates');
   if (stepInfo && stepInfo.currentStep) {
     lines.push(`2. **THEN:** Continue workflow from step \`${stepInfo.currentStep}\``);
   } else {
@@ -200,6 +200,7 @@ function buildRecoveryInjection(workflowState, stepInfo, sessionState, checkpoin
   if (sessionState?.activePlan) {
     lines.push(`3. **⚠️ IMPORTANT — MUST READ:** \`${sessionState.activePlan}/plan.md\` for full context`);
   }
+  lines.push(`${sessionState?.activePlan ? '4' : '3'}. **⚠️ Re-read files** with Read tool before using Edit — compaction clears file read state.`);
   lines.push('');
 
   return lines.join('\n');

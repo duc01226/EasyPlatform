@@ -5,15 +5,17 @@ description: "[Project Management] Break PBIs into user stories using vertical s
 allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Break Product Backlog Items into implementable user stories using vertical slicing, SPIDR splitting, and INVEST criteria.
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `project-structure-reference.md` -- project patterns and structure
+> - `.claude/skills/shared/estimation-framework.md` -- story points, complexity, splitting rules
+> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 >
 > If file not found, search for: project documentation, coding standards, architecture docs.
 
@@ -27,9 +29,25 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate
 
 **Key Rules:**
 
-- Stories with effort >8 MUST be split; >5 SHOULD be split
+- Stories with SP >8 MUST be split; >5 SHOULD be split (see estimation-framework.md)
+- All stories MUST include `story_points` and `complexity` fields
+
+## Greenfield Mode
+
+> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+
+**When greenfield is detected:**
+
+1. Generate **foundation PBIs** instead of feature stories: infrastructure setup, project scaffold, CI/CD pipeline, first feature vertical slice
+2. Add dependency ordering: infrastructure stories BEFORE feature stories
+3. Skip "MUST READ project-structure-reference.md" (won't exist)
+4. Include setup stories: dev environment, build tooling, deployment pipeline, monitoring
+5. Priority order: infra → scaffold → first feature → remaining features
+
 - Each story needs happy path, edge case, and error scenario (minimum)
-- Use correct project domain vocabulary (Candidate not Applicant, Goal not Objective)
+- Use correct project domain vocabulary when available (check project docs for terminology)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # User Story Creation
 
@@ -91,13 +109,13 @@ Glob("docs/business-features/{module}/detailed-features/*.md")
 
 ### Step 3: Apply Domain Vocabulary
 
-| Module   | Correct Term   | Avoid               |
-| -------- | -------------- | ------------------- |
-| ServiceA | Candidate      | Applicant           |
-| ServiceA | JobApplication | Application         |
-| ServiceB | Goal           | Objective           |
-| ServiceB | Employee       | User, Staff         |
-| ServiceC | Survey         | Form, Questionnaire |
+| Module       | Correct Term | Avoid               |
+| ------------ | ------------ | ------------------- |
+| bravoTALENTS | Candidate    | Applicant           |
+| bravoTALENTS | Job Opening  | Position, Vacancy   |
+| bravoGROWTH  | Goal         | Objective, Target   |
+| bravoGROWTH  | Employee     | User, Staff         |
+| bravoSURVEYS | Survey       | Form, Questionnaire |
 
 ### Step 4: Include in Story
 
@@ -114,20 +132,20 @@ Glob("docs/business-features/{module}/detailed-features/*.md")
 
 ## INVEST Criteria
 
-| Criterion       | Definition                       | Validation Question                 |
-| --------------- | -------------------------------- | ----------------------------------- |
-| **I**ndependent | No dependencies on other stories | Can this be developed in any order? |
-| **N**egotiable  | Details can change               | Is the "how" open for discussion?   |
-| **V**aluable    | Delivers user value              | Does user get observable benefit?   |
-| **E**stimable   | Can estimate effort              | Can team size this?                 |
-| **S**mall       | Completable in sprint            | Effort ≤8? (prefer ≤5)              |
-| **T**estable    | Clear acceptance criteria        | Can we write pass/fail tests?       |
+| Criterion       | Definition                       | Validation Question                  |
+| --------------- | -------------------------------- | ------------------------------------ |
+| **I**ndependent | No dependencies on other stories | Can this be developed in any order?  |
+| **N**egotiable  | Details can change               | Is the "how" open for discussion?    |
+| **V**aluable    | Delivers user value              | Does user get observable benefit?    |
+| **E**stimable   | Can estimate story points        | Can team size this? (Fibonacci 1-21) |
+| **S**mall       | Completable in sprint            | SP ≤8? (prefer ≤5)                   |
+| **T**estable    | Clear acceptance criteria        | Can we write pass/fail tests?        |
 
 ---
 
 ## SPIDR Splitting Checklist
 
-**When to apply:** Story effort >8 MUST split. Effort >5 SHOULD split.
+**When to apply:** Story SP >8 MUST split. SP >5 SHOULD split. SP 13 = SHOULD split into 2-3 stories. SP 21 = MUST split (epic-level).
 
 | Pattern        | Question                     | Split Strategy                            |
 | -------------- | ---------------------------- | ----------------------------------------- |
@@ -148,9 +166,10 @@ Glob("docs/business-features/{module}/detailed-features/*.md")
 ### Size Validation
 
 ```
-Effort 1-5:  ✅ Good size
-Effort 6-8:  ⚠️ Consider splitting (apply SPIDR)
-Effort >8:   ❌ MUST split (apply SPIDR, repeat until ≤8)
+SP 1-5:   ✅ Good size
+SP 6-8:   ⚠️ Consider splitting (apply SPIDR)
+SP 13:    ❌ SHOULD split into 2-3 stories
+SP 21:    ❌ MUST split — epic-level, not sprint-ready
 ```
 
 ---
@@ -208,7 +227,8 @@ parent_pbi: '{PBI-ID}'
 title: '{Brief story title}'
 persona: '{User persona}'
 priority: P1 | P2 | P3
-effort: 1 | 2 | 3 | 5 | 8
+story_points: 1 | 2 | 3 | 5 | 8 | 13
+complexity: Low | Medium | High | Very High
 status: draft | ready | in_progress | done
 module: '{ServiceA | ServiceB | ServiceC | ServiceD}'
 ---

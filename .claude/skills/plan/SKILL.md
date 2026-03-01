@@ -2,12 +2,13 @@
 name: plan
 version: 1.0.0
 description: '[Planning] Intelligent plan creation with prompt enhancement'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
 
@@ -23,9 +24,40 @@ activation: user-invoked
 **Key Rules:**
 
 - PLANNING-ONLY: never implement, never use EnterPlanMode tool
-- Parent skill for all plan-* variants (plan-fast, plan-hard, plan-ci, plan-cro, plan-two, plan-parallel)
+- Parent skill for all plan-\* variants (plan-fast, plan-hard, plan-ci, plan-cro, plan-two, plan-parallel)
 - Always collaborate with user; ask decision questions, present options
 - Always add final `/plan-validate` and `/plan-review` tasks
+
+## Greenfield Mode
+
+> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+
+**When greenfield is detected:**
+
+1. **ALWAYS route to `/plan-hard`** — greenfield planning requires deep research, never fast plans
+2. Skip "MUST READ project-structure-reference.md" step (file won't exist or is placeholder)
+3. Enable web research for tech landscape analysis (WebSearch + WebFetch)
+4. Delegate architecture decisions to `solution-architect` agent
+5. Increase user interview frequency (AskUserQuestion at each major decision)
+6. If `/greenfield` workflow is not already active, suggest it via AskUserQuestion:
+    - "Activate Greenfield Project Init workflow (Recommended)" — full waterfall inception
+    - "Continue with standalone /plan-hard" — planning only, no full workflow
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+## Variant Decision Guide
+
+| If the task is...                | Use                  | Why                                    |
+| -------------------------------- | -------------------- | -------------------------------------- |
+| Simple, clear scope (<5 files)   | `/plan-fast`         | Lightweight plan, faster output        |
+| Complex, multi-layer, many files | `/plan-hard`         | Deep research, comprehensive plan      |
+| CI/CD pipeline changes           | `/plan-ci`           | CI-specific context and validation     |
+| Cross-cutting refactor           | `/plan-cro`          | Cross-service impact analysis          |
+| Parallel implementation possible | `/plan-parallel`     | Splits plan into parallelizable phases |
+| Two competing approaches         | `/plan-two`          | Creates 2 plans for comparison         |
+| Analyzing existing plan          | `/plan-analysis`     | Reviews/critiques an existing plan     |
+| Archiving completed plan         | `/plan-archive`      | Moves plan to archive                  |
+| General/unknown                  | `/plan` (this skill) | Routes automatically                   |
 
 ## PLANNING-ONLY — Collaboration Required
 
@@ -62,8 +94,8 @@ Check the `## Plan Context` section in the injected context:
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
-  1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-  2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+    1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
+    2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
 
 ## Important Notes
 
@@ -79,3 +111,12 @@ Check the `## Plan Context` section in the injected context:
 > **ALWAYS** use `AskUserQuestion` tool to offer `/plan-review` validation after plan creation.
 > **ASK** user to confirm the plan before any implementation begins.
 > **ASK** user decision questions using `AskUserQuestion` tool when multiple approaches exist.
+
+---
+
+## Workflow Recommendation
+
+> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+>
+> 1. **Activate `pre-development` workflow** (Recommended) — quality-gate → plan → plan-review → plan-validate
+> 2. **Execute `/plan` directly** — run this skill standalone

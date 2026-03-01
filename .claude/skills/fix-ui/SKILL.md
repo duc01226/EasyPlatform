@@ -2,12 +2,14 @@
 name: fix-ui
 version: 1.0.0
 description: '[Implementation] Analyze and fix UI issues'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` AND `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Skill Variant:** Variant of `/fix` — UI/UX visual issue diagnosis and fix.
 
@@ -16,19 +18,21 @@ activation: user-invoked
 **Goal:** Diagnose and fix UI/UX issues including layout, styling, responsiveness, and visual bugs.
 
 **Workflow:**
+
 1. **Identify** — Locate the component/template causing the visual issue
 2. **Diagnose** — Trace CSS/HTML/component logic to find root cause
 3. **Fix** — Apply targeted fix (SCSS, template, component logic)
 4. **Verify** — Check responsive behavior and cross-browser rendering
 
 **Key Rules:**
+
 - Debug Mindset: every claim needs `file:line` evidence
 - Always use BEM classes on template elements
 - Check responsive breakpoints when fixing layout issues
 
 ## Debug Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 - Do NOT assume the first hypothesis is correct — verify with actual code traces
 - Every root cause claim must include `file:line` evidence
@@ -39,7 +43,7 @@ activation: user-invoked
 
 ## ⚠️ MANDATORY: Confidence & Evidence Gate
 
-**MUST** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
+**MANDATORY IMPORTANT MUST** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
 **95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
 
 ## Required Skills (Priority Order)
@@ -102,3 +106,4 @@ If the user provides a screenshots or videos, use `ai-multimodal` skill to descr
 
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
+- **After fixing, MUST run `/prove-fix`** — build code proof traces per change with confidence scores. Never skip.

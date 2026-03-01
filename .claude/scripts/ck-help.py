@@ -49,7 +49,7 @@ TASK_MAPPINGS = {
     "fix": ["fix", "bug", "error", "broken", "issue", "debug", "crash", "fail", "wrong", "not working"],
     "plan": ["plan", "design", "architect", "research", "think", "analyze", "strategy", "how to", "approach"],
     "cook": ["implement", "build", "create", "add", "feature", "code", "develop", "make", "write"],
-    "bootstrap": ["start", "new", "init", "setup", "project", "scaffold", "generate", "begin"],
+
     "test": ["test", "check", "verify", "validate", "spec", "unit", "integration", "coverage"],
     "docs": ["document", "readme", "docs", "explain", "comment", "documentation"],
     "git": ["commit", "push", "pr", "merge", "branch", "pull", "request", "git"],
@@ -92,14 +92,6 @@ CATEGORY_GUIDES = {
             ("Test", "`/test`"),
         ],
         "tip": "Cook is standalone - it plans internally. Use /plan → /code for explicit planning",
-    },
-    "bootstrap": {
-        "title": "Project Setup",
-        "workflow": [
-            ("Quick start", "`/bootstrap-auto-fast` \"requirements\""),
-            ("Full setup", "`/bootstrap` \"detailed requirements\""),
-        ],
-        "tip": "Include tech stack preferences in description",
     },
     "test": {
         "title": "Testing",
@@ -740,11 +732,11 @@ def show_coding_level_guide() -> None:
     print("## Level Details")
     print()
     print("### Level 0 (ELI5)")
-    print("- **MUST** use real-world analogies (labeled boxes, recipes)")
-    print("- **MUST** define every technical term")
-    print("- **MUST** use \"we\" language")
-    print("- **MUST** end with check-in: \"Does this make sense?\"")
-    print("- **MUST** comment every line of code")
+    print("- **MANDATORY IMPORTANT MUST** use real-world analogies (labeled boxes, recipes)")
+    print("- **MANDATORY IMPORTANT MUST** define every technical term")
+    print("- **MANDATORY IMPORTANT MUST** use \"we\" language")
+    print("- **MANDATORY IMPORTANT MUST** end with check-in: \"Does this make sense?\"")
+    print("- **MANDATORY IMPORTANT MUST** comment every line of code")
     print("- Structure: Big Picture → Analogy → Baby Steps → Try It → Check-In")
     print()
     print("### Level 1 (Junior)")

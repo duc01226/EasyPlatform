@@ -1,0 +1,470 @@
+{
+    "_description": "Project-specific configuration consumed by .claude hooks at runtime. Update when adding services/apps.",
+    "schemaVersion": 2,
+    "project": {
+        "name": "Easy.Platform",
+        "description": ".NET 9 Framework for building microservices with CQRS, event-driven architecture, and multi-database support. Includes PlatformExampleApp (TextSnippet) as reference implementation.",
+        "languages": ["csharp", "typescript", "scss"],
+        "packageManagers": ["npm", "nuget"]
+    },
+    "framework": {
+        "name": "Easy.Platform",
+        "backendPatternsDoc": "docs/project-reference/backend-patterns-reference.md",
+        "frontendPatternsDoc": "docs/project-reference/frontend-patterns-reference.md",
+        "codeReviewDoc": "docs/project-reference/code-review-rules.md",
+        "integrationTestDoc": "docs/project-reference/integration-test-reference.md",
+        "searchPatternKeywords": [
+            "PlatformRootRepository",
+            "PlatformValidationResult",
+            "PlatformEntityDto",
+            "PlatformBaseController",
+            "PlatformVmStore",
+            "PlatformApiService",
+            "AppBaseComponent",
+            "AppBaseVmStoreComponent",
+            "AppBaseFormComponent",
+            "PlatformApplicationBackgroundJob",
+            "PlatformDataMigrationExecutor",
+            "PlatformServiceIntegrationTestWithAssertions"
+        ]
+    },
+    "modules": [
+        {
+            "name": "Easy.Platform",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform[\\\\/]",
+            "description": "Core framework library: CQRS, domain primitives, validation, repositories, message bus abstractions",
+            "tags": ["framework", "core"],
+            "meta": {}
+        },
+        {
+            "name": "Easy.Platform.AspNetCore",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.AspNetCore[\\\\/]",
+            "description": "ASP.NET Core integration for Easy.Platform",
+            "tags": ["framework", "aspnetcore"],
+            "meta": {}
+        },
+        {
+            "name": "Easy.Platform.MongoDB",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.MongoDB[\\\\/]",
+            "description": "MongoDB persistence provider",
+            "tags": ["framework", "persistence", "mongodb"],
+            "meta": {}
+        },
+        {
+            "name": "Easy.Platform.EfCore",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.EfCore[\\\\/]",
+            "description": "Entity Framework Core persistence provider (PostgreSQL, SQL Server)",
+            "tags": ["framework", "persistence", "efcore"],
+            "meta": {}
+        },
+        {
+            "name": "Easy.Platform.RabbitMQ",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.RabbitMQ[\\\\/]",
+            "description": "RabbitMQ message bus implementation",
+            "tags": ["framework", "messaging", "rabbitmq"],
+            "meta": {}
+        },
+        {
+            "name": "Easy.Platform.RedisCache",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.RedisCache[\\\\/]",
+            "description": "Redis caching provider",
+            "tags": ["framework", "caching", "redis"],
+            "meta": {}
+        },
+        {
+            "name": "Easy.Platform.AutomationTest",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.AutomationTest[\\\\/]",
+            "description": "Integration test framework base classes",
+            "tags": ["framework", "testing"],
+            "meta": {}
+        },
+        {
+            "name": "Easy.Platform.AzureFileStorage",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.AzureFileStorage[\\\\/]",
+            "description": "Azure Blob Storage file storage provider",
+            "tags": ["framework", "storage", "azure"],
+            "meta": {}
+        },
+        {
+            "name": "Easy.Platform.HangfireBackgroundJob",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.HangfireBackgroundJob[\\\\/]",
+            "description": "Hangfire background job provider",
+            "tags": ["framework", "backgroundjob", "hangfire"],
+            "meta": {}
+        },
+        {
+            "name": "Easy.Platform.FirebasePushNotification",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.FireBasePushNotification[\\\\/]",
+            "description": "Firebase push notification provider",
+            "tags": ["framework", "notification", "firebase"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.TextSnippet.Api",
+            "kind": "backend-service",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Api[\\\\/]",
+            "description": "TextSnippet API host (ASP.NET Core Web API)",
+            "tags": ["example-app", "api", "microservice"],
+            "meta": {
+                "port": 5000
+            }
+        },
+        {
+            "name": "PlatformExampleApp.TextSnippet.Application",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Application[\\\\/]",
+            "description": "TextSnippet application layer: CQRS commands, queries, DTOs, event handlers",
+            "tags": ["example-app", "application-layer"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.TextSnippet.Domain",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Domain[\\\\/]",
+            "description": "TextSnippet domain layer: entities, repository interfaces, domain events",
+            "tags": ["example-app", "domain-layer"],
+            "meta": {
+                "repository": "ITextSnippetRepository, IUserRepository"
+            }
+        },
+        {
+            "name": "PlatformExampleApp.TextSnippet.Infrastructure",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Infrastructure[\\\\/]",
+            "description": "TextSnippet infrastructure layer: external service integrations",
+            "tags": ["example-app", "infrastructure-layer"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.TextSnippet.Persistence",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence[\\\\/]",
+            "description": "TextSnippet EF Core persistence (SQL Server)",
+            "tags": ["example-app", "persistence", "efcore", "sqlserver"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.TextSnippet.Persistence.Mongo",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence\\.Mongo[\\\\/]",
+            "description": "TextSnippet MongoDB persistence provider",
+            "tags": ["example-app", "persistence", "mongodb"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.TextSnippet.Persistence.PostgreSql",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence\\.PostgreSql[\\\\/]",
+            "description": "TextSnippet PostgreSQL persistence provider",
+            "tags": ["example-app", "persistence", "postgresql"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.IntegrationTests",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.IntegrationTests[\\\\/]",
+            "description": "Integration tests for PlatformExampleApp",
+            "tags": ["example-app", "testing", "integration"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.Test",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Test[\\\\/]",
+            "description": "Unit tests for PlatformExampleApp",
+            "tags": ["example-app", "testing", "unit"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.Test.BDD",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Test\\.BDD[\\\\/]",
+            "description": "BDD tests for PlatformExampleApp",
+            "tags": ["example-app", "testing", "bdd"],
+            "meta": {}
+        },
+        {
+            "name": "playground-text-snippet",
+            "kind": "frontend-app",
+            "pathRegex": "src[\\\\/]Frontend[\\\\/]apps[\\\\/]playground-text-snippet[\\\\/]",
+            "description": "Angular example frontend app for TextSnippet service",
+            "tags": ["example-app", "angular", "nx"],
+            "meta": {
+                "port": 4200,
+                "generation": "modern"
+            }
+        },
+        {
+            "name": "platform-core",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]platform-core[\\\\/]",
+            "description": "Frontend framework core: base components, stores, API services, utilities",
+            "tags": ["framework", "angular", "core"],
+            "meta": {}
+        },
+        {
+            "name": "platform-components",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]platform-components[\\\\/]",
+            "description": "Reusable Angular UI components library",
+            "tags": ["framework", "angular", "components"],
+            "meta": {}
+        },
+        {
+            "name": "apps-domains",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]apps-domains[\\\\/]",
+            "description": "Shared domain models and services across frontend apps",
+            "tags": ["shared", "angular", "domains"],
+            "meta": {}
+        },
+        {
+            "name": "apps-domains-components",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]apps-domains-components[\\\\/]",
+            "description": "Domain-specific UI components shared across apps",
+            "tags": ["shared", "angular", "components"],
+            "meta": {}
+        },
+        {
+            "name": "apps-shared-components",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]apps-shared-components[\\\\/]",
+            "description": "Generic shared UI components across apps",
+            "tags": ["shared", "angular", "components"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.Shared",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Shared[\\\\/]",
+            "description": "Shared code across PlatformExampleApp projects",
+            "tags": ["example-app", "shared"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.Ids",
+            "kind": "backend-service",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Ids[\\\\/]",
+            "description": "Identity Server for PlatformExampleApp authentication",
+            "tags": ["example-app", "identity", "auth"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.TextSnippet.Persistence.MultiDbDemo.Mongo",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.TextSnippet\\.Persistence\\.MultiDbDemo\\.Mongo[\\\\/]",
+            "description": "Multi-database demo MongoDB persistence (secondary DB context)",
+            "tags": ["example-app", "persistence", "mongodb", "demo"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.Test.Shared",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Test\\.Shared[\\\\/]",
+            "description": "Shared test utilities across PlatformExampleApp test projects",
+            "tags": ["example-app", "testing", "shared"],
+            "meta": {}
+        },
+        {
+            "name": "PlatformExampleApp.Benchmark",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Backend[\\\\/]PlatformExampleApp\\.Benchmark[\\\\/]",
+            "description": "Performance benchmarks for PlatformExampleApp",
+            "tags": ["example-app", "benchmark"],
+            "meta": {}
+        },
+        {
+            "name": "Easy.Platform.Benchmark",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.Benchmark[\\\\/]",
+            "description": "Performance benchmarks for Easy.Platform framework",
+            "tags": ["framework", "benchmark"],
+            "meta": {}
+        },
+        {
+            "name": "Easy.Platform.CustomAnalyzers",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.CustomAnalyzers[\\\\/]",
+            "description": "Custom Roslyn analyzers for Easy.Platform code quality",
+            "tags": ["framework", "analyzers", "roslyn"],
+            "meta": {}
+        }
+    ],
+    "contextGroups": [
+        {
+            "name": "backend",
+            "pathRegexes": ["src[\\\\/]Backend[\\\\/].*\\.cs$"],
+            "fileExtensions": [".cs"],
+            "guideDoc": "docs/project-reference/backend-patterns-reference.md",
+            "patternsDoc": "docs/project-reference/backend-patterns-reference.md",
+            "rules": [
+                "Use IPlatformRootRepository<TEntity> for data access",
+                "Use PlatformValidationResult fluent API, never throw exceptions for validation",
+                "Side effects go in Entity Event Handlers (UseCaseEvents/), never in command handlers",
+                "DTOs own mapping via MapToEntity()/MapToObject(), never map in handlers",
+                "Cross-service communication via RabbitMQ message bus only",
+                "Command + Result + Handler in ONE file under UseCaseCommands/{Feature}/"
+            ]
+        },
+        {
+            "name": "frontend",
+            "pathRegexes": ["src[\\\\/]Frontend[\\\\/].*\\.(ts|html|scss)$"],
+            "fileExtensions": [".ts", ".html", ".scss"],
+            "guideDoc": "docs/project-reference/frontend-patterns-reference.md",
+            "patternsDoc": "docs/project-reference/frontend-patterns-reference.md",
+            "rules": [
+                "Extend AppBaseComponent/AppBaseVmStoreComponent/AppBaseFormComponent",
+                "Use PlatformVmStore + effectSimple() for state management",
+                "Extend PlatformApiService for HTTP calls, never use HttpClient directly",
+                "Always use .pipe(this.untilDestroyed()) for subscriptions",
+                "All template elements must have BEM classes (block__element --modifier)",
+                "Constants/columns/roles go in Model class static properties, not Components"
+            ]
+        },
+        {
+            "name": "platform-framework",
+            "pathRegexes": ["src[\\\\/]Platform[\\\\/].*\\.cs$"],
+            "fileExtensions": [".cs"],
+            "guideDoc": "docs/project-reference/backend-patterns-reference.md",
+            "patternsDoc": "docs/project-reference/backend-patterns-reference.md",
+            "rules": [
+                "This is the framework layer - changes affect all consumers",
+                "Maintain backward compatibility for public APIs",
+                "Document breaking changes in CHANGELOG"
+            ]
+        }
+    ],
+    "designSystem": {
+        "docsPath": "docs/project-reference/design-system",
+        "appMappings": [
+            {
+                "name": "playground-text-snippet",
+                "pathRegexes": ["src[\\\\/]Frontend[\\\\/]apps[\\\\/]playground-text-snippet[\\\\/]"],
+                "docFile": "docs/project-reference/design-system/README.md",
+                "description": "Example Angular app design system mapping"
+            }
+        ]
+    },
+    "styling": {
+        "technology": "scss",
+        "fileExtensions": [".scss"],
+        "guideDoc": "docs/project-reference/scss-styling-guide.md",
+        "appMap": {
+            "playground-text-snippet": "src[\\\\/]Frontend[\\\\/]apps[\\\\/]playground-text-snippet[\\\\/].*\\.scss$"
+        },
+        "patterns": [
+            {
+                "name": "BEM",
+                "pathRegexes": ["src[\\\\/]Frontend[\\\\/].*\\.scss$"],
+                "description": "Block Element Modifier naming convention for all CSS classes",
+                "scssExamples": ["block__element", "block__element--modifier"]
+            },
+            {
+                "name": "SCSS Partials",
+                "pathRegexes": ["src[\\\\/]Frontend[\\\\/]apps[\\\\/].*[\\\\/]styles[\\\\/]"],
+                "description": "Shared styles via _variables.scss, _mixins.scss, _functions.scss, _placeholders.scss",
+                "scssExamples": ["@use 'variables'", "@use 'mixins'"]
+            },
+            {
+                "name": "Material Theming",
+                "pathRegexes": ["src[\\\\/]Frontend[\\\\/]apps[\\\\/].*[\\\\/]styles[\\\\/]"],
+                "description": "Angular Material theme customization via _material-core.scss and themes/",
+                "scssExamples": ["@use '@angular/material' as mat"]
+            }
+        ]
+    },
+    "componentSystem": {
+        "type": "angular",
+        "selectorPrefixes": ["app-", "platform-", "platform-example-web-"],
+        "filePattern": "*.component.ts",
+        "layerClassification": {
+            "pages": "src[\\\\/]Frontend[\\\\/]apps[\\\\/].*[\\\\/]pages[\\\\/]",
+            "shared-components": "src[\\\\/]Frontend[\\\\/]apps[\\\\/].*[\\\\/]shared[\\\\/]components[\\\\/]",
+            "platform-components": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]platform-components[\\\\/]",
+            "domain-components": "src[\\\\/]Frontend[\\\\/]libs[\\\\/]apps-domains-components[\\\\/]"
+        }
+    },
+    "testing": {
+        "frameworks": ["xunit", "jest", "playwright"],
+        "filePatterns": {
+            "backend-unit": "*.Test.cs",
+            "backend-integration": "*IntegrationTest*.cs",
+            "backend-bdd": "*.BDD/*.cs",
+            "frontend-unit": "*.spec.ts",
+            "e2e": "*.spec.ts (under e2e/)"
+        },
+        "commands": {
+            "backend-build": "dotnet build src/Easy.Platform.sln",
+            "backend-test": "dotnet test src/Easy.Platform.sln",
+            "frontend-test": "cd src/Frontend && npx nx test",
+            "frontend-e2e": "cd src/Frontend/e2e && npx playwright test"
+        },
+        "coverageTool": "dotnet-coverage",
+        "guideDoc": "docs/project-reference/integration-test-reference.md"
+    },
+    "e2eTesting": {
+        "framework": "playwright",
+        "language": "typescript",
+        "configFile": "src/Frontend/e2e/playwright.config.ts",
+        "testsPath": "src/Frontend/e2e/tests/",
+        "pageObjectsPath": "src/Frontend/e2e/page-objects/",
+        "fixturesPath": "src/Frontend/e2e/fixtures/",
+        "guideDoc": "docs/project-reference/e2e-test-reference.md",
+        "testSpecsDocs": ["docs/test-specs/"],
+        "searchPatterns": ["test\\(", "\\.spec\\.ts$"],
+        "runCommands": {
+            "all": "cd src/Frontend/e2e && npx playwright test",
+            "headed": "cd src/Frontend/e2e && npx playwright test --headed",
+            "ui": "cd src/Frontend/e2e && npx playwright test --ui"
+        },
+        "bestPractices": [],
+        "entryPoints": ["src/Frontend/e2e/playwright.config.ts", "src/Frontend/e2e/recordings/", "src/Frontend/e2e/utils/"]
+    },
+    "databases": {
+        "primary": "MongoDB",
+        "providers": ["MongoDB", "PostgreSQL", "SQL Server"],
+        "note": "Multi-database support via persistence layer abstraction. Each provider has its own persistence project."
+    },
+    "messaging": {
+        "broker": "RabbitMQ",
+        "patterns": ["outbox", "inbox", "event-driven"],
+        "consumerConvention": "Entity Event Handlers in UseCaseEvents/"
+    },
+    "api": {
+        "style": "REST + CQRS",
+        "docsFormat": "Swagger/OpenAPI",
+        "authPattern": "JWT"
+    },
+    "infrastructure": {
+        "containerization": "Docker",
+        "orchestration": "docker-compose",
+        "cicd": {
+            "tool": "GitHub Actions",
+            "configPath": ".github/workflows/"
+        }
+    },
+    "referenceDocs": [
+        { "filename": "docs/project-reference/project-structure-reference.md", "purpose": "Project directory structure and module layout" },
+        { "filename": "docs/project-reference/backend-patterns-reference.md", "purpose": "Backend CQRS, repository, validation patterns" },
+        { "filename": "docs/project-reference/frontend-patterns-reference.md", "purpose": "Frontend Angular component, store, API patterns" },
+        { "filename": "docs/project-reference/integration-test-reference.md", "purpose": "Integration test base classes and patterns" },
+        { "filename": "docs/project-reference/feature-docs-reference.md", "purpose": "Business feature documentation index" },
+        { "filename": "docs/project-reference/code-review-rules.md", "purpose": "Code review standards and checklist" },
+        { "filename": "docs/project-reference/scss-styling-guide.md", "purpose": "SCSS/BEM styling conventions" },
+        { "filename": "docs/project-reference/design-system/README.md", "purpose": "Design system tokens and component guidelines" },
+        { "filename": "docs/project-reference/e2e-test-reference.md", "purpose": "E2E Playwright test patterns and page objects" },
+        { "filename": "docs/project-reference/domain-entities-reference.md", "purpose": "Domain entities, value objects, DTO mapping, aggregate boundaries" }
+    ],
+    "custom": {}
+}

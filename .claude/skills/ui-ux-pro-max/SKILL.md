@@ -5,7 +5,7 @@ description: '[Frontend] Frontend UI/UX design intelligence - activate FIRST whe
 allowed-tools: NONE
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -24,6 +24,8 @@ allowed-tools: NONE
 - All clickable elements need `cursor-pointer` and hover feedback
 - Light mode text must have 4.5:1 minimum contrast ratio
 - Test both light/dark modes and responsive breakpoints before delivery
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # UI/UX Pro Max - Design Intelligence
 

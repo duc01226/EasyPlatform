@@ -2,23 +2,27 @@
 name: coding-level
 version: 1.0.0
 description: '[Utilities] Set coding experience level for tailored explanations'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Set the user's coding experience level to tailor explanation depth and detail.
 
 **Workflow:**
+
 1. **Ask** -- Query user for their experience level (beginner/intermediate/expert)
 2. **Configure** -- Adjust response verbosity and explanation depth accordingly
 
 **Key Rules:**
+
 - Expert: minimal explanation, focus on code and architecture
 - Intermediate: moderate explanation with key concepts
 - Beginner: detailed explanation with examples and context
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Set your coding experience level for tailored explanations and output format.
 

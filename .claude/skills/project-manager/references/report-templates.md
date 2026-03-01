@@ -8,24 +8,28 @@
 ### Sprint: {Name} | Day {N} of {Total}
 
 #### Executive Summary
+
 {2-3 sentences on overall health}
 
 #### Sprint Metrics
-| Metric | Planned | Actual | Status |
-|--------|---------|--------|--------|
-| Stories | | | green/yellow/red |
-| Story Points | | | |
-| Bugs Found | | | |
-| Bugs Fixed | | | |
+
+| Metric                        | Planned | Actual | Status           |
+| ----------------------------- | ------- | ------ | ---------------- |
+| Stories                       |         |        | green/yellow/red |
+| Story Points (Fibonacci 1-21) |         |        |                  |
+| Bugs Found                    |         |        |                  |
+| Bugs Fixed                    |         |        |                  |
 
 #### Burndown
 ```
+
 Points | X
-       | X X
-       | X X X
-       | X X X X
-       +----------
-         D1 D2 D3 D4
+| X X
+| X X X
+| X X X X
++----------
+D1 D2 D3 D4
+
 ```
 
 #### Completed Since Last Report
@@ -84,9 +88,11 @@ Legend:
 
 ### Critical Path
 ```
+
 [Start] -> [Feature A] -> [Feature B] -> [Integration] -> [Release]
-                |              ^
-          [Feature C] ---------+
+| ^
+[Feature C] ---------+
+
 ```
 
 ### Upstream Dependencies (We depend on)
@@ -118,18 +124,21 @@ Legend:
 ## Risk Register: {Sprint/Project}
 
 ### Active Risks
-| ID | Risk | Category | P | I | Score | Mitigation | Owner | Status |
-|----|------|----------|---|---|-------|------------|-------|--------|
-| R001 | | Tech/Schedule/Resource/Scope | H/M/L | H/M/L | 1-9 | | | Open/Mitigating/Closed |
+
+| ID   | Risk | Category                     | P     | I     | Score | Mitigation | Owner | Status                 |
+| ---- | ---- | ---------------------------- | ----- | ----- | ----- | ---------- | ----- | ---------------------- |
+| R001 |      | Tech/Schedule/Resource/Scope | H/M/L | H/M/L | 1-9   |            |       | Open/Mitigating/Closed |
 
 ### Risk Scoring Matrix
 ```
+
 Impact
-  H | 3   6   9
-  M | 2   4   6
-  L | 1   2   3
-    +----------
-      L   M   H  Probability
+H | 3 6 9
+M | 2 4 6
+L | 1 2 3
++----------
+L M H Probability
+
 ```
 
 ### Thresholds
@@ -163,50 +172,59 @@ Impact
 ---
 
 ### 1. Sprint Health Check (5 min)
+
 - Burndown status: green/yellow/red
 - Blockers count: {N}
 - Key highlight: {one thing}
 
 ### 2. Role Updates (10 min)
+
 | Role | Update | Needs |
-|------|--------|-------|
-| PO | | |
-| BA | | |
-| Dev | | |
-| QA | | |
-| UX | | |
-| QC | | |
+| ---- | ------ | ----- |
+| PO   |        |       |
+| BA   |        |       |
+| Dev  |        |       |
+| QA   |        |       |
+| UX   |        |       |
+| QC   |        |       |
 
 ### 3. Blockers & Dependencies (5 min)
+
 | Blocker | Owner | Help Needed |
-|---------|-------|-------------|
-| | | |
+| ------- | ----- | ----------- |
+|         |       |             |
 
 ### 4. Risks & Escalations (5 min)
+
 | Item | Action | Owner |
-|------|--------|-------|
-| | | |
+| ---- | ------ | ----- |
+|      |        |       |
 
 ### 5. Action Items Review (5 min)
+
 #### Previous Action Items
-| Action | Owner | Due | Status |
-|--------|-------|-----|--------|
-| | | | done/in-progress/blocked |
+
+| Action | Owner | Due | Status                   |
+| ------ | ----- | --- | ------------------------ |
+|        |       |     | done/in-progress/blocked |
 
 ---
 
 ### Meeting Notes
+
 {Capture key discussions}
 
 ### Decisions Made
+
 | Decision | Rationale | Owner |
-|----------|-----------|-------|
-| | | |
+| -------- | --------- | ----- |
+|          |           |       |
 
 ### New Action Items
+
 | Action | Owner | Due |
-|--------|-------|-----|
-| | | |
+| ------ | ----- | --- |
+|        |       |     |
 
 ---
 
@@ -218,6 +236,7 @@ Impact
 ## Sprint Ceremonies Support
 
 ### Sprint Planning Checklist
+
 - [ ] Sprint goal defined
 - [ ] Capacity calculated
 - [ ] PBIs prioritized
@@ -226,6 +245,7 @@ Impact
 - [ ] Commitment agreed
 
 ### Sprint Review Checklist
+
 - [ ] Demo prepared
 - [ ] Stakeholders invited
 - [ ] Metrics gathered
@@ -238,13 +258,16 @@ Impact
 ## Sprint {N} Retrospective
 
 ### What Went Well
+
 - {item}
 
 ### What Didn't Go Well
+
 - {item}
 
 ### Action Items
+
 | Action | Owner | Due |
-|--------|-------|-----|
-| | | |
+| ------ | ----- | --- |
+|        |       |     |
 ```

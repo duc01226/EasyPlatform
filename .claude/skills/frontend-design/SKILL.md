@@ -6,7 +6,7 @@ allowed-tools: NONE
 license: Complete terms in LICENSE.txt
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -25,6 +25,8 @@ license: Complete terms in LICENSE.txt
 - For screenshot inputs, extract design guidelines FIRST before coding
 - Never use generic fonts (Inter, Roboto, Arial) or cliched color schemes
 - Match implementation complexity to aesthetic vision (maximalist = elaborate, minimalist = precise)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 This skill guides creation of distinctive, production-grade frontend interfaces that avoid generic "AI slop" aesthetics. Implement real working code with exceptional attention to aesthetic details and creative choices.
 
@@ -124,7 +126,6 @@ Remember: Claude is capable of extraordinary creative work. Don't hold back, sho
 
 ## Related
 
-- `frontend-angular`
 - `ui-ux-pro-max`
 - `shadcn-tailwind`
 

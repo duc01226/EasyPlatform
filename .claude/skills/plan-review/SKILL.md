@@ -2,10 +2,9 @@
 name: plan-review
 version: 1.0.0
 description: '[Planning] Auto-review plan for validity, correctness, and best practices before implementation'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
 
@@ -29,6 +28,8 @@ activation: user-invoked
 - **WARN**: Proceed with caution, note gaps
 - **FAIL**: STOP - must fix before proceeding, list specific issues
 - **Constructive**: Focus on implementation-blocking issues, not pedantic details
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Your mission
 
@@ -67,13 +68,14 @@ Read the plan directory:
 - [ ] File paths follow project patterns
 - [ ] No conflicting or duplicate steps
 - [ ] Dependencies between steps are clear
+- [ ] **New Tech/Lib Gate:** If plan introduces new packages/libraries/frameworks not in the project, verify alternatives were evaluated (top 3 compared) and user confirmed the choice. FAIL if new tech is added without evaluation.
 
 #### Best Practices (Required - all must pass)
 
 - [ ] YAGNI: No unnecessary features or over-engineering
 - [ ] KISS: Simplest viable solution chosen
 - [ ] DRY: No planned duplication of logic
-- [ ] Architecture: Follows project patterns from `docs/claude/`
+- [ ] Architecture: Follows project patterns from `.claude/docs/`
 
 #### Completeness (Recommended - ≥50% should pass)
 
@@ -142,8 +144,8 @@ Read the plan directory:
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
-  1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-  2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+    1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
+    2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
 
 ## Important Notes
 

@@ -2,10 +2,10 @@
 name: context
 version: 1.0.0
 description: '[Utilities] Load project context for current session'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -22,6 +22,8 @@ activation: user-invoked
 - Provides situational awareness at session start
 - Shows branch, uncommitted changes, recent commits
 - Non-destructive: read-only operation
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Load Project Context
 
@@ -46,27 +48,17 @@ git diff --stat
 
 ## Project Pattern Discovery
 
-Before reporting project structure, search the codebase for actual services and apps:
-
-- Search for: project services (`ls src/Services/`), frontend apps, key libraries
-- Look for: service directories, app directories, shared library directories
-
-> **MANDATORY IMPORTANT MUST** Read the `project-structure-reference.md` companion doc for project-specific patterns.
-> If file not found, continue with search-based discovery above.
-
-## Project Structure Reminder
-
-Discover the actual project structure by running:
+Read `docs/project-config.json` for project-specific module paths. Check `modules[]` for service/app list, or fall back to `backendServices.serviceMap` / `frontendApps.appMap` in older configs. If file not found, discover structure dynamically:
 
 ```bash
-# Backend services
-ls -d src/Services/*/
+# Find backend service directories
+find src/ -name "*.csproj" -maxdepth 4 | head -20
 
-# Frontend apps
-ls -d {frontend-apps-dir}/*/
+# Find frontend app directories
+find src/ -name "package.json" -maxdepth 3 | head -10
 
-# Key libraries
-ls -d {frontend-libs-dir}/*/
+# Find shared libraries
+find . -path "*/libs/*" -name "package.json" -maxdepth 4 | head -10
 ```
 
 ## Development Patterns

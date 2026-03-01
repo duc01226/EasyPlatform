@@ -63,6 +63,13 @@ public abstract class PlatformHangfireBackgroundJobModule : PlatformBackgroundJo
                     Attempts = options.Attempts,
                     DelayInSecondsByAttemptFunc = options.DelayInSecondsByAttemptFunc
                 }));
+
+        // Preserve culture information for background jobs
+        // Captures CurrentCulture and CurrentUICulture at job scheduling time
+        // and restores them when the job executes on a worker process
+        // This ensures consistent culture-dependent behavior (date/number formatting, localization)
+        // across different environments (local, systemtest, production)
+        GlobalJobFilters.Filters.Add(new CaptureCultureAttribute());
     }
 
     protected override async Task InternalInit(IServiceScope serviceScope)

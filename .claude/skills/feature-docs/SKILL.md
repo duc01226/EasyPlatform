@@ -5,7 +5,7 @@ description: '[Documentation] Create or update business feature documentation in
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -24,9 +24,13 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 - EVERY test case MUST have verifiable code evidence (`FilePath:LineNumber`), no exceptions
 - Output must have exactly 26 sections matching the master template
 - Always update CHANGELOG.md and Version History (Section 26) when modifying docs
-- When writing Section 17 test cases: include an `IntegrationTest` field pointing to the test file and method name. Format: `IntegrationTest: Goals/GoalCommandIntegrationTests.cs::{MethodName}`. If no integration test exists yet, set `Status: Untested`.
+- When writing Section 17 test cases: include an `IntegrationTest` field pointing to the test file and method name. Format: `IntegrationTest: Orders/OrderCommandIntegrationTests.cs::{MethodName}`. If no integration test exists yet, set `Status: Untested`.
 - Verify every TC-{MOD}-XXX in Section 17 has a corresponding `[Trait("TestSpec", "TC-{MOD}-XXX")]` in the integration test codebase. If missing, flag as `Status: Untested`.
 - If third verification pass finds >5 issues, HALT and re-run verification
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Project Pattern Discovery
 
@@ -269,8 +273,8 @@ When UPDATING an existing business feature document (not creating from scratch):
 
     **Priority**: P0-Critical
     **Status**: Tested | Untested
-    **IntegrationTest**: `Goals/GoalCommandIntegrationTests.cs::SaveGoal_WhenValidData_ShouldCreateSuccessfully`
-    **Evidence**: `Growth.Application/Goals/Commands/SaveGoalCommand.cs:42-68`
+    **IntegrationTest**: `Orders/OrderCommandIntegrationTests.cs::SaveOrder_WhenValidData_ShouldCreateSuccessfully`
+    **Evidence**: `{Service}.Application/{Feature}/Commands/Save{Feature}Command.cs:42-68`
     ```
 
 - **Section 18 (Test Data)**: Add seed data required for new test cases

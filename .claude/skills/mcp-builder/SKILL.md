@@ -7,7 +7,7 @@ allowed-tools: NONE
 license: Complete terms in LICENSE.txt
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -27,6 +27,8 @@ license: Complete terms in LICENSE.txt
 - **Optimize for Context**: Return high-signal info, support concise/detailed formats
 - **Actionable Errors**: Guide agents toward correct usage with specific suggestions
 - **Scripts First**: Execute detection/fetch/analyze scripts for zero-token overhead
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # MCP Server Development Guide
 

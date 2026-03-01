@@ -85,7 +85,10 @@ public abstract class PlatformBackgroundJobModule : PlatformInfrastructureModule
 
         await StartBackgroundJobProcessing(serviceScope);
 
-        if (AutoUseDashboardUi)
+        // Skip dashboard UI in integration tests where there's no ASP.NET Core pipeline.
+        // CurrentAppBuilder is null when InitializeAsync() is called without IApplicationBuilder
+        // (e.g., PlatformServiceIntegrationTestFixture → module.InitializeAsync(currentApp: null)).
+        if (AutoUseDashboardUi && CurrentAppBuilder != null)
             UseDashboardUi(CurrentAppBuilder);
     }
 

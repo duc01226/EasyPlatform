@@ -7,21 +7,25 @@ allowed-tools: NONE
 license: MIT
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Process multimedia files using FFmpeg for video/audio encoding, conversion, streaming, and filtering.
 
 **Workflow:**
+
 1. **Identify** -- Match input to correct FFmpeg operation (convert, trim, merge, compress)
 2. **Execute** -- Run FFmpeg command with appropriate codec and quality settings
 3. **Verify** -- Check output file integrity and quality
 
 **Key Rules:**
+
 - Use tool selection table to pick correct FFmpeg operation
 - Prefer hardware-accelerated encoding when available
 - Always verify output file exists and is playable
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Media Processing Skill
 

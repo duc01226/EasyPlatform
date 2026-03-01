@@ -1,0 +1,12 @@
+# Run commitlint in warning-only mode
+# Shows errors but allows commit to proceed (exits 0)
+npx --no -- commitlint --edit "$1" || {
+  echo ""
+  echo "WARNING: Commit message doesn't follow conventional format."
+  echo "   Commit allowed (warning mode). Please use: type(scope): subject"
+  echo ""
+  echo "   Valid types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert"
+  echo "   Example: feat(auth): add OAuth2 login"
+  echo ""
+  exit 0
+}

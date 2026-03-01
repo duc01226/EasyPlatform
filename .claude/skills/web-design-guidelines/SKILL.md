@@ -6,7 +6,7 @@ argument-hint: <file-or-pattern>
 allowed-tools: Read, Grep, Glob
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -23,7 +23,9 @@ allowed-tools: Read, Grep, Glob
 
 - Review-only skill: finds issues, does NOT fix them
 - Check categories in priority order (accessibility first)
-- Also reference `docs/claude/scss-styling-guide.md` if available
+- Also reference `docs/project-reference/scss-styling-guide.md` if available
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Web Design Guidelines Review
 
@@ -39,15 +41,15 @@ Review UI code for compliance with WCAG 2.2, Core Web Vitals, and modern web des
 
 ## When NOT to Use
 
-- **Building** UI -- use `frontend-design` or `frontend-angular`
+- **Building** UI -- use `frontend-design`
 - **Creating** design specs -- use `design-spec`
 - **Full UX design** process -- use `ux-designer`
-- Project SCSS review -- also check `docs/claude/scss-styling-guide.md`
+- Project SCSS review -- also check `docs/project-reference/scss-styling-guide.md`
 
 ## Prerequisites
 
 - Full guidelines reference: `references/guidelines.md`
-- Project SCSS: `docs/claude/scss-styling-guide.md` (if available)
+- Project SCSS: `docs/project-reference/scss-styling-guide.md` (if available)
 
 ## Workflow
 
@@ -114,12 +116,11 @@ src/components/Modal.tsx:78 - no focus trap for modal dialog
 
 ## Related Skills
 
-| Skill              | When to use instead                               |
-| ------------------ | ------------------------------------------------- |
-| `frontend-design`  | Building UI (not reviewing)                       |
-| `design-spec`      | Creating design specifications                    |
-| `ux-designer`      | Full UX design process                            |
-| `frontend-angular` | Angular 19 components, forms, state, API services |
+| Skill             | When to use instead            |
+| ----------------- | ------------------------------ |
+| `frontend-design` | Building UI (not reviewing)    |
+| `design-spec`     | Creating design specifications |
+| `ux-designer`     | Full UX design process         |
 
 ---
 

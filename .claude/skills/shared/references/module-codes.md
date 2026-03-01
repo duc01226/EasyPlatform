@@ -1,36 +1,80 @@
 # Module & Test Case ID Reference
 
-> Single source of truth for all test-related skills. Referenced by: `test-spec`, `test-specs-docs`, `integration-test`, `tasks-test-generation`.
+> Single source of truth for all test-related skills.
+> Referenced by: `test-spec`, `test-specs-docs`, `tdd-spec`, `integration-test`.
 
-Module codes and test case ID formats are project-specific. Define your project's mapping in CLAUDE.md or a project-level configuration file.
+## Unified TC Format: `TC-{FEATURE}-{NNN}`
 
-## Template
+All skills use **one format**. Feature codes are 2-4 letters. Sequential numbering per feature.
 
-### Service-Level Codes
+**Source of truth:** Feature docs Section 17 (canonical TC registry).
+**Dashboard:** `docs/test-specs/` (aggregated cross-module views, not duplicated TCs).
+**Code link:** Test annotation/attribute linking test method to TC ID (e.g., `[Trait("TestSpec", "TC-{FEATURE}-{NNN}")]`).
 
-Used in: `test-spec` TC IDs (`TC-{SVC}-{NNN}`), `test-specs-docs` TC IDs (`TC-{SVC}-{FEATURE}-{NNN}`)
+## Example Feature Codes
 
-| Code | Service/Module |
-|------|----------------|
-| SVC  | Your Service   |
-| COM  | Common/Shared  |
+> **Customize these for your project.** The services and feature codes below are examples
+> illustrating the naming convention. Replace them with your actual microservices and features.
 
-### Feature-Level Codes
+### Service A (e.g., HR/Growth)
 
-Used in: `integration-test` code comments (`TC-{2LETTER}-{NNN}`), `test-specs-docs` 4-segment IDs (`TC-{SVC}-{FEATURE}-{NNN}`)
+| Code | Feature            |
+| ---- | ------------------ |
+| GM   | Goal Management    |
+| CI   | Check-In           |
+| PR   | Performance Review |
+| KD   | Kudos              |
+| TM   | Time Management    |
+| FT   | Form Templates     |
 
-| 2-Letter | 3-Letter | Feature     | Notes |
-|----------|----------|-------------|-------|
-| FT       | FEA      | FeatureName | Description |
+### Service B (e.g., Recruitment)
 
-### TC ID Formats
+| Code | Feature        |
+| ---- | -------------- |
+| CAN  | Candidate      |
+| JOB  | Job            |
+| REC  | Recruitment    |
+| EMP  | Employee       |
+| INT  | Interview      |
+| SET  | Settings       |
+| MAT  | Matching       |
+| JOP  | Job Opening    |
+| HP   | Hiring Process |
 
-| Context          | Format                     | Example    | Notes                          |
-|------------------|----------------------------|------------|--------------------------------|
-| test-spec        | `TC-{SVC}-{NNN}`           | TC-SVC-015 | Service-level code (3 letters) |
-| test-specs-docs  | `TC-{SVC}-{FEATURE}-{NNN}` | TC-SVC-FEA-001 | Service + feature code + sequence |
-| integration-test | `TC-{FEATURE}-{NNN}`       | TC-FT-001  | 2-letter feature code in comments |
+### Service C (e.g., Surveys)
 
-### Migration Policy
+| Code | Feature             |
+| ---- | ------------------- |
+| SD   | Survey Design       |
+| SDI  | Survey Distribution |
 
-**New-only:** Existing tests and docs keep their current TC codes. New tests and docs follow this reference. No retroactive renames.
+### Service D (e.g., Analytics)
+
+| Code | Feature   |
+| ---- | --------- |
+| DASH | Dashboard |
+
+### Service E (e.g., Identity)
+
+| Code | Feature         |
+| ---- | --------------- |
+| AUTH | Authentication  |
+| USER | User Management |
+
+### Service F (e.g., Infrastructure)
+
+| Code | Feature      |
+| ---- | ------------ |
+| PERM | Permissions  |
+| NM   | Notification |
+| PAR  | Parser       |
+
+### Cross-Module
+
+| Code  | Feature                  |
+| ----- | ------------------------ |
+| INTEG | Cross-module Integration |
+
+## Migration Policy
+
+**New-only:** New TCs use `TC-{FEATURE}-{NNN}`. Existing TCs keep current codes. No retroactive renames.

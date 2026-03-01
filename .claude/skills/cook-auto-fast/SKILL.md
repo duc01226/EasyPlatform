@@ -2,12 +2,14 @@
 name: cook-auto-fast
 version: 1.0.0
 description: '[Implementation] No research. Only scout, plan & implement [trust me bro]'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Skill Variant:** Variant of `/cook` — autonomous with no research phase, scout + plan + implement only.
 
@@ -16,14 +18,18 @@ activation: user-invoked
 **Goal:** Implement features fast by skipping research, going directly to scout, plan, and implement.
 
 **Workflow:**
+
 1. **Scout** — Quick codebase scan for relevant patterns
 2. **Plan** — Create minimal implementation plan
 3. **Implement** — Execute plan autonomously
 
 **Key Rules:**
+
 - Skip research phase entirely for speed
 - Autonomous mode: no user confirmation
 - Break work into todo tasks; add final self-review task
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Think harder to plan & start working on these tasks follow the Orchestration Protocol, Core Responsibilities, Subagents Team and Development Rules:
 <tasks>$ARGUMENTS</tasks>

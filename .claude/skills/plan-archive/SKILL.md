@@ -2,24 +2,28 @@
 name: plan-archive
 version: 1.0.0
 description: '[Planning] Write journal entries and archive specific plans or all plans'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Write journal entries and archive completed or obsolete plans from the plans/ directory.
 
 **Workflow:**
+
 1. **Identify** -- Find plans to archive (specific or all completed)
 2. **Journal** -- Write summary journal entry for archived plans
 3. **Archive** -- Move plans to archive location or mark as completed
 
 **Key Rules:**
+
 - Preserve plan content during archival, never delete
 - Write journal entry documenting what was archived and why
 - Clean up plans/ directory for better organization
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Your mission
 

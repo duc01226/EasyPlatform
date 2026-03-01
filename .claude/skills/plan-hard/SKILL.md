@@ -2,12 +2,14 @@
 name: plan-hard
 version: 1.0.0
 description: '[Planning] Research, analyze, and create an implementation plan'
-activation: user-invoked
+disable-model-invocation: false
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
 
@@ -17,7 +19,7 @@ activation: user-invoked
 
 1. **Pre-Check** — Detect active/suggested plan or create new directory
 2. **Research** — Parallel researcher subagents explore different aspects (max 5 tool calls each)
-3. **Codebase Analysis** — Read codebase-summary.md, code-standards.md, system-architecture.md; scout if needed
+3. **Codebase Analysis** — Read backend-patterns-reference.md, frontend-patterns-reference.md, project-structure-reference.md; scout if needed
 4. **Plan Creation** — Planner subagent creates plan.md + phase-XX files with full sections
 5. **Post-Validation** — Optionally interview user to confirm decisions via /plan-validate
 
@@ -26,8 +28,31 @@ activation: user-invoked
 - PLANNING ONLY: do NOT implement or execute code changes
 - Always run /plan-review after plan creation
 - Ask user to confirm before any next step
+- **MANDATORY IMPORTANT MUST** detect new tech/lib in plan and create validation task (see New Tech/Lib Gate below)
+
+## New Tech/Lib Gate (MANDATORY for all plans)
+
+**MANDATORY IMPORTANT MUST** after plan creation, detect new tech/packages/libraries not in the project. If found: `TaskCreate` per lib → WebSearch top 3 alternatives → compare (fit, size, community, learning curve, license) → recommend with confidence % → `AskUserQuestion` to confirm. **Skip if** plan uses only existing dependencies.
+
+## Greenfield Mode
+
+> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+
+**When greenfield is detected:**
+
+1. Skip codebase analysis phase (researcher subagents that grep code)
+2. **Replace with:** market research + business evaluation phase using WebSearch + WebFetch
+3. Delegate architecture decisions to `solution-architect` agent
+4. Output: `plans/{id}/plan.md` with greenfield-specific phases (domain model, tech stack, project structure)
+5. Skip "MUST READ project-structure-reference.md" (won't exist)
+6. Enable broad web research for tech landscape, best practices, framework comparisons
+7. Every decision point requires AskUserQuestion with 2-4 options + confidence %
+8. **[CRITICAL] Business-First Protocol:** Tech stack decisions come AFTER full business analysis. Do NOT ask user to pick a tech stack upfront. Instead: complete business evaluation → derive technical requirements → research current market options → produce comparison report → present to user for decision. See `solution-architect` agent for the full tech stack research methodology.
+
 - Research reports <=150 lines; plan.md <=80 lines
 - **External Memory**: Write all research and analysis to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE analysis file before generating plan.
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Activate `planning` skill.
 
@@ -61,8 +86,8 @@ Check the `## Plan Context` section in the injected context:
 2. Follow strictly to the "Plan Creation & Organization" rules of `planning` skill.
 3. Use multiple `researcher` agents (max 2 agents) in parallel to research for this task:
    Each agent research for a different aspect of the task and are allowed to perform max 5 tool calls.
-4. Analyze the codebase by reading `codebase-summary.md`, `code-standards.md`, `system-architecture.md` and `project-overview-pdr.md` file.
-   **ONLY PERFORM THIS FOLLOWING STEP IF `codebase-summary.md` is not available or older than 3 days**: Use `/scout <instructions>` slash command to search the codebase for files needed to complete the task.
+4. Analyze the codebase by reading `backend-patterns-reference.md`, `frontend-patterns-reference.md`, and `project-structure-reference.md` file.
+   **ONLY PERFORM THIS FOLLOWING STEP IF reference docs are placeholders or older than 3 days**: Use `/scout <instructions>` slash command to search the codebase for files needed to complete the task.
 5. Main agent gathers all research and scout report filepaths, and pass them to `planner` subagent with the prompt to create an implementation plan of this task.
 6. Main agent receives the implementation plan from `planner` subagent, and ask user to review the plan
 
@@ -116,6 +141,7 @@ After plan creation, offer validation interview to confirm decisions before impl
     status: pending
     priority: P2
     effort: { sum of phases, e.g., 4h }
+    story_points: { sum of phase SPs, e.g., 8 }
     branch: { current git branch }
     tags: [relevant, tags]
     created: { YYYY-MM-DD }
@@ -130,8 +156,8 @@ After plan creation, offer validation interview to confirm decisions before impl
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
-  1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-  2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+    1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
+    2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
 
 ## Important Notes
 

@@ -2,24 +2,27 @@
 name: ask
 version: 1.0.0
 description: '[Utilities] Answer technical and architectural questions.'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
 **Goal:** Answer technical and architectural questions with evidence-based analysis.
 
 **Workflow:**
+
 1. **Understand** -- Parse the question and identify scope
 2. **Research** -- Search codebase for evidence and examples
 3. **Answer** -- Provide concise, evidence-backed answer
 
 **Key Rules:**
+
 - Every claim must be backed by code evidence (`file:line`)
 - Keep answers concise and actionable
 - Reference existing patterns over theoretical solutions
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Context
 
@@ -37,13 +40,16 @@ Current development workflows, system constraints, scale requirements, and busin
 
 ```
 ./docs
-├── project-overview-pdr.md
-├── code-standards.md
-├── codebase-summary.md
-├── design-guidelines.md
-├── deployment-guide.md
-├── system-architecture.md
-└── project-roadmap.md
+├── project-structure-reference.md
+├── backend-patterns-reference.md
+├── frontend-patterns-reference.md
+├── code-review-rules.md
+├── integration-test-reference.md
+├── e2e-test-reference.md
+├── scss-styling-guide.md
+├── feature-docs-reference.md
+├── design-system/
+└── business-features/
 ```
 
 ## Your Role

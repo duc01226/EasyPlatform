@@ -2,10 +2,9 @@
 name: plan-validate
 version: 1.0.0
 description: '[Planning] Validate plan with critical questions interview'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
 
@@ -26,6 +25,8 @@ activation: user-invoked
 - Only ask about genuine decision points; don't manufacture artificial choices
 - Prioritize questions that could change implementation significantly
 - Do NOT modify phase files; just document what needs updating
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 ## Your mission
 
@@ -60,13 +61,14 @@ Read the plan directory:
 
 Scan plan content for:
 
-| Category         | Keywords to detect                                                |
-| ---------------- | ----------------------------------------------------------------- |
-| **Architecture** | "approach", "pattern", "design", "structure", "database", "API"   |
-| **Assumptions**  | "assume", "expect", "should", "will", "must", "default"           |
-| **Tradeoffs**    | "tradeoff", "vs", "alternative", "option", "choice", "either/or"  |
-| **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern" |
-| **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"          |
+| Category         | Keywords to detect                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------------- |
+| **Architecture** | "approach", "pattern", "design", "structure", "database", "API"                                         |
+| **Assumptions**  | "assume", "expect", "should", "will", "must", "default"                                                 |
+| **Tradeoffs**    | "tradeoff", "vs", "alternative", "option", "choice", "either/or"                                        |
+| **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern"                                       |
+| **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"                                                |
+| **New Tech/Lib** | "install", "add package", "new dependency", "npm install", "dotnet add", framework names not in project |
 
 ### Step 3: Generate Questions
 
@@ -147,11 +149,12 @@ After validation completes, provide summary:
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
-  1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-  2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+    1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
+    2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
 
 ## Important Notes
 
 **IMPORTANT:** Only ask questions about genuine decision points - don't manufacture artificial choices.
 **IMPORTANT:** If plan is simple with few decisions, it's okay to ask fewer than min questions.
 **IMPORTANT:** Prioritize questions that could change implementation significantly.
+**MANDATORY IMPORTANT MUST** If plan introduces new tech/packages/libraries, ask user: "Plan uses {lib}. Were alternatives evaluated? Confirm choice or research more?"

@@ -2,10 +2,10 @@
 name: checkpoint
 version: 1.0.0
 description: '[Utilities] Save analysis context to checkpoint file for recovery'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -22,6 +22,8 @@ activation: user-invoked
 - Save checkpoints every 30-60 minutes during complex tasks
 - Include file paths, line numbers, and recovery instructions
 - Document decisions with rationale for future reference
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Save Memory Checkpoint
 

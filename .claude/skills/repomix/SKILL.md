@@ -6,7 +6,7 @@ description: '[AI & Tools] Package code repositories into single AI-friendly fil
 allowed-tools: NONE
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -25,6 +25,8 @@ allowed-tools: NONE
 - Use `--include` patterns to stay within LLM context limits
 - Default output is XML; use `--style markdown` for readable output
 - Use `--token-count-tree` to identify token-heavy files before packaging
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Repomix Skill
 

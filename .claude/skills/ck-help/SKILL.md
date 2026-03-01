@@ -2,10 +2,10 @@
 name: ck-help
 version: 1.0.0
 description: '[Utilities] ClaudeKit usage guide - just type naturally'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -23,6 +23,8 @@ activation: user-invoked
 - Never replace or summarize script output; always show it fully then enhance
 - `/plan` then `/code` is the correct flow; NEVER suggest `/plan` then `/cook`
 - `/cook` is standalone (has its own planning)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Think harder.
 All-in-one ClaudeKit guide. Run the script and present output based on type markers.

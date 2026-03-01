@@ -90,7 +90,7 @@ function formatTechnicalDetails(data) {
  */
 function formatContributors(contributors) {
   if (!contributors || contributors.length === 0) {
-    return '- Team EasyPlatform';
+    return '- Development Team';
   }
 
   return contributors

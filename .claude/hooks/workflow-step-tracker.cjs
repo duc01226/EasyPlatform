@@ -150,7 +150,7 @@ async function main() {
             }
             console.log(`\n---\n**IMPORTANT:** Execute \`${nextCmd}\` to continue the workflow.\n`);
         } else if (updated) {
-            // Workflow complete
+            // Workflow complete — clear state so next prompt gets fresh catalog
             console.log(`\n## Workflow Complete\n`);
             console.log(`All steps in **${state.workflowType}** workflow have been completed successfully!`);
             console.log(
@@ -161,6 +161,7 @@ async function main() {
                     })
                     .join(', ')}`
             );
+            clearState(sessionId);
         }
 
         process.exit(0);

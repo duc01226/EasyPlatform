@@ -2,10 +2,9 @@
 name: review-post-task
 version: 1.0.0
 description: '[Code Quality] Two-pass code review for task completion'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
@@ -14,16 +13,25 @@ activation: user-invoked
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
+>
+> - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)**
+> - `project-structure-reference.md` — service list, directory tree, conventions
+>
+> If files not found, search for: project documentation, coding standards, architecture docs.
+
 ## Quick Summary
 
 **Goal:** Two-pass code review after task completion to catch issues before commit.
 
 **Workflow:**
+
 1. **Pass 1: File-by-File** — Review each changed file individually
 2. **Pass 2: Holistic** — Assess overall approach, architecture, consistency
 3. **Report** — Summarize critical issues and recommendations
 
 **Key Rules:**
+
 - Ensure quality: no flaws, no bugs, no missing updates, no stale content
 - Check both code AND documentation for completeness
 - Evidence-based findings with `file:line` references
@@ -35,7 +43,7 @@ Activate `code-review` skill and follow its workflow with **post-task two-pass**
 
 ## Review Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 - Do NOT accept code correctness at face value — verify by reading actual implementations
 - Every finding must include `file:line` evidence (grep results, read confirmations)
@@ -56,10 +64,22 @@ Activate `code-review` skill and follow its workflow with **post-task two-pass**
 **Proof Required** — Every claim backed by `file:line` evidence or grep results. Speculation is forbidden.
 **Doc Staleness** — Cross-reference changed files against related docs (feature docs, test specs, READMEs). Flag any doc that is stale or missing updates to reflect current code changes.
 
+## Readability Checklist (MUST evaluate)
+
+Before approving, verify the code is **easy to read, easy to maintain, easy to understand**:
+
+- **Schema visibility** — If a function computes a data structure (object, map, config), a comment should show the output shape so readers don't have to trace the code
+- **Non-obvious data flows** — If data transforms through multiple steps (A → B → C), a brief comment should explain the pipeline
+- **Self-documenting signatures** — Function params should explain their role; flag unused params
+- **Magic values** — Unexplained numbers/strings should be named constants or have inline rationale
+- **Naming clarity** — Variables/functions should reveal intent without reading the implementation
+
 ## Protocol
 
 **Pass 1:** Gather changes (`git diff`), apply project review checklist:
+
 - Backend: platform repos, validation, events, DTOs
+- Backend: seed data in data seeders (not migrations) — if data must exist after DB reset, it's a seeder
 - Frontend: base classes, stores, untilDestroyed, BEM
 - Architecture: layer placement, service boundaries
 - **Convention:** grep for 3+ similar patterns to verify code follows codebase conventions
@@ -67,7 +87,7 @@ Activate `code-review` skill and follow its workflow with **post-task two-pass**
 - **DRY:** grep for duplicate/similar code across codebase
 - **YAGNI/KISS:** flag over-engineering, unnecessary abstractions, speculative features
 - **Doc staleness:** cross-reference changed files against `docs/business-features/`, test specs, READMEs — flag stale docs
-Fix issues found.
+  Fix issues found.
 
 **Pass 2 (conditional):** Only if Pass 1 made changes. Re-review ALL changes (original + corrections). Verify no new issues introduced.
 
@@ -86,3 +106,9 @@ Fix issues found.
 
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
+
+---
+
+## Systematic Review Protocol (for 10+ changed files)
+
+> **When the changeset is large (10+ files), categorize files by concern, fire parallel `code-reviewer` sub-agents per category, then synchronize findings into a holistic report.** See `review-changes/SKILL.md` § "Systematic Review Protocol" for the full 4-step protocol (Categorize → Parallel Sub-Agents → Synchronize → Holistic Assessment).

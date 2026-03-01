@@ -98,9 +98,8 @@ function noWorkflowBlockMessage(skill) {
 **Skill blocked:** \`${skill}\`
 
 No workflow has been activated and no tasks exist. You MUST either:
-1. **Detect and activate a workflow first:** \`/workflow-start <workflowId>\`
+1. **Detect nearest workflow and ask user via AskUserQuestion:** Present "Activate [Workflow] (Recommended)" vs "Execute directly"
 2. **Or create tasks:** Call \`TaskCreate\` to track your work
-3. **Or ask user to skip workflow** if the task is simple/straightforward
 
 ### Bypass
 Prefix your message with \`quick:\` to bypass enforcement.`;

@@ -6,7 +6,7 @@ allowed-tools: NONE
 license: MIT
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -25,6 +25,8 @@ license: MIT
 - Dynamically expand/contract thought count as complexity changes
 - Explicitly mark revisions with original reasoning and why it changed
 - Can apply explicitly (visible markers) or implicitly (internal methodology)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Sequential Thinking
 

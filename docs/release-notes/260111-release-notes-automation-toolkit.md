@@ -8,7 +8,7 @@
 
 ## Summary
 
-Introduces a comprehensive release notes automation system with Node.js CLI scripts for parsing commits, generating structured notes, validating quality, and transforming for different audiences. Includes version tracking infrastructure for all BravoSUITE services.
+Introduces a comprehensive release notes automation system with Node.js CLI scripts for parsing commits, generating structured notes, validating quality, and transforming for different audiences. Includes version tracking infrastructure for EasyPlatform modules.
 
 ## New Features
 
@@ -24,7 +24,7 @@ Introduces a comprehensive release notes automation system with Node.js CLI scri
 
 **Audience Transformation** (`transform-llm.cjs`, `generate-audience.cjs`): Generate business/executive/end-user variants via Claude API or template-based fallback.
 
-**Version Tracking** (`versions/*.json`): Service-specific version files for Platform, bravoGROWTH, bravoTALENTS, bravoSURVEYS, bravoINSIGHTS.
+**Version Tracking** (`versions/*.json`): Module-specific version files for Platform core, Backend (TextSnippet), and Frontend.
 
 ## Improvements
 

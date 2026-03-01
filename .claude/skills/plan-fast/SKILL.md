@@ -2,12 +2,14 @@
 name: plan-fast
 version: 1.0.0
 description: '[Planning] No research. Only analyze and create an implementation plan'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
 
@@ -16,7 +18,7 @@ activation: user-invoked
 **Workflow:**
 
 1. **Check Plan Context** — Reuse active plan or create new directory per naming convention
-2. **Analyze Codebase** — Read `codebase-summary.md`, `code-standards.md`, `system-architecture.md`
+2. **Analyze Codebase** — Read `backend-patterns-reference.md`, `frontend-patterns-reference.md`, `project-structure-reference.md`
 3. **Create Plan** — Generate `plan.md` + `phase-XX-*.md` files with YAML frontmatter
 4. **Validate** — Run `/plan-review` and ask user to confirm before implementation
 
@@ -25,6 +27,18 @@ activation: user-invoked
 - Do NOT use `EnterPlanMode` tool; do NOT implement any code
 - Collaborate with user: ask decision questions, present options with recommendations
 - Always validate plan with `/plan-review` after creation
+
+## Greenfield Mode
+
+> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill redirects to `/plan-hard`. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+
+**When greenfield is detected:**
+
+1. **REDIRECT to `/plan-hard`** — greenfield inception requires deep research, not quick plans
+2. Inform user: "Greenfield project detected. Redirecting to /plan-hard for thorough research and planning."
+3. Rationale: Fast planning skips research, but greenfield projects need market research, tech evaluation, and domain modeling — all impossible without deep analysis
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Activate `planning` skill.
 
@@ -58,7 +72,7 @@ Use `planner` subagent to:
    If reusing: Use the active plan path from Plan Context.
    Make sure you pass the directory path to every subagent during the process.
 2. Follow strictly to the "Plan Creation & Organization" rules of `planning` skill.
-3. Analyze the codebase by reading `codebase-summary.md`, `code-standards.md`, `system-architecture.md` and `project-overview-pdr.md` file.
+3. Analyze the codebase by reading `backend-patterns-reference.md`, `frontend-patterns-reference.md`, and `project-structure-reference.md` file.
    3.5. **External Memory**: Write analysis findings to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read this file before creating the plan.
 4. Gathers all information and create an implementation plan of this task.
 5. Ask user to review the plan.
@@ -88,6 +102,7 @@ Use `planner` subagent to:
     status: pending
     priority: P2
     effort: { sum of phases, e.g., 4h }
+    story_points: { sum of phase SPs, e.g., 8 }
     branch: { current git branch }
     tags: [relevant, tags]
     created: { YYYY-MM-DD }
@@ -102,8 +117,8 @@ Use `planner` subagent to:
 - Always plan and break work into many small todo tasks using `TaskCreate`
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
-  1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
-  2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
+    1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
+    2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
 
 ## Post-Plan Validation
 

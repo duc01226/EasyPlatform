@@ -5,9 +5,11 @@ description: '[Code Quality] Use when receiving code review feedback (especially
 allowed-tools: NONE
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
@@ -17,6 +19,7 @@ allowed-tools: NONE
 
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
 >
+> - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)**
 > - `backend-patterns-reference.md` — backend CQRS, validation, entity patterns
 > - `frontend-patterns-reference.md` — component hierarchy, store, forms patterns
 >
@@ -52,7 +55,7 @@ Each practice has specific triggers and protocols detailed in reference files.
 
 ## Review Mindset (NON-NEGOTIABLE)
 
-**Be skeptical. Apply critical thinking. Every claim needs traced proof.**
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 - Do NOT accept code correctness at face value — verify by reading actual implementations
 - Every finding must include `file:line` evidence (grep results, read confirmations)
@@ -129,14 +132,14 @@ After ALL files reviewed, **re-read accumulated report** to see big picture:
 
 Cross-reference changed files against related documentation:
 
-| Changed file pattern   | Docs to check                                                   |
-| ---------------------- | --------------------------------------------------------------- |
-| Service code `**`      | Business feature docs for affected service                      |
-| Frontend code `**`     | Frontend patterns doc, relevant business-feature docs           |
-| Framework code `**`    | Backend patterns doc, advanced patterns doc                     |
-| `.claude/hooks/**`     | `docs/claude/hooks/README.md`, `docs/claude/hooks-reference.md` |
-| `.claude/skills/**`    | `docs/claude/skills/README.md`, skill catalogs                  |
-| `.claude/workflows/**` | `CLAUDE.md` workflow catalog, `docs/claude/` references         |
+| Changed file pattern   | Docs to check                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------ |
+| Service code `**`      | Business feature docs for affected service                                     |
+| Frontend code `**`     | Frontend patterns doc, relevant business-feature docs                          |
+| Framework code `**`    | Backend patterns doc, advanced patterns doc                                    |
+| `.claude/hooks/**`     | `.claude/docs/hooks/README.md`, hook count tables in `.claude/docs/hooks/*.md` |
+| `.claude/skills/**`    | `.claude/docs/skills/README.md`, skill catalogs                                |
+| `.claude/workflows/**` | `CLAUDE.md` workflow catalog, `.claude/docs/` references                       |
 
 - Flag docs where counts, tables, examples, or descriptions no longer match the code
 - Flag missing docs for new features/components
@@ -150,7 +153,7 @@ Update report with: Overall Assessment, Critical Issues, High Priority, Architec
 
 1. **No Magic Numbers/Strings** - All literal values must be named constants
 2. **Type Annotations** - All functions must have explicit parameter and return types
-3. **Single Responsibility** - One reason to change per method/class
+3. **Single Responsibility** - One reason to change per method/class. **For event handlers, consumers, and background jobs: one handler = one independent concern.** Never bundle unrelated operations — if one fails, platform silently swallows the exception and the rest never execute.
 4. **DRY** - No code duplication; extract shared logic
 5. **Naming** - Clear, specific names that reveal intent:
     - Specific not generic: `employeeRecords` not `data`
@@ -160,26 +163,44 @@ Update report with: Overall Assessment, Critical Issues, High Priority, Architec
 6. **Performance** - Efficient data access patterns:
     - No O(n²): use dictionary lookup instead of nested loops
     - Project in query: don't load all then `.Select(x.Id)`
-    - Always paginate: never get all data without `.PageBy()`
-    - Batch load: use `GetByIdsAsync()` not N+1 queries
+    - Always paginate: never get all data without pagination (search for: pagination pattern)
+    - Batch load: use batch-by-IDs pattern, not N+1 queries (search for: batch load pattern)
 7. **Entity Indexes** - Database queries have matching indexes:
     - Database collections: index management methods (search for: index setup pattern)
     - EF Core: Composite indexes in migrations for filter columns
     - Expression fields match index field order (leftmost prefix)
     - Text search queries have text indexes configured
 
-## WebV1 Platform Compliance (`src/Web/**`)
+## Data Lifecycle Rules (MUST CHECK)
 
-When reviewing files in `src/Web/**`, verify these MANDATORY patterns.
-**⚠️ MUST READ:** CLAUDE.md "Component Hierarchy" and "Frontend (TypeScript)" sections for full pattern reference.
+1. **Seed Data ≠ Migration Data** — Seed data is application logic (default records, system config, reference data). Migrations are one-time schema/data transforms. If the data must exist after a fresh database setup, it belongs in a **startup data seeder** (idempotent, runs every launch), NOT in a migration (runs once, abandoned after cutoff).
+2. **Idempotent Seeders** — Data seeders must check-then-create: query if data exists before inserting. Safe for repeated runs without teardown.
+3. **Migration Scope** — Migrations should only contain: schema changes, column additions/removals, data shape transforms for existing rows, index creation. Never: default records, permission seeds, system configuration, reference data.
+
+**Decision test:** _"If I delete the database and start fresh, does this data still need to exist?"_ Yes → Seeder. No → Migration.
+
+**Anti-pattern to flag:**
+
+```
+// ❌ Seed data in a migration executor — lost after DB reset, skipped on new environments
+class SeedDefaultRecords : DataMigrationExecutor { ... }
+
+// ✅ Seed data in application startup seeder — idempotent, always runs
+class ApplicationDataSeeder { if (exists) return; else create(); }
+```
+
+## Legacy Frontend Pattern Compliance
+
+When reviewing files in legacy frontend app directories (check `docs/project-config.json` → `modules[].tags` for `"legacy"` tag, or fall back to `frontendApps.legacyApps` in older configs), verify these MANDATORY patterns.
+Read `docs/project-reference/frontend-patterns-reference.md` for full pattern reference.
 
 ### Review Checklist
 
 - [ ] Component extends project's base component class (search for: app base component hierarchy)
 - [ ] Constructor includes required DI and calls `super(...)`
-- [ ] Uses `this.untilDestroyed()` for RxJS subscriptions (NO manual `Subject` destroy pattern)
-- [ ] Services extend `PlatformApiService` (NO direct `HttpClient`)
-- [ ] Store API calls use `effectSimple()` (NOT `observerLoadingErrorState` in store)
+- [ ] Uses subscription cleanup pattern (search for: subscription cleanup pattern) for RxJS subscriptions (NO manual `Subject` destroy pattern)
+- [ ] Services extend project API service base class (NO direct `HttpClient`) (see docs/project-reference/frontend-patterns-reference.md)
+- [ ] Store API calls use store effect pattern (search for: store effect pattern) (NOT deprecated effect patterns)
 
 ### Anti-Patterns to Flag as CRITICAL
 
@@ -337,3 +358,18 @@ Verify. Question. Then implement. Evidence. Then claim.
 
 - Always plan and break work into many small todo tasks
 - Always add a final review todo task to verify work quality and identify fixes/enhancements
+
+---
+
+## Systematic Review Protocol (for 10+ changed files)
+
+> **When the changeset is large (10+ files), categorize files by concern, fire parallel `code-reviewer` sub-agents per category, then synchronize findings into a holistic report.** See `review-changes/SKILL.md` § "Systematic Review Protocol" for the full 4-step protocol (Categorize → Parallel Sub-Agents → Synchronize → Holistic Assessment).
+
+---
+
+## Workflow Recommendation
+
+> **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
+>
+> 1. **Activate `quality-audit` workflow** (Recommended) — code-review → plan → code → review-changes → test
+> 2. **Execute `/code-review` directly** — run this skill standalone

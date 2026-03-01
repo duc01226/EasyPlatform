@@ -5,7 +5,7 @@ description: "[Code Quality] Use when the user asks to enhance documentation, ad
 allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -24,6 +24,8 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 - Verify every documented feature against actual code (no assumptions)
 - For business feature docs, use `feature-docs` skill instead
 - Include practical examples and copy-pasteable code snippets
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 > **Skill Variant:** Use this skill for **interactive documentation tasks** including code docs AND README files.
 
@@ -233,7 +235,7 @@ Document under `## Documentation Validation`.
 - **Practical examples**: Include working examples users can follow; show common use cases; provide copy-pasteable code snippets
 - **No assumptions**: Don't assume user knowledge; explain acronyms and domain terms; link to prerequisite documentation
 
-**⚠️ MUST READ:** CLAUDE.md for code pattern examples (backend/frontend) when writing code documentation. See `docs/claude/` for existing documentation structure.
+**⚠️ MUST READ:** CLAUDE.md for code pattern examples (backend/frontend) when writing code documentation. See `.claude/docs/` for existing documentation structure.
 
 ---
 

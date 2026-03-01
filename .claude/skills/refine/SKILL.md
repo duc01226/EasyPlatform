@@ -5,7 +5,7 @@ description: "[Project Management] Transform ideas into Product Backlog Items us
 allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQuestion
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -26,7 +26,25 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
 
 - Never skip hypothesis validation for new features
 - Validation interview is NOT optional — always ask 3-5 questions
-- Use domain-specific vocabulary (Candidate not Applicant, Employee not User)
+- Use project domain-specific vocabulary when available
+- MUST include `story_points` and `complexity` in PBI output (see `.claude/skills/shared/estimation-framework.md`)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+
+## Greenfield Mode
+
+> **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.
+
+**When greenfield is detected:**
+
+1. Skip existing backlog item refinement (no backlog exists yet)
+2. Enable DDD domain modeling: bounded contexts, aggregates, entities, value objects
+3. Enable constraint capture: team skills, expected scale, hosting preferences, budget — as input signals for later tech stack research
+4. Use WebSearch for market research and competitor analysis
+5. Output domain model artifact alongside PBI artifact
+6. Increase AskUserQuestion frequency — validate domain boundaries, entity relationships, business rules
+7. **[CRITICAL] DO NOT ask about tech stack during refinement.** Tech stack is a research-driven decision that comes in a dedicated phase after business analysis. Capture team skills and scale expectations as input signals only.
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Idea Refinement to PBI
 
@@ -200,15 +218,48 @@ Scenario: Manager reviews subordinate goal
 
 ### Project Test Case Format
 
-- **Format:** `TC-{MOD}-{FEATURE}-XXX` (e.g., TC-GRO-GOAL-001)
+- **Format:** `TC-{FEATURE}-{NNN}` (e.g., TC-GM-001)
 - **Evidence:** `file:line` format
 - See `business-analyst` skill for detailed patterns
 
 ---
 
+### Phase 5.5: Testability Assessment
+
+Use `AskUserQuestion` with 2-3 questions:
+
+1. "Which testing approach fits this PBI?"
+    - TDD-first: Write test specs before implementation (Recommended for complex features)
+    - Implement-first: Build feature, then create test specs
+    - Parallel: Spec and implement simultaneously
+
+2. "What test levels are needed?"
+    - Integration tests only (Recommended for backend CQRS)
+    - Integration + E2E
+    - Unit + Integration + E2E
+
+For EACH acceptance criterion, generate a corresponding test case outline:
+
+| AC                         | Test Outline                                            | Priority |
+| -------------------------- | ------------------------------------------------------- | -------- |
+| AC-1: User can create goal | TC: Create goal with valid data → verify persisted      | P0       |
+| AC-2: Goal requires title  | TC: Create goal without title → verify validation error | P1       |
+
+This table becomes the seed for `/tdd-spec` if the user chooses TDD-first.
+
+Document in PBI under `## Testability Assessment`.
+
+---
+
 ## Phase 6: Prioritization & Estimation
 
-Apply RICE score or MoSCoW. Estimate effort using T-shirt sizing (XS-XL).
+> **MUST READ** `.claude/skills/shared/estimation-framework.md` for story point scale and complexity definitions.
+
+Apply RICE score or MoSCoW for priority. Estimate using **Story Points (Modified Fibonacci 1-21)** for complexity measurement.
+
+### Story Points (Primary Estimation)
+
+See `shared/estimation-framework.md` for SP reference table.
 
 ### Quick RICE Score
 
@@ -218,7 +269,7 @@ Score = (Reach x Impact x Confidence) / Effort
 Reach: Users affected per quarter (100, 500, 1000+)
 Impact: 0.25 (minimal) | 0.5 (low) | 1 (medium) | 2 (high) | 3 (massive)
 Confidence: 0.5 (low) | 0.8 (medium) | 1.0 (high)
-Effort: Person-days (1, 3, 5, 10, 20)
+Effort: Story points (1, 2, 3, 5, 8, 13, 21)
 ```
 
 ### MoSCoW Categories
@@ -229,16 +280,6 @@ Effort: Person-days (1, 3, 5, 10, 20)
 | **Should Have** | Important but not vital  | Plan for release    |
 | **Could Have**  | Nice to have, low effort | If time permits     |
 | **Won't Have**  | Out of scope this cycle  | Document for future |
-
-### Effort Estimation
-
-| T-Shirt | Days  | When to Use                        |
-| ------- | ----- | ---------------------------------- |
-| XS      | 0.5-1 | Config change, simple fix          |
-| S       | 1-2   | Single component, clear scope      |
-| M       | 3-5   | Multiple components, some unknowns |
-| L       | 5-10  | Cross-cutting, integration needed  |
-| XL      | 10+   | Epic - break down further          |
 
 ---
 
@@ -335,7 +376,7 @@ For domain PBIs: detect module (ref: `.claude/skills/shared/module-detection-key
 
 - **Role Skill:** `business-analyst` (detailed patterns)
 - **Input:** `/idea` output
-- **Next Step:** `/story`, `/test-spec`, `/design-spec`
+- **Next Step:** `/story`, `/tdd-spec` (Recommended for TDD), `/test-spec`, `/design-spec`
 - **Prioritization:** `/prioritize`
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**

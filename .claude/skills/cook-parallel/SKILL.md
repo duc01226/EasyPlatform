@@ -2,12 +2,14 @@
 name: cook-parallel
 version: 1.0.0
 description: '[Implementation] Parallel implementation - multiple tasks simultaneously'
-activation: user-invoked
+disable-model-invocation: true
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Skill Variant:** Variant of `/cook` — parallel multi-task implementation with subagents.
 
@@ -16,15 +18,19 @@ activation: user-invoked
 **Goal:** Implement multiple independent tasks simultaneously using parallel fullstack-developer subagents.
 
 **Workflow:**
+
 1. **Plan** — Create plan with parallel phases and strict file ownership
 2. **Dispatch** — Launch fullstack-developer subagents per phase
 3. **Merge** — Integrate all changes and verify
 4. **Review** — Run code-simplifier and review-changes
 
 **Key Rules:**
+
 - Phases must have non-overlapping file ownership
 - User approval required before dispatching subagents
 - Break work into todo tasks; add final self-review task
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 Execute these tasks in parallel for maximum efficiency:
 <tasks>$ARGUMENTS</tasks>

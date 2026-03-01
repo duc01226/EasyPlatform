@@ -5,22 +5,24 @@ description: '[Code Quality] Simplifies and refines code for clarity, consistenc
 allowed-tools: Read, Edit, Glob, Grep, Task
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** before executing:
 
 - `.claude/skills/shared/understand-code-first-protocol.md`
 - `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
 
 **Goal:** Simplify and refine code for clarity, consistency, and maintainability while preserving all functionality.
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
 >
-> - `project-structure-reference.md` -- project patterns and structure
+> - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)**
+> - `project-structure-reference.md` — project patterns and structure
 >
-> If file not found, search for: project documentation, coding standards, architecture docs.
+> If files not found, search for: project documentation, coding standards, architecture docs.
 
 **Workflow:**
 
@@ -64,6 +66,16 @@ Simplify and refine code for clarity, consistency, and maintainability.
 3. **Applies** KISS, DRY, and YAGNI principles
 4. **Preserves** all existing functionality
 5. **Follows convention** — grep for 3+ existing patterns before applying simplifications
+
+## Readability Checklist (MUST evaluate)
+
+Before finishing, verify the code is **easy to read, easy to maintain, easy to understand**:
+
+- **Schema visibility** — If a function computes a data structure (object, map, config), add a comment showing the output shape so readers don't have to trace the code
+- **Non-obvious data flows** — If data transforms through multiple steps (A → B → C), add a brief comment explaining the pipeline
+- **Self-documenting signatures** — Function params should explain their role; remove unused params
+- **Magic values** — Replace unexplained numbers/strings with named constants or add inline rationale
+- **Naming clarity** — Variables/functions should reveal intent without reading the implementation
 
 ## Simplification Targets
 
@@ -125,21 +137,21 @@ function getData() {
     - Run related tests if available
     - Confirm no behavior changes
 
-## Platform Patterns
+## Project Patterns
 
-### Backend (C#)
+### Backend
 
-- Extract to `Entity.XxxExpr()` static expressions
-- Use fluent helpers: `.With()`, `.Then()`, `.PipeIf()`
-- Move mapping to DTO `MapToObject()` / `MapToEntity()`
-- Use `PlatformValidationResult` fluent API
+- Extract to entity static expressions (search for: entity expression pattern)
+- Use fluent helpers (search for: fluent helper pattern in docs/project-reference/backend-patterns-reference.md)
+- Move mapping to DTO mapping methods (search for: DTO mapping pattern)
+- Use project validation fluent API (see docs/project-reference/backend-patterns-reference.md)
 - Check entity expressions have database indexes
 - Verify document database index methods exist for collections
 
-### Frontend (TypeScript)
+### Frontend
 
 - Use `project store base (search for: store base class)` for state management
-- Apply `untilDestroyed()` to all subscriptions
+- Apply subscription cleanup pattern (search for: subscription cleanup pattern) to all subscriptions
 - Ensure BEM class naming on all template elements
 - Use platform base classes (`project base component (search for: base component class)`, `project store component base (search for: store component base class)`)
 

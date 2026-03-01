@@ -2,12 +2,13 @@
 name: cook-hard
 version: 1.0.0
 description: '[Implementation] Thorough implementation with maximum verification'
-activation: user-invoked
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Skill Variant:** Variant of `/cook` — thorough implementation with maximum verification.
 
@@ -16,17 +17,22 @@ activation: user-invoked
 **Goal:** Implement features with deep research, comprehensive planning, and maximum quality verification.
 
 **Workflow:**
+
 1. **Research** — Deep investigation with multiple researcher subagents
 2. **Plan** — Detailed plan with `/plan-hard`, user approval required
 3. **Implement** — Execute with full code review and SRE review
 4. **Verify** — Run all tests, review changes, update docs
 
 **Key Rules:**
+
 - Maximum thoroughness: research → plan → implement → review → test → docs
 - User approval required at plan stage
 - Break work into todo tasks; add final self-review task
 
 **Ultrathink** to plan and implement these tasks with maximum verification:
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
+
 <tasks>$ARGUMENTS</tasks>
 
 **Mode:** HARD - Extra research, detailed planning, mandatory reviews.

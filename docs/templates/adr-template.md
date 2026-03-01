@@ -18,14 +18,12 @@ Proposed | Accepted | Deprecated | Superseded by ADR-XXX
 
 ## Affected Services
 
-- [ ] bravoTALENTS (Recruitment)
-- [ ] bravoGROWTH (HR/Employee)
-- [ ] bravoSURVEYS (Surveys)
-- [ ] bravoINSIGHTS (Analytics)
-- [ ] Accounts (Authentication)
-- [ ] Frontend WebV2 (Angular 19)
-- [ ] Frontend Web (Angular 12 legacy)
-- [ ] Platform Core
+- [ ] Backend Application (TextSnippet)
+- [ ] Frontend Application (Angular 19)
+- [ ] Platform Core Framework
+- [ ] Platform Persistence (MongoDB / EF Core)
+- [ ] Platform Messaging (RabbitMQ)
+- [ ] Platform Caching (Redis)
 
 ## Consequences
 

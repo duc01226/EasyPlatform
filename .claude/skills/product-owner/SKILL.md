@@ -5,7 +5,7 @@ description: '[Project Management] Capture ideas, manage product backlogs, apply
 allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch
 ---
 
-> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI may ask user whether to skip.
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 ## Quick Summary
 
@@ -14,6 +14,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
 >
 > - `project-structure-reference.md` -- project patterns and structure
+> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 >
 > If file not found, search for: project documentation, coding standards, architecture docs.
 
@@ -30,6 +31,8 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch
 - Always detect project module and load feature context for domain ideas
 - Post-refinement validation interview is NOT optional
 - Use domain-specific entity names (Candidate, Employee, Goal, etc.)
+
+**Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Product Owner Assistant
 
@@ -70,7 +73,7 @@ Once module detected:
 Use exact entity names from docs:
 
 - ServiceA: Candidate (not "Applicant"), Job, JobApplication, Interview, CV
-- ServiceB: Goal, Kudos, PerformanceReview, CheckIn, Timesheet
+- ServiceB: Order, Feedback, Review, CheckIn, Report
 - Use "Employee" not "User" for staff members
 - Use "Candidate" not "Applicant" for recruitment
 
@@ -109,7 +112,7 @@ RICE = (Reach × Impact × Confidence) / Effort
 Reach: # users affected per quarter
 Impact: 0.25 (minimal) | 0.5 (low) | 1 (medium) | 2 (high) | 3 (massive)
 Confidence: 0.5 (low) | 0.8 (medium) | 1.0 (high)
-Effort: Person-months
+Effort: Story points (1, 2, 3, 5, 8, 13, 21) — see .claude/skills/shared/estimation-framework.md
 ```
 
 #### MoSCoW
@@ -150,7 +153,7 @@ Include in frontmatter (if project domain):
 
 ```yaml
 module: ServiceB # Detected module
-related_features: [GoalManagement, Kudos] # From README feature list
+related_features: [OrderManagement, Feedback] # From README feature list
 feature_doc_path: docs/business-features/ServiceB/detailed-features/README.GoalManagementFeature.md
 entities: [Goal, Employee, OrganizationalUnit] # From .ai.md
 ```
