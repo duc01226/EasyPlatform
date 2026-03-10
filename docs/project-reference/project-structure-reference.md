@@ -39,6 +39,7 @@
 | Easy.Platform.AzureFileStorage         | Azure Blob Storage integration                                 | src/Platform/Easy.Platform.AzureFileStorage/         |
 | Easy.Platform.FirebasePushNotification | Firebase push notification provider                            | src/Platform/Easy.Platform.FireBasePushNotification/ |
 | Easy.Platform.AutomationTest           | Integration test framework base classes                        | src/Platform/Easy.Platform.AutomationTest/           |
+| Easy.Platform.Tests.Unit               | Unit tests for platform core (xUnit + AutoFixture + Moq)       | src/Platform/Easy.Platform.Tests.Unit/               |
 | Easy.Platform.CustomAnalyzers          | Roslyn custom code analyzers (netstandard2.0)                  | src/Platform/Easy.Platform.CustomAnalyzers/          |
 
 ### Frontend Libraries (Nx)
@@ -193,6 +194,7 @@ src/
 | PLT-AZ   | Easy.Platform.AzureFileStorage         | src/Platform/Easy.Platform.AzureFileStorage/                       |
 | PLT-FB   | Easy.Platform.FirebasePushNotification | src/Platform/Easy.Platform.FireBasePushNotification/               |
 | PLT-AT   | Easy.Platform.AutomationTest           | src/Platform/Easy.Platform.AutomationTest/                         |
+| PLT-UT   | Easy.Platform.Tests.Unit               | src/Platform/Easy.Platform.Tests.Unit/                             |
 | PLT-CA   | Easy.Platform.CustomAnalyzers          | src/Platform/Easy.Platform.CustomAnalyzers/                        |
 | PLT-BM   | Easy.Platform.Benchmark                | src/Platform/Easy.Platform.Benchmark/                              |
 | TS-API   | TextSnippet API                        | src/Backend/PlatformExampleApp.TextSnippet.Api/                    |
