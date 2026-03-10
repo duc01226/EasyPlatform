@@ -41,6 +41,15 @@ the codebase for 3+ similar implementations. This applies to EVERY feature regar
 of perceived simplicity. "Simple" features have hidden complexity.
 </HARD-GATE>
 
+## Per-Phase Quality Cycle (MANDATORY)
+
+<HARD-GATE>
+Follow `.claude/skills/shared/iterative-phase-quality-protocol.md`:
+Each plan phase = one quality cycle (plan→implement→review→fix→verify).
+DO NOT start next phase until current phase passes VERIFY.
+After each phase: re-assess remaining phases for scope changes.
+</HARD-GATE>
+
 ## Greenfield Mode
 
 > **Auto-detected:** If no existing codebase is found (no code directories like `src/`, `app/`, `lib/`, `server/`, `packages/`, etc., no manifest files like `package.json`/`*.sln`/`go.mod`, no populated `project-config.json`), this skill switches to greenfield mode automatically. Planning artifacts (docs/, plans/, .claude/) don't count — the project must have actual code directories with content.

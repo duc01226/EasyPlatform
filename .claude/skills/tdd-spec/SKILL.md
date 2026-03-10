@@ -75,6 +75,10 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 | Dashboard (optional)      | `docs/test-specs/{Module}/README.md` Implementation Index                |
 | Priority index (optional) | `docs/test-specs/PRIORITY-INDEX.md`                                      |
 
+> **Phase-Mapped Coverage:** When a plan exists with multiple phases, generate test cases
+> PER PHASE — not just per feature. Each phase's success criteria MUST have ≥1 test case.
+> See `.claude/skills/shared/iterative-phase-quality-protocol.md`.
+
 ---
 
 ## Detailed Workflow

@@ -89,7 +89,13 @@ Before approving, verify the code is **easy to read, easy to maintain, easy to u
 - **DRY:** grep for duplicate/similar code across codebase
 - **YAGNI/KISS:** flag over-engineering, unnecessary abstractions, speculative features
 - **Doc staleness:** cross-reference changed files against `docs/business-features/`, test specs, READMEs — flag stale docs
-  Fix issues found.
+
+> **[IMPORTANT] Database Performance Protocol (MANDATORY):**
+>
+> 1. **Paging Required** — ALL list/collection queries MUST use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
+> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
+
+Fix issues found.
 
 **Pass 2 (conditional):** Only if Pass 1 made changes. Re-review ALL changes (original + corrections). Verify no new issues introduced.
 

@@ -163,6 +163,15 @@
             {
                 "hooks": [
                     {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mindset-injector.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Skill"
+            },
+            {
+                "hooks": [
+                    {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/knowledge-context.cjs",
                         "type": "command"
                     },
@@ -192,6 +201,10 @@
                     },
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/lessons-injector.cjs",
+                        "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/mindset-injector.cjs",
                         "type": "command"
                     }
                 ],

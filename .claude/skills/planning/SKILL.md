@@ -10,6 +10,9 @@ license: MIT
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
+> **MANDATORY:** Apply `.claude/skills/shared/iterative-phase-quality-protocol.md` — assess task complexity,
+> decompose into small phases, each phase follows plan→implement→review→fix→verify cycle.
+
 ## Quick Summary
 
 **Goal:** Create detailed technical implementation plans through research, codebase analysis, solution design, and comprehensive documentation (includes research phase merged from `research` skill).

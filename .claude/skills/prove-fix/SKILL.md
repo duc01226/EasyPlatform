@@ -172,6 +172,12 @@ After individual proof traces, perform cross-change verification:
 2. **Completeness check** — Does the combined fix address ALL reported symptoms?
 3. **Regression check** — Could the combined changes introduce new bugs?
 4. **Dependency check** — Are there other code paths that depend on the changed behavior?
+5. **Performance regression check** — Does the fix introduce performance issues?
+
+> **[IMPORTANT] Database Performance Protocol (MANDATORY):**
+>
+> 1. **Paging Required** — ALL list/collection queries MUST use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
+> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
 
 ---
 

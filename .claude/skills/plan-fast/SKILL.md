@@ -11,6 +11,9 @@ disable-model-invocation: true
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
+> **Iterative Quality Gate:** **MUST READ** `.claude/skills/shared/iterative-phase-quality-protocol.md`.
+> Even for fast plans: assess complexity score. Score ≥3 → MUST produce multiple phases with per-phase quality cycles.
+
 ## Quick Summary
 
 **Goal:** Analyze codebase and create a structured implementation plan without writing any code.

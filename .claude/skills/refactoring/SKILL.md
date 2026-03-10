@@ -204,11 +204,17 @@ var config = req.Dto.MapToObject()
 
 ## Index Impact Check
 
+> **[IMPORTANT] Database Performance Protocol (MANDATORY):**
+>
+> 1. **Paging Required** — ALL list/collection queries MUST use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
+> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
+
 When extracting expressions or moving queries, verify index coverage:
 
 - [ ] New expression fields have indexes in DbContext?
 - [ ] Moved queries still use indexed fields?
 - [ ] Refactored filters maintain index selectivity order?
+- [ ] List queries use pagination (no unbounded GetAll/ToList)?
 
 ## Safety Checklist
 

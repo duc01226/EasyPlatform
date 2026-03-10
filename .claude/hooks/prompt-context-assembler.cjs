@@ -19,7 +19,13 @@ const os = require('os');
 const path = require('path');
 const { execSync } = require('child_process');
 const { loadConfig, resolvePlanPath, getReportsPath, resolveNamingPattern, normalizePath } = require('./lib/ck-config-utils.cjs');
-const { injectLessons, injectAiMistakePrevention, injectWorkflowProtocol, injectLessonReminder } = require('./lib/prompt-injections.cjs');
+const {
+    injectLessons,
+    injectCriticalContext,
+    injectAiMistakePrevention,
+    injectWorkflowProtocol,
+    injectLessonReminder
+} = require('./lib/prompt-injections.cjs');
 
 // ═══════════════════════════════════════════════════════════════════════════
 // DEDUPLICATION
@@ -126,20 +132,6 @@ function wasDevRulesRecentlyInjected(transcriptPath) {
 // ═══════════════════════════════════════════════════════════════════════════
 // REMINDER TEMPLATE (all output in one place for visibility)
 // ═══════════════════════════════════════════════════════════════════════════
-
-/**
- * Returns always-injected critical context: skeptical mindset + workflow detection instruction.
- * Called unconditionally on every prompt — never deduped.
- */
-function buildCriticalContext() {
-    return [
-        // ─────────────────────────────────────────────────────────────────────────
-        // CRITICAL THINKING MINDSET (top of context — always visible)
-        // ─────────────────────────────────────────────────────────────────────────
-        `**CRITICAL THINKING and PROOF protocol (IMPORTANT MANDATORY MUST): Be skeptical, critical thinking. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**`,
-        ``
-    ];
-}
 
 function buildReminder({
     thinkingLanguage,
@@ -262,9 +254,10 @@ async function main() {
         const payload = JSON.parse(stdin);
 
         // ═══════════════════════════════════════════════════════════════════════════
-        // ALWAYS INJECT: Critical context (never deduped — drives workflow detection)
+        // ALWAYS INJECT: Critical context (skipDedup on UserPromptSubmit — always visible)
         // ═══════════════════════════════════════════════════════════════════════════
-        console.log(buildCriticalContext().join('\n'));
+        const criticalTop = injectCriticalContext(payload.transcript_path, true);
+        if (criticalTop) console.log(criticalTop);
 
         // ═══════════════════════════════════════════════════════════════════════════
         // MAIN BLOCK: Session context, rules, modularization, dev rules
@@ -323,18 +316,20 @@ async function main() {
         const lessons = injectLessons(payload.transcript_path);
         if (lessons) console.log(lessons);
 
-        console.log(injectAiMistakePrevention());
+        const aiMistake = injectAiMistakePrevention(payload.transcript_path, true);
+        if (aiMistake) console.log(aiMistake);
 
         const workflowProtocol = injectWorkflowProtocol(payload.transcript_path);
         if (workflowProtocol) console.log(workflowProtocol);
 
+        // ═══════════════════════════════════════════════════════════════════════════
+        // ALWAYS INJECT: Critical context at bottom (skipDedup — bookend visibility)
+        // ═══════════════════════════════════════════════════════════════════════════
+        const criticalBottom = injectCriticalContext(payload.transcript_path, true);
+        if (criticalBottom) console.log(criticalBottom);
+
         const reminder = injectLessonReminder(payload.transcript_path);
         if (reminder) console.log(reminder);
-
-        // ═══════════════════════════════════════════════════════════════════════════
-        // ALWAYS INJECT: Critical context (never deduped — drives workflow detection)
-        // ═══════════════════════════════════════════════════════════════════════════
-        console.log(buildCriticalContext().join('\n'));
 
         process.exit(0);
     } catch (error) {

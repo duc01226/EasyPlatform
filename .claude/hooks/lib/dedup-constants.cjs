@@ -19,6 +19,8 @@
  *   KNOWLEDGE_CONTEXT   → knowledge-context
  *   E2E_CONTEXT         → code-patterns-injector
  *   LESSONS             → prompt-context-assembler (via lib/prompt-injections), lessons-injector (PreToolUse)
+ *   CRITICAL_THINKING   → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
+ *   AI_MISTAKE_PREVENTION → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
  *   WORKFLOW_CATALOG    → workflow-router
  *
  * DEDUP_LINES — dynamically calculated transcript line counts for each marker.
@@ -146,6 +148,8 @@ const CONTENT_SOURCES = {
     DESIGN_SYSTEM: { type: 'fixed', value: 100 },
     LESSON_LEARNED: { type: 'fixed', value: 100 },
     WORKFLOW_PROTOCOL: { type: 'fixed', value: 100 },
+    CRITICAL_THINKING: { type: 'fixed', value: 80 },
+    AI_MISTAKE_PREVENTION: { type: 'fixed', value: 80 },
     // Behavioral windows — not content dedup, fixed values
     SEARCH_WINDOW: { type: 'fixed', value: 100 },
     SEARCH_SKIP_OVERRIDE: { type: 'fixed', value: 50 }
@@ -276,5 +280,11 @@ module.exports = {
     WORKFLOW_CATALOG: '## Workflow Catalog',
 
     /** Marker for workflow execution protocol injection */
-    WORKFLOW_PROTOCOL: '[WORKFLOW-EXECUTION-PROTOCOL]'
+    WORKFLOW_PROTOCOL: '[WORKFLOW-EXECUTION-PROTOCOL]',
+
+    /** Marker for critical thinking mindset injection */
+    CRITICAL_THINKING: '[CRITICAL-THINKING-MINDSET]',
+
+    /** Marker for AI mistake prevention injection */
+    AI_MISTAKE_PREVENTION: '## Common AI Mistake Prevention'
 };

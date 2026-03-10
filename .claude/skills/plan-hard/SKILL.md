@@ -12,6 +12,9 @@ disable-model-invocation: false
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 - `docs/test-specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
 
+> **Phase Quality:** **MUST READ** `.claude/skills/shared/iterative-phase-quality-protocol.md`.
+> Each phase file MUST satisfy: ≤5 files per phase, ≤3h effort, clear success criteria, mapped test cases.
+
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.

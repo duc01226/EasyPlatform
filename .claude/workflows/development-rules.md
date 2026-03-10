@@ -39,6 +39,12 @@
 - Use try catch error handling & cover security standards
 - Use `code-reviewer` agent to review code after every implementation
 
+## Task Decomposition & Iterative Quality
+
+- **MUST READ** `.claude/skills/shared/iterative-phase-quality-protocol.md` for any task with complexity score ≥3
+- **Principle:** Break large tasks into small phases. Each phase: plan → implement → review → fix → verify
+- **Rule:** No phase >5 files or >3h effort. No monolithic plans for complex tasks.
+
 ## Pre-commit/Push Rules
 
 - Run linting before commit

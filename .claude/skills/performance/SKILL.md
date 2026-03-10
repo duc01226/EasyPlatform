@@ -43,6 +43,11 @@ description: '[Debugging] Analyze and optimize performance bottlenecks'
 - Challenge completeness: "Are there other bottlenecks?" → check the full request pipeline
 - No "should improve performance" without proof — measure before and after
 
+> **[IMPORTANT] Database Performance Protocol (MANDATORY):**
+>
+> 1. **Paging Required** — ALL list/collection queries MUST use pagination. NEVER load all records into memory. Verify: no unbounded `GetAll()`, `ToList()`, or `Find()` without `Skip/Take` or cursor-based paging.
+> 2. **Index Required** — ALL query filter fields, foreign keys, and sort columns MUST have database indexes configured. Verify: entity expressions match index field order, database collections have index management methods, migrations include indexes for WHERE/JOIN/ORDER BY columns.
+
 ## ⚠️ MANDATORY: Confidence & Evidence Gate
 
 **MANDATORY IMPORTANT MUST** declare `Confidence: X%` with profiling data + `file:line` proof for EVERY claim.

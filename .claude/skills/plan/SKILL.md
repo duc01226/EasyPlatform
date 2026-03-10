@@ -12,6 +12,9 @@ description: '[Planning] Intelligent plan creation with prompt enhancement'
 - `.claude/skills/shared/rationalization-prevention-protocol.md` — Anti-evasion rebuttals (prevents "too simple for a plan" shortcuts)
 - `docs/test-specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
 
+> **Iterative Quality Gate:** **MUST READ** `.claude/skills/shared/iterative-phase-quality-protocol.md`.
+> Before routing, assess complexity score. Score ≥3 → plan MUST produce multiple phases with per-phase quality cycles.
+
 ## Quick Summary
 
 **Goal:** Intelligently create implementation plans by analyzing task complexity and routing to `/plan-fast` or `/plan-hard`.
