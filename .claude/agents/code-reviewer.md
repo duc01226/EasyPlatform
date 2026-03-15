@@ -45,11 +45,13 @@ Perform systematic code quality assessment using report-driven two-phase review.
 ## Review Checklist (Priority Order)
 
 1. **Class Responsibility** -- Backend: mapping in Command/DTO not Handler. Frontend: constants/columns in Model not Component
-2. **Clean Code** -- No magic numbers/strings, explicit type annotations, single responsibility, DRY
-3. **Naming** -- Specific names (`employeeRecords` not `data`), verb+noun methods, boolean prefixes (is/has/can/should)
-4. **Performance** -- No O(n^2) nested loops, project in query, always paginate, batch load (no N+1)
-5. **Correctness** -- Edge cases (null, empty, boundary), error paths, race conditions
-6. **Security** -- OWASP Top 10, input validation, no secrets in logs/commits
+2. **DRY via OOP Abstraction** -- Classes with same suffix (*Entity, *Dto, \*Service) MUST share base class. Grep for 3+ similar patterns → extract. Generics for type-only variation. Shared interfaces for common contracts.
+3. **Design Pattern Assessment** -- READ `.claude/skills/shared/design-patterns-quality-checklist.md`. Check: switch/if-else→Strategy, scattered new→Factory, complex subsystem→Facade, notification needs→Observer. Flag anti-patterns: God Object, Copy-Paste, Circular Dependency. Only recommend patterns with evidence of 3+ occurrences.
+4. **Clean Code** -- No magic numbers/strings, explicit type annotations, single responsibility, DRY
+5. **Naming** -- Specific names (`employeeRecords` not `data`), verb+noun methods, boolean prefixes (is/has/can/should)
+6. **Performance** -- No O(n^2) nested loops, project in query, always paginate, batch load (no N+1)
+7. **Correctness** -- Edge cases (null, empty, boundary), error paths, race conditions
+8. **Security** -- OWASP Top 10, input validation, no secrets in logs/commits
 
 ## Output
 

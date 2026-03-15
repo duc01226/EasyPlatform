@@ -98,6 +98,8 @@ function buildInjection(context, filePath, app, patternsAlreadyInjected) {
     const ctxGroup = getContextGroup(filePath);
     const guideDoc = ctxGroup?.guideDoc || null;
     const patternsDoc = ctxGroup?.patternsDoc || 'docs/project-reference/frontend-patterns-reference.md';
+    const stylingDoc = ctxGroup?.stylingDoc || null;
+    const designSystemDoc = ctxGroup?.designSystemDoc || null;
 
     const lines = ['', DEDUP_MARKER, '', `**Context:** ${context.name}`, `**File:** ${fileName}`, app ? `**App:** ${app}` : '', ''];
 
@@ -111,6 +113,14 @@ function buildInjection(context, filePath, app, patternsAlreadyInjected) {
             '',
             `Also review **\`${patternsDoc}\`** for project-specific patterns.`
         );
+    }
+
+    // Inject styling and design system docs if configured
+    if (!patternsAlreadyInjected && (stylingDoc || designSystemDoc)) {
+        lines.push('### UI System References', '');
+        if (stylingDoc) lines.push(`- **Styling/BEM guide:** \`${stylingDoc}\``);
+        if (designSystemDoc) lines.push(`- **Design system tokens:** \`${designSystemDoc}\``);
+        lines.push('');
     }
     const rules = ctxGroup?.rules || [];
 

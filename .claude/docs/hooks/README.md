@@ -61,6 +61,7 @@ SessionStart hooks → UserPromptSubmit hooks → PreToolUse hooks → [Tool run
 | `figma-context-extractor.cjs`    | `Read`                   | Extract and inject Figma design context                         |
 | `code-review-rules-injector.cjs` | `Skill`                  | Inject YourProject code review rules on review skill activation |
 | `knowledge-context.cjs`          | `Edit\|Write\|MultiEdit` | Inject knowledge work guidelines for docs/knowledge/ files      |
+| `ba-refinement-context.cjs`      | `Write\|Edit`            | Inject BA team refinement context when editing PBI artifacts    |
 | `artifact-path-resolver.cjs`     | `Write`                  | Resolve correct artifact output paths (plans/, reports/)        |
 
 ### Lessons Injection

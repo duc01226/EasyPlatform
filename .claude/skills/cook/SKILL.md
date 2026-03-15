@@ -35,6 +35,14 @@ description: '[Implementation] Implement a feature [step by step]'
 - Always activate relevant skills from catalog during implementation
 - Break work into small todo tasks; add final review task
 
+### Frontend/UI Context (if applicable)
+
+When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
 <HARD-GATE>
 Do NOT start coding until you have a plan (approved or self-created) and have searched
 the codebase for 3+ similar implementations. This applies to EVERY feature regardless

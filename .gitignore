@@ -499,3 +499,4 @@ tmpclaude-*
 .claude/.compact-state.json
 .claude/tmp*
 .claude/agent-memory/
+.claude/workflow-state.json

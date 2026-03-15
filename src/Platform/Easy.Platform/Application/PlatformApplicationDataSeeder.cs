@@ -35,7 +35,8 @@ public interface IPlatformApplicationDataSeeder
 public abstract class PlatformApplicationDataSeeder : IPlatformApplicationDataSeeder
 {
     public const int DefaultActiveDelaySeedingInBackgroundBySeconds = 5;
-    public const int DefaultDelayRetryCheckSeedDataBySeconds = 5;
+    public const int DefaultDelayRetryCheckSyncDataBySeconds = 5;
+    public const int DefaultDelaySeedDataBySeconds = 1;
     public const int DefaultMaxWaitSeedDataBySyncMessagesBySeconds = 3600;
 
     protected readonly IConfiguration Configuration;
@@ -86,20 +87,19 @@ public abstract class PlatformApplicationDataSeeder : IPlatformApplicationDataSe
         if (ApplicationSettingContext.IsDebugInformationMode)
             Logger.LogInformation("{Type} {Method} STARTED", GetType().FullName, nameof(SeedData));
 
-        await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
-            async () =>
+        await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(async () =>
+        {
+            if (AutoBeginUow)
             {
-                if (AutoBeginUow)
+                using (var uow = UnitOfWorkManager.Begin())
                 {
-                    using (var uow = UnitOfWorkManager.Begin())
-                    {
-                        await InternalSeedData(isReplaceNewSeedData);
-                        await uow.CompleteAsync();
-                    }
-                }
-                else
                     await InternalSeedData(isReplaceNewSeedData);
-            });
+                    await uow.CompleteAsync();
+                }
+            }
+            else
+                await InternalSeedData(isReplaceNewSeedData);
+        });
 
         if (ApplicationSettingContext.IsDebugInformationMode)
             Logger.LogInformation("{Type} {Method} FINISHED", GetType().FullName, nameof(SeedData));

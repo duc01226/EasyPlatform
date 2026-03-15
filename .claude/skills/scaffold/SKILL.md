@@ -108,9 +108,33 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 
 ### UI Foundation
 
-- [ ] Global styles / design tokens
-- [ ] Base layout component
-- [ ] Loading/error/notification components
+> **Skip if:** Backend-only project, no frontend component. **Apply if:** Project has ANY frontend.
+
+#### Design Token Files
+
+- [ ] Create design token file(s) per chosen format (CSS custom properties / SCSS variables / JSON)
+- [ ] Define minimum token set: colors (primary, secondary, surface, bg, text, error, success, warning), spacing (xs-xl), typography (heading/body/caption families + sizes), breakpoints, shadows, z-index
+- [ ] Create theme file(s) if theming required (light/dark CSS classes or theme provider)
+
+#### Base Layout & Responsive
+
+- [ ] Base layout component (app shell: header, sidebar/nav, main content, footer)
+- [ ] Responsive container/grid utility
+- [ ] Responsive mixin/utility for breakpoints
+- [ ] Mobile-first media query definitions
+
+#### Base UI Components
+
+- [ ] Loading indicator component (spinner or skeleton)
+- [ ] Error display component (inline + page-level)
+- [ ] Empty state component (message + action)
+- [ ] Notification/toast component
+- [ ] Base button component with variants (primary, secondary, ghost, danger)
+- [ ] Base input component with validation display
+
+#### Design System Documentation
+
+- [ ] Create `docs/project-reference/design-system/README.md` skeleton with: token naming conventions, component tier classification (Common/Domain-Shared/Page), usage examples
 
 ## Code Quality Gate Tooling (MANDATORY MUST — Setup Before Any Feature Code)
 

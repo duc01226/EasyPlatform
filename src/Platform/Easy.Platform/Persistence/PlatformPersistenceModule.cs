@@ -232,16 +232,15 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     public new const int DefaultInitializationPriority = PlatformModule.DefaultInitializationPriority + (InitializationPriorityTierGap * 2);
 
     /// <summary>
-    /// Recommended connection idle lifetime in seconds to prevent connection pool exhaustion.
+    /// Recommended connection idle lifetime in seconds for pruning idle connections.
     /// </summary>
     /// <remarks>
-    /// Set to 5 seconds to quickly release idle connections back to the pool.
-    /// This prevents scenarios where long-running operations (like paging) hold connections
-    /// while waiting for user input, which can exhaust the connection pool.
-    ///
-    /// Particularly important in containerized environments with limited connection pools.
+    /// Set to 30 seconds — balances connection reuse with resource cleanup in multi-pool microservices.
+    /// Npgsql default is 300s; 30s prevents holding too many idle connections across ~15 pools
+    /// while avoiding the reconnection churn caused by overly aggressive values (e.g., 5s).
+    /// With MinPoolSize=1, at least one connection always survives pruning.
     /// </remarks>
-    public static readonly int RecommendedConnectionIdleLifetimeSeconds = 5;
+    public static readonly int RecommendedConnectionIdleLifetimeSeconds = 30;
 
     /// <summary>
     /// Recommended number of retry attempts for database connection failures.
@@ -253,23 +252,39 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     public static readonly int RecommendedConnectionRetryOnFailureCount = 10;
 
     /// <summary>
-    /// Recommended delay between connection retry attempts.
+    /// Recommended maximum delay between connection retry attempts.
     /// </summary>
     /// <remarks>
-    /// Set to 1 second to provide reasonable recovery time for transient network issues
-    /// without excessive delay in application startup.
+    /// Set to 5 seconds as the upper bound for exponential backoff with jitter.
+    /// NpgsqlRetryingExecutionStrategy randomizes actual delays between 0 and this value,
+    /// reducing thundering herd probability when multiple services retry concurrently
+    /// after a pool exhaustion event (FATAL 53300).
     /// </remarks>
-    public static readonly TimeSpan RecommendedConnectionRetryDelay = 1.Seconds();
+    public static readonly TimeSpan RecommendedConnectionRetryDelay = 5.Seconds();
 
     /// <summary>
-    /// Recommended maximum size for database connection pools.
+    /// Default maximum size for database connection pools when no configuration is provided.
     /// </summary>
     /// <remarks>
-    /// Calculated as CPU cores × 50 to optimize for high-concurrency scenarios.
-    /// This provides adequate connection availability while preventing resource exhaustion.
-    /// Adjust based on application-specific load patterns and database server capacity.
+    /// Formula: <c>Max(ProcessorCount * 2, 10)</c> — based on HikariCP best practice (core_count × 2 + spindle_count).
+    /// Floor of 10 ensures adequate burst capacity even on low-core dev machines.
+    /// Connections are reused via async/await — a pool of 10 can serve 50+ concurrent requests because each
+    /// query holds a connection for ~1-10ms, not the full request duration.
+    /// Override per-environment via appsettings "PostgreSql:MaxPoolSize" or "Sql:MaxPoolSize".
     /// </remarks>
-    public static readonly int RecommendedMaxPoolSize = Environment.ProcessorCount * 50;
+    public static readonly int RecommendedMaxPoolSize = Math.Max(Environment.ProcessorCount * 2, 10);
+
+    /// <summary>
+    /// Reads the recommended max pool size from configuration, falling back to <see cref="RecommendedMaxPoolSize"/>.
+    /// </summary>
+    /// <param name="configuration">The application configuration.</param>
+    /// <returns>The configured max pool size, or <c>Max(ProcessorCount * 2, 10)</c> if not configured.</returns>
+    public static int GetRecommendedMaxPoolSize(IConfiguration configuration)
+    {
+        return configuration.GetValue<int?>("PostgreSql:MaxPoolSize")
+            ?? configuration.GetValue<int?>("Sql:MaxPoolSize")
+            ?? RecommendedMaxPoolSize;
+    }
 
     /// <summary>
     /// Recommended minimum size for database connection pools.

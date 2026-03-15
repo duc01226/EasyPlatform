@@ -11,6 +11,8 @@ description: '[Implementation] Start coding & testing an existing plan'
 - `.claude/skills/shared/understand-code-first-protocol.md`
 - `docs/project-reference/backend-patterns-reference.md`
 - `docs/project-reference/frontend-patterns-reference.md`
+- `docs/project-reference/scss-styling-guide.md` — Styling/BEM guide (read when task involves frontend/UI)
+- `docs/project-reference/design-system/README.md` — Design system tokens (read when task involves frontend/UI)
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.

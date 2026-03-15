@@ -130,7 +130,7 @@ public class StringExtensionTests : PlatformUnitTestBase
     [Fact]
     public void ToBase64String_EncodesCorrectly()
     {
-        "Hello".ToBase64String().Should().Be(Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes("Hello")));
+        "Hello".ToBase64String().Should().Be(Convert.ToBase64String("Hello"u8.ToArray()));
     }
 
     [Fact]

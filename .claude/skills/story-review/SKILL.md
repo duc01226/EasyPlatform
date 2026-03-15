@@ -20,6 +20,14 @@ description: '[Code Quality] Review user stories for completeness, coverage, dep
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
+### Frontend/UI Context (if applicable)
+
+When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
 ## Workflow
 
 1. **Locate stories** — Find story artifacts in `team-artifacts/stories/` or plan context
@@ -40,13 +48,14 @@ description: '[Code Quality] Review user stories for completeness, coverage, dep
 - [ ] **No overlapping scope** — Stories don't duplicate functionality
 - [ ] **Vertical slices** — Each story delivers end-to-end value (not horizontal layers)
 - [ ] **Authorization scenarios** — Every story includes at least 1 authorization scenario (unauthorized access → rejection) per PBI roles table (ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` §1)
+- [ ] **UI Wireframe section** — If story involves UI: has `## UI Wireframe` section per `ui-wireframe-protocol.md` (wireframe + component tree + interaction flow + states + responsive). If backend-only: explicit "N/A"
 
 ### Recommended (>=50% should pass)
 
 - [ ] **Edge cases** — Boundary values, empty states, max limits addressed
 - [ ] **Error scenarios** — Failure paths explicitly covered in stories
 - [ ] **API contract** — If API changes needed, story specifies contract
-- [ ] **UI/UX considerations** — Frontend stories reference design specs or mockups
+- [ ] **UI/UX visualization** — Frontend stories have component decomposition tree with EXISTING/NEW classification, design token mapping, and responsive breakpoint behavior per `ui-wireframe-protocol.md`
 - [ ] **Seed data stories** — If PBI has seed data requirements, Sprint 0 seed data story exists (ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` §2)
 - [ ] **Data migration stories** — If PBI has schema changes, data migration story exists (ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` §5)
 

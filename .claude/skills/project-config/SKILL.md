@@ -55,7 +55,7 @@ docs/project-config.json
 ├── modules[]                  (array, optional — universal module registry)
 │   └── { name, kind, pathRegex, description, tags[], meta{} }
 ├── contextGroups[]            (array, optional — hook injection config)
-│   └── { name, pathRegexes[], fileExtensions[], guideDoc, patternsDoc, rules[] }
+│   └── { name, pathRegexes[], fileExtensions[], guideDoc, patternsDoc, stylingDoc, designSystemDoc, rules[] }
 ├── styling                    (object, optional — replaces scss)
 │   ├── technology, guideDoc, appMap{}, patterns[]
 ├── designSystem               (object, required)
@@ -191,9 +191,11 @@ find src/ -path "*/Web/*" -name "*.ts" | head -5
 ```
 
 **Build `contextGroups[]`:**
-Each group: `{ name, pathRegexes[], fileExtensions[], guideDoc, patternsDoc, rules[] }`
+Each group: `{ name, pathRegexes[], fileExtensions[], guideDoc, patternsDoc, stylingDoc, designSystemDoc, rules[] }`
 
 - `rules[]`: Critical coding rules for this context (consumed by hooks — NO hardcoded fallbacks)
+- `stylingDoc`: Path to SCSS/CSS styling guide doc (optional, used by frontend-context hook)
+- `designSystemDoc`: Path to design system overview doc (optional, used by frontend-context hook)
 
 ### 2c. Design System
 
@@ -347,22 +349,20 @@ After project-config is verified, AI **MANDATORY IMPORTANT MUST** create `TaskCr
 
 **Canonical mapping** (from `SCAN_SKILL_MAP` in `.claude/hooks/session-init-docs.cjs`):
 
-| Reference Doc                    | Scan Skill Command        |
-| -------------------------------- | ------------------------- |
-| `project-structure-reference.md` | `/scan-project-structure` |
-| `backend-patterns-reference.md`  | `/scan-backend-patterns`  |
-| `frontend-patterns-reference.md` | `/scan-frontend-patterns` |
-| `integration-test-reference.md`  | `/scan-integration-tests` |
-| `feature-docs-reference.md`      | `/scan-feature-docs`      |
-| `code-review-rules.md`           | `/scan-code-review-rules` |
-| `scss-styling-guide.md`          | `/scan-scss-styling`      |
-| `design-system/README.md`        | `/scan-design-system`     |
-| `e2e-test-reference.md`          | `/scan-e2e-tests`         |
-| `domain-entities-reference.md`   | `/scan-domain-entities`   |
+| Reference Doc                                                                 | Scan Skill Command        |
+| ----------------------------------------------------------------------------- | ------------------------- |
+| `project-structure-reference.md`                                              | `/scan-project-structure` |
+| `backend-patterns-reference.md`                                               | `/scan-backend-patterns`  |
+| `design-system/` + `scss-styling-guide.md` + `frontend-patterns-reference.md` | `/scan-ui-system`         |
+| `integration-test-reference.md`                                               | `/scan-integration-tests` |
+| `feature-docs-reference.md`                                                   | `/scan-feature-docs`      |
+| `code-review-rules.md`                                                        | `/scan-code-review-rules` |
+| `e2e-test-reference.md`                                                       | `/scan-e2e-tests`         |
+| `domain-entities-reference.md`                                                | `/scan-domain-entities`   |
 
 **Instructions:**
 
-1. Create **one `TaskCreate`** per scan skill above (10 tasks total)
+1. Create **one `TaskCreate`** per scan skill above (8 tasks total)
 2. Each task subject: `"Run /scan-{name} to populate docs/{filename}"`
 3. Each task description: `"Invoke /scan-{name} skill to scan codebase and populate docs/{filename} with real project patterns."`
 4. Tasks should be `pending` — execute sequentially after project-config phase completes

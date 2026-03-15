@@ -60,7 +60,11 @@ public class ActionExtensionTests : PlatformUnitTestBase
     public async Task ToAsyncFunc_FuncTask_InvokesAndReturnsObject()
     {
         var invoked = false;
-        Func<Task> action = () => { invoked = true; return Task.CompletedTask; };
+        var action = () =>
+        {
+            invoked = true;
+            return Task.CompletedTask;
+        };
 
         var func = action.ToAsyncFunc();
         var result = await func();
@@ -75,7 +79,11 @@ public class ActionExtensionTests : PlatformUnitTestBase
     public async Task ToAsyncFunc_FuncTTask_InvokesWithArgAndReturnsObject()
     {
         var captured = 0;
-        Func<int, Task> action = x => { captured = x; return Task.CompletedTask; };
+        Func<int, Task> action = x =>
+        {
+            captured = x;
+            return Task.CompletedTask;
+        };
 
         var func = action.ToAsyncFunc();
         var result = await func(99);
@@ -90,7 +98,11 @@ public class ActionExtensionTests : PlatformUnitTestBase
     public async Task ToAsyncFunc_FuncT1T2Task_InvokesWithArgsAndReturnsObject()
     {
         var sum = 0;
-        Func<int, int, Task> action = (a, b) => { sum = a + b; return Task.CompletedTask; };
+        Func<int, int, Task> action = (a, b) =>
+        {
+            sum = a + b;
+            return Task.CompletedTask;
+        };
 
         var func = action.ToAsyncFunc();
         var result = await func(5, 15);

@@ -16,6 +16,7 @@ const { loadConfig, resolveNamingPattern, getGitBranch, resolvePlanPath, getRepo
 const { getTodoStateForSubagent } = require('./lib/todo-state.cjs');
 const { loadProjectConfig } = require('./lib/project-config-loader.cjs');
 const { CODE_PATTERNS: CODE_PATTERNS_MARKER } = require('./lib/dedup-constants.cjs');
+const { injectAiMistakePrevention } = require('./lib/prompt-injections.cjs');
 
 /**
  * Get agent-specific context from config
@@ -57,6 +58,9 @@ function buildCodingPatternContext(agentType) {
     const backendDoc = projConfig.framework?.backendPatternsDoc || 'docs/project-reference/backend-patterns-reference.md';
     const frontendDoc = projConfig.framework?.frontendPatternsDoc || 'docs/project-reference/frontend-patterns-reference.md';
 
+    const stylingDoc = projConfig.contextGroups?.find(g => g.stylingDoc)?.stylingDoc || null;
+    const designSystemDoc = projConfig.contextGroups?.find(g => g.designSystemDoc)?.designSystemDoc || null;
+
     const lines = ['', CODE_PATTERNS_MARKER];
     lines.push(
         '',
@@ -64,6 +68,8 @@ function buildCodingPatternContext(agentType) {
         `- \`${backendDoc}\` - Backend (patterns, repositories, entities, etc.)`,
         `- \`${frontendDoc}\` - Frontend (Components, Store, Forms, etc.)`
     );
+    if (stylingDoc) lines.push(`- \`${stylingDoc}\` - Styling (BEM, SCSS variables, mixins)`);
+    if (designSystemDoc) lines.push(`- \`${designSystemDoc}\` - Design system (tokens, components, icons)`);
     return lines;
 }
 
@@ -130,6 +136,19 @@ function buildLessonsContext() {
 }
 
 /**
+ * Build AI mistake prevention context for subagent awareness
+ */
+function buildAiMistakePreventionContext() {
+    try {
+        // skipDedup=true: subagents always get fresh injection (no transcript to dedup against)
+        const block = injectAiMistakePrevention(null, true);
+        return block ? ['', block] : [];
+    } catch {
+        return []; /* fail-open */
+    }
+}
+
+/**
  * Build parent task state section for subagent awareness
  */
 function buildParentTodoSection() {
@@ -189,7 +208,8 @@ async function main() {
             ...buildParentTodoSection(),
             ...buildCodingPatternContext(agentType),
             ...buildClaudeMdContext(),
-            ...buildLessonsContext()
+            ...buildLessonsContext(),
+            ...buildAiMistakePreventionContext()
         ];
 
         // SubagentStart requires hookSpecificOutput.additionalContext format

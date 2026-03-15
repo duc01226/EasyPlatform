@@ -31,6 +31,14 @@ description: '[Implementation] Analyze & fix issues with parallel fullstack-deve
 - Issues MUST be independent (no overlapping file modifications)
 - Each subagent owns specific files; no cross-boundary edits
 
+### Frontend/UI Context (if applicable)
+
+When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
 ## Debug Mindset (NON-NEGOTIABLE)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**

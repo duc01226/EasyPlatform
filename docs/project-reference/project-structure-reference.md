@@ -1,6 +1,6 @@
 # Project Structure Reference
 
-<!-- Last scanned: 2026-03-07 -->
+<!-- Last scanned: 2026-03-15 -->
 <!-- This file is referenced by Claude skills and agents for project-specific context. -->
 
 ## Service Architecture
@@ -84,7 +84,7 @@
 
 ```
 src/
-├── Platform/                          # Easy.Platform Framework (11 libraries + 2 tools)
+├── Platform/                          # Easy.Platform Framework (11 libraries + 2 tools + 1 test)
 │   ├── Easy.Platform/                 #   Core framework
 │   ├── Easy.Platform.AspNetCore/      #   ASP.NET Core integration
 │   ├── Easy.Platform.AutomationTest/  #   Test framework
@@ -96,7 +96,8 @@ src/
 │   ├── Easy.Platform.HangfireBackgroundJob/
 │   ├── Easy.Platform.MongoDB/         #   MongoDB persistence
 │   ├── Easy.Platform.RabbitMQ/        #   Message bus
-│   └── Easy.Platform.RedisCache/      #   Caching
+│   ├── Easy.Platform.RedisCache/      #   Caching
+│   └── Easy.Platform.Tests.Unit/      #   Unit tests
 │
 ├── Backend/                           # PlatformExampleApp (TextSnippet)
 │   ├── PlatformExampleApp.TextSnippet.Api/          # API host (port 5001)

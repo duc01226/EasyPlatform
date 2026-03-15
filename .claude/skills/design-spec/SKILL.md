@@ -21,8 +21,11 @@ allowed-tools: Read, Write, Edit, Grep, Glob
 
 **Key Rules:**
 
-- If Figma URL provided, run `/figma-design` first to extract specs
+- If Figma URL provided → auto-routes to `/figma-design` for context extraction
+- If wireframe image provided → auto-routes to `/wireframe-to-spec` for structured analysis
+- If screenshot provided → uses `ai-multimodal` for design extraction
 - Reference existing design system tokens from `docs/project-reference/design-system/`
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Include accessibility requirements (keyboard nav, ARIA labels, contrast)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -40,7 +43,7 @@ Create structured UI/UX design specification documents from requirements or PBIs
 
 ## When NOT to Use
 
-- Extracting specs from Figma -- use `figma-design` first, then this skill
+- This skill auto-routes Figma URLs to `/figma-design` and wireframes to `/wireframe-to-spec` — no need to call those skills separately
 - Building the actual UI -- use `frontend-design`
 - Full UX research and design process -- use `ux-designer`
 - Reviewing existing UI code -- use `web-design-guidelines`
@@ -53,12 +56,27 @@ Read before executing:
 - `docs/project-reference/design-system/` -- project design tokens (if applicable)
 - Existing design specs in `team-artifacts/design-specs/` for format consistency
 
+### Frontend/UI Context
+
+When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+
+- Frontend patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
 ## Workflow
 
-1. **Read source input**
-    - IF Figma URL provided → run `/figma-design` first to extract specs, then continue
-    - IF PBI/story → extract acceptance criteria and UI requirements
-    - IF verbal requirements → clarify with user before proceeding
+1. **Read source input & route by type**
+
+    | Input Detected           | Detection                                      | Action                                                                   |
+    | ------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------ |
+    | Figma URL                | `figma.com/design` or `figma.com/file` in text | Activate `/figma-design` to extract context, then continue               |
+    | Image/screenshot         | Image file attached to prompt                  | Use `ai-multimodal` to extract design guidelines, then continue          |
+    | Hand-drawn wireframe     | Image + "wireframe"/"sketch" keyword           | Activate `/wireframe-to-spec` to generate structured spec, then continue |
+    | PBI/story text           | Acceptance criteria present                    | Extract UI requirements from text, continue                              |
+    | Verbal/text requirements | No image, no URL, no PBI                       | Clarify with user, then continue                                         |
+
+    For ANY visual input: extract design context FIRST, then proceed to spec generation.
 
 2. **Determine spec complexity**
 

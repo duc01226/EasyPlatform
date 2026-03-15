@@ -11,6 +11,7 @@ allowed-tools: Read, Edit, Glob, Grep, Task
 
 - `.claude/skills/shared/understand-code-first-protocol.md`
 - `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+- `.claude/skills/shared/design-patterns-quality-checklist.md` — Design pattern opportunities, anti-pattern detection, DRY/abstraction enforcement
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
@@ -42,6 +43,14 @@ allowed-tools: Read, Edit, Glob, Grep, Task
 - Preserve all existing functionality; no behavior changes
 - Follow platform patterns (Entity expressions, fluent helpers, project store base (search for: store base class), BEM)
 - Keep tests passing after every change
+
+### Frontend/UI Context (if applicable)
+
+When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
 
 # Code Simplifier Skill
 
@@ -134,12 +143,19 @@ function getData() {
     - Find duplicated code patterns
     - Check naming clarity
 
-3. **Apply simplifications**
+3. **Design Pattern Assessment** (per `design-patterns-quality-checklist.md`)
+    - **DRY/Abstraction:** Flag duplicate patterns extractable to base class, generic, or helper
+    - **Right Responsibility:** Verify logic is in lowest appropriate layer (Entity > Service > Component)
+    - **Pattern Opportunities:** Check for creational/structural/behavioral pattern opportunities (switch→Strategy, scattered new→Factory, etc.)
+    - **Anti-Patterns:** Flag God Objects, Copy-Paste, Circular Dependencies, Singleton overuse
+    - **Guard against over-engineering:** Only recommend patterns with evidence of 3+ occurrences of the problem
+
+4. **Apply simplifications**
     - One refactoring type at a time
     - Preserve all functionality
     - Follow platform patterns
 
-4. **Verify**
+5. **Verify**
     - Run related tests if available
     - Confirm no behavior changes
 

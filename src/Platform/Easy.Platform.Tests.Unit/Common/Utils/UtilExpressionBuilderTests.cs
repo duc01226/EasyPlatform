@@ -68,7 +68,7 @@ public sealed class UtilExpressionBuilderTests : PlatformUnitTestBase
     {
         var expr = Util.ExpressionBuilder.BuildChainExpression<TestItem>(
             "Name",
-            ("Contains", new object[] { "test" }));
+            ("Contains", ["test"]));
         var compiled = expr.Compile();
 
         var result = compiled(new TestItem { Name = "this is a test" });
@@ -83,7 +83,7 @@ public sealed class UtilExpressionBuilderTests : PlatformUnitTestBase
         var expr = Util.ExpressionBuilder.BuildChainExpression<TestItem>(
             "Name",
             ("ToLower", null!),
-            ("Contains", new object[] { "hello" }));
+            ("Contains", ["hello"]));
         var compiled = expr.Compile();
 
         var result = compiled(new TestItem { Name = "HELLO World" });
@@ -96,7 +96,7 @@ public sealed class UtilExpressionBuilderTests : PlatformUnitTestBase
     {
         var expr = Util.ExpressionBuilder.BuildChainExpression<TestItem>(
             "Name",
-            ("Contains", new object[] { "missing" }));
+            ("Contains", ["missing"]));
         var compiled = expr.Compile();
 
         var result = compiled(new TestItem { Name = "present" });

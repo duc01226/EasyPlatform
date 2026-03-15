@@ -9,6 +9,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
+- `.claude/skills/shared/design-patterns-quality-checklist.md` — Design pattern opportunities, anti-pattern detection, DRY/abstraction enforcement
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
@@ -30,6 +31,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 > - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)**
 > - `backend-patterns-reference.md` — backend CQRS, validation, entity patterns
 > - `frontend-patterns-reference.md` — component hierarchy, store, forms patterns
+> - `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
 >
 > If files not found, search for: project coding standards, architecture documentation.
 
@@ -121,6 +123,7 @@ After ALL files reviewed, **re-read accumulated report** to see big picture:
 - **Frontend**: Constants/columns in Model (not Component)?
 - **Duplication**: Any duplicated logic across changes? Similar code elsewhere? (grep to verify)
 - **Architecture**: Clean Architecture followed? Service boundaries respected?
+- **Design Patterns** (per `design-patterns-quality-checklist.md`): Pattern opportunities (switch→Strategy, scattered new→Factory)? Anti-patterns (God Object, Copy-Paste, Circular Dependency)? DRY via base classes/generics? Right responsibility layer? Tech-agnostic abstractions?
 
 **Clean Code & Over-engineering Checks:**
 

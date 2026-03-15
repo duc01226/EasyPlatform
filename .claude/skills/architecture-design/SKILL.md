@@ -165,6 +165,53 @@ WebSearch top 3 frontend architecture styles. Candidates:
 
 ---
 
+## Step 4B: UI System Architecture
+
+> **Skip if:** Backend-only project, no frontend component.
+
+Research and recommend the project's design system architecture. Use `AskUserQuestion` for each decision.
+
+### 4B-1: Styling Approach
+
+WebSearch top 3 styling approaches for the confirmed frontend framework:
+
+| Approach                         | Best For                                 | Research Focus                     |
+| -------------------------------- | ---------------------------------------- | ---------------------------------- |
+| **Utility-first (Tailwind CSS)** | Rapid prototyping, design enforcement    | JIT, custom config, design tokens  |
+| **CSS Modules / Scoped CSS**     | Component isolation, no global conflicts | Naming, composition patterns       |
+| **SCSS/SASS with BEM**           | Complex theming, token variables         | BEM methodology, mixin libraries   |
+| **CSS-in-JS**                    | Dynamic styling, theme providers         | Runtime perf, SSR support          |
+| **CSS Custom Properties**        | Native theming, framework-agnostic       | Browser support, fallback strategy |
+
+### 4B-2: Design Token Strategy
+
+| Decision         | Options                                                   | Default               |
+| ---------------- | --------------------------------------------------------- | --------------------- |
+| Token format     | CSS custom properties / JSON / SCSS variables             | CSS custom properties |
+| Token categories | Color, spacing, typography, breakpoints, shadows, z-index | All                   |
+| Token naming     | Semantic (`--color-primary`) vs Functional (`--btn-bg`)   | Semantic first        |
+| Theming          | Light/dark toggle / Multi-brand / Single theme            | Single + dark mode    |
+
+### 4B-3: Component Library Strategy
+
+| Decision        | Options                                                                     | Default                    |
+| --------------- | --------------------------------------------------------------------------- | -------------------------- |
+| Library         | Build custom / Headless (Radix, Headless UI) / Full kit (MUI, Ant, PrimeNG) | Based on team and timeline |
+| Component tiers | Common → Domain-Shared → Page (per ui-wireframe-protocol)                   | Standard 3-tier            |
+| Documentation   | Storybook / Docusaurus / In-code only                                       | Based on team size         |
+
+### 4B-4: Responsive Strategy
+
+| Decision    | Options                                 | Default            |
+| ----------- | --------------------------------------- | ------------------ |
+| Approach    | Mobile-first / Desktop-first / Adaptive | Mobile-first       |
+| Breakpoints | 320/768/1024/1280 / Custom              | Standard           |
+| Grid system | CSS Grid / Flexbox / Framework grid     | CSS Grid + Flexbox |
+
+**MANDATORY IMPORTANT MUST** validate all UI system decisions with user via `AskUserQuestion` before proceeding to Step 5.
+
+---
+
 ## Step 5: Library Ecosystem Research
 
 For EACH concern below, WebSearch top 3 library options for the confirmed tech stack. Evaluate: maturity, community, bundle size, maintenance activity, license, learning curve.

@@ -39,7 +39,7 @@ namespace PlatformExampleApp.IntegrationTests.MessageBus;
 /// </para>
 ///
 /// <para>
-/// <strong>Two message bus usage patterns in Easy.Platform:</strong>
+/// <strong>Two message bus usage patterns in BravoSUITE:</strong>
 /// 1. <strong>Direct</strong>: Service calls <c>busMessageProducer.SendAsync(message)</c> explicitly
 /// 2. <strong>Command-event</strong>: A <c>PlatformCqrsCommandEventBusMessageProducer&lt;TCommand&gt;</c>
 ///    auto-fires when its associated command executes (used for cross-service data sync)

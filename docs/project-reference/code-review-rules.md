@@ -1,4 +1,4 @@
-<!-- Last scanned: 2026-03-07 -->
+<!-- Last scanned: 2026-03-15 -->
 
 # Code Review Rules
 

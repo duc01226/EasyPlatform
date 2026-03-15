@@ -50,7 +50,7 @@ public class TextSnippetHangfireBackgroundJobModule : PlatformHangfireBackground
                     .With(conn => conn.Enlist = false)
                     .With(conn => conn.Pooling = true)
                     .With(conn => conn.MinPoolSize = PlatformPersistenceModule.RecommendedMinPoolSize) // Always available connection to serve request, reduce latency
-                    .With(conn => conn.MaxPoolSize = PlatformPersistenceModule.RecommendedMaxPoolSize) // Setup based on app resource cpu ram max concurrent
+                    .With(conn => conn.MaxPoolSize = PlatformPersistenceModule.GetRecommendedMaxPoolSize(Configuration))
                     .With(conn => conn.Timeout = 30)
                     .With(conn => conn.ConnectionIdleLifetime = PlatformPersistenceModule.RecommendedConnectionIdleLifetimeSeconds)
                     .With(conn => conn.ConnectionPruningInterval = PlatformPersistenceModule.RecommendedConnectionIdleLifetimeSeconds)
@@ -60,7 +60,7 @@ public class TextSnippetHangfireBackgroundJobModule : PlatformHangfireBackground
                 .With(conn => conn.LoadBalanceTimeout = PlatformPersistenceModule.RecommendedConnectionIdleLifetimeSeconds) // (I)
                 .With(conn => conn.Pooling = true)
                 .With(conn => conn.MinPoolSize = PlatformPersistenceModule.RecommendedMinPoolSize) // Always available connection to serve request, reduce latency
-                .With(conn => conn.MaxPoolSize = PlatformPersistenceModule.RecommendedMaxPoolSize) // Setup based on app resource cpu ram max concurrent
+                .With(conn => conn.MaxPoolSize = PlatformPersistenceModule.GetRecommendedMaxPoolSize(Configuration))
                 .With(p => p.ConnectTimeout = 30)
                 .ToString())
             .Execute();

@@ -61,7 +61,7 @@ public class AccountController : Controller
         var vm = await BuildLoginViewModelAsync(returnUrl);
 
         if (vm.IsExternalLoginOnly)
-            // we only have one option for logging in and it's an external provider
+        // we only have one option for logging in and it's an external provider
         {
             return RedirectToAction(
                 "Challenge",

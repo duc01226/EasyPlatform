@@ -9,6 +9,7 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 - `.claude/skills/shared/understand-code-first-protocol.md`
 - `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+- `.claude/skills/shared/design-patterns-quality-checklist.md` — Design pattern opportunities, anti-pattern detection, DRY/abstraction enforcement
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
@@ -27,6 +28,8 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 >
 > - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)**
 > - `project-structure-reference.md` — service list, directory tree, conventions
+> - `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins
+> - `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
 >
 > If files not found, search for: project documentation, coding standards, architecture docs.
 

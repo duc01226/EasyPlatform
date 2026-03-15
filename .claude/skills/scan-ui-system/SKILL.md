@@ -1,0 +1,72 @@
+---
+name: scan-ui-system
+version: 1.0.0
+description: '[Documentation] Orchestrate all UI system scans in parallel: design system + SCSS styling + frontend patterns. Single command to populate all UI-related project reference docs. Use for project onboarding, post-scaffold setup, or periodic refresh.'
+allowed-tools: Read, Write, Grep, Glob
+---
+
+> **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
+
+## Quick Summary
+
+**Goal:** Run all 3 UI scan skills in parallel and produce a summary.
+
+**Workflow:**
+
+1. **Check Prerequisites** — Verify project has frontend code (not backend-only)
+2. **Launch Parallel Scans** — 3 skills simultaneously
+3. **Collect Results** — Read scan output from reference docs
+4. **Summarize** — Report what was found
+
+**Key Rules:**
+
+- Skip entirely if project has no frontend code
+- All 3 scans run in PARALLEL for speed
+- Does NOT modify code — only populates docs/project-reference/
+
+## When to Use
+
+- After `/scaffold` in greenfield-init workflow (design system just created)
+- First time using easy-claude on an existing project (project onboarding)
+- Periodic refresh when design system has changed significantly
+- User runs `/scan-ui-system` manually
+- Auto-triggered by `project-config` skill Phase 5 (scan task creation)
+
+## When to Skip
+
+- Backend-only project (no frontend code directories)
+- All 3 reference docs are already populated and recent
+
+## Auto-Trigger Integration
+
+Follow existing pattern from `project-config/SKILL.md` Phase 5 scan table. The `project-config` skill creates TaskCreate items for all `/scan-*` skills. This skill replaces 3 separate scan entries with 1 orchestrator:
+
+| Reference Docs                                                                         | Scan Skill        |
+| -------------------------------------------------------------------------------------- | ----------------- |
+| `design-system/README.md` + `scss-styling-guide.md` + `frontend-patterns-reference.md` | `/scan-ui-system` |
+
+## Execution
+
+Launch 3 skills in parallel:
+
+### Scan 1: Design System
+
+Activate `/scan-design-system` → populates `docs/project-reference/design-system/README.md`
+
+### Scan 2: SCSS/Styling
+
+Activate `/scan-scss-styling` → populates `docs/project-reference/scss-styling-guide.md`
+
+### Scan 3: Frontend Patterns
+
+Activate `/scan-frontend-patterns` → populates `docs/project-reference/frontend-patterns-reference.md`
+
+## Summary Output
+
+After all 3 scans complete, report:
+
+"UI System Scan Complete:
+
+- Design System: {X} tokens, {Y} components found → docs/project-reference/design-system/README.md
+- Styling: {approach} detected, {Z} variables/mixins → docs/project-reference/scss-styling-guide.md
+- Frontend Patterns: {framework} detected, {N} base classes → docs/project-reference/frontend-patterns-reference.md"

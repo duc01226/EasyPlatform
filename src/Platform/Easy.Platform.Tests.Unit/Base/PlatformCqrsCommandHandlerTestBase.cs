@@ -25,7 +25,7 @@ public abstract class PlatformCqrsCommandHandlerTestBase<THandler, TCommand, TRe
     protected Mock<IPlatformCqrs> CqrsMock { get; private set; } = null!;
     protected Mock<IPlatformRootServiceProvider> RootServiceProviderMock { get; private set; } = null!;
 
-    protected override void ConfigureFixture(AutoFixture.IFixture fixture)
+    protected override void ConfigureFixture(IFixture fixture)
     {
         base.ConfigureFixture(fixture);
 

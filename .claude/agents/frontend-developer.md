@@ -24,7 +24,8 @@ Angular frontend specialist. Implement components, stores, forms, services, and 
 >
 > - `docs/project-reference/frontend-patterns-reference.md` — component hierarchy, stores, forms, services
 > - `docs/project-reference/project-structure-reference.md` — service list, directory tree, ports
-> - Design system docs in `docs/project-reference/design-system/` — design tokens, BEM conventions
+> - `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins
+> - `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
 >
 > If files not found, search for: `AppBaseComponent`, store base classes, API service base classes
 

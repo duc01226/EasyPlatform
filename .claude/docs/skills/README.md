@@ -1,6 +1,6 @@
 # Skills Reference
 
-> 202 skills across 15+ domains + 3 shared modules for context-aware AI assistance
+> 231 skills across 15+ domains + 3 shared modules for context-aware AI assistance
 
 ## Overview
 
@@ -222,6 +222,8 @@ Reusable content blocks in `.claude/skills/shared/` extracted from multiple skil
 | `design-system-check.md`                    | Mandatory design system doc locations for frontend work                                             | frontend-design, web-design-guidelines                                 |
 | `module-detection-keywords.md`              | YourProject module keyword lists for context loading                                                | 4 skills (idea, product-owner, refine, story)                          |
 | `scaffold-production-readiness-protocol.md` | Production readiness requirements: code quality, error handling, loading state, Docker              | 5 skills (scaffold, refine, refine-review, story, architecture-design) |
+| `ba-team-decision-model-protocol.md`        | BA team 2/3 vote model, technical veto, disagree-and-commit, role scope boundaries                  | 3 skills (pbi-challenge, dor-gate) + business-analyst agent            |
+| `refinement-dor-checklist-protocol.md`      | Definition of Ready checklist (7 items), validation rules, failure modes, gate output template      | 3 skills (pbi-challenge, dor-gate, refine-review) + ba-refinement hook |
 
 See [shared/README.md](../../skills/shared/README.md) for full consumer lists and contribution guidelines.
 
@@ -244,7 +246,9 @@ Each skill is located at `.claude/skills/{skill-name}/`:
 |-- understand-code-first-protocol.md
 |-- design-system-check.md
 |-- module-detection-keywords.md
-+-- scaffold-production-readiness-protocol.md
+|-- scaffold-production-readiness-protocol.md
+|-- ba-team-decision-model-protocol.md
++-- refinement-dor-checklist-protocol.md
 ```
 
 ### SKILL.md Structure
@@ -320,4 +324,4 @@ Use `/skill/create` to create a new skill:
 
 ---
 
-_Source: `.claude/skills/` | 202 skills across 15+ domains + 3 shared modules_
+_Source: `.claude/skills/` | 231 skills across 15+ domains + 3 shared modules_

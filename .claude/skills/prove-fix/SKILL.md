@@ -35,6 +35,14 @@ description: '[Code Quality] Prove fix correctness with code proof traces, confi
 - If ANY change scores below 80%, flag it and recommend additional investigation
 - This step is **non-negotiable** after `/fix` — never skip it
 
+### Frontend/UI Context (if applicable)
+
+When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
 # Prove Fix

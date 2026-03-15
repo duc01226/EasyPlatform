@@ -13,13 +13,12 @@ Read `docs/project-config.json` → `designSystem` section for project-specific 
 
 ## Key Docs to Read
 
-| Doc File                  | Content                                           |
-| ------------------------- | ------------------------------------------------- |
-| `README.md`               | Component overview, base classes, library summary |
-| `01-design-tokens.md`     | Colors, typography, spacing tokens                |
-| `02-component-catalog.md` | Available components and usage examples           |
-| `03-form-patterns.md`     | Form validation, modes, error handling patterns   |
-| `06-state-management.md`  | State management and API integration patterns     |
-| `07-technical-guide.md`   | Implementation checklist, best practices          |
+| Doc                                                     | Content                                                                  | When to Read                                    |
+| ------------------------------------------------------- | ------------------------------------------------------------------------ | ----------------------------------------------- |
+| `docs/project-reference/design-system/README.md`        | Design tokens, component inventory, icon library, theme variants         | New UI components, design decisions, wireframes |
+| `docs/project-reference/frontend-patterns-reference.md` | Component base classes, stores, forms, API services, directives, routing | Any frontend code change                        |
+| `docs/project-reference/scss-styling-guide.md`          | BEM methodology, SCSS variables, mixins, responsive patterns, theming    | Any styling/CSS/SCSS change, new components     |
+
+**Note:** Doc paths are configured per-project. Check `docs/project-config.json` → `contextGroups[].patternsDoc`, `contextGroups[].stylingDoc`, `contextGroups[].designSystemDoc` for project-specific paths.
 
 **⚠️ MUST READ** the docs most relevant to your task type (component, form, store, or API service).

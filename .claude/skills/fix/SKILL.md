@@ -32,6 +32,14 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 - Never assume first hypothesis is correct — verify with actual code traces
 - Parent skill for all fix-\* variants; routes based on issue keywords
 
+### Frontend/UI Context (if applicable)
+
+When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
 ## Variant Decision Guide
 
 | If the issue is...        | Use                 | Why                                         |
@@ -66,13 +74,30 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 **Analyze issues and route to specialized fix command:**
 <issues>$ARGUMENTS</issues>
 
+## ⚠️ MANDATORY: Plan Before Fix (NON-NEGOTIABLE)
+
+**MANDATORY IMPORTANT MUST** — Before routing to ANY fix variant, you MUST have a validated plan. This applies whether running standalone or within a workflow.
+
+**If no plan exists**, you MUST create todo tasks for and execute these steps IN ORDER before proceeding to fix:
+
+1. **`/plan`** — Create an implementation plan for the fix (root cause analysis + fix approach + affected files)
+2. **`/plan-review`** — Auto-review the plan for validity, correctness, and best practices
+3. **`/plan-validate`** — Validate plan with critical questions interview (get user confirmation)
+
+**Only after plan is validated** → proceed to fix routing below.
+
+**If a plan already exists** (markdown plan file in `plans/`) → skip to fix routing.
+
+> **Why:** Fixes without plans lead to incomplete root cause analysis, missed side effects, and regressions. Planning forces the AI to think before acting.
+
 ## Decision Tree
 
 **1. Check for existing plan:**
 
 - If markdown plan exists → `/code <path-to-plan>`
+- If NO plan exists → **STOP. Run `/plan → /plan-review → /plan-validate` first** (see section above)
 
-**2. Route by issue type:**
+**2. Route by issue type (only after plan exists):**
 
 **A) Type Errors** (keywords: type, typescript, tsc, type error)
 → `/fix-types`
@@ -123,8 +148,8 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 
 > **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
 >
-> 1. **Activate `bugfix` workflow** (Recommended) — scout → investigate → debug → plan → fix → prove-fix → review → test
-> 2. **Execute `/fix` directly** — run this skill standalone
+> 1. **Activate `bugfix` workflow** (Recommended) — scout → investigate → debug → plan → plan-review → plan-validate → fix → prove-fix → review → test
+> 2. **Execute `/fix` directly** — still requires `/plan → /plan-review → /plan-validate` before fixing (enforced by Plan Before Fix gate above)
 
 ---
 

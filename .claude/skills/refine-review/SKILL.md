@@ -20,6 +20,14 @@ description: '[Code Quality] Review PBI artifact for completeness, missing conce
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
+### Frontend/UI Context (if applicable)
+
+When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
 ## Workflow
 
 1. **Locate PBI** — Find latest PBI artifact in `team-artifacts/pbis/` or active plan context
@@ -39,6 +47,7 @@ description: '[Code Quality] Review PBI artifact for completeness, missing conce
 - [ ] **No vague language** — No "should work", "might need", "TBD" in acceptance criteria
 - [ ] **Scope boundary** — Clear "out of scope" or "not included" section
 - [ ] **Authorization defined** — PBI has "Authorization & Access Control" section with roles × CRUD table (ref: `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` §1)
+- [ ] **UI Layout section** — If PBI involves UI changes: has `## UI Layout` section per `ui-wireframe-protocol.md` (wireframe + components with tiers + states + design tokens). If backend-only: explicit "N/A"
 
 ### Recommended (>=50% should pass)
 

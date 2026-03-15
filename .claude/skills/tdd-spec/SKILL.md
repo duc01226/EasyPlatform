@@ -79,6 +79,14 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 > PER PHASE — not just per feature. Each phase's success criteria MUST have ≥1 test case.
 > See `.claude/skills/shared/iterative-phase-quality-protocol.md`.
 
+### Frontend/UI Context (if applicable)
+
+When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
+- Design system tokens: `docs/project-reference/design-system/README.md`
+
 ---
 
 ## Detailed Workflow

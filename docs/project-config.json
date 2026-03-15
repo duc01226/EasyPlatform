@@ -299,6 +299,14 @@
             "description": "Custom Roslyn analyzers for Easy.Platform code quality",
             "tags": ["framework", "analyzers", "roslyn"],
             "meta": {}
+        },
+        {
+            "name": "Easy.Platform.Tests.Unit",
+            "kind": "library",
+            "pathRegex": "src[\\\\/]Platform[\\\\/]Easy\\.Platform\\.Tests\\.Unit[\\\\/]",
+            "description": "Unit tests for Easy.Platform framework core",
+            "tags": ["framework", "testing", "unit"],
+            "meta": {}
         }
     ],
     "contextGroups": [
@@ -448,11 +456,7 @@
     },
     "infrastructure": {
         "containerization": "Docker",
-        "orchestration": "docker-compose",
-        "cicd": {
-            "tool": "GitHub Actions",
-            "configPath": ".github/workflows/"
-        }
+        "orchestration": "docker-compose"
     },
     "referenceDocs": [
         { "filename": "docs/project-reference/project-structure-reference.md", "purpose": "Project directory structure and module layout" },

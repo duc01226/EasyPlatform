@@ -23,11 +23,19 @@ Translate business needs into actionable requirements. Write user stories, accep
 >
 > If files not found, search for: service directories, configuration files, project patterns.
 
+> **BA Team Process:** MUST READ `ba-team-decision-model-protocol.md` for:
+>
+> - 2/3 majority vote model (UX BA + Designer BA + Dev BA PIC)
+> - Technical veto scope (Dev BA PIC only)
+> - Role scope boundaries (what each person owns vs. does NOT own)
+> - Disagree-and-commit rule
+
 ## Workflow
 
 1. **Understand source** — read idea/PBI, identify stakeholders, note constraints
 2. **Analyze requirements** — break into vertical slices, identify acceptance criteria, document business rules
 3. **Write stories** — "As a... I want... So that..." with INVEST criteria and 3+ scenarios each
+   3b. **Collaborative Review** — If PBI was drafted by BA Drafters (UX BA + Designer BA), use `/pbi-challenge` for Dev BA PIC review. If drafted by Dev BA PIC, use `/refine-review` for AI self-review.
 4. **Validate** — check completeness, hand off to `test-spec` for test generation
 
 ## Key Rules
@@ -40,6 +48,9 @@ Translate business needs into actionable requirements. Write user stories, accep
 - **Business rules** documented as IF/THEN/ELSE with IDs: `BR-{MOD}-{NNN}`
 - **No solution-speak** — describe outcomes, not implementations
 - **5 Whys** for root cause analysis on vague requests
+- **Team decision model** — BA refinement uses 2/3 majority vote. Dev BA PIC has technical veto. Disagree-and-commit after decision. See `ba-team-decision-model-protocol.md`.
+- **DoR gate** — Every PBI must pass DoR gate before grooming. Use `/dor-gate` skill.
+- **Role scopes** — UX BA owns UX/UI flows. Designer BA owns design feasibility. Dev BA PIC owns technical review + AI pre-review. See protocol for full scope.
 
 ### Requirement IDs
 
@@ -82,3 +93,5 @@ Report path: `plans/reports/` with naming from `## Naming` hook injection. Conci
 - **NEVER** write requirements without understanding the existing system.
 - **NEVER** skip acceptance criteria.
 - **ALWAYS** validate assumptions with stakeholders.
+- **ALWAYS** run `/dor-gate` before considering a PBI grooming-ready.
+- **ALWAYS** use `/pbi-challenge` for collaborative review (not just `/refine-review`).

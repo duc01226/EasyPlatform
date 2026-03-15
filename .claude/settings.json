@@ -107,6 +107,10 @@
                     {
                         "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/windows-command-detector.cjs",
                         "type": "command"
+                    },
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/git-commit-block.cjs",
+                        "type": "command"
                     }
                 ],
                 "matcher": "Bash"
@@ -218,6 +222,15 @@
                     }
                 ],
                 "matcher": "Write"
+            },
+            {
+                "hooks": [
+                    {
+                        "command": "node \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/ba-refinement-context.cjs",
+                        "type": "command"
+                    }
+                ],
+                "matcher": "Write|Edit|MultiEdit"
             },
             {
                 "hooks": [

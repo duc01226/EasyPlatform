@@ -23,6 +23,10 @@ Execute plan phases for the project with strict file ownership boundaries. Recei
 
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs: `project-structure-reference.md`
 >
+> - `docs/project-reference/frontend-patterns-reference.md` — component hierarchy, stores, forms, services
+> - `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins
+> - `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
+>
 > If files not found, search for: service directories, configuration files, project patterns.
 
 ## Workflow

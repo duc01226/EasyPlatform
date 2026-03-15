@@ -24,6 +24,8 @@ Create and review UI/UX designs with focus on accessibility, responsive layouts,
 >
 > - `frontend-patterns-reference.md` -- primary patterns for this role
 > - `project-structure-reference.md` -- service list, directory tree, ports
+> - `docs/project-reference/scss-styling-guide.md` — BEM methodology, SCSS variables, mixins
+> - `docs/project-reference/design-system/README.md` — design tokens, component inventory, icons
 >
 > If files not found, search for: service directories, configuration files, project patterns.
 

@@ -20,12 +20,14 @@ public class TypeExtensionTests : PlatformUnitTestBase
         public string? Name { get; set; }
     }
 
+#pragma warning disable IDE0051
     private static class ConstHolder
     {
         public const string First = "A";
         public const string Second = "B";
         public const int Number = 42;
     }
+#pragma warning restore IDE0051
 
     [Fact]
     public void IsAssignableToGenericType_MatchingInterface_ReturnsTrue()

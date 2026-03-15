@@ -34,6 +34,18 @@ public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContex
     where TClientContext : class, IPlatformMongoClient<TDbContext>
     where TMongoOptions : PlatformMongoOptions<TDbContext>
 {
+    /// <summary>
+    /// Recommended maximum connection pool size for MongoDB drivers.
+    /// Shadows <see cref="PlatformPersistenceModule.RecommendedMaxPoolSize"/> with a higher value
+    /// because MongoDB connections are lighter than PostgreSQL (no server-side process per connection).
+    /// </summary>
+    /// <remarks>
+    /// MongoDB driver default is 100. <c>Max(ProcessorCount * 4, 50)</c> scales with machine
+    /// while providing adequate headroom for burst traffic and concurrent document operations.
+    /// Override per-environment via MongoDB connection string <c>maxPoolSize=N</c>.
+    /// </remarks>
+    public static new readonly int RecommendedMaxPoolSize = Math.Max(Environment.ProcessorCount * 4, 50);
+
     public PlatformMongoDbPersistenceModule(
         IServiceProvider serviceProvider,
         IConfiguration configuration) : base(serviceProvider, configuration)

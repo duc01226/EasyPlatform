@@ -144,6 +144,8 @@ const SCHEMA = {
             fileExtensions: { type: 'array', required: false },
             guideDoc: { type: 'string', required: false },
             patternsDoc: { type: 'string', required: false },
+            stylingDoc: { type: 'string', required: false },
+            designSystemDoc: { type: 'string', required: false },
             rules: { type: 'array', required: false }
         }
     },

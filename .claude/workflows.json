@@ -157,6 +157,14 @@
             "claude": "/review-artifact",
             "copilot": "/review-artifact"
         },
+        "pbi-challenge": {
+            "claude": "/pbi-challenge",
+            "copilot": "/pbi-challenge"
+        },
+        "dor-gate": {
+            "claude": "/dor-gate",
+            "copilot": "/dor-gate"
+        },
         "workflow-end": {
             "claude": "/workflow-end",
             "copilot": "/workflow-end"
@@ -224,6 +232,22 @@
         "tech-stack-research": {
             "claude": "/tech-stack-research",
             "copilot": "/tech-stack-research"
+        },
+        "architecture-design": {
+            "claude": "/architecture-design",
+            "copilot": "/architecture-design"
+        },
+        "performance": {
+            "claude": "/performance",
+            "copilot": "/performance"
+        },
+        "security": {
+            "claude": "/security",
+            "copilot": "/security"
+        },
+        "test-specs-docs": {
+            "claude": "/test-specs-docs",
+            "copilot": "/test-specs-docs"
         }
     },
     "description": "Workflow automation configuration for Claude Code and GitHub Copilot (multilingual)",
@@ -584,9 +608,9 @@
             "description": "PO/BA workflow: capture idea, refine to PBI, create stories, prioritize",
             "name": "Idea to PBI",
             "preActions": {
-                "injectContext": "Role: Product Owner\nIDEA-TO-PBI WORKFLOW:\n1. Capture idea with problem statement\n2. Refine into PBI with acceptance criteria\n3. Break into user stories (GIVEN/WHEN/THEN)\n4. Prioritize using RICE or MoSCoW"
+                "injectContext": "Role: Product Owner\nIDEA-TO-PBI WORKFLOW:\n1. Capture idea with problem statement\n2. Refine into PBI with acceptance criteria\n3. Break into user stories (GIVEN/WHEN/THEN)\n4. Dev BA PIC collaborative review via /pbi-challenge\n5. DoR gate validation via /dor-gate\n6. Prioritize using RICE or MoSCoW"
             },
-            "sequence": ["idea", "refine", "refine-review", "story", "story-review", "prioritize", "workflow-end"],
+            "sequence": ["idea", "refine", "refine-review", "story", "story-review", "pbi-challenge", "dor-gate", "prioritize", "workflow-end"],
             "whenNotToUse": "Bug fixes, direct implementation (use feature workflow)",
             "whenToUse": "User has a new idea, feature request, or wants to add to backlog; wants to refine idea into PBI with stories"
         },
@@ -799,9 +823,9 @@
             "description": "PO hands off idea/PBI to BA for refinement and story creation",
             "name": "PO to BA Handoff",
             "preActions": {
-                "injectContext": "Role: Product Owner\nPO-BA HANDOFF:\n1. Capture idea with /idea\n2. Review artifact quality with /review-artifact\n3. Create handoff record with /handoff\n4. BA refines into PBI with /refine\n5. BA creates user stories with /story"
+                "injectContext": "Role: Product Owner\nPO-BA HANDOFF:\n1. Capture idea with /idea\n2. Review artifact quality with /review-artifact\n3. Create handoff record with /handoff\n4. BA refines into PBI with /refine\n5. BA creates user stories with /story\n6. Dev BA PIC collaborative review via /pbi-challenge\n7. DoR gate validation via /dor-gate"
             },
-            "sequence": ["idea", "review-artifact", "handoff", "refine", "refine-review", "story", "story-review", "workflow-end"],
+            "sequence": ["idea", "review-artifact", "handoff", "refine", "refine-review", "story", "story-review", "pbi-challenge", "dor-gate", "workflow-end"],
             "whenNotToUse": "Direct development, design-first workflows, already refined requirements",
             "whenToUse": "PO hands off idea/PBI to BA for refinement and story creation"
         },
@@ -890,7 +914,7 @@
             "description": "Complete feature from idea to release with all role handoffs",
             "name": "Full Feature Lifecycle",
             "preActions": {
-                "injectContext": "FULL FEATURE LIFECYCLE:\n1. PO captures idea\n2. BA refines and creates stories\n3. Designer creates design spec\n4. Dev plans and implements with plan validation\n5. Code simplification, review changes, code review, SRE review\n6. QA generates test spec\n7. QC runs quality gate\n8. PO signs off acceptance\n\nThis is an end-to-end workflow crossing all roles."
+                "injectContext": "FULL FEATURE LIFECYCLE:\n1. PO captures idea\n2. BA refines and creates stories\n3. Dev BA PIC collaborative review via /pbi-challenge\n4. DoR gate validation via /dor-gate\n5. Designer creates design spec\n6. Dev plans and implements with plan validation\n7. Code simplification, review changes, code review, SRE review\n8. QA generates test spec\n9. QC runs quality gate\n10. PO signs off acceptance\n\nThis is an end-to-end workflow crossing all roles."
             },
             "sequence": [
                 "idea",
@@ -898,6 +922,8 @@
                 "refine-review",
                 "story",
                 "story-review",
+                "pbi-challenge",
+                "dor-gate",
                 "design-spec",
                 "interface-design",
                 "plan",
