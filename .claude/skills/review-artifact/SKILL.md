@@ -6,7 +6,10 @@ description: '[Code Quality] Review artifact quality before handoff. Use to veri
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+**Prerequisites:** **MUST READ** before executing:
+
+- `.claude/skills/shared/understand-code-first-protocol.md`
+- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
@@ -90,6 +93,23 @@ Before approving, verify the code is **easy to read, easy to maintain, easy to u
 ### Action Items (if NEEDS WORK)
 1. [Specific actionable item]
 ```
+
+## Round 2: Focused Re-Review (MANDATORY)
+
+> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+
+After completing Round 1 evaluation, execute a **second full review round**:
+
+1. **Re-read** the Round 1 verdict and findings
+2. **Re-evaluate** ALL quality checklist items — do NOT rely on Round 1 memory
+3. **Challenge** Round 1 READY items: "Is this truly ready? Did I verify with evidence?"
+4. **Focus on** what Round 1 typically misses:
+    - Implicit assumptions in the artifact
+    - Missing coverage of edge cases or error scenarios
+    - Cross-references that weren't verified
+    - Completeness gaps only visible on second reading
+5. **Update verdict** if Round 2 found new issues
+6. **Final verdict** must incorporate findings from BOTH rounds
 
 ## IMPORTANT Task Planning Notes (MUST FOLLOW)
 

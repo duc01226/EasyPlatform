@@ -649,15 +649,15 @@
         },
         "design-workflow": {
             "confirmFirst": false,
-            "description": "Designer workflow: create design specification from requirements, hand off for review",
+            "description": "Designer workflow: create design specification and implement UI (product, marketing, creative) from requirements or screenshots",
             "name": "Design Workflow",
             "preActions": {
                 "readFiles": ["docs/project-reference/design-system/README.md"],
-                "injectContext": "Role: UX Designer\nDESIGN WORKFLOW:\n1. Read requirements/PBI\n2. Create design spec with component inventory, states, tokens, accessibility\n3. Build product UI with craft-driven interface design (dashboards, admin panels, SaaS apps)\n4. Review with code-review agent"
+                "injectContext": "Role: UX Designer\nDESIGN WORKFLOW:\n1. Read requirements/PBI\n2. Create design spec with component inventory, states, tokens, accessibility\n3. DESIGN IMPLEMENTATION GATE (pick ONE, skip the other):\n   - Product UIs (dashboards, admin panels, SaaS apps, data interfaces) → /interface-design (skip frontend-design)\n   - Marketing pages, landing pages, creative UIs, screenshot replication → /frontend-design (skip interface-design)\n   Mark the skipped step as completed immediately.\n4. Review with code-review agent"
             },
-            "sequence": ["design-spec", "interface-design", "code-review", "workflow-end"],
+            "sequence": ["design-spec", "interface-design", "frontend-design", "code-review", "workflow-end"],
             "whenNotToUse": "Implementing an existing design in code",
-            "whenToUse": "User wants to create a UI/UX design spec, mockup, wireframe, or component specification, or design a product interface (dashboard, admin panel, SaaS app)"
+            "whenToUse": "User wants to create a UI/UX design spec, mockup, wireframe, or component specification, design a product interface (dashboard, admin panel, SaaS app), build a landing page, create a marketing page, replicate a screenshot/design, or build a creative/distinctive frontend interface"
         },
         "pm-reporting": {
             "confirmFirst": false,
@@ -914,7 +914,7 @@
             "description": "Complete feature from idea to release with all role handoffs",
             "name": "Full Feature Lifecycle",
             "preActions": {
-                "injectContext": "FULL FEATURE LIFECYCLE:\n1. PO captures idea\n2. BA refines and creates stories\n3. Dev BA PIC collaborative review via /pbi-challenge\n4. DoR gate validation via /dor-gate\n5. Designer creates design spec\n6. Dev plans and implements with plan validation\n7. Code simplification, review changes, code review, SRE review\n8. QA generates test spec\n9. QC runs quality gate\n10. PO signs off acceptance\n\nThis is an end-to-end workflow crossing all roles."
+                "injectContext": "FULL FEATURE LIFECYCLE:\n1. PO captures idea\n2. BA refines and creates stories\n3. Dev BA PIC collaborative review via /pbi-challenge\n4. DoR gate validation via /dor-gate\n5. Designer creates design spec\n5a. DESIGN IMPLEMENTATION GATE (pick ONE, skip the other):\n    - Product UIs (dashboards, admin panels, SaaS apps) → /interface-design (skip frontend-design)\n    - Marketing pages, landing pages, creative UIs, screenshot replication → /frontend-design (skip interface-design)\n    Mark the skipped step as completed immediately.\n6. Dev plans and implements with plan validation\n7. Code simplification, review changes, code review, SRE review\n8. QA generates test spec\n9. QC runs quality gate\n10. PO signs off acceptance\n\nThis is an end-to-end workflow crossing all roles."
             },
             "sequence": [
                 "idea",
@@ -926,6 +926,7 @@
                 "dor-gate",
                 "design-spec",
                 "interface-design",
+                "frontend-design",
                 "plan",
                 "plan-review",
                 "plan-validate",

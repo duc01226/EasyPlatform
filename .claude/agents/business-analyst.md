@@ -5,7 +5,7 @@ description: >-
     creating acceptance criteria, analyzing business processes, or
     bridging technical and non-technical stakeholders.
 tools: Read, Write, Edit, Grep, Glob, TaskCreate
-model: inherit
+model: opus
 memory: project
 maxTurns: 22
 ---

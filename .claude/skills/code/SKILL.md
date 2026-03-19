@@ -184,6 +184,12 @@ Do not skip steps. Do not proceed if validation fails. Do not assume approval wi
 - **"/review-changes"** — Review changes before commit
 - **"Skip, continue manually"** — user decides
 
+## Standalone Review Gate (Non-Workflow Only)
+
+> **MANDATORY IMPORTANT MUST:** If this skill is called **outside a workflow** (standalone `/code`), you MUST create a `TaskCreate` todo task for `/review-changes` as the **last task** in your task list. This ensures all changes are reviewed before commit even without a workflow enforcing it.
+>
+> If already running inside a workflow (e.g., `feature`, `refactor`), skip this — the workflow sequence handles `/review-changes` at the appropriate step.
+
 ## Closing Reminders
 
 **MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.

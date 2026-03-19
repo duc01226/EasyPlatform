@@ -5,7 +5,7 @@ description: >-
     examine logs and CI/CD pipelines, debug test failures, or identify performance
     bottlenecks. Produces diagnostic reports with root cause analysis.
 tools: Read, Grep, Glob, Bash, Write, TaskCreate
-model: inherit
+model: opus
 memory: project
 maxTurns: 30
 ---

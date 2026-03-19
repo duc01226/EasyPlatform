@@ -313,12 +313,16 @@ QC:                              /quality-gate ──→ [PASS/FAIL report]
 
 ### Workflow 3: Design Workflow (`design-workflow`)
 
-**Trigger:** "ui spec", "component spec", "design the"
+**Trigger:** "ui spec", "component spec", "design the", "landing page", "screenshot"
 **Roles:** UX Designer, Developer
-**Steps:** `/design-spec` → `/code-review`
+**Steps:** `/design-spec` → `/interface-design` | `/frontend-design` → `/code-review`
 
 ```
 UX:   [PBI] ──→ /design-spec ──→ [component spec + states + tokens]
+                                        │
+                              DESIGN IMPLEMENTATION GATE:
+                              Product UIs → /interface-design
+                              Marketing/Creative → /frontend-design
                                         │
 Dev:                             /code-review ──→ Implementation
 ```

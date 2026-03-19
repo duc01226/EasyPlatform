@@ -758,7 +758,7 @@ WORKFLOW CATALOG
 │   ├── greenfield-init ─── idea→research→domain→techstack→plan→scaffold→cook→integration-test→review (40 steps)
 │   ├── pre-development ─── quality-gate→plan→plan-review→plan-validate
 │   ├── investigation ───── scout→investigate (read-only)
-│   ├── design-workflow ─── design-spec→interface-design→code-review
+│   ├── design-workflow ─── design-spec→interface-design|frontend-design→code-review
 │   └── release-prep ────── sre-review→quality-gate→status
 │
 ├── RESEARCH & CONTENT (4)

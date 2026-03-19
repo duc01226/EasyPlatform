@@ -12,6 +12,8 @@ description: '[Code Quality] Review user stories for completeness, coverage, dep
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
+- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
+
 ## Quick Summary
 
 **Goal:** Auto-review user stories for completeness, acceptance criteria coverage, dependency ordering, and quality before implementation proceeds.
@@ -93,6 +95,23 @@ When this task involves frontend or UI changes, **MUST READ** `.claude/skills/sh
 
 {PROCEED | REVISE_FIRST}
 ```
+
+## Round 2: Focused Re-Review (MANDATORY)
+
+> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+
+After completing Round 1 checklist evaluation, execute a **second full review round**:
+
+1. **Re-read** the Round 1 verdict and checklist results
+2. **Re-evaluate** ALL checklist items — do NOT rely on Round 1 memory
+3. **Challenge** Round 1 PASS items: "Is this really PASS? Did I verify with evidence?"
+4. **Focus on** what Round 1 typically misses:
+    - Implicit assumptions that weren't validated
+    - Missing acceptance criteria coverage
+    - Edge cases not addressed in the artifact
+    - Cross-references that weren't verified
+5. **Update verdict** if Round 2 found new issues
+6. **Final verdict** must incorporate findings from BOTH rounds
 
 ## Key Rules
 

@@ -255,36 +255,43 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     /// Recommended maximum delay between connection retry attempts.
     /// </summary>
     /// <remarks>
-    /// Set to 5 seconds as the upper bound for exponential backoff with jitter.
+    /// Set to 3 seconds as the upper bound for exponential backoff with jitter.
     /// NpgsqlRetryingExecutionStrategy randomizes actual delays between 0 and this value,
     /// reducing thundering herd probability when multiple services retry concurrently
     /// after a pool exhaustion event (FATAL 53300).
+    /// Reduced from 5s: with 10 retries, the 5s cap produced a 40-50s worst-case wait budget
+    /// that consumed most of a typical HTTP request timeout. 3s keeps total retry budget under ~20s.
     /// </remarks>
-    public static readonly TimeSpan RecommendedConnectionRetryDelay = 5.Seconds();
+    public static readonly TimeSpan RecommendedConnectionRetryDelay = 3.Seconds();
 
     /// <summary>
     /// Default maximum size for database connection pools when no configuration is provided.
     /// </summary>
     /// <remarks>
-    /// Formula: <c>Max(ProcessorCount * 2, 10)</c> — based on HikariCP best practice (core_count × 2 + spindle_count).
-    /// Floor of 10 ensures adequate burst capacity even on low-core dev machines.
-    /// Connections are reused via async/await — a pool of 10 can serve 50+ concurrent requests because each
-    /// query holds a connection for ~1-10ms, not the full request duration.
-    /// Override per-environment via appsettings "PostgreSql:MaxPoolSize" or "Sql:MaxPoolSize".
+    /// Formula: <c>Max(ProcessorCount * 4, 20)</c>.
+    /// The HikariCP formula (core_count × 2) does not apply 1:1 to async .NET (Npgsql) — HikariCP assumes
+    /// blocking Java threads that hold connections for the full query duration, while Npgsql releases
+    /// connections at each async yield. The *4 multiplier provides adequate burst capacity for async workloads.
+    /// Floor of 20 (up from 10) prevents starvation on containerized pods with 1-2 visible CPUs.
+    /// Override via <see cref="GetRecommendedMaxPoolSize()"/> virtual method in derived classes,
+    /// or via appsettings "Persistence:MaxPoolSize".
     /// </remarks>
-    public static readonly int RecommendedMaxPoolSize = Math.Max(Environment.ProcessorCount * 2, 10);
+    public static readonly int DefaultRecommendedMaxPoolSize = Math.Max(Environment.ProcessorCount * 4, 20);
 
     /// <summary>
-    /// Reads the recommended max pool size from configuration, falling back to <see cref="RecommendedMaxPoolSize"/>.
+    /// Gets the recommended maximum connection pool size for this persistence module.
     /// </summary>
-    /// <param name="configuration">The application configuration.</param>
-    /// <returns>The configured max pool size, or <c>Max(ProcessorCount * 2, 10)</c> if not configured.</returns>
-    public static int GetRecommendedMaxPoolSize(IConfiguration configuration)
+    /// <remarks>
+    /// Base implementation: reads "Persistence:MaxPoolSize" from configuration,
+    /// falling back to <see cref="DefaultRecommendedMaxPoolSize"/> (Max(ProcessorCount * 4, 20)).
+    /// Override in derived classes to provide database-specific pool sizing.
+    /// </remarks>
+    protected virtual int GetRecommendedMaxPoolSize()
     {
-        return configuration.GetValue<int?>("PostgreSql:MaxPoolSize")
-            ?? configuration.GetValue<int?>("Sql:MaxPoolSize")
-            ?? RecommendedMaxPoolSize;
+        return Configuration.GetValue<int?>("Persistence:MaxPoolSize")
+            ?? DefaultRecommendedMaxPoolSize;
     }
+
 
     /// <summary>
     /// Recommended minimum size for database connection pools.

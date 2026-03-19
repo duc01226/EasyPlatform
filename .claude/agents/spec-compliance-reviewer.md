@@ -5,7 +5,7 @@ description: >-
     more, nothing less. Dispatched BEFORE code-reviewer. Catches spec drift,
     missing requirements, extra features, and misunderstandings.
 tools: Read, Grep, Glob, Bash, Write, TaskCreate
-model: inherit
+model: opus
 memory: project
 maxTurns: 20
 ---

@@ -7,54 +7,68 @@
  * @module ck-config-loader
  */
 
-'use strict';
+"use strict";
 
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
-const { sanitizePath } = require('./ck-path-utils.cjs');
+const fs = require("fs");
+const path = require("path");
+const os = require("os");
+const { sanitizePath } = require("./ck-path-utils.cjs");
+const { validateCkConfig } = require("./ck-config-schema.cjs");
 
-const LOCAL_CONFIG_PATH = '.claude/.ck.json';
-const GLOBAL_CONFIG_PATH = path.join(os.homedir(), '.claude', '.ck.json');
+const LOCAL_CONFIG_PATH = ".claude/.ck.json";
+const LOCAL_OVERRIDE_PATH = ".claude/.ck.local.json";
+const GLOBAL_CONFIG_PATH = path.join(os.homedir(), ".claude", ".ck.json");
 
 // Legacy export for backward compatibility
 const CONFIG_PATH = LOCAL_CONFIG_PATH;
 
 const DEFAULT_CONFIG = {
   plan: {
-    namingFormat: '{date}-{issue}-{slug}',
-    dateFormat: 'YYMMDD-HHmm',
+    namingFormat: "{date}-{issue}-{slug}",
+    dateFormat: "YYMMDD-HHmm",
     issuePrefix: null,
-    reportsDir: 'reports',
+    reportsDir: "reports",
     resolution: {
-      order: ['session', 'branch'],
-      branchPattern: '(?:feat|fix|chore|refactor|docs)/(?:[^/]+/)?(.+)'
+      order: ["session", "branch"],
+      branchPattern: "(?:feat|fix|chore|refactor|docs)/(?:[^/]+/)?(.+)",
     },
     validation: {
-      mode: 'prompt',  // 'auto' | 'prompt' | 'off'
+      mode: "prompt", // 'auto' | 'prompt' | 'off'
       minQuestions: 3,
       maxQuestions: 8,
-      focusAreas: ['assumptions', 'risks', 'tradeoffs', 'architecture']
-    }
+      focusAreas: ["assumptions", "risks", "tradeoffs", "architecture"],
+    },
   },
   paths: {
-    docs: 'docs',
-    plans: 'plans'
+    docs: "docs",
+    plans: "plans",
   },
   locale: {
     thinkingLanguage: null,
-    responseLanguage: null
+    responseLanguage: null,
   },
   trust: {
     passphrase: null,
-    enabled: false
+    enabled: false,
   },
   project: {
-    type: 'auto',
-    packageManager: 'auto',
-    framework: 'auto'
+    type: "auto",
+    packageManager: "auto",
+    framework: "auto",
   },
-  assertions: []
+  // Workflow behavior settings (user-configurable in .ck.json)
+  workflow: {
+    // Controls whether workflow detection requires user confirmation via AskUserQuestion.
+    // "always" — always ask before activating (default, collaborative)
+    // "never"  — auto-execute without asking (power user, quickMode forced globally)
+    // "off"    — disable workflow detection entirely (plain Claude, no injection)
+    confirmationMode: "always",
+  },
+  // Reference docs staleness enforcement (configurable threshold)
+  referenceDocs: {
+    staleDays: 60,
+  },
+  assertions: [],
 };
 
 /**
@@ -65,8 +79,8 @@ const DEFAULT_CONFIG = {
  * @returns {Object} Merged object
  */
 function deepMerge(target, source) {
-  if (!source || typeof source !== 'object') return target;
-  if (!target || typeof target !== 'object') return source;
+  if (!source || typeof source !== "object") return target;
+  if (!target || typeof target !== "object") return source;
 
   const result = { ...target };
   for (const key of Object.keys(source)) {
@@ -78,7 +92,11 @@ function deepMerge(target, source) {
       result[key] = [...sourceVal];
     }
     // Objects: recurse (but not null)
-    else if (sourceVal !== null && typeof sourceVal === 'object' && !Array.isArray(sourceVal)) {
+    else if (
+      sourceVal !== null &&
+      typeof sourceVal === "object" &&
+      !Array.isArray(sourceVal)
+    ) {
       result[key] = deepMerge(targetVal || {}, sourceVal);
     }
     // Primitives: source wins
@@ -97,7 +115,7 @@ function deepMerge(target, source) {
 function loadConfigFromPath(configPath) {
   try {
     if (!fs.existsSync(configPath)) return null;
-    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    return JSON.parse(fs.readFileSync(configPath, "utf8"));
   } catch (e) {
     return null;
   }
@@ -120,12 +138,12 @@ function sanitizeConfig(config, projectRoot) {
     // Merge resolution defaults
     result.plan.resolution = {
       ...DEFAULT_CONFIG.plan.resolution,
-      ...result.plan.resolution
+      ...result.plan.resolution,
     };
     // Merge validation defaults
     result.plan.validation = {
       ...DEFAULT_CONFIG.plan.validation,
-      ...result.plan.validation
+      ...result.plan.validation,
     };
   }
 
@@ -153,11 +171,17 @@ function sanitizeConfig(config, projectRoot) {
  * @param {boolean} includeLocale - Include locale section
  * @returns {Object} Default config
  */
-function getDefaultConfig(includeProject = true, includeAssertions = true, includeLocale = true) {
+function getDefaultConfig(
+  includeProject = true,
+  includeAssertions = true,
+  includeLocale = true,
+) {
   const result = {
     plan: { ...DEFAULT_CONFIG.plan },
     paths: { ...DEFAULT_CONFIG.paths },
-    codingLevel: -1  // Default: disabled (no injection, saves tokens)
+    codingLevel: -1, // Default: disabled (no injection, saves tokens)
+    workflow: { ...DEFAULT_CONFIG.workflow },
+    referenceDocs: { ...DEFAULT_CONFIG.referenceDocs },
   };
   if (includeLocale) {
     result.locale = { ...DEFAULT_CONFIG.locale };
@@ -186,28 +210,34 @@ function getDefaultConfig(includeProject = true, includeAssertions = true, inclu
  * @returns {Object} Merged config
  */
 function loadConfig(options = {}) {
-  const { includeProject = true, includeAssertions = true, includeLocale = true } = options;
+  const {
+    includeProject = true,
+    includeAssertions = true,
+    includeLocale = true,
+  } = options;
   const projectRoot = process.cwd();
 
-  // Load configs from both locations
+  // Load configs from all locations
   const globalConfig = loadConfigFromPath(GLOBAL_CONFIG_PATH);
   const localConfig = loadConfigFromPath(LOCAL_CONFIG_PATH);
+  const localOverrideConfig = loadConfigFromPath(LOCAL_OVERRIDE_PATH);
 
   // No config files found - use defaults
-  if (!globalConfig && !localConfig) {
+  if (!globalConfig && !localConfig && !localOverrideConfig) {
     return getDefaultConfig(includeProject, includeAssertions, includeLocale);
   }
 
   try {
-    // Deep merge: DEFAULT → global → local (local wins)
+    // Deep merge: DEFAULT → global → local → local override (override wins)
     let merged = deepMerge({}, DEFAULT_CONFIG);
     if (globalConfig) merged = deepMerge(merged, globalConfig);
     if (localConfig) merged = deepMerge(merged, localConfig);
+    if (localOverrideConfig) merged = deepMerge(merged, localOverrideConfig);
 
     // Build result with optional sections
     const result = {
       plan: merged.plan || DEFAULT_CONFIG.plan,
-      paths: merged.paths || DEFAULT_CONFIG.paths
+      paths: merged.paths || DEFAULT_CONFIG.paths,
     };
 
     if (includeLocale) {
@@ -224,6 +254,23 @@ function loadConfig(options = {}) {
     // Coding level for output style selection (-1 to 5, default: -1 = disabled)
     result.codingLevel = merged.codingLevel ?? -1;
 
+    // Workflow behavior (user-configurable, always included)
+    result.workflow = merged.workflow || DEFAULT_CONFIG.workflow;
+
+    // Reference docs staleness config (always included)
+    result.referenceDocs = merged.referenceDocs || DEFAULT_CONFIG.referenceDocs;
+
+    // Validate merged config — emit warnings to stderr, never block
+    const validation = validateCkConfig(merged);
+    if (validation.errors.length > 0 || validation.warnings.length > 0) {
+      for (const err of validation.errors) {
+        console.error(`[ck-config] ERROR: ${err}`);
+      }
+      for (const warn of validation.warnings) {
+        console.error(`[ck-config] WARN: ${warn}`);
+      }
+    }
+
     return sanitizeConfig(result, projectRoot);
   } catch (e) {
     return getDefaultConfig(includeProject, includeAssertions, includeLocale);
@@ -233,11 +280,12 @@ function loadConfig(options = {}) {
 module.exports = {
   CONFIG_PATH,
   LOCAL_CONFIG_PATH,
+  LOCAL_OVERRIDE_PATH,
   GLOBAL_CONFIG_PATH,
   DEFAULT_CONFIG,
   deepMerge,
   loadConfigFromPath,
   loadConfig,
   getDefaultConfig,
-  sanitizeConfig
+  sanitizeConfig,
 };

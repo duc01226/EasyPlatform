@@ -10,6 +10,7 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
 - `.claude/skills/shared/design-patterns-quality-checklist.md` — Design pattern opportunities, anti-pattern detection, DRY/abstraction enforcement
+- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
@@ -98,6 +99,8 @@ Before starting, call TaskCreate with review phase tasks:
 - `[Review Phase 1] Review file-by-file and update report` - pending
 - `[Review Phase 2] Re-read report for holistic assessment` - pending
 - `[Review Phase 3] Generate final review findings` - pending
+- `[Review Round 2] Focused re-review of all files` - pending
+- `[Review Final] Consolidate Round 1 + Round 2 findings` - pending
   Update todo status as each phase completes.
 
 **Step 0: Create Report File**
@@ -159,6 +162,24 @@ Cross-reference changed files against related documentation:
 
 **Phase 3: Final Review Result**
 Update report with: Overall Assessment, Critical Issues, High Priority, Architecture Recommendations, Documentation Staleness, Positive Observations
+
+## Round 2: Focused Re-Review (MANDATORY)
+
+> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+
+After completing Phase 3 (Round 1), execute a **second full review round**:
+
+1. **Re-read** the Round 1 report to understand what was already caught
+2. **Re-scan** ALL reviewed files — do NOT rely on Round 1 memory
+3. **Focus on** what Round 1 typically misses:
+    - Cross-cutting concerns spanning multiple files
+    - Subtle edge cases (null, empty, boundary, off-by-one)
+    - Naming inconsistencies across files
+    - Missing pieces (error handling, validation, tests)
+    - Convention drift (grep to verify against codebase patterns)
+    - Over-engineering that seemed justified in Round 1
+4. **Update report** with `## Round 2 Findings` section
+5. **Final verdict** must incorporate findings from BOTH rounds
 
 ## Clean Code Rules (MUST CHECK)
 

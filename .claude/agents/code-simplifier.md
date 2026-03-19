@@ -5,7 +5,7 @@ description: >-
     while preserving all functionality. Focuses on recently modified code unless
     instructed otherwise. Use after implementing features or fixes to clean up code.
 tools: Read, Write, Edit, MultiEdit, Grep, Glob, Bash, TaskCreate
-model: inherit
+model: opus
 skills: code-simplifier
 memory: project
 maxTurns: 30

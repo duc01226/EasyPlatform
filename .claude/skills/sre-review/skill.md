@@ -9,6 +9,7 @@ description: '[Code Quality] Production readiness review for service-layer and A
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
@@ -105,6 +106,23 @@ Review the changed files and score each criterion 0-2:
 | 15-20 | **PASS**       | Production-ready. Proceed to commit.                                                      |
 | 10-14 | **NEEDS WORK** | Address gaps before deploying to production. OK for dev/staging.                          |
 | 0-9   | **NOT READY**  | Significant operational gaps. Review Operational Readiness rules in code-review-rules.md. |
+
+## Round 2: Focused Re-Review (MANDATORY)
+
+> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+
+After completing Round 1 scoring, execute a **second full review round**:
+
+1. **Re-read** the Round 1 score and findings
+2. **Re-evaluate** ALL scoring criteria — do NOT rely on Round 1 memory
+3. **Focus on** what Round 1 typically misses:
+    - Operational concerns that span multiple services
+    - Subtle reliability gaps (retry logic, circuit breakers, timeout handling)
+    - Missing observability (structured logging, correlation IDs, metrics)
+    - Data integrity edge cases under concurrent load
+4. **Re-score** all criteria — verify Round 1 scoring accuracy
+5. **Update report** with `## Round 2 Findings` section
+6. **Final score** must incorporate findings from BOTH rounds
 
 ## Output Format
 

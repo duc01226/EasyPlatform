@@ -119,6 +119,12 @@ Check the `## Plan Context` section in the injected context:
 
 ---
 
+## Standalone Review Gate (Non-Workflow Only)
+
+> **MANDATORY IMPORTANT MUST:** If this skill is called **outside a workflow** (standalone `/plan`), the generated plan MUST include `/review-changes` as a **final phase/task** in the plan. This ensures all implementation changes get reviewed before commit even without a workflow enforcing it.
+>
+> If already running inside a workflow (e.g., `feature`, `bugfix`), skip this — the workflow sequence handles `/review-changes` at the appropriate step.
+
 ## Workflow Recommendation
 
 > **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:

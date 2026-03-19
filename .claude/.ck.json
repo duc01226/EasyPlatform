@@ -54,11 +54,11 @@
     },
     "subagent": {
         "agents": {
-            "integration-tester": {
-                "contextPrefix": "Focus: Integration tests. Read docs/project-reference/integration-test-reference.md for patterns. Use TC-{MOD}-XXX format."
-            },
             "backend-developer": {
                 "contextPrefix": "Focus: Backend CQRS development. Read docs/project-reference/backend-patterns-reference.md for patterns."
+            },
+            "integration-tester": {
+                "contextPrefix": "Focus: Integration tests. Read docs/project-reference/integration-test-reference.md for patterns. Use TC-{MOD}-XXX format."
             },
             "researcher": {
                 "contextPrefix": "Focus: Technology research. Check codebase for existing implementations first."
@@ -68,5 +68,8 @@
     "trust": {
         "enabled": false,
         "passphrase": null
+    },
+    "workflow": {
+        "confirmationMode": "always"
     }
 }

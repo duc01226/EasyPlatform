@@ -8,6 +8,8 @@ description: '[Planning] Auto-review plan for validity, correctness, and best pr
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
 
+- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
+
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
@@ -138,6 +140,23 @@ Read the plan directory:
 
 {PROCEED | REVISE_FIRST | BLOCKED}
 ```
+
+## Round 2: Focused Re-Review (MANDATORY)
+
+> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+
+After completing Round 1 checklist evaluation, execute a **second full review round**:
+
+1. **Re-read** the Round 1 verdict and checklist results
+2. **Re-evaluate** ALL checklist items — do NOT rely on Round 1 memory
+3. **Challenge** Round 1 PASS items: "Is this really PASS? Did I verify with evidence?"
+4. **Focus on** what Round 1 typically misses:
+    - Implicit assumptions that weren't validated
+    - Missing acceptance criteria coverage
+    - Edge cases not addressed in the artifact
+    - Cross-references that weren't verified
+5. **Update verdict** if Round 2 found new issues
+6. **Final verdict** must incorporate findings from BOTH rounds
 
 ## Next Steps
 

@@ -35,21 +35,38 @@ public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContex
     where TMongoOptions : PlatformMongoOptions<TDbContext>
 {
     /// <summary>
-    /// Recommended maximum connection pool size for MongoDB drivers.
-    /// Shadows <see cref="PlatformPersistenceModule.RecommendedMaxPoolSize"/> with a higher value
+    /// Default maximum connection pool size for MongoDB drivers.
+    /// Shadows <see cref="PlatformPersistenceModule.DefaultRecommendedMaxPoolSize"/> with a higher value
     /// because MongoDB connections are lighter than PostgreSQL (no server-side process per connection).
     /// </summary>
     /// <remarks>
-    /// MongoDB driver default is 100. <c>Max(ProcessorCount * 4, 50)</c> scales with machine
-    /// while providing adequate headroom for burst traffic and concurrent document operations.
-    /// Override per-environment via MongoDB connection string <c>maxPoolSize=N</c>.
+    /// MongoDB driver default is 100. Formula: <c>Max(ProcessorCount * 25, 100)</c>.
+    /// Floor of 100 ensures we never fall below MongoDB's own default (the previous *4 multiplier
+    /// undershot the default on machines with fewer than 25 cores — typical for containers/VMs).
+    /// The *25 multiplier reflects that async MongoDB operations are short-lived (~1-5ms),
+    /// so each core can sustain many concurrent in-flight operations without blocking.
+    /// Override per-environment via appsettings "Mongo:MaxConnectionPoolSize"
+    /// or MongoDB connection string <c>maxPoolSize=N</c>.
     /// </remarks>
-    public static new readonly int RecommendedMaxPoolSize = Math.Max(Environment.ProcessorCount * 4, 50);
+    public static new readonly int DefaultRecommendedMaxPoolSize = Math.Max(Environment.ProcessorCount * 25, 100);
 
     public PlatformMongoDbPersistenceModule(
         IServiceProvider serviceProvider,
         IConfiguration configuration) : base(serviceProvider, configuration)
     {
+    }
+
+    /// <summary>
+    /// Gets the recommended maximum connection pool size for MongoDB.
+    /// </summary>
+    /// <remarks>
+    /// Reads "Mongo:MaxConnectionPoolSize" from configuration,
+    /// falling back to <see cref="DefaultRecommendedMaxPoolSize"/> (Max(ProcessorCount * 25, 100)).
+    /// </remarks>
+    protected override int GetRecommendedMaxPoolSize()
+    {
+        return Configuration.GetValue<int?>("Mongo:MaxConnectionPoolSize")
+            ?? DefaultRecommendedMaxPoolSize;
     }
 
     /// <summary>

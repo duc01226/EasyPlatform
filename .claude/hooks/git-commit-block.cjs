@@ -18,7 +18,8 @@ const fs = require('fs');
 const path = require('path');
 
 // Marker file created by /commit skill to bypass this hook
-const COMMIT_SKILL_MARKER = path.join(process.env.CLAUDE_PROJECT_DIR || '.', '.claude', '.commit-skill-active');
+const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+const COMMIT_SKILL_MARKER = path.join(PROJECT_DIR, '.claude', '.commit-skill-active');
 
 // Git commands that require explicit user request.
 // Patterns use lookbehind to match only at command boundaries (start of line, after &&, ||, ;)
@@ -67,13 +68,14 @@ const ALLOWED_GIT_COMMANDS = new Set([
 const ALLOWED_COMPOUND_PATTERNS = [/(?:^|&&|\|\||;)\s*git\s+reset\s+HEAD\b/m, /(?:^|&&|\|\||;)\s*git\s+add\s+--dry-run\b/m];
 
 function formatBlockMessage(match) {
+    const markerPath = COMMIT_SKILL_MARKER.replace(/\\/g, '/');
     return [
         `[BLOCKED] ${match.name} — ${match.reason}`,
         '',
         'If the user EXPLICITLY asked you to commit/push in their prompt, activate the bypass first:',
-        '  1. Run: touch "$CLAUDE_PROJECT_DIR/.claude/.commit-skill-active"',
+        `  1. Run: touch "${markerPath}"`,
         '  2. Then retry your git command',
-        '  3. After done, run: rm -f "$CLAUDE_PROJECT_DIR/.claude/.commit-skill-active"',
+        `  3. After done, run: rm -f "${markerPath}"`,
         '',
         'If the user did NOT ask you to commit — do NOT create the bypass. Report your changes and wait.',
         '',

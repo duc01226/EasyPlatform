@@ -10,6 +10,7 @@ allowed-tools: Read, Grep, Glob, TaskCreate
 **Prerequisites:** **MUST READ** before executing:
 
 - `.claude/skills/shared/web-research-protocol.md`
+- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
@@ -106,6 +107,23 @@ allowed-tools: Read, Grep, Glob, TaskCreate
 
 {APPROVED | REVISE | BLOCKED}
 ```
+
+## Round 2: Focused Re-Review (MANDATORY)
+
+> **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
+
+After completing Round 1 evaluation, execute a **second full review round**:
+
+1. **Re-read** the Round 1 verdict and checklist results
+2. **Re-evaluate** ALL checklist items — do NOT rely on Round 1 memory
+3. **Challenge** Round 1 PASS items: "Is this really PASS? Did I verify citations and confidence?"
+4. **Focus on** what Round 1 typically misses:
+    - Citation accuracy (do sources actually say what's claimed?)
+    - Confidence calibration (are percentages realistic?)
+    - Knowledge gaps that weren't flagged
+    - Template compliance shortcuts
+5. **Update verdict** if Round 2 found new issues
+6. **Final verdict** must incorporate findings from BOTH rounds
 
 ---
 
