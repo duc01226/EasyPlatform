@@ -51,9 +51,9 @@ public interface IPlatformApplicationModule : IPlatformModule
     /// This method is used to invalidate or remove cached data related to the module.
     /// </summary>
     /// <param name="options">The options for configuring the auto-clearing of the distributed cache.</param>
-    /// <param name="serviceScope">The service scope to resolve dependencies for cache clearing.</param>
+    /// <param name="sp">The service provider to resolve dependencies for cache clearing.</param>
     /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
-    public Task ClearDistributedCache(PlatformApplicationAutoClearDistributedCacheOnInitOptions options, IServiceScope serviceScope);
+    public Task ClearDistributedCache(PlatformApplicationAutoClearDistributedCacheOnInitOptions options, IServiceProvider sp);
 }
 
 /// <summary>
@@ -230,14 +230,14 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
     /// If the cache server is not initiated, this method could fail. Therefore, it uses a retry mechanism to ensure successful execution.
     /// </remarks>
     /// <returns>A Task representing the asynchronous operation.</returns>
-    public async Task ClearDistributedCache(PlatformApplicationAutoClearDistributedCacheOnInitOptions options, IServiceScope serviceScope)
+    public async Task ClearDistributedCache(PlatformApplicationAutoClearDistributedCacheOnInitOptions options, IServiceProvider sp)
     {
         //if the cache server is not initiated, ClearDistributedCache could fail.
         //So that we do retry to ensure that ClearDistributedCache action run successfully.
         await Util.TaskRunner.WaitRetryThrowFinalExceptionAsync(
             async () =>
             {
-                var cacheProvider = serviceScope.ServiceProvider.GetService<IPlatformCacheRepositoryProvider>();
+                var cacheProvider = sp.GetService<IPlatformCacheRepositoryProvider>();
                 if (cacheProvider == null)
                     return;
 
@@ -427,12 +427,31 @@ public abstract class PlatformApplicationModule : PlatformModule, IPlatformAppli
         if (IsRootModule && EnableAutomaticDataSeedingOnInit)
             await SeedDependentModulesDataAsync();
 
-        var autoClearDistributedCacheOnInitOptions = AutoClearDistributedCacheOnInitOptions(serviceScope);
-        if (autoClearDistributedCacheOnInitOptions.EnableAutoClearDistributedCacheOnInit)
-            await ClearDistributedCache(autoClearDistributedCacheOnInitOptions, serviceScope);
-
         if (EnableDefaultCachingModule)
             await serviceScope.ServiceProvider.GetRequiredService<PlatformCachingModule>().With(p => p.IsChildModule = true).InitializeAsync(CurrentAppBuilder);
+
+        var autoClearDistributedCacheOnInitOptions = AutoClearDistributedCacheOnInitOptions(serviceScope);
+        if (autoClearDistributedCacheOnInitOptions.EnableAutoClearDistributedCacheOnInit)
+        {
+            serviceScope.ServiceProvider.ExecuteInjectScopedInBackgroundAsync(
+                async (IServiceProvider sp) =>
+                {
+                    try
+                    {
+                        await ClearDistributedCache(autoClearDistributedCacheOnInitOptions, sp);
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.LogError(
+                            e.BeautifyStackTrace(),
+                            "Exception {ExceptionType} detected while ClearDistributedCache on initialization.",
+                            e.GetType().Name
+                        );
+                    }
+                },
+                loggerFactory: () => CreateLogger(LoggerFactory)
+            );
+        }
     }
 
     /// <summary>
