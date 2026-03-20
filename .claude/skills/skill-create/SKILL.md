@@ -61,7 +61,7 @@ description: '[Category] What it does. Triggers on: keyword1, keyword2.'
 
 **Official fields:** `name`, `description`, `argument-hint`, `disable-model-invocation`, `user-invocable`, `allowed-tools`, `model`, `context`, `agent`, `hooks`
 
-**Project conventions (non-official but used here):** `disable-model-invocation: true`, `version: X.Y.Z`
+**Project conventions (non-official but used here):** `disable-model-invocation: false`, `version: X.Y.Z`
 
 ### Rules
 

@@ -2,7 +2,7 @@
 name: docs-init
 version: 2.0.0
 description: '[Documentation] Initialize project reference docs via hook + scan skills'
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.

@@ -17,52 +17,52 @@ skill-name/
 ```yaml
 ---
 # Display & Discovery
-name: my-skill                         # Lowercase, hyphens. Default: directory name. Max 64 chars.
-description: 'What it does and when'   # Claude uses this for auto-activation. MUST be single-line or quoted.
-argument-hint: '[issue-number]'        # Autocomplete hint for arguments.
+name: my-skill # Lowercase, hyphens. Default: directory name. Max 64 chars.
+description: 'What it does and when' # Claude uses this for auto-activation. MUST be single-line or quoted.
+argument-hint: '[issue-number]' # Autocomplete hint for arguments.
 
 # Invocation Control
-disable-model-invocation: false        # true = user-only (/name). Claude cannot auto-invoke.
-user-invocable: true                   # false = hidden from / menu. Claude-only auto-invoke.
+disable-model-invocation: false # true = user-only (/name). Claude cannot auto-invoke.
+user-invocable: true # false = hidden from / menu. Claude-only auto-invoke.
 
 # Execution
-context: inline                        # inline (default) or fork (isolated subagent).
-agent: general-purpose                 # Subagent type when context: fork.
-model: opus-4-5                        # Model override. Default: session model.
+context: inline # inline (default) or fork (isolated subagent).
+agent: general-purpose # Subagent type when context: fork.
+model: opus-4-5 # Model override. Default: session model.
 
 # Capabilities
-allowed-tools: 'Read, Grep, Glob'     # Comma-separated. Restricts tools when skill is active.
+allowed-tools: 'Read, Grep, Glob' # Comma-separated. Restricts tools when skill is active.
 
 # Hooks (skill-scoped)
 hooks:
-  SessionStart:
-    - matcher: startup
-      hooks:
-        - type: command
-          command: 'echo "loaded"'
+    SessionStart:
+        - matcher: startup
+          hooks:
+              - type: command
+                command: 'echo "loaded"'
 
 # Portable Standard (optional)
-version: 1.0.0                         # Semantic version.
-license: MIT                           # License type.
+version: 1.0.0 # Semantic version.
+license: MIT # License type.
 ---
 ```
 
 ## Invocation Control Matrix
 
-| Setting | User Invokes | Claude Invokes | Description |
-|---------|-------------|----------------|-------------|
-| Default | Yes | Yes | Description in context; loads on invocation |
-| `disable-model-invocation: true` | Yes | No | User-only. Not in context until invoked |
-| `user-invocable: false` | No | Yes | Hidden from menu. Claude auto-invokes |
+| Setting                           | User Invokes | Claude Invokes | Description                                 |
+| --------------------------------- | ------------ | -------------- | ------------------------------------------- |
+| Default                           | Yes          | Yes            | Description in context; loads on invocation |
+| `disable-model-invocation: false` | Yes          | No             | User-only. Not in context until invoked     |
+| `user-invocable: false`           | No           | Yes            | Hidden from menu. Claude auto-invokes       |
 
 ## Variable Substitution
 
-| Variable | Description |
-|----------|-------------|
-| `$ARGUMENTS` | All arguments passed to skill |
-| `$ARGUMENTS[N]` / `$N` | Specific argument by 0-based index |
-| `${CLAUDE_SESSION_ID}` | Current session ID |
-| `` !`command` `` | Execute shell command before skill runs (preprocessing) |
+| Variable               | Description                                             |
+| ---------------------- | ------------------------------------------------------- |
+| `$ARGUMENTS`           | All arguments passed to skill                           |
+| `$ARGUMENTS[N]` / `$N` | Specific argument by 0-based index                      |
+| `${CLAUDE_SESSION_ID}` | Current session ID                                      |
+| `` !`command` ``       | Execute shell command before skill runs (preprocessing) |
 
 ## Description Best Practices
 

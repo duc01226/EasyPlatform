@@ -2,7 +2,7 @@
 name: learn
 version: 3.0.0
 description: "[Utilities] Teach Claude lessons that persist across sessions. Triggers on 'remember this', 'always do', 'never do', 'learn this', 'from now on'. Smart routing to the most relevant reference doc."
-disable-model-invocation: true
+disable-model-invocation: false
 allowed-tools: Read, Write, Edit, Glob
 ---
 
