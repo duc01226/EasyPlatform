@@ -2,7 +2,7 @@
 name: business-analyst
 version: 1.0.0
 description: "[Project Management] Assist Business Analysts with requirements refinement, user story writing, acceptance criteria in BDD format, and gap analysis. Use when creating user stories, writing acceptance criteria, analyzing requirements, or mapping business processes. Triggers on keywords like "requirements", "user story", "acceptance criteria", "BDD", "GIVEN WHEN THEN", "gap analysis", "process flow", "business rules"."
-allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate
+allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
@@ -23,6 +23,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate
 - Always reference existing business rules from `docs/business-features/` before creating new ones
 - User stories must pass INVEST criteria (Independent, Negotiable, Valuable, Estimable, Small, Testable)
 - Include entity context and related domain model in every story
+- MUST include `story_points` and `complexity` in all PBI/story outputs (see `.claude/skills/shared/estimation-framework.md`)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 

@@ -1054,12 +1054,36 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
                             {
                                 if (AutoOpenUow)
                                 {
-                                    // If not ForceCurrentInstanceHandleInCurrentThreadAndScope, then create new scope to open new uow so that multiple events handlers from an event do not get conflicted
-                                    // uow in the same scope if not open new scope
-                                    if (ForceCurrentInstanceHandleInCurrentThreadAndScope)
-                                        return UnitOfWorkManager.ExecuteUowTask(() => HandleAsync(@event, cancellationToken));
+                                    // ═══════════════════════════════════════════════════════════════════
+                                    // SCOPE DECISION for event handler execution
+                                    // ═══════════════════════════════════════════════════════════════════
+                                    //
+                                    // SAME SCOPE (current instance + current DbContext):
+                                    //   ForceCurrentInstanceHandleInCurrentThreadAndScope=true:
+                                    //     Already in own scope (background/inbox). Don't re-scope. Commits own changes.
+                                    //   MustRunHandlerInSameCurrentActiveUow=true:
+                                    //     Runs in parent's scope/transaction. Sees uncommitted entities.
+                                    //     Suppress SaveChanges — parent commits all. Used for outbox pattern.
+                                    //
+                                    // NEW SCOPE (new DI scope + new DbContext + new handler instance):
+                                    //   Default for all other handlers. Provides UoW isolation.
+                                    // ═══════════════════════════════════════════════════════════════════
+                                    if (ForceCurrentInstanceHandleInCurrentThreadAndScope || NeedRunHandlerInSameCurrentActiveUow(@event))
+                                    {
+                                        // Suppress SaveChanges only when handler runs in parent's scope (MustRunInSameUow=true, Force=false).
+                                        // Parent owns the UoW and will commit all changes together.
+                                        // When Force=true (background/inbox), handler owns its scope and MUST commit.
+                                        var suppressSaveChanges = NeedRunHandlerInSameCurrentActiveUow(@event)
+                                                                  && !ForceCurrentInstanceHandleInCurrentThreadAndScope;
+
+                                        return UnitOfWorkManager.ExecuteUowTask(
+                                            () => HandleAsync(@event, cancellationToken),
+                                            suppressSaveChangesWhenExistingActiveUow: suppressSaveChanges);
+                                    }
                                     else
                                     {
+                                        // New scope: create new DI scope to isolate UoW between multiple handlers
+                                        // for the same event, preventing DbContext conflicts
                                         return ServiceProvider.ExecuteInjectScopedAsync((
                                                 IPlatformUnitOfWorkManager unitOfWorkManager,
                                                 IServiceProvider serviceProvider) =>
@@ -1315,26 +1339,102 @@ public abstract class PlatformCqrsEventApplicationHandler<TEvent> : PlatformCqrs
     /// and that background work is properly isolated and managed.
     /// </para>
     /// </remarks>
+    /// <remarks>
+    /// <para><b>Event Handler Execution Paths (4 paths):</b></para>
+    /// <code>
+    /// ┌─ MustRunInSameUow?
+    /// │   YES → PATH C: same scope, same UoW, suppress SaveChanges (outbox)
+    /// │
+    /// ├─ Has real UoW AND MustWait?
+    /// │   YES → PATH B: OnSaveChangesCompletedActions, AWAIT new scope (foreground)
+    /// │
+    /// ├─ Has real UoW AND !MustWait?
+    /// │   YES → PATH A: OnSaveChangesCompletedActions, background (fire-and-forget)
+    /// │
+    /// └─ else → PATH D: base.DoHandle (no real UoW, pseudo UoW, or Force)
+    /// </code>
+    /// </remarks>
     protected override async Task DoHandle(TEvent @event, CancellationToken cancellationToken)
     {
         try
         {
             var eventSourceUow = TryGetCurrentOrCreatedActiveUow(@event);
+            var hasRealActiveUow = eventSourceUow?.IsPseudoTransactionUow() == false;
+            var needWait = NeedWaitHandlerExecutionFinishedImmediately(@event);
+            var needSameUow = NeedRunHandlerInSameCurrentActiveUow(@event);
 
-            if (eventSourceUow?.IsPseudoTransactionUow() == false && NotNeedWaitHandlerExecutionFinishedImmediately(@event))
+            // ═══════════════════════════════════════════════════════════════════
+            // 4 EXECUTION PATHS:
+            //
+            // PATH C: MustRunInSameUow — immediate, same scope, same UoW, suppress SaveChanges
+            //   Handler sees uncommitted entities. Parent controls commit. Used for outbox.
+            //   → base.DoHandle → ExecuteHandleAsync uses same scope (NeedRunInSameUow condition)
+            //
+            // PATH B: MustWait — wait after UoW complete, NEW scope, foreground
+            //   Entity committed to DB. Handler gets own DbContext. Awaited (not background).
+            //   → register on OnSaveChangesCompletedActions, AWAIT new scope execution
+            //
+            // PATH A: Default (deferred) — background after commit
+            //   → register on OnSaveChangesCompletedActions, fire-and-forget background
+            //
+            // PATH D: base.DoHandle — no real UoW, pseudo UoW, or Force
+            //   → base.DoHandle handles background/foreground decision + ExecuteHandleAsync
+            // ═══════════════════════════════════════════════════════════════════
+
+            if (needSameUow)
             {
-                var thisHandlerInstanceEvent = DoHandle_BuildHandlerInstanceEvent(@event);
-
-                DoHandle_AddEventStackTrace(thisHandlerInstanceEvent);
-
-                eventSourceUow.OnSaveChangesCompletedActions.Add(async () =>
+                // PATH C: Run immediately in parent's scope/UoW (before SaveChanges)
+                await base.DoHandle(@event, cancellationToken);
+            }
+            else if (hasRealActiveUow)
+            {
+                if (needWait)
                 {
-                    // Execute task in background separated thread task
-                    ExecuteHandleInBackgroundNewScopeAsync(thisHandlerInstanceEvent, cancellationToken);
-                });
+                    // PATH B: Wait after UoW complete, new scope.
+                    // Register on OnSaveChangesCompletedActions so entity is committed to DB first.
+                    // Then AWAIT (not fire-and-forget) so caller waits for handler to finish.
+                    var thisHandlerInstanceEvent = DoHandle_BuildHandlerInstanceEvent(@event);
+                    DoHandle_AddEventStackTrace(thisHandlerInstanceEvent);
+
+                    eventSourceUow.OnSaveChangesCompletedActions.Add(async () =>
+                    {
+                        await RootServiceProvider.ExecuteInjectScopedAsync(async (IServiceProvider sp) =>
+                        {
+                            try
+                            {
+                                var thisHandlerNewInstance = sp.GetRequiredService(GetType())
+                                    .As<PlatformCqrsEventHandler<TEvent>>()
+                                    .With(newInstance => CopyPropertiesToNewInstanceBeforeExecution(this, newInstance));
+
+                                await thisHandlerNewInstance
+                                    .With(p => p.ForceCurrentInstanceHandleInCurrentThreadAndScope = true)
+                                    .With(p => p.IsHandlingInNewScope = true)
+                                    .Handle(thisHandlerInstanceEvent, cancellationToken);
+                            }
+                            catch (Exception e)
+                            {
+                                LogError(thisHandlerInstanceEvent, e, LoggerFactory);
+                            }
+                        });
+                    });
+                }
+                else
+                {
+                    // PATH A: Deferred — background after commit (default for most handlers)
+                    var thisHandlerInstanceEvent = DoHandle_BuildHandlerInstanceEvent(@event);
+                    DoHandle_AddEventStackTrace(thisHandlerInstanceEvent);
+
+                    eventSourceUow.OnSaveChangesCompletedActions.Add(async () =>
+                    {
+                        ExecuteHandleInBackgroundNewScopeAsync(thisHandlerInstanceEvent, cancellationToken);
+                    });
+                }
             }
             else
+            {
+                // PATH D: No real UoW (null or pseudo) — base.DoHandle handles decision
                 await base.DoHandle(@event, cancellationToken);
+            }
         }
         catch (Exception e)
         {

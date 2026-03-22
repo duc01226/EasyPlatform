@@ -9,10 +9,10 @@ priority: P1 | P2 | P3 | unset
 tags: []
 template_version: '2.0'
 
-# BravoSUITE Domain Context (optional, for domain features)
-module: '' # bravoGROWTH | bravoTALENTS | bravoSURVEYS | bravoINSIGHTS | Accounts
-related_features: [] # e.g., [GoalManagement, Kudos]
-feature_doc_path: '' # e.g., docs/business-features/bravoGROWTH/detailed-features/README.GoalManagementFeature.md
+# Domain Context (optional, for domain features — populate from project-config.json modules)
+module: '' # Module name from project-config.json backendServices.serviceMap
+related_features: [] # e.g., [FeatureA, FeatureB]
+feature_doc_path: '' # e.g., docs/business-features/{Module}/detailed-features/README.{Feature}.md
 entities: [] # e.g., [Goal, Employee, OrganizationalUnit]
 
 # Refinement Tracking
@@ -44,7 +44,7 @@ pbi_references: [] # Links to generated PBIs
 - [ ] {Scope item 1}
 - [ ] {Scope item 2}
 
-## Domain Context (BravoSUITE Features)
+## Domain Context (Project Features)
 
 > **Note:** This section is auto-populated by `/idea` command for domain features.
 
@@ -88,13 +88,13 @@ pbi_references: [] # Links to generated PBIs
 
 ### Frontmatter Fields
 
-- **module**: Auto-detected by `/idea` for BravoSUITE domain features. Leave blank for infrastructure/cross-cutting.
+- **module**: Auto-detected by `/idea` for project domain features. Leave blank for infrastructure/cross-cutting.
 - **related_features**: Auto-populated from module README. Can be manually edited.
 - **entities**: Domain entities involved, helps with codebase navigation.
 
 ### Domain Context Section
 
-- Auto-populated for BravoSUITE domain ideas
+- Auto-populated for project domain ideas
 - Provides quick links to related feature documentation
 - References existing business rules that may be affected
 - Can be manually edited if detection is incorrect

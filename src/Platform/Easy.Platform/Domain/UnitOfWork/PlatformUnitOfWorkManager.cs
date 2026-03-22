@@ -143,23 +143,38 @@ public interface IPlatformUnitOfWorkManager : IDisposable
     /// Executes a task within the context of a unit of work.
     /// </summary>
     /// <param name="taskFn">The task function to execute.</param>
+    /// <param name="suppressSaveChangesWhenExistingActiveUow">
+    /// When true and an active UoW already exists, the task executes within that UoW context
+    /// but does NOT call SaveChangesAsync — letting the parent UoW owner control when to commit.
+    /// <br/>
+    /// <b>When to use:</b> Event handlers with <c>MustRunHandlerInSameCurrentActiveUow=true</c> (PATH C) run in the
+    /// parent's scope and share the parent's UoW. The parent will call SaveChanges after the handler completes.
+    /// Without this flag, the handler would prematurely commit the parent's pending changes.
+    /// <br/>
+    /// <b>When NOT to use:</b> Handlers in their own scope (background execution, inbox consumers) that own
+    /// their UoW must call SaveChanges themselves — pass <c>false</c> (default).
+    /// </param>
     /// <returns>A task representing the asynchronous operation.</returns>
     /// <remarks>
-    /// This method ensures that the provided task runs within a unit of work context:
-    /// - If a current active UoW already exists, the task is executed within that context and SaveChangesAsync is called.
-    /// - If no active UoW exists, a new UoW is created, the task is executed, and then the UoW is completed and disposed.
-    ///
-    /// This provides a clean pattern for ensuring database operations are properly wrapped in a transaction,
-    /// without requiring the caller to explicitly manage the UoW lifecycle.
+    /// <para><b>Execution paths:</b></para>
+    /// <list type="bullet">
+    /// <item>Active UoW exists + suppress=false → execute task, then SaveChangesAsync (default behavior)</item>
+    /// <item>Active UoW exists + suppress=true → execute task only, parent commits later</item>
+    /// <item>No active UoW → create new UoW, execute task, CompleteAsync (suppress flag irrelevant)</item>
+    /// </list>
     /// </remarks>
-    public async Task ExecuteUowTask(Func<Task> taskFn)
+    public async Task ExecuteUowTask(Func<Task> taskFn, bool suppressSaveChangesWhenExistingActiveUow = false)
     {
         var currentActiveUow = TryGetCurrentActiveUow();
 
         if (currentActiveUow != null)
         {
             await taskFn();
-            await currentActiveUow.SaveChangesAsync();
+
+            // When handler runs in parent's scope (MustWaitHandlerExecutionFinishedImmediately),
+            // skip SaveChanges — the parent UoW owner controls commit timing.
+            if (!suppressSaveChangesWhenExistingActiveUow)
+                await currentActiveUow.SaveChangesAsync();
         }
         else
         {
@@ -176,25 +191,23 @@ public interface IPlatformUnitOfWorkManager : IDisposable
     /// </summary>
     /// <typeparam name="TResult">The type of result returned by the task.</typeparam>
     /// <param name="taskFn">The task function to execute that returns a result.</param>
+    /// <param name="suppressSaveChangesWhenExistingActiveUow">
+    /// <inheritdoc cref="ExecuteUowTask(Func{Task}, bool)" path="/param[@name='suppressSaveChangesWhenExistingActiveUow']"/>
+    /// </param>
     /// <returns>A task representing the asynchronous operation with the result value.</returns>
     /// <remarks>
-    /// This method is similar to ExecuteUowTask but works with tasks that return a result:
-    /// - If a current active UoW already exists, the task is executed within that context, SaveChangesAsync is called,
-    ///   and the result is returned.
-    /// - If no active UoW exists, a new UoW is created, the task is executed, the UoW is completed and disposed,
-    ///   and the result is returned.
-    ///
-    /// This provides a clean pattern for ensuring database operations are properly wrapped in a transaction,
-    /// without requiring the caller to explicitly manage the UoW lifecycle.
+    /// <inheritdoc cref="ExecuteUowTask(Func{Task}, bool)" path="/remarks"/>
     /// </remarks>
-    public async Task<TResult> ExecuteUowTask<TResult>(Func<Task<TResult>> taskFn)
+    public async Task<TResult> ExecuteUowTask<TResult>(Func<Task<TResult>> taskFn, bool suppressSaveChangesWhenExistingActiveUow = false)
     {
         var currentActiveUow = TryGetCurrentActiveUow();
 
         if (currentActiveUow != null)
         {
             var result = await taskFn();
-            await currentActiveUow.SaveChangesAsync();
+
+            if (!suppressSaveChangesWhenExistingActiveUow)
+                await currentActiveUow.SaveChangesAsync();
 
             return result;
         }

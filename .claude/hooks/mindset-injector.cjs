@@ -19,6 +19,7 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 const { injectCriticalContext, injectAiMistakePrevention, injectLessons } = require('./lib/prompt-injections.cjs');
 
 // Skills that benefit from mindset reminders before execution
@@ -32,6 +33,8 @@ const MINDSET_SKILLS = new Set([
     'cook-hard',
     'code',
     'fix',
+    'fix-fast',
+    'fix-hard',
     'fix-issue',
     'fix-parallel',
     'fix-types',
@@ -43,7 +46,33 @@ const MINDSET_SKILLS = new Set([
     'review-changes',
     'review-post-task',
     'integration-test',
-    'tdd-spec'
+    'tdd-spec',
+    // Investigation skills — also get graph protocol reminder
+    'scout',
+    'investigate',
+    'feature-investigation',
+    'prove-fix',
+    'security',
+    'performance'
+]);
+
+// Subset of skills that REQUIRE graph trace — gets extra graph protocol injection
+const GRAPH_REQUIRED_SKILLS = new Set([
+    'scout',
+    'investigate',
+    'feature-investigation',
+    'debug',
+    'fix',
+    'fix-fast',
+    'fix-hard',
+    'fix-issue',
+    'prove-fix',
+    'code-review',
+    'review-changes',
+    'security',
+    'performance',
+    'plan',
+    'plan-hard'
 ]);
 
 function normalizeSkill(skill) {
@@ -80,6 +109,27 @@ function main() {
         if (isSkill) {
             const lessons = injectLessons(transcriptPath);
             if (lessons) console.log(lessons);
+
+            // Graph protocol reminder for investigation/fix/review skills
+            // Only fires when: skill requires graph + graph.db exists
+            // Compact: ~2 lines, no dedup (fires once per skill invocation, not spammy)
+            const skillName = normalizeSkill(payload.tool_input?.skill);
+            if (GRAPH_REQUIRED_SKILLS.has(skillName)) {
+                try {
+                    const graphDbPath = path.join(process.env.CLAUDE_PROJECT_DIR || '.', '.code-graph', 'graph.db');
+                    if (fs.existsSync(graphDbPath)) {
+                        console.log(
+                            `\n<HARD-GATE>\n` +
+                                `[GRAPH MANDATORY for /${skillName}] You MUST run at least ONE graph trace on key files before concluding this task.\n` +
+                                `Command: python .claude/scripts/code_graph trace <key-file> --direction both --json\n` +
+                                `Skip ONLY if .code-graph/graph.db does not exist. It EXISTS — so graph trace is REQUIRED.\n` +
+                                `</HARD-GATE>`
+                        );
+                    }
+                } catch {
+                    /* silent */
+                }
+            }
         }
     } catch {
         /* silent fail — non-blocking */

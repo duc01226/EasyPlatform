@@ -2,7 +2,7 @@
 name: architecture-design
 version: 2.0.0
 description: '[Architecture] Full solution architecture: backend + frontend patterns, design patterns, library ecosystem, CI/CD, deployment, monitoring, testing, code quality, dependency risk. Compare top 3 approaches per concern with recommendation.'
-allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, TaskCreate, AskUserQuestion
+allowed-tools: Read, Write, Edit, Grep, Glob, WebSearch, WebFetch, TaskCreate, AskUserQuestion, Bash
 ---
 
 **MANDATORY IMPORTANT MUST** use `TaskCreate` to break ALL work into small tasks BEFORE starting.

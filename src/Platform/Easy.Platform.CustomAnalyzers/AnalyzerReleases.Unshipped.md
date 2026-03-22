@@ -3,6 +3,5 @@
 
 ### New Rules
 
-Rule ID | Category | Severity | Notes
---------|----------|----------|------
-(none so far)           | —        | —        | No shipped diagnostics yet
+| Rule ID | Category | Severity | Notes |
+| ------- | -------- | -------- | ----- |

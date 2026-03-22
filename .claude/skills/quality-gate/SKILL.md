@@ -9,6 +9,7 @@ description: '[Code Quality] Run quality gate checklist. Use for pre-release, pr
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+- `.claude/skills/shared/graph-impact-analysis-protocol.md` — Graph impact analysis: blast-radius + trace to find potentially stale/affected files
 
 ## Quick Summary
 

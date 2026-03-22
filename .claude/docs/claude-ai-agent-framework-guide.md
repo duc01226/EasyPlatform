@@ -26,6 +26,7 @@
     - 8.14 [Big Feature Workflow — Research-Driven Development](#814-big-feature-workflow--research-driven-development)
     - 8.15 [Prompt Engineering Principles Applied](#815-prompt-engineering-principles-applied)
     - 8.16 [Context Engineering Principles Applied](#816-context-engineering-principles-applied)
+    - 8.17 [Code Review Graph — Structural Intelligence](#817-code-graph--structural-intelligence)
 9. [State Management & Recovery](#9-state-management--recovery)
 10. [Testing Infrastructure](#10-testing-infrastructure)
 11. [Quick Reference](#11-quick-reference)
@@ -95,6 +96,7 @@ graph TB
             DC[Design System Context]
             CP[Code Patterns Injector]
             LI[Lessons Injector]
+            GR[Graph Context Injector]
         end
     end
 
@@ -510,6 +512,13 @@ mindmap
       frontend-design
       ui-ux-pro-max
       web-design-guidelines
+    Code Intelligence
+      graph-build
+      graph-blast-radius
+      graph-query
+      graph-export
+      graph-export-mermaid
+      graph-connect-api
     AI & Tools
       sequential-thinking
       ai-multimodal
@@ -2878,6 +2887,150 @@ Context engineering is the discipline of **managing what information reaches the
 | **Tiered injection frequency** | Lessons (every prompt) vs patterns (every edit) vs design tokens (UI only)    |
 | **Output compression**         | Swap engine replaces 500-line outputs with 10-line summaries + disk pointers  |
 | **State persistence**          | External JSON files survive compaction; disk = persistent, context = volatile |
+
+---
+
+### 8.17 Code Review Graph — Structural Intelligence
+
+The Code Review Graph is a persistent knowledge graph built from your codebase using Tree-sitter AST parsing. It stores every function, class, import, call, inheritance, and test relationship in SQLite and uses BFS to compute blast radius on changes. This gives Claude **structural awareness** — it knows what your change breaks before reviewing the code.
+
+#### The Token Problem
+
+```mermaid
+graph LR
+    subgraph "Without Graph"
+        A1["Developer changes<br/>auth.py"] --> B1["Claude reads<br/>ENTIRE codebase"]
+        B1 --> C1["13,205 tokens<br/>unfocused context"]
+        C1 --> D1["Review quality: 7.2/10"]
+    end
+
+    subgraph "With Graph"
+        A2["Developer changes<br/>auth.py"] --> B2["Graph computes<br/>blast radius"]
+        B2 --> C2["1,928 tokens<br/>precise context"]
+        C2 --> D2["Review quality: 8.8/10"]
+    end
+
+    style C1 fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    style D1 fill:#ff6b6b,stroke:#c92a2a,color:#fff
+    style C2 fill:#69db7c,stroke:#2b8a3e
+    style D2 fill:#69db7c,stroke:#2b8a3e
+```
+
+**Result: 6.8x fewer tokens, 22% higher review quality** (tested on httpx, FastAPI, Next.js).
+
+#### Three-Hook Architecture
+
+The graph integrates via 3 CJS hooks that fire automatically:
+
+```mermaid
+graph TB
+    subgraph "Hook 1: graph-session-init.cjs"
+        SE["SessionStart"] --> CHK{"Python +<br/>tree-sitter<br/>installed?"}
+        CHK -->|Yes| STAT["Inject: Graph active<br/>94 files, 875 nodes"]
+        CHK -->|No| GUIDE["Inject: Install<br/>instructions"]
+    end
+
+    subgraph "Hook 2: graph-auto-update.cjs"
+        EDIT["PostToolUse<br/>(Edit/Write)"] --> DEB["3s debounce"]
+        DEB --> INC["Incremental update:<br/>re-parse changed file<br/>+ dependents"]
+    end
+
+    subgraph "Hook 3: graph-context-injector.cjs"
+        SKILL["PreToolUse(Skill)<br/>/code-review, /scout,<br/>/debug, /sre-review"] --> BR["Run graph-blast-radius"]
+        BR --> INJ["Inject into context:<br/>Risk level, impacted files,<br/>untested functions"]
+    end
+
+    style SE fill:#339af0,stroke:#1864ab,color:#fff
+    style EDIT fill:#ffd43b,stroke:#fab005
+    style SKILL fill:#69db7c,stroke:#2b8a3e
+```
+
+#### Graph in Workflow Context
+
+Every workflow that touches code benefits from the graph automatically:
+
+```mermaid
+sequenceDiagram
+    participant Dev as Developer
+    participant WF as Workflow
+    participant GH as Graph Hooks
+    participant DB as graph.db
+
+    Dev->>WF: Start bugfix workflow
+
+    rect rgb(240, 248, 255)
+        Note over WF,DB: /scout step
+        WF->>GH: context-injector fires
+        GH->>DB: Structural overview query
+        DB-->>GH: 94 files, 875 nodes
+        GH-->>WF: Inject codebase map
+    end
+
+    rect rgb(255, 248, 240)
+        Note over WF,DB: /debug + /fix steps
+        WF->>WF: Claude edits auth.py
+        WF->>GH: auto-update fires
+        GH->>DB: Re-parse auth.py + dependents
+    end
+
+    rect rgb(240, 255, 240)
+        Note over WF,DB: /code-review step
+        WF->>GH: context-injector fires
+        GH->>DB: BFS blast radius
+        DB-->>GH: MEDIUM risk, 5 impacted files
+        GH-->>WF: Inject review context
+        Note over WF: Claude flags untested<br/>functions + broken callers
+    end
+```
+
+#### Available Skills & Commands
+
+| Category    | Skill                   | Purpose                                                        |
+| ----------- | ----------------------- | -------------------------------------------------------------- |
+| **Build**   | `/graph-build`          | Build or incrementally update the knowledge graph              |
+| **Analyze** | `/graph-blast-radius`   | Show impacted files, functions, and test gaps                  |
+| **Query**   | `/graph-query`          | Natural language: "who calls login?", "tests for AuthService?" |
+| **Export**  | `/graph-export`         | Full graph to JSON for external tools                          |
+| **Export**  | `/graph-export-mermaid` | Single-file graph as Mermaid diagram                           |
+| **Connect** | `/graph-connect-api`    | Detect frontend-backend API connections                        |
+| **Connect** | `/connect-implicit`     | Detect implicit connections (events, message bus)              |
+| **Sync**    | `/graph-sync`           | Sync graph with git state after pull/checkout                  |
+| **Batch**   | `/graph-query batch`    | Multi-file deduplicated query                                  |
+
+Skills that **automatically receive graph context** when graph.db exists: `/code-review`, `/review-changes`, `/scout`, `/debug`, `/sre-review`, `/investigate`, `/feature-investigation`, `/fix`, `/refactoring`, `/security`, `/performance`, `/code-simplifier`, `/prove-fix`.
+
+#### Auto-Maintenance
+
+The graph requires **zero manual maintenance** after initial build:
+
+- **Every edit:** `graph-auto-update.cjs` re-parses the edited file (3s debounce, atomic lock)
+- **Every session:** `graph-session-init.cjs` diffs `last_synced_commit` vs HEAD, syncs changed files from git pull/checkout/merge
+- **Implicit connections:** `connect-implicit` runs after build/update when `graphConnectors.implicitConnections[]` is configured, creating edges for entity events, message bus, and loosely coupled patterns
+
+#### Why This Matters for AI Agents
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  AI AGENT CHALLENGE         │  GRAPH SOLUTION                    │
+│─────────────────────────────│────────────────────────────────────│
+│  "What did this change      │  BFS blast radius computes         │
+│   break?"                   │  impacted callers + dependents     │
+│─────────────────────────────│────────────────────────────────────│
+│  "Are there tests for       │  TESTED_BY edges reveal untested   │
+│   the changed code?"        │  functions instantly               │
+│─────────────────────────────│────────────────────────────────────│
+│  "What's the risk level     │  Node count + edge depth =         │
+│   of this PR?"              │  LOW/MEDIUM/HIGH/CRITICAL          │
+│─────────────────────────────│────────────────────────────────────│
+│  "Which files should I      │  Impacted files list replaces      │
+│   review?"                  │  reading entire codebase           │
+│─────────────────────────────│────────────────────────────────────│
+│  "How does auth connect     │  CALLS + IMPORTS edges trace       │
+│   to the API layer?"        │  the full dependency chain         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+> **Setup:** `pip install tree-sitter tree-sitter-language-pack networkx` then `/graph-build`. See [code-graph-mechanism.md](./code-graph-mechanism.md) for full technical details.
 
 ---
 

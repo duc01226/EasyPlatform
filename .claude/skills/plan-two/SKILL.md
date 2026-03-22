@@ -9,6 +9,8 @@ disable-model-invocation: false
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
 
+- `.claude/skills/shared/estimation-framework.md` — Story points, complexity scale, splitting rules (plans MUST include `story_points` and `effort` in frontmatter)
+
 > **Skill Variant:** Variant of `/plan` — creates two alternative implementation approaches for comparison.
 
 ## Quick Summary

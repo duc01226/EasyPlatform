@@ -20,6 +20,8 @@ public static class PlatformEnvironment
 
     public static bool IsDevelopment => AspCoreEnvironmentValue.ContainsIgnoreCase(DevelopmentEnvironmentIndicatorText);
 
+    public static int EffectiveProcessorCount => Math.Min(Environment.ProcessorCount, IsDevelopment ? 4 : Environment.ProcessorCount);
+
     public static string StackTrace()
     {
         return EnhancedStackTrace.Current().ToString();

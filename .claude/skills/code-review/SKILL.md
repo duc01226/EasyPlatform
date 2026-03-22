@@ -90,6 +90,26 @@ Each practice has specific triggers and protocols detailed in reference files.
 **Be honest, be brutal, straight to the point, and be concise.**
 **Technical correctness over social comfort.** Verify before implementing. Ask before assuming. Evidence before claims.
 
+> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. Run `python .claude/scripts/code_graph query tests_for <function> --json` on changed functions to flag coverage gaps.
+
+## Graph-Enhanced Review (RECOMMENDED if graph.db exists)
+
+If `.code-graph/graph.db` exists, prepend graph-blast-radius analysis before file-by-file review:
+
+1. Run: `python .claude/scripts/code_graph graph-blast-radius --json`
+2. Prioritize files by impact (most dependents first)
+3. For each changed function, check test coverage: `python .claude/scripts/code_graph query tests_for <function_name> --json`
+4. Flag untested changed functions in the review report
+5. Note wide blast radius (>20 impacted nodes) as high-risk
+
+### Graph-Assisted Code Review
+
+Use graph trace to understand the full impact of code under review:
+
+1. `python .claude/scripts/code_graph trace <file> --direction downstream --json` — downstream impact through events, bus messages, cross-service consumers
+2. `python .claude/scripts/code_graph trace <file> --direction both --json` — complete flow context when reviewing controllers, commands, or handlers
+3. Check if all affected files have adequate test coverage
+
 ## Review Approach (Report-Driven Two-Phase - CRITICAL)
 
 **⛔ MANDATORY FIRST: Create Todo Tasks**

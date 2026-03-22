@@ -3,7 +3,7 @@ name: learn
 version: 3.0.0
 description: "[Utilities] Teach Claude lessons that persist across sessions. Triggers on 'remember this', 'always do', 'never do', 'learn this', 'from now on'. Smart routing to the most relevant reference doc."
 disable-model-invocation: false
-allowed-tools: Read, Write, Edit, Glob
+allowed-tools: Read, Write, Edit, Glob, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
@@ -197,7 +197,7 @@ Every lesson MUST be **generic and reusable across any project**. Before saving:
 
 ## Auto-Inferred Activation
 
-When Claude detects correction phrases in conversation (e.g., "always use X", "remember this", "never do Y", "from now on"), this skill auto-activates via `infer: true`. When auto-inferred (not explicit `/learn`), **confirm with the user before saving**: "Save this as a lesson? [Y/n]"
+When Claude detects correction phrases in conversation (e.g., "always use X", "remember this", "never do Y", "from now on"), this skill auto-activates. When auto-inferred (not explicit `/learn`), **confirm with the user before saving**: "Save this as a lesson? [Y/n]"
 
 ## Storage
 

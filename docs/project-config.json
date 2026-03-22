@@ -331,6 +331,8 @@
             "fileExtensions": [".ts", ".html", ".scss"],
             "guideDoc": "docs/project-reference/frontend-patterns-reference.md",
             "patternsDoc": "docs/project-reference/frontend-patterns-reference.md",
+            "stylingDoc": "docs/project-reference/scss-styling-guide.md",
+            "designSystemDoc": "docs/project-reference/design-system/README.md",
             "rules": [
                 "Extend AppBaseComponent/AppBaseVmStoreComponent/AppBaseFormComponent",
                 "Use PlatformVmStore + effectSimple() for state management",
@@ -470,5 +472,125 @@
         { "filename": "docs/project-reference/e2e-test-reference.md", "purpose": "E2E Playwright test patterns and page objects" },
         { "filename": "docs/project-reference/domain-entities-reference.md", "purpose": "Domain entities, value objects, DTO mapping, aggregate boundaries" }
     ],
+    "graphConnectors": {
+        "apiEndpoints": {
+            "enabled": true,
+            "frontend": {
+                "framework": "angular",
+                "paths": ["src/Frontend/libs/apps-domains/", "src/Frontend/libs/platform-core/src/lib/api-services/"],
+                "customPatterns": []
+            },
+            "backend": {
+                "framework": "dotnet",
+                "paths": ["src/Backend/PlatformExampleApp.TextSnippet.Api/Controllers/"],
+                "routePrefix": "api",
+                "customPatterns": []
+            }
+        },
+        "implicitConnections": [
+            {
+                "name": "entity-definition-to-event-handlers",
+                "description": "Entity domain events trigger EntityEventApplicationHandlers in UseCaseEvents/",
+                "edgeKind": "ENTITY_EVENT",
+                "paths": ["src/Backend/"],
+                "source": {
+                    "filePattern": "**/Entities/*.cs",
+                    "contentPattern": "class\\s+(\\w+)\\s*:",
+                    "keyGroup": 1
+                },
+                "target": {
+                    "filePattern": "**/UseCaseEvents/**/*EventHandler.cs",
+                    "contentPattern": "EntityEventApplicationHandler<(\\w+)",
+                    "keyGroup": 1
+                },
+                "matchBy": "key-equals"
+            },
+            {
+                "name": "entity-event-producers",
+                "description": "Entity events published to message bus via EntityEventBusMessageProducer",
+                "edgeKind": "BUS_PRODUCE",
+                "paths": ["src/Backend/"],
+                "source": {
+                    "filePattern": "**/UseCaseEvents/**/*EventHandler.cs",
+                    "contentPattern": "EntityEventApplicationHandler<(\\w+)",
+                    "keyGroup": 1
+                },
+                "target": {
+                    "filePattern": "**/Producers/**/*Producer.cs",
+                    "contentPattern": "EntityEventBusMessageProducer<(\\w+)",
+                    "keyGroup": 1
+                },
+                "matchBy": "key-equals"
+            },
+            {
+                "name": "bus-message-producers-to-consumers",
+                "description": "Entity event bus messages consumed by EntityEventBusMessageConsumer",
+                "edgeKind": "BUS_CONSUME",
+                "paths": ["src/Backend/"],
+                "source": {
+                    "filePattern": "**/Producers/**/*Producer.cs",
+                    "contentPattern": "EntityEventBusMessageProducer<(\\w+)",
+                    "keyGroup": 1
+                },
+                "target": {
+                    "filePattern": "**/Consumers/**/*Consumer.cs",
+                    "contentPattern": "EntityEventBusMessageConsumer<(\\w+)",
+                    "keyGroup": 1
+                },
+                "matchBy": "key-contains"
+            },
+            {
+                "name": "free-format-message-consumers",
+                "description": "Free-format bus message consumers via PlatformApplicationMessageBusConsumer",
+                "edgeKind": "BUS_CONSUME",
+                "paths": ["src/Backend/"],
+                "source": {
+                    "filePattern": "**/FreeFormatMessages/**/*.cs",
+                    "contentPattern": "class\\s+(\\w+BusMessage)",
+                    "keyGroup": 1
+                },
+                "target": {
+                    "filePattern": "**/Consumers/FreeFormatConsumers/**/*Consumer.cs",
+                    "contentPattern": "PlatformApplicationMessageBusConsumer<(\\w+)",
+                    "keyGroup": 1
+                },
+                "matchBy": "key-contains"
+            },
+            {
+                "name": "free-format-bus-message-send-to-consumers",
+                "description": "Free-format messages sent via bus producer service directly in command handlers",
+                "edgeKind": "BUS_PRODUCE",
+                "paths": ["src/Backend/"],
+                "source": {
+                    "filePattern": "**/UseCaseCommands/**/*.cs",
+                    "contentPattern": "new\\s+(\\w+BusMessage)",
+                    "keyGroup": 1
+                },
+                "target": {
+                    "filePattern": "**/Consumers/FreeFormatConsumers/**/*Consumer.cs",
+                    "contentPattern": "PlatformApplicationMessageBusConsumer<(\\w+)",
+                    "keyGroup": 1
+                },
+                "matchBy": "key-contains"
+            },
+            {
+                "name": "command-event-handlers",
+                "description": "CQRS command events trigger CommandEventApplicationHandlers",
+                "edgeKind": "COMMAND_EVENT",
+                "paths": ["src/Backend/", "src/Platform/"],
+                "source": {
+                    "filePattern": "**/UseCaseCommands/**/*.cs",
+                    "contentPattern": "class\\s+(\\w+Command)\\b",
+                    "keyGroup": 1
+                },
+                "target": {
+                    "filePattern": "**/*CommandEventApplicationHandler.cs",
+                    "contentPattern": "CommandEventApplicationHandler<(\\w+)",
+                    "keyGroup": 1
+                },
+                "matchBy": "key-contains"
+            }
+        ]
+    },
     "custom": {}
 }

@@ -117,6 +117,20 @@ Use the naming pattern from the `## Naming` section injected by hooks. The patte
 **IMPORTANT**: Sacrifice grammar for concision in reports.
 **IMPORTANT**: List unresolved questions at end if any.
 
+## Graph Intelligence (MANDATORY when .code-graph/graph.db exists)
+
+After grep/search finds key files, you MUST use graph for structural analysis. Graph reveals callers, importers, tests, event consumers, and bus messages that grep cannot find.
+
+```bash
+python .claude/scripts/code_graph trace <file> --direction both --json                    # Full system flow (BEST FIRST CHOICE)
+python .claude/scripts/code_graph trace <file> --direction both --node-mode file --json    # File-level overview (less noise)
+python .claude/scripts/code_graph connections <file> --json             # Structural relationships
+python .claude/scripts/code_graph query callers_of <function> --json    # All callers
+python .claude/scripts/code_graph query tests_for <function> --json     # Test coverage
+```
+
+Orchestration: Grep first → Graph expand → Grep verify. Iterative deepening encouraged.
+
 ## Reminders
 
 - **NEVER** skip BEM class naming on template elements.

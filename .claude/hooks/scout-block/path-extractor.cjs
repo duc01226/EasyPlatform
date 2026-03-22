@@ -11,26 +11,31 @@
  * Handles: file_path, path, pattern params and command strings
  *
  * @param {Object} toolInput - The tool_input from hook JSON
+ * @param {string} [toolName] - The tool name (e.g., 'Grep', 'Glob', 'Read')
  * @returns {string[]} Array of extracted paths
  */
-function extractFromToolInput(toolInput) {
+function extractFromToolInput(toolInput, toolName) {
   const paths = [];
 
-  if (!toolInput || typeof toolInput !== 'object') {
+  if (!toolInput || typeof toolInput !== "object") {
     return paths;
   }
 
-  // Direct path params (Read, Edit, Write, Grep, Glob tools)
-  const directParams = ['file_path', 'path', 'pattern'];
+  // Grep 'pattern' is a search regex (e.g., 'build'), NOT a file path — skip it.
+  // Glob 'pattern' IS a file path pattern (e.g., '**/node_modules/**') — keep checking it.
+  const directParams =
+    toolName === "Grep"
+      ? ["file_path", "path"]
+      : ["file_path", "path", "pattern"];
   for (const param of directParams) {
-    if (toolInput[param] && typeof toolInput[param] === 'string') {
+    if (toolInput[param] && typeof toolInput[param] === "string") {
       const normalized = normalizeExtractedPath(toolInput[param]);
       if (normalized) paths.push(normalized);
     }
   }
 
   // Extract from Bash command if present
-  if (toolInput.command && typeof toolInput.command === 'string') {
+  if (toolInput.command && typeof toolInput.command === "string") {
     const cmdPaths = extractFromCommand(toolInput.command);
     paths.push(...cmdPaths);
   }
@@ -46,7 +51,7 @@ function extractFromToolInput(toolInput) {
  * @returns {string[]} Array of extracted paths
  */
 function extractFromCommand(command) {
-  if (!command || typeof command !== 'string') {
+  if (!command || typeof command !== "string") {
     return [];
   }
 
@@ -62,7 +67,7 @@ function extractFromCommand(command) {
   }
 
   // Remove quoted strings for unquoted path extraction
-  const withoutQuotes = command.replace(/["'][^"']*["']/g, ' ');
+  const withoutQuotes = command.replace(/["'][^"']*["']/g, " ");
 
   // Split on whitespace and extract path-like tokens
   const tokens = withoutQuotes.split(/\s+/).filter(Boolean);
@@ -95,8 +100,18 @@ function extractFromCommand(command) {
 // match command keywords (e.g., "build" is both a subcommand and a dir name)
 // Keep in sync with DEFAULT_PATTERNS in pattern-matcher.cjs
 const BLOCKED_DIR_NAMES = [
-  'node_modules', '__pycache__', '.git', 'dist', 'build',
-  '.next', '.nuxt', '.venv', 'venv', 'vendor', 'target', 'coverage'
+  "node_modules",
+  "__pycache__",
+  ".git",
+  "dist",
+  "build",
+  ".next",
+  ".nuxt",
+  ".venv",
+  "venv",
+  "vendor",
+  "target",
+  "coverage",
 ];
 
 /**
@@ -120,10 +135,10 @@ function looksLikePath(str) {
   if (!str || str.length < 2) return false;
 
   // Contains path separator
-  if (str.includes('/') || str.includes('\\')) return true;
+  if (str.includes("/") || str.includes("\\")) return true;
 
   // Starts with relative path indicator
-  if (str.startsWith('./') || str.startsWith('../')) return true;
+  if (str.startsWith("./") || str.startsWith("../")) return true;
 
   // Has file extension (likely a file)
   if (/\.\w{1,6}$/.test(str)) return true;
@@ -145,12 +160,14 @@ function looksLikePath(str) {
  */
 function isSkippableToken(token) {
   // Flags
-  if (token.startsWith('-')) return true;
+  if (token.startsWith("-")) return true;
 
   // Shell operators
-  if (['|', '||', '&&', '>', '>>', '<', '<<', '&', ';'].includes(token)) return true;
-  if (token.startsWith('|') || token.startsWith('>') || token.startsWith('<')) return true;
-  if (token.startsWith('&')) return true;
+  if (["|", "||", "&&", ">", ">>", "<", "<<", "&", ";"].includes(token))
+    return true;
+  if (token.startsWith("|") || token.startsWith(">") || token.startsWith("<"))
+    return true;
+  if (token.startsWith("&")) return true;
 
   // Numeric values
   if (/^\d+$/.test(token)) return true;
@@ -167,30 +184,135 @@ function isSkippableToken(token) {
 function isCommandKeyword(token) {
   const keywords = [
     // Shell commands
-    'echo', 'cat', 'ls', 'cd', 'rm', 'cp', 'mv', 'find', 'grep', 'head', 'tail',
-    'wc', 'du', 'tree', 'touch', 'mkdir', 'rmdir', 'pwd', 'which', 'env', 'export',
-    'source', 'bash', 'sh', 'zsh', 'true', 'false', 'test', 'xargs', 'tee', 'sort',
-    'uniq', 'cut', 'tr', 'sed', 'awk', 'diff', 'chmod', 'chown', 'ln', 'file',
+    "echo",
+    "cat",
+    "ls",
+    "cd",
+    "rm",
+    "cp",
+    "mv",
+    "find",
+    "grep",
+    "head",
+    "tail",
+    "wc",
+    "du",
+    "tree",
+    "touch",
+    "mkdir",
+    "rmdir",
+    "pwd",
+    "which",
+    "env",
+    "export",
+    "source",
+    "bash",
+    "sh",
+    "zsh",
+    "true",
+    "false",
+    "test",
+    "xargs",
+    "tee",
+    "sort",
+    "uniq",
+    "cut",
+    "tr",
+    "sed",
+    "awk",
+    "diff",
+    "chmod",
+    "chown",
+    "ln",
+    "file",
 
     // Package managers and their subcommands
-    'npm', 'pnpm', 'yarn', 'bun', 'npx', 'pnpx', 'bunx', 'node',
-    'run', 'build', 'test', 'lint', 'dev', 'start', 'install', 'ci', 'exec',
-    'add', 'remove', 'update', 'publish', 'pack', 'init', 'create',
+    "npm",
+    "pnpm",
+    "yarn",
+    "bun",
+    "npx",
+    "pnpx",
+    "bunx",
+    "node",
+    "run",
+    "build",
+    "test",
+    "lint",
+    "dev",
+    "start",
+    "install",
+    "ci",
+    "exec",
+    "add",
+    "remove",
+    "update",
+    "publish",
+    "pack",
+    "init",
+    "create",
 
     // Build tools
-    'tsc', 'esbuild', 'vite', 'webpack', 'rollup', 'turbo', 'nx',
-    'jest', 'vitest', 'mocha', 'eslint', 'prettier',
+    "tsc",
+    "esbuild",
+    "vite",
+    "webpack",
+    "rollup",
+    "turbo",
+    "nx",
+    "jest",
+    "vitest",
+    "mocha",
+    "eslint",
+    "prettier",
 
     // Git
-    'git', 'commit', 'push', 'pull', 'merge', 'rebase', 'checkout', 'branch',
-    'status', 'log', 'diff', 'add', 'reset', 'stash', 'fetch', 'clone',
+    "git",
+    "commit",
+    "push",
+    "pull",
+    "merge",
+    "rebase",
+    "checkout",
+    "branch",
+    "status",
+    "log",
+    "diff",
+    "add",
+    "reset",
+    "stash",
+    "fetch",
+    "clone",
 
     // Docker
-    'docker', 'compose', 'up', 'down', 'ps', 'logs', 'exec', 'container', 'image',
+    "docker",
+    "compose",
+    "up",
+    "down",
+    "ps",
+    "logs",
+    "exec",
+    "container",
+    "image",
 
     // Misc
-    'sudo', 'time', 'timeout', 'watch', 'make', 'cargo', 'python', 'python3', 'pip',
-    'ruby', 'gem', 'go', 'rust', 'java', 'javac', 'mvn', 'gradle'
+    "sudo",
+    "time",
+    "timeout",
+    "watch",
+    "make",
+    "cargo",
+    "python",
+    "python3",
+    "pip",
+    "ruby",
+    "gem",
+    "go",
+    "rust",
+    "java",
+    "javac",
+    "mvn",
+    "gradle",
   ];
 
   return keywords.includes(token.toLowerCase());
@@ -205,21 +327,23 @@ function isCommandKeyword(token) {
  * @returns {string} Normalized path
  */
 function normalizeExtractedPath(path) {
-  if (!path) return '';
+  if (!path) return "";
 
   let normalized = path.trim();
 
   // Remove surrounding quotes
-  if ((normalized.startsWith('"') && normalized.endsWith('"')) ||
-      (normalized.startsWith("'") && normalized.endsWith("'"))) {
+  if (
+    (normalized.startsWith('"') && normalized.endsWith('"')) ||
+    (normalized.startsWith("'") && normalized.endsWith("'"))
+  ) {
     normalized = normalized.slice(1, -1);
   }
 
   // Normalize path separators to forward slash
-  normalized = normalized.replace(/\\/g, '/');
+  normalized = normalized.replace(/\\/g, "/");
 
   // Remove trailing slash for consistency
-  if (normalized.endsWith('/') && normalized.length > 1) {
+  if (normalized.endsWith("/") && normalized.length > 1) {
     normalized = normalized.slice(0, -1);
   }
 
@@ -234,5 +358,5 @@ module.exports = {
   isCommandKeyword,
   isBlockedDirName,
   normalizeExtractedPath,
-  BLOCKED_DIR_NAMES
+  BLOCKED_DIR_NAMES,
 };

@@ -9,6 +9,8 @@ disable-model-invocation: false
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
 
+- `.claude/skills/shared/estimation-framework.md` — Story points, complexity scale, splitting rules (plans MUST include `story_points` and `effort` in frontmatter)
+
 ## Quick Summary
 
 **Goal:** Create a detailed implementation plan with phases optimized for parallel execution by multiple agents.

@@ -267,6 +267,26 @@ CONFIDENCE: 95%
 
 ---
 
+> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. Run `python .claude/scripts/code_graph trace <file> --direction downstream --json` to prove fix doesn't break downstream.
+
+## Graph Intelligence (RECOMMENDED if graph.db exists)
+
+If `.code-graph/graph.db` exists, enhance analysis with structural queries:
+
+- **Verify test coverage:** `python .claude/scripts/code_graph query tests_for <function> --json`
+- **Trace affected code paths:** `python .claude/scripts/code_graph query callers_of <function> --json`
+- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
+
+> See `.claude/skills/shared/graph-intelligence-queries.md` for full query reference.
+
+### Graph-Trace for Fix Verification
+
+When graph DB is available, use `trace` to PROVE the fix doesn't break downstream consumers:
+
+- `python .claude/scripts/code_graph trace <fixed-file> --direction downstream --json` — verify all downstream consumers, event handlers, and bus message listeners are unaffected
+- `python .claude/scripts/code_graph trace <fixed-file> --direction both --json` — full context: what triggered the bug (upstream) + what the fix affects (downstream)
+- Include trace results as evidence in the proof chain
+
 ## Integration with Other Skills
 
 This skill is the **mandatory verification gate** between `/fix` and `/code-simplifier` in fix workflows.

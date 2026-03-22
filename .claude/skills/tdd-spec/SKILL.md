@@ -17,6 +17,8 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 
 > **Process Discipline:** MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` — prevents "tests aren't relevant" and "I'll test after" evasions.
 
+> **Graph Context (MANDATORY when graph.db exists):** Before generating test specs, run graph impact analysis per `.claude/skills/shared/graph-impact-analysis-protocol.md`. This reveals cross-service consumers, event handlers, and implicit connections (MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT) that tests must cover.
+
 ## Quick Summary
 
 **Goal:** Generate or update test specifications in feature docs Section 17 (canonical TC registry) using the unified `TC-{FEATURE}-{NNN}` format. Supports 5 modes: TDD-first, implement-first, update (post-change/PR), sync, and from-integration-tests.

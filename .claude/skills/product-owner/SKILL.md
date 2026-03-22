@@ -2,7 +2,7 @@
 name: product-owner
 version: 1.0.0
 description: '[Project Management] Capture ideas, manage product backlogs, apply prioritization frameworks (RICE, MoSCoW), and facilitate stakeholder communication. Triggers: product owner, backlog management, user story prioritization, product roadmap, product backlog.'
-allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch
+allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.

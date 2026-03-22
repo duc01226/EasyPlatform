@@ -5,12 +5,12 @@ Test prompts to verify skills activate correctly. Each section contains prompts 
 ## Testing Instructions
 
 1. **Direct Invocation**: Test with `/skill-name` to verify the skill loads
-2. **Inference Testing**: Test with natural prompts (for skills with `infer: true`)
+2. **Inference Testing**: Test with natural prompts
 3. **Verify Output**: Check that the skill's workflow and patterns are applied
 
 ---
 
-## Interactive Skills (infer: true)
+## Interactive Skills
 
 ### debug
 

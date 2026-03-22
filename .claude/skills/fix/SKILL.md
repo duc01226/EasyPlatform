@@ -9,6 +9,7 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` AND `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+- `.claude/skills/shared/estimation-framework.md` — Story points and complexity (MUST provide `story_points` and `complexity` estimate after investigation, before fixing)
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
@@ -122,6 +123,25 @@ When this task involves frontend or UI changes, **MUST READ** `.claude/skills/sh
 
 **H) Simple/Quick Fixes** (default: small bug, single file, straightforward)
 → `/fix-fast <detailed-description>`
+
+## Graph Intelligence (MANDATORY — DO NOT SKIP when graph.db exists)
+
+If `.code-graph/graph.db` exists, you MUST use graph to enhance analysis with structural queries:
+
+**Without graph, your fix may miss affected callers, consumers, and tests. This step is NOT optional.**
+
+- **Trace callers of buggy function:** `python .claude/scripts/code_graph query callers_of <function> --json`
+- **Find existing tests:** `python .claude/scripts/code_graph query tests_for <function> --json`
+- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
+
+> See `.claude/skills/shared/graph-intelligence-queries.md` for full query reference.
+
+### Graph-Assisted Fix Verification
+
+Before and after fixing, use graph trace to understand blast radius:
+
+1. `python .claude/scripts/code_graph trace <file-to-fix> --direction downstream --json` — see all downstream consumers affected by the fix
+2. `python .claude/scripts/code_graph trace <file-to-fix> --direction both --json` — full flow to ensure fix doesn't break upstream or downstream
 
 ## Notes
 

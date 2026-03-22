@@ -4,6 +4,7 @@ using System.Diagnostics;
 using Easy.Platform.Common.Extensions;
 using Easy.Platform.Common.Utils;
 using Easy.Platform.Common.Validations.Exceptions;
+using Easy.Platform.Domain.Events;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -211,7 +212,7 @@ public interface IPlatformCqrsEventHandler
     /// </remarks>
     /// <exception cref="ArgumentException">Thrown when the event parameter is not of the expected type.</exception>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
-    Task Handle(object @event, CancellationToken cancellationToken);
+    public Task Handle(object @event, CancellationToken cancellationToken);
 
     /// <summary>
     /// Determines whether this handler should process the specified event based on runtime conditions.
@@ -375,7 +376,7 @@ public interface IPlatformCqrsEventHandler<in TEvent> : INotificationHandler<TEv
     /// </para>
     /// </remarks>
     /// <exception cref="OperationCanceledException">Thrown when the operation is cancelled via the cancellation token.</exception>
-    Task ExecuteHandleAsync(TEvent @event, CancellationToken cancellationToken);
+    public Task ExecuteHandleAsync(TEvent @event, CancellationToken cancellationToken);
 }
 
 /// <summary>
@@ -571,15 +572,47 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     public virtual double MaxRetryOnFailedDelaySeconds { get; set; } = 60;
 
     /// <summary>
-    /// The MustWaitHandlerExecutionFinishedImmediately method is part of the IPlatformCqrsEvent interface and its implementation is in the PlatformCqrsEvent class. This method is used to determine whether the execution of a specific event handler should be waited for to finish immediately or not.
-    /// <br />
-    /// In the context of the Command Query Responsibility Segregation (CQRS) pattern, this method provides a way to control the execution flow of event handlers. By default, event handlers are executed in the background and the command returns immediately without waiting for the handlers to finish. However, there might be cases where it's necessary to wait for a handler to finish its execution before proceeding, and this is where MustWaitHandlerExecutionFinishedImmediately comes into play.
-    /// <br />
-    /// The method takes a Type parameter, which represents the event handler type, and returns a boolean. If the method returns true, it means that the execution of the event handler of the provided type should be waited for to finish immediately.
-    /// <br />
-    /// In the DoHandle method of the PlatformCqrsEventHandler class, this method is used to decide whether to queue the event handler execution in the background or execute it immediately. If MustWaitHandlerExecutionFinishedImmediately returns true for the event handler type, the handler is executed immediately using the same current active uow if existing active uow; otherwise, it's queued to run in the background.
+    /// Controls whether the caller waits for this handler to finish (foreground, not background).
+    /// Handler runs AFTER the parent's UoW commits, in a NEW scope with its own DbContext.
+    /// <br/><br/>
+    /// <b>When true (PATH B):</b>
+    /// <list type="bullet">
+    /// <item>Handler waits for parent's UoW to complete (OnSaveChangesCompletedActions)</item>
+    /// <item>Handler runs in a NEW DI scope with its own DbContext (entity committed to DB)</item>
+    /// <item>Caller AWAITS handler completion (not fire-and-forget)</item>
+    /// <item>Use when handler needs committed data but caller needs to wait for handler result</item>
+    /// </list>
+    /// <br/>
+    /// <b>When false (default, PATH A):</b>
+    /// <list type="bullet">
+    /// <item>Handler is deferred to background (OnSaveChangesCompletedActions, fire-and-forget)</item>
+    /// <item>Caller does NOT wait for handler to finish</item>
+    /// </list>
+    /// <br/>
+    /// <b>Differs from MustRunHandlerInSameCurrentActiveUow (PATH C):</b>
+    /// <c>MustRunHandlerInSameCurrentActiveUow</c> runs in the SAME scope/UoW BEFORE commit.
+    /// <c>MustWaitHandlerExecutionFinishedImmediately</c> runs in a NEW scope AFTER commit.
+    /// Both are foreground (awaited), but timing and scope differ.
     /// </summary>
     protected virtual bool MustWaitHandlerExecutionFinishedImmediately => false;
+
+    /// <summary>
+    /// When true, handler runs in the SAME scope and SAME active UoW as the parent operation.
+    /// <br/><br/>
+    /// <b>When true:</b>
+    /// <list type="bullet">
+    /// <item>Handler runs BEFORE parent's SaveChanges (during entity Create/Update)</item>
+    /// <item>Shares parent's DI scope, DbContext, and UoW (same transaction)</item>
+    /// <item>Sees uncommitted entities in the parent's change tracker</item>
+    /// <item>Does NOT trigger SaveChanges — parent controls commit timing</item>
+    /// <item>Outbox messages participate in the parent's transaction (correct outbox pattern)</item>
+    /// </list>
+    /// <br/>
+    /// <b>Differs from MustWaitHandlerExecutionFinishedImmediately:</b>
+    /// <c>MustWait</c> runs after parent UoW completes, in a NEW scope.
+    /// <c>MustRunInSameUow</c> runs in the SAME scope, before parent commits.
+    /// </summary>
+    protected virtual bool MustRunHandlerInSameCurrentActiveUow => false;
 
     /// <summary>
     /// Gets or sets a value indicating whether event instances should be cloned for each handler
@@ -645,6 +678,26 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
 
     public virtual int RetryOnFailedTimes { get; set; } = Util.TaskRunner.DefaultResilientRetryCount;
 
+    /// <summary>
+    /// When true, the handler uses the current instance and current DI scope directly
+    /// (no new scope creation in ExecuteHandleAsync).
+    /// <br/><br/>
+    /// <b>Set by platform internals only</b> — NOT by handler subclasses.
+    /// This is set to true in two places:
+    /// <list type="bullet">
+    /// <item><c>ExecuteHandleInBackgroundNewScopeAsync</c>: After creating a background scope + new handler instance.
+    /// Prevents the new instance from creating yet another scope (double-scoping prevention).</item>
+    /// <item><c>PlatformCqrsEventInboxBusMessageConsumer</c>: After creating an inbox processing scope.
+    /// Same purpose — handler is already in its own isolated scope.</item>
+    /// </list>
+    /// <br/>
+    /// <b>Relationship to other properties:</b>
+    /// This flag means "I'm already in the right scope, don't create another."
+    /// <c>MustRunHandlerInSameCurrentActiveUow</c> means "run in the parent's scope/transaction."
+    /// <c>MustWaitHandlerExecutionFinishedImmediately</c> means "wait after commit, new scope."
+    /// Both Force and MustRunInSameUow result in same-scope execution at <c>ExecuteHandleAsync</c>,
+    /// but Force commits its own changes while MustRunInSameUow suppresses (parent commits).
+    /// </summary>
     public bool ForceCurrentInstanceHandleInCurrentThreadAndScope { get; set; }
 
     public bool IsHandlingInNewScope { get; set; }
@@ -939,15 +992,44 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     /// </remarks>
     protected TEvent DoHandle_BuildHandlerInstanceEvent(TEvent @event)
     {
-        return NoNeedCloneNewEventInstanceForTheHandler ||
-               RootServiceProvider.ImplementationAssignableToServiceTypeRegisteredCount(typeof(IPlatformCqrsEventHandler<TEvent>)) == 1
-            ? @event
-            : @event
-                .DeepClone()
-                .PipeAction(_ =>
-                {
-                    NoNeedCloneNewEventInstanceForTheHandler = true;
-                });
+        // Single handler or already cloned for this handler → return original event (no clone needed)
+        if (NoNeedCloneNewEventInstanceForTheHandler ||
+            RootServiceProvider.ImplementationAssignableToServiceTypeRegisteredCount(typeof(IPlatformCqrsEventHandler<TEvent>)) == 1)
+            return @event;
+
+        // Multiple handlers: deep-clone event for handler isolation (each handler gets its own event instance)
+        var clonedEvent = @event.DeepClone();
+        NoNeedCloneNewEventInstanceForTheHandler = true;
+
+        // ═══════════════════════════════════════════════════════════════════
+        // ENTITY DATA RESTORATION after deep clone
+        // ═══════════════════════════════════════════════════════════════════
+        // Problem: DeepClone uses JSON serialization which creates NEW instances of all navigation
+        // properties (Employee, RequestType, etc.). When the handler runs in the SAME DbContext scope
+        // (MustWaitHandlerExecutionFinishedImmediately or ForceCurrentInstanceHandleInCurrentThreadAndScope),
+        // these deserialized navigation property instances conflict with entities already tracked by the
+        // DbContext (EF Core's "another instance with the same key" error).
+        //
+        // Solution: Restore the original EntityData reference on the cloned event. The event metadata
+        // (RequestContext, pipeline info) stays cloned for handler isolation, but EntityData points back
+        // to the original in-memory instance that is properly tracked by the DbContext.
+        //
+        // This is safe because:
+        // - Single handler: no clone happens (early return above), original event used directly
+        // - Multiple handlers, same scope: EntityData restored, all handlers share tracked entity
+        // - Multiple handlers, new scope: EntityData restored but handler's new DbContext loads its own;
+        //   the restored reference is harmless (not tracked by new scope's DbContext)
+        // - Background re-entry: NoNeedCloneNewEventInstanceForTheHandler is copied to new instance,
+        //   so this code is never reached on re-entry (early return above)
+        // - ForceCurrentInstanceHandleInCurrentThreadAndScope is NOT included because:
+        //   (a) Background re-entry: NoNeedClone=true → early return above, never reaches here
+        //   (b) Inbox consumer: event is deserialized from JSON, not original tracked instance
+        // ═══════════════════════════════════════════════════════════════════
+        if (NeedRunHandlerInSameCurrentActiveUow(@event) &&
+            @event is IPlatformCqrsEntityEvent originalEntityEvent)
+            clonedEvent.As<IPlatformCqrsEntityEvent>()?.RestoreEntityDataFromOriginalEvent(originalEntityEvent);
+
+        return clonedEvent;
     }
 
     /// <summary>
@@ -1028,6 +1110,15 @@ public abstract class PlatformCqrsEventHandler<TEvent> : IPlatformCqrsEventHandl
     protected virtual bool NeedWaitHandlerExecutionFinishedImmediately(TEvent @event)
     {
         return @event.MustWaitHandlerExecutionFinishedImmediately(GetType()) || MustWaitHandlerExecutionFinishedImmediately;
+    }
+
+    /// <summary>
+    /// Determines whether this handler must run in the same active UoW as the parent.
+    /// Combines handler-level property with event-level per-handler configuration.
+    /// </summary>
+    protected virtual bool NeedRunHandlerInSameCurrentActiveUow(TEvent @event)
+    {
+        return @event.MustRunHandlerInSameCurrentActiveUow(GetType()) || MustRunHandlerInSameCurrentActiveUow;
     }
 
     /// <summary>

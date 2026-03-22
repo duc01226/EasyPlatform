@@ -2,7 +2,7 @@
 name: investigate
 description: '[Fix & Debug] Investigate and explain how existing features or logic work. READ-ONLY exploration with no code changes.'
 version: 2.1.0
-allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
+allowed-tools: Read, Grep, Glob, Bash, Task, WebFetch, WebSearch, TodoWrite
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
@@ -11,6 +11,7 @@ allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TodoWrite
 
 - `.claude/skills/shared/understand-code-first-protocol.md`
 - `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+- `.claude/skills/shared/graph-assisted-investigation-protocol.md` — Graph ↔ Grep ↔ Glob orchestration (MANDATORY when graph.db exists)
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 ## Quick Summary
@@ -87,11 +88,24 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 ## Workflow
 
 1. **Discovery** - Search codebase for all files related to the feature/question. Prioritize: Entities > Commands/Queries > EventHandlers > Controllers > Consumers > Components.
-2. **Knowledge Graph** - Read and analyze each file. Document purpose, symbols, dependencies, data flow. Batch in groups of 10, update progress after each batch.
-3. **Flow Mapping** - Trace entry points through processing pipeline to exit points. Map data transformations, persistence, side effects, cross-service boundaries.
-4. **Analysis** - Extract business rules, validation logic, authorization, error handling. Document happy path and edge cases.
-5. **Synthesis** - Write executive summary answering the original question. Include key files, patterns used, and text-based flow diagrams.
-6. **Present** - Deliver findings using the structured output format. Offer deeper dives on subtopics.
+2. **Graph Expand (MANDATORY — DO NOT SKIP)** - **YOU (the main agent) MUST run graph queries YOURSELF** on key files found in Step 1. This step is NOT optional — without graph, your understanding is incomplete. Sub-agents CANNOT use graph — only you can. Pick 2-3 key files (entities, commands, bus messages) and run:
+    ```bash
+    python .claude/scripts/code_graph connections <key_file> --json
+    python .claude/scripts/code_graph query callers_of <FunctionName> --json
+    python .claude/scripts/code_graph query importers_of <file_path> --json
+    # If "ambiguous" → search to disambiguate, then retry with qualified name
+    python .claude/scripts/code_graph search <keyword> --kind Function --json
+    # Trace how two nodes connect
+    python .claude/scripts/code_graph find-path <source> <target> --json
+    # Filter by service, limit results
+    python .claude/scripts/code_graph query callers_of <name> --limit 5 --filter "ServiceName" --json
+    ```
+    Graph reveals the complete dependency network (callers, importers, tests, inheritance) that grep alone misses. This is essential for understanding features and workflows fully. Also run `/graph-connect-api` for frontend-to-backend API mapping.
+3. **Knowledge Graph** - Read and analyze each file (from grep + graph results). Document purpose, symbols, dependencies, data flow. Batch in groups of 10, update progress after each batch.
+4. **Flow Mapping** - Trace entry points through processing pipeline to exit points. Map data transformations, persistence, side effects, cross-service boundaries.
+5. **Analysis** - Extract business rules, validation logic, authorization, error handling. Document happy path and edge cases.
+6. **Synthesis** - Write executive summary answering the original question. Include key files, patterns used, and text-based flow diagrams.
+7. **Present** - Deliver findings using the structured output format. Offer deeper dives on subtopics.
 
 ## ⚠️ MUST READ Before Investigation
 
@@ -368,11 +382,45 @@ For each file, document in `## Knowledge Graph`:
 - **Read-only**: Never suggest changes unless explicitly asked.
 - **Layered explanation**: Start simple, offer deeper detail on request.
 
+### Graph Intelligence (MANDATORY when graph.db exists)
+
+> See `.claude/skills/shared/graph-assisted-investigation-protocol.md` for full orchestration guidance.
+> See `.claude/skills/shared/graph-intelligence-queries.md` for CLI command reference.
+
+### Grep-First Discovery (When Query is Semantic)
+
+When the user's prompt describes a behavior or flow (not a specific file), use Grep/Glob/Search FIRST to discover entry point files:
+
+1. Grep for key terms from the user's query (class names, commands, handlers, endpoints)
+2. Use discovered files as input to graph `connections`, `batch-query`, or `trace` commands
+3. Use `trace --direction both` on middle files (controllers, commands) to see full upstream + downstream flow
+4. The `trace` command follows ALL edge types including implicit connections (MESSAGE_BUS, TRIGGERS_EVENT)
+
+**Orchestrate grep ↔ graph ↔ glob dynamically.** After grep/glob finds entry files, use graph to expand the dependency network. Then grep again to verify content in discovered files.
+
+```bash
+# Full picture of a key file
+python .claude/scripts/code_graph connections <file> --json
+
+# Find all callers of a function
+python .claude/scripts/code_graph query callers_of <name> --json
+
+# Find all importers of a module
+python .claude/scripts/code_graph query importers_of <file> --json
+
+# Find tests covering a function
+python .claude/scripts/code_graph query tests_for <name> --json
+
+# Batch query multiple files at once
+python .claude/scripts/code_graph batch-query <f1> <f2> --json
+```
+
 ## Related Skills
 
 - `feature` - Implementing new features (code changes)
 - `debug` - Debugging and fixing issues
 - `scout` - Quick codebase discovery (run before investigation)
+- `graph-query` - Natural language graph queries for code relationships
 
 ## IMPORTANT Task Planning Notes
 

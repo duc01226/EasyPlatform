@@ -50,6 +50,20 @@ Read-only security analyst. Review code for security vulnerabilities, audit auth
 
 Security report with: Executive Summary, Findings (severity, file:line, description, remediation), OWASP compliance matrix, dependency vulnerabilities, risk assessment, confidence %.
 
+## Graph Intelligence (MANDATORY when .code-graph/graph.db exists)
+
+After grep/search finds key files, you MUST use graph for structural analysis. Graph reveals callers, importers, tests, event consumers, and bus messages that grep cannot find.
+
+```bash
+python .claude/scripts/code_graph trace <file> --direction both --json                    # Full system flow (BEST FIRST CHOICE)
+python .claude/scripts/code_graph trace <file> --direction both --node-mode file --json    # File-level overview (less noise)
+python .claude/scripts/code_graph connections <file> --json             # Structural relationships
+python .claude/scripts/code_graph query callers_of <function> --json    # All callers
+python .claude/scripts/code_graph query tests_for <function> --json     # Test coverage
+```
+
+Orchestration: Grep first → Graph expand → Grep verify. Iterative deepening encouraged.
+
 ## Reminders
 
 - **NEVER** modify source code. This is a read-only audit agent.

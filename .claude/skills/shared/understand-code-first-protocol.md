@@ -21,6 +21,7 @@ first. This applies to EVERY task regardless of perceived simplicity.
 - **Read existing files** in the target area before making any changes
 - **Understand the current patterns** — how is the code structured? What base classes, conventions, DI patterns are used?
 - **Map dependencies** — what other files reference or depend on the target code?
+- **Use graph for full picture (MANDATORY — DO NOT SKIP)** — if `.code-graph/graph.db` exists, YOU MUST run `/graph-query` on key files to discover ALL callers, importers, tests, and inheritance chains. Graph reveals the complete dependency network that grep alone CANNOT find. Without this step, your understanding of the code is incomplete. This is a MANDATORY phase, not optional.
 
 ### 2. Validate Assumptions
 
@@ -73,11 +74,21 @@ Before modifying code:
 
 - [ ] Read the target file(s) completely
 - [ ] Searched for existing patterns (`Grep`/`Glob`)
-- [ ] Identified dependencies and consumers
+- [ ] **RAN GRAPH on key files (MANDATORY when .code-graph/graph.db exists)** — `trace --direction both` or `connections`
+- [ ] Identified dependencies and consumers (via graph `connections` or `callers_of`)
 - [ ] Verified assumptions with code evidence
 - [ ] Confirmed approach follows existing conventions
 - [ ] **Wrote analysis to `.ai/workspace/analysis/` (if non-trivial task)**
 - [ ] **Re-read analysis file before implementation (if analysis was written)**
+
+### Graph-Assisted Understanding
+
+After finding key files via grep/glob, use graph tools for deeper understanding:
+
+1. `python .claude/scripts/code_graph connections <file> --json` — structural relationships (callers, importers, tests)
+2. `python .claude/scripts/code_graph trace <file> --direction both --json` — full system flow: upstream callers + downstream events, bus messages, cross-service consumers
+3. Choose `--direction downstream` for impact analysis, `--direction both` when you need the complete picture
+4. Use `--node-mode file` for high-level overview (10-30x less noise), then `--node-mode function` for detail on specific files
 
 ### Extended Discovery (for data access/business logic tasks)
 

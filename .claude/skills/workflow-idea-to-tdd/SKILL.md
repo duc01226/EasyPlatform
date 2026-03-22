@@ -8,4 +8,4 @@ description: '[Workflow] Trigger Idea to TDD Specs workflow — full cycle: capt
 
 Activate the `idea-to-tdd` workflow. Run `/workflow-start idea-to-tdd` with the user's prompt as context.
 
-**Steps:** /idea → /refine → /refine-review → /tdd-spec → /tdd-spec-review → /workflow-end
+**Steps:** /idea → /refine → /refine-review → /tdd-spec → /tdd-spec-review → /pbi-mockup → /workflow-end

@@ -7,12 +7,14 @@
 | Goal                         | Document                                                                                        |
 | ---------------------------- | ----------------------------------------------------------------------------------------------- |
 | **New to Claude Code?**      | [quick-start.md](./quick-start.md) - 5-minute onboarding                                        |
-| **Need a skill?**            | [skills/README.md](./skills/README.md) - 202 skills catalog                                     |
+| **Need a skill?**            | [skills/README.md](./skills/README.md) - 246 skills catalog                                     |
 | **Building a feature?**      | [skills/README.md](./skills/README.md) + `docs/project-reference/` patterns                     |
-| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 34 hooks deep-dive                                       |
+| **Understanding hooks?**     | [hooks/README.md](./hooks/README.md) - 41 hooks deep-dive                                       |
 | **Understanding workflows?** | `CLAUDE.md` workflow catalog (project root) - 48 workflows                                      |
 | **Configuring Claude?**      | [configuration/README.md](./configuration/README.md)                                            |
 | **Team collaboration?**      | [team-collaboration-guide.md](./team-collaboration-guide.md) - PO, BA, QA, QC, UX, PM workflows |
+| **Graph intelligence?**      | [code-graph-mechanism.md](./code-graph-mechanism.md) - How structural code analysis works       |
+| **Setup graph?**             | [code-graph-setup.md](./code-graph-setup.md) - Install Python deps + build graph                |
 
 ## Documentation Map
 
@@ -21,15 +23,18 @@
 |-- README.md                 <- You are here (Navigation hub)
 |-- quick-start.md            5-minute onboarding guide
 |
-|-- skills/                   202 skills across 15+ domains
+|-- skills/                   246 skills across 15+ domains
 |   |-- README.md             Skills overview + full catalog
 |   +-- (patterns)           → docs/project-reference/
 |
-|-- hooks/                    34 hooks, 25 lib modules
+|-- hooks/                    41 hooks, 27 lib modules
 |   |-- README.md             Hooks overview, lessons system, session lifecycle
 |   |-- architecture.md       System architecture with diagrams
 |   |-- external-memory-swap.md  Post-compaction recovery via swap files
 |   +-- extending-hooks.md    How to create custom hooks
+|
+|-- code-graph-mechanism.md  How the structural knowledge graph works
+|-- code-graph-setup.md      Setup guide for Python + Tree-sitter
 |
 |-- agents/                   Subagent configurations
 |   |-- README.md             Agents overview
@@ -47,21 +52,23 @@
 
 ### "I need to..."
 
-| Task                | Command         | Skill                   |
-| ------------------- | --------------- | ----------------------- |
-| Implement a feature | `/cook`         | `feature`               |
-| Fix a bug           | `/fix`          | `debug`                 |
-| Create a PR         | `/git/pr`       | `commit`                |
-| Understand code     | `/scout`        | `feature-investigation` |
-| Plan implementation | `/plan`         | `planning`              |
-| Run tests           | `/test`         | `test-spec`             |
-| Review code         | `/review`       | `code-review`           |
-| Debug issues        | `/debug`        | `debug`                 |
-| Create user story   | `/story`        | `business-analyst`      |
-| Prioritize backlog  | `/prioritize`   | `product-owner`         |
-| Create test cases   | `/test-spec`    | `test-spec`             |
-| Quality checkpoint  | `/quality-gate` | `qc-specialist`         |
-| Create design spec  | `/design-spec`  | `ux-designer`           |
+| Task                 | Command               | Skill                   |
+| -------------------- | --------------------- | ----------------------- |
+| Implement a feature  | `/cook`               | `feature`               |
+| Fix a bug            | `/fix`                | `debug`                 |
+| Create a PR          | `/git/pr`             | `commit`                |
+| Understand code      | `/scout`              | `feature-investigation` |
+| Plan implementation  | `/plan`               | `planning`              |
+| Run tests            | `/test`               | `test-spec`             |
+| Review code          | `/review`             | `code-review`           |
+| Debug issues         | `/debug`              | `debug`                 |
+| Create user story    | `/story`              | `business-analyst`      |
+| Prioritize backlog   | `/prioritize`         | `product-owner`         |
+| Create test cases    | `/test-spec`          | `test-spec`             |
+| Quality checkpoint   | `/quality-gate`       | `qc-specialist`         |
+| Create design spec   | `/design-spec`        | `ux-designer`           |
+| Analyze blast radius | `/graph-blast-radius` | `graph-blast-radius`    |
+| Build code graph     | `/graph-build`        | `graph-build`           |
 
 ### "I want to learn about..."
 
@@ -136,9 +143,9 @@
 
 | Category            | Count |
 | ------------------- | ----- |
-| Skills              | 202   |
-| Hooks               | 34    |
-| Lib Modules         | 25    |
+| Skills              | 245   |
+| Hooks               | 41    |
+| Lib Modules         | 27    |
 | Hook Events         | 9     |
 | Agents              | 28    |
 | Workflows           | 48    |
@@ -147,4 +154,4 @@
 
 ---
 
-_Last updated: 2026-03-10 | Source: `.claude/` directory analysis_
+_Last updated: 2026-03-21 | Source: `.claude/` directory analysis_

@@ -2,7 +2,7 @@
 name: knowledge-review
 version: 1.0.0
 description: '[Research] Review knowledge artifacts for completeness, citation quality, confidence accuracy, and template compliance.'
-allowed-tools: Read, Grep, Glob, TaskCreate
+allowed-tools: Read, Grep, Glob, TaskCreate, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.

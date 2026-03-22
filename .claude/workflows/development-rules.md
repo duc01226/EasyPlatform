@@ -29,6 +29,7 @@
 - Read and understand existing code before making changes
 - Validate assumptions with grep/read evidence, never guess
 - Search for existing patterns before creating new ones
+- **MUST USE graph trace** on key files when `.code-graph/graph.db` exists — after grep finds entry points, **STOP AND DECIDE:** run `python .claude/scripts/code_graph trace <file> --direction both --json` NOW, or continue searching only if key files not found yet. Use `--node-mode file` for file-level overview (10-30x less noise), `--node-mode function` for detail. Graph reveals callers, importers, bus messages, event chains that grep cannot find. See CLAUDE.md "Graph Intelligence" section.
 
 ## Code Quality Guidelines
 

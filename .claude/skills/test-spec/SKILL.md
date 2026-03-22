@@ -14,6 +14,7 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
 >
 > - `project-structure-reference.md` -- project patterns and structure
+> - `.claude/skills/shared/graph-impact-analysis-protocol.md` — Graph impact analysis: blast-radius + trace to find cross-service flows and implicit connections that test cases must cover
 > - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 > - `docs/test-specs/` — Test specifications by module (read existing TCs before generating new to avoid duplicates and maintain TC ID continuity)
 >

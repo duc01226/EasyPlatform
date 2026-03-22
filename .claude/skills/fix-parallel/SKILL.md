@@ -9,6 +9,7 @@ description: '[Implementation] Analyze & fix issues with parallel fullstack-deve
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` AND `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+- `.claude/skills/shared/estimation-framework.md` — Story points and complexity (MUST provide `story_points` and `complexity` estimate in fix summary)
 
 > **Process Discipline:** MUST READ `.claude/skills/shared/red-flag-stop-conditions-protocol.md` — STOP after 3+ failed fix attempts or when each fix reveals a new problem.
 

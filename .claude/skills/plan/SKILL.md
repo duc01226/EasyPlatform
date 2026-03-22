@@ -10,6 +10,7 @@ description: '[Planning] Intelligent plan creation with prompt enhancement'
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 - `.claude/skills/shared/rationalization-prevention-protocol.md` — Anti-evasion rebuttals (prevents "too simple for a plan" shortcuts)
+- `.claude/skills/shared/estimation-framework.md` — Story points, complexity scale, splitting rules (plans MUST include `story_points` and `effort` in frontmatter)
 - `docs/test-specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
 
 > **Iterative Quality Gate:** **MUST READ** `.claude/skills/shared/iterative-phase-quality-protocol.md`.

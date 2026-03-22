@@ -2,7 +2,7 @@
 name: memory-management
 version: 1.0.0
 description: "[Utilities] Use when saving or retrieving important patterns, decisions, and learnings across sessions. Also use for external memory checkpoints during long-running tasks to prevent context loss. Triggers on keywords like "remember", "save pattern", "recall", "memory", "persist", "knowledge base", "learnings", "checkpoint", "save context", "preserve progress"."
-allowed-tools: Read, Write, Edit, Glob, Grep, TaskCreate, mcp__memory__*
+allowed-tools: Read, Write, Edit, Glob, Grep, TaskCreate, mcp__memory__*, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.

@@ -2,7 +2,7 @@
 name: qc-specialist
 version: 1.1.0
 description: '[Project Management] Enforce quality gates, verify compliance with standards, track quality metrics, and generate audit trails. Triggers: quality gate, compliance, audit trail, quality metrics, qc specialist, standards verification.'
-allowed-tools: Read, Grep, Glob, TaskCreate, Write
+allowed-tools: Read, Grep, Glob, TaskCreate, Write, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.

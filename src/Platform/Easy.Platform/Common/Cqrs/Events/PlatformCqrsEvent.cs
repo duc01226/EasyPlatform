@@ -300,6 +300,12 @@ public interface IPlatformCqrsEvent : INotification
     bool MustWaitHandlerExecutionFinishedImmediately(Type eventHandlerType);
 
     /// <summary>
+    /// Determines whether a specific event handler must run in the same active UoW as the parent.
+    /// Same-UoW handlers share the parent's scope/DbContext and participate in the same transaction.
+    /// </summary>
+    bool MustRunHandlerInSameCurrentActiveUow(Type eventHandlerType);
+
+    /// <summary>
     /// Retrieves a typed value from the request context dictionary.
     /// Provides strongly-typed access to contextual information.
     /// </summary>
@@ -771,6 +777,34 @@ public abstract class PlatformCqrsEvent : IPlatformCqrsEvent
     {
         // Check if handler type's full name is configured for immediate execution
         return WaitHandlerExecutionFinishedImmediatelyFullNames?.Contains(eventHandlerType.FullName) == true;
+    }
+
+    /// <summary>
+    /// Full type names of event handlers that must run in the same active UoW as the parent operation.
+    /// Mirrors <see cref="WaitHandlerExecutionFinishedImmediatelyFullNames"/> but for same-UoW execution.
+    /// </summary>
+    [JsonIgnore]
+    public HashSet<string> RunHandlerInSameCurrentActiveUowFullNames { get; set; }
+
+    /// <summary>
+    /// Configures specific event handler types to run in the same active UoW as the parent.
+    /// </summary>
+    public virtual PlatformCqrsEvent SetRunHandlerInSameCurrentActiveUow(params Type[] eventHandlerTypes)
+    {
+        RunHandlerInSameCurrentActiveUowFullNames = eventHandlerTypes.Select(p => p.FullName).ToHashSet();
+        return this;
+    }
+
+    /// <summary>
+    /// Determines whether a specific event handler type must run in the same active UoW.
+    /// <br/><br/>
+    /// <b>When true:</b> Handler runs in the parent's scope/DbContext BEFORE parent's SaveChanges.
+    /// Handler sees uncommitted entities. Parent controls commit timing.
+    /// Used for outbox pattern (outbox message in same transaction).
+    /// </summary>
+    public bool MustRunHandlerInSameCurrentActiveUow(Type eventHandlerType)
+    {
+        return RunHandlerInSameCurrentActiveUowFullNames?.Contains(eventHandlerType.FullName) == true;
     }
 
     /// <summary>

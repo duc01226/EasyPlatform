@@ -2,7 +2,7 @@
 name: project-manager
 version: 1.1.0
 description: '[Project Management] Generate project status reports, track dependencies, manage risk registers, and facilitate team sync meetings. Triggers: project status, sprint tracking, risk assessment, project timeline, blocker report, meeting agenda.'
-allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch
+allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.

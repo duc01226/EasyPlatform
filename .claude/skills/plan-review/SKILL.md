@@ -91,6 +91,7 @@ Read the plan directory:
 - [ ] Testing strategy defined
 - [ ] Success criteria per phase
 - [ ] Security considerations addressed
+- [ ] **Graph dependency check:** If `.code-graph/graph.db` exists, for each file in the plan's "files to modify" list, run `python .claude/scripts/code_graph query importers_of <file> --json`. Flag any importer NOT listed in the plan as "potentially missed dependent". Also run `tests_for` on key functions to verify test coverage is planned.
 
 ### Step 3: Score and Classify
 
@@ -140,6 +141,16 @@ Read the plan directory:
 
 {PROCEED | REVISE_FIRST | BLOCKED}
 ```
+
+> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. Validate plan file references exist via `python .claude/scripts/code_graph connections <file> --json`.
+
+### Graph-Trace for Plan Coverage
+
+When graph DB is available, verify the plan covers all affected files:
+
+- For each file in the plan's "files to modify" list, run `python .claude/scripts/code_graph trace <file> --direction downstream --json`
+- Flag any downstream file NOT listed in the plan as "potentially missed"
+- This catches cross-service impact (MESSAGE_BUS consumers, event handlers) that the plan author may have overlooked
 
 ## Round 2: Focused Re-Review (MANDATORY)
 

@@ -10,6 +10,7 @@ description: '[Code Quality] Review artifact quality before handoff. Use to veri
 
 - `.claude/skills/shared/understand-code-first-protocol.md`
 - `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
+- `.claude/skills/shared/graph-impact-analysis-protocol.md` — Graph impact analysis: blast-radius + trace to find potentially stale/affected files
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 

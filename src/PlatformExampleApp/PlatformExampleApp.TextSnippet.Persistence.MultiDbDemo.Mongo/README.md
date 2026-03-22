@@ -1,1 +1,0 @@
-# Persistence Techincal Guide

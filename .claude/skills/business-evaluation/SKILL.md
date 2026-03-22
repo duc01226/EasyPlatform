@@ -2,7 +2,7 @@
 name: business-evaluation
 version: 1.0.0
 description: '[Content] Evaluate business idea viability: Business Model Canvas, financial projections, risk matrix, go-to-market, execution plan.'
-allowed-tools: Read, Write, Edit, WebSearch, WebFetch, TaskCreate
+allowed-tools: Read, Write, Edit, WebSearch, WebFetch, TaskCreate, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.

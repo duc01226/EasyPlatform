@@ -48,6 +48,26 @@ Activate `arch-security-review` skill and follow its workflow.
 
 **CRITICAL**: Present your security findings. Wait for explicit user approval before implementing fixes.
 
+> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. Run `python .claude/scripts/code_graph query callers_of <function> --json` to trace all entry points into sensitive functions.
+
+## Graph Intelligence (RECOMMENDED if graph.db exists)
+
+If `.code-graph/graph.db` exists, enhance analysis with structural queries:
+
+- **Trace data flow to sensitive functions:** `python .claude/scripts/code_graph query callers_of <function> --json`
+- **What does this function call?** `python .claude/scripts/code_graph query callees_of <function> --json`
+- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
+
+> See `.claude/skills/shared/graph-intelligence-queries.md` for full query reference.
+
+### Graph-Trace for Data Flow Analysis
+
+When graph DB is available, use `trace` to analyze data flow paths for security review:
+
+- `python .claude/scripts/code_graph trace <entry-point> --direction downstream --json` — trace data flow from input to all consumers (find where untrusted data travels)
+- `python .claude/scripts/code_graph trace <sensitive-file> --direction upstream --json` — find all entry points that reach sensitive code
+- Trace reveals cross-service MESSAGE_BUS flows where data crosses trust boundaries
+
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**

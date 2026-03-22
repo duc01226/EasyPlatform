@@ -9,6 +9,8 @@ disable-model-invocation: false
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
 
+- `.claude/skills/shared/estimation-framework.md` — Story points, complexity scale, splitting rules (plans MUST include `story_points` and `effort` in frontmatter)
+
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 
 > **Iterative Quality Gate:** **MUST READ** `.claude/skills/shared/iterative-phase-quality-protocol.md`.

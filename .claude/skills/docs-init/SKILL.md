@@ -52,9 +52,10 @@ Read the first 512 bytes of each file. If it contains `<!-- Fill in your project
 
 Use `AskUserQuestion` to present:
 
-1. **"Run all scan skills" (Recommended for first-time init)** -- Runs all 9 scan skills sequentially
-2. **"Select specific skills"** -- Let user choose which ones to run
-3. **"Skip -- docs are already populated"** -- Exit if all docs have content
+1. **"Run /claude-md-init + all scan skills" (Recommended for first-time init)** -- Generates CLAUDE.md from config, then runs all 9 scan skills
+2. **"Run all scan skills only"** -- Runs all 9 scan skills without CLAUDE.md generation
+3. **"Select specific skills"** -- Let user choose which ones to run
+4. **"Skip -- docs are already populated"** -- Exit if all docs have content
 
 For each selected scan skill, invoke it via the Skill tool (e.g., `/scan-backend-patterns`).
 

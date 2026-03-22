@@ -35,16 +35,17 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 
 **Workflow:**
 
-1. **Phase 0: Collect** — Run git status/diff, create report file
-2. **Phase 1: File Review** — Review each changed file, update report incrementally
-3. **Phase 2: Holistic** — Re-read report for big-picture architecture and responsibility checks
-4. **Phase 3: Finalize** — Generate critical issues, recommendations, and suggested commit message
+1. **Phase 0: Blast Radius** — Call `/graph-blast-radius` skill first (MANDATORY)
+2. **Phase 1: Collect** — Run git status/diff, create report file
+3. **Phase 2: File Review** — Review each changed file, update report incrementally
+4. **Phase 3: Holistic** — Re-read report for big-picture architecture and responsibility checks
+5. **Phase 4: Finalize** — Generate critical issues, recommendations, and suggested commit message
 
 **Key Rules:**
 
 - Report-driven: always write findings to `plans/reports/code-review-{date}-{slug}.md`
 - Check logic placement (lowest layer: Entity > Service > Component)
-- Must create todo tasks for all 4 phases before starting
+- Must create todo tasks for all 5 phases before starting
 - Be skeptical — every claim needs `file:line` proof
 - Verify convention by grepping 3+ existing examples before flagging violations
 - Actively check for DRY violations, YAGNI/KISS over-engineering, and correctness bugs
@@ -81,28 +82,58 @@ Target: All uncommitted changes (staged and unstaged) in the current working dir
 **Proof Required** — Every claim backed by `file:line` evidence or grep results. Speculation is forbidden.
 **Doc Staleness** — Cross-reference changed files against related docs (feature docs, test specs, READMEs). Flag any doc that is stale or missing updates to reflect current code changes.
 
+> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. Run `python .claude/scripts/code_graph batch-query <f1> <f2> --json` on changed files for test coverage and caller impact.
+
+## Blast Radius Pre-Analysis (MANDATORY FIRST STEP)
+
+> **IMPORTANT MANDATORY MUST:** This is the FIRST action in every review. Call `/graph-blast-radius` skill BEFORE any other review work.
+
+If `.code-graph/graph.db` exists, run graph-blast-radius analysis before reviewing changes:
+
+- Call `/graph-blast-radius` skill (which runs `python .claude/scripts/code_graph blast-radius --json`)
+- Include in review: impacted files count, untested changes, risk level based on blast radius size
+- Use results to prioritize file review order (highest-impact files first)
+
+### Graph-Assisted Change Review
+
+For each changed file, trace its full impact:
+
+1. `python .claude/scripts/code_graph trace <changed-file> --direction downstream --json` — see all files affected by changes (including implicit MESSAGE_BUS consumers, event handlers)
+2. Flag any affected file NOT covered by tests
+3. This catches cross-service impact that simple diff review misses
+
 ## Review Approach (Report-Driven Two-Phase - CRITICAL)
 
 **⛔ MANDATORY FIRST: Create Todo Tasks for Review Phases**
 Before starting, call TaskCreate with:
 
-- [ ] `[Review Phase 0] Get changes and create report file` - in_progress
-- [ ] `[Review Phase 1] Review file-by-file and update report` - pending
-- [ ] `[Review Phase 2] Re-read report for holistic assessment` - pending
-- [ ] `[Review Phase 3] Generate final review findings` - pending
+- [ ] `[Review Phase 0] Run /graph-blast-radius to analyze change impact` - in_progress **(MUST BE FIRST)**
+- [ ] `[Review Phase 1] Get changes and create report file` - pending
+- [ ] `[Review Phase 2] Review file-by-file and update report` - pending
+- [ ] `[Review Phase 3] Re-read report for holistic assessment` - pending
+- [ ] `[Review Phase 4] Generate final review findings` - pending
       Update todo status as each phase completes. This ensures review is tracked.
 
-> **Note:** If Phase 0 reveals 20+ changed files, replace Phase 1-3 tasks with Systematic Review Protocol tasks:
-> `[Review Phase 1] Categorize and fire parallel sub-agents`, `[Review Phase 2] Synchronize and cross-reference`, `[Review Phase 3] Generate consolidated report`
+> **Note:** If Phase 1 reveals 20+ changed files, replace Phase 2-4 tasks with Systematic Review Protocol tasks:
+> `[Review Phase 2] Categorize and fire parallel sub-agents`, `[Review Phase 3] Synchronize and cross-reference`, `[Review Phase 4] Generate consolidated report`
 
-**Phase 0: Get Changes and Create Report File**
+**Phase 0: Run Graph Blast Radius Analysis (MANDATORY FIRST STEP)**
+
+> **IMPORTANT MANDATORY MUST:** This is the FIRST action before ANY other review work. The blast radius analysis provides structural impact data (impacted files, untested changes, risk level) that informs the entire review.
+
+- [ ] Call `/graph-blast-radius` skill (runs `python .claude/scripts/code_graph blast-radius --json`)
+- [ ] Record in report: changed files count, impacted files count, untested changes, risk level
+- [ ] Use blast radius output to prioritize which files to review most carefully in Phase 2
+- [ ] If `.code-graph/graph.db` does not exist, note "Graph not available — skipping blast radius" and proceed to Phase 1
+
+**Phase 1: Get Changes and Create Report File**
 
 - [ ] Run `git status` to see all changed files
 - [ ] Run `git diff` to see actual changes (staged and unstaged)
 - [ ] Create `plans/reports/code-review-{date}-{slug}.md`
-- [ ] Initialize with Scope, Files to Review sections
+- [ ] Initialize with Scope, Files to Review, and Blast Radius Summary sections
 
-**Phase 1: File-by-File Review (Build Report Incrementally)**
+**Phase 2: File-by-File Review (Build Report Incrementally)**
 For EACH changed file, read and **immediately update report** with:
 
 - [ ] File path and change type (added/modified/deleted)
@@ -114,7 +145,7 @@ For EACH changed file, read and **immediately update report** with:
 - [ ] Issues Found: naming, typing, responsibility, patterns, bugs, over-engineering
 - [ ] Continue to next file, repeat
 
-**Phase 2: Holistic Review (Review the Accumulated Report)**
+**Phase 3: Holistic Review (Review the Accumulated Report)**
 After ALL files reviewed, **re-read the report** to see big picture:
 
 - [ ] Overall technical approach makes sense?
@@ -164,7 +195,7 @@ Cross-reference changed files against related documentation using this mapping:
 - [ ] **Race conditions:** Any async code with shared state? Concurrent access patterns safe?
 - [ ] **Business logic:** Does the logic match the requirement? Trace one complete happy path + one error path through the code.
 
-**Phase 3: Generate Final Review Result**
+**Phase 4: Generate Final Review Result**
 Update report with final sections:
 
 - [ ] Overall Assessment (big picture summary)

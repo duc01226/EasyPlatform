@@ -22,6 +22,7 @@
  *   CRITICAL_THINKING   → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
  *   AI_MISTAKE_PREVENTION → prompt-context-assembler (via lib/prompt-injections), mindset-injector (PreToolUse)
  *   WORKFLOW_CATALOG    → workflow-router
+ *   GRAPH_GREP_SUGGESTER → graph-grep-suggester
  *
  * DEDUP_LINES — dynamically calculated transcript line counts for each marker.
  * Values are computed at runtime based on actual injection content sizes.
@@ -152,7 +153,8 @@ const CONTENT_SOURCES = {
     AI_MISTAKE_PREVENTION: { type: 'fixed', value: 80 },
     // Behavioral windows — not content dedup, fixed values
     SEARCH_WINDOW: { type: 'fixed', value: 100 },
-    SEARCH_SKIP_OVERRIDE: { type: 'fixed', value: 50 }
+    SEARCH_SKIP_OVERRIDE: { type: 'fixed', value: 50 },
+    GRAPH_GREP_SUGGESTER: { type: 'fixed', value: 80 }
 };
 
 /**
@@ -286,5 +288,8 @@ module.exports = {
     CRITICAL_THINKING: '[CRITICAL-THINKING-MINDSET]',
 
     /** Marker for AI mistake prevention injection */
-    AI_MISTAKE_PREVENTION: '## Common AI Mistake Prevention'
+    AI_MISTAKE_PREVENTION: '## Common AI Mistake Prevention',
+
+    /** Marker for graph-grep-suggester directive */
+    GRAPH_GREP_SUGGESTER: '[graph] **STOP AND DECIDE'
 };

@@ -2,7 +2,7 @@
 name: prioritize
 version: 2.0.0
 description: '[Project Management] Order backlog items using RICE, MoSCoW, or Value-Effort frameworks. Produces prioritized lists with scores and rationale. Triggers on prioritize backlog, RICE score, MoSCoW, value effort matrix, feature prioritization.'
-allowed-tools: Read, Write, Edit
+allowed-tools: Read, Write, Edit, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.

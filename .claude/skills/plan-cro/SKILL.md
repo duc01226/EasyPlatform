@@ -9,6 +9,8 @@ disable-model-invocation: false
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
+- `.claude/skills/shared/estimation-framework.md` — Story points, complexity scale, splitting rules (plans MUST include `story_points` and `effort` in frontmatter)
+
 > **Skill Variant:** Variant of `/plan` — specialized for CRO (Conversion Rate Optimization) planning.
 
 ## Quick Summary

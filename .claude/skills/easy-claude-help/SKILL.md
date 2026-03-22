@@ -276,3 +276,32 @@ The workflow catalog itself lives in `.claude/workflows.json`. You can:
 - Change `settings.overridePrefix` (default `"quick:"`) for the per-prompt skip prefix
 
 > **Note:** Prefer `.ck.json → workflow.confirmationMode` over editing `workflows.json` directly, as `.ck.json` supports global+local cascading.
+
+---
+
+## Code Review Graph (Structural Code Intelligence)
+
+Optional feature that builds a knowledge graph of your codebase for graph-blast-radius analysis and smarter code reviews.
+
+**Setup:** `pip install tree-sitter tree-sitter-language-pack networkx` then `/graph-build`
+
+**Skills:**
+
+| Skill                   | Purpose                                            |
+| ----------------------- | -------------------------------------------------- |
+| `/graph-build`          | Build or update the knowledge graph                |
+| `/graph-blast-radius`   | Analyze impact of current changes                  |
+| `/graph-export`         | Export graph to JSON                               |
+| `/graph-connect-api`    | Detect frontend→backend API connections            |
+| `/graph-query`          | Query code relationships (callers, imports, tests) |
+| `/graph-export-mermaid` | Export single-file graph as Mermaid diagram        |
+
+**Auto-features (when graph is built):**
+
+- Session start: shows graph status
+- Review skills: auto-inject blast radius analysis
+- File edits: auto-update graph in background
+
+**Frontend→Backend API detection:** Auto-configured by `/project-config` when both frontend and backend are detected. Or manually add `graphConnectors` to `docs/project-config.json`.
+
+**Docs:** `.claude/docs/code-graph-mechanism.md` for detailed architecture.

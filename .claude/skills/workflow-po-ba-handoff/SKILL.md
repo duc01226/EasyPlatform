@@ -8,4 +8,4 @@ description: '[Workflow] Trigger PO to BA Handoff workflow — po hands off idea
 
 Activate the `po-ba-handoff` workflow. Run `/workflow-start po-ba-handoff` with the user's prompt as context.
 
-**Steps:** /idea → /review-artifact → /handoff → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /workflow-end
+**Steps:** /idea → /review-artifact → /handoff → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /workflow-end

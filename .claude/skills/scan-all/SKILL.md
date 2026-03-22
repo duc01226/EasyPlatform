@@ -63,6 +63,22 @@ node -e "require('./.claude/hooks/lib/session-init-helpers.cjs').refreshScanStal
 
 This re-evaluates all docs and removes the `.scan-stale` gate if all are now fresh.
 
+## Post-Scan: Build Knowledge Graph (MANDATORY)
+
+After all scans complete, **MUST create a follow-up task:**
+
+**TaskCreate: "Run /graph-build to build/update code knowledge graph"**
+
+The knowledge graph uses `project-config.json` (populated by scans) for API connector patterns and implicit connection rules. Building the graph after scans ensures:
+
+- Frontend↔backend API_ENDPOINT edges use accurate service paths
+- MESSAGE_BUS implicit edges use correct consumer patterns
+- Graph trace shows full system flow (frontend → backend → cross-service consumers)
+
+```bash
+python .claude/scripts/code_graph build --json
+```
+
 ## Summary Output
 
 After all scans complete, report:
@@ -71,4 +87,5 @@ After all scans complete, report:
 
 - {X}/10 scans succeeded
 - Reference docs refreshed in docs/project-reference/
-- Staleness gate cleared"
+- Staleness gate cleared
+- Next: Run /graph-build to build code knowledge graph"

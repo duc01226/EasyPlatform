@@ -56,6 +56,14 @@ Start working on these tasks immediately with minimal planning:
     - NO researcher subagents, NO scout commands
     - For non-trivial tasks: write brief analysis to `.ai/workspace/analysis/{task-name}.analysis.md` before implementing.
 
+> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. After implementing, run `python .claude/scripts/code_graph connections <file> --json` on modified files to verify no related files need updates.
+
+### Graph-Trace Quick Check
+
+When graph DB is available, run a quick downstream trace before implementing:
+
+- `python .claude/scripts/code_graph trace <file-to-modify> --direction downstream --json` — fast check for downstream impact
+
 2. **Rapid Implementation**
     - Use `/code` directly on tasks
     - Skip multi-step planning documents

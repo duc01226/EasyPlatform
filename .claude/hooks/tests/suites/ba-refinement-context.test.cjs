@@ -102,7 +102,7 @@ const baRefinementContextTests = [
             const tmpDir = createTempDir();
             try {
                 const input = createPreToolUseInput('Write', {
-                    file_path: 'src/Services/bravoGROWTH/Goals/GoalEntity.cs',
+                    file_path: 'src/Services/ServiceA/Goals/GoalEntity.cs',
                     content: 'public class GoalEntity {}'
                 });
                 const result = await runHook(BA_REFINEMENT_CONTEXT, input, { cwd: tmpDir });

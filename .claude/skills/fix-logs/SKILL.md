@@ -10,6 +10,7 @@ disable-model-invocation: false
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` AND `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+- `.claude/skills/shared/estimation-framework.md` — Story points and complexity (MUST provide `story_points` and `complexity` estimate in fix summary)
 
 > **Skill Variant:** Variant of `/fix` — log-based troubleshooting and error analysis.
 

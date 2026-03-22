@@ -47,6 +47,20 @@ Systematically investigate and diagnose issues using evidence-based debugging. C
 - Concise -- sacrifice grammar for brevity; list unresolved questions at end
 - When root cause is uncertain, present most likely scenarios with evidence and recommend further investigation steps
 
+## Graph Intelligence (MANDATORY when .code-graph/graph.db exists)
+
+After grep/search finds key files, you MUST use graph for structural analysis. Graph reveals callers, importers, tests, event consumers, and bus messages that grep cannot find.
+
+```bash
+python .claude/scripts/code_graph trace <file> --direction both --json                    # Full system flow (BEST FIRST CHOICE)
+python .claude/scripts/code_graph trace <file> --direction both --node-mode file --json    # File-level overview (less noise)
+python .claude/scripts/code_graph connections <file> --json             # Structural relationships
+python .claude/scripts/code_graph query callers_of <function> --json    # All callers
+python .claude/scripts/code_graph query tests_for <function> --json     # Test coverage
+```
+
+Orchestration: Grep first → Graph expand → Grep verify. Iterative deepening encouraged.
+
 ## Reminders
 
 - **NEVER** guess at root cause. Trace the actual code path.

@@ -2,7 +2,7 @@
 name: code-simplifier
 version: 2.0.0
 description: '[Code Quality] Simplifies and refines code for clarity, consistency, and maintainability while preserving all functionality. Focuses on recently modified code unless instructed otherwise.'
-allowed-tools: Read, Edit, Glob, Grep, Task
+allowed-tools: Read, Edit, Glob, Grep, Task, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
@@ -189,6 +189,24 @@ function getData() {
 - **Follow patterns** — Use platform conventions
 - **Document intent** — Add comments only where non-obvious
 - **Doc staleness** — After simplifications, cross-reference changed files against related docs (feature docs, test specs, READMEs); flag any that need updating
+
+## Graph Intelligence (RECOMMENDED if graph.db exists)
+
+If `.code-graph/graph.db` exists, enhance analysis with structural queries:
+
+- **Verify no callers break after simplification:** `python .claude/scripts/code_graph query callers_of <function> --json`
+- **Check dependents:** `python .claude/scripts/code_graph query importers_of <module> --json`
+- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
+
+> See `.claude/skills/shared/graph-intelligence-queries.md` for full query reference.
+
+### Graph-Trace Before Simplification
+
+When graph DB is available, BEFORE simplifying code, trace to understand what depends on it:
+
+- `python .claude/scripts/code_graph trace <file-to-simplify> --direction downstream --json` — all downstream consumers that depend on current behavior
+- Verify simplified code preserves the same interface for all traced consumers
+- Cross-service MESSAGE_BUS consumers are especially fragile — they may depend on exact message shape
 
 ## Related
 

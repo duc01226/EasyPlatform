@@ -2,7 +2,7 @@
 name: idea
 version: 1.0.0
 description: "[Project Management] Capture and structure product ideas as backlog artifacts. Use when capturing new ideas, feature requests, or concepts for future refinement. Triggers on keywords like "capture idea", "new idea", "feature idea", "add to backlog", "quick idea"."
-allowed-tools: Read, Write, Grep, Glob, TaskCreate, AskUserQuestion
+allowed-tools: Read, Write, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
@@ -49,6 +49,7 @@ allowed-tools: Read, Write, Grep, Glob, TaskCreate, AskUserQuestion
 
 - Validation step is mandatory, not optional
 - Auto-detect module silently; only prompt when ambiguous
+- MUST include rough `t_shirt_size` (XS/S/M/L/XL) in idea artifact for early sizing (see `.claude/skills/shared/estimation-framework.md` T-Shirt to Story Point Mapping)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 

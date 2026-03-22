@@ -246,6 +246,26 @@ Before any refactoring:
 - **Breaking Public APIs**: Maintain backward compatibility
 - **Logic in Wrong Layer**: Leads to duplicated code - move to lowest appropriate layer
 
+> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. Run `python .claude/scripts/code_graph connections <file> --json` on refactored files to find all consumers needing updates.
+
+## Graph Intelligence (RECOMMENDED if graph.db exists)
+
+If `.code-graph/graph.db` exists, enhance analysis with structural queries:
+
+- **Impact of restructuring -- trace callers:** `python .claude/scripts/code_graph query callers_of <function> --json`
+- **Impact of restructuring -- check importers:** `python .claude/scripts/code_graph query importers_of <module> --json`
+- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
+
+> See `.claude/skills/shared/graph-intelligence-queries.md` for full query reference.
+
+### Graph-Trace for Refactoring Impact
+
+When graph DB is available, BEFORE refactoring, trace to verify all consumers:
+
+- `python .claude/scripts/code_graph trace <file-to-refactor> --direction downstream --json` — all downstream consumers that depend on this code
+- `python .claude/scripts/code_graph trace <file-to-refactor> --direction both --json` — full picture: callers + consumers
+- Flag any consumer NOT covered in your refactoring plan — it may break silently
+
 ## Related
 
 - `code-simplifier`

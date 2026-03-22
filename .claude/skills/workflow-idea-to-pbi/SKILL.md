@@ -8,4 +8,4 @@ description: '[Workflow] Trigger Idea to PBI workflow — po/ba workflow: captur
 
 Activate the `idea-to-pbi` workflow. Run `/workflow-start idea-to-pbi` with the user's prompt as context.
 
-**Steps:** /idea → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /prioritize → /workflow-end
+**Steps:** /idea → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /prioritize → /workflow-end

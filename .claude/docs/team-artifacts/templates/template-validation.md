@@ -12,9 +12,9 @@ Use this checklist to validate idea and PBI templates before committing.
 - [ ] `tags` are lowercase and hyphenated
 - [ ] `template_version` is "2.0"
 
-### BravoSUITE Domain (if applicable)
+### Project Domain (if applicable)
 
-- [ ] `module` is valid (bravoGROWTH | bravoTALENTS | bravoSURVEYS | bravoINSIGHTS | Accounts)
+- [ ] `module` is valid (matches a module in project-config.json backendServices.serviceMap)
 - [ ] `related_features` list matches features in module README
 - [ ] `feature_doc_path` points to existing file
 - [ ] `entities` list uses exact entity names from .ai.md files
@@ -37,7 +37,7 @@ Use this checklist to validate idea and PBI templates before committing.
 - [ ] `idea_reference` links to valid idea (if from refinement)
 - [ ] `template_version` is "2.0"
 
-### BravoSUITE Domain (if applicable)
+### Project Domain (if applicable)
 
 - [ ] `module` matches idea template (if from refinement)
 - [ ] `primary_feature_doc` points to existing file
@@ -104,14 +104,11 @@ grep -rh "BR-[A-Z]\{3\}-[0-9]\{3\}" team-artifacts/ 2>/dev/null | sort | uniq
 
 ### Issue: Entity names don't match domain vocabulary
 
-**Fix:** Use exact entity names from .ai.md files:
-
-- bravoTALENTS: Candidate (not Applicant), Job, JobApplication
-- bravoGROWTH: Goal, Kudos, PerformanceReview, CheckIn
+**Fix:** Use exact entity names from .ai.md files. Check project-config.json for module-to-entity mapping.
 
 ## Version History
 
-| Version | Date       | Changes                                                  |
-| ------- | ---------- | -------------------------------------------------------- |
-| 2.0     | 2026-01-19 | Added BravoSUITE domain context fields, BR/TC validation |
-| 1.0     | Initial    | Basic template structure                                 |
+| Version | Date       | Changes                                       |
+| ------- | ---------- | --------------------------------------------- |
+| 2.0     | 2026-01-19 | Added domain context fields, BR/TC validation |
+| 1.0     | Initial    | Basic template structure                      |

@@ -2,7 +2,7 @@
 name: market-analysis
 version: 1.0.0
 description: '[Research] Analyze market landscape: competitors, sizing (TAM/SAM/SOM), trends, SWOT, customer segments. Use for marketing or business evaluation.'
-allowed-tools: Read, Write, WebSearch, WebFetch, TaskCreate
+allowed-tools: Read, Write, WebSearch, WebFetch, TaskCreate, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.

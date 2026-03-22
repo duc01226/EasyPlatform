@@ -275,6 +275,67 @@ const SCHEMA = {
             sections: { type: 'array', required: false }
         }
     },
+    graphConnectors: {
+        type: 'object',
+        required: false,
+        properties: {
+            apiEndpoints: {
+                type: 'object',
+                required: false,
+                properties: {
+                    enabled: { type: 'boolean', required: false },
+                    frontend: {
+                        type: 'object',
+                        required: false,
+                        properties: {
+                            framework: { type: 'string', required: true },
+                            paths: { type: 'array', required: true },
+                            customPatterns: { type: 'array', required: false }
+                        }
+                    },
+                    backend: {
+                        type: 'object',
+                        required: false,
+                        properties: {
+                            framework: { type: 'string', required: true },
+                            paths: { type: 'array', required: true },
+                            routePrefix: { type: 'string', required: false },
+                            customPatterns: { type: 'array', required: false }
+                        }
+                    }
+                }
+            },
+            implicitConnections: {
+                type: 'arrayOf',
+                required: false,
+                itemSchema: {
+                    name: { type: 'string', required: true },
+                    description: { type: 'string', required: false },
+                    edgeKind: { type: 'string', required: true },
+                    paths: { type: 'array', required: false },
+                    source: {
+                        type: 'object',
+                        required: true,
+                        properties: {
+                            filePattern: { type: 'string', required: true },
+                            contentPattern: { type: 'string', required: true },
+                            keyGroup: { type: 'number', required: true }
+                        }
+                    },
+                    target: {
+                        type: 'object',
+                        required: true,
+                        properties: {
+                            filePattern: { type: 'string', required: true },
+                            contentPattern: { type: 'string', required: true },
+                            keyGroup: { type: 'number', required: true }
+                        }
+                    },
+                    matchBy: { type: 'string', required: true }
+                }
+            }
+        }
+    },
     custom: { type: 'object', required: false, freeform: true }
 };
 
@@ -331,6 +392,12 @@ function validateField(value, fieldSchema, path, errors, warnings) {
         case 'number':
             if (typeof value !== 'number') {
                 errors.push(`${path}: expected number, got ${typeof value}`);
+            }
+            break;
+
+        case 'boolean':
+            if (typeof value !== 'boolean') {
+                errors.push(`${path}: expected boolean, got ${typeof value}`);
             }
             break;
 
@@ -419,7 +486,11 @@ function validateConfig(config) {
     const warnings = [];
 
     if (!config || typeof config !== 'object') {
-        return { valid: false, errors: ['Config must be a non-null object'], warnings: [] };
+        return {
+            valid: false,
+            errors: ['Config must be a non-null object'],
+            warnings: []
+        };
     }
 
     // Validate each top-level section
@@ -518,7 +589,7 @@ function describeField(name, schema, depth, lines) {
     const depr = schema.deprecated ? ' [DEPRECATED]' : '';
     const req = schema.required ? 'required' : 'optional';
 
-    if (schema.type === 'string' || schema.type === 'number') {
+    if (schema.type === 'string' || schema.type === 'number' || schema.type === 'boolean') {
         const extra = schema.isRegex ? ', regex' : '';
         lines.push(`${indent}${name} (${schema.type}, ${req}${extra})${depr}`);
     } else if (schema.type === 'array') {
@@ -561,7 +632,14 @@ function describeSchema() {
     return lines.join('\n');
 }
 
-module.exports = { SCHEMA, validateConfig, getRequiredSections, formatResult, validateRegex, describeSchema };
+module.exports = {
+    SCHEMA,
+    validateConfig,
+    getRequiredSections,
+    formatResult,
+    validateRegex,
+    describeSchema
+};
 
 // ═══════════════════════════════════════════════════════════════════════════
 // CLI ENTRY POINT

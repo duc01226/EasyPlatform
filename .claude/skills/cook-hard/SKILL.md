@@ -59,6 +59,16 @@ When this task involves frontend or UI changes, **MUST READ** `.claude/skills/sh
 - Generate research reports (max 150 lines each)
 - **External Memory**: Write all research to `.ai/workspace/analysis/{task-name}.analysis.md`. Re-read ENTIRE file before planning.
 
+> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. After implementing, run `python .claude/scripts/code_graph connections <file> --json` on modified files to verify no related files need updates.
+
+### Graph-Trace Before Implementation
+
+When graph DB is available, BEFORE writing code, trace to understand the blast radius:
+
+- `python .claude/scripts/code_graph trace <file-to-modify> --direction both --json` — see what calls this code AND what it triggers
+- `python .claude/scripts/code_graph trace <file-to-modify> --direction downstream --json` — see all downstream consumers
+- This prevents breaking implicit dependencies (bus message consumers, event handlers)
+
 ### 2. Comprehensive Planning
 
 - Use `planner` subagent with all research reports

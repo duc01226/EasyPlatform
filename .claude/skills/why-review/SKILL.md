@@ -9,6 +9,7 @@ description: '[Code Quality] Validate design rationale completeness in plan file
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
 - `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
+- `.claude/skills/shared/graph-impact-analysis-protocol.md` — Graph impact analysis: blast-radius + trace to find potentially stale/affected files
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 

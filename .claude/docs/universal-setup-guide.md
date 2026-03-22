@@ -63,18 +63,26 @@ Optional scans (run if applicable):
 
 These generate files in `docs/project-reference/` that hooks auto-inject into context.
 
-### Step 4: Customize CLAUDE.md
+### Step 4: Generate CLAUDE.md
 
-Update the root `CLAUDE.md` with your project-specific:
+Run the `/claude-md-init` skill to generate CLAUDE.md from your project configuration:
 
-- Project description and architecture overview
-- Golden rules (repository patterns, validation, side effects, etc.)
-- Key file locations
-- Development commands (build, test, lint, run)
-- Service ports and infrastructure
-- Naming conventions
+```
+/claude-md-init
+```
 
-The existing `CLAUDE.md` serves as a template — replace BravoSUITE-specific content with your project's.
+This reads `docs/project-config.json` and generates a CLAUDE.md with:
+
+- Project description and architecture overview (from config)
+- Golden rules (from contextGroups[].rules)
+- Key file locations (from modules[].pathRegex)
+- Development commands, service ports, infrastructure
+- Documentation index and lookup guide
+- Static framework sections (search-first, task planning, evidence-based reasoning, etc.)
+
+**Modes:** `init` (first-time), `update` (sync marked sections), `refactor` (optimize token efficiency).
+
+After generation, review and customize the AI-filled sections (project description, golden rules) to match your team's conventions.
 
 ### Step 5: Start Working
 

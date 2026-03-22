@@ -2,6 +2,7 @@
 
 using Easy.Platform.Application.MessageBus.InboxPattern;
 using Easy.Platform.Application.MessageBus.OutboxPattern;
+using Easy.Platform.Common;
 using Easy.Platform.Common.DependencyInjection;
 using Easy.Platform.Domain.UnitOfWork;
 using Easy.Platform.MongoDB.Domain.Repositories;
@@ -48,7 +49,7 @@ public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContex
     /// Override per-environment via appsettings "Mongo:MaxConnectionPoolSize"
     /// or MongoDB connection string <c>maxPoolSize=N</c>.
     /// </remarks>
-    public static new readonly int DefaultRecommendedMaxPoolSize = Math.Max(Environment.ProcessorCount * 25, 100);
+    public static new readonly int DefaultRecommendedMaxPoolSize = Math.Max(PlatformEnvironment.EffectiveProcessorCount * 25, 100);
 
     public PlatformMongoDbPersistenceModule(
         IServiceProvider serviceProvider,
@@ -66,7 +67,7 @@ public abstract class PlatformMongoDbPersistenceModule<TDbContext, TClientContex
     protected override int GetRecommendedMaxPoolSize()
     {
         return Configuration.GetValue<int?>("Mongo:MaxConnectionPoolSize")
-            ?? DefaultRecommendedMaxPoolSize;
+               ?? DefaultRecommendedMaxPoolSize;
     }
 
     /// <summary>

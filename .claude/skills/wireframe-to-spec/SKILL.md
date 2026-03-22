@@ -2,7 +2,7 @@
 name: wireframe-to-spec
 version: 1.0.0
 description: '[Frontend] Convert hand-drawn wireframes, digital wireframes, or UI sketches into structured design specifications. Accepts image inputs and produces ui-wireframe-protocol-formatted specs. Triggers on wireframe, sketch, hand-drawn, mockup image, wireframe to spec, sketch to code.'
-allowed-tools: Read, Write, Grep, Glob, AskUserQuestion
+allowed-tools: Read, Write, Grep, Glob, AskUserQuestion, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.

@@ -1,6 +1,6 @@
 # Estimation Framework — Story Points & Complexity
 
-> **Single source of truth** for all estimation across skills. Referenced by: story, refine, business-analyst, planning, plan, plan-hard, plan-fast, prioritize, product-owner, project-manager, quality-gate.
+> **Single source of truth** for all estimation across skills. Referenced by: story, refine, idea, business-analyst, planning, plan, plan-fast, plan-hard, plan-parallel, plan-two, plan-ci, plan-cro, prioritize, product-owner, project-manager, quality-gate, fix, fix-fast, fix-hard, fix-ui, fix-ci, fix-test, fix-logs, fix-issue, fix-parallel, debug.
 
 ## Story Point Scale (Modified Fibonacci 1-21)
 

@@ -57,6 +57,25 @@ Activate `arch-performance-optimization` skill and follow its workflow.
 
 **CRITICAL:** Present findings and optimization plan. Wait for explicit user approval before making changes.
 
+> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. Run `python .claude/scripts/code_graph query callers_of <function> --json` on hot functions to understand call frequency.
+
+## Graph Intelligence (RECOMMENDED if graph.db exists)
+
+If `.code-graph/graph.db` exists, enhance analysis with structural queries:
+
+- **Identify hot paths calling bottleneck:** `python .claude/scripts/code_graph query callers_of <function> --json`
+- **Batch analysis:** `python .claude/scripts/code_graph batch-query file1 file2 --json`
+
+> See `.claude/skills/shared/graph-intelligence-queries.md` for full query reference.
+
+### Graph-Trace for Hot Path Analysis
+
+When graph DB is available, use `trace` to map execution paths for performance analysis:
+
+- `python .claude/scripts/code_graph trace <bottleneck-file> --direction both --json` — full call chain: what triggers this code + what it triggers downstream
+- `python .claude/scripts/code_graph trace <bottleneck-file> --direction downstream --json` — downstream cascade (N+1 queries, excessive event handlers)
+- Cross-service MESSAGE_BUS edges reveal distributed performance bottlenecks
+
 ---
 
 **IMPORTANT Task Planning Notes (MUST FOLLOW)**

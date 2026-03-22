@@ -107,6 +107,7 @@ function injectAiMistakePrevention(transcriptPath, skipDedup = false) {
         `- **Update docs that embed canonical data when the source changes.** Docs inlining derived data (workflow sequences, schemas, config tables) go stale silently on source modification — trace and update all embedding docs alongside the canonical source.`,
         `- **Verify sub-agent results after context recovery.** Background agents may complete while parent context is compacted — grep-verify their output rather than trusting assumed completion.`,
         `- **Cross-check full target list against sub-agent assignments.** When distributing work to parallel sub-agents by category, items at category boundaries get missed. Always reconcile the union of all agent assignments against the complete target list before proceeding.`,
+        `- **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption needs permission + knowledge + enforcement (numbered workflow step).`,
         `- **PRIORITY** try to find suitable skill to activate for the task.`,
         ``
     ].join('\n');

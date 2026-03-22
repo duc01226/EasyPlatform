@@ -2,7 +2,7 @@
 name: plan-validate
 version: 1.0.0
 description: '[Planning] Validate plan with critical questions interview'
-allowed-tools: Read, Glob, Grep, TaskCreate, AskUserQuestion
+allowed-tools: Read, Glob, Grep, TaskCreate, AskUserQuestion, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.

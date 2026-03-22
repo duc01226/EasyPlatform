@@ -1,6 +1,6 @@
 # Skills Reference
 
-> 231 skills across 15+ domains + 3 shared modules for context-aware AI assistance
+> 246 skills across 15+ domains + 22 shared modules for context-aware AI assistance
 
 ## Overview
 
@@ -31,6 +31,7 @@ Skills Activated: fix, feature-investigation
 | [AI/ML Tools](#aiml-tools)                        | 4      | Prompts, multimodal, agents                          |
 | [Documentation](#documentation)                   | 6      | Docs, feature docs, changelogs, release notes        |
 | [Git/Workflow](#gitworkflow)                      | 6      | Commits, branches, code review, scout, quality gates |
+| [Code Quality](#code-quality)                     | 7      | Graph-based code analysis, blast radius, sync        |
 | [Planning/Research](#planningresearch)            | 6      | Plans, research, implementation, investigation       |
 | [Infrastructure/DevOps](#infrastructuredevops)    | 5      | Cloudflare, Docker, MCP                              |
 | [Context/Memory](#contextmemory)                  | 6      | Optimization, persistence, learning                  |
@@ -39,7 +40,7 @@ Skills Activated: fix, feature-investigation
 | [Document Processing](#document-processing)       | 4      | PDF, DOCX, Markdown conversions                      |
 | [Utility](#utility)                               | 2      | Claude Code CLI, skill creation                      |
 
-**Additional:** Shared Modules (3) -- see [Shared Modules](#shared-modules)
+**Additional:** Shared Modules (22) -- see [Shared Modules](#shared-modules)
 
 ---
 
@@ -121,6 +122,20 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 | `scout`             | find files, locate, search codebase                     | Fast codebase file discovery                         |
 | `why-review`        | why, design rationale, plan validation, alternatives    | Validate design rationale in plan files              |
 | `sre-review`        | sre, production, observability, reliability, ops review | Production readiness scoring for service/API changes |
+
+---
+
+## Code Quality
+
+| Skill                  | Triggers                                           | Description                                                            |
+| ---------------------- | -------------------------------------------------- | ---------------------------------------------------------------------- |
+| `graph-build`          | build graph, code graph, knowledge graph           | Build or update the code review knowledge graph (Tree-sitter + SQLite) |
+| `graph-blast-radius`   | blast radius, impact analysis, structural impact   | Analyze structural impact of current changes using knowledge graph     |
+| `graph-export`         | export graph, JSON dump                            | Export full knowledge graph to JSON file                               |
+| `graph-export-mermaid` | mermaid, diagram, visualize                        | Export single-file graph as Mermaid diagram                            |
+| `graph-query`          | graph query, callers, tests_for                    | Natural language graph relationship queries                            |
+| `graph-connect-api`    | connect api, api connections, frontend backend     | Detect frontend-to-backend API connections via knowledge graph         |
+| `graph-sync`           | sync graph, refresh graph, update graph after pull | Sync knowledge graph with current git state after pull/checkout        |
 
 ---
 
@@ -324,4 +339,4 @@ Use `/skill/create` to create a new skill:
 
 ---
 
-_Source: `.claude/skills/` | 231 skills across 15+ domains + 3 shared modules_
+_Source: `.claude/skills/` | 246 skills across 15+ domains + 22 shared modules_

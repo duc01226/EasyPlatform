@@ -13,6 +13,7 @@ description: '[Code Quality] Review PBI artifact for completeness, missing conce
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 - `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
+- `.claude/skills/shared/graph-impact-analysis-protocol.md` — Graph impact analysis: blast-radius + trace to find potentially stale/affected files
 
 ## Quick Summary
 

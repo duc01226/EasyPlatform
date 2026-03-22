@@ -77,6 +77,29 @@ public interface IPlatformCqrsEntityEvent : IPlatformCqrsEvent
     /// <returns>The event instance.</returns>
     public PlatformCqrsEntityEvent SetForceWaitEventHandlerFinished<THandler>()
         where THandler : IPlatformCqrsEventHandler;
+
+    /// <summary>
+    /// Sets the event to force a specific handler to run in the same active UoW as the parent.
+    /// </summary>
+    public PlatformCqrsEntityEvent SetForceRunHandlerInSameCurrentActiveUow<THandler>()
+        where THandler : IPlatformCqrsEventHandler;
+
+    /// <summary>
+    /// Restores EntityData and ExistingEntityData references from the original (pre-clone) event.
+    /// <br/><br/>
+    /// <b>Why needed:</b> When multiple handlers exist for an event, the event is deep-cloned (JSON serialized)
+    /// for handler isolation. This creates NEW instances of all navigation properties (Employee, RequestType, etc.).
+    /// If the handler runs in the same DbContext scope (MustWaitHandlerExecutionFinishedImmediately=true),
+    /// these deserialized instances conflict with entities already tracked by the DbContext
+    /// ("another instance with the same key value" error).
+    /// <br/><br/>
+    /// <b>What it does:</b> Replaces the cloned event's EntityData with the original in-memory reference
+    /// that is properly tracked by the parent's DbContext. Event metadata stays cloned for isolation.
+    /// <br/><br/>
+    /// Called from <c>DoHandle_BuildHandlerInstanceEvent</c> when <c>NeedWaitHandlerExecutionFinishedImmediately</c>
+    /// or <c>ForceCurrentInstanceHandleInCurrentThreadAndScope</c> is true.
+    /// </summary>
+    public void RestoreEntityDataFromOriginalEvent(IPlatformCqrsEntityEvent originalEvent);
 }
 
 /// <summary>
@@ -224,10 +247,28 @@ public abstract class PlatformCqrsEntityEvent : PlatformCqrsEvent, IPlatformUowE
         return SetWaitHandlerExecutionFinishedImmediately(typeof(THandler)).Cast<PlatformCqrsEntityEvent>();
     }
 
+    /// <inheritdoc />
+    public virtual PlatformCqrsEntityEvent SetForceRunHandlerInSameCurrentActiveUow<THandler>()
+        where THandler : IPlatformCqrsEventHandler
+    {
+        return SetRunHandlerInSameCurrentActiveUow(typeof(THandler)).Cast<PlatformCqrsEntityEvent>();
+    }
+
     /// <summary>
     /// Gets or sets the ID of the source unit of work.
     /// </summary>
     public string SourceUowId { get; set; }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Base implementation: restores untyped EntityData and ExistingEntityData references.
+    /// The typed override in <see cref="PlatformCqrsEntityEvent{TEntity}"/> also restores the strongly-typed properties.
+    /// </remarks>
+    public virtual void RestoreEntityDataFromOriginalEvent(IPlatformCqrsEntityEvent originalEvent)
+    {
+        EntityData = ((PlatformCqrsEntityEvent)originalEvent).EntityData;
+        ExistingEntityData = ((PlatformCqrsEntityEvent)originalEvent).ExistingEntityData;
+    }
 
     /// <summary>
     /// Sends an entity event.
@@ -610,6 +651,22 @@ public class PlatformCqrsEntityEvent<TEntity> : PlatformCqrsEntityEvent, IPlatfo
     /// Existing entity data before update/delete. Only available for entity with attribute <see cref="TrackFieldUpdatedDomainEventAttribute" />
     /// </summary>
     public TEntity? ExistingOriginalEntityData { get; set; }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Typed override: restores strongly-typed <see cref="EntityData"/> and <see cref="ExistingOriginalEntityData"/>
+    /// from the original event, preserving the in-memory entity reference that is tracked by the parent's DbContext.
+    /// </remarks>
+    public override void RestoreEntityDataFromOriginalEvent(IPlatformCqrsEntityEvent originalEvent)
+    {
+        base.RestoreEntityDataFromOriginalEvent(originalEvent);
+
+        if (originalEvent is PlatformCqrsEntityEvent<TEntity> typedOriginal)
+        {
+            EntityData = typedOriginal.EntityData;
+            ExistingOriginalEntityData = typedOriginal.ExistingOriginalEntityData;
+        }
+    }
 
     /// <summary>
     /// Gets or sets the list of domain events associated with the entity.

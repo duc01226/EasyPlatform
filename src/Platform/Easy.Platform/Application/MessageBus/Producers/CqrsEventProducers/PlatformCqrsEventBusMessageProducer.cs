@@ -49,7 +49,9 @@ public abstract class PlatformCqrsEventBusMessageProducer<TEvent, TMessage>
 
     protected override bool AutoOpenUow => false;
 
-    protected override bool MustWaitHandlerExecutionFinishedImmediately => ApplicationBusMessageProducer.HasOutboxMessageSupport();
+    // Outbox messages must be inserted in the same transaction as the entity change.
+    // MustRunHandlerInSameCurrentActiveUow ensures same scope/DbContext/UoW as the parent.
+    protected override bool MustRunHandlerInSameCurrentActiveUow => ApplicationBusMessageProducer.HasOutboxMessageSupport();
 
     protected abstract TMessage BuildMessage(TEvent @event);
 

@@ -11,8 +11,8 @@ created: { YYYY-MM-DD }
 updated: { YYYY-MM-DD }
 template_version: '2.0'
 
-# BravoSUITE Domain Context (for domain features)
-module: '' # bravoGROWTH | bravoTALENTS | bravoSURVEYS | bravoINSIGHTS | Accounts
+# Domain Context (for domain features — populate from project-config.json modules)
+module: '' # Module name from project-config.json backendServices.serviceMap
 related_features: [] # From idea template
 primary_feature_doc: '' # Primary related feature documentation
 
@@ -34,7 +34,7 @@ dependencies: [] # Other PBIs this depends on
 
 ## Related Business Rules
 
-> **Note:** For BravoSUITE domain features, this section references existing business rules from feature docs.
+> **Note:** For project domain features, this section references existing business rules from feature docs.
 
 ### Existing Business Rules (from feature docs)
 
@@ -75,7 +75,7 @@ WHEN {action/trigger}
 THEN {expected outcome}
 ```
 
-### For BravoSUITE Domain Features
+### For project Domain Features
 
 Follow test case patterns from related feature docs:
 
@@ -166,7 +166,7 @@ THEN {error handling}
 
 ## Reference Documentation
 
-> **Note:** Auto-populated for BravoSUITE domain features.
+> **Note:** Auto-populated for project domain features.
 
 ### Business Feature Docs
 

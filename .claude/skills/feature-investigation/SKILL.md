@@ -2,7 +2,7 @@
 name: feature-investigation
 version: 1.1.1
 description: "[Investigation] Use when the user asks to investigate, explore, understand, explain, or analyze how an existing feature or logic works. Triggers on keywords like "how does", "explain", "what is the logic", "investigate", "understand", "where is", "trace", "walk through", "show me how"."
-allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate
+allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate, Bash
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
@@ -541,11 +541,26 @@ Present findings in clear format with: Answer, How It Works (with code refs), Ke
 
 ---
 
+### Graph Intelligence
+
+> See `.claude/skills/shared/graph-intelligence-queries.md` for the full list of structural graph queries.
+> **RECOMMENDED** if `.code-graph/graph.db` exists.
+
+### Graph-Trace for Feature Flow
+
+When graph DB is available, use `trace` to understand the complete feature flow:
+
+- `python .claude/scripts/code_graph trace <entry-file> --direction both --json` — full upstream (who triggers) + downstream (what it affects) flow
+- Use `--direction downstream` when investigating "what happens after X"
+- Use `--direction upstream` when investigating "what triggers X"
+- Trace reveals implicit connections (MESSAGE_BUS, events) that grep misses
+
 ## See Also
 
 - `feature-implementation` - For implementing new features (code changes)
 - `debug` - For debugging and fixing issues
 - `planning` - For creating implementation plans
+- `graph-query` - Natural language graph queries for code relationships
 
 ## References
 

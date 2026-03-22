@@ -14,6 +14,7 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TaskCreate, AskUserQue
 - `references/integration-test-patterns.md`
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 - `docs/test-specs/` — Test specifications by module (read existing TCs for expected behavior; verify test-to-spec traceability)
+- `.claude/skills/shared/graph-impact-analysis-protocol.md` — Graph impact analysis: blast-radius + trace to find cross-service flows tests must cover
 
 > **CRITICAL: Search existing patterns FIRST.** Before generating ANY test, grep for existing integration test files in the same service. Read at least 1 existing test file to match conventions (namespace, usings, collection name, base class, helper usage). Never generate tests that contradict established patterns in the codebase.
 

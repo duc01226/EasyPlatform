@@ -1,6 +1,6 @@
 # Hooks Reference
 
-> 34 hooks + 25 lib modules for context-aware AI behavior
+> 41 hook files + 27 lib modules for context-aware AI behavior (some hooks register on multiple events)
 
 ## Overview
 
@@ -18,11 +18,11 @@ SessionStart hooks → UserPromptSubmit hooks → PreToolUse hooks → [Tool run
 
 | Event              | Trigger                      | Hooks | Use Cases                                                      |
 | ------------------ | ---------------------------- | ----- | -------------------------------------------------------------- |
-| `SessionStart`     | Session begins/resumes       | 7     | Init state, recover from compaction, resume context, load docs |
+| `SessionStart`     | Session begins/resumes       | 8     | Init state, recover from compaction, resume context, load docs |
 | `SessionEnd`       | Session ends                 | 2     | Save state, cleanup temp/swap files, notifications             |
 | `UserPromptSubmit` | Before processing user input | 3     | Route workflows, gate init, assemble prompt context            |
-| `PreToolUse`       | Before tool execution        | 18    | Block sensitive ops, inject context, enforce plans/todos       |
-| `PostToolUse`      | After tool completes         | 5     | Externalize outputs, format code, track events                 |
+| `PreToolUse`       | Before tool execution        | 23    | Block sensitive ops, inject context, enforce plans/todos       |
+| `PostToolUse`      | After tool completes         | 6     | Externalize outputs, format code, track events                 |
 | `PreCompact`       | Before context compaction    | 1     | Write compaction marker                                        |
 | `SubagentStart`    | Subagent spawning            | 1     | Configure subagent with parent context                         |
 | `Notification`     | Idle/waiting events          | 1     | System notifications                                           |
@@ -43,6 +43,7 @@ SessionStart hooks → UserPromptSubmit hooks → PreToolUse hooks → [Tool run
 | `session-init-docs.cjs`        | SessionStart                   | `startup`                         | Config skeleton + reference doc placeholder creation                          |
 | `workflow-router.cjs`          | SessionStart, UserPromptSubmit | `startup`, `*`                    | Detect intent, inject matching workflow from 45-workflow catalog              |
 | `prompt-context-assembler.cjs` | SessionStart, UserPromptSubmit | `startup`, `*`                    | Assemble dev rules, lessons, and lesson-learned reminder                      |
+| `graph-session-init.cjs`       | SessionStart                   | `startup`                         | Check Python/tree-sitter/graph.db, inject status guidance                     |
 | `session-end.cjs`              | SessionEnd                     | `clear\|exit\|compact`            | Write pending-tasks warning, cleanup temp/swap files, delete markers          |
 | `notify-waiting.js`            | SessionEnd, Stop, Notification | various                           | System notification when Claude is waiting for input                          |
 | `subagent-init.cjs`            | SubagentStart                  | `*`                               | Inject project context, rules, and workflow state into subagent sessions      |
@@ -63,6 +64,7 @@ SessionStart hooks → UserPromptSubmit hooks → PreToolUse hooks → [Tool run
 | `knowledge-context.cjs`          | `Edit\|Write\|MultiEdit` | Inject knowledge work guidelines for docs/knowledge/ files      |
 | `ba-refinement-context.cjs`      | `Write\|Edit`            | Inject BA team refinement context when editing PBI artifacts    |
 | `artifact-path-resolver.cjs`     | `Write`                  | Resolve correct artifact output paths (plans/, reports/)        |
+| `graph-context-injector.cjs`     | `Skill`                  | Auto-inject blast radius when review/debug skills invoked       |
 
 ### Lessons Injection
 
@@ -97,12 +99,14 @@ Lessons are managed via `/learn` skill. See `.claude/skills/learn/SKILL.md`.
 
 ### Context Management & Utility
 
-| Hook                       | Event                                | Purpose                                                                                         |
-| -------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------- |
-| `tool-output-swap.cjs`     | PostToolUse:`Read\|Grep\|Glob`       | Externalize large outputs to swap files (see [External Memory Swap](./external-memory-swap.md)) |
-| `write-compact-marker.cjs` | PreCompact                           | Write compaction marker for statusline baseline reset                                           |
-| `post-edit-prettier.cjs`   | PostToolUse:`Edit\|Write\|MultiEdit` | Auto-run Prettier on edited files                                                               |
-| `bash-cleanup.cjs`         | PostToolUse:`Bash`                   | Clean up tmpclaude temp files after Bash commands                                               |
+| Hook                       | Event                                | Purpose                                                                                          |
+| -------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `tool-output-swap.cjs`     | PostToolUse:`Read\|Grep\|Glob`       | Externalize large outputs to swap files (see [External Memory Swap](./external-memory-swap.md))  |
+| `write-compact-marker.cjs` | PreCompact                           | Write compaction marker for statusline baseline reset                                            |
+| `post-edit-prettier.cjs`   | PostToolUse:`Edit\|Write\|MultiEdit` | Auto-run Prettier on edited files                                                                |
+| `bash-cleanup.cjs`         | PostToolUse:`Bash`                   | Clean up tmpclaude temp files after Bash commands                                                |
+| `graph-auto-update.cjs`    | PostToolUse:`Edit\|Write\|MultiEdit` | Incremental graph update after file edits (3s debounce)                                          |
+| `graph-grep-suggester.cjs` | PostToolUse:`Grep`                   | Suggest graph queries when grep finds important entry-point files (entities, commands, handlers) |
 
 ---
 
@@ -133,22 +137,23 @@ Max 50 entries (FIFO trim)
 ## Session Lifecycle
 
 ```
-SESSION START (7 hooks)                         DURING SESSION
+SESSION START (8 hooks)                         DURING SESSION
   session-init.cjs ─────────────────────┐         edit-enforcement.cjs (every edit)
     ├── cleanupAll()                    │         skill-enforcement.cjs (every skill)
     ├── detectProjectType()             │         tool-output-swap.cjs (large outputs)
     ├── resolvePlanPath()               │         todo-tracker.cjs (every TaskCreate)
     └── writeEnv() (25 CK_* vars)      │         lessons-injector.cjs (every edit)
-  post-compact-recovery.cjs ────────────┤
-    └── restore workflow + todos        │       COMPACTION
-  session-resume.cjs ───────────────────┤         write-compact-marker.cjs
-    ├── injectPendingTasksWarning()     │
-    ├── restore todos from checkpoint   │       SESSION END (2 hooks)
-    └── inject swap inventory           │         session-end.cjs
-  npm-auto-install.cjs                  │           ├── write pending-tasks-warning.json
-  session-init-docs.cjs                 │           ├── cleanupAll()
-  workflow-router.cjs                   │           ├── deleteMarker() (on /clear)
-  prompt-context-assembler.cjs ─────────┘           └── deleteSessionSwap() (on exit/clear)
+  post-compact-recovery.cjs ────────────┤         graph-auto-update.cjs (after edits)
+    └── restore workflow + todos        │
+  session-resume.cjs ───────────────────┤       COMPACTION
+    ├── injectPendingTasksWarning()     │         write-compact-marker.cjs
+    ├── restore todos from checkpoint   │
+    └── inject swap inventory           │       SESSION END (2 hooks)
+  npm-auto-install.cjs                  │         session-end.cjs
+  session-init-docs.cjs                 │           ├── write pending-tasks-warning.json
+  workflow-router.cjs                   │           ├── cleanupAll()
+  prompt-context-assembler.cjs          │           ├── deleteMarker() (on /clear)
+  graph-session-init.cjs ───────────────┘           └── deleteSessionSwap() (on exit/clear)
 ```
 
 ---
@@ -202,13 +207,14 @@ SESSION START (7 hooks)                         DURING SESSION
 
 ### General Utilities
 
-| Module                  | Purpose                                    |
-| ----------------------- | ------------------------------------------ |
-| `debug-log.cjs`         | Debug logging (file + stderr)              |
-| `hook-runner.cjs`       | Hook execution wrapper with error handling |
-| `stdin-parser.cjs`      | Parse JSON from hook stdin                 |
-| `temp-file-cleanup.cjs` | tmpclaude file cleanup                     |
-| `wr-config.cjs`         | Workflow router configuration              |
+| Module                  | Purpose                                                            |
+| ----------------------- | ------------------------------------------------------------------ |
+| `debug-log.cjs`         | Debug logging (file + stderr)                                      |
+| `hook-runner.cjs`       | Hook execution wrapper with error handling                         |
+| `stdin-parser.cjs`      | Parse JSON from hook stdin                                         |
+| `temp-file-cleanup.cjs` | tmpclaude file cleanup                                             |
+| `wr-config.cjs`         | Workflow router configuration                                      |
+| `graph-utils.cjs`       | Python detection, graph availability check, CLI invocation wrapper |
 
 ---
 

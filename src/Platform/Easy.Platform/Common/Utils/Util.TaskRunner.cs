@@ -42,12 +42,12 @@ public static partial class Util
 
         public static int GetDefaultParallelIoTaskMaxConcurrent()
         {
-            return Environment.ProcessorCount * DefaultNumberOfParallelIoTasksPerCpuRatio;
+            return PlatformEnvironment.EffectiveProcessorCount * DefaultNumberOfParallelIoTasksPerCpuRatio;
         }
 
         public static int GetDefaultNumberOfParallelIoTaskMaxConcurrent()
         {
-            return Environment.ProcessorCount * DefaultNumberOfParallelComputeTasksPerCpuRatio;
+            return PlatformEnvironment.EffectiveProcessorCount * DefaultNumberOfParallelComputeTasksPerCpuRatio;
         }
 
         /// <summary>

@@ -12,6 +12,7 @@ description: '[Code Quality] Two-pass code review for task completion'
 - `.claude/skills/shared/evidence-based-reasoning-protocol.md`
 - `.claude/skills/shared/design-patterns-quality-checklist.md` — Design pattern opportunities, anti-pattern detection, DRY/abstraction enforcement
 - `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
+- `.claude/skills/shared/graph-impact-analysis-protocol.md` — Graph impact analysis: blast-radius + trace to find potentially stale/affected files
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 

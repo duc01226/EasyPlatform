@@ -276,7 +276,7 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     /// Override via <see cref="GetRecommendedMaxPoolSize()"/> virtual method in derived classes,
     /// or via appsettings "Persistence:MaxPoolSize".
     /// </remarks>
-    public static readonly int DefaultRecommendedMaxPoolSize = Math.Max(Environment.ProcessorCount * 4, 20);
+    public static readonly int DefaultRecommendedMaxPoolSize = Math.Max(PlatformEnvironment.EffectiveProcessorCount * 4, 20);
 
     /// <summary>
     /// Gets the recommended maximum connection pool size for this persistence module.
@@ -289,7 +289,7 @@ public abstract class PlatformPersistenceModule : PlatformModule, IPlatformPersi
     protected virtual int GetRecommendedMaxPoolSize()
     {
         return Configuration.GetValue<int?>("Persistence:MaxPoolSize")
-            ?? DefaultRecommendedMaxPoolSize;
+               ?? DefaultRecommendedMaxPoolSize;
     }
 
 

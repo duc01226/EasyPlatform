@@ -104,7 +104,6 @@ If validation fails, note the errors — the scan should fix them.
 Check if `CLAUDE.md` exists at the project root. If missing, create a skeleton with essential sections so the AI has project instructions from the start.
 
 ```bash
-# Check if CLAUDE.md exists
 test -f CLAUDE.md && echo "EXISTS" || echo "MISSING"
 ```
 
@@ -116,9 +115,9 @@ The skeleton should contain:
 - Key file locations section (empty, to be filled by the user or `/scan-*` skills)
 - Development commands section (empty placeholders)
 - Naming conventions section
-- A note directing users to run `/project-config` for full setup
+- A note directing users to run `/claude-md-init` after scan skills complete for full generation
 
-> **NOTE:** The `session-init-docs.cjs` hook also creates this skeleton automatically on session start. This phase is a safety net for cases where the hook didn't run or was skipped.
+> **NOTE:** The `session-init-docs.cjs` hook also creates this skeleton automatically on session start. This phase is a safety net for cases where the hook didn't run or was skipped. The full CLAUDE.md generation via `/claude-md-init` runs as the last task in Phase 5, after all scan skills populate reference docs.
 
 **If EXISTS — skip.** Do not overwrite an existing CLAUDE.md.
 
@@ -312,6 +311,84 @@ find . -name "*fixture*" -path "*e2e*" 2>/dev/null | head -10
 - `tcCodeFormat`: Detect pattern from existing tests (grep for TC- codes)
 - `entryPoints`: List framework config + key fixture files
 
+### 2i. Graph Connectors (auto-detect frontend→backend API mapping)
+
+If the project has BOTH frontend AND backend modules (detected in Phase 2a), auto-populate `graphConnectors` to enable API endpoint detection:
+
+**Detection logic (AI decision):**
+
+1. **Frontend framework detection:**
+    - `@angular/core` in any package.json → `"angular"`
+    - `react` in any package.json → `"react"`
+    - `vue` in any package.json → `"vue"`
+    - None detected → `"generic"`
+
+2. **Backend framework detection:**
+    - `.csproj` with `Microsoft.AspNetCore` → `"dotnet"`
+    - `@springboot` or `spring-boot-starter-web` in pom.xml/build.gradle → `"spring"`
+    - `express` in any package.json → `"express"`
+    - `fastapi` in any requirements.txt/pyproject.toml → `"fastapi"`
+    - None detected → `"generic"`
+
+3. **Path detection:**
+    - Frontend paths: use module paths from `modules[]` where `kind=frontend-app`
+    - Backend paths: use module paths from `modules[]` where `kind=backend-service`, filter to controller/route directories
+
+4. **Route prefix:** Common prefixes: `"api"` for .NET/Spring, `""` for Express/FastAPI. AI determines based on codebase evidence.
+
+**Build `graphConnectors`:**
+
+```json
+{
+    "graphConnectors": {
+        "apiEndpoints": {
+            "enabled": true,
+            "frontend": {
+                "framework": "<detected>",
+                "paths": ["<from modules[]>"],
+                "customPatterns": []
+            },
+            "backend": {
+                "framework": "<detected>",
+                "paths": ["<from modules[]>"],
+                "routePrefix": "<detected>",
+                "customPatterns": []
+            }
+        }
+    }
+}
+```
+
+**Rules:**
+
+- Only populate if both frontend AND backend are detected (skip for backend-only or frontend-only projects)
+- Set `enabled: true` by default when both sides detected
+- Use AI judgment for ambiguous cases — if unsure, set `"generic"` framework
+- Supported frameworks: `angular`, `react`, `vue`, `dotnet`, `spring`, `express`, `fastapi`, `generic`
+
+### 2j. Implicit Connections (auto-detect loosely coupled patterns)
+
+If the project has backend services with event-driven or message bus patterns, auto-populate `graphConnectors.implicitConnections[]`.
+
+**Detection heuristics (AI decision):**
+
+1. If `.cs` files with `EntityEventApplicationHandler<` found in `UseCaseEvents/` dirs → suggest `entity-definition-to-event-handlers` + `repo-crud-to-event-handlers` rules
+2. If `.cs` files with `EntityEventBusMessageProducer<` found in `Producers/` dirs → suggest `entity-event-producers` rule
+3. If `.cs` files with `EntityEventBusMessageConsumer<` or `PlatformApplicationMessageBusConsumer<` found in `Consumers/` dirs → suggest `bus-message-producers-to-consumers` + `free-format-message-consumers` rules
+4. If `.cs` files with `CommandEventApplicationHandler<` found → suggest `command-event-handlers` rule
+5. If files contain `new \w+BusMessage` or `SendAsync.*BusMessage` outside of `Producers/` dirs → suggest `free-format-bus-message-send-to-consumers` rule (captures free-format messages sent directly via bus producer service, not via typed producer classes)
+6. If files contain `FreeFormatMessages/` directories with bus message class definitions → suggest `free-format-bus-message-class-to-consumers` rule
+7. For non-.NET projects: AI uses judgment to detect event/message patterns and propose custom rules (e.g., Redux actions, signal handlers, pub/sub patterns)
+
+**Rules:**
+
+- Only populate `implicitConnections[]` when patterns are detected; omit if none found
+- Each rule must have `paths` scoped to relevant directories (not repo root)
+- Set `matchBy: "key-equals"` by default; use `"key-contains"` only for fuzzy message name matching
+- **MANDATORY:** Present detected rules to user via `AskUserQuestion` before writing — let user confirm or adjust patterns
+- After writing rules, run `python .claude/scripts/code_graph connect-implicit --json` to verify edges are created
+- Report: "Created N implicit connection rules, detected M edges"
+
 ### Merge Strategy
 
 - **If `modules[]` is empty but v1 sections exist** — leave v1 data, skip `modules[]` generation (let hooks use v1 fallback)
@@ -367,6 +444,7 @@ After project-config is verified, AI **MANDATORY IMPORTANT MUST** create `TaskCr
 3. Each task description: `"Invoke /scan-{name} skill to scan codebase and populate docs/{filename} with real project patterns."`
 4. Tasks should be `pending` — execute sequentially after project-config phase completes
 5. `/scan-project-structure` should run **first** (other scans may reference its output)
+6. **LAST TASK:** After ALL scan skills complete, create a final task: `"Run /claude-md-init to generate CLAUDE.md from config + scan results"`. This must run last because it reads populated reference docs to build the documentation index and lookup guide.
 
 ## E2E Investigation Guidance
 
@@ -405,6 +483,20 @@ Report what changed:
 - New services/apps discovered
 - Any path mismatches or warnings
 - Reference doc scan tasks created (list all 10)
+
+---
+
+## Post-Completion Tasks (MANDATORY)
+
+After project-config scan completes, **MUST create these follow-up tasks:**
+
+1. **TaskCreate: "Run /graph-build to build code knowledge graph"** — The knowledge graph uses project-config.json for API connector patterns and implicit connection rules. Building the graph after config ensures frontend↔backend API edges and MESSAGE_BUS edges are created correctly.
+
+2. **TaskCreate: "Run /docs-init or /scan-all to populate reference docs"** — Reference docs (backend-patterns, frontend-patterns, etc.) depend on accurate project-config.json. Run scans after config is populated.
+
+3. **TaskCreate: "Verify graph edges: run `python .claude/scripts/code_graph status --json`"** — Confirm graph built successfully with API_ENDPOINT and MESSAGE_BUS edges.
+
+> **Why graph-build after project-config?** The graph auto-connect feature reads `graphConnectors` from project-config.json to match frontend HTTP calls with backend routes. Without populated config, auto-detection is used as fallback — but explicit config produces more accurate matches (custom patterns, scoped paths).
 
 ---
 

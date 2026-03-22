@@ -3,7 +3,7 @@ name: scout
 version: 1.0.0
 description: "[Investigation] Fast codebase file discovery for task-related files. Use when quickly locating relevant files across a large codebase, beginning work on features spanning multiple directories, or before making changes that might affect multiple parts. Triggers on "find files", "locate", "scout", "search codebase", "what files"."
 
-allowed-tools: Glob, Grep, Read, Task, TaskCreate
+allowed-tools: Glob, Grep, Read, Bash, Task, TaskCreate
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
@@ -26,7 +26,8 @@ allowed-tools: Glob, Grep, Read, Task, TaskCreate
 
 1. **Analyze Request** — Extract entity names, feature keywords, file types from prompt
 2. **Parallel Search** — Spawn 3 agents searching backend core, backend infra, and frontend paths
-3. **Synthesize** — Combine into numbered, prioritized file list with suggested starting points
+3. **Graph Expand (MANDATORY — DO NOT SKIP)** — **YOU MUST** run `/graph-query` on 2-3 key files found in Step 2. This is NOT optional. Graph reveals the complete dependency network that grep alone CANNOT find. Use `/graph-connect-api` for frontend↔backend API tracing. Without this step, investigation results are incomplete.
+4. **Synthesize** — Combine grep + graph results into numbered, prioritized file list with suggested starting points
 
 **Key Rules:**
 
@@ -80,7 +81,9 @@ Extract keywords from USER_PROMPT to identify:
 
 ### Step 2: Execute Parallel Search
 
-Spawn SCALE number of `Explore` subagents in parallel using `Task` tool.
+Spawn SCALE number of `scout` subagents in parallel using Agent tool (`subagent_type: "scout"`).
+
+**WHY `scout` not `Explore`:** Custom `scout` agents read `.claude/agents/scout.md` which includes graph CLI knowledge and Bash access. Built-in `Explore` agents have NO graph awareness.
 
 #### Agent Distribution Strategy
 
@@ -92,12 +95,48 @@ Spawn SCALE number of `Explore` subagents in parallel using `Task` tool.
 
 - **Timeout**: 3 minutes per agent
 - Skip agents that don't return within timeout
-- Use Glob for file patterns, Grep for content search
+- Use Glob for file patterns, Grep for content search, Bash for graph CLI
 - Return only file paths, no content
 
-### Step 3: Synthesize Results
+### Step 3: Graph Expand (MANDATORY — DO NOT SKIP)
 
-Combine results into a **numbered, prioritized file list** (see Results Format below).
+**YOU (the main agent) MUST run these graph commands YOURSELF after sub-agents return.** This step is NOT optional — without graph, results are incomplete. Sub-agents cannot use graph — only you can.
+
+```bash
+# Check graph exists
+ls .code-graph/graph.db 2>/dev/null && echo "GRAPH_AVAILABLE" || echo "NO_GRAPH"
+```
+
+If GRAPH_AVAILABLE, pick 2-3 key files from sub-agent results (entities, commands, bus messages) and run:
+
+```bash
+# Get full dependency network of a key file
+python .claude/scripts/code_graph connections <key_file> --json
+
+# Find ALL callers of a key command/handler
+python .claude/scripts/code_graph query callers_of <FunctionName> --json
+
+# Find ALL importers of a bus message class
+python .claude/scripts/code_graph query importers_of <file_path> --json
+
+# Batch query multiple files at once
+python .claude/scripts/code_graph batch-query <file1> <file2> <file3> --json
+
+# If graph returns "ambiguous" — search to disambiguate, then retry with qualified name
+python .claude/scripts/code_graph search <keyword> --kind Function --json
+
+# Find shortest path between two nodes (trace how A connects to B)
+python .claude/scripts/code_graph find-path <source_qn> <target_qn> --json
+
+# Filter results by service and limit count
+python .claude/scripts/code_graph query callers_of <name> --limit 5 --filter "ServiceName" --json
+```
+
+Merge graph results with sub-agent grep results. Graph discovers files that grep missed (structural relationships).
+
+### Step 4: Synthesize Results
+
+Combine grep + graph results into a **numbered, prioritized file list** (see Results Format below).
 
 ---
 
@@ -123,6 +162,43 @@ Combine results into a **numbered, prioritized file list** (see Results Format b
 **/*{keyword}*Service*.cs
 **/*{keyword}*.html
 ```
+
+---
+
+## Graph Intelligence (MANDATORY when graph.db exists)
+
+> **MUST READ** `.claude/skills/shared/graph-assisted-investigation-protocol.md` for full orchestration guidance.
+
+If `.code-graph/graph.db` exists, **orchestrate grep ↔ graph ↔ glob** to find files faster:
+
+### Grep-First Discovery (When Query is Semantic)
+
+When the user's prompt describes a behavior or flow (not a specific file), use Grep/Glob/Search FIRST to discover entry point files before using graph tools:
+
+1. Grep for key terms from the user's query (class names, commands, handlers, endpoints)
+2. Use discovered files as input to `connections`, `batch-query`, or `trace` commands
+3. Use `trace --direction both` on middle files (controllers, commands) to see full upstream + downstream flow
+
+### After grep/glob finds entry files, use graph to expand the network:
+
+```bash
+# Check graph exists
+ls .code-graph/graph.db 2>/dev/null && echo "AVAILABLE" || echo "MISSING"
+
+# Full picture of a key file (callers + importers + tests in one call)
+python .claude/scripts/code_graph connections <file> --json
+
+# Find all callers of a function/command (e.g., after finding a handler)
+python .claude/scripts/code_graph query callers_of <name> --json
+
+# Find all importers of a module/entity (e.g., after finding a BusMessage)
+python .claude/scripts/code_graph query importers_of <file> --json
+
+# Batch query multiple files at once (most efficient)
+python .claude/scripts/code_graph batch-query <f1> <f2> <f3> --json
+```
+
+**Key:** Graph results get HIGHER priority than grep (structural relationships > text matches). After graph expansion, grep again to verify content in discovered files.
 
 ---
 

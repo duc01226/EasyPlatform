@@ -161,6 +161,10 @@
             "claude": "/pbi-challenge",
             "copilot": "/pbi-challenge"
         },
+        "pbi-mockup": {
+            "claude": "/pbi-mockup",
+            "copilot": "/pbi-mockup"
+        },
         "dor-gate": {
             "claude": "/dor-gate",
             "copilot": "/dor-gate"
@@ -441,6 +445,7 @@
                 "refine-review",
                 "story",
                 "story-review",
+                "pbi-mockup",
                 "tdd-spec",
                 "tdd-spec-review",
                 "plan",
@@ -610,7 +615,7 @@
             "preActions": {
                 "injectContext": "Role: Product Owner\nIDEA-TO-PBI WORKFLOW:\n1. Capture idea with problem statement\n2. Refine into PBI with acceptance criteria\n3. Break into user stories (GIVEN/WHEN/THEN)\n4. Dev BA PIC collaborative review via /pbi-challenge\n5. DoR gate validation via /dor-gate\n6. Prioritize using RICE or MoSCoW"
             },
-            "sequence": ["idea", "refine", "refine-review", "story", "story-review", "pbi-challenge", "dor-gate", "prioritize", "workflow-end"],
+            "sequence": ["idea", "refine", "refine-review", "story", "story-review", "pbi-challenge", "dor-gate", "pbi-mockup", "prioritize", "workflow-end"],
             "whenNotToUse": "Bug fixes, direct implementation (use feature workflow)",
             "whenToUse": "User has a new idea, feature request, or wants to add to backlog; wants to refine idea into PBI with stories"
         },
@@ -825,7 +830,19 @@
             "preActions": {
                 "injectContext": "Role: Product Owner\nPO-BA HANDOFF:\n1. Capture idea with /idea\n2. Review artifact quality with /review-artifact\n3. Create handoff record with /handoff\n4. BA refines into PBI with /refine\n5. BA creates user stories with /story\n6. Dev BA PIC collaborative review via /pbi-challenge\n7. DoR gate validation via /dor-gate"
             },
-            "sequence": ["idea", "review-artifact", "handoff", "refine", "refine-review", "story", "story-review", "pbi-challenge", "dor-gate", "workflow-end"],
+            "sequence": [
+                "idea",
+                "review-artifact",
+                "handoff",
+                "refine",
+                "refine-review",
+                "story",
+                "story-review",
+                "pbi-challenge",
+                "dor-gate",
+                "pbi-mockup",
+                "workflow-end"
+            ],
             "whenNotToUse": "Direct development, design-first workflows, already refined requirements",
             "whenToUse": "PO hands off idea/PBI to BA for refinement and story creation"
         },
@@ -924,6 +941,7 @@
                 "story-review",
                 "pbi-challenge",
                 "dor-gate",
+                "pbi-mockup",
                 "design-spec",
                 "interface-design",
                 "frontend-design",
@@ -1000,7 +1018,7 @@
             "preActions": {
                 "injectContext": "IDEA-TO-TDD WORKFLOW:\n1. Capture idea interactively with discovery interview (AskUserQuestion)\n2. Refine into PBI with testability assessment\n3. Generate TDD test specs in feature docs Section 17 using /tdd-spec\n\nThis workflow supports TDD-first development: write test specs BEFORE implementation."
             },
-            "sequence": ["idea", "refine", "refine-review", "tdd-spec", "tdd-spec-review", "workflow-end"],
+            "sequence": ["idea", "refine", "refine-review", "tdd-spec", "tdd-spec-review", "pbi-mockup", "workflow-end"],
             "whenNotToUse": "Direct implementation, bug fixes, existing PBIs that already have test specs",
             "whenToUse": "User wants to go from idea to test-driven specifications, TDD approach, spec-first development, write tests before code"
         },
@@ -1091,6 +1109,7 @@
                 "refine-review",
                 "story",
                 "story-review",
+                "pbi-mockup",
                 "plan-validate",
                 "tdd-spec",
                 "tdd-spec-review",

@@ -24,9 +24,12 @@ Rapidly locate relevant files across the codebase using parallel search strategi
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `project-structure-reference.md` — service list, directory tree, ports
+> - `graph-intelligence-queries.md` — Graph CLI commands for structural code queries
 >
 > If files not found, search for: `src/Services` or `services/`, frontend directories, configuration files
 > to discover project-specific directory structure and conventions.
+>
+> **GRAPH POWER TOOL:** When `.code-graph/graph.db` exists, orchestrate grep ↔ graph ↔ glob dynamically. After grep/glob/search finds entry files, use graph `connections` or `batch-query` to discover ALL related files instantly. Graph → grep → graph is valid. See graph-assisted-investigation-protocol.md.
 
 ## Workflow
 
@@ -34,7 +37,25 @@ Rapidly locate relevant files across the codebase using parallel search strategi
 
 2. **Execute prioritized search** using project directory structure and search patterns (see below)
 
-3. **Synthesize results** into a numbered, prioritized file list with cross-service integration points and suggested starting points
+3. **Graph expand (MANDATORY — DO NOT SKIP)** — after finding entry files, YOU MUST use graph to discover the full dependency network. Without this step, results are incomplete:
+
+    ```bash
+    ls .code-graph/graph.db 2>/dev/null && echo "GRAPH_AVAILABLE" || echo "NO_GRAPH"
+    python .claude/scripts/code_graph connections <entry_file> --json
+    python .claude/scripts/code_graph query callers_of <key_function> --json
+    python .claude/scripts/code_graph search <keyword> --kind Function --json
+    python .claude/scripts/code_graph find-path <source> <target> --json
+    python .claude/scripts/code_graph batch-query <file1> <file2> --json
+    ```
+
+    If graph returns "ambiguous", use `search --kind` to disambiguate, then retry with the qualified name.
+    Graph results get HIGHER priority than grep matches. Then grep again to verify content if needed.
+
+### Grep-First Protocol
+
+When user prompt is semantic (not file-specific), grep/glob/search FIRST to find entry files, then expand with graph `trace --direction both` for full system flow.
+
+4. **Synthesize results** into a numbered, prioritized file list with cross-service integration points and suggested starting points
 
 ## Key Rules
 

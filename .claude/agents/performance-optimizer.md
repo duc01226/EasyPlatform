@@ -52,6 +52,20 @@ Performance analysis specialist. Investigate and optimize backend query performa
 
 Performance report: Executive Summary, Bottleneck Analysis (severity, file:line, metrics), Root Cause, Optimization Recommendations (with expected impact), Before/After comparison plan, Confidence %.
 
+## Graph Intelligence (MANDATORY when .code-graph/graph.db exists)
+
+After grep/search finds key files, you MUST use graph for structural analysis. Graph reveals callers, importers, tests, event consumers, and bus messages that grep cannot find.
+
+```bash
+python .claude/scripts/code_graph trace <file> --direction both --json                    # Full system flow (BEST FIRST CHOICE)
+python .claude/scripts/code_graph trace <file> --direction both --node-mode file --json    # File-level overview (less noise)
+python .claude/scripts/code_graph connections <file> --json             # Structural relationships
+python .claude/scripts/code_graph query callers_of <function> --json    # All callers
+python .claude/scripts/code_graph query tests_for <function> --json     # Test coverage
+```
+
+Orchestration: Grep first → Graph expand → Grep verify. Iterative deepening encouraged.
+
 ## Reminders
 
 - **NEVER** optimize without measuring first. Premature optimization is the root of all evil.

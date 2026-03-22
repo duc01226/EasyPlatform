@@ -76,6 +76,20 @@ When invoked with spec compliance context (requirements/plan text provided along
 
 **When to use:** Lightweight inline spec check during ad-hoc reviews. For formal workflows, use the dedicated `spec-compliance-reviewer` agent instead.
 
+## Graph Intelligence (MANDATORY when .code-graph/graph.db exists)
+
+After grep/search finds key files, you MUST use graph for structural analysis. Graph reveals callers, importers, tests, event consumers, and bus messages that grep cannot find.
+
+```bash
+python .claude/scripts/code_graph trace <file> --direction both --json                    # Full system flow (BEST FIRST CHOICE)
+python .claude/scripts/code_graph trace <file> --direction both --node-mode file --json    # File-level overview (less noise)
+python .claude/scripts/code_graph connections <file> --json             # Structural relationships
+python .claude/scripts/code_graph query callers_of <function> --json    # All callers
+python .claude/scripts/code_graph query tests_for <function> --json     # Test coverage
+```
+
+Orchestration: Grep first → Graph expand → Grep verify. Iterative deepening encouraged.
+
 ## Reminders
 
 - **NEVER** approve code without reading it. "Looks fine" without proof is forbidden.

@@ -10,6 +10,8 @@ license: MIT
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
+- `.claude/skills/shared/estimation-framework.md` — Story points, complexity scale, splitting rules (plans MUST include `story_points` and `effort` in frontmatter)
+
 > **MANDATORY:** Apply `.claude/skills/shared/iterative-phase-quality-protocol.md` — assess task complexity,
 > decompose into small phases, each phase follows plan→implement→review→fix→verify cycle.
 

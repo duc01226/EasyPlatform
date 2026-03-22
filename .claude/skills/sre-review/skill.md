@@ -107,6 +107,24 @@ Review the changed files and score each criterion 0-2:
 | 10-14 | **NEEDS WORK** | Address gaps before deploying to production. OK for dev/staging.                          |
 | 0-9   | **NOT READY**  | Significant operational gaps. Review Operational Readiness rules in code-review-rules.md. |
 
+> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. Run `python .claude/scripts/code_graph connections <file> --json` on service boundary files for cross-service impact.
+
+## Structural Impact Analysis (RECOMMENDED if graph.db exists)
+
+If `.code-graph/graph.db` exists, include structural impact in production readiness assessment:
+
+- Run: `python .claude/scripts/code_graph graph-blast-radius --json`
+- High blast radius (>20 impacted nodes) --> flag as high-risk deployment
+- Check if changed functions have test coverage via `python .claude/scripts/code_graph query tests_for <function_name> --json`
+
+### Graph-Trace for Production Flow
+
+When graph DB is available, use `trace` to verify production readiness:
+
+- `python .claude/scripts/code_graph trace <service-file> --direction downstream --json` — verify all downstream dependencies are accounted for (event handlers, bus consumers, cross-service calls)
+- `python .claude/scripts/code_graph trace <service-file> --direction both --json` — full flow: entry points + downstream cascade
+- Flag any cross-service MESSAGE_BUS consumer that lacks error handling or monitoring
+
 ## Round 2: Focused Re-Review (MANDATORY)
 
 > **Protocol:** `.claude/skills/shared/double-round-trip-review-protocol.md`
