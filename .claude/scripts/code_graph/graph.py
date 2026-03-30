@@ -310,6 +310,127 @@ class GraphStore:
         ).fetchall()
         return [r["file_path"] for r in rows]
 
+    def get_distinct_edge_kinds(self) -> set[str]:
+        """Return all distinct edge kinds present in the database."""
+        rows = self._conn.execute(
+            "SELECT DISTINCT kind FROM edges"
+        ).fetchall()
+        return {r["kind"] for r in rows}
+
+    def resolve_bare_calls(self) -> dict:
+        """Post-build batch resolution of unqualified CALLS targets.
+
+        Scans all CALLS edges with bare (unqualified) targets, looks up each
+        bare name in the global node table, and resolves edges where exactly
+        one match exists. For ambiguous matches (2+), uses IMPORTS_FROM edges
+        from the calling file to disambiguate.
+
+        Returns stats: {total_bare, resolved_unique, resolved_import, ambiguous, no_match}.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        # Step 1: Find all bare CALLS targets (no :: = unresolved)
+        bare_edges = self._conn.execute(
+            "SELECT id, source_qualified, target_qualified, file_path "
+            "FROM edges WHERE kind = 'CALLS' AND target_qualified NOT LIKE '%::%'"
+        ).fetchall()
+
+        if not bare_edges:
+            return {"total_bare": 0, "resolved_unique": 0,
+                    "resolved_import": 0, "ambiguous": 0, "no_match": 0}
+
+        # Step 2: Build lookup cache — bare name → list of qualified names
+        # Only Functions and Classes (not Files or Tests)
+        name_to_qns: dict[str, list[str]] = {}
+        rows = self._conn.execute(
+            "SELECT name, qualified_name, file_path FROM nodes "
+            "WHERE kind IN ('Function', 'Class')"
+        ).fetchall()
+        for r in rows:
+            name_to_qns.setdefault(r["name"], []).append(r["qualified_name"])
+
+        # Step 3: Build import cache — file_path → set of imported targets
+        import_cache: dict[str, set[str]] = {}
+        imp_rows = self._conn.execute(
+            "SELECT source_qualified, target_qualified FROM edges "
+            "WHERE kind = 'IMPORTS_FROM'"
+        ).fetchall()
+        for r in imp_rows:
+            import_cache.setdefault(r["source_qualified"], set()).add(
+                r["target_qualified"]
+            )
+
+        # Step 4: Resolve edges
+        resolved_unique = 0
+        resolved_import = 0
+        ambiguous = 0
+        no_match = 0
+        updates: list[tuple[str, int]] = []
+
+        for edge in bare_edges:
+            target_name = edge["target_qualified"]
+            candidates = name_to_qns.get(target_name, [])
+
+            if len(candidates) == 0:
+                no_match += 1
+            elif len(candidates) == 1:
+                updates.append((candidates[0], edge["id"]))
+                resolved_unique += 1
+            else:
+                # Ambiguous: try import-based disambiguation
+                source_file = edge["file_path"]
+                imported = import_cache.get(source_file, set())
+                # Check which candidate's file is imported by the calling file
+                matched = []
+                for qn in candidates:
+                    # Extract file path from qualified name (before ::)
+                    cand_file = qn.split("::")[0] if "::" in qn else ""
+                    # Check if any import target is a prefix/suffix of candidate file
+                    for imp_target in imported:
+                        if (imp_target in cand_file or
+                                cand_file.endswith(imp_target) or
+                                imp_target.replace(".", "/") in cand_file or
+                                imp_target.replace(".", "\\") in cand_file):
+                            matched.append(qn)
+                            break
+                if len(matched) == 1:
+                    updates.append((matched[0], edge["id"]))
+                    resolved_import += 1
+                else:
+                    ambiguous += 1
+
+        # Step 5: Batch update resolved edges
+        if updates:
+            # SQLite limits variables per query; batch in chunks of 500
+            for i in range(0, len(updates), 500):
+                chunk = updates[i:i + 500]
+                for new_target, edge_id in chunk:
+                    self._conn.execute(
+                        "UPDATE edges SET target_qualified = ? WHERE id = ?",
+                        (new_target, edge_id),
+                    )
+            self.commit()
+            self._invalidate_cache()
+
+        total_bare = len(bare_edges)
+        logger.info(
+            "resolve_bare_calls: %d bare → %d unique + %d import = %d resolved "
+            "(%.0f%%), %d ambiguous, %d no-match",
+            total_bare, resolved_unique, resolved_import,
+            resolved_unique + resolved_import,
+            (resolved_unique + resolved_import) * 100 / max(total_bare, 1),
+            ambiguous, no_match,
+        )
+
+        return {
+            "total_bare": total_bare,
+            "resolved_unique": resolved_unique,
+            "resolved_import": resolved_import,
+            "ambiguous": ambiguous,
+            "no_match": no_match,
+        }
+
     def search_nodes(self, query: str, limit: int = 20) -> list[GraphNode]:
         """Keyword search across node names with multi-word AND logic.
 

@@ -107,14 +107,30 @@ def _get_store(repo_root: str | None = None) -> tuple[GraphStore, Path]:
 
 
 def _resolve_target_node(store: GraphStore, root: Path, target: str):
-    """Resolve a target string to a graph node using 3-step lookup."""
+    """Resolve a target string to a graph node using multi-step lookup.
+
+    Resolution order:
+    1. Exact qualified name match
+    2. Relative file path → absolute path
+    3. Exact class/function name match (prefer Class over Function)
+    4. Keyword search fallback (single match → use; multiple → ambiguous)
+    """
     node = store.get_node(target)
     if not node:
         abs_target = str(root / target)
         node = store.get_node(abs_target)
+    # Step 3: exact name match — handles class names in multi-class files
+    # e.g. "DeleteCheckInCommandHandler" in DeleteCheckInCommand.cs
     if not node:
-        candidates = store.search_nodes(target, limit=5)
-        if len(candidates) == 1:
+        candidates = store.search_nodes(target, limit=20)
+        # Prefer exact name match: filter to nodes whose name == target
+        exact = [c for c in candidates if c.name == target]
+        if exact:
+            # Among exact matches, prefer Class > Function > File
+            kind_prio = {"Class": 0, "File": 1, "Function": 2, "Type": 3}
+            exact.sort(key=lambda n: kind_prio.get(n.kind, 9))
+            node = exact[0]
+        elif len(candidates) == 1:
             node = candidates[0]
         elif len(candidates) > 1:
             return None, {
@@ -1265,24 +1281,35 @@ def _filter_by_node_mode(levels: list[dict], node_mode: str) -> list[dict]:
 # Tool 8: trace (BFS through edges for full system flow)
 # ---------------------------------------------------------------------------
 
-# Default edge kinds to follow during trace.
-# Includes call chains + all implicit connector types:
-# - CALLS: function-to-function call chains
-# - INHERITS: class inheritance chains
-# - MESSAGE_BUS: cross-service bus message producer→consumer
-# - TRIGGERS_EVENT: entity event → handler
-# - PRODUCES_EVENT: event producer
-# - TRIGGERS_COMMAND_EVENT: command → event chain
-# - API_ENDPOINT: frontend HTTP call → backend route
-# Excluded from default (add via --edge-kinds when needed):
-# - IMPORTS_FROM (64K edges, depth 2+ causes massive fan-out)
-# - CONTAINS (94K edges, structural only)
-# - TESTED_BY (test links, use query tests_for instead)
-_TRACE_DEFAULT_EDGE_KINDS = frozenset({
-    "CALLS", "INHERITS",
-    "TRIGGERS_EVENT", "PRODUCES_EVENT",
-    "MESSAGE_BUS", "TRIGGERS_COMMAND_EVENT", "API_ENDPOINT",
+# Always-included edge kinds for trace (structural code relationships).
+_TRACE_CORE_EDGE_KINDS = frozenset({"CALLS", "INHERITS"})
+
+# Edge kinds excluded from trace defaults — high fan-out or structural-only.
+# These can be added explicitly via --edge-kinds when needed.
+_TRACE_EXCLUDED_EDGE_KINDS = frozenset({
+    "IMPORTS_FROM",  # 64K+ edges, depth 2+ causes massive fan-out
+    "CONTAINS",      # 94K+ edges, structural hierarchy only
+    "TESTED_BY",     # test links — use query tests_for instead
 })
+
+
+def _get_trace_edge_kinds(store: "GraphStore") -> frozenset[str]:
+    """Auto-discover traceable edge kinds from the database.
+
+    Returns core kinds (CALLS, INHERITS) plus any implicit/connector
+    edge kinds found in the DB (MESSAGE_BUS, TRIGGERS_EVENT, API_ENDPOINT,
+    CQRS_DISPATCH, etc.), excluding high-fan-out structural kinds.
+
+    This makes the trace engine generic — it works with any project's
+    implicit connector rules without hardcoding edge kind names.
+    """
+    try:
+        all_kinds = store.get_distinct_edge_kinds()
+    except Exception:
+        all_kinds = set()
+    return frozenset(
+        (all_kinds | _TRACE_CORE_EDGE_KINDS) - _TRACE_EXCLUDED_EDGE_KINDS
+    )
 
 
 def trace_connections(
@@ -1325,14 +1352,28 @@ def trace_connections(
                 "summary": f"No node found matching '{target}'.",
             }
 
-        allowed_kinds = set(edge_kinds) if edge_kinds else _TRACE_DEFAULT_EDGE_KINDS
+        allowed_kinds = set(edge_kinds) if edge_kinds else _get_trace_edge_kinds(store)
         visited: set[str] = set()
         levels: list[dict[str, Any]] = []
 
-        # Seed with all nodes in the target file (if target is a file)
+        # Seed with nodes from the target scope:
+        # - File: all nodes in the file (classes, functions, etc.)
+        # - Class: the class + all contained members (methods, properties)
+        #   This enables tracing by class name in multi-class files
+        # - Other (function, etc.): just that node
         if node.kind == "File":
             file_nodes = store.get_nodes_by_file(node.file_path)
             current_qns = {n.qualified_name for n in file_nodes}
+        elif node.kind == "Class":
+            # Include the class itself + its file (for connector edges)
+            current_qns = {node.qualified_name}
+            # Add all contained members via CONTAINS edges
+            for e in store.get_edges_by_source(node.qualified_name):
+                if e.kind == "CONTAINS":
+                    current_qns.add(e.target_qualified)
+            # Also include the file node for connector edges (MESSAGE_BUS, etc.)
+            if node.file_path:
+                current_qns.add(node.file_path)
         else:
             current_qns = {node.qualified_name}
 

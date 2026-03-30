@@ -500,3 +500,4 @@ tmpclaude-*
 .claude/tmp*
 .claude/agent-memory/
 .claude/workflow-state.json
+.claude/.commit-skill-active

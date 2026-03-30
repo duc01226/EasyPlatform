@@ -137,6 +137,78 @@ _CALL_TYPES: dict[str, list[str]] = {
     "solidity": ["call_expression"],
 }
 
+# Per-language built-in call noise — names that tree-sitter captures as call
+# expressions but are language keywords, built-in functions, or base-class
+# methods that never correspond to user-defined nodes in the graph.
+# Engine defaults only: universally safe to skip in ANY project of that language.
+# Project-specific noise (delegate params, framework methods) goes in
+# project-config.json → graphSettings.callNoiseFilter instead.
+_BUILTIN_CALL_NOISE: dict[str, frozenset[str]] = {
+    "csharp": frozenset({
+        # Language keywords parsed as calls
+        "nameof", "typeof", "sizeof", "default",
+        # System.Object base methods
+        "GetType", "ToString", "GetHashCode", "Equals", "ReferenceEquals",
+    }),
+    "typescript": frozenset({
+        # Array/String prototype methods (always on built-in types)
+        "map", "filter", "reduce", "forEach", "find", "findIndex", "includes",
+        "indexOf", "lastIndexOf", "some", "every", "flat", "flatMap",
+        "push", "pop", "shift", "unshift", "splice", "slice", "sort", "reverse",
+        "concat", "join", "split", "replace", "match", "test", "exec",
+        "trim", "toLowerCase", "toUpperCase", "startsWith", "endsWith",
+        "substring", "charAt", "charCodeAt", "padStart", "padEnd", "repeat",
+        # Object/JSON/Math builtins
+        "assign", "freeze", "create", "defineProperty", "hasOwnProperty",
+        "parse", "stringify", "floor", "ceil", "round", "abs", "random",
+        "keys", "values", "entries", "from", "of", "isArray",
+        # Console methods
+        "log", "warn", "error", "info", "debug", "dir", "table", "trace",
+        # Promise methods
+        "then", "catch", "finally", "resolve", "reject", "all", "race",
+        # Event/Observable/Stream methods (EventEmitter, Observable, DOM — runtime standard, not framework)
+        "pipe", "subscribe", "unsubscribe", "next", "emit",
+        "addEventListener", "removeEventListener", "on", "off",
+        # Timer methods
+        "setTimeout", "setInterval", "clearTimeout", "clearInterval",
+    }),
+    # JS shares the same built-in set as TS (DRY — defined once above)
+    "tsx": None,  # placeholder, replaced after dict creation
+    "javascript": None,  # placeholder, replaced after dict creation
+    "python": frozenset({
+        # Built-in functions (always available, never user-defined)
+        "print", "len", "range", "str", "int", "float", "bool", "list",
+        "dict", "set", "tuple", "type", "isinstance", "issubclass",
+        "hasattr", "getattr", "setattr", "delattr", "super",
+        "enumerate", "zip", "map", "filter", "sorted", "reversed",
+        "min", "max", "sum", "abs", "round", "any", "all",
+        "next", "iter", "open", "repr", "id", "hash", "callable",
+        "vars", "dir", "input", "format", "ord", "chr", "hex", "oct", "bin",
+    }),
+    "go": frozenset({
+        # Go built-in functions (language-level, not from any package)
+        "make", "len", "cap", "append", "close", "delete", "copy",
+        "new", "panic", "recover", "print", "println",
+        "complex", "real", "imag",
+    }),
+    "java": frozenset({
+        # Object base methods + common parse utilities
+        "toString", "equals", "hashCode", "getClass", "clone",
+        "notify", "notifyAll", "wait", "finalize",
+        "println", "printf", "format", "valueOf",
+        "parseInt", "parseDouble", "parseLong", "parseFloat",
+    }),
+    "ruby": frozenset({
+        # Kernel/Object methods + common built-ins
+        "puts", "print", "p", "raise", "require", "require_relative",
+        "include", "extend", "attr_reader", "attr_writer", "attr_accessor",
+        "new", "initialize", "to_s", "to_i", "to_f",
+    }),
+}
+# JS, TSX share the same built-in set as TypeScript (DRY)
+_BUILTIN_CALL_NOISE["javascript"] = _BUILTIN_CALL_NOISE["typescript"]
+_BUILTIN_CALL_NOISE["tsx"] = _BUILTIN_CALL_NOISE["typescript"]
+
 # Patterns that indicate a test function
 _TEST_PATTERNS = [
     re.compile(r"^test_"),
@@ -191,9 +263,19 @@ class CodeParser:
 
     _MODULE_CACHE_MAX = 15_000  # Evict cache to cap memory on huge monorepos
 
-    def __init__(self) -> None:
+    def __init__(self, call_noise_extra: dict[str, frozenset[str]] | None = None) -> None:
         self._parsers: dict[str, object] = {}
         self._module_file_cache: dict[str, Optional[str]] = {}
+        # Merge engine defaults with optional project-specific noise entries
+        # loaded from project-config.json → graphSettings.callNoiseFilter
+        self._call_noise: dict[str, frozenset[str]] = {}
+        for lang, defaults in _BUILTIN_CALL_NOISE.items():
+            extra = (call_noise_extra or {}).get(lang, frozenset())
+            self._call_noise[lang] = defaults | extra
+        # Also include any config-only languages not in engine defaults
+        for lang, extra in (call_noise_extra or {}).items():
+            if lang not in self._call_noise:
+                self._call_noise[lang] = frozenset(extra)
 
     def _get_parser(self, language: str):  # type: ignore[arg-type]
         if language not in self._parsers:
@@ -648,6 +730,9 @@ class CodeParser:
             if node_type in call_types:
                 call_name = self._get_call_name(child, language, source)
                 if call_name and enclosing_func:
+                    # Skip built-in noise for all languages (engine + project config)
+                    if call_name in self._call_noise.get(language, frozenset()):
+                        continue
                     caller = self._qualify(enclosing_func, file_path, enclosing_class)
                     target = self._resolve_call_target(
                         call_name, file_path, language,
@@ -1081,7 +1166,23 @@ class CodeParser:
                     for arg in child.children:
                         if arg.type in ("identifier", "attribute"):
                             bases.append(arg.text.decode("utf-8", errors="replace"))
-        elif language in ("java", "csharp", "kotlin"):
+        elif language == "csharp":
+            # C# AST: class_declaration → base_list → (generic_name | identifier | qualified_name)
+            for child in node.children:
+                if child.type == "base_list":
+                    for sub in child.children:
+                        if sub.type == "generic_name":
+                            # Extract the class name (first identifier), strip type args
+                            for ident in sub.children:
+                                if ident.type == "identifier":
+                                    bases.append(ident.text.decode("utf-8", errors="replace"))
+                                    break
+                        elif sub.type == "identifier":
+                            bases.append(sub.text.decode("utf-8", errors="replace"))
+                        elif sub.type == "qualified_name":
+                            text = sub.text.decode("utf-8", errors="replace")
+                            bases.append(text.rsplit(".", 1)[-1])
+        elif language in ("java", "kotlin"):
             # Look for superclass/interfaces in extends/implements clauses
             for child in node.children:
                 if child.type in (

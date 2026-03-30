@@ -472,6 +472,36 @@
         { "filename": "docs/project-reference/e2e-test-reference.md", "purpose": "E2E Playwright test patterns and page objects" },
         { "filename": "docs/project-reference/domain-entities-reference.md", "purpose": "Domain entities, value objects, DTO mapping, aggregate boundaries" }
     ],
+    "graphSettings": {
+        "callNoiseFilter": {
+            "description": "Project-specific bare call names to skip as CALLS edges (delegate params, short vars, etc.)",
+            "csharp": [
+                "action",
+                "func",
+                "callback",
+                "predicate",
+                "selector",
+                "condition",
+                "factory",
+                "handler",
+                "resolver",
+                "compiled",
+                "must",
+                "queryBuilder",
+                "builder",
+                "configure",
+                "configureOptions",
+                "fr1",
+                "fr2",
+                "fr3",
+                "fr4",
+                "fr5",
+                "p",
+                "x",
+                "e"
+            ]
+        }
+    },
     "graphConnectors": {
         "apiEndpoints": {
             "enabled": true,
@@ -589,6 +619,40 @@
                     "keyGroup": 1
                 },
                 "matchBy": "key-contains"
+            },
+            {
+                "name": "cqrs-command-dispatch",
+                "description": "Controller dispatches CQRS command to command handler via Cqrs.SendCommand",
+                "edgeKind": "CQRS_DISPATCH",
+                "paths": ["src/Backend/"],
+                "source": {
+                    "filePattern": "**/Controllers/*.cs",
+                    "contentPattern": "\\]\\s+(\\w+Command)\\s+\\w+\\)",
+                    "keyGroup": 1
+                },
+                "target": {
+                    "filePattern": "**/UseCaseCommands/**/*.cs",
+                    "contentPattern": "class\\s+(\\w+Command)Handler\\b",
+                    "keyGroup": 1
+                },
+                "matchBy": "key-equals"
+            },
+            {
+                "name": "cqrs-query-dispatch",
+                "description": "Controller dispatches CQRS query to query handler via Cqrs.SendQuery",
+                "edgeKind": "CQRS_DISPATCH",
+                "paths": ["src/Backend/"],
+                "source": {
+                    "filePattern": "**/Controllers/*.cs",
+                    "contentPattern": "\\]\\s+(\\w+Query)\\s+\\w+\\)",
+                    "keyGroup": 1
+                },
+                "target": {
+                    "filePattern": "**/UseCaseQueries/**/*.cs",
+                    "contentPattern": "class\\s+(\\w+Query)Handler\\b",
+                    "keyGroup": 1
+                },
+                "matchBy": "key-equals"
             }
         ]
     },

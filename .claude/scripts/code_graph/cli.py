@@ -562,10 +562,58 @@ def _auto_connect(repo: str | None, result: dict) -> None:
                     store.commit()
                 except Exception as e:
                     logger.warning("Implicit connector failed: %s", e)
+            # Post-build suggestions for improving graph quality
+            suggestions = _generate_build_suggestions(config, result)
+            if suggestions:
+                result["suggestions"] = suggestions
+
         finally:
             store.close()
     except Exception as e:
         logger.warning("Auto-connect failed: %s", e)
+
+
+def _generate_build_suggestions(config: dict, build_result: dict) -> list[str]:
+    """Analyze build results and suggest config improvements.
+
+    Uses build_result stats (including call_resolution) instead of
+    querying the DB directly. Returns actionable suggestions for users
+    who haven't configured project-config.json or are missing key settings.
+    """
+    suggestions = []
+    try:
+        from .incremental import find_project_config, find_project_root
+        root = find_project_root()
+        has_config = find_project_config(root) is not None
+
+        if not has_config:
+            suggestions.append(
+                "No project-config.json found. Create one in docs/ or .claude/ "
+                "with graphConnectors.implicitConnections for framework-specific "
+                "edges (message bus, entity events, CQRS dispatch)."
+            )
+
+        if not config.get("graphConnectors", {}).get("implicitConnections"):
+            suggestions.append(
+                "No implicit connection rules configured. Add "
+                "graphConnectors.implicitConnections[] to project-config.json "
+                "for cross-service tracing (entity events, bus messages)."
+            )
+
+        if not config.get("graphSettings", {}).get("callNoiseFilter"):
+            # Use call_resolution stats from build result (no DB access needed)
+            cr = build_result.get("call_resolution", {})
+            total_bare = cr.get("total_bare", 0)
+            ambiguous = cr.get("ambiguous", 0)
+            if total_bare > 1000 and ambiguous > total_bare * 0.3:
+                suggestions.append(
+                    f"{total_bare} bare CALLS edges remain after resolution. "
+                    "Add graphSettings.callNoiseFilter to project-config.json "
+                    "with project-specific delegate/callback names to reduce noise."
+                )
+    except Exception:
+        pass
+    return suggestions
 
 
 def _connect_api(args) -> dict:

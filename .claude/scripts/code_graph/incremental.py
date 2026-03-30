@@ -18,6 +18,51 @@ from typing import Optional
 from .graph import GraphStore
 from .parser import CodeParser
 
+
+def find_project_config(root: Path) -> Optional[Path]:
+    """Find project-config.json by searching common locations.
+
+    Searches in order: docs/, .claude/, project root, .ai/.
+    Returns the first match or None. Works for any project structure.
+    """
+    for subdir in ["docs", ".claude", ".", ".ai"]:
+        candidate = root / subdir / "project-config.json"
+        if candidate.is_file():
+            return candidate
+    return None
+
+
+def load_project_config(root: Path) -> dict:
+    """Load project-config.json if it exists. Returns {} if not found."""
+    import json
+    config_path = find_project_config(root)
+    if not config_path:
+        return {}
+    try:
+        return json.loads(config_path.read_text(encoding="utf-8", errors="replace"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def _make_parser(repo_root: Path) -> CodeParser:
+    """Create a CodeParser with project-specific call noise filter.
+
+    Reads optional graphSettings.callNoiseFilter from project-config.json
+    and passes extra entries to the parser. Falls back to engine defaults
+    if no config exists.
+    """
+    config = load_project_config(repo_root)
+    noise_config = config.get("graphSettings", {}).get("callNoiseFilter", {})
+    # Build dict[str, frozenset] from all language keys in config
+    extra_noise: dict[str, frozenset[str]] | None = None
+    if noise_config:
+        extra_noise = {
+            lang: frozenset(entries)
+            for lang, entries in noise_config.items()
+            if isinstance(entries, list) and entries
+        }
+    return CodeParser(call_noise_extra=extra_noise or None)
+
 logger = logging.getLogger(__name__)
 
 # Default ignore patterns (in addition to .gitignore)
@@ -200,7 +245,7 @@ def get_all_tracked_files(repo_root: Path) -> list[str]:
 def collect_all_files(repo_root: Path) -> list[str]:
     """Collect all parseable files in the repo, respecting ignore patterns."""
     ignore_patterns = _load_ignore_patterns(repo_root)
-    parser = CodeParser()
+    parser = _make_parser(repo_root)
     files = []
 
     # Prefer git ls-files for tracked files
@@ -258,7 +303,7 @@ def find_dependents(store: GraphStore, file_path: str) -> list[str]:
 
 def full_build(repo_root: Path, store: GraphStore) -> dict:
     """Full rebuild of the entire graph."""
-    parser = CodeParser()
+    parser = _make_parser(repo_root)
     files = collect_all_files(repo_root)
 
     # Purge stale data from files no longer on disk
@@ -296,11 +341,15 @@ def full_build(repo_root: Path, store: GraphStore) -> dict:
         store.set_metadata("last_synced_commit", head)
     store.commit()
 
+    # Post-build: resolve bare CALLS targets against global node table
+    resolution_stats = store.resolve_bare_calls()
+
     return {
         "files_parsed": len(files),
         "total_nodes": total_nodes,
         "total_edges": total_edges,
         "errors": errors,
+        "call_resolution": resolution_stats,
     }
 
 
@@ -311,7 +360,7 @@ def incremental_update(
     changed_files: list[str] | None = None,
 ) -> dict:
     """Incremental update: re-parse changed + dependent files only."""
-    parser = CodeParser()
+    parser = _make_parser(repo_root)
     ignore_patterns = _load_ignore_patterns(repo_root)
 
     # Determine changed files
@@ -383,6 +432,9 @@ def incremental_update(
         store.set_metadata("last_synced_commit", head)
     store.commit()
 
+    # Post-build: resolve bare CALLS targets against global node table
+    resolution_stats = store.resolve_bare_calls()
+
     return {
         "files_updated": len(all_files),
         "total_nodes": total_nodes,
@@ -390,6 +442,7 @@ def incremental_update(
         "changed_files": list(changed_files),
         "dependent_files": list(dependent_files),
         "errors": errors,
+        "call_resolution": resolution_stats,
     }
 
 
@@ -465,7 +518,7 @@ def sync_with_git(repo_root: Path, store: GraphStore) -> dict:
 
     Detects files changed via git pull/checkout/merge and updates the graph.
     """
-    parser = CodeParser()
+    parser = _make_parser(repo_root)
     ignore_patterns = _load_ignore_patterns(repo_root)
 
     current_head = get_current_head(repo_root)
@@ -573,7 +626,10 @@ def sync_with_git(repo_root: Path, store: GraphStore) -> dict:
     store.commit()
 
     files_synced = len(all_changed) + len(diff["deleted"])
-    return {
+
+    # Post-sync: resolve bare CALLS targets
+    resolution_stats = store.resolve_bare_calls() if files_synced > 0 else {}
+    result = {
         "status": "ok", "reason": "synced",
         "synced_commit": current_head, "previous_commit": last_synced,
         "files_synced": files_synced,
@@ -582,6 +638,9 @@ def sync_with_git(repo_root: Path, store: GraphStore) -> dict:
         "total_nodes": total_nodes, "total_edges": total_edges,
         "errors": errors,
     }
+    if resolution_stats:
+        result["call_resolution"] = resolution_stats
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -696,7 +755,7 @@ def watch(repo_root: Path, store: GraphStore) -> None:
     """Watch for file changes and auto-update the graph."""
     from watchdog.observers import Observer
 
-    parser = CodeParser()
+    parser = _make_parser(repo_root)
     ignore_patterns = _load_ignore_patterns(repo_root)
     handler = _GraphUpdateHandler(repo_root, store, parser, ignore_patterns)
 

@@ -594,11 +594,22 @@ def connect_api_endpoints(
 
 
 def load_project_config(root: Path) -> dict:
-    """Load project-config.json if it exists."""
-    config_path = root / "docs" / "project-config.json"
-    if not config_path.is_file():
-        return {}
+    """Load project-config.json if it exists.
+
+    Delegates to incremental.load_project_config for shared config discovery.
+    Falls back to local search if import fails (standalone usage).
+    """
     try:
-        return json.loads(config_path.read_text(encoding="utf-8"))
-    except (json.JSONDecodeError, OSError):
-        return {}
+        from .incremental import load_project_config as _load
+        return _load(root)
+    except ImportError:
+        pass
+    # Fallback: search common locations directly
+    for subdir in ["docs", ".claude", ".", ".ai"]:
+        config_path = root / subdir / "project-config.json"
+        if config_path.is_file():
+            try:
+                return json.loads(config_path.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                return {}
+    return {}

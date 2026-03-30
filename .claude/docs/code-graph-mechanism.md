@@ -344,6 +344,42 @@ sequenceDiagram
 | `PRODUCES_EVENT`         | Event handler triggers bus producer              | `UserCreatedEventHandler` → `UserCreatedBusProducer` |
 | `MESSAGE_BUS`            | Bus message producer to consumer (cross-service) | `UserSavedMsg` → `AccountUserSavedConsumer`          |
 | `TRIGGERS_COMMAND_EVENT` | Command triggers command event handler           | `CreateUserCommand` → `CommandEventHandler`          |
+| `CQRS_DISPATCH`          | CQRS command class to command handler (naming)   | `EditUserCommand` → `EditUserCommandHandler`         |
+
+## Post-Build Enhancements (Auto-Run)
+
+After parsing all files, the build pipeline automatically runs these enhancement steps:
+
+### 1. Call Noise Filtering (Multi-Language)
+
+Tree-sitter captures built-in method calls (e.g., `map`, `push`, `forEach` in JS/TS; `print`, `len` in Python) as CALLS edges. These are never user-defined and create noise. The engine has built-in noise sets for 7 languages (C#, TypeScript, JavaScript, Python, Go, Java, Ruby). Projects can extend noise filtering per-language via `project-config.json → graphSettings.callNoiseFilter`.
+
+### 2. Bare Call Resolution (`resolve_bare_calls`)
+
+After all files are parsed, a batch SQL pass resolves unqualified CALLS targets. For each bare target name (no `::` separator), it queries the global node table:
+
+- **Exact 1 match** → resolve to qualified name (e.g., `BuildCheckInPermissionExpr` → `PermissionService.cs::BuildCheckInPermissionExpr`)
+- **2+ matches** → use IMPORTS_FROM edges from the calling file to disambiguate (import-based resolution)
+- **0 matches** → leave bare (built-in method or external library)
+
+### 3. Implicit Connectors
+
+Creates behavioral edges (MESSAGE_BUS, TRIGGERS_EVENT, CQRS_DISPATCH, etc.) based on regex rules in `project-config.json → graphConnectors.implicitConnections[]`. These edges are project-specific and enable cross-service tracing.
+
+### 4. Build Suggestions
+
+After build, analyzes results and outputs suggestions for projects missing config:
+
+- "No project-config.json found — create one for framework-specific edges"
+- "No implicit connection rules — add for cross-service tracing"
+
+### Trace Edge Kind Auto-Discovery
+
+The trace engine automatically discovers all edge kinds present in the DB. No hardcoded edge kind names — works for any project regardless of what implicit connector rules it defines.
+
+### Config Path Discovery
+
+`find_project_config()` searches for `project-config.json` in: `docs/`, `.claude/`, project root, `.ai/`. Works for any project layout without hardcoded paths.
 
 ## Frontend↔Backend API Auto-Detection (Zero-Config)
 
@@ -385,19 +421,22 @@ The BFS trace algorithm (`tools.py:trace_connections`) follows both structural e
 
 ### Python Package (`.claude/scripts/code_graph/`)
 
-| File                  | Lines | Purpose                                                                                                                                                                        |
-| --------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `parser.py`           | ~1240 | Tree-sitter AST walker, 14 language mappings                                                                                                                                   |
-| `graph.py`            | ~619  | SQLite GraphStore, BFS impact analysis, NetworkX caching                                                                                                                       |
-| `incremental.py`      | ~514  | git diff detection, full/incremental build, watch mode                                                                                                                         |
-| `tools.py`            | ~980  | 8 query/analysis tool functions (incl. find_path, search_nodes)                                                                                                                |
-| `cli.py`              | ~400  | CLI with 15 subcommands (incl. search, find-path, describe) and `--json` output. `--node-mode` option on trace/connections/query: `file`, `function`, `class`, `all` (default) |
-| `mermaid_exporter.py` | ~150  | Export single-file graph as Mermaid flowchart markdown                                                                                                                         |
-| `api_connector.py`    | ~300  | Detect frontend-backend API connections via graph                                                                                                                              |
-| `api_patterns.py`     | ~85   | Framework-specific HTTP call and route patterns                                                                                                                                |
-| `__init__.py`         | ~10   | Package init with MIT attribution                                                                                                                                              |
-| `__main__.py`         | ~15   | Entry point for `python .claude/scripts/code_graph`                                                                                                                            |
-| `LICENSE`             | MIT   | License from code-graph v1.8.4                                                                                                                                                 |
+| File                    | Lines | Purpose                                                                                                                               |
+| ----------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `parser.py`             | ~1350 | Tree-sitter AST walker, 14 languages, multi-language noise filter (`_BUILTIN_CALL_NOISE`), C# `base_list` INHERITS                    |
+| `graph.py`              | ~750  | SQLite GraphStore, BFS impact, `resolve_bare_calls()` post-build resolution, `get_distinct_edge_kinds()`, NetworkX caching            |
+| `incremental.py`        | ~750  | git diff detection, full/incremental/sync build, `find_project_config()`, `load_project_config()`, `_make_parser()` multi-lang config |
+| `tools.py`              | ~1100 | Query/analysis tools, `trace_connections()` with auto-discover edge kinds, class-name resolution, Class node seeding                  |
+| `cli.py`                | ~650  | CLI with 17 subcommands, `_auto_connect()`, `_generate_build_suggestions()`, `--json` output, `--node-mode` option                    |
+| `implicit_connector.py` | ~250  | Regex-based implicit connection engine: reads rules from `project-config.json → graphConnectors.implicitConnections[]`                |
+| `mermaid_exporter.py`   | ~150  | Export single-file graph as Mermaid flowchart markdown                                                                                |
+| `api_connector.py`      | ~620  | Detect frontend-backend API connections, delegates config to shared `find_project_config()`                                           |
+| `api_patterns.py`       | ~85   | Framework-specific HTTP call and route patterns                                                                                       |
+| `models.py`             | ~50   | Data classes: `NodeInfo`, `EdgeInfo` for parser output                                                                                |
+| `descriptions.py`       | ~150  | MCP-style structured descriptions for `describe` command                                                                              |
+| `__init__.py`           | ~10   | Package init with MIT attribution                                                                                                     |
+| `__main__.py`           | ~15   | Entry point for `python .claude/scripts/code_graph`                                                                                   |
+| `LICENSE`               | MIT   | License from code-graph v1.8.4                                                                                                        |
 
 ### CJS Hooks (`.claude/hooks/`)
 
@@ -411,14 +450,16 @@ The BFS trace algorithm (`tools.py:trace_connections`) follows both structural e
 
 ### Skills (`.claude/skills/`)
 
-| Skill                  | Purpose                                           |
-| ---------------------- | ------------------------------------------------- |
-| `graph-build`          | Build or update the knowledge graph               |
-| `graph-blast-radius`   | Analyze structural impact of changes              |
-| `graph-export`         | Export full graph to JSON file                    |
-| `graph-export-mermaid` | Export single-file graph as Mermaid diagram       |
-| `graph-query`          | Natural language graph queries (8 query patterns) |
-| `graph-connect-api`    | Detect frontend-backend API connections via graph |
+| Skill                  | Purpose                                                                                        |
+| ---------------------- | ---------------------------------------------------------------------------------------------- |
+| `graph-build`          | Build or update the knowledge graph (auto-runs noise filter + resolve_bare_calls + connectors) |
+| `graph-sync`           | Sync graph with git state after pull/checkout/merge                                            |
+| `graph-trace`          | Trace full system flow (upstream/downstream/both) with auto-discovered edge kinds              |
+| `graph-blast-radius`   | Analyze structural impact of changes                                                           |
+| `graph-query`          | Natural language graph queries (8 query patterns)                                              |
+| `graph-connect-api`    | Detect frontend-backend API connections via graph                                              |
+| `graph-export`         | Export full graph to JSON file                                                                 |
+| `graph-export-mermaid` | Export single-file graph as Mermaid diagram                                                    |
 
 **Skills with graph integration** (RECOMMENDED if graph.db exists):
 scout, debug, code-review, review-changes, sre-review, investigate, feature-investigation

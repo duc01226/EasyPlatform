@@ -455,7 +455,7 @@ logSection('V2 Loader Helpers');
     // getContextGroup matches .cs file (config-driven path)
     const csGroup = getContextGroup(f.backendServiceCs);
     logResult('getContextGroup matches .cs', csGroup !== null);
-    logResult('getContextGroup returns backend name', csGroup && csGroup.name.toLowerCase().includes('backend'));
+    logResult('getContextGroup returns Backend name', csGroup && csGroup.name.includes('Backend'));
 
     // getContextGroup matches .ts file (config-driven path)
     const tsGroup = getContextGroup(f.modernAppTs);
