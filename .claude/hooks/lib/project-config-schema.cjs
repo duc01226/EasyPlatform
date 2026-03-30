@@ -336,7 +336,32 @@ const SCHEMA = {
             }
         }
     },
-    custom: { type: 'object', required: false, freeform: true }
+    architectureRules: {
+        type: 'object',
+        required: false,
+        properties: {
+            layerBoundaries: {
+                type: 'arrayOf',
+                required: false,
+                itemSchema: {
+                    layer: { type: 'string', required: true },
+                    paths: { type: 'array', required: true },
+                    cannotImportFrom: { type: 'array', required: true }
+                }
+            },
+            excludePatterns: { type: 'array', required: false }
+        }
+    },
+    codebaseHealth: {
+        type: 'object',
+        required: false,
+        properties: {
+            sourcePaths: { type: 'array', required: false },
+            docPaths: { type: 'array', required: false },
+            configPatterns: { type: 'array', required: false },
+            excludePaths: { type: 'array', required: false }
+        }
+    }
 };
 
 // ═══════════════════════════════════════════════════════════════════════════

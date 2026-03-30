@@ -380,15 +380,16 @@ Before creating or modifying files matching these patterns, Claude MUST:
 
 ### Project & Operations (`docs/`)
 
-| Document / Directory                                                | Purpose                          | When to Use                    |
-| ------------------------------------------------------------------- | -------------------------------- | ------------------------------ |
-| [getting-started.md](docs/getting-started.md)                       | Dev environment setup            | Onboarding, first-time setup   |
-| [code-review-rules.md](docs/project-reference/code-review-rules.md) | Code review standards            | PR reviews, quality audits     |
-| [lessons.md](docs/project-reference/lessons.md)                     | Learned lessons (auto-injected)  | Avoiding repeated mistakes     |
-| [design-system/](docs/project-reference/design-system/README.md)    | Design tokens, BEM, style guides | UI/UX work, styling, theming   |
-| [templates/](docs/templates/)                                       | Doc templates: ADR, changelog    | Creating new documentation     |
-| [test-specs/](docs/test-specs/README.md)                            | Test specs, integration tests    | Test planning, coverage gaps   |
-| [release-notes/](docs/release-notes/)                               | Release changelogs               | Release prep, changelog review |
+| Document / Directory                                                      | Purpose                          | When to Use                    |
+| ------------------------------------------------------------------------- | -------------------------------- | ------------------------------ |
+| [getting-started.md](docs/getting-started.md)                             | Dev environment setup            | Onboarding, first-time setup   |
+| [code-review-rules.md](docs/project-reference/code-review-rules.md)       | Code review standards            | PR reviews, quality audits     |
+| [lessons.md](docs/project-reference/lessons.md)                           | Learned lessons (auto-injected)  | Avoiding repeated mistakes     |
+| [design-system/](docs/project-reference/design-system/README.md)          | Design tokens, BEM, style guides | UI/UX work, styling, theming   |
+| [templates/](docs/templates/)                                             | Doc templates: ADR, changelog    | Creating new documentation     |
+| [test-specs/](docs/test-specs/README.md)                                  | Test specs, integration tests    | Test planning, coverage gaps   |
+| [docs-index-reference.md](docs/project-reference/docs-index-reference.md) | Doc tree, counts, lookup table   | Finding docs, doc inventory    |
+| [release-notes/](docs/release-notes/)                                     | Release changelogs               | Release prep, changelog review |
 
 <!-- /SECTION:doc-index -->
 
@@ -406,6 +407,7 @@ Before creating or modifying files matching these patterns, Claude MUST:
 | Frontend patterns, Angular, stores, forms                | `docs/project-reference/frontend-patterns-reference.md`   |
 | UI design, styling, BEM, design tokens, themes           | `docs/project-reference/design-system/`                   |
 | Test specs, test coverage                                | `docs/test-specs/`                                        |
+| Documentation inventory, doc tree, file counts           | `docs/project-reference/docs-index-reference.md`          |
 | Hooks, skills, agents, Claude Code config                | `.claude/docs/` subdirectories                            |
 
 **Additional Resources:** [README.md](README.md), [EasyPlatform.README.md](EasyPlatform.README.md)

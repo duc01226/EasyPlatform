@@ -1,14 +1,14 @@
 ---
 name: scan-all
 version: 1.0.0
-description: '[Documentation] Orchestrate all reference doc scans in parallel. Refreshes all 10 docs/project-reference/ files and clears the staleness gate. Use for project onboarding, periodic refresh, or when the staleness gate blocks prompts.'
+description: '[Documentation] Orchestrate all reference doc scans in parallel. Refreshes all 11 docs/project-reference/ files and clears the staleness gate. Use for project onboarding, periodic refresh, or when the staleness gate blocks prompts.'
 ---
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting.
 
 ## Quick Summary
 
-**Goal:** Run all 10 scan-\* skills in parallel and clear the staleness gate.
+**Goal:** Run all 11 scan-\* skills in parallel and clear the staleness gate.
 
 **Workflow:**
 
@@ -52,6 +52,7 @@ Launch all 10 scan skills in parallel:
 | 8   | `/scan-design-system`     | `design-system/README.md`        |
 | 9   | `/scan-e2e-tests`         | `e2e-test-reference.md`          |
 | 10  | `/scan-domain-entities`   | `domain-entities-reference.md`   |
+| 11  | `/scan-docs-index`        | `docs-index-reference.md`        |
 
 ## Post-Scan Cleanup
 

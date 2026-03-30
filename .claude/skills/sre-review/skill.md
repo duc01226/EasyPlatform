@@ -27,6 +27,12 @@ description: '[Code Quality] Production readiness review for service-layer and A
 
 **Why this exists:** Code that works but can't be debugged, monitored, or rolled back is technical debt in disguise.
 
+> **Deployment Context:** Read `docs/project-config.json` → `infrastructure` section for deployment platform:
+>
+> - `containerization` — e.g., "docker" → check Dockerfiles, docker-compose
+> - `orchestration` — e.g., "kubernetes" → check K8s manifests, Helm charts
+> - `cicd.tool` — e.g., "azure-devops" → check pipeline configs
+
 ## Your Mission
 
 <task>

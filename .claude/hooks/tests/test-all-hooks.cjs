@@ -496,8 +496,7 @@ async function testProjectConfigInit() {
                 databases: {},
                 messaging: {},
                 api: {},
-                infrastructure: {},
-                custom: {}
+                infrastructure: {}
             };
             fs.writeFileSync(path.join(docsDir, 'project-config.json'), JSON.stringify(populatedConfig, null, 2), 'utf-8');
 

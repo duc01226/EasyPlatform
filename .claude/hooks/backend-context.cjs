@@ -146,6 +146,18 @@ function buildInjection(context, filePath, service, patternsAlreadyInjected) {
         }
     }
 
+    // API metadata from project-config
+    const apiConfig = config.api;
+    if (apiConfig) {
+        const parts = [];
+        if (apiConfig.style) parts.push(`Style: ${apiConfig.style}`);
+        if (apiConfig.authPattern) parts.push(`Auth: ${apiConfig.authPattern}`);
+        if (apiConfig.docsFormat) parts.push(`Docs: ${apiConfig.docsFormat}`);
+        if (parts.length > 0) {
+            lines.push(`**API:** ${parts.join(' | ')}`, '');
+        }
+    }
+
     // Filter out empty lines from middle
     return lines
         .filter((line, i, arr) => {

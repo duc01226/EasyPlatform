@@ -437,6 +437,21 @@ Parallel categorized review ensures thorough coverage with holistic synthesis.
 
 ---
 
+## Architecture Boundary Check
+
+For each changed file, verify it does not import from a forbidden layer:
+
+1. **Read rules** from `docs/project-config.json` → `architectureRules.layerBoundaries`
+2. **Determine layer** — For each changed file, match its path against each rule's `paths` glob patterns
+3. **Scan imports** — Grep the file for `using` (C#) or `import` (TS) statements
+4. **Check violations** — If any import path contains a layer name listed in `cannotImportFrom`, it is a violation
+5. **Exclude framework** — Skip files matching any pattern in `architectureRules.excludePatterns`
+6. **BLOCK on violation** — Report as critical: `"BLOCKED: {layer} layer file {filePath} imports from {forbiddenLayer} layer ({importStatement})"`
+
+If `architectureRules` is not present in project-config.json, skip this check silently.
+
+---
+
 ## Next Steps
 
 **MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:

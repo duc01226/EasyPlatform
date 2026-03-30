@@ -15,9 +15,10 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 **Goal:** Design or modify REST API endpoints following the project platform patterns and REST best practices.
 
-> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
+> **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
 >
-> - `backend-patterns-reference.md` -- project patterns and structure
+> - `backend-patterns-reference.md` — project patterns and structure
+> - `docs/project-config.json` → `api` section — API conventions (style: REST/GraphQL, authPattern: jwt/api-key, docsFormat: swagger/openapi)
 >
 > If file not found, search for: project documentation, coding standards, architecture docs.
 

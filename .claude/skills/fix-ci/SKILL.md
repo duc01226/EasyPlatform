@@ -26,6 +26,7 @@ disable-model-invocation: false
 
 **Key Rules:**
 
+- **Infrastructure Context:** Read `docs/project-config.json` → `infrastructure.cicd.tool` to identify CI platform (e.g., "azure-devops", "github-actions", "gitlab-ci"). Target the correct pipeline config files for that platform.
 - Debug Mindset: every claim needs `file:line` evidence
 - Focus on CI-specific issues (env vars, Docker, dependencies, build order)
 - Verify fix doesn't break local development

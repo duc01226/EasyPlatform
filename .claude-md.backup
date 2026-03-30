@@ -2,7 +2,7 @@
 
 > .NET 9 Framework + Angular Frontend | Platform Framework & Example Application
 
-**Sections:** [TL;DR](#tldr--what-you-must-know-before-writing-any-code) | [Search First](#mandatory-search-existing-code-first) | [First Action](#first-action-decision-before-any-tool-call) | [Task Planning](#important-task-planning-rules-must-follow) | [Code Hierarchy](#code-responsibility-hierarchy-critical) | [Plan Before Implement](#mandatory-plan-before-implement) | [Naming](#naming-conventions) | [File Locations](#key-file-locations) | [Dev Commands](#development-commands) | [Integration Testing](#integration-testing) | [Local Startup](#local-system-startup) | [Evidence & Investigation](#evidence-based-reasoning--investigation-protocol-mandatory) | [Skill Activation](#automatic-skill-activation-mandatory) | [Documentation Index](#documentation-index) | [Workflow Lookup](#workflow-keyword-lookup--execution-protocol)
+**Sections:** [TL;DR](#tldr--what-you-must-know-before-writing-any-code) | [Search First](#mandatory-search-existing-code-first) | [First Action](#first-action-decision-before-any-tool-call) | [Task Planning](#important-task-planning-rules-must-follow) | [Code Hierarchy](#code-responsibility-hierarchy-critical) | [Plan Before Implement](#mandatory-plan-before-implement) | [Naming](#naming-conventions) | [File Locations](#key-file-locations) | [Dev Commands](#development-commands) | [Integration Testing](#integration-testing) | [E2E Testing](#e2e-testing) | [Local Startup](#local-system-startup) | [Evidence & Investigation](#evidence-based-reasoning--investigation-protocol-mandatory) | [Graph Intelligence](#graph-intelligence-mandatory-when-code-graphgraphdb-exists) | [Skill Activation](#automatic-skill-activation-mandatory) | [Documentation Index](#documentation-index) | [Workflow Lookup](#workflow-keyword-lookup--execution-protocol)
 
 ---
 
@@ -162,6 +162,8 @@ Before implementing ANY non-trivial task, you MUST:
 | Collections | Plural                      | `users`, `items`, `employees`                           |
 | BEM CSS     | block\_\_element --modifier | All frontend template elements must have BEM classes    |
 
+<!-- SECTION:key-locations -->
+
 ## Key File Locations
 
 ```
@@ -181,6 +183,10 @@ docs/                            # Project documentation
 docs/project-reference/code-review-rules.md  # Code review rules (auto-injected)
 docs/project-reference/lessons.md            # Learned lessons (injected via hook, written via /learn skill)
 ```
+
+<!-- /SECTION:key-locations -->
+
+<!-- SECTION:dev-commands -->
 
 ## Development Commands
 
@@ -202,6 +208,10 @@ node .claude/hooks/tests/test-lib-modules.cjs
 node .claude/hooks/tests/test-lib-modules-extended.cjs
 ```
 
+<!-- /SECTION:dev-commands -->
+
+<!-- SECTION:integration-testing -->
+
 ## Integration Testing
 
 Subcutaneous CQRS tests through real DI (no HTTP), against live infrastructure. Reference: `src/Backend/PlatformExampleApp.Tests.Integration/`. Platform base: `src/Platform/Easy.Platform.AutomationTest/IntegrationTests/`.
@@ -210,9 +220,29 @@ Subcutaneous CQRS tests through real DI (no HTTP), against live infrastructure. 
 
 **Key APIs:** `ExecuteCommandAsync`, `ExecuteQueryAsync`, `AssertEntityExistsAsync<T>`, `AssertEntityMatchesAsync<T>`, `AssertEntityDeletedAsync<T>`, `IntegrationTestHelper.UniqueName()`, `TestUserContextFactory.Create*()`
 
+<!-- /SECTION:integration-testing -->
+
+<!-- SECTION:e2e-testing -->
+
+## E2E Testing
+
+Playwright-based E2E tests. Config: `src/Frontend/e2e/playwright.config.ts`. Tests: `src/Frontend/e2e/tests/`. Page objects: `src/Frontend/e2e/page-objects/`.
+
+```bash
+cd src/Frontend/e2e && npx playwright test           # Run all
+cd src/Frontend/e2e && npx playwright test --headed   # Headed mode
+cd src/Frontend/e2e && npx playwright test --ui       # Interactive UI
+```
+
+See [e2e-test-reference.md](docs/project-reference/e2e-test-reference.md) for patterns, page objects, and configuration.
+
+<!-- /SECTION:e2e-testing -->
+
 ## Local System Startup
 
 Start order: **Infrastructure → Backend API → Frontend**. Docker compose files in `src/`.
+
+<!-- SECTION:infra-ports -->
 
 ### Infrastructure Ports
 
@@ -224,6 +254,8 @@ Start order: **Infrastructure → Backend API → Frontend**. Docker compose fil
 | Redis         | 127.0.0.1:6379                     | —                   |
 | PostgreSQL    | 127.0.0.1:54320                    | postgres / postgres |
 | SQL Server    | 127.0.0.1:14330 (optional)         | sa / 123456Abc      |
+
+<!-- /SECTION:infra-ports -->
 
 ### Quick Start
 
@@ -292,6 +324,32 @@ Before recommending changes, complete ALL items — skip none:
 
 **Use `/investigate` skill** for: removing registrations/classes, cross-layer changes, "this seems unused" claims, breaking change assessment.
 
+## Graph Intelligence (MANDATORY when .code-graph/graph.db exists)
+
+<HARD-GATE>
+You MUST run at least ONE graph command on key files before concluding any investigation,
+creating any plan, or verifying any fix. Proceeding without graph evidence is FORBIDDEN.
+Skip only if `.code-graph/graph.db` does not exist.
+</HARD-GATE>
+
+### Quick CLI Reference
+
+```bash
+python .claude/scripts/code_graph trace <file> --direction both --json                    # Full system flow
+python .claude/scripts/code_graph trace <file> --direction both --node-mode file --json   # File-level overview
+python .claude/scripts/code_graph connections <file> --json                               # Structural relationships
+python .claude/scripts/code_graph query callers_of <function> --json                      # All callers
+python .claude/scripts/code_graph query tests_for <function> --json                       # Test coverage
+python .claude/scripts/code_graph batch-query <f1> <f2> <f3> --json                       # Multiple files at once
+python .claude/scripts/code_graph search <keyword> --kind Function --json                 # Find by keyword
+```
+
+**Pattern:** Grep finds files > trace reveals system flow > grep verifies details.
+
+---
+
+<!-- SECTION:skill-activation -->
+
 ## Automatic Skill Activation (MANDATORY)
 
 When working in specific areas, these skills MUST be automatically activated BEFORE any file creation or modification:
@@ -312,6 +370,10 @@ Before creating or modifying files matching these patterns, Claude MUST:
 2. **Read reference files** - Template + existing example in same folder
 3. **Follow skill workflow** - Apply all skill-specific rules
 
+<!-- /SECTION:skill-activation -->
+
+<!-- SECTION:doc-index -->
+
 ## Documentation Index
 
 **Full reference:** [`.claude/docs/README.md`](.claude/docs/README.md) — 178 skills, 40 hooks, 24 agents, configuration, patterns, complete guides.
@@ -328,6 +390,10 @@ Before creating or modifying files matching these patterns, Claude MUST:
 | [test-specs/](docs/test-specs/README.md)                            | Test specs, integration tests    | Test planning, coverage gaps   |
 | [release-notes/](docs/release-notes/)                               | Release changelogs               | Release prep, changelog review |
 
+<!-- /SECTION:doc-index -->
+
+<!-- SECTION:doc-lookup -->
+
 ### Doc Lookup Guide
 
 | If user prompt mentions...                               | → Read first                                              |
@@ -343,6 +409,8 @@ Before creating or modifying files matching these patterns, Claude MUST:
 | Hooks, skills, agents, Claude Code config                | `.claude/docs/` subdirectories                            |
 
 **Additional Resources:** [README.md](README.md), [EasyPlatform.README.md](EasyPlatform.README.md)
+
+<!-- /SECTION:doc-lookup -->
 
 ## Workflow Keyword Lookup & Execution Protocol
 
