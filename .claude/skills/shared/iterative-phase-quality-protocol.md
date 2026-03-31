@@ -34,7 +34,7 @@ Each phase MUST satisfy ALL:
 - Completable in ≤3 hours
 - Has clear success criteria (testable)
 - Can be reviewed independently
-- Has specific test cases mapped to it
+- Has specific test cases mapped to it — per `.claude/skills/shared/plan-quality-protocol.md`, every phase MUST have `## Test Specifications` with TC IDs
 
 If a phase violates any rule → split further.
 
@@ -53,6 +53,16 @@ Phase N:
 
 DO NOT start Phase N+1 until Phase N passes VERIFY.
 </HARD-GATE>
+
+## 3.5 Attention Anchoring Between Phases
+
+> Per `.claude/skills/shared/plan-quality-protocol.md` Part 2
+
+Before starting each new phase:
+
+1. Call `TaskList` to verify previous phase is marked `completed`
+2. Re-read the phase file for the new phase
+3. Verify plan context hasn't changed
 
 ## 4. Mid-Execution Re-Assessment
 

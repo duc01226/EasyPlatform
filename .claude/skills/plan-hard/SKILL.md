@@ -13,6 +13,7 @@ disable-model-invocation: false
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 - `docs/test-specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
+- `.claude/skills/shared/plan-quality-protocol.md` — Test spec integration in plans and attention anchoring for long workflows
 
 > **Phase Quality:** **MUST READ** `.claude/skills/shared/iterative-phase-quality-protocol.md`.
 > Each phase file MUST satisfy: ≤5 files per phase, ≤3h effort, clear success criteria, mapped test cases.

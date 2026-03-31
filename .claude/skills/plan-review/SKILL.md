@@ -77,6 +77,8 @@ Read the plan directory:
 - [ ] No conflicting or duplicate steps
 - [ ] Dependencies between steps are clear
 - [ ] **New Tech/Lib Gate:** If plan introduces new packages/libraries/frameworks not in the project, verify alternatives were evaluated (top 3 compared) and user confirmed the choice. FAIL if new tech is added without evaluation.
+- [ ] **Test spec coverage** — Every phase has `## Test Specifications` section with TC mappings per `.claude/skills/shared/plan-quality-protocol.md`. "TBD" is valid for TDD-first mode.
+- [ ] **TC-requirement mapping** — Every functional requirement maps to ≥1 TC (or explicit "TBD" with rationale)
 
 #### Best Practices (Required - all must pass)
 

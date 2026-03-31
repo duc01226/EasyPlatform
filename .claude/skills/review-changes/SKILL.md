@@ -126,6 +126,21 @@ Before starting, call TaskCreate with:
 - [ ] Use blast radius output to prioritize which files to review most carefully in Phase 2
 - [ ] If `.code-graph/graph.db` does not exist, note "Graph not available — skipping blast radius" and proceed to Phase 1
 
+**Phase 0.5: Plan Compliance Check (CONDITIONAL — only when active plan exists)**
+
+Check `## Plan Context` in injected context:
+
+- If "Plan: none" → skip, log "No active plan — skipping plan compliance"
+- If "Plan: {path}" → load plan and verify:
+
+1. Read `{plan-path}/plan.md` — get phase list and scope
+2. Read relevant `phase-*.md` files — extract files to modify, test specifications (TC IDs), success criteria
+3. Verify:
+    - [ ] **Scope match** — changed files listed in plan phases (warn on unplanned files)
+    - [ ] **TC evidence** — TCs mapped to completed phases have evidence (file:line), not "TBD"
+    - [ ] **Success criteria met** — phase success criteria satisfied by changes
+4. Add "Plan Compliance" section to review report
+
 **Phase 1: Get Changes and Create Report File**
 
 - [ ] Run `git status` to see all changed files

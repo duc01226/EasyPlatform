@@ -9,6 +9,8 @@ allowed-tools: Read, Glob, Grep, TaskCreate, AskUserQuestion, Bash
 
 **Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
 
+- `.claude/skills/shared/plan-quality-protocol.md` — Test spec integration in plans and attention anchoring for long workflows
+
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
@@ -74,6 +76,7 @@ Scan plan content for:
 | **Risks**        | "risk", "might", "could fail", "dependency", "blocker", "concern"                                       |
 | **Scope**        | "phase", "MVP", "future", "out of scope", "nice to have"                                                |
 | **New Tech/Lib** | "install", "add package", "new dependency", "npm install", "dotnet add", framework names not in project |
+| **Test Specs**   | "TC-", "test case", "coverage", "TDD", "test specification", "test spec"                                |
 
 ### Step 3: Generate Questions
 

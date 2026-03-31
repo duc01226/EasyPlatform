@@ -10,6 +10,7 @@ description: '[Implementation] Implement a feature [step by step]'
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
 - `docs/test-specs/` — Test specifications by module (read existing TCs; generate/update test specs via `/tdd-spec` after implementation)
+- `.claude/skills/shared/plan-quality-protocol.md` — Test spec integration in plans and attention anchoring for long workflows
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
@@ -57,6 +58,17 @@ Each plan phase = one quality cycle (plan→implement→review→fix→verify).
 DO NOT start next phase until current phase passes VERIFY.
 After each phase: re-assess remaining phases for scope changes.
 </HARD-GATE>
+
+## TC Satisfaction Verification (Per Phase)
+
+> Per `.claude/skills/shared/plan-quality-protocol.md`
+
+After implementing each phase, before marking it complete:
+
+1. Read the phase's `## Test Specifications` section
+2. For each mapped TC: verify evidence exists (file:line, not TBD), grep-verify the file
+3. If any TC lacks evidence → phase is NOT complete
+4. Update phase file's TC table with actual evidence references
 
 ## Greenfield Mode
 

@@ -12,6 +12,7 @@ disable-model-invocation: false
 - `.claude/skills/shared/estimation-framework.md` — Story points, complexity scale, splitting rules (plans MUST include `story_points` and `effort` in frontmatter)
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+- `.claude/skills/shared/plan-quality-protocol.md` — Test spec integration in plans and attention anchoring for long workflows
 
 > **Iterative Quality Gate:** **MUST READ** `.claude/skills/shared/iterative-phase-quality-protocol.md`.
 > Even for fast plans: assess complexity score. Score ≥3 → MUST produce multiple phases with per-phase quality cycles.

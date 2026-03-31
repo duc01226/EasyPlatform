@@ -8,6 +8,10 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
+**Prerequisites:**
+
+- `.claude/skills/shared/plan-quality-protocol.md` — Test spec integration in plans and attention anchoring for long workflows
+
 ## Quick Summary
 
 **Goal:** Analyze an implementation plan, assess its impact on the codebase, and update specification documents accordingly.

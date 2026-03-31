@@ -146,6 +146,7 @@ After ALL files reviewed, **re-read accumulated report** to see big picture:
 - **Frontend**: Constants/columns in Model (not Component)?
 - **Duplication**: Any duplicated logic across changes? Similar code elsewhere? (grep to verify)
 - **Architecture**: Clean Architecture followed? Service boundaries respected?
+- **Plan Compliance (if active plan exists):** Check `## Plan Context` → if plan path exists, verify: implementation matches plan requirements, plan TCs have code evidence (not "TBD"), no plan requirement unaddressed
 - **Design Patterns** (per `design-patterns-quality-checklist.md`): Pattern opportunities (switch→Strategy, scattered new→Factory)? Anti-patterns (God Object, Copy-Paste, Circular Dependency)? DRY via base classes/generics? Right responsibility layer? Tech-agnostic abstractions?
 
 **Clean Code & Over-engineering Checks:**

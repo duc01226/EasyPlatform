@@ -838,6 +838,16 @@ Each phase file should contain:
 - Auth/authorization
 - Data protection
 
+###### Test Specifications
+
+> Per `.claude/skills/shared/plan-quality-protocol.md`
+
+| TC ID           | Requirement                   | Priority | Evidence           |
+| --------------- | ----------------------------- | -------- | ------------------ |
+| TC-{FEAT}-{NNN} | {requirement from this phase} | P0-P3    | {file:line} or TBD |
+
+Coverage: {X}/{Y} requirements mapped to TCs
+
 ###### Next Steps
 
 - Dependencies

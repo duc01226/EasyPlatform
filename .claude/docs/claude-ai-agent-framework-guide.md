@@ -101,7 +101,7 @@ graph TB
     end
 
     subgraph "Intelligence Layer — 202 Skills"
-        SP[Shared Protocols<br/>5 modules]
+        SP[Shared Protocols<br/>25 modules]
         IS[Implementation Skills<br/>cook, fix, refactor]
         QS[Quality Skills<br/>code-review, prove-fix]
         PS[Planning Skills<br/>plan, investigate, scout]
@@ -3269,7 +3269,7 @@ flowchart TB
 │   └── tests/ ────────── Test suites
 ├── skills/ ────────────── 202 skill directories
 │   ├── {skill-name}/SKILL.md
-│   ├── shared/ ───────── 5 shared protocols + references (module-codes.md)
+│   ├── shared/ ───────── 25 shared protocols + references (module-codes.md)
 │   └── _templates/ ───── Skill scaffolding
 ├── agents/ ────────────── 28 agent definitions
 ├── docs/ ─────────────── Framework documentation (co-located)

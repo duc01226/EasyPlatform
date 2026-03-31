@@ -1,6 +1,6 @@
 # Skills Reference
 
-> 246 skills across 15+ domains + 22 shared modules for context-aware AI assistance
+> 246 skills across 15+ domains + 25 shared modules for context-aware AI assistance
 
 ## Overview
 
@@ -40,7 +40,7 @@ Skills Activated: fix, feature-investigation
 | [Document Processing](#document-processing)       | 4      | PDF, DOCX, Markdown conversions                      |
 | [Utility](#utility)                               | 2      | Claude Code CLI, skill creation                      |
 
-**Additional:** Shared Modules (22) -- see [Shared Modules](#shared-modules)
+**Additional:** Shared Modules (25) -- see [Shared Modules](#shared-modules)
 
 ---
 
@@ -230,15 +230,16 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 
 Reusable content blocks in `.claude/skills/shared/` extracted from multiple skills to eliminate duplication (DRY). Each module is referenced by 3+ skills.
 
-| Module                                      | Purpose                                                                                             | Consumers                                                              |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `evidence-based-reasoning-protocol.md`      | Consolidated evidence-based reasoning: core rules, confidence levels, validation chain, risk matrix | 50 skills (all code-modifying and analysis skills)                     |
-| `understand-code-first-protocol.md`         | Read-before-write protocol, assumption validation, external memory                                  | 34+ skills (all code-modifying skills)                                 |
-| `design-system-check.md`                    | Mandatory design system doc locations for frontend work                                             | frontend-design, web-design-guidelines                                 |
-| `module-detection-keywords.md`              | YourProject module keyword lists for context loading                                                | 4 skills (idea, product-owner, refine, story)                          |
-| `scaffold-production-readiness-protocol.md` | Production readiness requirements: code quality, error handling, loading state, Docker              | 5 skills (scaffold, refine, refine-review, story, architecture-design) |
-| `ba-team-decision-model-protocol.md`        | BA team 2/3 vote model, technical veto, disagree-and-commit, role scope boundaries                  | 3 skills (pbi-challenge, dor-gate) + business-analyst agent            |
-| `refinement-dor-checklist-protocol.md`      | Definition of Ready checklist (7 items), validation rules, failure modes, gate output template      | 3 skills (pbi-challenge, dor-gate, refine-review) + ba-refinement hook |
+| Module                                      | Purpose                                                                                              | Consumers                                                              |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `evidence-based-reasoning-protocol.md`      | Consolidated evidence-based reasoning: core rules, confidence levels, validation chain, risk matrix  | 50 skills (all code-modifying and analysis skills)                     |
+| `understand-code-first-protocol.md`         | Read-before-write protocol, assumption validation, external memory                                   | 34+ skills (all code-modifying skills)                                 |
+| `design-system-check.md`                    | Mandatory design system doc locations for frontend work                                              | frontend-design, web-design-guidelines                                 |
+| `module-detection-keywords.md`              | YourProject module keyword lists for context loading                                                 | 4 skills (idea, product-owner, refine, story)                          |
+| `scaffold-production-readiness-protocol.md` | Production readiness requirements: code quality, error handling, loading state, Docker               | 5 skills (scaffold, refine, refine-review, story, architecture-design) |
+| `ba-team-decision-model-protocol.md`        | BA team 2/3 vote model, technical veto, disagree-and-commit, role scope boundaries                   | 3 skills (pbi-challenge, dor-gate) + business-analyst agent            |
+| `refinement-dor-checklist-protocol.md`      | Definition of Ready checklist (7 items), validation rules, failure modes, gate output template       | 3 skills (pbi-challenge, dor-gate, refine-review) + ba-refinement hook |
+| `plan-quality-protocol.md`                  | Test spec integration in plans (TC mapping, evidence rules) + attention anchoring for long workflows | 15 skills (plan*, cook*, review-changes, code-review, iterative-phase) |
 
 See [shared/README.md](../../skills/shared/README.md) for full consumer lists and contribution guidelines.
 
@@ -263,7 +264,8 @@ Each skill is located at `.claude/skills/{skill-name}/`:
 |-- module-detection-keywords.md
 |-- scaffold-production-readiness-protocol.md
 |-- ba-team-decision-model-protocol.md
-+-- refinement-dor-checklist-protocol.md
+|-- refinement-dor-checklist-protocol.md
++-- plan-quality-protocol.md
 ```
 
 ### SKILL.md Structure
@@ -339,4 +341,4 @@ Use `/skill/create` to create a new skill:
 
 ---
 
-_Source: `.claude/skills/` | 246 skills across 15+ domains + 22 shared modules_
+_Source: `.claude/skills/` | 246 skills across 15+ domains + 25 shared modules_

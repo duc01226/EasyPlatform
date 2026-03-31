@@ -33,6 +33,15 @@ Code quality review on the wrong implementation wastes effort. A beautifully arc
 - Changed files: [git diff --name-only or file list]
 ```
 
+- **Plan TCs (if available):** [TC IDs from plan phase ## Test Specifications]
+- **Expected evidence:** [file:line expectations from plan TCs]
+
+**TC verification (if plan TCs provided):**
+
+- [ ] Every TC mapped to this task has evidence (file:line reference)
+- [ ] No TC is still "TBD" after implementation
+- [ ] Evidence references exist in actual code (grep verify)
+
 **Pass criteria:** All requirements marked PASS. Zero FAIL items.
 
 **On failure:** Fix missing/wrong requirements. Re-run Stage 1. Do NOT proceed to Stage 2.

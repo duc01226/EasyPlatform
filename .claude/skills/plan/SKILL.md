@@ -12,6 +12,7 @@ description: '[Planning] Intelligent plan creation with prompt enhancement'
 - `.claude/skills/shared/rationalization-prevention-protocol.md` — Anti-evasion rebuttals (prevents "too simple for a plan" shortcuts)
 - `.claude/skills/shared/estimation-framework.md` — Story points, complexity scale, splitting rules (plans MUST include `story_points` and `effort` in frontmatter)
 - `docs/test-specs/` — Test specifications by module (read existing TCs to include test strategy in plan)
+- `.claude/skills/shared/plan-quality-protocol.md` — Test spec integration in plans and attention anchoring for long workflows
 
 > **Iterative Quality Gate:** **MUST READ** `.claude/skills/shared/iterative-phase-quality-protocol.md`.
 > Before routing, assess complexity score. Score ≥3 → plan MUST produce multiple phases with per-phase quality cycles.
