@@ -2,7 +2,7 @@
 name: workflow-end
 version: 1.0.0
 description: '[Process] End the active workflow and clear state. Auto-added as last step of every workflow. Clears workflow tracking so next prompt gets fresh workflow detection.'
-allowed-tools: TaskUpdate
+allowed-tools: TaskUpdate, Bash
 ---
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -23,11 +23,14 @@ This skill is the **last step of every workflow sequence**. It runs automaticall
 
 ## What To Do
 
-1. Mark this task as `completed` via `TaskUpdate`
-2. Announce to the user: "Workflow **[name]** completed. Next prompt will trigger fresh workflow detection."
-3. The `workflow-step-tracker` hook handles the actual state cleanup automatically when this skill completes
-
-That's it. The hook does the heavy lifting.
+1. **Sync knowledge graph** (skip if `.code-graph/` dir doesn't exist):
+    ```bash
+    if [ -d ".code-graph" ]; then python .claude/scripts/code_graph sync --json && python .claude/scripts/code_graph update --json; fi
+    ```
+    Report results briefly.
+2. Mark this task as `completed` via `TaskUpdate`
+3. Announce to the user: "Workflow **[name]** completed. Next prompt will trigger fresh workflow detection."
+4. The `workflow-step-tracker` hook handles the actual state cleanup automatically when this skill completes
 
 ---
 

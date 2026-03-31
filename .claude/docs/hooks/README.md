@@ -77,16 +77,16 @@ Lessons are managed via `/learn` skill. See `.claude/skills/learn/SKILL.md`.
 
 ### Workflow Automation
 
-| Hook                           | Event                                             | Purpose                                                           |
-| ------------------------------ | ------------------------------------------------- | ----------------------------------------------------------------- |
-| `init-prompt-gate.cjs`         | UserPromptSubmit                                  | Block prompts until project config is populated (exit 2 = block)  |
-| `workflow-router.cjs`          | SessionStart, UserPromptSubmit                    | Detect intent, inject matching workflow from 45-workflow catalog  |
-| `prompt-context-assembler.cjs` | SessionStart, UserPromptSubmit                    | Assemble dev rules, lessons, and lesson-learned reminder          |
-| `session-init-docs.cjs`        | SessionStart:`startup`                            | Config skeleton + reference doc placeholder creation              |
-| `workflow-step-tracker.cjs`    | PostToolUse:`Skill`                               | Track workflow step completion                                    |
-| `edit-enforcement.cjs`         | PreToolUse:`Edit\|Write\|MultiEdit\|NotebookEdit` | Track edits, plan warnings at 4/8 files, block without TaskCreate |
-| `skill-enforcement.cjs`        | PreToolUse:`Skill`                                | Block implementation skills without TaskCreate                    |
-| `todo-tracker.cjs`             | PostToolUse:`TaskCreate\|TaskUpdate`              | Persist todo state to disk for cross-compaction recovery          |
+| Hook                           | Event                                             | Purpose                                                             |
+| ------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------- |
+| `init-prompt-gate.cjs`         | UserPromptSubmit                                  | Block prompts until config populated + graph built (exit 2 = block) |
+| `workflow-router.cjs`          | SessionStart, UserPromptSubmit                    | Detect intent, inject matching workflow from 45-workflow catalog    |
+| `prompt-context-assembler.cjs` | SessionStart, UserPromptSubmit                    | Assemble dev rules, lessons, and lesson-learned reminder            |
+| `session-init-docs.cjs`        | SessionStart:`startup`                            | Config skeleton + reference doc placeholder creation                |
+| `workflow-step-tracker.cjs`    | PostToolUse:`Skill`                               | Track workflow step completion                                      |
+| `edit-enforcement.cjs`         | PreToolUse:`Edit\|Write\|MultiEdit\|NotebookEdit` | Track edits, plan warnings at 4/8 files, block without TaskCreate   |
+| `skill-enforcement.cjs`        | PreToolUse:`Skill`                                | Block implementation skills without TaskCreate                      |
+| `todo-tracker.cjs`             | PostToolUse:`TaskCreate\|TaskUpdate`              | Persist todo state to disk for cross-compaction recovery            |
 
 ### Safety & Privacy
 

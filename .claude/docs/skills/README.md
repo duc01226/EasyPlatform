@@ -136,6 +136,7 @@ See `docs/project-reference/frontend-patterns-reference.md` for project-specific
 | `graph-query`          | graph query, callers, tests_for                    | Natural language graph relationship queries                            |
 | `graph-connect-api`    | connect api, api connections, frontend backend     | Detect frontend-to-backend API connections via knowledge graph         |
 | `graph-sync`           | sync graph, refresh graph, update graph after pull | Sync knowledge graph with current git state after pull/checkout        |
+| `graph-update`         | update graph, working tree, uncommitted changes    | Update knowledge graph with uncommitted working tree changes           |
 
 ---
 

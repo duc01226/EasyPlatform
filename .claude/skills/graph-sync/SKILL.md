@@ -36,12 +36,17 @@ This means after `sync`, ALL connections are up-to-date — not just direct code
 
 ## Steps
 
-1. **Run sync** via Bash:
+1. **Run sync** (committed changes) via Bash:
     ```bash
     python .claude/scripts/code_graph sync --json
     ```
 2. **Report results:** Files synced, added, modified, deleted
 3. If sync reports `full_rebuild_fallback` (unreachable commit), inform user that a full rebuild was triggered
+4. **Run update** (working tree changes) via Bash:
+    ```bash
+    python .claude/scripts/code_graph update --json
+    ```
+5. **Report update results:** Files updated from working tree, or "working tree clean"
 
 ## Fallback Behavior
 
@@ -65,6 +70,7 @@ This means after `sync`, ALL connections are up-to-date — not just direct code
 
 ## Related Skills
 
+- `/graph-update` — Update graph with uncommitted working tree changes (explicitly invoked in step 4)
 - `/graph-build` — Full or incremental graph build
 - `/graph-blast-radius` — Analyze structural impact of changes
 - `/graph-query` — Query code relationships

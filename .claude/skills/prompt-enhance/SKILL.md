@@ -23,7 +23,8 @@ description: '[Skill Management] Enhance any prompt/doc/skill file with AI atten
 - Every READ instruction MUST include an inline summary of the referenced file's key rules
 - Top section = concise summary + key rules. Bottom section = closing reminders echoing top rules
 - Middle section = detailed steps. Accept intentional duplication between top and bottom.
-- Never remove content — only restructure and enhance
+- **Prompt quality > token count** — but verbose/repetitive prompts degrade quality too. Optimize for clarity-per-token.
+- Never remove **meaningful** content — but DO tighten prose, merge redundant sections, and cut filler
 
 ---
 
@@ -111,6 +112,32 @@ If no file specified, ask via `AskUserQuestion`.
 ```
 
 Pick 3-5 rules from the top that AI most commonly violates. The bottom section exists purely to re-anchor attention after the long middle section.
+
+### Transformation 4: Token Optimization (Conciseness Pass)
+
+**Principle:** Prompt quality is FIRST priority. But verbose prompts degrade quality too — AI attention dilutes across unnecessary tokens. Optimize for **clarity-per-token**: maximum signal, minimum noise.
+
+**What to cut:**
+
+- **Filler phrases** — "It is important to note that", "Please make sure to", "You should always" → just state the rule
+- **Redundant explanations** — if the heading says it, the body doesn't need to re-explain. Tables > paragraphs for structured data
+- **Duplicate content** — merge sections that say the same thing differently (except intentional top/bottom anchoring)
+- **Overly verbose examples** — trim examples to minimum lines that demonstrate the pattern. Replace paragraph explanations with `// comment` in code
+- **Prose paragraphs for rules** — convert to bullet lists or tables (AI parses structured formats faster)
+
+**What to KEEP:**
+
+- Code examples with actual file paths/patterns (AI copies these directly)
+- Decision tables and lookup references
+- Anti-pattern examples (before/after pairs)
+- All `file:line` evidence and concrete paths
+- Top/bottom anchoring (intentional duplication)
+
+**Evaluation metrics per doc:**
+
+- **Density score** — useful rules per 100 lines (higher = better)
+- **Savings estimate** — % tokens saveable without losing information
+- **Risk** — what breaks if cut too aggressively (e.g., AI misses a pattern)
 
 ---
 
