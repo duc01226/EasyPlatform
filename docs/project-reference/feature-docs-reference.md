@@ -4,6 +4,34 @@
 
 > Business feature index for PlatformExampleApp (TextSnippet). Auto-populated by `/scan-feature-docs`.
 
+## Quick Summary
+
+**Goal:** Centralized index of all business features, domain entities, CQRS operations, event handlers, API controllers, frontend components, and integration tests in PlatformExampleApp.
+
+**Doc Structure:**
+
+| Section                | Contains                                                       |
+| ---------------------- | -------------------------------------------------------------- |
+| App-to-Service Mapping | Frontend app to backend service + domain lib + doc directory   |
+| Feature Index          | Entities, Commands, Queries, Controllers, Events, Jobs, Bus    |
+| Frontend Components    | Angular components + domain library files                      |
+| DTOs                   | Data transfer objects with entity mappings                     |
+| Integration Tests      | Test files with coverage area and paths                        |
+| Persistence Providers  | MongoDB, PostgreSQL, multi-DB demo projects                    |
+| Directory Structure    | Backend + frontend folder layout                               |
+| Templates              | Feature doc templates (detailed, AI companion, ADR, changelog) |
+| Conventions            | Naming patterns for commands, queries, handlers, tests         |
+| Coverage Gaps          | Missing docs and test coverage                                 |
+
+**When to use:**
+
+- Before implementing a new feature -- check what already exists
+- When writing feature docs -- find the correct template and naming convention
+- When investigating CQRS patterns -- locate commands, queries, and event handlers
+- When adding integration tests -- find existing test patterns and coverage gaps
+
+---
+
 ## App-to-Service Mapping
 
 | Frontend App              | Backend Service                              | Domain Library        | Doc Directory                         |
@@ -199,3 +227,13 @@ src/Frontend/
 | TaskItem feature docs             | Not created           | TaskItem has full CRUD but no standalone feature doc.                                                              |
 | E2E test coverage for TaskItem    | Unknown               | No TaskItem-specific integration tests found in `PlatformExampleApp.IntegrationTests/`.                            |
 | BDD test coverage                 | Present but unaudited | `PlatformExampleApp.Test.BDD/Features/` exists but not cross-referenced.                                           |
+
+---
+
+## Closing Reminders
+
+- **This file is auto-populated** by `/scan-feature-docs` -- manual edits will be overwritten on next scan
+- **Check Coverage Gaps** before creating new features -- existing gaps should be addressed first
+- **Follow naming conventions** for all new commands, queries, event handlers, and tests (see Conventions section)
+- **Feature docs go in** `docs/business-features/{Module}/detailed-features/` using the 26-section template
+- **All side effects** belong in `UseCaseEvents/` handlers, never in command handlers

@@ -5,6 +5,22 @@
 <!-- This file is referenced by Claude skills and agents for project-specific context. -->
 <!-- Canonical source of truth: docs/design-system/README.md (detailed guide with Known Discrepancies). -->
 
+## Quick Summary
+
+**Goal:** Single reference for all design tokens, mixins, components, and theming conventions used across Easy.Platform frontend apps.
+
+**Token Categories:** Colors (primary/neutral/semantic), Spacing (rem-based scale), Typography (sizes/weights), Shadows/Radii/Transitions, Breakpoints (rem-based responsive), Z-Index (layered scale)
+
+**Key Rules:**
+
+- All styling uses SCSS token variables -- no raw hex values, no CSS custom properties
+- BEM naming: `.block__element.--modifier` on all template elements
+- Two-layer token architecture: Platform tokens (framework) -> App tokens (overrides) -> Components consume via `_index.scss`
+- Angular Material Design 3 (M3) theming with azure/blue palettes, light + dark mode
+- `rem`-based units for spacing, typography, and breakpoints (`calculateRem()` for px conversion)
+
+---
+
 ## Design System Overview
 
 | Aspect                | Value                                                    |
@@ -297,3 +313,13 @@ No custom icon sets or asset libraries detected. The project uses Angular Materi
 | Mixins: `flex()`, `flex-col()`, `flex-row()`, `text-base()` | Mixins: `flex-center`, `stack()`, `cluster()`, `truncate-text`             |
 
 Use this README and `docs/design-system/README.md` as source of truth for token/mixin names.
+
+---
+
+## Closing Reminders
+
+- **MUST** use SCSS token variables (`$color-*`, `$space-*`, `$font-*`) for all styling -- never hard-code hex values, pixel sizes, or raw numbers
+- **MUST** apply BEM naming (`.block__element.--modifier`) on every template element -- no unnamed or generic classes
+- **MUST** import tokens through the app `_index.scss` layer, not directly from `_platform-variables.scss` -- the two-layer architecture ensures app overrides apply
+- **MUST** use platform/app mixins (`flex-center`, `stack`, `app-page-container`, etc.) instead of writing custom flex/layout CSS
+- **MUST** verify token names against this reference before use -- WebV2DesignSystem.md contains stale names from a prior project (see Known Discrepancies)

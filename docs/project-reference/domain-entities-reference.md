@@ -4,13 +4,38 @@
 
 > Easy.Platform — .NET 9 Framework + PlatformExampleApp (TextSnippet)
 
+## Quick Summary
+
+**Goal:** Canonical reference for all domain entities, value objects, DTO mappings, and persistence patterns in the Easy.Platform framework and PlatformExampleApp.
+
+**Entity Hierarchy (decision tree):**
+
+```
+Need aggregate root?  → RootEntity<T, TKey>
+  + audit trail?      → RootAuditedEntity<T, TKey, TUserId>
+Non-root entity?      → Entity<T, TKey>
+  + audit trail?      → AuditedEntity<T, TKey, TUserId>
+```
+
+**Key Patterns:**
+
+- All aggregate roots extend `RootEntity<>` or `RootAuditedEntity<>` — never `Entity<>` directly
+- Validation lives in entities via `IValidatableEntity<TEntity>` + `PlatformValidationResult` fluent API
+- Side effects via domain event handlers in `UseCaseEvents/`, NEVER in command handlers
+- DTOs own mapping via `PlatformEntityDto<TEntity, TKey>.MapToEntity()`, NEVER map in handlers
+- Value objects embedded as JSON columns (SubTasks, Address, Tags)
+- Cross-aggregate references use string FKs, not navigation objects in commands
+- Domain events accumulated within aggregate root, published after save
+
+**Counts:** 5 domain entities + 3 infrastructure entities | 4 value objects | 6 enums
+
 **Contents:** [Entity Hierarchy](#entity-hierarchy) | [Platform Framework Entities](#platform-framework-entities) | [Example App Entities](#platformexampleapp-textsnippet-entities) | [Value Objects](#value-objects) | [Entity Relationships](#entity-relationships) | [DTO Mapping](#dto-mapping) | [Cross-Service Entity Map](#cross-service-entity-map) | [Aggregate Boundaries](#aggregate-boundaries) | [Naming Conventions](#naming-conventions)
 
 ---
 
 ## Entity Hierarchy
 
-The framework provides a layered entity base class hierarchy supporting validation, domain events, audit trails, and optimistic concurrency.
+Layered base class hierarchy supporting validation, domain events, audit trails, and optimistic concurrency.
 
 ```
 IEntity
@@ -48,11 +73,11 @@ IEntity
 
 ## Platform Framework Entities
 
-Infrastructure entities provided by the framework for messaging and migration support.
+Infrastructure entities for messaging and migration support.
 
 ### PlatformOutboxBusMessage
 
-Stores outgoing messages for reliable delivery via RabbitMQ (outbox pattern).
+Outgoing messages for reliable delivery via RabbitMQ (outbox pattern).
 
 | Property               | Type              | Purpose                                     |
 | ---------------------- | ----------------- | ------------------------------------------- |
@@ -72,7 +97,7 @@ Stores outgoing messages for reliable delivery via RabbitMQ (outbox pattern).
 
 ### PlatformInboxBusMessage
 
-Stores received messages for idempotent processing (inbox pattern).
+Received messages for idempotent processing (inbox pattern).
 
 | Property               | Type                 | Purpose                                     |
 | ---------------------- | -------------------- | ------------------------------------------- |
@@ -113,7 +138,7 @@ Tracks data migration execution state.
 
 ### TextSnippetEntity
 
-Core domain entity — a text snippet with categorization, publishing, and full-text search.
+Core domain entity — text snippet with categorization, publishing, and full-text search.
 
 | Property               | Type                      | Purpose                                |
 | ---------------------- | ------------------------- | -------------------------------------- |
@@ -351,7 +376,7 @@ Frontend paths relative to `src/Frontend/`.
 
 ## Cross-Service Entity Map
 
-This is a single-service (TextSnippet) application. Cross-service communication is demonstrated via RabbitMQ message bus patterns.
+Single-service (TextSnippet) application. Cross-service communication demonstrated via RabbitMQ message bus patterns.
 
 | Entity            | Owner                              | Sync Mechanism                                        | Direction | Purpose                                             |
 | ----------------- | ---------------------------------- | ----------------------------------------------------- | --------- | --------------------------------------------------- |
@@ -433,3 +458,13 @@ Event handlers located in `src/Backend/PlatformExampleApp.TextSnippet.Applicatio
 **Entity counts:** 5 domain entities + 2 framework infrastructure entities + 1 migration tracker = **8 total**
 **Value objects:** 2 framework + 2 app = **4 total**
 **Enums:** 6 total (SnippetStatus, TaskItemStatus, TaskItemPriority, SendStatuses, ConsumeStatuses, MigrationStatuses)
+
+---
+
+## Closing Reminders
+
+- **MUST** use `RootEntity<>` or `RootAuditedEntity<>` for aggregate roots — never persist a non-root `Entity<>` directly
+- **MUST** place validation in entities via `IValidatableEntity<TEntity>` + `PlatformValidationResult` fluent API — never throw exceptions for validation
+- **MUST** implement side effects as domain event handlers in `UseCaseEvents/` — never in command handlers
+- **MUST** let DTOs own mapping via `PlatformEntityDto.MapToEntity()` / `PlatformDto.MapToObject()` — never map in handlers or controllers
+- **MUST** use string FKs for cross-aggregate references and embed value objects as JSON columns

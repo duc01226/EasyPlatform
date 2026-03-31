@@ -4,11 +4,33 @@
 
 > Easy.Platform -- .NET 9 + Angular code review standards derived from actual codebase conventions.
 
+## Quick Summary
+
+**Goal:** Enforce consistent, high-quality code across backend (.NET 9 / CQRS) and frontend (Angular / Nx) by catching architectural drift, anti-patterns, and convention violations during review.
+
+**Key Review Categories:**
+
+| Category          | Scope                                                              | Rules        |
+| ----------------- | ------------------------------------------------------------------ | ------------ |
+| **Critical**      | Validation, DTO mapping, side effects, cross-service, base classes | CR-01..CR-07 |
+| **Backend**       | Naming, CQRS, controllers, repositories, entities, formatting      | BE section   |
+| **Frontend**      | ESLint, Prettier, stores, API services, BEM, logic placement       | FE section   |
+| **Architecture**  | Layer boundaries, module boundaries, DB abstraction, testing       | Arch section |
+| **Anti-Patterns** | 6 named anti-patterns with before/after examples                   | AP-01..AP-06 |
+
+**Severity Levels:**
+
+| Severity     | Meaning                                                         | Action         |
+| ------------ | --------------------------------------------------------------- | -------------- |
+| **Blocker**  | Breaks architecture (wrong layer, thrown exceptions, direct DB) | Must fix       |
+| **Critical** | Convention violation (missing BEM, raw HttpClient, no cleanup)  | Must fix       |
+| **Warning**  | Style/formatting deviation caught by linter                     | Fix or justify |
+
 ---
 
 ## Critical Rules
 
-These are the highest-impact rules. Violations here cause the most bugs and architectural drift.
+Highest-impact rules. Violations here cause the most bugs and architectural drift.
 
 ### CR-01: Validation via PlatformValidationResult, NEVER throw exceptions
 
@@ -129,7 +151,7 @@ export class TaskListComponent extends AppBaseVmStoreComponent<TaskListVm, TaskL
 
 ### CR-06: Use `this.untilDestroyed()` for ALL subscriptions
 
-Every `.subscribe()` must be preceded by `.pipe(this.untilDestroyed())` to prevent memory leaks. The base class provides this operator.
+Every `.subscribe()` must be preceded by `.pipe(this.untilDestroyed())` to prevent memory leaks.
 
 **DO** (`src/Frontend/apps/playground-text-snippet/src/app/shared/components/task-detail/task-detail.component.ts:206`):
 
@@ -172,7 +194,7 @@ Reference: `src/.editorconfig:230-387`
 
 ### CQRS Command Pattern
 
-Command, Result, and Handler go in ONE file under `UseCaseCommands/{Feature}/`.
+Command, Result, and Handler in ONE file under `UseCaseCommands/{Feature}/`.
 
 **DO** (`src/Backend/PlatformExampleApp.TextSnippet.Application/UseCaseCommands/SaveSnippetTextCommand.cs`):
 
@@ -184,13 +206,13 @@ internal sealed class SaveSnippetTextCommandHandler
     : PlatformCqrsCommandApplicationHandler<SaveSnippetTextCommand, SaveSnippetTextCommandResult> { ... }
 ```
 
-- Command classes are `public sealed`
-- Handler classes are `internal sealed`
+- Command classes: `public sealed`
+- Handler classes: `internal sealed`
 - Handler overrides `HandleAsync(command, cancellationToken)`
 
 ### Controller Pattern
 
-Controllers extend `PlatformBaseController`, use attribute routing, and dispatch to CQRS.
+Controllers extend `PlatformBaseController`, use attribute routing, dispatch to CQRS only.
 
 **DO** (`src/Backend/PlatformExampleApp.TextSnippet.Api/Controllers/TextSnippetController.cs:20-22`):
 
@@ -246,11 +268,8 @@ Reference: `src/.editorconfig:406-776`
 
 ### Formatting
 
-- 4-space indentation for C# files
-- Braces on new line (`csharp_new_line_before_open_brace = all`)
-- Sort `System` usings first
-- No trailing whitespace
-- CRLF line endings for `.cs` files
+- 4-space indentation, braces on new line (`csharp_new_line_before_open_brace = all`)
+- Sort `System` usings first, no trailing whitespace, CRLF line endings for `.cs`
 
 ---
 
@@ -290,8 +309,7 @@ Reference: `src/Frontend/.prettierrc`
 
 ### State Management with PlatformVmStore
 
-- ViewModel extends `PlatformVm`
-- Store extends `PlatformVmStore<TViewModel>`
+- ViewModel extends `PlatformVm`, Store extends `PlatformVmStore<TViewModel>`
 - Component extends `AppBaseVmStoreComponent<TViewModel, TStore>`
 - Use `effectSimple()` for async operations (API calls, state transitions)
 
@@ -402,7 +420,7 @@ API (Controllers -- thin, dispatch only)
 - **Domain** has NO dependencies on Application or Infrastructure
 - **Application** depends on Domain only
 - **Infrastructure** implements Domain interfaces
-- **API** dispatches to CQRS, does not contain business logic
+- **API** dispatches to CQRS, no business logic
 - Controllers MUST NOT contain business logic beyond dispatching commands/queries
 
 ### Frontend Module Boundaries
@@ -430,7 +448,7 @@ apps/playground-text-snippet (app)
 
 ### Database Provider Abstraction
 
-The project supports MongoDB, PostgreSQL, and SQL Server via separate persistence projects. Business logic must be provider-agnostic.
+Supports MongoDB, PostgreSQL, and SQL Server. Business logic must be provider-agnostic.
 
 - Use repository interfaces from Domain layer
 - Each provider has its own project (`*.Persistence`, `*.Persistence.Mongo`, `*.Persistence.PostgreSql`)
@@ -625,3 +643,15 @@ Does it modify data?
 - [ ] New persistence code is provider-agnostic (works with MongoDB, PostgreSQL, SQL Server)
 - [ ] Integration tests use CQRS dispatch, not HTTP
 - [ ] Breaking changes documented in CHANGELOG
+
+---
+
+## Closing Reminders
+
+These are the rules reviewers most commonly miss:
+
+- **MUST** verify side effects are in `UseCaseEvents/` handlers, not command handlers (CR-03) -- the single most frequent architectural violation
+- **MUST** check every `.subscribe()` for `.pipe(this.untilDestroyed())` (CR-06) -- memory leaks are silent and cumulative
+- **MUST** confirm DTOs own their mapping via `MapToEntity()`/`MapToObject()` (CR-02) -- mapping in handlers causes duplication across every consumer
+- **MUST** verify static data (dropdowns, constants, column definitions) lives in entity/model classes, not components (AP-06) -- logic in the wrong layer cascades
+- **MUST** ensure controllers are thin dispatchers only -- any logic beyond `Cqrs.SendCommandAsync()` is a violation (AP-01)

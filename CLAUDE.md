@@ -2,6 +2,26 @@
 
 > .NET 9 Framework + Angular Frontend | Platform Framework & Example Application
 
+**Goal:** Build microservices with CQRS, event-driven architecture, multi-database support using Easy.Platform framework. PlatformExampleApp (TextSnippet) is the reference implementation.
+
+**Workflow:** Detect workflow from prompt → `/workflow-start <id>` → TaskCreate → execute. Modification keywords → Feature/Refactor/Bugfix workflow. Fallback → `/plan <prompt>`.
+
+**Top 5 Rules (AI violates these most):**
+
+1. **Search 3+ existing patterns** before writing ANY code — never invent new patterns
+2. **Evidence before conclusion** — cite `file:line`, grep results. Speculation is FORBIDDEN
+3. **Logic in LOWEST layer** — Entity/Model > Service > Component/Handler
+4. **Workflow detection is non-negotiable** — first action on any non-trivial prompt
+5. **TaskCreate before file changes** — mandatory for any file-modifying prompt
+
+> **Development Rules** — YAGNI/KISS/DRY. Kebab-case files. Files under 200 lines. Logic in lowest layer. Run linting before commit. MUST READ [`.claude/workflows/development-rules.md`](.claude/workflows/development-rules.md) for full rules, code quality guidelines, and pre-commit checklist.
+
+> **Evidence-Based Reasoning Protocol** — No speculation: cite `file:line` for every claim. Confidence declaration required (95%+ = recommend freely, <60% = DO NOT recommend). Complete validation chain before any code removal/refactoring. MUST READ [`.claude/skills/shared/evidence-based-reasoning-protocol.md`](.claude/skills/shared/evidence-based-reasoning-protocol.md) for full protocol.
+
+> **Understand Code First Protocol** — Read and understand existing code BEFORE any modification. Search for 3+ similar implementations. Run graph trace on key files when `.code-graph/graph.db` exists. Write analysis to `.ai/workspace/analysis/` for non-trivial tasks. MUST READ [`.claude/skills/shared/understand-code-first-protocol.md`](.claude/skills/shared/understand-code-first-protocol.md) for full protocol.
+
+> **Iterative Phase Quality Protocol** — Score complexity before planning (score 6+ = MUST decompose into phases). Each phase: ≤5 files, ≤3h effort, independently reviewable. Cycle: plan → implement → review → fix → verify. MUST READ [`.claude/skills/shared/iterative-phase-quality-protocol.md`](.claude/skills/shared/iterative-phase-quality-protocol.md) for complexity scoring and phase rules.
+
 **Sections:** [TL;DR](#tldr--what-you-must-know-before-writing-any-code) | [Search First](#mandatory-search-existing-code-first) | [First Action](#first-action-decision-before-any-tool-call) | [Task Planning](#important-task-planning-rules-must-follow) | [Code Hierarchy](#code-responsibility-hierarchy-critical) | [Plan Before Implement](#mandatory-plan-before-implement) | [Naming](#naming-conventions) | [File Locations](#key-file-locations) | [Dev Commands](#development-commands) | [Integration Testing](#integration-testing) | [E2E Testing](#e2e-testing) | [Local Startup](#local-system-startup) | [Evidence & Investigation](#evidence-based-reasoning--investigation-protocol-mandatory) | [Graph Intelligence](#graph-intelligence-mandatory-when-code-graphgraphdb-exists) | [Skill Activation](#automatic-skill-activation-mandatory) | [Documentation Index](#documentation-index) | [Workflow Lookup](#workflow-keyword-lookup--execution-protocol)
 
 ---
@@ -25,10 +45,10 @@
 **First Principles (Code Quality in AI Era):**
 
 1. **Understanding > Output** — Never ship code you can't explain. AI generates candidates; humans validate intent.
-2. **Design Before Mechanics** — Document WHY before WHAT. A 3-sentence rationale prevents 3-day debugging sessions.
-3. **Own Your Abstractions** — Every dependency, framework, and platform decision is YOUR responsibility. Understand what's under the hood.
-4. **Operational Awareness** — Code that works but can't be debugged, monitored, or rolled back is technical debt in disguise.
-5. **Depth Over Breadth** — One well-understood solution beats ten AI-generated variants. Quality compounds; quantity decays.
+2. **Design Before Mechanics** — Document WHY before WHAT.
+3. **Own Your Abstractions** — Every dependency and framework decision is YOUR responsibility.
+4. **Operational Awareness** — Code that can't be debugged or rolled back is technical debt.
+5. **Depth Over Breadth** — One well-understood solution beats ten AI-generated variants.
 
 **Decision Quick-Ref:**
 
@@ -47,8 +67,6 @@
 | Repository         | `IPlatformRootRepository<TEntity>`                             |
 | Complex queries    | `RepositoryExtensions` with static expressions                 |
 | Integration test   | Extend `PlatformServiceIntegrationTestWithAssertions<TModule>` |
-
-**Workflow:** Always plan before implementing non-trivial tasks. Match user prompt to workflow catalog (below). If modification keywords present → use Feature/Refactor/Bugfix workflow. Fallback → `/plan <prompt>`.
 
 **Key Locations:** `src/Platform/Easy.Platform/` (framework core), `src/Backend/` (PlatformExampleApp backend), `src/Frontend/` (Angular frontend), `src/Frontend/libs/platform-core/` (frontend framework)
 
@@ -94,18 +112,18 @@ For simple/straightforward tasks (single-file changes, clear small fixes), AI MU
 
 ## IMPORTANT: Task Planning Rules (MUST FOLLOW)
 
-These rules apply to EVERY task, whether using a workflow or not:
-
-1. **MANDATORY task creation for file-modifying prompts** — If the prompt could result in ANY file changes (code, config, docs), you MUST create `TaskCreate` items BEFORE making changes. This applies even without a workflow match. Only skip for single-line trivial fixes or pure questions.
-2. **Always break work into many small todo tasks** — granular tasks prevent losing track of progress
-3. **Always add a final review todo task** to review all work done, find any fixes or enhancements needed, **and check for doc staleness** (cross-reference changed files against `docs/` — see watzup skill for the mapping table)
-4. **Mark todos as completed IMMEDIATELY** after finishing each task — never batch completions
-5. **Exactly ONE task in_progress at a time** — complete current before starting next
-6. **Use TaskCreate proactively** for any task with 2+ steps or any task that modifies files — visibility into progress is critical
-7. **On context loss**, check `TaskList` for `[Workflow]` items to recover your place
-8. **No speculation or hallucination** — always answer with proof (code references, search results, file evidence). If unsure, investigate first rather than guessing.
-9. **Evidence-based recommendations** — Before recommending code removal/refactoring, complete the Investigation Protocol validation chain. Declare confidence level for all architectural recommendations.
-10. **Breaking change assessment** — Any recommendation that could break functionality requires HIGH/MEDIUM risk validation (see Investigation & Recommendation Protocol).
+| #   | Rule                                                                                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **MANDATORY task creation for file-modifying prompts** — `TaskCreate` items BEFORE making changes. Only skip for single-line trivial fixes or pure questions. |
+| 2   | **Break work into many small todo tasks** — granular tasks prevent losing track of progress                                                                   |
+| 3   | **Final review todo task** — review all work, find fixes/enhancements, **check for doc staleness** (cross-reference changed files against `docs/`)            |
+| 4   | **Mark todos completed IMMEDIATELY** — never batch completions                                                                                                |
+| 5   | **ONE task in_progress at a time** — complete current before starting next                                                                                    |
+| 6   | **TaskCreate proactively** for any task with 2+ steps or any task that modifies files                                                                         |
+| 7   | **On context loss** — check `TaskList` for `[Workflow]` items to recover your place                                                                           |
+| 8   | **No speculation or hallucination** — always answer with proof (code references, search results, file evidence)                                               |
+| 9   | **Evidence-based recommendations** — complete Investigation Protocol validation chain. Declare confidence level.                                              |
+| 10  | **Breaking change assessment** — HIGH/MEDIUM risk requires full validation (see Investigation Protocol)                                                       |
 
 ---
 
@@ -178,10 +196,10 @@ src/Backend/                     # PlatformExampleApp backend
 src/Frontend/                    # Angular frontend (Nx workspace)
 src/Frontend/apps/playground-text-snippet/  # Example frontend app
 src/Frontend/libs/platform-core/ # Frontend framework core
-docs/                            # Project documentation
+docs/                            # Project documentation (content auto-injected by hook)
 .claude/hooks/                   # Claude Code hooks
-docs/project-reference/code-review-rules.md  # Code review rules (auto-injected)
-docs/project-reference/lessons.md            # Learned lessons (injected via hook, written via /learn skill)
+docs/project-reference/code-review-rules.md  # Code review rules (content auto-injected by hook)
+docs/project-reference/lessons.md            # Learned lessons (content auto-injected by hook)
 ```
 
 <!-- /SECTION:key-locations -->
@@ -234,7 +252,7 @@ cd src/Frontend/e2e && npx playwright test --headed   # Headed mode
 cd src/Frontend/e2e && npx playwright test --ui       # Interactive UI
 ```
 
-See [e2e-test-reference.md](docs/project-reference/e2e-test-reference.md) for patterns, page objects, and configuration.
+See [e2e-test-reference.md](docs/project-reference/e2e-test-reference.md) for patterns, page objects, and configuration (content auto-injected by hook).
 
 <!-- /SECTION:e2e-testing -->
 
@@ -273,7 +291,9 @@ Start order: **Infrastructure → Backend API → Frontend**. Docker compose fil
 
 ## Evidence-Based Reasoning & Investigation Protocol (MANDATORY)
 
-Speculation is FORBIDDEN. Every claim about code behavior, every recommendation for changes, must be backed by evidence. Ref: [Evidence-Based Reasoning Protocol](.claude/skills/shared/evidence-based-reasoning-protocol.md) (mandatory) | [Anti-Hallucination Patterns](.claude/patterns/anti-hallucination-patterns.md) (optional deep-dive).
+> **Evidence-Based Reasoning Protocol** — No speculation: cite `file:line` for every claim. Confidence declaration required (95%+ = recommend freely, <60% = DO NOT recommend). Pre-claim checklist: evidence file path + grep search + 3+ similar patterns + framework docs + confidence level. MUST READ [`.claude/skills/shared/evidence-based-reasoning-protocol.md`](.claude/skills/shared/evidence-based-reasoning-protocol.md) for full protocol.
+
+> **Anti-Hallucination Patterns** — Forbidden phrases without evidence: "should be", "obviously", "I think", "probably". Replace with evidence-first language: "Evidence from [file:line] shows...", "Confidence: X% based on [evidence list]". Optional deep-dive: [`.claude/docs/anti-hallucination-patterns.md`](.claude/docs/anti-hallucination-patterns.md).
 
 ### Core Rules
 
@@ -376,9 +396,11 @@ Before creating or modifying files matching these patterns, Claude MUST:
 
 ## Documentation Index
 
-**Full reference:** [`.claude/docs/README.md`](.claude/docs/README.md) — 178 skills, 40 hooks, 24 agents, configuration, patterns, complete guides.
+> **Claude Code Docs Hub** — 245 skills, 41 hooks, 28 agents, 48 workflows. Quick decision trees for common tasks. See [`.claude/docs/README.md`](.claude/docs/README.md) for full navigation hub, document sizes, and core pattern references.
 
 ### Project & Operations (`docs/`)
+
+All `docs/` files below are content auto-injected by hook — do NOT create inline summaries for these.
 
 | Document / Directory                                                      | Purpose                          | When to Use                    |
 | ------------------------------------------------------------------------- | -------------------------------- | ------------------------------ |
@@ -430,3 +452,15 @@ For GitHub Copilot (which lacks hooks), run `/sync-copilot-workflows` to regener
 4. **CREATE TASKS (HARD BLOCKING):** Use `TaskCreate` for ALL workflow steps BEFORE doing anything else — this is NOT optional
 5. **ANNOUNCE:** Tell user: `"Detected: [Intent]. Following workflow: [sequence]"`
 6. **EXECUTE:** Follow each step in sequence, updating todo status as you progress
+
+---
+
+## Closing Reminders (AI Attention Anchor)
+
+**These are the rules AI most commonly violates. Re-read before EVERY action.**
+
+1. **SEARCH FIRST** — Before writing ANY code, grep/glob for 3+ existing patterns. Follow codebase conventions, not generic knowledge. PlatformExampleApp is the reference.
+2. **WORKFLOW BEFORE TOOLS** — First action on any non-trivial prompt MUST be workflow detection → `/workflow-start <id>`. Never jump straight to TaskCreate, Read, Grep, or Edit.
+3. **EVIDENCE, NOT SPECULATION** — Every claim needs `file:line` proof. Never say "obviously", "I think", "should be" without grep results. Confidence <60% = DO NOT recommend.
+4. **LOGIC IN LOWEST LAYER** — Entity/Model > Service > Component/Handler. If logic belongs 90% to an entity, put it in the entity. Constants, dropdowns, display helpers = Model layer.
+5. **TaskCreate BEFORE file changes** — Any file-modifying prompt requires TaskCreate items BEFORE making changes. Mark completed IMMEDIATELY. One in_progress at a time.

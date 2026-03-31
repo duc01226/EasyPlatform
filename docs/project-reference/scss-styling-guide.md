@@ -2,11 +2,31 @@
 
 # SCSS Styling Guide
 
-This document describes the SCSS architecture, design tokens, BEM conventions, theming approach, and responsive patterns used in the EasyPlatform frontend.
+## Quick Summary
+
+**Goal:** Define SCSS architecture, design tokens, BEM conventions, theming, and responsive patterns for EasyPlatform frontend.
+
+**Architecture:** Two-layer system -- Platform tokens/mixins in `libs/platform-core/src/styles/`, app overrides in `apps/playground-text-snippet/src/styles/`.
+
+**BEM Convention:** `.block__element--modifier` (kebab-case). State modifiers use `.-prefix` (e.g., `.-selected`). Max nesting depth: 3.
+
+**Key Tokens:** `$space-{1..12}` for spacing, `$font-size-{xs..3xl}` for typography, `$color-primary-*`/`$color-neutral-*`/`$color-{success|warning|error}*` for colors, `$radius-{sm|md|lg|full}` for borders.
+
+**Responsive:** Desktop-first via `flex-layout-media()` mixin. Switch row-to-column at `lt-md` breakpoint.
+
+**Key Rules:**
+
+- Use design tokens (`$space-*`, `$color-*`, `$radius-*`) -- never hardcode values
+- Use `flex-layout-media()` mixin -- never raw `@media` queries
+- Use `calculateRem()` for pixel-to-rem conversion
+- All template elements MUST have BEM classes
+- Host elements styled via component selector, not `:host`
+
+---
 
 ## SCSS Architecture
 
-The project uses a **two-layer SCSS architecture** within an Angular + Nx workspace:
+Two-layer SCSS architecture within Angular + Nx workspace:
 
 | Layer        | Directory                                               | Purpose                                       |
 | ------------ | ------------------------------------------------------- | --------------------------------------------- |
@@ -41,7 +61,7 @@ apps/playground-text-snippet/src/
 
 ### Import Chain
 
-The entry point `styles.scss` loads everything through `_index.scss`:
+Entry point `styles.scss` loads everything through `_index.scss`:
 
 ```scss
 // styles.scss (line 1)
@@ -193,8 +213,6 @@ Base font size: `$app-root-font-size: 16px`. All pixel-based sizing should use `
 
 ### Naming Convention
 
-The project follows BEM (Block Element Modifier) with these conventions:
-
 | Part           | Separator                | Example                                           |
 | -------------- | ------------------------ | ------------------------------------------------- |
 | Block          | kebab-case               | `.task-list`, `.text-snippet-detail`              |
@@ -204,8 +222,7 @@ The project follows BEM (Block Element Modifier) with these conventions:
 
 ### Nesting Rules
 
-- **Max nesting depth: 3** (enforced by Stylelint)
-- Elements are nested inside blocks using `&__`:
+Max nesting depth: 3 (enforced by Stylelint). Elements nested inside blocks using `&__`:
 
 ```scss
 // src/Frontend/apps/playground-text-snippet/src/app/app.component.scss (lines 37-42)
@@ -283,7 +300,7 @@ Shared patterns use `%placeholder` selectors with `@extend`:
 
 ### Approach
 
-Angular Material Design 3 (MD3) theming using the `mat.theme()` mixin. The Material core is initialized in `_material-core.scss`:
+Angular Material Design 3 (MD3) theming using `mat.theme()`. Material core initialized in `_material-core.scss`:
 
 ```scss
 // _material-core.scss
@@ -337,7 +354,7 @@ All breakpoint values use `calculateRem()` for rem-based media queries.
 
 ### Media Query Mixin
 
-Use the `flex-layout-media($media-type)` mixin instead of raw `@media` queries. Supported media types:
+Use `flex-layout-media($media-type)` instead of raw `@media` queries. Supported types:
 
 | Type               | Meaning            |
 | ------------------ | ------------------ |
@@ -376,7 +393,7 @@ Usage example from `app.component.scss` (lines 214-263):
 
 ### Responsive Strategy
 
-The project uses a **desktop-first** approach: layouts are designed for wide screens and adapted to narrow screens using `lt-md`, `lt-lg` breakpoints. Common pattern is switching from `flex-direction: row` to `column` at the `lt-md` breakpoint.
+Desktop-first approach: layouts designed for wide screens, adapted to narrow screens using `lt-md`, `lt-lg` breakpoints. Common pattern: switch `flex-direction: row` to `column` at `lt-md`.
 
 ## Color Palette
 
@@ -463,3 +480,13 @@ Root config: `src/Frontend/.stylelintrc.json`. App and lib configs extend it.
 ### Overrides
 
 Theme files (`**/themes/**/*.scss`, `**/*-theme.scss`) are exempt from variable naming patterns and nesting depth limits.
+
+---
+
+## Closing Reminders
+
+- **MUST** use design tokens (`$space-*`, `$color-*`, `$radius-*`, `$font-size-*`) for all values -- never hardcode pixels, colors, or magic numbers
+- **MUST** use `flex-layout-media()` mixin for responsive breakpoints -- never write raw `@media` queries
+- **MUST** follow BEM naming: `.block__element--modifier` (kebab-case), state modifiers with `.-` prefix, max 3 nesting levels
+- **MUST** style Angular host elements via component selector (not `:host`) and use `calculateRem()` for all pixel-to-rem conversions
+- **MUST** apply BEM classes to ALL template elements -- no classless elements in component templates

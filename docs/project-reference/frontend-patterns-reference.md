@@ -4,11 +4,36 @@
 
 > Angular 17+ / Nx Workspace | Standalone Components | NgRx ComponentStore | RxJS | Angular Material
 
+## Quick Summary
+
+**Goal:** Define all frontend conventions, base classes, state management, form patterns, API services, and styling rules for Easy.Platform Angular apps.
+
+**Key Rules:**
+
+- Always extend `AppBase*Component` wrappers, NEVER `PlatformComponent` directly
+- All subscriptions MUST use `.pipe(this.untilDestroyed()).subscribe()`
+- State management via `PlatformVmStore` + `effectSimple()`, NEVER direct `HttpClient`
+- Business logic belongs in `PlatformVm` subclass (model layer), NOT components
+- BEM classes on ALL template elements, `ViewEncapsulation.None` + `OnPush` always
+- API services MUST extend `PlatformApiService`
+
+**Key Patterns:**
+
+| Pattern            | Class / Method                       | Source Location                                              |
+| ------------------ | ------------------------------------ | ------------------------------------------------------------ |
+| Simple component   | `AppBaseComponent`                   | `apps/.../shared/base/app-base.component.ts`                 |
+| Store component    | `AppBaseVmStoreComponent<VM, Store>` | `apps/.../shared/base/app-base-vm-store.component.ts`        |
+| Form component     | `AppBaseFormComponent<VM>`           | `apps/.../shared/base/`                                      |
+| State management   | `PlatformVmStore<VM>`                | `libs/platform-core/src/lib/view-models/view-model.store.ts` |
+| API service        | `PlatformApiService`                 | `libs/platform-core/src/lib/api-services/abstracts/`         |
+| Side effects       | `effectSimple()`                     | `view-model.store.ts:1577`                                   |
+| Subscription guard | `untilDestroyed()`                   | `platform.component.ts:488`                                  |
+
 ---
 
 ## Component Base Classes
 
-The platform provides a layered component hierarchy. Applications create thin `AppBase*` wrappers that extend the platform classes, allowing app-wide customizations without modifying feature components.
+Layered component hierarchy. Apps create thin `AppBase*` wrappers extending platform classes for app-wide customizations.
 
 ### Hierarchy
 
@@ -55,14 +80,14 @@ export abstract class AppBaseVmStoreComponent<TViewModel extends PlatformVm, TSt
 
 **Source:** `libs/platform-core/src/lib/components/abstracts/platform.component.ts:250`
 
-Provides out of the box:
+Built-in capabilities:
 
-- **Reactive lifecycle**: `initiated$`, `viewInitiated$`, `destroyed$` signals
-- **Operation state tracking**: `status$`, `loadingMap$`, `errorMsgMap$` with multi-request support
-- **Subscription cleanup**: `untilDestroyed()` operator, automatic on destroy
-- **Services**: `ToastrService`, `PlatformCachingService`, `PlatformTranslateService`, `ChangeDetectorRef` pre-injected
-- **Request-specific state**: `isLoading$(key)`, `errorMsg$(key)`, `getErrorMsg$(key)` for granular loading/error per operation
-- **Throttled change detection**: built-in throttling for performance
+- **Reactive lifecycle:** `initiated$`, `viewInitiated$`, `destroyed$` signals
+- **Operation state tracking:** `status$`, `loadingMap$`, `errorMsgMap$` with multi-request support
+- **Subscription cleanup:** `untilDestroyed()` operator, automatic on destroy
+- **Pre-injected services:** `ToastrService`, `PlatformCachingService`, `PlatformTranslateService`, `ChangeDetectorRef`
+- **Request-specific state:** `isLoading$(key)`, `errorMsg$(key)`, `getErrorMsg$(key)` for granular loading/error per operation
+- **Throttled change detection:** built-in throttling for performance
 
 ---
 
@@ -92,7 +117,7 @@ export interface IPlatformVm {
 }
 ```
 
-The `PlatformVm` class adds multi-request loading/error tracking, with properties like `isStateLoading`, `isStateSuccess`, `isStateError`, `isStateReloading`.
+`PlatformVm` adds multi-request loading/error tracking: `isStateLoading`, `isStateSuccess`, `isStateError`, `isStateReloading`.
 
 ### Store Example
 
@@ -151,7 +176,7 @@ export class AppStore extends PlatformVmStore<AppVm> {
 
 **Source:** `libs/platform-core/src/lib/view-models/view-model.store.ts:1577`
 
-`effectSimple()` is the primary way to define side effects (API calls, state updates). It wraps NgRx `ComponentStore.effect()` with:
+Primary way to define side effects (API calls, state updates). Wraps NgRx `ComponentStore.effect()` with:
 
 - Automatic loading/error state tracking per `requestKey`
 - `switchMap` semantics (cancels previous in-flight request)
@@ -235,13 +260,15 @@ export class AppComponent extends AppBaseVmStoreComponent<AppVm, AppStore> {
 }
 ```
 
-Key conventions:
+Key APIs:
 
-- `vm()` -- signal returning current VM (use in templates)
-- `currentVm()` -- synchronous snapshot of current VM
-- `updateVm({...})` -- partial update on VM
-- `store.updateState({...})` -- partial update from store
-- `store.currentState()` -- synchronous snapshot from store
+| API                        | Purpose                                        |
+| -------------------------- | ---------------------------------------------- |
+| `vm()`                     | Signal returning current VM (use in templates) |
+| `currentVm()`              | Synchronous snapshot of current VM             |
+| `updateVm({...})`          | Partial update on VM                           |
+| `store.updateState({...})` | Partial update from store                      |
+| `store.currentState()`     | Synchronous snapshot from store                |
 
 ---
 
@@ -323,11 +350,13 @@ export class TaskDetailComponent extends AppBaseFormComponent<TaskDetailFormVm> 
 
 Key form utilities:
 
-- `formControls(key)` -- get FormControl by VM property name
-- `formControlsError(controlKey, errorKey)` -- get validation error
-- `isFormValid()` / `validateForm()` -- validation
-- `PlatformFormConfig.dependentValidations` -- cross-field revalidation
-- `startEndValidator()` -- built-in date range validator from platform-core
+| Utility                                   | Purpose                        |
+| ----------------------------------------- | ------------------------------ |
+| `formControls(key)`                       | Get FormControl by VM property |
+| `formControlsError(controlKey, errorKey)` | Get validation error           |
+| `isFormValid()` / `validateForm()`        | Validation                     |
+| `PlatformFormConfig.dependentValidations` | Cross-field revalidation       |
+| `startEndValidator()`                     | Built-in date range validator  |
 
 ---
 
@@ -337,13 +366,13 @@ Key form utilities:
 
 **Source:** `libs/platform-core/src/lib/api-services/abstracts/platform.api-service.ts:147`
 
-Extends `PlatformHttpService`. Provides:
+Extends `PlatformHttpService`. Features:
 
-- Smart caching with TTL (`get()` caches by default, `{ enableCache: false }` to disable)
-- Standardized error responses via `PlatformApiServiceErrorResponse`
-- Automatic null property removal from payloads
-- Event-driven error handling (`PlatformApiErrorEvent`)
-- File upload support (`postFileMultiPartForm`)
+- **Smart caching** with TTL (`get()` caches by default, `{ enableCache: false }` to disable)
+- **Standardized errors** via `PlatformApiServiceErrorResponse`
+- **Auto null removal** from payloads
+- **Event-driven error handling** (`PlatformApiErrorEvent`)
+- **File upload** via `postFileMultiPartForm`
 
 ### API Service Example
 
@@ -429,7 +458,7 @@ export class SaveTextSnippetCommandResult extends PlatformResultDto {
 
 **Source:** `libs/platform-core/src/lib/components/abstracts/platform.component.ts:488`
 
-All components and stores inherit `untilDestroyed()` which returns a `takeUntil` operator tied to the component/store destroy lifecycle.
+All components and stores inherit `untilDestroyed()` -- a `takeUntil` operator tied to the destroy lifecycle.
 
 ```typescript
 // In components -- always pipe subscriptions through untilDestroyed()
@@ -451,7 +480,7 @@ public untilDestroyed<T>(): MonoTypeOperatorFunction<T> {
 }
 ```
 
-### Store subscription management
+### Store Subscription Management
 
 Stores also provide:
 
@@ -459,7 +488,7 @@ Stores also provide:
 - `storeAnonymousSubscription(subscription)` -- anonymous subscription storage
 - `subscribe(observable)` -- subscribe and auto-store
 - `cancelStoredSubscription(key)` -- cancel by name
-- All stored subscriptions are cleaned up on store destroy
+- All stored subscriptions cleaned up on store destroy
 
 **DO:**
 
@@ -481,7 +510,7 @@ this.subscriptions.push(sub);  // manual cleanup
 
 ### BEM CSS
 
-All template elements use BEM naming: `block__element--modifier`. The block name matches the component selector minus prefixes.
+All template elements use BEM naming: `block__element--modifier`. Block name matches component selector minus prefixes.
 
 **Source:** `apps/playground-text-snippet/src/app/app.component.html:1-37`
 
@@ -536,13 +565,12 @@ Components use `ViewEncapsulation.None` with BEM to scope styles. SCSS uses plat
 
 **Source:** `libs/platform-core/src/styles/_platform-variables.scss:1-50`
 
-Spacing scale: `$space-1` (4px) through `$space-12` (48px).
-
-Color tokens: `$color-primary-*`, `$color-neutral-*`, `$color-success`, `$color-warning`, `$color-error`.
+- **Spacing scale:** `$space-1` (4px) through `$space-12` (48px)
+- **Color tokens:** `$color-primary-*`, `$color-neutral-*`, `$color-success`, `$color-warning`, `$color-error`
 
 **Source:** `libs/platform-core/src/styles/_platform-mixins.scss:1-47`
 
-Layout mixins: `flex-center`, `flex-start`, `flex-between`, `stack($gap)`, `cluster($gap)`, `card-elevated`.
+- **Layout mixins:** `flex-center`, `flex-start`, `flex-between`, `stack($gap)`, `cluster($gap)`, `card-elevated`
 
 ---
 
@@ -599,8 +627,6 @@ src/Frontend/
 ```
 
 ### Component File Conventions
-
-Each component directory contains:
 
 ```
 task-detail/
@@ -677,10 +703,12 @@ export class AppComponent extends AppBaseVmStoreComponent<AppVm, AppStore> { ...
 
 Standard conventions:
 
-- `ChangeDetectionStrategy.OnPush` -- always
-- `ViewEncapsulation.None` -- always (BEM scoping via class names)
-- Import child components directly in `imports` array
-- Import `PlatformCoreModule` for platform utilities
+| Convention         | Required Value              | Reason                      |
+| ------------------ | --------------------------- | --------------------------- |
+| `changeDetection`  | `OnPush`                    | Always                      |
+| `encapsulation`    | `None`                      | BEM scoping via class names |
+| Child components   | Direct in `imports` array   | Standalone pattern          |
+| Platform utilities | Import `PlatformCoreModule` | Access platform services    |
 
 ---
 
@@ -697,3 +725,13 @@ Standard conventions:
 | Change detection    | `OnPush` always                            | Default change detection                |
 | View encapsulation  | `None` + BEM                               | `Emulated` or `ShadowDom`               |
 | Component structure | `standalone: true` with explicit imports   | NgModule-based components               |
+
+---
+
+## Closing Reminders
+
+- **MUST** extend `AppBase*Component` wrappers (NOT `PlatformComponent` directly) -- app-level wrappers exist for a reason
+- **MUST** use `.pipe(this.untilDestroyed()).subscribe()` on ALL subscriptions -- memory leaks are the #1 frontend defect
+- **MUST** use `PlatformVmStore` + `effectSimple()` for state management -- NEVER call `HttpClient` directly from components
+- **MUST** place business logic in `PlatformVm` subclass (model layer), NOT in component classes -- follow Code Responsibility Hierarchy
+- **MUST** apply BEM classes to ALL template elements with `ViewEncapsulation.None` + `ChangeDetectionStrategy.OnPush`

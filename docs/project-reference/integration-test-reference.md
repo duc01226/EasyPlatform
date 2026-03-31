@@ -4,6 +4,30 @@
 
 > Subcutaneous CQRS integration tests through real DI (no HTTP), against live infrastructure (MongoDB, RabbitMQ, Redis, PostgreSQL).
 
+## Quick Summary
+
+**Goal:** Write subcutaneous CQRS integration tests that execute commands/queries through real DI against live Docker infrastructure -- no HTTP layer, no in-memory fakes.
+
+**Setup Steps:**
+
+1. Start Docker infrastructure: `src/start-dev-platform-example-app.infrastructure.cmd`
+2. Create fixture extending `PlatformServiceIntegrationTestFixture<TApiModule>`
+3. Create `[CollectionDefinition]` with `ICollectionFixture<YourFixture>`
+4. Create service-specific base class extending `PlatformServiceIntegrationTestWithAssertions<TApiModule>` (override `ResolveRepository` + `BeforeExecuteAnyAsync`)
+5. Create test classes with `[Collection(Name)]` + `[Trait("Category", "...")]`
+
+**Key APIs:**
+
+| API                                           | Purpose                                            |
+| --------------------------------------------- | -------------------------------------------------- |
+| `ExecuteCommandAsync<TResult>(command)`       | Send CQRS command through pipeline                 |
+| `ExecuteQueryAsync<TResult>(query)`           | Send CQRS query through pipeline                   |
+| `AssertEntityExistsAsync<T>(id)`              | Poll DB until entity exists (eventual consistency) |
+| `AssertEntityMatchesAsync<T>(id, assertions)` | Poll DB until entity matches assertions            |
+| `AssertEntityDeletedAsync<T>(id)`             | Poll DB until entity removed                       |
+| `IntegrationTestHelper.UniqueName(base)`      | Generate unique test data name                     |
+| `ExecuteWithServicesAsync(func)`              | Direct DI access for custom logic                  |
+
 **Framework:** xUnit 2.9.3 + FluentAssertions 7.0.0 + Easy.Platform.AutomationTest
 **Pattern:** Register real service module DI -> initialize platform modules -> execute commands/queries through CQRS pipeline
 **Infrastructure:** Tests run against local Docker Compose services (same ports as development)
@@ -462,3 +486,13 @@ public class CrossServiceCollection : ICollectionFixture<MyCrossServiceFixture> 
 Fixtures initialize sequentially in declared order. Place foundational services first.
 
 **Source:** `src/Platform/Easy.Platform.AutomationTest/IntegrationTests/PlatformCrossServiceFixture.cs:42-136`
+
+---
+
+## Closing Reminders
+
+- **MUST** use `[Collection(Name)]` attribute on every test class -- without it, xUnit creates a separate fixture instance and DI breaks
+- **MUST** use `IntegrationTestHelper.UniqueName()` / `UniqueId()` for all test data -- data accumulates across runs, hardcoded values cause collisions
+- **MUST** use `AssertEntityMatchesAsync` (not direct DB reads) for post-command assertions -- eventual consistency requires polling with `WaitUntilAsync`
+- **MUST** provide explicit `BatchKey` or `Skip`/`Take` when testing batch/paged background jobs -- without them, master-job mode schedules into Hangfire which never executes in tests
+- **MUST** override `ResolveRepository` and `BeforeExecuteAnyAsync` in your service-specific base class -- these wire up the correct repository interface and user context

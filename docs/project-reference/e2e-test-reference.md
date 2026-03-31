@@ -2,7 +2,29 @@
 
 # E2E Test Reference
 
-This project has **two E2E testing frameworks**: Playwright (TypeScript, frontend-focused) and Selenium + SpecFlow (C#, BDD backend-focused). Both target the PlatformExampleApp (TextSnippet + TaskItem) running against live infrastructure.
+## Quick Summary
+
+**Goal:** Reference for both E2E testing frameworks -- Playwright (TypeScript, frontend) and Selenium + SpecFlow (C#, BDD backend) -- targeting PlatformExampleApp (TextSnippet + TaskItem) against live infrastructure.
+
+**Key Commands:**
+
+| Goal                 | Command                                                 |
+| -------------------- | ------------------------------------------------------- |
+| All Playwright tests | `cd src/Frontend/e2e && npx playwright test`            |
+| Smoke only (P0)      | `cd src/Frontend/e2e && npx playwright test --grep @P0` |
+| Headed (visible)     | `cd src/Frontend/e2e && npx playwright test --headed`   |
+| Interactive UI       | `cd src/Frontend/e2e && npx playwright test --ui`       |
+| All BDD tests        | `dotnet test src/Backend/PlatformExampleApp.Test.BDD/`  |
+
+**Setup:** Live infra required. Start with `src/start-dev-platform-example-app.infrastructure.cmd`, then backend API. Playwright auto-starts frontend via `webServer` config.
+
+**Key Patterns:**
+
+- **Page Object Model (POM)** -- all page objects extend `BasePage` (`src/Frontend/e2e/page-objects/base.page.ts`)
+- **Selectors** -- BEM classes, Angular Material selectors, accessibility attributes; never raw CSS indexes
+- **Test data** -- factory functions with `generateTestId()` for uniqueness; cleanup in `afterEach`
+- **Waits** -- `domcontentloaded` (not `networkidle`); `waitForResponse()` for API-triggered UI updates
+- **Console errors** -- import `test`/`expect` from `utils/test-helpers` for automatic console error tracking
 
 ---
 
@@ -10,23 +32,23 @@ This project has **two E2E testing frameworks**: Playwright (TypeScript, fronten
 
 ```
 E2E Testing
-├── Playwright (Frontend)
-│   └── src/Frontend/e2e/
-│       ├── playwright.config.ts         # Config: baseURL, projects, webServer
-│       ├── tests/                       # 10 spec files across 4 categories
-│       ├── page-objects/                # 5 page objects (POM pattern)
-│       ├── fixtures/                    # Test data factories
-│       ├── utils/                       # API helpers, console error tracking
-│       └── recordings/                  # Video recordings (gitignored)
-│
-└── Selenium + SpecFlow (Backend BDD)
-    ├── src/Backend/PlatformExampleApp.Test.BDD/
-    │   ├── Features/                    # Gherkin .feature files
-    │   ├── StepDefinitions/             # C# step bindings
-    │   └── Startup.cs                   # DI + WebDriver config
-    │
-    └── src/Platform/Easy.Platform.AutomationTest/
-        └── Base classes: BaseStartup, BddStepDefinitions<T>, IBddStepsContext
++-- Playwright (Frontend)
+|   +-- src/Frontend/e2e/
+|       +-- playwright.config.ts         # Config: baseURL, projects, webServer
+|       +-- tests/                       # 10 spec files across 4 categories
+|       +-- page-objects/                # 5 page objects (POM pattern)
+|       +-- fixtures/                    # Test data factories
+|       +-- utils/                       # API helpers, console error tracking
+|       +-- recordings/                  # Video recordings (gitignored)
+|
++-- Selenium + SpecFlow (Backend BDD)
+    +-- src/Backend/PlatformExampleApp.Test.BDD/
+    |   +-- Features/                    # Gherkin .feature files
+    |   +-- StepDefinitions/             # C# step bindings
+    |   +-- Startup.cs                   # DI + WebDriver config
+    |
+    +-- src/Platform/Easy.Platform.AutomationTest/
+        +-- Base classes: BaseStartup, BddStepDefinitions<T>, IBddStepsContext
 ```
 
 **Target Application:** `http://localhost:4001` (frontend), `http://localhost:5001/api` (backend API)
@@ -39,52 +61,52 @@ E2E Testing
 
 ```
 src/Frontend/e2e/
-├── playwright.config.ts          # Framework configuration
-├── package.json                  # Standalone package with @playwright/test ^1.50.0
-├── tsconfig.json                 # Path aliases: @page-objects/*, @fixtures/*, @utils/*
-├── page-objects/
-│   ├── index.ts                  # Barrel exports
-│   ├── base.page.ts              # BasePage: navigation, waitUntil, waitForLoading
-│   ├── app.page.ts               # AppPage: tab navigation, global errors
-│   ├── text-snippet.page.ts      # TextSnippetPage: CRUD, search, form modes
-│   ├── task-list.page.ts         # TaskListPage: filtering, statistics, pagination
-│   └── task-detail.page.ts       # TaskDetailPage: form, subtasks, soft-delete
-├── fixtures/
-│   └── test-data.ts              # TestData constants, createTestTask(), createTestSnippet()
-├── utils/
-│   ├── api-helpers.ts            # ApiHelpers class: CRUD via REST, cleanup
-│   └── test-helpers.ts           # Extended test with ConsoleErrorTracker fixture
-├── tests/
-│   ├── smoke/
-│   │   ├── app-load.spec.ts      # @P0: App loads, tabs work, responsive
-│   │   └── api-health.spec.ts    # @P0: Backend API health checks
-│   ├── text-snippet/
-│   │   ├── crud.spec.ts          # @P0-P2: Create, update, reset, select
-│   │   ├── search.spec.ts        # @P0-P3: Full-text, partial, case-insensitive, debounce
-│   │   └── edge-cases.spec.ts    # @P2: Max length, special chars, unicode
-│   ├── task/
-│   │   ├── crud.spec.ts          # @P0-P2: Create, update, view, status/priority change
-│   │   ├── filtering.spec.ts     # @P1-P3: Status, priority, overdue, combined filters
-│   │   ├── soft-delete.spec.ts   # @P0-P3: Delete, restore, include-deleted toggle
-│   │   ├── subtasks.spec.ts      # @P0-P3: Add, toggle, remove, persist, completion %
-│   │   └── completion.spec.ts    # @P1-P2: Status transitions, stats update
-│   └── form-validation/
-│       └── task-form.spec.ts     # @P0-P3: Required fields, errors, unicode, dates
-└── recordings/                   # .gitignored video output
++-- playwright.config.ts          # Framework configuration
++-- package.json                  # Standalone package with @playwright/test ^1.50.0
++-- tsconfig.json                 # Path aliases: @page-objects/*, @fixtures/*, @utils/*
++-- page-objects/
+|   +-- index.ts                  # Barrel exports
+|   +-- base.page.ts              # BasePage: navigation, waitUntil, waitForLoading
+|   +-- app.page.ts               # AppPage: tab navigation, global errors
+|   +-- text-snippet.page.ts      # TextSnippetPage: CRUD, search, form modes
+|   +-- task-list.page.ts         # TaskListPage: filtering, statistics, pagination
+|   +-- task-detail.page.ts       # TaskDetailPage: form, subtasks, soft-delete
++-- fixtures/
+|   +-- test-data.ts              # TestData constants, createTestTask(), createTestSnippet()
++-- utils/
+|   +-- api-helpers.ts            # ApiHelpers class: CRUD via REST, cleanup
+|   +-- test-helpers.ts           # Extended test with ConsoleErrorTracker fixture
++-- tests/
+|   +-- smoke/
+|   |   +-- app-load.spec.ts      # @P0: App loads, tabs work, responsive
+|   |   +-- api-health.spec.ts    # @P0: Backend API health checks
+|   +-- text-snippet/
+|   |   +-- crud.spec.ts          # @P0-P2: Create, update, reset, select
+|   |   +-- search.spec.ts        # @P0-P3: Full-text, partial, case-insensitive, debounce
+|   |   +-- edge-cases.spec.ts    # @P2: Max length, special chars, unicode
+|   +-- task/
+|   |   +-- crud.spec.ts          # @P0-P2: Create, update, view, status/priority change
+|   |   +-- filtering.spec.ts     # @P1-P3: Status, priority, overdue, combined filters
+|   |   +-- soft-delete.spec.ts   # @P0-P3: Delete, restore, include-deleted toggle
+|   |   +-- subtasks.spec.ts      # @P0-P3: Add, toggle, remove, persist, completion %
+|   |   +-- completion.spec.ts    # @P1-P2: Status transitions, stats update
+|   +-- form-validation/
+|       +-- task-form.spec.ts     # @P0-P3: Required fields, errors, unicode, dates
++-- recordings/                   # .gitignored video output
 ```
 
 ### SpecFlow BDD (Backend E2E)
 
 ```
 src/Backend/PlatformExampleApp.Test.BDD/
-├── PlatformExampleApp.Test.BDD.csproj    # SpecFlow.xUnit 3.9.74, Selenium 4.28.0
-├── Startup.cs                            # DI config, WebDriver options
-├── Features/
-│   └── CreateTextSnippet.feature         # 2 scenarios: create + duplicate validation
-└── StepDefinitions/
-    ├── HomePageSteps.cs                  # Given/When/Then for text snippet CRUD
-    └── Common/
-        └── CommonSteps.cs                # Shared "page has no errors" assertion
++-- PlatformExampleApp.Test.BDD.csproj    # SpecFlow.xUnit 3.9.74, Selenium 4.28.0
++-- Startup.cs                            # DI config, WebDriver options
++-- Features/
+|   +-- CreateTextSnippet.feature         # 2 scenarios: create + duplicate validation
++-- StepDefinitions/
+    +-- HomePageSteps.cs                  # Given/When/Then for text snippet CRUD
+    +-- Common/
+        +-- CommonSteps.cs                # Shared "page has no errors" assertion
 ```
 
 ---
@@ -154,10 +176,10 @@ Key design decisions:
 
 ```
 BasePage
-├── AppPage          # Tab navigation (Text Snippets / Task Management)
-├── TextSnippetPage  # Snippet CRUD, search, form modes
-├── TaskListPage     # Task list, statistics, filters, pagination
-└── TaskDetailPage   # Task form, subtasks, soft-delete/restore
++-- AppPage          # Tab navigation (Text Snippets / Task Management)
++-- TextSnippetPage  # Snippet CRUD, search, form modes
++-- TaskListPage     # Task list, statistics, filters, pagination
++-- TaskDetailPage   # Task form, subtasks, soft-delete/restore
 ```
 
 ### SpecFlow BDD: BddStepDefinitions
@@ -615,3 +637,13 @@ These conventions are observed across the existing test suite:
 9. **Status display mapping** -- Map API enum values (`Todo`, `InProgress`) to UI display text (`To Do`, `In Progress`) in page objects, not in tests (`task-detail.page.ts:25-30`)
 
 10. **Use `@retry` for flaky BDD scenarios** -- SpecFlow tests use `@retry(3,5000)` tag via xRetry.SpecFlow to handle infrastructure timing issues
+
+---
+
+## Closing Reminders
+
+- **MUST** use Page Object Model -- all locators live in page objects, never inline selectors in test specs
+- **MUST** use BEM classes, Angular Material selectors, or accessibility attributes for locators -- never raw CSS indexes or fragile DOM paths
+- **MUST** use `domcontentloaded` waits (not `networkidle`) and `waitForResponse()` for API-triggered UI updates
+- **MUST** clean up test data in `afterEach` via `ApiHelpers.cleanupTestData()` to prevent test pollution
+- **MUST** import `test`/`expect` from `utils/test-helpers` (not `@playwright/test`) to get console error tracking

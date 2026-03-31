@@ -4,6 +4,39 @@
 
 > Easy.Platform -- .NET 9 CQRS Framework | Scanned from `src/Backend/PlatformExampleApp.TextSnippet.*` and `src/Platform/Easy.Platform/`
 
+## Quick Summary
+
+**Goal:** Canonical backend patterns for Easy.Platform CQRS applications -- repository, command/query, validation, DTO mapping, events, messaging, migrations, jobs, and authorization.
+
+**Key Rules:**
+
+- **DTOs own mapping** -- `MapToEntity()` / `UpdateToEntity()` in DTO class, NEVER map in handlers
+- **Side effects in event handlers** (`UseCaseEvents/`), NEVER in command handlers
+- **Validation via fluent API** (`PlatformValidationResult`), NEVER throw exceptions directly
+- **Repository interfaces** -- inject narrowest type: `IXxxRepository<T>` for reads, `IXxxRootRepository<T>` for writes
+- **Cross-service communication** -- RabbitMQ message bus ONLY, never direct DB access
+- **Logic in lowest layer** -- Entity > Service > Handler (validation, expressions, factory methods belong on Entity)
+
+**Key Patterns Quick-Ref:**
+
+| Pattern               | Base Class / Interface                                            | Location                         |
+| --------------------- | ----------------------------------------------------------------- | -------------------------------- |
+| Repository (read)     | `IPlatformQueryableRepository<TEntity, TId>`                      | `Domain/Repositories/`           |
+| Repository (CRUD)     | `IPlatformQueryableRootRepository<TEntity, TId>`                  | `Domain/Repositories/`           |
+| Command               | `PlatformCqrsCommand<TResult>`                                    | `UseCaseCommands/`               |
+| Command Handler       | `PlatformCqrsCommandApplicationHandler<TCmd, TResult>`            | `UseCaseCommands/`               |
+| Query                 | `PlatformCqrsQuery<TResult>` / `PlatformCqrsPagedQuery<T, TItem>` | `UseCaseQueries/`                |
+| Query Handler         | `PlatformCqrsQueryApplicationHandler<TQuery, TResult>`            | `UseCaseQueries/`                |
+| Entity DTO            | `PlatformEntityDto<TEntity, TKey>`                                | `Dtos/EntityDtos/`               |
+| Value Object DTO      | `PlatformDto<T>`                                                  | `Dtos/`                          |
+| Entity Event Handler  | `PlatformCqrsEntityEventApplicationHandler<TEntity>`              | `UseCaseEvents/`                 |
+| Entity Event Producer | `PlatformCqrsEntityEventBusMessageProducer<TMsg, TEntity, TId>`   | `MessageBus/Producers/`          |
+| Event Consumer        | `PlatformCqrsEntityEventBusMessageConsumer<TMsg, TEntity>`        | `MessageBus/Consumers/`          |
+| Free-Format Message   | `PlatformTrackableBusMessage`                                     | `MessageBus/FreeFormatMessages/` |
+| Background Job        | `PlatformApplicationBackgroundJobExecutor`                        | `BackgroundJob/`                 |
+| Data Migration        | `PlatformDataMigrationExecutor<TDbContext>`                       | `DataMigrations/`                |
+| Controller            | `PlatformBaseController`                                          | `Api/Controllers/`               |
+
 ---
 
 ## Table of Contents
@@ -25,7 +58,7 @@
 
 ### Interface Hierarchy
 
-The platform uses a layered repository interface pattern. Domain projects define service-specific interfaces extending platform base interfaces.
+Domain projects define service-specific interfaces extending platform base interfaces.
 
 | Interface                             | Purpose                                    | Base                                                                                   |
 | ------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------- |
@@ -50,9 +83,9 @@ public interface ITextSnippetRootRepository<TEntity> : IPlatformQueryableRootRep
 
 ### Key Conventions
 
-- **Read-only vs Root:** Use `IXxxRepository<T>` for queries (no write), `IXxxRootRepository<T>` for full CRUD
-- **Generic entity param:** Repositories are generic over entity type, enabling one interface for multiple entities (e.g., `ITextSnippetRootRepository<TextSnippetEntity>` and `ITextSnippetRootRepository<MultiDbDemoEntity>`)
-- **Inject the narrowest type needed:** Query handlers inject `ITextSnippetRepository<T>` (read-only); command handlers inject `ITextSnippetRootRepository<T>` (read-write)
+- **Read-only vs Root:** `IXxxRepository<T>` for queries (no write), `IXxxRootRepository<T>` for full CRUD
+- **Generic entity param:** One interface for multiple entities (e.g., `ITextSnippetRootRepository<TextSnippetEntity>` and `ITextSnippetRootRepository<MultiDbDemoEntity>`)
+- **Inject narrowest type:** Query handlers use `ITextSnippetRepository<T>` (read-only); command handlers use `ITextSnippetRootRepository<T>` (read-write)
 
 ### Query Builder Pattern
 
@@ -110,11 +143,9 @@ UseCaseQueries/
         GetTaskListQuery.cs
 ```
 
-**Convention:** Command, Result, and Handler classes are co-located in a single file. Commands in `UseCaseCommands/`, queries in `UseCaseQueries/`.
+**Convention:** Command, Result, and Handler co-located in a single file. Commands in `UseCaseCommands/`, queries in `UseCaseQueries/`.
 
 ### Command Structure
-
-A command file contains three classes: Command, Result, Handler.
 
 **File:** `src/Backend/PlatformExampleApp.TextSnippet.Application/UseCaseCommands/SaveSnippetTextCommand.cs`
 
@@ -375,7 +406,7 @@ public class TextSnippetEntity : RootAuditedEntity<TextSnippetEntity, string, st
 
 ### Computed Properties
 
-Use `[ComputedEntityProperty]` attribute for derived values. Must have empty setter for EF Core compatibility.
+Use `[ComputedEntityProperty]` for derived values. Empty setter required for EF Core.
 
 **File:** `src/Backend/PlatformExampleApp.TextSnippet.Domain/Entities/TextSnippetEntity.cs` (lines 96-140)
 
@@ -397,7 +428,7 @@ public bool IsPublished
 
 ### Static Expression Pattern
 
-Entities define reusable LINQ expressions as static methods for repository queries:
+Reusable LINQ expressions as static methods for repository queries:
 
 **File:** `src/Backend/PlatformExampleApp.TextSnippet.Domain/Entities/TextSnippetEntity.cs` (lines 144-218)
 
@@ -432,7 +463,7 @@ public static TextSnippetEntity Create(string id, string snippetText, string ful
 
 ### Domain Events
 
-Entities can raise domain events via `AddDomainEvent()`:
+Entities raise domain events via `AddDomainEvent()`:
 
 ```csharp
 public TextSnippetEntity DemoDoSomeDomainEntityLogicAction_EncryptSnippetText()
@@ -797,7 +828,7 @@ await busMessageProducer.SendAsync(new DemoSendFreeFormatEventBusMessage { Prope
 
 ### Platform Data Migrations
 
-Used for runtime data migrations (not schema). Extends `PlatformDataMigrationExecutor<TDbContext>`.
+Runtime data migrations (not schema). Extend `PlatformDataMigrationExecutor<TDbContext>`.
 
 **File:** `src/Backend/PlatformExampleApp.TextSnippet.Persistence/DataMigrations/DemoMigrateUpdateSeedDataWhenSeedDataLogicIsUpdated.cs`
 
@@ -830,7 +861,7 @@ Located in `Persistence.PostgreSql/Migrations/`. Standard EF Core migration appr
 
 **Directory:** `src/Backend/PlatformExampleApp.TextSnippet.Persistence.PostgreSql/Migrations/`
 
-Migration naming pattern: `YYYYMMDDHHMMSS_Description.cs` (e.g., `20251219050854_AddTaskItemEntity.cs`)
+Migration naming: `YYYYMMDDHHMMSS_Description.cs` (e.g., `20251219050854_AddTaskItemEntity.cs`)
 
 ### Persistence Projects
 
@@ -963,3 +994,13 @@ await RequestContext.CurrentUser()  // Get full user object (lazy-loaded)
 | `PlatformDomainException`      | `.WithDomainException()`        | 400         |
 | `PlatformApplicationException` | `.EnsureValidAsync()` (default) | 400         |
 | `PlatformNotFoundException`    | `.EnsureFound()`                | 404         |
+
+---
+
+## Closing Reminders
+
+- **MUST** use `PlatformValidationResult` fluent API for all validation -- NEVER throw exceptions directly for business/input validation
+- **MUST** put DTO mapping in DTO class (`MapToEntity()` / `UpdateToEntity()`) -- NEVER map fields in command handlers
+- **MUST** place side effects in entity event handlers (`UseCaseEvents/`) -- NEVER in command handlers (cache clearing, notifications, cross-entity updates)
+- **MUST** inject narrowest repository type -- `IXxxRepository<T>` for reads, `IXxxRootRepository<T>` for writes
+- **MUST** place business logic, validators, static expressions, and factory methods on the Entity -- keep handlers thin
