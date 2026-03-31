@@ -305,3 +305,12 @@ Optional feature that builds a knowledge graph of your codebase for graph-blast-
 **Frontend→Backend API detection:** Auto-configured by `/project-config` when both frontend and backend are detected. Or manually add `graphConnectors` to `docs/project-config.json`.
 
 **Docs:** `.claude/docs/code-graph-mechanism.md` for detailed architecture.
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

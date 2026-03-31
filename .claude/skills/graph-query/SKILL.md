@@ -266,3 +266,12 @@ Returns a multi-level tree of connected nodes grouped by BFS depth, with edge ty
 - `/graph-blast-radius` -- Change-driven impact analysis from git diff
 - `/graph-export` -- Export full graph to JSON
 - `/graph-export-mermaid` -- Export file graph as Mermaid diagram
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

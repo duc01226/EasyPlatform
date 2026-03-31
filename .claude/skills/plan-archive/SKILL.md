@@ -89,3 +89,13 @@ After archiving the plans, provide summary:
 **IMPORTANT:** Sacrifice grammar for the sake of concision when writing outputs.
 **IMPORTANT:** In the last summary report, list any unresolved questions at the end, if any.
 **IMPORTANT:** Ensure token efficiency while maintaining high quality.
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality
+- **MUST** include Test Specifications section and story_points in plan frontmatter

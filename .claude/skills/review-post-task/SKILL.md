@@ -8,17 +8,20 @@ description: '[Code Quality] Two-pass code review for task completion'
 
 **Prerequisites:** **MUST READ** before executing:
 
-- `.claude/skills/shared/understand-code-first-protocol.md`
-- `.claude/skills/shared/evidence-based-reasoning-protocol.md`
-- `.claude/skills/shared/design-patterns-quality-checklist.md` — Design pattern opportunities, anti-pattern detection, DRY/abstraction enforcement
-- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
-- `.claude/skills/shared/graph-impact-analysis-protocol.md` — Graph impact analysis: blast-radius + trace to find potentially stale/affected files
+> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+> **Design Patterns Quality** — Priority checks: (1) DRY via OOP — same-suffix classes MUST share base class, 3+ similar patterns → extract. (2) Right Responsibility — logic in LOWEST layer (Entity > Service > Component). (3) SOLID principles.
+> MUST READ `.claude/skills/shared/design-patterns-quality-checklist.md` for full protocol and checklists.
+> **Double Round-Trip Review** — Every review executes TWO full rounds: Round 1 builds understanding (normal review), Round 2 leverages accumulated context to catch what Round 1 missed. Round 2 is MANDATORY — never skip, never combine into single pass.
+> MUST READ `.claude/skills/shared/double-round-trip-review-protocol.md` for full protocol and checklists.
+> **Graph Impact Analysis** — Use `trace --direction downstream` on changed files to find all impacted consumers, bus message handlers, event subscribers. Verify each needs updating.
+> MUST READ `.claude/skills/shared/graph-impact-analysis-protocol.md` for full protocol and checklists.
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
 >
-> - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)**
+> - `docs/project-reference/code-review-rules.md` — anti-patterns, review checklists, quality standards **(READ FIRST)** (content auto-injected by hook — check for [Injected: ...] header before reading)
 > - `project-structure-reference.md` — service list, directory tree, conventions
 >
 > If files not found, search for: project documentation, coding standards, architecture docs.
@@ -113,13 +116,16 @@ Fix issues found.
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
-
----
-
 ## Systematic Review Protocol (for 10+ changed files)
 
 > **When the changeset is large (10+ files), categorize files by concern, fire parallel `code-reviewer` sub-agents per category, then synchronize findings into a holistic report.** See `review-changes/SKILL.md` § "Systematic Review Protocol" for the full 4-step protocol (Categorize → Parallel Sub-Agents → Synchronize → Holistic Assessment).
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality
+- **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)

@@ -14,21 +14,27 @@ const { loadEnv } = require('./lib/env-loader.cjs');
 // Provider prefixes to check for enablement
 const PROVIDER_PREFIXES = ['TELEGRAM', 'DISCORD', 'SLACK'];
 
+// Whitelist: only these events trigger notifications (everything else is skipped)
+// Stop = task complete, idle_prompt = Claude waiting for input
+const EVENT_WHITELIST = ['Stop', 'idle_prompt'];
+
 /**
- * Check if event is a permission/command approval prompt
- * These should NOT trigger external notifications (user sees them in terminal)
- * @see https://github.com/anthropics/claude-code/issues/11964
+ * Get the effective event type from input
  * @param {Object} input - Event data
- * @returns {boolean} True if permission prompt (skip notification)
+ * @returns {string} Event type
  */
-function isPermissionPrompt(input) {
-  // Check notification_type (for future when bug #11964 is fixed)
-  if (input.notification_type === 'permission_prompt') {
-    return true;
-  }
-  // Fallback: check message content
-  const message = input.message || '';
-  return message.includes('permission') && message.includes('use');
+function getEventType(input) {
+  return input.notification_type || input.hook_event_name || 'default';
+}
+
+/**
+ * Check if event is allowed by whitelist
+ * @param {Object} input - Event data
+ * @returns {boolean} True if event is allowed
+ */
+function isWhitelisted(input) {
+  const eventType = getEventType(input);
+  return EVENT_WHITELIST.includes(eventType);
 }
 
 /**
@@ -112,15 +118,32 @@ async function main() {
     const cwd = input.cwd || process.cwd();
     const env = loadEnv(cwd);
 
-    // Skip permission/command approval prompts - user sees these in terminal
-    if (isPermissionPrompt(input)) {
-      console.error('[notify] Skipped: permission prompt');
+    // Whitelist check: only allow specific event types through
+    if (!isWhitelisted(input)) {
+      const eventType = getEventType(input);
+      console.error(`[notify] Skipped: ${eventType} not in whitelist`);
       process.exit(0);
     }
 
     // Find and call enabled providers
     const results = [];
 
+    // Always try desktop provider (enabled by default, no env prefix needed)
+    const desktopProvider = loadProvider('desktop');
+    if (desktopProvider && typeof desktopProvider.isEnabled === 'function' && desktopProvider.isEnabled(env)) {
+      try {
+        const result = await desktopProvider.send(input, env);
+        results.push({ provider: 'desktop', ...result });
+        if (result.success) {
+          console.error('[notify] desktop: sent');
+        }
+      } catch (err) {
+        console.error(`[notify] desktop error: ${err.message}`);
+        results.push({ provider: 'desktop', success: false, error: err.message });
+      }
+    }
+
+    // External providers (Telegram, Discord, Slack) - require env vars
     for (const prefix of PROVIDER_PREFIXES) {
       if (!hasProviderEnv(prefix, env)) continue;
 

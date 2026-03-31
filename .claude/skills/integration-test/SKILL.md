@@ -9,12 +9,15 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TaskCreate, AskUserQue
 
 **Prerequisites:** **MUST READ** before executing:
 
-- `.claude/skills/shared/understand-code-first-protocol.md`
-- `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` — Authorization testing, test data setup, seed data patterns
+> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+
 - `references/integration-test-patterns.md`
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 - `docs/test-specs/` — Test specifications by module (read existing TCs for expected behavior; verify test-to-spec traceability)
-- `.claude/skills/shared/graph-impact-analysis-protocol.md` — Graph impact analysis: blast-radius + trace to find cross-service flows tests must cover
+
+> **Graph Impact Analysis** — Use `trace --direction downstream` on changed files to find all impacted consumers, bus message handlers, event subscribers. Verify each needs updating.
+> MUST READ `.claude/skills/shared/graph-impact-analysis-protocol.md` for full protocol and checklists.
 
 > **CRITICAL: Search existing patterns FIRST.** Before generating ANY test, grep for existing integration test files in the same service. Read at least 1 existing test file to match conventions (namespace, usings, collection name, base class, helper usage). Never generate tests that contradict established patterns in the codebase.
 
@@ -24,9 +27,11 @@ allowed-tools: Read, Write, Edit, Grep, Glob, Bash, Task, TaskCreate, AskUserQue
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-> **Process Discipline:** MUST READ `.claude/skills/shared/red-flag-stop-conditions-protocol.md` — STOP when test passes but behavior differs from expectation, or when 3+ fix attempts fail.
+> **Red Flag STOP Conditions** — STOP current approach when: 3+ fix attempts on same issue (root cause not identified), each fix reveals NEW problems (upstream root cause), fix requires 5+ files for "simple" change (wrong abstraction layer), using "should work"/"probably fixed" without verification evidence. After 3 failed attempts, report all outcomes and ask user before attempt #4.
+> MUST READ `.claude/skills/shared/red-flag-stop-conditions-protocol.md` for full protocol and checklists.
 
-> **Process Discipline:** MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` — counter "tests aren't relevant" and "I'll test after" evasions.
+> **Rationalization Prevention** — AI consistently skips steps via: "too simple for a plan", "I'll test after", "already searched", "code is self-explanatory". These are EVASIONS — not valid reasons. Plan anyway. Test first. Show grep evidence with file:line. Never combine steps to "save time".
+> MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` for full protocol and checklists.
 
 ## Quick Summary
 
@@ -576,13 +581,6 @@ When test code and spec disagree, determine which is correct:
 - Factory methods return valid entities by default — tests override only what they test
 - Cross-entity dependencies: create parent first, then child (e.g., create User, then create Order for that User)
 - **Seed data:** If the feature requires reference/lookup data, set up seed data in the collection fixture or per-test preconditions
-
----
-
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
 
 ---
 

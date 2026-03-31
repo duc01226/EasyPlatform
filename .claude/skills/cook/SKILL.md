@@ -6,15 +6,19 @@ description: '[Implementation] Implement a feature [step by step]'
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 - `docs/test-specs/` — Test specifications by module (read existing TCs; generate/update test specs via `/tdd-spec` after implementation)
-- `.claude/skills/shared/plan-quality-protocol.md` — Test spec integration in plans and attention anchoring for long workflows
+
+> **Plan Quality** — Every plan phase MUST include `## Test Specifications` section with TC-{FEAT}-{NNN} format. Verify TC satisfaction per phase before marking complete. Plans must include `story_points` and `effort` in frontmatter.
+> MUST READ `.claude/skills/shared/plan-quality-protocol.md` for full protocol and checklists.
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-> **Process Discipline:** MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` (anti-evasion) AND `.claude/skills/shared/red-flag-stop-conditions-protocol.md` (when to STOP and reassess).
+> **Rationalization Prevention** — AI consistently skips steps via: "too simple for a plan", "I'll test after", "already searched", "code is self-explanatory". These are EVASIONS — not valid reasons. Plan anyway. Test first. Show grep evidence with file:line. Never combine steps to "save time".
+> MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` for full protocol and checklists.
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
@@ -38,7 +42,10 @@ description: '[Implementation] Implement a feature [step by step]'
 
 ### Frontend/UI Context (if applicable)
 
-When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+> When this task involves frontend or UI changes,
+
+> **UI System Context** — For frontend/UI/styling tasks, MUST READ these BEFORE implementing: `frontend-patterns-reference.md` (component base classes, stores, forms), `scss-styling-guide.md` (BEM methodology, SCSS vars, responsive), `design-system/README.md` (design tokens, component inventory, icons).
+> MUST READ `.claude/skills/shared/ui-system-context.md` for full protocol and checklists.
 
 - Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
@@ -53,7 +60,8 @@ of perceived simplicity. "Simple" features have hidden complexity.
 ## Per-Phase Quality Cycle (MANDATORY)
 
 <HARD-GATE>
-Follow `.claude/skills/shared/iterative-phase-quality-protocol.md`:
+> **Iterative Phase Quality** — Assess complexity BEFORE planning (signals: >5 files +2, cross-service +3, new pattern +2). Score ≥6 → MUST decompose into phases. Each phase: plan → implement → review → fix → verify. No phase >5 files or >3h effort. DO NOT start next phase until current passes VERIFY.
+> MUST READ `.claude/skills/shared/iterative-phase-quality-protocol.md` for full protocol and checklists.
 Each plan phase = one quality cycle (plan→implement→review→fix→verify).
 DO NOT start next phase until current phase passes VERIFY.
 After each phase: re-assess remaining phases for scope changes.
@@ -201,7 +209,9 @@ If you're thinking:
 - "This refactor will make it better" — Only refactor what's in scope. YAGNI.
 - "I can skip the review, it's obvious" — Reviews catch what authors miss. Never skip.
 
-> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. After implementing, run `python .claude/scripts/code_graph connections <file> --json` on modified files to verify no related files need updates.
+> **Graph-Assisted Investigation** — When `.code-graph/graph.db` exists, MUST run at least ONE graph command on key files before concluding. Pattern: Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details. Use `connections` for 1-hop, `callers_of`/`tests_for` for specific queries, `batch-query` for multiple files.
+> MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` for full protocol and checklists.
+> After implementing, run `python .claude/scripts/code_graph connections <file> --json` on modified files to verify no related files need updates.
 
 ### Graph-Trace Before Implementation
 
@@ -210,13 +220,6 @@ When graph DB is available, BEFORE writing code, trace to understand the blast r
 - `python .claude/scripts/code_graph trace <file-to-modify> --direction both --json` — see what calls this code AND what it triggers
 - `python .claude/scripts/code_graph trace <file-to-modify> --direction downstream --json` — see all downstream consumers that may need updating
 - This prevents breaking implicit dependencies (bus message consumers, event handlers) that aren't visible in the file itself
-
----
-
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
 
 ---
 

@@ -304,13 +304,6 @@ Creates with ServiceB context: `team-artifacts/ideas/260119-po-idea-goal-progres
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
-
----
-
 ## Workflow Recommendation
 
 > **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:

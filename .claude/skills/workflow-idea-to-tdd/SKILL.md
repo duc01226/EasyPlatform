@@ -9,3 +9,12 @@ description: '[Workflow] Trigger Idea to TDD Specs workflow — full cycle: capt
 Activate the `idea-to-tdd` workflow. Run `/workflow-start idea-to-tdd` with the user's prompt as context.
 
 **Steps:** /idea → /refine → /refine-review → /tdd-spec → /tdd-spec-review → /pbi-mockup → /workflow-end
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

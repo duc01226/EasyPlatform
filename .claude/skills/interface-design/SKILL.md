@@ -25,7 +25,7 @@ allowed-tools: NONE
 - Produce 4 domain outputs before proposing any direction
 - Run 4 mandate checks before showing output to user
 - Save reusable patterns to `docs/design-system/interface-system.md` when 2+ uses
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (content auto-injected by hook — check for [Injected: ...] header before reading)
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 
 **Scope:**
@@ -431,13 +431,6 @@ For more detail on specific topics:
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
-
----
-
 ## Next Steps
 
 **MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:
@@ -445,3 +438,12 @@ For more detail on specific topics:
 - **"/web-design-guidelines (Recommended)"** — Review UI for accessibility and best practices
 - **"/review-changes"** — Review all changes before commit
 - **"Skip, continue manually"** — user decides
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

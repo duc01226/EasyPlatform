@@ -7,9 +7,11 @@ disable-model-invocation: false
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs `file:line` proof. Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend — gather more evidence. Cross-service validation required for architectural changes.
+> MUST READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` for full protocol and checklists.
 
-- `.claude/skills/shared/estimation-framework.md` — Story points, complexity scale, splitting rules (plans MUST include `story_points` and `effort` in frontmatter)
+> **Estimation Framework** — SP scale: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large, high risk) → 13(epic, SHOULD split) → 21(MUST split). MUST provide `story_points` and `complexity` estimate after investigation.
+> MUST READ `.claude/skills/shared/estimation-framework.md` for full protocol and checklists.
 
 > **Skill Variant:** Variant of `/plan` — specialized for CRO (Conversion Rate Optimization) planning.
 
@@ -119,3 +121,13 @@ Activate `planning` skill.
 > **ALWAYS** validate with `/plan-review` after plan creation.
 > **ASK** user to confirm the plan before any implementation begins.
 > **ASK** user decision questions with your recommendations when multiple approaches exist.
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality
+- **MUST** include Test Specifications section and story_points in plan frontmatter

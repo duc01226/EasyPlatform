@@ -208,3 +208,12 @@ When enriching per-group instruction files, follow this pattern for each doc ent
 - **Sources:** `.claude/workflows.json`, `.claude/workflows/development-rules.md`
 - **Main output:** `.github/copilot-instructions.md`
 - **Instruction files:** `.github/instructions/*.instructions.md`
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

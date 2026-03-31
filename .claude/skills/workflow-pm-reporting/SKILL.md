@@ -9,3 +9,12 @@ description: '[Workflow] Trigger PM Reporting workflow — pm workflow: generate
 Activate the `pm-reporting` workflow. Run `/workflow-start pm-reporting` with the user's prompt as context.
 
 **Steps:** /status → /dependency → /workflow-end
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

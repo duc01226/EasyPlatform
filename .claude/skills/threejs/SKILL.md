@@ -145,3 +145,12 @@ animate();
 - Examples: https://threejs.org/examples/
 - Editor: https://threejs.org/editor/
 - Discord: https://discord.gg/56GBJwAnUS
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

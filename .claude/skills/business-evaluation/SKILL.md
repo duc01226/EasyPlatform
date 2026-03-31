@@ -123,13 +123,6 @@ Write to `docs/knowledge/strategy/business/{descriptive-slug}.md` using enforced
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks using `TaskCreate`
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
-
----
-
 ## Next Steps
 
 **MANDATORY IMPORTANT MUST** after completing this skill, use `AskUserQuestion` to recommend:

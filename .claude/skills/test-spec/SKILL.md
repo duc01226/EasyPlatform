@@ -14,8 +14,9 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
 >
 > - `project-structure-reference.md` -- project patterns and structure
-> - `.claude/skills/shared/graph-impact-analysis-protocol.md` — Graph impact analysis: blast-radius + trace to find cross-service flows and implicit connections that test cases must cover
-> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+>     > **Graph Impact Analysis** — Use `trace --direction downstream` on changed files to find all impacted consumers, bus message handlers, event subscribers. Verify each needs updating.
+>     > MUST READ `.claude/skills/shared/graph-impact-analysis-protocol.md` for full protocol and checklists.
+> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 > - `docs/test-specs/` — Test specifications by module (read existing TCs before generating new to avoid duplicates and maintain TC ID continuity)
 >
 > If file not found, search for: project documentation, coding standards, architecture docs.
@@ -40,7 +41,9 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 **Key Rules:**
 
 - **⚠️ MUST READ** `.claude/skills/shared/references/module-codes.md` for TC ID formats and module codes
-- **⚠️ MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing
+- > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs `file:line` proof. Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend — gather more evidence. Cross-service validation required for architectural changes.
+  > MUST READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` for full protocol and checklists.
+  > before executing
 - **⚠️ INVESTIGATE FIRST** — NEVER generate test specs without completing Phase 0 (Business & Code Investigation). You must understand the business logic and code paths before writing any test case.
 - **⚠️ ALWAYS PLAN TASKS** — Use `TaskCreate` to break work into granular todo items BEFORE starting. Must include a final review task.
 - Every test case must have `Evidence: {FilePath}:{LineNumber}`
@@ -349,3 +352,12 @@ Before completing test artifacts:
 - `test-specs-docs` — Write test specs to `docs/test-specs/` (permanent docs)
 - `qc-specialist` — Quality gates after test case generation
 - `integration-test` — the project CQRS integration test code generation
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

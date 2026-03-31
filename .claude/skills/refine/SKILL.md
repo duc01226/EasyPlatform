@@ -32,9 +32,12 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, WebSearch, AskUserQues
 
 ### Frontend/UI Context (if applicable)
 
-When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+> When this task involves frontend or UI changes,
 
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+> **UI System Context** — For frontend/UI/styling tasks, MUST READ these BEFORE implementing: `frontend-patterns-reference.md` (component base classes, stores, forms), `scss-styling-guide.md` (BEM methodology, SCSS vars, responsive), `design-system/README.md` (design tokens, component inventory, icons).
+> MUST READ `.claude/skills/shared/ui-system-context.md` for full protocol and checklists.
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (content auto-injected by hook — check for [Injected: ...] header before reading)
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
@@ -43,8 +46,12 @@ When this task involves frontend or UI changes, **MUST READ** `.claude/skills/sh
 - Use project domain-specific vocabulary when available
 - MUST include `story_points` and `complexity` in PBI output (see `.claude/skills/shared/estimation-framework.md`)
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
-- **MUST READ** `.claude/skills/shared/scaffold-production-readiness-protocol.md` — for Production Readiness Concerns table in PBI output
-- **MUST READ** `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` — for Authorization, Seed Data, Data Migration concerns in PBI output
+- > **Scaffold Production Readiness** — Production scaffold checklist: health endpoints, structured logging, graceful shutdown, config validation, CI pipeline, Dockerfile, env separation. Verify each item exists before marking scaffold complete.
+  > MUST READ `.claude/skills/shared/scaffold-production-readiness-protocol.md` for full protocol and checklists.
+  > — for Production Readiness Concerns table in PBI output
+- > **Cross-Cutting Quality** — Check: error handling consistency, logging standards, security headers, input validation, rate limiting, CORS config, health checks across all services.
+  > MUST READ `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` for full protocol and checklists.
+  > — for Authorization, Seed Data, Data Migration concerns in PBI output
 
 ## Greenfield Mode
 
@@ -279,7 +286,9 @@ Document in PBI under `## Testability Assessment`.
 
 ## Phase 6: Prioritization & Estimation
 
-> **MUST READ** `.claude/skills/shared/estimation-framework.md` for story point scale and complexity definitions.
+> > **Estimation Framework** — SP scale: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large, high risk) → 13(epic, SHOULD split) → 21(MUST split). MUST provide `story_points` and `complexity` estimate after investigation.
+> > MUST READ `.claude/skills/shared/estimation-framework.md` for full protocol and checklists.
+> > for story point scale and complexity definitions.
 
 Apply RICE score or MoSCoW for priority. Estimate using **Story Points (Modified Fibonacci 1-21)** for complexity measurement.
 
@@ -592,11 +601,6 @@ For domain PBIs: detect module (ref: `.claude/skills/shared/module-detection-key
 - **Input:** `/idea` output
 - **Next Step:** `/story`, `/tdd-spec` (Recommended for TDD), `/test-spec`, `/design-spec`
 - **Prioritization:** `/prioritize`
-
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
 
 ---
 

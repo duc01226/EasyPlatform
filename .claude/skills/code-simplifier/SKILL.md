@@ -9,10 +9,12 @@ allowed-tools: Read, Edit, Glob, Grep, Task, Bash
 
 **Prerequisites:** **MUST READ** before executing:
 
-- `.claude/skills/shared/understand-code-first-protocol.md`
-- `.claude/skills/shared/evidence-based-reasoning-protocol.md`
-- `.claude/skills/shared/design-patterns-quality-checklist.md` — Design pattern opportunities, anti-pattern detection, DRY/abstraction enforcement
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+> **Design Patterns Quality** — Priority checks: (1) DRY via OOP — same-suffix classes MUST share base class, 3+ similar patterns → extract. (2) Right Responsibility — logic in LOWEST layer (Entity > Service > Component). (3) SOLID principles.
+> MUST READ `.claude/skills/shared/design-patterns-quality-checklist.md` for full protocol and checklists.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 > **External Memory:** For complex or lengthy work (research, analysis, scan, review), write intermediate findings and final results to a report file in `plans/reports/` — prevents context loss and serves as deliverable.
 
@@ -46,7 +48,10 @@ allowed-tools: Read, Edit, Glob, Grep, Task, Bash
 
 ### Frontend/UI Context (if applicable)
 
-When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+> When this task involves frontend or UI changes,
+
+> **UI System Context** — For frontend/UI/styling tasks, MUST READ these BEFORE implementing: `frontend-patterns-reference.md` (component base classes, stores, forms), `scss-styling-guide.md` (BEM methodology, SCSS vars, responsive), `design-system/README.md` (design tokens, component inventory, icons).
+> MUST READ `.claude/skills/shared/ui-system-context.md` for full protocol and checklists.
 
 - Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
@@ -212,13 +217,6 @@ When graph DB is available, BEFORE simplifying code, trace to understand what de
 
 - `code-review`
 - `refactoring`
-
----
-
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
 
 ---
 

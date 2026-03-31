@@ -102,13 +102,6 @@ Write to `.claude/tmp/_evidence-{slug}.md`:
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks using `TaskCreate`
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
-
----
-
 ## Workflow Recommendation
 
 > **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:

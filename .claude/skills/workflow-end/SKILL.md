@@ -36,3 +36,12 @@ That's it. The hook does the heavy lifting.
 - **Skill:** `/workflow-start` - Start/switch workflows
 - **Hook:** `workflow-step-tracker.cjs` - Clears state on final step completion
 - **Hook:** `workflow-router.cjs` - Detects active vs inactive workflows
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

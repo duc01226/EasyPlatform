@@ -8,9 +8,10 @@ description: '[Code Quality] Review artifact quality before handoff. Use to veri
 
 **Prerequisites:** **MUST READ** before executing:
 
-- `.claude/skills/shared/understand-code-first-protocol.md`
-- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
-- `.claude/skills/shared/graph-impact-analysis-protocol.md` — Graph impact analysis: blast-radius + trace to find potentially stale/affected files
+> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+> **Graph Impact Analysis** — Use `trace --direction downstream` on changed files to find all impacted consumers, bus message handlers, event subscribers. Verify each needs updating.
+> MUST READ `.claude/skills/shared/graph-impact-analysis-protocol.md` for full protocol and checklists.
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
@@ -122,3 +123,13 @@ After completing Round 1 evaluation, execute a **second full review round**:
 ## Systematic Review Protocol (for 10+ artifacts)
 
 > **When reviewing many artifacts at once, categorize by type, fire parallel `code-reviewer` sub-agents per category, then synchronize findings.** See `review-changes/SKILL.md` § "Systematic Review Protocol" for the full 4-step protocol (Categorize → Parallel Sub-Agents → Synchronize → Holistic Assessment).
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality
+- **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)

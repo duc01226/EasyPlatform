@@ -6,9 +6,11 @@ description: '[Planning] Auto-review plan for validity, correctness, and best pr
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
 
-- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
+> **Double Round-Trip Review** — Every review executes TWO full rounds: Round 1 builds understanding (normal review), Round 2 leverages accumulated context to catch what Round 1 missed. Round 2 is MANDATORY — never skip, never combine into single pass.
+> MUST READ `.claude/skills/shared/double-round-trip-review-protocol.md` for full protocol and checklists.
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
@@ -144,7 +146,8 @@ Read the plan directory:
 {PROCEED | REVISE_FIRST | BLOCKED}
 ```
 
-> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. Validate plan file references exist via `python .claude/scripts/code_graph connections <file> --json`.
+> **Graph-Assisted Investigation** — When `.code-graph/graph.db` exists, MUST run at least ONE graph command on key files before concluding. Pattern: Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details. Use `connections` for 1-hop, `callers_of`/`tests_for` for specific queries, `batch-query` for multiple files.
+> MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` for full protocol and checklists.
 
 ### Graph-Trace for Plan Coverage
 

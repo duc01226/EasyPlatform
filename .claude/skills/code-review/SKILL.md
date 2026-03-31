@@ -7,11 +7,15 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs `file:line` proof. Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend — gather more evidence. Cross-service validation required for architectural changes.
+> MUST READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` for full protocol and checklists.
 
-- `.claude/skills/shared/design-patterns-quality-checklist.md` — Design pattern opportunities, anti-pattern detection, DRY/abstraction enforcement
-- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+> **Design Patterns Quality** — Priority checks: (1) DRY via OOP — same-suffix classes MUST share base class, 3+ similar patterns → extract. (2) Right Responsibility — logic in LOWEST layer (Entity > Service > Component). (3) SOLID principles.
+> MUST READ `.claude/skills/shared/design-patterns-quality-checklist.md` for full protocol and checklists.
+> **Double Round-Trip Review** — Every review executes TWO full rounds: Round 1 builds understanding (normal review), Round 2 leverages accumulated context to catch what Round 1 missed. Round 2 is MANDATORY — never skip, never combine into single pass.
+> MUST READ `.claude/skills/shared/double-round-trip-review-protocol.md` for full protocol and checklists.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
@@ -19,7 +23,8 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-> **Process Discipline:** MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` — prevents "code is self-explanatory" and "combine reviews to save time" evasions.
+> **Rationalization Prevention** — AI consistently skips steps via: "too simple for a plan", "I'll test after", "already searched", "code is self-explanatory". These are EVASIONS — not valid reasons. Plan anyway. Test first. Show grep evidence with file:line. Never combine steps to "save time".
+> MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` for full protocol and checklists.
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
@@ -90,7 +95,9 @@ Each practice has specific triggers and protocols detailed in reference files.
 **Be honest, be brutal, straight to the point, and be concise.**
 **Technical correctness over social comfort.** Verify before implementing. Ask before assuming. Evidence before claims.
 
-> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. Run `python .claude/scripts/code_graph query tests_for <function> --json` on changed functions to flag coverage gaps.
+> **Graph-Assisted Investigation** — When `.code-graph/graph.db` exists, MUST run at least ONE graph command on key files before concluding. Pattern: Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details. Use `connections` for 1-hop, `callers_of`/`tests_for` for specific queries, `batch-query` for multiple files.
+> MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` for full protocol and checklists.
+> Run `python .claude/scripts/code_graph query tests_for <function> --json` on changed functions to flag coverage gaps.
 
 ## Graph-Enhanced Review (RECOMMENDED if graph.db exists)
 
@@ -404,13 +411,6 @@ Verify. Question. Then implement. Evidence. Then claim.
 - `code-simplifier`
 - `debug`
 - `refactoring`
-
----
-
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
 
 ---
 

@@ -101,16 +101,44 @@ function notifyWindows(title, message, showDialog = false) {
 
 /**
  * Send notification on macOS
+ * @param {string} title - Notification title
+ * @param {string} message - Notification message
+ * @param {boolean} showDialog - Whether to show blocking dialog
  */
-function notifyMacOS(title, message) {
-    exec(`osascript -e 'display notification "${message}" with title "${title}"'`);
+function notifyMacOS(title, message, showDialog = false) {
+    // Escape double quotes for osascript
+    const escapedTitle = title.replace(/"/g, '\\"');
+    const escapedMessage = message.replace(/"/g, '\\"');
+
+    if (showDialog) {
+        // Blocking dialog - user must click OK (visible even when app is background)
+        exec(`osascript -e 'display dialog "${escapedMessage}" with title "${escapedTitle}" buttons {"OK"} default button "OK"'`, { timeout: 60000 });
+    } else {
+        // Non-blocking toast notification
+        exec(`osascript -e 'display notification "${escapedMessage}" with title "${escapedTitle}"'`, { timeout: 5000 });
+    }
 }
 
 /**
  * Send notification on Linux
+ * @param {string} title - Notification title
+ * @param {string} message - Notification message
+ * @param {boolean} showDialog - Whether to show blocking dialog
  */
-function notifyLinux(title, message) {
-    exec(`notify-send "${title}" "${message}" --urgency=normal`);
+function notifyLinux(title, message, showDialog = false) {
+    // Escape double quotes for shell
+    const escapedTitle = title.replace(/"/g, '\\"');
+    const escapedMessage = message.replace(/"/g, '\\"');
+
+    if (showDialog) {
+        // Try zenity (GTK) then kdialog (KDE) for blocking dialog
+        exec(
+            `zenity --info --title="${escapedTitle}" --text="${escapedMessage}" 2>/dev/null || kdialog --msgbox "${escapedMessage}" --title "${escapedTitle}" 2>/dev/null`,
+            { timeout: 60000 }
+        );
+    } else {
+        exec(`notify-send "${escapedTitle}" "${escapedMessage}" --urgency=normal --expire-time=5000`);
+    }
 }
 
 /**
@@ -124,10 +152,10 @@ function sendNotification(title, message, showDialog = false) {
             notifyWindows(title, message, showDialog);
             break;
         case 'darwin':
-            notifyMacOS(title, message);
+            notifyMacOS(title, message, showDialog);
             break;
         case 'linux':
-            notifyLinux(title, message);
+            notifyLinux(title, message, showDialog);
             break;
     }
 }

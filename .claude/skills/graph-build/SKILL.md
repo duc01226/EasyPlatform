@@ -93,3 +93,12 @@ Run `python .claude/scripts/code_graph describe --json` to get MCP-style structu
 | `build --files <list>`  | `build --json` (always does full rebuild)                         |
 | `sync --files <list>`   | `sync --json` (auto-detects from git)                             |
 | `file_summary`          | `connections <file> --json`                                       |
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

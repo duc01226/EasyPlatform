@@ -519,7 +519,7 @@
             "preActions": {
                 "injectContext": "PRE-COMMIT REVIEW:\n- Review all staged and unstaged changes\n- Check for: security issues, debug artifacts (console.log, debugger), incomplete code, style violations\n- Verify no sensitive files (.env, credentials) are staged\n- Check architecture compliance, naming, patterns\n- Report findings with file:line references\n- Output: PASS (safe to commit) or ISSUES FOUND (with list)"
             },
-            "sequence": ["review-changes", "code-review", "watzup", "workflow-end"],
+            "sequence": ["review-changes", "code-simplifier", "code-review", "performance", "watzup", "workflow-end"],
             "whenNotToUse": "PR reviews, codebase reviews, branch comparisons",
             "whenToUse": "User wants to review current uncommitted, staged, or unstaged changes before committing"
         },

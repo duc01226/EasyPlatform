@@ -15,7 +15,8 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
-> **Process Discipline:** MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` — prevents "tests aren't relevant" and "I'll test after" evasions.
+> **Rationalization Prevention** — AI consistently skips steps via: "too simple for a plan", "I'll test after", "already searched", "code is self-explanatory". These are EVASIONS — not valid reasons. Plan anyway. Test first. Show grep evidence with file:line. Never combine steps to "save time".
+> MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` for full protocol and checklists.
 
 > **Graph Context (MANDATORY when graph.db exists):** Before generating test specs, run graph impact analysis per `.claude/skills/shared/graph-impact-analysis-protocol.md`. This reveals cross-service consumers, event handlers, and implicit connections (MESSAGE_BUS, API_ENDPOINT, TRIGGERS_EVENT) that tests must cover.
 
@@ -28,10 +29,12 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference doc:
 >
 > - `.claude/skills/shared/references/module-codes.md` — TC ID format and feature codes
-> - `.claude/skills/shared/evidence-based-reasoning-protocol.md` — Evidence requirements
-> - `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` — Authorization, Seed Data, Performance Data, Data Migration TC requirements
+>     > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs `file:line` proof. Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend — gather more evidence. Cross-service validation required for architectural changes.
+>     > MUST READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` for full protocol and checklists.
+>     > **Cross-Cutting Quality** — Check: error handling consistency, logging standards, security headers, input validation, rate limiting, CORS config, health checks across all services.
+>     > MUST READ `.claude/skills/shared/cross-cutting-quality-concerns-protocol.md` for full protocol and checklists.
 > - `.claude/skills/tdd-spec/references/tdd-spec-template.md` — TC template format
-> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 > - `docs/test-specs/` — Test specifications by module (read existing TCs before generating new to avoid duplicates and maintain TC ID continuity)
 
 **Workflow:**
@@ -83,7 +86,10 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate, AskUserQue
 
 ### Frontend/UI Context (if applicable)
 
-When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+> When this task involves frontend or UI changes,
+
+> **UI System Context** — For frontend/UI/styling tasks, MUST READ these BEFORE implementing: `frontend-patterns-reference.md` (component base classes, stores, forms), `scss-styling-guide.md` (BEM methodology, SCSS vars, responsive), `design-system/README.md` (design tokens, component inventory, icons).
+> MUST READ `.claude/skills/shared/ui-system-context.md` for full protocol and checklists.
 
 - Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`

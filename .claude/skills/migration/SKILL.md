@@ -9,9 +9,10 @@ disable-model-invocation: false
 
 **Prerequisites:** **MUST READ** before executing:
 
-- `.claude/skills/shared/understand-code-first-protocol.md`
-- `.claude/skills/shared/evidence-based-reasoning-protocol.md`
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 ## Quick Summary
 
@@ -44,7 +45,9 @@ disable-model-invocation: false
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## Closing Reminders
 
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

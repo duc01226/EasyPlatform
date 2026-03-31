@@ -7,7 +7,7 @@ allowed-tools: Read, Grep, Glob, Task, WebFetch, WebSearch, TaskCreate, Bash
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
@@ -525,7 +525,10 @@ Present findings in clear format with: Answer, How It Works (with code refs), Ke
 
 ## Anti-Hallucination Protocols (Investigation-Specific)
 
-**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` and `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+**Prerequisites:** > **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+> and `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
 ---
 

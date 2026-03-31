@@ -8,12 +8,12 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 **Prerequisites:** **MUST READ** before executing:
 
-- `.claude/skills/shared/scan-and-update-reference-doc-protocol.md`
-- `.claude/skills/shared/understand-code-first-protocol.md`
+> **Scan & Update Reference Doc** — Read existing doc first, scan codebase for current state, diff against doc content, update only changed sections, preserve manual annotations.
+> MUST READ `.claude/skills/shared/scan-and-update-reference-doc-protocol.md` for full protocol and checklists.
 
 ## Quick Summary
 
-**Goal:** Scan project stylesheets and populate `docs/project-reference/scss-styling-guide.md` with BEM methodology usage, SCSS architecture, mixins/variables inventory, theming patterns, responsive breakpoints, and design token conventions.
+**Goal:** Scan project stylesheets and populate `docs/project-reference/scss-styling-guide.md` with BEM methodology usage, SCSS architecture, mixins/variables inventory, theming patterns, responsive breakpoints, and design token conventions. (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 **Workflow:**
 
@@ -119,7 +119,9 @@ Read the report. Build these sections:
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## Closing Reminders
 
-- Always plan and break work into many small todo tasks using TaskCreate
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

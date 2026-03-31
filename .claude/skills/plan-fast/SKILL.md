@@ -7,14 +7,19 @@ disable-model-invocation: false
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
+> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
 
-- `.claude/skills/shared/estimation-framework.md` — Story points, complexity scale, splitting rules (plans MUST include `story_points` and `effort` in frontmatter)
+> **Estimation Framework** — SP scale: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large, high risk) → 13(epic, SHOULD split) → 21(MUST split). MUST provide `story_points` and `complexity` estimate after investigation.
+> MUST READ `.claude/skills/shared/estimation-framework.md` for full protocol and checklists.
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
-- `.claude/skills/shared/plan-quality-protocol.md` — Test spec integration in plans and attention anchoring for long workflows
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
-> **Iterative Quality Gate:** **MUST READ** `.claude/skills/shared/iterative-phase-quality-protocol.md`.
+> **Plan Quality** — Every plan phase MUST include `## Test Specifications` section with TC-{FEAT}-{NNN} format. Verify TC satisfaction per phase before marking complete. Plans must include `story_points` and `effort` in frontmatter.
+> MUST READ `.claude/skills/shared/plan-quality-protocol.md` for full protocol and checklists.
+
+> **Iterative Phase Quality** — Assess complexity BEFORE planning (signals: >5 files +2, cross-service +3, new pattern +2). Score ≥6 → MUST decompose into phases. Each phase: plan → implement → review → fix → verify. No phase >5 files or >3h effort. DO NOT start next phase until current passes VERIFY.
+> MUST READ `.claude/skills/shared/iterative-phase-quality-protocol.md` for full protocol and checklists.
 > Even for fast plans: assess complexity score. Score ≥3 → MUST produce multiple phases with per-phase quality cycles.
 
 ## Quick Summary
@@ -148,3 +153,13 @@ After plan creation, use the `AskUserQuestion` tool to ask: "Want me to run `/pl
 > **ALWAYS** validate with `/plan-review` after plan creation.
 > **ASK** user to confirm the plan before any implementation begins.
 > **ASK** user decision questions with your recommendations when multiple approaches exist.
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality
+- **MUST** include Test Specifications section and story_points in plan frontmatter

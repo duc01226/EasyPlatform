@@ -6,10 +6,13 @@ description: '[Code Quality] Production readiness review for service-layer and A
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-**Prerequisites:** **MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs `file:line` proof. Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend — gather more evidence. Cross-service validation required for architectural changes.
+> MUST READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` for full protocol and checklists.
 
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
-- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
+
+> **Double Round-Trip Review** — Every review executes TWO full rounds: Round 1 builds understanding (normal review), Round 2 leverages accumulated context to catch what Round 1 missed. Round 2 is MANDATORY — never skip, never combine into single pass.
+> MUST READ `.claude/skills/shared/double-round-trip-review-protocol.md` for full protocol and checklists.
 
 > **Critical Purpose:** Ensure quality — no flaws, no bugs, no missing updates, no stale content. Verify both code AND documentation.
 
@@ -113,7 +116,9 @@ Review the changed files and score each criterion 0-2:
 | 10-14 | **NEEDS WORK** | Address gaps before deploying to production. OK for dev/staging.                          |
 | 0-9   | **NOT READY**  | Significant operational gaps. Review Operational Readiness rules in code-review-rules.md. |
 
-> **Graph Intelligence (MANDATORY when graph.db exists):** MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md`. Run `python .claude/scripts/code_graph connections <file> --json` on service boundary files for cross-service impact.
+> **Graph-Assisted Investigation** — When `.code-graph/graph.db` exists, MUST run at least ONE graph command on key files before concluding. Pattern: Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details. Use `connections` for 1-hop, `callers_of`/`tests_for` for specific queries, `batch-query` for multiple files.
+> MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` for full protocol and checklists.
+> Run `python .claude/scripts/code_graph connections <file> --json` on service boundary files for cross-service impact.
 
 ## Structural Impact Analysis (RECOMMENDED if graph.db exists)
 
@@ -198,13 +203,6 @@ After completing Round 1 scoring, execute a **second full review round**:
 - Evidence-based — cite specific file:line for each score
 - Proportional — small bug fixes need less rigor than new endpoints
 - Check for project framework patterns (background job handlers, base controller error handling)
-
----
-
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
 
 ---
 

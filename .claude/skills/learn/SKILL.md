@@ -218,3 +218,12 @@ Lessons are injected by `lessons-injector.cjs` hook on:
 - **UserPromptSubmit** — `docs/project-reference/lessons.md` content (with dedup)
 - **PreToolUse(Edit|Write|MultiEdit)** — `docs/project-reference/lessons.md` content (always)
 - Pattern reference files are injected by their respective hooks (`code-patterns-injector.cjs`, `code-review-rules-injector.cjs`, etc.)
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

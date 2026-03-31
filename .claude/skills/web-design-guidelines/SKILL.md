@@ -23,7 +23,7 @@ allowed-tools: Read, Grep, Glob, Bash
 
 - Review-only skill: finds issues, does NOT fix them
 - Check categories in priority order (accessibility first)
-- Also reference `docs/project-reference/scss-styling-guide.md` if available
+- Also reference `docs/project-reference/scss-styling-guide.md` if available (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
@@ -124,7 +124,9 @@ src/components/Modal.tsx:78 - no focus trap for modal dialog
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## Closing Reminders
 
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

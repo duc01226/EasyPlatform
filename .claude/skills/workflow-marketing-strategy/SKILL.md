@@ -9,3 +9,12 @@ description: '[Workflow] Trigger Marketing Strategy workflow — research market
 Activate the `marketing-strategy` workflow. Run `/workflow-start marketing-strategy` with the user's prompt as context.
 
 **Steps:** /web-research → /deep-research → /market-analysis → /strategy-builder → /knowledge-review → /workflow-end
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

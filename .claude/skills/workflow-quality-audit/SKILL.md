@@ -9,3 +9,12 @@ description: '[Workflow] Trigger Quality Audit workflow — audit code quality, 
 Activate the `quality-audit` workflow. Run `/workflow-start quality-audit` with the user's prompt as context.
 
 **Steps:** /code-review → /plan → /plan-review → /plan-validate → /code → /tdd-spec → /tdd-spec-review → /review-changes → /test → /watzup → /workflow-end
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

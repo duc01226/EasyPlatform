@@ -9,10 +9,12 @@ allowed-tools: Read, Grep, Glob, Bash, Task, WebFetch, WebSearch, TodoWrite
 
 **Prerequisites:** **MUST READ** before executing:
 
-- `.claude/skills/shared/understand-code-first-protocol.md`
-- `.claude/skills/shared/evidence-based-reasoning-protocol.md`
-- `.claude/skills/shared/graph-assisted-investigation-protocol.md` — Graph ↔ Grep ↔ Glob orchestration (MANDATORY when graph.db exists)
-- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+> **Graph-Assisted Investigation** — When `.code-graph/graph.db` exists, MUST run at least ONE graph command on key files before concluding. Pattern: Grep finds files → `trace --direction both` reveals full system flow → Grep verifies details. Use `connections` for 1-hop, `callers_of`/`tests_for` for specific queries, `batch-query` for multiple files.
+> MUST READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` for full protocol and checklists.
+
+- `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 ## Quick Summary
 
@@ -111,7 +113,9 @@ READ-ONLY exploration skill for understanding existing features. No code changes
 
 **IMPORTANT: You MUST read these files before starting. Do NOT skip.**
 
-- **⚠️ MUST READ** `.claude/skills/shared/evidence-based-reasoning-protocol.md` — Assumption validation, evidence chains, context anchoring
+- > **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs `file:line` proof. Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend — gather more evidence. Cross-service validation required for architectural changes.
+  > MUST READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` for full protocol and checklists.
+  > — Assumption validation, evidence chains, context anchoring
 - **⚠️ MUST READ** `.claude/skills/shared/knowledge-graph-template.md` — Per-file analysis structure
 
 **If preceded by `/scout`:** Use Scout's numbered file list as analysis targets. Skip redundant discovery. Prioritize HIGH PRIORITY files first.
@@ -559,3 +563,12 @@ Trigger the full validation chain for:
 - "This seems unused" observations
 - Cross-service dependency analysis
 - Breaking change impact assessment
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

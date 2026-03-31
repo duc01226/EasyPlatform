@@ -644,3 +644,12 @@ uv run playwright install chromium
 26. **Arrows land correctly**: Arrows connect to intended elements without crossing others
 27. **Readable at export size**: Text is legible in the rendered PNG
 28. **Balanced composition**: No large empty voids or overcrowded regions
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

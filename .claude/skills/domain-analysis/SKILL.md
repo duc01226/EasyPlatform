@@ -212,7 +212,7 @@ After user confirms, update report with final decisions and mark as `status: con
 
 ## Step 8: Domain Entity Change Assessment (MANDATORY)
 
-**MANDATORY IMPORTANT MUST** compare domain analysis results against `docs/project-reference/domain-entities-reference.md` (if exists):
+**MANDATORY IMPORTANT MUST** compare domain analysis results against `docs/project-reference/domain-entities-reference.md` (if exists): (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 1. **Identify new entities** — entities in analysis that don't exist in reference doc
 2. **Identify modified entities** — entities with changed fields, relationships, or bounded context assignment

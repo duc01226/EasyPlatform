@@ -8,8 +8,8 @@ description: '[Documentation] Scan project and populate/sync docs/project-refere
 
 **Prerequisites:** **MUST READ** before executing:
 
-- `.claude/skills/shared/scan-and-update-reference-doc-protocol.md`
-- `.claude/skills/shared/understand-code-first-protocol.md`
+> **Scan & Update Reference Doc** — Read existing doc first, scan codebase for current state, diff against doc content, update only changed sections, preserve manual annotations.
+> MUST READ `.claude/skills/shared/scan-and-update-reference-doc-protocol.md` for full protocol and checklists.
 
 ## Quick Summary
 
@@ -124,3 +124,12 @@ Spot-check 3 file counts:
 
 {keyword → path table}
 ```
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 /**
  * Shared base for PreToolUse context injector hooks.
  *
@@ -10,9 +10,12 @@
  *            scss-styling-context, knowledge-context
  */
 
-const fs = require('fs');
-const { isKnowledgePath } = require('./project-config-loader.cjs');
-const { CODE_PATTERNS: SHARED_PATTERN_MARKER, DEDUP_LINES } = require('./dedup-constants.cjs');
+const fs = require("fs");
+const { isKnowledgePath } = require("./project-config-loader.cjs");
+const {
+  CODE_PATTERNS: SHARED_PATTERN_MARKER,
+  DEDUP_LINES,
+} = require("./dedup-constants.cjs");
 
 /**
  * Check if a marker was recently injected in the transcript.
@@ -22,13 +25,13 @@ const { CODE_PATTERNS: SHARED_PATTERN_MARKER, DEDUP_LINES } = require('./dedup-c
  * @returns {boolean}
  */
 function wasRecentlyInjected(transcriptPath, marker, lines) {
-    try {
-        if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
-        const transcript = fs.readFileSync(transcriptPath, 'utf-8');
-        return transcript.split('\n').slice(-lines).join('\n').includes(marker);
-    } catch {
-        return false;
-    }
+  try {
+    if (!transcriptPath || !fs.existsSync(transcriptPath)) return false;
+    const transcript = fs.readFileSync(transcriptPath, "utf-8");
+    return transcript.split("\n").slice(-lines).join("\n").includes(marker);
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -37,7 +40,11 @@ function wasRecentlyInjected(transcriptPath, marker, lines) {
  * @returns {boolean}
  */
 function werePatternRecentlyInjected(transcriptPath) {
-    return wasRecentlyInjected(transcriptPath, SHARED_PATTERN_MARKER, DEDUP_LINES.CODE_PATTERNS);
+  return wasRecentlyInjected(
+    transcriptPath,
+    SHARED_PATTERN_MARKER,
+    DEDUP_LINES.CODE_PATTERNS,
+  );
 }
 
 /**
@@ -48,22 +55,59 @@ function werePatternRecentlyInjected(transcriptPath) {
  * @returns {{ filePath: string, transcriptPath: string, payload: object } | null}
  */
 function parsePreToolUseInput(options = {}) {
-    const stdin = fs.readFileSync(0, 'utf-8').trim();
-    if (!stdin) return null;
+  const stdin = fs.readFileSync(0, "utf-8").trim();
+  if (!stdin) return null;
 
-    const payload = JSON.parse(stdin);
-    const toolName = payload.tool_name || '';
-    const toolInput = payload.tool_input || {};
-    const transcriptPath = payload.transcript_path || '';
+  const payload = JSON.parse(stdin);
+  const toolName = payload.tool_name || "";
+  const toolInput = payload.tool_input || {};
+  const transcriptPath = payload.transcript_path || "";
 
-    if (!['Edit', 'Write', 'MultiEdit'].includes(toolName)) return null;
+  if (!["Edit", "Write", "MultiEdit"].includes(toolName)) return null;
 
-    const filePath = toolInput.file_path || toolInput.filePath || '';
-    if (!filePath) return null;
+  const filePath = toolInput.file_path || toolInput.filePath || "";
+  if (!filePath) return null;
 
-    if (!options.skipKnowledgeCheck && isKnowledgePath(filePath)) return null;
+  if (!options.skipKnowledgeCheck && isKnowledgePath(filePath)) return null;
 
-    return { filePath, transcriptPath, payload };
+  return { filePath, transcriptPath, payload };
 }
 
-module.exports = { parsePreToolUseInput, wasRecentlyInjected, werePatternRecentlyInjected };
+/**
+ * Read a project doc file and return formatted injection block with header marker.
+ * AI sees the header and knows the content is already loaded — no need to Read the file again.
+ *
+ * @param {string} docPath - Relative path from project root (e.g. 'docs/project-reference/backend-patterns-reference.md')
+ * @param {object} [options]
+ * @param {string} [options.projectDir] - Project root directory (defaults to CLAUDE_PROJECT_DIR or cwd)
+ * @returns {string|null} Formatted injection block, or null if file not found
+ */
+function readAndInjectDoc(docPath, options = {}) {
+  const projectDir =
+    options.projectDir || process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const fullPath = require("path").resolve(projectDir, docPath);
+  try {
+    if (!fs.existsSync(fullPath)) return null;
+    const content = fs.readFileSync(fullPath, "utf-8");
+    if (!content.trim()) return null;
+    return [
+      ``,
+      `## [Injected: ${docPath}]`,
+      `> Content auto-injected by hook. Do NOT re-read this file — it is already loaded below.`,
+      ``,
+      content,
+      ``,
+      `## [End: ${docPath}]`,
+      ``,
+    ].join("\n");
+  } catch {
+    return null;
+  }
+}
+
+module.exports = {
+  parsePreToolUseInput,
+  wasRecentlyInjected,
+  werePatternRecentlyInjected,
+  readAndInjectDoc,
+};

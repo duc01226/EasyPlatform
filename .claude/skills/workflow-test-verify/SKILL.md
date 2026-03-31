@@ -9,3 +9,12 @@ description: '[Workflow] Trigger Test Verification & Quality workflow — compre
 Activate the `test-verify` workflow. Run `/workflow-start test-verify` with the user's prompt as context.
 
 **Steps:** /scout → /integration-test → /test → /integration-test → /watzup → /workflow-end
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

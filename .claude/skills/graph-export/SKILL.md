@@ -73,3 +73,12 @@ These edges are created by the implicit connector and API connector during `buil
 - Feed into external analysis tools
 - Verify graph correctness after build
 - Share graph snapshot with team members
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

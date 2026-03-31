@@ -189,3 +189,12 @@ Same `name` across levels: higher-priority wins. Use `claude agents` CLI to list
 
 - Always break work into small todo tasks
 - Always add a final review todo task
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

@@ -116,3 +116,12 @@ The connector tries 5 strategies in order (highest confidence first):
 - `/graph-trace` — Trace full system flow (API_ENDPOINT edges enable frontend-to-backend tracing)
 - `/graph-blast-radius` — Analyze structural impact of changes
 - `/graph-query` — Query code relationships in the graph
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

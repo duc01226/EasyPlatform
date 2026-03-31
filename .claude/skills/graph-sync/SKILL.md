@@ -68,3 +68,12 @@ This means after `sync`, ALL connections are up-to-date — not just direct code
 - `/graph-build` — Full or incremental graph build
 - `/graph-blast-radius` — Analyze structural impact of changes
 - `/graph-query` — Query code relationships
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

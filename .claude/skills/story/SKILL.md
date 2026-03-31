@@ -18,8 +18,9 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 > **MANDATORY IMPORTANT MUST** Plan ToDo Task to READ the following project-specific reference docs:
 >
 > - `project-structure-reference.md` -- project patterns and structure
-> - `.claude/skills/shared/estimation-framework.md` -- story points, complexity, splitting rules
-> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models)
+>     > **Estimation Framework** — SP scale: 1(trivial) → 2(small) → 3(medium) → 5(large) → 8(very large, high risk) → 13(epic, SHOULD split) → 21(MUST split). MUST provide `story_points` and `complexity` estimate after investigation.
+>     > MUST READ `.claude/skills/shared/estimation-framework.md` for full protocol and checklists.
+> - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 > - `docs/test-specs/` — Test specifications by module (read existing TCs for related features; include test story/acceptance criteria for new stories)
 >
 > If file not found, search for: project documentation, coding standards, architecture docs.
@@ -36,7 +37,10 @@ allowed-tools: Read, Write, Edit, Grep, Glob, TaskCreate, AskUserQuestion, Bash
 
 ### Frontend/UI Context (if applicable)
 
-When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+> When this task involves frontend or UI changes,
+
+> **UI System Context** — For frontend/UI/styling tasks, MUST READ these BEFORE implementing: `frontend-patterns-reference.md` (component base classes, stores, forms), `scss-styling-guide.md` (BEM methodology, SCSS vars, responsive), `design-system/README.md` (design tokens, component inventory, icons).
+> MUST READ `.claude/skills/shared/ui-system-context.md` for full protocol and checklists.
 
 - Component patterns: `docs/project-reference/frontend-patterns-reference.md`
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
@@ -491,12 +495,6 @@ After creating user stories, validate with user.
 | **Command**    | `/story`                                    |
 | **Input**      | `/refine` output (PBI)                      |
 | **Next Steps** | `/test-spec`, `/design-spec`, `/prioritize` |
-
----
-
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-- Always plan and break work into many small todo tasks
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
 
 ---
 

@@ -10,7 +10,8 @@ allowed-tools: Read, Write, Edit, Bash, Grep, Glob, Task, TaskCreate
 
 **Prerequisites:**
 
-- `.claude/skills/shared/plan-quality-protocol.md` — Test spec integration in plans and attention anchoring for long workflows
+> **Plan Quality** — Every plan phase MUST include `## Test Specifications` section with TC-{FEAT}-{NNN} format. Verify TC satisfaction per phase before marking complete. Plans must include `story_points` and `effort` in frontmatter.
+> MUST READ `.claude/skills/shared/plan-quality-protocol.md` for full protocol and checklists.
 
 ## Quick Summary
 
@@ -46,7 +47,10 @@ You are to operate as an expert full-stack dotnet angular principle developer, s
 
 **IMPORTANT**: Always thinks hard, plan step by step to-do list first before execute. Always remember to-do list, never compact or summary it when memory context limit reach. Always preserve and carry your to-do list through every operation.
 
-**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` and `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
+**Prerequisites:** > **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+> and `.claude/skills/shared/evidence-based-reasoning-protocol.md` before executing.
 
 ---
 
@@ -211,12 +215,6 @@ Verify under `## Specification Validation`:
 - `planning`
 - `feature-implementation`
 
----
-
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
-
-- Always plan and break work into many small todo tasks using `TaskCreate`
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
 - **MANDATORY FINAL TASKS:** After creating all planning todo tasks, ALWAYS add these two final tasks:
     1. **Task: "Run /plan-validate"** — Trigger `/plan-validate` skill to interview the user with critical questions and validate plan assumptions
     2. **Task: "Run /plan-review"** — Trigger `/plan-review` skill to auto-review plan for validity, correctness, and best practices
@@ -228,3 +226,13 @@ Verify under `## Specification Validation`:
 > **ALWAYS** validate with user approval after analysis.
 > **ASK** user to confirm findings before any execution begins.
 > **ASK** user for clarification when multiple approaches exist.
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality
+- **MUST** include Test Specifications section and story_points in plan frontmatter

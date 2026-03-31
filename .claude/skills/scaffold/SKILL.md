@@ -6,8 +6,11 @@ description: '[Architecture] Scaffold project architecture with OOP/SOLID base c
 
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
-**Prerequisites:** **MUST READ** `.claude/skills/shared/understand-code-first-protocol.md` before executing.
-**Prerequisites:** **MUST READ** `.claude/skills/shared/scaffold-production-readiness-protocol.md` before executing — defines production readiness requirements for all 4 concern areas.
+> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+> **Prerequisites:** > **Scaffold Production Readiness** — Production scaffold checklist: health endpoints, structured logging, graceful shutdown, config validation, CI pipeline, Dockerfile, env separation. Verify each item exists before marking scaffold complete.
+> MUST READ `.claude/skills/shared/scaffold-production-readiness-protocol.md` for full protocol and checklists.
+> before executing — defines production readiness requirements for all 4 concern areas.
 
 > **Evidence Gate:** MANDATORY IMPORTANT MUST — every claim, finding, and recommendation requires `file:line` proof or traced evidence with confidence percentage (>80% to act, <80% must verify first).
 
@@ -134,7 +137,7 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 
 #### Design System Documentation
 
-- [ ] Create `docs/project-reference/design-system/README.md` skeleton with: token naming conventions, component tier classification (Common/Domain-Shared/Page), usage examples
+- [ ] Create `docs/project-reference/design-system/README.md` skeleton with: token naming conventions, component tier classification (Common/Domain-Shared/Page), usage examples (content auto-injected by hook — check for [Injected: ...] header before reading)
 
 ## Code Quality Gate Tooling (MANDATORY MUST — Setup Before Any Feature Code)
 
@@ -170,7 +173,8 @@ AI must self-investigate the chosen tech stack and produce a checklist covering 
 
 ## Production Readiness Scaffolding (MANDATORY)
 
-**MUST READ** `.claude/skills/shared/scaffold-production-readiness-protocol.md` for full details.
+> **Scaffold Production Readiness** — Production scaffold checklist: health endpoints, structured logging, graceful shutdown, config validation, CI pipeline, Dockerfile, env separation. Verify each item exists before marking scaffold complete.
+> MUST READ `.claude/skills/shared/scaffold-production-readiness-protocol.md` for full protocol and checklists.
 
 Every scaffolded project MUST include these 4 foundations. AI must detect the tech stack from the plan/architecture report and present 2-3 options per concern via `AskUserQuestion`.
 

@@ -160,3 +160,12 @@ Report:
 >
 > 1. **Activate `e2e-from-changes` workflow** (Recommended) — scout → e2e-test → test → watzup
 > 2. **Execute `/e2e-test` directly** — run this skill standalone
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

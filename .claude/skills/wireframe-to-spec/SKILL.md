@@ -22,13 +22,18 @@ allowed-tools: Read, Write, Grep, Glob, AskUserQuestion, Bash
 
 ### Frontend/UI Context (if applicable)
 
-When this task involves frontend or UI changes, **MUST READ** `.claude/skills/shared/ui-system-context.md` and the following docs:
+> When this task involves frontend or UI changes,
 
-- Component patterns: `docs/project-reference/frontend-patterns-reference.md`
+> **UI System Context** — For frontend/UI/styling tasks, MUST READ these BEFORE implementing: `frontend-patterns-reference.md` (component base classes, stores, forms), `scss-styling-guide.md` (BEM methodology, SCSS vars, responsive), `design-system/README.md` (design tokens, component inventory, icons).
+> MUST READ `.claude/skills/shared/ui-system-context.md` for full protocol and checklists.
+
+- Component patterns: `docs/project-reference/frontend-patterns-reference.md` (content auto-injected by hook — check for [Injected: ...] header before reading)
 - Styling/BEM guide: `docs/project-reference/scss-styling-guide.md`
 - Design system tokens: `docs/project-reference/design-system/README.md`
 
-- **MUST READ** `.claude/skills/shared/ui-wireframe-protocol.md` before generating output
+- > **UI Wireframe Protocol** — Wireframe-to-implementation flow: parse layout structure, map to components, extract design tokens, generate responsive breakpoints.
+  > MUST READ `.claude/skills/shared/ui-wireframe-protocol.md` for full protocol and checklists.
+  > before generating output
 - Always require human review — wireframe analysis is 70-80% accurate
 - Route to other skills when appropriate (Figma URL → `figma-design`, app screenshot → `design-screenshot`)
 
@@ -79,3 +84,12 @@ Output as `team-artifacts/design-specs/{YYMMDD}-wireframe-spec-{slug}.md`
 - **Always display confidence level** for wireframe interpretation
 - **Always recommend human review** before proceeding to implementation
 - If confidence <70%: ask user clarifying questions about ambiguous elements via `AskUserQuestion`
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

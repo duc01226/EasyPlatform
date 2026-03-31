@@ -8,10 +8,13 @@ description: '[Category] Replace with description and trigger keywords.'
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
 
-**Prerequisites:** **MUST READ** before executing:
+**Prerequisites:** (inline summary + read instruction for each protocol)
 
-- `.claude/skills/shared/understand-code-first-protocol.md`
-- `.claude/skills/shared/evidence-based-reasoning-protocol.md`
+> **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.
+> MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
+
+> **Evidence-Based Reasoning** — Speculation is FORBIDDEN. Every claim needs `file:line` proof. Confidence: >95% recommend freely, 80-94% with caveats, <80% DO NOT recommend — gather more evidence. Cross-service validation required for architectural changes.
+> MUST READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` for full protocol and checklists.
 
 ## Quick Summary
 
@@ -33,7 +36,9 @@ description: '[Category] Replace with description and trigger keywords.'
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## Closing Reminders
 
-- Always plan and break work into many small todo tasks using TaskCreate
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

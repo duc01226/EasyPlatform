@@ -9,3 +9,12 @@ description: '[Workflow] Trigger Designer to Dev Handoff workflow — designer h
 Activate the `design-dev-handoff` workflow. Run `/workflow-start design-dev-handoff` with the user's prompt as context.
 
 **Steps:** /design-spec → /review-artifact → /handoff → /plan → /plan-review → /plan-validate → /workflow-end
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

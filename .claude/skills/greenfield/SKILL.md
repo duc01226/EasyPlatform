@@ -97,3 +97,12 @@ After completion, recommend next step: `/cook` to scaffold the project structure
 **MANDATORY IMPORTANT MUST** break work into small todo tasks — one per workflow step.
 **MANDATORY IMPORTANT MUST** validate with user at EVERY step — never auto-decide.
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality and identify fixes/enhancements.
+
+---
+
+## Closing Reminders
+
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality

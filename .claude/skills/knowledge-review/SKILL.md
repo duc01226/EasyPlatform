@@ -9,8 +9,8 @@ allowed-tools: Read, Grep, Glob, TaskCreate, Bash
 
 **Prerequisites:** **MUST READ** before executing:
 
-- `.claude/skills/shared/web-research-protocol.md`
-- `.claude/skills/shared/double-round-trip-review-protocol.md` — Mandatory two-round review enforcement
+> **Web Research Protocol** — Structured web research: define search queries, validate source credibility, cross-reference claims across 3+ sources, track evidence provenance.
+> MUST READ `.claude/skills/shared/web-research-protocol.md` for full protocol and checklists.
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
@@ -127,7 +127,10 @@ After completing Round 1 evaluation, execute a **second full review round**:
 
 ---
 
-**IMPORTANT Task Planning Notes (MUST FOLLOW)**
+## Closing Reminders
 
-- Always plan and break work into many small todo tasks using `TaskCreate`
-- Always add a final review todo task to verify work quality and identify fixes/enhancements
+- **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
+- **MUST** search codebase for 3+ similar patterns before creating new code
+- **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
+- **MUST** add a final review todo task to verify work quality
+- **MUST** execute two review rounds (Round 1: understand, Round 2: catch missed issues)
