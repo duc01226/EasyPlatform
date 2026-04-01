@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Workflow] Trigger Feature with Integration Test workflow — implement a well-defined feature with spec-first integration testing: spec writing before implementation, plan refinement, and test verification.'
 ---
 
-> **[IMPORTANT]** This skill activates a full workflow. You MUST create todo tasks for ALL steps and execute them in sequence. Do NOT skip any step.
+> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `feature-with-integration-test` workflow. Run `/workflow-start feature-with-integration-test` with the user's prompt as context.
 

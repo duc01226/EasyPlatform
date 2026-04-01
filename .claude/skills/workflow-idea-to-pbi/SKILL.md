@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Workflow] Trigger Idea to PBI workflow — po/ba workflow: capture idea, refine to pbi, create stories, prioritize.'
 ---
 
-> **[IMPORTANT]** This skill activates a full workflow. You MUST create todo tasks for ALL steps and execute them in sequence. Do NOT skip any step.
+> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `idea-to-pbi` workflow. Run `/workflow-start idea-to-pbi` with the user's prompt as context.
 

@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Workflow] Trigger BA to Dev Handoff workflow — ba hands off refined stories to development team with quality gate.'
 ---
 
-> **[IMPORTANT]** This skill activates a full workflow. You MUST create todo tasks for ALL steps and execute them in sequence. Do NOT skip any step.
+> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `ba-dev-handoff` workflow. Run `/workflow-start ba-dev-handoff` with the user's prompt as context.
 

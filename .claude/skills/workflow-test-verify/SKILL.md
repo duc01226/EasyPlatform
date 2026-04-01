@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Workflow] Trigger Test Verification & Quality workflow — comprehensive test verification: review quality, diagnose failures, verify traceability, fix flaky tests.'
 ---
 
-> **[IMPORTANT]** This skill activates a full workflow. You MUST create todo tasks for ALL steps and execute them in sequence. Do NOT skip any step.
+> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `test-verify` workflow. Run `/workflow-start test-verify` with the user's prompt as context.
 

@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Workflow] Trigger E2E from Changes workflow — update e2e tests based on code or spec changes.'
 ---
 
-> **[IMPORTANT]** This skill activates a full workflow. You MUST create todo tasks for ALL steps and execute them in sequence. Do NOT skip any step.
+> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `e2e-from-changes` workflow. Run `/workflow-start e2e-from-changes` with the user's prompt as context.
 

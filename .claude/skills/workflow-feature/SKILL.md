@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Workflow] Trigger Feature Implementation workflow — implement a well-defined feature with investigation, planning, implementation, and review.'
 ---
 
-> **[IMPORTANT]** This skill activates a full workflow. You MUST create todo tasks for ALL steps and execute them in sequence. Do NOT skip any step.
+> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `feature` workflow. Run `/workflow-start feature` with the user's prompt as context.
 
@@ -17,3 +17,7 @@ When a feature involves UI changes (detected during `/scout` or `/feature-invest
 - If image/wireframe/Figma URL is provided → route to `/wireframe-to-spec` or `/figma-design` before `/plan`
 - If `/plan` detects frontend phases → ensure `ui-wireframe-protocol.md` sections are included in plan phases
 - This is advisory — NOT a mandatory workflow step change. The existing workflow sequence remains unchanged.
+
+## Closing Rule
+
+Every step = `TaskUpdate in_progress` → `Skill` tool → complete skill → `TaskUpdate completed`. No shortcuts.

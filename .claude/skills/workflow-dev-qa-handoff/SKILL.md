@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Workflow] Trigger Dev to QA Handoff workflow — development complete, handoff to qa for testing.'
 ---
 
-> **[IMPORTANT]** This skill activates a full workflow. You MUST create todo tasks for ALL steps and execute them in sequence. Do NOT skip any step.
+> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `dev-qa-handoff` workflow. Run `/workflow-start dev-qa-handoff` with the user's prompt as context.
 

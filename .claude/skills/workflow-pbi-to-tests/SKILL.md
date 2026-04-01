@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Workflow] Trigger PBI to Tests workflow — qa workflow: generate tdd test specs from pbi, write to feature docs section 17, run quality gate.'
 ---
 
-> **[IMPORTANT]** This skill activates a full workflow. You MUST create todo tasks for ALL steps and execute them in sequence. Do NOT skip any step.
+> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `pbi-to-tests` workflow. Run `/workflow-start pbi-to-tests` with the user's prompt as context.
 

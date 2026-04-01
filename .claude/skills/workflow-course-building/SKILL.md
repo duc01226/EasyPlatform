@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Workflow] Trigger Course Material Builder workflow — research a topic and build structured learning/teaching course material with bloom taxonomy objectives.'
 ---
 
-> **[IMPORTANT]** This skill activates a full workflow. You MUST create todo tasks for ALL steps and execute them in sequence. Do NOT skip any step.
+> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `course-building` workflow. Run `/workflow-start course-building` with the user's prompt as context.
 

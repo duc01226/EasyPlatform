@@ -23,13 +23,47 @@ Every plan phase MUST pass ALL five criteria to be considered implementation-rea
 | 6-9              | Refine in-place    | Expand vague phases into detailed steps within the same phase file, or split into sibling phases |
 | 10+              | Sub-plan directory | Create `{plan-dir}/sub-plans/phase-{XX}-{name}/plan.md` with its own phases                      |
 
-## 3. Post-Plan Self-Check (for plan skills)
+## 3. Recursive Decomposition Loop (for plan skills)
 
-After creating all phase files, BEFORE final /plan-validate and /plan-review tasks:
+After creating all phase files, execute this loop BEFORE final /plan-validate and /plan-review tasks:
 
-1. Score each phase against the 5 criteria above
-2. For each phase that FAILS any criterion → create a task: "Refine Phase X: {specific failure reason}"
-3. Refinement means: rewrite the phase with more specific steps, split it into multiple phases, or create a sub-plan
+```
+REPEAT:
+  1. Score EVERY phase against the 5 criteria above
+  2. For each phase that FAILS any criterion:
+     a. Create a task: "Decompose Phase X into sub-plan"
+     b. Run /plan on that phase → produces its own plan.md + phase files
+     c. Run /plan-review on the sub-plan
+     d. Run /plan-validate on the sub-plan (if user available)
+     e. Fix any issues found in review
+  3. After all sub-plans created, score the NEW phases
+UNTIL: ALL leaf phases pass ALL 5 criteria (max depth: 3 levels)
+```
+
+**Self-questioning gate (MANDATORY after every plan creation):**
+Ask yourself: "How many phases does this plan have? For each phase, can I start coding RIGHT NOW without any further planning? If any phase needs 'figuring out' before coding → it needs a sub-plan."
+
+**Sub-plan directory convention:**
+
+```
+plans/{date}-{slug}/
+├── plan.md                    # Root plan (depth 0)
+├── phase-01-simple.md         # Leaf — passes 5-point check ✓
+├── phase-02-complex.md        # Branch — links to sub-plan ✗
+├── sub-plans/
+│   └── phase-02-complex/
+│       ├── plan.md            # Sub-plan (depth 1) — has own phases
+│       ├── phase-01-*.md      # Leaf ✓
+│       └── phase-02-*.md      # Could be another branch → depth 2
+```
+
+**Each sub-plan gets the full quality cycle:**
+
+1. `/plan` — Create the sub-plan with detailed phases
+2. `/plan-review` — Auto-review for validity, correctness, granularity
+3. `/plan-validate` — Interview user on assumptions (if interactive mode)
+4. Fix any FAIL items from review
+5. Re-check: do any NEW phases need further decomposition?
 
 ## 4. Pre-Cook/Pre-Code Granularity Gate
 

@@ -5,6 +5,8 @@ description: '[Planning] Validate plan with critical questions interview'
 allowed-tools: Read, Glob, Grep, TaskCreate, AskUserQuestion, Bash
 ---
 
+> **[BLOCKING]** This skill MUST use `AskUserQuestion` to interview the user. Completing without asking at least one question is a violation.
+
 > **[IMPORTANT]** Use `TaskCreate` to break ALL work into small tasks BEFORE starting — including tasks for each file read. This prevents context loss from long files. For simple tasks, AI MUST ask user whether to skip.
 
 > **Understand Code First** — Search codebase for 3+ similar implementations BEFORE writing any code. Read existing files, validate assumptions with grep evidence, map dependencies via graph trace. Never invent new patterns when existing ones work.

@@ -4,7 +4,7 @@ version: 1.0.0
 description: '[Workflow] Trigger Code Refactoring workflow — restructure and improve existing code without changing behavior.'
 ---
 
-> **[IMPORTANT]** This skill activates a full workflow. You MUST create todo tasks for ALL steps and execute them in sequence. Do NOT skip any step.
+> **[BLOCKING]** Each step MUST invoke its `Skill` tool — marking a task `completed` without skill invocation is a workflow violation. NEVER batch-complete validation gates.
 
 Activate the `refactor` workflow. Run `/workflow-start refactor` with the user's prompt as context.
 

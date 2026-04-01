@@ -76,6 +76,12 @@ Your FIRST action after activation MUST be calling `TaskCreate` once for EACH wo
 
 Create ALL tasks first, then mark the first task `in_progress` via `TaskUpdate`. Do NOT skip this.
 
+## Step Execution Protocol (applies to ALL workflows)
+
+Per step: `TaskUpdate in_progress` → **invoke `Skill` tool** → complete skill workflow → `TaskUpdate completed`.
+
+Marking a task `completed` without invoking its `Skill` tool is a workflow violation. Validation gates (`/plan-validate`, `/plan-review`, `/why-review`) require `AskUserQuestion` — never auto-approve or batch-complete them.
+
 ---
 
 ## See Also

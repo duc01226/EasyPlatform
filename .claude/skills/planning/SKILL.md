@@ -1143,7 +1143,12 @@ All agents writing reports MUST:
 
 > Per `.claude/skills/shared/plan-granularity-protocol.md`
 
-After creating all phase files, score each phase against the 5-point implementation-readiness criteria. If any phase FAILS (missing file paths, planning verbs in steps, >3h effort, >5 files, unresolved decisions) → create a task to refine that phase before proceeding to /plan-validate.
+After creating all phase files, run the **recursive decomposition loop** from `plan-granularity-protocol.md`:
+
+1. Score each phase against the 5-point criteria (file paths, no planning verbs, ≤30min steps, ≤5 files, no open decisions)
+2. For each FAILING phase → create task to decompose it into a sub-plan (with its own /plan → /plan-review → /plan-validate → fix cycle)
+3. Re-score new phases. Repeat until ALL leaf phases pass (max depth: 3)
+4. **Self-question:** "For each phase, can I start coding RIGHT NOW? If any needs 'figuring out' → sub-plan it."
 
 ## Closing Reminders
 
