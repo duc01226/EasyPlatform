@@ -266,3 +266,6 @@ This keeps main agent context clean and enables efficient MCP integration.
 - **MUST** search codebase for 3+ similar patterns before creating new code
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `references/configuration.md` before starting
+- **MUST** READ `references/mcp-protocol.md` before starting

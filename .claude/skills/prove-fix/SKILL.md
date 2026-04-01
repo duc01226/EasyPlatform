@@ -337,3 +337,8 @@ This skill is the **mandatory verification gate** between `/fix` and `/code-simp
 **MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST** READ the following files before starting:
+
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/ui-system-context.md` before starting
+- **MUST** READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` before starting

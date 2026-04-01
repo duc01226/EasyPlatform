@@ -39,6 +39,8 @@ description: '[Implementation] Analyze & fix issues with parallel fullstack-deve
 - Issues MUST be independent (no overlapping file modifications)
 - Each subagent owns specific files; no cross-boundary edits
 
+> **[MANDATORY]** Read `.claude/skills/shared/root-cause-debugging-protocol.md` BEFORE proposing any fix. Responsibility attribution and data lifecycle tracing are required.
+
 ### Frontend/UI Context (if applicable)
 
 > When this task involves frontend or UI changes,
@@ -66,6 +68,8 @@ description: '[Implementation] Analyze & fix issues with parallel fullstack-deve
 **MANDATORY IMPORTANT MUST** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
 **95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
 
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause analysis + plan creation, MUST present findings + proposed fix plan to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
+
 **Ultrathink parallel** to fix: <issues>$ARGUMENTS</issues>
 
 **IMPORTANT:** Activate needed skills. Ensure token efficiency. Sacrifice grammar for concision.
@@ -86,6 +90,7 @@ description: '[Implementation] Analyze & fix issues with parallel fullstack-deve
 - Wait for plan with dependency graph, execution strategy, file ownership matrix
 - Group independent fixes for parallel execution
 - Sequential fixes for dependent issues
+- **🛑 Present root cause + fix plan → `AskUserQuestion` → wait for user approval before launching agents.**
 
 ### 3. Parallel Fix Implementation
 
@@ -147,3 +152,9 @@ description: '[Implementation] Analyze & fix issues with parallel fullstack-deve
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** STOP after 3 failed fix attempts — report outcomes, ask user before #4
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/estimation-framework.md` before starting
+- **MUST** READ `.claude/skills/shared/red-flag-stop-conditions-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/ui-system-context.md` before starting

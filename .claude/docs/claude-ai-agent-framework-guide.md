@@ -2997,7 +2997,7 @@ sequenceDiagram
 | **Sync**    | `/graph-sync`           | Sync graph with git state after pull/checkout                  |
 | **Batch**   | `/graph-query batch`    | Multi-file deduplicated query                                  |
 
-Skills that **automatically receive graph context** when graph.db exists: `/code-review`, `/review-changes`, `/scout`, `/debug`, `/sre-review`, `/investigate`, `/feature-investigation`, `/fix`, `/refactoring`, `/security`, `/performance`, `/code-simplifier`, `/prove-fix`.
+Skills that **automatically receive graph context** when graph.db exists: `/code-review`, `/review-changes`, `/review-architecture`, `/scout`, `/debug`, `/sre-review`, `/investigate`, `/feature-investigation`, `/fix`, `/refactoring`, `/security`, `/performance`, `/code-simplifier`, `/prove-fix`.
 
 #### Auto-Maintenance
 

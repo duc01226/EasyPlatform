@@ -228,3 +228,8 @@ After completing Round 1 scoring, execute a **second full review round**:
 **MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST** READ the following files before starting:
+
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/double-round-trip-review-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` before starting

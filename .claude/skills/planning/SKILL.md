@@ -1139,6 +1139,12 @@ All agents writing reports MUST:
 
 ---
 
+## Post-Plan Granularity Self-Check (MANDATORY)
+
+> Per `.claude/skills/shared/plan-granularity-protocol.md`
+
+After creating all phase files, score each phase against the 5-point implementation-readiness criteria. If any phase FAILS (missing file paths, planning verbs in steps, >3h effort, >5 files, unresolved decisions) → create a task to refine that phase before proceeding to /plan-validate.
+
 ## Closing Reminders
 
 - **MUST** break work into small todo tasks using `TaskCreate` BEFORE starting
@@ -1146,3 +1152,8 @@ All agents writing reports MUST:
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** include Test Specifications section and story_points in plan frontmatter
+- **MUST** verify all phases pass granularity check per `plan-granularity-protocol.md`
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/estimation-framework.md` before starting
+- **MUST** READ `.claude/skills/shared/plan-granularity-protocol.md` before starting

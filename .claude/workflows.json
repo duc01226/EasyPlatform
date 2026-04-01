@@ -85,6 +85,10 @@
             "claude": "/refine-review",
             "copilot": "/refine-review"
         },
+        "review-architecture": {
+            "claude": "/review-architecture",
+            "copilot": "/review-architecture"
+        },
         "review-changes": {
             "claude": "/review-changes",
             "copilot": "/review-changes"
@@ -296,7 +300,9 @@
                 "test-specs-docs",
                 "code-simplifier",
                 "review-changes",
+                "review-architecture",
                 "code-review",
+                "performance",
                 "changelog",
                 "test",
                 "docs-update",
@@ -375,6 +381,7 @@
                 "test-specs-docs",
                 "code-simplifier",
                 "review-changes",
+                "review-architecture",
                 "code-review",
                 "sre-review",
                 "security",
@@ -411,6 +418,7 @@
                 "test",
                 "code-simplifier",
                 "review-changes",
+                "review-architecture",
                 "code-review",
                 "sre-review",
                 "security",
@@ -457,6 +465,7 @@
                 "integration-test",
                 "code-simplifier",
                 "review-changes",
+                "review-architecture",
                 "code-review",
                 "sre-review",
                 "security",
@@ -501,8 +510,10 @@
                 "test-specs-docs",
                 "code-simplifier",
                 "review-changes",
+                "review-architecture",
                 "code-review",
                 "sre-review",
+                "performance",
                 "changelog",
                 "test",
                 "docs-update",
@@ -519,7 +530,7 @@
             "preActions": {
                 "injectContext": "PRE-COMMIT REVIEW:\n- Review all staged and unstaged changes\n- Check for: security issues, debug artifacts (console.log, debugger), incomplete code, style violations\n- Verify no sensitive files (.env, credentials) are staged\n- Check architecture compliance, naming, patterns\n- Report findings with file:line references\n- Output: PASS (safe to commit) or ISSUES FOUND (with list)"
             },
-            "sequence": ["review-changes", "code-simplifier", "code-review", "performance", "watzup", "workflow-end"],
+            "sequence": ["review-changes", "review-architecture", "code-simplifier", "code-review", "performance", "watzup", "workflow-end"],
             "whenNotToUse": "PR reviews, codebase reviews, branch comparisons",
             "whenToUse": "User wants to review current uncommitted, staged, or unstaged changes before committing"
         },
@@ -530,7 +541,7 @@
             "preActions": {
                 "injectContext": "CODE REVIEW PROTOCOL:\n1. Review code for quality, patterns compliance, security, and performance\n2. Apply project standards: CQRS, state management, CSS methodology, Code Responsibility Hierarchy\n3. Check docs/project-reference/code-review-rules.md for project-specific review rules\n4. Report findings with severity (Critical/Major/Minor) and file:line references\n5. Summarize with actionable recommendations"
             },
-            "sequence": ["code-review", "watzup", "workflow-end"],
+            "sequence": ["review-architecture", "code-simplifier", "code-review", "performance", "watzup", "workflow-end"],
             "whenNotToUse": "Reviewing uncommitted changes (use review-changes), reviewing plans/designs/specs/docs",
             "whenToUse": "User wants a code review, PR review, codebase quality audit, or code quality check"
         },
@@ -599,7 +610,10 @@
                 "test-specs-docs",
                 "code-simplifier",
                 "review-changes",
+                "review-architecture",
+                "code-review",
                 "sre-review",
+                "performance",
                 "test",
                 "docs-update",
                 "watzup",
@@ -696,7 +710,9 @@
                 "test-specs-docs",
                 "code-simplifier",
                 "review-changes",
+                "review-architecture",
                 "code-review",
+                "performance",
                 "test",
                 "watzup",
                 "workflow-end"
@@ -720,6 +736,8 @@
                 "tdd-spec",
                 "tdd-spec-review",
                 "review-changes",
+                "review-architecture",
+                "code-review",
                 "test",
                 "watzup",
                 "workflow-end"
@@ -742,6 +760,7 @@
                 "plan-validate",
                 "code",
                 "review-changes",
+                "review-architecture",
                 "code-review",
                 "sre-review",
                 "test",
@@ -758,7 +777,20 @@
             "preActions": {
                 "injectContext": "Role: Dependency Manager\nPACKAGE UPGRADE PROTOCOL:\n1. Scout: Identify current versions, check for breaking changes\n2. Investigate: Read changelogs, migration guides for target versions\n3. Plan: List all packages to upgrade, identify breaking changes\n4. Implement: Upgrade packages one at a time or in compatible groups\n5. Test: Run full test suite after each upgrade group\n6. Review: Check for deprecated API usage\n\nGUARDRAILS:\n- One major version bump at a time\n- Read changelog for EVERY package upgraded\n- Run tests after each upgrade, not just at the end\n- Check peer dependency compatibility\n- Keep lockfile changes in separate commit"
             },
-            "sequence": ["scout", "investigate", "plan", "plan-review", "plan-validate", "code", "test", "review-changes", "watzup", "workflow-end"],
+            "sequence": [
+                "scout",
+                "investigate",
+                "plan",
+                "plan-review",
+                "plan-validate",
+                "code",
+                "test",
+                "review-changes",
+                "review-architecture",
+                "code-review",
+                "watzup",
+                "workflow-end"
+            ],
             "whenNotToUse": "Adding new packages (use feature), removing packages (use refactor)",
             "whenToUse": "User wants to upgrade packages, update dependencies, npm update, NuGet upgrade, version bump"
         },
@@ -780,6 +812,8 @@
                 "tdd-spec-review",
                 "test-specs-docs",
                 "test",
+                "review-changes",
+                "review-architecture",
                 "sre-review",
                 "watzup",
                 "workflow-end"
@@ -802,6 +836,7 @@
                 "plan-validate",
                 "code",
                 "review-changes",
+                "review-architecture",
                 "code-review",
                 "sre-review",
                 "test",
@@ -919,6 +954,7 @@
                 "test-specs-docs",
                 "test",
                 "review-changes",
+                "review-architecture",
                 "sre-review",
                 "watzup",
                 "workflow-end"
@@ -951,8 +987,10 @@
                 "cook",
                 "code-simplifier",
                 "review-changes",
+                "review-architecture",
                 "code-review",
                 "sre-review",
+                "performance",
                 "test-spec",
                 "quality-gate",
                 "docs-update",
@@ -1043,8 +1081,10 @@
                 "test",
                 "code-simplifier",
                 "review-changes",
+                "review-architecture",
                 "code-review",
                 "sre-review",
+                "performance",
                 "changelog",
                 "docs-update",
                 "watzup",
@@ -1126,6 +1166,7 @@
                 "test",
                 "code-simplifier",
                 "review-changes",
+                "review-architecture",
                 "code-review",
                 "sre-review",
                 "security",

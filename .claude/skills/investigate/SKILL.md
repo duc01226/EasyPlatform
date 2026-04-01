@@ -43,6 +43,8 @@ allowed-tools: Read, Grep, Glob, Bash, Task, WebFetch, WebSearch, TodoWrite
 - Write analysis to `.ai/workspace/analysis/[feature-name]-investigation.md`
 - For UI investigation, activate `visual-component-finder` skill FIRST
 
+> **[MANDATORY]** Read `.claude/skills/shared/root-cause-debugging-protocol.md` BEFORE proposing any fix. Responsibility attribution and data lifecycle tracing are required.
+
 # Feature Investigation
 
 READ-ONLY exploration skill for understanding existing features. No code changes.
@@ -572,3 +574,8 @@ Trigger the full validation chain for:
 - **MUST** search codebase for 3+ similar patterns before creating new code
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/knowledge-graph-template.md` before starting

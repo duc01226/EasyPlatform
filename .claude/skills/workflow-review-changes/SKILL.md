@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Review Current Changes workflow — review unco
 
 Activate the `review-changes` workflow. Run `/workflow-start review-changes` with the user's prompt as context.
 
-**Steps:** /review-changes → /code-simplifier → /code-review → /performance → /watzup → /workflow-end
+**Steps:** /review-changes → /review-architecture → /code-simplifier → /code-review → /performance → /watzup → /workflow-end
 
 ---
 

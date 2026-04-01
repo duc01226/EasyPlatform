@@ -35,8 +35,9 @@ Each phase MUST satisfy ALL:
 - Has clear success criteria (testable)
 - Can be reviewed independently
 - Has specific test cases mapped to it — per `.claude/skills/shared/plan-quality-protocol.md`, every phase MUST have `## Test Specifications` with TC IDs
+- Is implementation-ready — per `.claude/skills/shared/plan-granularity-protocol.md`, every step names specific files, contains no planning verbs ("research", "determine", "figure out"), and has no unresolved decisions
 
-If a phase violates any rule → split further.
+If a phase violates any rule → split further or refine in-place.
 
 ## 3. Per-Phase Quality Cycle
 

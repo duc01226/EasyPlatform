@@ -57,6 +57,19 @@ the codebase for 3+ similar implementations. This applies to EVERY feature regar
 of perceived simplicity. "Simple" features have hidden complexity.
 </HARD-GATE>
 
+## Pre-Implementation Granularity Gate (MANDATORY)
+
+<HARD-GATE>
+Per `.claude/skills/shared/plan-granularity-protocol.md` — before implementing ANY phase:
+1. Verify every step names specific files (not generic "implement X")
+2. Verify no step uses planning verbs: "research", "determine", "figure out", "decide", "evaluate", "explore"
+3. Verify each step ≤30 min, phase total ≤5 files and ≤3h
+4. Verify no unresolved decisions or TBDs in approach
+
+If ANY check fails → STOP. Ask user: "Phase needs more detail before implementation. Refine with /plan? [Y/n]"
+DO NOT implement a phase that contains planning verbs, unnamed files, or unresolved decisions.
+</HARD-GATE>
+
 ## Per-Phase Quality Cycle (MANDATORY)
 
 <HARD-GATE>
@@ -251,3 +264,11 @@ When graph DB is available, BEFORE writing code, trace to understand the blast r
 **MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST** READ the following files before starting:
+
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/plan-quality-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/rationalization-prevention-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/ui-system-context.md` before starting
+- **MUST** READ `.claude/skills/shared/iterative-phase-quality-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` before starting

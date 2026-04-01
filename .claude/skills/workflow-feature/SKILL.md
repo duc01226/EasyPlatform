@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Feature Implementation workflow — implement a
 
 Activate the `feature` workflow. Run `/workflow-start feature` with the user's prompt as context.
 
-**Steps:** /scout → /feature-investigation → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /cook → /tdd-spec → /tdd-spec-review → /test-specs-docs → /code-simplifier → /review-changes → /code-review → /sre-review → /security → /performance → /changelog → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /feature-investigation → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /cook → /tdd-spec → /tdd-spec-review → /test-specs-docs → /code-simplifier → /review-changes → /review-architecture → /code-review → /sre-review → /security → /performance → /changelog → /test → /docs-update → /watzup → /workflow-end
 
 ## Conditional UI Planning
 

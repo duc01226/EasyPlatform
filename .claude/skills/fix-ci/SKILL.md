@@ -37,6 +37,8 @@ disable-model-invocation: false
 - Focus on CI-specific issues (env vars, Docker, dependencies, build order)
 - Verify fix doesn't break local development
 
+> **[MANDATORY]** Read `.claude/skills/shared/root-cause-debugging-protocol.md` BEFORE proposing any fix. Responsibility attribution and data lifecycle tracing are required.
+
 ## Debug Mindset (NON-NEGOTIABLE)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -57,14 +59,17 @@ disable-model-invocation: false
 
 <url>$ARGUMENTS</url>
 
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After CI log analysis + root cause identification, MUST present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
+
 ## Workflow
 
 1. Use `debugger` subagent to read the github actions logs with `gh` command, analyze and find the root cause of the issues and report back to main agent.
    1.5. Write analysis findings to `.ai/workspace/analysis/{ci-issue}.analysis.md`. Re-read before implementing fix.
-2. Start implementing the fix based the reports and solutions.
-3. Use `tester` agent to test the fix and make sure it works, then report back to main agent.
-4. If there are issues or failed tests, repeat from step 2.
-5. After finishing, respond back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
+2. **🛑 Present root cause + proposed fix → `AskUserQuestion` → wait for user approval.**
+3. Start implementing the fix based the reports and solutions.
+4. Use `tester` agent to test the fix and make sure it works, then report back to main agent.
+5. If there are issues or failed tests, repeat from step 2.
+6. After finishing, respond back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
 
 ## Notes
 
@@ -81,3 +86,7 @@ disable-model-invocation: false
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** STOP after 3 failed fix attempts — report outcomes, ask user before #4
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/estimation-framework.md` before starting

@@ -49,6 +49,21 @@ description: '[Implementation] Start coding & testing an existing plan'
 
 ---
 
+## Pre-Implementation Granularity Gate (MANDATORY)
+
+<HARD-GATE>
+Per `.claude/skills/shared/plan-granularity-protocol.md` — before implementing ANY phase:
+1. Verify every step names specific files (not generic "implement X")
+2. Verify no step uses planning verbs: "research", "determine", "figure out", "decide", "evaluate", "explore"
+3. Verify each step ≤30 min, phase total ≤5 files and ≤3h
+4. Verify no unresolved decisions or TBDs in approach
+
+If ANY check fails → STOP. Ask user: "Phase needs more detail before implementation. Refine with /plan? [Y/n]"
+DO NOT implement a phase that contains planning verbs, unnamed files, or unresolved decisions.
+</HARD-GATE>
+
+---
+
 ## Step 0: Plan Detection & Phase Selection
 
 **If `$ARGUMENTS` is empty:**
@@ -189,3 +204,7 @@ Do not skip steps. Do not proceed if validation fails. Do not assume approval wi
 **MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST** READ the following files before starting:
+
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `CLAUDE.md` before starting

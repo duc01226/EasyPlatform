@@ -40,6 +40,8 @@ description: '[Implementation] Analyze and fix issues [INTELLIGENT ROUTING]'
 - Never assume first hypothesis is correct — verify with actual code traces
 - Parent skill for all fix-\* variants; routes based on issue keywords
 
+> **[MANDATORY]** Read `.claude/skills/shared/root-cause-debugging-protocol.md` BEFORE proposing any fix. Responsibility attribution and data lifecycle tracing are required.
+
 ### Frontend/UI Context (if applicable)
 
 > When this task involves frontend or UI changes,
@@ -189,3 +191,10 @@ Before and after fixing, use graph trace to understand blast radius:
 **MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST** READ the following files before starting:
+
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/estimation-framework.md` before starting
+- **MUST** READ `.claude/skills/shared/red-flag-stop-conditions-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/ui-system-context.md` before starting

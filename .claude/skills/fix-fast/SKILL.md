@@ -36,6 +36,8 @@ disable-model-invocation: false
 - Use for simple, isolated bugs only — escalate to `/fix-hard` for complex issues
 - Minimize investigation time; if root cause isn't clear within minutes, escalate
 
+> **[MANDATORY]** Read `.claude/skills/shared/root-cause-debugging-protocol.md` BEFORE proposing any fix. Responsibility attribution and data lifecycle tracing are required.
+
 Analyze the skills catalog and activate the skills that are needed for the task during the process.
 
 ## Debug Mindset (NON-NEGOTIABLE)
@@ -59,16 +61,19 @@ Analyze the skills catalog and activate the skills that are needed for the task 
 **Think hard** to analyze and fix these issues:
 <issues>$ARGUMENTS</issues>
 
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause analysis, MUST present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
+
 ## Workflow
 
 1. If the user provides a screenshots or videos, use `ai-multimodal` skill to describe as detailed as possible the issue, make sure developers can predict the root causes easily based on the description.
 2. Use `debugger` subagent to find the root cause of the issues and report back to main agent.
    2.5. Write root cause analysis to `.ai/workspace/analysis/{issue-name}.analysis.md`. Re-read before implementing fix.
 3. Activate `debug` skills and `problem-solving` skills to tackle the issues.
-4. Start implementing the fix based the reports and solutions.
-5. Use `tester` agent to test the fix and make sure it works, then report back to main agent.
-6. If there are issues or failed tests, repeat from step 2.
-7. After finishing, respond back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
+4. **🛑 Present root cause + proposed fix → `AskUserQuestion` → wait for user approval.**
+5. Start implementing the fix based the reports and solutions.
+6. Use `tester` agent to test the fix and make sure it works, then report back to main agent.
+7. If there are issues or failed tests, repeat from step 2.
+8. After finishing, respond back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
 
 - **After fixing, MUST run `/prove-fix`** — build code proof traces per change with confidence scores. Never skip.
 
@@ -81,3 +86,7 @@ Analyze the skills catalog and activate the skills that are needed for the task 
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** STOP after 3 failed fix attempts — report outcomes, ask user before #4
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/estimation-framework.md` before starting

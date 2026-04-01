@@ -36,6 +36,8 @@ disable-model-invocation: false
 - Focus on log patterns: stack traces, error codes, timing anomalies
 - Cross-reference logs with source code to find actual root cause
 
+> **[MANDATORY]** Read `.claude/skills/shared/root-cause-debugging-protocol.md` BEFORE proposing any fix. Responsibility attribution and data lifecycle tracing are required.
+
 **IMPORTANT:** Analyze the skills catalog and activate the skills that are needed for the task during the process.
 
 ## Debug Mindset (NON-NEGOTIABLE)
@@ -58,6 +60,8 @@ disable-model-invocation: false
 
 <issue>$ARGUMENTS</issue>
 
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause analysis + plan creation, MUST present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
+
 ## Workflow
 
 1. Check if `./logs.txt` exists:
@@ -71,11 +75,12 @@ disable-model-invocation: false
     - **External Memory**: Write log analysis to `.ai/workspace/analysis/{issue-name}.analysis.md`. Re-read before fixing.
 3. Use `scout` subagent to analyze the codebase and find the exact location of the issues, then report back to main agent.
 4. Use `planner` subagent to create an implementation plan based on the reports, then report back to main agent.
-5. Start implementing the fix based the reports and solutions.
-6. Use `tester` agent to test the fix and make sure it works, then report back to main agent.
-7. Use `code-reviewer` subagent to quickly review the code changes and make sure it meets requirements, then report back to main agent.
-8. If there are issues or failed tests, repeat from step 3.
-9. After finishing, respond back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
+5. **🛑 Present root cause + fix plan → `AskUserQuestion` → wait for user approval.**
+6. Start implementing the fix based the reports and solutions.
+7. Use `tester` agent to test the fix and make sure it works, then report back to main agent.
+8. Use `code-reviewer` subagent to quickly review the code changes and make sure it meets requirements, then report back to main agent.
+9. If there are issues or failed tests, repeat from step 3.
+10. After finishing, respond back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
 
 - **After fixing, MUST run `/prove-fix`** — build code proof traces per change with confidence scores. Never skip.
 
@@ -88,3 +93,7 @@ disable-model-invocation: false
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** STOP after 3 failed fix attempts — report outcomes, ask user before #4
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/estimation-framework.md` before starting

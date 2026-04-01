@@ -31,6 +31,10 @@ description: '[Implementation] Fix type errors'
 - Prefer proper typing over `any` or type assertions
 - Fix root cause (wrong interface, missing export) not symptoms
 
+> **[MANDATORY]** Read `.claude/skills/shared/root-cause-debugging-protocol.md` BEFORE proposing any fix. Responsibility attribution and data lifecycle tracing are required.
+
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After identifying type errors and root cause, MUST present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
+
 Run `bun run typecheck` or `tsc` or `npx tsc` and fix all type errors.
 
 ## Debug Mindset (NON-NEGOTIABLE)
@@ -65,3 +69,6 @@ Run `bun run typecheck` or `tsc` or `npx tsc` and fix all type errors.
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** STOP after 3 failed fix attempts — report outcomes, ask user before #4
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting

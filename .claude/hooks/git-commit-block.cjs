@@ -26,6 +26,11 @@ const COMMIT_SKILL_MARKER = path.join(PROJECT_DIR, '.claude', '.commit-skill-act
 // to avoid false positives from strings/echo content containing "git".
 const BLOCKED_GIT_PATTERNS = [
     {
+        pattern: /(?:^|&&|\|\||;)\s*git\s+commit\s+--amend\b/m,
+        name: 'git commit --amend',
+        reason: 'Amending commits is NEVER allowed — always create new commits. Amend can corrupt other commits when HEAD has moved.'
+    },
+    {
         pattern: /(?:^|&&|\|\||;)\s*git\s+commit\b/m,
         name: 'git commit',
         reason: 'Commits must be explicitly requested by the user (use /commit skill)'
@@ -69,6 +74,17 @@ const ALLOWED_COMPOUND_PATTERNS = [/(?:^|&&|\|\||;)\s*git\s+reset\s+HEAD\b/m, /(
 
 function formatBlockMessage(match) {
     const markerPath = COMMIT_SKILL_MARKER.replace(/\\/g, '/');
+
+    // --amend is NEVER allowed, no bypass
+    if (match.name === 'git commit --amend') {
+        return [
+            `[BLOCKED] ${match.name} — ${match.reason}`,
+            '',
+            'NEVER use --amend. Always create a NEW commit instead.',
+            'This block cannot be bypassed.'
+        ].join('\n');
+    }
+
     return [
         `[BLOCKED] ${match.name} — ${match.reason}`,
         '',
@@ -117,6 +133,13 @@ function main() {
         // Allow compound patterns (e.g., git reset HEAD, git add --dry-run)
         if (ALLOWED_COMPOUND_PATTERNS.some(p => p.test(command))) {
             process.exit(0);
+        }
+
+        // Check --amend FIRST — never allowed, even with commit skill active
+        const amendMatch = BLOCKED_GIT_PATTERNS.find(p => p.name === 'git commit --amend' && p.pattern.test(command));
+        if (amendMatch) {
+            console.error(formatBlockMessage(amendMatch));
+            process.exit(2);
         }
 
         // Allow if /commit skill is active (marker file exists)

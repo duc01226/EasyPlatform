@@ -263,7 +263,7 @@ Steps: /web-research → /deep-research → /knowledge-synthesis → /knowledge-
 **review** — Code Review
 Use: User wants a code review, PR review, codebase quality audit, or code quality check
 Not for: Reviewing uncommitted changes (use review-changes), reviewing plans/designs/specs/docs
-Steps: /code-review → /watzup → /workflow-end
+Steps: /code-simplifier → /code-review → /performance → /watzup → /workflow-end
 
 **review-changes** — Review Current Changes
 Use: User wants to review current uncommitted, staged, or unstaged changes before committing

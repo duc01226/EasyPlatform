@@ -88,7 +88,12 @@ async function testBlockedCommands() {
         logResult(`BLOCK: ${name}`, result.code === 2);
         if (result.code !== 2 && verbose) log(`    Expected exit 2, got ${result.code}. stderr: ${result.stderr}`);
         if (result.code === 2) {
-            logResult(`BLOCK MSG: ${name} has bypass instructions`, result.stderr.includes('[BLOCKED]') && result.stderr.includes('commit-skill-active'));
+            // --amend has no bypass (permanently blocked), other commands show bypass instructions
+            const isAmend = cmd.includes('--amend');
+            const hasExpectedMsg = isAmend
+                ? result.stderr.includes('[BLOCKED]') && result.stderr.includes('NEVER')
+                : result.stderr.includes('[BLOCKED]') && result.stderr.includes('commit-skill-active');
+            logResult(`BLOCK MSG: ${name} has ${isAmend ? 'permanent block' : 'bypass instructions'}`, hasExpectedMsg);
         }
     }
 }

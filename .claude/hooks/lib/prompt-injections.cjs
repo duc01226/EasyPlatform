@@ -108,6 +108,7 @@ function injectAiMistakePrevention(transcriptPath, skipDedup = false) {
         `- **Verify sub-agent results after context recovery.** Background agents may complete while parent context is compacted — grep-verify their output rather than trusting assumed completion.`,
         `- **Cross-check full target list against sub-agent assignments.** When distributing work to parallel sub-agents by category, items at category boundaries get missed. Always reconcile the union of all agent assignments against the complete target list before proceeding.`,
         `- **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption needs permission + knowledge + enforcement (numbered workflow step).`,
+        `- **When debugging, ask "whose responsibility?" before fixing.** Trace whether the bug is in the caller (wrong data) or the callee (wrong handling). Fix at the responsible layer — never patch the symptom site with context-specific guards.`,
         `- **PRIORITY** try to find suitable skill to activate for the task.`,
         ``
     ].join('\n');

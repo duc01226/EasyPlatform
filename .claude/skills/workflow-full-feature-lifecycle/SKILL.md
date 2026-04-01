@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Full Feature Lifecycle workflow — complete fe
 
 Activate the `full-feature-lifecycle` workflow. Run `/workflow-start full-feature-lifecycle` with the user's prompt as context.
 
-**Steps:** /idea → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /design-spec → /interface-design → /plan → /plan-review → /plan-validate → /cook → /code-simplifier → /review-changes → /code-review → /sre-review → /test-spec → /quality-gate → /docs-update → /watzup → /acceptance → /workflow-end
+**Steps:** /idea → /refine → /refine-review → /story → /story-review → /pbi-challenge → /dor-gate → /pbi-mockup → /design-spec → /interface-design → /frontend-design → /plan → /plan-review → /plan-validate → /cook → /code-simplifier → /review-changes → /review-architecture → /code-review → /sre-review → /performance → /test-spec → /quality-gate → /docs-update → /watzup → /acceptance → /workflow-end
 
 ---
 

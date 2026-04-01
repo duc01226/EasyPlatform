@@ -37,6 +37,8 @@ disable-model-invocation: false
 - Always use BEM classes on template elements
 - Check responsive breakpoints when fixing layout issues
 
+> **[MANDATORY]** Read `.claude/skills/shared/root-cause-debugging-protocol.md` BEFORE proposing any fix. Responsibility attribution and data lifecycle tracing are required.
+
 ## Debug Mindset (NON-NEGOTIABLE)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -59,6 +61,8 @@ disable-model-invocation: false
 2. **`ui-ux-pro-max`** - Design intelligence database
 3. **`web-design-guidelines`** - Design principles
 4. **`frontend-design`** - Implementation patterns
+
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After identifying UI root cause, MUST present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
 
 Use `ui-ux-designer` subagent to read and analyze `./docs/design-guidelines.md` then fix the following issues:
 <issue>$ARGUMENTS</issue>
@@ -118,3 +122,7 @@ If the user provides a screenshots or videos, use `ai-multimodal` skill to descr
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** STOP after 3 failed fix attempts — report outcomes, ask user before #4
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/estimation-framework.md` before starting

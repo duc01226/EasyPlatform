@@ -8,4 +8,4 @@ description: '[Workflow] Trigger Code Review workflow — code review and qualit
 
 Activate the `review` workflow. Run `/workflow-start review` with the user's prompt as context.
 
-**Steps:** /code-review → /watzup → /workflow-end
+**Steps:** /review-architecture → /code-simplifier → /code-review → /performance → /watzup → /workflow-end

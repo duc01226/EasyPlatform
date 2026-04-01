@@ -188,3 +188,6 @@ For each `.claude/` protocol reference:
 - **MUST** keep all original content — only restructure, never delete instructions
 - **MUST** add inline summaries only for `.claude/` protocol files, not project-specific `docs/` files
 - **MUST** verify no YAML frontmatter corruption after changes
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `file.md` before starting
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting

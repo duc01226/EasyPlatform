@@ -35,6 +35,8 @@ description: '[Implementation] Debug and fix GitHub issues with systematic inves
 - Link fix back to the GitHub issue for traceability
 - Verify fix addresses the specific reproduction steps from the issue
 
+> **[MANDATORY]** Read `.claude/skills/shared/root-cause-debugging-protocol.md` BEFORE proposing any fix. Responsibility attribution and data lifecycle tracing are required.
+
 <issue-number>$ARGUMENTS</issue-number>
 
 ## Debug Mindset (NON-NEGOTIABLE)
@@ -53,11 +55,13 @@ description: '[Implementation] Debug and fix GitHub issues with systematic inves
 **MANDATORY IMPORTANT MUST** declare `Confidence: X%` with evidence list + `file:line` proof for EVERY claim.
 **95%+** recommend freely | **80-94%** with caveats | **60-79%** list unknowns | **<60% STOP — gather more evidence.**
 
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause analysis, MUST present findings + proposed fix to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
+
 Activate `debug` skill and follow its workflow.
 
 **IMPORTANT**: Always use external memory at `.ai/workspace/analysis/issue-[number].analysis.md` for structured analysis. **Re-read ENTIRE analysis file before proposing any fix** — this prevents knowledge loss.
 
-**DO NOT** make any code changes without explicit user approval. Present analysis and proposed fix, then wait for approval before implementing.
+**🛑 Present root cause + proposed fix → `AskUserQuestion` → wait for user approval before implementing.**
 
 See `.claude/docs/AI-DEBUGGING-PROTOCOL.md` for comprehensive guidelines.
 
@@ -78,3 +82,8 @@ See `.claude/docs/AI-DEBUGGING-PROTOCOL.md` for comprehensive guidelines.
 **MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
 **MANDATORY IMPORTANT MUST** validate decisions with user via `AskUserQuestion` — never auto-decide.
 **MANDATORY IMPORTANT MUST** add a final review todo task to verify work quality.
+**MANDATORY IMPORTANT MUST** READ the following files before starting:
+
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/estimation-framework.md` before starting

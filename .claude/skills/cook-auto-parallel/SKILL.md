@@ -104,3 +104,8 @@ disable-model-invocation: false
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** validate decisions with user via `AskUserQuestion` — never auto-decide
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/plan-quality-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/rationalization-prevention-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/red-flag-stop-conditions-protocol.md` before starting

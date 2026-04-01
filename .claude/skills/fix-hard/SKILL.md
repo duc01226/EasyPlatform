@@ -37,6 +37,8 @@ disable-model-invocation: false
 - Use subagents for parallel investigation of multiple hypotheses
 - Always create a plan before implementing complex fixes
 
+> **[MANDATORY]** Read `.claude/skills/shared/root-cause-debugging-protocol.md` BEFORE proposing any fix. Responsibility attribution and data lifecycle tracing are required.
+
 ## Debug Mindset (NON-NEGOTIABLE)
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -68,6 +70,8 @@ If the user provides a screenshots or videos, use `ai-multimodal` skill to descr
 - Ask 1 question at a time, wait for the user to answer before moving to the next question.
 - If you don't have any questions, start the next step.
 
+> **⚠️ Validate Before Fix (NON-NEGOTIABLE):** After root cause + plan creation, MUST present findings + proposed fix plan to user via `AskUserQuestion` and get explicit approval BEFORE any code changes. No silent fixes.
+
 ### Fix the issue
 
 Use `sequential-thinking` skill to break complex problems into sequential thought steps.
@@ -78,8 +82,9 @@ Analyze the skills catalog and activate other skills that are needed for the tas
    1.5. Write investigation results to `.ai/workspace/analysis/{issue-name}.analysis.md`. Re-read ENTIRE file before planning fix.
 2. Use `researcher` subagent to research quickly about the root causes on the internet (if needed) and report back to main agent.
 3. Use `planner` subagent to create an implementation plan based on the reports, then report back to main agent.
-4. Then use `/code` SlashCommand to implement the plan step by step.
-5. Final Report:
+4. **🛑 Present root cause + fix plan → `AskUserQuestion` → wait for user approval.**
+5. Then use `/code` SlashCommand to implement the plan step by step.
+6. Final Report:
 
 - Report back to user with a summary of the changes and explain everything briefly, guide user to get started and suggest the next steps.
 - Ask the user if they want to commit and push to git repository, if yes, use `git-manager` subagent to commit and push to git repository.
@@ -104,3 +109,7 @@ Analyze the skills catalog and activate other skills that are needed for the tas
 - **MUST** cite `file:line` evidence for every claim (confidence >80% to act)
 - **MUST** add a final review todo task to verify work quality
 - **MUST** STOP after 3 failed fix attempts — report outcomes, ask user before #4
+  **MANDATORY IMPORTANT MUST** READ the following files before starting:
+- **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/evidence-based-reasoning-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/estimation-framework.md` before starting

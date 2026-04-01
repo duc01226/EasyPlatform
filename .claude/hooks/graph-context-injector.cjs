@@ -20,6 +20,7 @@ const { isGraphAvailable, invokeGraph, getGraphDbPath } = require('./lib/graph-u
 const GRAPH_SKILLS = new Set([
     'code-review',
     'review-changes',
+    'review-architecture',
     'sre-review',
     'graph-blast-radius',
     'scout',
