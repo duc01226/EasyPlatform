@@ -11,6 +11,12 @@ description: '[Code Quality] Review all uncommitted changes before commit'
 > MUST READ `.claude/skills/shared/understand-code-first-protocol.md` for full protocol and checklists.
 > **Design Patterns Quality** — Priority checks: (1) DRY via OOP — same-suffix classes MUST share base class, 3+ similar patterns → extract. (2) Right Responsibility — logic in LOWEST layer (Entity > Service > Component). (3) SOLID principles.
 > MUST READ `.claude/skills/shared/design-patterns-quality-checklist.md` for full protocol and checklists.
+> **Logic & Intention Review** — Verify WHAT the code does matches WHY it was changed. Every changed line must serve stated purpose. Trace at least one happy path + one error path. Clean code can be wrong code.
+> MUST READ `.claude/skills/shared/logic-and-intention-review-protocol.md` for full protocol and checklists.
+> **Bug Detection** — Systematically hunt for potential bugs: null safety, boundary conditions (off-by-one, empty collections), error handling (silent failures, swallowed exceptions), resource leaks, concurrency issues (missing await, race conditions). Check categories 1-4 for EVERY review.
+> MUST READ `.claude/skills/shared/bug-detection-protocol.md` for full protocol and checklists.
+> **Test Spec Verification** — Cross-reference changes against TC-{FEAT}-{NNN} test specifications. Flag untested code paths, new functions without TCs, stale evidence in existing TCs. If no specs exist, recommend /tdd-spec.
+> MUST READ `.claude/skills/shared/test-spec-verification-protocol.md` for full protocol and checklists.
 
 - `docs/project-reference/domain-entities-reference.md` — Domain entity catalog, relationships, cross-service sync (read when task involves business entities/models) (content auto-injected by hook — check for [Injected: ...] header before reading)
 
@@ -161,7 +167,10 @@ For EACH changed file, read and **immediately update report** with:
 - [ ] **Convention check:** Grep for 3+ similar patterns in codebase — does new code follow existing convention?
 - [ ] **Correctness check:** Trace logic paths — does the code handle null, empty, boundary values, error cases?
 - [ ] **DRY check:** Grep for similar/duplicate code — does this logic already exist elsewhere?
-- [ ] Issues Found: naming, typing, responsibility, patterns, bugs, over-engineering
+- [ ] **Intention check:** Does this change serve the stated purpose? Flag unrelated modifications
+- [ ] **Logic trace:** Trace one happy path + one error path. Does the logic match requirements?
+- [ ] **Semantic correctness:** Does the code DO what it's supposed to? (filter logic, sort order, boundary conditions)
+- [ ] Issues Found: naming, typing, responsibility, patterns, bugs, over-engineering, logic errors
 - [ ] Continue to next file, repeat
 
 **Phase 3: Holistic Review (Review the Accumulated Report)**
@@ -207,12 +216,23 @@ Cross-reference changed files against related documentation using this mapping:
 - [ ] Check test specs (`docs/business-features/**/test-*`) reflect current behavior
 - [ ] **Do NOT auto-fix** — flag in report with specific stale section and what changed
 
-**Correctness & Bug Detection:**
+**Correctness & Bug Detection (per bug-detection-protocol.md):**
 
-- [ ] **Edge cases:** Null/undefined inputs handled? Empty collections? Boundary values (0, -1, max)?
-- [ ] **Error paths:** What happens when this fails? Are errors caught, logged, and propagated correctly?
-- [ ] **Race conditions:** Any async code with shared state? Concurrent access patterns safe?
+- [ ] **Null safety:** New variables/params/returns — can they be null? Are they guarded?
+- [ ] **Boundary conditions:** Off-by-one, empty collections, zero/negative/max values
+- [ ] **Error handling:** Try-catch scope correct? Silent failures? Swallowed exceptions?
+- [ ] **Resource cleanup:** Connections, streams, subscriptions properly disposed?
+- [ ] **Concurrency:** Async code with shared state safe? Missing awaits? Race conditions?
+- [ ] **Data types:** Implicit conversions, timezone issues, string/number confusion?
 - [ ] **Business logic:** Does the logic match the requirement? Trace one complete happy path + one error path through the code.
+
+**Test Spec Verification (per test-spec-verification-protocol.md):**
+
+- [ ] **Locate specs:** From changed files → find TC-{FEAT}-{NNN} in feature docs or test-specs/
+- [ ] **Coverage:** Each changed code path has a corresponding TC (or flag as "needs TC")
+- [ ] **New code without TCs:** New functions/endpoints/handlers flagged for test spec creation
+- [ ] **Cross-cutting:** Auth changes → TC-{FEAT}-02x exist? Data changes → TC-{FEAT}-01x exist?
+- [ ] **Stale evidence:** Changed code referenced in TC Evidence fields — re-verify
 
 **Phase 4: Generate Final Review Result**
 Update report with final sections:
@@ -444,7 +464,7 @@ Parallel categorized review ensures thorough coverage with holistic synthesis.
 
 > **IMPORTANT MUST:** If you are NOT already in a workflow, use `AskUserQuestion` to ask the user:
 >
-> 1. **Activate `review-changes` workflow** (Recommended) — review-changes → code-review → watzup
+> 1. **Activate `review-changes` workflow** (Recommended) — review-changes → review-architecture → code-simplifier → code-review → performance → plan → plan-validate → cook → watzup
 > 2. **Execute `/review-changes` directly** — run this skill standalone
 
 ---
@@ -472,6 +492,16 @@ If `architectureRules` is not present in project-config.json, skip this check si
 - **"/watzup"** — Wrap up session and review all changes
 - **"Skip, continue manually"** — user decides
 
+## AI Agent Integrity Gate (NON-NEGOTIABLE)
+
+> **Completion ≠ Correctness.** Before reporting ANY work done, prove it:
+>
+> 1. **Grep every removed name.** Extraction/rename/delete touched N files? Grep confirms 0 dangling refs across ALL file types.
+> 2. **Ask WHY before changing.** Existing values are intentional until proven otherwise. No "fix" without traced rationale.
+> 3. **Verify ALL outputs.** One build passing ≠ all builds passing. Check every affected stack.
+> 4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints.
+> 5. **New artifact = wired artifact.** Created something? Prove it's registered, imported, and reachable by all consumers.
+
 ## Closing Reminders
 
 **MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
@@ -482,3 +512,6 @@ If `architectureRules` is not present in project-config.json, skip this check si
 - **MUST** READ `.claude/skills/shared/understand-code-first-protocol.md` before starting
 - **MUST** READ `.claude/skills/shared/design-patterns-quality-checklist.md` before starting
 - **MUST** READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/logic-and-intention-review-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/bug-detection-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/test-spec-verification-protocol.md` before starting

@@ -25,6 +25,12 @@ allowed-tools: Read, Grep, Glob, Bash, Write, TaskCreate, Edit, AskUserQuestion
 
 > **Rationalization Prevention** — AI consistently skips steps via: "too simple for a plan", "I'll test after", "already searched", "code is self-explanatory". These are EVASIONS — not valid reasons. Plan anyway. Test first. Show grep evidence with file:line. Never combine steps to "save time".
 > MUST READ `.claude/skills/shared/rationalization-prevention-protocol.md` for full protocol and checklists.
+> **Logic & Intention Review** — Verify WHAT the code does matches WHY it was changed. Every changed line must serve stated purpose. Trace at least one happy path + one error path. Clean code can be wrong code.
+> MUST READ `.claude/skills/shared/logic-and-intention-review-protocol.md` for full protocol and checklists.
+> **Bug Detection** — Systematically hunt for potential bugs: null safety, boundary conditions (off-by-one, empty collections), error handling (silent failures, swallowed exceptions), resource leaks, concurrency issues (missing await, race conditions). Check categories 1-4 for EVERY review.
+> MUST READ `.claude/skills/shared/bug-detection-protocol.md` for full protocol and checklists.
+> **Test Spec Verification** — Cross-reference changes against TC-{FEAT}-{NNN} test specifications. Flag untested code paths, new functions without TCs, stale evidence in existing TCs. If no specs exist, recommend /tdd-spec.
+> MUST READ `.claude/skills/shared/test-spec-verification-protocol.md` for full protocol and checklists.
 
 > **OOP & DRY Enforcement:** MANDATORY IMPORTANT MUST — flag duplicated patterns that should be extracted to a base class, generic, or helper. Classes in the same group or suffix (ex *Entity, *Dto, \*Service, etc...) MUST inherit a common base (even if empty now — enables future shared logic and child overrides). Verify project has code linting/analyzer configured for the stack.
 
@@ -452,6 +458,16 @@ If `architectureRules` is not present in project-config.json, skip this check si
 - **"/watzup"** — If review is clean, wrap up session
 - **"Skip, continue manually"** — user decides
 
+## AI Agent Integrity Gate (NON-NEGOTIABLE)
+
+> **Completion ≠ Correctness.** Before reporting ANY work done, prove it:
+>
+> 1. **Grep every removed name.** Extraction/rename/delete touched N files? Grep confirms 0 dangling refs across ALL file types.
+> 2. **Ask WHY before changing.** Existing values are intentional until proven otherwise. No "fix" without traced rationale.
+> 3. **Verify ALL outputs.** One build passing ≠ all builds passing. Check every affected stack.
+> 4. **Evaluate pattern fit.** Copying nearby code? Verify preconditions match — same scope, lifetime, base class, constraints.
+> 5. **New artifact = wired artifact.** Created something? Prove it's registered, imported, and reachable by all consumers.
+
 ## Closing Reminders
 
 **MANDATORY IMPORTANT MUST** break work into small todo tasks using `TaskCreate` BEFORE starting.
@@ -464,3 +480,6 @@ If `architectureRules` is not present in project-config.json, skip this check si
 - **MUST** READ `.claude/skills/shared/double-round-trip-review-protocol.md` before starting
 - **MUST** READ `.claude/skills/shared/rationalization-prevention-protocol.md` before starting
 - **MUST** READ `.claude/skills/shared/graph-assisted-investigation-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/logic-and-intention-review-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/bug-detection-protocol.md` before starting
+- **MUST** READ `.claude/skills/shared/test-spec-verification-protocol.md` before starting

@@ -8,4 +8,4 @@ description: '[Workflow] Trigger Deployment & Infrastructure workflow — CI/CD 
 
 Activate the `deployment` workflow. Run `/workflow-start deployment` with the user's prompt as context.
 
-**Steps:** /scout → /feature-investigation → /plan → /plan-review → /plan-validate → /code → /review-changes → /review-architecture → /code-review → /sre-review → /test → /watzup → /workflow-end
+**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /code → /workflow-review-changes → /sre-review → /test → /watzup → /workflow-end

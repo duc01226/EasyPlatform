@@ -109,6 +109,10 @@ function injectAiMistakePrevention(transcriptPath, skipDedup = false) {
         `- **Cross-check full target list against sub-agent assignments.** When distributing work to parallel sub-agents by category, items at category boundaries get missed. Always reconcile the union of all agent assignments against the complete target list before proceeding.`,
         `- **Sub-agents inherit knowledge only from their agent .md definition — use custom agent types, not built-in Explore.** Tool adoption needs permission + knowledge + enforcement (numbered workflow step).`,
         `- **When debugging, ask "whose responsibility?" before fixing.** Trace whether the bug is in the caller (wrong data) or the callee (wrong handling). Fix at the responsible layer — never patch the symptom site with context-specific guards.`,
+        `- **Grep ALL removed names after extraction/refactoring.** AI finishes the primary file then reports "done" — secondary files silently keep dangling references. After moving or deleting ANY symbol, grep the entire scope for every removed name before declaring complete.`,
+        `- **Assume existing values are intentional — ask WHY before changing.** AI pattern-matches a value as "wrong" and "fixes" it without investigating context. Before changing any constant, limit, flag, or pattern: read comments, check git blame, examine surrounding code. The current value may exist for a reason you haven't discovered yet.`,
+        `- **Verify ALL affected outputs, not just the first.** AI confirms one build passes then declares success. Changes touching multiple stacks (backend, frontend, tests, docs) require verifying EVERY output. One green check is not all green checks.`,
+        `- **Don't copy nearby patterns without evaluating fit.** AI mimics the closest code example without checking if preconditions match. Before reusing a pattern: verify the new context has the same constraints, base classes, scope, and lifetime requirements as the source.`,
         `- **PRIORITY** try to find suitable skill to activate for the task.`,
         ``
     ].join('\n');

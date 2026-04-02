@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Business Feature Documentation workflow — bus
 
 Activate the `feature-docs` workflow. Run `/workflow-start feature-docs` with the user's prompt as context.
 
-**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /docs-update → /review-changes → /review-post-task → /watzup → /workflow-end
+**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /docs-update → /workflow-review-changes → /review-post-task → /watzup → /workflow-end
 
 ---
 

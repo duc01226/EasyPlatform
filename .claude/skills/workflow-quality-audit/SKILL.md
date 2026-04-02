@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Quality Audit workflow — audit code quality, 
 
 Activate the `quality-audit` workflow. Run `/workflow-start quality-audit` with the user's prompt as context.
 
-**Steps:** /code-review → /plan → /plan-review → /plan-validate → /code → /tdd-spec → /tdd-spec-review → /review-changes → /review-architecture → /code-review → /test → /watzup → /workflow-end
+**Steps:** /workflow-review-changes → /plan → /plan-review → /plan-validate → /code → /tdd-spec → /tdd-spec-review → /test → /watzup → /workflow-end
 
 ---
 

@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Test Spec Update (Post-Change) workflow — upd
 
 Activate the `test-spec-update` workflow. Run `/workflow-start test-spec-update` with the user's prompt as context.
 
-**Steps:** /review-changes → /tdd-spec → /tdd-spec-review → /test-specs-docs → /integration-test → /test → /workflow-end
+**Steps:** /workflow-review-changes → /tdd-spec → /tdd-spec-review → /test-specs-docs → /integration-test → /test → /workflow-end
 
 ---
 

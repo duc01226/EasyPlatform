@@ -1,7 +1,7 @@
 ---
 name: plan-review
 version: 1.0.0
-description: '[Planning] Auto-review plan for validity, correctness, and best practices before implementation'
+description: '[Planning] Auto-review plan for validity, correctness, and best practices — recursive: review, fix issues, re-review until PASS (max 3 iterations)'
 ---
 
 > **[BLOCKING]** This is a validation gate. MUST use `AskUserQuestion` to present review findings and get user confirmation. Completing without asking at least one question is a violation.
@@ -24,7 +24,7 @@ description: '[Planning] Auto-review plan for validity, correctness, and best pr
 
 ## Quick Summary
 
-**Goal:** Auto-review implementation plans for validity, correctness, and best practices before proceeding (AI self-review, not user interview).
+**Goal:** Auto-review implementation plans for validity, correctness, and best practices. **Recursive:** on FAIL, fix issues directly in plan files and re-review until PASS (max 3 iterations).
 
 **Workflow:**
 
@@ -33,12 +33,14 @@ description: '[Planning] Auto-review plan for validity, correctness, and best pr
 3. **Evaluate Checklist** — Validity (summary, requirements, steps, files), Correctness (specific, paths, no conflicts), Best Practices (YAGNI/KISS/DRY, architecture), Completeness (risks, testing, success, security)
 4. **Score & Classify** — PASS (all Required + ≥50% Recommended), WARN (all Required + <50% Recommended), FAIL (any Required fails)
 5. **Output Result** — Status, checks passed, issues, recommendations, verdict
+6. **If FAIL** — Fix issues in plan files directly, then re-review (loop back to step 2, max 3 iterations)
 
 **Key Rules:**
 
 - **PASS**: Proceed to implementation
 - **WARN**: Proceed with caution, note gaps
-- **FAIL**: STOP - must fix before proceeding, list specific issues
+- **FAIL (iteration < 3)**: Fix plan issues directly, then re-review
+- **FAIL (iteration = 3)**: STOP - escalate to user
 - **Constructive**: Focus on implementation-blocking issues, not pedantic details
 
 **Be skeptical. Apply critical thinking, sequential thinking. Every claim needs traced proof, confidence percentages (Idea should be more than 80%).**
@@ -195,11 +197,56 @@ After completing Round 1 checklist evaluation, execute a **second full review ro
 5. **Update verdict** if Round 2 found new issues
 6. **Final verdict** must incorporate findings from BOTH rounds
 
+## Recursive Fix-and-Review Protocol (CRITICAL)
+
+When the review results in **FAIL**, plan-review **fixes the issues itself** and re-reviews, looping until PASS or max iterations.
+
+### Flow
+
+```
+┌──────────────────────────────────┐
+│  Round 1+2: Review plan          │
+│  Output: PASS / WARN / FAIL      │
+└──────────────┬───────────────────┘
+               │
+        ┌──────▼──────┐
+        │ PASS/WARN?  │──YES──→ Proceed to next workflow step
+        └──────┬──────┘
+               │ FAIL
+        ┌──────▼──────────────────────────────────┐
+        │  FIX: Modify plan files to resolve       │
+        │  all FAIL issues (edit plan.md/phase-*)  │
+        └──────┬──────────────────────────────────┘
+               │
+        ┌──────▼──────────────────────────────────┐
+        │  RE-REVIEW: Full checklist again         │
+        │  (both Round 1 + Round 2)                │
+        └──────┬──────────────────────────────────┘
+               │
+               └──→ Loop until PASS/WARN (max 3 iterations)
+```
+
+### Iteration Rules
+
+1. **Max 3 iterations** — if issues persist after 3 review-fix cycles, STOP and escalate to user via `AskUserQuestion`
+2. **Track iteration count** — log "Plan review iteration N/3" at the start of each cycle
+3. **PASS/WARN = exit** — when all Required checks pass, proceed (WARN is acceptable)
+4. **Diminishing scope** — each iteration should find FEWER issues. If iteration N finds MORE than N-1, STOP and escalate
+5. **Fix scope** — only fix issues flagged as FAIL (Required check failures). Do NOT rewrite the plan.
+6. **Fix approach:**
+    - Vague steps → expand with specific file paths, concrete actions
+    - Missing sections → add them (risks, testing strategy, success criteria)
+    - Conflicting steps → resolve conflicts, document rationale
+    - Over-engineering → simplify, remove unnecessary complexity
+    - Missing TC mappings → add TC references or "TBD" with rationale
+7. **After each fix** — re-read the modified plan files before re-reviewing (don't review stale content)
+
 ## Next Steps
 
 - **If PASS**: Announce "Plan review complete. Proceeding with next workflow step."
 - **If WARN**: Announce "Plan review complete with warnings. Proceeding - consider addressing gaps."
-- **If FAIL**: List specific issues. Do NOT proceed. Ask user to fix or regenerate plan.
+- **If FAIL (iteration < 3)**: Fix the issues directly in plan files, then re-review (recursive).
+- **If FAIL (iteration = 3)**: List remaining issues. STOP. Ask user to fix or regenerate plan via `AskUserQuestion`.
 
 ## **IMPORTANT Task Planning Notes (MUST FOLLOW)**
 

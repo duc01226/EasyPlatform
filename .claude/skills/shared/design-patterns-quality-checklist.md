@@ -93,6 +93,20 @@ During review, check if any of these pattern opportunities apply:
 
 ---
 
+## Refactoring Completeness Check (MANDATORY after extraction/move/rename)
+
+> **AI failure mode:** Finishes primary file, misses secondary files. Reports "done" with dangling references.
+
+After ANY code extraction, move, rename, or deletion:
+
+1. **List every removed/renamed symbol** — fields, methods, imports, template bindings, CSS classes
+2. **Grep the ENTIRE scope for each** — all file types (code, templates, styles, configs, tests)
+3. **Zero dangling = complete.** Any match = incomplete migration. Fix before reporting done.
+4. **Verify new artifact is wired** — registered, imported, referenced by all consumers. Creation without registration = runtime failure.
+5. **Match lifetime to state** — if extracted code holds mutable state, verify each consumer gets its own instance (not shared). Shared mutable state across independent consumers = silent cross-contamination.
+
+---
+
 ## Anti-Pattern Red Flags (MUST FLAG)
 
 | Anti-Pattern              | Detection Signal                                                          | Severity                                     |

@@ -68,19 +68,38 @@ Activate a workflow from the injected catalog and initialize step tracking via T
 
 ---
 
-## After Activation
+## After Activation — Task Creation Protocol (ZERO TOLERANCE)
 
-Your FIRST action after activation MUST be calling `TaskCreate` once for EACH workflow step:
+Your FIRST action after activation MUST be creating EXACTLY one `TaskCreate` for EACH entry in the workflow's `sequence` array from `.claude/workflows.json`.
 
-    TaskCreate: subject="[Workflow] /step-command - Step description", description="Workflow step", activeForm="Executing step"
+### How to determine the task list:
 
-Create ALL tasks first, then mark the first task `in_progress` via `TaskUpdate`. Do NOT skip this.
+1. Read `.claude/workflows.json`
+2. Find the activated workflow by ID
+3. Read its `sequence` array — this is the SOLE source of truth
+4. Create one `TaskCreate` per array entry, IN ORDER
+
+### Task format:
+
+    TaskCreate: subject="[Workflow] /{step-name} — {brief description}", description="Workflow step N/{total}. {conditional note if applicable}", activeForm="Executing /{step-name}"
+
+### Rules (NON-NEGOTIABLE):
+
+- **1:1 mapping** — Each sequence entry = exactly one task. No consolidation, no summarization, no custom task names.
+- **Conditional steps still get tasks** — Steps that may be skipped at runtime (e.g., /plan, /cook after a PASS review) STILL get created as tasks. Add to description: "Conditional — skip if reviews pass".
+- **Recursive self-calls get tasks** — If the sequence references itself (e.g., `workflow-review-changes` within `review-changes`), create a task: `[Workflow] /workflow-review-changes — Recursive re-review (conditional)`.
+- **Never invent tasks** — Do NOT add tasks not in the sequence array (no "Assess results", no "Final review", no "Check output"). Only create what the sequence defines.
+- **Count verification** — After creating all tasks, verify: `task count == len(sequence)`. If mismatch, fix immediately before proceeding.
+
+Create ALL tasks first, then mark the first task `in_progress` via `TaskUpdate`.
 
 ## Step Execution Protocol (applies to ALL workflows)
 
 Per step: `TaskUpdate in_progress` → **invoke `Skill` tool** → complete skill workflow → `TaskUpdate completed`.
 
 Marking a task `completed` without invoking its `Skill` tool is a workflow violation. Validation gates (`/plan-validate`, `/plan-review`, `/why-review`) require `AskUserQuestion` — never auto-approve or batch-complete them.
+
+To skip a conditional step: `TaskUpdate in_progress` → add comment "Skipped — {reason}" → `TaskUpdate completed`. Do NOT delete conditional tasks.
 
 ---
 

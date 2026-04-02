@@ -8,7 +8,26 @@ description: '[Workflow] Trigger Feature Implementation workflow — implement a
 
 Activate the `feature` workflow. Run `/workflow-start feature` with the user's prompt as context.
 
-**Steps:** /scout → /feature-investigation → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /cook → /tdd-spec → /tdd-spec-review → /test-specs-docs → /code-simplifier → /review-changes → /review-architecture → /code-review → /sre-review → /security → /performance → /changelog → /test → /docs-update → /watzup → /workflow-end
+**Steps:** /scout → /investigate → /plan → /plan-review → /plan-validate → /why-review → /tdd-spec → /tdd-spec-review → /plan → /plan-review → /cook → /tdd-spec → /tdd-spec-review → /test-specs-docs → /workflow-review-changes → /sre-review → /security → /changelog → /test → /docs-update → /watzup → /workflow-end
+
+## Repeated Steps Disambiguation (CRITICAL for task creation)
+
+This workflow has steps that appear multiple times. When creating tasks, use these descriptions to distinguish them:
+
+| Step               | Occurrence   | Task Description                                 |
+| ------------------ | ------------ | ------------------------------------------------ |
+| `/plan`            | 1st (pos 3)  | PLAN₁: Investigation-based implementation plan   |
+| `/plan`            | 2nd (pos 9)  | PLAN₂: Sprint-ready plan incorporating TDD specs |
+| `/plan-review`     | 1st (pos 4)  | Review PLAN₁                                     |
+| `/plan-review`     | 2nd (pos 10) | Review PLAN₂                                     |
+| `/tdd-spec`        | 1st (pos 7)  | TDD-SPEC₁: Pre-implementation test specs         |
+| `/tdd-spec`        | 2nd (pos 11) | TDD-SPEC₂: Post-implementation test spec update  |
+| `/tdd-spec-review` | 1st (pos 8)  | Review TDD-SPEC₁                                 |
+| `/tdd-spec-review` | 2nd (pos 12) | Review TDD-SPEC₂                                 |
+
+**NEVER deduplicate** — each occurrence is a distinct task with a different purpose.
+
+---
 
 ## Conditional UI Planning
 

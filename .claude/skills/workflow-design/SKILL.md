@@ -8,7 +8,7 @@ description: '[Workflow] Trigger Design Workflow workflow — designer workflow:
 
 Activate the `design-workflow` workflow. Run `/workflow-start design-workflow` with the user's prompt as context.
 
-**Steps:** /design-spec → /interface-design | /frontend-design → /code-review → /workflow-end
+**Steps:** /design-spec → /interface-design → /frontend-design → /workflow-review-changes → /workflow-end
 
 ---
 
